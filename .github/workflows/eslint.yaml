@@ -1,0 +1,21 @@
+name: ESLint
+
+on:
+  push:
+    branches: [ master, staging ]
+  pull_request:
+    branches: [ master, staging ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      run: |
+        cd src/pages
+        npm i
+    - name: Run ESLint
+      run: |
+        cd src/pages
+        npx eslint --ext .js,.vue src/

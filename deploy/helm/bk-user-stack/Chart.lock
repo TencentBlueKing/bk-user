@@ -1,0 +1,12 @@
+dependencies:
+- name: api
+  repository: file://../api
+  version: 0.1.0
+- name: saas
+  repository: file://../saas
+  version: 0.1.0
+- name: mariadb
+  repository: https://charts.bitnami.com/bitnami
+  version: 9.4.0
+digest: sha256:ce88cbabac806aa4518112938d66634e42d86986d0e5c77959d386f5729ec4f9
+generated: "2021-08-02T19:15:57.739357+08:00"

@@ -1,0 +1,194 @@
+# 全局变量，通常用于多个 Chart 之间共享
+global:
+  imagePullSecrets: []
+  # imagePullSecrets, 预先创建的 imagePullSecrets, 将直接被添加到 chartty.imagePullSecretNames 中.
+  # - name: "secret-a"
+  # - name: "secret-b"
+
+  # credential, 用于创建独享的 Secret 资源
+  imageCredentials:
+    # 当且仅当 enabled 为 true 时，会生成 dockerconfigjson 类型的 Secret 资源, 并在 chartty.imagePullSecretNames 添加该名称.
+    enabled: false
+    password: ""
+    registry: ""
+    username: ""
+    name: ""
+  # 全局环境变量，当 `env` 指定时，`global.env` 内相同 key 值变量将被覆盖
+  env: {}
+
+  # 默认的全局根域
+  sharedDomain: ""
+
+# 缺省实例数
+replicaCount: 1
+
+image:
+  registry: ccr.ccs.tencentyun.com/bk.io
+  repository: bk-user-api
+  pullPolicy: IfNotPresent
+  tag: ""
+
+# 用来覆盖 Chart 名
+nameOverride: ""
+# 用来覆盖 fullName （通常是 release-chart 拼接）
+fullnameOverride: ""
+
+# 是否自动创建 serviceAccount
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+# 支持定义 labels
+podLabels: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+#---------------
+# 调度
+#---------------
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+#---------------
+# 环境变量
+# 除 global.env 和 env 外
+# 其余变量定义均不去重，请手动确保无变量名冲突
+#---------------
+
+requiredEnvList:
+  - BK_IAM_V3_INNER_HOST
+
+# key-value 结构渲染
+env:
+  APP_ID: "bk-user"
+  APP_TOKEN: ""
+  DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.prod"
+  # -------------
+  # 权限中心相关配置
+  # -------------
+  BK_IAM_SYSTEM_ID: "bk-user"
+  # 权限中心后台访问地址
+  BK_IAM_V3_INNER_HOST: ""
+  # 默认我们会按照 BK_PAAS_HOST/o/bk_iam 拼接权限中心 SaaS 访问地址，可以通过以下值覆盖
+  # BK_IAM_SAAS_HOST: "http://apps.bktencent-example.com/bkapp-bk-iam-saas-prod/"
+
+envFrom: []
+
+# 提供原生的 env 写法，
+extrasEnv: []
+
+# 额外提供一种基于 sharedDomain 自动生成的 URL 类型环境变量
+sharedUrlEnvMap: {}
+  # BK_JOB_HOST:
+  #   value: "jobee-test"
+
+# 标识必填的环境变量列表
+requiredEnvList:
+  - APP_TOKEN
+  - BK_IAM_V3_INNER_HOST
+
+#---------------
+# 进程定义
+#--------------
+httpPort: 8000
+defaultDBName: bk-user-api
+
+# 定义应用内的多个进程
+processes:
+  web:
+    ingress:
+      enabled: true
+      host: "bkuser-api.{{ .Values.global.sharedDomain }}"
+      paths: ["/"]
+    replicas: 1
+    resources:
+      limits:
+        cpu: 1024m
+        memory: 1024Mi
+      requests:
+        cpu: 200m
+        memory: 128Mi
+    readinessProbe:
+      tcpSocket:
+        port: 8000
+      initialDelaySeconds: 5
+      periodSeconds: 30
+    livenessProbe:
+      httpGet:
+        path: /ping
+        port: http
+      initialDelaySeconds: 5
+      periodSeconds: 30
+  celery:
+    replicas: 1
+    resources:
+      limits:
+        cpu: 1024m
+        memory: 1024Mi
+      requests:
+        cpu: 200m
+        memory: 128Mi
+    command:
+      - bash
+    args:
+      - /app/start_celery.sh
+  beat:
+    replicas: 1
+    resources:
+      limits:
+        cpu: 128m
+        memory: 512Mi
+      requests:
+        cpu: 128m
+        memory: 128Mi
+    command:
+      - bash
+    args:
+      - /app/start_beat.sh
+
+
+# 部署前钩子
+preRunHooks:
+  db-migrate:
+    weight: 1
+    enabled: true
+    position: "pre-install,pre-upgrade"
+    command:
+      - bash
+    args:
+      - -c
+      - python manage.py migrate
+  bkiam-migrate:
+    weight: 2
+    enabled: true
+    position: "pre-install,pre-upgrade"
+    command:
+      - bash
+    args:
+      - /app/migrate_iam.sh
+
+# 支持定义多个 cronJobs
+cronJobs:
+  jobs: []
+
+# 挂载配置
+volumes: []
+volumeMounts: []
+
+# 支持定义 configmaps
+configMaps: []
+
+mariadb:
+  enabled: false

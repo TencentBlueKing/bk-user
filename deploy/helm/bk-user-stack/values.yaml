@@ -1,0 +1,44 @@
+global:
+  env:
+    # 蓝鲸平台域名
+    BK_PAAS_HOST: ""
+
+  # 用户管理访问域名
+  sharedDomain: ""
+
+api:
+  enabeld: true
+  env:
+    APP_TOKEN: ""
+    # 权限中心后台访问地址
+    BK_IAM_V3_INNER_HOST: ""
+
+  envFrom:
+    - configMapRef:
+        name: bk-user-api-mariadb-env
+
+saas:
+  enabled: true
+  envFrom:
+    - configMapRef:
+        name: bk-user-saas-mariadb-env
+
+mariadb:
+  enabled: true
+  commonAnnotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": hook-failed,before-hook-creation
+  architecture: standalone
+  auth:
+    rootPassword: "root"
+    username: "bk-user"
+    password: "root"
+  primary:
+    # 默认我们未开启持久化，如有需求可以参考:
+    # - https://kubernetes.io/docs/user-guide/persistent-volumes/
+    # - https://github.com/bitnami/charts/blob/master/bitnami/mariadb/values.yaml#L360
+    persistence:
+      enabled: true
+      size: 1Gi
+  initdbScriptsConfigMap: "bk-user-mariadb-init"

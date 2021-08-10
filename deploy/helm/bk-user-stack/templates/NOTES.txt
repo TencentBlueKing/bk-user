@@ -1,0 +1,9 @@
+恭喜你，你已经成功安装了蓝鲸用户管理 !
+
+如果你已经安装了 IngressController，那么就可以通过以下地址访问产品:
+- SaaS: http://bkuser.{{ .Values.global.sharedDomain }}
+- Api: http://bkuser-api.{{ .Values.global.sharedDomain }}/ping
+
+通过你也可以查看查看更多信息:
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}

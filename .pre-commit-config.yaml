@@ -1,0 +1,27 @@
+repos:
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        language: python
+        types: [python]
+        pass_filenames: false
+        entry: isort --settings-path=pyproject.toml .
+      - id: black
+        name: black
+        language: python
+        types: [python]
+        pass_filenames: false
+        entry: black --config=pyproject.toml .
+      - id: flake8
+        name: flak8
+        language: python
+        types: [python]
+        pass_filenames: false
+        entry: pflake8 --config=pyproject.toml
+      - id: mypy
+        name: mypy
+        language: python
+        types: [python]
+        pass_filenames: false
+        entry: mypy src/ --config-file=pyproject.toml

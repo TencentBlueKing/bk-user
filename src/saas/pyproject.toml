@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "bk-user-saas"
+version = "2.3.0"
+description = "bk-user SaaS"
+authors = ["IMBlues <bluesedenyu@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.6.14"
+urllib3 = "^1.25.7"
+djangorestframework = "3.12.4"
+PyMySQL = "1.0.2"
+six = "1.11.0"
+certifi = "^2019.11.28"
+requests = "^2.22.0"
+openpyxl = "3.0.0"
+aenum = "2.2.1"
+whitenoise = "5.2.0"
+Django = "3.2.5"
+gunicorn = "19.9.0"
+gevent = "1.1.2"
+django-cors-headers = "^3.2.1"
+python-json-logger = "0.1.11"
+raven = "6.1.0"
+drf-yasg = "1.20.0"
+pydantic = "^1.6.1"
+semantic-version = "^2.8.5"
+pyyaml = "^5.3.1"
+django-environ = "^0.4.5"
+
+[tool.poetry.dev-dependencies]
+ipython = "^7.15.0"
+# black
+black = "^21.7b0"
+# isort
+isort = "^5.9.2"
+# flake8
+pyproject-flake8 = "^0.0.1-alpha.2"
+flake8-comprehensions = "^3.5.0"
+# pytest
+pytest = "^6.2.4"
+pytest-django = "^3.9.0"
+pytest-cov = "^2.8.1"
+# mypy
+mypy = "^v0.910"
+types-requests = "^2.25.0"
+types-dataclasses = "^0.1.5"
+
+[[tool.poetry.source]]
+name = "tencent-mirrors"
+url = "https://mirrors.tencent.com/pypi/simple/"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "bkuser_shell.config.overlays.dev"

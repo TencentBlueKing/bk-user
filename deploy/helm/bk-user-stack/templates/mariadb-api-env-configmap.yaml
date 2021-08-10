@@ -1,0 +1,17 @@
+{{- if .Values.mariadb.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-user-api-mariadb-env
+  labels:
+    {{- include "chartty.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-1"
+data:
+  DB_NAME: "{{ .Values.api.defaultDBName }}"
+  DB_USER: "{{ .Values.mariadb.auth.username }}"
+  DB_PASSWORD: "{{ .Values.mariadb.auth.password }}"
+  DB_HOST: "{{ .Release.Name }}-mariadb"
+  DB_PORT: "3306"
+{{- end -}}

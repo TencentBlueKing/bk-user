@@ -1,0 +1,8 @@
+[run]
+omit = 
+    */migrations/*
+    */bkuser_core/apis/*
+    */bkuser_core/monitoring/*
+    */urls.py
+    */management/commands/*
+    */esb_sdk/*

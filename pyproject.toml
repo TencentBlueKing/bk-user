@@ -1,0 +1,69 @@
+[tool.poetry]
+name = "蓝鲸用户管理"
+version = "2.3.0"
+description = "project description file for ci"
+authors = ["IMBlues <bluesedenyu@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.6.14"
+
+[tool.poetry.dev-dependencies]
+# black
+black = "^21.7b0"
+# isort
+isort = "^5.9.2"
+# flake8
+pyproject-flake8 = "^0.0.1-alpha.2"
+flake8-comprehensions = "^3.5.0"
+# pytest
+pytest = "^6.2.4"
+pytest-django = "^3.9.0"
+pytest-cov = "^2.8.1"
+# mypy
+mypy = "^v0.910"
+types-requests = "^2.25.0"
+types-dataclasses = "^0.1.5"
+types-pytz = "^2021.1.0"
+types-pyyaml = "^5.4.3"
+types-pymysql = "^1.0.0"
+types-redis = "^3.5.4"
+types-toml = "^0.1.3"
+
+[tool.black]
+line-length = 119
+skip-string-normalization = 'true'
+exclude = '''
+/(
+  | .+/migrations
+  | .+/sdk
+  | .+/node_modules
+)/
+'''
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = 'true'
+force_grid_wrap = 0
+use_parentheses = 'true'
+line_length = 119
+skip_glob = ["*/migrations/**", "*/sdk/**", "*/node_modules/**"]
+
+[tool.flake8]
+ignore = "C901,E203,W503"
+max-line-length = 119
+max-complexity = 8
+format = "pylint"
+exclude = "*migrations*,*.pyc,.git,__pycache__,*/node_modules/*,*/templates_module*,*/bin/*,*/config/*,*sdk*"
+
+[tool.mypy]
+ignore_missing_imports = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "*.migrations.*",
+    "*.config.*",
+    "bkuser_sdk.*",
+    "*.bkuser_sdk.*"
+]
+ignore_errors = true
