@@ -689,13 +689,10 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
             profiles = Profile.objects.filter(enabled=True).filter(functools.reduce(or_, target_lookups))
 
-        if serializer.validated_data.get("is_complete", False):
-            response_serializer = local_serializers.LoginBatchResponseSerializer
-        else:
-            response_serializer = local_serializers.LoginBatchResponseSerializer
-
         # 由于当前只继承了 viewSet，需要需要额外添加 context
-        return Response(data=response_serializer(profiles, many=True, context={"request": request}).data)
+        return Response(
+            data=local_serializers.LoginBatchResponseSerializer(profiles, many=True, context={"request": request}).data
+        )
 
 
 class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
