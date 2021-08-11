@@ -106,8 +106,6 @@ api:
     DB_PASSWORD: "your-db-password"
     DB_HOST: "your-db-host"
     DB_PORT: "your-db-port"
-  # 取消 mariadb 的环境变量挂载
-  envFrom: {}
 
 saas:
   enabled: true
@@ -117,8 +115,6 @@ saas:
     DB_PASSWORD: "your-db-password"
     DB_HOST: "your-db-host"
     DB_PORT: "your-db-port"
-  # 取消 mariadb 的环境变量挂载
-  envFrom: {}
 
 mariadb:
   enabled: false
@@ -159,6 +155,8 @@ helm install bk-user bk-user-stack -n bk-user -f values.yaml \
  --set api.preRunHooks.db-migrate.enabled=false \
  --set saas.preRunHooks.db-migrate.enabled=false
 ```
+
+如果在安装完成之后，访问 SaaS 地址出现 `503`，可以检查一下 `saas-web` 容器是否完全就绪，静候就绪后刷新页面即可。
 
 ## 卸载
 ```bash

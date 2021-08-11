@@ -1,5 +1,3 @@
-{{- if .Values.mariadb.enabled }}
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,9 +8,10 @@ metadata:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "-1"
 data:
-  DB_NAME: "{{ .Values.saas.defaultDBName }}"
+  {{- if .Values.mariadb.enabled }}
+  DB_NAME: "{{ .Values.saas.database.preferName }}"
   DB_USER: "{{ .Values.mariadb.auth.username }}"
   DB_PASSWORD: "{{ .Values.mariadb.auth.password }}"
   DB_HOST: "{{ .Release.Name }}-mariadb"
   DB_PORT: "3306"
-{{- end -}}
+  {{- end -}}

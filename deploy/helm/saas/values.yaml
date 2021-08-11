@@ -91,7 +91,8 @@ requiredEnvList: []
 # 进程定义
 #--------------
 httpPort: 8000
-defaultDBName: bk-user-saas
+database:
+  preferName: bk-user-saas
 
 # 定义应用内的多个进程
 processes:

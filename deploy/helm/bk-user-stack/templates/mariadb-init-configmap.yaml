@@ -11,8 +11,8 @@ metadata:
     "helm.sh/hook-weight": "-1"
 data:
   init.sql: |
-    CREATE DATABASE IF NOT EXISTS `{{ .Values.api.defaultDBName }}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-    CREATE DATABASE IF NOT EXISTS `{{ .Values.saas.defaultDBName }}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-    GRANT ALL PRIVILEGES ON `{{ .Values.api.defaultDBName }}`.* TO `{{ .Values.mariadb.auth.username }}`@'%';
-    GRANT ALL PRIVILEGES ON `{{ .Values.saas.defaultDBName }}`.* TO `{{ .Values.mariadb.auth.username }}`@'%';
+    CREATE DATABASE IF NOT EXISTS `{{ .Values.api.database.preferName }}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+    CREATE DATABASE IF NOT EXISTS `{{ .Values.saas.database.preferName }}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+    GRANT ALL PRIVILEGES ON `{{ .Values.api.database.preferName }}`.* TO `{{ .Values.mariadb.auth.username }}`@'%';
+    GRANT ALL PRIVILEGES ON `{{ .Values.saas.database.preferName }}`.* TO `{{ .Values.mariadb.auth.username }}`@'%';
 {{- end -}}
