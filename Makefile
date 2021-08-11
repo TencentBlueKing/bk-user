@@ -32,7 +32,7 @@ helm-debug: helm-refresh
 	cd deploy/helm && helm install bk-user-test bk-user-stack --debug --dry-run
 
 helm-install: helm-refresh
-	kubectl create ns bk-user
+	kubectl create ns bk-user || true
 	cd deploy/helm && helm install bk-user-test bk-user-stack --namespace bk-user -f local_values.yaml
 
 helm-upgrade: helm-refresh
