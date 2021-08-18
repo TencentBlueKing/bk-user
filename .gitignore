@@ -224,5 +224,5 @@ deploy/helm/*/charts/
 deploy/helm/local_values.yaml
 deploy/helm/dist/
 
-!deploy/helm/api/templates/*
-!deploy/helm/saas/templates/*
+deploy/helm/api/templates/c_*.*
+deploy/helm/saas/templates/c_*.*
