@@ -1,9 +1,12 @@
-恭喜你，你已经成功安装了蓝鲸用户管理 !
+恭喜，你已经成功安装了蓝鲸用户管理 !
 
-如果你已经安装了 IngressController，那么就可以通过以下地址访问产品:
+如果集群中已经安装了 IngressController，那么可以通过以下地址访问用户管理:
 - SaaS: http://bkuser.{{ .Values.global.sharedDomain }}
 - Api: http://bkuser-api.{{ .Values.global.sharedDomain }}/ping
 
-通过你也可以查看查看更多信息:
+登录账户名密码:
+{{ .Values.bkuserapi.env.INITIAL_ADMIN_USERNAME }}/{{ .Values.bkuserapi.env.INITIAL_ADMIN_PASSWORD }}
+
+查看更多信息:
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}

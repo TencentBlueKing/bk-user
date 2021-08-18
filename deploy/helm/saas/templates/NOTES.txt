@@ -1,6 +1,1 @@
-已经成功安装 {{ .Chart.Name }}.
-
-查看更多信息:
-
-  $ helm status {{ .Release.Name }}
-  $ helm get all {{ .Release.Name }}
+/Users/amazingblues/SourceCode/BlueKing/bk-user/deploy/helm/chartty/NOTES.txt

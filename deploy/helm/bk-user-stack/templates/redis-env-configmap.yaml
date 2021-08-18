@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-user-api-redis-env
+  labels:
+    {{- include "chartty.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-1"
+data:
+  {{- if .Values.redis.enabled }}
+  {{- $redis_url := printf "redis://:%s@%s-redis-master:%s/0" $.Values.redis.auth.password $.Release.Name ($.Values.redis.master.service.port | toString )}}
+  CELERY_BROKER_URL: {{ $redis_url }}
+  CELERY_RESULT_BACKEND: {{ $redis_url }}
+  {{- end }}

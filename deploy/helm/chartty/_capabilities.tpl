@@ -64,6 +64,18 @@ Return the appropriate apiVersion for ingress.
 {{- end }}
 {{- end -}}
 
+{{- define "chartty.capabilities.ingress.backendService" -}}
+{{- if semverCompare "<1.19-0" (include "chartty.capabilities.kubeVersion" .global) -}}
+serviceName: {{ .chartName }}-{{ .processType }}
+servicePort: {{ .svcPort }}
+{{- else -}}
+service:
+  name: {{ .chartName }}-{{ .processType }}
+  port:
+    number: {{ .svcPort }}
+{{- end }}
+{{- end -}}
+
 {{/*
 Return the appropriate apiVersion for RBAC resources.
 */}}
