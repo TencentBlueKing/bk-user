@@ -2,9 +2,9 @@ name: Python CI Check
 
 on:
   push:
-    branches: [ master, staging ]
+    branches: [ master, development ]
   pull_request:
-    branches: [ master, staging ]
+    branches: [ master, development ]
 
 jobs:
   build:
