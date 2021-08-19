@@ -33,8 +33,7 @@ spec:
         paths:
           {{- range $processInfo.ingress.paths }}
           - path: {{ . }}
-            backend:
-              {{- include "chartty.capabilities.ingress.backendService" (dict "global" $global "chartName" $chartName "processType" $processType "svcPort" $svcPort ) | nindent 14 }}
+            {{- include "chartty.capabilities.ingress.backendService" (dict "global" $global "chartName" $chartName "processType" $processType "svcPort" $svcPort ) | nindent 12 }}
           {{- end }}
 {{- end }}
 {{- end }}

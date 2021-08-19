@@ -69,8 +69,6 @@ affinity: {}
 
 # key-value 结构渲染
 env:
-  APP_ID: "bk-user"
-  APP_TOKEN: "insert-your-app-token"
   DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.prod"
   # -------------
   # 权限中心相关配置

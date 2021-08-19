@@ -4,6 +4,9 @@ global:
   sharedImageRegistry: "ccr.ccs.tencentyun.com/bk.io"
   env:
     BK_PAAS_HOST: ""
+    BK_APP_CODE: "bk-user"
+    # 请在 PaaS 产品就绪后，查询 secret 并填入，否则影响用户管理调用 ESB 的相关功能（邮件通知等）
+    BK_APP_SECRET: "your-own-secret"
 
 bkuserapi:
   enabeld: true
