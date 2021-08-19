@@ -138,6 +138,11 @@ class ViewCrown:
             return data
 
         if isinstance(self.out, BaseSerializer):
+            # 由于传入的是全局对象，会残留上一次请求的结果
+            # 这里需要手动清理一下
+            if hasattr(self.out, "_data"):
+                delattr(self.out, "_data")
+
             self.out.instance = data
             _data = self.out.data
         elif issubclass(self.out, BaseSerializer):
@@ -178,7 +183,7 @@ def inject_serializer(
     :param query_in: input serializer (query)
     :param out: output serializer
     :param config: initial info of Config
-    :param swagger_params: pass to swagger_auto_schema of drf-yasg
+    :param swagger_kwargs: pass to swagger_auto_schema of drf-yasg
     """
 
     def decorator_serializer_inject(func):
