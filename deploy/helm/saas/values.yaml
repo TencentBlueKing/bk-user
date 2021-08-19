@@ -72,6 +72,7 @@ env:
   DJANGO_SETTINGS_MODULE: "bkuser_shell.config.overlays.prod"
   BKAPP_BK_USER_CORE_API_HOST: "http://bkuserapi-web"
   SITE_URL: "/"
+  DISABLE_IAM: true
 
 
 envFrom: []
