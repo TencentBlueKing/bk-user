@@ -27,7 +27,7 @@ spec:
   {{- end }}
   containers:
     - name: {{ $.Release.Name }}-{{ $name }}
-      image: "{{ required ".Values.image.registry is required" $.Values.image.registry }}/{{ required ".Values.image.repository is required" $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}" 
+      image: {{ include "chartty.image" $global }}
       imagePullPolicy: {{ $.Values.image.pullPolicy }}
       env:
         {{- include "chartty.envs" $global | nindent 8 }}

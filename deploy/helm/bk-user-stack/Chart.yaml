@@ -2,21 +2,26 @@ apiVersion: v2
 name: bk-user-stack
 description: A Helm chart for bk-user
 type: application
-version: 0.1.0
+version: 0.5.0
 appVersion: v2.3.0
 
 dependencies:
-- name: api
+- name: bkuserapi
   version: "0.1.0"
   repository: "file://../api"
-  condition: api.enabled
+  condition: bkuserapi.enabled
 
-- name: saas
+- name: bkusersaas
   version: "0.1.0"
   repository: "file://../saas"
-  condition: saas.enabled
+  condition: bkusersaas.enabled
 
 - name: mariadb
   version: "9.x.x"
   repository: "https://charts.bitnami.com/bitnami"
   condition: mariadb.enabled
+
+- name: redis
+  version: "14.x.x"
+  repository: "https://charts.bitnami.com/bitnami"
+  condition: redis.enabled

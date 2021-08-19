@@ -5,7 +5,7 @@
 {{- with $processInfo.ingress }}
 {{- if (default false $processInfo.ingress.enabled) }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: {{ template "chartty.capabilities.ingress.apiVersion" $global }}
 kind: Ingress
 metadata:
   name: {{ $chartName }}-{{ $processType }} 
@@ -33,9 +33,7 @@ spec:
         paths:
           {{- range $processInfo.ingress.paths }}
           - path: {{ . }}
-            backend:
-              serviceName: {{ $chartName }}-{{ $processType }}
-              servicePort: {{ $svcPort }}
+            {{- include "chartty.capabilities.ingress.backendService" (dict "global" $global "chartName" $chartName "processType" $processType "svcPort" $svcPort ) | nindent 12 }}
           {{- end }}
 {{- end }}
 {{- end }}
