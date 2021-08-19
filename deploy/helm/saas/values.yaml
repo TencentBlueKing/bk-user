@@ -23,7 +23,7 @@ global:
 replicaCount: 1
 
 image:
-  registry: ccr.ccs.tencentyun.com/bk.io
+  registry: ""
   repository: bk-user-saas
   pullPolicy: IfNotPresent
   tag: ""
@@ -70,8 +70,9 @@ affinity: {}
 # key-value 结构渲染
 env:
   DJANGO_SETTINGS_MODULE: "bkuser_shell.config.overlays.prod"
-  BKAPP_BK_USER_CORE_API_HOST: "http://api-web"
+  BKAPP_BK_USER_CORE_API_HOST: "http://bkuserapi-web"
   SITE_URL: "/"
+  DISABLE_IAM: true
 
 
 envFrom: []

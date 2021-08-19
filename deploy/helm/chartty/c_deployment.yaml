@@ -38,7 +38,7 @@ spec:
         - name: {{ $.Chart.Name }}-{{ $processType }}
           securityContext:
             {{- toYaml $.Values.securityContext | nindent 12 }}
-          image: "{{ required ".Values.image.registry is required" $.Values.image.registry }}/{{ required ".Values.image.repository is required" $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+          image: {{ include "chartty.image" $global }}
           {{- if hasKey $processInfo "command" }}
           command: 
           {{- range $idx, $value := $processInfo.command }}

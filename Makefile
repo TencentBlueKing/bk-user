@@ -1,5 +1,7 @@
 version ?= "v2.3.0"
 values ?=
+image_repo ?= "ccr.ccs.tencentyun.com/bk.io"
+chart_repo ?=
 
 generate-release-md:
 	cd src/saas/ && poetry run python manage.py generate_release_md > release.md
@@ -21,11 +23,15 @@ build-saas:
 
 build-all: build-api build-saas
 
-helm-sync:
-	cp -r ~/Library/helm/starters/chartty/templates/* deploy/helm/api/templates/
-	cp -r ~/Library/helm/starters/chartty/templates/* deploy/helm/saas/templates/
+push:
+	docker push ${image_repo}/bk.io/bk-user-api:${version}
+	docker push ${image_repo}/bk.io/bk-user-saas:${version}
 
-helm-refresh:
+helm-sync:
+	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/api/templates/ || true
+	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/saas/templates/ || true
+
+helm-refresh: helm-sync
 	cd deploy/helm && helm dependency update bk-user-stack --skip-refresh
 
 helm-debug: helm-refresh
@@ -41,3 +47,11 @@ helm-upgrade: helm-refresh
 helm-uninstall:
 	helm uninstall bk-user-test -n bk-user
 	kubectl delete ns bk-user
+
+helm-package: helm-refresh
+	cd deploy/helm && helm package bk-user-stack -d dist/
+
+helm-publish: deploy/helm/dist/*.tgz
+	for f in $^; do \
+		curl -kL -X POST -F chart=@$${f} -u ${credentials} ${chart_repo}; \
+	done

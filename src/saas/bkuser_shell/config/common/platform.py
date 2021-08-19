@@ -14,8 +14,8 @@ from . import env
 # 应用基本信息配置 (请按照说明修改)
 # ==============================================================================
 # 在蓝鲸智云开发者中心 -> 点击应用ID -> 基本信息 中获取 APP_ID 和 APP_TOKEN 的值
-APP_ID = env("APP_ID", default="bk_user_manage")
-APP_TOKEN = env("APP_TOKEN", default="04631675-6ddf-4f8f-a199-c397cb19f4f8")
+APP_ID = env("BK_APP_CODE")
+APP_TOKEN = env("BK_APP_SECRET")
 # 蓝鲸智云开发者中心的域名，形如：http://paas.bking.com
 BK_PAAS_HOST = env("BK_PAAS_HOST")
 BK_PAAS_INNER_HOST = env("BK_PAAS_INNER_HOST", default=BK_PAAS_HOST)

@@ -62,7 +62,21 @@ Return the appropriate apiVersion for ingress.
 {{- else -}}
 {{- print "networking.k8s.io/v1" -}}
 {{- end }}
-{{- print "networking.k8s.io/v1" -}}
+{{- end -}}
+
+{{- define "chartty.capabilities.ingress.backendService" -}}
+{{- if semverCompare "<1.19-0" (include "chartty.capabilities.kubeVersion" .global) -}}
+backend:
+  serviceName: {{ .chartName }}-{{ .processType }}
+  servicePort: {{ .svcPort }}
+{{- else -}}
+pathType: "Prefix"
+backend:
+  service:
+    name: {{ .chartName }}-{{ .processType }}
+    port:
+      number: {{ .svcPort }}
+{{- end }}
 {{- end -}}
 
 {{/*
