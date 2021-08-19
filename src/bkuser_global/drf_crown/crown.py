@@ -97,6 +97,11 @@ class ViewCrown:
                 _data = getattr(request, "query_params")
 
         if isinstance(_in, BaseSerializer):
+            # 由于传入的是全局对象，会残留上一次请求的结果
+            # 这里需要手动清理一下
+            if hasattr(_in, "_validated_data"):
+                delattr(_in, "_validated_data")
+
             _in.initial_data = _data
             slz_obj = _in
         elif issubclass(_in, BaseSerializer):

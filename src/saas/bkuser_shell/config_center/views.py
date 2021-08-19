@@ -201,7 +201,7 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
         return setting_metas
 
     @inject_serializer(
-        query_in=serializers.UpdateNamespaceSettingSerializer(many=True),
+        body_in=serializers.UpdateNamespaceSettingSerializer(many=True),
         out=serializers.SettingSerializer(many=True),
         tags=["config_center"],
     )
