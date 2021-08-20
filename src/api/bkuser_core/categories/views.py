@@ -246,7 +246,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.TEST_CONNECTION_FAILED.f("请确保连接设置正确")
 
         try:
-            syncer.test_fetch_data(serializer.validated_data)
+            syncer.fetcher.test_fetch_data(serializer.validated_data)
         except FetchDataFromRemoteFailed as e:
             raise error_codes.TEST_FETCH_DATA_FAILED.f(f"{e}")
         except Exception:  # pylint: disable=broad-except

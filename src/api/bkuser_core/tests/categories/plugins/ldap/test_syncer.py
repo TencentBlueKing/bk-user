@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from unittest import mock
+
 import pytest
 from bkuser_core.categories.plugins.metas import ProfileMeta
 from bkuser_core.departments.models import Department
@@ -18,73 +20,7 @@ pytestmark = pytest.mark.django_db
 
 class TestSyncer:
     @pytest.mark.parametrize(
-        "dn,first,second",
-        [
-            ("cn=xxx,cn=qqq,ou=vvv,dc=test,dc=org", {"cn": "xxx"}, {"dc": "org"}),
-            # 带空格
-            ("cn=xx x,cn=qq q,ou=v vv,dc=test,dc=or g", {"cn": "xx x"}, {"dc": "or g"}),
-        ],
-    )
-    def test_parse_tree(self, test_ldap_syncer, dn, first, second):
-        """测试解析 dn 树"""
-        b = test_ldap_syncer._parse_tree(dn)
-        assert b[0] == first
-        assert b[-1] == second
-
-    @pytest.mark.parametrize(
-        "dn,target,first,second",
-        [
-            (
-                "cn=xxx,cn=qqq,ou=vvv,dc=test,dc=org",
-                ["cn"],
-                {"cn": "xxx"},
-                {"cn": "qqq"},
-            ),
-            (
-                "cn=xxx,ou=ddd,ou=vvv,dc=test,dc=org",
-                ["ou"],
-                {"ou": "ddd"},
-                {"ou": "vvv"},
-            ),
-        ],
-    )
-    def test_parse_tree_restrict(self, test_ldap_syncer, dn, target, first, second):
-        b = test_ldap_syncer._parse_tree(dn, target)
-
-        assert b[0] == first
-        assert b[1] == second
-
-    @pytest.mark.parametrize(
-        "dn,results",
-        [
-            (
-                "cn=xx x,cn=qq q,ou=4+1,dc=test,dc=or g",
-                [
-                    {"cn": "xx x"},
-                    {"cn": "qq q"},
-                    {"ou": "4\\+1"},
-                    {"dc": "test"},
-                    {"dc": "or g"},
-                ],
-            ),
-            (
-                "cn=xx x,cn=《梦工厂大冒险》攻坚组,ou=4+1,dc=test,dc=or g",
-                [
-                    {"cn": "xx x"},
-                    {"cn": "《梦工厂大冒险》攻坚组"},
-                    {"ou": "4\\+1"},
-                    {"dc": "test"},
-                    {"dc": "or g"},
-                ],
-            ),
-        ],
-    )
-    def test_parse_tree_with_special(self, test_ldap_syncer, dn, results):
-        """测试解析 dn 树，特殊字符"""
-        assert test_ldap_syncer._parse_tree(dn) == results
-
-    @pytest.mark.parametrize(
-        "pre_created,users,expected_adding, expected_updating",
+        "pre_created, users, expected_adding, expected_updating",
         [
             (
                 [],
@@ -219,7 +155,9 @@ class TestSyncer:
         for p in pre_created:
             make_simple_profile(p, force_create_params={"category_id": test_ldap_syncer.category_id})
 
-        test_ldap_syncer._sync_users(users)
+        with mock.patch.object(test_ldap_syncer.fetcher, "fetch") as fetch:
+            fetch.return_value = [], [], users
+            test_ldap_syncer._sync_profile()
 
         for k in expected_adding:
             assert (
@@ -234,7 +172,7 @@ class TestSyncer:
             )
 
     @pytest.mark.parametrize(
-        "departments,expected",
+        "departments, expected",
         [
             (
                 [
@@ -278,7 +216,9 @@ class TestSyncer:
     )
     def test_sync_departments(self, test_ldap_syncer, departments, expected):
         """测试同步部门"""
-        test_ldap_syncer._sync_departments(departments)
+        with mock.patch.object(test_ldap_syncer.fetcher, "fetch") as fetch:
+            fetch.return_value = [], departments, []
+            test_ldap_syncer._sync_department()
 
         for route in expected:
             parent = None
@@ -335,13 +275,11 @@ class TestSyncer:
     )
     def test_sync_groups(self, test_ldap_syncer, groups, expected):
         """测试同步组织"""
-        test_ldap_syncer._sync_departments(groups, True)
+        with mock.patch.object(test_ldap_syncer.fetcher, "fetch") as fetch:
+            fetch.return_value = groups, [], []
+            test_ldap_syncer._sync_department()
 
         for route in expected:
             parent = None
             for d in route:
                 parent = Department.objects.get(name=d, parent=parent, category_id=test_ldap_syncer.category_id)
-
-
-class TestFetcher:
-    """Test Fetcher"""

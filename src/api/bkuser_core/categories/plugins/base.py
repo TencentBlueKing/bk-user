@@ -11,11 +11,11 @@ specific language governing permissions and limitations under the License.
 import datetime
 import logging
 from abc import abstractmethod
-from collections import defaultdict
+from collections import UserDict, defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import Any, ClassVar, Dict, List, Optional, Type
+from typing import Any, ClassVar, Dict, List, MutableMapping, Optional, Type, TypeVar
 
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.constants import SYNC_LOG_TEMPLATE_MAP, SyncStep
@@ -25,6 +25,7 @@ from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.db.models import Model
+from typing_extensions import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -297,4 +298,42 @@ class LoginHandler:
 
     @abstractmethod
     def check(self, *args, **kwargs):
+        raise NotImplementedError
+
+
+class TypeProtocol(Protocol):
+    @property
+    def key_field(self) -> str:
+        """The Key Field to make obj unique."""
+
+    @property
+    def display_str(self) -> str:
+        """The Display str for obj."""
+
+
+M = TypeVar("M")
+
+
+class TypeList(UserDict, MutableMapping[str, M]):
+    @classmethod
+    def from_list(cls, items: List[TypeProtocol]):
+        items_map = {i.key_field: i for i in items}
+        return cls(items_map)
+
+    @classmethod
+    def get_type(cls) -> Type[M]:
+        # As of Python 3.6. there is a public __args__ and (__parameters__) field for Generic
+        return cls.__args__[0]  # type: ignore
+
+
+class DBSyncHelper(Protocol):
+    """将 TypeList 塞入到 DBSyncManager 中的协议"""
+
+    category: ProfileCategory
+    db_sync_manager: DBSyncManager
+    target_obj_list: TypeList
+    context: SyncContext
+
+    def load_to_memory(self):
+        """将数据对象加载到内存"""
         raise NotImplementedError

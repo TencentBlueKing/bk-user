@@ -21,6 +21,7 @@ from bkuser_core.categories.plugins.custom.models import CustomDepartment, Custo
 from bkuser_core.categories.plugins.custom.utils import handle_with_progress_info
 from bkuser_core.common.db_sync import SyncOperation
 from bkuser_core.departments.models import Department, DepartmentThroughModel
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.profiles.validators import validate_username
 from django.db.models import Model
@@ -172,6 +173,7 @@ class ProSyncHelper(DBSyncHelper):
                 "telephone": info.telephone,
                 "position": info.position,
                 "extras": info.extras,
+                "status": ProfileStatus.NORMAL.value,
             }
 
             # 2. 更新或创建 Profile 对象
