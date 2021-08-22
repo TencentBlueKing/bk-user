@@ -25,6 +25,6 @@ def need_iam(request: "HttpRequest") -> bool:
         return False
 
     if settings.NEED_IAM_HEADER not in request.META:
-        return False
+        return True
 
     return bool(request.META[settings.NEED_IAM_HEADER])
