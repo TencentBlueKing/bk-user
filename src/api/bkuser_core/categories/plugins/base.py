@@ -131,9 +131,9 @@ class DBSyncManager:
     def __getitem__(self, item):
         return self._sets[item]
 
-    def register_id(self, _type: Type[SyncModelMeta]):
+    def register_id(self, type_: Type[SyncModelMeta]):
         """注册自增ID"""
-        return next(self.id_generators[_type.target_model])
+        return next(self.id_generators[type_.target_model])
 
     def sync_type(self, target_type: Type[Model]):
         """针对某种类型同步"""
@@ -146,10 +146,10 @@ class DBSyncManager:
 
     def detect_model_manager(self, model_type: Type[Model]) -> SyncModelManager:
         """根据传递的 Model 类型获取对应的 SyncModelManager"""
-        for _type in list(self.meta_map.values()):
-            if issubclass(model_type, _type.target_model):
+        for type_ in list(self.meta_map.values()):
+            if issubclass(model_type, type_.target_model):
                 return self._sets[model_type]
-        supported_types = [_type.target_model for _type in self.meta_map.values()]
+        supported_types = [type_.target_model for type_ in self.meta_map.values()]
         raise ValueError(f"Unsupported Type<{model_type}>, item should be within types: {supported_types}")
 
     def magic_add(self, item: Model, operation: SyncOperation = None):

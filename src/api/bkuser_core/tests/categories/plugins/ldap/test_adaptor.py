@@ -11,10 +11,10 @@ specific language governing permissions and limitations under the License.
 import pytest
 from bkuser_core.categories.plugins.ldap.adaptor import (
     RDN,
-    department_adaptor,
+    department_adapter,
     parse_dn_tree,
     parse_dn_value_list,
-    user_adaptor,
+    user_adapter,
 )
 from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
 
@@ -228,7 +228,7 @@ def test_parse_dn_tree(dn, restrict_types, expected):
 )
 def test_user_adaptor(profile_field_mapper, user_meta, restrict_types, expected):
     assert (
-        user_adaptor(
+        user_adapter(
             code="dummy",
             user_meta=user_meta,
             field_mapper=profile_field_mapper,
@@ -275,7 +275,7 @@ def test_user_adaptor(profile_field_mapper, user_meta, restrict_types, expected)
 )
 def test_department_adaptor(dept_meta, restrict_types, expected):
     assert (
-        department_adaptor(
+        department_adapter(
             code="dummy",
             dept_meta=dept_meta,
             is_group=False,

@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 from bkuser_core.categories.plugins.base import TypeList
-from bkuser_core.categories.plugins.ldap.adaptor import department_adaptor, user_adaptor
+from bkuser_core.categories.plugins.ldap.adaptor import department_adapter, user_adapter
 from bkuser_core.categories.plugins.ldap.helper import DepartmentSyncHelper, ProfileSyncHelper
 from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapProfileMeta
 from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
@@ -96,7 +96,7 @@ class TestDepartmentSyncHelper:
         expected_groups,
     ):
         target_objs = [
-            department_adaptor(code="", dept_meta=dept_meta, is_group=False, restrict_types=["ou", "cn"])
+            department_adapter(code="", dept_meta=dept_meta, is_group=False, restrict_types=["ou", "cn"])
             for dept_meta in departments
         ]
         helper = DepartmentSyncHelper(
@@ -179,7 +179,7 @@ class TestProfileSyncHelper:
                 )
 
         target_objs = [
-            user_adaptor(
+            user_adapter(
                 code=None, user_meta=user_meta, field_mapper=profile_field_mapper, restrict_types=["ou", "cn"]
             )
             for user_meta in users

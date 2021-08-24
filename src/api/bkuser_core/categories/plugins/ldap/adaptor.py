@@ -46,7 +46,7 @@ class ProfileFieldMapper:
         return [self.config_loader[x] for x in self.setting_field_map.values() if self.config_loader[x]]
 
 
-def user_adaptor(
+def user_adapter(
     code: str, user_meta: Dict[str, Any], field_mapper: ProfileFieldMapper, restrict_types: List[str]
 ) -> UserProfile:
     groups = user_meta["attributes"][field_mapper.config_loader["user_member_of"]]
@@ -67,7 +67,7 @@ def user_adaptor(
     )
 
 
-def department_adaptor(code: str, dept_meta: Dict, is_group: bool, restrict_types: List[str]) -> DepartmentProfile:
+def department_adapter(code: str, dept_meta: Dict, is_group: bool, restrict_types: List[str]) -> DepartmentProfile:
     dn = dept_meta["dn"]
     dn_values = parse_dn_value_list(dn, restrict_types=restrict_types)
 
@@ -79,7 +79,7 @@ def department_adaptor(code: str, dept_meta: Dict, is_group: bool, restrict_type
             is_group=is_group,
         )
 
-    assert parent_dept is not None
+    assert parent_dept is not None, "未从 dn 中提取到任何部门信息"
     parent_dept.code = code
     return parent_dept
 
@@ -92,7 +92,7 @@ class RDN(NamedTuple):
     separator: str
 
 
-def parse_dn_tree(dn, restrict_types: List[str] = None) -> List[RDN]:
+def parse_dn_tree(dn: str, restrict_types: List[str] = None) -> List[RDN]:
     """A DN is a sequence of relative distinguished names (RDN) connected by commas, For examples:
 
     we have a dn = "CN=Jeff Smith,OU=Sales,DC=Fabrikam,DC=COM", this method will parse the dn to:
@@ -112,7 +112,7 @@ def parse_dn_tree(dn, restrict_types: List[str] = None) -> List[RDN]:
 
     See Also: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ldap/distinguished-names
     """
-    restrict_types = [_type.upper() for _type in (restrict_types or [])]
+    restrict_types = [type_.upper() for type_ in (restrict_types or [])]
     items = dn_utils.parse_dn(dn, escape=True)
 
     if restrict_types:
@@ -123,7 +123,7 @@ def parse_dn_tree(dn, restrict_types: List[str] = None) -> List[RDN]:
     return parts
 
 
-def parse_dn_value_list(dn, restrict_types: List[str] = None) -> List[str]:
+def parse_dn_value_list(dn: str, restrict_types: List[str] = None) -> List[str]:
     """this method work like parse_dn_tree, be only return values of those attributes, For examples:
 
     >>> parse_dn_value_list("CN=Jeff Smith,OU=Sales,DC=Fabrikam,DC=COM")

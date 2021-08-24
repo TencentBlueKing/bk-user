@@ -17,7 +17,7 @@ from typing import List, Optional, Tuple
 
 from bkuser_core.categories.exceptions import FetchDataFromRemoteFailed
 from bkuser_core.categories.plugins.base import DBSyncManager, Fetcher, SyncContext, Syncer, SyncStep, TypeList
-from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper, department_adaptor, user_adaptor
+from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper, department_adapter, user_adapter
 from bkuser_core.categories.plugins.ldap.client import LDAPClient
 from bkuser_core.categories.plugins.ldap.helper import DepartmentSyncHelper, ProfileSyncHelper
 from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapProfileMeta
@@ -130,7 +130,7 @@ class LDAPFetcher(Fetcher):
                 continue
 
             profiles.append(
-                user_adaptor(
+                user_adapter(
                     code=self._get_code(user),
                     user_meta=user,
                     field_mapper=self.field_mapper,
@@ -149,7 +149,7 @@ class LDAPFetcher(Fetcher):
                 continue
 
             results.append(
-                department_adaptor(
+                department_adapter(
                     code=self._get_code(dept_meta),
                     dept_meta=dept_meta,
                     is_group=is_group,

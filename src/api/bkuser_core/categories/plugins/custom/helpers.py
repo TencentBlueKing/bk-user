@@ -65,7 +65,7 @@ class DepSyncHelper(DBSyncHelper):
     @cached_property
     def db_departments(self) -> Dict[str, Department]:
         # 由于 bulk_update 需要从数据库查询完整的 Department 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
-        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk).all()}
+        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk)}
 
     def load_to_memory(self):
         for dept in handle_with_progress_info(self.target_obj_list, progress_title="handle department"):
@@ -144,12 +144,12 @@ class ProSyncHelper(DBSyncHelper):
     @cached_property
     def db_profiles(self) -> Dict[str, Profile]:
         # 由于 bulk_update 需要从数据库查询完整的 Profile 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
-        return {profile.username: profile for profile in Profile.objects.filter(category_id=self.category.pk).all()}
+        return {profile.username: profile for profile in Profile.objects.filter(category_id=self.category.pk)}
 
     @cached_property
     def db_departments(self) -> Dict[str, Department]:
         # 由于 bulk_update 需要从数据库查询完整的 Department 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
-        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk, enabled=True).all()}
+        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk, enabled=True)}
 
     def _load_base_info(self):
         for info in handle_with_progress_info(self.target_obj_list, progress_title="handle profile"):
