@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 @app.task
-def adapter_sync(instance_id: int, *args, **kwargs):
+def adapter_sync(instance_id: int, task_id: uuid.UUID, args, **kwargs):
     logger.info("going to sync Category<%s>", instance_id)
     instance = ProfileCategory.objects.get(pk=instance_id)
 
@@ -41,7 +41,7 @@ def adapter_sync(instance_id: int, *args, **kwargs):
         raise error_codes.LOAD_DATA_ADAPTER_FAILED
 
     with catch_time() as context:
-        plugin.sync(instance_id=instance_id, task_id=uuid.uuid4(), *args, **kwargs)
+        plugin.sync(instance_id=instance_id, task_id=task_id, *args, **kwargs)
     logger.info(f"同步总耗时: {context.time_delta}s, 消耗总CPU时间: {context.clock_delta}s.")
 
     # 标记同步
