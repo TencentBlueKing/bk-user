@@ -46,6 +46,9 @@ def test_ldap_category() -> ProfileCategory:
 
 @pytest.fixture
 def test_ldap_config_provider(test_ldap_category) -> ConfigProvider:
+    if not settings.TEST_LDAP:
+        return pytest.skip("未配置测试的 Ldap 服务器")
+
     c = ConfigProvider(test_ldap_category.id)
     c["connection_url"] = settings.TEST_LDAP["url"]
     c["user"] = settings.TEST_LDAP["user"]

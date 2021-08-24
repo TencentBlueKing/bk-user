@@ -21,6 +21,7 @@ from bkuser_core.categories.plugins.custom.models import CustomDepartment, Custo
 from bkuser_core.categories.plugins.custom.utils import handle_with_progress_info
 from bkuser_core.common.db_sync import SyncOperation
 from bkuser_core.departments.models import Department, DepartmentThroughModel
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.profiles.validators import validate_username
 from django.db.models import Model
@@ -64,7 +65,7 @@ class DepSyncHelper(DBSyncHelper):
     @cached_property
     def db_departments(self) -> Dict[str, Department]:
         # 由于 bulk_update 需要从数据库查询完整的 Department 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
-        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk).all()}
+        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk)}
 
     def load_to_memory(self):
         for dept in handle_with_progress_info(self.target_obj_list, progress_title="handle department"):
@@ -143,12 +144,12 @@ class ProSyncHelper(DBSyncHelper):
     @cached_property
     def db_profiles(self) -> Dict[str, Profile]:
         # 由于 bulk_update 需要从数据库查询完整的 Profile 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
-        return {profile.username: profile for profile in Profile.objects.filter(category_id=self.category.pk).all()}
+        return {profile.username: profile for profile in Profile.objects.filter(category_id=self.category.pk)}
 
     @cached_property
     def db_departments(self) -> Dict[str, Department]:
         # 由于 bulk_update 需要从数据库查询完整的 Department 信息, 为提高查询效率, 统一执行查询操作, 减轻数据库负担
-        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk, enabled=True).all()}
+        return {dep.code: dep for dep in Department.objects.filter(category_id=self.category.pk, enabled=True)}
 
     def _load_base_info(self):
         for info in handle_with_progress_info(self.target_obj_list, progress_title="handle profile"):
@@ -172,6 +173,7 @@ class ProSyncHelper(DBSyncHelper):
                 "telephone": info.telephone,
                 "position": info.position,
                 "extras": info.extras,
+                "status": ProfileStatus.NORMAL.value,
             }
 
             # 2. 更新或创建 Profile 对象

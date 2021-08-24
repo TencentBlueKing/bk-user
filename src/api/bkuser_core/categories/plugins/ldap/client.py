@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, List
 
 import ldap3
 from bkuser_core.categories.loader import get_plugin_by_name
@@ -81,7 +81,7 @@ class LDAPClient:
         force_filter_str: str = "",
         start_root: str = None,
         attributes: list = None,
-    ) -> Dict:
+    ) -> List[Dict]:
         """搜索"""
         if not start_root:
             start_root = self.start_root

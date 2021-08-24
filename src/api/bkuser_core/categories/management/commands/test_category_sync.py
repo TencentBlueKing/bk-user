@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+import uuid
 
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.tasks import adapter_sync
@@ -29,11 +30,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         category_type = options["category_type"]
         excel_file = options["excel_file"]
+        task_id = uuid.uuid4()
+        self.stdout.write(f"Your Task ID: {str(task_id)}")
 
         if excel_file:
             try:
                 adapter_sync(
                     ProfileCategory.objects.filter(type=category_type)[0].pk,
+                    task_id=task_id,
                     raw_data_file=excel_file,
                 )
             except Exception:  # pylint: disable=broad-except
@@ -41,6 +45,6 @@ class Command(BaseCommand):
             return
 
         try:
-            adapter_sync(ProfileCategory.objects.filter(type=category_type)[0].pk)
+            adapter_sync(ProfileCategory.objects.filter(type=category_type)[0].pk, task_id=task_id)
         except Exception:  # pylint: disable=broad-except
             logger.exception("can not find category by type<%s>", category_type)

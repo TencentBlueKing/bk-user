@@ -21,21 +21,16 @@ pytestmark = pytest.mark.django_db
 class TestClient:
     def test_error_server_load(self, test_ldap_config_provider):
         """测试无法正常连接 Ldap"""
-        test_ldap_config_provider["connection_url"] = "ldap://localhost:389"
+        test_ldap_config_provider["connection_url"] = "ldap://localhost:3891"
         with pytest.raises(LdapCannotBeInitialized):
             LDAPClient(test_ldap_config_provider)
 
     def test_correct_server_load(self, test_ldap_config_provider):
         """测试正常连接 Ldap(仅当存在可用 Ldap 服务器时可用)"""
-        if not settings.TEST_LDAP:
-            return
         LDAPClient(test_ldap_config_provider)
 
     def test_search(self, test_ldap_config_provider):
         """测试正常搜索(仅当存在可用 Ldap 服务器时可用)"""
-        if not settings.TEST_LDAP:
-            return
-
         client = LDAPClient(test_ldap_config_provider)
         client.search(
             start_root=test_ldap_config_provider["basic_pull_node"],
@@ -47,9 +42,6 @@ class TestClient:
 
     def test_check(self, test_ldap_config_provider):
         """测试登陆"""
-        if not settings.TEST_LDAP:
-            return
-
         client = LDAPClient(test_ldap_config_provider)
 
         with pytest.raises(ldap3.core.exceptions.LDAPBindError):

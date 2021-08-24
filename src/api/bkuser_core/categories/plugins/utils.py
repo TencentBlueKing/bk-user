@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
+from bkuser_core.categories.plugins.base import TypeList, TypeProtocol
+from bkuser_core.common.progress import progress
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 logger = logging.getLogger(__name__)
@@ -66,3 +68,24 @@ def delete_periodic_sync_task(category_id: int):
     except PeriodicTask.DoesNotExist:
         logger.warning("PeriodicTask %s has been deleted, skip it...", str(category_id))
         return
+
+
+def handle_with_progress_info(
+    item_list: TypeList[TypeProtocol], progress_title: str, continue_if_exception: bool = True
+):
+    """控制进度"""
+    total = len(item_list)
+    for index, (key, item) in enumerate(item_list.items()):  # type: int, (str, TypeProtocol)
+        try:
+            progress(
+                index + 1,
+                total,
+                f"{progress_title}: {item.display_str}<{key}> ({index + 1}/{total})",
+            )
+            yield item
+        except Exception:
+            logger.exception("%s failed", progress_title)
+            if continue_if_exception:
+                continue
+
+            raise
