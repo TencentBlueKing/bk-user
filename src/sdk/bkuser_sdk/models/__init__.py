@@ -18,6 +18,7 @@ from bkuser_sdk.models.auth_info_slz import AuthInfoSLZ
 from bkuser_sdk.models.category import Category
 from bkuser_sdk.models.category_meta_slz import CategoryMetaSLZ
 from bkuser_sdk.models.category_sync import CategorySync
+from bkuser_sdk.models.category_sync_response_slz import CategorySyncResponseSLZ
 from bkuser_sdk.models.category_test_connection import CategoryTestConnection
 from bkuser_sdk.models.category_test_fetch_data import CategoryTestFetchData
 from bkuser_sdk.models.create_category import CreateCategory
@@ -49,4 +50,6 @@ from bkuser_sdk.models.setting_create import SettingCreate
 from bkuser_sdk.models.setting_meta import SettingMeta
 from bkuser_sdk.models.setting_update import SettingUpdate
 from bkuser_sdk.models.simple_department import SimpleDepartment
+from bkuser_sdk.models.sync_task import SyncTask
+from bkuser_sdk.models.sync_task_process import SyncTaskProcess
 from bkuser_sdk.models.update_profile import UpdateProfile

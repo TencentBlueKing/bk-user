@@ -1,6 +1,6 @@
 # bkuser_sdk.CategoriesApi
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -381,7 +381,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_categories_sync**
-> Empty v2_categories_sync(body, lookup_value)
+> CategorySyncResponseSLZ v2_categories_sync(body, lookup_value)
 
 
 
@@ -416,7 +416,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**Empty**](Empty.md)
+[**CategorySyncResponseSLZ**](CategorySyncResponseSLZ.md)
 
 ### Authorization
 
