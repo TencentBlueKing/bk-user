@@ -276,7 +276,9 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
         try:
-            adapter_sync.apply_async(kwargs=dict(instance_id=instance.id, operator=request.operator, task_id=task_id))
+            adapter_sync.apply_async(
+                kwargs={"instance_id": instance.id, "operator": request.operator, "task_id": task_id}
+            )
         except FetchDataFromRemoteFailed as e:
             logger.exception("failed to sync data")
             raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
