@@ -1,5 +1,5 @@
 global:
-  sharedDomain: "bktencent.example.com"
+  sharedDomain: "example.com"
   # 全局 registry
   sharedImageRegistry: "ccr.ccs.tencentyun.com/bk.io"
   env:
@@ -56,5 +56,9 @@ redis:
     enabled: false
   auth:
     password: "maybe_another_strong_passwd"
-  persistence:
-    enabled: false
+  master:
+    persistence:
+      enabled: false
+  replica:
+    persistence:
+      enabled: false

@@ -16,10 +16,10 @@ generate-sdk:
 	cd src/ && swagger-codegen generate -i http://localhost:8004/redoc/\?format\=openapi -l python -o sdk/ -c config.json
 
 build-api:
-	docker build -f src/api/Dockerfile . -t ccr.ccs.tencentyun.com/bk.io/bk-user-api:${version}
+	docker build -f src/api/Dockerfile . -t ${image_repo}/bk.io/bk-user-api:${version}
 
 build-saas:
-	docker build -f src/saas/Dockerfile . -t ccr.ccs.tencentyun.com/bk.io/bk-user-saas:${version}
+	docker build -f src/saas/Dockerfile . -t ${image_repo}/bk.io/bk-user-saas:${version}
 
 build-all: build-api build-saas
 
@@ -35,14 +35,14 @@ helm-refresh: helm-sync
 	cd deploy/helm && helm dependency update bk-user-stack --skip-refresh
 
 helm-debug: helm-refresh
-	cd deploy/helm && helm install bk-user-test bk-user-stack --debug --dry-run
+	cd deploy/helm && helm install bk-user-test bk-user-stack --debug --dry-run -f local_values.yaml
 
 helm-install: helm-refresh
 	kubectl create ns bk-user || true
 	cd deploy/helm && helm install bk-user-test bk-user-stack --namespace bk-user -f local_values.yaml
 
 helm-upgrade: helm-refresh
-	cd deploy/helm && helm upgrade bk-user-test bk-user-stack -n bk-user
+	cd deploy/helm && helm upgrade bk-user-test bk-user-stack -n bk-user -f local_values.yaml
 
 helm-uninstall:
 	helm uninstall bk-user-test -n bk-user
