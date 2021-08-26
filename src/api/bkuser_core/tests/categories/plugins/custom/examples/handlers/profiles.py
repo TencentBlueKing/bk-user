@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import json
 import math
 import random
 import string
@@ -38,10 +37,8 @@ def make_profile_info(index: int):
     }
 
 
-print("Content-type: application/json\n")
-
-profiles = {
-    "count": PROFILES_COUNT,
-    "results": [make_profile_info(index) for index, _ in enumerate(range(PROFILES_COUNT))],
-}
-print(json.dumps(profiles))
+def serve():
+    return {
+        "count": PROFILES_COUNT,
+        "results": [make_profile_info(index) for index, _ in enumerate(range(PROFILES_COUNT))],
+    }

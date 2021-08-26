@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import json
 import random
 import string
 
@@ -20,7 +19,5 @@ def make_department_info(index: int):
     return {"name": f"{random_key}组", "code": index, "parent": None}
 
 
-print("Content-type: application/json\n")
-
-departments = {"count": DEPARTMENTS_COUNT, "results": [make_department_info(i) for i in range(DEPARTMENTS_COUNT)]}
-print(json.dumps(departments))
+def serve():
+    return {"count": DEPARTMENTS_COUNT, "results": [make_department_info(i) for i in range(DEPARTMENTS_COUNT)]}
