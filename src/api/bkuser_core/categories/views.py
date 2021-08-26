@@ -66,23 +66,23 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """
         helper = IAMHelper()
 
-        def make_meta(_type: CategoryType):
+        def make_meta(type_: CategoryType):
             return {
-                "type": _type,
-                "description": CategoryType.get_description(_type),
-                "name": CategoryType.get_choice_label(_type),
+                "type": type_,
+                "description": CategoryType.get_description(type_),
+                "name": CategoryType.get_choice_label(type_),
             }
 
         metas = []
-        for _type in CategoryType.all():
+        for type_ in CategoryType.all():
             # 这里目前只返回创建目录类型的权限操作，后期应该可扩展
             try:
-                action_id = IAMAction.get_action_by_category_type(_type)
+                action_id = IAMAction.get_action_by_category_type(type_)
             except KeyError:
                 # tof 属于隐藏目录，这里直接忽略掉
                 continue
 
-            _meta = make_meta(_type)
+            _meta = make_meta(type_)
             # Q：为什么这里需要手动判断权限，而不是通用 permission_classes？
             # A：因为这里的资源（目录类型）是没有对应实体，同时也没有在权限中心注册
             if need_iam(request) and not helper.action_allow(request.operator, action_id):
@@ -246,7 +246,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.TEST_CONNECTION_FAILED.f("请确保连接设置正确")
 
         try:
-            syncer.test_fetch_data(serializer.validated_data)
+            syncer.fetcher.test_fetch_data(serializer.validated_data)
         except FetchDataFromRemoteFailed as e:
             raise error_codes.TEST_FETCH_DATA_FAILED.f(f"{e}")
         except Exception:  # pylint: disable=broad-except
