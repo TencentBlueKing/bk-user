@@ -39,15 +39,15 @@ global:
 
 #### 2. 确定用户管理访问地址
 
-你需要为用户管理提供一个访问根域，类似 `bktencent-example.com`，配置示例:
+你需要为用户管理提供一个访问根域，类似 `example.com`，配置示例:
 ```yaml
 global:
-  sharedDomain: "bktencent-example.com"
+  sharedDomain: "example.com"
 ```
 
 默认地，我们会为 `Api` & `SaaS` 分别创建两个访问入口(Ingress)：
-- `bkuser.bktencent-example.com` SaaS 页面访问入口
-- `bkuser-api.bktencent-example.com` Api 访问入口
+- `bkuser.example.com` SaaS 页面访问入口
+- `bkuser-api.example.com` Api 访问入口
 
 #### 3. 准备用户管理镜像
 

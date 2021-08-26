@@ -25,7 +25,7 @@ replicaCount: 1
 image:
   registry: ""
   repository: bk-user-saas
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tag: ""
 
 # 用来覆盖 Chart 名
