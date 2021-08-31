@@ -14,7 +14,7 @@ from enum import auto
 from bkuser_core.common.enum import AutoLowerEnum
 from django.utils.translation import ugettext_lazy as _
 
-TIMEOUT_THRESHOLD = timedelta(hours=2)
+TIMEOUT_THRESHOLD = timedelta(hours=1)
 
 
 class CategoryStatus(AutoLowerEnum):

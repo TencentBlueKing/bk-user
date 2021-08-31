@@ -13,7 +13,7 @@ import uuid
 from typing import Optional
 
 from bkuser_core.categories.constants import SyncTaskType
-from bkuser_core.categories.exceptions import CategorySyncingError
+from bkuser_core.categories.exceptions import ExistsSyncingTaskError
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory, SyncTask
 from bkuser_core.categories.utils import catch_time
@@ -33,7 +33,7 @@ def adapter_sync(instance_id: int, operator: str, task_id: Optional[uuid.UUID] =
         # 只有定时任务未传递 task_id
         try:
             task_id = SyncTask.objects.register_task(category=instance, operator=operator, type_=SyncTaskType.AUTO).id
-        except CategorySyncingError as e:
+        except ExistsSyncingTaskError as e:
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
     with SyncTask.objects.get(id=task_id):

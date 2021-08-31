@@ -22,7 +22,7 @@ from bkuser_core.categories.constants import (
     SyncTaskType,
 )
 from bkuser_core.categories.db_managers import ProfileCategoryManager
-from bkuser_core.categories.exceptions import CategorySyncingError
+from bkuser_core.categories.exceptions import ExistsSyncingTaskError
 from bkuser_core.common.models import TimestampedModel
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.constants import ProfileStatus
@@ -31,6 +31,7 @@ from bkuser_core.user_settings.models import Setting, SettingMeta
 from django.db import models
 from django.utils import timezone
 from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 
 
@@ -144,7 +145,9 @@ class SyncTaskManager(models.Manager):
         if delta > TIMEOUT_THRESHOLD:
             qs.update(status=SyncTaskStatus.FAILED.value)
             return self.register_task(category=category, operator=operator, type_=type_)
-        raise CategorySyncingError(f"当前目录处于同步状态, 请在 {(TIMEOUT_THRESHOLD - delta).total_seconds()}s 后重试.")
+        raise ExistsSyncingTaskError(
+            _("当前目录处于同步状态, 请在 {timeout}s 后重试.").format(timeout=(TIMEOUT_THRESHOLD - delta).total_seconds())
+        )
 
 
 class SyncTask(TimestampedModel):

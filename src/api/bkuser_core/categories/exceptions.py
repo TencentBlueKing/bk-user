@@ -14,5 +14,5 @@ class FetchDataFromRemoteFailed(Exception):
     """获取远程数据失败"""
 
 
-class CategorySyncingError(Exception):
+class ExistsSyncingTaskError(Exception):
     """目录正在同步"""

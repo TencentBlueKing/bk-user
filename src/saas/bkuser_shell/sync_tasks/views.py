@@ -17,7 +17,6 @@ from bkuser_global.drf_crown import inject_serializer
 
 
 class SyncTaskViewSet(BkUserApiViewSet):
-    serializer_class = slzs
     ACTION_ID = ActionEnum.VIEW_CATEGORY.value
 
     @inject_serializer(out=slzs.SyncTaskSerializer(many=True), tags=["sync_tasks"])

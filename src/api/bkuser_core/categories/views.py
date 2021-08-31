@@ -15,7 +15,7 @@ from bkuser_core.audit.constants import OperationEnum
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.bkiam.permissions import IAMAction, IAMHelper, IAMPermissionExtraInfo, need_iam
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
-from bkuser_core.categories.exceptions import CategorySyncingError, FetchDataFromRemoteFailed
+from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory, SyncTask
 from bkuser_core.categories.plugins.local.exceptions import DataFormatError
@@ -272,7 +272,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             task_id = SyncTask.objects.register_task(
                 category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
             ).id
-        except CategorySyncingError as e:
+        except ExistsSyncingTaskError as e:
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
         try:
@@ -320,7 +320,7 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             task_id = SyncTask.objects.register_task(
                 category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
             ).id
-        except CategorySyncingError as e:
+        except ExistsSyncingTaskError as e:
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
         params = {"raw_data_file": serializer.validated_data["raw_data_file"]}
