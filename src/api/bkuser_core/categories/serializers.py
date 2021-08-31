@@ -49,7 +49,7 @@ class CategorySerializer(CustomFieldsModelSerializer):
     """用户目录 Serializer"""
 
     configured = SerializerMethodField()
-    syncing = BooleanField()
+    syncing = BooleanField(read_only=True, required=False)
     unfilled_namespaces = SerializerMethodField(required=False)
 
     def get_configured(self, obj) -> bool:

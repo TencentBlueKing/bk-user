@@ -86,7 +86,8 @@ class Category(object):
             self.id = id
         if configured is not None:
             self.configured = configured
-        self.syncing = syncing
+        if syncing is not None:
+            self.syncing = syncing
         if unfilled_namespaces is not None:
             self.unfilled_namespaces = unfilled_namespaces
         if create_time is not None:
@@ -169,8 +170,6 @@ class Category(object):
         :param syncing: The syncing of this Category.  # noqa: E501
         :type: bool
         """
-        if syncing is None:
-            raise ValueError("Invalid value for `syncing`, must not be `None`")  # noqa: E501
 
         self._syncing = syncing
 

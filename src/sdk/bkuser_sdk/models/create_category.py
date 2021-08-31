@@ -86,7 +86,8 @@ class CreateCategory(object):
             self.id = id
         if configured is not None:
             self.configured = configured
-        self.syncing = syncing
+        if syncing is not None:
+            self.syncing = syncing
         if unfilled_namespaces is not None:
             self.unfilled_namespaces = unfilled_namespaces
         self.display_name = display_name
@@ -169,8 +170,6 @@ class CreateCategory(object):
         :param syncing: The syncing of this CreateCategory.  # noqa: E501
         :type: bool
         """
-        if syncing is None:
-            raise ValueError("Invalid value for `syncing`, must not be `None`")  # noqa: E501
 
         self._syncing = syncing
 

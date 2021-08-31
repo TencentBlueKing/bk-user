@@ -5,7 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **int** |  | [optional] 
 **configured** | **bool** |  | [optional] 
-**syncing** | **bool** |  | 
+**syncing** | **bool** |  | [optional] 
 **unfilled_namespaces** | **list[str]** |  | [optional] 
 **display_name** | **str** |  | 
 **domain** | **str** |  | 
