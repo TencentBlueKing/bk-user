@@ -52,7 +52,8 @@ class DetailCategorySerializer(Serializer):
     update_time = DateTimeField()
     last_synced_time = DateTimeField()
     unfilled_namespaces = JSONField()
-    configured = BooleanField()
+    configured = BooleanField(help_text="是否配置就绪")
+    syncing = BooleanField(help_text="是否正在同步")
     activated = SerializerMethodField()
 
     def get_activated(self, obj) -> bool:

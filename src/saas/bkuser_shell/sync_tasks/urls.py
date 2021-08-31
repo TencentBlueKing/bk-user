@@ -8,11 +8,27 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.urls.conf import path
 
+from . import views
 
-class FetchDataFromRemoteFailed(Exception):
-    """获取远程数据失败"""
-
-
-class ExistsSyncingTaskError(Exception):
-    """目录正在同步"""
+urlpatterns = [
+    path(
+        "api/v2/sync_task/",
+        views.SyncTaskViewSet.as_view(
+            {
+                "get": "list",
+            }
+        ),
+        name="sync_task.list",
+    ),
+    path(
+        "api/v2/sync_task/<task_id>/logs",
+        views.SyncTaskViewSet.as_view(
+            {
+                "get": "show_logs",
+            }
+        ),
+        name="sync_task.show_logs",
+    ),
+]

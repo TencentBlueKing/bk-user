@@ -8,12 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 from typing import Dict, List
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.categories.constants import CategoryStatus, CategoryType, SyncStep, SyncTaskStatus
+from bkuser_core.categories.constants import (
+    TIMEOUT_THRESHOLD,
+    CategoryStatus,
+    CategoryType,
+    SyncStep,
+    SyncTaskStatus,
+    SyncTaskType,
+)
 from bkuser_core.categories.db_managers import ProfileCategoryManager
+from bkuser_core.categories.exceptions import ExistsSyncingTaskError
 from bkuser_core.common.models import TimestampedModel
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.constants import ProfileStatus
@@ -21,6 +30,8 @@ from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.models import Setting, SettingMeta
 from django.db import models
 from django.utils import timezone
+from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 
 
@@ -84,6 +95,11 @@ class ProfileCategory(TimestampedModel):
         # 存在任何必要的配置没有被满足，即配置未就绪
         return not bool(self.get_unfilled_settings())
 
+    @property
+    def syncing(self) -> bool:
+        """是否正在同步"""
+        return self.synctask_set.filter(status=SyncTaskStatus.RUNNING.value).exists()
+
     def get_required_metas(self):
         """获取所有必须的配置"""
         return SettingMeta.objects.get_required_metas(self.type)
@@ -112,6 +128,60 @@ class ProfileCategory(TimestampedModel):
         return AuditObjMetaInfo(key=self.domain, display_name=self.display_name, category_id=self.id)
 
 
+class SyncTaskManager(models.Manager):
+    def register_task(
+        self, category: ProfileCategory, operator: str, type_: SyncTaskType = SyncTaskType.MANUAL
+    ) -> 'SyncTask':
+        qs = self.filter(category=category, status=SyncTaskStatus.RUNNING.value).order_by("-create_time")
+        running = qs.first()
+        if not running:
+            instance = self.create(
+                category=category, status=SyncTaskStatus.RUNNING.value, type=type_.value, operator=operator
+            )
+            return instance
+
+        # 防御逻辑, 避免 celery 异常后, 一直无法重试.
+        delta = now() - running.create_time
+        if delta > TIMEOUT_THRESHOLD:
+            qs.update(status=SyncTaskStatus.FAILED.value)
+            return self.register_task(category=category, operator=operator, type_=type_)
+        raise ExistsSyncingTaskError(
+            _("当前目录处于同步状态, 请在 {timeout}s 后重试.").format(timeout=(TIMEOUT_THRESHOLD - delta).total_seconds())
+        )
+
+
+class SyncTask(TimestampedModel):
+    id = models.UUIDField('UUID', default=uuid4, primary_key=True, editable=False, auto_created=True, unique=True)
+    category = models.ForeignKey(ProfileCategory, verbose_name="用户目录", on_delete=models.CASCADE, db_index=True)
+    status = models.CharField(
+        verbose_name="状态", max_length=16, choices=SyncTaskStatus.get_choices(), default=SyncTaskStatus.RUNNING.value
+    )
+    type = models.CharField(
+        verbose_name="触发类型", max_length=16, choices=SyncTaskType.get_choices(), default=SyncTaskType.MANUAL.value
+    )
+    operator = models.CharField(max_length=255, verbose_name="操作人", default="nobody")
+
+    objects = SyncTaskManager()
+
+    @property
+    def required_time(self) -> datetime.timedelta:
+        return self.update_time - self.create_time
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_val is not None:
+            self.status = SyncTaskStatus.FAILED.value
+            self.save(update_fields=["status", "update_time"])
+
+    @property
+    def progresses(self):
+        # 由于建表顺序的原因, SyncProgress 的 task_id 未设置成外键....
+        # 所以这里用一个 property 实现逻辑上的外键关联.
+        return SyncProgress.objects.filter(task_id=self.id)
+
+
 class SyncProgressManager(models.Manager):
     def init_progresses(self, category: ProfileCategory, task_id: UUID) -> Dict[SyncStep, 'SyncProgress']:
         progresses: Dict[SyncStep, 'SyncProgress'] = {}
@@ -128,7 +198,7 @@ class SyncProgressManager(models.Manager):
 
 
 class SyncProgress(TimestampedModel):
-    task_id = models.UUIDField(db_index=True, verbose_name="任务id")
+    task_id = models.UUIDField(db_index=True, verbose_name='任务id')
     category = models.ForeignKey(ProfileCategory, verbose_name="用户目录", on_delete=models.CASCADE)
     step = models.CharField(verbose_name="同步步骤", max_length=32, choices=SyncStep.get_choices())
     status = models.CharField(

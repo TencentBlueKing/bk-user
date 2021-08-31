@@ -156,7 +156,7 @@ except ApiException as e:
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -225,6 +225,8 @@ Class | Method | HTTP request | Description
 *SettingsApi* | [**v2_settings_read**](docs/SettingsApi.md#v2_settings_read) | **GET** /api/v2/settings/{lookup_value}/ | 
 *SettingsApi* | [**v2_settings_update**](docs/SettingsApi.md#v2_settings_update) | **PUT** /api/v2/settings/{lookup_value}/ | 
 *ShortcutsApi* | [**v2_shortcuts_departments_list_tops**](docs/ShortcutsApi.md#v2_shortcuts_departments_list_tops) | **GET** /api/v2/shortcuts/departments/tops/ | 
+*SyncTaskApi* | [**v2_sync_task_list**](docs/SyncTaskApi.md#v2_sync_task_list) | **GET** /api/v2/sync_task/ | 
+*SyncTaskApi* | [**v2_sync_task_show_logs**](docs/SyncTaskApi.md#v2_sync_task_show_logs) | **GET** /api/v2/sync_task/{id}/logs | 
 *V1Api* | [**v1_login_login**](docs/V1Api.md#v1_login_login) | **POST** /api/v1/login/check/ | 
 *V1Api* | [**v1_login_profile_batch_query**](docs/V1Api.md#v1_login_profile_batch_query) | **POST** /api/v1/login/profile/query/ | 
 *V1Api* | [**v1_login_upsert**](docs/V1Api.md#v1_login_upsert) | **POST** /api/v1/login/profile/ | 
@@ -235,6 +237,7 @@ Class | Method | HTTP request | Description
  - [Category](docs/Category.md)
  - [CategoryMetaSLZ](docs/CategoryMetaSLZ.md)
  - [CategorySync](docs/CategorySync.md)
+ - [CategorySyncResponseSLZ](docs/CategorySyncResponseSLZ.md)
  - [CategoryTestConnection](docs/CategoryTestConnection.md)
  - [CategoryTestFetchData](docs/CategoryTestFetchData.md)
  - [CreateCategory](docs/CreateCategory.md)
@@ -266,6 +269,8 @@ Class | Method | HTTP request | Description
  - [SettingMeta](docs/SettingMeta.md)
  - [SettingUpdate](docs/SettingUpdate.md)
  - [SimpleDepartment](docs/SimpleDepartment.md)
+ - [SyncTask](docs/SyncTask.md)
+ - [SyncTaskProcess](docs/SyncTaskProcess.md)
  - [UpdateProfile](docs/UpdateProfile.md)
 
 ## Documentation For Authorization
