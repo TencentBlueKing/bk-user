@@ -34,7 +34,7 @@ helm repo update
 global:
   env:
     # 蓝鲸平台域名
-    BK_PAAS_HOST: "https://paas.bktencent-example.com"
+    BK_PAAS_URL: "https://paas.example.com"
 ```
 
 #### 2. 确定用户管理访问地址
@@ -60,18 +60,12 @@ ccr.ccs.tencentyun.com/bk.io/bk-user-saas:${version}
 
 如果你想使用官方其他版本或者自己构建的镜像，也可以在 `values.yaml` 中修改，配置示例：
 ```yaml
-bkuserapi:
-  enabeld: true
+global:
   image:
     # 修改镜像地址，我们会按照 {registry}/{repository} 方式拼接
     registry: any-mirrors-you-want.com/any-group
-    repository: bk-user-api
     # 修改用户管理版本，从 https://github.com/TencentBlueKing/bk-user/releases 获取
-    tag: "v2.2.0"
-
-# 使用官方最新镜像则无需修改该部分
-bkusersaas:
-  enabled: true
+    tag: "v2.3.0"
 ```
 
 #### 4. 数据库依赖
@@ -175,8 +169,10 @@ helm install bk-user bk-user-stack -n bk-user -f values.yaml \
 # 卸载资源
 helm uninstall bk-user -n bk-user
 
-# 已安装的 mariadb 并不会被删除，防止没有开启持久化期间产生的数据被销毁
-# 如果确认已不再需要相关内容，可以手动删除
-kubectl delete sts bk-user-mariadb -n bk-user 
-kubectl delete svc bk-user-mariadb -n bk-user 
+# 已安装的 mariadb & redis 并不会被删除，防止没有开启持久化期间产生的数据被销毁
+# 如果确认已不再需要相关内容，可以手动删除命名空间内的资源
+# 独立命名空间时
+kubectl delete ns bk-user
+# 非独立命名空间时
+kubectl delete deploy,sts,cronjob,pod,svc,ingress,secret,cm,sa,role,rolebinding,pvc -l app.kubernetes.io/instance=bk-user-mariadb -n bk-user 
 ```

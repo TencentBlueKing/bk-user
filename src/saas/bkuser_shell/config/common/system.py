@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from .django_basic import MEDIA_ROOT
-from .platform import BK_PAAS_HOST
+from .platform import BK_PAAS_URL
 
 # paths for exempting of login
 LOGIN_EXEMPT_WHITE_LIST = (
@@ -66,7 +66,7 @@ FOOTER_CONFIG = {
         {
             "text": "蓝鲸智云桌面",
             "text_en": "BlueKing Desktop",
-            "link": BK_PAAS_HOST,
+            "link": BK_PAAS_URL,
             "is_blank": True,
         },
     ],
