@@ -29,4 +29,14 @@ class SyncTaskProcessSerializer(serializers.Serializer):
     successful_count = serializers.IntegerField(help_text="同步成功数量")
     failed_count = serializers.IntegerField(help_text="同步失败数量")
     logs = serializers.CharField(help_text="纯文本日志")
-    failed_records = serializers.ListField(child=serializers.CharField(), help_text="失败对象名称")
+    failed_records = serializers.ListField(child=serializers.JSONField(), help_text="失败对象名称")
+
+
+class SyncTaskResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    results = SyncTaskSerializer(many=True)
+
+
+class SearchSerializer(serializers.Serializer):
+    page = serializers.IntegerField(required=False, default=1)
+    page_size = serializers.IntegerField(required=False, default=10)

@@ -23,6 +23,7 @@ from rest_framework.serializers import (
     DateTimeField,
     FileField,
     IntegerField,
+    JSONField,
     ListField,
     Serializer,
     SerializerMethodField,
@@ -116,4 +117,4 @@ class SyncTaskProcessSerializer(Serializer):
     successful_count = IntegerField(help_text="同步成功数量")
     failed_count = IntegerField(help_text="同步失败数量")
     logs = CharField(help_text="纯文本日志")
-    failed_records = ListField(child=CharField(), help_text="失败对象名称")
+    failed_records = ListField(child=JSONField(), help_text="失败对象名称")

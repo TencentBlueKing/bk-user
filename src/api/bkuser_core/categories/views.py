@@ -43,7 +43,6 @@ from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
-from rest_framework.viewsets import ReadOnlyModelViewSet
 
 logger = logging.getLogger(__name__)
 
@@ -343,15 +342,21 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         return Response()
 
 
-class SyncTaskViewSet(ReadOnlyModelViewSet):
+class SyncTaskViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     queryset = SyncTask.objects.all()
     serializer_class = SyncTaskSerializer
     lookup_field = "id"
     ordering = ["-create_time"]
+    filter_backends = [
+        AdvancedSearchFilter,
+        filters.OrderingFilter,
+    ]
+
+    iam_filter_actions = ("list",)
 
     @action(methods=["GET"], detail=True)
     @swagger_auto_schema(responses={200: SyncTaskProcessSerializer(many=True)})
-    def show_logs(self, request, id):
+    def show_logs(self, request, lookup_value):
         task: SyncTask = self.get_object()
         processes = task.progresses.order_by("-create_time")
 
