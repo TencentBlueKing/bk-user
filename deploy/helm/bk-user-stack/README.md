@@ -174,5 +174,5 @@ helm uninstall bk-user -n bk-user
 # 独立命名空间时
 kubectl delete ns bk-user
 # 非独立命名空间时
-kubectl delete deploy,sts,cronjob,pod,svc,ingress,secret,cm,sa,role,rolebinding,pvc -l app.kubernetes.io/instance=bk-user-mariadb -n bk-user 
+kubectl delete deploy,sts,cronjob,pod,svc,ingress,secret,cm,sa,role,rolebinding,pvc -l app.kubernetes.io/instance=bk-user -n bk-user 
 ```

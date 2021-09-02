@@ -13,7 +13,7 @@ global:
     # PaaS 平台访问地址
     BK_PAAS_URL: "http://paas.example.com"
     # ESB Api 访问地址
-    # BK_COMPONENT_API_URL: "http://bk-esb-api"
+    BK_COMPONENT_API_URL: "http://bk-apigateway-bkapi"
 
 bkuserapi:
   enabeld: true
