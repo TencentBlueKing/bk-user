@@ -8,7 +8,7 @@ kind: CronJob
 metadata:
   name: {{ $.Chart.Name }}-{{ $job.name }}
   labels:
-    chart: {{ $.Chart.Name }}-{{ $chart_version }}
+    {{- include "chartty.labels" $global | nindent 4 }}
 spec:
   schedule: {{ $job.schedule | quote }}
   successfulJobsHistoryLimit: {{ $job.successfulJobsHistoryLimit }}

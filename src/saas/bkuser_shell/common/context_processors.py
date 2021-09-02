@@ -30,9 +30,9 @@ def shell(request):
         # 登录跳转链接
         "LOGIN_URL": ConfFixture.LOGIN_URL,
         "LOGIN_PAAS_URL": ConfFixture.LOGIN_PLAIN_URL,
-        "BK_PAAS_HOST": f"{settings.BK_PAAS_HOST}/app/list/",
-        "BK_PLAT_HOST": settings.BK_PAAS_HOST,
-        "BK_MAIL_GATEWAY": settings.BK_MAIL_GATEWAY,
+        "BK_PAAS_HOST": f"{settings.BK_PAAS_URL}/app/list/",
+        "BK_PLAT_HOST": settings.BK_PAAS_URL,
+        "BK_MAIL_GATEWAY": f"{settings.BK_COMPONENT_API_URL}/esb/manager/channel/list/",
         "BK_DOC_URL": settings.BK_DOC_URL,
         # 当前页面，主要为了login_required做跳转用
         "APP_PATH": request.get_full_path(),

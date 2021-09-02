@@ -17,7 +17,7 @@ try:
 
     APP_ID = settings.APP_ID
     APP_TOKEN = settings.APP_TOKEN
-    COMPONENT_SYSTEM_HOST = getattr(settings, "BK_PAAS_INNER_HOST", settings.BK_PAAS_HOST) or settings.BK_PAAS_HOST
+    COMPONENT_SYSTEM_HOST = getattr(settings, "BK_COMPONENT_API_URL", None) or settings.BK_PAAS_URL
     DEFAULT_BK_API_VER = getattr(settings, "DEFAULT_BK_API_VER", "v2")
 except Exception:  # pylint: disable=broad-except
     APP_ID = ""

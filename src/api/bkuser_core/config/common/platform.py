@@ -22,8 +22,11 @@ APP_TOKEN = env("BK_APP_SECRET")
 # ==============================================================================
 # 蓝鲸平台相关配置
 # ==============================================================================
-BK_PAAS_HOST = env("BK_PAAS_HOST")
-BK_PAAS_INNER_HOST = env("BK_PAAS_INNER_HOST", default=BK_PAAS_HOST)
+# 蓝鲸平台 URL
+BK_PAAS_URL = env("BK_PAAS_URL")
+
+# ESB Api URL
+BK_COMPONENT_API_URL = env("BK_COMPONENT_API_URL", default=BK_PAAS_URL)
 
 # ESB API 路径前缀
 BK_PAAS_API_PATH_PREFIX = env("BK_PAAS_API_PATH_PREFIX", default="/component")
@@ -33,8 +36,7 @@ DEFAULT_BK_API_VER = "v2"
 # ==============================================================================
 # 登陆相关
 # ==============================================================================
-LOGIN_REDIRECT_TO = "%s/login/?c_url=%s" % (BK_PAAS_HOST, SITE_URL)
-LOGIN_REDIRECT_URL = SITE_URL
+LOGIN_REDIRECT_TO = f"{BK_PAAS_URL}/login/?c_url={SITE_URL}"
 
 # 初始化 Admin 用户名密码
 SUPERUSER_USERNAME = env("INITIAL_ADMIN_USERNAME", default="admin")
@@ -45,8 +47,8 @@ SUPERUSER_PASSWORD = env("INITIAL_ADMIN_PASSWORD", default="Blueking@2019")
 # ==============================================================================
 # SaaS 应用 Code
 SAAS_CODE = "bk_user_manage"
-# SaaS 请求地址，用于拼接访问地址 TODO: 重置密码相关页面挪入到 Core 中
-SAAS_URL = urllib.parse.urljoin(BK_PAAS_HOST, f"/o/{SAAS_CODE}/")
+# SaaS 请求地址，用于拼接访问地址(默认支持二进制部署)
+SAAS_URL = env("SAAS_URL", default=urllib.parse.urljoin(BK_PAAS_URL, f"/o/{SAAS_CODE}/"))
 
 # SaaS 偏好 client ip 头
 CLIENT_IP_FROM_SAAS_HEADER = "HTTP_CLIENT_IP_FROM_SAAS"
@@ -68,7 +70,7 @@ def get_iam_config(app_id: str, app_token: str) -> dict:
         # iam app 访问 url 用于回调拼接
         iam_app_host=env(
             "BK_IAM_SAAS_HOST",
-            default=f"{BK_PAAS_HOST}/o/{env('BK_IAM_V3_APP_CODE', default='bk_iam')}",
+            default=f"{BK_PAAS_URL}/o/{env('BK_IAM_V3_APP_CODE', default='bk_iam')}",
         ),
         apply_path="apply-custom-perm",
         # 自己的 app_id & app_token
