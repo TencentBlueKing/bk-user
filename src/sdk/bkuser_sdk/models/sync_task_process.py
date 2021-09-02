@@ -34,7 +34,7 @@ class SyncTaskProcess(object):
         'successful_count': 'int',
         'failed_count': 'int',
         'logs': 'str',
-        'failed_records': 'list[str]'
+        'failed_records': 'list[object]'
     }
 
     attribute_map = {
@@ -206,7 +206,7 @@ class SyncTaskProcess(object):
         失败对象名称  # noqa: E501
 
         :return: The failed_records of this SyncTaskProcess.  # noqa: E501
-        :rtype: list[str]
+        :rtype: list[object]
         """
         return self._failed_records
 
@@ -217,7 +217,7 @@ class SyncTaskProcess(object):
         失败对象名称  # noqa: E501
 
         :param failed_records: The failed_records of this SyncTaskProcess.  # noqa: E501
-        :type: list[str]
+        :type: list[object]
         """
         if failed_records is None:
             raise ValueError("Invalid value for `failed_records`, must not be `None`")  # noqa: E501

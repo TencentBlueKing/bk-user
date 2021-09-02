@@ -19,14 +19,17 @@ from bkuser_global.drf_crown import inject_serializer
 class SyncTaskViewSet(BkUserApiViewSet):
     ACTION_ID = ActionEnum.VIEW_CATEGORY.value
 
-    @inject_serializer(out=slzs.SyncTaskSerializer(many=True), tags=["sync_tasks"])
-    def list(self, request):
+    @inject_serializer(query_in=slzs.SearchSerializer, out=slzs.SyncTaskResponseSerializer, tags=["sync_tasks"])
+    def list(self, request, validated_data):
+        page = validated_data["page"]
+        page_size = validated_data["page_size"]
+
         api_instance = bkuser_sdk.SyncTaskApi(self.get_api_client_by_request(request))
-        response = api_instance.v2_sync_task_list()
+        response = api_instance.v2_sync_task_list(page=page, page_size=page_size)
         return response
 
     @inject_serializer(out=slzs.SyncTaskProcessSerializer(many=True), tags=["sync_tasks"])
     def show_logs(self, request, task_id):
         api_instance = bkuser_sdk.SyncTaskApi(self.get_api_client_by_request(request))
-        response = api_instance.v2_sync_task_show_logs(task_id)
+        response = api_instance.v2_sync_task_logs_read(task_id)
         return response

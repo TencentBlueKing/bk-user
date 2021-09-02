@@ -35,13 +35,27 @@ class SyncTaskApi(object):
     def v2_sync_task_list(self, **kwargs):  # noqa: E501
         """v2_sync_task_list  # noqa: E501
 
+        获取对象列表  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
         >>> thread = api.v2_sync_task_list(async_req=True)
         >>> result = thread.get()
 
         :param async_req bool
-        :return: list[SyncTask]
+        :param str ordering: Which field to use when ordering the results.
+        :param int page: A page number within the paginated result set.
+        :param int page_size: Number of results to return per page.
+        :param list[str] fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
+        :param str lookup_field: 查询字段，针对 exact_lookups,fuzzy_lookups 生效
+        :param list[str] exact_lookups: 精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish
+        :param list[str] fuzzy_lookups: 模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish
+        :param str wildcard_search: 在多个字段模糊搜索的内容
+        :param list[str] wildcard_search_fields: 指定多个模糊搜索字段
+        :param bool best_match: 是否按照最短匹配排序
+        :param str time_field: 时间过滤字段，支持 update_time, create_time
+        :param datetime since: 筛选某个时间点后的记录
+        :param datetime until: 筛选某个时间点前的记录
+        :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -55,18 +69,32 @@ class SyncTaskApi(object):
     def v2_sync_task_list_with_http_info(self, **kwargs):  # noqa: E501
         """v2_sync_task_list  # noqa: E501
 
+        获取对象列表  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
         >>> thread = api.v2_sync_task_list_with_http_info(async_req=True)
         >>> result = thread.get()
 
         :param async_req bool
-        :return: list[SyncTask]
+        :param str ordering: Which field to use when ordering the results.
+        :param int page: A page number within the paginated result set.
+        :param int page_size: Number of results to return per page.
+        :param list[str] fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
+        :param str lookup_field: 查询字段，针对 exact_lookups,fuzzy_lookups 生效
+        :param list[str] exact_lookups: 精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish
+        :param list[str] fuzzy_lookups: 模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish
+        :param str wildcard_search: 在多个字段模糊搜索的内容
+        :param list[str] wildcard_search_fields: 指定多个模糊搜索字段
+        :param bool best_match: 是否按照最短匹配排序
+        :param str time_field: 时间过滤字段，支持 update_time, create_time
+        :param datetime since: 筛选某个时间点后的记录
+        :param datetime until: 筛选某个时间点前的记录
+        :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = []  # noqa: E501
+        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -87,6 +115,36 @@ class SyncTaskApi(object):
         path_params = {}
 
         query_params = []
+        if 'ordering' in params:
+            query_params.append(('ordering', params['ordering']))  # noqa: E501
+        if 'page' in params:
+            query_params.append(('page', params['page']))  # noqa: E501
+        if 'page_size' in params:
+            query_params.append(('page_size', params['page_size']))  # noqa: E501
+        if 'fields' in params:
+            query_params.append(('fields', params['fields']))  # noqa: E501
+            collection_formats['fields'] = 'csv'  # noqa: E501
+        if 'lookup_field' in params:
+            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'exact_lookups' in params:
+            query_params.append(('exact_lookups', params['exact_lookups']))  # noqa: E501
+            collection_formats['exact_lookups'] = 'csv'  # noqa: E501
+        if 'fuzzy_lookups' in params:
+            query_params.append(('fuzzy_lookups', params['fuzzy_lookups']))  # noqa: E501
+            collection_formats['fuzzy_lookups'] = 'csv'  # noqa: E501
+        if 'wildcard_search' in params:
+            query_params.append(('wildcard_search', params['wildcard_search']))  # noqa: E501
+        if 'wildcard_search_fields' in params:
+            query_params.append(('wildcard_search_fields', params['wildcard_search_fields']))  # noqa: E501
+            collection_formats['wildcard_search_fields'] = 'csv'  # noqa: E501
+        if 'best_match' in params:
+            query_params.append(('best_match', params['best_match']))  # noqa: E501
+        if 'time_field' in params:
+            query_params.append(('time_field', params['time_field']))  # noqa: E501
+        if 'since' in params:
+            query_params.append(('since', params['since']))  # noqa: E501
+        if 'until' in params:
+            query_params.append(('until', params['until']))  # noqa: E501
 
         header_params = {}
 
@@ -109,7 +167,7 @@ class SyncTaskApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='list[SyncTask]',  # noqa: E501
+            response_type='object',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -117,43 +175,43 @@ class SyncTaskApi(object):
             _request_timeout=params.get('_request_timeout'),
             collection_formats=collection_formats)
 
-    def v2_sync_task_show_logs(self, id, **kwargs):  # noqa: E501
-        """v2_sync_task_show_logs  # noqa: E501
+    def v2_sync_task_logs_read(self, lookup_value, **kwargs):  # noqa: E501
+        """v2_sync_task_logs_read  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
-        >>> thread = api.v2_sync_task_show_logs(id, async_req=True)
+        >>> thread = api.v2_sync_task_logs_read(lookup_value, async_req=True)
         >>> result = thread.get()
 
         :param async_req bool
-        :param str id: A UUID string identifying this sync task. (required)
+        :param str lookup_value: (required)
         :return: list[SyncTaskProcess]
                  If the method is called asynchronously,
                  returns the request thread.
         """
         kwargs['_return_http_data_only'] = True
         if kwargs.get('async_req'):
-            return self.v2_sync_task_show_logs_with_http_info(id, **kwargs)  # noqa: E501
+            return self.v2_sync_task_logs_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
         else:
-            (data) = self.v2_sync_task_show_logs_with_http_info(id, **kwargs)  # noqa: E501
+            (data) = self.v2_sync_task_logs_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
             return data
 
-    def v2_sync_task_show_logs_with_http_info(self, id, **kwargs):  # noqa: E501
-        """v2_sync_task_show_logs  # noqa: E501
+    def v2_sync_task_logs_read_with_http_info(self, lookup_value, **kwargs):  # noqa: E501
+        """v2_sync_task_logs_read  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
-        >>> thread = api.v2_sync_task_show_logs_with_http_info(id, async_req=True)
+        >>> thread = api.v2_sync_task_logs_read_with_http_info(lookup_value, async_req=True)
         >>> result = thread.get()
 
         :param async_req bool
-        :param str id: A UUID string identifying this sync task. (required)
+        :param str lookup_value: (required)
         :return: list[SyncTaskProcess]
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['id']  # noqa: E501
+        all_params = ['lookup_value']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -164,20 +222,20 @@ class SyncTaskApi(object):
             if key not in all_params:
                 raise TypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method v2_sync_task_show_logs" % key
+                    " to method v2_sync_task_logs_read" % key
                 )
             params[key] = val
         del params['kwargs']
-        # verify the required parameter 'id' is set
-        if ('id' not in params or
-                params['id'] is None):
-            raise ValueError("Missing the required parameter `id` when calling `v2_sync_task_show_logs`")  # noqa: E501
+        # verify the required parameter 'lookup_value' is set
+        if ('lookup_value' not in params or
+                params['lookup_value'] is None):
+            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_sync_task_logs_read`")  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'id' in params:
-            path_params['id'] = params['id']  # noqa: E501
+        if 'lookup_value' in params:
+            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
 
         query_params = []
 
@@ -195,7 +253,7 @@ class SyncTaskApi(object):
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/sync_task/{id}/logs', 'GET',
+            '/api/v2/sync_task/{lookup_value}/logs', 'GET',
             path_params,
             query_params,
             header_params,

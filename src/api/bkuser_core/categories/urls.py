@@ -86,7 +86,7 @@ urlpatterns = [
     ),
     path("api/v2/sync_task/", views.SyncTaskViewSet.as_view({"get": "list"}), name="categories.sync_tasks"),
     path(
-        "api/v2/sync_task/<id>/logs",
+        "api/v2/sync_task/<lookup_value>/logs",
         views.SyncTaskViewSet.as_view({"get": "show_logs"}),
         name="categories.sync_tasks.logs",
     ),

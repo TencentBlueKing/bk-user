@@ -226,7 +226,7 @@ Class | Method | HTTP request | Description
 *SettingsApi* | [**v2_settings_update**](docs/SettingsApi.md#v2_settings_update) | **PUT** /api/v2/settings/{lookup_value}/ | 
 *ShortcutsApi* | [**v2_shortcuts_departments_list_tops**](docs/ShortcutsApi.md#v2_shortcuts_departments_list_tops) | **GET** /api/v2/shortcuts/departments/tops/ | 
 *SyncTaskApi* | [**v2_sync_task_list**](docs/SyncTaskApi.md#v2_sync_task_list) | **GET** /api/v2/sync_task/ | 
-*SyncTaskApi* | [**v2_sync_task_show_logs**](docs/SyncTaskApi.md#v2_sync_task_show_logs) | **GET** /api/v2/sync_task/{id}/logs | 
+*SyncTaskApi* | [**v2_sync_task_logs_read**](docs/SyncTaskApi.md#v2_sync_task_logs_read) | **GET** /api/v2/sync_task/{lookup_value}/logs | 
 *V1Api* | [**v1_login_login**](docs/V1Api.md#v1_login_login) | **POST** /api/v1/login/check/ | 
 *V1Api* | [**v1_login_profile_batch_query**](docs/V1Api.md#v1_login_profile_batch_query) | **POST** /api/v1/login/profile/query/ | 
 *V1Api* | [**v1_login_upsert**](docs/V1Api.md#v1_login_upsert) | **POST** /api/v1/login/profile/ | 
