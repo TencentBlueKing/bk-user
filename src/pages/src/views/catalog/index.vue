@@ -25,6 +25,10 @@
     <PageHome v-show="showingPage === 'showPageHome'" :catalog-metas="catalogMetas" @changePage="changePage" />
     <!-- 新增目录 -->
     <PageAdd v-if="showingPage === 'showPageAdd'" :catalog-metas="catalogMetas" @changePage="changePage" />
+    <!-- 数据更新记录 -->
+    <ReDataupdate v-if="showingPage === 'showReDataupdate'" :catalog-metas="catalogMetas"
+                  @changePage="changePage">
+    </ReDataupdate>
     <!-- 本地用户 -->
     <LocalAdd v-if="showingPage === 'showLocalAdd'" @changePage="changePage" @cancel="handleCancel" />
     <LocalSet v-if="showingPage === 'showLocalSet'" @changePage="changePage" :catalog-info="catalogInfo" />
@@ -44,6 +48,7 @@
 <script>
 import PageHome from './PageHome';
 import PageAdd from './PageAdd';
+import ReDataupdate from './dataUpdate.vue';
 import LocalAdd from './operation/LocalAdd';
 import LocalSet from './operation/LocalSet';
 import RemoteAdd from './operation/RemoteAdd';
@@ -58,6 +63,7 @@ export default {
     LocalSet,
     RemoteAdd,
     RemoteSet,
+    ReDataupdate,
   },
   data() {
     return {

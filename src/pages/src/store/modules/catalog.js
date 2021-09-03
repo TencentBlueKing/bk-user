@@ -44,6 +44,18 @@ export default {
     // ['post', 'put', 'patch'] return http.post(url, data, config)
     // ['delete', 'get', 'head', 'options'] return http.get(url, config)
 
+    // 获取数据更新记录
+    ajaxGetUpdateRecord(_context, params, config = {}) {
+      const url = `/api/v2/sync_task/?page=${params.page}&page_size=${params.page_size}`;
+      return http.get(url, config);
+    },
+
+    // 获取数据更新日记详细记录
+    ajaxGetUpdateDetailRecord(_context, params, config = {}) {
+      const url = `/api/v2/sync_task/${params.id}/logs`;
+      return http.get(url, config);
+    },
+
     // 获取新增目录类型数据
     ajaxGetCatalogMetas(_context, _params, config = {}) {
       const url = 'api/v2/categories_metas/';

@@ -340,4 +340,11 @@ export default {
   登录状态: 'Login status',
   失败: 'failed',
   '来源 IP': 'Source IP',
+  开始时间: 'Start Time',
+  耗时: 'Time-consuming',
+  操作人: 'operator ',
+  触发类型: 'Trigger type',
+  目标目录: 'Target Directory',
+  操作: 'operate',
+  状态: 'Status',
 };
