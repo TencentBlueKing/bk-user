@@ -88,7 +88,7 @@
     <bk-sideslider :is-show.sync="showDiary" :quick-close="true" :width="696">
       <div slot="header" class="log-level">{{$t('日志详细')}}</div>
       <div class="content" slot="content">
-        <div class="userDataUpdate margin-bottom" v-for="(item) in updateDetailList" :key="item.id">
+        <div class="user-data-update margin-bottom" v-for="(item) in updateDetailList" :key="item.id">
           <p class="title-wrapper" @click.stop="handleExpanded(item)">
             <section class="action-group-name">
               <span :class="`bk-icon icon-angle-${item.expanded ? 'down' : 'right'}`"></span>
