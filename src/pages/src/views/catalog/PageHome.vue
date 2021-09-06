@@ -24,7 +24,7 @@
     <div class="button-container">
       <!-- 新增目录 -->
       <bk-button theme="primary" :disabled="!catalogMetas.length" @click="addCatalog">{{$t('新增目录')}}</bk-button>
-      <p class="reDataupdate" @click="dataUpdate">数据更新记录</p>
+      <p class="reDataupdate" @click="dataUpdate">{{$t('数据更新记录')}}</p>
     </div>
     <div class="catalog-table">
       <div class="thead-container table-container">
@@ -35,7 +35,6 @@
               <th class="table-item">{{$t('类型')}}</th>
               <th class="table-item">{{$t('更新时间')}}</th>
               <th class="table-item">{{$t('启/停')}}</th>
-              <!-- <th class="table-item">{{$t('最近一次同步成功时间')}}</th> -->
               <th class="table-item">{{$t('操作')}}</th>
             </tr>
           </thead>
@@ -207,15 +206,6 @@ export default {
       syncing: false,
     };
   },
-  // watch: {
-  //   catalogList: {
-  //     handler(value) {
-  //       console.log(value);
-  //     },
-  //     deep: true,
-  //     immediate: true,
-  //   },
-  // },
   created() {
     this.getCatalogList();
     this.getDepartments();

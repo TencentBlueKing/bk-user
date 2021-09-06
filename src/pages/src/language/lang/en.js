@@ -347,4 +347,8 @@ export default {
   目标目录: 'Target Directory',
   操作: 'operate',
   状态: 'Status',
+  数据更新记录: 'Data update record',
+  用户目录: 'user catalog',
+  日记详细: 'Log in detail',
+  同步中: 'In the synchronous',
 };

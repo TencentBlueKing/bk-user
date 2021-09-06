@@ -22,8 +22,10 @@
 <template>
   <div class="update-page">
     <div class="header">
-      <span @click="showPageHome" style="font-size: 14px;color: #979ba5;cursor: pointer;">用户目录 ></span>
-      <span style="font-size: 14px;color: #313238;">数据更新记录</span>
+      <span @click="showPageHome" class="userCatalog ">
+        {{$t('用户目录')}} >
+      </span>
+      <span class="updateRecord">{{$t('数据更新记录')}}</span>
     </div>
     <div class="catalog-table">
       <bk-table
@@ -61,46 +63,47 @@
         <bk-table-column :label="$t('状态')">
           <template slot-scope="{ row }">
             <div class="td-container" v-if="row.status === 'successful'">
-              <span class="succeed"></span>
-              <span>成功</span>
+              <span class="success"></span>
+              <span>{{$t('成功')}}</span>
             </div>
             <div class="td-container" v-else-if="row.status === 'failed'">
               <span class="fail"></span>
-              <span v-bk-tooltips="$t('同步操作失败，请在用户管理后台 API 日志中查询详情')">失败</span>
+              <span v-bk-tooltips="$t('同步操作失败，请在用户管理后台 API 日志中查询详情')">{{$t('失败')}}</span>
             </div>
             <div class="td-container" v-else-if="row.status === 'running'">
-              <img src="../../images/svg/loading.svg" width="20" alt="loading"
-                   style="vertical-align:middle;margin-left:-11px">
-              <span style="vertical-align:middle;">同步中</span>
+              <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncingImg">
+              <span class="syncing">{{$t('同步中')}}</span>
             </div>
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('操作')">
           <template slot-scope="{ row }">
-            <span style="color: #3a84ff;cursor: pointer;" @click.stop="isShowDiary(row)">日志详细</span>
+            <span class="logDetail" @click.stop="isShowDiary(row)">
+              {{$t('日志详细')}}
+            </span>
           </template>
         </bk-table-column>
       </bk-table>
     </div>
     <bk-sideslider :is-show.sync="showDiary" :quick-close="true" :width="696">
-      <div slot="header" style="color: #313238;font-weight: 400;">日记详细</div>
+      <div slot="header" class="logLevel">{{$t('日志详细')}}</div>
       <div class="content" slot="content">
-        <div class="userDataUpdate marginBottom" v-for="(item , index ) in UpdateDetailList" :key="index">
+        <div class="userDataUpdate marginBottom" v-for="(item , index) in UpdateDetailList" :key="item.id">
           <p class="title-wrapper" @click.stop="handleExpanded(item)">
             <section class="action-group-name">
-              <span :class="item.expanded ? 'bk-icon icon-angle-down' : 'bk-icon icon-angle-right'"></span>
-              <span class="name">{{item.step}}</span>
-              <span style="font-size:12px;color: #2dcb56;" v-if="item.successful_count > 0">
-                <span class="bk-icon icon-check-circle" style="font-size:18px;" />
-                <span>成功</span>
+              <span :class="`bk-icon icon-angle-${item.expanded ? 'down' : 'right'}`"></span>
+              <span class="name">{{stepList[index].name}}</span>
+              <span class="successful" v-if="item.successful_count > 0">
+                <span class="bk-icon icon-check-circle" />
+                <span>{{$t('成功')}}</span>
                 <span>{{item.successful_count}}</span>
               </span>
-              <span style="font-size:12px;color: #ed5555;" v-if="item.failed_count > 0">
-                <span class="bk-icon icon-close-circle" style="font-size:18px;" />
+              <span class="failed" v-if="item.failed_count > 0">
+                <span class="bk-icon icon-close-circle" />
                 <bk-popover placement="bottom">
-                  <span>失败</span>
+                  <span>{{$t('失败')}}</span>
                   <div slot="content">
-                    <div v-for="(failItem , failIndex) in item.failed_records" :key="failIndex">
+                    <div v-for="(failItem) in item.failed_records" :key="failItem.id">
                       {{failItem.detail.username}};
                     </div>
                   </div>
@@ -108,21 +111,19 @@
                 <span>{{item.failed_count}}</span>
               </span>
               <span v-if="item.status === 'running'">
-                <img src="../../images/svg/loading.svg" width="20" alt="loading"
-                     style="vertical-align:middle;margin-left:-11px">
-                <span style="vertical-align:middle;font-size:12px">同步中</span>
+                <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncingImg">
+                <span class="syncing">{{$t('同步中')}}</span>
               </span>
             </section>
           </p>
           <div class="action-content" v-if="item.expanded">
-            <pre style="font-size:12px;color:#666770;font-family: PingFangSC, PingFangSC-Regular;">{{item.logs}}</pre>
+            <pre class="logs">{{item.logs}}</pre>
           </div>
         </div>
       </div>
     </bk-sideslider>
   </div>
 </template>
-
 <script>
 export default {
   filters: {
@@ -144,31 +145,13 @@ export default {
         count: 0,
         limit: 10,
       },
+      stepList: [
+        { name: '' },
+        { name: '' },
+        { name: '' },
+        { name: '' },
+      ],
     };
-  },
-  computed: {
-    // curUpdateList() {
-    //   return this.updateList.slice(
-    //     this.pagination.limit * (this.pagination.current - 1),
-    //     this.pagination.limit * this.pagination.current
-    //   );
-    // },
-  },
-  watch: {
-    // updateList: {
-    //   handler(value) {
-    //     console.log(value);
-    //   },
-    //   deep: true,
-    //   immediate: true,
-    // },
-    // UpdateDetailList: {
-    //   handler(value) {
-    //     console.log(value);
-    //   },
-    //   deep: true,
-    //   immediate: true,
-    // },
   },
   created() {
     // 数据更新记录
@@ -222,15 +205,13 @@ export default {
         this.UpdateDetailList = expandedList;
         for (let index = 0; index < this.UpdateDetailList.length; index++) {
           const element = this.UpdateDetailList[index];
-          if (element.step === 'users') {
-            this.UpdateDetailList[index].step = '用户数据更新';
-          } else if (element.step === 'departments') {
-            this.UpdateDetailList[index].step = '组织数据更新';
-          } else if (element.step === 'users_relationship') {
-            this.UpdateDetailList[index].step = '用户间关系数据更新';
-          } else if (element.step === 'dept_user_relationship') {
-            this.UpdateDetailList[index].step = '用户和组织关系数据更新';
-          }
+          const Map = {
+            users: '用户数据更新',
+            departments: '组织数据更新',
+            users_relationship: '用户间关系数据更新',
+            dept_user_relationship: '用户和组织关系数据更新',
+          };
+          this.stepList[index].name = Map[element.step];
         }
       } catch (e) {
         console.warn(e);
@@ -246,88 +227,28 @@ export default {
 .update-page {
       height: 100%;
       color: $fontGray;
+ > .header {
+      .userCatalog {
+        font-size: 14px;
+        color: #979ba5;
+        cursor: pointer;
+    }
+      .updateRecord{
+        font-size: 14px;
+        color: #313238;
+    }
+  }
 > .catalog-table {
-    // max-height: calc(100% - 52px);
-    // border: 1px solid $borderColor;
-    // overflow: hidden;
     margin-top: 25px;
     padding-bottom: 25px;
-  //   > .table-container {
-  //     //table 公用样式
-  //     > table {
-  //       width: 100%;
-  //       table-layout: fixed;
-  //       border: none;
-  //       border-collapse: collapse;
-  //       font-size: 12px;
-
-  //       tr {
-  //         height: 42px;
-  //         border-bottom: 1px solid $borderColor;
-
-  //         td,
-  //         th {
-  //           padding: 0 20px;
-  //           border: none;
-  //           font-weight: normal;
-  //           overflow: hidden;
-  //           text-overflow: ellipsis;
-  //           white-space: nowrap;
-  //         }
-  //       }
-  //     }
-  //   }
-  //   > .thead-container {
-  //     > table {
-  //       background: #fafbfd;
-
-  //       th {
-  //         text-align: left;
-  //         color: $fontPrimary;
-  //       }
-  //     }
-  //   }
-  //   > .tbody-container {
-  //     max-height: calc(100vh - 194px);
-  //     @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-  //     &.overflow-auto {
-  //       overflow-y: auto;
-  //     }
-  //     > .table-loading {
-  //       display: flex;
-  //       justify-content: center;
-  //       align-items: center;
-  //       width: 100%;
-  //       height: calc(100vh - 194px);
-  //     }
-  //   }
-  //   > table > tbody > tr {
-  //       position: relative;
-  //       transform: scale(1);
-  //       transition: background .2s ease;
-
-  //       &:hover {
-  //         transition: background .2s ease;
-  //         background: #e1ecff;
-  //       }
-
-  //       &:last-child {
-  //         border-bottom: none;
-  //       }
-
-  //       > td {
-  //         &:first-child span {
-  //           color: $primaryColor;
-  //           cursor: pointer;
-  //         }
-
-  //         > .td-container > .catalog-name {
-  //           display: flex;
-  //           align-items: center;
-  //           line-height: 16px;
-  //       }
-  //     }
-  //   }
+    .logDetail{
+      color: #3a84ff;
+      cursor: pointer;
+    }
+   }
+   .logLevel {
+      color: #313238;
+      font-weight: 400;
    }
   .content {
     margin-left: 32px;
@@ -351,8 +272,25 @@ export default {
       margin-top: 8px;
       margin-left: 20px;
     }
+    .successful {
+      font-size:12px;
+      color: #2dcb56;
+    }
+    .failed {
+      font-size:12px;
+      color: #ed5555;
+    }
+    .icon-check-circle,
+    .icon-close-circle {
+      font-size: 18px;
+    }
+    .logs {
+      font-size:12px;
+      color:#666770;
+      font-family: PingFangSC, PingFangSC-Regular;
+    }
   }
-  .succeed {
+  .success {
     display: inline-block;
     width: 8px;
     height: 8px;
@@ -370,5 +308,12 @@ export default {
     border: 1px solid #ea3636;
     border-radius: 50%;
   }
+  .syncingImg {
+      vertical-align:middle;
+      margin-left:-11px;
+    }
+  .syncing {
+      vertical-align:middle;
+    }
 }
 </style>
