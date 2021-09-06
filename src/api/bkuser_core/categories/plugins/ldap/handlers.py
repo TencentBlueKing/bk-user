@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from typing import Optional
 
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(post_category_create)
-def create_sync_tasks(sender, category, creator: Optional[str], **kwargs):
+def create_sync_tasks(sender, category, creator: str, **kwargs):
     if category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
@@ -48,7 +47,7 @@ def delete_sync_tasks(sender, category, **kwargs):
 
 
 @receiver(post_setting_create_or_update)
-def update_sync_tasks(sender, setting, operator: Optional[str], **kwargs):
+def update_sync_tasks(sender, setting, operator: str, **kwargs):
     if setting.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
