@@ -10,4 +10,4 @@ specific language governing permissions and limitations under the License.
 """
 import django
 
-post_setting_create_or_update = django.dispatch.Signal(providing_args=["setting"])
+post_setting_create_or_update = django.dispatch.Signal(providing_args=["setting", "operator"])

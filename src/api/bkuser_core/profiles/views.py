@@ -23,7 +23,12 @@ from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.common.kits import force_str_2_bool
-from bkuser_core.common.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, EmptySerializer
+from bkuser_core.common.serializers import (
+    AdvancedListSerializer,
+    AdvancedRetrieveSerialzier,
+    BatchRetrieveSerializer,
+    EmptySerializer,
+)
 from bkuser_core.common.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.departments import serializers as department_serializer
 from bkuser_core.user_settings.loader import ConfigProvider
@@ -466,8 +471,7 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
             return self.serializer_class
 
     @swagger_auto_schema(
-        manual_parameters=[],
-        responses={"200": local_serializers.ProfileSerializer(many=True)},
+        query_serializer=BatchRetrieveSerializer(), responses={"200": local_serializers.ProfileSerializer(many=True)}
     )
     def multiple_retrieve(self, request):
         """批量获取用户"""

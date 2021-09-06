@@ -156,3 +156,10 @@ class DurationTotalSecondField(fields.Field):
 
     def to_representation(self, value: datetime.timedelta):
         return value.total_seconds()
+
+
+#########
+# Batch #
+#########
+class BatchRetrieveSerializer(serializers.Serializer):
+    query_ids = serializers.CharField(help_text="查询 id 列表，以 , 分隔")
