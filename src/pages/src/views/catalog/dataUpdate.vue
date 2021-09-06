@@ -22,16 +22,16 @@
 <template>
   <div class="update-page">
     <div class="header">
-      <span @click="showPageHome" class="userCatalog ">
+      <span @click="showPageHome" class="user-catalog ">
         {{$t('用户目录')}} >
       </span>
-      <span class="updateRecord">{{$t('数据更新记录')}}</span>
+      <span class="update-decord">{{$t('数据更新记录')}}</span>
     </div>
     <div class="catalog-table">
       <bk-table
         :data="updateList"
         :size="'small'"
-        v-bkloading="{ isLoading: tableLoading, opacity: 1 }"
+        v-bkloading="{ isLoading: tableLoading }"
         :pagination="pagination"
         @page-change="handlePageChange"
         @page-limit-change="pageLimitChange">
@@ -71,14 +71,14 @@
               <span v-bk-tooltips="$t('同步操作失败，请在用户管理后台 API 日志中查询详情')">{{$t('失败')}}</span>
             </div>
             <div class="td-container" v-else-if="row.status === 'running'">
-              <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncingImg">
+              <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
               <span class="syncing">{{$t('同步中')}}</span>
             </div>
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('操作')">
           <template slot-scope="{ row }">
-            <span class="logDetail" @click.stop="isShowDiary(row)">
+            <span class="log-detail" @click.stop="isShowDiary(row)">
               {{$t('日志详细')}}
             </span>
           </template>
@@ -86,13 +86,13 @@
       </bk-table>
     </div>
     <bk-sideslider :is-show.sync="showDiary" :quick-close="true" :width="696">
-      <div slot="header" class="logLevel">{{$t('日志详细')}}</div>
+      <div slot="header" class="log-level">{{$t('日志详细')}}</div>
       <div class="content" slot="content">
-        <div class="userDataUpdate marginBottom" v-for="(item , index) in UpdateDetailList" :key="item.id">
+        <div class="userDataUpdate margin-bottom" v-for="(item) in updateDetailList" :key="item.id">
           <p class="title-wrapper" @click.stop="handleExpanded(item)">
             <section class="action-group-name">
               <span :class="`bk-icon icon-angle-${item.expanded ? 'down' : 'right'}`"></span>
-              <span class="name">{{stepList[index].name}}</span>
+              <span class="name">{{mapList[item.step]}}</span>
               <span class="successful" v-if="item.successful_count > 0">
                 <span class="bk-icon icon-check-circle" />
                 <span>{{$t('成功')}}</span>
@@ -111,7 +111,7 @@
                 <span>{{item.failed_count}}</span>
               </span>
               <span v-if="item.status === 'running'">
-                <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncingImg">
+                <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
                 <span class="syncing">{{$t('同步中')}}</span>
               </span>
             </section>
@@ -139,18 +139,18 @@ export default {
       tableLoading: false,
       showDiary: false,
       updateList: [],
-      UpdateDetailList: [],
+      updateDetailList: [],
       pagination: {
         current: 1,
         count: 0,
         limit: 10,
       },
-      stepList: [
-        { name: '' },
-        { name: '' },
-        { name: '' },
-        { name: '' },
-      ],
+      mapList: {
+        users: this.$t('同步中'),
+        departments: this.$t('组织数据更新'),
+        users_relationship: this.$t('用户间关系数据更新'),
+        dept_user_relationship: this.$t('用户和组织关系数据更新'),
+      },
     };
   },
   created() {
@@ -198,21 +198,10 @@ export default {
     async getUpdateDetailList(item) {
       try {
         const res = await this.$store.dispatch('catalog/ajaxGetUpdateDetailRecord', { id: item.id });
-        const expandedList = [];
         res.data.map((item) => {
-          expandedList.push(Object.assign(item, { expanded: false }));
+          return Object.assign(item, { expanded: false });
         });
-        this.UpdateDetailList = expandedList;
-        for (let index = 0; index < this.UpdateDetailList.length; index++) {
-          const element = this.UpdateDetailList[index];
-          const Map = {
-            users: '用户数据更新',
-            departments: '组织数据更新',
-            users_relationship: '用户间关系数据更新',
-            dept_user_relationship: '用户和组织关系数据更新',
-          };
-          this.stepList[index].name = Map[element.step];
-        }
+        this.updateDetailList = res.data;
       } catch (e) {
         console.warn(e);
       }
@@ -228,12 +217,12 @@ export default {
       height: 100%;
       color: $fontGray;
  > .header {
-      .userCatalog {
+      .user-catalog {
         font-size: 14px;
         color: #979ba5;
         cursor: pointer;
     }
-      .updateRecord{
+      .update-decord{
         font-size: 14px;
         color: #313238;
     }
@@ -241,19 +230,19 @@ export default {
 > .catalog-table {
     margin-top: 25px;
     padding-bottom: 25px;
-    .logDetail{
+    .log-detail{
       color: #3a84ff;
       cursor: pointer;
     }
    }
-   .logLevel {
+   .log-level {
       color: #313238;
       font-weight: 400;
    }
   .content {
     margin-left: 32px;
     margin-top: 24px;
-    .marginBottom {
+    .margin-bottom {
       margin-bottom: 16px;
     }
     .title-wrapper {
@@ -261,13 +250,11 @@ export default {
     }
     .name {
       font-size: 14px;
-      font-family: PingFangSC, PingFangSC-Regular;
       color: #666770;
       margin-right: 15px;
     }
     .action-content {
       font-size: 12px;
-      font-family: PingFangSC, PingFangSC-Regular;
       color: #666770;
       margin-top: 8px;
       margin-left: 20px;
@@ -288,13 +275,12 @@ export default {
       font-size:12px;
       color:#666770;
       font-family: PingFangSC, PingFangSC-Regular;
-    }
+      }
   }
   .success {
     display: inline-block;
     width: 8px;
     height: 8px;
-    opacity: 1;
     background: #94f5a4;
     border: 1px solid #2dcb56;
     border-radius: 50%;
@@ -303,12 +289,11 @@ export default {
     display: inline-block;
     width: 8px;
     height: 8px;
-    opacity: 1;
     background: #fd9c9c;
     border: 1px solid #ea3636;
     border-radius: 50%;
   }
-  .syncingImg {
+  .syncing-img {
       vertical-align:middle;
       margin-left:-11px;
     }

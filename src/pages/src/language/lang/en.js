@@ -351,4 +351,8 @@ export default {
   用户目录: 'user catalog',
   日记详细: 'Log in detail',
   同步中: 'In the synchronous',
+  用户数据更新: 'User Data Update',
+  组织数据更新: 'Organizing data updates',
+  用户间关系数据更新: 'Update relationship data between users',
+  用户和组织关系数据更新: 'Update user and organization relationship data',
 };
