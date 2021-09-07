@@ -1,0 +1,38 @@
+name: Unittest
+
+on:
+  push:
+    branches: [ master, development ]
+  pull_request:
+    branches: [ master, development ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6]
+        poetry-version: [1.1.7]
+        os: [ubuntu-18.04]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2.1.0
+      with:
+        poetry-version: ${{ matrix.poetry-version }}
+    - name: Install dependencies
+      run: |
+        cd src/api/
+        poetry config virtualenvs.create false && poetry install
+    - name: Run api unittest
+      env:
+        DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.unittest"
+      run: |
+        cd src/api
+        poetry run pytest bkuser_core/tests --disable-pytest-warnings
