@@ -34,5 +34,6 @@ jobs:
       env:
         DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.unittest"
       run: |
+        make link
         cd src/api
         poetry run pytest bkuser_core/tests --disable-pytest-warnings
