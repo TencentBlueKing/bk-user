@@ -42,11 +42,7 @@
         </bk-table-column>
         <bk-table-column :label="$t('耗时')">
           <template slot-scope="{ row }">
-            <span :title="row.name" v-if="row.required_time < 60">&lt;1分钟</span>
-            <span :title="row.name" v-if="60 <= row.required_time && row.required_time < 3600">
-              {{parseInt(row.required_time / 60)}}分钟
-            </span>
-            <span :title="row.name" v-if="3600 <= row.required_time">{{row.required_time}}小时</span>
+            <span>{{ timeText(row) }}</span>
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('操作人')">
@@ -157,8 +153,8 @@ export default {
         dept_user_relationship: this.$t('用户和组织关系数据更新'),
       },
       triggeMode: {
-        manual: '手动触发',
-        auto: '定时触发',
+        manual: this.$t('手动触发'),
+        auto: this.$t('定时触发'),
       },
     };
   },
@@ -167,6 +163,15 @@ export default {
     this.getUpdateList();
   },
   methods: {
+    timeText(row) {
+      if (row.required_time < 60) {
+        return '<1分钟';
+      } if (60 <= row.required_time && row.required_time < 3600) {
+        return  parseInt(`${row.required_time / 60}`) + this.$t('分钟');
+      } if (3600 <= row.required_time) {
+        return `${row.required_time_hour}${this.$t('小时')}`;
+      }
+    },
     showPageHome() {
       this.$emit('changePage', 'showPageHome');
     },
@@ -199,7 +204,7 @@ export default {
         this.pagination.count = res.data.count;
         res.data.results.map((item) => {
           if (3600 <= item.required_time) {
-            return Object.assign(item, { required_time: (item.required_time / 3600).toFixed(1) });
+            return Object.assign(item, { required_time_hour: (item.required_time / 3600).toFixed(1) });
           }
         });
       } catch (e) {

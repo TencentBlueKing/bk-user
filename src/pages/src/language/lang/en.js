@@ -355,4 +355,8 @@ export default {
   用户间关系数据更新: 'Update relationship data between users',
   用户和组织关系数据更新: 'Update user and organization relationship data',
   暂无数据: 'no overall data yet',
+  手动触发: 'Manual trigger',
+  定时触发: 'trigger mode',
+  分钟: 'minute',
+  小时: 'hour',
 };
