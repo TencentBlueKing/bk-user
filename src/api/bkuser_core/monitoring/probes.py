@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-from .base import HttpProbe, MySQLProbe, RedisProbe
+from .base import Diagnosis, HttpProbe, MySQLProbe, RedisProbe
 
 
 def get_default_probes():
@@ -22,20 +22,28 @@ def get_default_probes():
     return probes
 
 
-def transfer_django_db_settings(django_db_settings) -> dict:
-    # transfer django db settings to pymysql params style
-    return {
-        "host": django_db_settings["HOST"],
-        "user": django_db_settings["USER"],
-        "password": django_db_settings["PASSWORD"],
-        "db": django_db_settings["NAME"],
-        "port": int(django_db_settings["PORT"]),
-    }
-
-
 class DefaultDBProbe(MySQLProbe):
     name = "default-db"
-    mysql_config = transfer_django_db_settings(settings.DATABASES["default"])
+
+    @staticmethod
+    def transfer_django_db_settings(django_db_settings: dict) -> dict:
+        # only support mysql engine
+        if django_db_settings["ENGINE"] != "django.db.backends.mysql":
+            return {}
+
+        # transfer django db settings to pymysql params style
+        return {
+            "host": django_db_settings["HOST"],
+            "user": django_db_settings["USER"],
+            "password": django_db_settings["PASSWORD"],
+            "db": django_db_settings["NAME"],
+            "port": int(django_db_settings["PORT"]),
+        }
+
+    def diagnose(self) -> Diagnosis:
+        self.mysql_config = self.transfer_django_db_settings(settings.DATABASES["default"])
+
+        return super().diagnose()
 
 
 class ESBProbe(HttpProbe):
