@@ -10,13 +10,6 @@ from bkuser_global.config import get_logging_config_dict
 
 DEBUG = True
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": "bk-user-api",
-    }
-}
-
 # ===============================================================================
 # 日志设置
 # ===============================================================================
