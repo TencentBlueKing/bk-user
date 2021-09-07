@@ -42,7 +42,11 @@
         </bk-table-column>
         <bk-table-column :label="$t('耗时')">
           <template slot-scope="{ row }">
-            <span :title="row.name">{{row.required_time}}h</span>
+            <span :title="row.name" v-if="row.required_time < 60">&lt;1分钟</span>
+            <span :title="row.name" v-if="60 <= row.required_time && row.required_time < 3600">
+              {{parseInt(row.required_time / 60)}}分钟
+            </span>
+            <span :title="row.name" v-if="3600 <= row.required_time">{{row.required_time}}小时</span>
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('操作人')">
@@ -52,10 +56,10 @@
         </bk-table-column>
         <bk-table-column :label="$t('触发类型')">
           <template slot-scope="{ row }">
-            <span :title="row.name">{{row.type}}</span>
+            <span :title="row.name">{{triggeMode[row.type]}}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('目标目录')">
+        <bk-table-column :label="$t('用户目录')">
           <template slot-scope="{ row }">
             <span :title="row.name">{{row.category.display_name}}</span>
           </template>
@@ -117,7 +121,8 @@
             </section>
           </p>
           <div class="action-content" v-if="item.expanded">
-            <pre class="logs">{{item.logs}}</pre>
+            <pre v-if="item.logs.length > 0" class="logs">{{item.logs}}</pre>
+            <p v-else class="logs">{{$t('暂无数据')}}</p>
           </div>
         </div>
       </div>
@@ -146,10 +151,14 @@ export default {
         limit: 10,
       },
       mapList: {
-        users: this.$t('同步中'),
+        users: this.$t('用户数据更新'),
         departments: this.$t('组织数据更新'),
         users_relationship: this.$t('用户间关系数据更新'),
         dept_user_relationship: this.$t('用户和组织关系数据更新'),
+      },
+      triggeMode: {
+        manual: '手动触发',
+        auto: '定时触发',
       },
     };
   },
@@ -188,6 +197,11 @@ export default {
         const res = await this.$store.dispatch('catalog/ajaxGetUpdateRecord', params);
         this.updateList = res.data.results;
         this.pagination.count = res.data.count;
+        res.data.results.map((item) => {
+          if (3600 <= item.required_time) {
+            return Object.assign(item, { required_time: (item.required_time / 3600).toFixed(1) });
+          }
+        });
       } catch (e) {
         console.warn(e);
       } finally {
