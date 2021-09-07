@@ -184,8 +184,7 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
 
         if wildcard_search and wildcard_search_fields:
             target_lookups = [Q(**{"{}__icontains".format(x): wildcard_search}) for x in wildcard_search_fields]
-            # 如果选择了 wildcard 搜索，则忽略其他搜索条件
-            return queryset.filter(functools.reduce(or_, target_lookups))
+            queryset = queryset.filter(functools.reduce(or_, target_lookups))
 
         # 2. 单字段搜索
         return self.make_lookups(query_data, queryset, search_field)

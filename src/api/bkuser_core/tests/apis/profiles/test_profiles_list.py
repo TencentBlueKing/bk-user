@@ -184,6 +184,40 @@ class TestListCreateApis:
             assert len(response.data["results"]) == results_count
 
     @pytest.mark.parametrize(
+        "samples,wildcard_search,lookup,expected",
+        [
+            (
+                {"user-a-1": {"category_id": 1}, "user-b-1": {"category_id": 2}, "user-a-2": {"category_id": 1}},
+                "wildcard_search=1&wildcard_search_fields=username",
+                "exact_lookups=1&lookup_field=category_id",
+                "user-a-1",
+            ),
+            (
+                {"user-a-1": {}, "user-b-1": {}, "user-a-2": {}},
+                "wildcard_search=a&wildcard_search_fields=username",
+                "fuzzy_lookups=user&lookup_field=username",
+                "user-a-1,user-a-2",
+            ),
+            (
+                {"user-a-1": {}, "user-b-1": {}, "user-a-2": {}},
+                "wildcard_search=a&wildcard_search_fields=username",
+                "fuzzy_lookups=2&lookup_field=username",
+                "user-a-2",
+            ),
+        ],
+    )
+    def test_wildcard_with_lookup(self, factory, view, samples, wildcard_search, lookup, expected):
+        """wildcard 和 lookup 查询结合"""
+        for k, v in samples.items():
+            make_simple_profile(k, force_create_params=v)
+
+        url = f"/api/v2/profiles/?{wildcard_search}&{lookup}"
+        request = factory.get(url)
+        response = view(request=request)
+
+        assert ",".join([r["username"] for r in response.data["results"]]) == expected
+
+    @pytest.mark.parametrize(
         "factory_params,query_string,target_code,results_count,target_username",
         [
             (
