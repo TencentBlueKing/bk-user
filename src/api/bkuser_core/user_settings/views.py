@@ -119,4 +119,4 @@ class SettingMetaViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     queryset = SettingMeta.objects.all()
     serializer_class = serializers.SettingMetaSerializer
-    lookup_field = "key"
+    lookup_field = "id"
