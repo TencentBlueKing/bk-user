@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     services:
-      mysql-service:
+      mysql:
         image: mysql:5.7
         env:
           MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -28,7 +28,7 @@ jobs:
           --health-cmd="mysqladmin ping"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=10
 
     steps:
     - uses: actions/checkout@v2
