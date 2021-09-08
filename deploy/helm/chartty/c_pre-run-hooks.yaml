@@ -28,7 +28,7 @@ spec:
   containers:
     - name: {{ $.Release.Name }}-{{ $name }}
       image: {{ include "chartty.image" $global }}
-      imagePullPolicy: {{ $.Values.image.pullPolicy }}
+      imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
       env:
         {{- include "chartty.envs" $global | nindent 8 }}
       {{- with $.Values.envFrom }}
