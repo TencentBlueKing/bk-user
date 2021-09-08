@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = ProfileCategory.objects.filter(enabled=True)
+    queryset = ProfileCategory.objects.filter()
     serializer_class = CategorySerializer
     lookup_field = "id"
     filter_backends = [

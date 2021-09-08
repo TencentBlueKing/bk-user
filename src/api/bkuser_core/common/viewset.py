@@ -21,6 +21,7 @@ from bkuser_core.bkiam.filters import IAMFilter
 from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.common.kits import force_str_2_bool
 from bkuser_core.common.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, is_custom_fields_enabled
 from django.conf import settings
 from django.core.exceptions import FieldError, ObjectDoesNotExist
@@ -94,10 +95,21 @@ class DynamicFieldsMixin:
         """
         return self._get_list_query_param("fields", request=request)
 
+    def _ensure_enabled_field(self, request, fields: Optional[List] = None):
+        """确保用户在传入 include_disabled_field 时，返回内容包含 enabled 字段"""
+        if not fields:
+            return
+        if (
+            "enabled" in fields
+            or getattr(self, "include_disabled_field", "include_disabled") not in request.query_params
+        ):
+            return
+        fields.append("enabled")
+
 
 class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
     SEARCH_PARAM = "lookup_field"
-
+    SOFT_DELETE_MODELNAMES = ("Profile", "Department", "ProfileCategory")
     WILDCARD_SEARCH_PARAM = "wildcard_search"
     WILDCARD_SEARCH_FIELDS_PARAM = "wildcard_search_fields"
     BEST_MATCH_PARAM = "best_match"
@@ -164,6 +176,11 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
         serializer = self.serializer_class(data=request.query_params)
         serializer.is_valid(True)
         query_data = serializer.validated_data
+
+        if queryset.model.__name__ in self.SOFT_DELETE_MODELNAMES and not force_str_2_bool(
+            request.query_params.get(view.include_disabled_field, False)
+        ):
+            queryset = queryset.filter(enabled=True)
 
         fields = query_data.get("fields", [])
         if fields:
@@ -292,7 +309,7 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
     pagination_class = StandardResultsSetPagination
     exclude_fields: List = []
     permission_classes = [IAMPermission]
-
+    include_disabled_field = "include_disabled"
     relation_fields: list = []
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
@@ -305,6 +322,7 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
         query_data = _query_slz.validated_data
 
         fields = query_data.get("fields", None)
+        self._ensure_enabled_field(request, fields=fields)
         self._check_fields(fields)
 
         try:
