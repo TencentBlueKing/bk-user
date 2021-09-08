@@ -94,25 +94,25 @@
               <span :class="`bk-icon icon-angle-${item.expanded ? 'down' : 'right'}`"></span>
               <span class="name">{{mapList[item.step]}}</span>
               <span class="successful" v-if="item.successful_count > 0">
-                <span class="bk-icon icon-check-circle" />
-                <span>{{$t('成功')}}</span>
-                <span>{{item.successful_count}}</span>
+                <img src="../../images/svg/right.svg" width="20" alt="loading" class="status-img">
+                <span class="status-text">{{$t('成功')}}</span>
+                <span class="status-img">({{item.successful_count}})</span>
               </span>
               <span class="failed" v-if="item.failed_count > 0">
-                <span class="bk-icon icon-close-circle" />
+                <img src="../../images/svg/fail.svg" width="20" alt="loading" class="status-img">
                 <bk-popover placement="bottom">
-                  <span>{{$t('失败')}}</span>
+                  <span class="status-text">{{$t('失败')}}</span>
                   <div slot="content">
                     <div v-for="(failItem) in item.failed_records" :key="failItem.id">
                       {{failItem.detail.username}};
                     </div>
                   </div>
                 </bk-popover>
-                <span>{{item.failed_count}}</span>
+                <span class="status-img">({{item.failed_count}})</span>
               </span>
               <span v-if="item.status === 'running'">
-                <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
-                <span class="syncing">{{$t('同步中')}}</span>
+                <img src="../../images/svg/loading.svg" width="20" alt="loading" class="statusg-img">
+                <span class="status-text">{{$t('同步中')}}</span>
               </span>
             </section>
           </p>
@@ -165,11 +165,19 @@ export default {
   methods: {
     timeText(row) {
       if (row.required_time < 60) {
-        return '<1分钟';
-      } if (60 <= row.required_time && row.required_time < 3600) {
-        return  parseInt(`${row.required_time / 60}`) + this.$t('分钟');
-      } if (3600 <= row.required_time) {
-        return `${row.required_time_hour}${this.$t('小时')}`;
+        return `<1${this.$t('分钟')}`;
+      }
+      if (60 <= row.required_time && row.required_time < 3600) {
+        const time = row.required_time / 60;
+        const min = time.toString().split('.')[0];
+        const sec = parseInt(time.toString().split('.')[1][0]) * 6;
+        return `${min}${this.$t('分钟')}${sec}${this.$t('秒')}`;
+      }
+      if (3600 <= row.required_time) {
+        const time = row.required_time / 3600;
+        const hour = time.toString().split('.')[0];
+        const min = parseInt(time.toString().split('.')[1][0]) * 6;
+        return `${hour}${this.$t('小时')}${min}${this.$t('分钟')}`;
       }
     },
     showPageHome() {
@@ -202,11 +210,6 @@ export default {
         const res = await this.$store.dispatch('catalog/ajaxGetUpdateRecord', params);
         this.updateList = res.data.results;
         this.pagination.count = res.data.count;
-        res.data.results.map((item) => {
-          if (3600 <= item.required_time) {
-            return Object.assign(item, { required_time_hour: (item.required_time / 3600).toFixed(1) });
-          }
-        });
       } catch (e) {
         console.warn(e);
       } finally {
@@ -303,6 +306,7 @@ export default {
     background: #94f5a4;
     border: 1px solid #2dcb56;
     border-radius: 50%;
+    margin-right: 8px;
   }
   .fail {
     display: inline-block;
@@ -311,13 +315,14 @@ export default {
     background: #fd9c9c;
     border: 1px solid #ea3636;
     border-radius: 50%;
+    margin-right: 8px;
   }
-  .syncing-img {
+  .status-img {
       vertical-align:middle;
-      margin-left:-11px;
     }
-  .syncing {
+  .status-text {
       vertical-align:middle;
+      margin: 0 5px;
     }
 }
 </style>
