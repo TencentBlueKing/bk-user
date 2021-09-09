@@ -42,7 +42,7 @@
         </bk-table-column>
         <bk-table-column :label="$t('耗时')">
           <template slot-scope="{ row }">
-            <span :title="row.name">{{row.required_time}}h</span>
+            <span>{{ timeText(row) }}</span>
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('操作人')">
@@ -52,10 +52,10 @@
         </bk-table-column>
         <bk-table-column :label="$t('触发类型')">
           <template slot-scope="{ row }">
-            <span :title="row.name">{{row.type}}</span>
+            <span :title="row.name">{{triggeMode[row.type]}}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('目标目录')">
+        <bk-table-column :label="$t('用户目录')">
           <template slot-scope="{ row }">
             <span :title="row.name">{{row.category.display_name}}</span>
           </template>
@@ -94,30 +94,31 @@
               <span :class="`bk-icon icon-angle-${item.expanded ? 'down' : 'right'}`"></span>
               <span class="name">{{mapList[item.step]}}</span>
               <span class="successful" v-if="item.successful_count > 0">
-                <span class="bk-icon icon-check-circle" />
-                <span>{{$t('成功')}}</span>
-                <span>{{item.successful_count}}</span>
+                <img src="../../images/svg/right.svg" width="20" alt="loading" class="status-img">
+                <span class="status-text">{{$t('成功')}}</span>
+                <span class="status-img">({{item.successful_count}})</span>
               </span>
               <span class="failed" v-if="item.failed_count > 0">
-                <span class="bk-icon icon-close-circle" />
+                <img src="../../images/svg/fail.svg" width="20" alt="loading" class="status-img">
                 <bk-popover placement="bottom">
-                  <span>{{$t('失败')}}</span>
+                  <span class="status-text">{{$t('失败')}}</span>
                   <div slot="content">
                     <div v-for="(failItem) in item.failed_records" :key="failItem.id">
                       {{failItem.detail.username}};
                     </div>
                   </div>
                 </bk-popover>
-                <span>{{item.failed_count}}</span>
+                <span class="status-img">({{item.failed_count}})</span>
               </span>
               <span v-if="item.status === 'running'">
-                <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
-                <span class="syncing">{{$t('同步中')}}</span>
+                <img src="../../images/svg/loading.svg" width="20" alt="loading" class="statusg-img">
+                <span class="status-text">{{$t('同步中')}}</span>
               </span>
             </section>
           </p>
           <div class="action-content" v-if="item.expanded">
-            <pre class="logs">{{item.logs}}</pre>
+            <pre v-if="item.logs.length > 0" class="logs">{{item.logs}}</pre>
+            <p v-else class="logs">{{$t('暂无数据')}}</p>
           </div>
         </div>
       </div>
@@ -146,10 +147,14 @@ export default {
         limit: 10,
       },
       mapList: {
-        users: this.$t('同步中'),
+        users: this.$t('用户数据更新'),
         departments: this.$t('组织数据更新'),
         users_relationship: this.$t('用户间关系数据更新'),
         dept_user_relationship: this.$t('用户和组织关系数据更新'),
+      },
+      triggeMode: {
+        manual: this.$t('手动触发'),
+        auto: this.$t('定时触发'),
       },
     };
   },
@@ -158,6 +163,23 @@ export default {
     this.getUpdateList();
   },
   methods: {
+    timeText(row) {
+      if (row.required_time < 60) {
+        return `<1${this.$t('分钟')}`;
+      }
+      if (60 <= row.required_time && row.required_time < 3600) {
+        const time = row.required_time / 60;
+        const min = time.toString().split('.')[0];
+        const sec = parseInt(time.toString().split('.')[1][0]) * 6;
+        return `${min}${this.$t('分钟')}${sec}${this.$t('秒')}`;
+      }
+      if (3600 <= row.required_time) {
+        const time = row.required_time / 3600;
+        const hour = time.toString().split('.')[0];
+        const min = parseInt(time.toString().split('.')[1][0]) * 6;
+        return `${hour}${this.$t('小时')}${min}${this.$t('分钟')}`;
+      }
+    },
     showPageHome() {
       this.$emit('changePage', 'showPageHome');
     },
@@ -284,6 +306,7 @@ export default {
     background: #94f5a4;
     border: 1px solid #2dcb56;
     border-radius: 50%;
+    margin-right: 8px;
   }
   .fail {
     display: inline-block;
@@ -292,13 +315,14 @@ export default {
     background: #fd9c9c;
     border: 1px solid #ea3636;
     border-radius: 50%;
+    margin-right: 8px;
   }
-  .syncing-img {
+  .status-img {
       vertical-align:middle;
-      margin-left:-11px;
     }
-  .syncing {
+  .status-text {
       vertical-align:middle;
+      margin: 0 5px;
     }
 }
 </style>
