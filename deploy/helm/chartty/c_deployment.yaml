@@ -55,7 +55,7 @@ spec:
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
           env:
             {{- include "chartty.envs" $global | nindent 12 }}
           {{- with $.Values.envFrom }}

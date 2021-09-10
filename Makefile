@@ -30,8 +30,12 @@ push:
 	docker push ${image_repo}/bk-user-saas:${version}
 
 helm-sync:
+	mkdir -p deploy/helm/api/templates/
+	mkdir -p deploy/helm/saas/templates/
 	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/api/templates/ || true
 	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/saas/templates/ || true
+
+	ln -s ${PWD}/deploy/helm/chartty/c_*.tpl deploy/helm/bk-user-stack/templates/ || true
 
 helm-refresh: helm-sync
 	cd deploy/helm && helm dependency update bk-user-stack --skip-refresh
