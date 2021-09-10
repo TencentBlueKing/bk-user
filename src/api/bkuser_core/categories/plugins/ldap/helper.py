@@ -86,22 +86,19 @@ class DepartmentSyncHelper:
             "extras": {
                 "type": self.config_loader["user_group_class"]
                 if dept_info.is_group
-                else self.config_loader["organization_class"]
+                else self.config_loader["organization_class"],
+                "entryUUID": dept_info.code,
             },
             **self._MPTT_INIT_PARAMS,
         }
-        if dept_info.code:
-            defaults["code"] = dept_info.code
-
         dept = self._insert_dept(dept_info=dept_info, defaults=defaults)
         return dept
 
     def _insert_dept(self, dept_info: DepartmentProfile, defaults: Dict) -> Department:
-        dept: Department = self.db_sync_manager.magic_get(
-            unique_key=dept_info.key_field, target_meta=LdapDepartmentMeta
-        )
-        if dept and dept_info.code:
-            dept.code = dept_info.code
+        dept: Department = self.db_sync_manager.magic_get(dept_info.key_field, LdapDepartmentMeta)
+        if dept:
+            if dept_info.code and dept.code != dept_info.code:
+                dept.code = dept_info.code
             return dept
 
         if dept_info.key_field in self.db_departments:

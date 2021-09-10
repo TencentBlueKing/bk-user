@@ -172,7 +172,7 @@ class TestSyncer:
             )
 
     @pytest.mark.parametrize(
-        "departments, expected",
+        "departments, expected, expected_count",
         [
             (
                 [
@@ -211,10 +211,67 @@ class TestSyncer:
                     },
                 ],
                 [["guangdong", "shenzhen"], ["beijing"]],
-            )
+                4,
+            ),
+            (
+                [
+                    {
+                        "raw_dn": b"ou=shenzhen,ou=guangdong,dc=center,dc=com",
+                        "dn": "ou=shenzhen,ou=guangdong,dc=center,dc=com",
+                        "raw_attributes": {
+                            "entryUUID": [b"shenzhen"],
+                        },
+                        "attributes": {
+                            "entryUUID": "shenzhen",
+                        },
+                        "type": "searchResEntry",
+                    },
+                    {
+                        "raw_dn": b"ou=guangdong,dc=center,dc=com",
+                        "dn": "ou=guangdong,dc=center,dc=com",
+                        "raw_attributes": {
+                            "entryUUID": [b"guangdong"],
+                        },
+                        "attributes": {
+                            "entryUUID": "guangdong",
+                        },
+                        "type": "searchResEntry",
+                    },
+                ],
+                [["guangdong", "shenzhen"]],
+                2,
+            ),
+            (
+                [
+                    {
+                        "raw_dn": b"ou=guangdong,dc=center,dc=com",
+                        "dn": "ou=guangdong,dc=center,dc=com",
+                        "raw_attributes": {
+                            "entryUUID": [b"guangdong"],
+                        },
+                        "attributes": {
+                            "entryUUID": "guangdong",
+                        },
+                        "type": "searchResEntry",
+                    },
+                    {
+                        "raw_dn": b"ou=shenzhen,ou=guangdong,dc=center,dc=com",
+                        "dn": "ou=shenzhen,ou=guangdong,dc=center,dc=com",
+                        "raw_attributes": {
+                            "entryUUID": [b"shenzhen"],
+                        },
+                        "attributes": {
+                            "entryUUID": "shenzhen",
+                        },
+                        "type": "searchResEntry",
+                    },
+                ],
+                [["guangdong", "shenzhen"]],
+                2,
+            ),
         ],
     )
-    def test_sync_departments(self, test_ldap_syncer, departments, expected):
+    def test_sync_departments(self, test_ldap_category, test_ldap_syncer, departments, expected, expected_count):
         """测试同步部门"""
         with mock.patch.object(test_ldap_syncer.fetcher, "fetch") as fetch:
             fetch.return_value = [], departments, []
@@ -224,6 +281,8 @@ class TestSyncer:
             parent = None
             for d in route:
                 parent = Department.objects.get(name=d, parent=parent, category_id=test_ldap_syncer.category_id)
+
+        assert Department.objects.filter(category_id=test_ldap_category.id).count() == expected_count
 
     @pytest.mark.parametrize(
         "groups,expected",
