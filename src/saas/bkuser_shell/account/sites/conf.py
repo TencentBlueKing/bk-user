@@ -20,8 +20,8 @@ class ConfFixture(object):
     CONSOLE_LOGIN_URL = settings.BK_PAAS_URL
     LOGIN_URL = settings.BK_PAAS_URL + "/login/"
     LOGIN_PLAIN_URL = settings.BK_PAAS_URL + "/login/plain/"
-    VERIFY_URL = settings.BK_PAAS_URL + "/login/accounts/is_login/"
-    USER_INFO_URL = settings.BK_PAAS_URL + "/login/accounts/get_user/"
+    VERIFY_URL = settings.BK_LOGIN_API_URL + "/accounts/is_login/"
+    USER_INFO_URL = settings.BK_LOGIN_API_URL + "/accounts/get_user/"
     HAS_PLAIN = False
     ADD_CROSS_PREFIX = False
     ADD_APP_CODE = True
