@@ -22,11 +22,11 @@ class TimestampedModel(models.Model):
 
 
 class AdvancedModelManager(models.Manager):
-    def disable(self, *args, **kwargs):
-        """禁用"""
-        try:
-            disable_param = kwargs.pop("disable_param")
-        except KeyError:
-            disable_param = {"enabled": False}
-
+    def enable_or_disable(self, is_enable: bool, *args, **kwargs):
+        if is_enable:
+            enable_param = kwargs.pop("enable_param", {"enabled": True})
+            self.get_queryset().filter(*args, **kwargs).update(**enable_param)
+            return
+        disable_param = kwargs.pop("disable_param", {"enabled": False})
         self.get_queryset().filter(*args, **kwargs).update(**disable_param)
+        return

@@ -10,10 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 from bkuser_core.audit.utils import create_profile_log
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.views import ProfileViewSet
 from bkuser_core.tests.apis.utils import get_api_factory
-from bkuser_core.tests.utils import make_simple_department, make_simple_profile
+from bkuser_core.tests.utils import get_one_object, make_simple_department, make_simple_profile
 
 pytestmark = pytest.mark.django_db
 
@@ -31,6 +32,7 @@ class TestActionApis:
                 "put": "update",
                 "patch": "partial_update",
                 "delete": "destroy",
+                "post": "restoration",
             }
         )
 
@@ -112,6 +114,21 @@ class TestActionApis:
             assert response.data["code"] == "PASSWORD_DUPLICATED"
         else:
             assert response.status_code == 200
+
+    @pytest.mark.parametrize(
+        "enabled,status", [(False, ProfileStatus.NORMAL.value), (False, ProfileStatus.DELETED.value)]
+    )
+    def test_profile_restoration(self, factory, view, enabled, status):
+        p = make_simple_profile(
+            username="boouser",
+            force_create_params={"category_id": 1, "enabled": enabled, "status": status},
+        )
+        request = factory.post(f"/api/v2/profiles/{p.username}/restoration/?include_disabled=1")
+        setattr(request, "operator", "faker")
+        response = view(request=request, lookup_value=f"{p.username}")
+        assert response.status_code == 200
+        p = get_one_object("profile", id=p.id, username=p.username)
+        assert p.enabled and p.status == ProfileStatus.NORMAL.value
 
 
 class TestGetDepartmentApis:

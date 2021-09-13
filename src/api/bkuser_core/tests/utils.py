@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict
 
+import pytest
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
@@ -74,3 +75,13 @@ def make_simple_dynamic_field(name: str, force_create_params: Dict = None):
     default_create_params.update(force_create_params or {})
     d = DynamicFieldInfo.objects.create(**default_create_params)
     return d
+
+
+def get_one_object(object_name: str, **kwargs):
+    """获取满足条件的单个数据对象"""
+    str_to_object = {}
+    for support_object in [Profile, ProfileCategory, Department]:
+        str_to_object[support_object.__name__.lower()] = support_object
+    if object_name not in str_to_object:
+        pytest.fail("only support %s object name now" % str_to_object.keys(), pytrace=False)
+    return str_to_object[object_name].objects.get(**kwargs)

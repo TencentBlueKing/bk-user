@@ -21,7 +21,12 @@ from bkuser_core.bkiam.filters import IAMFilter
 from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, is_custom_fields_enabled
+from bkuser_core.common.serializers import (
+    AdvancedListSerializer,
+    AdvancedRetrieveSerialzier,
+    EmptySerializer,
+    is_custom_fields_enabled,
+)
 from django.conf import settings
 from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.db.models import ManyToOneRel, Q, QuerySet
@@ -307,6 +312,28 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
         )
 
         return super().destroy(request, *args, **kwargs)
+
+    @method_decorator(clear_cache_if_succeed)
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier(), request_body=EmptySerializer)
+    def restoration(self, request, lookup_value):
+        """软删除对象恢复"""
+        instance = self.get_object()
+        if instance.enabled:
+            raise error_codes.RESOURCE_ALREADY_ENABLED
+        try:
+            instance.enable()
+        except Exception as why:
+            # TODO: 基于 issue71 更新操作日志
+            logger.exception("failed to restoration instance: %s, error: %s", instance, why)
+        else:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.RESTORATION.value,
+                operator_obj=instance,
+                request=request,
+                extra_info={"action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}"},
+            )
+        return Response()
 
 
 class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
