@@ -176,7 +176,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         validated_data = serializer.validated_data
 
         if not validated_data.get("category_id", None):
-            serializer.category_id = ProfileCategory.objects.get_default().id
+            serializer.validated_data["category_id"] = ProfileCategory.objects.get_default().id
         else:
             if not ProfileCategory.objects.check_writable(validated_data["category_id"]):
                 raise error_codes.CANNOT_MANUAL_WRITE_INTO
