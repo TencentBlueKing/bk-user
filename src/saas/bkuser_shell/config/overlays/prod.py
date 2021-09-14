@@ -20,7 +20,7 @@ from bkuser_global.config import get_logging_config_dict
 # 应用运行环境配置信息
 # ===============================================================================
 SITE_URL = env("SITE_URL", default="/o/%s/" % APP_ID)
-SITE_PREFIX = BK_PAAS_HOST + SITE_URL
+SITE_PREFIX = BK_PAAS_URL + SITE_URL
 BUILD_STATIC = "%sstatic" % SITE_URL
 
 # ===============================================================================

@@ -14,7 +14,7 @@ from uuid import UUID
 
 from bkuser_core.categories.constants import SyncTaskStatus
 from bkuser_core.categories.loader import register_plugin
-from bkuser_core.categories.models import SyncProgress
+from bkuser_core.categories.models import SyncProgress, SyncTask
 from bkuser_core.categories.plugins.base import LoginHandler, Syncer
 from rest_framework import serializers
 
@@ -52,11 +52,15 @@ class DataSourcePlugin:
         """同步数据"""
         syncer = self.syncer_cls(category_id=instance_id)
         category = syncer.category
+        task = SyncTask.objects.get(id=task_id)
         progresses = SyncProgress.objects.init_progresses(category, task_id=task_id)
         try:
             syncer.sync(*args, **kwargs)
         finally:
+            task_status = SyncTaskStatus.SUCCESSFUL.value
             for item in syncer.context.report():
+                if not item.successful:
+                    task_status = SyncTaskStatus.FAILED.value
                 progress = progresses[item.step]
                 fields = {
                     "status": SyncTaskStatus.SUCCESSFUL.value if item.successful else SyncTaskStatus.FAILED.value,
@@ -68,3 +72,6 @@ class DataSourcePlugin:
                 for key, value in fields.items():
                     setattr(progress, key, value)
                 progress.save(update_fields=["status", "successful_count", "failed_count", "update_time"])
+            # 更新任务状态
+            task.status = task_status
+            task.save(update_fields=["status", "update_time"])

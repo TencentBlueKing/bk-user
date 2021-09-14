@@ -184,8 +184,7 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
 
         if wildcard_search and wildcard_search_fields:
             target_lookups = [Q(**{"{}__icontains".format(x): wildcard_search}) for x in wildcard_search_fields]
-            # 如果选择了 wildcard 搜索，则忽略其他搜索条件
-            return queryset.filter(functools.reduce(or_, target_lookups))
+            queryset = queryset.filter(functools.reduce(or_, target_lookups))
 
         # 2. 单字段搜索
         return self.make_lookups(query_data, queryset, search_field)
@@ -340,8 +339,8 @@ class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     def multiple_retrieve(self, request):
         """批量获取"""
-        ids = self._get_list_query_param(field_name="query_ids")
-        instances = self.queryset.filter(id__in=ids)
+        ids = self._get_list_query_param(field_name="query_ids") or []
+        instances = self.queryset.filter(pk__in=ids)
         return Response(self.serializer_class(instances, many=True).data)
 
     @method_decorator(clear_cache_if_succeed)

@@ -11,11 +11,11 @@ specific language governing permissions and limitations under the License.
 import datetime
 import logging
 from abc import abstractmethod
-from collections import defaultdict
+from collections import UserDict, defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import Any, ClassVar, Dict, List, Optional, Type
+from typing import Any, ClassVar, Dict, List, MutableMapping, Optional, Type, TypeVar
 
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.constants import SYNC_LOG_TEMPLATE_MAP, SyncStep
@@ -25,6 +25,7 @@ from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.db.models import Model
+from typing_extensions import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -130,9 +131,9 @@ class DBSyncManager:
     def __getitem__(self, item):
         return self._sets[item]
 
-    def register_id(self, _type: Type[SyncModelMeta]):
+    def register_id(self, type_: Type[SyncModelMeta]):
         """注册自增ID"""
-        return next(self.id_generators[_type.target_model])
+        return next(self.id_generators[type_.target_model])
 
     def sync_type(self, target_type: Type[Model]):
         """针对某种类型同步"""
@@ -145,10 +146,10 @@ class DBSyncManager:
 
     def detect_model_manager(self, model_type: Type[Model]) -> SyncModelManager:
         """根据传递的 Model 类型获取对应的 SyncModelManager"""
-        for _type in list(self.meta_map.values()):
-            if issubclass(model_type, _type.target_model):
+        for type_ in list(self.meta_map.values()):
+            if issubclass(model_type, type_.target_model):
                 return self._sets[model_type]
-        supported_types = [_type.target_model for _type in self.meta_map.values()]
+        supported_types = [type_.target_model for type_ in self.meta_map.values()]
         raise ValueError(f"Unsupported Type<{model_type}>, item should be within types: {supported_types}")
 
     def magic_add(self, item: Model, operation: SyncOperation = None):
@@ -297,4 +298,42 @@ class LoginHandler:
 
     @abstractmethod
     def check(self, *args, **kwargs):
+        raise NotImplementedError
+
+
+class TypeProtocol(Protocol):
+    @property
+    def key_field(self) -> str:
+        """The Key Field to make obj unique."""
+
+    @property
+    def display_str(self) -> str:
+        """The Display str for obj."""
+
+
+M = TypeVar("M")
+
+
+class TypeList(UserDict, MutableMapping[str, M]):
+    @classmethod
+    def from_list(cls, items: List[TypeProtocol]):
+        items_map = {i.key_field: i for i in items}
+        return cls(items_map)
+
+    @classmethod
+    def get_type(cls) -> Type[M]:
+        # As of Python 3.6. there is a public __args__ and (__parameters__) field for Generic
+        return cls.__args__[0]  # type: ignore
+
+
+class DBSyncHelper(Protocol):
+    """将 TypeList 塞入到 DBSyncManager 中的协议"""
+
+    category: ProfileCategory
+    db_sync_manager: DBSyncManager
+    target_obj_list: TypeList
+    context: SyncContext
+
+    def load_to_memory(self):
+        """将数据对象加载到内存"""
         raise NotImplementedError

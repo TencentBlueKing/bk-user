@@ -34,20 +34,20 @@ helm repo update
 global:
   env:
     # 蓝鲸平台域名
-    BK_PAAS_HOST: "https://paas.bktencent-example.com"
+    BK_PAAS_URL: "https://paas.example.com"
 ```
 
 #### 2. 确定用户管理访问地址
 
-你需要为用户管理提供一个访问根域，类似 `bktencent-example.com`，配置示例:
+你需要为用户管理提供一个访问根域，类似 `example.com`，配置示例:
 ```yaml
 global:
-  sharedDomain: "bktencent-example.com"
+  sharedDomain: "example.com"
 ```
 
 默认地，我们会为 `Api` & `SaaS` 分别创建两个访问入口(Ingress)：
-- `bkuser.bktencent-example.com` SaaS 页面访问入口
-- `bkuser-api.bktencent-example.com` Api 访问入口
+- `bkuser.example.com` SaaS 页面访问入口
+- `bkuser-api.example.com` Api 访问入口
 
 #### 3. 准备用户管理镜像
 
@@ -60,18 +60,12 @@ ccr.ccs.tencentyun.com/bk.io/bk-user-saas:${version}
 
 如果你想使用官方其他版本或者自己构建的镜像，也可以在 `values.yaml` 中修改，配置示例：
 ```yaml
-api:
-  enabeld: true
+global:
   image:
     # 修改镜像地址，我们会按照 {registry}/{repository} 方式拼接
     registry: any-mirrors-you-want.com/any-group
-    repository: bk-user-api
     # 修改用户管理版本，从 https://github.com/TencentBlueKing/bk-user/releases 获取
-    tag: "v2.2.0"
-
-# 使用官方最新镜像则无需修改该部分
-saas:
-  enabled: true
+    tag: "v2.3.0"
 ```
 
 #### 4. 数据库依赖
@@ -98,7 +92,7 @@ mariadb:
 如果你想要在生产环境中使用其他外部数据库，那么可以通过环境变量来指定，并禁用 `mariadb`，配置示例:
 
 ```yaml
-api:
+bkuserapi:
   enabeld: true
   env:
     DB_NAME: "your-db-name"
@@ -107,7 +101,7 @@ api:
     DB_HOST: "your-db-host"
     DB_PORT: "your-db-port"
 
-saas:
+bkusersaas:
   enabled: true
   env:
     DB_NAME: "your-db-name"
@@ -121,19 +115,31 @@ mariadb:
 ```
 
 #### 5. 权限中心
-默认地，我们开启了权限中心，如果你只想使用 **超级管理员** 账号，简单体验用户管理功能，那么你可以手动禁用掉权限中心相关部署内容:
+默认地，我们未开启权限中心，如果在权限中心已经就绪之后，想体验用户管理功能，那么你可以手动向权限中心注册模型:
 ```yaml
-api:
-  # 关闭权限中心变量必填校验
-  requiredEnvList:
-    - APP_TOKEN
+bkuserapi:
   env:
-    # 以下变量为非必填
-    BK_IAM_V3_INNER_HOST: ""
-  # 关闭权限中心模型注册
+    # 填充权限中心相关变量
+    BK_IAM_V3_INNER_HOST: "http://iam-backend-url.com" 
+  # 打开权限中心模型注册，每次重新部署即会运行
   preRunHooks:
     bkiam-migrate:
-      enabled: false
+      enabled: true
+
+bkusersaas:
+  env:
+    # 主动开启用户管理 SaaS 权限校验 
+    DISABLE_IAM: false
+```
+
+#### 6. 账号密码
+我们需要为 `admin` 账户添加用户名密码，虽然我们给定了默认值，但是为了安全，请手动修改：
+```yaml
+bkuserapi:
+  env:
+    # !!!请修改初始账号密码!!!
+    INITIAL_ADMIN_USERNAME: "your-user-name"
+    INITIAL_ADMIN_PASSWORD: "your-super-strong-password"
 ```
 
 ### 安装
@@ -163,8 +169,10 @@ helm install bk-user bk-user-stack -n bk-user -f values.yaml \
 # 卸载资源
 helm uninstall bk-user -n bk-user
 
-# 已安装的 mariadb 并不会被删除，防止没有开启持久化期间产生的数据被销毁
-# 如果确认已不再需要相关内容，可以手动删除
-kubectl delete sts bk-user-mariadb -n bk-user 
-kubectl delete svc bk-user-mariadb -n bk-user 
+# 已安装的 mariadb & redis 并不会被删除，防止没有开启持久化期间产生的数据被销毁
+# 如果确认已不再需要相关内容，可以手动删除命名空间内的资源
+# 独立命名空间时
+kubectl delete ns bk-user
+# 非独立命名空间时
+kubectl delete deploy,sts,cronjob,pod,svc,ingress,secret,cm,sa,role,rolebinding,pvc -l app.kubernetes.io/instance=bk-user -n bk-user 
 ```

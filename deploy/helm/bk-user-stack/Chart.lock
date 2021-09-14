@@ -1,12 +1,15 @@
 dependencies:
-- name: api
+- name: bkuserapi
   repository: file://../api
-  version: 0.1.0
-- name: saas
+  version: 1.0.0
+- name: bkusersaas
   repository: file://../saas
-  version: 0.1.0
+  version: 1.0.0
 - name: mariadb
   repository: https://charts.bitnami.com/bitnami
   version: 9.4.0
-digest: sha256:ce88cbabac806aa4518112938d66634e42d86986d0e5c77959d386f5729ec4f9
-generated: "2021-08-02T19:15:57.739357+08:00"
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 14.8.7
+digest: sha256:5f5c69a6e9e9f002d5897f19c2de8ad441ae65aaa09b641880bb044b1b9cdda1
+generated: "2021-09-01T15:22:58.235089+08:00"

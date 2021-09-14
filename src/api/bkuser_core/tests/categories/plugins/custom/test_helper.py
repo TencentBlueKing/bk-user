@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser_core.categories.plugins.base import DBSyncManager, SyncContext
 from bkuser_core.categories.plugins.custom.helpers import DepSyncHelper, ProSyncHelper
 from bkuser_core.categories.plugins.custom.metas import CustomDepartmentMeta, CustomProfileMeta
 from bkuser_core.categories.plugins.custom.models import CustomDepartment, CustomProfile, CustomTypeList
@@ -20,14 +19,8 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def sync_context():
-    return SyncContext()
-
-
-@pytest.fixture
-def make_pro_sync_helper(test_custom_category, sync_context):
+def make_pro_sync_helper(test_custom_category, db_sync_manager, sync_context):
     def helper(target_obj_list: CustomTypeList) -> ProSyncHelper:
-        db_sync_manager = DBSyncManager()
         db_sync_manager.update_model_meta({"department": CustomDepartmentMeta, "profile": CustomProfileMeta})
         return ProSyncHelper(test_custom_category, db_sync_manager, target_obj_list, context=sync_context)
 
@@ -35,9 +28,8 @@ def make_pro_sync_helper(test_custom_category, sync_context):
 
 
 @pytest.fixture
-def make_dep_sync_helper(test_custom_category, sync_context):
+def make_dep_sync_helper(test_custom_category, db_sync_manager, sync_context):
     def helper(target_obj_list: CustomTypeList) -> DepSyncHelper:
-        db_sync_manager = DBSyncManager()
         db_sync_manager.update_model_meta({"department": CustomDepartmentMeta, "profile": CustomProfileMeta})
         return DepSyncHelper(test_custom_category, db_sync_manager, target_obj_list, context=sync_context)
 

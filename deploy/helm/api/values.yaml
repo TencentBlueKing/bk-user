@@ -13,6 +13,12 @@ global:
     registry: ""
     username: ""
     name: ""
+
+  # 全局镜像配置
+  image:
+    registry: "ccr.ccs.tencentyun.com/bk.io"
+    pullPolicy: Always
+
   # 全局环境变量，当 `env` 指定时，`global.env` 内相同 key 值变量将被覆盖
   env: {}
 
@@ -23,10 +29,7 @@ global:
 replicaCount: 1
 
 image:
-  registry: ccr.ccs.tencentyun.com/bk.io
-  repository: bk-user-api
-  pullPolicy: IfNotPresent
-  tag: ""
+  name: bk-user-api
 
 # 用来覆盖 Chart 名
 nameOverride: ""
@@ -67,13 +70,12 @@ affinity: {}
 # 其余变量定义均不去重，请手动确保无变量名冲突
 #---------------
 
-requiredEnvList:
-  - BK_IAM_V3_INNER_HOST
-
 # key-value 结构渲染
 env:
-  APP_ID: "bk-user"
-  APP_TOKEN: ""
+  # -------------
+  # 默认配置，不了解详情时请不要修改
+  # -------------
+  BK_APP_CODE: "bk-user"
   DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.prod"
   # -------------
   # 权限中心相关配置
@@ -81,23 +83,20 @@ env:
   BK_IAM_SYSTEM_ID: "bk-user"
   # 权限中心后台访问地址
   BK_IAM_V3_INNER_HOST: ""
-  # 默认我们会按照 BK_PAAS_HOST/o/bk_iam 拼接权限中心 SaaS 访问地址，可以通过以下值覆盖
+  # 默认我们会按照 BK_PAAS_URL/o/bk_iam 拼接权限中心 SaaS 访问地址，可以通过以下值覆盖
   # BK_IAM_SAAS_HOST: "http://apps.bktencent-example.com/bkapp-bk-iam-saas-prod/"
 
 envFrom: []
 
-# 提供原生的 env 写法，
+# 提供原生的 env 写法
 extrasEnv: []
 
 # 额外提供一种基于 sharedDomain 自动生成的 URL 类型环境变量
-sharedUrlEnvMap: {}
-  # BK_JOB_HOST:
-  #   value: "jobee-test"
+sharedUrlEnvMap:
+   SAAS_URL: "http://bkuser.{{ .Values.global.sharedDomain }}"
 
 # 标识必填的环境变量列表
-requiredEnvList:
-  - APP_TOKEN
-  - BK_IAM_V3_INNER_HOST
+requiredEnvList: []
 
 #---------------
 # 进程定义
@@ -149,10 +148,10 @@ processes:
     replicas: 1
     resources:
       limits:
-        cpu: 128m
+        cpu: 200m
         memory: 512Mi
       requests:
-        cpu: 128m
+        cpu: 100m
         memory: 128Mi
     command:
       - bash
@@ -173,7 +172,7 @@ preRunHooks:
       - python manage.py migrate
   bkiam-migrate:
     weight: 2
-    enabled: true
+    enabled: false
     position: "pre-install,pre-upgrade"
     command:
       - bash

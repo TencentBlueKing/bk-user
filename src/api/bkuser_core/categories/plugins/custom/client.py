@@ -14,10 +14,9 @@ from typing import Optional
 
 import curlify
 import requests
+from bkuser_core.categories.plugins.custom.exceptions import CustomAPIRequestFailed
+from bkuser_core.categories.plugins.custom.models import CustomDepartment, CustomProfile, CustomTypeList
 from bkuser_core.user_settings.loader import ConfigProvider
-
-from .exceptions import CustomAPIRequestFailed
-from .models import CustomDepartment, CustomProfile, CustomTypeList
 
 logger = logging.getLogger(__name__)
 

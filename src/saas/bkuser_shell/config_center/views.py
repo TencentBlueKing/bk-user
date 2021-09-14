@@ -201,7 +201,7 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
         return setting_metas
 
     @inject_serializer(
-        query_in=serializers.UpdateNamespaceSettingSerializer(),
+        body_in=serializers.UpdateNamespaceSettingSerializer(many=True),
         out=serializers.SettingSerializer(many=True),
         tags=["config_center"],
     )
@@ -232,7 +232,9 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
         return result
 
     @inject_serializer(
-        body_in=serializers.SettingSerializer, out=serializers.SettingSerializer(many=True), tags=["config_center"]
+        body_in=serializers.SettingSerializer(many=True),
+        out=serializers.SettingSerializer(many=True),
+        tags=["config_center"],
     )
     def create(self, request, category_id, namespace_name, validated_data):
         """批量创建一个 namespace 下的配置"""

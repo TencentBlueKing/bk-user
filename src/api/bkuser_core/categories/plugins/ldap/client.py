@@ -10,10 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, List
 
 import ldap3
 from bkuser_core.categories.loader import get_plugin_by_name
+from django.conf import settings
 from ldap3 import ALL, SIMPLE, Connection, Server
 
 from . import exceptions as local_exceptions
@@ -61,6 +62,9 @@ class LDAPClient:
                 "receive_timeout": timeout_setting,
             }
 
+            if hasattr(settings, "LDAP_CONNECTION_EXTRAS_PARAMS"):
+                connection_params.update(settings.LDAP_CONNECTION_EXTRAS_PARAMS)
+
             # 目前只支持简单鉴权
             if user and password:
                 connection_params.update({"user": user, "password": password, "authentication": SIMPLE})
@@ -81,7 +85,7 @@ class LDAPClient:
         force_filter_str: str = "",
         start_root: str = None,
         attributes: list = None,
-    ) -> Dict:
+    ) -> List[Dict]:
         """搜索"""
         if not start_root:
             start_root = self.start_root

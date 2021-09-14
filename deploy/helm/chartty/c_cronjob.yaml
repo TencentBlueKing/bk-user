@@ -1,0 +1,65 @@
+{{- $global := . }}
+{{- $chart_version := .Chart.Version | replace "+" "_" }}
+{{- range $job := .Values.cronJobs.jobs }}
+{{ if $job.enabled }}
+---
+apiVersion: {{ template "chartty.capabilities.cronjob.apiVersion" $global }}
+kind: CronJob
+metadata:
+  name: {{ $.Chart.Name }}-{{ $job.name }}
+  labels:
+    {{- include "chartty.labels" $global | nindent 4 }}
+spec:
+  schedule: {{ $job.schedule | quote }}
+  successfulJobsHistoryLimit: {{ $job.successfulJobsHistoryLimit }}
+  concurrencyPolicy: {{ $job.concurrencyPolicy }}
+  failedJobsHistoryLimit: {{ $job.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ $.Release.Name }}
+            cron: {{ $job.name }}
+            {{- include "chartty.labels" $global | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          {{- with $.Values.global.hostAliases }}
+          hostAliases:
+            {{- toYaml $.Values.global.hostAliases | nindent 12 }}
+          {{- end }}
+          imagePullSecrets: 
+            {{- include "chartty.imagePullSecretNames" $global | nindent 12 }}
+          containers:
+          - image: {{ include "chartty.image" $global }}
+            imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
+            env:
+              {{- include "chartty.envs" $global | nindent 14 }}
+            {{- with $.Values.envFrom }}
+            envFrom:
+              {{- toYaml . | nindent 14}}
+            {{- end }}
+            name: {{ $job.name }}
+            command:
+              {{- toYaml $job.command | nindent 14 }}
+            args:
+              {{- toYaml $job.args | nindent 14 }}
+            {{- with $job.readinessProbe }}
+            readinessProbe:
+              {{- toYaml . | nindent 14 }} 
+            {{- end }}
+            {{- with $job.livenessProbe }}
+            livenessProbe:
+              {{- toYaml . | nindent 14 }} 
+            {{- end }} 
+          {{- with $.Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.affinity }}
+            affinity:
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
+
+{{- end }}

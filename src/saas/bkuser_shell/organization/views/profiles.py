@@ -104,27 +104,26 @@ class ProfilesViewSet(BkUserApiViewSet):
         return ResponseParams(profile, {"context": {"request": request}})
 
     @inject_serializer(
-        query_in=serializers.ListProfilesSerializer, out=serializers.ProfileSerializer(many=True), tags=["profiles"]
+        query_in=serializers.ListProfilesSerializer, out=serializers.ProfileResultSerializer, tags=["profiles"]
     )
     def list(self, request, category_id, validated_data):
-        lookup_param = {
+        params = {
             "page": validated_data["page"],
             "page_size": validated_data["page_size"],
             "lookup_field": "category_id",
-            "exact_lookups": [
-                category_id,
-            ],
+            "exact_lookups": [category_id],
         }
-        # 全量用户返回体过大，只选择某些字段展示
-        if validated_data["no_page"]:
-            lookup_param.update({"fields": ["id", "username", "display_name"]})
+
+        keyword = validated_data.get("keyword")
+        if keyword:
+            params.update({"wildcard_search": keyword, "wildcard_search_fields": ["username", "display_name", "id"]})
 
         api_instance = bkuser_sdk.ProfilesApi(
             self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_DEPARTMENT.value)
         )
-        profiles = api_instance.v2_profiles_list(**lookup_param)
+        profiles = api_instance.v2_profiles_list(**params)
 
-        return ResponseParams(profiles.get("results"), {"context": {"request": request}})
+        return ResponseParams(profiles, {"context": {"request": request}})
 
     # TODO: 动态字段定义到swagger输出
     @inject_serializer(out=serializers.ProfileSerializer(), tags=["profiles"])

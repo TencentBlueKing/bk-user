@@ -31,6 +31,7 @@ class CreateCategory(object):
     swagger_types = {
         'id': 'int',
         'configured': 'bool',
+        'syncing': 'bool',
         'unfilled_namespaces': 'list[str]',
         'display_name': 'str',
         'domain': 'str',
@@ -48,6 +49,7 @@ class CreateCategory(object):
     attribute_map = {
         'id': 'id',
         'configured': 'configured',
+        'syncing': 'syncing',
         'unfilled_namespaces': 'unfilled_namespaces',
         'display_name': 'display_name',
         'domain': 'domain',
@@ -62,10 +64,11 @@ class CreateCategory(object):
         'last_synced_time': 'last_synced_time'
     }
 
-    def __init__(self, id=None, configured=None, unfilled_namespaces=None, display_name=None, domain=None, create_time=None, update_time=None, type=None, description=None, default=None, enabled=None, status=None, order=None, last_synced_time=None):  # noqa: E501
+    def __init__(self, id=None, configured=None, syncing=None, unfilled_namespaces=None, display_name=None, domain=None, create_time=None, update_time=None, type=None, description=None, default=None, enabled=None, status=None, order=None, last_synced_time=None):  # noqa: E501
         """CreateCategory - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._configured = None
+        self._syncing = None
         self._unfilled_namespaces = None
         self._display_name = None
         self._domain = None
@@ -83,6 +86,8 @@ class CreateCategory(object):
             self.id = id
         if configured is not None:
             self.configured = configured
+        if syncing is not None:
+            self.syncing = syncing
         if unfilled_namespaces is not None:
             self.unfilled_namespaces = unfilled_namespaces
         self.display_name = display_name
@@ -146,6 +151,27 @@ class CreateCategory(object):
         """
 
         self._configured = configured
+
+    @property
+    def syncing(self):
+        """Gets the syncing of this CreateCategory.  # noqa: E501
+
+
+        :return: The syncing of this CreateCategory.  # noqa: E501
+        :rtype: bool
+        """
+        return self._syncing
+
+    @syncing.setter
+    def syncing(self, syncing):
+        """Sets the syncing of this CreateCategory.
+
+
+        :param syncing: The syncing of this CreateCategory.  # noqa: E501
+        :type: bool
+        """
+
+        self._syncing = syncing
 
     @property
     def unfilled_namespaces(self):

@@ -8,13 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper
 from bkuser_core.categories.plugins.ldap.client import LDAPClient
-from bkuser_core.categories.plugins.ldap.syncer import ProfileFieldMapper
+from bkuser_core.categories.plugins.ldap.exceptions import FetchUserMetaInfoFailed
+from bkuser_core.categories.plugins.ldap.syncer import SETTING_FIELD_MAP
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.utils.encoding import force_str
-
-from .exceptions import FetchUserMetaInfoFailed
-from .syncer import SETTING_FIELD_MAP
 
 
 class LoginHandler:

@@ -147,8 +147,8 @@ class ResourceType(AutoLowerEnum):
     @classmethod
     def get_attr_by_model(cls, instance, index: int) -> str:
         """通过 model instance 获取"""
-        _type = cls.get_by_model(instance)
-        id_name_pair = cls.get_id_name_pair(_type)
+        type_ = cls.get_by_model(instance)
+        id_name_pair = cls.get_id_name_pair(type_)
         return getattr(instance, id_name_pair[index])
 
     @classmethod

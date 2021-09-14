@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
+
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import ugettext as _
@@ -144,3 +146,20 @@ class AdvancedRetrieveSerialzier(serializers.Serializer):
 
 class EmptySerializer(serializers.Serializer):
     """空"""
+
+
+class DurationTotalSecondField(fields.Field):
+    def to_internal_value(self, value) -> datetime.timedelta:
+        if isinstance(value, float):
+            value = str(value)
+        return fields.parse_duration(value)
+
+    def to_representation(self, value: datetime.timedelta):
+        return value.total_seconds()
+
+
+#########
+# Batch #
+#########
+class BatchRetrieveSerializer(serializers.Serializer):
+    query_ids = serializers.CharField(help_text="查询 id 列表，以 , 分隔")
