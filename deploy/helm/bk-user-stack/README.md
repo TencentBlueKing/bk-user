@@ -27,7 +27,7 @@ helm repo update
 ### 准备 `values.yaml`
 
 #### 1. 获取蓝鲸平台访问地址 
-首先，你需要获取到蓝鲸平台的访问地址，例如 `https://paas.bktencent-example.com`，确保 `https://paas.bktencent-example.com/login` 可以访问蓝鲸登录，然后将该值的内容填入全局环境变量中。
+首先，你需要获取到蓝鲸平台的访问地址，例如 `https://paas.example.com`，确保 `https://paas.example.com/login` 可以访问蓝鲸登录，然后将该值的内容填入全局环境变量中。
 
 配置示例：
 ```yaml
@@ -83,7 +83,7 @@ mariadb:
     username: "bk-user"
     password: "root"
   primary:
-    # 默认我们未开启持久化，如有需求可以参考: https://kubernetes.io/docs/user-guide/persistent-volumes/ 
+    # 默认我们未开启持久化，如有需求可以参考: https://kubernetes.io/docs/user-guide/persistent-volumes/
     persistence:
       enabled: false
   initdbScriptsConfigMap: "bk-user-mariadb-init
@@ -95,11 +95,17 @@ mariadb:
 bkuserapi:
   enabeld: true
   env:
+    # 手动指定外部 DB ，仅支持 MySQL/MariaDB
     DB_NAME: "your-db-name"
     DB_USER: "your-db-user"
     DB_PASSWORD: "your-db-password"
     DB_HOST: "your-db-host"
     DB_PORT: "your-db-port"
+    # 外部 Celery Broker，任意符合要求的 Broker 存储均可
+    CELERY_BROKER_URL: "your-broker-url"
+    CELERY_RESULT_BACKEND: "your-broker-url"
+  # 手动取消内建存储挂载
+  envFrom: []
 
 bkusersaas:
   enabled: true
@@ -109,8 +115,13 @@ bkusersaas:
     DB_PASSWORD: "your-db-password"
     DB_HOST: "your-db-host"
     DB_PORT: "your-db-port"
+  # 手动取消内建存储挂载 
+  envFrom: []
 
 mariadb:
+  enabled: false
+  
+redis:
   enabled: false
 ```
 
@@ -120,7 +131,7 @@ mariadb:
 bkuserapi:
   env:
     # 填充权限中心相关变量
-    BK_IAM_V3_INNER_HOST: "http://iam-backend-url.com" 
+    BK_IAM_V3_INNER_HOST: "https://iam.example.com" 
   # 打开权限中心模型注册，每次重新部署即会运行
   preRunHooks:
     bkiam-migrate:
