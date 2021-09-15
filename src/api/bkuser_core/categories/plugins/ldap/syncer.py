@@ -21,7 +21,7 @@ from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper, depa
 from bkuser_core.categories.plugins.ldap.client import LDAPClient
 from bkuser_core.categories.plugins.ldap.helper import DepartmentSyncHelper, ProfileSyncHelper
 from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapProfileMeta
-from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
+from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from django.db import transaction
@@ -185,7 +185,7 @@ class LDAPSyncer(Syncer):
         DepartmentSyncHelper(
             category=self.category,
             db_sync_manager=self.db_sync_manager,
-            target_obj_list=(TypeList[DepartmentProfile]).from_list(
+            target_obj_list=(TypeList[LdapDepartment]).from_list(
                 self.fetcher.fetch_departments([self.OU_KEY, self.CN_KEY])
             ),
             context=self.context,
@@ -206,7 +206,9 @@ class LDAPSyncer(Syncer):
         ProfileSyncHelper(
             category=self.category,
             db_sync_manager=self.db_sync_manager,
-            target_obj_list=(TypeList[UserProfile]).from_list(self.fetcher.fetch_profiles([self.OU_KEY, self.CN_KEY])),
+            target_obj_list=(TypeList[LdapUserProfile]).from_list(
+                self.fetcher.fetch_profiles([self.OU_KEY, self.CN_KEY])
+            ),
             context=self.context,
         ).load_to_memory()
 
