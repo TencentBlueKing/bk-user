@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 from bkuser_core.categories.views import CategoryViewSet
+from bkuser_core.tests.utils import make_simple_category
 
 pytestmark = pytest.mark.django_db
 
@@ -28,3 +29,29 @@ class TestUpdateApis:
 
     def test_update_category(self, view):
         pass
+
+
+class TestListCreateApis:
+    @pytest.fixture(scope="class")
+    def view(self):
+        return CategoryViewSet.as_view({"get": "list", "post": "create"})
+
+    @pytest.mark.parametrize(
+        "all_count,fields,result_count,include_disabled,expected_fields",
+        [
+            (10, "id,display_name,domain,enabled", 5, "false", "id,display_name,domain,enabled"),
+            (10, "id,display_name,domain", 10, "true", "id,display_name,domain,enabled"),
+            (10, "id,display_name,domain,enabled", 10, "true", "id,display_name,domain,enabled"),
+        ],
+    )
+    def test_category_include_enabled_fields(
+        self, factory, view, all_count, fields, result_count, include_disabled, expected_fields
+    ):
+        """测试目录软删除显式拉取和字段选择"""
+        for i in range(1, all_count):
+            make_simple_category(f"domain{i}", f"Display{i}", force_create_params={"enabled": i % 2 == 0})
+        response = view(
+            request=factory.get(f"/api/v2/categories/?fields={fields}&include_disabled={include_disabled}")
+        )
+        assert response.data["count"] == result_count
+        assert set(response.data["results"][0].keys()) == set(expected_fields.split(","))

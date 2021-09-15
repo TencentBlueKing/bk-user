@@ -72,6 +72,27 @@ class TestListCreateApis:
         data = response.data["results"]
         assert set(data[0].keys()) == set(fields.split(","))
 
+    @pytest.mark.parametrize(
+        "all_count,fields,result_count,include_disabled,expected_fields",
+        [
+            # 当未传入 include_disabled 并且传入 enabled 字段时
+            (10, "id,username,enabled", 5, "false", "id,username,enabled"),
+            # 当传入 include_disabled 并且未传入 enabled 字段时
+            (10, "id,username", 10, "true", "id,username,enabled"),
+            # 当传入 include_disabled 并且传入 enabled 字段时
+            (10, "id,username,enabled", 10, "true", "id,username,enabled"),
+        ],
+    )
+    def test_profile_include_enabled_fields(
+        self, factory, view, all_count, fields, result_count, include_disabled, expected_fields
+    ):
+        """测试用户软删除显式拉取和字段选择"""
+        for i in range(1, all_count):
+            make_simple_profile(f"user{i}", force_create_params={"enabled": i % 2 == 0})
+        response = view(request=factory.get(f"/api/v2/profiles/?fields={fields}&include_disabled={include_disabled}"))
+        assert response.data["count"] == result_count
+        assert set(response.data["results"][0].keys()) == set(expected_fields.split(","))
+
     @pytest.mark.parametrize("fields", ["xxxxx", "usernam", "department"])
     def test_profile_list_non_fields(self, factory, view, fields):
         """测试未知字段返回"""
