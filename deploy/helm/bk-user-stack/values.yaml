@@ -54,6 +54,7 @@ mariadb:
     # 默认我们未开启持久化，如有需求可以参考:
     # - https://kubernetes.io/docs/user-guide/persistent-volumes/
     # - https://github.com/bitnami/charts/blob/master/bitnami/mariadb/values.yaml#L360
+    # 当同时请注意，当开启 PVC 可能会导致首次安装部署时间延长
     persistence:
       enabled: false
   initdbScriptsConfigMap: "bk-user-mariadb-init"
