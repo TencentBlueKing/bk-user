@@ -192,8 +192,16 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                     select_params=(default_domain,),
                 )
 
-        serializer = self.get_serializer(self.paginate_queryset(queryset), fields=fields, many=True)
-        return self.get_paginated_response(serializer.data)
+        page = self.paginate_queryset(queryset)
+        # page may be empty list
+        if page is not None:
+            serializer = self.get_serializer(page, fields=fields, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        # 全量数据太大，使用 serializer 效率非常低
+        # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
+        # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
+        return Response(data=list(queryset.values(*fields)))
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(
