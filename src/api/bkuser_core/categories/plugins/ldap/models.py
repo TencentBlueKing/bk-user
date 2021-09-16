@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 
 
 @dataclass
-class UserProfile:
+class LdapUserProfile:
     username: str
     display_name: str
     email: str
@@ -34,9 +34,9 @@ class UserProfile:
 
 
 @dataclass
-class DepartmentProfile:
+class LdapDepartment:
     name: str
-    parent: Optional['DepartmentProfile'] = None
+    parent: Optional['LdapDepartment'] = None
     code: Optional[str] = None
     is_group: bool = False
 

@@ -42,7 +42,7 @@ from .models import Department, DepartmentThroughModel
 
 
 class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = Department.objects.filter(enabled=True)
+    queryset = Department.objects.filter()
     serializer_class = local_serializers.DepartmentSerializer
     lookup_field: str = "id"
     filter_backends = [

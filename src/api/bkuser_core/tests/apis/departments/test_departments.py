@@ -72,6 +72,29 @@ class TestListCreateApis:
         assert len(data[0].keys()) == len(expected.keys())
 
     @pytest.mark.parametrize(
+        "all_count,fields,result_count,include_disabled,expected_fields",
+        [
+            (10, "id,name,parent,enabled", 5, "false", "id,name,parent,enabled"),
+            (10, "id,name,parent", 10, "true", "id,name,parent,enabled"),
+            (10, "id,name,parent,enabled", 10, "true", "id,name,parent,enabled"),
+        ],
+    )
+    def test_department_include_enabled_fields(
+        self, factory, view, all_count, fields, result_count, include_disabled, expected_fields
+    ):
+        """测试组织软删除显式拉取和字段选择"""
+        parent_id = 1
+        for i in range(1, all_count):
+            parent_id = make_simple_department(
+                f"Dep{i+1}", parent_id=parent_id, force_create_params={"enabled": i % 2 == 0}
+            ).id
+        response = view(
+            request=factory.get(f"/api/v2/departments/?fields={fields}&include_disabled={include_disabled}")
+        )
+        assert response.data["count"] == result_count
+        assert set(response.data["results"][0].keys()) == set(expected_fields.split(","))
+
+    @pytest.mark.parametrize(
         "query_string,expected",
         [
             (

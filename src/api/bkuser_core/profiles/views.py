@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = Profile.objects.filter(enabled=True)
+    queryset = Profile.objects.filter()
     serializer_class = local_serializers.ProfileSerializer
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
@@ -169,6 +169,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         query_data = _query_slz.validated_data
 
         fields = query_data.get("fields", self.get_serializer().fields)
+        self._ensure_enabled_field(request, fields=fields)
         self._check_fields(fields)
 
         try:

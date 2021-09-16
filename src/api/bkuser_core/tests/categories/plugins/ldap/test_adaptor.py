@@ -16,7 +16,7 @@ from bkuser_core.categories.plugins.ldap.adaptor import (
     parse_dn_value_list,
     user_adapter,
 )
-from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
+from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 
 
 @pytest.mark.parametrize(
@@ -177,7 +177,7 @@ def test_parse_dn_tree(dn, restrict_types, expected):
                 "type": "searchResEntry",
             },
             [],
-            UserProfile(
+            LdapUserProfile(
                 username="Administrator",
                 email="asdf@asdf.com",
                 telephone="",
@@ -212,7 +212,7 @@ def test_parse_dn_tree(dn, restrict_types, expected):
                 "type": "searchResEntry",
             },
             ["OU", "CN"],
-            UserProfile(
+            LdapUserProfile(
                 username="Guest",
                 email="",
                 telephone="",
@@ -250,9 +250,9 @@ def test_user_adaptor(profile_field_mapper, user_meta, restrict_types, expected)
                 "type": "searchResEntry",
             },
             ["OU", "CN"],
-            DepartmentProfile(
+            LdapDepartment(
                 name="shenzhen",
-                parent=DepartmentProfile(name="guangdong"),
+                parent=LdapDepartment(name="guangdong"),
                 code="dummy",
             ),
         ),
@@ -265,9 +265,9 @@ def test_user_adaptor(profile_field_mapper, user_meta, restrict_types, expected)
                 "type": "searchResEntry",
             },
             ["OU", "CN"],
-            DepartmentProfile(
+            LdapDepartment(
                 name="shenzhen",
-                parent=DepartmentProfile(name="guangdong", parent=DepartmentProfile(name="china")),
+                parent=LdapDepartment(name="guangdong", parent=LdapDepartment(name="china")),
                 code="dummy",
             ),
         ),
