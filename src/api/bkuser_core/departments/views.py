@@ -149,7 +149,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         serializer_fields = list(_serializer().get_fields().keys())
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
-        # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
+        # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#values
         return Response(data=list(profiles.only(*serializer_fields).values(*serializer_fields)))
 
     @method_decorator(clear_cache_if_succeed)
