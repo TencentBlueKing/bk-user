@@ -104,6 +104,11 @@ export default {
     getAllUser(context, params, config = {}) {
       return http.get(`api/v2/categories/${params.id}/profiles/?no_page=true`);
     },
+    // 直接上级数据
+    getSupOrganization(context, params, config = {}) {
+      const { id, pageSize, page, keyword } = params;
+      return http.get(`api/v2/categories/${id}/profiles/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
+    },
     // 根据id查看用户
     getProfileById(context, params, config = {}) {
       return http.get(`api/v2/profiles/${params.id}/`);
