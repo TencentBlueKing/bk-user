@@ -34,6 +34,8 @@ from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from bkuser_global.utils import force_str_2_bool
+
 from .constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,13 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size = 50
     page_size_query_param = "page_size"
     max_page_size = settings.MAX_PAGE_SIZE
+
+    def paginate_queryset(self, queryset, request, view=None):
+        # FIXME: REMOVE no_page in future version
+        if force_str_2_bool(request.query_params.get("no_page", False)):
+            return None
+
+        return super().paginate_queryset(queryset, request, view)
 
     def get_paginated_response(self, data):
         return Response(
