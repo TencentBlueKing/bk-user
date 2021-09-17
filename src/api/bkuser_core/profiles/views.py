@@ -22,7 +22,6 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.kits import force_str_2_bool
 from bkuser_core.common.serializers import (
     AdvancedListSerializer,
     AdvancedRetrieveSerialzier,
@@ -45,6 +44,8 @@ from rest_framework import filters, status, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework_jsonp.renderers import JSONPRenderer
+
+from bkuser_global.utils import force_str_2_bool
 
 from . import serializers as local_serializers
 from .constants import ProfileStatus
