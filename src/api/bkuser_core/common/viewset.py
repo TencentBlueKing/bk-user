@@ -21,7 +21,6 @@ from bkuser_core.bkiam.filters import IAMFilter
 from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.kits import force_str_2_bool
 from bkuser_core.common.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, is_custom_fields_enabled
 from django.conf import settings
 from django.core.exceptions import FieldError, ObjectDoesNotExist
