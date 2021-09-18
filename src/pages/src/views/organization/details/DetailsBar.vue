@@ -58,7 +58,7 @@
                   :list="rtxList"
                   ext-popover-cls="scrollview"
                   @toggle="handleBranchToggle"
-                  :scroll-height="100">
+                  :scroll-height="188">
                   <bk-option v-for="option in rtxList"
                              :key="option.id"
                              :id="option.id"
@@ -193,7 +193,7 @@ export default {
       paginationConfig: {
         current: 1,
         count: 1,
-        limit: 3,
+        limit: 10,
       },
       searchValue: '',
       // 人员选择器的数据，初始化调用接口
