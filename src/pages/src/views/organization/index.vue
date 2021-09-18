@@ -152,8 +152,7 @@
                           :left-icon="'bk-icon icon-search'"
                           @clear="handleClear"
                           @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch"
-                          @change="valChange">
+                          @enter="handleTableSearch">
                 </bk-input>
                 <!-- 设置列表字段 -->
                 <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
@@ -173,8 +172,7 @@
                           :left-icon="'bk-icon icon-search'"
                           @clear="handleClear"
                           @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch"
-                          @change="valChange">
+                          @enter="handleTableSearch">
                 </bk-input>
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
@@ -683,12 +681,6 @@ export default {
     },
     handleTableSearch() {
       if (!this.basicLoading) {
-        this.paginationConfig.current = 1;
-        this.getTableData();
-      }
-    },
-    valChange(val) {
-      if (val === '') {
         this.paginationConfig.current = 1;
         this.getTableData();
       }
