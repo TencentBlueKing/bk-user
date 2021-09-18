@@ -20,192 +20,195 @@
   - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
   -->
 <template>
-  <ul class="tree-menu">
-    <li class="tree-first-node" v-for="(item, index) in treeDataList" :key="item.id">
-      <div :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
-           :class="{ 'tree-node': true, 'first-tree-node': treeIndex === 0,
-                     'expand': item.showChildren, 'active': item.showBackground }">
-        <!-- 组织开关图标 -->
-        <div class="toggle-icon" v-if="treeIndex !== 0 && treeSearchResult === null" @click="handleClickToggle(item)">
-          <i class="icon icon-user-triangle" :class="{ 'hidden': !item.has_children }"></i>
-        </div>
-
-        <!-- 目录或组织的图标和名称 -->
-        <div class="main-node" @click="handleClickTreeNode(item)">
-          <div class="folder-icon" :class="treeIndex === 0 && treeSearchResult === null && 'root-node'">
-            <i v-if="treeIndex === 0 && treeSearchResult === null" class="icon user-icon icon-root-node-i"></i>
-            <i v-else class="icon icon-user-file-close-01"></i>
+  <div data-test-id="opOrganizaData">
+    <ul class="tree-menu">
+      <li class="tree-first-node" v-for="(item, index) in treeDataList" :key="item.id">
+        <div :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
+             :class="{ 'tree-node': true, 'first-tree-node': treeIndex === 0,
+                       'expand': item.showChildren, 'active': item.showBackground }">
+          <!-- 组织开关图标 -->
+          <div class="toggle-icon" v-if="treeIndex !== 0 && treeSearchResult === null" @click="handleClickToggle(item)">
+            <i class="icon icon-user-triangle" :class="{ 'hidden': !item.has_children }"></i>
           </div>
-          <div class="depart-name" v-bk-overflow-tips>{{item.name || item.display_name}}</div>
-        </div>
 
-        <!-- 用户目录，扩展操作 -->
-        <div class="option" v-if="item.type && treeSearchResult === null">
-          <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
-          <div v-if="item.showOption" :class="{ 'dropdown-list': true,
-                                                'chang-en': $i18n.locale === 'en' }"
-               @click.stop="item.showOption = false">
-            <!-- 本地用户目录添加下级组织 -->
-            <div class="specific-menu" v-if="item.type === 'local'">
-              <a href="javascript:;" @click="addRootDepartment(item)">{{$t('添加根组织')}}</a>
+          <!-- 目录或组织的图标和名称 -->
+          <div class="main-node" @click="handleClickTreeNode(item)">
+            <div class="folder-icon" :class="treeIndex === 0 && treeSearchResult === null && 'root-node'">
+              <i v-if="treeIndex === 0 && treeSearchResult === null" class="icon user-icon icon-root-node-i"></i>
+              <i v-else class="icon icon-user-file-close-01"></i>
             </div>
-            <!-- 上移 -->
-            <div class="specific-menu">
-              <a href="javascript:;"
-                 :class="{ 'disable': index === 0 }"
-                 @click="shiftNodeUp(item, index)"
-                 @mouseenter="checkUpTips(item, index)"
-                 @mouseleave="closeUpTips(item)">
-                {{$t('上移')}}
-              </a>
-              <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
-                <div class="arrow"></div>
-                <p class="inner">{{$t('已经是最顶层')}}</p>
-              </div>
-            </div>
-            <!-- 下移 -->
-            <div class="specific-menu">
-              <a href="javascript:;"
-                 :class="{ 'disable': index === treeDataList.length - 1 }"
-                 @click="shiftNodeDown(item, index)"
-                 @mouseenter="checkDownTips(item, index)"
-                 @mouseleave="closeDownTips(item)">
-                {{$t('下移')}}
-              </a>
-              <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
-                <div class="arrow"></div>
-                <p class="inner">{{$t('已经是最顶层')}}</p>
-              </div>
-            </div>
-            <!-- 重命名 -->
-            <div class="specific-menu">
-              <a href="javascript:;" @click="handleRename(item, 'catalog')">{{$t('重命名')}}</a>
-            </div>
+            <div class="depart-name" v-bk-overflow-tips>{{item.name || item.display_name}}</div>
           </div>
-        </div>
 
-        <!-- 本地用户目录下的组织，扩展操作，包括搜索结果为组织 -->
-        <div class="option" v-if="item.isLocalDepartment && noSearchOrSearchDepartment">
-          <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
-          <div v-if="item.showOption" :class="{ 'dropdown-list': true, 'chang-en': $i18n.locale === 'en' }"
-               @click.stop="item.showOption = false">
-            <!-- 添加下级组织 -->
-            <div class="specific-menu" v-if="!treeSearchResult">
-              <a href="javascript:;"
-                 :class="{ 'disable': treeIndex === 9 }"
-                 @click="addChild(item)"
-                 @mouseenter="checkAddTips(item)"
-                 @mouseleave="closeAddTips(item)">
-                {{$t('添加下级组织')}}
-              </a>
-              <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showAddChildTips }">
-                <div class="arrow"></div>
-                <p class="inner">{{$t('最多只能添加十级')}}</p>
+          <!-- 用户目录，扩展操作 -->
+          <div class="option" v-if="item.type && treeSearchResult === null">
+            <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
+            <div v-if="item.showOption" :class="{ 'dropdown-list': true,
+                                                  'chang-en': $i18n.locale === 'en' }"
+                 @click.stop="item.showOption = false">
+              <!-- 本地用户目录添加下级组织 -->
+              <div class="specific-menu" v-if="item.type === 'local'">
+                <a href="javascript:;" @click="addRootDepartment(item)">{{$t('添加根组织')}}</a>
               </div>
-            </div>
-            <!-- 上移 -->
-            <div class="specific-menu" v-if="!treeSearchResult">
-              <a href="javascript:;"
-                 :class="{ 'disable': index === 0 }"
-                 @click="shiftNodeUp(item, index)"
-                 @mouseenter="checkUpTips(item, index)"
-                 @mouseleave="closeUpTips(item)">
-                {{$t('上移')}}
-              </a>
-              <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
-                <div class="arrow"></div>
-                <p class="inner">{{$t('已经是最顶层')}}</p>
+              <!-- 上移 -->
+              <div class="specific-menu">
+                <a href="javascript:;"
+                   :class="{ 'disable': index === 0 }"
+                   @click="shiftNodeUp(item, index)"
+                   @mouseenter="checkUpTips(item, index)"
+                   @mouseleave="closeUpTips(item)">
+                  {{$t('上移')}}
+                </a>
+                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
+                  <div class="arrow"></div>
+                  <p class="inner">{{$t('已经是最顶层')}}</p>
+                </div>
               </div>
-            </div>
-            <!-- 下移 -->
-            <div class="specific-menu" v-if="!treeSearchResult">
-              <a href="javascript:;"
-                 :class="{ 'disable': index === treeDataList.length - 1 }"
-                 @click="shiftNodeDown(item, index)"
-                 @mouseenter="checkDownTips(item, index)"
-                 @mouseleave="closeDownTips(item)">
-                {{$t('下移')}}
-              </a>
-              <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
-                <div class="arrow"></div>
-                <p class="inner">{{$t('已经是最底层')}}</p>
+              <!-- 下移 -->
+              <div class="specific-menu">
+                <a href="javascript:;"
+                   :class="{ 'disable': index === treeDataList.length - 1 }"
+                   @click="shiftNodeDown(item, index)"
+                   @mouseenter="checkDownTips(item, index)"
+                   @mouseleave="closeDownTips(item)">
+                  {{$t('下移')}}
+                </a>
+                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
+                  <div class="arrow"></div>
+                  <p class="inner">{{$t('已经是最顶层')}}</p>
+                </div>
               </div>
-            </div>
-            <!-- 重命名 -->
-            <div class="specific-menu">
-              <a href="javascript:;" @click="handleRename(item, 'department')">{{$t('重命名')}}</a>
-            </div>
-            <!-- 复制组织ID -->
-            <div class="specific-menu">
-              <a href="javascript:;" v-clipboard:copy="item.id" v-clipboard:success="handleCopyIdSuccess"
-                 v-clipboard:error="handleCopyIdError">
-                {{$t('复制组织ID')}}
-              </a>
-            </div>
-            <!-- 复制组织名称 -->
-            <div class="specific-menu">
-              <a href="javascript:;" v-clipboard:copy="item.full_name" v-clipboard:success="handleCopyNameSuccess"
-                 v-clipboard:error="handleCopyNameError">
-                {{$t('复制组织名称')}}
-              </a>
-            </div>
-            <!-- 删除 -->
-            <div class="specific-menu">
-              <a href="javascript:;"
-                 :class="['delete', { 'delete-disable': item.has_children }]"
-                 @click="deleteDepartment(item, index)"
-                 @mouseenter="checkDeleteTips(item)"
-                 @mouseleave="closeDeleteTips(item)">
-                {{$t('删除')}}
-              </a>
-              <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showDeleteTips }">
-                <div class="arrow"></div>
-                <p class="inner">{{$t('非空组织不能删除')}}</p>
+              <!-- 重命名 -->
+              <div class="specific-menu">
+                <a href="javascript:;" @click="handleRename(item, 'catalog')">{{$t('重命名')}}</a>
               </div>
             </div>
           </div>
+
+          <!-- 本地用户目录下的组织，扩展操作，包括搜索结果为组织 -->
+          <div class="option" v-if="item.isLocalDepartment && noSearchOrSearchDepartment">
+            <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
+            <div v-if="item.showOption" :class="{ 'dropdown-list': true, 'chang-en': $i18n.locale === 'en' }"
+                 @click.stop="item.showOption = false">
+              <!-- 添加下级组织 -->
+              <div class="specific-menu" v-if="!treeSearchResult">
+                <a href="javascript:;"
+                   :class="{ 'disable': treeIndex === 9 }"
+                   @click="addChild(item)"
+                   @mouseenter="checkAddTips(item)"
+                   @mouseleave="closeAddTips(item)">
+                  {{$t('添加下级组织')}}
+                </a>
+                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showAddChildTips }">
+                  <div class="arrow"></div>
+                  <p class="inner">{{$t('最多只能添加十级')}}</p>
+                </div>
+              </div>
+              <!-- 上移 -->
+              <div class="specific-menu" v-if="!treeSearchResult">
+                <a href="javascript:;"
+                   :class="{ 'disable': index === 0 }"
+                   @click="shiftNodeUp(item, index)"
+                   @mouseenter="checkUpTips(item, index)"
+                   @mouseleave="closeUpTips(item)">
+                  {{$t('上移')}}
+                </a>
+                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
+                  <div class="arrow"></div>
+                  <p class="inner">{{$t('已经是最顶层')}}</p>
+                </div>
+              </div>
+              <!-- 下移 -->
+              <div class="specific-menu" v-if="!treeSearchResult">
+                <a href="javascript:;"
+                   :class="{ 'disable': index === treeDataList.length - 1 }"
+                   @click="shiftNodeDown(item, index)"
+                   @mouseenter="checkDownTips(item, index)"
+                   @mouseleave="closeDownTips(item)">
+                  {{$t('下移')}}
+                </a>
+                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
+                  <div class="arrow"></div>
+                  <p class="inner">{{$t('已经是最底层')}}</p>
+                </div>
+              </div>
+              <!-- 重命名 -->
+              <div class="specific-menu">
+                <a href="javascript:;" @click="handleRename(item, 'department')">{{$t('重命名')}}</a>
+              </div>
+              <!-- 复制组织ID -->
+              <div class="specific-menu">
+                <a href="javascript:;" v-clipboard:copy="item.id" v-clipboard:success="handleCopyIdSuccess"
+                   v-clipboard:error="handleCopyIdError">
+                  {{$t('复制组织ID')}}
+                </a>
+              </div>
+              <!-- 复制组织名称 -->
+              <div class="specific-menu">
+                <a href="javascript:;" v-clipboard:copy="item.full_name" v-clipboard:success="handleCopyNameSuccess"
+                   v-clipboard:error="handleCopyNameError">
+                  {{$t('复制组织名称')}}
+                </a>
+              </div>
+              <!-- 删除 -->
+              <div class="specific-menu">
+                <a href="javascript:;"
+                   :class="['delete', { 'delete-disable': item.has_children }]"
+                   @click="deleteDepartment(item, index)"
+                   @mouseenter="checkDeleteTips(item)"
+                   @mouseleave="closeDeleteTips(item)">
+                  {{$t('删除')}}
+                </a>
+                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showDeleteTips }">
+                  <div class="arrow"></div>
+                  <p class="inner">{{$t('非空组织不能删除')}}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="tree-node-loading" v-if="item.showLoading">
-        <img src="../../../images/svg/loading.svg" alt="">
-        <span class="loading-text">{{$t('加载中')}}</span>
-      </div>
-
-      <OrganizationTree
-        v-if="item.children && item.children.length"
-        v-show="item.showChildren"
-        :tree-data-list="item.children"
-        :tree-index="treeIndex + 1"
-        :tree-search-result="treeSearchResult"
-        @handleClickToggle="handleClickToggle"
-        @handleClickTreeNode="handleClickTreeNode"
-        @handleClickOption="handleClickOption"
-        @addChildDepartment="addChildDepartment"
-        @handleRename="handleRename"
-        @switchNodeOrder="switchNodeOrder"
-        @deleteDepartment="deleteDepartment" />
-
-      <!-- 添加根组织 -->
-      <div v-if="addDepartmentShow && addDepartmentParentId === item.id" class="new-department">
-        <div class="folder-icon">
-          <span class="icon icon-user-file-close-01"></span>
+        <div class="tree-node-loading" v-if="item.showLoading">
+          <img src="../../../images/svg/loading.svg" alt="">
+          <span class="loading-text">{{$t('加载中')}}</span>
         </div>
-        <bk-input
-          v-focus
-          v-model="addDepartmentName"
-          ref="addRootDepartment"
-          type="text"
-          font-size="medium"
-          class="adding-input"
-          :placeholder="$t('按Enter键确认添加')"
-          @enter="confirmAdd(item)"
-          @blur="cancelAdd"
-          @keydown="handleKeydown"
-        ></bk-input>
-      </div>
-    </li>
-  </ul>
+
+        <OrganizationTree
+          v-if="item.children && item.children.length"
+          v-show="item.showChildren"
+          :tree-data-list="item.children"
+          :tree-index="treeIndex + 1"
+          :tree-search-result="treeSearchResult"
+          @handleClickToggle="handleClickToggle"
+          @handleClickTreeNode="handleClickTreeNode"
+          @handleClickOption="handleClickOption"
+          @addChildDepartment="addChildDepartment"
+          @handleRename="handleRename"
+          @switchNodeOrder="switchNodeOrder"
+          @deleteDepartment="deleteDepartment" />
+
+        <!-- 添加根组织 -->
+        <div v-if="addDepartmentShow && addDepartmentParentId === item.id" class="new-department">
+          <div class="folder-icon">
+            <span class="icon icon-user-file-close-01"></span>
+          </div>
+          <bk-input
+            v-focus
+            v-model="addDepartmentName"
+            ref="addRootDepartment"
+            type="text"
+            font-size="medium"
+            class="adding-input"
+            :placeholder="$t('按Enter键确认添加')"
+            @enter="confirmAdd(item)"
+            @blur="cancelAdd"
+            @keydown="handleKeydown"
+          ></bk-input>
+        </div>
+      </li>
+    </ul>
+  </div>
+
 </template>
 
 <script>

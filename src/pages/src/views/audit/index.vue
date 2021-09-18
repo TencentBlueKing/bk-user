@@ -52,7 +52,7 @@
         :key="index">
       </bk-tab-panel>
       <div class="audit-content-wrapper">
-        <div class="thead-container table-container">
+        <div class="thead-container table-container" data-test-id="list_headTitleData">
           <table>
             <thead>
               <tr>
@@ -62,7 +62,7 @@
           </table>
         </div>
         <div class="tbody-container table-container" v-bkloading="{ isLoading: basicLoading }">
-          <div class="scroll-container" ref="auditScroller">
+          <div class="scroll-container" ref="auditScroller" data-test-id="list_auditData">
             <table>
               <tbody v-if="auditList.length">
                 <tr v-for="(item, index) in auditList" :key="index">

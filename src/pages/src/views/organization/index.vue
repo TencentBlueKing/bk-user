@@ -105,10 +105,12 @@
                     <span class="more-action">{{$t('添加用户')}}</span>
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowAdd }]"></i>
                   </bk-button>
-                  <ul class="bk-dropdown-list" slot="dropdown-content">
-                    <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户')}}</a></li>
-                    <li><a href="javascript:;" @click="pullUserFn">{{$t('从其他组织拉取')}}</a></li>
-                  </ul>
+                  <div data-test-id="list_operationUser">
+                    <ul class="bk-dropdown-list" slot="dropdown-content">
+                      <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户')}}</a></li>
+                      <li><a href="javascript:;" @click="pullUserFn">{{$t('从其他组织拉取')}}</a></li>
+                    </ul>
+                  </div>
                 </bk-dropdown-menu>
                 <!-- 更多操作 -->
                 <bk-dropdown-menu ref="dropdownMore" class="king-dropdown-menu"
@@ -118,18 +120,20 @@
                     <span class="more-action">{{$t('更多操作')}}</span>
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowMore }]"></i>
                   </bk-button>
-                  <ul class="bk-dropdown-list" slot="dropdown-content">
-                    <li>
-                      <a href="javascript:;" :class="{ 'disabled': !isClick }"
-                         @click="handleSetDepartment">{{$t('设置所在组织')}}
-                      </a>
-                    </li>
-                    <li>
-                      <a href="javascript:;" :class="{ 'disabled': !isClick }"
-                         @click="deleteProfiles">{{$t('批量删除')}}
-                      </a>
-                    </li>
-                  </ul>
+                  <div data-test-id="list_deleteUser">
+                    <ul class="bk-dropdown-list" slot="dropdown-content">
+                      <li>
+                        <a href="javascript:;" :class="{ 'disabled': !isClick }"
+                           @click="handleSetDepartment">{{$t('设置所在组织')}}
+                        </a>
+                      </li>
+                      <li>
+                        <a href="javascript:;" :class="{ 'disabled': !isClick }"
+                           @click="deleteProfiles">{{$t('批量删除')}}
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
                 </bk-dropdown-menu>
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">

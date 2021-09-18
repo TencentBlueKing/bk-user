@@ -65,7 +65,7 @@
         </div>
       </div>
     </div>
-    <div class="user-detail">
+    <div class="user-detail" data-test-id="activeFieldsData">
       <div class="user-avatar-wrapper">
         <img :src="localAvatar || currentProfile.logo" width="68" height="68" @error="handleLoadAvatarError" />
         <p v-if="isForbid" class="forbid-text">{{currentProfile.status === 'DISABLED' ? $t('已禁用') : $t('已锁定')}}</p>

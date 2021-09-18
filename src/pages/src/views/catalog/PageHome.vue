@@ -27,7 +27,7 @@
       <p class="reDataupdate" @click="dataUpdate">{{$t('数据更新记录')}}</p>
     </div>
     <div class="catalog-table">
-      <div class="thead-container table-container">
+      <div class="thead-container table-container" data-test-id="list_titelHeaderInfo">
         <table>
           <thead>
             <tr>
@@ -49,7 +49,8 @@
         <div class="detail">{{$t('你没有相应资源的访问权限')}}</div>
         <bk-button class="king-button" theme="primary" @click="confirmPageApply">{{$t('去申请')}}</bk-button>
       </div>
-      <div class="tbody-container table-container" :class="catalogList.length >= 4 && 'overflow-auto'" v-else>
+      <div class="tbody-container table-container" :class="catalogList.length >= 4 && 'overflow-auto'"
+           data-test-id="list_catalogData" v-else>
         <table>
           <tbody>
             <tr v-for="(item, index) in catalogList" :key="item.id">
