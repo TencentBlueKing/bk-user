@@ -58,7 +58,7 @@
                   :list="rtxList"
                   ext-popover-cls="scrollview"
                   @toggle="handleBranchToggle"
-                  :scroll-height="188">
+                  :scroll-height="100">
                   <bk-option v-for="option in rtxList"
                              :key="option.id"
                              :id="option.id"
@@ -193,7 +193,7 @@ export default {
       paginationConfig: {
         current: 1,
         count: 1,
-        limit: 10,
+        limit: 3,
       },
       searchValue: '',
       // 人员选择器的数据，初始化调用接口
@@ -228,7 +228,6 @@ export default {
     // 进入页面获取数据
     this.paginationConfig.current = 1;
     this.searchValue = '';
-    this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
   methods: {
     // 上级组织搜索
@@ -236,24 +235,20 @@ export default {
       this.searchValue = val;
       this.paginationConfig.current = 1;
       this.copyList = [];
-      if (val) {
-        setTimeout(async () => {
-          await this.initRtxList(val, this.paginationConfig.current);
-        }, 200);
-      } else {
-        setTimeout(async () => {
-          await this.initRtxList(val, this.paginationConfig.current);
-        }, 200);
-      }
+      setTimeout(async () => {
+        await this.initRtxList(val, this.paginationConfig.current);
+      }, 200);
     },
     // 点击select
-    handleBranchToggle(value) {
+    async handleBranchToggle(value) {
       if (value) {
         this.$nextTick(() => {
+          this.paginationConfig.current = 1;
+          this.copyList = [];
+          this.initRtxList(this.searchValue, this.paginationConfig.current);
           const selectorList = document.querySelector('.scrollview').querySelector('.bk-options');
           if (selectorList) {
             selectorList.scrollTop = 0;
-            selectorList.removeEventListener('scroll', this.scrollHandler);
             selectorList.addEventListener('scroll', this.scrollHandler);
           }
         });

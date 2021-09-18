@@ -152,7 +152,8 @@
                           :left-icon="'bk-icon icon-search'"
                           @clear="handleClear"
                           @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch">
+                          @enter="handleTableSearch"
+                          @change="valChange">
                 </bk-input>
                 <!-- 设置列表字段 -->
                 <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
@@ -172,7 +173,8 @@
                           :left-icon="'bk-icon icon-search'"
                           @clear="handleClear"
                           @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch">
+                          @enter="handleTableSearch"
+                          @change="valChange">
                 </bk-input>
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
@@ -685,7 +687,12 @@ export default {
         this.getTableData();
       }
     },
-
+    valChange(val) {
+      if (val === '') {
+        this.paginationConfig.current = 1;
+        this.getTableData();
+      }
+    },
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
       // 消除之前空组织对搜索结果的影响
