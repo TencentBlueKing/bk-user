@@ -226,8 +226,9 @@ export default {
       });
     }
     // 进入页面获取数据
-    this.paginationConfig.current = 1;
     this.searchValue = '';
+    this.paginationConfig.current = 1;
+    this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
   methods: {
     // 上级组织搜索
