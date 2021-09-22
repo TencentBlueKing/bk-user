@@ -36,7 +36,7 @@
     <!-- add/edit -->
     <div class="add-user-infor" v-else>
       <div class="user-infor-wrapper" ref="userInforWrapper">
-        <div class="information-box">
+        <div class="information-box" data-test-id="superiorData">
           <h4 class="infor-title">{{$t('用户信息')}}</h4>
           <div class="fill-infor-wrapper">
             <InputComponents :edit-status="detailsBarInfo.type === 'edit'" :profile-info-list="profileInfoList" />
