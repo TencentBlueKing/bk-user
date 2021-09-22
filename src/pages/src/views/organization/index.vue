@@ -685,7 +685,6 @@ export default {
         this.getTableData();
       }
     },
-
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
       // 消除之前空组织对搜索结果的影响

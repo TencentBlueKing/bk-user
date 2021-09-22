@@ -359,4 +359,7 @@ export default {
   定时触发: 'trigger mode',
   分钟: 'minute',
   小时: 'hour',
+  日志详细: 'Detail log',
+  正在发起同步任务: 'A synchronization task is being initiated. Procedure',
+  请在数据更新记录中查看具体详细: 'Please refer to the data update record for details',
 };
