@@ -49,7 +49,7 @@
               <p class="desc">{{$t('直接上级')}}</p>
               <div class="input-text leader-input" ref="leaderInput">
                 <bk-select
-                  v-if="rtxList.length || detailsBarInfo.type === 'add' || detailsBarInfo.type === 'edit'"
+                  v-if="showselectData"
                   searchable
                   multiple
                   display-tag
@@ -70,7 +70,8 @@
                   searchable
                   multiple
                   display-tag
-                  v-model="leaderIdList">
+                  v-model="leaderIdList"
+                  @toggle="handleBranchToggle">
                   <bk-option v-for="option in currentProfile.leader"
                              :key="option.id"
                              :id="option.id"
@@ -199,6 +200,8 @@ export default {
       // 人员选择器的数据，初始化调用接口
       rtxList: [],
       copyList: [],
+      timer: null,
+      showselectData: false,
     };
   },
   computed: {
@@ -236,12 +239,14 @@ export default {
       this.searchValue = val;
       this.paginationConfig.current = 1;
       this.copyList = [];
-      setTimeout(async () => {
+      clearTimeout(this.timer);
+      this.timer = setTimeout(async () => {
         await this.initRtxList(val, this.paginationConfig.current);
-      }, 200);
+      }, 500);
     },
     // 点击select
     async handleBranchToggle(value) {
+      this.showselectData = value;
       if (value) {
         this.$nextTick(() => {
           this.paginationConfig.current = 1;
