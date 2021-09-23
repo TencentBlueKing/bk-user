@@ -183,6 +183,11 @@ class Profile(TimestampedModel):
         """最近一次更新密码时间"""
         return self.password_update_time or self.create_time
 
+    def enable(self):
+        self.enabled = True
+        self.status = ProfileStatus.NORMAL.value
+        self.save(update_fields=["enabled", "status", "update_time"])
+
     def delete(self, using=None, keep_parents=False):
         """软删除"""
         self.enabled = False
@@ -192,7 +197,7 @@ class Profile(TimestampedModel):
         self.departments.clear()
         self.leader.clear()
 
-        self.save(update_fields=["enabled", "status"])
+        self.save(update_fields=["enabled", "status", "update_time"])
         return
 
     def set_password(self, raw_password):

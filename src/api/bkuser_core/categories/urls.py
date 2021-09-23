@@ -49,6 +49,15 @@ urlpatterns = [
         name="categories.action",
     ),
     re_path(
+        r"^api/v2/categories/%s/restoration/$" % PVAR_PROFILE_ID,
+        views.CategoryViewSet.as_view(
+            {
+                "post": "restoration",
+            }
+        ),
+        name="categories.restoration",
+    ),
+    re_path(
         r"^api/v2/categories/%s/sync/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
