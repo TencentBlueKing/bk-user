@@ -51,7 +51,7 @@ class FieldsViewSet(BkUserApiViewSet):
         return self.get_paging_results(api_instance.v2_dynamic_fields_list)
 
     @inject_serializer(
-        query_in=serializers.FieldsSaveSerializer(), out=serializers.ProfileFieldsSerializer(), tags=["config_center"]
+        body_in=serializers.FieldsSaveSerializer(), out=serializers.ProfileFieldsSerializer(), tags=["config_center"]
     )
     def create(self, request, validated_data):
         """创建用户字段"""
