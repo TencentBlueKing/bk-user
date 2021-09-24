@@ -49,7 +49,7 @@
               <p class="desc">{{$t('直接上级')}}</p>
               <div class="input-text leader-input" ref="leaderInput">
                 <bk-select
-                  v-if="showselectData"
+                  v-if="showselectData || detailsBarInfo.type === 'add'"
                   searchable
                   multiple
                   display-tag
