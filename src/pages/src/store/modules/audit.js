@@ -38,5 +38,10 @@ export default {
       return http.get(`api/v2/audit/operation_logs/?start_time=${startTime}&end_time=${endTime}&page=${page}&page_size=${pageSize}${keyword && (`&keyword=${keyword}`)}`);
       // &keyword=${keyword}&page=${page}&page_size=${page_size}
     },
+    // 审计导出
+    getAuditderive(context, params, config = {}) {
+      const { url, startTime, endTime } = params;
+      return http.get(`${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`);
+    },
   },
 };
