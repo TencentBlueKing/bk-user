@@ -21,7 +21,7 @@
   -->
 <template>
   <div class="table-list-wrapper">
-    <div class="thead-container table-container">
+    <div class="thead-container table-container" data-test-id="list_activeTableHeardData">
       <table>
         <thead>
           <tr v-if="userMessage.tableHeardList.length">
@@ -37,8 +37,8 @@
         </thead>
       </table>
     </div>
-
-    <div class="tbody-container table-container" ref="scrollWrapper" @scroll.passive="handleTableScroll">
+    <div class="tbody-container table-container" ref="scrollWrapper"
+         @scroll.passive="handleTableScroll" data-test-id="list_organizationData">
       <table v-if="!isEmptySearch">
         <tbody v-if="userMessage.userInforList.length">
           <tr v-for="(item, index) in dataList" :key="item.id + Date.now()" @click.stop="viewDetails(item)">

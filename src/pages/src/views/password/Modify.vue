@@ -25,7 +25,7 @@
       <div class="heard-img">
         <img src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
       </div>
-      <div class="modify-content">
+      <div class="modify-content" data-test-id="passwordInfo">
         <h4 class="common-title">{{$t('更改密码')}}</h4>
         <p class="error-text" v-if="isConfirmError">
           <i class="icon icon-user-exclamation-circle-shape"></i>
