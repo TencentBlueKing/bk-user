@@ -132,7 +132,7 @@ class UpdateProfileSerializer(Serializer):
 class ProfileExportSerializer(Serializer):
     display_name = CharField()
     username = CharField()
-    leader = ListField()
+    leader = LeaderSerializer(many=True)
     department_name = SubDepartmentSerializer(many=True, source="departments")
     staff_status = CharField(required=False)
     status = CharField(required=False)
@@ -148,6 +148,6 @@ class ProfileExportSerializer(Serializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
 
-        data["leader"] = ",".join(x.username for x in data["leader"])
+        data["leader"] = ",".join(x["username"] for x in data["leader"])
         data["department_name"] = ",".join([x["full_name"] for x in data["department_name"]])
         return data
