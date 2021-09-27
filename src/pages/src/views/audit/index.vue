@@ -51,7 +51,7 @@
         v-bind="panel"
         :key="index">
       </bk-tab-panel>
-      <div class="derive" @click="Auditderive">{{$t('审计导出')}}</div>
+      <div class="derive" v-if="panelActive === 'login'" @click="Auditderive">{{$t('审计导出')}}</div>
       <div class="audit-content-wrapper">
         <div class="thead-container table-container" data-test-id="list_headTitleData">
           <table>
@@ -110,14 +110,6 @@
         </div>
       </div>
     </bk-tab>
-    <div v-show="basicLoading" class="loading-cover" @click.stop></div>
-    <bk-dialog v-model="showAuditderive"
-               theme="primary"
-               :mask-close="false"
-               @confirm="confirmAuditderive"
-               @cancel="cancelAuditderive">
-      <h3 class="confirmExport">确认导出</h3>
-    </bk-dialog>
   </div>
 </template>
 
@@ -134,8 +126,6 @@ export default {
   data() {
     return {
       basicLoading: true,
-      showAuditderive: false,
-      auditderiveUrl: '',
       paginationConfig: {
         current: 1,
         count: 1,
@@ -254,22 +244,8 @@ export default {
         // tips: 后端提供的 SITE_URL 需以 / 开头
         url = window.location.origin + url;
       }
-      const params = {
-        url,
-        startTime,
-        endTime,
-      };
-      const res = await this.$store.dispatch('audit/getAuditderive', params);
-      this.auditderiveUrl = res;
-      if (res.code !== -1) {
-        this.showAuditderive = true;
-      }
-    },
-    confirmAuditderive() {
-      window.open(this.auditderiveUrl);
-    },
-    cancelAuditderive() {
-      this.$store.commit('updateInitLoading', false);
+      const res = `${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`;
+      window.open(res);
     },
     getMyDate(date) {
       // return date.getFullYear() + '-' + (date.getMonth() + 1)
