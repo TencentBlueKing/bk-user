@@ -51,6 +51,7 @@
         v-bind="panel"
         :key="index">
       </bk-tab-panel>
+      <div class="derive" @click="Auditderive">{{$t('审计导出')}}</div>
       <div class="audit-content-wrapper">
         <div class="thead-container table-container" data-test-id="list_headTitleData">
           <table>
@@ -110,6 +111,13 @@
       </div>
     </bk-tab>
     <div v-show="basicLoading" class="loading-cover" @click.stop></div>
+    <bk-dialog v-model="showAuditderive"
+               theme="primary"
+               :mask-close="false"
+               @confirm="confirmAuditderive"
+               @cancel="cancelAuditderive">
+      <h3 class="confirmExport">确认导出</h3>
+    </bk-dialog>
   </div>
 </template>
 
@@ -126,6 +134,8 @@ export default {
   data() {
     return {
       basicLoading: true,
+      showAuditderive: false,
+      auditderiveUrl: '',
       paginationConfig: {
         current: 1,
         count: 1,
@@ -232,6 +242,35 @@ export default {
     this.initUserList(this.panelActive);
   },
   methods: {
+    async  Auditderive() {
+      const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
+      const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
+      let url = window.AJAX_URL;
+      if (url.endsWith('/')) {
+        // 去掉末尾的斜杠
+        url = url.slice(0, url.length - 1);
+      }
+      if (!url.startsWith('http')) {
+        // tips: 后端提供的 SITE_URL 需以 / 开头
+        url = window.location.origin + url;
+      }
+      const params = {
+        url,
+        startTime,
+        endTime,
+      };
+      const res = await this.$store.dispatch('audit/getAuditderive', params);
+      this.auditderiveUrl = res;
+      if (res.code !== -1) {
+        this.showAuditderive = true;
+      }
+    },
+    confirmAuditderive() {
+      window.open(this.auditderiveUrl);
+    },
+    cancelAuditderive() {
+      this.$store.commit('updateInitLoading', false);
+    },
     getMyDate(date) {
       // return date.getFullYear() + '-' + (date.getMonth() + 1)
       // `${+ '-' + date.getDate()}-${date.toString().match(/\d\d:\d\d:\d\d/)[0]}`;
@@ -314,6 +353,15 @@ export default {
         margin-right: 15px;
       }
     }
+  }
+  .derive {
+    position: absolute;
+    font-size: 14px;
+    cursor: pointer;
+    color: #02a8db;
+    right: 0px;
+    top: 65px;
+    z-index: 9999;
   }
   // 表格
   .audit-content-wrapper {
@@ -441,4 +489,8 @@ export default {
     }
   }
 }
+  .confirmExport{
+    text-align: center;
+    font-weight: normal;
+  }
 </style>
