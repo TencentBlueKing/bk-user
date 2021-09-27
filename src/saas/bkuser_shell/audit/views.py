@@ -104,7 +104,9 @@ class LoginLogViewSet(AuditLogViewSet):
         fields_api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
 
         params = self._get_request_params(validated_data)
-        login_logs = api_instance.v2_audit_login_log_list(**params)["results"]
+        login_logs = self.get_paging_results(
+            api_instance.v2_audit_login_log_list, since=params["since"], until=params["until"]
+        )
         if not login_logs:
             raise error_codes.CANNOT_EXPORT_EMPTY_LOG
 
