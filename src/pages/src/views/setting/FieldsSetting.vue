@@ -28,7 +28,7 @@
     </bk-button>
 
     <div class="table-content-wrapper" ref="userInfoField">
-      <div class="thead-container table-container">
+      <div class="thead-container table-container" data-test-id="list_thInfo">
         <table>
           <thead>
             <tr>
@@ -45,7 +45,7 @@
         </table>
       </div>
       <div class="tbody-container table-container" v-bkloading="{ isLoading: basicLoading }">
-        <div class="scroll-container">
+        <div class="scroll-container" data-test-id="list_fieldsData">
           <table>
             <tbody id="table-list">
               <tr v-for="item in fieldsList" :key="item.id" :id="item.id">

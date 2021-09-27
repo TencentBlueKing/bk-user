@@ -21,7 +21,7 @@
   -->
 <template>
   <div class="child-department-wrapper">
-    <div class="add-child-wrapper" v-if="handleTabData.title === $t('添加下级组织')">
+    <div class="add-child-wrapper" v-if="handleTabData.title === $t('添加下级组织')" data-test-id="organizationInfo">
       <ul>
         <li class="infor-list">
           <p class="desc">{{$t('组织名称')}}<span class="star">*</span></p>
@@ -51,7 +51,7 @@
       </ul>
     </div>
     <!-- 重命名 -->
-    <div class="editor-department-wrapper" v-if="handleTabData.title === $t('重命名')">
+    <div class="editor-department-wrapper" v-if="handleTabData.title === $t('重命名')" data-test-id="catalogInfo">
       <ul>
         <li class="infor-list">
           <p class="desc">{{ renameData.type === 'catalog' ? $t('目录名称') : $t('组织名称')}}<span class="star">*</span></p>
@@ -73,7 +73,7 @@
         </li>
       </ul>
     </div>
-    <div class="set-list-name-wrapper" v-if="handleTabData.title === $t('设置列表字段')">
+    <div class="set-list-name-wrapper" v-if="handleTabData.title === $t('设置列表字段')" data-test-id="fieldsData">
       <p class="description">{{$t('最多显示 10 个字段，已选')}}
         <span :class="{ 'show-error': isShowError }">{{selectLength}}</span> {{$t('个字段')}}
       </p>

@@ -116,6 +116,7 @@ li {
       <div class="tab-panel"  data-type="multipleColor">彩色图标</div>
     </div>
     <section class="tab-content single-color active" data-type="singleColor">
+    <div data-test-id="iconData">
       <ul class="icon-list">
         <li class="icon-item" title="user-logo-i">
           <span class="icon user-icon icon-user-logo-i"></span>
@@ -130,21 +131,27 @@ li {
           <p class="icon-text">duihao-i</p>
         </li>
       </ul>
+    </div>
       <h3 class="describe-title">为什么使用</h3>
+     <div data-test-id="meritInfo">
       <ul class="use-describe">
         <li>弹性，在网页或者 app 上，展示字体是很便捷的。用字体图标可以很方便的改变 icon 的颜色，或者加入一些其他的效果</li>
         <li>可缩放，可以很方便的改变图标的大小</li>
         <li>矢量，字体图标是矢量的并且具有独立的分辨率，不管在高分辨率还是低分辨率，不管是在网页还是手机端，都具有很好的展示效果，不会出现锯齿或者马赛克模糊</li>
         <li>节省加载时间，字体图标很小，每个小图标只有几 kb，大大节省了加载时间</li>
       </ul>
+     </div>
       <h3 class="describe-title">如何使用</h3>
-      <ul class="use-describe">
-        <li>将整个目录复制到您的项目里</li>
-        <li>引入 style.css</li>
-        <li>挑选相应图标并获取类名，如 .bk-icon .icon-demo</li>
-      </ul>
+      <div data-test-id="teachingInfo">
+        <ul class="use-describe">
+          <li>将整个目录复制到您的项目里</li>
+          <li>引入 style.css</li>
+          <li>挑选相应图标并获取类名，如 .bk-icon .icon-demo</li>
+        </ul>
+      </div>
     </section>
     <section class="tab-content multiple-color"  data-type="multipleColor">
+    <div data-test-id="otherIconData">
       <ul class="icon-list">
         <li class="colorful-icon">
           <svg class="icon svg-icon">
@@ -165,12 +172,16 @@ li {
           <p class="icon-text">duihao-i</p>
         </li>
       </ul>
+    </div>
       <h3 class="describe-title">为什么使用</h3>
+     <div data-test-id="supportSVGInfo">
       <ul class="use-describe">
-          <li>支持彩色图标</li>
-          <li>跨 SVG 使用，使用 use 可调用文档中加载的所有 SVG 图标 </li>
-      </ul>
+        <li>支持彩色图标</li>
+        <li>跨 SVG 使用，使用 use 可调用文档中加载的所有 SVG 图标 </li>
+    </ul>
+     </div>
       <h3 class="describe-title">如何使用</h3>
+    <div data-test-id="hintInfo">
       <ul class="use-describe">
         <li>将下载的资源文件中 iconcool.js 文件外部资源通过 script 标签引入</li>
         <li>在 html 模板文件中挑选对应的对应图标的名称使用，例如：
@@ -181,6 +192,7 @@ li {
           </pre>
         </li>
       </ul>
+    </div>
       </section>
     </section>
   </div>
