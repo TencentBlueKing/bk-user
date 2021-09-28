@@ -110,6 +110,7 @@
         </div>
       </div>
     </bk-tab>
+    <div v-show="basicLoading" class="loading-cover" @click.stop></div>
   </div>
 </template>
 
@@ -126,6 +127,7 @@ export default {
   data() {
     return {
       basicLoading: true,
+      errorMessage: this.$t('审计日志为空，无法导出'),
       paginationConfig: {
         current: 1,
         count: 1,
@@ -232,6 +234,11 @@ export default {
     this.initUserList(this.panelActive);
   },
   methods: {
+    handleWarning(config) {
+      config.message = this.errorMessage;
+      config.offsetY = 80;
+      this.$bkMessage(config);
+    },
     async  Auditderive() {
       const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
       const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
@@ -244,8 +251,12 @@ export default {
         // tips: 后端提供的 SITE_URL 需以 / 开头
         url = window.location.origin + url;
       }
-      const res = `${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`;
-      window.open(res);
+      if (this.panelActive === 'login' && this.auditList.length === 0) {
+        this.handleWarning({ theme: 'error' });
+      } else {
+        url = `${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`;
+        window.open(url);
+      }
     },
     getMyDate(date) {
       // return date.getFullYear() + '-' + (date.getMonth() + 1)

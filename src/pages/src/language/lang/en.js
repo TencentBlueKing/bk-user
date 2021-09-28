@@ -383,4 +383,5 @@ export default {
   一个月: 'one month',
   两个月: 'two months',
   三个月: 'three months',
+  '审计日志为空, 无法导出': 'the audit log is empty and cannot be exported',
 };
