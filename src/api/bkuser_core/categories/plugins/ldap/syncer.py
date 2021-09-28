@@ -101,18 +101,11 @@ class LDAPFetcher(Fetcher):
         return groups, departments, users
 
     def _get_code(self, raw_obj: dict) -> str:
-        """如果不存在 uuid 则用 dn(sha) 作为唯一标示"""
-        entry_uuid = raw_obj.get("raw_attributes", {}).get("entryUUID", [])
-        if isinstance(entry_uuid, list) and entry_uuid:
-            logger.debug("uuid in raw_attributes: return %s", entry_uuid[0])
-            return entry_uuid[0]
-        else:
-            # 由于其他目录也可能会出现这样的 code，所以添加 category_id 进行转换
-            dn = f"{self.category_id}-{raw_obj.get('dn')}"
-
-            sha = hashlib.sha256(force_bytes(dn)).hexdigest()
-            logger.debug("no uuid in raw_attributes, use dn instead: %s -> %s", dn, sha)
-            return sha
+        """通过对象 dn 生成 唯一code"""
+        dn = f"{self.category_id}-{raw_obj.get('dn')}"
+        sha = hashlib.sha256(force_bytes(dn)).hexdigest()
+        logger.info("use dn to be code: %s -> %s", dn, sha)
+        return sha
 
     def _load(self):
         # TODO: 将 Fetcher 拆成两个对象, 或者不再遵循原来的 Fetcher 协议
@@ -147,7 +140,6 @@ class LDAPFetcher(Fetcher):
             if not dept_meta.get("dn"):
                 logger.info("no dn field, skipping for %s", dept_meta)
                 continue
-
             results.append(
                 department_adapter(
                     code=self._get_code(dept_meta),

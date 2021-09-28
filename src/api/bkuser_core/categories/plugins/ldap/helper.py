@@ -87,7 +87,6 @@ class DepartmentSyncHelper:
                 "type": self.config_loader["user_group_class"]
                 if dept_info.is_group
                 else self.config_loader["organization_class"],
-                "entryUUID": dept_info.code,
             },
             **self._MPTT_INIT_PARAMS,
         }
