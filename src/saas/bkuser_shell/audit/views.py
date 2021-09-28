@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+import math
 
 import bkuser_sdk
 from bkuser_shell.audit import serializers
@@ -119,11 +120,21 @@ class LoginLogViewSet(AuditLogViewSet):
             load_workbook(settings.EXPORT_LOGIN_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields, 1
         )
 
-        profile_ids = [x["profile_id"] for x in login_logs]
         # may too large refer to #88
-        profiles = self.get_paging_results(
-            profile_api_instance.v2_profiles_list, lookup_field="id", exact_lookups=profile_ids, include_disabled=True
-        )
+        # TODO: remove step when #88 is done
+        step = 300
+        profile_ids = list({x["profile_id"] for x in login_logs})
+        profiles = []
+        counts = math.ceil(len(profile_ids) / step)
+        for _c in range(counts):
+            profiles.extend(
+                self.get_paging_results(
+                    profile_api_instance.v2_profiles_list,
+                    lookup_field="id",
+                    exact_lookups=profile_ids[_c * step : (_c + 1) * step],
+                    include_disabled=True,
+                )
+            )
 
         extra_info = {x["profile_id"]: x for x in login_logs}
         exporter.update_profiles(profiles, extra_info)
