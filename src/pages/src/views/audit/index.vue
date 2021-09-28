@@ -51,7 +51,7 @@
         v-bind="panel"
         :key="index">
       </bk-tab-panel>
-      <div class="derive" @click="Auditderive">{{$t('审计导出')}}</div>
+      <div class="derive" v-if="panelActive === 'login'" @click="Auditderive">{{$t('审计导出')}}</div>
       <div class="audit-content-wrapper">
         <div class="thead-container table-container">
           <table>
@@ -111,13 +111,6 @@
       </div>
     </bk-tab>
     <div v-show="basicLoading" class="loading-cover" @click.stop></div>
-    <bk-dialog v-model="showAuditderive"
-               theme="primary"
-               :mask-close="false"
-               @confirm="confirmAuditderive"
-               @cancel="cancelAuditderive">
-      <h3 class="confirmExport">确认导出</h3>
-    </bk-dialog>
   </div>
 </template>
 
@@ -134,8 +127,7 @@ export default {
   data() {
     return {
       basicLoading: true,
-      showAuditderive: false,
-      auditderiveUrl: '',
+      errorMessage: this.$t('审计日志为空，无法导出'),
       paginationConfig: {
         current: 1,
         count: 1,
@@ -242,6 +234,11 @@ export default {
     this.initUserList(this.panelActive);
   },
   methods: {
+    handleWarning(config) {
+      config.message = this.errorMessage;
+      config.offsetY = 80;
+      this.$bkMessage(config);
+    },
     async  Auditderive() {
       const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
       const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
@@ -254,19 +251,12 @@ export default {
         // tips: 后端提供的 SITE_URL 需以 / 开头
         url = window.location.origin + url;
       }
-      const params = {
-        url,
-        startTime,
-        endTime,
-      };
-      const res = await this.$store.dispatch('audit/getAuditderive', params);
-      this.auditderiveUrl = res;
-      if (res.code !== -1) {
-        this.showAuditderive = true;
+      if (this.panelActive === 'login' && this.auditList.length === 0) {
+        this.handleWarning({ theme: 'error' });
+      } else {
+        url = `${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`;
+        window.open(url);
       }
-    },
-    confirmAuditderive() {
-      window.open(this.auditderiveUrl);
     },
     cancelAuditderive() {
       this.$store.commit('updateInitLoading', false);
