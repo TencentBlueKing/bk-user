@@ -52,7 +52,8 @@
           </div>
         </div>
       </div>
-      <div class="search-wrapper" ref="searchWrapper" v-if="searchResult && searchList.length && !searchLoading">
+      <div class="search-wrapper" ref="searchWrapper"
+           v-if="searchResult && searchList.length && !searchLoading" data-test-id="groupData">
         <ul class="groups-container">
           <li class="match-list" v-for="(group, groupIndex) in searchList" :key="'group' + groupIndex">
             <!-- 组织 -->
@@ -65,17 +66,19 @@
                   <span class="collapse-toggle" v-else @click="isDepartmentCollapsed = true">{{ $t('收起') }}</span>
                 </template>
               </div>
-              <ul class="items-container">
-                <li class="match-item"
-                    v-for="(item, index) in group.items"
-                    v-show="index < departmentLimitLength || !isDepartmentCollapsed"
-                    :key="'department' + index"
-                    :class="{ 'active': (activeType === 'department' && activeIndex === index) }"
-                    @click="handleSelect(item)">
-                  <p class="item-title">{{ item.name }}</p>
-                  <p class="item-detail">{{ getDepartmentDetail(item) }}</p>
-                </li>
-              </ul>
+              <div data-test-id="departmentData">
+                <ul class="items-container">
+                  <li class="match-item"
+                      v-for="(item, index) in group.items"
+                      v-show="index < departmentLimitLength || !isDepartmentCollapsed"
+                      :key="'department' + index"
+                      :class="{ 'active': (activeType === 'department' && activeIndex === index) }"
+                      @click="handleSelect(item)">
+                    <p class="item-title">{{ item.name }}</p>
+                    <p class="item-detail">{{ getDepartmentDetail(item) }}</p>
+                  </li>
+                </ul>
+              </div>
             </template>
             <!-- 用户 -->
             <template v-if="group.type === 'user'">
@@ -87,20 +90,22 @@
                   <span class="collapse-toggle" v-else @click="isUserCollapsed = true">{{ $t('收起') }}</span>
                 </template>
               </div>
-              <ul class="items-container">
-                <li class="match-item"
-                    v-for="(item, index) in group.items"
-                    v-show="index < userLimitLength || !isUserCollapsed"
-                    :key="'user' + index"
-                    :class="{ 'active': (activeType === 'user' && activeIndex === index) }"
-                    @click="handleSelect(item)">
-                  <p class="item-title">
-                    {{ item.username + '(' + item.display_name + ') ' }}
-                    <span class="category-label">{{item.category_name}}</span>
-                  </p>
-                  <p class="item-detail">{{ getUserDetail(item) }}</p>
-                </li>
-              </ul>
+              <div data-test-id="userDetailData">
+                <ul class="items-container">
+                  <li class="match-item"
+                      v-for="(item, index) in group.items"
+                      v-show="index < userLimitLength || !isUserCollapsed"
+                      :key="'user' + index"
+                      :class="{ 'active': (activeType === 'user' && activeIndex === index) }"
+                      @click="handleSelect(item)">
+                    <p class="item-title">
+                      {{ item.username + '(' + item.display_name + ') ' }}
+                      <span class="category-label">{{item.category_name}}</span>
+                    </p>
+                    <p class="item-detail">{{ getUserDetail(item) }}</p>
+                  </li>
+                </ul>
+              </div>
             </template>
           </li>
           <li class="match-list" v-if="resultLength >= searchLength">

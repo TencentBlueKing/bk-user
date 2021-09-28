@@ -102,13 +102,13 @@ class Department(TimestampMPTTModel):
     def enable(self):
         """软删除恢复"""
         self.enabled = True
-        self.save(update_fields=["enabled"])
+        self.save(update_fields=["enabled", "update_time"])
 
     def delete(self, *args, **kwargs):
         """默认为软删除"""
         # TODO: 区分软删除，用 disable 方法代替
         self.enabled = False
-        self.save(update_fields=["enabled"])
+        self.save(update_fields=["enabled", "update_time"])
 
         # 解除关系
         self.profiles.clear()

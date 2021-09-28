@@ -11,15 +11,18 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import bkuser_sdk
+from bkuser_shell.audit import serializers
+from bkuser_shell.audit.constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
 from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.common.error_codes import error_codes
+from bkuser_shell.common.export import ProfileExcelExporter
 from bkuser_shell.common.viewset import BkUserApiViewSet
+from django.conf import settings
 from django.utils.timezone import make_aware
+from openpyxl import load_workbook
 
 from bkuser_global.drf_crown import ResponseParams, inject_serializer
 from bkuser_global.utils import get_timezone_offset
-
-from . import serializers
-from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -92,3 +95,37 @@ class LoginLogViewSet(AuditLogViewSet):
 
         params = self._get_request_params(validated_data)
         return ResponseParams(api_instance.v2_audit_login_log_list(**params), {"context": {"categories": categories}})
+
+    @inject_serializer(query_in=serializers.LoginLogListReqeustSerializer, tags=["audit"])
+    def export(self, request, validated_data: dict):
+        """导出登录日志"""
+        api_instance = bkuser_sdk.AuditApi(self.get_api_client_by_request(request))
+        profile_api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
+        fields_api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
+
+        params = self._get_request_params(validated_data)
+        login_logs = self.get_paging_results(
+            api_instance.v2_audit_login_log_list, since=params["since"], until=params["until"]
+        )
+        if not login_logs:
+            raise error_codes.CANNOT_EXPORT_EMPTY_LOG
+
+        fields = self.get_paging_results(fields_api_instance.v2_dynamic_fields_list)
+        fields.append(
+            bkuser_sdk.DynamicFields(name="create_time", display_name="登录时间", type="timer", order=0).to_dict()
+        )
+
+        exporter = ProfileExcelExporter(
+            load_workbook(settings.EXPORT_LOGIN_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields, 1
+        )
+
+        profile_ids = [x["profile_id"] for x in login_logs]
+        # may too large refer to #88
+        profiles = self.get_paging_results(
+            profile_api_instance.v2_profiles_list, lookup_field="id", exact_lookups=profile_ids, include_disabled=True
+        )
+
+        extra_info = {x["profile_id"]: x for x in login_logs}
+        exporter.update_profiles(profiles, extra_info)
+
+        return exporter.get_excel_response()

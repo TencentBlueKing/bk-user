@@ -66,18 +66,29 @@ class ProfileCategory(TimestampedModel):
     def inactive(self) -> bool:
         return self.status == CategoryStatus.INACTIVE.value
 
+    def enable(self):
+        Profile.objects.enable_or_disable(
+            True, category_id=self.id, enable_param={"enabled": True, "status": ProfileStatus.NORMAL.value}
+        )
+        Department.objects.enable_or_disable(True, category_id=self.id)
+        Setting.objects.enable_or_disable(True, category_id=self.id)
+        self.enabled = True
+        self.status = CategoryStatus.NORMAL.value
+        self.save(update_fields=["enabled", "status", "update_time"])
+
     def delete(self, using=None, keep_parents=False):
         """保护默认用户目录不被删除"""
         if self.default:
             raise ValueError("default category can not be deleted.")
 
         # 手动禁用相关资源，同时保留关联关系
-        Profile.objects.disable(
+        Profile.objects.enable_or_disable(
+            False,
             category_id=self.id,
             disable_param={"enabled": False, "status": ProfileStatus.DELETED.value},
         )
-        Department.objects.disable(category_id=self.id)
-        Setting.objects.disable(category_id=self.id)
+        Department.objects.enable_or_disable(False, category_id=self.id)
+        Setting.objects.enable_or_disable(False, category_id=self.id)
 
         # 删除周期任务
         try:
@@ -87,7 +98,7 @@ class ProfileCategory(TimestampedModel):
 
         self.enabled = False
         self.status = CategoryStatus.INACTIVE.value
-        self.save()
+        self.save(update_fields=["enabled", "status", "update_time"])
 
     @property
     def configured(self) -> bool:
@@ -116,12 +127,14 @@ class ProfileCategory(TimestampedModel):
         self.save(update_fields=["last_synced_time"])
         return
 
-    def make_default_settings(self):
+    def make_default_settings(self) -> List[Setting]:
         """创建默认配置"""
         metas = SettingMeta.objects.filter(category_type=self.type)
+        settings_result = []
         for meta in metas:
-            Setting.objects.get_or_create(category_id=self.id, meta=meta, value=meta.default)
-        return
+            instance, _ = Setting.objects.get_or_create(category_id=self.id, meta=meta, value=meta.default)
+            settings_result.append(instance)
+        return settings_result
 
     def to_audit_info(self):
         """提供审计元信息"""

@@ -35,7 +35,7 @@
                :ok-text="$t('去申请')"
                @confirm="confirmSourceApply"
                @cancel="closeAuth">
-      <div class="apply-authority-dialog-container">
+      <div class="apply-authority-dialog-container" data-test-id="list_authorityManagement">
         <img src="../../images/svg/lock-radius.svg" alt="lock" class="lock-icon">
         <div class="title">{{$t('该操作需要以下权限')}}</div>
         <bk-table class="king-table" :data="authInfos" :outer-border="false">

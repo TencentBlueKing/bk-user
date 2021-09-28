@@ -27,7 +27,8 @@ DEFAULT_LOGO_URL = "img/logo_default.png"
 ##########
 # Export #
 ##########
-EXPORT_EXCEL_TEMPLATE = MEDIA_ROOT + "/excel/export_template.xlsx"
+EXPORT_ORG_TEMPLATE = MEDIA_ROOT + "/excel/export_org_tmpl.xlsx"
+EXPORT_LOGIN_TEMPLATE = MEDIA_ROOT + "/excel/export_login_tmpl.xlsx"
 
 # according to https://docs.qq.com/sheet/DTktLdUtmRldob21P?tab=uty37p&c=C3A0A0
 EXPORT_EXCEL_FILENAME = "bk_user_export"

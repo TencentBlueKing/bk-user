@@ -21,8 +21,12 @@ from bkuser_core.bkiam.filters import IAMFilter
 from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.kits import force_str_2_bool
-from bkuser_core.common.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, is_custom_fields_enabled
+from bkuser_core.common.serializers import (
+    AdvancedListSerializer,
+    AdvancedRetrieveSerialzier,
+    EmptySerializer,
+    is_custom_fields_enabled,
+)
 from django.conf import settings
 from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.db.models import ManyToOneRel, Q, QuerySet
@@ -34,6 +38,8 @@ from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from bkuser_global.utils import force_str_2_bool
+
 from .constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 
 logger = logging.getLogger(__name__)
@@ -43,6 +49,13 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size = 50
     page_size_query_param = "page_size"
     max_page_size = settings.MAX_PAGE_SIZE
+
+    def paginate_queryset(self, queryset, request, view=None):
+        # FIXME: REMOVE no_page in future version
+        if force_str_2_bool(request.query_params.get("no_page", False)):
+            return None
+
+        return super().paginate_queryset(queryset, request, view)
 
     def get_paginated_response(self, data):
         return Response(
@@ -299,6 +312,28 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
         )
 
         return super().destroy(request, *args, **kwargs)
+
+    @method_decorator(clear_cache_if_succeed)
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier(), request_body=EmptySerializer)
+    def restoration(self, request, lookup_value):
+        """软删除对象恢复"""
+        instance = self.get_object()
+        if instance.enabled:
+            raise error_codes.RESOURCE_ALREADY_ENABLED
+        try:
+            instance.enable()
+        except Exception as why:
+            # TODO: 基于 issue71 更新操作日志
+            logger.exception("failed to restoration instance: %s, error: %s", instance, why)
+        else:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.RESTORATION.value,
+                operator_obj=instance,
+                request=request,
+                extra_info={"action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}"},
+            )
+        return Response()
 
 
 class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):

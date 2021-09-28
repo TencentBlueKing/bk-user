@@ -39,7 +39,7 @@
            :class="$route.name === 'setting' && 'router-link-active'" @click="goTo('setting')">{{ $t('设置') }}</a>
       </p>
     </div>
-    <div class="header-right">
+    <div class="header-right" data-test-id="list_menuInfo">
       <bk-dropdown-menu ref="dropdownHelp"
                         align="center"
                         @show="showHelpDropdown = true"

@@ -14,6 +14,7 @@ from bkuser_core.departments.views import DepartmentViewSet
 from bkuser_core.tests.apis.utils import get_api_factory, make_request_operator_aware
 from bkuser_core.tests.utils import (
     attach_pd_relation,
+    get_one_object,
     make_simple_category,
     make_simple_department,
     make_simple_dynamic_field,
@@ -264,6 +265,7 @@ class TestActionApis:
                 "put": "update",
                 "patch": "partial_update",
                 "delete": "destroy",
+                "post": "restoration",
             }
         )
 
@@ -330,6 +332,14 @@ class TestActionApis:
         assert response.data["children"][0]["name"] == expected[0]
         assert response.data["children"][0]["full_name"] == expected[1]
         assert response.data["children"][0]["has_children"] == expected[2]
+
+    def test_department_restoration(self, factory, view):
+        d = make_simple_department("foodep", parent_id=1, force_create_params={"enabled": 0})
+        request = factory.post(f"/api/v2/departments/{d.id}/restoration/?include_disabled=1")
+        setattr(request, "operator", "faker")
+        response = view(request=request, lookup_value=f"{d.id}")
+        assert response.status_code == 200
+        assert get_one_object("department", id=d.id, name=d.name).enabled
 
 
 class TestGetProfilesApis:

@@ -2,6 +2,29 @@
 # Changelog
 
 
+## [Version: 2.3.0] - 2021-09-27 
+
+
+### API
+
+
+- [NEW] 支持传递参数，可以拉取已软删除数据 [#1](https://github.com/TencentBlueKing/bk-user/issues/1)
+- [NEW] 支持恢复已删除的数据 [#15](https://github.com/TencentBlueKing/bk-user/issues/15)
+- [NEW] 支持记录 LDAP/AD 同步组织架构/人员信息的结构化日志 [#27](https://github.com/TencentBlueKing/bk-user/issues/27)
+- [OPTIMIZATION] 优化数据源同步任务为后台执行 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)
+- [FIX] 修正 SettingMeta 默认路径参数为 id [#45](https://github.com/TencentBlueKing/bk-user/issues/45)
+- [FIX] 修正 API /api/v2/batch/profiles/ 中 swagger 参数 query_ids 缺失问题 [#26](https://github.com/TencentBlueKing/bk-user/issues/26)
+
+
+### SaaS
+
+
+- [NEW] 支持数据源同步任务页面查看 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)
+- [NEW] 支持登录日志导出 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)
+- [OPTIMIZATION] 修改页面拉取上级组件，从全量拉取改为类似【人员选择器】的分页拉取组件 [#55](https://github.com/TencentBlueKing/bk-user/issues/55)
+
+
+
 ## [Version: 2.2.6] - 2021-05-20 
 
 

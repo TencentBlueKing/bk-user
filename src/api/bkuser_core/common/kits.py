@@ -26,23 +26,6 @@ def convert_camelcase_dict(camel_dict: Dict) -> Dict:
     return new_dict
 
 
-def force_str_2_bool(bool_str: str, raise_if_unknown: bool = False) -> bool:
-    """convent 'True' or 'False' to bool, using on query_param"""
-    if isinstance(bool_str, bool):
-        return bool_str
-
-    if bool_str in ["True", "true", "1"]:
-        return True
-    elif bool_str in ["False", "false", "0"]:
-        return False
-
-    if raise_if_unknown:
-        raise ValueError("str should be 'True/true' or 'False/false' ")
-
-    # unknown str regard as False
-    return False
-
-
 def jsonp_2_json(jsonp):
     try:
         l_index = jsonp.index("(") + 1

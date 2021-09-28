@@ -40,6 +40,15 @@ urlpatterns = [
         name="profiles.action",
     ),
     url(
+        r"^api/v2/profiles/%s/restoration/$" % PVAR_PROFILE_ID,
+        views.ProfileViewSet.as_view(
+            {
+                "post": "restoration",
+            }
+        ),
+        name="profiles.restoration",
+    ),
+    url(
         r"^api/v2/profiles/%s/departments/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {

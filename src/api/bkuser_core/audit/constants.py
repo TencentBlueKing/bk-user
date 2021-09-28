@@ -49,6 +49,7 @@ class OperationEnum(AutoLowerEnum):
     SYNC = auto()
     IMPORT = auto()
     EXPORT = auto()
+    RESTORATION = auto()
 
     _choices_labels = (
         (CREATE, "创建"),
@@ -58,4 +59,5 @@ class OperationEnum(AutoLowerEnum):
         (SYNC, "同步"),
         (EXPORT, "导出"),
         (IMPORT, "导入"),
+        (RESTORATION, "恢复"),
     )

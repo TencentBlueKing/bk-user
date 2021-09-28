@@ -53,7 +53,7 @@
       </bk-tab-panel>
       <div class="derive" v-if="panelActive === 'login'" @click="Auditderive">{{$t('审计导出')}}</div>
       <div class="audit-content-wrapper">
-        <div class="thead-container table-container">
+        <div class="thead-container table-container" data-test-id="list_headTitleData">
           <table>
             <thead>
               <tr>
@@ -63,7 +63,7 @@
           </table>
         </div>
         <div class="tbody-container table-container" v-bkloading="{ isLoading: basicLoading }">
-          <div class="scroll-container" ref="auditScroller">
+          <div class="scroll-container" ref="auditScroller" data-test-id="list_auditData">
             <table>
               <tbody v-if="auditList.length">
                 <tr v-for="(item, index) in auditList" :key="index">
@@ -257,9 +257,6 @@ export default {
         url = `${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`;
         window.open(url);
       }
-    },
-    cancelAuditderive() {
-      this.$store.commit('updateInitLoading', false);
     },
     getMyDate(date) {
       // return date.getFullYear() + '-' + (date.getMonth() + 1)

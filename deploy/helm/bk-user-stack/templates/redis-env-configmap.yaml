@@ -1,3 +1,4 @@
+{{- if .Values.redis.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,8 +9,7 @@ metadata:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "-1"
 data:
-  {{- if .Values.redis.enabled }}
   {{- $redis_url := printf "redis://:%s@%s-redis-master:%s/0" $.Values.redis.auth.password $.Release.Name ($.Values.redis.master.service.port | toString )}}
   CELERY_BROKER_URL: {{ $redis_url }}
   CELERY_RESULT_BACKEND: {{ $redis_url }}
-  {{- end }}
+{{- end }}
