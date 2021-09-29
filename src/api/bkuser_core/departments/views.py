@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Type
 
-from bkuser_core.audit.constants import OperationEnum
+from bkuser_core.audit.constants import OperationEnum, OperationStatusEnum
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMPermissionExtraInfo
@@ -174,6 +174,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.UPDATE.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response(data=ProfileMinimalSerializer(profiles, many=True).data)
 
@@ -228,6 +229,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.CREATE.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
 

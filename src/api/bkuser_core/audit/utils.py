@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from django.conf import settings
 
 from . import models
-from .constants import OperationEnum
+from .constants import OperationEnum, OperationStatusEnum
 from .models import GeneralLog, ProfileRelatedLog
 
 if TYPE_CHECKING:
@@ -45,6 +45,7 @@ def get_client_ip(request: "Request") -> str:
 def create_general_log(
     operator: str,
     operate_type: str,
+    status: str,
     operator_obj: Any,
     extra_info: Dict = None,
     request=None,
@@ -58,6 +59,10 @@ def create_general_log(
 
     if not OperationEnum.has_value(operate_type):
         logger.exception("operate type<%s> unknown", operate_type)
+        return None
+
+    if not OperationStatusEnum.has_value(status):
+        logger.exception("status <s%> unknown", status)
         return None
 
     extra_value = {
@@ -77,7 +82,7 @@ def create_general_log(
         operator_obj,
         operator_obj.__class__.__name__,
     )
-    return GeneralLog.objects.create(operator=operator, extra_value=extra_value)
+    return GeneralLog.objects.create(operator=operator, extra_value=extra_value, status=status)
 
 
 def create_profile_log(

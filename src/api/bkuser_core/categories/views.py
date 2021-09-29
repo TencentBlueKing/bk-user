@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import List
 
-from bkuser_core.audit.constants import OperationEnum
+from bkuser_core.audit.constants import OperationEnum, OperationStatusEnum
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.bkiam.permissions import IAMAction, IAMHelper, IAMPermissionExtraInfo, need_iam
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
@@ -125,9 +125,8 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.CREATE.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_serializer(self, *args, **kwargs):
         if self.action in ["create"]:
@@ -149,9 +148,25 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         updating_domain = serializer.validated_data.get("domain")
         if updating_domain and not updating_domain == instance.domain:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.UPDATE.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{error_codes.CANNOT_UPDATE_DOMAIN.message}"},
+            )
             raise error_codes.CANNOT_UPDATE_DOMAIN
 
         if instance.default and any(serializer.validated_data.get(x) is False for x in ["enabled", "status"]):
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.UPDATE.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{error_codes.CANNOT_DISABLE_DOMAIN.message}"},
+            )
             raise error_codes.CANNOT_DISABLE_DOMAIN
 
         self.perform_update(serializer)
@@ -166,6 +181,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.UPDATE.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
 
         return Response(serializer.data)
@@ -176,9 +192,24 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """
         instance = self.get_object()
         if instance.default:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.DELETE.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{error_codes.CANNOT_DELETE_DEFAULT_CATEGORY.message}"},
+            )
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
 
         post_category_delete.send(sender=self, category=instance, operator=request.operator)
+        create_general_log(
+            operator=request.operator,
+            operate_type=OperationEnum.DELETE.value,
+            operator_obj=instance,
+            request=request,
+            status=OperationStatusEnum.SUCCESS.value,
+        )
         return super().destroy(request, *args, **kwargs)
 
     @swagger_auto_schema(
@@ -265,6 +296,14 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         self.check_object_permissions(request, instance)
 
         if instance.type == CategoryType.LOCAL.value:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.SYNC.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{error_codes.LOCAL_CATEGORY_CANNOT_SYNC.message}"}
+            )
             raise error_codes.LOCAL_CATEGORY_CANNOT_SYNC
 
         try:
@@ -272,6 +311,15 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
             ).id
         except ExistsSyncingTaskError as e:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.SYNC.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{e}"}
+            )
+
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
         try:
@@ -280,11 +328,28 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             )
         except FetchDataFromRemoteFailed as e:
             logger.exception("failed to sync data")
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.SYNC.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{e}"}
+            )
+
             raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
         except CoreAPIError:
             raise
         except Exception:
             logger.exception("failed to sync data")
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.SYNC.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{error_codes.SYNC_DATA_FAILED.message}"}
+            )
             raise error_codes.SYNC_DATA_FAILED
 
         create_general_log(
@@ -292,6 +357,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.SYNC.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response({"task_id": task_id})
 
@@ -313,6 +379,14 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         self.check_object_permissions(request, instance)
 
         if instance.type != CategoryType.LOCAL.value:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.IMPORT.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{error_codes.CATEGORY_CANNOT_IMPORT_BY_FILE.message}"}
+            )
             raise error_codes.CATEGORY_CANNOT_IMPORT_BY_FILE
 
         try:
@@ -320,6 +394,14 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
             ).id
         except ExistsSyncingTaskError as e:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.IMPORT.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{e}"}
+            )
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
         params = {"raw_data_file": serializer.validated_data["raw_data_file"]}
@@ -328,9 +410,25 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             adapter_sync(lookup_value, operator=request.operator, task_id=task_id, **params)
         except DataFormatError as e:
             logger.exception("failed to sync data")
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.IMPORT.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{e}"}
+            )
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
         except Exception as e:
             logger.exception("failed to sync data")
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.IMPORT.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={"failed_info": f"{e}"}
+            )
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
 
         create_general_log(
@@ -338,6 +436,7 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.IMPORT.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response()
 

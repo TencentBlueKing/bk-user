@@ -18,6 +18,7 @@ class GeneralLogSerializer(CustomFieldsMixin, serializers.Serializer):
     extra_value = serializers.JSONField(help_text=_("额外信息"))
     operator = serializers.CharField(help_text=_("操作者"))
     create_time = serializers.DateTimeField(help_text=_("创建时间"))
+    status = serializers.CharField(help_text=_("状态"))
 
 
 class LoginLogSerializer(CustomFieldsMixin, serializers.Serializer):

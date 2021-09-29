@@ -14,7 +14,7 @@ import logging
 from collections import defaultdict
 from operator import or_
 
-from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum
+from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum, OperationStatusEnum
 from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
@@ -576,9 +576,9 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             time_aware_now = now()
             valid_period = datetime.timedelta(days=profile.password_valid_days)
             if (
-                profile.password_valid_days > 0
-                and ((profile.password_update_time or profile.latest_password_update_time) + valid_period)
-                < time_aware_now
+                    profile.password_valid_days > 0
+                    and ((profile.password_update_time or profile.latest_password_update_time) + valid_period)
+                    < time_aware_now
             ):
                 create_profile_log(
                     profile=profile,
@@ -746,6 +746,7 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.CREATE.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -781,6 +782,7 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.UPDATE.value,
             operator_obj=instance,
             request=request,
+            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response(self.serializer_class(instance).data)
 

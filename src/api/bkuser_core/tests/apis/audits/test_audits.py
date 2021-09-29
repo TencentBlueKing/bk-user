@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum
+from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum, OperationStatusEnum
 from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.audit.views import GeneralLogViewSet, LoginLogViewSet, ResetPasswordLogViewSet
 from bkuser_core.tests.utils import make_simple_profile
@@ -28,18 +28,19 @@ class TestGeneralApis:
 
     # --------------- List ---------------
     @pytest.mark.parametrize(
-        "operate_type, username",
+        "operate_type, username, status",
         [
-            (OperationEnum.UPDATE.value, "abc"),
-            (OperationEnum.CREATE.value, "edf"),
-            (OperationEnum.DELETE.value, "xyz"),
+            (OperationEnum.UPDATE.value, "abc", OperationStatusEnum.SUCCESS.value),
+            (OperationEnum.CREATE.value, "edf", OperationStatusEnum.FAILED.value),
+            (OperationEnum.DELETE.value, "xyz", OperationStatusEnum.SUCCESS.value),
         ],
     )
-    def test_normal_list(self, factory, view, operate_type, username):
+    def test_normal_list(self, factory, view, operate_type, username, status):
         """测试拉取日志返回"""
         operator = "admin"
         operator_obj = make_simple_profile(username=username)
-        create_general_log(operator=operator, operator_obj=operator_obj, operate_type=operate_type)
+        create_general_log(operator=operator, operator_obj=operator_obj, operate_type=operate_type,
+                           status=status)
 
         request = factory.get("/api/v2/general_log/")
         response = view(request=request)
@@ -63,6 +64,7 @@ class TestGeneralApis:
                 operator=operator,
                 operator_obj=operator_obj,
                 operate_type=OperationEnum.UPDATE.value,
+                status=OperationStatusEnum.SUCCESS.value,
             )
 
         request = factory.get(f"/api/v2/general_log/?page={page}&page_size={page_size}")
