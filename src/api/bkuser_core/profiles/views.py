@@ -232,6 +232,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
             serializer.validated_data["domain"] = ProfileCategory.objects.get(pk=validated_data["category_id"]).domain
+        # `ConfigProvider._refresh_config` 过滤 enabled=True
+        if not ProfileCategory.objects.get(pk=validated_data["category_id"]).enabled:
+            raise error_codes.CATEGORY_NOT_ENABLED
 
         try:
             existed = Profile.objects.get(
