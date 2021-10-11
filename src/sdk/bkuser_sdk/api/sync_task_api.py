@@ -55,6 +55,7 @@ class SyncTaskApi(object):
         :param str time_field: 时间过滤字段，支持 update_time, create_time
         :param datetime since: 筛选某个时间点后的记录
         :param datetime until: 筛选某个时间点前的记录
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
@@ -89,12 +90,13 @@ class SyncTaskApi(object):
         :param str time_field: 时间过滤字段，支持 update_time, create_time
         :param datetime since: 筛选某个时间点后的记录
         :param datetime until: 筛选某个时间点前的记录
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until']  # noqa: E501
+        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -145,6 +147,8 @@ class SyncTaskApi(object):
             query_params.append(('since', params['since']))  # noqa: E501
         if 'until' in params:
             query_params.append(('until', params['until']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -175,12 +179,12 @@ class SyncTaskApi(object):
             _request_timeout=params.get('_request_timeout'),
             collection_formats=collection_formats)
 
-    def v2_sync_task_logs_read(self, lookup_value, **kwargs):  # noqa: E501
-        """v2_sync_task_logs_read  # noqa: E501
+    def v2_sync_task_show_logs(self, lookup_value, **kwargs):  # noqa: E501
+        """v2_sync_task_show_logs  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
-        >>> thread = api.v2_sync_task_logs_read(lookup_value, async_req=True)
+        >>> thread = api.v2_sync_task_show_logs(lookup_value, async_req=True)
         >>> result = thread.get()
 
         :param async_req bool
@@ -191,17 +195,17 @@ class SyncTaskApi(object):
         """
         kwargs['_return_http_data_only'] = True
         if kwargs.get('async_req'):
-            return self.v2_sync_task_logs_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
+            return self.v2_sync_task_show_logs_with_http_info(lookup_value, **kwargs)  # noqa: E501
         else:
-            (data) = self.v2_sync_task_logs_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
+            (data) = self.v2_sync_task_show_logs_with_http_info(lookup_value, **kwargs)  # noqa: E501
             return data
 
-    def v2_sync_task_logs_read_with_http_info(self, lookup_value, **kwargs):  # noqa: E501
-        """v2_sync_task_logs_read  # noqa: E501
+    def v2_sync_task_show_logs_with_http_info(self, lookup_value, **kwargs):  # noqa: E501
+        """v2_sync_task_show_logs  # noqa: E501
 
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
-        >>> thread = api.v2_sync_task_logs_read_with_http_info(lookup_value, async_req=True)
+        >>> thread = api.v2_sync_task_show_logs_with_http_info(lookup_value, async_req=True)
         >>> result = thread.get()
 
         :param async_req bool
@@ -222,14 +226,14 @@ class SyncTaskApi(object):
             if key not in all_params:
                 raise TypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method v2_sync_task_logs_read" % key
+                    " to method v2_sync_task_show_logs" % key
                 )
             params[key] = val
         del params['kwargs']
         # verify the required parameter 'lookup_value' is set
         if ('lookup_value' not in params or
                 params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_sync_task_logs_read`")  # noqa: E501
+            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_sync_task_show_logs`")  # noqa: E501
 
         collection_formats = {}
 

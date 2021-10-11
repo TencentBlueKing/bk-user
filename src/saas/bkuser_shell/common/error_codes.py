@@ -123,6 +123,7 @@ error_codes.add_codes(
         ErrorCode("CANNOT_CREATE_PROFILE", _("无法创建用户")),
         # 审计
         ErrorCode("CANNOT_GET_AUDIT_LOG", _("无法获取审计日志")),
+        ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
         # 密码重置
         ErrorCode("CANNOT_GENERATE_TOKEN", _("无法生成重置链接")),
         ErrorCode("CANNOT_GET_PROFILE_BY_TOKEN", _("链接已失效，请重新申请")),

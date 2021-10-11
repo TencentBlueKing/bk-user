@@ -144,6 +144,7 @@ class SettingMetasApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: None
                  If the method is called asynchronously,
                  returns the request thread.
@@ -168,12 +169,13 @@ class SettingMetasApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: None
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -204,6 +206,8 @@ class SettingMetasApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -253,6 +257,7 @@ class SettingMetasApi(object):
         :param str time_field: 时间过滤字段，支持 update_time, create_time
         :param datetime since: 筛选某个时间点后的记录
         :param datetime until: 筛选某个时间点前的记录
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
@@ -287,12 +292,13 @@ class SettingMetasApi(object):
         :param str time_field: 时间过滤字段，支持 update_time, create_time
         :param datetime since: 筛选某个时间点后的记录
         :param datetime until: 筛选某个时间点前的记录
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until']  # noqa: E501
+        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -343,6 +349,8 @@ class SettingMetasApi(object):
             query_params.append(('since', params['since']))  # noqa: E501
         if 'until' in params:
             query_params.append(('until', params['until']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -493,6 +501,7 @@ class SettingMetasApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: SettingMeta
                  If the method is called asynchronously,
                  returns the request thread.
@@ -517,12 +526,13 @@ class SettingMetasApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: SettingMeta
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -553,6 +563,8 @@ class SettingMetasApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -597,6 +609,7 @@ class SettingMetasApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: SettingMeta
                  If the method is called asynchronously,
                  returns the request thread.
@@ -622,12 +635,13 @@ class SettingMetasApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: SettingMeta
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['body', 'lookup_value', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['body', 'lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -662,6 +676,8 @@ class SettingMetasApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 

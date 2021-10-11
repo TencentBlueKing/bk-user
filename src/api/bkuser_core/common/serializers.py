@@ -137,11 +137,13 @@ class AdvancedListSerializer(serializers.Serializer):
         input_formats=["iso-8601", "%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%S"],
         help_text=_("筛选某个时间点前的记录"),
     )
+    include_disabled = serializers.BooleanField(required=False, default=False, help_text=_("是否包含已软删除的数据"))
 
 
 class AdvancedRetrieveSerialzier(serializers.Serializer):
     fields = serializers.CharField(required=False, help_text=_("指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id"))
     lookup_field = serializers.CharField(required=False, help_text=_("指定查询字段，内容为 lookup_value 所属字段, 例如: username"))
+    include_disabled = serializers.BooleanField(required=False, default=False, help_text=_("是否包含已软删除的数据"))
 
 
 class EmptySerializer(serializers.Serializer):

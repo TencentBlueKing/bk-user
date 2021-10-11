@@ -4,7 +4,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **int** |  | [optional] 
-**name** | **str** |  | [optional] 
+**name** | **str** |  | 
 **has_children** | **bool** |  | [optional] 
 **full_name** | **str** |  | [optional] 
 **order** | **int** |  | [optional] 

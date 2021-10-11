@@ -59,8 +59,8 @@ class ProfileFieldsValueSerializer(ProfileFieldsSerializer):
 
 
 class FieldsSaveSerializer(serializers.Serializer):
-    name = serializers.SerializerMethodField()
-    display_name = serializers.SerializerMethodField()
+    name = serializers.CharField()
+    display_name = serializers.CharField()
     builtin = serializers.BooleanField(required=False, default=False)
     require = serializers.BooleanField(required=False, default=False)
     unique = serializers.BooleanField(required=False, default=False)
