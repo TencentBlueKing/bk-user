@@ -47,11 +47,13 @@ class ProfileExcelExporter:
 
             exported_profile = ProfileExportSerializer(p).data
             for f_index, f in enumerate(self.fields):
+                field_name = f["name"]
+
                 try:
                     if f["builtin"]:
-                        raw_value = exported_profile[f["name"]]
+                        raw_value = exported_profile[field_name]
                     else:
-                        raw_value = exported_profile["extras"][f["name"]]
+                        raw_value = exported_profile["extras"][field_name]
                 except KeyError:
                     # 当无法从当前用户属性中找到对应字段时，尝试从 extra_infos 中获取
                     if extra_infos is None:
@@ -59,7 +61,7 @@ class ProfileExcelExporter:
                         continue
 
                     try:
-                        raw_value = extra_infos[str(p["id"])][f["name"]]
+                        raw_value = extra_infos[str(p["id"])][field_name]
                     except KeyError:
                         logger.exception("failed to get value from field<%s>", f)
                         continue
@@ -73,7 +75,7 @@ class ProfileExcelExporter:
 
                 # 为电话添加国际号码段
                 if f["name"] == "telephone":
-                    value = f'+{exported_profile["country_code"]}{exported_profile[f["name"]]}'
+                    value = f'+{exported_profile["country_code"]}{exported_profile[field_name]}'
 
                 if raw_value is None:
                     continue
@@ -103,7 +105,7 @@ class ProfileExcelExporter:
             )
             _cell.font = black_ft
 
-    def get_excel_response(self):
+    def to_response(self) -> HttpResponse:
         response = HttpResponse(content_type="application/ms-excel")
         response["Content-Disposition"] = f"attachment;filename={self.exported_file_name}.xlsx"
         self.workbook.save(response)

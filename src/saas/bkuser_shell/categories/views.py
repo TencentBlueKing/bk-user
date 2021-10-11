@@ -211,7 +211,7 @@ class CategoriesExportViewSet(BkUserApiViewSet):
         )
         exporter.update_profiles(all_profiles)
 
-        return exporter.get_excel_response()
+        return exporter.to_response()
 
     @inject_serializer(out=EmptySerializer, tags=["categories"])
     def export_template(self, request, category_id):
@@ -222,4 +222,4 @@ class CategoriesExportViewSet(BkUserApiViewSet):
             load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields
         )
 
-        return exporter.get_excel_response()
+        return exporter.to_response()

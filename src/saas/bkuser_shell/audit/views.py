@@ -120,7 +120,6 @@ class LoginLogViewSet(AuditLogViewSet):
             load_workbook(settings.EXPORT_LOGIN_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields, 1
         )
 
-        # may too large refer to #88
         # TODO: remove step when #88 is done
         step = 300
         profile_ids = list({x["profile_id"] for x in login_logs})
@@ -139,4 +138,4 @@ class LoginLogViewSet(AuditLogViewSet):
         extra_info = {x["profile_id"]: x for x in login_logs}
         exporter.update_profiles(profiles, extra_info)
 
-        return exporter.get_excel_response()
+        return exporter.to_response()
