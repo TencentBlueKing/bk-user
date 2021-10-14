@@ -66,7 +66,7 @@ ENABLE_IAM = True
 def get_iam_config(app_id: str, app_token: str) -> dict:
     return dict(
         api_host=env("BK_IAM_V3_INNER_HOST"),
-        system_id=env("BK_IAM_SYSTEM_ID", default="bk-user"),
+        system_id=env("BK_IAM_SYSTEM_ID", default="bk_usermgr"),
         # iam app 访问 url 用于回调拼接
         iam_app_host=env(
             "BK_IAM_SAAS_HOST",
