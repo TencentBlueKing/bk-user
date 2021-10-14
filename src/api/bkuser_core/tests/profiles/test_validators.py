@@ -236,3 +236,22 @@ class TestExtrasValidator:
                 order=100,
                 type=DynamicFieldTypeEnum.STRING.value,
             )
+
+    @pytest.mark.parametrize(
+        "field_names,force_extras",
+        [
+            (["xxxx", "yyyy"], [{"yyyy": "abcd"}, {"xxxx": "abcd"}]),
+        ],
+    )
+    def test_duplicate_other_missing_key(self, field_names, force_extras):
+        for field_name in field_names:
+            DynamicFieldInfo.objects.create(
+                name=field_name,
+                display_name=f"Dis_{field_name}",
+                unique=True,
+                order=100,
+                type=DynamicFieldTypeEnum.STRING.value,
+            )
+
+        for i, e in enumerate(force_extras):
+            make_simple_profile(username=f"fake{i}", force_create_params={"extras": e})
