@@ -67,7 +67,7 @@
             {{$t('已选择列表')}}({{selectedDepartments.length}})
             <span class="clear" @click="clearSelected">{{$t('清空')}}</span>
           </h4>
-          <div class="selected-content">
+          <div class="selected-content" data-test-id="list_selDepartmentsData">
             <ul v-if="selectedDepartments.length" class="selected-list-wrapper">
               <li class="selected-list" v-for="(item, index) in selectedDepartments" :key="index">
                 <span class="title" v-bk-overflow-tips>{{item.name}}</span>

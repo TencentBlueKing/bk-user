@@ -51,8 +51,9 @@
         v-bind="panel"
         :key="index">
       </bk-tab-panel>
+      <div class="derive" v-if="panelActive === 'login'" @click="Auditderive">{{$t('审计导出')}}</div>
       <div class="audit-content-wrapper">
-        <div class="thead-container table-container">
+        <div class="thead-container table-container" data-test-id="list_headTitleData">
           <table>
             <thead>
               <tr>
@@ -62,7 +63,7 @@
           </table>
         </div>
         <div class="tbody-container table-container" v-bkloading="{ isLoading: basicLoading }">
-          <div class="scroll-container" ref="auditScroller">
+          <div class="scroll-container" ref="auditScroller" data-test-id="list_auditData">
             <table>
               <tbody v-if="auditList.length">
                 <tr v-for="(item, index) in auditList" :key="index">
@@ -126,6 +127,7 @@ export default {
   data() {
     return {
       basicLoading: true,
+      errorMessage: this.$t('审计日志为空，无法导出'),
       paginationConfig: {
         current: 1,
         count: 1,
@@ -232,6 +234,30 @@ export default {
     this.initUserList(this.panelActive);
   },
   methods: {
+    handleWarning(config) {
+      config.message = this.errorMessage;
+      config.offsetY = 80;
+      this.$bkMessage(config);
+    },
+    async  Auditderive() {
+      const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
+      const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
+      let url = window.AJAX_URL;
+      if (url.endsWith('/')) {
+        // 去掉末尾的斜杠
+        url = url.slice(0, url.length - 1);
+      }
+      if (!url.startsWith('http')) {
+        // tips: 后端提供的 SITE_URL 需以 / 开头
+        url = window.location.origin + url;
+      }
+      if (this.panelActive === 'login' && this.auditList.length === 0) {
+        this.handleWarning({ theme: 'error' });
+      } else {
+        url = `${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`;
+        window.open(url);
+      }
+    },
     getMyDate(date) {
       // return date.getFullYear() + '-' + (date.getMonth() + 1)
       // `${+ '-' + date.getDate()}-${date.toString().match(/\d\d:\d\d:\d\d/)[0]}`;
@@ -314,6 +340,15 @@ export default {
         margin-right: 15px;
       }
     }
+  }
+  .derive {
+    position: absolute;
+    font-size: 14px;
+    cursor: pointer;
+    color: #02a8db;
+    right: 0px;
+    top: 65px;
+    z-index: 9999;
   }
   // 表格
   .audit-content-wrapper {
@@ -441,4 +476,8 @@ export default {
     }
   }
 }
+  .confirmExport{
+    text-align: center;
+    font-weight: normal;
+  }
 </style>

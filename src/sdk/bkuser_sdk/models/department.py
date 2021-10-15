@@ -81,8 +81,7 @@ class Department(object):
         self.discriminator = None
         if id is not None:
             self.id = id
-        if name is not None:
-            self.name = name
+        self.name = name
         if has_children is not None:
             self.has_children = has_children
         if full_name is not None:
@@ -147,6 +146,8 @@ class Department(object):
         :param name: The name of this Department.  # noqa: E501
         :type: str
         """
+        if name is None:
+            raise ValueError("Invalid value for `name`, must not be `None`")  # noqa: E501
 
         self._name = name
 

@@ -31,5 +31,5 @@ class SyncTaskViewSet(BkUserApiViewSet):
     @inject_serializer(out=slzs.SyncTaskProcessSerializer(many=True), tags=["sync_tasks"])
     def show_logs(self, request, task_id):
         api_instance = bkuser_sdk.SyncTaskApi(self.get_api_client_by_request(request))
-        response = api_instance.v2_sync_task_logs_read(task_id)
+        response = api_instance.v2_sync_task_show_logs(task_id)
         return response

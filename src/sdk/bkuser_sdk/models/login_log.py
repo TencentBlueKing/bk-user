@@ -36,6 +36,7 @@ class LoginLog(object):
         'reason': 'str',
         'create_time': 'datetime',
         'username': 'str',
+        'profile_id': 'str',
         'category_id': 'str'
     }
 
@@ -47,10 +48,11 @@ class LoginLog(object):
         'reason': 'reason',
         'create_time': 'create_time',
         'username': 'username',
+        'profile_id': 'profile_id',
         'category_id': 'category_id'
     }
 
-    def __init__(self, id=None, extra_value=None, operator=None, is_success=None, reason=None, create_time=None, username=None, category_id=None):  # noqa: E501
+    def __init__(self, id=None, extra_value=None, operator=None, is_success=None, reason=None, create_time=None, username=None, profile_id=None, category_id=None):  # noqa: E501
         """LoginLog - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._extra_value = None
@@ -59,6 +61,7 @@ class LoginLog(object):
         self._reason = None
         self._create_time = None
         self._username = None
+        self._profile_id = None
         self._category_id = None
         self.discriminator = None
         self.id = id
@@ -68,6 +71,7 @@ class LoginLog(object):
         self.reason = reason
         self.create_time = create_time
         self.username = username
+        self.profile_id = profile_id
         self.category_id = category_id
 
     @property
@@ -244,6 +248,31 @@ class LoginLog(object):
             raise ValueError("Invalid value for `username`, must not be `None`")  # noqa: E501
 
         self._username = username
+
+    @property
+    def profile_id(self):
+        """Gets the profile_id of this LoginLog.  # noqa: E501
+
+        登录用户ID  # noqa: E501
+
+        :return: The profile_id of this LoginLog.  # noqa: E501
+        :rtype: str
+        """
+        return self._profile_id
+
+    @profile_id.setter
+    def profile_id(self, profile_id):
+        """Sets the profile_id of this LoginLog.
+
+        登录用户ID  # noqa: E501
+
+        :param profile_id: The profile_id of this LoginLog.  # noqa: E501
+        :type: str
+        """
+        if profile_id is None:
+            raise ValueError("Invalid value for `profile_id`, must not be `None`")  # noqa: E501
+
+        self._profile_id = profile_id
 
     @property
     def category_id(self):

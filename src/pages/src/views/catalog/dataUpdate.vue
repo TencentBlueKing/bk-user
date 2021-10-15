@@ -27,7 +27,7 @@
       </span>
       <span class="update-decord">{{$t('数据更新记录')}}</span>
     </div>
-    <div class="catalog-table">
+    <div class="catalog-table" data-test-id="list_dataUpdateInfo">
       <bk-table
         :data="updateList"
         :size="'small'"

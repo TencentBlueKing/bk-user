@@ -28,19 +28,14 @@ from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
 from bkuser_shell.common.viewset import BkUserApiViewSet
-from bkuser_shell.config_center.constants import DynamicFieldTypeEnum
-from bkuser_shell.organization.serializers.profiles import ProfileExportSerializer
-from bkuser_shell.organization.utils import get_options_values_by_key
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.http.response import HttpResponse
-from django.utils.translation import ugettext_lazy as _
 from openpyxl import load_workbook
-from openpyxl.styles import Alignment, Font, colors
 
 from bkuser_global.drf_crown import inject_serializer
 
+from ..common.export import ProfileExcelExporter
 from .constants import TEST_CONNECTION_TYPES, CategoryStatus, CategoryTypeEnum
 
 logger = logging.getLogger(__name__)
@@ -205,116 +200,26 @@ class CategoriesExportViewSet(BkUserApiViewSet):
 
         department_ids = validated_data["department_ids"]
         api_instance = bkuser_sdk.BatchApi(self.get_api_client_by_request(request))
+        field_api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
         all_profiles = api_instance.v2_batch_departments_multiple_retrieve_profiles(
             department_ids=department_ids, recursive=True
         )
 
-        try:
-            export_template = self.load_export_template()
-            first_sheet = export_template.worksheets[0]
-            first_sheet.alignment = Alignment(wrapText=True)
-        except Exception:
-            logger.exception("读取模版文件失败, Category<%s>", category_id)
-            raise error_codes.CATEGORY_EXPORT_FAILED.f(_("读取模版文件失败, 请联系管理员"))
+        fields = self.get_paging_results(field_api_instance.v2_dynamic_fields_list)
+        exporter = ProfileExcelExporter(
+            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields
+        )
+        exporter.update_profiles(all_profiles)
 
-        try:
-            all_profiles = ProfileExportSerializer(all_profiles, many=True).data
-            fields_api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-            required_fields, not_required_fields = self._get_fields(fields_api_instance)
-            self._update_sheet_titles(required_fields, not_required_fields, first_sheet)
-            all_fields = required_fields + not_required_fields
-        except Exception:
-            logger.exception("导出 Category<%s> 失败", category_id)
-            raise error_codes.CATEGORY_EXPORT_FAILED.f(_("获取用户信息字段失败, 请联系管理员"))
+        return exporter.to_response()
 
-        # 写用户数据
-        for row_index, row_data in enumerate(all_profiles):
-            for index, field in enumerate(all_fields):
-                # 对于任意包含 options 值的内容
-                try:
-                    if field["builtin"]:
-                        raw_value = row_data[field["name"]]
-                    else:
-                        raw_value = row_data["extras"][field["name"]]
-                except Exception:  # pylint: disable=broad-except
-                    logger.exception("failed to get value from field<%s>", field)
-                    continue
-
-                value = raw_value
-                # options 存储值为 key， 但是 Excel 交互值为 value
-                if field["type"] == DynamicFieldTypeEnum.ONE_ENUM.value:
-                    value = ",".join(get_options_values_by_key(field["options"], [raw_value]))
-                elif field["type"] == DynamicFieldTypeEnum.MULTI_ENUM.value:
-                    value = ",".join(get_options_values_by_key(field["options"], raw_value))
-
-                # 为电话添加国际号码段
-                if field["name"] == "telephone":
-                    value = f'+{row_data["country_code"]}{row_data[field["name"]]}'
-
-                try:
-                    first_sheet.cell(row=row_index + 3, column=index + 1, value=value)
-                except Exception:  # pylint: disable=broad-except
-                    logger.exception("写入表格数据失败 Category<%s>-Profile<%s>", category_id, row_data)
-                    continue
-
-        response = self.make_excel_response(settings.EXPORT_EXCEL_FILENAME)
-        export_template.save(response)
-        return response
-
-    @inject_serializer(query_in=CategoryExportSerializer, out=EmptySerializer, tags=["categories"])
-    def export_template(self, request, category_id, validated_data):
+    @inject_serializer(out=EmptySerializer, tags=["categories"])
+    def export_template(self, request, category_id):
         """生成excel导入模板样例文件"""
-
-        export_template = self.load_export_template()
-        first_sheet = export_template.worksheets[0]
-        first_sheet.alignment = Alignment(wrapText=True)
-
         api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        required_fields, not_required_fields = self._get_fields(api_instance)
-        self._update_sheet_titles(required_fields, not_required_fields, first_sheet)
-
-        response = self.make_excel_response(settings.EXPORT_EXCEL_FILENAME + "_template")
-        export_template.save(response)
-        return response
-
-    @staticmethod
-    def make_excel_response(file_name: str):
-        response = HttpResponse(content_type="application/ms-excel")
-        response["Content-Disposition"] = f"attachment;filename={file_name}.xlsx"
-        return response
-
-    @staticmethod
-    def load_export_template():
-        return load_workbook(settings.EXPORT_EXCEL_TEMPLATE)
-
-    def _get_fields(self, api_instance):
-        """获取所有的字段"""
         fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
+        exporter = ProfileExcelExporter(
+            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields
+        )
 
-        required_fields = [x for x in fields if x["require"]]
-        not_required_fields = [x for x in fields if not x["require"]]
-        return required_fields, not_required_fields
-
-    @staticmethod
-    def _update_sheet_titles(required_fields, not_required_fields, sheet, title_row_index=2):
-        """更新表格标题"""
-        required_field_names = [x["display_name"] for x in required_fields]
-        not_required_field_names = [x["display_name"] for x in not_required_fields]
-
-        red_ft = Font(color=colors.RED)
-        black_ft = Font(color=colors.BLACK)
-        for index, field_name in enumerate(required_field_names):
-            _cell = sheet.cell(
-                row=title_row_index,
-                column=index + 1,
-                value=field_name,
-            )
-            _cell.font = red_ft
-
-        for index, field_name in enumerate(not_required_field_names):
-            _cell = sheet.cell(
-                row=title_row_index,
-                column=index + 1 + len(required_field_names),
-                value=field_name,
-            )
-            _cell.font = black_ft
+        return exporter.to_response()

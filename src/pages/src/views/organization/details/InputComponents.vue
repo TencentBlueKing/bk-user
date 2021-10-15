@@ -20,30 +20,33 @@
   - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
   -->
 <template>
-  <ul v-if="profileInfoList.length">
-    <li class="infor-list" v-for="(item,index) in profileInfoList" :key="index">
-      <p class="desc">{{item.name}}
-        <span class="star" v-if="item.require">*</span>
-        <i class="account-msg icon-user--l"
-           v-if="item.key === 'username'"
-           v-bk-tooltips="$t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头')"
-        ></i>
-        <i class="account-msg icon-user--l"
-           v-if="item.key === 'display_name'"
-           v-bk-tooltips="item.name + $t('可随时修改，长度为1-32个字符')"
-        ></i>
-      </p>
-      <!-- 输入框 -->
-      <div class="input-text">
-        <InputPhone v-if="item.key === 'telephone'" :item="item" :edit-status="editStatus" />
-        <InputString v-else-if="item.type === 'string' || item.type === 'number'"
-                     :item="item"
-                     :edit-status="editStatus" />
-        <InputDate v-else-if="item.type === 'timer'" :item="item" :edit-status="editStatus" />
-        <InputSelect v-else-if="item.type.indexOf('enum') !== -1" :item="item" :edit-status="editStatus" />
-      </div>
-    </li>
-  </ul>
+  <div data-test-id="profileInfo">
+    <ul v-if="profileInfoList.length">
+      <li class="infor-list" v-for="(item,index) in profileInfoList" :key="index">
+        <p class="desc">{{item.name}}
+          <span class="star" v-if="item.require">*</span>
+          <i class="account-msg icon-user--l"
+             v-if="item.key === 'username'"
+             v-bk-tooltips="$t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头')"
+          ></i>
+          <i class="account-msg icon-user--l"
+             v-if="item.key === 'display_name'"
+             v-bk-tooltips="item.name + $t('可随时修改，长度为1-32个字符')"
+          ></i>
+        </p>
+        <!-- 输入框 -->
+        <div class="input-text">
+          <InputPhone v-if="item.key === 'telephone'" :item="item" :edit-status="editStatus" />
+          <InputString v-else-if="item.type === 'string' || item.type === 'number'"
+                       :item="item"
+                       :edit-status="editStatus" />
+          <InputDate v-else-if="item.type === 'timer'" :item="item" :edit-status="editStatus" />
+          <InputSelect v-else-if="item.type.indexOf('enum') !== -1" :item="item" :edit-status="editStatus" />
+        </div>
+      </li>
+    </ul>
+  </div>
+
 </template>
 
 <script>

@@ -96,7 +96,7 @@
           <div class="table-actions" v-if="noSearchOrSearchDepartment">
             <!-- 本地用户目录 -->
             <template v-if="currentCategoryType === 'local'">
-              <div class="table-actions-left-container local-type">
+              <div class="table-actions-left-container local-type" data-test-id="list_operationUser">
                 <!-- 添加成员 -->
                 <bk-dropdown-menu ref="dropdownAdd" class="king-dropdown-menu"
                                   :disabled="basicLoading" @show="isDropdownShowAdd = true"
