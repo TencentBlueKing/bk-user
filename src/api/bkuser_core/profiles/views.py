@@ -427,6 +427,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operator=request.operator,
             extra_values=modify_summary,
             operation_type=OperationEnum.UPDATE.value,
+            status=OperationStatusEnum.SUCCEED.value,
         )
         return Response(data=local_serializers.ProfileMinimalSerializer(instance).data)
 
@@ -579,9 +580,9 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             time_aware_now = now()
             valid_period = datetime.timedelta(days=profile.password_valid_days)
             if (
-                    profile.password_valid_days > 0
-                    and ((profile.password_update_time or profile.latest_password_update_time) + valid_period)
-                    < time_aware_now
+                profile.password_valid_days > 0
+                and ((profile.password_update_time or profile.latest_password_update_time) + valid_period)
+                < time_aware_now
             ):
                 create_profile_log(
                     profile=profile,
@@ -749,7 +750,6 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.CREATE.value,
             operator_obj=instance,
             request=request,
-            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -785,7 +785,6 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type=OperationEnum.UPDATE.value,
             operator_obj=instance,
             request=request,
-            status=OperationStatusEnum.SUCCESS.value,
         )
         return Response(self.serializer_class(instance).data)
 

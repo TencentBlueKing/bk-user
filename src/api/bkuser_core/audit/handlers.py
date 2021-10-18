@@ -15,7 +15,7 @@ from django.dispatch import receiver
 
 @receiver(post_profile_create)
 @receiver(post_profile_update)
-def create_audit_log(sender, profile, operator, operation_type, status, extra_values, **kwargs):
+def create_audit_log(sender, profile, operator, operation_type, extra_values, **kwargs):
     """Create an audit log"""
     request = extra_values["request"]
     create_general_log(
@@ -23,7 +23,6 @@ def create_audit_log(sender, profile, operator, operation_type, status, extra_va
         operate_type=operation_type,
         operator_obj=profile,
         request=request,
-        status=status,
     )
 
     # 当密码信息存在时，我们需要增加一条记录，

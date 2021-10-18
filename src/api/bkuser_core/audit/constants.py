@@ -61,10 +61,10 @@ class OperationEnum(AutoLowerEnum):
 
 
 class OperationStatusEnum(AutoLowerEnum):
-    SUCCESS = auto()
+    SUCCEED = auto()
     FAILED = auto()
 
     _choices_labels = (
-        (SUCCESS, "成功"),
+        (SUCCEED, "成功"),
         (FAILED, "失败"),
     )
