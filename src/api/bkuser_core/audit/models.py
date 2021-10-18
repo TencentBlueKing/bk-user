@@ -59,6 +59,7 @@ class ProfileRelatedLog(Log):
 
 class GeneralLog(Log):
     """通用操作日志"""
+
     status = models.CharField("状态", max_length=16, choices=OperationStatusEnum.get_choices())
 
 

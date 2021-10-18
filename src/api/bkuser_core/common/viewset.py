@@ -113,8 +113,8 @@ class DynamicFieldsMixin:
         if not fields:
             return
         if (
-                "enabled" in fields
-                or getattr(self, "include_disabled_field", "include_disabled") not in request.query_params
+            "enabled" in fields
+            or getattr(self, "include_disabled_field", "include_disabled") not in request.query_params
         ):
             return
         fields.append("enabled")
@@ -131,10 +131,10 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
 
     @staticmethod
     def _try_best_match(
-            best_match: bool,
-            queryset: QuerySet,
-            condition_str: str,
-            params: Optional[list] = None,
+        best_match: bool,
+        queryset: QuerySet,
+        condition_str: str,
+        params: Optional[list] = None,
     ):
         # 最短匹配排在前面
         if best_match:
@@ -191,7 +191,7 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
         query_data = serializer.validated_data
 
         if queryset.model.__name__ in self.SOFT_DELETE_MODELNAMES and not force_str_2_bool(
-                request.query_params.get(view.include_disabled_field, False)
+            request.query_params.get(view.include_disabled_field, False)
         ):
             queryset = queryset.filter(enabled=True)
 
@@ -296,7 +296,6 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             operate_type=OperationEnum.UPDATE.value,
             operator_obj=instance,
             request=request,
-            status=OperationStatusEnum.SUCCESS.value,
         )
         return result
 
@@ -310,7 +309,6 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             operate_type=OperationEnum.DELETE.value,
             operator_obj=instance,
             request=request,
-            status=OperationStatusEnum.SUCCESS.value,
         )
 
         return super().destroy(request, *args, **kwargs)
@@ -332,8 +330,10 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
                 operator_obj=instance,
                 request=request,
                 status=OperationStatusEnum.FAILED.value,
-                extra_info={"action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}",
-                            "FAILED_info": f"{why}"},
+                extra_info={
+                    "action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}",
+                    "FAILED_info": f"{why}",
+                },
             )
             logger.exception("failed to restoration instance: %s, error: %s", instance, why)
         else:
@@ -342,7 +342,6 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
                 operate_type=OperationEnum.RESTORATION.value,
                 operator_obj=instance,
                 request=request,
-                status=OperationStatusEnum.SUCCESS.value,
                 extra_info={"action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}"},
             )
         return Response()
@@ -433,7 +432,6 @@ class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
                     operate_type=OperationEnum.UPDATE.value,
                     operator_obj=instance,
                     request=request,
-                    status=OperationStatusEnum.SUCCESS.value,
                 )
 
             if self.CATEGORY_SENSITIVE:
@@ -463,7 +461,6 @@ class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
                     operate_type=OperationEnum.DELETE.value,
                     operator_obj=instance,
                     request=request,
-                    status=OperationStatusEnum.SUCCESS.value
                 )
 
                 instance.delete()
