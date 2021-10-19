@@ -40,7 +40,9 @@ class IAMHelper:
         self.app_id_in_iam = self.config_loader.own_app_id or settings.APP_ID
         self.system_id = self.config_loader.system_id
         self.app_token_in_iam = self.config_loader.own_app_token or settings.APP_TOKEN
-        self.iam = IAM(self.app_id_in_iam, self.app_token_in_iam, self.config_loader.api_host, settings.BK_PAAS_URL)
+        self.iam = IAM(
+            self.app_id_in_iam, self.app_token_in_iam, self.config_loader.api_host, settings.BK_COMPONENT_API_URL
+        )
 
     def make_request_without_resources(self, username: str, action_id: IAMAction) -> Request:
         return Request(

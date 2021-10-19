@@ -82,7 +82,7 @@ env:
   # -------------
   BK_IAM_SYSTEM_ID: "bk_usermgr"
   # 权限中心后台访问地址
-  BK_IAM_V3_INNER_HOST: ""
+  BK_IAM_V3_INNER_HOST: "http://bkiam-web"
   # 默认我们会按照 BK_PAAS_URL/o/bk_iam 拼接权限中心 SaaS 访问地址，可以通过以下值覆盖
   # BK_IAM_SAAS_HOST: "http://apps.bktencent-example.com/bkapp-bk-iam-saas-prod/"
 
