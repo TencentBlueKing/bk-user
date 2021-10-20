@@ -21,13 +21,22 @@
   -->
 <template>
   <div class="pull-user-wrapper">
-    <bk-tag-input
-      ref="pullUser"
+    <bk-select
+      searchable
+      multiple
+      display-tag
       v-model="tags"
-      has-delete-icon
-      :placeholder="$t('搜索用户名/账户')"
-      :list="userList"
-    ></bk-tag-input>
+      :remote-method="selectData"
+      @toggle="handleBranchToggle"
+      ext-popover-cls="scrollview"
+      :scroll-height="188">
+      <bk-option
+        v-for="option in userList"
+        :key="option.id"
+        :id="option.id"
+        :name="option.username">
+      </bk-option>
+    </bk-select>
     <div class="input-loading" @click.stop v-show="basicLoading">
       <img src="../../../images/svg/loading.svg" alt="">
     </div>
@@ -47,6 +56,14 @@ export default {
       tags: [],
       userList: [],
       basicLoading: true,
+      searchValue: '',
+      paginationConfig: {
+        current: 1,
+        count: 1,
+        limit: 10,
+      },
+      timer: null,
+      copyList: [],
     };
   },
   watch: {
@@ -55,22 +72,65 @@ export default {
     },
   },
   created() {
-    this.getUserList();
+    // 进入页面获取数据
+    this.searchValue = '';
+    this.paginationConfig.current = 1;
+    this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
   methods: {
-    // 获取已有人员列表
-    async getUserList() {
-      try {
-        const res = await this.$store.dispatch('organization/getAllUser', { id: this.id });
-        this.userList = res.data.map(v => ({
-          id: v.id,
-          username: v.username,
-          display_name: v.display_name,
-          name: v.display_name ? `${v.username}(${v.display_name})` : v.username,
-        }));
+    selectData(val) {
+      this.searchValue = val;
+      this.paginationConfig.current = 1;
+      this.copyList = [];
+      clearTimeout(this.timer);
+      this.timer = setTimeout(async () => {
+        await this.initRtxList(val, this.paginationConfig.current);
+      }, 500);
+    },
+    // 点击select
+    async handleBranchToggle(value) {
+      if (value) {
         this.$nextTick(() => {
-          this.$refs.pullUser.$el.click();
+          this.paginationConfig.current = 1;
+          this.copyList = [];
+          this.initRtxList(this.searchValue, this.paginationConfig.current);
+          const selectorList = document.querySelector('.scrollview').querySelector('.bk-options');
+          if (selectorList) {
+            selectorList.scrollTop = 0;
+            selectorList.addEventListener('scroll', this.scrollHandler);
+          }
         });
+      }
+    },
+    // 滚动回调
+    scrollHandler() {
+      const scrollContainer = document.querySelector('.scrollview').querySelector('.bk-options');
+      if (scrollContainer.scrollTop === 0) {
+        return;
+      }
+      if (scrollContainer.scrollTop + scrollContainer.offsetHeight >= scrollContainer.scrollHeight) {
+        this.paginationConfig.current = this.paginationConfig.current + 1;
+        if (this.paginationConfig.current
+        <= Math.floor((this.paginationConfig.count / this.paginationConfig.limit) + 1)) {
+          setTimeout(async () => {
+            await this.initRtxList(this.searchValue, this.paginationConfig.current);
+          }, 200);
+        }
+      }
+    },
+    async initRtxList(searchValue, curPage) {
+      try {
+        const params = {
+          id: this.id,
+          pageSize: this.paginationConfig.limit,
+          page: curPage,
+          keyword: searchValue,
+        };
+        this.showLeaderLoading = true;
+        const res = await this.$store.dispatch('organization/getSupOrganization', params);
+        this.paginationConfig.count = res.data.count;
+        this.copyList.push(...res.data.data);
+        this.userList = this.copyList.filter(item => item.username);
       } catch (e) {
         console.warn(e);
       } finally {
