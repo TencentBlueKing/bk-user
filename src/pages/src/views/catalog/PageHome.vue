@@ -408,7 +408,7 @@ export default {
     .reDataupdate {
       font-family: MicrosoftYaHei, MicrosoftYaHei-Regular;
       height: 32px;
-      font-size: 12px;
+      font-size: 14px;
       color: #3a84ff;
       line-height: 32px;
       cursor: pointer;
