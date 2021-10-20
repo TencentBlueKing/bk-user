@@ -39,7 +39,7 @@ from bkuser_core.common.viewset import AdvancedListAPIView, AdvancedModelViewSet
 from django.utils.decorators import method_decorator
 from django.utils.module_loading import import_string
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters
+from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
@@ -112,7 +112,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-        # headers = self.get_success_headers(serializer.data)
+        headers = self.get_success_headers(serializer.data)
 
         # 默认添加到最后 TODO: 需要一个更优雅的实现
         max_order = ProfileCategory.objects.get_max_order()
@@ -125,6 +125,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operator_obj=instance,
             request=request,
         )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_serializer(self, *args, **kwargs):
         if self.action in ["create"]:
@@ -132,7 +133,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         else:
             return self.serializer_class(*args, **kwargs)
 
-    # @method_decorator(audit_error_general_log)
     @audit_error_general_log(operate_type=OperationEnum.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def update(self, request, *args, **kwargs):

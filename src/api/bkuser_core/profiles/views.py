@@ -14,7 +14,7 @@ import logging
 from collections import defaultdict
 from operator import or_
 
-from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum, OperationStatusEnum
+from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum
 from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
@@ -427,7 +427,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operator=request.operator,
             extra_values=modify_summary,
             operation_type=OperationEnum.UPDATE.value,
-            status=OperationStatusEnum.SUCCEED.value,
         )
         return Response(data=local_serializers.ProfileMinimalSerializer(instance).data)
 
