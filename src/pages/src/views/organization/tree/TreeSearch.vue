@@ -74,8 +74,12 @@
                       :key="'department' + index"
                       :class="{ 'active': (activeType === 'department' && activeIndex === index) }"
                       @click="handleSelect(item)">
-                    <p class="item-title">{{ item.name }}</p>
-                    <p class="item-detail">{{ getDepartmentDetail(item) }}</p>
+                    <div class="match-item-left">
+                      <p class="item-title">{{ item.name }}</p>
+                      <p class="item-detail">{{ getDepartmentDetail(item) }}</p>
+                    </div>
+                    <bk-tag
+                      v-if="!item.enabled">{{ $t('已删除') }}</bk-tag>
                   </li>
                 </ul>
               </div>
@@ -98,11 +102,15 @@
                       :key="'user' + index"
                       :class="{ 'active': (activeType === 'user' && activeIndex === index) }"
                       @click="handleSelect(item)">
-                    <p class="item-title">
-                      {{ item.username + '(' + item.display_name + ') ' }}
-                      <span class="category-label">{{item.category_name}}</span>
-                    </p>
-                    <p class="item-detail">{{ getUserDetail(item) }}</p>
+                    <div class="match-item-left">
+                      <p class="item-title">
+                        {{ item.username + '(' + item.display_name + ') ' }}
+                        <span class="category-label">{{item.category_name}}</span>
+                      </p>
+                      <p class="item-detail">{{ getUserDetail(item) }}</p>
+                    </div>
+                    <bk-tag
+                      v-if="item.status !== 'NORMAL'">{{ getStatus(item.status) }}</bk-tag>
                   </li>
                 </ul>
               </div>
@@ -162,6 +170,14 @@ export default {
         return itemInfo.category_name;
       }
       return `${groupName}：${itemInfo[groupType]}`;
+    },
+    getStatus(status) {
+      switch (status) {
+        case 'LOCKED':
+          return this.$t('已冻结');
+        case 'DISABLED':
+          return this.$t('已禁用');
+      }
     },
     dealDepartmentPath(path) {
       const length = path.length;
@@ -536,27 +552,38 @@ export default {
       display: block;
       padding: 10px 20px 12px;
       cursor: pointer;
-
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       &.active,
       &:hover {
         background: #e1ecff;
       }
+      .match-item-left {
+        .item-title {
+          margin-bottom: 4px;
+          font-weight: bold;
+          color: #63656e;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
 
-      .item-title {
-        margin-bottom: 4px;
-        font-weight: bold;
-        color: #63656e;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-
-        .category-label {
-          font-weight: normal;
-          background: #f0f1f5;
-          padding: 2px 4px;
+          .category-label {
+            font-weight: normal;
+            background: #f0f1f5;
+            padding: 2px 4px;
+          }
         }
       }
-
+      .bk-tag {
+        font-size: 13px;
+        height: 30px;
+        line-height: 30px;
+        color: #aaa;
+        background-color: #f2f2f2;
+        padding: 0 20px;
+        border: 1px solid #d7d7d7;
+      }
       .item-detail {
         overflow: hidden;
         text-overflow: ellipsis;

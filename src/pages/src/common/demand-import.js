@@ -54,6 +54,7 @@ import {
   bkTable,
   bkTableColumn,
   bkTagInput,
+  bkTag,
   bkTimePicker,
   bkTimeline,
   bkTransfer,
@@ -112,6 +113,7 @@ Vue.use(bkTabPanel);
 Vue.use(bkTable);
 Vue.use(bkTableColumn);
 Vue.use(bkTagInput);
+Vue.use(bkTag);
 Vue.use(bkTimePicker);
 Vue.use(bkTimeline);
 Vue.use(bkTransfer);

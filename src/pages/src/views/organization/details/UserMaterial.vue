@@ -118,6 +118,20 @@
               <span class="text">{{passwordValidDays}}</span>
             </p>
           </div>
+          <div class="specific-text">
+            <span class="name">{{$t('创建时间')}}</span>
+            <span class="gap">：</span>
+            <p class="desc">
+              <span class="text">{{currentProfile.create_time}}</span>
+            </p>
+          </div>
+          <div class="specific-text">
+            <span class="name">{{$t('最近一次登录时间')}}</span>
+            <span class="gap">：</span>
+            <p class="desc">
+              <span class="text">{{currentProfile.update_time}}</span>
+            </p>
+          </div>
         </li>
       </ul>
     </div>
