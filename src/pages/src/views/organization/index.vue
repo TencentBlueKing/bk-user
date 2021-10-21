@@ -325,6 +325,7 @@ import PullUser from './table/PullUser';
 import DetailsBar from './details/DetailsBar';
 
 import SetDepartment from '@/components/organization/SetDepartment';
+import moment from 'moment';
 
 export default {
   components: {
@@ -548,6 +549,14 @@ export default {
           {
             key: 'departments',
             name: 'departments',
+          },
+          {
+            key: 'create_time',
+            name: 'create_time',
+          },
+          {
+            key: 'update_time',
+            name: 'update_time',
           }
         );
         this.userMessage.tableHeardList = tableHeardList;
@@ -873,6 +882,8 @@ export default {
 
     // 查看当前用户的信息
     viewDetails(item) {
+      item.create_time = moment(item.create_time).format('YYYY-MM-DD HH:mm:ss');
+      item.update_time = moment(item.update_time).format('YYYY-MM-DD HH:mm:ss');
       this.currentProfile = item;
       this.detailsBarInfo.type = 'view';
       this.detailsBarInfo.title = this.currentProfile.display_name;
