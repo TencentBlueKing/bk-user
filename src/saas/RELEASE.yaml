@@ -314,7 +314,7 @@ versions:
         - "支持用户重置密码不能与最近三次密码重复"
 
 - version: "2.3.0"
-  date: "2021-09-27"
+  date: "2021-10-22"
   changeLogs:
   - project: "API"
     detail:
@@ -339,3 +339,7 @@ versions:
     - type: "OPTIMIZATION"
       content:
       - "修改页面拉取上级组件，从全量拉取改为类似【人员选择器】的分页拉取组件 [#55](https://github.com/TencentBlueKing/bk-user/issues/55)"
+    - type: "FIX"
+      content:
+      - "修复数值型自定义字段在页面上输入时没有异常提示 [#101](https://github.com/TencentBlueKing/bk-user/issues/101)"
+      - "修复“从其他组织拉取用户”异常问题 [#102](https://github.com/TencentBlueKing/bk-user/issues/102)"

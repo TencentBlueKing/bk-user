@@ -2,7 +2,7 @@
 # Changelog
 
 
-## [Version: 2.3.0] - 2021-09-27 
+## [Version: 2.3.0] - 2021-10-22 
 
 
 ### API
@@ -22,6 +22,8 @@
 - [NEW] 支持数据源同步任务页面查看 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)
 - [NEW] 支持登录日志导出 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)
 - [OPTIMIZATION] 修改页面拉取上级组件，从全量拉取改为类似【人员选择器】的分页拉取组件 [#55](https://github.com/TencentBlueKing/bk-user/issues/55)
+- [FIX] 修复数值型自定义字段在页面上输入时没有异常提示 [#101](https://github.com/TencentBlueKing/bk-user/issues/101)
+- [FIX] 修复“从其他组织拉取用户”异常问题 [#102](https://github.com/TencentBlueKing/bk-user/issues/102)
 
 
 
