@@ -27,6 +27,9 @@ CSRF_COOKIE_NAME = "bkuser_csrftoken"
 # Django 3 required
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
+# for iframe
+X_FRAME_OPTIONS = "SAMEORIGIN"
+
 # ==============================================================================
 # Middleware and apps
 # ==============================================================================

@@ -101,10 +101,10 @@ body,
   background-color: #fff;
 }
 
-body {
+// body {
   /*鼠标快速滚动 tips dom 会抖动*/
-  overflow-y: hidden;
-}
+//   overflow-y: hidden;
+// }
 
 /*无权限时 v-cursor 样式*/
 .cursor-element {

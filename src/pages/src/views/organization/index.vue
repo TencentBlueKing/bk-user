@@ -96,7 +96,7 @@
           <div class="table-actions" v-if="noSearchOrSearchDepartment">
             <!-- 本地用户目录 -->
             <template v-if="currentCategoryType === 'local'">
-              <div class="table-actions-left-container local-type">
+              <div class="table-actions-left-container local-type" data-test-id="list_operationUser">
                 <!-- 添加成员 -->
                 <bk-dropdown-menu ref="dropdownAdd" class="king-dropdown-menu"
                                   :disabled="basicLoading" @show="isDropdownShowAdd = true"
@@ -325,6 +325,7 @@ import PullUser from './table/PullUser';
 import DetailsBar from './details/DetailsBar';
 
 import SetDepartment from '@/components/organization/SetDepartment';
+import moment from 'moment';
 
 export default {
   components: {
@@ -548,6 +549,14 @@ export default {
           {
             key: 'departments',
             name: 'departments',
+          },
+          {
+            key: 'create_time',
+            name: 'create_time',
+          },
+          {
+            key: 'update_time',
+            name: 'update_time',
           }
         );
         this.userMessage.tableHeardList = tableHeardList;
@@ -685,7 +694,6 @@ export default {
         this.getTableData();
       }
     },
-
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
       // 消除之前空组织对搜索结果的影响
@@ -874,6 +882,8 @@ export default {
 
     // 查看当前用户的信息
     viewDetails(item) {
+      item.create_time = moment(item.create_time).format('YYYY-MM-DD HH:mm:ss');
+      item.update_time = moment(item.update_time).format('YYYY-MM-DD HH:mm:ss');
       this.currentProfile = item;
       this.detailsBarInfo.type = 'view';
       this.detailsBarInfo.title = this.currentProfile.display_name;

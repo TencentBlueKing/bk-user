@@ -25,13 +25,14 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(post_category_create)
-def create_sync_tasks(sender, category, **kwargs):
+def create_sync_tasks(sender, category, creator: str, **kwargs):
     if category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
     logger.info("going to add periodic task for Category<%s>", category.id)
     make_periodic_sync_task(
         category_id=category.id,
+        operator=creator,
         interval_seconds=get_plugin_by_category(category).extra_config["default_sync_period"],
     )
 
@@ -46,7 +47,7 @@ def delete_sync_tasks(sender, category, **kwargs):
 
 
 @receiver(post_setting_create_or_update)
-def update_sync_tasks(sender, setting, **kwargs):
+def update_sync_tasks(sender, setting, operator: str, **kwargs):
     if setting.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
@@ -69,6 +70,6 @@ def update_sync_tasks(sender, setting, **kwargs):
         cycle_value,
     )
     try:
-        update_periodic_sync_task(category_id=setting.category_id, interval_seconds=cycle_value)
+        update_periodic_sync_task(category_id=setting.category_id, operator=operator, interval_seconds=cycle_value)
     except Exception:  # pylint: disable=broad-except
         logger.exception("failed to update periodic task schedule")

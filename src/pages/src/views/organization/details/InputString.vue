@@ -25,7 +25,7 @@
     <input
       :type="inputType"
       :disabled="editStatus && !item.editable"
-      :placeholder="item.holder"
+      :placeholder="inputType === 'number' ? $t('请输入数字') : item.holder"
       :class="['select-text', { 'input-error': item.isError }]"
       v-model="item.value"
       @blur="verifyInput(item)"

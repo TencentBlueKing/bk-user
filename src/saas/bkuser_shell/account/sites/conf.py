@@ -17,11 +17,11 @@ class ConfFixture(object):
     LOGIN_REQUIRED_MIDDLEWARE = "bk_token.middlewares.LoginRequiredMiddleware"
     USER_MODEL = "bk_token.models.UserProxy"
 
-    CONSOLE_LOGIN_URL = settings.BK_PAAS_HOST
-    LOGIN_URL = settings.BK_PAAS_HOST + "/login/"
-    LOGIN_PLAIN_URL = settings.BK_PAAS_HOST + "/login/plain/"
-    VERIFY_URL = settings.BK_PAAS_INNER_HOST + "/login/accounts/is_login/"
-    USER_INFO_URL = settings.BK_PAAS_INNER_HOST + "/login/accounts/get_user/"
+    CONSOLE_LOGIN_URL = settings.BK_PAAS_URL
+    LOGIN_URL = settings.BK_PAAS_URL + "/login/"
+    LOGIN_PLAIN_URL = settings.BK_PAAS_URL + "/login/plain/"
+    VERIFY_URL = settings.BK_LOGIN_API_URL + "/accounts/is_login/"
+    USER_INFO_URL = settings.BK_LOGIN_API_URL + "/accounts/get_user/"
     HAS_PLAIN = False
     ADD_CROSS_PREFIX = False
     ADD_APP_CODE = True

@@ -9,15 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from bkuser_shell.organization.utils import get_default_logo_url
-from rest_framework.serializers import (
-    BooleanField,
-    CharField,
-    IntegerField,
-    JSONField,
-    ListField,
-    Serializer,
-    SerializerMethodField,
-)
+from rest_framework.serializers import CharField, IntegerField, JSONField, ListField, Serializer, SerializerMethodField
 
 from .departments import SubDepartmentSerializer
 
@@ -39,7 +31,7 @@ class ProfileSerializer(Serializer):
     password = CharField(required=False)
     position = IntegerField(required=False)
     role = IntegerField(required=False)
-    email = CharField()
+    email = CharField(required=False)
     username = CharField(required=True)
     display_name = CharField(required=True)
     leader = ListField(required=False, default=[], child=LeaderSerializer())
@@ -70,6 +62,11 @@ class ProfileSerializer(Serializer):
         return data.iso_code
 
 
+class ProfileResultSerializer(Serializer):
+    count = IntegerField()
+    data = ProfileSerializer(many=True, source="results")
+
+
 class LoginInfoSerializer(Serializer):
     username = CharField()
     logo = SerializerMethodField(required=False)
@@ -90,9 +87,7 @@ class LoginInfoSerializer(Serializer):
 
 
 class ListProfilesSerializer(Serializer):
-    no_page = BooleanField(default=False)
-    username = CharField(required=False)
-    display_name = CharField(required=False)
+    keyword = CharField(required=False)
     page = IntegerField(required=False, default=1)
     page_size = IntegerField(required=False, default=10)
 
@@ -137,7 +132,7 @@ class UpdateProfileSerializer(Serializer):
 class ProfileExportSerializer(Serializer):
     display_name = CharField()
     username = CharField()
-    leader = ListField()
+    leader = LeaderSerializer(many=True)
     department_name = SubDepartmentSerializer(many=True, source="departments")
     staff_status = CharField(required=False)
     status = CharField(required=False)
@@ -153,6 +148,6 @@ class ProfileExportSerializer(Serializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
 
-        data["leader"] = ",".join(x.username for x in data["leader"])
+        data["leader"] = ",".join(x["username"] for x in data["leader"])
         data["department_name"] = ",".join([x["full_name"] for x in data["department_name"]])
         return data

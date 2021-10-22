@@ -24,9 +24,10 @@
     <div class="button-container">
       <!-- 新增目录 -->
       <bk-button theme="primary" :disabled="!catalogMetas.length" @click="addCatalog">{{$t('新增目录')}}</bk-button>
+      <p class="reDataupdate" @click="dataUpdate">{{$t('数据更新记录')}}</p>
     </div>
     <div class="catalog-table">
-      <div class="thead-container table-container">
+      <div class="thead-container table-container" data-test-id="list_titelHeaderInfo">
         <table>
           <thead>
             <tr>
@@ -34,7 +35,6 @@
               <th class="table-item">{{$t('类型')}}</th>
               <th class="table-item">{{$t('更新时间')}}</th>
               <th class="table-item">{{$t('启/停')}}</th>
-              <th class="table-item">{{$t('最近一次同步成功时间')}}</th>
               <th class="table-item">{{$t('操作')}}</th>
             </tr>
           </thead>
@@ -49,7 +49,8 @@
         <div class="detail">{{$t('你没有相应资源的访问权限')}}</div>
         <bk-button class="king-button" theme="primary" @click="confirmPageApply">{{$t('去申请')}}</bk-button>
       </div>
-      <div class="tbody-container table-container" :class="catalogList.length >= 4 && 'overflow-auto'" v-else>
+      <div class="tbody-container table-container" :class="catalogList.length >= 4 && 'overflow-auto'"
+           data-test-id="list_catalogData" v-else>
         <table>
           <tbody>
             <tr v-for="(item, index) in catalogList" :key="item.id">
@@ -100,11 +101,11 @@
                 </div>
               </td>
               <!-- 同步时间 -->
-              <td>
+              <!-- <td>
                 <div class="td-container">
                   <span>{{item.last_synced_time | convertIsoTime}}</span>
                 </div>
-              </td>
+              </td> -->
               <!-- 操作 -->
               <td v-if="item.type === 'local'">
                 <div class="td-container operation-container">
@@ -125,7 +126,13 @@
                 <div class="td-container operation-container">
                   <span v-if="item.unfilled_namespaces.length"
                         v-bk-tooltips="$t('目录未完成配置，无法操作')"
-                        class="is-disabled">{{$t('同步')}}</span>
+                        class="is-disabled">{{$t('同步')}}
+                  </span>
+                  <span v-if="syncing"
+                        v-bk-tooltips="$t('已有数据同步任务正在进行，请在数据更新记录中查看详情')"
+                        class="is-disabled">
+                    {{$t('同步')}}
+                  </span>
                   <span v-else @click="syncCatalog(item)">{{$t('同步')}}</span>
                   <span @click="deleteCatalog(item, index)">{{$t('删除')}}</span>
                 </div>
@@ -197,6 +204,7 @@ export default {
       exportId: '',
       showImport: false,
       importId: '',
+      syncing: false,
     };
   },
   created() {
@@ -211,6 +219,10 @@ export default {
     // 新增目录
     addCatalog() {
       this.$emit('changePage', 'showPageAdd');
+    },
+    // 数据更新记录
+    dataUpdate() {
+      this.$emit('changePage', 'showReDataupdate');
     },
     // 去目录的设置页面
     goToSettingPage(item) {
@@ -248,14 +260,16 @@ export default {
     // 同步目录
     async syncCatalog(item) {
       try {
+        this.syncing = true;
         this.loadingIdList.push(item.id);
-        this.loadingTextList.push(this.$t('正在') + this.$t('同步'));
+        this.loadingTextList.push(this.$t('正在发起同步任务,') + this.$t('请在数据更新记录中查看具体详细'));
         await this.$store.dispatch('catalog/ajaxSyncCatalog', { id: item.id });
         this.messageSuccess(this.$t('同步成功'));
       } catch (e) {
         console.warn(e);
       } finally {
         this.closeLoading(item.id);
+        this.syncing = false;
       }
     },
     // 切换开启或关闭状态
@@ -388,9 +402,18 @@ export default {
   color: $fontGray;
 
   > .button-container {
+    display: flex;
+    justify-content: space-between;
     margin-bottom: 20px;
+    .reDataupdate {
+      font-family: MicrosoftYaHei, MicrosoftYaHei-Regular;
+      height: 32px;
+      font-size: 14px;
+      color: #3a84ff;
+      line-height: 32px;
+      cursor: pointer;
+    }
   }
-
   > .catalog-table {
     max-height: calc(100% - 52px);
     border: 1px solid $borderColor;

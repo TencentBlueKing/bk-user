@@ -21,7 +21,7 @@ from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper, depa
 from bkuser_core.categories.plugins.ldap.client import LDAPClient
 from bkuser_core.categories.plugins.ldap.helper import DepartmentSyncHelper, ProfileSyncHelper
 from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapProfileMeta
-from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
+from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from django.db import transaction
@@ -101,18 +101,11 @@ class LDAPFetcher(Fetcher):
         return groups, departments, users
 
     def _get_code(self, raw_obj: dict) -> str:
-        """如果不存在 uuid 则用 dn(sha) 作为唯一标示"""
-        entry_uuid = raw_obj.get("raw_attributes", {}).get("entryUUID", [])
-        if isinstance(entry_uuid, list) and entry_uuid:
-            logger.debug("uuid in raw_attributes: return %s", entry_uuid[0])
-            return entry_uuid[0]
-        else:
-            # 由于其他目录也可能会出现这样的 code，所以添加 category_id 进行转换
-            dn = f"{self.category_id}-{raw_obj.get('dn')}"
-
-            sha = hashlib.sha256(force_bytes(dn)).hexdigest()
-            logger.debug("no uuid in raw_attributes, use dn instead: %s -> %s", dn, sha)
-            return sha
+        """通过对象 dn 生成 唯一code"""
+        dn = f"{self.category_id}-{raw_obj.get('dn')}"
+        sha = hashlib.sha256(force_bytes(dn)).hexdigest()
+        logger.info("use dn to be code: %s -> %s", dn, sha)
+        return sha
 
     def _load(self):
         # TODO: 将 Fetcher 拆成两个对象, 或者不再遵循原来的 Fetcher 协议
@@ -147,7 +140,6 @@ class LDAPFetcher(Fetcher):
             if not dept_meta.get("dn"):
                 logger.info("no dn field, skipping for %s", dept_meta)
                 continue
-
             results.append(
                 department_adapter(
                     code=self._get_code(dept_meta),
@@ -185,7 +177,7 @@ class LDAPSyncer(Syncer):
         DepartmentSyncHelper(
             category=self.category,
             db_sync_manager=self.db_sync_manager,
-            target_obj_list=(TypeList[DepartmentProfile]).from_list(
+            target_obj_list=(TypeList[LdapDepartment]).from_list(
                 self.fetcher.fetch_departments([self.OU_KEY, self.CN_KEY])
             ),
             context=self.context,
@@ -206,7 +198,9 @@ class LDAPSyncer(Syncer):
         ProfileSyncHelper(
             category=self.category,
             db_sync_manager=self.db_sync_manager,
-            target_obj_list=(TypeList[UserProfile]).from_list(self.fetcher.fetch_profiles([self.OU_KEY, self.CN_KEY])),
+            target_obj_list=(TypeList[LdapUserProfile]).from_list(
+                self.fetcher.fetch_profiles([self.OU_KEY, self.CN_KEY])
+            ),
             context=self.context,
         ).load_to_memory()
 

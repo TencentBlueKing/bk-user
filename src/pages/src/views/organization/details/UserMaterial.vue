@@ -65,7 +65,7 @@
         </div>
       </div>
     </div>
-    <div class="user-detail">
+    <div class="user-detail" data-test-id="activeFieldsData">
       <div class="user-avatar-wrapper">
         <img :src="localAvatar || currentProfile.logo" width="68" height="68" @error="handleLoadAvatarError" />
         <p v-if="isForbid" class="forbid-text">{{currentProfile.status === 'DISABLED' ? $t('已禁用') : $t('已锁定')}}</p>
@@ -116,6 +116,20 @@
             <span class="gap">：</span>
             <p class="desc">
               <span class="text">{{passwordValidDays}}</span>
+            </p>
+          </div>
+          <div class="specific-text">
+            <span class="name">{{$t('创建时间')}}</span>
+            <span class="gap">：</span>
+            <p class="desc">
+              <span class="text">{{currentProfile.create_time}}</span>
+            </p>
+          </div>
+          <div class="specific-text">
+            <span class="name">{{$t('最近一次登录时间')}}</span>
+            <span class="gap">：</span>
+            <p class="desc">
+              <span class="text">{{currentProfile.update_time}}</span>
             </p>
           </div>
         </li>

@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from bkuser_core.common.constants import LOOKUP_FIELD_NAME
-from django.conf.urls import url
+from django.urls.conf import path, re_path
 
 from . import views
 
@@ -17,7 +17,7 @@ PVAR_PROFILE_ID = r"(?P<%s>[a-z0-9-]+)" % LOOKUP_FIELD_NAME
 
 
 urlpatterns = [
-    url(
+    re_path(
         r"^api/v2/categories_metas/$",
         views.CategoryViewSet.as_view(
             {
@@ -26,7 +26,7 @@ urlpatterns = [
         ),
         name="categories.metas",
     ),
-    url(
+    re_path(
         r"^api/v2/categories/$",
         views.CategoryViewSet.as_view(
             {
@@ -36,7 +36,7 @@ urlpatterns = [
         ),
         name="categories",
     ),
-    url(
+    re_path(
         r"^api/v2/categories/%s/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
@@ -48,7 +48,16 @@ urlpatterns = [
         ),
         name="categories.action",
     ),
-    url(
+    re_path(
+        r"^api/v2/categories/%s/restoration/$" % PVAR_PROFILE_ID,
+        views.CategoryViewSet.as_view(
+            {
+                "post": "restoration",
+            }
+        ),
+        name="categories.restoration",
+    ),
+    re_path(
         r"^api/v2/categories/%s/sync/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
@@ -57,7 +66,7 @@ urlpatterns = [
         ),
         name="categories.sync",
     ),
-    url(
+    re_path(
         r"^api/v2/categories/%s/import/$" % PVAR_PROFILE_ID,
         views.CategoryFileViewSet.as_view(
             {
@@ -66,7 +75,7 @@ urlpatterns = [
         ),
         name="categories.import",
     ),
-    url(
+    re_path(
         r"^api/v2/categories/%s/test_connection/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
@@ -75,7 +84,7 @@ urlpatterns = [
         ),
         name="categories.test_connection",
     ),
-    url(
+    re_path(
         r"^api/v2/categories/%s/test_fetch_data/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
@@ -83,5 +92,11 @@ urlpatterns = [
             }
         ),
         name="categories.test_fetch_data",
+    ),
+    path("api/v2/sync_task/", views.SyncTaskViewSet.as_view({"get": "list"}), name="categories.sync_tasks"),
+    path(
+        "api/v2/sync_task/<lookup_value>/logs",
+        views.SyncTaskViewSet.as_view({"get": "show_logs"}),
+        name="categories.sync_tasks.logs",
     ),
 ]

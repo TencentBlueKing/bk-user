@@ -20,7 +20,7 @@
   - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
   -->
 <template>
-  <div class="add-page">
+  <div class="add-page" data-test-id="list_catalogMetasData">
     <h1 class="page-title">{{$t('新增用户目录')}}</h1>
     <p class="description">{{$t('选择目录类型')}}</p>
     <ul class="catalog-list">

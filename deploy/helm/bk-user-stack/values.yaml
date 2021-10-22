@@ -1,21 +1,28 @@
 global:
-  sharedDomain: "bktencent.example.com"
-  # 全局 registry
-  sharedImageRegistry: "ccr.ccs.tencentyun.com/bk.io"
+  # 用户管理产品对外暴露访问根域
+  sharedDomain: "example.com"
+  # 全局镜像配置
+  image:
+    registry: "ccr.ccs.tencentyun.com/bk.io"
+    pullPolicy: Always
+
   env:
-    BK_PAAS_HOST: ""
-    BK_APP_CODE: "bk-user"
     # 请在 PaaS 产品就绪后，查询 secret 并填入，否则影响用户管理调用 ESB 的相关功能（邮件通知等）
     BK_APP_SECRET: "your-own-secret"
+    # 默认采用集群内 Service 访问 PaaS 平台和蓝鲸产品，如果有其他部署方式，请手动覆盖相关地址
+    # PaaS 平台访问地址
+    BK_PAAS_URL: "http://paas.example.com"
+    # ESB Api 访问地址
+    BK_COMPONENT_API_URL: "http://bkapi.example.com"
 
 bkuserapi:
   enabeld: true
   env:
-    # !!!请修改初始账号密码!!!
+    # !!!安全：请修改初始账号密码!!!
     INITIAL_ADMIN_USERNAME: "admin"
     INITIAL_ADMIN_PASSWORD: "Blueking@2019"
-  # 挂载内建 DB 变量
   envFrom:
+    # 挂载内建 DB 变量
     - configMapRef:
         name: bk-user-api-mariadb-env
     - configMapRef:
@@ -23,11 +30,16 @@ bkuserapi:
 
 bkusersaas:
   enabled: true
-  # 挂载内建 DB 变量
   envFrom:
+    # 挂载内建 DB 变量
     - configMapRef:
         name: bk-user-saas-mariadb-env
 
+# -------------
+# 内建存储配置
+# 默认通过 .Release.Name 拼接访问，请不要配置 nameOverride 或 fullnameOverride
+# 否则会出现无法访问存储的异常
+# -------------
 mariadb:
   enabled: true
   commonAnnotations:
@@ -42,6 +54,7 @@ mariadb:
     # 默认我们未开启持久化，如有需求可以参考:
     # - https://kubernetes.io/docs/user-guide/persistent-volumes/
     # - https://github.com/bitnami/charts/blob/master/bitnami/mariadb/values.yaml#L360
+    # 当同时请注意，当开启 PVC 可能会导致首次安装部署时间延长
     persistence:
       enabled: false
   initdbScriptsConfigMap: "bk-user-mariadb-init"
@@ -56,5 +69,10 @@ redis:
     enabled: false
   auth:
     password: "maybe_another_strong_passwd"
-  persistence:
-    enabled: false
+  master:
+    persistence:
+      enabled: false
+  replica:
+    replicaCount: 1
+    persistence:
+      enabled: false

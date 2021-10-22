@@ -42,7 +42,7 @@ from .models import Department, DepartmentThroughModel
 
 
 class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = Department.objects.filter(enabled=True)
+    queryset = Department.objects.filter()
     serializer_class = local_serializers.DepartmentSerializer
     lookup_field: str = "id"
     filter_backends = [
@@ -141,7 +141,16 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 select_params=(default_domain,),
             )
 
-        return self.get_paginated_response(RapidProfileSerializer(self.paginate_queryset(profiles), many=True).data)
+        page = self.paginate_queryset(profiles)
+        _serializer = RapidProfileSerializer
+        if page is not None:
+            return self.get_paginated_response(_serializer(page, many=True).data)
+
+        serializer_fields = list(_serializer().get_fields().keys())
+        # 全量数据太大，使用 serializer 效率非常低
+        # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
+        # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#values
+        return Response(data=list(profiles.only(*serializer_fields).values(*serializer_fields)))
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(
@@ -176,7 +185,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         validated_data = serializer.validated_data
 
         if not validated_data.get("category_id", None):
-            serializer.category_id = ProfileCategory.objects.get_default().id
+            serializer.validated_data["category_id"] = ProfileCategory.objects.get_default().id
         else:
             if not ProfileCategory.objects.check_writable(validated_data["category_id"]):
                 raise error_codes.CANNOT_MANUAL_WRITE_INTO

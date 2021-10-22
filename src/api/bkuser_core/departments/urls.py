@@ -39,6 +39,15 @@ urlpatterns = [
         name="departments.action",
     ),
     url(
+        r"^api/v2/departments/%s/restoration/$" % PVAR_DEPARTMENT_ID,
+        views.DepartmentViewSet.as_view(
+            {
+                "post": "restoration",
+            }
+        ),
+        name="departments.restoration",
+    ),
+    url(
         r"^api/v2/departments/%s/ancestors/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {

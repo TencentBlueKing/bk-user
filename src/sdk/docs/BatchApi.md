@@ -1,6 +1,6 @@
 # bkuser_sdk.BatchApi
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -153,7 +153,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_batch_profiles_read**
-> list[Profile] v2_batch_profiles_read()
+> list[Profile] v2_batch_profiles_read(query_ids)
 
 
 
@@ -169,16 +169,20 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.BatchApi()
+query_ids = 'query_ids_example' # str | 查询 id 列表，以 , 分隔
 
 try:
-    api_response = api_instance.v2_batch_profiles_read()
+    api_response = api_instance.v2_batch_profiles_read(query_ids)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling BatchApi->v2_batch_profiles_read: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **query_ids** | **str**| 查询 id 列表，以 , 分隔 | 
 
 ### Return type
 

@@ -1,0 +1,59 @@
+name: Unittest
+
+on:
+  push:
+    branches: [ master, development ]
+  pull_request:
+    branches: [ master, development ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6.14]
+        poetry-version: [1.1.7]
+        os: [ubuntu-18.04]
+    runs-on: ${{ matrix.os }}
+    
+    env:
+      DB_DATABASE: bk_user_api_test
+      DB_USER: root
+      DB_PASSWORD: root
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up MySQL
+      run: |
+        sudo /etc/init.d/mysql start
+        mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2.1.0
+      with:
+        poetry-version: ${{ matrix.poetry-version }}
+    - name: Install dependencies
+      run: |
+        cd src/api/
+        poetry config virtualenvs.create false && poetry install
+    - name: Run api unittest
+      env:
+        DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.unittest"
+        BK_PAAS_URL: "http://bkpaas.example.com"
+        BK_IAM_V3_INNER_HOST: "http://bkiam.example.com"
+        BK_APP_CODE: "bk-user"
+        BK_APP_SECRET: "some-default-token"
+        CELERY_BROKER_URL: "redis://:passwordG@localhost:32768/0"
+        CELERY_RESULT_BACKEND: "redis://:passwordG@localhost:32768/0"
+        DB_NAME: ${{ env.DB_DATABASE }}
+        DB_USER: ${{ env.DB_USER }}
+        DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        DB_HOST: "127.0.0.1"
+        DB_PORT: "3306"
+      run: |
+        make link
+        cd src/api
+        poetry run pytest bkuser_core/tests --disable-pytest-warnings

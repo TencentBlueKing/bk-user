@@ -11,21 +11,24 @@ specific language governing permissions and limitations under the License.
 from typing import List
 
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
-from bkuser_core.common.serializers import CustomFieldsModelSerializer
+from bkuser_core.categories import constants
+from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.common.serializers import CustomFieldsModelSerializer, DurationTotalSecondField
 from bkuser_core.profiles.validators import validate_domain
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.serializers import (
     BooleanField,
     CharField,
+    ChoiceField,
+    DateTimeField,
     FileField,
     IntegerField,
+    JSONField,
     ListField,
     Serializer,
     SerializerMethodField,
 )
 from rest_framework.validators import ValidationError
-
-from .models import ProfileCategory
 
 
 class ExtraInfoSLZ(Serializer):
@@ -47,6 +50,7 @@ class CategorySerializer(CustomFieldsModelSerializer):
     """用户目录 Serializer"""
 
     configured = SerializerMethodField()
+    syncing = BooleanField(read_only=True, required=False, allow_null=True)
     unfilled_namespaces = SerializerMethodField(required=False)
 
     def get_configured(self, obj) -> bool:
@@ -78,6 +82,10 @@ class CategorySyncSerializer(Serializer):
     raw_data_file = FileField()
 
 
+class CategorySyncResponseSLZ(Serializer):
+    task_id = CharField(help_text="task_id for the sync job.")
+
+
 class CategoryTestConnectionSerializer(Serializer):
     connection_url = CharField()
     user = CharField(required=False)
@@ -91,3 +99,22 @@ class CategoryTestFetchDataSerializer(Serializer):
     user_filter = CharField()
     organization_class = CharField()
     user_group_filter = CharField()
+
+
+class SyncTaskSerializer(Serializer):
+    id = CharField()
+    category = CategorySerializer()
+    status = ChoiceField(choices=constants.SyncTaskStatus.get_choices(), help_text="任务执行状态")
+    type = ChoiceField(choices=constants.SyncTaskType.get_choices(), help_text="任务触发类型")
+    operator = CharField(help_text="操作人")
+    create_time = DateTimeField(help_text="开始时间")
+    required_time = DurationTotalSecondField(help_text="耗时")
+
+
+class SyncTaskProcessSerializer(Serializer):
+    step = ChoiceField(choices=constants.SyncStep.get_choices(), help_text="同步步骤")
+    status = ChoiceField(choices=constants.SyncTaskStatus.get_choices(), help_text="执行状态")
+    successful_count = IntegerField(help_text="同步成功数量")
+    failed_count = IntegerField(help_text="同步失败数量")
+    logs = CharField(help_text="纯文本日志")
+    failed_records = ListField(child=JSONField(), help_text="失败对象名称")

@@ -1,6 +1,6 @@
 # bkuser_sdk.SettingsApi
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -59,7 +59,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_settings_delete**
-> v2_settings_delete(lookup_value, fields=fields, lookup_field=lookup_field)
+> v2_settings_delete(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -78,9 +78,10 @@ api_instance = bkuser_sdk.SettingsApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_instance.v2_settings_delete(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_instance.v2_settings_delete(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 except ApiException as e:
     print("Exception when calling SettingsApi->v2_settings_delete: %s\n" % e)
 ```
@@ -92,6 +93,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -213,7 +215,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_settings_read**
-> Setting v2_settings_read(lookup_value, fields=fields, lookup_field=lookup_field)
+> Setting v2_settings_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -232,9 +234,10 @@ api_instance = bkuser_sdk.SettingsApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_settings_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_settings_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling SettingsApi->v2_settings_read: %s\n" % e)
@@ -247,6 +250,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 

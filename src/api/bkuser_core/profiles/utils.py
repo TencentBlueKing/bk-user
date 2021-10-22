@@ -15,13 +15,14 @@ import string
 from typing import TYPE_CHECKING, Tuple
 
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.common.kits import force_str_2_bool
 from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
 from bkuser_core.user_settings.constants import InitPasswordMethod
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from phonenumbers.phonenumberutil import UNKNOWN_REGION, country_code_for_region, region_code_for_country_code
+
+from bkuser_global.utils import force_str_2_bool
 
 from ..audit.models import ResetPassword
 from .exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError

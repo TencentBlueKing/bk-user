@@ -14,6 +14,7 @@ from bkuser_core.departments.views import DepartmentViewSet
 from bkuser_core.tests.apis.utils import get_api_factory, make_request_operator_aware
 from bkuser_core.tests.utils import (
     attach_pd_relation,
+    get_one_object,
     make_simple_category,
     make_simple_department,
     make_simple_dynamic_field,
@@ -70,6 +71,29 @@ class TestListCreateApis:
         data = response.data["results"]
         assert data[0] == expected
         assert len(data[0].keys()) == len(expected.keys())
+
+    @pytest.mark.parametrize(
+        "all_count,fields,result_count,include_disabled,expected_fields",
+        [
+            (10, "id,name,parent,enabled", 5, "false", "id,name,parent,enabled"),
+            (10, "id,name,parent", 10, "true", "id,name,parent,enabled"),
+            (10, "id,name,parent,enabled", 10, "true", "id,name,parent,enabled"),
+        ],
+    )
+    def test_department_include_enabled_fields(
+        self, factory, view, all_count, fields, result_count, include_disabled, expected_fields
+    ):
+        """测试组织软删除显式拉取和字段选择"""
+        parent_id = 1
+        for i in range(1, all_count):
+            parent_id = make_simple_department(
+                f"Dep{i+1}", parent_id=parent_id, force_create_params={"enabled": i % 2 == 0}
+            ).id
+        response = view(
+            request=factory.get(f"/api/v2/departments/?fields={fields}&include_disabled={include_disabled}")
+        )
+        assert response.data["count"] == result_count
+        assert set(response.data["results"][0].keys()) == set(expected_fields.split(","))
 
     @pytest.mark.parametrize(
         "query_string,expected",
@@ -241,6 +265,7 @@ class TestActionApis:
                 "put": "update",
                 "patch": "partial_update",
                 "delete": "destroy",
+                "post": "restoration",
             }
         )
 
@@ -307,6 +332,14 @@ class TestActionApis:
         assert response.data["children"][0]["name"] == expected[0]
         assert response.data["children"][0]["full_name"] == expected[1]
         assert response.data["children"][0]["has_children"] == expected[2]
+
+    def test_department_restoration(self, factory, view):
+        d = make_simple_department("foodep", parent_id=1, force_create_params={"enabled": 0})
+        request = factory.post(f"/api/v2/departments/{d.id}/restoration/?include_disabled=1")
+        setattr(request, "operator", "faker")
+        response = view(request=request, lookup_value=f"{d.id}")
+        assert response.status_code == 200
+        assert get_one_object("department", id=d.id, name=d.name).enabled
 
 
 class TestGetProfilesApis:

@@ -27,27 +27,27 @@ helm repo update
 ### 准备 `values.yaml`
 
 #### 1. 获取蓝鲸平台访问地址 
-首先，你需要获取到蓝鲸平台的访问地址，例如 `https://paas.bktencent-example.com`，确保 `https://paas.bktencent-example.com/login` 可以访问蓝鲸登录，然后将该值的内容填入全局环境变量中。
+首先，你需要获取到蓝鲸平台的访问地址，例如 `https://paas.example.com`，确保 `https://paas.example.com/login` 可以访问蓝鲸登录，然后将该值的内容填入全局环境变量中。
 
 配置示例：
 ```yaml
 global:
   env:
     # 蓝鲸平台域名
-    BK_PAAS_HOST: "https://paas.bktencent-example.com"
+    BK_PAAS_URL: "https://paas.example.com"
 ```
 
 #### 2. 确定用户管理访问地址
 
-你需要为用户管理提供一个访问根域，类似 `bktencent-example.com`，配置示例:
+你需要为用户管理提供一个访问根域，类似 `example.com`，配置示例:
 ```yaml
 global:
-  sharedDomain: "bktencent-example.com"
+  sharedDomain: "example.com"
 ```
 
 默认地，我们会为 `Api` & `SaaS` 分别创建两个访问入口(Ingress)：
-- `bkuser.bktencent-example.com` SaaS 页面访问入口
-- `bkuser-api.bktencent-example.com` Api 访问入口
+- `bkuser.example.com` SaaS 页面访问入口
+- `bkuser-api.example.com` Api 访问入口
 
 #### 3. 准备用户管理镜像
 
@@ -60,18 +60,12 @@ ccr.ccs.tencentyun.com/bk.io/bk-user-saas:${version}
 
 如果你想使用官方其他版本或者自己构建的镜像，也可以在 `values.yaml` 中修改，配置示例：
 ```yaml
-bkuserapi:
-  enabeld: true
+global:
   image:
     # 修改镜像地址，我们会按照 {registry}/{repository} 方式拼接
     registry: any-mirrors-you-want.com/any-group
-    repository: bk-user-api
     # 修改用户管理版本，从 https://github.com/TencentBlueKing/bk-user/releases 获取
-    tag: "v2.2.0"
-
-# 使用官方最新镜像则无需修改该部分
-bkusersaas:
-  enabled: true
+    tag: "v2.3.0"
 ```
 
 #### 4. 数据库依赖
@@ -89,7 +83,7 @@ mariadb:
     username: "bk-user"
     password: "root"
   primary:
-    # 默认我们未开启持久化，如有需求可以参考: https://kubernetes.io/docs/user-guide/persistent-volumes/ 
+    # 默认我们未开启持久化，如有需求可以参考: https://kubernetes.io/docs/user-guide/persistent-volumes/
     persistence:
       enabled: false
   initdbScriptsConfigMap: "bk-user-mariadb-init
@@ -101,11 +95,17 @@ mariadb:
 bkuserapi:
   enabeld: true
   env:
+    # 手动指定外部 DB ，仅支持 MySQL/MariaDB
     DB_NAME: "your-db-name"
     DB_USER: "your-db-user"
     DB_PASSWORD: "your-db-password"
     DB_HOST: "your-db-host"
     DB_PORT: "your-db-port"
+    # 外部 Celery Broker，任意符合要求的 Broker 存储均可
+    CELERY_BROKER_URL: "your-broker-url"
+    CELERY_RESULT_BACKEND: "your-broker-url"
+  # 手动取消内建存储挂载
+  envFrom: []
 
 bkusersaas:
   enabled: true
@@ -115,8 +115,13 @@ bkusersaas:
     DB_PASSWORD: "your-db-password"
     DB_HOST: "your-db-host"
     DB_PORT: "your-db-port"
+  # 手动取消内建存储挂载 
+  envFrom: []
 
 mariadb:
+  enabled: false
+  
+redis:
   enabled: false
 ```
 
@@ -126,7 +131,7 @@ mariadb:
 bkuserapi:
   env:
     # 填充权限中心相关变量
-    BK_IAM_V3_INNER_HOST: "http://iam-backend-url.com" 
+    BK_IAM_V3_INNER_HOST: "https://iam.example.com" 
   # 打开权限中心模型注册，每次重新部署即会运行
   preRunHooks:
     bkiam-migrate:
@@ -175,8 +180,10 @@ helm install bk-user bk-user-stack -n bk-user -f values.yaml \
 # 卸载资源
 helm uninstall bk-user -n bk-user
 
-# 已安装的 mariadb 并不会被删除，防止没有开启持久化期间产生的数据被销毁
-# 如果确认已不再需要相关内容，可以手动删除
-kubectl delete sts bk-user-mariadb -n bk-user 
-kubectl delete svc bk-user-mariadb -n bk-user 
+# 已安装的 mariadb & redis 并不会被删除，防止没有开启持久化期间产生的数据被销毁
+# 如果确认已不再需要相关内容，可以手动删除命名空间内的资源
+# 独立命名空间时
+kubectl delete ns bk-user
+# 非独立命名空间时
+kubectl delete deploy,sts,cronjob,pod,svc,ingress,secret,cm,sa,role,rolebinding,pvc -l app.kubernetes.io/instance=bk-user -n bk-user 
 ```

@@ -26,4 +26,4 @@ LOGGING = get_logging_config_dict(
     package_name="bkuser_core",
 )
 
-SAAS_URL = urllib.parse.urljoin(BK_PAAS_HOST, f"/o/{SAAS_CODE}/")
+SAAS_URL = urllib.parse.urljoin(BK_PAAS_URL, f"/o/{SAAS_CODE}/")

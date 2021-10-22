@@ -89,7 +89,7 @@
           <bk-radio value="multi_enum" name="egRadio" :disabled="setType === 'edit'">{{$t('多选')}}</bk-radio>
         </bk-radio-group>
       </div>
-      <div class="enum-settings">
+      <div class="enum-settings" data-test-id="fieldData">
         <p class="explain">
           <span class="default">{{$t('默认选项')}}</span>
           <span class="text">{{$t('选项值')}}</span>

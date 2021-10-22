@@ -144,6 +144,7 @@ class SettingsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: None
                  If the method is called asynchronously,
                  returns the request thread.
@@ -168,12 +169,13 @@ class SettingsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: None
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -204,6 +206,8 @@ class SettingsApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -461,6 +465,7 @@ class SettingsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: Setting
                  If the method is called asynchronously,
                  returns the request thread.
@@ -485,12 +490,13 @@ class SettingsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: Setting
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -521,6 +527,8 @@ class SettingsApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 

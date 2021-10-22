@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
+from typing import Union
 
 from django.utils.timezone import get_current_timezone
 
@@ -20,11 +21,14 @@ def get_timezone_offset():
     return datetime.timedelta(seconds=offset_seconds)
 
 
-def force_str_2_bool(bool_str, raise_if_unknown=False):
+def force_str_2_bool(bool_str: Union[str, bool], raise_if_unknown: bool = False) -> bool:
     """convent 'True' or 'False' to bool, using on query_param"""
-    if bool_str in ["True", "true"]:
+    if isinstance(bool_str, bool):
+        return bool_str
+
+    if bool_str in ["True", "true", "1"]:
         return True
-    elif bool_str in ["False", "false"]:
+    elif bool_str in ["False", "false", "0"]:
         return False
 
     if raise_if_unknown:

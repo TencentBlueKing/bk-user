@@ -45,7 +45,7 @@ class SimpleDepartmentSerializer(CustomFieldsModelSerializer):
 
 
 class DepartmentSerializer(CustomFieldsModelSerializer):
-    name = serializers.CharField(required=False)
+    name = serializers.CharField(required=True)
     has_children = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
     order = serializers.IntegerField(required=False)

@@ -1,6 +1,6 @@
 # bkuser_sdk.CategoriesApi
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -11,6 +11,7 @@ Method | HTTP request | Description
 [**v2_categories_list_metas**](CategoriesApi.md#v2_categories_list_metas) | **GET** /api/v2/categories_metas/ | 
 [**v2_categories_partial_update**](CategoriesApi.md#v2_categories_partial_update) | **PATCH** /api/v2/categories/{lookup_value}/ | 
 [**v2_categories_read**](CategoriesApi.md#v2_categories_read) | **GET** /api/v2/categories/{lookup_value}/ | 
+[**v2_categories_restoration**](CategoriesApi.md#v2_categories_restoration) | **POST** /api/v2/categories/{lookup_value}/restoration/ | 
 [**v2_categories_sync**](CategoriesApi.md#v2_categories_sync) | **POST** /api/v2/categories/{lookup_value}/sync/ | 
 [**v2_categories_test_connection**](CategoriesApi.md#v2_categories_test_connection) | **POST** /api/v2/categories/{lookup_value}/test_connection/ | 
 [**v2_categories_test_fetch_data**](CategoriesApi.md#v2_categories_test_fetch_data) | **POST** /api/v2/categories/{lookup_value}/test_fetch_data/ | 
@@ -159,7 +160,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_categories_list**
-> object v2_categories_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+> object v2_categories_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
 
 
 
@@ -188,9 +189,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_categories_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_categories_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling CategoriesApi->v2_categories_list: %s\n" % e)
@@ -213,6 +215,7 @@ Name | Type | Description  | Notes
  **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional] 
  **since** | **datetime**| 筛选某个时间点后的记录 | [optional] 
  **until** | **datetime**| 筛选某个时间点前的记录 | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -330,7 +333,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_categories_read**
-> Category v2_categories_read(lookup_value, fields=fields, lookup_field=lookup_field)
+> Category v2_categories_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -349,9 +352,10 @@ api_instance = bkuser_sdk.CategoriesApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_categories_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_categories_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling CategoriesApi->v2_categories_read: %s\n" % e)
@@ -364,6 +368,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -380,8 +385,63 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **v2_categories_restoration**
+> Empty v2_categories_restoration(body, lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
+
+
+
+软删除对象恢复
+
+### Example
+```python
+from __future__ import print_function
+import time
+import bkuser_sdk
+from bkuser_sdk.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = bkuser_sdk.CategoriesApi()
+body = NULL # object | 
+lookup_value = 'lookup_value_example' # str | 
+fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
+lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
+
+try:
+    api_response = api_instance.v2_categories_restoration(body, lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling CategoriesApi->v2_categories_restoration: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**object**](object.md)|  | 
+ **lookup_value** | **str**|  | 
+ **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
+ **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
+
+### Return type
+
+[**Empty**](Empty.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **v2_categories_sync**
-> Empty v2_categories_sync(body, lookup_value)
+> CategorySyncResponseSLZ v2_categories_sync(body, lookup_value)
 
 
 
@@ -416,7 +476,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**Empty**](Empty.md)
+[**CategorySyncResponseSLZ**](CategorySyncResponseSLZ.md)
 
 ### Authorization
 
