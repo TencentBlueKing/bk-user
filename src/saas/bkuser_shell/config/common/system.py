@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from .django_basic import MEDIA_ROOT
-from .platform import BK_PAAS_HOST
+from .platform import BK_PAAS_URL
 
 # paths for exempting of login
 LOGIN_EXEMPT_WHITE_LIST = (
@@ -27,7 +27,8 @@ DEFAULT_LOGO_URL = "img/logo_default.png"
 ##########
 # Export #
 ##########
-EXPORT_EXCEL_TEMPLATE = MEDIA_ROOT + "/excel/export_template.xlsx"
+EXPORT_ORG_TEMPLATE = MEDIA_ROOT + "/excel/export_org_tmpl.xlsx"
+EXPORT_LOGIN_TEMPLATE = MEDIA_ROOT + "/excel/export_login_tmpl.xlsx"
 
 # according to https://docs.qq.com/sheet/DTktLdUtmRldob21P?tab=uty37p&c=C3A0A0
 EXPORT_EXCEL_FILENAME = "bk_user_export"
@@ -66,7 +67,7 @@ FOOTER_CONFIG = {
         {
             "text": "蓝鲸智云桌面",
             "text_en": "BlueKing Desktop",
-            "link": BK_PAAS_HOST,
+            "link": BK_PAAS_URL,
             "is_blank": True,
         },
     ],

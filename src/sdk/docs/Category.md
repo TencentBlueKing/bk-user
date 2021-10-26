@@ -5,6 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **int** |  | [optional] 
 **configured** | **bool** |  | [optional] 
+**syncing** | **bool** |  | [optional] 
 **unfilled_namespaces** | **list[str]** |  | [optional] 
 **create_time** | **datetime** |  | [optional] 
 **update_time** | **datetime** |  | [optional] 

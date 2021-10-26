@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Dict, List
 
 import ldap3
 from bkuser_core.categories.loader import get_plugin_by_name
+from django.conf import settings
 from ldap3 import ALL, SIMPLE, Connection, Server
 
 from . import exceptions as local_exceptions
@@ -60,6 +61,9 @@ class LDAPClient:
                 "auto_bind": True,
                 "receive_timeout": timeout_setting,
             }
+
+            if hasattr(settings, "LDAP_CONNECTION_EXTRAS_PARAMS"):
+                connection_params.update(settings.LDAP_CONNECTION_EXTRAS_PARAMS)
 
             # 目前只支持简单鉴权
             if user and password:

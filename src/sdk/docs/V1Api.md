@@ -1,6 +1,6 @@
 # bkuser_sdk.V1Api
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------

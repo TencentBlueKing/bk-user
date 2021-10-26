@@ -41,7 +41,7 @@ class DefaultDBProbe(MySQLProbe):
 class ESBProbe(HttpProbe):
     name = "ESB"
     healthz_check = {
-        "url": f"{settings.BK_PAAS_HOST}/esb/healthz/",
+        "url": f"{settings.BK_COMPONENT_API_URL}/esb/healthz/",
         "token": settings.COMMON_HEALTHZ_TOKEN,
     }
     diagnose_method = "make_healthz_check"

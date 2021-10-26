@@ -226,3 +226,4 @@ deploy/helm/dist/
 
 deploy/helm/api/templates/c_*.*
 deploy/helm/saas/templates/c_*.*
+deploy/helm/bk-user-stack/templates/c_*.*

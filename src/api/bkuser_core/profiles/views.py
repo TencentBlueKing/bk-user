@@ -22,8 +22,12 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.kits import force_str_2_bool
-from bkuser_core.common.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, EmptySerializer
+from bkuser_core.common.serializers import (
+    AdvancedListSerializer,
+    AdvancedRetrieveSerialzier,
+    BatchRetrieveSerializer,
+    EmptySerializer,
+)
 from bkuser_core.common.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.departments import serializers as department_serializer
 from bkuser_core.user_settings.loader import ConfigProvider
@@ -40,6 +44,8 @@ from rest_framework import filters, status, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework_jsonp.renderers import JSONPRenderer
+
+from bkuser_global.utils import force_str_2_bool
 
 from . import serializers as local_serializers
 from .constants import ProfileStatus
@@ -62,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = Profile.objects.filter(enabled=True)
+    queryset = Profile.objects.filter()
     serializer_class = local_serializers.ProfileSerializer
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
@@ -164,6 +170,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         query_data = _query_slz.validated_data
 
         fields = query_data.get("fields", self.get_serializer().fields)
+        self._ensure_enabled_field(request, fields=fields)
         self._check_fields(fields)
 
         try:
@@ -187,8 +194,16 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                     select_params=(default_domain,),
                 )
 
-        serializer = self.get_serializer(self.paginate_queryset(queryset), fields=fields, many=True)
-        return self.get_paginated_response(serializer.data)
+        page = self.paginate_queryset(queryset)
+        # page may be empty list
+        if page is not None:
+            serializer = self.get_serializer(page, fields=fields, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        # 全量数据太大，使用 serializer 效率非常低
+        # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
+        # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
+        return Response(data=list(queryset.values(*fields)))
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(
@@ -217,6 +232,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
             serializer.validated_data["domain"] = ProfileCategory.objects.get(pk=validated_data["category_id"]).domain
+        # `ConfigProvider._refresh_config` 过滤 enabled=True
+        if not ProfileCategory.objects.get(pk=validated_data["category_id"]).enabled:
+            raise error_codes.CATEGORY_NOT_ENABLED
 
         try:
             existed = Profile.objects.get(
@@ -466,8 +484,7 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
             return self.serializer_class
 
     @swagger_auto_schema(
-        manual_parameters=[],
-        responses={"200": local_serializers.ProfileSerializer(many=True)},
+        query_serializer=BatchRetrieveSerializer(), responses={"200": local_serializers.ProfileSerializer(many=True)}
     )
     def multiple_retrieve(self, request):
         """批量获取用户"""

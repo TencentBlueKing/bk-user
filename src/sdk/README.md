@@ -66,9 +66,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_general_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_audit_general_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_general_log_list: %s\n" % e)
@@ -78,9 +79,10 @@ api_instance = bkuser_sdk.AuditApi(bkuser_sdk.ApiClient(configuration))
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_general_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_audit_general_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_general_log_read: %s\n" % e)
@@ -100,9 +102,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_login_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_audit_login_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_login_log_list: %s\n" % e)
@@ -112,9 +115,10 @@ api_instance = bkuser_sdk.AuditApi(bkuser_sdk.ApiClient(configuration))
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_login_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_audit_login_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_login_log_read: %s\n" % e)
@@ -134,9 +138,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_reset_password_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_audit_reset_password_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_reset_password_log_list: %s\n" % e)
@@ -146,9 +151,10 @@ api_instance = bkuser_sdk.AuditApi(bkuser_sdk.ApiClient(configuration))
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_reset_password_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_audit_reset_password_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_reset_password_log_read: %s\n" % e)
@@ -156,7 +162,7 @@ except ApiException as e:
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -177,6 +183,7 @@ Class | Method | HTTP request | Description
 *CategoriesApi* | [**v2_categories_list_metas**](docs/CategoriesApi.md#v2_categories_list_metas) | **GET** /api/v2/categories_metas/ | 
 *CategoriesApi* | [**v2_categories_partial_update**](docs/CategoriesApi.md#v2_categories_partial_update) | **PATCH** /api/v2/categories/{lookup_value}/ | 
 *CategoriesApi* | [**v2_categories_read**](docs/CategoriesApi.md#v2_categories_read) | **GET** /api/v2/categories/{lookup_value}/ | 
+*CategoriesApi* | [**v2_categories_restoration**](docs/CategoriesApi.md#v2_categories_restoration) | **POST** /api/v2/categories/{lookup_value}/restoration/ | 
 *CategoriesApi* | [**v2_categories_sync**](docs/CategoriesApi.md#v2_categories_sync) | **POST** /api/v2/categories/{lookup_value}/sync/ | 
 *CategoriesApi* | [**v2_categories_test_connection**](docs/CategoriesApi.md#v2_categories_test_connection) | **POST** /api/v2/categories/{lookup_value}/test_connection/ | 
 *CategoriesApi* | [**v2_categories_test_fetch_data**](docs/CategoriesApi.md#v2_categories_test_fetch_data) | **POST** /api/v2/categories/{lookup_value}/test_fetch_data/ | 
@@ -190,6 +197,7 @@ Class | Method | HTTP request | Description
 *DepartmentsApi* | [**v2_departments_profiles_create**](docs/DepartmentsApi.md#v2_departments_profiles_create) | **POST** /api/v2/departments/{lookup_value}/profiles/ | 
 *DepartmentsApi* | [**v2_departments_profiles_read**](docs/DepartmentsApi.md#v2_departments_profiles_read) | **GET** /api/v2/departments/{lookup_value}/profiles/ | 
 *DepartmentsApi* | [**v2_departments_read**](docs/DepartmentsApi.md#v2_departments_read) | **GET** /api/v2/departments/{lookup_value}/ | 
+*DepartmentsApi* | [**v2_departments_restoration**](docs/DepartmentsApi.md#v2_departments_restoration) | **POST** /api/v2/departments/{lookup_value}/restoration/ | 
 *DepartmentsApi* | [**v2_departments_update**](docs/DepartmentsApi.md#v2_departments_update) | **POST** /api/v2/departments/{lookup_value}/ | 
 *DynamicFieldsApi* | [**v2_dynamic_fields_create**](docs/DynamicFieldsApi.md#v2_dynamic_fields_create) | **POST** /api/v2/dynamic_fields/ | 
 *DynamicFieldsApi* | [**v2_dynamic_fields_delete**](docs/DynamicFieldsApi.md#v2_dynamic_fields_delete) | **DELETE** /api/v2/dynamic_fields/{lookup_value}/ | 
@@ -210,6 +218,7 @@ Class | Method | HTTP request | Description
 *ProfilesApi* | [**v2_profiles_modify_password**](docs/ProfilesApi.md#v2_profiles_modify_password) | **POST** /api/v2/profiles/{lookup_value}/modify_password/ | 
 *ProfilesApi* | [**v2_profiles_partial_update**](docs/ProfilesApi.md#v2_profiles_partial_update) | **PATCH** /api/v2/profiles/{lookup_value}/ | 
 *ProfilesApi* | [**v2_profiles_read**](docs/ProfilesApi.md#v2_profiles_read) | **GET** /api/v2/profiles/{lookup_value}/ | 
+*ProfilesApi* | [**v2_profiles_restoration**](docs/ProfilesApi.md#v2_profiles_restoration) | **POST** /api/v2/profiles/{lookup_value}/restoration/ | 
 *ProfilesApi* | [**v2_profiles_update**](docs/ProfilesApi.md#v2_profiles_update) | **PUT** /api/v2/profiles/{lookup_value}/ | 
 *ProfilesApi* | [**v2_retrieve_by_token**](docs/ProfilesApi.md#v2_retrieve_by_token) | **GET** /api/v2/token/{token}/ | 
 *SettingMetasApi* | [**v2_setting_metas_create**](docs/SettingMetasApi.md#v2_setting_metas_create) | **POST** /api/v2/setting_metas/ | 
@@ -225,6 +234,8 @@ Class | Method | HTTP request | Description
 *SettingsApi* | [**v2_settings_read**](docs/SettingsApi.md#v2_settings_read) | **GET** /api/v2/settings/{lookup_value}/ | 
 *SettingsApi* | [**v2_settings_update**](docs/SettingsApi.md#v2_settings_update) | **PUT** /api/v2/settings/{lookup_value}/ | 
 *ShortcutsApi* | [**v2_shortcuts_departments_list_tops**](docs/ShortcutsApi.md#v2_shortcuts_departments_list_tops) | **GET** /api/v2/shortcuts/departments/tops/ | 
+*SyncTaskApi* | [**v2_sync_task_list**](docs/SyncTaskApi.md#v2_sync_task_list) | **GET** /api/v2/sync_task/ | 
+*SyncTaskApi* | [**v2_sync_task_show_logs**](docs/SyncTaskApi.md#v2_sync_task_show_logs) | **GET** /api/v2/sync_task/{lookup_value}/logs | 
 *V1Api* | [**v1_login_login**](docs/V1Api.md#v1_login_login) | **POST** /api/v1/login/check/ | 
 *V1Api* | [**v1_login_profile_batch_query**](docs/V1Api.md#v1_login_profile_batch_query) | **POST** /api/v1/login/profile/query/ | 
 *V1Api* | [**v1_login_upsert**](docs/V1Api.md#v1_login_upsert) | **POST** /api/v1/login/profile/ | 
@@ -235,6 +246,7 @@ Class | Method | HTTP request | Description
  - [Category](docs/Category.md)
  - [CategoryMetaSLZ](docs/CategoryMetaSLZ.md)
  - [CategorySync](docs/CategorySync.md)
+ - [CategorySyncResponseSLZ](docs/CategorySyncResponseSLZ.md)
  - [CategoryTestConnection](docs/CategoryTestConnection.md)
  - [CategoryTestFetchData](docs/CategoryTestFetchData.md)
  - [CreateCategory](docs/CreateCategory.md)
@@ -266,6 +278,8 @@ Class | Method | HTTP request | Description
  - [SettingMeta](docs/SettingMeta.md)
  - [SettingUpdate](docs/SettingUpdate.md)
  - [SimpleDepartment](docs/SimpleDepartment.md)
+ - [SyncTask](docs/SyncTask.md)
+ - [SyncTaskProcess](docs/SyncTaskProcess.md)
  - [UpdateProfile](docs/UpdateProfile.md)
 
 ## Documentation For Authorization

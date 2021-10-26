@@ -1,6 +1,6 @@
 # bkuser_sdk.DepartmentsApi
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -13,6 +13,7 @@ Method | HTTP request | Description
 [**v2_departments_profiles_create**](DepartmentsApi.md#v2_departments_profiles_create) | **POST** /api/v2/departments/{lookup_value}/profiles/ | 
 [**v2_departments_profiles_read**](DepartmentsApi.md#v2_departments_profiles_read) | **GET** /api/v2/departments/{lookup_value}/profiles/ | 
 [**v2_departments_read**](DepartmentsApi.md#v2_departments_read) | **GET** /api/v2/departments/{lookup_value}/ | 
+[**v2_departments_restoration**](DepartmentsApi.md#v2_departments_restoration) | **POST** /api/v2/departments/{lookup_value}/restoration/ | 
 [**v2_departments_update**](DepartmentsApi.md#v2_departments_update) | **POST** /api/v2/departments/{lookup_value}/ | 
 
 # **v2_departments_create**
@@ -63,7 +64,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_departments_delete**
-> v2_departments_delete(lookup_value, fields=fields, lookup_field=lookup_field)
+> v2_departments_delete(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -82,9 +83,10 @@ api_instance = bkuser_sdk.DepartmentsApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_instance.v2_departments_delete(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_instance.v2_departments_delete(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 except ApiException as e:
     print("Exception when calling DepartmentsApi->v2_departments_delete: %s\n" % e)
 ```
@@ -96,6 +98,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -113,7 +116,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_departments_get_ancestor**
-> object v2_departments_get_ancestor(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field)
+> object v2_departments_get_ancestor(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -135,9 +138,10 @@ page = 56 # int | A page number within the paginated result set. (optional)
 page_size = 56 # int | Number of results to return per page. (optional)
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_departments_get_ancestor(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_departments_get_ancestor(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DepartmentsApi->v2_departments_get_ancestor: %s\n" % e)
@@ -153,6 +157,7 @@ Name | Type | Description  | Notes
  **page_size** | **int**| Number of results to return per page. | [optional] 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -170,7 +175,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_departments_get_children**
-> object v2_departments_get_children(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field)
+> object v2_departments_get_children(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -192,9 +197,10 @@ page = 56 # int | A page number within the paginated result set. (optional)
 page_size = 56 # int | Number of results to return per page. (optional)
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_departments_get_children(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_departments_get_children(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DepartmentsApi->v2_departments_get_children: %s\n" % e)
@@ -210,6 +216,7 @@ Name | Type | Description  | Notes
  **page_size** | **int**| Number of results to return per page. | [optional] 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -227,7 +234,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_departments_list**
-> object v2_departments_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+> object v2_departments_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
 
 
 
@@ -256,9 +263,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_departments_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_departments_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DepartmentsApi->v2_departments_list: %s\n" % e)
@@ -281,6 +289,7 @@ Name | Type | Description  | Notes
  **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional] 
  **since** | **datetime**| 筛选某个时间点后的记录 | [optional] 
  **until** | **datetime**| 筛选某个时间点前的记录 | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -394,7 +403,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_departments_profiles_read**
-> object v2_departments_profiles_read(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, recursive=recursive, detail=detail, wildcard_search=wildcard_search)
+> object v2_departments_profiles_read(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled, recursive=recursive, detail=detail, wildcard_search=wildcard_search)
 
 
 
@@ -416,12 +425,13 @@ page = 56 # int | A page number within the paginated result set. (optional)
 page_size = 56 # int | Number of results to return per page. (optional)
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 recursive = true # bool | 是否递归 (optional)
 detail = true # bool | 是否返回全部字段 (optional)
 wildcard_search = 'wildcard_search_example' # str | 模糊查找用户的 username & display_name 字段 (optional)
 
 try:
-    api_response = api_instance.v2_departments_profiles_read(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, recursive=recursive, detail=detail, wildcard_search=wildcard_search)
+    api_response = api_instance.v2_departments_profiles_read(lookup_value, ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled, recursive=recursive, detail=detail, wildcard_search=wildcard_search)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DepartmentsApi->v2_departments_profiles_read: %s\n" % e)
@@ -437,6 +447,7 @@ Name | Type | Description  | Notes
  **page_size** | **int**| Number of results to return per page. | [optional] 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
  **recursive** | **bool**| 是否递归 | [optional] 
  **detail** | **bool**| 是否返回全部字段 | [optional] 
  **wildcard_search** | **str**| 模糊查找用户的 username &amp; display_name 字段 | [optional] 
@@ -457,7 +468,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_departments_read**
-> DepartmentsWithAncestors v2_departments_read(lookup_value, fields=fields, lookup_field=lookup_field, with_ancestors=with_ancestors)
+> DepartmentsWithAncestors v2_departments_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled, with_ancestors=with_ancestors)
 
 
 
@@ -474,10 +485,11 @@ api_instance = bkuser_sdk.DepartmentsApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 with_ancestors = true # bool |  (optional)
 
 try:
-    api_response = api_instance.v2_departments_read(lookup_value, fields=fields, lookup_field=lookup_field, with_ancestors=with_ancestors)
+    api_response = api_instance.v2_departments_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled, with_ancestors=with_ancestors)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DepartmentsApi->v2_departments_read: %s\n" % e)
@@ -490,6 +502,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
  **with_ancestors** | **bool**|  | [optional] 
 
 ### Return type
@@ -503,6 +516,61 @@ No authorization required
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **v2_departments_restoration**
+> Empty v2_departments_restoration(body, lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
+
+
+
+软删除对象恢复
+
+### Example
+```python
+from __future__ import print_function
+import time
+import bkuser_sdk
+from bkuser_sdk.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = bkuser_sdk.DepartmentsApi()
+body = NULL # object | 
+lookup_value = 'lookup_value_example' # str | 
+fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
+lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
+
+try:
+    api_response = api_instance.v2_departments_restoration(body, lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DepartmentsApi->v2_departments_restoration: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**object**](object.md)|  | 
+ **lookup_value** | **str**|  | 
+ **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
+ **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
+
+### Return type
+
+[**Empty**](Empty.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

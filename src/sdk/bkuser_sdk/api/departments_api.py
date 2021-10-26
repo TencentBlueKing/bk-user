@@ -144,6 +144,7 @@ class DepartmentsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: None
                  If the method is called asynchronously,
                  returns the request thread.
@@ -168,12 +169,13 @@ class DepartmentsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: None
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -204,6 +206,8 @@ class DepartmentsApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -246,6 +250,7 @@ class DepartmentsApi(object):
         :param int page_size: Number of results to return per page.
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
@@ -273,12 +278,13 @@ class DepartmentsApi(object):
         :param int page_size: Number of results to return per page.
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -315,6 +321,8 @@ class DepartmentsApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -361,6 +369,7 @@ class DepartmentsApi(object):
         :param int page_size: Number of results to return per page.
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
@@ -388,12 +397,13 @@ class DepartmentsApi(object):
         :param int page_size: Number of results to return per page.
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field']  # noqa: E501
+        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -430,6 +440,8 @@ class DepartmentsApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -483,6 +495,7 @@ class DepartmentsApi(object):
         :param str time_field: 时间过滤字段，支持 update_time, create_time
         :param datetime since: 筛选某个时间点后的记录
         :param datetime until: 筛选某个时间点前的记录
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
@@ -517,12 +530,13 @@ class DepartmentsApi(object):
         :param str time_field: 时间过滤字段，支持 update_time, create_time
         :param datetime since: 筛选某个时间点后的记录
         :param datetime until: 筛选某个时间点前的记录
+        :param bool include_disabled: 是否包含已软删除的数据
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until']  # noqa: E501
+        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until', 'include_disabled']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -573,6 +587,8 @@ class DepartmentsApi(object):
             query_params.append(('since', params['since']))  # noqa: E501
         if 'until' in params:
             query_params.append(('until', params['until']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
 
         header_params = {}
 
@@ -831,6 +847,7 @@ class DepartmentsApi(object):
         :param int page_size: Number of results to return per page.
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :param bool recursive: 是否递归
         :param bool detail: 是否返回全部字段
         :param str wildcard_search: 模糊查找用户的 username & display_name 字段
@@ -861,6 +878,7 @@ class DepartmentsApi(object):
         :param int page_size: Number of results to return per page.
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :param bool recursive: 是否递归
         :param bool detail: 是否返回全部字段
         :param str wildcard_search: 模糊查找用户的 username & display_name 字段
@@ -869,7 +887,7 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field', 'recursive', 'detail', 'wildcard_search']  # noqa: E501
+        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field', 'include_disabled', 'recursive', 'detail', 'wildcard_search']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -906,6 +924,8 @@ class DepartmentsApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
         if 'recursive' in params:
             query_params.append(('recursive', params['recursive']))  # noqa: E501
         if 'detail' in params:
@@ -954,6 +974,7 @@ class DepartmentsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :param bool with_ancestors:
         :return: DepartmentsWithAncestors
                  If the method is called asynchronously,
@@ -978,13 +999,14 @@ class DepartmentsApi(object):
         :param str lookup_value: (required)
         :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
         :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
         :param bool with_ancestors:
         :return: DepartmentsWithAncestors
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'fields', 'lookup_field', 'with_ancestors']  # noqa: E501
+        all_params = ['lookup_value', 'fields', 'lookup_field', 'include_disabled', 'with_ancestors']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -1015,6 +1037,8 @@ class DepartmentsApi(object):
             query_params.append(('fields', params['fields']))  # noqa: E501
         if 'lookup_field' in params:
             query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
         if 'with_ancestors' in params:
             query_params.append(('with_ancestors', params['with_ancestors']))  # noqa: E501
 
@@ -1040,6 +1064,125 @@ class DepartmentsApi(object):
             post_params=form_params,
             files=local_var_files,
             response_type='DepartmentsWithAncestors',  # noqa: E501
+            auth_settings=auth_settings,
+            async_req=params.get('async_req'),
+            _return_http_data_only=params.get('_return_http_data_only'),
+            _preload_content=params.get('_preload_content', True),
+            _request_timeout=params.get('_request_timeout'),
+            collection_formats=collection_formats)
+
+    def v2_departments_restoration(self, body, lookup_value, **kwargs):  # noqa: E501
+        """v2_departments_restoration  # noqa: E501
+
+        软删除对象恢复  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+        >>> thread = api.v2_departments_restoration(body, lookup_value, async_req=True)
+        >>> result = thread.get()
+
+        :param async_req bool
+        :param object body: (required)
+        :param str lookup_value: (required)
+        :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
+        :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
+        :return: Empty
+                 If the method is called asynchronously,
+                 returns the request thread.
+        """
+        kwargs['_return_http_data_only'] = True
+        if kwargs.get('async_req'):
+            return self.v2_departments_restoration_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
+        else:
+            (data) = self.v2_departments_restoration_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
+            return data
+
+    def v2_departments_restoration_with_http_info(self, body, lookup_value, **kwargs):  # noqa: E501
+        """v2_departments_restoration  # noqa: E501
+
+        软删除对象恢复  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+        >>> thread = api.v2_departments_restoration_with_http_info(body, lookup_value, async_req=True)
+        >>> result = thread.get()
+
+        :param async_req bool
+        :param object body: (required)
+        :param str lookup_value: (required)
+        :param str fields: 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id
+        :param str lookup_field: 指定查询字段，内容为 lookup_value 所属字段, 例如: username
+        :param bool include_disabled: 是否包含已软删除的数据
+        :return: Empty
+                 If the method is called asynchronously,
+                 returns the request thread.
+        """
+
+        all_params = ['body', 'lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
+        all_params.append('async_req')
+        all_params.append('_return_http_data_only')
+        all_params.append('_preload_content')
+        all_params.append('_request_timeout')
+
+        params = locals()
+        for key, val in six.iteritems(params['kwargs']):
+            if key not in all_params:
+                raise TypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method v2_departments_restoration" % key
+                )
+            params[key] = val
+        del params['kwargs']
+        # verify the required parameter 'body' is set
+        if ('body' not in params or
+                params['body'] is None):
+            raise ValueError("Missing the required parameter `body` when calling `v2_departments_restoration`")  # noqa: E501
+        # verify the required parameter 'lookup_value' is set
+        if ('lookup_value' not in params or
+                params['lookup_value'] is None):
+            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_restoration`")  # noqa: E501
+
+        collection_formats = {}
+
+        path_params = {}
+        if 'lookup_value' in params:
+            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+
+        query_params = []
+        if 'fields' in params:
+            query_params.append(('fields', params['fields']))  # noqa: E501
+        if 'lookup_field' in params:
+            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
+        if 'include_disabled' in params:
+            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
+
+        header_params = {}
+
+        form_params = []
+        local_var_files = {}
+
+        body_params = None
+        if 'body' in params:
+            body_params = params['body']
+        # HTTP header `Accept`
+        header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # HTTP header `Content-Type`
+        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
+            ['application/json'])  # noqa: E501
+
+        # Authentication setting
+        auth_settings = []  # noqa: E501
+
+        return self.api_client.call_api(
+            '/api/v2/departments/{lookup_value}/restoration/', 'POST',
+            path_params,
+            query_params,
+            header_params,
+            body=body_params,
+            post_params=form_params,
+            files=local_var_files,
+            response_type='Empty',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

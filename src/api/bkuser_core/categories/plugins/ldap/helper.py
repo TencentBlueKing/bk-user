@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Type
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.base import DBSyncManager, SyncContext, SyncStep, TypeList
 from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapProfileMeta
-from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
+from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.categories.plugins.utils import handle_with_progress_info
 from bkuser_core.common.db_sync import SyncOperation
 from bkuser_core.departments.models import Department, DepartmentThroughModel
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class DepartmentSyncHelper:
     category: ProfileCategory
     db_sync_manager: DBSyncManager
-    target_obj_list: TypeList[DepartmentProfile]
+    target_obj_list: TypeList[LdapDepartment]
     context: SyncContext
     config_loader: ConfigProvider
 
@@ -63,10 +63,10 @@ class DepartmentSyncHelper:
     def load_to_memory(self):
         for dept in handle_with_progress_info(
             self.target_obj_list, progress_title="handle department"
-        ):  # type: DepartmentProfile
+        ):  # type: LdapDepartment
             self._handle_department(dept)
 
-    def _handle_department(self, dept_info: DepartmentProfile) -> Optional[Department]:
+    def _handle_department(self, dept_info: LdapDepartment) -> Optional[Department]:
         """将 DepartmentProfile 转换成 Department, 并递归处理其父节点
 
         如果父节点存在, 则递归处理父节点, 并绑定部门上下级关系, 再将部门对象(Department)插入缓存层
@@ -86,22 +86,18 @@ class DepartmentSyncHelper:
             "extras": {
                 "type": self.config_loader["user_group_class"]
                 if dept_info.is_group
-                else self.config_loader["organization_class"]
+                else self.config_loader["organization_class"],
             },
             **self._MPTT_INIT_PARAMS,
         }
-        if dept_info.code:
-            defaults["code"] = dept_info.code
-
         dept = self._insert_dept(dept_info=dept_info, defaults=defaults)
         return dept
 
-    def _insert_dept(self, dept_info: DepartmentProfile, defaults: Dict) -> Department:
-        dept: Department = self.db_sync_manager.magic_get(
-            unique_key=dept_info.key_field, target_meta=LdapDepartmentMeta
-        )
-        if dept and dept_info.code:
-            dept.code = dept_info.code
+    def _insert_dept(self, dept_info: LdapDepartment, defaults: Dict) -> Department:
+        dept: Department = self.db_sync_manager.magic_get(dept_info.key_field, LdapDepartmentMeta)
+        if dept:
+            if dept_info.code and dept.code != dept_info.code:
+                dept.code = dept_info.code
             return dept
 
         if dept_info.key_field in self.db_departments:
@@ -122,7 +118,7 @@ class DepartmentSyncHelper:
 class ProfileSyncHelper:
     category: ProfileCategory
     db_sync_manager: DBSyncManager
-    target_obj_list: TypeList[UserProfile]
+    target_obj_list: TypeList[LdapUserProfile]
     context: SyncContext
 
     @cached_property

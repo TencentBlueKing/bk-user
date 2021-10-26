@@ -83,7 +83,7 @@ urlpatterns = [
                 "post": "activate",
             }
         ),
-        name="categories.sync",
+        name="categories.activate",
     ),
     url(
         r"^api/v2/categories/%s/test_connection/$" % PVAR_CATEGORIES_ID,

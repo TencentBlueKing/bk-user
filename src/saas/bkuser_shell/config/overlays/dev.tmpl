@@ -34,10 +34,8 @@ INSTALLED_APPS += [
 
 MIDDLEWARE.insert(0, "corsheaders.middleware.CorsMiddleware")
 
-CORS_ORIGIN_WHITELIST = [
-    # 填入你的前端访问地址
-    "http://some-impossible.com",
-]
+
+CORS_ORIGIN_WHITELIST = env.list("CORS_ORIGIN_WHITELIST", default=[])
 
 CORS_ALLOW_CREDENTIALS = True
-CSRF_COOKIE_DOMAIN = ".some-impossible.com"
+CSRF_COOKIE_DOMAIN = env.str("CSRF_COOKIE_DOMAIN", default=".example.com")

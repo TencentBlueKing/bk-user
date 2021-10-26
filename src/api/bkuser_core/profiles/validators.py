@@ -57,6 +57,10 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
         for s in queryset.only("pk", "extras").extra(
             where=["JSON_SEARCH(extras, 'one', %s) is not null"], params=[target_value]
         ):
+            # 防御: 可能存在部分旧数据并未添加所有 extra key
+            if f.name not in s.extras:
+                continue
+
             if s.extras[f.name] == target_value:
                 raise ValidationError(
                     _("自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录").format(f.display_name, category_id, target_value)

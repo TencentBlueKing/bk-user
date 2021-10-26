@@ -8,10 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from datetime import timedelta
 from enum import auto
 
 from bkuser_core.common.enum import AutoLowerEnum
 from django.utils.translation import ugettext_lazy as _
+
+TIMEOUT_THRESHOLD = timedelta(hours=1)
 
 
 class CategoryStatus(AutoLowerEnum):
@@ -76,6 +79,13 @@ class SyncStep(AutoLowerEnum):
         (USERS_RELATIONSHIP, _("用户间关系数据更新")),
         (DEPT_USER_RELATIONSHIP, _("用户和组织关系数据更新")),
     )
+
+
+class SyncTaskType(AutoLowerEnum):
+    MANUAL = auto()
+    AUTO = auto()
+
+    _choices_labels = ((MANUAL, _("手动导入")), (AUTO, _("定时同步")))
 
 
 class SyncTaskStatus(AutoLowerEnum):

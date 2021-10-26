@@ -92,7 +92,7 @@ class SettingViewSet(AdvancedModelViewSet):
             logger.exception("cannot create setting")
             raise error_codes.CANNOT_CREATE_SETTING
 
-        post_setting_create_or_update.send(sender=setting, setting=setting)
+        post_setting_create_or_update.send(sender=setting, setting=setting, operator=request.operator)
         return Response(serializers.SettingSerializer(setting).data, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
@@ -101,7 +101,7 @@ class SettingViewSet(AdvancedModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         result = super().update(request, *args, **kwargs)
-        post_setting_create_or_update.send(sender=self, setting=self.get_object())
+        post_setting_create_or_update.send(sender=self, setting=self.get_object(), operator=request.operator)
         return result
 
     @swagger_auto_schema(
@@ -110,7 +110,7 @@ class SettingViewSet(AdvancedModelViewSet):
     )
     def partial_update(self, request, *args, **kwargs):
         result = super().partial_update(request, *args, **kwargs)
-        post_setting_create_or_update.send(sender=self, setting=self.get_object())
+        post_setting_create_or_update.send(sender=self, setting=self.get_object(), operator=request.operator)
         return result
 
 
@@ -119,4 +119,4 @@ class SettingMetaViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     queryset = SettingMeta.objects.all()
     serializer_class = serializers.SettingMetaSerializer
-    lookup_field = "key"
+    lookup_field = "id"

@@ -1,6 +1,6 @@
 # bkuser_sdk.SettingMetasApi
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -59,7 +59,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_setting_metas_delete**
-> v2_setting_metas_delete(lookup_value, fields=fields, lookup_field=lookup_field)
+> v2_setting_metas_delete(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -78,9 +78,10 @@ api_instance = bkuser_sdk.SettingMetasApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_instance.v2_setting_metas_delete(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_instance.v2_setting_metas_delete(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 except ApiException as e:
     print("Exception when calling SettingMetasApi->v2_setting_metas_delete: %s\n" % e)
 ```
@@ -92,6 +93,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -109,7 +111,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_setting_metas_list**
-> object v2_setting_metas_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+> object v2_setting_metas_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
 
 
 
@@ -138,9 +140,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_setting_metas_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_setting_metas_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling SettingMetasApi->v2_setting_metas_list: %s\n" % e)
@@ -163,6 +166,7 @@ Name | Type | Description  | Notes
  **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional] 
  **since** | **datetime**| 筛选某个时间点后的记录 | [optional] 
  **until** | **datetime**| 筛选某个时间点前的记录 | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -229,7 +233,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_setting_metas_read**
-> SettingMeta v2_setting_metas_read(lookup_value, fields=fields, lookup_field=lookup_field)
+> SettingMeta v2_setting_metas_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -248,9 +252,10 @@ api_instance = bkuser_sdk.SettingMetasApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_setting_metas_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_setting_metas_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling SettingMetasApi->v2_setting_metas_read: %s\n" % e)
@@ -263,6 +268,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -280,7 +286,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_setting_metas_update**
-> SettingMeta v2_setting_metas_update(body, lookup_value, fields=fields, lookup_field=lookup_field)
+> SettingMeta v2_setting_metas_update(body, lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -300,9 +306,10 @@ body = bkuser_sdk.SettingMeta() # SettingMeta |
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_setting_metas_update(body, lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_setting_metas_update(body, lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling SettingMetasApi->v2_setting_metas_update: %s\n" % e)
@@ -316,6 +323,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 

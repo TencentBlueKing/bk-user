@@ -1,6 +1,6 @@
 # bkuser_sdk.AuditApi
 
-All URIs are relative to *http://localhost:8004/*
+All URIs are relative to *http://localhost:8000/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -12,7 +12,7 @@ Method | HTTP request | Description
 [**v2_audit_reset_password_log_read**](AuditApi.md#v2_audit_reset_password_log_read) | **GET** /api/v2/audit/reset_password_log/{lookup_value}/ | 
 
 # **v2_audit_general_log_list**
-> object v2_audit_general_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+> object v2_audit_general_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
 
 
 
@@ -41,9 +41,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_general_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_audit_general_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_general_log_list: %s\n" % e)
@@ -66,6 +67,7 @@ Name | Type | Description  | Notes
  **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional] 
  **since** | **datetime**| 筛选某个时间点后的记录 | [optional] 
  **until** | **datetime**| 筛选某个时间点前的记录 | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -83,7 +85,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_audit_general_log_read**
-> GeneralLog v2_audit_general_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+> GeneralLog v2_audit_general_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -102,9 +104,10 @@ api_instance = bkuser_sdk.AuditApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_general_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_audit_general_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_general_log_read: %s\n" % e)
@@ -117,6 +120,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -134,7 +138,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_audit_login_log_list**
-> object v2_audit_login_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+> object v2_audit_login_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
 
 
 
@@ -163,9 +167,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_login_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_audit_login_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_login_log_list: %s\n" % e)
@@ -188,6 +193,7 @@ Name | Type | Description  | Notes
  **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional] 
  **since** | **datetime**| 筛选某个时间点后的记录 | [optional] 
  **until** | **datetime**| 筛选某个时间点前的记录 | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -205,7 +211,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_audit_login_log_read**
-> LoginLog v2_audit_login_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+> LoginLog v2_audit_login_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -224,9 +230,10 @@ api_instance = bkuser_sdk.AuditApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_login_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_audit_login_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_login_log_read: %s\n" % e)
@@ -239,6 +246,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -256,7 +264,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_audit_reset_password_log_list**
-> object v2_audit_reset_password_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+> object v2_audit_reset_password_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
 
 
 
@@ -285,9 +293,10 @@ best_match = true # bool | 是否按照最短匹配排序 (optional)
 time_field = 'time_field_example' # str | 时间过滤字段，支持 update_time, create_time (optional)
 since = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点后的记录 (optional)
 until = '2013-10-20T19:20:30+01:00' # datetime | 筛选某个时间点前的记录 (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_reset_password_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until)
+    api_response = api_instance.v2_audit_reset_password_log_list(ordering=ordering, page=page, page_size=page_size, fields=fields, lookup_field=lookup_field, exact_lookups=exact_lookups, fuzzy_lookups=fuzzy_lookups, wildcard_search=wildcard_search, wildcard_search_fields=wildcard_search_fields, best_match=best_match, time_field=time_field, since=since, until=until, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_reset_password_log_list: %s\n" % e)
@@ -310,6 +319,7 @@ Name | Type | Description  | Notes
  **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional] 
  **since** | **datetime**| 筛选某个时间点后的记录 | [optional] 
  **until** | **datetime**| 筛选某个时间点前的记录 | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 
@@ -327,7 +337,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **v2_audit_reset_password_log_read**
-> ResetPasswordLog v2_audit_reset_password_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+> ResetPasswordLog v2_audit_reset_password_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
 
 
 
@@ -346,9 +356,10 @@ api_instance = bkuser_sdk.AuditApi()
 lookup_value = 'lookup_value_example' # str | 
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
+include_disabled = true # bool | 是否包含已软删除的数据 (optional)
 
 try:
-    api_response = api_instance.v2_audit_reset_password_log_read(lookup_value, fields=fields, lookup_field=lookup_field)
+    api_response = api_instance.v2_audit_reset_password_log_read(lookup_value, fields=fields, lookup_field=lookup_field, include_disabled=include_disabled)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling AuditApi->v2_audit_reset_password_log_read: %s\n" % e)
@@ -361,6 +372,7 @@ Name | Type | Description  | Notes
  **lookup_value** | **str**|  | 
  **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
  **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
 
 ### Return type
 

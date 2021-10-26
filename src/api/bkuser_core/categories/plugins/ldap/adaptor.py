@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/MIT
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+"""
 from dataclasses import dataclass
 from typing import Any, Dict, List, NamedTuple, Optional
 
-from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
+from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.utils.encoding import force_str
 from ldap3.utils import dn as dn_utils
@@ -48,10 +57,10 @@ class ProfileFieldMapper:
 
 def user_adapter(
     code: str, user_meta: Dict[str, Any], field_mapper: ProfileFieldMapper, restrict_types: List[str]
-) -> UserProfile:
+) -> LdapUserProfile:
     groups = user_meta["attributes"][field_mapper.config_loader["user_member_of"]]
 
-    return UserProfile(
+    return LdapUserProfile(
         username=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="username"),
         email=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="email"),
         telephone=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="telephone"),
@@ -67,13 +76,13 @@ def user_adapter(
     )
 
 
-def department_adapter(code: str, dept_meta: Dict, is_group: bool, restrict_types: List[str]) -> DepartmentProfile:
+def department_adapter(code: str, dept_meta: Dict, is_group: bool, restrict_types: List[str]) -> LdapDepartment:
     dn = dept_meta["dn"]
     dn_values = parse_dn_value_list(dn, restrict_types=restrict_types)
 
-    parent_dept: Optional[DepartmentProfile] = None
+    parent_dept: Optional[LdapDepartment] = None
     for dept_name in reversed(dn_values):
-        parent_dept = DepartmentProfile(
+        parent_dept = LdapDepartment(
             name=dept_name,
             parent=parent_dept,
             is_group=is_group,

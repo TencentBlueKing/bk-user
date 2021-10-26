@@ -12,3 +12,7 @@ specific language governing permissions and limitations under the License.
 
 class FetchDataFromRemoteFailed(Exception):
     """获取远程数据失败"""
+
+
+class ExistsSyncingTaskError(Exception):
+    """目录正在同步"""

@@ -157,7 +157,7 @@
             {{$t('编辑邮件模板')}}
           </span>
         </div>
-        <div class="template-config-container" v-show="showEmailTemplate">
+        <div class="template-config-container" v-show="showEmailTemplate" data-test-id="list_emailInfo">
           <i class="arrow"></i>
           <ul class="template-config clearfix">
             <li class="email-block">

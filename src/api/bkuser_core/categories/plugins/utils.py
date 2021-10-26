@@ -18,7 +18,7 @@ from django_celery_beat.models import IntervalSchedule, PeriodicTask
 logger = logging.getLogger(__name__)
 
 
-def make_periodic_sync_task(category_id: int, interval_seconds: int):
+def make_periodic_sync_task(category_id: int, operator: str, interval_seconds: int):
     """创建同步周期任务"""
     try:
         schedule, _ = IntervalSchedule.objects.get_or_create(every=interval_seconds, period=IntervalSchedule.SECONDS)
@@ -32,11 +32,11 @@ def make_periodic_sync_task(category_id: int, interval_seconds: int):
         name=str(category_id),
         task="bkuser_core.categories.tasks.adapter_sync",
         enabled=True,
-        kwargs=json.dumps({"instance_id": category_id}),
+        kwargs=json.dumps({"instance_id": category_id, "operator": operator}),
     )
 
 
-def update_periodic_sync_task(category_id: int, interval_seconds: int):
+def update_periodic_sync_task(category_id: int, operator: str, interval_seconds: int):
     """更新同步周期任务"""
     try:
         schedule, _ = IntervalSchedule.objects.get_or_create(every=interval_seconds, period=IntervalSchedule.SECONDS)
@@ -44,17 +44,19 @@ def update_periodic_sync_task(category_id: int, interval_seconds: int):
         schedule = IntervalSchedule.objects.filter(every=interval_seconds, period=IntervalSchedule.SECONDS)[0]
 
     # 通过 category_id 来做任务名
+    kwargs = json.dumps({"instance_id": category_id, "operator": operator})
     try:
-        p = PeriodicTask.objects.get(name=str(category_id))
+        p: PeriodicTask = PeriodicTask.objects.get(name=str(category_id))
         p.interval = schedule
-        p.save(update_fields=["interval"])
+        p.kwargs = kwargs
+        p.save(update_fields=["interval", "kwargs"])
     except PeriodicTask.DoesNotExist:
         create_params = {
             "interval": schedule,
             "name": str(category_id),
             "task": "bkuser_core.categories.tasks.adapter_sync",
             "enabled": True,
-            "kwargs": json.dumps({"instance_id": category_id}),
+            "kwargs": kwargs,
         }
         PeriodicTask.objects.create(**create_params)
 

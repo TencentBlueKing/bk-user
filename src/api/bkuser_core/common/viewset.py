@@ -21,7 +21,12 @@ from bkuser_core.bkiam.filters import IAMFilter
 from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, is_custom_fields_enabled
+from bkuser_core.common.serializers import (
+    AdvancedListSerializer,
+    AdvancedRetrieveSerialzier,
+    EmptySerializer,
+    is_custom_fields_enabled,
+)
 from django.conf import settings
 from django.core.exceptions import FieldError, ObjectDoesNotExist
 from django.db.models import ManyToOneRel, Q, QuerySet
@@ -33,6 +38,8 @@ from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from bkuser_global.utils import force_str_2_bool
+
 from .constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 
 logger = logging.getLogger(__name__)
@@ -42,6 +49,13 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size = 50
     page_size_query_param = "page_size"
     max_page_size = settings.MAX_PAGE_SIZE
+
+    def paginate_queryset(self, queryset, request, view=None):
+        # FIXME: REMOVE no_page in future version
+        if force_str_2_bool(request.query_params.get("no_page", False)):
+            return None
+
+        return super().paginate_queryset(queryset, request, view)
 
     def get_paginated_response(self, data):
         return Response(
@@ -94,10 +108,21 @@ class DynamicFieldsMixin:
         """
         return self._get_list_query_param("fields", request=request)
 
+    def _ensure_enabled_field(self, request, fields: Optional[List] = None):
+        """确保用户在传入 include_disabled_field 时，返回内容包含 enabled 字段"""
+        if not fields:
+            return
+        if (
+            "enabled" in fields
+            or getattr(self, "include_disabled_field", "include_disabled") not in request.query_params
+        ):
+            return
+        fields.append("enabled")
+
 
 class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
     SEARCH_PARAM = "lookup_field"
-
+    SOFT_DELETE_MODELNAMES = ("Profile", "Department", "ProfileCategory")
     WILDCARD_SEARCH_PARAM = "wildcard_search"
     WILDCARD_SEARCH_FIELDS_PARAM = "wildcard_search_fields"
     BEST_MATCH_PARAM = "best_match"
@@ -165,6 +190,11 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
         serializer.is_valid(True)
         query_data = serializer.validated_data
 
+        if queryset.model.__name__ in self.SOFT_DELETE_MODELNAMES and not force_str_2_bool(
+            request.query_params.get(view.include_disabled_field, False)
+        ):
+            queryset = queryset.filter(enabled=True)
+
         fields = query_data.get("fields", [])
         if fields:
             # 需要将多对多的关系字段先减去，避免 prefetch 失败
@@ -184,8 +214,7 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
 
         if wildcard_search and wildcard_search_fields:
             target_lookups = [Q(**{"{}__icontains".format(x): wildcard_search}) for x in wildcard_search_fields]
-            # 如果选择了 wildcard 搜索，则忽略其他搜索条件
-            return queryset.filter(functools.reduce(or_, target_lookups))
+            queryset = queryset.filter(functools.reduce(or_, target_lookups))
 
         # 2. 单字段搜索
         return self.make_lookups(query_data, queryset, search_field)
@@ -284,6 +313,28 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
 
         return super().destroy(request, *args, **kwargs)
 
+    @method_decorator(clear_cache_if_succeed)
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier(), request_body=EmptySerializer)
+    def restoration(self, request, lookup_value):
+        """软删除对象恢复"""
+        instance = self.get_object()
+        if instance.enabled:
+            raise error_codes.RESOURCE_ALREADY_ENABLED
+        try:
+            instance.enable()
+        except Exception as why:
+            # TODO: 基于 issue71 更新操作日志
+            logger.exception("failed to restoration instance: %s, error: %s", instance, why)
+        else:
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.RESTORATION.value,
+                operator_obj=instance,
+                request=request,
+                extra_info={"action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}"},
+            )
+        return Response()
+
 
 class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
     """列表查询功能增强类"""
@@ -292,7 +343,7 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
     pagination_class = StandardResultsSetPagination
     exclude_fields: List = []
     permission_classes = [IAMPermission]
-
+    include_disabled_field = "include_disabled"
     relation_fields: list = []
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
@@ -305,6 +356,7 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
         query_data = _query_slz.validated_data
 
         fields = query_data.get("fields", None)
+        self._ensure_enabled_field(request, fields=fields)
         self._check_fields(fields)
 
         try:
@@ -340,8 +392,8 @@ class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     def multiple_retrieve(self, request):
         """批量获取"""
-        ids = self._get_list_query_param(field_name="query_ids")
-        instances = self.queryset.filter(id__in=ids)
+        ids = self._get_list_query_param(field_name="query_ids") or []
+        instances = self.queryset.filter(pk__in=ids)
         return Response(self.serializer_class(instances, many=True).data)
 
     @method_decorator(clear_cache_if_succeed)

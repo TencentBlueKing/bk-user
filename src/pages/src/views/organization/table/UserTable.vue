@@ -21,7 +21,7 @@
   -->
 <template>
   <div class="table-list-wrapper">
-    <div class="thead-container table-container">
+    <div class="thead-container table-container" data-test-id="list_activeTableHeardData">
       <table>
         <thead>
           <tr v-if="userMessage.tableHeardList.length">
@@ -37,8 +37,8 @@
         </thead>
       </table>
     </div>
-
-    <div class="tbody-container table-container" ref="scrollWrapper" @scroll.passive="handleTableScroll">
+    <div class="tbody-container table-container" ref="scrollWrapper"
+         @scroll.passive="handleTableScroll" data-test-id="list_organizationData">
       <table v-if="!isEmptySearch">
         <tbody v-if="userMessage.userInforList.length">
           <tr v-for="(item, index) in dataList" :key="item.id + Date.now()" @click.stop="viewDetails(item)">
@@ -47,7 +47,7 @@
                 <input type="checkbox" name="checkbox1" :checked="item.isCheck">
               </label>
             </td>
-            <td :class="{ 'hidden': ['id', 'isCheck', 'departments', 'originItem'].indexOf(key) !== -1 }"
+            <td :class="{ 'hidden': labelName.indexOf(key) !== -1 }"
                 v-for="(key, keyIndex) in Object.keys(item)"
                 :key="keyIndex">
               <!-- 组织 -->
@@ -144,11 +144,12 @@ export default {
       currentPage: null, // 当前加载了多少页
       pageLimit: 20, // 大于此条数前端分页
       lineHeight: 42, // 列表行高
+      labelName: ['id', 'isCheck', 'departments', 'originItem', 'create_time', 'update_time'],
     };
   },
   computed: {
     activeTableHeardList() {
-      const arr = ['id', 'isCheck', 'departments'];
+      const arr = ['id', 'isCheck', 'departments', 'create_time', 'update_time'];
       return this.userMessage.tableHeardList.filter(item => arr.indexOf(item.key) === -1);
     },
     enumInfo() {

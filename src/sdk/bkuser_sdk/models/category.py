@@ -31,6 +31,7 @@ class Category(object):
     swagger_types = {
         'id': 'int',
         'configured': 'bool',
+        'syncing': 'bool',
         'unfilled_namespaces': 'list[str]',
         'create_time': 'datetime',
         'update_time': 'datetime',
@@ -48,6 +49,7 @@ class Category(object):
     attribute_map = {
         'id': 'id',
         'configured': 'configured',
+        'syncing': 'syncing',
         'unfilled_namespaces': 'unfilled_namespaces',
         'create_time': 'create_time',
         'update_time': 'update_time',
@@ -62,10 +64,11 @@ class Category(object):
         'last_synced_time': 'last_synced_time'
     }
 
-    def __init__(self, id=None, configured=None, unfilled_namespaces=None, create_time=None, update_time=None, type=None, description=None, display_name=None, domain=None, default=None, enabled=None, status=None, order=None, last_synced_time=None):  # noqa: E501
+    def __init__(self, id=None, configured=None, syncing=None, unfilled_namespaces=None, create_time=None, update_time=None, type=None, description=None, display_name=None, domain=None, default=None, enabled=None, status=None, order=None, last_synced_time=None):  # noqa: E501
         """Category - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._configured = None
+        self._syncing = None
         self._unfilled_namespaces = None
         self._create_time = None
         self._update_time = None
@@ -83,6 +86,8 @@ class Category(object):
             self.id = id
         if configured is not None:
             self.configured = configured
+        if syncing is not None:
+            self.syncing = syncing
         if unfilled_namespaces is not None:
             self.unfilled_namespaces = unfilled_namespaces
         if create_time is not None:
@@ -146,6 +151,27 @@ class Category(object):
         """
 
         self._configured = configured
+
+    @property
+    def syncing(self):
+        """Gets the syncing of this Category.  # noqa: E501
+
+
+        :return: The syncing of this Category.  # noqa: E501
+        :rtype: bool
+        """
+        return self._syncing
+
+    @syncing.setter
+    def syncing(self, syncing):
+        """Sets the syncing of this Category.
+
+
+        :param syncing: The syncing of this Category.  # noqa: E501
+        :type: bool
+        """
+
+        self._syncing = syncing
 
     @property
     def unfilled_namespaces(self):

@@ -36,7 +36,7 @@
     <!-- add/edit -->
     <div class="add-user-infor" v-else>
       <div class="user-infor-wrapper" ref="userInforWrapper">
-        <div class="information-box">
+        <div class="information-box" data-test-id="superiorData">
           <h4 class="infor-title">{{$t('用户信息')}}</h4>
           <div class="fill-infor-wrapper">
             <InputComponents :edit-status="detailsBarInfo.type === 'edit'" :profile-info-list="profileInfoList" />
@@ -47,27 +47,37 @@
           <ul class="mark-width">
             <li class="infor-list">
               <p class="desc">{{$t('直接上级')}}</p>
-              <div class="input-text leader-input" ref="leaderInput" @click="initRtxList">
-                <bk-tag-input
-                  v-if="rtxList.length || detailsBarInfo.type === 'add'"
+              <div class="input-text leader-input" ref="leaderInput">
+                <bk-select
+                  v-if="showselectData || detailsBarInfo.type === 'add'"
+                  searchable
+                  multiple
+                  display-tag
                   v-model="leaderIdList"
-                  class="member-info-king-tag-input"
-                  save-key="id"
-                  display-key="username"
-                  :search-key="['username', 'display_name']"
-                  :content-max-height="200"
-                  :tpl="tpl"
-                  :list="rtxList">
-                </bk-tag-input>
-                <bk-tag-input
+                  :remote-method="selectData"
+                  :list="rtxList"
+                  ext-popover-cls="scrollview"
+                  @toggle="handleBranchToggle"
+                  :scroll-height="188">
+                  <bk-option v-for="option in rtxList"
+                             :key="option.id"
+                             :id="option.id"
+                             :name="option.username">
+                  </bk-option>
+                </bk-select>
+                <bk-select
                   v-else
+                  searchable
+                  multiple
+                  display-tag
                   v-model="leaderIdList"
-                  class="member-info-king-tag-input"
-                  save-key="id"
-                  display-key="username"
-                  :tpl="tpl"
-                  :list="currentProfile.leader">
-                </bk-tag-input>
+                  @toggle="handleBranchToggle">
+                  <bk-option v-for="option in currentProfile.leader"
+                             :key="option.id"
+                             :id="option.id"
+                             :name="option.username">
+                  </bk-option>
+                </bk-select>
                 <div class="input-loading" @click.stop v-show="showLeaderLoading">
                   <img src="../../../images/svg/loading.svg" alt="">
                 </div>
@@ -178,11 +188,20 @@ export default {
       initialDepartments: [],
       // 选择的组织
       getSelectedDepartments: [],
-      // 人员选择器的数据，初始化调用接口
-      rtxList: [],
       rtxListUpdated: false,
       // 密码有效期
       passwordValidDays: null,
+      paginationConfig: {
+        current: 1,
+        count: 1,
+        limit: 10,
+      },
+      searchValue: '',
+      // 人员选择器的数据，初始化调用接口
+      rtxList: [],
+      copyList: [],
+      timer: null,
+      showselectData: false,
     };
   },
   computed: {
@@ -209,8 +228,54 @@ export default {
         this.passwordValidDays = res.data.find(item => item.key === 'password_valid_days').value;
       });
     }
+    // 进入页面获取数据
+    this.searchValue = '';
+    this.paginationConfig.current = 1;
+    this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
   methods: {
+    // 上级组织搜索
+    selectData(val) {
+      this.searchValue = val;
+      this.paginationConfig.current = 1;
+      this.copyList = [];
+      clearTimeout(this.timer);
+      this.timer = setTimeout(async () => {
+        await this.initRtxList(val, this.paginationConfig.current);
+      }, 500);
+    },
+    // 点击select
+    async handleBranchToggle(value) {
+      this.showselectData = value;
+      if (value) {
+        this.$nextTick(() => {
+          this.paginationConfig.current = 1;
+          this.copyList = [];
+          this.initRtxList(this.searchValue, this.paginationConfig.current);
+          const selectorList = document.querySelector('.scrollview').querySelector('.bk-options');
+          if (selectorList) {
+            selectorList.scrollTop = 0;
+            selectorList.addEventListener('scroll', this.scrollHandler);
+          }
+        });
+      }
+    },
+    // 滚动回调
+    scrollHandler() {
+      const scrollContainer = document.querySelector('.scrollview').querySelector('.bk-options');
+      if (scrollContainer.scrollTop === 0) {
+        return;
+      }
+      if (scrollContainer.scrollTop + scrollContainer.offsetHeight >= scrollContainer.scrollHeight) {
+        this.paginationConfig.current = this.paginationConfig.current + 1;
+        if (this.paginationConfig.current
+        <= Math.floor((this.paginationConfig.count / this.paginationConfig.limit) + 1)) {
+          setTimeout(async () => {
+            await this.initRtxList(this.searchValue, this.paginationConfig.current);
+          }, 200);
+        }
+      }
+    },
     // 编辑成员信息
     editProfile() {
       const fieldsList = JSON.parse(JSON.stringify(this.fieldsList));
@@ -245,25 +310,27 @@ export default {
     },
     // 初始化直接上级列表
     // eslint-disable-next-line no-unused-vars
-    async initRtxList(event) {
-      if (this.rtxListUpdated) {
-        return;
-      }
+    async initRtxList(searchValue, curPage) {
       try {
+        const params = {
+          id: this.currentCategoryId,
+          pageSize: this.paginationConfig.limit,
+          page: curPage,
+          keyword: searchValue,
+        };
         this.showLeaderLoading = true;
-        const res = await this.$store.dispatch('organization/getAllUser', { id: this.currentCategoryId });
-        const list = res.data;
+        const res = await this.$store.dispatch('organization/getSupOrganization', params);
+        this.paginationConfig.count = res.data.count;
+        this.copyList.push(...res.data.data);
         if (this.detailsBarInfo.type === 'add') {
           // 新增 profile
-          this.rtxList = list;
+          this.rtxList = this.copyList;
         } else {
           // 编辑 profile
-          this.rtxList = list.filter((item) => {
+          this.rtxList = this.copyList.filter((item) => {
             return item.username !== this.currentProfile.username;
           });
         }
-        this.rtxListUpdated = true;
-        this.$refs.leaderInput.click();
       } catch (e) {
         console.warn(e);
       } finally {

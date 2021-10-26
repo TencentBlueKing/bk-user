@@ -28,6 +28,7 @@ class LoginLogSerializer(CustomFieldsMixin, serializers.Serializer):
     reason = serializers.CharField(help_text=_("失败原因"))
     create_time = serializers.DateTimeField(help_text=_("创建时间"))
     username = serializers.CharField(help_text=_("登录用户"), source="profile.username")
+    profile_id = serializers.CharField(help_text=_("登录用户ID"), source="profile.id")
     category_id = serializers.CharField(help_text=_("登录用户"), source="profile.category_id")
 
 

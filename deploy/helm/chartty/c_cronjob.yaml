@@ -8,7 +8,7 @@ kind: CronJob
 metadata:
   name: {{ $.Chart.Name }}-{{ $job.name }}
   labels:
-    chart: {{ $.Chart.Name }}-{{ $chart_version }}
+    {{- include "chartty.labels" $global | nindent 4 }}
 spec:
   schedule: {{ $job.schedule | quote }}
   successfulJobsHistoryLimit: {{ $job.successfulJobsHistoryLimit }}
@@ -32,7 +32,7 @@ spec:
             {{- include "chartty.imagePullSecretNames" $global | nindent 12 }}
           containers:
           - image: {{ include "chartty.image" $global }}
-            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
             env:
               {{- include "chartty.envs" $global | nindent 14 }}
             {{- with $.Values.envFrom }}

@@ -117,6 +117,7 @@ def get_raw_exception_response(exc, context):
         data = {"code": "PERMISSION_DENIED", "detail": exc.extra_info}
         return Response(data, status=exc.status_code, headers={})
     elif isinstance(exc, ProgrammingError):
+        logger.exception("occur some programming errors")
         data = {"code": "PROGRAMMING_ERROR", "detail": UNKNOWN_ERROR_HINT}
         return Response(data, status=HTTP_400_BAD_REQUEST, headers={})
 

@@ -26,22 +26,8 @@ class TestSendMailTask:
         "profile_id, email, raw_password, init, token, expected",
         [
             (1000, "", "qwer", True, None, ProfileEmailEmpty),
-            (
-                1000,
-                "faker@email.com",
-                "qwer",
-                True,
-                None,
-                f"faker:qwer:{settings.BK_PAAS_HOST}/login/?c_url=/",
-            ),
-            (
-                1000,
-                "faker@email.com",
-                "qwer",
-                False,
-                None,
-                PASSWD_RESET_VIA_SAAS_EMAIL_TMPL.format(username="faker"),
-            ),
+            (1000, "faker@email.com", "qwer", True, None, f"faker:qwer:{settings.LOGIN_REDIRECT_TO}"),
+            (1000, "faker@email.com", "qwer", False, None, PASSWD_RESET_VIA_SAAS_EMAIL_TMPL.format(username="faker")),
             (
                 1000,
                 "faker@email.com",

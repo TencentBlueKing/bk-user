@@ -18,7 +18,6 @@ from rest_framework import permissions
 class CustomOpenAPISchemaGenerator(OpenAPISchemaGenerator):
     def get_schema(self, request=None, public=False):
         schema = super().get_schema(request, public)
-        schema.basePath = "/api"  # API prefix
         return schema
 
 

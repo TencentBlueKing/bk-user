@@ -58,7 +58,7 @@ class SearchViewSet(BkUserApiViewSet):
         _cached_categories_map = {x["id"]: x["display_name"] for x in categories}
 
         # 2. 获取动态字段信息
-        fields = fields_api_instance.v2_dynamic_fields_list()
+        fields = fields_api_instance.v2_dynamic_fields_list()["results"]
         extra_fields = [x for x in fields if not x["builtin"]]
 
         # 分页，保证搜索速度

@@ -13,7 +13,7 @@ from bkuser_core.categories.plugins.base import TypeList
 from bkuser_core.categories.plugins.ldap.adaptor import department_adapter, user_adapter
 from bkuser_core.categories.plugins.ldap.helper import DepartmentSyncHelper, ProfileSyncHelper
 from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapProfileMeta
-from bkuser_core.categories.plugins.ldap.models import DepartmentProfile, UserProfile
+from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.departments.models import Department, DepartmentThroughModel, Profile
 
 pytestmark = pytest.mark.django_db
@@ -26,13 +26,13 @@ class TestDepartmentSyncHelper:
 
     @pytest.mark.parametrize(
         "dept_info, expected_count",
-        [(DepartmentProfile(name="c", parent=DepartmentProfile(name="b", parent=DepartmentProfile(name="a"))), 3)],
+        [(LdapDepartment(name="c", parent=LdapDepartment(name="b", parent=LdapDepartment(name="a"))), 3)],
     )
     def test_handle_department(
         self, test_ldap_category, test_ldap_config_provider, db_sync_manager, sync_context, dept_info, expected_count
     ):
         helper = DepartmentSyncHelper(
-            test_ldap_category, db_sync_manager, TypeList[DepartmentProfile](), sync_context, test_ldap_config_provider
+            test_ldap_category, db_sync_manager, TypeList[LdapDepartment](), sync_context, test_ldap_config_provider
         )
         helper._handle_department(dept_info)
         assert len(db_sync_manager[Department].adding_items) == expected_count
@@ -102,7 +102,7 @@ class TestDepartmentSyncHelper:
         helper = DepartmentSyncHelper(
             test_ldap_category,
             db_sync_manager,
-            TypeList[DepartmentProfile].from_list(target_objs),
+            TypeList[LdapDepartment].from_list(target_objs),
             sync_context,
             test_ldap_config_provider,
         )
@@ -187,7 +187,7 @@ class TestProfileSyncHelper:
         helper = ProfileSyncHelper(
             test_ldap_category,
             db_sync_manager,
-            TypeList[UserProfile].from_list(target_objs),
+            TypeList[LdapUserProfile].from_list(target_objs),
             sync_context,
         )
         helper.load_to_memory()

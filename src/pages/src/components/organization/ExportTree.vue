@@ -20,36 +20,39 @@
   - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
   -->
 <template>
-  <ul class="child-node">
-    <li class="vue-tree-item" v-for="item in treeDataList" :key="item.id">
-      <div :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
-           :class="['tree-node', { 'down': item.showChildren, 'first-tree-node': treeIndex === 0 }]">
-        <!-- 开关 icon == -->
-        <p class="unfold-icon" @click.stop="handleClickToggle(item)">
-          <i class="icon icon-user-triangle" :class="{ 'hidden': !item.has_children }"></i>
-          <i class="tree-file icon-user-file-close-01"></i>
-        </p>
-        <!-- 组织名称 -->
-        <span class="name-text" v-bk-overflow-tips @click.stop="handleClickToggle(item)">{{item.name}}</span>
-        <!-- checkbox -->
-        <template v-if="item.disabled">
-          <i :class="['check-icon', 'disabled']" @click.stop></i>
-        </template>
-        <template v-else>
-          <i :class="['check-icon', { 'icon-user-sure': item.isChecked }]" @click.stop="checkItem(item)"></i>
-        </template>
-      </div>
-      <div class="tree-node-loading" v-if="item.showLoading">
-        <img src="../../images/svg/loading.svg" alt="">
-      </div>
-      <ExportTree
-        v-if="item.showChildren && item.children"
-        :tree-data-list="item.children"
-        :tree-index="treeIndex + 1"
-        @selectItem="selectItem"
-        @handleClickToggle="handleClickToggle" />
-    </li>
-  </ul>
+  <div data-test-id="list_treeData">
+    <ul class="child-node">
+      <li class="vue-tree-item" v-for="item in treeDataList" :key="item.id">
+        <div :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
+             :class="['tree-node', { 'down': item.showChildren, 'first-tree-node': treeIndex === 0 }]">
+          <!-- 开关 icon == -->
+          <p class="unfold-icon" @click.stop="handleClickToggle(item)">
+            <i class="icon icon-user-triangle" :class="{ 'hidden': !item.has_children }"></i>
+            <i class="tree-file icon-user-file-close-01"></i>
+          </p>
+          <!-- 组织名称 -->
+          <span class="name-text" v-bk-overflow-tips @click.stop="handleClickToggle(item)">{{item.name}}</span>
+          <!-- checkbox -->
+          <template v-if="item.disabled">
+            <i :class="['check-icon', 'disabled']" @click.stop></i>
+          </template>
+          <template v-else>
+            <i :class="['check-icon', { 'icon-user-sure': item.isChecked }]" @click.stop="checkItem(item)"></i>
+          </template>
+        </div>
+        <div class="tree-node-loading" v-if="item.showLoading">
+          <img src="../../images/svg/loading.svg" alt="">
+        </div>
+        <ExportTree
+          v-if="item.showChildren && item.children"
+          :tree-data-list="item.children"
+          :tree-index="treeIndex + 1"
+          @selectItem="selectItem"
+          @handleClickToggle="handleClickToggle" />
+      </li>
+    </ul>
+  </div>
+
 </template>
 
 <script>

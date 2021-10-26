@@ -2,5 +2,5 @@
 
 {{/* Create image */}}
 {{- define "chartty.image" -}}
-"{{ .Values.image.registry | default .Values.global.sharedImageRegistry }}/{{ required ".Values.image.repository is required" .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+"{{ .Values.global.image.registry }}/{{ .Values.image.name }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
 {{- end }}
