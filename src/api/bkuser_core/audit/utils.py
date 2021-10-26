@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from django.conf import settings
 
+from ..common.error_codes import CoreAPIError
 from . import models
-from .constants import OperationEnum
+from .constants import OperationEnum, OperationStatusEnum
 from .models import GeneralLog, ProfileRelatedLog
 
 if TYPE_CHECKING:
@@ -46,6 +47,7 @@ def create_general_log(
     operator: str,
     operate_type: str,
     operator_obj: Any,
+    status: str = OperationStatusEnum.SUCCEED.value,
     extra_info: Dict = None,
     request=None,
 ) -> Optional[GeneralLog]:
@@ -77,7 +79,7 @@ def create_general_log(
         operator_obj,
         operator_obj.__class__.__name__,
     )
-    return GeneralLog.objects.create(operator=operator, extra_value=extra_value)
+    return GeneralLog.objects.create(operator=operator, extra_value=extra_value, status=status)
 
 
 def create_profile_log(
@@ -93,3 +95,27 @@ def create_profile_log(
         raise ValueError("unknown operation for profile log")
     except Exception:
         raise ValueError("operation is not a profile log type")
+
+
+def audit_error_general_log(operate_type):
+    """定义捕获异常的审计日志装饰器"""
+
+    def catch_exc(func):
+        def _catch_exc(self, request, *args, **kwargs):
+            try:
+                func(self, request, *args, **kwargs)
+
+            except CoreAPIError as e:
+                create_general_log(
+                    operator=request.operator,
+                    operate_type=operate_type,
+                    operator_obj=self.get_object(),
+                    request=request,
+                    status=OperationStatusEnum.FAILED.value,
+                    extra_info={"failed_info": f"{e.message}"},
+                )
+                return
+
+        return _catch_exc
+
+    return catch_exc
