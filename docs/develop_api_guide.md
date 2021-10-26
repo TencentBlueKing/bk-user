@@ -48,35 +48,9 @@ bin/start_beat.sh
 
 ### LDAP & MAD 测试
 
-由于内置了 `Ldap & MAD` 的功能，所以需要额外配置资源
-
-可以使用 `Docker` 来启动 `Ldap` 服务进行测试:
-
-``` bash
-# openLdap
-docker run -p 389:389 -p 636:636 \ 
-        --name my-openldap-container \
-        --detach osixia/openldap:1.3.0
-
-# ldap admin
-docker run -p 6443:443 \
-        --env PHPLDAPADMIN_LDAP_HOSTS=docker.for.mac.host.internal \
-        --detach osixia/phpldapadmin:0.9.0
-```
-
-使用 `bkuser_core/tests/categories/vendors/ldap/assets/ldap.ldif` 直接导入必须的数据。
-
-最后，在 `dev.py` 中配置
-
+你需要确保在 `dev.py` 中已添加 LDAP mock 配置
 ``` python
-TEST_LDAP = {
-    "url": "localhost",
-    "base": "dc=example,dc=org",
-    "user": "cn=admin,dc=example,dc=org",
-    "password": "admin",
-    "user_class": "inetOrgPerson",
-    "organization_class": "organizationalUnit",
-}
+LDAP_CONNECTION_EXTRAS_PARAMS = {"client_strategy": ldap3.MOCK_SYNC}
 ```
 运行单元测试
 
