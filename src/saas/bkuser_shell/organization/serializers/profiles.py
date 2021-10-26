@@ -8,8 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.organization.utils import get_default_logo_url
-from rest_framework.serializers import CharField, IntegerField, JSONField, ListField, Serializer, SerializerMethodField
+from bkuser_shell.organization.utils import expand_extra_fields, get_default_logo_url
+from rest_framework.serializers import (
+    CharField,
+    DateTimeField,
+    IntegerField,
+    JSONField,
+    ListField,
+    Serializer,
+    SerializerMethodField,
+)
 
 from .departments import SubDepartmentSerializer
 
@@ -41,6 +49,7 @@ class ProfileSerializer(Serializer):
     extras = JSONField(required=False)
     logo = SerializerMethodField(required=False)
     departments = SubDepartmentSerializer(many=True)
+    update_time = DateTimeField(required=False)
 
     def get_logo(self, data):
         if isinstance(data, dict):
@@ -60,6 +69,12 @@ class ProfileSerializer(Serializer):
         if isinstance(data, dict):
             return data["iso_code"].lower() or "cn"
         return data.iso_code
+
+    def to_representation(self, instance):
+        if not self.context.get("fields"):
+            return super().to_representation(instance)
+
+        return expand_extra_fields(self.context.get("fields"), super().to_representation(instance))
 
 
 class ProfileResultSerializer(Serializer):
@@ -151,3 +166,10 @@ class ProfileExportSerializer(Serializer):
         data["leader"] = ",".join(x["username"] for x in data["leader"])
         data["department_name"] = ",".join([x["full_name"] for x in data["department_name"]])
         return data
+
+
+class DepartmentGetProfileResultSerializer(Serializer):
+    count = IntegerField()
+    current_count = IntegerField(required=False)
+    total_count = IntegerField(required=False)
+    data = ProfileSerializer(many=True)
