@@ -93,6 +93,7 @@ error_codes.add_codes(
         # 通用
         ErrorCode("FIELDS_NOT_SUPPORTED_YET", _("存在不支持动态返回的字段")),
         ErrorCode("QUERY_PARAMS_ERROR", _("查询参数错误，请检查")),
+        ErrorCode("USERNAME_MISSING", _("用户名信息缺失"), status_code=HTTP_400_BAD_REQUEST),
         ErrorCode("RESOURCE_ALREADY_ENABLED", _("资源数据未被删除"), status_code=HTTP_400_BAD_REQUEST),
         # 登陆相关
         ErrorCode("USER_DOES_NOT_EXIST", _("账号不存在"), 3210010),
