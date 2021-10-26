@@ -12,7 +12,7 @@ import logging
 from typing import List
 
 from bkuser_core.audit.constants import OperationEnum
-from bkuser_core.audit.utils import create_general_log
+from bkuser_core.audit.utils import audit_error_general_log, create_general_log
 from bkuser_core.bkiam.permissions import IAMAction, IAMHelper, IAMPermissionExtraInfo, need_iam
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
@@ -118,7 +118,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         max_order = ProfileCategory.objects.get_max_order()
         instance.order = max_order + 1
         instance.save(update_fields=["order"])
-
         post_category_create.send(sender=self, category=instance, creator=request.operator)
         create_general_log(
             operator=request.operator,
@@ -126,7 +125,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operator_obj=instance,
             request=request,
         )
-
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_serializer(self, *args, **kwargs):
@@ -135,6 +133,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         else:
             return self.serializer_class(*args, **kwargs)
 
+    @audit_error_general_log(operate_type=OperationEnum.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def update(self, request, *args, **kwargs):
         """
@@ -170,6 +169,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response(serializer.data)
 
+    @audit_error_general_log(operate_type=OperationEnum.DELETE.value)
     def destroy(self, request, *args, **kwargs):
         """
         删除用户目录
@@ -179,6 +179,12 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
 
         post_category_delete.send(sender=self, category=instance, operator=request.operator)
+        create_general_log(
+            operator=request.operator,
+            operate_type=OperationEnum.DELETE.value,
+            operator_obj=instance,
+            request=request,
+        )
         return super().destroy(request, *args, **kwargs)
 
     @swagger_auto_schema(
@@ -257,6 +263,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response()
 
+    @audit_error_general_log(operate_type=OperationEnum.SYNC.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": CategorySyncResponseSLZ()})
     def sync(self, request, lookup_value):
@@ -303,6 +310,7 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field = "id"
     ordering = ["-create_time"]
 
+    @audit_error_general_log(operate_type=OperationEnum.IMPORT.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": EmptySerializer()})
     def import_data_file(self, request, lookup_value):

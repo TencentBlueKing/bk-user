@@ -17,7 +17,7 @@ from bkuser_core.common.models import TimestampedModel
 from django.db import models
 from jsonfield import JSONField
 
-from .constants import LogInFailReasonEnum
+from .constants import LogInFailReasonEnum, OperationStatusEnum
 from .managers import LogInManager, ResetPasswordManager
 
 
@@ -59,6 +59,8 @@ class ProfileRelatedLog(Log):
 
 class GeneralLog(Log):
     """通用操作日志"""
+
+    status = models.CharField("状态", max_length=16, choices=OperationStatusEnum.get_choices())
 
 
 class ApiRequest(Log):

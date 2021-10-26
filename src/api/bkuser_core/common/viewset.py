@@ -14,7 +14,7 @@ from collections import OrderedDict
 from operator import or_
 from typing import Any, Dict, List, Optional
 
-from bkuser_core.audit.constants import OperationEnum
+from bkuser_core.audit.constants import OperationEnum, OperationStatusEnum
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.filters import IAMFilter
@@ -325,6 +325,17 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             instance.enable()
         except Exception as why:
             # TODO: 基于 issue71 更新操作日志
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationEnum.RESTORATION.value,
+                operator_obj=instance,
+                request=request,
+                status=OperationStatusEnum.FAILED.value,
+                extra_info={
+                    "action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}",
+                    "FAILED_info": f"{why}",
+                },
+            )
             logger.exception("failed to restoration instance: %s, error: %s", instance, why)
         else:
             create_general_log(
