@@ -71,10 +71,11 @@ class ProfileSerializer(Serializer):
         return data.iso_code
 
     def to_representation(self, instance):
+        data = super().to_representation(instance)
         if not self.context.get("fields"):
-            return super().to_representation(instance)
+            return data
 
-        return expand_extra_fields(self.context.get("fields"), super().to_representation(instance))
+        return expand_extra_fields(self.context.get("fields"), data)
 
 
 class ProfileResultSerializer(Serializer):

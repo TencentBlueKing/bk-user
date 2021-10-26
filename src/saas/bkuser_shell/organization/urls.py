@@ -71,7 +71,7 @@ urlpatterns = [
     ),
     url(
         r"^api/v2/profiles/%s/restoration/$" % PVAR_PROFILE_ID,
-        ProfilesViewSet.as_view({"get": "restoration"}),
+        ProfilesViewSet.as_view({"post": "restoration"}),
         name="profiles.restoration",
     ),
     url(
