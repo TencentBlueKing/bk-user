@@ -91,7 +91,9 @@ class SettingViewSet(AdvancedModelViewSet):
             logger.exception("cannot create setting")
             raise error_codes.CANNOT_CREATE_SETTING
 
-        post_setting_create.send(sender=setting, setting=setting, operator=request.operator)
+        post_setting_create.send(
+            sender=self, setting=setting, operator=request.operator, extra_values={"request": request}
+        )
         return Response(serializers.SettingSerializer(setting).data, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
