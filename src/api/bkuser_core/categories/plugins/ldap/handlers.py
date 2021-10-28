@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import TYPE_CHECKING
 
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
@@ -18,46 +19,51 @@ from bkuser_core.categories.plugins.utils import (
     update_periodic_sync_task,
 )
 from bkuser_core.categories.signals import post_category_create, post_category_delete
-from bkuser_core.user_settings.signals import post_setting_create_or_update
+from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
 from django.dispatch import receiver
+
+if TYPE_CHECKING:
+    from bkuser_core.categories.models import ProfileCategory
+    from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
 
 
 @receiver(post_category_create)
-def create_sync_tasks(sender, category, creator: str, **kwargs):
-    if category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+def create_sync_tasks(sender, instance: "ProfileCategory", operator: str, **kwargs):
+    if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
-    logger.info("going to add periodic task for Category<%s>", category.id)
+    logger.info("going to add periodic task for Category<%s>", instance.id)
     make_periodic_sync_task(
-        category_id=category.id,
-        operator=creator,
-        interval_seconds=get_plugin_by_category(category).extra_config["default_sync_period"],
+        category_id=instance.id,
+        operator=operator,
+        interval_seconds=get_plugin_by_category(instance).extra_config["default_sync_period"],
     )
 
 
 @receiver(post_category_delete)
-def delete_sync_tasks(sender, category, **kwargs):
-    if category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
+    if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
-    logger.info("going to delete periodic task for Category<%s>", category.id)
-    delete_periodic_sync_task(category.id)
+    logger.info("going to delete periodic task for Category<%s>", instance.id)
+    delete_periodic_sync_task(instance.id)
 
 
-@receiver(post_setting_create_or_update)
-def update_sync_tasks(sender, setting, operator: str, **kwargs):
-    if setting.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+@receiver(post_setting_update)
+@receiver(post_setting_create)
+def update_sync_tasks(sender, instance: "Setting", operator: str, **kwargs):
+    if instance.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
-    if not setting.meta.key == "pull_cycle":
+    if not instance.meta.key == "pull_cycle":
         return
 
-    cycle_value = int(setting.value)
-    category_config = get_plugin_by_category(setting.category)
+    cycle_value = int(instance.value)
+    category_config = get_plugin_by_category(instance.category)
     if cycle_value <= 0:
-        delete_periodic_sync_task(category_id=setting.category_id)
+        delete_periodic_sync_task(category_id=instance.category_id)
         return
 
     elif cycle_value < category_config.extra_config["min_sync_period"]:
@@ -66,10 +72,10 @@ def update_sync_tasks(sender, setting, operator: str, **kwargs):
     # 尝试更新周期任务周期
     logger.info(
         "going to update category<%s> sync interval to %s",
-        setting.category_id,
+        instance.category_id,
         cycle_value,
     )
     try:
-        update_periodic_sync_task(category_id=setting.category_id, operator=operator, interval_seconds=cycle_value)
+        update_periodic_sync_task(category_id=instance.category_id, operator=operator, interval_seconds=cycle_value)
     except Exception:  # pylint: disable=broad-except
         logger.exception("failed to update periodic task schedule")

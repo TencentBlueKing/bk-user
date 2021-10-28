@@ -8,15 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import functools
 import logging
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from bkuser_core.audit import models as log_models_module
+from bkuser_core.audit.constants import OperationStatus, OperationType
+from bkuser_core.audit.models import GeneralLog, ProfileRelatedLog
+from bkuser_core.common.error_codes import CoreAPIError
 from django.conf import settings
-
-from ..common.error_codes import CoreAPIError
-from . import models
-from .constants import OperationEnum, OperationStatusEnum
-from .models import GeneralLog, ProfileRelatedLog
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
@@ -47,7 +47,7 @@ def create_general_log(
     operator: str,
     operate_type: str,
     operator_obj: Any,
-    status: str = OperationStatusEnum.SUCCEED.value,
+    status: str = OperationStatus.SUCCEED.value,
     extra_info: Dict = None,
     request=None,
 ) -> Optional[GeneralLog]:
@@ -58,7 +58,7 @@ def create_general_log(
         logger.exception("Object<%s> should add to_audit_info() method", operator_obj.__class__)
         return None
 
-    if not OperationEnum.has_value(operate_type):
+    if not OperationType.has_value(operate_type):
         logger.exception("operate type<%s> unknown", operate_type)
         return None
 
@@ -90,31 +90,42 @@ def create_profile_log(
         create_params.update({"extra_value": {"client_ip": get_client_ip(request)}})
 
     try:
-        return getattr(models, operation).objects.create(profile=profile, **create_params)
+        return getattr(log_models_module, operation).objects.create(profile=profile, **create_params)
     except AttributeError:
         raise ValueError("unknown operation for profile log")
     except Exception:
         raise ValueError("operation is not a profile log type")
 
 
-def audit_error_general_log(operate_type):
+def audit_general_log(operate_type: OperationType):
     """定义捕获异常的审计日志装饰器"""
 
-    def catch_exc(func):
-        def _catch_exc(self, request, *args, **kwargs):
-            try:
-                func(self, request, *args, **kwargs)
+    if operate_type == OperationType.CREATE.value:
+        raise ValueError("audit_general_log decoration does not support create views")
 
+    def catch_exc(func):
+        @functools.wraps(func)
+        def _catch_exc(self, request, *args, **kwargs):
+            _params = {
+                "operator": request.operator,
+                "operate_type": operate_type,
+                "request": request,
+            }
+            try:
+                r = func(self, request, *args, **kwargs)
             except CoreAPIError as e:
+                # get updated obj
+                _params["operator_obj"] = self.get_object()
                 create_general_log(
-                    operator=request.operator,
-                    operate_type=operate_type,
-                    operator_obj=self.get_object(),
-                    request=request,
-                    status=OperationStatusEnum.FAILED.value,
+                    **_params,
+                    status=OperationStatus.FAILED.value,
                     extra_info={"failed_info": f"{e.message}"},
                 )
-                return
+                raise
+            else:
+                _params["operator_obj"] = self.get_object()
+                create_general_log(**_params)
+                return r
 
         return _catch_exc
 

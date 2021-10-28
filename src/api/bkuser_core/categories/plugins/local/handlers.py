@@ -9,18 +9,22 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import TYPE_CHECKING
 
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.signals import post_category_create
 from django.dispatch import receiver
 
+if TYPE_CHECKING:
+    from bkuser_core.categories.models import ProfileCategory
+
 logger = logging.getLogger(__name__)
 
 
 @receiver(post_category_create)
-def make_local_default_settings(sender, category, **kwargs):
-    if category.type not in [CategoryType.LOCAL.value]:
+def make_local_default_settings(sender, instance: "ProfileCategory", **kwargs):
+    if instance.type not in [CategoryType.LOCAL.value]:
         return
 
-    logger.info("going to make default settings for Category<%s>", category.id)
-    category.make_default_settings()
+    logger.info("going to make default settings for Category<%s>", instance.id)
+    instance.make_default_settings()
