@@ -8,9 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import json
 import logging
 
 import bkuser_sdk
+from bkuser_sdk.rest import ApiException
 from bkuser_shell.bkiam.constants import ActionEnum
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
@@ -138,10 +140,16 @@ class ProfilesViewSet(BkUserApiViewSet):
     def restoration(self, request, profile_id):
         """恢复 profile"""
         api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
-        api_instance.v2_profiles_restoration(
-            lookup_value=profile_id, lookup_field="id", body={}, include_disabled=True
-        )
-        return {}
+        try:
+            api_instance.v2_profiles_restoration(
+                lookup_value=profile_id, lookup_field="id", body={}, include_disabled=True
+            )
+        except ApiException as e:
+            if json.loads(e.body)["code"] == "RESOURCE_ALREADY_ENABLED":
+                return Response({})
+            raise error_codes.CANNOT_RESTORATION_PROFILE
+
+        return Response({})
 
     @inject_serializer(
         body_in=serializers.UpdateProfileSerializer(many=True),
