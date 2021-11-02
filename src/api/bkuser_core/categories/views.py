@@ -37,7 +37,6 @@ from bkuser_core.common.error_codes import CoreAPIError, error_codes
 from bkuser_core.common.serializers import EmptySerializer
 from bkuser_core.common.viewset import AdvancedListAPIView, AdvancedModelViewSet, AdvancedSearchFilter
 from django.utils.decorators import method_decorator
-from django.utils.module_loading import import_string
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
 from rest_framework.decorators import action
@@ -197,8 +196,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.TEST_CONNECTION_UNSUPPORTED
 
         try:
-            category_config = get_plugin_by_category(instance)
-            client_class = import_string(category_config.extra_config["ldap_client"])
+            syncer_cls = get_plugin_by_category(instance).syncer_cls
         except Exception:
             logger.exception(
                 "category<%s-%s-%s> load ldap client failed",
@@ -209,7 +207,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.LOAD_LDAP_CLIENT_FAILED
 
         try:
-            client_class.initialize(**serializer.validated_data)
+            syncer_cls(instance.id).fetcher.client.initialize(**serializer.validated_data)
         except Exception:
             logger.exception("failed to test initialize category<%s>", instance.id)
             raise error_codes.TEST_CONNECTION_FAILED
