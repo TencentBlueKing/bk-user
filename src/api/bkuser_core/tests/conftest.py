@@ -12,6 +12,7 @@ import pytest
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.ldap.syncer import LDAPSyncer
+from bkuser_core.categories.plugins.wecom import WeComSyncer
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
 from bkuser_core.tests.apis.utils import get_api_factory
@@ -102,3 +103,23 @@ def test_custom_category():
     p = ProfileCategory.objects.create(type=CategoryType.CUSTOM.value, display_name="Test", domain="test.com")
     p.make_default_settings()
     return p
+
+
+@pytest.fixture
+def test_wecom_config_provider(test_wecom_category) -> ConfigProvider:
+    c = ConfigProvider(test_wecom_category.id)
+    c["wecom_corpid"] = {}
+    c["wecom_secret"] = {}
+    return c
+
+
+@pytest.fixture
+def test_wecom_category() -> ProfileCategory:
+    p = ProfileCategory.objects.create(type=CategoryType.PLUGGABLE.value, display_name="Test", domain="test.com")
+    make_default_settings(p)
+    return p
+
+
+@pytest.fixture
+def test_wecom_syncer(test_wecom_category, test_wecom_config_provider) -> WeComSyncer:
+    return WeComSyncer(category_id=test_wecom_category.id)
