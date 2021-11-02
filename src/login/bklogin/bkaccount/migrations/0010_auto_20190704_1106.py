@@ -10,11 +10,25 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import os
+from __future__ import unicode_literals
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+from django.db import migrations, models
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
-application = Cling(get_wsgi_application())
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("bkaccount", "0009_add_role_data"),
+    ]
+
+    operations = [
+        migrations.RemoveField(
+            model_name="LoginLog",
+            name="user",
+        ),
+        migrations.AddField(
+            model_name="LoginLog",
+            name="username",
+            field=models.CharField(max_length=128, null=True, verbose_name="\u7528\u6237\u540d", blank=True),
+        ),
+    ]

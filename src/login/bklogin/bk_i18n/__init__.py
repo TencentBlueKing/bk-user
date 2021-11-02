@@ -10,11 +10,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import os
+from __future__ import unicode_literals
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-application = Cling(get_wsgi_application())
+default_app_config = "bklogin.bk_i18n.apps.BkI18nAppConfig"

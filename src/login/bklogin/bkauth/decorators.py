@@ -9,12 +9,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from functools import wraps
 
-import os
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+def login_exempt(view_func):
+    """
+    登录豁免,被此装饰器修饰的action可以不校验登录
+    """
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+    def wrapped_view(*args, **kwargs):
+        return view_func(*args, **kwargs)
 
-application = Cling(get_wsgi_application())
+    wrapped_view.login_exempt = True
+    return wraps(view_func)(wrapped_view)

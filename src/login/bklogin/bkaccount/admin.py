@@ -10,11 +10,22 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import os
+from __future__ import unicode_literals
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+from bklogin.bkaccount.models import LoginLog
+from django.contrib import admin
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
-application = Cling(get_wsgi_application())
+class LoginLogAdmin(admin.ModelAdmin):
+    """
+    The forms to add and change login log instances.
+
+    The fields to be used in displaying the LoginLog model.
+    """
+
+    list_display = ["username", "login_time", "login_browser", "login_ip", "login_host", "app_id"]
+    search_fields = ["username"]
+    list_filter = ["app_id"]
+
+
+admin.site.register(LoginLog, LoginLogAdmin)

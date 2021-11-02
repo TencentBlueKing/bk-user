@@ -10,11 +10,28 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import os
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+from __future__ import unicode_literals
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+from bklogin.common.constants import enum
 
-application = Cling(get_wsgi_application())
+LoginErrorCodes = enum(
+    E1302000_DEFAULT_CODE=1302000,
+    E1302001_BASE_SETTINGS_ERROR=1302001,
+    E1302002_BASE_DATABASE_ERROR=1302002,
+    E1302003_BASE_HTTP_DEPENDENCE_ERROR=1302003,
+    E1302004_BASE_BKSUITE_DATABASE_ERROR=1302004,
+    E1302005_BASE_LICENSE_ERROR=1302005,
+    # E1302006_ENTERPRISE_LOGIN_ERROR=1302006,
+)
+
+
+class AuthenticationError(Exception):
+    message = "login error"
+    redirect_to = ""
+
+    def __init__(self, message=None, redirect_to=None):
+        if message is not None:
+            self.message = message
+        if redirect_to is not None:
+            self.redirect_to = redirect_to

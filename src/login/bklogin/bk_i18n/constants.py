@@ -9,12 +9,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bklogin.common.constants import enum
 
-import os
+LanguageEnum = enum(ZH_CN="zh-cn", EN="en")
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+DJANGO_LANG_TO_BK_LANG = {"zh-hans": LanguageEnum.ZH_CN, "en": LanguageEnum.EN}
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+BK_LANG_TO_DJANGO_LANG = {v: k for k, v in DJANGO_LANG_TO_BK_LANG.items()}
 
-application = Cling(get_wsgi_application())
+# note: Add synchronization when add login api
+LOGIN_API_URL_SUFFIX_LIST = [
+    "is_login",
+    "get_user",
+    "get_all_user",
+    "get_batch_user",
+]

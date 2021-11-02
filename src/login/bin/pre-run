@@ -1,6 +1,0 @@
-#!/bin/bash
-
-command -v python
-env
-export BK_ENV=env
-python manage.py migrate

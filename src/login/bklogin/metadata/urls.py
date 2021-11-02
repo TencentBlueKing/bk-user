@@ -10,11 +10,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import os
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+from bklogin.metadata import views
+from django.conf.urls import url
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-application = Cling(get_wsgi_application())
+urlpatterns = [url("^website/$", views.website_metadata)]
