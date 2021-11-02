@@ -118,7 +118,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         max_order = ProfileCategory.objects.get_max_order()
         instance.order = max_order + 1
         instance.save(update_fields=["order"])
-        post_category_create.send(
+        post_category_create.send_robust(
             sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -166,7 +166,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if instance.default:
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
 
-        post_category_delete.send(sender=self, instance=instance, operator=request.operator)
+        post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
         return super().destroy(request, *args, **kwargs)
 
     @swagger_auto_schema(

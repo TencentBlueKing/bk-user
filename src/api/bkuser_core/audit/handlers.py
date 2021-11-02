@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import TYPE_CHECKING
 
 from bkuser_core.audit.constants import OperationType
@@ -22,24 +23,26 @@ if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
 
 
+logger = logging.getLogger(__name__)
+
+
 @receiver(post_profile_update)
 def create_reset_password_log(sender, instance: "Profile", operator: str, extra_values: dict, **kwargs):
     """Create an audit log for profile"""
-    # 当密码信息存在时，我们需要增加一条记录，
+    # 当密码信息存在时，我们需要增加一条记录
     if "raw_password" in extra_values:
-        create_profile_log(
-            instance,
-            "ResetPassword",
-            {"is_success": True, "password": extra_values["raw_password"]},
-            extra_values["request"],
-        )
+        try:
+            create_profile_log(
+                instance,
+                "ResetPassword",
+                {"is_success": True, "password": extra_values["raw_password"]},
+                extra_values["request"],
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("failed to create reset password log")
 
 
-@receiver(post_profile_create)
-@receiver(post_department_create)
-@receiver(post_category_create)
-@receiver(post_field_create)
-@receiver(post_setting_create)
+@receiver([post_profile_create, post_department_create, post_category_create, post_field_create, post_setting_create])
 def create_audit_log(sender, instance: "Profile", operator: str, extra_values: dict, **kwargs):
     """Create an audit log for instance"""
     create_general_log(
