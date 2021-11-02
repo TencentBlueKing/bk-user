@@ -113,7 +113,7 @@ processes:
     replicas: 1
     resources:
       limits:
-        cpu: 200m
+        cpu: 1024m
         memory: 1024Mi
       requests:
         cpu: 200m
