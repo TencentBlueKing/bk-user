@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making 蓝鲸智云PaaS平台社区版 (BlueKing PaaS
 Community Edition) available.
@@ -9,12 +8,25 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser_global.config import get_db_config
 
-import os
+from . import env
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+# ==============================================================================
+# 数据库
+# ==============================================================================
+DB_PREFIX = "DATABASE"
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+DATABASES = get_db_config(env, DB_PREFIX)
 
-application = Cling(get_wsgi_application())
+
+# ==============================================================================
+# 缓存
+# ==============================================================================
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "TIMEOUT": 30,
+        "OPTIONS": {"MAX_ENTRIES": 1000},
+    }
+}

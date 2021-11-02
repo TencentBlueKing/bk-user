@@ -10,11 +10,13 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-import os
 
-from dj_static import Cling
-from django.core.wsgi import get_wsgi_application
+from bklogin.bkauth.decorators import login_exempt
+from django.shortcuts import render
+from django.views.decorators.clickjacking import xframe_options_exempt
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
-application = Cling(get_wsgi_application())
+@xframe_options_exempt
+@login_exempt
+def website_metadata(request):
+    return render(request, "metadata/website.json")
