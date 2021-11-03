@@ -121,6 +121,7 @@ error_codes.add_codes(
         ErrorCode("CANNOT_UPDATE_PROFILE", _("无法更新用户")),
         ErrorCode("CANNOT_GET_PROFILE", _("无法获取用户")),
         ErrorCode("CANNOT_CREATE_PROFILE", _("无法创建用户")),
+        ErrorCode("CANNOT_RESTORATION_PROFILE", _("无法恢复用户")),
         # 审计
         ErrorCode("CANNOT_GET_AUDIT_LOG", _("无法获取审计日志")),
         ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),

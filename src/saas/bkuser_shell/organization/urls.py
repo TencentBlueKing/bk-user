@@ -27,46 +27,23 @@ urlpatterns = [
     ######################
     url(
         r"^api/v2/departments/%s/profiles/$" % PVAR_DEPARTMENT_ID,
-        DepartmentViewSet.as_view(
-            {
-                "get": "get_profiles",
-                "post": "add_profiles",
-            }
-        ),
+        DepartmentViewSet.as_view({"get": "get_profiles", "post": "add_profiles"}),
         name="department.profiles",
     ),
-    url(
-        r"^api/v2/departments/$",
-        DepartmentViewSet.as_view({"get": "list", "post": "create"}),
-        name="departments",
-    ),
+    url(r"^api/v2/departments/$", DepartmentViewSet.as_view({"get": "list", "post": "create"}), name="departments"),
     url(
         r"^api/v2/categories/%s/departments/search/$" % PVAR_CATEGORY_ID,
-        DepartmentViewSet.as_view(
-            {
-                "get": "search_in_category",
-            }
-        ),
+        DepartmentViewSet.as_view({"get": "search_in_category"}),
         name="departments.search_in_category",
     ),
     url(
         r"^api/v2/departments/%s/$" % PVAR_DEPARTMENT_ID,
-        DepartmentViewSet.as_view(
-            {
-                "get": "retrieve",
-                "delete": "delete",
-                "patch": "update",
-            }
-        ),
+        DepartmentViewSet.as_view({"get": "retrieve", "delete": "delete", "patch": "update"}),
         name="department.actions",
     ),
     url(
         r"^api/v2/departments/%s/switch_order/%s/$" % (PVAR_DEPARTMENT_ID, PVAR_ANOTHER_DEPARTMENT_ID),
-        DepartmentViewSet.as_view(
-            {
-                "patch": "switch_order",
-            }
-        ),
+        DepartmentViewSet.as_view({"patch": "switch_order"}),
         name="department.switch_order",
     ),
     ###################
@@ -74,11 +51,7 @@ urlpatterns = [
     ###################
     url(
         r"^api/v2/me/$",
-        LoginInfoViewSet.as_view(
-            {
-                "get": "me",
-            }
-        ),
+        LoginInfoViewSet.as_view({"get": "me"}),
         name="profiles.login_info",
     ),
     url(
@@ -93,13 +66,13 @@ urlpatterns = [
     ),
     url(
         r"^api/v2/profiles/%s/$" % PVAR_PROFILE_ID,
-        ProfilesViewSet.as_view(
-            {
-                "get": "retrieve",
-                "patch": "update",
-            }
-        ),
+        ProfilesViewSet.as_view({"get": "retrieve", "patch": "update"}),
         name="profiles.actions",
+    ),
+    url(
+        r"^api/v2/profiles/%s/restoration/$" % PVAR_PROFILE_ID,
+        ProfilesViewSet.as_view({"post": "restoration"}),
+        name="profiles.restoration",
     ),
     url(
         r"^api/v2/batch/profiles/$",
@@ -111,11 +84,7 @@ urlpatterns = [
     ##########
     url(
         r"^api/v2/search/detail/$",
-        SearchViewSet.as_view(
-            {
-                "get": "search",
-            }
-        ),
+        SearchViewSet.as_view({"get": "search"}),
         name="profiles.login_info",
     ),
 ]

@@ -120,7 +120,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     status = serializers.CharField(read_only=True)
     logo = serializers.CharField(read_only=True, allow_blank=True)
 
-    def get_extras(self, obj) -> dict:
+    def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
         return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
 

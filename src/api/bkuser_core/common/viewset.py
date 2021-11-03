@@ -317,6 +317,7 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
     @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier(), request_body=EmptySerializer)
     def restoration(self, request, lookup_value):
         """软删除对象恢复"""
+        # TODO: auto support include_disabled=True
         instance = self.get_object()
         if instance.enabled:
             raise error_codes.RESOURCE_ALREADY_ENABLED
