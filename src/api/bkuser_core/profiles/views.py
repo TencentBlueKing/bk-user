@@ -541,6 +541,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         except MultipleObjectsReturned:
             raise error_codes.PASSWORD_ERROR
 
+        time_aware_now = now()
         # Admin 用户只需直接判断 密码是否正确 (只有本地目录有密码配置)
         if not profile.is_superuser and category.type in [CategoryType.LOCAL.value]:
 
@@ -569,22 +570,6 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             config_loader = ConfigProvider(category_id=category.id)
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
             max_trail_times = int(config_loader["max_trail_times"])
-
-            # 密码状态校验:密码过期
-            time_aware_now = now()
-            valid_period = datetime.timedelta(days=profile.password_valid_days)
-            if (
-                profile.password_valid_days > 0
-                and ((profile.password_update_time or profile.latest_password_update_time) + valid_period)
-                < time_aware_now
-            ):
-                create_profile_log(
-                    profile=profile,
-                    operation="LogIn",
-                    request=request,
-                    params={"is_success": False, "reason": LogInFailReason.EXPIRED_PASSWORD.value},
-                )
-                raise error_codes.PASSWORD_EXPIRED
 
             # 错误登录次数校验
             if profile.bad_check_cnt >= max_trail_times > 0:
@@ -628,6 +613,21 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
             logger.exception("check profile<%s> failed", profile.username)
             raise error_codes.PASSWORD_ERROR
+        else:
+            # 密码状态校验:密码过期
+            valid_period = datetime.timedelta(days=profile.password_valid_days)
+            if (
+                profile.password_valid_days > 0
+                and ((profile.password_update_time or profile.latest_password_update_time) + valid_period)
+                < time_aware_now
+            ):
+                create_profile_log(
+                    profile=profile,
+                    operation="LogIn",
+                    request=request,
+                    params={"is_success": False, "reason": LogInFailReason.EXPIRED_PASSWORD.value},
+                )
+                raise error_codes.PASSWORD_EXPIRED
 
         return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)
 
