@@ -22,6 +22,18 @@ class MethodOverrideMiddleware(MiddlewareMixin):
         if request.method == "POST" and self.METHOD_OVERRIDE_HEADER in request.META:
             request.method = request.META[self.METHOD_OVERRIDE_HEADER]
 
+            if request.body:
+                request_get_params = request.GET
+
+                original_mutable = request_get_params._mutable
+                request_get_params._mutable = True
+
+                request_post_body = eval(request.body.decode(encoding="utf-8"))
+                request_get_params.update(request_post_body)
+
+                # 恢复初始的_mutable属性
+                request_get_params._mutable = original_mutable
+
 
 class DynamicResponseFormatMiddleware:
     """根据动态修改返回值格式
