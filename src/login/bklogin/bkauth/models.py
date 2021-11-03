@@ -20,7 +20,6 @@ from bklogin.components.usermgr_api import upsert_user
 from django.contrib.auth import models
 from django.db import models as db_models
 from django.utils import timezone
-from past.builtins import basestring
 
 
 class User(models.AbstractBaseUser, models.AnonymousUser):
@@ -36,7 +35,7 @@ class User(models.AbstractBaseUser, models.AnonymousUser):
 
         # NOTE: 兼容老版本文档中:
         # user = UserModel(username, display_name="mockadmin", email="mockadmin@mock.com",)
-        if len(args) == 1 and isinstance(args[0], basestring):
+        if len(args) == 1 and isinstance(args[0], str):
             args = (None, timezone.now(), args[0])
 
         super(User, self).__init__(*args)
@@ -117,7 +116,7 @@ class User(models.AbstractBaseUser, models.AnonymousUser):
 
     @property
     def is_anonymous(self):
-        return not (self.is_authenticated)
+        return not self.is_authenticated
 
     class Meta(object):
         app_label = "bkauth"

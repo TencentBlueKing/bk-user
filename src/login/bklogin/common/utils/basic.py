@@ -9,9 +9,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
 from django.utils.html import escape as html_escape
-from past.builtins import basestring
 
 
 def escape_html_return_msg(func):
@@ -22,6 +20,6 @@ def escape_html_return_msg(func):
     def wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
         # 对于字符串类型，进行html转义
-        return [html_escape(item) if isinstance(item, basestring) else item for item in result]
+        return [html_escape(item) if isinstance(item, str) else item for item in result]
 
     return wrapper

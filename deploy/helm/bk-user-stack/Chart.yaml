@@ -2,7 +2,7 @@ apiVersion: v2
 name: bk-user-stack
 description: A Helm chart for bk-user
 type: application
-version: 0.5.4
+version: 0.6.0
 appVersion: v2.3.0
 
 dependencies:
@@ -15,6 +15,11 @@ dependencies:
   version: "1.0.0"
   repository: "file://../saas"
   condition: bkusersaas.enabled
+
+- name: bklogin
+  version: "1.0.0"
+  repository: "file://../login"
+  condition: bklogin.enabled
 
 - name: mariadb
   version: "9.x.x"

@@ -14,7 +14,6 @@ data:
   DB_PASSWORD: "{{ .Values.mariadb.auth.password }}"
   DB_HOST: "{{ .Release.Name }}-mariadb"
   DB_PORT: "3306"
-# Another configmap
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -31,4 +30,20 @@ data:
   DB_PASSWORD: "{{ .Values.mariadb.auth.password }}"
   DB_HOST: "{{ .Release.Name }}-mariadb"
   DB_PORT: "3306"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-login-mariadb-env
+  labels:
+    {{- include "chartty.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-1"
+data:
+  DATABASE_NAME: "{{ .Values.bklogin.database.preferName }}"
+  DATABASE_USER: "{{ .Values.mariadb.auth.username }}"
+  DATABASE_PASSWORD: "{{ .Values.mariadb.auth.password }}"
+  DATABASE_HOST: "{{ .Release.Name }}-mariadb"
+  DATABASE_PORT: "3306"
 {{- end -}}

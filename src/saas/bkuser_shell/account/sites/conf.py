@@ -18,8 +18,8 @@ class ConfFixture(object):
     USER_MODEL = "bk_token.models.UserProxy"
 
     CONSOLE_LOGIN_URL = settings.BK_PAAS_URL
-    LOGIN_URL = settings.BK_PAAS_URL + "/login/"
-    LOGIN_PLAIN_URL = settings.BK_PAAS_URL + "/login/plain/"
+    LOGIN_URL = settings.BK_LOGIN_URL
+    LOGIN_PLAIN_URL = settings.BK_LOGIN_URL + "/plain/"
     VERIFY_URL = settings.BK_LOGIN_API_URL + "/accounts/is_login/"
     USER_INFO_URL = settings.BK_LOGIN_API_URL + "/accounts/get_user/"
     HAS_PLAIN = False
