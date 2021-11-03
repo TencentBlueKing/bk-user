@@ -14,8 +14,8 @@ import logging
 from collections import defaultdict
 from operator import or_
 
-from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum
-from bkuser_core.audit.utils import create_general_log, create_profile_log
+from bkuser_core.audit.constants import LogInFailReason, OperationType
+from bkuser_core.audit.utils import audit_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -30,6 +30,21 @@ from bkuser_core.common.serializers import (
 )
 from bkuser_core.common.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.departments import serializers as department_serializer
+from bkuser_core.profiles.constants import ProfileStatus
+from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
+from bkuser_core.profiles.filters import ProfileSearchFilter
+from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
+from bkuser_core.profiles.password import PasswordValidator
+from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
+from bkuser_core.profiles.tasks import send_password_by_email
+from bkuser_core.profiles.utils import (
+    align_country_iso_code,
+    check_former_passwords,
+    force_use_raw_username,
+    make_password_by_config,
+    parse_username_domain,
+)
+from bkuser_core.profiles.validators import validate_username
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -48,21 +63,6 @@ from rest_framework_jsonp.renderers import JSONPRenderer
 from bkuser_global.utils import force_str_2_bool
 
 from . import serializers as local_serializers
-from .constants import ProfileStatus
-from .exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
-from .filters import ProfileSearchFilter
-from .models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
-from .password import PasswordValidator
-from .signals import post_profile_create, post_profile_update
-from .tasks import send_password_by_email
-from .utils import (
-    align_country_iso_code,
-    check_former_passwords,
-    force_use_raw_username,
-    make_password_by_config,
-    parse_username_domain,
-)
-from .validators import validate_username
 
 logger = logging.getLogger(__name__)
 
@@ -279,14 +279,11 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         # 善后工作
         post_profile_create.send(
-            sender=self,
-            profile=instance,
-            operator=request.operator,
-            extra_values=create_summary,
-            operation_type=OperationEnum.CREATE.value,
+            sender=self, instance=instance, operator=request.operator, extra_values=create_summary
         )
         return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
 
+    @audit_general_log(OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def _update(self, request, partial):
         instance = self.get_object()
@@ -352,10 +349,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         post_profile_update.send(
             sender=self,
-            profile=instance,
+            instance=instance,
             operator=request.operator,
             extra_values=update_summary,
-            operation_type=OperationEnum.UPDATE.value,
         )
         return Response(self.serializer_class(instance).data)
 
@@ -423,10 +419,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         }
         post_profile_update.send(
             sender=self,
-            profile=instance,
+            instance=instance,
             operator=request.operator,
             extra_values=modify_summary,
-            operation_type=OperationEnum.UPDATE.value,
         )
         return Response(data=local_serializers.ProfileMinimalSerializer(instance).data)
 
@@ -558,7 +553,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     profile=profile,
                     operation="LogIn",
                     request=request,
-                    params={"is_success": False, "reason": LogInFailReasonEnum.DISABLED_USER.value},
+                    params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
                 )
                 raise error_codes.USER_IS_DISABLED
             elif profile.status == ProfileStatus.LOCKED.value:
@@ -566,7 +561,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     profile=profile,
                     operation="LogIn",
                     request=request,
-                    params={"is_success": False, "reason": LogInFailReasonEnum.LOCKED_USER.value},
+                    params={"is_success": False, "reason": LogInFailReason.LOCKED_USER.value},
                 )
                 raise error_codes.USER_IS_LOCKED
 
@@ -587,7 +582,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     profile=profile,
                     operation="LogIn",
                     request=request,
-                    params={"is_success": False, "reason": LogInFailReasonEnum.EXPIRED_PASSWORD.value},
+                    params={"is_success": False, "reason": LogInFailReason.EXPIRED_PASSWORD.value},
                 )
                 raise error_codes.PASSWORD_EXPIRED
 
@@ -601,7 +596,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                         profile=profile,
                         operation="LogIn",
                         request=request,
-                        params={"is_success": False, "reason": LogInFailReasonEnum.TOO_MANY_FAILURE.value},
+                        params={"is_success": False, "reason": LogInFailReason.TOO_MANY_FAILURE.value},
                     )
                     raise error_codes.TOO_MANY_TRY.f(f"请 {retry_after_wait}s 后再试")
 
@@ -629,7 +624,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 profile=profile,
                 operation="LogIn",
                 request=request,
-                params={"is_success": False, "reason": LogInFailReasonEnum.BAD_PASSWORD.value},
+                params={"is_success": False, "reason": LogInFailReason.BAD_PASSWORD.value},
             )
             logger.exception("check profile<%s> failed", profile.username)
             raise error_codes.PASSWORD_ERROR
@@ -742,16 +737,13 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         instance = serializer.save()
         headers = self.get_success_headers(serializer.data)
-
-        # 审计记录
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.CREATE.value,
-            operator_obj=instance,
-            request=request,
+        post_field_create.send(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
         )
+
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def _update(self, request, partial):
         instance = self.get_object()
@@ -778,13 +770,6 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             setattr(instance, key, value)
 
         instance.save()
-        # 审计记录
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.UPDATE.value,
-            operator_obj=instance,
-            request=request,
-        )
         return Response(self.serializer_class(instance).data)
 
     @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())

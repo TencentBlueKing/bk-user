@@ -10,8 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Type
 
-from bkuser_core.audit.constants import OperationEnum
-from bkuser_core.audit.utils import create_general_log
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMPermissionExtraInfo
 from bkuser_core.bkiam.utils import need_iam
@@ -25,8 +25,12 @@ from bkuser_core.common.viewset import (
     AdvancedModelViewSet,
     AdvancedSearchFilter,
 )
+from bkuser_core.departments import serializers as local_serializers
+from bkuser_core.departments.models import Department, DepartmentThroughModel
+from bkuser_core.departments.signals import post_department_create
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
+from bkuser_core.profiles.utils import force_use_raw_username
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -35,10 +39,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
-
-from ..profiles.utils import force_use_raw_username
-from . import serializers as local_serializers
-from .models import Department, DepartmentThroughModel
 
 
 class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
@@ -152,6 +152,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#values
         return Response(data=list(profiles.only(*serializer_fields).values(*serializer_fields)))
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(
         request_body=local_serializers.DepartmentAddProfilesSerializer,
@@ -168,13 +169,6 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         for profile in profiles:
             instance.add_profile(profile)
 
-        # 审计记录
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.UPDATE.value,
-            operator_obj=instance,
-            request=request,
-        )
         return Response(data=ProfileMinimalSerializer(profiles, many=True).data)
 
     @method_decorator(clear_cache_if_succeed)
@@ -222,18 +216,25 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         except Department.DoesNotExist:
             instance = serializer.save()
 
-        # 审计记录
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.CREATE.value,
-            operator_obj=instance,
-            request=request,
+        post_department_create.send(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
         )
         return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        request_body=local_serializers.DepartmentUpdateSerializer(),
+        responses={200: local_serializers.DepartmentSerializer()},
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=local_serializers.DepartmentUpdateSerializer(),
+        responses={200: local_serializers.DepartmentSerializer()},
+    )
     def update(self, request, *args, **kwargs):
         """更新部门"""
-        serializer = self.serializer_class(data=request.data)
+        serializer = local_serializers.DepartmentUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         instance = self.get_object()
@@ -266,6 +267,8 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
             queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
 
+        # 为了支持 include_disabled 参数，我们默认在 queryset 中去掉了该参数，这里补上
+        queryset = queryset.filter(enabled=True)
         if not queryset:
             raise IAMPermissionDenied(
                 detail=_("您没有该操作的权限，请在权限中心申请"),

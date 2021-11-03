@@ -14,14 +14,8 @@ from bkuser_core.common.enum import AutoLowerEnum
 
 RESET_PASSWORD_VAILD_MINUTES = 3 * 60
 
-TOKEN_IS_OK = 0
-TOKEN_USED_CODE = 10000
-TOKEN_EXPIRED_CODE = 10001
-TOKEN_PROFILE_NOT_EXIST_CODE = 10002
-TOKEN_NOT_EXIST_CODE = 10003
 
-
-class LogInFailReasonEnum(AutoLowerEnum):
+class LogInFailReason(AutoLowerEnum):
     BAD_PASSWORD = auto()
     EXPIRED_PASSWORD = auto()
     TOO_MANY_FAILURE = auto()
@@ -37,7 +31,7 @@ class LogInFailReasonEnum(AutoLowerEnum):
     )
 
 
-class OperationEnum(AutoLowerEnum):
+class OperationType(AutoLowerEnum):
     CREATE = auto()
     UPDATE = auto()
     DELETE = auto()
@@ -60,7 +54,7 @@ class OperationEnum(AutoLowerEnum):
     )
 
 
-class OperationStatusEnum(AutoLowerEnum):
+class OperationStatus(AutoLowerEnum):
     SUCCEED = auto()
     FAILED = auto()
 

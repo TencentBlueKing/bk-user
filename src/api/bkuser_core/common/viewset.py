@@ -14,8 +14,8 @@ from collections import OrderedDict
 from operator import or_
 from typing import Any, Dict, List, Optional
 
-from bkuser_core.audit.constants import OperationEnum, OperationStatusEnum
-from bkuser_core.audit.utils import create_general_log
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log, create_general_log
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.filters import IAMFilter
 from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
@@ -284,35 +284,21 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             status=status.HTTP_200_OK,
         )
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
     def update(self, request, *args, **kwargs):
         """更新对象"""
-        instance = self.get_object()
-        result = super().update(request, *args, **kwargs)
+        return super().update(request, *args, **kwargs)
 
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.UPDATE.value,
-            operator_obj=instance,
-            request=request,
-        )
-        return result
-
+    @audit_general_log(operate_type=OperationType.DELETE.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
     def destroy(self, request, *args, **kwargs):
         """删除对象"""
-        instance = self.get_object()
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.DELETE.value,
-            operator_obj=instance,
-            request=request,
-        )
-
         return super().destroy(request, *args, **kwargs)
 
+    @audit_general_log(operate_type=OperationType.RESTORATION.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier(), request_body=EmptySerializer)
     def restoration(self, request, lookup_value):
@@ -323,28 +309,9 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             raise error_codes.RESOURCE_ALREADY_ENABLED
         try:
             instance.enable()
-        except Exception as why:
-            # TODO: 基于 issue71 更新操作日志
-            create_general_log(
-                operator=request.operator,
-                operate_type=OperationEnum.RESTORATION.value,
-                operator_obj=instance,
-                request=request,
-                status=OperationStatusEnum.FAILED.value,
-                extra_info={
-                    "action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}",
-                    "FAILED_info": f"{why}",
-                },
-            )
-            logger.exception("failed to restoration instance: %s, error: %s", instance, why)
-        else:
-            create_general_log(
-                operator=request.operator,
-                operate_type=OperationEnum.RESTORATION.value,
-                operator_obj=instance,
-                request=request,
-                extra_info={"action": f"restoration {instance._meta.model_name}.{self.lookup_field}-{lookup_value}"},
-            )
+        except Exception:
+            logger.exception("failed to restoration instance: %s", instance)
+            raise error_codes.RESOURCE_RESTORATION_FAILED
         return Response()
 
 
@@ -430,7 +397,7 @@ class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             else:
                 create_general_log(
                     operator=request.operator,
-                    operate_type=OperationEnum.UPDATE.value,
+                    operate_type=OperationType.UPDATE.value,
                     operator_obj=instance,
                     request=request,
                 )
@@ -459,7 +426,7 @@ class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
                 instance = self.queryset.get(pk=obj["id"])
                 create_general_log(
                     operator=request.operator,
-                    operate_type=OperationEnum.DELETE.value,
+                    operate_type=OperationType.DELETE.value,
                     operator_obj=instance,
                     request=request,
                 )

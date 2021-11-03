@@ -11,8 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import List
 
-from bkuser_core.audit.constants import OperationEnum
-from bkuser_core.audit.utils import audit_error_general_log, create_general_log
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.permissions import IAMAction, IAMHelper, IAMPermissionExtraInfo, need_iam
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
@@ -117,12 +117,8 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         max_order = ProfileCategory.objects.get_max_order()
         instance.order = max_order + 1
         instance.save(update_fields=["order"])
-        post_category_create.send(sender=self, category=instance, creator=request.operator)
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.CREATE.value,
-            operator_obj=instance,
-            request=request,
+        post_category_create.send_robust(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -132,7 +128,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         else:
             return self.serializer_class(*args, **kwargs)
 
-    @audit_error_general_log(operate_type=OperationEnum.UPDATE.value)
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def update(self, request, *args, **kwargs):
         """
@@ -159,16 +155,8 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
 
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.UPDATE.value,
-            operator_obj=instance,
-            request=request,
-        )
-
         return Response(serializer.data)
 
-    @audit_error_general_log(operate_type=OperationEnum.DELETE.value)
     def destroy(self, request, *args, **kwargs):
         """
         删除用户目录
@@ -177,13 +165,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if instance.default:
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
 
-        post_category_delete.send(sender=self, category=instance, operator=request.operator)
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.DELETE.value,
-            operator_obj=instance,
-            request=request,
-        )
+        post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
         return super().destroy(request, *args, **kwargs)
 
     @swagger_auto_schema(
@@ -261,7 +243,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response()
 
-    @audit_error_general_log(operate_type=OperationEnum.SYNC.value)
+    @audit_general_log(operate_type=OperationType.SYNC.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": CategorySyncResponseSLZ()})
     def sync(self, request, lookup_value):
@@ -292,12 +274,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             logger.exception("failed to sync data")
             raise error_codes.SYNC_DATA_FAILED
 
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.SYNC.value,
-            operator_obj=instance,
-            request=request,
-        )
         return Response({"task_id": task_id})
 
 
@@ -308,7 +284,7 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field = "id"
     ordering = ["-create_time"]
 
-    @audit_error_general_log(operate_type=OperationEnum.IMPORT.value)
+    @audit_general_log(operate_type=OperationType.IMPORT.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": EmptySerializer()})
     def import_data_file(self, request, lookup_value):
@@ -339,12 +315,6 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             logger.exception("failed to sync data")
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
 
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.IMPORT.value,
-            operator_obj=instance,
-            request=request,
-        )
         return Response()
 
 

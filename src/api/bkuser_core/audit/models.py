@@ -12,13 +12,12 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional
 
+from bkuser_core.audit.constants import LogInFailReason, OperationStatus
+from bkuser_core.audit.managers import LogInManager, ResetPasswordManager
 from bkuser_core.common.fields import EncryptField
 from bkuser_core.common.models import TimestampedModel
 from django.db import models
 from jsonfield import JSONField
-
-from .constants import LogInFailReasonEnum, OperationStatusEnum
-from .managers import LogInManager, ResetPasswordManager
 
 
 @dataclass
@@ -60,7 +59,7 @@ class ProfileRelatedLog(Log):
 class GeneralLog(Log):
     """通用操作日志"""
 
-    status = models.CharField("状态", max_length=16, choices=OperationStatusEnum.get_choices())
+    status = models.CharField("状态", max_length=16, choices=OperationStatus.get_choices())
 
 
 class ApiRequest(Log):
@@ -79,7 +78,7 @@ class LogIn(ProfileRelatedLog):
     reason = models.CharField(
         "登陆失败原因",
         max_length=32,
-        choices=LogInFailReasonEnum.get_choices(),
+        choices=LogInFailReason.get_choices(),
         null=True,
         blank=True,
     )
