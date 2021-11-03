@@ -195,7 +195,12 @@ class TestAuditGeneralLogDeco:
         with pytest.raises(ValueError):
             assert dummy_view.unknown_failed_view(fake_request) == "result"
 
-        assert not GeneralLog.objects.filter(status=OperationStatus.FAILED.value)
+        general_log = GeneralLog.objects.order_by("-create_time").first()
+        assert general_log.status == OperationStatus.FAILED.value
+        assert general_log.extra_value["operation"] == OperationType.DELETE.value
+        assert general_log.extra_value["obj_type"] == "Profile"
+        assert general_log.extra_value["key"] == "fake-test"
+        assert general_log.extra_value["failed_info"] == "未知异常，请查阅日志了解详情"
 
     def test_failure(self, dummy_view, fake_request):
         """test decorator of creating general log"""

@@ -17,6 +17,7 @@ from bkuser_core.audit.constants import OperationStatus, OperationType
 from bkuser_core.audit.models import GeneralLog, ProfileRelatedLog
 from bkuser_core.common.error_codes import CoreAPIError
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
@@ -97,7 +98,7 @@ def create_profile_log(
         raise ValueError("operation is not a profile log type")
 
 
-def audit_general_log(operate_type: OperationType):
+def audit_general_log(operate_type: str):
     """定义捕获异常的审计日志装饰器"""
 
     if operate_type == OperationType.CREATE.value:
@@ -112,20 +113,26 @@ def audit_general_log(operate_type: OperationType):
                 "request": request,
             }
             try:
-                r = func(self, request, *args, **kwargs)
-            except CoreAPIError as e:
+                _result = func(self, request, *args, **kwargs)
+            except Exception as e:
                 # get updated obj
                 _params["operator_obj"] = self.get_object()
+
+                if isinstance(e, CoreAPIError):
+                    failed_info = f"{e.message}"
+                else:
+                    failed_info = _("未知异常，请查阅日志了解详情")
+
                 create_general_log(
                     **_params,
                     status=OperationStatus.FAILED.value,
-                    extra_info={"failed_info": f"{e.message}"},
+                    extra_info={"failed_info": failed_info},
                 )
                 raise
             else:
                 _params["operator_obj"] = self.get_object()
                 create_general_log(**_params)
-                return r
+                return _result
 
         return _catch_exc
 

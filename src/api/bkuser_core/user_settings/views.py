@@ -92,7 +92,7 @@ class SettingViewSet(AdvancedModelViewSet):
             raise error_codes.CANNOT_CREATE_SETTING
 
         post_setting_create.send(
-            sender=self, setting=setting, operator=request.operator, extra_values={"request": request}
+            sender=self, instance=setting, operator=request.operator, extra_values={"request": request}
         )
         return Response(serializers.SettingSerializer(setting).data, status=status.HTTP_201_CREATED)
 
