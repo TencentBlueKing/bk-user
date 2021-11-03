@@ -48,6 +48,7 @@ class ProfileSerializer(Serializer):
     iso_code = SerializerMethodField()
     extras = JSONField(required=False)
     logo = SerializerMethodField(required=False)
+    category_id = IntegerField(required=False)
     departments = SubDepartmentSerializer(many=True)
     update_time = DateTimeField(required=False)
 

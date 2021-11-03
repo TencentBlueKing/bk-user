@@ -18,7 +18,7 @@ from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.organization.constants import ProfileWildSearchFieldEnum
 from bkuser_shell.organization.serializers.departments import DepartmentSerializer
 from bkuser_shell.organization.serializers.misc import SearchResultSerializer, SearchSerializer
-from bkuser_shell.organization.utils import expand_extra_fields
+from bkuser_shell.organization.serializers.profiles import ProfileSerializer
 from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
@@ -80,7 +80,7 @@ class SearchViewSet(BkUserApiViewSet):
 
         # 判断搜索出的内容是通过哪个字段选择的
         for profile in hit_profiles:
-            profile = expand_extra_fields(extra_fields, profile)
+            profile = ProfileSerializer(profile, context={"fields": extra_fields, "request": request}).data
             for field in ProfileWildSearchFieldEnum.to_list():
                 if keyword not in profile.get(field, ""):
                     continue
