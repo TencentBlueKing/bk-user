@@ -13,6 +13,7 @@ import logging
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.bkiam.helper import IAMHelper
 from bkuser_core.categories.signals import post_category_create
+from django.conf import settings
 from django.dispatch import receiver
 
 from .plugins.ldap.handlers import create_sync_tasks, delete_sync_tasks, update_sync_tasks  # noqa
@@ -24,6 +25,10 @@ logger = logging.getLogger(__name__)
 @receiver(post_category_create)
 def create_creator_actions(sender, instance, **kwargs):
     """请求权限中心，创建新建关联权限记录"""
+    if not settings.ENABLE_IAM:
+        logger.info("skip creation of resource_creator_action (category related) due to ENABLE_IAM is false")
+        return
+
     logger.info("going to create resource_creator_action for Category<%s>", instance.id)
     helper = IAMHelper()
     try:

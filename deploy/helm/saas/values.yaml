@@ -81,8 +81,6 @@ env:
   BK_LOGIN_API_URL: "http://bk-login-web"
   # 容器化版本默认采用子域名形式暴露服务
   SITE_URL: "/"
-  # 由于用户管理先于权限中心拉起，所以默认禁用，后期所有产品就绪后，可手动开启
-  DISABLE_IAM: true
 
 envFrom: []
 
