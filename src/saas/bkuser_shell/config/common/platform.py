@@ -20,6 +20,8 @@ APP_TOKEN = env("BK_APP_SECRET")
 # 蓝鲸智云开发者中心的域名，形如：http://paas.example.com
 BK_PAAS_URL = env("BK_PAAS_URL")
 
+# 蓝鲸登录跳转页面
+BK_LOGIN_URL = env("BK_LOGIN_URL", default=f"{BK_PAAS_URL}/login")
 # 蓝鲸登录 API URL
 BK_LOGIN_API_URL = env("BK_LOGIN_API_URL", default=f"{BK_PAAS_URL}/login")
 

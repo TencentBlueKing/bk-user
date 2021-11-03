@@ -1,5 +1,5 @@
-# 全局变量，通常用于多个 Chart 之间共享
 global:
+  # 全局变量，通常用于多个 Chart 之间共享
   imagePullSecrets: []
   # imagePullSecrets, 预先创建的 imagePullSecrets, 将直接被添加到 chartty.imagePullSecretNames 中.
   # - name: "secret-a"
@@ -20,17 +20,27 @@ global:
     pullPolicy: Always
 
   # 全局环境变量，当 `env` 指定时，`global.env` 内相同 key 值变量将被覆盖
-  env: {}
-
-  # 默认的全局根域
-  sharedDomain: ""
+  env:
+    # 登录态 Cookie 写入的域名
+    BK_DOMAIN: "example.com"
+    # 统一登录的外部访问域名
+    BK_LOGIN_PUBLIC_ADDR: "paas.example.com"
+    # 用户管理后台API访问地址
+    BK_USERMGR_API_URL: "http://bkuserapi-web"
+    # 与 ESB 的通信凭证，应用(bk_paas) 对应的 bk_app_secret
+    BK_PAAS_SECRET_KEY: ""
+    # 32位随机字符串，用于加密登录态票据(bk_token)
+    ENCRYPT_SECRET_KEY: ""
+    DJANGO_SETTINGS_MODULE: "bklogin.config.overlays.prod"
+  # 全局 hosts
+  hostAliases: []
 
 # 缺省实例数
 replicaCount: 1
 
 image:
-  name: bk-user-api
-  tag: v2.3.0
+  name: bk-login
+  tag: "1.0.0-beta.3"
 
 # 用来覆盖 Chart 名
 nameOverride: ""
@@ -72,99 +82,69 @@ affinity: {}
 #---------------
 
 # key-value 结构渲染
-env:
-  # -------------
-  # 默认配置，不了解详情时请不要修改
-  # -------------
-  BK_APP_CODE: "bk_user"
-  DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.prod"
-  # -------------
-  # 权限中心相关配置
-  # -------------
-  BK_IAM_SYSTEM_ID: "bk_usermgr"
-  # 权限中心后台访问地址
-  BK_IAM_V3_INNER_HOST: "http://bkiam-web"
-  # 默认我们会按照 BK_PAAS_URL/o/bk_iam 拼接权限中心 SaaS 访问地址，可以通过以下值覆盖
-  # BK_IAM_SAAS_HOST: "http://apps.bktencent-example.com/bkapp-bk-iam-saas-prod/"
+env: {}
 
 envFrom: []
 
-# 提供原生的 env 写法
+# 提供原生的 env 写法，
 extrasEnv: []
 
 # 额外提供一种基于 sharedDomain 自动生成的 URL 类型环境变量
-sharedUrlEnvMap:
-   BK_USER_SAAS_URL: "http://bkuser.{{ .Values.global.sharedDomain }}"
-   # 使容器可以自我感知访问地址
-   BK_USER_API_URL: "http://bkuser-api.{{ .Values.global.sharedDomain }}"
+sharedUrlEnvMap: {}
 
 # 标识必填的环境变量列表
-requiredEnvList: []
+requiredEnvList:
+  - BK_DOMAIN
+  - BK_LOGIN_PUBLIC_ADDR
+  - BK_USERMGR_API_URL
+  - ENCRYPT_SECRET_KEY
 
 #---------------
 # 进程定义
 #--------------
-httpPort: 8000
+httpPort: 5000
 database:
-  preferName: bk-user-api
+  preferName: bk-login
 
 # 定义应用内的多个进程
 processes:
   web:
     ingress:
       enabled: true
-      host: "bkuser-api.{{ .Values.global.sharedDomain }}"
-      paths: ["/"]
-    replicas: 1
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+      paths: ["/login(/|$)(.*)"]
+      host: "{{ .Values.global.env.BK_LOGIN_PUBLIC_ADDR }}"
     resources:
       limits:
         cpu: 1024m
         memory: 1024Mi
       requests:
         cpu: 200m
-        memory: 128Mi
-    readinessProbe:
-      tcpSocket:
-        port: 8000
-      initialDelaySeconds: 5
-      periodSeconds: 30
-    livenessProbe:
-      httpGet:
-        path: /ping
-        port: http
-      initialDelaySeconds: 5
-      periodSeconds: 30
-  celery:
-    replicas: 1
-    resources:
-      limits:
-        cpu: 1024m
-        memory: 1024Mi
-      requests:
-        cpu: 200m
-        memory: 128Mi
-    command:
-      - bash
-    args:
-      - /app/start_celery.sh
-  beat:
-    replicas: 1
-    resources:
-      limits:
-        cpu: 1024m
         memory: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    command:
-      - bash
-    args:
-      - /app/start_beat.sh
-
+    readinessProbe:
+      failureThreshold: 15
+      periodSeconds: 10
+      timeoutSeconds: 10
+      httpGet:
+        path: /ping/
+        port: http
+    livenessProbe:
+      initialDelaySeconds: 90
+      failureThreshold: 15
+      periodSeconds: 10
+      timeoutSeconds: 10
+      tcpSocket:
+        port: 5000
+    command: ["./start.sh"]
+    args: []
+    hostAliases: []
 
 # 部署前钩子
 preRunHooks:
-  db-migrate:
+  # 变更表结构，仅在初始化或升级时执行
+  on-migrate:
     weight: 1
     enabled: true
     position: "pre-install,pre-upgrade"
@@ -173,14 +153,6 @@ preRunHooks:
     args:
       - -c
       - python manage.py migrate
-  bkiam-migrate:
-    weight: 2
-    enabled: false
-    position: "pre-install,pre-upgrade"
-    command:
-      - bash
-    args:
-      - /app/migrate_iam.sh
 
 # 支持定义多个 cronJobs
 cronJobs:
@@ -192,6 +164,3 @@ volumeMounts: []
 
 # 支持定义 configmaps
 configMaps: []
-
-mariadb:
-  enabled: false

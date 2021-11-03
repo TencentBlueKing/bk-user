@@ -48,7 +48,7 @@ SUPERUSER_PASSWORD = env("INITIAL_ADMIN_PASSWORD", default="Blueking@2019")
 # SaaS 应用 Code
 SAAS_CODE = "bk_user_manage"
 # SaaS 请求地址，用于拼接访问地址(默认支持二进制部署)
-SAAS_URL = env("SAAS_URL", default=urllib.parse.urljoin(BK_PAAS_URL, f"/o/{SAAS_CODE}/"))
+SAAS_URL = env("BK_USER_SAAS_URL", default=urllib.parse.urljoin(BK_PAAS_URL, f"/o/{SAAS_CODE}/"))
 
 # SaaS 偏好 client ip 头
 CLIENT_IP_FROM_SAAS_HEADER = "HTTP_CLIENT_IP_FROM_SAAS"

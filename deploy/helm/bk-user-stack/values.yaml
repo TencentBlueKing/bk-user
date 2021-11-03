@@ -37,6 +37,19 @@ bkusersaas:
     - configMapRef:
         name: bk-user-saas-mariadb-env
 
+bklogin:
+  enabled: true
+  env:
+    # 指定 bk_token 加密 secret key, 可通过 `tr -dc A-Za-z0-9 </dev/urandom | head -c 32 | base64` 生成
+    ENCRYPT_SECRET_KEY: ""
+    # 统一登录的外部访问域名
+    BK_LOGIN_PUBLIC_ADDR: "paas.example.com"
+
+  envFrom:
+  # 挂载内建 DB 变量
+  - configMapRef:
+      name: bk-login-mariadb-env
+
 # -------------
 # 内建存储配置
 # 默认通过 .Release.Name 拼接访问，请不要配置 nameOverride 或 fullnameOverride
