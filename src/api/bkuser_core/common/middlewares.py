@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import json
 from django.utils.deprecation import MiddlewareMixin
 
 from .http import force_response_ee_format, force_response_raw_format, should_use_raw_response
@@ -28,7 +29,7 @@ class MethodOverrideMiddleware(MiddlewareMixin):
                 original_mutable = request_get_params._mutable
                 request_get_params._mutable = True
 
-                request_post_body = eval(request.body.decode(encoding="utf-8"))
+                request_post_body = json.loads(request.body)
                 request_get_params.update(request_post_body)
 
                 # 恢复初始的_mutable属性
