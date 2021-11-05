@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import json
 from django.utils.deprecation import MiddlewareMixin
 
 from .http import force_response_ee_format, force_response_raw_format, should_use_raw_response
@@ -21,6 +22,18 @@ class MethodOverrideMiddleware(MiddlewareMixin):
         """因为 GET 方法 URL 长度有限制，可以使用 POST 实现 GET 效果"""
         if request.method == "POST" and self.METHOD_OVERRIDE_HEADER in request.META:
             request.method = request.META[self.METHOD_OVERRIDE_HEADER]
+
+            if request.body:
+                request_get_params = request.GET
+
+                original_mutable = request_get_params._mutable
+                request_get_params._mutable = True
+
+                request_post_body = json.loads(request.body)
+                request_get_params.update(request_post_body)
+
+                # 恢复初始的_mutable属性
+                request_get_params._mutable = original_mutable
 
 
 class DynamicResponseFormatMiddleware:
