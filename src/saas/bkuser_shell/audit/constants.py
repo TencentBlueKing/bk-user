@@ -31,6 +31,7 @@ OPERATION_NAME_TUPLE = (
     ("sync", _("同步")),
     ("export", _("导出")),
     ("import", _("导入")),
+    ("restoration", _("恢复")),
 )
 
 OPERATION_NAME_MAP = {x[0]: x[1] for x in OPERATION_NAME_TUPLE}

@@ -113,5 +113,10 @@ export default {
     getProfileById(context, params, config = {}) {
       return http.get(`api/v2/profiles/${params.id}/`);
     },
+    // 恢复删除用户
+    postProfilesRestoration(context, params, config = {}) {
+      const { id } = params;
+      return http.post(`/api/v2/profiles/${id}/restoration/`);
+    },
   },
 };

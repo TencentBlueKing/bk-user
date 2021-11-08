@@ -11,8 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import List
 
-from bkuser_core.audit.constants import OperationEnum
-from bkuser_core.audit.utils import create_general_log
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.permissions import IAMAction, IAMHelper, IAMPermissionExtraInfo, need_iam
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
@@ -37,7 +37,6 @@ from bkuser_core.common.error_codes import CoreAPIError, error_codes
 from bkuser_core.common.serializers import EmptySerializer
 from bkuser_core.common.viewset import AdvancedListAPIView, AdvancedModelViewSet, AdvancedSearchFilter
 from django.utils.decorators import method_decorator
-from django.utils.module_loading import import_string
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
 from rest_framework.decorators import action
@@ -118,15 +117,9 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         max_order = ProfileCategory.objects.get_max_order()
         instance.order = max_order + 1
         instance.save(update_fields=["order"])
-
-        post_category_create.send(sender=self, category=instance, creator=request.operator)
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.CREATE.value,
-            operator_obj=instance,
-            request=request,
+        post_category_create.send_robust(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
         )
-
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_serializer(self, *args, **kwargs):
@@ -135,6 +128,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         else:
             return self.serializer_class(*args, **kwargs)
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def update(self, request, *args, **kwargs):
         """
@@ -161,13 +155,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
 
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.UPDATE.value,
-            operator_obj=instance,
-            request=request,
-        )
-
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
@@ -178,7 +165,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if instance.default:
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
 
-        post_category_delete.send(sender=self, category=instance, operator=request.operator)
+        post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
         return super().destroy(request, *args, **kwargs)
 
     @swagger_auto_schema(
@@ -197,8 +184,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.TEST_CONNECTION_UNSUPPORTED
 
         try:
-            category_config = get_plugin_by_category(instance)
-            client_class = import_string(category_config.extra_config["ldap_client"])
+            syncer_cls = get_plugin_by_category(instance).syncer_cls
         except Exception:
             logger.exception(
                 "category<%s-%s-%s> load ldap client failed",
@@ -209,7 +195,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.LOAD_LDAP_CLIENT_FAILED
 
         try:
-            client_class.initialize(**serializer.validated_data)
+            syncer_cls(instance.id).fetcher.client.initialize(**serializer.validated_data)
         except Exception:
             logger.exception("failed to test initialize category<%s>", instance.id)
             raise error_codes.TEST_CONNECTION_FAILED
@@ -257,6 +243,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response()
 
+    @audit_general_log(operate_type=OperationType.SYNC.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": CategorySyncResponseSLZ()})
     def sync(self, request, lookup_value):
@@ -287,12 +274,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             logger.exception("failed to sync data")
             raise error_codes.SYNC_DATA_FAILED
 
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.SYNC.value,
-            operator_obj=instance,
-            request=request,
-        )
         return Response({"task_id": task_id})
 
 
@@ -303,6 +284,7 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field = "id"
     ordering = ["-create_time"]
 
+    @audit_general_log(operate_type=OperationType.IMPORT.value)
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": EmptySerializer()})
     def import_data_file(self, request, lookup_value):
@@ -333,12 +315,6 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             logger.exception("failed to sync data")
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
 
-        create_general_log(
-            operator=request.operator,
-            operate_type=OperationEnum.IMPORT.value,
-            operator_obj=instance,
-            request=request,
-        )
         return Response()
 
 

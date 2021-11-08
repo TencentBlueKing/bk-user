@@ -60,7 +60,7 @@ CAN_MANUAL_WRITE_LISTS = ["local"]
 # 权限中心相关配置
 # ==============================================================================
 # 默认启用，禁用时会跳过权限校验步骤
-ENABLE_IAM = True
+ENABLE_IAM = env.bool("ENABLE_IAM", default=True)
 
 
 def get_iam_config(app_id: str, app_token: str) -> dict:

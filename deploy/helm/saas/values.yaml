@@ -82,8 +82,6 @@ env:
   BK_LOGIN_API_URL: "http://bklogin-web"
   # 容器化版本默认采用子域名形式暴露服务
   SITE_URL: "/"
-  # 由于用户管理先于权限中心拉起，所以默认禁用，后期所有产品就绪后，可手动开启
-  DISABLE_IAM: true
 
 envFrom: []
 
@@ -114,7 +112,7 @@ processes:
     replicas: 1
     resources:
       limits:
-        cpu: 200m
+        cpu: 1024m
         memory: 1024Mi
       requests:
         cpu: 200m

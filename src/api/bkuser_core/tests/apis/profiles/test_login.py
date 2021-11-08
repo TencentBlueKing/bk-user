@@ -219,6 +219,13 @@ class TestListCreateApis:
         p.save()
         request = factory.post(
             "/api/v1/login/check/",
+            data={"username": "logintest", "password": "wrongpwd", "domain": "testdomain"},
+        )
+        response = check_view(request=request)
+        assert response.data["code"] == "PASSWORD_ERROR"
+
+        request = factory.post(
+            "/api/v1/login/check/",
             data={"username": "logintest", "password": "testpwd", "domain": "testdomain"},
         )
         response = check_view(request=request)

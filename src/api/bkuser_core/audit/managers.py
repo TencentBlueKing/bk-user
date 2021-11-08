@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
-from .constants import LogInFailReasonEnum
+from .constants import LogInFailReason
 
 
 class ResetPasswordManager(models.Manager):
@@ -26,8 +26,8 @@ class LogInManager(models.Manager):
             create_time = self.filter(is_success=True).latest().create_time
             return self.filter(
                 is_success=False,
-                reason=LogInFailReasonEnum.BAD_PASSWORD.value,  # type: ignore
+                reason=LogInFailReason.BAD_PASSWORD.value,  # type: ignore
                 create_time__gt=create_time,
             ).count()
         except ObjectDoesNotExist:
-            return self.filter(is_success=False, reason=LogInFailReasonEnum.BAD_PASSWORD.value).count()  # type: ignore
+            return self.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value).count()  # type: ignore

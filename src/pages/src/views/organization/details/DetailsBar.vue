@@ -30,6 +30,7 @@
       :fields-list="fieldsList"
       @editProfile="editProfile"
       @deleteProfile="$emit('deleteProfile')"
+      @restoreProfile="$emit('restoreProfile')"
       @getTableData="$emit('getTableData')"
       @showBarLoading="$emit('showBarLoading')"
       @closeBarLoading="$emit('closeBarLoading')" />

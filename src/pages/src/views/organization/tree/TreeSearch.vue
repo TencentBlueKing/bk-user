@@ -177,6 +177,8 @@ export default {
           return this.$t('已冻结');
         case 'DISABLED':
           return this.$t('已禁用');
+        case 'DELETED':
+          return this.$t('已删除');
       }
     },
     dealDepartmentPath(path) {

@@ -183,6 +183,7 @@ export default {
   },
   methods: {
     handleOriginList(value) {
+      this.$emit('updateTableData', value);
       if (this.isAllChecked) {
         this.isAllChecked = false;
       }

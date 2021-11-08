@@ -23,6 +23,7 @@ class DepartmentSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     name = serializers.CharField(required=False)
     order = serializers.IntegerField(required=False)
+    enabled = serializers.BooleanField(required=False)
     full_name = serializers.CharField()
     children = SubDepartmentSerializer(many=True, required=False)
     ancestors = SubDepartmentSerializer(many=True, required=False)
@@ -47,17 +48,6 @@ class DepartmentProfileSerializer(serializers.Serializer):
     page_size = serializers.IntegerField(required=False, default=10)
     recursive = serializers.BooleanField(default=True)
     keyword = serializers.CharField(required=False)
-
-
-class DepartmentProfileResultDataSerializer(serializers.Serializer):
-    logo = serializers.CharField()
-
-
-class DepartmentGetProfileResultSerializer(serializers.Serializer):
-    count = serializers.IntegerField()
-    current_count = serializers.IntegerField()
-    total_count = serializers.IntegerField()
-    data = DepartmentProfileResultDataSerializer(many=True)
 
 
 class ListDepartmentSerializer(serializers.Serializer):

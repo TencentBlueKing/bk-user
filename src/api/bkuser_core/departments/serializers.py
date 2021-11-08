@@ -127,6 +127,13 @@ class DepartmentProfileEdgesSLZ(serializers.Serializer):
 # ===============================================================================
 
 
+class DepartmentUpdateSerializer(serializers.Serializer):
+    name = serializers.CharField(required=False)
+    order = serializers.IntegerField(required=False)
+    extras = serializers.JSONField(required=False)
+    enabled = serializers.BooleanField(required=False)
+
+
 class DepartmentAddProfilesSerializer(serializers.Serializer):
     profile_id_list = serializers.ListField(child=serializers.IntegerField())
 

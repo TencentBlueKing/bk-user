@@ -19,7 +19,6 @@ from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.organization.serializers.departments import (
     CreateDepartmentSerializer,
     DepartmentAddProfilesSerializer,
-    DepartmentGetProfileResultSerializer,
     DepartmentListSerializer,
     DepartmentProfileSerializer,
     DepartmentSearchSerializer,
@@ -28,12 +27,12 @@ from bkuser_shell.organization.serializers.departments import (
     RetrieveDepartmentSLZ,
     UpdateDepartmentSerializer,
 )
-from bkuser_shell.organization.utils import batch_expand_extra_fields, get_default_logo_url
+from bkuser_shell.organization.serializers.profiles import DepartmentGetProfileResultSerializer
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
-from bkuser_global.drf_crown import inject_serializer
+from bkuser_global.drf_crown import ResponseParams, inject_serializer
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class DepartmentViewSet(BkUserApiViewSet):
     @inject_serializer(query_in=RetrieveDepartmentSLZ, out=DepartmentSerializer, tag=["departments"])
     def retrieve(self, request, department_id, validated_data):
         api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request, no_auth=True))
-        return api_instance.v2_departments_read(department_id)
+        return api_instance.v2_departments_read(department_id, include_disabled=True)
 
     @staticmethod
     def _get_profiles_count(api_instance, department_id, recursive, page, page_size):
@@ -92,22 +91,13 @@ class DepartmentViewSet(BkUserApiViewSet):
         fields = self.get_paging_results(fields_api_instance.v2_dynamic_fields_list)
         extra_fields = [x for x in fields if not x["builtin"]]
 
-        # TODO: 使用 serializer
-        target_profiles = batch_expand_extra_fields(extra_fields, profiles_response.get("results"))
-
-        # TODO: 临时做法
-        for x in target_profiles:
-            if not x["logo"]:
-                x["logo"] = get_default_logo_url(request)
-
-        data = {"count": profiles_response.get("count"), "data": target_profiles}
-
+        data = {"count": profiles_response.get("count"), "data": profiles_response.get("results")}
         if recursive:
             data["current_count"] = self._get_profiles_count(api_instance, department_id, False, 1, 1)
         else:
             data["total_count"] = self._get_profiles_count(api_instance, department_id, True, 1, 1)
 
-        return Response(data=data)
+        return ResponseParams(data, {"context": {"fields": extra_fields, "request": request}})
 
     @inject_serializer(
         query_in=DepartmentListSerializer, out=ListDepartmentSerializer(many=True), tags=["departments"]
