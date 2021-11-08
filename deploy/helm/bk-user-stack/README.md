@@ -64,8 +64,6 @@ global:
   image:
     # 修改镜像地址，我们会按照 {registry}/{repository} 方式拼接
     registry: any-mirrors-you-want.com/any-group
-    # 修改用户管理版本，从 https://github.com/TencentBlueKing/bk-user/releases 获取
-    tag: "v2.3.0"
 ```
 
 #### 4. 数据库依赖

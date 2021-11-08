@@ -203,6 +203,7 @@ src/pages/index-dev.html
 # ignore global code
 src/api/bkuser_global
 src/saas/bkuser_global
+src/login/bkuser_global
 # sdk
 src/saas/bkuser_sdk
 
@@ -226,4 +227,5 @@ deploy/helm/dist/
 
 deploy/helm/api/templates/c_*.*
 deploy/helm/saas/templates/c_*.*
+deploy/helm/login/templates/c_*.*
 deploy/helm/bk-user-stack/templates/c_*.*

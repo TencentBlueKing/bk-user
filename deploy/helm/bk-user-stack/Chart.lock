@@ -5,11 +5,14 @@ dependencies:
 - name: bkusersaas
   repository: file://../saas
   version: 1.0.0
+- name: bklogin
+  repository: file://../login
+  version: 1.0.0
 - name: mariadb
   repository: https://charts.bitnami.com/bitnami
   version: 9.4.0
 - name: redis
   repository: https://charts.bitnami.com/bitnami
   version: 14.8.7
-digest: sha256:5f5c69a6e9e9f002d5897f19c2de8ad441ae65aaa09b641880bb044b1b9cdda1
-generated: "2021-09-01T15:22:58.235089+08:00"
+digest: sha256:99ff256f34c2ba1d182fe765219129482f7e90be72cb986cd514a6283f0151ab
+generated: "2021-11-08T14:35:43.662782+08:00"
