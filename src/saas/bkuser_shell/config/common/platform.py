@@ -56,7 +56,7 @@ API_NEED_IAM_HEADER_NAME = "Need-Iam"
 API_IAM_ACTION_ID_HEADER_NAME = "Action-Id"
 
 # 默认开启 IAM，但是可以通过部署的环境变量关闭
-DISABLE_IAM = env.bool("DISABLE_IAM", default=False)
+ENABLE_IAM = env.bool("ENABLE_IAM", default=True)
 
 # 特殊标记从 SaaS 请求到 Api 的 IP
 CLIENT_IP_FROM_SAAS_HEADER = "Client-IP-From-SaaS"

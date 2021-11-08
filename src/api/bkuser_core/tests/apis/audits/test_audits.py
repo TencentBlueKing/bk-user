@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser_core.audit.constants import LogInFailReasonEnum, OperationEnum
+from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.audit.views import GeneralLogViewSet, LoginLogViewSet, ResetPasswordLogViewSet
 from bkuser_core.tests.utils import make_simple_profile
@@ -30,9 +30,9 @@ class TestGeneralApis:
     @pytest.mark.parametrize(
         "operate_type, username",
         [
-            (OperationEnum.UPDATE.value, "abc"),
-            (OperationEnum.CREATE.value, "edf"),
-            (OperationEnum.DELETE.value, "xyz"),
+            (OperationType.UPDATE.value, "abc"),
+            (OperationType.CREATE.value, "edf"),
+            (OperationType.DELETE.value, "xyz"),
         ],
     )
     def test_normal_list(self, factory, view, operate_type, username):
@@ -62,7 +62,7 @@ class TestGeneralApis:
             create_general_log(
                 operator=operator,
                 operator_obj=operator_obj,
-                operate_type=OperationEnum.UPDATE.value,
+                operate_type=OperationType.UPDATE.value,
             )
 
         request = factory.get(f"/api/v2/general_log/?page={page}&page_size={page_size}")
@@ -94,13 +94,13 @@ class TestLoginLogApis:
             create_profile_log(
                 profile=p,
                 operation="LogIn",
-                params={"is_success": False, "reason": LogInFailReasonEnum.DISABLED_USER.value},
+                params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
             )
 
         request = factory.get(f"/api/v2/login_log/?page={page}&page_size={page_size}")
         response = view(request=request)
         assert len(response.data["results"]) == expected
-        assert response.data["results"][0]["reason"] == LogInFailReasonEnum.DISABLED_USER.value
+        assert response.data["results"][0]["reason"] == LogInFailReason.DISABLED_USER.value
 
 
 class TestResetPasswordApis:

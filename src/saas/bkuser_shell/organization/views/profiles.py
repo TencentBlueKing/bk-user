@@ -8,15 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import json
 import logging
 
 import bkuser_sdk
+from bkuser_sdk.rest import ApiException
 from bkuser_shell.bkiam.constants import ActionEnum
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.organization.serializers import profiles as serializers
-from bkuser_shell.organization.utils import expand_extra_fields, get_default_logo_url
+from bkuser_shell.organization.utils import get_default_logo_url
 from rest_framework.permissions import IsAuthenticated
 
 from bkuser_global.drf_crown import ResponseParams, inject_serializer
@@ -46,7 +48,7 @@ class LoginInfoViewSet(BkUserApiViewSet):
                 "logo": get_default_logo_url(request),
             }
 
-        return ResponseParams(profile, {"context": {"request": request}})
+        return profile
 
 
 class ProfilesViewSet(BkUserApiViewSet):
@@ -101,7 +103,7 @@ class ProfilesViewSet(BkUserApiViewSet):
         profile = api_instance.v2_profiles_partial_update(
             lookup_value=profile_id, lookup_field="id", body=validated_data
         )
-        return ResponseParams(profile, {"context": {"request": request}})
+        return profile
 
     @inject_serializer(
         query_in=serializers.ListProfilesSerializer, out=serializers.ProfileResultSerializer, tags=["profiles"]
@@ -122,11 +124,9 @@ class ProfilesViewSet(BkUserApiViewSet):
             self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_DEPARTMENT.value)
         )
         profiles = api_instance.v2_profiles_list(**params)
+        return profiles
 
-        return ResponseParams(profiles, {"context": {"request": request}})
-
-    # TODO: 动态字段定义到swagger输出
-    @inject_serializer(out=serializers.ProfileSerializer(), tags=["profiles"])
+    @inject_serializer(out=serializers.ProfileSerializer, tags=["profiles"])
     def retrieve(self, request, profile_id):
         api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
         profile = api_instance.v2_profiles_read(profile_id, lookup_field="id")
@@ -134,9 +134,22 @@ class ProfilesViewSet(BkUserApiViewSet):
         api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
         fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
         extra_fields = [x for x in fields if not x["builtin"]]
+        return ResponseParams(profile, {"context": {"fields": extra_fields, "request": request}})
 
-        serializer = serializers.ProfileSerializer(profile, context={"request": request})
-        return expand_extra_fields(extra_fields, serializer.data)
+    @inject_serializer(tag=["profiles"])
+    def restoration(self, request, profile_id):
+        """恢复 profile"""
+        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
+        try:
+            api_instance.v2_profiles_restoration(
+                lookup_value=profile_id, lookup_field="id", body={}, include_disabled=True
+            )
+        except ApiException as e:
+            if json.loads(e.body)["code"] == "RESOURCE_ALREADY_ENABLED":
+                return Response({})
+            raise error_codes.CANNOT_RESTORATION_PROFILE
+
+        return Response({})
 
     @inject_serializer(
         body_in=serializers.UpdateProfileSerializer(many=True),
@@ -146,7 +159,7 @@ class ProfilesViewSet(BkUserApiViewSet):
     def multiple_update(self, request, validated_data):
         api_instance = bkuser_sdk.BatchApi(self.get_api_client_by_request(request))
         updated_profiles = api_instance.v2_batch_profiles_partial_update(body=validated_data)
-        return ResponseParams(updated_profiles, {"context": {"request": request}})
+        return updated_profiles
 
     @inject_serializer(body_in=serializers.UpdateProfileSerializer(many=True), tags=["profiles"])
     def multiple_delete(self, request, validated_data):

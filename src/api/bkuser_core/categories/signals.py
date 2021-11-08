@@ -10,5 +10,5 @@ specific language governing permissions and limitations under the License.
 """
 import django
 
-post_category_create = django.dispatch.Signal(providing_args=["category", "creator"])
-post_category_delete = django.dispatch.Signal(providing_args=["category", "operator"])
+post_category_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+post_category_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])

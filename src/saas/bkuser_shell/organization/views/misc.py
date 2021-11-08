@@ -18,7 +18,7 @@ from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.organization.constants import ProfileWildSearchFieldEnum
 from bkuser_shell.organization.serializers.departments import DepartmentSerializer
 from bkuser_shell.organization.serializers.misc import SearchResultSerializer, SearchSerializer
-from bkuser_shell.organization.utils import expand_extra_fields
+from bkuser_shell.organization.serializers.profiles import ProfileSerializer
 from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
@@ -60,17 +60,6 @@ class SearchViewSet(BkUserApiViewSet):
         # 2. 获取动态字段信息
         fields = fields_api_instance.v2_dynamic_fields_list()["results"]
         extra_fields = [x for x in fields if not x["builtin"]]
-
-        # 分页，保证搜索速度
-        hit_profiles = profiles_api_instance.v2_profiles_list(
-            page=1,
-            page_size=max_items,
-            wildcard_search=keyword,
-            wildcard_search_fields=ProfileWildSearchFieldEnum.to_list(),
-        )
-        if hit_profiles:
-            hit_profiles = hit_profiles.get("results")
-
         hit_type_map = {
             field: {
                 "type": field,
@@ -80,15 +69,35 @@ class SearchViewSet(BkUserApiViewSet):
             for field in ProfileWildSearchFieldEnum.to_list()
         }
 
+        # 分页，保证搜索速度
+        hit_profiles = profiles_api_instance.v2_profiles_list(
+            page=1,
+            page_size=max_items,
+            wildcard_search=keyword,
+            wildcard_search_fields=ProfileWildSearchFieldEnum.to_list(),
+            include_disabled=True,
+        ).get("results", [])
+
+        # 判断搜索出的内容是通过哪个字段选择的
         for profile in hit_profiles:
+            profile = ProfileSerializer(profile, context={"fields": extra_fields, "request": request}).data
             for field in ProfileWildSearchFieldEnum.to_list():
-                if keyword in profile.get(field, ""):
-                    profile = expand_extra_fields(extra_fields, profile)
-                    if _cached_categories_map.get(profile["category_id"]):
-                        profile["category_name"] = _cached_categories_map.get(profile["category_id"])
-                        hit_type_map[field]["items"].append(profile)
-                        # 只匹配一种类型
-                        break
+                if keyword not in profile.get(field, ""):
+                    continue
+
+                if profile["category_id"] not in _cached_categories_map:
+                    logger.warning(
+                        "profile<%s-%s>'s category<%s> has been deleted",
+                        profile["id"],
+                        profile["username"],
+                        profile["category_id"],
+                    )
+                    continue
+
+                profile["category_name"] = _cached_categories_map.get(profile["category_id"])
+                hit_type_map[field]["items"].append(profile)
+                # 只匹配一种类型
+                break
 
         # department 只有一种类型
         hit_departments = departments_api_instance.v2_departments_list(

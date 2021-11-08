@@ -14,15 +14,14 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.common.viewset import AdvancedListAPIView, AdvancedModelViewSet
+from bkuser_core.user_settings import serializers
+from bkuser_core.user_settings.models import Setting, SettingMeta
+from bkuser_core.user_settings.serializers import SettingUpdateSerializer
+from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
-
-from . import serializers
-from .models import Setting, SettingMeta
-from .serializers import SettingUpdateSerializer
-from .signals import post_setting_create_or_update
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +91,9 @@ class SettingViewSet(AdvancedModelViewSet):
             logger.exception("cannot create setting")
             raise error_codes.CANNOT_CREATE_SETTING
 
-        post_setting_create_or_update.send(sender=setting, setting=setting, operator=request.operator)
+        post_setting_create.send(
+            sender=self, instance=setting, operator=request.operator, extra_values={"request": request}
+        )
         return Response(serializers.SettingSerializer(setting).data, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
@@ -101,7 +102,9 @@ class SettingViewSet(AdvancedModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         result = super().update(request, *args, **kwargs)
-        post_setting_create_or_update.send(sender=self, setting=self.get_object(), operator=request.operator)
+        post_setting_update.send(
+            sender=self, instance=self.get_object(), operator=request.operator, extra_values={"request": request}
+        )
         return result
 
     @swagger_auto_schema(
@@ -110,7 +113,9 @@ class SettingViewSet(AdvancedModelViewSet):
     )
     def partial_update(self, request, *args, **kwargs):
         result = super().partial_update(request, *args, **kwargs)
-        post_setting_create_or_update.send(sender=self, setting=self.get_object(), operator=request.operator)
+        post_setting_update.send(
+            sender=self, instance=self.get_object(), operator=request.operator, extra_values={"request": request}
+        )
         return result
 
 

@@ -9,8 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import TYPE_CHECKING
 
-from bkuser_core.audit.constants import OperationEnum
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 from django.dispatch import receiver
@@ -18,20 +18,33 @@ from django.dispatch import receiver
 from .exceptions import ProfileEmailEmpty
 from .tasks import send_password_by_email
 
+if TYPE_CHECKING:
+    from bkuser_core.profiles.models import Profile
 logger = logging.getLogger(__name__)
 
 
-@receiver(post_profile_create)
 @receiver(post_profile_update)
-def notify_by_email(sender, profile, operator, operation_type, extra_values, **kwargs):
+def notify_reset_email(sender, instance: "Profile", operator: str, extra_values: dict, **kwargs):
+    """Notify the result of creating or updating password"""
+    if not extra_values.get("should_notify"):
+        return
+
+    try:
+        send_password_by_email.delay(instance.id, raw_password=extra_values["raw_password"], init=False)
+    except ProfileEmailEmpty:
+        raise error_codes.EMAIL_NOT_PROVIDED
+    except Exception:  # pylint: disable=broad-except
+        logger.exception("failed to send password via email")
+
+
+@receiver(post_profile_create)
+def notify_init_password(sender, instance: "Profile", operator: str, extra_values: dict, **kwargs):
     """Notify the result of creating profile"""
     if not extra_values.get("should_notify"):
         return
 
-    init = operation_type == OperationEnum.CREATE.value
     try:
-        logger.info("going to notify password via email")
-        send_password_by_email.delay(profile.id, raw_password=extra_values["raw_password"], init=init)
+        send_password_by_email.delay(instance.id, raw_password=extra_values["raw_password"], init=True)
     except ProfileEmailEmpty:
         raise error_codes.EMAIL_NOT_PROVIDED
     except Exception:  # pylint: disable=broad-except

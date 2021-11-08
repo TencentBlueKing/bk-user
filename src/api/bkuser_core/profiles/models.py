@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import datetime
 
 import jsonfield
-from bkuser_core.audit.constants import LogInFailReasonEnum
+from bkuser_core.audit.constants import LogInFailReason
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.common.bulk_update.manager import BulkUpdateManager
 from bkuser_core.common.models import TimestampedModel
@@ -170,9 +170,7 @@ class Profile(TimestampedModel):
 
     @property
     def latest_check_time(self):
-        return (
-            self.login_set.filter(is_success=False, reason=LogInFailReasonEnum.BAD_PASSWORD.value).latest().create_time
-        )
+        return self.login_set.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value).latest().create_time
 
     @property
     def is_superuser(self) -> bool:

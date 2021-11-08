@@ -14,6 +14,8 @@ global:
     BK_PAAS_URL: "http://paas.example.com"
     # ESB Api 访问地址
     BK_COMPONENT_API_URL: "http://bkapi.example.com"
+    # 由于用户管理先于权限中心拉起，所以默认禁用，后期所有产品就绪后，可手动开启
+    ENABLE_IAM: false
 
 bkuserapi:
   enabeld: true

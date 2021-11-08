@@ -10,12 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import django
 
-post_department_create = django.dispatch.Signal(
-    providing_args=["department", "operator", "operation_type", "extra_values"]
-)
-post_department_update = django.dispatch.Signal(
-    providing_args=["department", "operator", "operation_type", "extra_values"]
-)
-post_department_delete = django.dispatch.Signal(
-    providing_args=["department", "operator", "operation_type", "extra_values"]
-)
+post_department_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+post_department_update = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+post_department_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
