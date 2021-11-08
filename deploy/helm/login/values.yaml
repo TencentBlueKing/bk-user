@@ -112,7 +112,6 @@ processes:
     ingress:
       enabled: true
       annotations:
-        kubernetes.io/ingress.class: "nginx"
         nginx.ingress.kubernetes.io/rewrite-target: /$2
       paths: ["/login(/|$)(.*)"]
       host: "{{ .Values.global.env.BK_LOGIN_PUBLIC_ADDR }}"
