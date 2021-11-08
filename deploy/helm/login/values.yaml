@@ -43,7 +43,7 @@ image:
   tag: "1.0.0-beta.3"
 
 # 用来覆盖 Chart 名
-nameOverride: ""
+nameOverride: "bk-login"
 # 用来覆盖 fullName （通常是 release-chart 拼接）
 fullnameOverride: ""
 
@@ -112,7 +112,6 @@ processes:
     ingress:
       enabled: true
       annotations:
-        kubernetes.io/ingress.class: "nginx"
         nginx.ingress.kubernetes.io/rewrite-target: /$2
       paths: ["/login(/|$)(.*)"]
       host: "{{ .Values.global.env.BK_LOGIN_PUBLIC_ADDR }}"

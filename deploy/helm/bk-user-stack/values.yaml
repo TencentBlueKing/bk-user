@@ -40,8 +40,8 @@ bklogin:
   env:
     # 指定 bk_token 加密 secret key, 可通过 `tr -dc A-Za-z0-9 </dev/urandom | head -c 32 | base64` 生成
     ENCRYPT_SECRET_KEY: ""
-    # 统一登录的外部访问域名
-    BK_LOGIN_PUBLIC_ADDR: "paas.example.com"
+    # 与 ESB 的通信凭证，应用(bk_paas) 对应的 bk_app_secret
+    BK_PAAS_SECRET_KEY: ""
 
   envFrom:
   # 挂载内建 DB 变量
