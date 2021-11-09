@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import copy
+from typing import Optional
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -23,16 +24,18 @@ class CoreAPIError(APIException):
 
     def __init__(self, code):
         self.code = code
+        self.data = {}
         super().__init__(str(self))
 
     def __str__(self):
         return f"CoreAPIError {self.code.status_code}-{self.code.code_name}"
 
-    def format(self, message=None, replace=False, **kwargs):
+    def format(self, message: Optional[str] = None, replace: bool = False, data: Optional[dict] = None, **kwargs):
         """Using a customized message for this ErrorCode
 
+        :param data: exception body
         :param str message: if not given, default message will be used
-        :param bool replace: relace default message if true
+        :param bool replace: replace default message if true
         """
         self.code = copy.copy(self.code)
         if message:
@@ -44,6 +47,9 @@ class CoreAPIError(APIException):
         # Render message string
         if kwargs:
             self.code.message = self.code.message.format(**kwargs)
+
+        if data:
+            self.data = data
 
         return self
 
@@ -59,7 +65,7 @@ class CoreAPIError(APIException):
         return self.code.code_num
 
 
-class ErrorCode(object):
+class ErrorCode:
     """Error code"""
 
     def __init__(self, code_name, message, code_num=-1, status_code=HTTP_400_BAD_REQUEST):
@@ -69,7 +75,7 @@ class ErrorCode(object):
         self.status_code = status_code
 
 
-class ErrorCodeCollection(object):
+class ErrorCodeCollection:
     """A collection of ErrorCodes"""
 
     def __init__(self):
@@ -98,24 +104,25 @@ error_codes.add_codes(
         ErrorCode("RESOURCE_RESTORATION_FAILED", _("资源恢复失败")),
         # 登陆相关
         ErrorCode("USER_DOES_NOT_EXIST", _("账号不存在"), 3210010),
-        ErrorCode("USERNAME_FORMAT_ERROR", _("账户名格式错误"), 3210012),
-        ErrorCode("DOMAIN_UNKNOWN", _("未知登陆域"), 3210017),
-        ErrorCode("USER_EXIST_MANY", _("存在多个同名账号，请联系管理员"), 3210014),
-        ErrorCode("USER_IS_DISABLED", _("账号已被管理员禁用，请联系管理员"), 3210016),
-        ErrorCode("USER_IS_LOCKED", _("账号长时间未登录，已被冻结，请联系管理员"), 3210015),
-        ErrorCode("PASSWORD_ERROR", _("账户名和密码不匹配"), 3210013),
-        ErrorCode(
-            "PASSWORD_DUPLICATED",
-            _("新密码不能与最近{}次密码相同").format(settings.MAX_PASSWORD_HISTORY),
-        ),
-        ErrorCode("PASSWORD_EXPIRED", _("该账户密码已到期，请修改密码后登录"), 3210018),
         ErrorCode("TOO_MANY_TRY", _("密码输入错误次数过多，已被锁定"), 3210011),
+        ErrorCode("USERNAME_FORMAT_ERROR", _("账户名格式错误"), 3210012),
+        ErrorCode("PASSWORD_ERROR", _("账户或者密码错误，请重新输入"), 3210013),
+        ErrorCode("USER_EXIST_MANY", _("存在多个同名账号，请联系管理员"), 3210014),
+        ErrorCode("USER_IS_LOCKED", _("账号长时间未登录，已被冻结，请联系管理员"), 3210015),
+        ErrorCode("USER_IS_DISABLED", _("账号已被管理员禁用，请联系管理员"), 3210016),
+        ErrorCode("DOMAIN_UNKNOWN", _("未知登陆域"), 3210017),
+        ErrorCode("PASSWORD_EXPIRED", _("该账户密码已到期，请修改密码后登录"), 3210018),
         ErrorCode("CATEGORY_NOT_ENABLED", _("用户目录未启用"), 3210019),
-        ErrorCode("ERROR_FORMAT", _("传入参数错误"), 3210019),
+        ErrorCode("ERROR_FORMAT", _("传入参数错误"), 3210020),
+        ErrorCode("SHOULD_CHANGE_INITIAL_PASSWORD", _("请修改初始密码"), 3210021),
         # 用户相关
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
         ErrorCode("USER_ALREADY_EXISTED", _("该目录下此用户名已存在"), status_code=HTTP_409_CONFLICT),
         ErrorCode("SAVE_USER_INFO_FAILED", _("保存用户信息失败")),
+        ErrorCode(
+            "PASSWORD_DUPLICATED",
+            _("新密码不能与最近{}次密码相同").format(settings.MAX_PASSWORD_HISTORY),
+        ),
         # 上传文件相关
         ErrorCode("FILE_IMPORT_TOO_LARGE", _("上传文件过大")),
         ErrorCode("FILE_IMPORT_FORMAT_ERROR", _("上传文件格式错误")),

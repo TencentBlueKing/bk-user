@@ -44,5 +44,6 @@ LOGIN_FAILED_REASON_TUPLE = (
     ("too_many_failure", _("密码错误次数过多")),
     ("locked_user", _("用户已锁定")),
     ("disabled_user", _("用户已删除")),
+    ("should_change_initial_password", _("需要修改初始密码")),
 )
 LOGIN_FAILED_REASON_MAP = {x[0]: x[1] for x in LOGIN_FAILED_REASON_TUPLE}
