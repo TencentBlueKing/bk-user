@@ -112,7 +112,17 @@ $(document).ready(function(){
       hideUserDomainList()
     });
 
-
+    // 密码切换显示
+    $('#invisible').on('click', function () {
+      const pass = document.getElementById('password');
+      if (pass.type === 'password') {
+        pass.type = 'text';
+        $('#invisible').attr('class', 'bk-icon icon-kejian');
+      } else {
+        pass.type = 'password';
+        $('#invisible').attr('class', 'bk-icon icon-invisible-eye');
+      }
+    })
 
     // 用户选择时处理
     userDomainList.on('click', function (event) {
