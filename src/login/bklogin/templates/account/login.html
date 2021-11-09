@@ -6,6 +6,7 @@
         <link rel="icon" type="image/x-icon" href="{{STATIC_URL}}favicon.ico">
         <link href="{{STATIC_URL}}css/bk.{{CSS_SUFFIX}}" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}assets/bk-icon-2.0/iconfont.css" rel="stylesheet" type="text/css" />
+        <link href="{{STATIC_URL}}assets/blueking-icon/index.css" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}css/login.{{CSS_SUFFIX}}?v={{STATIC_VERSION}}" rel="stylesheet" type="text/css" />
         <title>{% trans '登录|蓝鲸智云企业版' %}</title>
     </head>
@@ -13,7 +14,8 @@
         <div class="page-content">
             <div class="login-from">
                 <div class="logo-title">
-                    <img src="{{STATIC_URL}}{% trans 'img/logo/logo_cn.svg' %}" height="33" width="178" alt="">
+                    <span class="title">{% trans '蓝鲸社区版' %}</span>
+                    <img src="{{STATIC_URL}}{% trans 'img/logo/v7.png' %}" alt="">
                 </div>
                 {% if not custom_login  %}
                 <div class="from-detail">
@@ -24,30 +26,35 @@
                             {% endif %}
                         </div>
                         <div class="form-login">
+                            <p class="label">{% trans '用户名' %}</p>
                             <div class="user group-control">
-                                <i class="bk-icon icon-user"></i>
-                                <input id="user" type="text" name="username" placeholder="{% trans '用户名/邮箱/手机号' %}" autocomplete="off">
+                                <input id="user" type="text" name="username" placeholder="{% trans '请输入用户名' %}" autocomplete="off">
                                 <ul class="user-domain-list" id="user-domain-list">
 
                                 <input id="domains" type="hidden" name="domains" value="{{categories}}" >
 
                             </div>
+                            <p class="label">{% trans '密码' %}</p>
                             <div class="pwd group-control">
-                                <i class="bk-icon icon-lock"></i>
-                                <input class="password" id="password" type="password" name="password" value="" placeholder="{% trans '密码' %}">
+                                <i class="bk-icon icon-invisible-eye" id="invisible"></i>
+                                <input class="password" id="password" type="password" name="password" value="" placeholder="{% trans '请输入密码' %}">
                             </div>
+                            <p class="change-password">
+                                <!-- <span>{% trans '你的密码已过期，请' %}</span>
+                                <a href="javascript: void(0);" target="_blank">{% trans '修改密码' %}</a> -->
+                            </p>
                             <div>
                                 <input type="hidden" name="next" value="{{ next }}" />
                                 <input type="hidden" name="app_id" value="{{ app_id }}">
                             </div>
                             <div class="btn-content clearfix">
-                                <button class="login-btn" type="button" id="login-btn">{% trans '登录' %}</button>
+                                <button class="login-btn" type="button" id="login-btn">{% trans '立即登录' %}</button>
                                 <!--<span class="protocol-btn">{% trans '查看用户协议' %}</span>-->
                             </div>
                             <div class="action clearfix">
 
                                 {% if "/plain/" not in APP_PATH %}
-                                <a href="javascript: void(0);" class="protocol-btn fl">{% trans '查看用户协议' %}</a>
+                                <a href="javascript: void(0);" class="protocol-btn fl">{% trans '用户协议 >' %}</a>
                                 {% endif %}
 
                                 <a href="{{ forget_password_url }}" class="password-btn fr" target="_blank">{% trans '忘记密码？' %}</a>
