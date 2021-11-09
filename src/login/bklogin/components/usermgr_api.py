@@ -67,7 +67,7 @@ def authenticate(username, password, language="", domain=""):
             "Content-Type": "application/json",
         },
     )
-    return ok, code, message, _data
+    return ok, code, message, _data or {}
 
 
 def batch_query_users(username_list=[], is_complete=False):

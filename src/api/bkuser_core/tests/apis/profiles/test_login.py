@@ -61,7 +61,7 @@ class TestListCreateApis:
         """测试登录校验"""
         make_simple_profile(
             username="logintest",
-            force_create_params={"password": make_password("testpwd")},
+            force_create_params={"password": make_password("testpwd"), "password_update_time": now()},
         )
         request = factory.post("/api/v1/login/check/", data={"username": "logintest", "password": "testpwd"})
         response = check_view(request=request)
@@ -82,7 +82,12 @@ class TestListCreateApis:
         """测试使用其他字段登录"""
         make_simple_profile(
             username="logintest",
-            force_create_params={"password": make_password("testpwd"), "email": "haha@haha", "telephone": "12345"},
+            force_create_params={
+                "password": make_password("testpwd"),
+                "email": "haha@haha",
+                "telephone": "12345",
+                "password_update_time": now(),
+            },
         )
         request = factory.post("/api/v1/login/check/", data={"username": "logintest", "password": "testpwd"})
         response = check_view(request=request)
@@ -106,11 +111,21 @@ class TestListCreateApis:
         """测试使用其他字段登录重复问题"""
         make_simple_profile(
             username="logintest",
-            force_create_params={"password": make_password("testpwd"), "email": "haha@haha", "telephone": "12345"},
+            force_create_params={
+                "password": make_password("testpwd"),
+                "email": "haha@haha",
+                "telephone": "12345",
+                "password_update_time": now(),
+            },
         )
         make_simple_profile(
             username="logintest1",
-            force_create_params={"password": make_password("testpwd"), "email": "haha@haha", "telephone": "12345"},
+            force_create_params={
+                "password": make_password("testpwd"),
+                "email": "haha@haha",
+                "telephone": "12345",
+                "password_update_time": now(),
+            },
         )
         # 实际上是这些字段重复了，但是会模糊错误返回
         request = factory.post("/api/v1/login/check/", data={"username": "12345", "password": "testpwd"})
@@ -127,7 +142,12 @@ class TestListCreateApis:
         ca.make_default_settings()
         make_simple_profile(
             username="logintest",
-            force_create_params={"password": make_password("testpwd"), "domain": "testdomain", "category_id": ca.id},
+            force_create_params={
+                "password": make_password("testpwd"),
+                "domain": "testdomain",
+                "category_id": ca.id,
+                "password_update_time": now(),
+            },
         )
         request = factory.post("/api/v1/login/check/", data={"username": "logintest", "password": "testpwd"})
         response = check_view(request=request)
@@ -149,7 +169,12 @@ class TestListCreateApis:
         ca.make_default_settings()
         p = make_simple_profile(
             username="logintest",
-            force_create_params={"password": make_password("testpwd"), "domain": "testdomain", "category_id": ca.id},
+            force_create_params={
+                "password": make_password("testpwd"),
+                "domain": "testdomain",
+                "category_id": ca.id,
+                "password_update_time": now(),
+            },
         )
 
         # 未知登录域
@@ -187,7 +212,7 @@ class TestListCreateApis:
             data={"username": "logintest", "password": "testpwd", "domain": "testdomain"},
         )
         response = check_view(request=request)
-        assert response.data["code"] == "USER_IS_LOCKED"
+        assert response.data["code"] == "PASSWORD_ERROR"
 
         # 用户被禁用
         p.status = ProfileStatus.DISABLED.value
@@ -197,7 +222,7 @@ class TestListCreateApis:
             data={"username": "logintest", "password": "testpwd", "domain": "testdomain"},
         )
         response = check_view(request=request)
-        assert response.data["code"] == "USER_IS_DISABLED"
+        assert response.data["code"] == "PASSWORD_ERROR"
 
         # 超级用户不判断用户状态
         p.role = RoleCodeEnum.SUPERUSER.value
@@ -213,7 +238,7 @@ class TestListCreateApis:
         p.save()
 
         # 用户密码过期
-        p.create_time = now() - datetime.timedelta(days=3 * 365)
+        p.password_update_time = now() - datetime.timedelta(days=3 * 365)
         p.password_valid_days = 1
         p.status = ProfileStatus.NORMAL.value
         p.save()
@@ -231,11 +256,21 @@ class TestListCreateApis:
         response = check_view(request=request)
         assert response.data["code"] == "PASSWORD_EXPIRED"
 
+        # 初始化密码需要修改
+        p.password_update_time = None
+        p.save()
+        request = factory.post(
+            "/api/v1/login/check/",
+            data={"username": "logintest", "password": "testpwd", "domain": "testdomain"},
+        )
+        response = check_view(request=request)
+        assert response.data["code"] == "SHOULD_CHANGE_INITIAL_PASSWORD"
+
     def test_check_auto_lock(self, factory, check_view):
         """测试多次错误自动锁定"""
         make_simple_profile(
             username="logintest",
-            force_create_params={"password": make_password("testpwd")},
+            force_create_params={"password": make_password("testpwd"), "password_update_time": now()},
         )
 
         auto_unlock_seconds = Setting.objects.get(category__id=1, meta__key="auto_unlock_seconds")
@@ -252,7 +287,7 @@ class TestListCreateApis:
 
         request = factory.post("/api/v1/login/check/", data={"username": "logintest", "password": "wrongpwd"})
         response = check_view(request=request)
-        assert response.data["code"] == "TOO_MANY_TRY"
+        assert response.data["code"] == "PASSWORD_ERROR"
 
         # 确保解锁了
         time.sleep(2)

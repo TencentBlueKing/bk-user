@@ -21,6 +21,7 @@ class LogInFailReason(AutoLowerEnum):
     TOO_MANY_FAILURE = auto()
     LOCKED_USER = auto()
     DISABLED_USER = auto()
+    SHOULD_CHANGE_INITIAL_PASSWORD = auto()
 
     _choices_labels = (
         (BAD_PASSWORD, "密码错误"),
@@ -28,6 +29,7 @@ class LogInFailReason(AutoLowerEnum):
         (TOO_MANY_FAILURE, "密码错误次数过多"),
         (LOCKED_USER, "用户已锁定"),
         (DISABLED_USER, "用户已删除"),
+        (SHOULD_CHANGE_INITIAL_PASSWORD, "需要修改初始密码"),
     )
 
 

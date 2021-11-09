@@ -56,6 +56,7 @@ def get_ee_exception_response(exc, context):
         # 主动抛出的已知异常
         data["code"] = exc.code_num
         data["message"] = exc.message
+        data["data"] = exc.data or None
     elif isinstance(exc, Http404):
         data["message"] = "404, could not be found"
     elif isinstance(exc, PermissionDenied):

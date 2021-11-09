@@ -48,8 +48,10 @@ OPERATOR_HEADER = "HTTP_X_BKUSER_OPERATOR"
 # 最大的自定义字段数量（暂未启用）
 MAX_DYNAMIC_FIELDS = 20
 
-# 默认用户 Token 的过期时间
+# 默认用户 Token 的过期时间(用于发送邮件)
 DEFAULT_TOKEN_EXPIRE_SECONDS = 12 * 60 * 60
+# 页面临时生成用户 Token
+PAGE_TOKEN_EXPIRE_SECONDS = 5 * 60
 
 # 国际号码段默认值
 DEFAULT_COUNTRY_CODE = "86"
