@@ -6,6 +6,7 @@
         <link rel="icon" type="image/x-icon" href="{{STATIC_URL}}favicon.ico">
         <link href="{{STATIC_URL}}css_ce/bk.{{CSS_SUFFIX}}" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}assets/bk-icon-2.0/iconfont.css" rel="stylesheet" type="text/css" />
+        <link href="{{STATIC_URL}}assets/blueking-icon/index.css" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}css_ce/login.{{CSS_SUFFIX}}?v={{STATIC_VERSION}}" rel="stylesheet" type="text/css" />
         <title>登录|蓝鲸智云</title>
 
@@ -15,56 +16,72 @@
                 left: 50% !important;
                 top: 50% !important;
                 margin: 0 !important;
-                transform: translate(-50%, -50%);
-                border-radius: 0 !important;
-              }
-              .logo-title {
-                border-radius: 0 !important;
+                transform: translate(-50%, -70%);
               }
               .protocol-btn {
                 display: none !important;
-              }
-              .footer {
-                display: none !important;
-              }
-              .page-content {
-                background: #e3eefa !important;
               }
           </style>
         {% endif %}
     </head>
     <body>
         <div class="page-content">
+            <img class="login-logo" src="../../../static/img/logo_ce/logo.png" alt="">
             <div class="login-from">
                 <div class="logo-title">
-                    <img src="{{STATIC_URL}}img/logo_ce/bk_login.png" height="32" width="311" alt="">
+                    <span class="title">蓝鲸社区版</span>
+                    <img src="{{STATIC_URL}}/img/logo_ce/v7.png" alt="">
                 </div>
                 <div class="from-detail">
                     <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
-                        <div class="is-danger-tip">
-                            {% if error_message %}
-                            <i class="bk-icon icon-exclamation-circle-shape"></i><span>{{ error_message }}</span>
-                                {% if token_set_password_url %}
-                                    <a href="{{ token_set_password_url }}" target="_blank">>>去修改</a>
-                                {% endif %}
-                            {% endif %}
-                        </div>
                         <div class="form-login">
+                            <p class="label">用户名</p>
                             <div class="user group-control">
                                 <i class="bk-icon icon-user"></i>
                                 <input id="user" type="text" name="username" placeholder="请输入用户名" >
                             </div>
+                            <p class="label">密码</p>
                             <div class="pwd group-control">
-                                <i class="bk-icon icon-password"></i>
-                                <input class="password" id="password" type="password" name="password" value="" placeholder="请输入用户密码">
+                                <i class="bk-icon icon-invisible-eye" id="invisible"></i>
+                                <input class="password" id="password" type="password" name="password" value="" placeholder="请输入密码">
                             </div>
+                            <p class="change-password">
+                                {% if error_message %}
+                                <span>{{ error_message }}</span>
+                                    {% if token_set_password_url %}
+                                        <a href="{{ token_set_password_url }}" target="_blank">，请修改密码</a>
+                                    {% endif %}
+                                {% endif %}
+                            </p>
                             <div>
                                 <input type="hidden" name="next" value="{{ next }}" />
                                 <input type="hidden" name="app_id" value="{{app_id }}">
                             </div>
                             <div class="btn-content clearfix">
-                                <button class="login-btn">登录</button>
-                                <span class="protocol-btn">查看用户协议</span>
+                                <button class="login-btn" type="button" id="login-btn">立即登录</button>
+                                <!-- <span class="protocol-btn">查看用户协议</span> -->
+                            </div>
+                            <div class="action clearfix">
+                                <!-- {% if "/plain/" not in APP_PATH %} -->
+                                <a href="javascript: void(0);" class="protocol-btn fl">用户协议 ></a>
+                                <!-- {% endif %} -->
+                                <a href="{{ reset_password_url }}" class="password-btn fr" target="_blank">忘记密码？</a>
+                            </div>
+                            <div class="language-wrapper">
+                                <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">
+                                    <!-- {% csrf_token %} -->
+                                    <i id="languageIcon" class="bk-icon icon-yuyanqiehuanzhongwen"></i>
+                                    <select name="language" id="languageSelect">
+                                        {% get_current_language as LANGUAGE_CODE %}
+                                        {% get_available_languages as LANGUAGES %}
+                                        {% get_language_info_list for LANGUAGES as languages %}
+                                        {% for language in languages %} -->
+                                            <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
+                                                {{ language.name_local }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
                             </div>
                         </div>
                     </form>
@@ -76,14 +93,7 @@
                     | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" hotrep="hp.footer.feedback" class="link">蓝鲸论坛</a>
                     | <a href="http://bk.tencent.com/" target="_blank" hotrep="hp.footer.feedback" class="link">蓝鲸官网</a>
                     | <a href="/" target="_blank" hotrep="hp.footer.feedback" class="link">蓝鲸智云工作台</a>
-                    |<a class="follow-us" href="###">关注我们
-                    <span class="qr-box">
-                        <span class="qr">
-                            <img src="{{STATIC_URL}}img/logo_ce/qr.png">
-                            <span class="qr-caret"></span>
-                        </span>
-                    </span>
-                    </a>
+                    |<a class="follow-us" href="###">关注我们</a>
                 </p>
                 <p>Copyright © 2012-{{NOW.year}} Tencent BlueKing. All Rights Reserved.</p>
                 <p>蓝鲸智云 版权所有</p>
@@ -97,10 +107,14 @@
         </div>
     </body>
     <!-- js 国际化 -->
-    <!--
+    
     <script type="text/javascript" src="{{SITE_URL}}jsi18n/i18n/"></script>
-    -->
+   
     <script src="{{STATIC_URL}}assets/jquery-1.10.2.min.js"></script>
     <script src="{{STATIC_URL}}js_ce/login.{{JS_SUFFIX}}?v={{STATIC_VERSION}}"></script>
-
+    <script type="text/javascript">
+        {% if login_redirect_to %}
+        window.open("{{login_redirect_to}}");
+        {% endif %}
+    </script>
 </html>
