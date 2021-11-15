@@ -116,21 +116,6 @@ textarea:-ms-input-placeholder {
   font-family: "Microsoft YaHei";
   color: #C4C6CC;
 }
-
-.pb110 {
-  padding-bottom: 110px;
-}
-
-.clearfix:before,
-.clearfix:after {
-  content: "";
-  display: table;
-}
-
-.clearfix:after {
-  clear: both;
-}
-
 .clearfix {
   *zoom: 1;
 }
