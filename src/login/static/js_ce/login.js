@@ -28,6 +28,20 @@ function refresh_token(){
 
 
 $(document).ready(function(){
+    // 中英文切换
+    $('#languageSelect').on('change', function() {
+        const val = $('#languageSelect').find('option:selected').val();
+        if (val === 'en') {
+          $('#languageIcon').attr('class', 'bk-icon icon-yuyanqiehuanyingwen');
+        } else {
+          $('#languageIcon').attr('class', 'bk-icon icon-yuyanqiehuanzhongwen');
+        }
+        $("#language-form select").val(val);
+        setTimeout(function(){
+            $("#language-form").submit();
+        }, 500);
+    })
+
     // 点击查看协议
     $('.btn-content .protocol-btn').click(function(event) {
         $('.protocol-pop').show();
@@ -53,4 +67,16 @@ $(document).ready(function(){
     } else {
         $('.is-chrome').hide();
     }
+
+    // 密码切换
+    $('#invisible').on('click', function () {
+        const pass = document.getElementById('password');
+        if (pass.type === 'password') {
+            pass.type = 'text';
+            $('#invisible').attr('class', 'bk-icon icon-kejian');
+        } else {
+            pass.type = 'password';
+            $('#invisible').attr('class', 'bk-icon icon-invisible-eye');
+        }
+    })
 });
