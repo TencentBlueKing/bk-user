@@ -359,7 +359,7 @@ input[type="number"]::-webkit-outer-spin-button {
   position: relative;
 }
 .page-content .login-from .form-login .user {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 .page-content .login-from .form-login .group-control i {
   position: absolute;
