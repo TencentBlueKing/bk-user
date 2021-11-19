@@ -163,18 +163,49 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 100%;
   width: 100%;
   position: relative;
-  background: url(../img/logo_ce/new_bg.png) no-repeat center;
   margin: 0 auto;
-  background-size: 100% 100%;
+  background-color: rgb(235,242,250);
 }
-.page-content .login-logo {
-  width: 140px;
-  height: 25px;
-  margin: 21px 0 0 23px;
+
+#particles-js{
+  height: 100%;
+}
+.page-content .right-top {
+  width: 52%;
+  height: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding-bottom: 18%;
+  background-color: rgb(235,242,250);
+}
+.page-content .right-top img {
+  width: 100%;
+}
+.page-content .right-bottom {
+  width: 31%;
+  height: 0;
+  position: absolute;
+  right: 59px;
+  bottom: 90px;
+  padding-bottom: 11%;
+}
+.page-content .right-bottom img {
+  width: 100%;
+}
+.page-content .left-bottom {
+  width: 35%;
+  height: 0;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding-bottom: 14%;
+}
+.page-content .left-bottom img {
+  width: 100%;
 }
 .page-content .login-from {
   width: 450px;
-  min-height: 452px;
   position: absolute;
   top: 17%;
   left: 50%;
@@ -187,19 +218,37 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .logo-title {
   opacity: 1;
-  padding: 32px 36px;
+  padding: 55px 32px 50px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
 .page-content .login-from .logo-title .title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #313238;
+  font-size: 22px;
+  font-family: TencentSansW7;
+  color: #63656e;
+}
+.page-content .login-from .logo-title .logo_ce:after {
+  content: '';
+  height: 18px;
+  width: 1px;
+  display: block;
+  position: absolute;
+  cursor: pointer;
+  background: #c4c6cc;
+  top: 61px;
+  left: 225px;
+}
+.page-content .login-from .logo-title div {
+  padding: 0 12px;
 }
 .page-content .login-from .logo-title img {
   vertical-align: text-bottom;
 }
 .page-content .login-from .from-detail {
   position: relative;
-  padding-bottom: 44px;
+  padding-bottom: 40px;
 }
 .page-content .login-from .from-detail .is-danger-tip {
   position: absolute;
@@ -218,10 +267,6 @@ input[type="number"]::-webkit-outer-spin-button {
 .page-content .login-from .form-login {
   width: 100%;
   padding: 0 38px;
-}
-.page-content .login-from .form-login .label {
-  color: #313238;
-  margin-bottom: 12px;
 }
 .page-content .login-from .form-login .change-password {
   height: 22px;
@@ -334,7 +379,7 @@ input[type="number"]::-webkit-outer-spin-button {
   position: relative;
 }
 .page-content .login-from .form-login .user {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 .page-content .login-from .form-login .group-control i {
   position: absolute;
@@ -345,9 +390,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .form-login .group-control i:hover {
   cursor: pointer;
-}
-.page-content .login-from .form-login .group-control + .group-control {
-  margin-top: 15px;
 }
 .page-content .login-from .form-login .group-control input {
   width: 100%;
@@ -386,7 +428,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .form-login .btn-content {
   font-size: 0;
-  padding-top: 30px;
+  padding-top: 24px;
 }
 .page-content .login-from .form-login .btn-content .login-btn {
   width: 100%;
@@ -421,25 +463,51 @@ input[type="number"]::-webkit-outer-spin-button {
     color: #1768EF;
 }
 
-.language-wrapper {
-	margin-top: 42px;
+.language-switcher {
+  display: flex;
+  border-radius: 2px;
+  height: 24px;
+  line-height: 24px;
+  justify-content: end;
+  text-align: right;
+	margin-top: 47px;
 }
-
-.language-wrapper i {
-  font-size: 16px;
+.language-switcher .language-item {
+  width: 70px;
+  text-align: center;
+  background: #f5f7fa;
+  transform: skew(-15deg, 0deg);
+  display: inline-block;
+  height: 24px;
+  border-radius: 2px;
+  cursor: pointer;
 }
-
-.language-wrapper select {
+.language-switcher .language-item .text-active {
+  display: block;
+  width: 70px;
+  height: 24px;
+  line-height: 24px;
   font-size: 12px;
-  border: none;
+  transform: skew(15deg, 0deg);
+}
+.language-switcher .active {
+  background: #e1ecff;
+}
+.language-switcher .active .text-active {
+  color: #3a84ff;
 }
 .footer {
   width: 100%;
+  height: 15%;
+  line-height: 20px;
+  padding: 40px 0;
   position: absolute;
-  bottom: 6%;
+  bottom: 0;
   color: #bfcbd7;
   font-size: 12px;
   text-align: center;
+  background: url(../img/logo_ce/footer.png) no-repeat center;
+  background-size: 100% 100%;
 }
 .footer .logo-qt {
   margin-bottom: 10px;
