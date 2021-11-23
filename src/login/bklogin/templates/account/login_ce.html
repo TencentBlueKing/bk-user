@@ -26,21 +26,33 @@
     </head>
     <body>
         <div class="page-content">
-            <img class="login-logo" src="../../../static/img/logo_ce/logo.png" alt="">
+            <div id="particles-js"></div>
+            <div class="right-top">
+                <img src="../../../static/img/logo_ce/right-top.png" alt="">
+            </div>
+            <div class="right-bottom">
+                <img src="../../../static/img/logo_ce/right-bottom.png" alt="">
+            </div>
+            <div class="left-bottom">
+                <img src="../../../static/img/logo_ce/left-bottom.png" alt="">
+            </div>
             <div class="login-from">
                 <div class="logo-title">
-                    <span class="title">蓝鲸社区版</span>
-                    <img src="{{STATIC_URL}}/img/logo_ce/v7.png" alt="">
+                    <div class="logo_ce">
+                        <img src="{{STATIC_URL}}img/logo_ce/logo_ce.png" alt="">
+                    </div>
+                    <div>
+                        <span class="title">社区版</span>
+                        <img src="{{STATIC_URL}}/img/logo_ce/v7.png" alt="">
+                    </div>
                 </div>
                 <div class="from-detail">
                     <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
                         <div class="form-login">
-                            <p class="label">用户名</p>
                             <div class="user group-control">
                                 <i class="bk-icon icon-user"></i>
                                 <input id="user" type="text" name="username" placeholder="请输入用户名" >
                             </div>
-                            <p class="label">密码</p>
                             <div class="pwd group-control">
                                 <i class="bk-icon icon-invisible-eye" id="invisible"></i>
                                 <input class="password" id="password" type="password" name="password" value="" placeholder="请输入密码">
@@ -64,21 +76,29 @@
                                 <!-- {% endif %} -->
                                 <a href="{{ reset_password_url }}" class="password-btn fr" target="_blank">忘记密码？</a>
                             </div>
-                            <div class="language-wrapper">
-                                <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">
-                                    <!-- {% csrf_token %} -->
-                                    <i id="languageIcon" class="bk-icon icon-yuyanqiehuanzhongwen"></i>
-                                    <select name="language" id="languageSelect">
+                            <div class="language-switcher">
+                                <p class="language-item active">
+                                    <span id="ch" class="text-active">中文</span>
+                                </p>
+                                <p class="language-item">
+                                    <span id="en" class="text-active">English</span>
+                                </p>
+                                <!-- <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">{% csrf_token %}
+                                    <input name="next" type="hidden" value="{{ redirect_to }}" />
+                                    <select name="language" style="display: none;">
                                         {% get_current_language as LANGUAGE_CODE %}
                                         {% get_available_languages as LANGUAGES %}
                                         {% get_language_info_list for LANGUAGES as languages %}
-                                        {% for language in languages %} -->
+                                        {% for language in languages %}
                                             <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
                                                 {{ language.name_local }}
                                             </option>
                                         {% endfor %}
                                     </select>
-                                </form>
+                                    <a href="javascript: void(0);">
+                                        <img class="{% if LANGUAGE_CODE == 'en' %} en {% endif %}" src="{{STATIC_URL}}{% trans 'img/logo/btn_cn.png' %}" />
+                                    </a>
+                                </form> -->
                             </div>
                         </div>
                     </form>
@@ -86,10 +106,9 @@
             </div>
             <footer class="footer">
                 <p>
-                    <a id="contact_us" class="link">QQ咨询(800802001)</a>
-                    | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" hotrep="hp.footer.feedback" class="link">蓝鲸论坛</a>
-                    | <a href="http://bk.tencent.com/" target="_blank" hotrep="hp.footer.feedback" class="link">蓝鲸官网</a>
-                    | <a href="/" target="_blank" hotrep="hp.footer.feedback" class="link">蓝鲸智云工作台</a>
+                    <a id="contact_us" class="link">QQ群支持(495299374)</a>
+                    | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" hotrep="hp.footer.feedback" class="link">社区论坛</a>
+                    | <a href="http://bk.tencent.com/" target="_blank" hotrep="hp.footer.feedback" class="link">产品官网</a>
                     |<a class="follow-us" href="###">关注我们</a>
                 </p>
                 <p>Copyright © 2012-{{NOW.year}} Tencent BlueKing. All Rights Reserved.</p>
@@ -109,6 +128,10 @@
    
     <script src="{{STATIC_URL}}assets/jquery-1.10.2.min.js"></script>
     <script src="{{STATIC_URL}}js_ce/login.{{JS_SUFFIX}}?v={{STATIC_VERSION}}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particlesjs/2.2.3/particles.min.js"></script>
+    <script src="{{STATIC_URL}}js_ce/particles.js"></script>
+    <script src="{{STATIC_URL}}js_ce/app.js"></script>
+    <script src="{{STATIC_URL}}js_ce/stats.js"></script>
     <script type="text/javascript">
         {% if login_redirect_to %}
         window.open("{{login_redirect_to}}");
