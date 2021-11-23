@@ -1,6 +1,6 @@
 # bkuser_sdk.DepartmentsApi
 
-All URIs are relative to *http://localhost:8000/*
+All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -321,7 +321,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.DepartmentsApi()
-body = bkuser_sdk.Department() # Department | 
+body = bkuser_sdk.DepartmentUpdate() # DepartmentUpdate | 
 lookup_value = 'lookup_value_example' # str | 
 
 try:
@@ -335,7 +335,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**Department**](Department.md)|  | 
+ **body** | [**DepartmentUpdate**](DepartmentUpdate.md)|  | 
  **lookup_value** | **str**|  | 
 
 ### Return type
@@ -592,7 +592,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.DepartmentsApi()
-body = bkuser_sdk.Department() # Department | 
+body = bkuser_sdk.DepartmentUpdate() # DepartmentUpdate | 
 lookup_value = 'lookup_value_example' # str | 
 
 try:
@@ -606,7 +606,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**Department**](Department.md)|  | 
+ **body** | [**DepartmentUpdate**](DepartmentUpdate.md)|  | 
  **lookup_value** | **str**|  | 
 
 ### Return type

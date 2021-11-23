@@ -73,7 +73,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
 
-    relation_fields = ["departments", "leader"]
+    relation_fields = ["departments", "leader", "login_set"]
 
     def get_object(self):
         _default_lookup_field = self.lookup_field
@@ -169,9 +169,12 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         _query_slz.is_valid(True)
         query_data = _query_slz.validated_data
 
-        fields = query_data.get("fields", self.get_serializer().fields)
+        fields = query_data.get("fields", [])
+        if fields:
+            self._check_fields(fields)
+        else:
+            fields = self.get_serializer().fields
         self._ensure_enabled_field(request, fields=fields)
-        self._check_fields(fields)
 
         try:
             queryset = self.filter_queryset(self.get_queryset())
@@ -180,9 +183,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.QUERY_PARAMS_ERROR
 
         # 提前将关系表拿出来
-        chosen_fields = [_f for _f in self.relation_fields if _f in fields]
-        if chosen_fields:
-            queryset = queryset.prefetch_related(*chosen_fields)
+        queryset = queryset.prefetch_related(*self.relation_fields)
 
         # 当用户请求数据时，判断其是否强制输出原始 username
         if not force_use_raw_username(request):
