@@ -60,6 +60,9 @@
                             <p class="change-password">
                                 {% if error_message %}
                                 <span>{{ error_message }}</span>
+                                    {% if token_set_password_url %}
+                                        <a href="{{ token_set_password_url }}" target="_blank">>>去修改</a>
+                                    {% endif %}
                                 {% endif %}
                             </p>
                             <div>

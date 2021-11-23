@@ -54,6 +54,8 @@ class PasswordViewSet(BkUserApiViewSet):
 
         api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
         profile = api_instance.v2_retrieve_by_token(token=token)
+        # 由于该接口无登录态，我们只能认为访问该链接的人即用户所有者
+        request.user.username = profile.username
 
         profiles_api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
         body = {"password": password}

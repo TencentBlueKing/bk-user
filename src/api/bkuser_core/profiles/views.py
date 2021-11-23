@@ -41,6 +41,7 @@ from bkuser_core.profiles.utils import (
     align_country_iso_code,
     check_former_passwords,
     force_use_raw_username,
+    make_passwd_reset_url_by_token,
     make_password_by_config,
     parse_username_domain,
 )
@@ -542,6 +543,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             raise error_codes.PASSWORD_ERROR
 
         time_aware_now = now()
+        config_loader = ConfigProvider(category_id=category.id)
         # Admin 用户只需直接判断 密码是否正确 (只有本地目录有密码配置)
         if not profile.is_superuser and category.type in [CategoryType.LOCAL.value]:
 
@@ -556,7 +558,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
                 )
-                raise error_codes.USER_IS_DISABLED
+                raise error_codes.PASSWORD_ERROR
             elif profile.status == ProfileStatus.LOCKED.value:
                 create_profile_log(
                     profile=profile,
@@ -564,10 +566,9 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.LOCKED_USER.value},
                 )
-                raise error_codes.USER_IS_LOCKED
+                raise error_codes.PASSWORD_ERROR
 
             # 获取密码配置
-            config_loader = ConfigProvider(category_id=category.id)
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
             max_trail_times = int(config_loader["max_trail_times"])
 
@@ -583,7 +584,10 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                         request=request,
                         params={"is_success": False, "reason": LogInFailReason.TOO_MANY_FAILURE.value},
                     )
-                    raise error_codes.TOO_MANY_TRY.f(f"请 {retry_after_wait}s 后再试")
+
+                    logger.info(f"用户<{profile}> 登录失败错误过多，已被锁定，请 {retry_after_wait}s 后再试")
+                    # 当密码输入错误时，不暴露不同的信息，避免用户名爆破
+                    raise error_codes.PASSWORD_ERROR
 
         try:
             login_class = get_plugin_by_category(category).login_handler_cls
@@ -594,16 +598,10 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 category.display_name,
                 category.id,
             )
-            raise error_codes.LOAD_LOGIN_HANDLER_FAILED
+            raise error_codes.PASSWORD_ERROR
 
         try:
             login_class().check(profile, password)
-            create_profile_log(
-                profile=profile,
-                operation="LogIn",
-                request=request,
-                params={"is_success": True},
-            )
         except Exception:
             create_profile_log(
                 profile=profile,
@@ -614,6 +612,19 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             logger.exception("check profile<%s> failed", profile.username)
             raise error_codes.PASSWORD_ERROR
         else:
+            # 密码状态校验:初始密码未修改
+            if config_loader.get("force_reset_first_login") and profile.password_update_time is None:
+                create_profile_log(
+                    profile=profile,
+                    operation="LogIn",
+                    request=request,
+                    params={"is_success": False, "reason": LogInFailReason.SHOULD_CHANGE_INITIAL_PASSWORD.value},
+                )
+
+                raise error_codes.SHOULD_CHANGE_INITIAL_PASSWORD.format(
+                    data=self._generate_reset_passwd_url_with_token(profile)
+                )
+
             # 密码状态校验:密码过期
             valid_period = datetime.timedelta(days=profile.password_valid_days)
             if (
@@ -627,9 +638,25 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.EXPIRED_PASSWORD.value},
                 )
-                raise error_codes.PASSWORD_EXPIRED
 
+                raise error_codes.PASSWORD_EXPIRED.format(data=self._generate_reset_passwd_url_with_token(profile))
+
+        create_profile_log(profile=profile, operation="LogIn", request=request, params={"is_success": True})
         return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)
+
+    @staticmethod
+    def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
+        data = {}
+        try:
+            token_holder = ProfileTokenHolder.objects.create(
+                profile=profile, token_expire_seconds=settings.PAGE_TOKEN_EXPIRE_SECONDS
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("failed to create token for password reset")
+        else:
+            data.update({"reset_password_url": make_passwd_reset_url_by_token(token_holder.token)})
+
+        return data
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=local_serializers.LoginUpsertSerializer)

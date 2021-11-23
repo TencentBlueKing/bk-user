@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 import json
+
 from django.utils.deprecation import MiddlewareMixin
 
 from .http import force_response_ee_format, force_response_raw_format, should_use_raw_response

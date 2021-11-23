@@ -11,9 +11,10 @@ specific language governing permissions and limitations under the License.
 """
 
 
-from __future__ import unicode_literals
+from typing import Optional
 
 from bklogin.common.constants import enum
+from django.utils.translation import ugettext_lazy as _
 
 LoginErrorCodes = enum(
     E1302000_DEFAULT_CODE=1302000,
@@ -35,3 +36,11 @@ class AuthenticationError(Exception):
             self.message = message
         if redirect_to is not None:
             self.redirect_to = redirect_to
+
+
+class PasswordNeedReset(Exception):
+    """Auth failure due to needing reset of password"""
+
+    def __init__(self, reset_password_url: str, message: Optional[str] = None):
+        self.reset_password_url = reset_password_url
+        self.message = message or _("登录校验失败，请重置密码")
