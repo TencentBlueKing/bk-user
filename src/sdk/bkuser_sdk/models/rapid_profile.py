@@ -39,6 +39,7 @@ class RapidProfile(object):
         'leader': 'list[Leader]',
         'create_time': 'datetime',
         'update_time': 'datetime',
+        'last_login_time': 'str',
         'extras': 'object',
         'qq': 'str',
         'email': 'str',
@@ -66,6 +67,7 @@ class RapidProfile(object):
         'leader': 'leader',
         'create_time': 'create_time',
         'update_time': 'update_time',
+        'last_login_time': 'last_login_time',
         'extras': 'extras',
         'qq': 'qq',
         'email': 'email',
@@ -84,7 +86,7 @@ class RapidProfile(object):
         'logo': 'logo'
     }
 
-    def __init__(self, id=None, username=None, display_name=None, password_valid_days=None, departments=None, leader=None, create_time=None, update_time=None, extras=None, qq=None, email=None, telephone=None, wx_userid=None, domain=None, category_id=None, enabled=None, iso_code=None, country_code=None, language=None, time_zone=None, position=None, staff_status=None, status=None, logo=None):  # noqa: E501
+    def __init__(self, id=None, username=None, display_name=None, password_valid_days=None, departments=None, leader=None, create_time=None, update_time=None, last_login_time=None, extras=None, qq=None, email=None, telephone=None, wx_userid=None, domain=None, category_id=None, enabled=None, iso_code=None, country_code=None, language=None, time_zone=None, position=None, staff_status=None, status=None, logo=None):  # noqa: E501
         """RapidProfile - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._username = None
@@ -94,6 +96,7 @@ class RapidProfile(object):
         self._leader = None
         self._create_time = None
         self._update_time = None
+        self._last_login_time = None
         self._extras = None
         self._qq = None
         self._email = None
@@ -126,6 +129,8 @@ class RapidProfile(object):
             self.create_time = create_time
         if update_time is not None:
             self.update_time = update_time
+        if last_login_time is not None:
+            self.last_login_time = last_login_time
         if extras is not None:
             self.extras = extras
         if qq is not None:
@@ -328,6 +333,27 @@ class RapidProfile(object):
         """
 
         self._update_time = update_time
+
+    @property
+    def last_login_time(self):
+        """Gets the last_login_time of this RapidProfile.  # noqa: E501
+
+
+        :return: The last_login_time of this RapidProfile.  # noqa: E501
+        :rtype: str
+        """
+        return self._last_login_time
+
+    @last_login_time.setter
+    def last_login_time(self, last_login_time):
+        """Sets the last_login_time of this RapidProfile.
+
+
+        :param last_login_time: The last_login_time of this RapidProfile.  # noqa: E501
+        :type: str
+        """
+
+        self._last_login_time = last_login_time
 
     @property
     def extras(self):

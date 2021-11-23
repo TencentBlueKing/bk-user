@@ -51,6 +51,8 @@ class ProfileSerializer(Serializer):
     category_id = IntegerField(required=False)
     departments = SubDepartmentSerializer(many=True)
     update_time = DateTimeField(required=False)
+    create_time = DateTimeField(required=False)
+    last_login_time = DateTimeField(required=False)
 
     def get_logo(self, data):
         if isinstance(data, dict):

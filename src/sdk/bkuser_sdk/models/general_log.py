@@ -32,27 +32,31 @@ class GeneralLog(object):
         'id': 'int',
         'extra_value': 'object',
         'operator': 'str',
-        'create_time': 'datetime'
+        'create_time': 'datetime',
+        'status': 'str'
     }
 
     attribute_map = {
         'id': 'id',
         'extra_value': 'extra_value',
         'operator': 'operator',
-        'create_time': 'create_time'
+        'create_time': 'create_time',
+        'status': 'status'
     }
 
-    def __init__(self, id=None, extra_value=None, operator=None, create_time=None):  # noqa: E501
+    def __init__(self, id=None, extra_value=None, operator=None, create_time=None, status=None):  # noqa: E501
         """GeneralLog - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._extra_value = None
         self._operator = None
         self._create_time = None
+        self._status = None
         self.discriminator = None
         self.id = id
         self.extra_value = extra_value
         self.operator = operator
         self.create_time = create_time
+        self.status = status
 
     @property
     def id(self):
@@ -153,6 +157,31 @@ class GeneralLog(object):
             raise ValueError("Invalid value for `create_time`, must not be `None`")  # noqa: E501
 
         self._create_time = create_time
+
+    @property
+    def status(self):
+        """Gets the status of this GeneralLog.  # noqa: E501
+
+        状态  # noqa: E501
+
+        :return: The status of this GeneralLog.  # noqa: E501
+        :rtype: str
+        """
+        return self._status
+
+    @status.setter
+    def status(self, status):
+        """Sets the status of this GeneralLog.
+
+        状态  # noqa: E501
+
+        :param status: The status of this GeneralLog.  # noqa: E501
+        :type: str
+        """
+        if status is None:
+            raise ValueError("Invalid value for `status`, must not be `None`")  # noqa: E501
+
+        self._status = status
 
     def to_dict(self):
         """Returns the model properties as a dict"""

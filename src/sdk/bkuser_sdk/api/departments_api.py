@@ -628,7 +628,7 @@ class DepartmentsApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :param Department body: (required)
+        :param DepartmentUpdate body: (required)
         :param str lookup_value: (required)
         :return: Department
                  If the method is called asynchronously,
@@ -650,7 +650,7 @@ class DepartmentsApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :param Department body: (required)
+        :param DepartmentUpdate body: (required)
         :param str lookup_value: (required)
         :return: Department
                  If the method is called asynchronously,
@@ -1200,7 +1200,7 @@ class DepartmentsApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :param Department body: (required)
+        :param DepartmentUpdate body: (required)
         :param str lookup_value: (required)
         :return: Department
                  If the method is called asynchronously,
@@ -1223,7 +1223,7 @@ class DepartmentsApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :param Department body: (required)
+        :param DepartmentUpdate body: (required)
         :param str lookup_value: (required)
         :return: Department
                  If the method is called asynchronously,
