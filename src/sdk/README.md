@@ -162,7 +162,7 @@ except ApiException as e:
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *http://localhost:8000/*
+All URIs are relative to *http://localhost:8004/*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -255,6 +255,7 @@ Class | Method | HTTP request | Description
  - [Department](docs/Department.md)
  - [DepartmentAddProfiles](docs/DepartmentAddProfiles.md)
  - [DepartmentProfileEdgesSLZ](docs/DepartmentProfileEdgesSLZ.md)
+ - [DepartmentUpdate](docs/DepartmentUpdate.md)
  - [DepartmentsWithAncestors](docs/DepartmentsWithAncestors.md)
  - [DynamicFields](docs/DynamicFields.md)
  - [Empty](docs/Empty.md)

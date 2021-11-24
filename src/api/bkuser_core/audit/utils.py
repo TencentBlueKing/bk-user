@@ -111,12 +111,13 @@ def audit_general_log(operate_type: str):
                 "operator": request.operator,
                 "operate_type": operate_type,
                 "request": request,
+                "operator_obj": self.get_object(),
             }
             try:
                 _result = func(self, request, *args, **kwargs)
             except Exception as e:
-                # get updated obj
-                _params["operator_obj"] = self.get_object()
+                if operate_type == OperationType.UPDATE.value:
+                    _params["operator_obj"] = self.get_object()
 
                 if isinstance(e, CoreAPIError):
                     failed_info = f"{e.message}"
@@ -130,7 +131,9 @@ def audit_general_log(operate_type: str):
                 )
                 raise
             else:
-                _params["operator_obj"] = self.get_object()
+                if operate_type == OperationType.UPDATE.value:
+                    _params["operator_obj"] = self.get_object()
+
                 create_general_log(**_params)
                 return _result
 

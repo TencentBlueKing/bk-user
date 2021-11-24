@@ -111,10 +111,10 @@ error_codes.add_codes(
         ErrorCode("USER_IS_LOCKED", _("账号长时间未登录，已被冻结，请联系管理员"), 3210015),
         ErrorCode("USER_IS_DISABLED", _("账号已被管理员禁用，请联系管理员"), 3210016),
         ErrorCode("DOMAIN_UNKNOWN", _("未知登陆域"), 3210017),
-        ErrorCode("PASSWORD_EXPIRED", _("该账户密码已到期，请修改密码后登录"), 3210018),
+        ErrorCode("PASSWORD_EXPIRED", _("该账户密码已到期"), 3210018),
         ErrorCode("CATEGORY_NOT_ENABLED", _("用户目录未启用"), 3210019),
         ErrorCode("ERROR_FORMAT", _("传入参数错误"), 3210020),
-        ErrorCode("SHOULD_CHANGE_INITIAL_PASSWORD", _("请修改初始密码"), 3210021),
+        ErrorCode("SHOULD_CHANGE_INITIAL_PASSWORD", _("平台分配的初始密码未修改"), 3210021),
         # 用户相关
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
         ErrorCode("USER_ALREADY_EXISTED", _("该目录下此用户名已存在"), status_code=HTTP_409_CONFLICT),

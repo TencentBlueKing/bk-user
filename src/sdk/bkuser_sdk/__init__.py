@@ -46,6 +46,7 @@ from bkuser_sdk.models.create_profile import CreateProfile
 from bkuser_sdk.models.department import Department
 from bkuser_sdk.models.department_add_profiles import DepartmentAddProfiles
 from bkuser_sdk.models.department_profile_edges_slz import DepartmentProfileEdgesSLZ
+from bkuser_sdk.models.department_update import DepartmentUpdate
 from bkuser_sdk.models.departments_with_ancestors import DepartmentsWithAncestors
 from bkuser_sdk.models.dynamic_fields import DynamicFields
 from bkuser_sdk.models.empty import Empty

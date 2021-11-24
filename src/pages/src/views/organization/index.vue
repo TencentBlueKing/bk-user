@@ -885,7 +885,11 @@ export default {
     // 查看当前用户的信息
     viewDetails(item) {
       item.create_time = moment(item.create_time).format('YYYY-MM-DD HH:mm:ss');
-      item.update_time = moment(item.update_time).format('YYYY-MM-DD HH:mm:ss');
+      if (item.last_login_time) {
+        item.last_login_time = moment(item.last_login_time).format('YYYY-MM-DD HH:mm:ss');
+      } else {
+        item.last_login_time = '--';
+      }
       this.currentProfile = item;
       this.detailsBarInfo.type = 'view';
       this.detailsBarInfo.title = this.currentProfile.display_name;

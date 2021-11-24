@@ -3,7 +3,7 @@ name: bk-user-stack
 description: A Helm chart for bk-user
 type: application
 version: 0.6.0
-appVersion: v2.3.0
+appVersion: v2.3.1-beta.2
 
 dependencies:
 - name: bkuserapi

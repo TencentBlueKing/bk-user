@@ -136,7 +136,7 @@
             <span class="name">{{$t('最近一次登录时间')}}</span>
             <span class="gap">：</span>
             <p class="desc">
-              <span class="text">{{currentProfile.update_time}}</span>
+              <span class="text">{{currentProfile.last_login_time}}</span>
             </p>
           </div>
         </li>

@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List
 
 import regex
 from bkuser_core.categories.constants import CategoryType
-from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.models import ProfileCategory, SyncTask
 from bkuser_core.common.enum import AutoLowerEnum
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
@@ -125,6 +125,7 @@ class ResourceType(AutoLowerEnum):
     CATEGORY = auto()
     DEPARTMENT = auto()
     PROFILE = auto()
+    SYNCTASK = auto()
 
     @classmethod
     def get_type_name(cls, resource_type: "ResourceType") -> str:
@@ -142,6 +143,7 @@ class ResourceType(AutoLowerEnum):
             ProfileCategory: cls.CATEGORY,
             DynamicFieldInfo: cls.FIELD,
             Profile: cls.PROFILE,
+            SyncTask: cls.SYNCTASK,
         }[type(instance)]
 
     @classmethod
@@ -196,6 +198,7 @@ class ResourceType(AutoLowerEnum):
             cls.CATEGORY: {"category.id": "id"},
             cls.FIELD: {"field.id": "name"},
             cls.PROFILE: {},
+            cls.SYNCTASK: {"category.id": "category_id"},
         }
         return _map[resource_type]
 
