@@ -6,6 +6,11 @@ global:
     registry: "ccr.ccs.tencentyun.com/bk.io"
     pullPolicy: Always
 
+  # 日志采集
+  bkLogConfig:
+    enabled: false
+    dataId: ""
+
   env:
     # 请在 PaaS 产品就绪后，查询 secret 并填入，否则影响用户管理调用 ESB 的相关功能（邮件通知等）
     BK_APP_SECRET: "your-own-secret"
