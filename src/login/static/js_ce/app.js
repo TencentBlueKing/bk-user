@@ -18,7 +18,7 @@ particlesJS('particles-js',
         }
       },
       "color": {
-        "value": "#DAE2ED"
+        "value": "#D0D9E2"
       },
       "shape": {
         "type": "circle",
@@ -58,13 +58,13 @@ particlesJS('particles-js',
       "line_linked": {
         "enable": true,
         "distance": 150,
-        "color": "#DAE2ED",
+        "color": "#D0D9E2",
         "opacity": 0.4,
         "width": 2
       },
       "move": {
         "enable": true,
-        "speed": 2,
+        "speed": 1,
         "direction": "none",
         "random": true,
         "straight": false,
@@ -101,7 +101,7 @@ particlesJS('particles-js',
           "size": 40,
           "duration": 2,
           "opacity": 8,
-          "speed": 3
+          "speed": 1
         },
         "repulse": {
           "distance": 50

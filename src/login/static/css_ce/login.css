@@ -186,9 +186,9 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 31%;
   height: 0;
   position: absolute;
-  right: 59px;
-  bottom: 90px;
-  padding-bottom: 11%;
+  right: 1%;
+  bottom: 0;
+  padding-bottom: 15%;
 }
 .page-content .right-bottom img {
   width: 100%;
@@ -199,7 +199,7 @@ input[type="number"]::-webkit-outer-spin-button {
   position: absolute;
   left: 0;
   bottom: 0;
-  padding-bottom: 14%;
+  padding-bottom: 12%;
 }
 .page-content .left-bottom img {
   width: 100%;
@@ -498,9 +498,8 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .footer {
   width: 100%;
-  height: 15%;
   line-height: 20px;
-  padding: 40px 0;
+  padding: 2% 0;
   position: absolute;
   bottom: 0;
   color: #bfcbd7;
