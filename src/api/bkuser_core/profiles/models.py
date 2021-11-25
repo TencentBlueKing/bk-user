@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
+from typing import Optional
 
 import jsonfield
 from bkuser_core.audit.constants import LogInFailReason
@@ -181,6 +182,15 @@ class Profile(TimestampedModel):
         """最近一次更新密码时间"""
         return self.password_update_time or self.create_time
 
+    @property
+    def last_login_time(self) -> Optional[datetime.datetime]:
+        """获取用户最近一次登录时间"""
+        latest_logins = self.login_set.filter(is_success=True)
+        if latest_logins:
+            return latest_logins.latest().create_time
+
+        return None
+
     def enable(self):
         self.enabled = True
         self.status = ProfileStatus.NORMAL.value
@@ -188,13 +198,9 @@ class Profile(TimestampedModel):
 
     def delete(self, using=None, keep_parents=False):
         """软删除"""
+        # 为了保证用户恢复时拥有原来所有关系，这里只修改状态字段
         self.enabled = False
         self.status = ProfileStatus.DELETED.value
-
-        # 解除与其他模型的绑定关系
-        self.departments.clear()
-        self.leader.clear()
-
         self.save(update_fields=["enabled", "status", "update_time"])
         return
 

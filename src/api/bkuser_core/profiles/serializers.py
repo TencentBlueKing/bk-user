@@ -71,15 +71,7 @@ class ProfileSerializer(CustomFieldsModelSerializer):
     departments = SimpleDepartmentSerializer(many=True, required=False)
     extras = serializers.SerializerMethodField(required=False)
     leader = LeaderSerializer(many=True, required=False)
-    last_login_time = serializers.SerializerMethodField(required=False, read_only=True)
-
-    def get_last_login_time(self, obj: "Profile") -> Optional[str]:
-        """获取用户最近一次登录时间"""
-        latest_logins = obj.login_set.filter(is_success=True)
-        if latest_logins:
-            return latest_logins.latest().create_time
-
-        return None
+    last_login_time = serializers.DateTimeField(required=False, read_only=True)
 
     def get_extras(self, obj) -> dict:
         """尝试从 context 中获取默认字段值"""
@@ -106,7 +98,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
 
     departments = SimpleDepartmentSerializer(many=True, required=False)
     leader = LeaderSerializer(many=True, required=False)
-    last_login_time = serializers.SerializerMethodField(required=False, read_only=True)
+    last_login_time = serializers.DateTimeField(required=False, read_only=True)
 
     create_time = serializers.DateTimeField(required=False, read_only=True)
     update_time = serializers.DateTimeField(required=False, read_only=True)
@@ -129,14 +121,6 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     staff_status = serializers.CharField(read_only=True)
     status = serializers.CharField(read_only=True)
     logo = serializers.CharField(read_only=True, allow_blank=True)
-
-    def get_last_login_time(self, obj: "Profile") -> Optional[str]:
-        """获取用户最近一次登录时间"""
-        latest_logins = obj.login_set.filter(is_success=True)
-        if latest_logins:
-            return latest_logins.latest().create_time
-
-        return None
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""

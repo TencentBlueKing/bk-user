@@ -117,7 +117,7 @@ class LoginLogViewSet(AuditLogViewSet):
         )
 
         exporter = ProfileExcelExporter(
-            load_workbook(settings.EXPORT_LOGIN_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields, 1
+            load_workbook(settings.EXPORT_LOGIN_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_login_audit", fields, 1
         )
 
         # TODO: remove step when #88 is done
