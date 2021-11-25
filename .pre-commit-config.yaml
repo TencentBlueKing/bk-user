@@ -1,6 +1,16 @@
 repos:
   - repo: local
     hooks:
+      - id: Name check
+        name: Check sensitive info
+        verbose: true
+        language: script
+        entry: pre_commit_hooks/rtx.sh
+      - id: IP check
+        name: Check sensitive info
+        verbose: true
+        language: script
+        entry: pre_commit_hooks/ip.sh
       - id: isort
         name: isort
         language: python
