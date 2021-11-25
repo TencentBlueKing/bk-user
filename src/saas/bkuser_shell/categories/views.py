@@ -192,6 +192,7 @@ class CategoriesExportViewSet(BkUserApiViewSet):
 
     @inject_serializer(query_in=CategoryExportSerializer, out=EmptySerializer, tags=["categories"])
     def export(self, request, category_id, validated_data):
+        """导出组织架构"""
         api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
         category = api_instance.v2_categories_read(lookup_field="id", lookup_value=category_id)
 
@@ -207,7 +208,7 @@ class CategoriesExportViewSet(BkUserApiViewSet):
 
         fields = self.get_paging_results(field_api_instance.v2_dynamic_fields_list)
         exporter = ProfileExcelExporter(
-            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields
+            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org", fields
         )
         exporter.update_profiles(all_profiles)
 
@@ -219,7 +220,7 @@ class CategoriesExportViewSet(BkUserApiViewSet):
         api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
         fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
         exporter = ProfileExcelExporter(
-            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME, fields
+            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org_tmpl", fields
         )
 
         return exporter.to_response()

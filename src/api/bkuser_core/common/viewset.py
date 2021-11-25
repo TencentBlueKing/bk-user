@@ -245,7 +245,7 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             if not permission.has_object_permission(request, self, obj):
                 self.permission_denied(request, message=getattr(permission, "message", None), obj=obj)
 
-    def permission_denied(self, request, message=None, obj=None):
+    def permission_denied(self, request, message=None, obj=None, **kwargs):
         """针对 IAM 注入相关信息"""
         raise IAMPermissionDenied(
             detail=message,
