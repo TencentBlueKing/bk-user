@@ -38,6 +38,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -49,6 +50,7 @@ MIDDLEWARE = [
     "bkuser_global.middlewares.TimezoneMiddleware",
     "bkuser_core.common.middlewares.MethodOverrideMiddleware",
     "bkuser_core.common.middlewares.DynamicResponseFormatMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 INSTALLED_APPS = [
@@ -63,6 +65,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "mptt",
     "django_celery_beat",
+    "django_prometheus",
     # core API
     "bkuser_core.apis",
     "bkuser_core.monitoring",

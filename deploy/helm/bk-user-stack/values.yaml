@@ -6,7 +6,7 @@ global:
     registry: "ccr.ccs.tencentyun.com/bk.io"
     pullPolicy: Always
 
-  # 日志采集
+  # 日志采集，默认关闭，当日志采集就绪时，手动开启
   bkLogConfig:
     enabled: false
     dataId: ""
@@ -35,12 +35,20 @@ bkuserapi:
     - configMapRef:
         name: bk-user-api-redis-env
 
+  # 默认我们关闭了监控采集，当监控就绪时，请手动开启
+  # serviceMonitor:
+  #   enabled: true
+
 bkusersaas:
   enabled: true
   envFrom:
     # 挂载内建 DB 变量
     - configMapRef:
         name: bk-user-saas-mariadb-env
+
+  # 默认我们关闭了监控采集，当监控就绪时，请手动开启
+  # serviceMonitor:
+  #   enabled: true
 
 # -------------
 # 内建存储配置

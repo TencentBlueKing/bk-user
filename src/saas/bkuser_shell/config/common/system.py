@@ -19,6 +19,7 @@ LOGIN_EXEMPT_WHITE_LIST = (
     r"/api/v1/password/reset/$",
     r"/api/v1/password/reset_by_token/$",
     r"api/footer/$",
+    r"/metrics$",
 )
 
 # put on s3 maybe better

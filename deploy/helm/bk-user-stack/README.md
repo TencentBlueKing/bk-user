@@ -128,6 +128,10 @@ redis:
 #### 5. 权限中心
 默认地，我们未开启权限中心，如果在权限中心已经就绪之后，想体验用户管理功能，那么你可以手动向权限中心注册模型:
 ```yaml
+global:
+  env:
+    ENABLE_IAM: true
+
 bkuserapi:
   env:
     # 填充权限中心相关变量
@@ -136,11 +140,6 @@ bkuserapi:
   preRunHooks:
     bkiam-migrate:
       enabled: true
-
-bkusersaas:
-  env:
-    # 主动开启用户管理 SaaS 权限校验 
-    DISABLE_IAM: false
 ```
 
 #### 6. 账号密码
@@ -151,6 +150,24 @@ bkuserapi:
     # !!!请修改初始账号密码!!!
     INITIAL_ADMIN_USERNAME: "your-user-name"
     INITIAL_ADMIN_PASSWORD: "your-super-strong-password"
+```
+
+#### 7. 如何扩容
+我们支持对任意进程进行扩容，就像这样:
+```yaml
+bkuserapi:
+  processes:
+    web:
+      replicas: 3
+    celery:
+      replicas: 2
+    beat:
+      replicas: 1 (切记，beat 进程只能存在一个副本，否则后台任务会重复执行)
+
+bkusersaas:
+  processes:
+    web:
+      replicas: 2
 ```
 
 ### 安装

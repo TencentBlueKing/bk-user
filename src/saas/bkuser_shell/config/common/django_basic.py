@@ -34,6 +34,7 @@ X_FRAME_OPTIONS = "SAMEORIGIN"
 # Middleware and apps
 # ==============================================================================
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -46,6 +47,7 @@ MIDDLEWARE = [
     "bkuser_global.middlewares.TimezoneMiddleware",
     # 静态资源服务
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 INSTALLED_APPS = [
@@ -57,6 +59,7 @@ INSTALLED_APPS = [
     # OTHER 3rd Party App
     "rest_framework",
     "drf_yasg",
+    "django_prometheus",
     # SaaS related
     "bkuser_shell.account",
     "bkuser_shell.organization",
