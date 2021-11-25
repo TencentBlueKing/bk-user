@@ -13,7 +13,7 @@ from django.conf.urls import url
 
 from . import views
 
-PVAR_DEPARTMENT_ID = r"(?P<%s>[\w\-]+)" % LOOKUP_FIELD_NAME
+PVAR_DEPARTMENT_ID = r"(?P<%s>[\w\-\.]+)" % LOOKUP_FIELD_NAME
 
 urlpatterns = [
     url(
