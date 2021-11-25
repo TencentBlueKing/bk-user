@@ -67,3 +67,17 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/* vim: set filetype=mustache: */}}
+{{/*
+Renders a value that contains template.
+Usage:
+{{ include "chartty.tplvalues.render" ( dict "value" .Values.path.to.the.Value "context" $) }}
+*/}}
+{{- define "chartty.tplvalues.render" -}}
+    {{- if typeIs "string" .value }}
+        {{- tpl .value .context }}
+    {{- else }}
+        {{- tpl (.value | toYaml) .context }}
+    {{- end }}
+{{- end -}}

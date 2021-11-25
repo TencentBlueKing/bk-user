@@ -36,6 +36,7 @@ for app in settings.INSTALLED_APPS:
         logger.exception("failed to load urls from installed app: %s", app)
         continue
 
+urlpatterns += [url(r"^", include("django_prometheus.urls"))]
 
 if "silk" in settings.INSTALLED_APPS:
     urlpatterns += [url(r"^silk/", include("silk.urls", namespace="silk"))]
