@@ -229,4 +229,4 @@ deploy/helm/saas/templates/c_*.*
 deploy/helm/bk-user-stack/templates/c_*.*
 
 # local hooks
-pre_commit_hooks/
+pre_commit_hooks
