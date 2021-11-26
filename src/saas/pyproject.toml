@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bk-user-saas"
-version = "2.3.0"
+version = "2.3.1"
 description = "bk-user SaaS"
 authors = ["IMBlues <bluesedenyu@gmail.com>"]
 
