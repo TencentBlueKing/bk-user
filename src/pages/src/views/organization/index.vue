@@ -207,7 +207,8 @@
               :no-search-or-search-department="noSearchOrSearchDepartment"
               @viewDetails="viewDetails"
               @showTableLoading="showTableLoading"
-              @closeTableLoading="closeTableLoading" />
+              @closeTableLoading="closeTableLoading"
+              @updateTableData="updateTableData" />
             <div class="table-pagination" v-if="noSearchOrSearchDepartment && paginationConfig.count > 0">
               <div class="table-pagination-left">{{$t('共计')}}
                 {{Math.ceil(paginationConfig.count / paginationConfig.limit)}} {{$t('页')}}，
@@ -251,7 +252,8 @@
           @updateUserInfor="updateUserInfor"
           @editProfile="editProfile"
           @handleCancelEdit="handleCancelEdit"
-          @deleteProfile="deleteProfile" />
+          @deleteProfile="deleteProfile"
+          @restoreProfile="restoreProfile" />
       </div>
     </bk-sideslider>
     <!-- 弹窗操作 -->
@@ -325,7 +327,6 @@ import PullUser from './table/PullUser';
 import DetailsBar from './details/DetailsBar';
 
 import SetDepartment from '@/components/organization/SetDepartment';
-import moment from 'moment';
 
 export default {
   components: {
@@ -882,14 +883,15 @@ export default {
 
     // 查看当前用户的信息
     viewDetails(item) {
-      item.create_time = moment(item.create_time).format('YYYY-MM-DD HH:mm:ss');
-      item.update_time = moment(item.update_time).format('YYYY-MM-DD HH:mm:ss');
       this.currentProfile = item;
       this.detailsBarInfo.type = 'view';
       this.detailsBarInfo.title = this.currentProfile.display_name;
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
       this.detailsBarInfo.quickClose = true;
+    },
+    updateTableData(item) {
+      this.tableData = item;
     },
     // 侧边栏 点击保存 更新列表 userMessage.userInforList
     async updateUserInfor() {
@@ -1143,6 +1145,40 @@ export default {
             });
         },
       });
+    },
+    // 恢复某一条用户信息
+    restoreProfile() {
+      this.clickSecond = true;
+      this.hideBar();
+      this.$store.dispatch('organization/postProfilesRestoration', {
+        id: this.currentProfile.id,
+      }).then((res) => {
+        if (res.result === true) {
+          this.$bkMessage({
+            message: this.$t('恢复成功'),
+            theme: 'success',
+          });
+          this.currentProfile.status = 'NORMAL';
+        }
+        this.detailsBarInfo.isShow = false;
+        setTimeout(() => {
+          this.isHideBar = false;
+        }, 500);
+        if (this.treeSearchResult && this.treeSearchResult.groupType !== 'department') {
+          // 搜索个人信息下删除 profile 关闭搜索
+          this.basicLoading = false;
+          this.$refs.searchChild.closeSearch();
+        } else {
+          this.getTableData();
+        }
+      })
+        .catch((e) => {
+          console.warn(e);
+          this.showBar();
+        })
+        .finally(() => {
+          this.clickSecond = false;
+        });
     },
     // 点击某个树节点
     handleClickTreeNode(item, isSearchProfile = false) {

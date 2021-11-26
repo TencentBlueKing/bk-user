@@ -2,6 +2,30 @@
 # Changelog
 
 
+## [Version: 2.3.1] - 2021-11-05 
+
+
+### API
+
+
+- [NEW] API 支持通过 POST body 筛选数据 [#88](https://github.com/TencentBlueKing/bk-user/issues/88)
+- [NEW] 支持审计记录失败内容(仅数据) [#71](https://github.com/TencentBlueKing/bk-user/issues/71)
+- [FIX] 修复 ldap/mad 测试连接按钮报错问题 [#129](https://github.com/TencentBlueKing/bk-user/issues/129)
+- [FIX] 修复手动关闭权限中心时，目录新建关联权限报错问题 [#99](https://github.com/TencentBlueKing/bk-user/issues/99)
+- [FIX] 修复部门查询接口 ?lookup_field=name，当部门名称中含有 . 时返回 404 问题 [#147](https://github.com/TencentBlueKing/bk-user/issues/147)
+- [FIX] 修复 Excel 模板字段名与内置字段名不统一，导致导入失败问题 [#150](https://github.com/TencentBlueKing/bk-user/issues/150)
+- [OPTIMIZATION] 将「密码过期判断」逻辑调整到「密码校验成功」后，规避可能存在的安全风险 [#137](https://github.com/TencentBlueKing/bk-user/issues/137)
+
+
+### SaaS
+
+
+- [NEW] 支持搜索已删除的数据 [#80](https://github.com/TencentBlueKing/bk-user/issues/80)
+- [NEW] 支持恢复已删除用户 [#15](https://github.com/TencentBlueKing/bk-user/issues/15)
+- [FIX] 增大默认的 CPU 限制，保证容器正常启动
+
+
+
 ## [Version: 2.3.0] - 2021-10-22 
 
 

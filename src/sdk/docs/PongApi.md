@@ -1,6 +1,6 @@
 # bkuser_sdk.PongApi
 
-All URIs are relative to *http://localhost:8000/*
+All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------

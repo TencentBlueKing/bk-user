@@ -42,8 +42,10 @@ urlpatterns = [
 if settings.IS_PAGES_INDEPENDENT_DEPLOYMENT:
     urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# swagger
-urlpatterns += [url(r"^", include("bkuser_shell.apis.urls"))]
+urlpatterns += [
+    url(r"^", include("bkuser_shell.apis.urls")),
+    url(r"^", include("django_prometheus.urls")),
+]
 
 if "silk" in settings.INSTALLED_APPS:
     urlpatterns += [url(r"^silk/", include("silk.urls", namespace="silk"))]

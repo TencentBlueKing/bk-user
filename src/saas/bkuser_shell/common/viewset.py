@@ -82,7 +82,7 @@ class BkUserApiViewSet(GenericViewSet):
             headers.update({settings.CLIENT_IP_FROM_SAAS_HEADER: ip})
 
         action_id = force_action_id or self.ACTION_ID
-        if not no_auth and action_id and not settings.DISABLE_IAM:
+        if not no_auth and action_id and settings.ENABLE_IAM:
             # 需要走 iam 主动标记
             headers.update(
                 {

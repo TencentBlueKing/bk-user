@@ -22,24 +22,31 @@
 <template>
   <div :class="['look-user-info-wrapper',{ 'forbid-operate': isForbid }]">
     <div class="action-btn-wrapper" v-if="currentCategoryType === 'local'">
-      <bk-button theme="primary" class="editor-btn" @click="editProfile">
+      <bk-button :disabled="isStatus" theme="primary" class="editor-btn" @click="editProfile">
         {{$t('编辑')}}
       </bk-button>
-      <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="changeStatus">
-        {{!isForbid ? $t('禁用') : $t('启用')}}
-      </bk-button>
-      <template v-if="isAdmin">
-        <bk-button theme="default" class="editor-btn" disabled>
-          {{$t('删除')}}
+      <template v-if="!isStatus">
+        <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="changeStatus">
+          {{!isForbid ? $t('禁用') : $t('启用')}}
         </bk-button>
+        <template v-if="isAdmin">
+          <bk-button theme="default" class="editor-btn" disabled>
+            {{$t('删除')}}
+          </bk-button>
+        </template>
+        <template v-else>
+          <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="deleteProfile">
+            {{$t('删除')}}
+          </bk-button>
+        </template>
       </template>
       <template v-else>
-        <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="deleteProfile">
-          {{$t('删除')}}
+        <bk-button theme="default" @click="restoreProfile">
+          {{$t('恢复')}}
         </bk-button>
       </template>
       <div class="reset">
-        <bk-button theme="default" @click="showResetDialog">
+        <bk-button :disabled="isStatus" theme="default" @click="showResetDialog">
           {{$t('重置密码')}}
         </bk-button>
         <div class="reset-dialog" v-if="isShowReset" v-click-outside="closeResetDialog">
@@ -122,14 +129,14 @@
             <span class="name">{{$t('创建时间')}}</span>
             <span class="gap">：</span>
             <p class="desc">
-              <span class="text">{{currentProfile.create_time}}</span>
+              <span class="text">{{currentProfile.create_time | convertIsoTime}}</span>
             </p>
           </div>
           <div class="specific-text">
             <span class="name">{{$t('最近一次登录时间')}}</span>
             <span class="gap">：</span>
             <p class="desc">
-              <span class="text">{{currentProfile.update_time}}</span>
+              <span class="text">{{currentProfile.last_login_time | convertIsoTime}}</span>
             </p>
           </div>
         </li>
@@ -140,6 +147,18 @@
 
 <script>
 export default {
+  filters: {
+    convertIsoTime(iso) {
+      if (iso === null) {
+        return '--';
+      }
+
+      const arr = iso.split('T');
+      const year = arr[0];
+      const time = arr[1].split('.')[0];
+      return `${year} ${time}`;
+    },
+  },
   directives: {
     focus: {
       // 输入框自动获焦
@@ -203,6 +222,9 @@ export default {
       // 这里先根据唯一字段 username 判断是否是 admin 用户
       return this.currentProfile.username === 'admin';
     },
+    isStatus() {
+      return this.currentProfile.status === 'DELETED';
+    },
   },
   mounted() {
     this.$nextTick(() => {
@@ -258,6 +280,10 @@ export default {
     // 删除
     deleteProfile() {
       this.$emit('deleteProfile');
+    },
+    // 恢复已删除用户
+    restoreProfile() {
+      this.$emit('restoreProfile');
     },
     // 禁用/启用
     async changeStatus() {

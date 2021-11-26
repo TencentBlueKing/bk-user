@@ -6,6 +6,11 @@ global:
     registry: "ccr.ccs.tencentyun.com/bk.io"
     pullPolicy: Always
 
+  # 日志采集，默认关闭，当日志采集就绪时，手动开启
+  bkLogConfig:
+    enabled: false
+    dataId: ""
+
   env:
     # 请在 PaaS 产品就绪后，查询 secret 并填入，否则影响用户管理调用 ESB 的相关功能（邮件通知等）
     BK_APP_SECRET: "your-own-secret"
@@ -14,6 +19,8 @@ global:
     BK_PAAS_URL: "http://paas.example.com"
     # ESB Api 访问地址
     BK_COMPONENT_API_URL: "http://bkapi.example.com"
+    # 由于用户管理先于权限中心拉起，所以默认禁用，后期所有产品就绪后，可手动开启
+    ENABLE_IAM: false
 
 bkuserapi:
   enabeld: true
@@ -28,12 +35,20 @@ bkuserapi:
     - configMapRef:
         name: bk-user-api-redis-env
 
+  # 默认我们关闭了监控采集，当监控就绪时，请手动开启
+  # serviceMonitor:
+  #   enabled: true
+
 bkusersaas:
   enabled: true
   envFrom:
     # 挂载内建 DB 变量
     - configMapRef:
         name: bk-user-saas-mariadb-env
+
+  # 默认我们关闭了监控采集，当监控就绪时，请手动开启
+  # serviceMonitor:
+  #   enabled: true
 
 # -------------
 # 内建存储配置

@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **leader** | [**list[Leader]**](Leader.md) |  | [optional] 
 **create_time** | **datetime** |  | [optional] 
 **update_time** | **datetime** |  | [optional] 
+**last_login_time** | **str** |  | [optional] 
 **extras** | **object** |  | [optional] 
 **qq** | **str** |  | [optional] 
 **email** | **str** |  | [optional] 
