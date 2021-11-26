@@ -2,7 +2,7 @@ apiVersion: v2
 name: bk-user-stack
 description: A Helm chart for bk-user
 type: application
-version: 0.5.4
+version: 0.5.6
 appVersion: v2.3.1
 
 dependencies:
