@@ -38,7 +38,7 @@ metadata:
   labels:
     {{- include "chartty.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": pre-install
+    "helm.sh/hook": "pre-install,pre-upgrade"
     "helm.sh/hook-weight": "-1"
 data:
   DATABASE_NAME: "{{ .Values.bklogin.database.preferName }}"

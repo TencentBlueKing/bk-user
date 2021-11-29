@@ -1,0 +1,16 @@
+{{- $global := . }}
+{{- $namePrefix := include "chartty.name" . -}}
+{{- if .Values.global.bkLogConfig.enabled }}
+apiVersion: bk.tencent.com/v1alpha1
+kind: BkLogConfig
+metadata:
+  name: {{ $namePrefix }}-stdout-log
+spec:
+  dataId: {{ .Values.global.bkLogConfig.dataId }}
+  logConfigType: std_log_config
+  namespace: {{ .Release.Namespace | quote }}
+  container_name_match:
+    - {{ $namePrefix }}
+  labelSelector:
+    matchLabels: {{- include "chartty.labels" $global | nindent 6 }}
+{{- end }}
