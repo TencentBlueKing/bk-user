@@ -9,8 +9,11 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from django.core.exceptions import ObjectDoesNotExist
+import datetime
+
+from django.conf import settings
 from django.db import models
+from django.utils.timezone import now
 
 from .constants import LogInFailReason
 
@@ -22,12 +25,15 @@ class ResetPasswordManager(models.Manager):
 class LogInManager(models.Manager):
     def latest_failed_count(self) -> int:
         """获取上一次成功登陆前最近登陆失败次数"""
+        farthest_count_time = now() - datetime.timedelta(seconds=settings.LOGIN_RECORD_COUNT_SECONDS)
         try:
-            create_time = self.filter(is_success=True).latest().create_time
+            create_time = self.filter(is_success=True, create_time__gte=farthest_count_time).latest().create_time
+        except AttributeError:
+            return self.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value).count()  # type: ignore
+        else:
+            # 当没有任何成功记录时，统计全局错误次数
             return self.filter(
                 is_success=False,
                 reason=LogInFailReason.BAD_PASSWORD.value,  # type: ignore
                 create_time__gt=create_time,
             ).count()
-        except ObjectDoesNotExist:
-            return self.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value).count()  # type: ignore
