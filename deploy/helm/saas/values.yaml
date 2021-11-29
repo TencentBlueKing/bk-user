@@ -75,7 +75,7 @@ env:
   # -------------
   # 默认配置，不了解详情时请不要修改
   # -------------
-  BK_APP_CODE: "bk-user"
+  BK_APP_CODE: "bk_usermgr"
   DJANGO_SETTINGS_MODULE: "bkuser_shell.config.overlays.prod"
   BKAPP_BK_USER_CORE_API_HOST: "http://bkuserapi-web"
   BK_LOGIN_API_URL: "http://bk-login-web"
