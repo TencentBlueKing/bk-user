@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 import datetime
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.timezone import now
 
@@ -25,15 +26,21 @@ class ResetPasswordManager(models.Manager):
 class LogInManager(models.Manager):
     def latest_failed_count(self) -> int:
         """获取上一次成功登陆前最近登陆失败次数"""
+        # 如果服务运行的时间足够长，单个用户登录记录条目数将会非常多，统计可能会产生慢查询
+        # 所以按照服务维护者可以根据用户登录频次来调整最远统计时间(默认为一个月)
         farthest_count_time = now() - datetime.timedelta(seconds=settings.LOGIN_RECORD_COUNT_SECONDS)
         try:
-            create_time = self.filter(is_success=True, create_time__gte=farthest_count_time).latest().create_time
-        except AttributeError:
-            return self.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value).count()  # type: ignore
+            latest_success_time = (
+                self.filter(is_success=True, create_time__gte=farthest_count_time).latest().create_time
+            )
+        except ObjectDoesNotExist:
+            # 当没有任何成功记录时，直接统计时间区域内的错误次数
+            return self.filter(
+                is_success=False, reason=LogInFailReason.BAD_PASSWORD.value, create_time__gte=farthest_count_time
+            ).count()
         else:
-            # 当没有任何成功记录时，统计全局错误次数
             return self.filter(
                 is_success=False,
-                reason=LogInFailReason.BAD_PASSWORD.value,  # type: ignore
-                create_time__gt=create_time,
+                reason=LogInFailReason.BAD_PASSWORD.value,
+                create_time__gte=latest_success_time,
             ).count()
