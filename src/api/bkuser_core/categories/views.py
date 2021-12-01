@@ -81,7 +81,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             try:
                 action_id = IAMAction.get_action_by_category_type(type_)
             except KeyError:
-                # tof 属于隐藏目录，这里直接忽略掉
                 continue
 
             _meta = make_meta(type_)

@@ -17,49 +17,86 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categories', '0009_auto_20210413_1702'),
+        ("categories", "0009_auto_20210413_1702"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SyncProgress',
+            name="SyncProgress",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('create_time', models.DateTimeField(auto_now_add=True)),
-                ('update_time', models.DateTimeField(auto_now=True)),
-                ('task_id', models.UUIDField(db_index=True, verbose_name='任务id')),
-                ('step', models.CharField(choices=[('users', '用户数据更新'), ('departments', '组织数据更新'), ('users_relationship', '用户间关系数据更新'), ('dept_user_relationship', '用户和组织关系数据更新')], max_length=32, verbose_name='同步步骤')),
-                ('status', models.CharField(choices=[('successful', '成功'), ('failed', '失败'), ('running', '同步中')], default='running', max_length=16, verbose_name='状态')),
-                ('successful_count', models.IntegerField(verbose_name='同步成功数量', default=0)),
-                ('failed_count', models.IntegerField(verbose_name='同步失败数量', default=0)),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("create_time", models.DateTimeField(auto_now_add=True)),
+                ("update_time", models.DateTimeField(auto_now=True)),
+                ("task_id", models.UUIDField(db_index=True, verbose_name="任务id")),
+                (
+                    "step",
+                    models.CharField(
+                        choices=[
+                            ("users", "用户数据更新"),
+                            ("departments", "组织数据更新"),
+                            ("users_relationship", "用户间关系数据更新"),
+                            ("dept_user_relationship", "用户和组织关系数据更新"),
+                        ],
+                        max_length=32,
+                        verbose_name="同步步骤",
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("successful", "成功"), ("failed", "失败"), ("running", "同步中")],
+                        default="running",
+                        max_length=16,
+                        verbose_name="状态",
+                    ),
+                ),
+                ("successful_count", models.IntegerField(verbose_name="同步成功数量", default=0)),
+                ("failed_count", models.IntegerField(verbose_name="同步失败数量", default=0)),
             ],
         ),
         migrations.AlterField(
-            model_name='profilecategory',
-            name='type',
-            field=models.CharField(choices=[('local', '本地目录'), ('mad', 'Microsoft Active Directory'), ('ldap', 'OpenLDAP'), ('tof', 'TOF'), ('custom', '自定义目录'), ('pluggable', '可插拔目录')], max_length=32, verbose_name='类型'),
+            model_name="profilecategory",
+            name="type",
+            field=models.CharField(
+                choices=[
+                    ("local", "本地目录"),
+                    ("mad", "Microsoft Active Directory"),
+                    ("ldap", "OpenLDAP"),
+                    ("custom", "自定义目录"),
+                    ("pluggable", "可插拔目录"),
+                ],
+                max_length=32,
+                verbose_name="类型",
+            ),
         ),
         migrations.CreateModel(
-            name='SyncProgressLog',
+            name="SyncProgressLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('create_time', models.DateTimeField(auto_now_add=True)),
-                ('update_time', models.DateTimeField(auto_now=True)),
-                ('logs', models.TextField(verbose_name='日志')),
-                ('failed_records', models.JSONField(default=list)),
-                ('progress', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='log', to='categories.syncprogress')),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("create_time", models.DateTimeField(auto_now_add=True)),
+                ("update_time", models.DateTimeField(auto_now=True)),
+                ("logs", models.TextField(verbose_name="日志")),
+                ("failed_records", models.JSONField(default=list)),
+                (
+                    "progress",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE, related_name="log", to="categories.syncprogress"
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.AddField(
-            model_name='syncprogress',
-            name='category',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='categories.profilecategory', verbose_name='用户目录'),
+            model_name="syncprogress",
+            name="category",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="categories.profilecategory", verbose_name="用户目录"
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='syncprogress',
-            unique_together={('category', 'step', 'task_id')},
+            name="syncprogress",
+            unique_together={("category", "step", "task_id")},
         ),
     ]

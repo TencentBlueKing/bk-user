@@ -21,6 +21,7 @@ class Category(object):
 
     Do not edit the class manually.
     """
+
     """
     Attributes:
       swagger_types (dict): The key is attribute name
@@ -29,42 +30,59 @@ class Category(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'id': 'int',
-        'configured': 'bool',
-        'syncing': 'bool',
-        'unfilled_namespaces': 'list[str]',
-        'create_time': 'datetime',
-        'update_time': 'datetime',
-        'type': 'str',
-        'description': 'str',
-        'display_name': 'str',
-        'domain': 'str',
-        'default': 'bool',
-        'enabled': 'bool',
-        'status': 'str',
-        'order': 'int',
-        'last_synced_time': 'datetime'
+        "id": "int",
+        "configured": "bool",
+        "syncing": "bool",
+        "unfilled_namespaces": "list[str]",
+        "create_time": "datetime",
+        "update_time": "datetime",
+        "type": "str",
+        "description": "str",
+        "display_name": "str",
+        "domain": "str",
+        "default": "bool",
+        "enabled": "bool",
+        "status": "str",
+        "order": "int",
+        "last_synced_time": "datetime",
     }
 
     attribute_map = {
-        'id': 'id',
-        'configured': 'configured',
-        'syncing': 'syncing',
-        'unfilled_namespaces': 'unfilled_namespaces',
-        'create_time': 'create_time',
-        'update_time': 'update_time',
-        'type': 'type',
-        'description': 'description',
-        'display_name': 'display_name',
-        'domain': 'domain',
-        'default': 'default',
-        'enabled': 'enabled',
-        'status': 'status',
-        'order': 'order',
-        'last_synced_time': 'last_synced_time'
+        "id": "id",
+        "configured": "configured",
+        "syncing": "syncing",
+        "unfilled_namespaces": "unfilled_namespaces",
+        "create_time": "create_time",
+        "update_time": "update_time",
+        "type": "type",
+        "description": "description",
+        "display_name": "display_name",
+        "domain": "domain",
+        "default": "default",
+        "enabled": "enabled",
+        "status": "status",
+        "order": "order",
+        "last_synced_time": "last_synced_time",
     }
 
-    def __init__(self, id=None, configured=None, syncing=None, unfilled_namespaces=None, create_time=None, update_time=None, type=None, description=None, display_name=None, domain=None, default=None, enabled=None, status=None, order=None, last_synced_time=None):  # noqa: E501
+    def __init__(
+        self,
+        id=None,
+        configured=None,
+        syncing=None,
+        unfilled_namespaces=None,
+        create_time=None,
+        update_time=None,
+        type=None,
+        description=None,
+        display_name=None,
+        domain=None,
+        default=None,
+        enabled=None,
+        status=None,
+        order=None,
+        last_synced_time=None,
+    ):  # noqa: E501
         """Category - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._configured = None
@@ -256,11 +274,10 @@ class Category(object):
         """
         if type is None:
             raise ValueError("Invalid value for `type`, must not be `None`")  # noqa: E501
-        allowed_values = ["local", "mad", "ldap", "tof", "custom", "pluggable"]  # noqa: E501
+        allowed_values = ["local", "mad", "ldap", "custom", "pluggable"]  # noqa: E501
         if type not in allowed_values:
             raise ValueError(
-                "Invalid value for `type` ({0}), must be one of {1}"  # noqa: E501
-                .format(type, allowed_values)
+                "Invalid value for `type` ({0}), must be one of {1}".format(type, allowed_values)  # noqa: E501
             )
 
         self._type = type
@@ -395,8 +412,7 @@ class Category(object):
         allowed_values = ["normal", "inactive"]  # noqa: E501
         if status not in allowed_values:
             raise ValueError(
-                "Invalid value for `status` ({0}), must be one of {1}"  # noqa: E501
-                .format(status, allowed_values)
+                "Invalid value for `status` ({0}), must be one of {1}".format(status, allowed_values)  # noqa: E501
             )
 
         self._status = status
@@ -450,18 +466,16 @@ class Category(object):
         for attr, _ in six.iteritems(self.swagger_types):
             value = getattr(self, attr)
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: x.to_dict() if hasattr(x, "to_dict") else x,
-                    value
-                ))
+                result[attr] = list(map(lambda x: x.to_dict() if hasattr(x, "to_dict") else x, value))
             elif hasattr(value, "to_dict"):
                 result[attr] = value.to_dict()
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], item[1].to_dict())
-                    if hasattr(item[1], "to_dict") else item,
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(
+                        lambda item: (item[0], item[1].to_dict()) if hasattr(item[1], "to_dict") else item,
+                        value.items(),
+                    )
+                )
             else:
                 result[attr] = value
         if issubclass(Category, dict):

@@ -21,6 +21,7 @@ class SettingMeta(object):
 
     Do not edit the class manually.
     """
+
     """
     Attributes:
       swagger_types (dict): The key is attribute name
@@ -29,36 +30,50 @@ class SettingMeta(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'id': 'int',
-        'choices': 'object',
-        'example': 'object',
-        'default': 'object',
-        'create_time': 'datetime',
-        'update_time': 'datetime',
-        'key': 'str',
-        'enabled': 'bool',
-        'required': 'bool',
-        'namespace': 'str',
-        'region': 'str',
-        'category_type': 'str'
+        "id": "int",
+        "choices": "object",
+        "example": "object",
+        "default": "object",
+        "create_time": "datetime",
+        "update_time": "datetime",
+        "key": "str",
+        "enabled": "bool",
+        "required": "bool",
+        "namespace": "str",
+        "region": "str",
+        "category_type": "str",
     }
 
     attribute_map = {
-        'id': 'id',
-        'choices': 'choices',
-        'example': 'example',
-        'default': 'default',
-        'create_time': 'create_time',
-        'update_time': 'update_time',
-        'key': 'key',
-        'enabled': 'enabled',
-        'required': 'required',
-        'namespace': 'namespace',
-        'region': 'region',
-        'category_type': 'category_type'
+        "id": "id",
+        "choices": "choices",
+        "example": "example",
+        "default": "default",
+        "create_time": "create_time",
+        "update_time": "update_time",
+        "key": "key",
+        "enabled": "enabled",
+        "required": "required",
+        "namespace": "namespace",
+        "region": "region",
+        "category_type": "category_type",
     }
 
-    def __init__(self, id=None, choices=None, example=None, default=None, create_time=None, update_time=None, key=None, enabled=None, required=None, namespace='general', region=None, category_type=None):  # noqa: E501
+    def __init__(
+        self,
+        id=None,
+        choices=None,
+        example=None,
+        default=None,
+        create_time=None,
+        update_time=None,
+        key=None,
+        enabled=None,
+        required=None,
+        namespace="general",
+        region=None,
+        category_type=None,
+    ):  # noqa: E501
         """SettingMeta - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._choices = None
@@ -311,8 +326,9 @@ class SettingMeta(object):
         allowed_values = ["general", "password", "connection", "fields"]  # noqa: E501
         if namespace not in allowed_values:
             raise ValueError(
-                "Invalid value for `namespace` ({0}), must be one of {1}"  # noqa: E501
-                .format(namespace, allowed_values)
+                "Invalid value for `namespace` ({0}), must be one of {1}".format(  # noqa: E501
+                    namespace, allowed_values
+                )
             )
 
         self._namespace = namespace
@@ -358,11 +374,12 @@ class SettingMeta(object):
         """
         if category_type is None:
             raise ValueError("Invalid value for `category_type`, must not be `None`")  # noqa: E501
-        allowed_values = ["local", "mad", "ldap", "tof", "custom", "pluggable"]  # noqa: E501
+        allowed_values = ["local", "mad", "ldap", "custom", "pluggable"]  # noqa: E501
         if category_type not in allowed_values:
             raise ValueError(
-                "Invalid value for `category_type` ({0}), must be one of {1}"  # noqa: E501
-                .format(category_type, allowed_values)
+                "Invalid value for `category_type` ({0}), must be one of {1}".format(  # noqa: E501
+                    category_type, allowed_values
+                )
             )
 
         self._category_type = category_type
@@ -374,18 +391,16 @@ class SettingMeta(object):
         for attr, _ in six.iteritems(self.swagger_types):
             value = getattr(self, attr)
             if isinstance(value, list):
-                result[attr] = list(map(
-                    lambda x: x.to_dict() if hasattr(x, "to_dict") else x,
-                    value
-                ))
+                result[attr] = list(map(lambda x: x.to_dict() if hasattr(x, "to_dict") else x, value))
             elif hasattr(value, "to_dict"):
                 result[attr] = value.to_dict()
             elif isinstance(value, dict):
-                result[attr] = dict(map(
-                    lambda item: (item[0], item[1].to_dict())
-                    if hasattr(item[1], "to_dict") else item,
-                    value.items()
-                ))
+                result[attr] = dict(
+                    map(
+                        lambda item: (item[0], item[1].to_dict()) if hasattr(item[1], "to_dict") else item,
+                        value.items(),
+                    )
+                )
             else:
                 result[attr] = value
         if issubclass(SettingMeta, dict):

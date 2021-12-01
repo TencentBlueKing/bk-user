@@ -29,7 +29,6 @@ class ActionEnum(AutoLowerEnum):
     CREATE_LOCAL_CATEGORY = auto()
     CREATE_LDAP_CATEGORY = auto()
     CREATE_MAD_CATEGORY = auto()
-    CREATE_TOF_CATEGORY = auto()
     CREATE_CUSTOM_CATEGORY = auto()
     MANAGE_CATEGORY = auto()
     VIEW_CATEGORY = auto()
@@ -50,7 +49,6 @@ class ActionEnum(AutoLowerEnum):
             CategoryTypeEnum.LOCAL.value: cls.CREATE_LOCAL_CATEGORY,
             CategoryTypeEnum.LDAP.value: cls.CREATE_LDAP_CATEGORY,
             CategoryTypeEnum.MAD.value: cls.CREATE_MAD_CATEGORY,
-            CategoryTypeEnum.TOF.value: cls.CREATE_LOCAL_CATEGORY,
         }[category_type]
 
 

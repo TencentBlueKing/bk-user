@@ -6,13 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user_settings', '0008_auto_20210706_1702'),
+        ("user_settings", "0008_auto_20210706_1702"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='settingmeta',
-            name='category_type',
-            field=models.CharField(choices=[('local', '本地目录'), ('mad', 'Microsoft Active Directory'), ('ldap', 'OpenLDAP'), ('tof', 'TOF'), ('custom', '自定义目录'), ('pluggable', '可插拔目录')], max_length=32, verbose_name='类型'),
+            model_name="settingmeta",
+            name="category_type",
+            field=models.CharField(
+                choices=[
+                    ("local", "本地目录"),
+                    ("mad", "Microsoft Active Directory"),
+                    ("ldap", "OpenLDAP"),
+                    ("custom", "自定义目录"),
+                    ("pluggable", "可插拔目录"),
+                ],
+                max_length=32,
+                verbose_name="类型",
+            ),
         ),
     ]

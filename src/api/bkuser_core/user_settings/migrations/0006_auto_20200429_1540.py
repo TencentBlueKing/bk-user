@@ -18,22 +18,6 @@ from django.db import migrations
 
 def forwards_func(apps, schema_editor):
     """添加默认用户目录"""
-    SettingMeta = apps.get_model("user_settings", "SettingMeta")
-
-    tof_connection_settings = [
-        dict(key="root_company_id", default=0),
-        dict(key="max_depth", default=8),
-        dict(key="leader_keyword", default="TeamLeader"),
-        dict(key="normal_status_keyword", default="在职"),
-        dict(key="common_email_suffix", default="@tencent.com"),
-        dict(key="exempt_sync_department_ids", default=[]),
-        dict(key="pull_interval", default=60 * 60 * 24),
-    ]
-
-    for x in tof_connection_settings:
-        SettingMeta.objects.create(
-            namespace=SettingsEnableNamespaces.GENERAL.value, category_type=CategoryType.TOF.value, required=True, **x
-        )
 
 
 class Migration(migrations.Migration):

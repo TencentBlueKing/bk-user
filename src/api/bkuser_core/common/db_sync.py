@@ -32,7 +32,7 @@ class SyncModelMeta:
 
     例如，
     excel 导入数据时，是用 username 而不是 code 作为唯一标识
-    ldap or mad 是有 uuid 作为 code 的，tof 是有也有数字 id 作为 code
+    ldap or mad 是有 uuid 作为 code 的
     """
 
     target_model: ClassVar[Type[models.Model]]
