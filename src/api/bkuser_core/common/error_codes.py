@@ -119,10 +119,7 @@ error_codes.add_codes(
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
         ErrorCode("USER_ALREADY_EXISTED", _("该目录下此用户名已存在"), status_code=HTTP_409_CONFLICT),
         ErrorCode("SAVE_USER_INFO_FAILED", _("保存用户信息失败")),
-        ErrorCode(
-            "PASSWORD_DUPLICATED",
-            _("新密码不能与最近{}次密码相同").format(settings.MAX_PASSWORD_HISTORY),
-        ),
+        ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         # 上传文件相关
         ErrorCode("FILE_IMPORT_TOO_LARGE", _("上传文件过大")),
         ErrorCode("FILE_IMPORT_FORMAT_ERROR", _("上传文件格式错误")),
