@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import copy
 
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import APIException
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_409_CONFLICT
@@ -104,10 +103,7 @@ error_codes.add_codes(
         ErrorCode("USER_IS_DISABLED", _("账号已被管理员禁用，请联系管理员"), 3210016),
         ErrorCode("USER_IS_LOCKED", _("账号长时间未登录，已被冻结，请联系管理员"), 3210015),
         ErrorCode("PASSWORD_ERROR", _("账户名和密码不匹配"), 3210013),
-        ErrorCode(
-            "PASSWORD_DUPLICATED",
-            _("新密码不能与最近{}次密码相同").format(settings.MAX_PASSWORD_HISTORY),
-        ),
+        ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("PASSWORD_EXPIRED", _("该账户密码已到期，请修改密码后登录"), 3210018),
         ErrorCode("TOO_MANY_TRY", _("密码输入错误次数过多，已被锁定"), 3210011),
         ErrorCode("CATEGORY_NOT_ENABLED", _("用户目录未启用"), 3210019),

@@ -27,7 +27,7 @@ class LogInManager(models.Manager):
     def latest_failed_count(self) -> int:
         """获取上一次成功登陆前最近登陆失败次数"""
         # 如果服务运行的时间足够长，单个用户登录记录条目数将会非常多，统计可能会产生慢查询
-        # 所以按照服务维护者可以根据用户登录频次来调整最远统计时间(默认为一个月)
+        # 所以服务维护者可以根据用户登录频次来调整最远统计时间(默认为一个月)
         farthest_count_time = now() - datetime.timedelta(seconds=settings.LOGIN_RECORD_COUNT_SECONDS)
         try:
             latest_success_time = (

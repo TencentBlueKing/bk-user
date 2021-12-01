@@ -318,10 +318,11 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # 密码修改加密
         if validated_data.get("password"):
             pending_password = validated_data.get("password")
-            if check_former_passwords(instance, pending_password):
-                raise error_codes.PASSWORD_DUPLICATED
-
             config_loader = ConfigProvider(category_id=instance.category_id)
+            max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
+            if check_former_passwords(instance, pending_password, max_password_history):
+                raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
+
             PasswordValidator(
                 min_length=int(config_loader["password_min_length"]),
                 max_length=settings.PASSWORD_MAX_LENGTH,
@@ -396,13 +397,15 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         old_password = serializer.validated_data["old_password"]
         new_password = serializer.validated_data["new_password"]
-        if check_former_passwords(instance, new_password):
-            raise error_codes.PASSWORD_DUPLICATED
+
+        config_loader = ConfigProvider(category_id=instance.category_id)
+        max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
+        if check_former_passwords(instance, new_password, max_password_history):
+            raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
 
         if not instance.check_password(old_password):
             raise error_codes.PASSWORD_ERROR
 
-        config_loader = ConfigProvider(category_id=instance.category_id)
         PasswordValidator(
             min_length=int(config_loader["password_min_length"]),
             max_length=settings.PASSWORD_MAX_LENGTH,

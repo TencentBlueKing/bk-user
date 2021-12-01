@@ -179,7 +179,7 @@ def get_username(force_use_raw: bool, category_id: int, username: str, domain: s
 def check_former_passwords(
     instance: "Profile",
     new_password: str,
-    max_history: int = settings.MAX_PASSWORD_HISTORY,
+    max_history: int = settings.DEFAULT_MAX_PASSWORD_HISTORY,
 ) -> bool:
     """Check if new password in last passwords"""
     reset_records = ResetPassword.objects.filter(profile=instance).order_by("-create_time")[:max_history]
