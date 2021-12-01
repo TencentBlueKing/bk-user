@@ -43,7 +43,6 @@ class Migration(migrations.Migration):
                     ("local", "本地目录"),
                     ("mad", "Microsoft Active Directory"),
                     ("ldap", "OpenLDAP"),
-                    ("tof", "TOF"),
                     ("custom", "自定义目录"),
                 ],
                 max_length=32,
