@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import urllib.parse
 from unittest.mock import patch
 
 import pytest
@@ -34,7 +35,8 @@ class TestSendMailTask:
                 "abcd",
                 False,
                 "aaaa",
-                f"{settings.SAAS_URL}set_password?token=aaaa :{settings.SAAS_URL}reset_password ",
+                f'{urllib.parse.urljoin(settings.SAAS_URL, "set_password?token=aaaa")}:'
+                f'{urllib.parse.urljoin(settings.SAAS_URL, "reset_password")}',
             ),
         ],
     )

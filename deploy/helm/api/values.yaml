@@ -30,6 +30,7 @@ replicaCount: 1
 
 image:
   name: bk-user-api
+  tag: v2.3.0
 
 # 用来覆盖 Chart 名
 nameOverride: ""
@@ -93,7 +94,7 @@ extrasEnv: []
 
 # 额外提供一种基于 sharedDomain 自动生成的 URL 类型环境变量
 sharedUrlEnvMap:
-   SAAS_URL: "http://bkuser.{{ .Values.global.sharedDomain }}"
+   BK_USER_SAAS_URL: "http://bkuser.{{ .Values.global.sharedDomain }}"
    # 使容器可以自我感知访问地址
    BK_USER_API_URL: "http://bkuser-api.{{ .Values.global.sharedDomain }}"
 

@@ -60,8 +60,3 @@ if ENABLE_PROFILING:
 
     # silk middleware should be placed before any middleware using process_request
     MIDDLEWARE.insert(0, "silk.middleware.SilkyMiddleware")
-
-# ==============================================================================
-# SaaS
-# ==============================================================================
-SAAS_URL = urllib.parse.urljoin(BK_PAAS_URL, f"/o/{SAAS_CODE}/")

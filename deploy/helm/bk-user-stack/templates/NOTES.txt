@@ -4,6 +4,9 @@
 - SaaS: http://bkuser.{{ .Values.global.sharedDomain }}
 - Api: http://bkuser-api.{{ .Values.global.sharedDomain }}/ping
 
+也可以通过 http://{{ .Values.bklogin.env.BK_LOGIN_PUBLIC_ADDR }}/login 访问蓝鲸登录:
+
+
 登录账户名密码:
 {{ .Values.bkuserapi.env.INITIAL_ADMIN_USERNAME }}/{{ .Values.bkuserapi.env.INITIAL_ADMIN_PASSWORD }}
 

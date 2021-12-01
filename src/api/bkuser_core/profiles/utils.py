@@ -12,6 +12,7 @@ import logging
 import random
 import re
 import string
+import urllib.parse
 from typing import TYPE_CHECKING, Tuple
 
 from bkuser_core.categories.models import ProfileCategory
@@ -186,3 +187,8 @@ def check_former_passwords(
     former_passwords = [x.password for x in reset_records]
 
     return new_password in former_passwords
+
+
+def make_passwd_reset_url_by_token(token: str):
+    """make reset"""
+    return urllib.parse.urljoin(settings.SAAS_URL, f"set_password?token={token}")
