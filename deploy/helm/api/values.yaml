@@ -75,7 +75,7 @@ env:
   # -------------
   # 默认配置，不了解详情时请不要修改
   # -------------
-  BK_APP_CODE: "bk-user"
+  BK_APP_CODE: "bk_usermgr"
   DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.prod"
   # -------------
   # 权限中心相关配置

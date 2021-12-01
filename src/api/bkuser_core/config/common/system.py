@@ -63,6 +63,9 @@ FAKE_SEND_EMAIL = env.bool("FAKE_SEND_EMAIL", default=False)
 
 # 最大分页数量
 MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=2000)
+
+# 登录次数统计时间周期, 默认为一个月
+LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)
 # ==============================================================================
 # 开发调试
 # ==============================================================================
