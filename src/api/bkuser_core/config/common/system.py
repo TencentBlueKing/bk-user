@@ -19,7 +19,7 @@ from . import env
 # 最大密码长度（明文）
 PASSWORD_MAX_LENGTH = 32
 # 重复密码最大历史数量
-MAX_PASSWORD_HISTORY = 3
+DEFAULT_MAX_PASSWORD_HISTORY = 3
 # 用于加密密码历史
 try:
     # there is a bug in django-environ, the default in bytes() is unused.
