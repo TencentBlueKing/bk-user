@@ -92,7 +92,7 @@ def _bk_login(request):
     authentication_form = BkAuthenticationForm
     # NOTE: account/login.html 为支持自适应大小的模板
     template_name = "account/login.html"
-    forget_reset_password_url = "%s://%s/o/bk_user_manage/reset_password" % (settings.HTTP_SCHEMA, request.get_host())
+    forget_reset_password_url = f"{settings.BK_USERMGR_SAAS_URL}/reset_password"
     token_set_password_url = ""
 
     redirect_to = request.POST.get(REDIRECT_FIELD_NAME, request.GET.get(REDIRECT_FIELD_NAME, ""))

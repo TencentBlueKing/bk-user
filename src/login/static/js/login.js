@@ -31,7 +31,6 @@ $(document).ready(function(){
        setTimeout(function(){
            $("#language-form").submit();
        }, 500);
-
     });
 
     // 点击查看协议

@@ -64,7 +64,7 @@
                 </div>
                 <div class="language-switcher">
                     <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">{% csrf_token %}
-                        <input name="next" type="hidden" value="{{ redirect_to }}" />
+                        <input name="next" type="hidden" value="{{ login_redirect_to }}" />
                         <select name="language" style="display: none;">
                             {% get_current_language as LANGUAGE_CODE %}
                             {% get_available_languages as LANGUAGES %}
