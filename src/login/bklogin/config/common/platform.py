@@ -40,6 +40,7 @@ BK_COOKIE_DOMAIN = "." + env.str("BK_DOMAIN")
 
 # 用户管理API访问地址
 BK_USERMGR_API_URL = env.str("BK_USERMGR_API_URL", "http://bkuserapi-web")
+BK_USERMGR_SAAS_URL = env.str("BK_USERMGR_SAAS_URL", "http://bkusersaas-web")
 
 # external config
 # license

@@ -29,33 +29,29 @@ function refresh_token(){
 
 $(document).ready(function(){
     // 中英文切换
-    // $('.language-switcher img').click(function() {
-    //     $(this).toggleClass('en');
-    //     var language = 'zh-hans';
-    //     if ($(this).hasClass('en')) {
-    //          language = 'en';
-    //     }
-    //     $("#language-form select").val(language);
-    //     setTimeout(function(){
-    //         $("#language-form").submit();
-    //     }, 500);
- 
-    //  });
-
-    // 中英文切换
     const languageCH = $('#ch').parent();
     const languageEN = $('#en').parent();
+
+    function changeLanguage (language) {
+       $("#language-value").val(language);
+        setTimeout(function(){
+            $("#language-form").submit();
+        }, 500);
+    }
+
     languageCH.on('click', function() {
         $(this).attr('class', 'language-item active');
         languageEN.attr('class', 'language-item');
-    })
+        changeLanguage("zh-hans");
+    });
     languageEN.on('click', function() {
         $(this).attr('class', 'language-item active');
         languageCH.attr('class', 'language-item');
-    })
+        changeLanguage("en");
+    });
 
     // 点击查看协议
-    $('.btn-content .protocol-btn').click(function(event) {
+    $('.action .protocol-btn').click(function(event) {
         $('.protocol-pop').show();
     });
 

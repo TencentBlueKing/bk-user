@@ -14,7 +14,6 @@ from bklogin.bkauth import views as auth_views
 from bklogin.bkauth.decorators import login_exempt
 from bklogin.healthz import views as healthz_views
 from decorator_include import decorator_include
-from django.conf import settings
 from django.conf.urls import include, url
 from django.http import HttpResponse
 from django.views import i18n as django_i18n_views
@@ -101,14 +100,12 @@ urlpatterns = [
     url(r"", decorator_include(login_exempt, "django_prometheus.urls")),
 ]
 
-# ce not support i18n, so no setlang and jsi18n
-if settings.EDITION == "ee":
-    urlpatterns += [
-        # 无登录态下切换语言
-        url(r"^i18n/setlang/$", django_i18n_views.set_language, name="set_language"),
-        # 处理JS翻译
-        url(r"^jsi18n/(?P<packages>\S+?)/$", JavaScriptCatalog.as_view(), name="javascript-catalog"),
-    ]
+urlpatterns += [
+    # 无登录态下切换语言
+    url(r"^i18n/setlang/$", django_i18n_views.set_language, name="set_language"),
+    # 处理JS翻译
+    url(r"^jsi18n/(?P<packages>\S+?)/$", JavaScriptCatalog.as_view(), name="javascript-catalog"),
+]
 
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns  # noqa
