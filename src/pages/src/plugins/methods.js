@@ -67,8 +67,9 @@ const methods = {
           const region = regionArray[0];
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
-            const value = regionData[1];
-            arrayData.push({ key, value, region });
+            const value = regionData[1].value;
+            const enabled = regionData[1].enabled;
+            arrayData.push({ key, value, region, enabled });
           });
         });
         return arrayData;
@@ -81,11 +82,14 @@ const methods = {
       try {
         const objectData = {};
         arr.forEach((regionObject) => {
-          const { region, key, value } = regionObject;
+          const { region, key, value, enabled } = regionObject;
           if (!objectData[region]) {
             objectData[region] = {};
           }
-          objectData[region][key] = value;
+          objectData[region][key] = {
+            value,
+            enabled,
+          };
         });
         return objectData;
       } catch (e) {
