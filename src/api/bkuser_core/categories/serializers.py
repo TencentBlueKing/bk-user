@@ -98,7 +98,7 @@ class CategoryTestFetchDataSerializer(Serializer):
     basic_pull_node = CharField()
     user_filter = CharField()
     organization_class = CharField()
-    user_group_filter = CharField()
+    user_group_filter = CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class SyncTaskSerializer(Serializer):

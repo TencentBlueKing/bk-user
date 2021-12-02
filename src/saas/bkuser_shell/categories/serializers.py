@@ -96,7 +96,7 @@ class CategoryTestFetchDataSerializer(Serializer):
     basic_pull_node = CharField(required=False)
     user_filter = CharField(required=False)
     organization_class = CharField(required=False)
-    user_group_filter = CharField(required=False)
+    user_group_filter = CharField(required=False, allow_blank=True)
 
 
 class CategoryExportSerializer(Serializer):

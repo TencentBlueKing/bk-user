@@ -52,13 +52,13 @@ class ProfileFieldMapper:
 
     def get_user_attributes(self) -> list:
         """获取远端属性名列表"""
-        return [self.config_loader[x] for x in self.setting_field_map.values() if self.config_loader[x]]
+        return [self.config_loader[x] for x in self.setting_field_map.values() if self.config_loader.get(x)]
 
 
 def user_adapter(
     code: str, user_meta: Dict[str, Any], field_mapper: ProfileFieldMapper, restrict_types: List[str]
 ) -> LdapUserProfile:
-    groups = user_meta["attributes"][field_mapper.config_loader["user_member_of"]]
+    groups = user_meta["attributes"].get(field_mapper.config_loader["user_member_of"], [])
 
     return LdapUserProfile(
         username=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="username"),

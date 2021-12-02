@@ -55,7 +55,7 @@ class LDAPFetcher(Fetcher):
             basic_pull_node=self.config_loader["basic_pull_node"],
             user_filter=self.config_loader["user_filter"],
             organization_class=self.config_loader["organization_class"],
-            user_group_filter=self.config_loader["user_group_filter"],
+            user_group_filter=self.config_loader.get("user_group_filter"),
             attributes=self.field_mapper.get_user_attributes(),
         )
 
@@ -65,7 +65,7 @@ class LDAPFetcher(Fetcher):
             basic_pull_node=configs["basic_pull_node"],
             user_filter=configs["user_filter"],
             organization_class=configs["organization_class"],
-            user_group_filter=configs["user_group_filter"],
+            user_group_filter=configs.get("user_group_filter"),
         )
 
     def _fetch_data(
@@ -77,7 +77,10 @@ class LDAPFetcher(Fetcher):
         attributes: Optional[List] = None,
     ) -> tuple:
         try:
-            groups = self.client.search(start_root=basic_pull_node, force_filter_str=user_group_filter)
+            if user_group_filter:
+                groups = self.client.search(start_root=basic_pull_node, force_filter_str=user_group_filter)
+            else:
+                groups = []
         except Exception:
             logger.exception("failed to get groups from remote server")
             raise FetchDataFromRemoteFailed("无法获取用户组，请检查配置")
