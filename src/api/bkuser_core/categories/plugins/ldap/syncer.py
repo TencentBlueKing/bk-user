@@ -29,14 +29,6 @@ from django.utils.encoding import force_bytes
 
 logger = logging.getLogger(__name__)
 
-SETTING_FIELD_MAP = {
-    "username": "username",
-    "display_name": "display_name",
-    "email": "email",
-    "telephone": "telephone",
-    "user_member_of": "user_member_of",
-}
-
 
 @dataclass
 class LDAPFetcher(Fetcher):
@@ -46,7 +38,7 @@ class LDAPFetcher(Fetcher):
 
     def __post_init__(self):
         self.client = LDAPClient(self.config_loader)
-        self.field_mapper = ProfileFieldMapper(config_loader=self.config_loader, setting_field_map=SETTING_FIELD_MAP)
+        self.field_mapper = ProfileFieldMapper(config_loader=self.config_loader)
         self._data: Tuple[List, List, List] = None
 
     def fetch(self):

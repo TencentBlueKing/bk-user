@@ -615,35 +615,39 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
             logger.exception("check profile<%s> failed", profile.username)
             raise error_codes.PASSWORD_ERROR
-        else:
-            # 密码状态校验:初始密码未修改
-            if config_loader.get("force_reset_first_login") and profile.password_update_time is None:
-                create_profile_log(
-                    profile=profile,
-                    operation="LogIn",
-                    request=request,
-                    params={"is_success": False, "reason": LogInFailReason.SHOULD_CHANGE_INITIAL_PASSWORD.value},
-                )
 
-                raise error_codes.SHOULD_CHANGE_INITIAL_PASSWORD.format(
-                    data=self._generate_reset_passwd_url_with_token(profile)
-                )
+        # 密码状态校验:初始密码未修改
+        # 暂时跳过判断 admin，考虑在 login 模块未升级替换时，admin 可以在 SaaS 配置中关掉该特性
+        if (
+            not profile.is_superuser
+            and config_loader.get("force_reset_first_login")
+            and profile.password_update_time is None
+        ):
+            create_profile_log(
+                profile=profile,
+                operation="LogIn",
+                request=request,
+                params={"is_success": False, "reason": LogInFailReason.SHOULD_CHANGE_INITIAL_PASSWORD.value},
+            )
 
-            # 密码状态校验:密码过期
-            valid_period = datetime.timedelta(days=profile.password_valid_days)
-            if (
-                profile.password_valid_days > 0
-                and ((profile.password_update_time or profile.latest_password_update_time) + valid_period)
-                < time_aware_now
-            ):
-                create_profile_log(
-                    profile=profile,
-                    operation="LogIn",
-                    request=request,
-                    params={"is_success": False, "reason": LogInFailReason.EXPIRED_PASSWORD.value},
-                )
+            raise error_codes.SHOULD_CHANGE_INITIAL_PASSWORD.format(
+                data=self._generate_reset_passwd_url_with_token(profile)
+            )
 
-                raise error_codes.PASSWORD_EXPIRED.format(data=self._generate_reset_passwd_url_with_token(profile))
+        # 密码状态校验:密码过期
+        valid_period = datetime.timedelta(days=profile.password_valid_days)
+        if (
+            profile.password_valid_days > 0
+            and ((profile.password_update_time or profile.latest_password_update_time) + valid_period) < time_aware_now
+        ):
+            create_profile_log(
+                profile=profile,
+                operation="LogIn",
+                request=request,
+                params={"is_success": False, "reason": LogInFailReason.EXPIRED_PASSWORD.value},
+            )
+
+            raise error_codes.PASSWORD_EXPIRED.format(data=self._generate_reset_passwd_url_with_token(profile))
 
         create_profile_log(profile=profile, operation="LogIn", request=request, params={"is_success": True})
         return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)

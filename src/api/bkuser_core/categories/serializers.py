@@ -99,6 +99,7 @@ class CategoryTestFetchDataSerializer(Serializer):
     user_filter = CharField()
     organization_class = CharField()
     user_group_filter = CharField(required=False, allow_blank=True, allow_null=True)
+    user_member_of = CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class SyncTaskSerializer(Serializer):
