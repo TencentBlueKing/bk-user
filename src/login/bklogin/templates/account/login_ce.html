@@ -51,14 +51,6 @@
                                 <input class="password" id="password" type="password" name="password" value="" placeholder="{% trans '请输入密码' %}">
                             </div>
                             <p class="change-password">
-                                {% if error_message %}
-                                <span>{{ error_message }}</span>
-                                    {% if token_set_password_url %}
-                                        ,<a href="{{ token_set_password_url }}" target="_blank">{% trans '请修改密码' %}</a>
-                                    {% endif %}
-                                {% endif %}
-                            </p>
-                            <div>
                                 <input type="hidden" name="next" value="{{ next }}" />
                                 <input type="hidden" name="app_id" value="{{ app_id }}">
                             </div>
