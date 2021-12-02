@@ -37,7 +37,7 @@ class ProfileFieldMapper:
         # 1. 从目录配置中获取 字段名
         ldap_field_name = self.config_loader.get(field_name)
         if not ldap_field_name:
-            logger.info("no config[%s] in category[%s]", field_name, self.config_loader.category_id)
+            logger.info("no config[%s] in configs of category", field_name)
             return ""
 
         # 2. 通过字段名，获取具体值
