@@ -39,8 +39,9 @@
           <div class="info-container">
             <div class="title-container">
               <h4 class="title">{{$t('选择拉取节点')}}</h4>
+              <span class="star">*</span>
             </div>
-            <bk-input v-model="basicFields.basic_pull_node" style="width: 360px;"></bk-input>
+            <bk-input v-model="basicFields.basic_pull_node" style="width: 360px; "></bk-input>
             <!--<bk-select v-model="basicFields.basic_pull_node" multiple style="width: 360px;"
                            :clearable="false"
                            :placeholder="$t('请选择')">-->
@@ -180,7 +181,7 @@
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组对象类')"
-                       :is-need="true"
+                       :is-need="false"
                        @hasError="handleHasError" />
 
           <!-- 用户组对象过滤 -->
@@ -188,7 +189,7 @@
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组对象过滤')"
-                       :is-need="true"
+                       :is-need="false"
                        @hasError="handleHasError" />
 
           <!-- 用户组名字段 -->
@@ -196,7 +197,7 @@
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组名字段')"
-                       :is-need="true"
+                       :is-need="false"
                        @hasError="handleHasError" />
 
           <!-- 用户组描述字段 -->
@@ -204,7 +205,7 @@
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组描述字段')"
-                       :is-need="true"
+                       :is-need="false"
                        @hasError="handleHasError" />
 
         </div>

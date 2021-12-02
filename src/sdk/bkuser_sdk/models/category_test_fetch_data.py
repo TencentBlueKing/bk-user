@@ -52,7 +52,8 @@ class CategoryTestFetchData(object):
         self.basic_pull_node = basic_pull_node
         self.user_filter = user_filter
         self.organization_class = organization_class
-        self.user_group_filter = user_group_filter
+        if user_group_filter is not None:
+            self.user_group_filter = user_group_filter
 
     @property
     def basic_pull_node(self):
@@ -141,8 +142,6 @@ class CategoryTestFetchData(object):
         :param user_group_filter: The user_group_filter of this CategoryTestFetchData.  # noqa: E501
         :type: str
         """
-        if user_group_filter is None:
-            raise ValueError("Invalid value for `user_group_filter`, must not be `None`")  # noqa: E501
 
         self._user_group_filter = user_group_filter
 

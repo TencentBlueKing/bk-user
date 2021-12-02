@@ -112,7 +112,7 @@ database:
 processes:
   web:
     ingress:
-      enabled: true
+      enabled: false
       host: "bkuser-api.{{ .Values.global.sharedDomain }}"
       paths: ["/"]
     replicas: 1

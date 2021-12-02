@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **departments** | [**list[SimpleDepartment]**](SimpleDepartment.md) |  | [optional] 
 **extras** | **object** |  | [optional] 
 **leader** | [**list[Leader]**](Leader.md) |  | [optional] 
+**last_login_time** | **datetime** |  | [optional] 
 **create_time** | **datetime** |  | [optional] 
 **update_time** | **datetime** |  | [optional] 
 **qq** | **str** |  | [optional] 
