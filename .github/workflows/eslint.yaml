@@ -14,7 +14,7 @@ jobs:
     - name: Install modules
       run: |
         cd src/pages
-        npm i --legacy-peer-deps
+        npm i --force
     - name: Run ESLint
       run: |
         cd src/pages
