@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 import pytest
 from bkuser_core.categories.plugins.base import DBSyncManager, SyncContext
 from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper
-from bkuser_core.categories.plugins.ldap.syncer import SETTING_FIELD_MAP
 
 
 @pytest.fixture()
@@ -44,7 +43,7 @@ def ldap_config():
 
 @pytest.fixture()
 def profile_field_mapper(ldap_config):
-    return ProfileFieldMapper(config_loader=ldap_config, setting_field_map=SETTING_FIELD_MAP)
+    return ProfileFieldMapper(config_loader=ldap_config)
 
 
 @pytest.fixture

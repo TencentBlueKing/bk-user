@@ -112,62 +112,64 @@
       </div>
     </div>
 
-    <!-- 用户扩展字段 -->
-    <div class="collapse">
-      <div class="collapse-item">
-        <div class="header-container" @click="expandExtensional = !expandExtensional">
-          <div class="header">
-            <span class="title">{{$t('用户扩展字段')}}</span>
-            <div :class="{ 'collapse-group': true, expanded: expandExtensional }">
-              <i class="collapse-icon bk-icon icon-angle-double-down"></i>
-              <span class="collapse-text">{{expandExtensional ? $t('收起') : $t('展开')}}</span>
-            </div>
-          </div>
-        </div>
-        <!-- todo 动画 -->
-        <div class="content extend-content catalog-setting-step" v-show="expandExtensional">
-          <!-- 蓝鲸用户管理字段 -->
-          <div class="input-container">
-            <span class="description">{{$t('蓝鲸用户管理字段')}}</span>
-            <bk-input disabled class="extend-input" v-for="(item, index) in bkFieldsChoices"
-                      :key="index"
-                      :value="item"></bk-input>
-          </div>
-          <!-- = -->
-          <div class="symbol">
-            <span></span><i v-for="item in bkFieldsChoices" :key="item">=</i>
-          </div>
-          <!-- 对应用户目录字段 -->
-          <div class="input-container">
-            <span class="description">{{$t('对应字段1') + catalogName + $t('对应字段2')}}</span>
-            <bk-input
-              class="extend-input"
-              v-for="(item, index) in bkFieldsChoices"
-              v-model="extendFields.mad_fields[index]"
-              :key="index"
-            ></bk-input>
-            <!--                        <bk-select-->
-            <!--                            class="extend-input"-->
-            <!--                            v-for="(item, index) in bkFieldsChoices"-->
-            <!--                            v-model="extendFields.mad_fields[index]"-->
-            <!--                            :key="index"-->
-            <!--                            :clearable="false"-->
-            <!--                            :placeholder="$t('请选择')">-->
-            <!--                            <bk-option v-for="option in madFieldsChoices"
-                                                       :key="option" :id="option"
-                                                       :name="option"></bk-option>-->
-            <!--                        </bk-select>-->
-          </div>
-        </div>
-      </div>
-    </div>
+    <!--    &lt;!&ndash; 用户扩展字段 &ndash;&gt;-->
+    <!--    <div class="collapse">-->
+    <!--      <div class="collapse-item">-->
+    <!--        <div class="header-container" @click="expandExtensional = !expandExtensional">-->
+    <!--          <div class="header">-->
+    <!--            <span class="title">{{$t('用户扩展字段')}}</span>-->
+    <!--            <div :class="{ 'collapse-group': true, expanded: expandExtensional }">-->
+    <!--              <i class="collapse-icon bk-icon icon-angle-double-down"></i>-->
+    <!--              <span class="collapse-text">{{expandExtensional ? $t('收起') : $t('展开')}}</span>-->
+    <!--            </div>-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--        &lt;!&ndash; todo 动画 &ndash;&gt;-->
+    <!--        <div class="content extend-content catalog-setting-step" v-show="expandExtensional">-->
+    <!--          &lt;!&ndash; 蓝鲸用户管理字段 &ndash;&gt;-->
+    <!--          <div class="input-container">-->
+    <!--            <span class="description">{{$t('蓝鲸用户管理字段')}}</span>-->
+    <!--            <bk-input disabled class="extend-input" v-for="(item, index) in bkFieldsChoices"-->
+    <!--                      :key="index"-->
+    <!--                      :value="item"></bk-input>-->
+    <!--          </div>-->
+    <!--          &lt;!&ndash; = &ndash;&gt;-->
+    <!--          <div class="symbol">-->
+    <!--            <span></span><i v-for="item in bkFieldsChoices" :key="item">=</i>-->
+    <!--          </div>-->
+    <!--          &lt;!&ndash; 对应用户目录字段 &ndash;&gt;-->
+    <!--          <div class="input-container">-->
+    <!--            <span class="description">{{$t('对应字段1') + catalogName + $t('对应字段2')}}</span>-->
+    <!--            <bk-input-->
+    <!--              class="extend-input"-->
+    <!--              v-for="(item, index) in bkFieldsChoices"-->
+    <!--              v-model="extendFields.mad_fields[index]"-->
+    <!--              :key="index"-->
+    <!--            ></bk-input>-->
+    <!--            &lt;!&ndash;                        <bk-select&ndash;&gt;-->
+    <!--            &lt;!&ndash;                            class="extend-input"&ndash;&gt;-->
+    <!--            &lt;!&ndash;                            v-for="(item, index) in bkFieldsChoices"&ndash;&gt;-->
+    <!--            &lt;!&ndash;                            v-model="extendFields.mad_fields[index]"&ndash;&gt;-->
+    <!--            &lt;!&ndash;                            :key="index"&ndash;&gt;-->
+    <!--            &lt;!&ndash;                            :clearable="false"&ndash;&gt;-->
+    <!--            &lt;!&ndash;                            :placeholder="$t('请选择')">&ndash;&gt;-->
+    <!--            &lt;!&ndash;                            <bk-option v-for="option in madFieldsChoices"-->
+    <!--                                                       :key="option" :id="option"-->
+    <!--                                                       :name="option"></bk-option>&ndash;&gt;-->
+    <!--            &lt;!&ndash;                        </bk-select>&ndash;&gt;-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </div>-->
 
     <!-- 用户组字段 -->
     <div class="collapse">
       <div class="collapse-item">
         <div class="header-container" @click="expandGroup = !expandGroup">
           <div class="header">
-            <span class="title">{{$t('用户组字段')}}</span>
+            <span class="title">{{$t('用户组字段')}}
+              <span class="namespace-description">({{$t('用户组配置描述')}})</span>
+            </span>
             <div :class="{ 'collapse-group': true, expanded: expandGroup }">
               <i class="collapse-icon bk-icon icon-angle-double-down"></i>
               <span class="collapse-text">{{expandGroup ? $t('收起') : $t('展开')}}</span>
@@ -193,18 +195,29 @@
                        @hasError="handleHasError" />
 
           <!-- 用户组名字段 -->
-          <CommonInput keyword="user_group_name"
+          <!-- <CommonInput keyword="user_group_name"
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组名字段')"
                        :is-need="false"
                        @hasError="handleHasError" />
+          -->
 
           <!-- 用户组描述字段 -->
-          <CommonInput keyword="user_group_description"
+          <!-- <CommonInput keyword="user_group_description"
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组描述字段')"
+                       :is-need="false"
+                       @hasError="handleHasError" />
+          -->
+
+          <!-- 用户组关联字段 -->
+          <CommonInput keyword="user_member_of"
+                       :info="groupFields"
+                       :input-bus="inputBus"
+                       :title="$t('用户组关联字段')"
+                       :description="$t('用户组关联字段描述')"
                        :is-need="false"
                        @hasError="handleHasError" />
 
@@ -381,6 +394,13 @@ export default {
 
           > .title {
             font-weight: bold;
+
+            > .namespace-description {
+              margin-top: 8px;
+              font-size: 12px;
+              font-weight: lighter;
+              color: $fontLight;
+            }
           }
 
           > .collapse-group {
