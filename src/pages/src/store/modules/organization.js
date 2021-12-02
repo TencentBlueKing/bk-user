@@ -118,5 +118,9 @@ export default {
       const { id } = params;
       return http.post(`/api/v2/profiles/${id}/restoration/`);
     },
+    // 多条件查询
+    getMultiConditionQuery(context, params, config = {}) {
+      return http.get(`api/v3/profiles/?${params}`);
+    },
   },
 };

@@ -388,5 +388,5 @@ export default {
   请输入数字: 'Please enter a number',
   蓝鲸用户管理字段: 'Blue Whale User management field',
   对应: 'The corresponding',
-  目录字段: 'Category field'
+  目录字段: 'Category field',
 };
