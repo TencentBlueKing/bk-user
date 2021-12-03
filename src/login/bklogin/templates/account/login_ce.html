@@ -39,7 +39,7 @@
             <div class="login-from">
                 <div class="logo-title">
                     <div class="logo_ce">
-                        <img src="{{STATIC_URL}}img/logo_ce/logo_ce.png" alt="">
+                        <img src="{{STATIC_URL}}{% trans 'img/logo_ce/logo_ce.png' %}" alt="">
                     </div>
                     <div>
                         <span class="title">{% trans '社区版' %}</span>
@@ -47,15 +47,15 @@
                     </div>
                 </div>
                 <div class="from-detail">
-                    <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
-                        <div class="form-login">
+                    <div class="form-login">
+                        <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
                             <div class="user group-control">
                                 <i class="bk-icon icon-user"></i>
-                                <input id="user" type="text" name="username" placeholder={% trans "请输入用户名" %}>
+                                <input id="user" type="text" name="username" placeholder="{% trans '请输入用户名' %}">
                             </div>
                             <div class="pwd group-control">
                                 <i class="bk-icon icon-invisible-eye" id="invisible"></i>
-                                <input class="password" id="password" type="password" name="password" value="" placeholder={% trans "请输入密码" %}>
+                                <input class="password" id="password" type="password" name="password" value="" placeholder="{% trans '请输入密码' %}">
                             </div>
                             <p class="change-password">
                                 {% if error_message %}
@@ -79,32 +79,31 @@
                                 <!-- {% endif %} -->
                                 <a href="{{ forget_password_url }}" class="password-btn fr" target="_blank">{% trans '忘记密码？' %}</a>
                             </div>
-                            <div class="language-switcher">
-                                <p class="language-item active">
-                                    <span id="ch" class="text-active">中文</span>
-                                </p>
-                                <p class="language-item">
-                                    <span id="en" class="text-active">English</span>
-                                </p>
-                                <!-- <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">{% csrf_token %}
-                                    <input name="next" type="hidden" value="{{ redirect_to }}" />
-                                    <select name="language" style="display: none;">
-                                        {% get_current_language as LANGUAGE_CODE %}
-                                        {% get_available_languages as LANGUAGES %}
-                                        {% get_language_info_list for LANGUAGES as languages %}
-                                        {% for language in languages %}
-                                            <option class="language-item" value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
-                                                <span class="text-active">{{ language.name_local }}</span>
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                    <a href="javascript: void(0);">
-                                        <img class="{% if LANGUAGE_CODE == 'en' %} en {% endif %}" src="{{STATIC_URL}}{% trans 'img/logo/btn_cn.png' %}" />
-                                    </a> -->
-                                </form>
-                            </div>
+                        </form>
+                    <div class="language-switcher">
+                        {% get_current_language as LANGUAGE_CODE %}
+                        {% get_available_languages as LANGUAGES %}
+                        {% get_language_info_list for LANGUAGES as languages %}
+                        <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">{% csrf_token %}
+                            <input name="next" type="hidden" value="{{ redirect_to }}" />
+                            <select name="language" style="display: none;">
+                                {% for language in languages %}
+                                    <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
+                                        {{ language.name_local }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        <div class="language-select" style="display: flex">
+                            <p class="language-item {% if LANGUAGE_CODE == 'zh-hans' %} active {% endif %}"  >
+                                <span id="ch"  class="text-active">中文</span>
+                            </p>
+                            <p class="language-item {% if LANGUAGE_CODE == 'en' %} active {% endif %}">
+                                <span id="en" class="text-active">English</span>
+                            </p>
                         </div>
-                    </form>
+                        </form>
+                    </div>
+                    </div>
                 </div>
             </div>
             <footer class="footer">
