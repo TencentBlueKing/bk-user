@@ -20,7 +20,7 @@ RUN pip install poetry==1.1.7
 WORKDIR /app
 COPY src/api/pyproject.toml /app
 COPY src/api/poetry.lock /app
-RUN poetry config virtualenvs.create false && poetry install --no-dev
+RUN poetry config experimental.new-installer false && poetry config virtualenvs.create false && poetry install --no-dev
 
 COPY src/api/wsgi.py /app
 COPY src/api/bkuser_core /app/bkuser_core
