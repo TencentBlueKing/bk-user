@@ -30,7 +30,7 @@ RUN pip install poetry==1.1.7
 
 COPY src/saas/pyproject.toml /app
 COPY src/saas/poetry.lock /app
-RUN poetry config virtualenvs.create false && poetry install --no-dev
+RUN poetry config experimental.new-installer false && poetry config virtualenvs.create false && poetry install --no-dev
 
 COPY src/saas/wsgi.py /app
 COPY src/saas/bkuser_shell /app/bkuser_shell
