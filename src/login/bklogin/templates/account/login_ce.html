@@ -39,11 +39,11 @@
             <div class="login-from">
                 <div class="logo-title">
                     <div class="logo_ce">
-                        <img src="{{STATIC_URL}}{% trans 'img/logo_ce/logo_ce.png' %}" alt="">
+                        <img src="{{STATIC_URL}}{% trans 'img/logo_ce/logo.svg' %}" alt="">
                     </div>
                     <div>
                         <span class="title">{% trans '社区版' %}</span>
-                        <img src="{{STATIC_URL}}/img/logo_ce/v7.png" alt="">
+                        <img src="{{STATIC_URL}}/img/logo_ce/v7.svg" alt="">
                     </div>
                 </div>
                 <div class="from-detail">
@@ -80,29 +80,29 @@
                                 <a href="{{ forget_password_url }}" class="password-btn fr" target="_blank">{% trans '忘记密码？' %}</a>
                             </div>
                         </form>
-                    <div class="language-switcher">
-                        {% get_current_language as LANGUAGE_CODE %}
-                        {% get_available_languages as LANGUAGES %}
-                        {% get_language_info_list for LANGUAGES as languages %}
-                        <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">{% csrf_token %}
-                            <input name="next" type="hidden" value="{{ redirect_to }}" />
-                            <select name="language" style="display: none;">
-                                {% for language in languages %}
-                                    <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
-                                        {{ language.name_local }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        <div class="language-select" style="display: flex">
-                            <p class="language-item {% if LANGUAGE_CODE == 'zh-hans' %} active {% endif %}"  >
-                                <span id="ch"  class="text-active">中文</span>
-                            </p>
-                            <p class="language-item {% if LANGUAGE_CODE == 'en' %} active {% endif %}">
-                                <span id="en" class="text-active">English</span>
-                            </p>
+                        <div class="language-switcher">
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% get_available_languages as LANGUAGES %}
+                            {% get_language_info_list for LANGUAGES as languages %}
+                            <form id="language-form" action="{{SITE_URL}}i18n/setlang/" method="post">{% csrf_token %}
+                                <input name="next" type="hidden" value="{{ redirect_to }}" />
+                                <select name="language" style="display: none;">
+                                    {% for language in languages %}
+                                        <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected="selected"{% endif %}>
+                                            {{ language.name_local }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            <div class="language-select" style="display: flex">
+                                <p class="language-item {% if LANGUAGE_CODE == 'zh-hans' %} active {% endif %}"  >
+                                    <span id="ch"  class="text-active">中文</span>
+                                </p>
+                                <p class="language-item {% if LANGUAGE_CODE == 'en' %} active {% endif %}">
+                                    <span id="en" class="text-active">English</span>
+                                </p>
+                            </div>
+                            </form>
                         </div>
-                        </form>
-                    </div>
                     </div>
                 </div>
             </div>

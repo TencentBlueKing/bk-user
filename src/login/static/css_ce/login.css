@@ -176,7 +176,7 @@ input[type="number"]::-webkit-outer-spin-button {
   position: absolute;
   right: 0;
   top: 0;
-  padding-bottom: 18%;
+  padding-bottom: 10%;
   background-color: rgb(235,242,250);
 }
 .page-content .right-top img {
@@ -218,7 +218,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .logo-title {
   opacity: 1;
-  padding: 55px 32px 50px 0;
+  padding: 55px 0 50px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -237,15 +237,32 @@ input[type="number"]::-webkit-outer-spin-button {
   position: absolute;
   cursor: pointer;
   background: #c4c6cc;
-  top: 61px;
+  top: 63px;
   left: 225px;
 }
 .page-content .login-from .logo-title div {
   padding: 0 12px;
+  width: 50%;
 }
-.page-content .login-from .logo-title img {
+.page-content .login-from .logo-title .logo_ce {
+  text-align: end;
+}
+
+.page-content .login-from .logo-title .logo_ce img {
+  width: 145px;
+}
+
+.page-content .login-from .logo-title .logo_community {
+  display: flex;
+  line-height: 30px;
+}
+.page-content .login-from .logo-title .logo_community img {
+  width: 46px;
+  margin-left: 4px;
+}
+/* .page-content .login-from .logo-title img {
   vertical-align: text-bottom;
-}
+} */
 .page-content .login-from .from-detail {
   position: relative;
   padding-bottom: 40px;
@@ -470,7 +487,7 @@ input[type="number"]::-webkit-outer-spin-button {
   line-height: 24px;
   justify-content: end;
   text-align: right;
-  margin-top: 47px;
+	margin-top: 47px;
 }
 .language-switcher .language-item {
   width: 70px;
