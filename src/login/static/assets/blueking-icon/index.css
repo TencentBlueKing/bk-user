@@ -35,3 +35,12 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-invisible-eye:before {
 	content: "\e104";
 }
+.icon-v7:before {
+	content: "\e105";
+}
+.icon-logo:before {
+	content: "\e106";
+}
+.icon-lanjingzhiyunen:before {
+	content: "\e107";
+}

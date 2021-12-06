@@ -327,12 +327,12 @@ msgid "登录|蓝鲸智云"
 msgstr "Login|BlueKing"
 
 #: bklogin/templates/account/login_ce.html:42
-msgid "img/logo_ce/logo_ce.png"
-msgstr "img/logo_ce/logo_ce.png"
+msgid "img/logo_ce/logo.svg"
+msgstr "img/logo_ce/logo_en.svg"
 
 #: bklogin/templates/account/login_ce.html:45
 msgid "社区版"
-msgstr "社区版"
+msgstr "CE"
 
 #: bklogin/templates/account/login_ce.html:64
 #, fuzzy
