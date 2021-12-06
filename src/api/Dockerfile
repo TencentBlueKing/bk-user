@@ -9,7 +9,7 @@ RUN rm /etc/apt/sources.list && \
 
 RUN mkdir ~/.pip &&  printf '[global]\nindex-url = https://mirrors.tencent.com/pypi/simple/' > ~/.pip/pip.conf
 
-RUN apt-get update && apt-get install -y gcc
+RUN apt-get update && apt-get install -y gcc gettext
 
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
