@@ -470,7 +470,7 @@ input[type="number"]::-webkit-outer-spin-button {
   line-height: 24px;
   justify-content: end;
   text-align: right;
-	margin-top: 47px;
+  margin-top: 47px;
 }
 .language-switcher .language-item {
   width: 70px;

@@ -616,6 +616,15 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             logger.exception("check profile<%s> failed", profile.username)
             raise error_codes.PASSWORD_ERROR
 
+        self._check_password_status(request, profile, config_loader, time_aware_now)
+
+        create_profile_log(profile=profile, operation="LogIn", request=request, params={"is_success": True})
+        return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)
+
+    def _check_password_status(
+        self, request, profile: Profile, config_loader: ConfigProvider, time_aware_now: datetime.datetime
+    ):
+        """当密码校验成功后，检查用户密码状态"""
         # 密码状态校验:初始密码未修改
         # 暂时跳过判断 admin，考虑在 login 模块未升级替换时，admin 可以在 SaaS 配置中关掉该特性
         if (
@@ -648,9 +657,6 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
 
             raise error_codes.PASSWORD_EXPIRED.format(data=self._generate_reset_passwd_url_with_token(profile))
-
-        create_profile_log(profile=profile, operation="LogIn", request=request, params={"is_success": True})
-        return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)
 
     @staticmethod
     def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
