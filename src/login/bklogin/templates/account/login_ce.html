@@ -38,19 +38,12 @@
             </div>
             <div class="login-from">
                 <div class="logo-title">
-                    <div class="logo_ce">
-                        <img src="{{STATIC_URL}}{% trans 'img/logo_ce/logo.svg' %}" alt="">
-                    </div>
-                    <div class="logo_community">
-                        <span class="title">{% trans '社区版' %}</span>
-                        <img src="{{STATIC_URL}}/img/logo_ce/v7.svg" alt="">
-                    </div>
+                    <img class="logo-img" src="{{STATIC_URL}}{% trans 'img/logo_ce/logo_ch.png' %}" alt="">
                 </div>
                 <div class="from-detail">
                     <div class="form-login">
                         <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
                             <div class="user group-control">
-                                <i class="bk-icon icon-user"></i>
                                 <input id="user" type="text" name="username" placeholder="{% trans '请输入用户名' %}">
                             </div>
                             <div class="pwd group-control">

@@ -218,52 +218,14 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .logo-title {
   opacity: 1;
-  padding: 55px 0 50px 0;
+  padding: 55px 0 50px 71px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
-
-.page-content .login-from .logo-title .title {
-  font-size: 22px;
-  font-family: TencentSansW7;
-  color: #63656e;
+.page-content .login-from .logo-title .logo-img {
+  height: 34px;
 }
-.page-content .login-from .logo-title .logo_ce:after {
-  content: '';
-  height: 18px;
-  width: 1px;
-  display: block;
-  position: absolute;
-  cursor: pointer;
-  background: #c4c6cc;
-  top: 63px;
-  left: 225px;
-}
-.page-content .login-from .logo-title div {
-  padding: 0 12px;
-  width: 50%;
-}
-.page-content .login-from .logo-title .logo_ce {
-  text-align: end;
-}
-
-.page-content .login-from .logo-title .logo_ce img {
-  width: 145px;
-  height: 27px;
-}
-
-.page-content .login-from .logo-title .logo_community {
-  display: flex;
-  line-height: 30px;
-}
-.page-content .login-from .logo-title .logo_community img {
-  width: 46px;
-  margin-left: 4px;
-}
-/* .page-content .login-from .logo-title img {
-  vertical-align: text-bottom;
-} */
 .page-content .login-from .from-detail {
   position: relative;
   padding-bottom: 40px;
@@ -287,7 +249,7 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 0 38px;
 }
 .page-content .login-from .form-login .change-password {
-  height: 22px;
+  margin-top: 2px;
 }
 .page-content .login-from .form-login .change-password span {
   color: #ea3636;
@@ -300,7 +262,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .form-login.is-danger .group-control input {
   border-color: #ff5656;
-  color: #ff5656;
+  color: #63656e;
 }
 .page-content .login-from .form-login.is-danger .group-control input:focus {
   border-color: #ff5656;
@@ -338,7 +300,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .form-login.certificate-expired .group-control input {
   border-color: #dde4eb;
-  color: #cad3dc;
+  color: #63656e;
 }
 .page-content
   .login-from
@@ -397,7 +359,7 @@ input[type="number"]::-webkit-outer-spin-button {
   position: relative;
 }
 .page-content .login-from .form-login .user {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 .page-content .login-from .form-login .group-control i {
   position: absolute;
@@ -415,7 +377,7 @@ input[type="number"]::-webkit-outer-spin-button {
   outline: 0;
   border: 1px solid #C4C6CC;
   padding: 0 40px 0 12px;
-  color: #737987;
+  color: #63656e;
   border-radius: 2px;
 }
 .page-content .login-from .form-login .action {
@@ -446,7 +408,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .form-login .btn-content {
   font-size: 0;
-  padding-top: 24px;
+  padding-top: 32px;
 }
 .page-content .login-from .form-login .btn-content .login-btn {
   width: 100%;
