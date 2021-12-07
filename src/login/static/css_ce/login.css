@@ -215,9 +215,6 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 46px;
   margin-left: 4px;
 }
-/* .page-content .login-from .logo-title img {
-  vertical-align: text-bottom;
-} */
 .page-content .login-from .from-detail {
   position: relative;
   padding-bottom: 40px;
@@ -351,7 +348,7 @@ input[type="number"]::-webkit-outer-spin-button {
   position: relative;
 }
 .page-content .login-from .form-login .user {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 .page-content .login-from .form-login .group-control i {
   position: absolute;
