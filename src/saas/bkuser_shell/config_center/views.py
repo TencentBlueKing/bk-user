@@ -214,7 +214,7 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
         # TODO:  后续改为批量接口
         result = []
         for setting_info in validated_data:
-            body = {"value": setting_info["value"]}
+            body = {"value": setting_info["value"], "enabled": setting_info["enabled"]}
             try:
                 setting_id = setting_instances[setting_info["key"]].id
             except KeyError:
@@ -224,7 +224,7 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
             try:
                 api_response = api_instance.v2_settings_partial_update(body=body, lookup_value=setting_id)
             except ApiException:
-                logger.exception("更新 Setting<%s> 失败", setting_info["id"])
+                logger.exception("在目录<%s>中更新 Setting<%s>-<%s> 失败", category_id, setting_info["key"], setting_id)
                 continue
 
             result.append(api_response)

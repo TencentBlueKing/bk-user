@@ -45,6 +45,7 @@ class SettingCreateSerializer(serializers.Serializer):
 
 class SettingUpdateSerializer(serializers.Serializer):
     value = serializers.JSONField()
+    enabled = serializers.BooleanField(default=True)
 
 
 class SettingListSerializer(serializers.Serializer):

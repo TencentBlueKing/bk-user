@@ -63,6 +63,7 @@ from rest_framework_jsonp.renderers import JSONPRenderer
 
 from bkuser_global.utils import force_str_2_bool
 
+from ..user_settings.exceptions import SettingHasBeenDisabledError
 from . import serializers as local_serializers
 
 logger = logging.getLogger(__name__)
@@ -320,9 +321,12 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if validated_data.get("password"):
             pending_password = validated_data.get("password")
             config_loader = ConfigProvider(category_id=instance.category_id)
-            max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
-            if check_former_passwords(instance, pending_password, max_password_history):
-                raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
+            try:
+                max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
+                if check_former_passwords(instance, pending_password, int(max_password_history)):
+                    raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
+            except SettingHasBeenDisabledError:
+                logger.info("category<%s> has disabled checking password", instance.category_id)
 
             PasswordValidator(
                 min_length=int(config_loader["password_min_length"]),
@@ -400,9 +404,12 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         new_password = serializer.validated_data["new_password"]
 
         config_loader = ConfigProvider(category_id=instance.category_id)
-        max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
-        if check_former_passwords(instance, new_password, max_password_history):
-            raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
+        try:
+            max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
+            if check_former_passwords(instance, new_password, int(max_password_history)):
+                raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
+        except SettingHasBeenDisabledError:
+            logger.info("category<%s> has disabled checking password", instance.category_id)
 
         if not instance.check_password(old_password):
             raise error_codes.PASSWORD_ERROR
