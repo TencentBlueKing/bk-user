@@ -329,8 +329,8 @@ export default {
         const currentPasswordInfo = this.$store.state.organization.currentPasswordInfo;
         if (currentPasswordInfo.id === this.currentCategoryId && currentPasswordInfo.data) {
           this.passwordRules = {
-            passwordMinLength: currentPasswordInfo.data.password_min_length,
-            passwordMustIncludes: currentPasswordInfo.data.password_must_includes,
+            passwordMinLength: currentPasswordInfo.data.password_min_length.value,
+            passwordMustIncludes: currentPasswordInfo.data.password_must_includes.value,
           };
         } else {
           try {
@@ -340,8 +340,8 @@ export default {
             });
             const passwordInfo = this.$convertArrayToObject(res.data).default;
             this.passwordRules = {
-              passwordMinLength: passwordInfo.password_min_length,
-              passwordMustIncludes: passwordInfo.password_must_includes,
+              passwordMinLength: passwordInfo.password_min_length.value,
+              passwordMustIncludes: passwordInfo.password_must_includes.value,
             };
             this.$store.commit('organization/updatePasswordInfo', {
               id: this.currentCategoryId,
