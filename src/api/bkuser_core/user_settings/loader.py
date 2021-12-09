@@ -31,7 +31,7 @@ class ConfigProvider:
         self._config = {x.meta.key: x.value for x in settings}
 
     def get(self, k, d=None):
-        if not self._raws.get(k).enabled:
+        if k in self._raws and not self._raws.get(k).enabled:
             raise SettingHasBeenDisabledError(k)
 
         return self._config.get(k, d)
