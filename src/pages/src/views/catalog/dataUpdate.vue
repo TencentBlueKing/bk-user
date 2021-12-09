@@ -69,10 +69,16 @@
             <div class="td-container" v-else-if="row.status === 'failed'">
               <span class="fail"></span>
               <span v-bk-tooltips="$t('同步操作失败，请在用户管理后台 API 日志中查询详情')">{{$t('失败')}}</span>
+              <span v-if="row.retry_count !== 0">(已重试{{row.retry_count}}次)</span>
             </div>
             <div class="td-container" v-else-if="row.status === 'running'">
               <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
               <span class="syncing">{{$t('同步中')}}</span>
+            </div>
+            <div class="td-container" v-else-if="row.status === 'retrying'">
+              <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
+              <span v-if="row.retry_count !== 0">第{{row.retry_count}}次</span>
+              <span class="syncing">{{$t('失败重试中')}}</span>
             </div>
           </template>
         </bk-table-column>

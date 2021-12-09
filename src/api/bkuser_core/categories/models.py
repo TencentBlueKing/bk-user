@@ -173,20 +173,13 @@ class SyncTask(TimestampedModel):
         verbose_name="触发类型", max_length=16, choices=SyncTaskType.get_choices(), default=SyncTaskType.MANUAL.value
     )
     operator = models.CharField(max_length=255, verbose_name="操作人", default="nobody")
+    retry_count = models.IntegerField(verbose_name="重试次数", default=0)
 
     objects = SyncTaskManager()
 
     @property
     def required_time(self) -> datetime.timedelta:
         return self.update_time - self.create_time
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_val is not None:
-            self.status = SyncTaskStatus.FAILED.value
-            self.save(update_fields=["status", "update_time"])
 
     @property
     def progresses(self):

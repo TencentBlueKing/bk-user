@@ -8,17 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_core.categories.plugins.plugin import DataSourcePlugin, HookType
+import logging
 
-from .hooks import AlertIfFailedHook
-from .login import LoginHandler
-from .sycner import CustomSyncer
+from celery.states import FAILURE
 
-DataSourcePlugin(
-    name="custom",
-    syncer_cls=CustomSyncer,
-    login_handler_cls=LoginHandler,
-    allow_client_write=True,
-    category_type="custom",
-    hooks={HookType.POST_SYNC: AlertIfFailedHook},
-).register()
+logger = logging.getLogger(__name__)
+
+
+class AlertIfFailedHook:
+    def trigger(self, status: str, params: dict):
+        if status == FAILURE:
+            logger.error(
+                "failed to sync data for category<%s> after %s times tries", params["category"], params["retries"]
+            )
+            # you can send some alerts here
