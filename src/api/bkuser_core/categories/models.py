@@ -118,7 +118,7 @@ class ProfileCategory(TimestampedModel):
     def get_unfilled_settings(self):
         """获取未就绪的配置"""
         required_metas = self.get_required_metas()
-        configured_meta_ids = self.settings.filter(enabled=True).values_list("meta", flat=True)
+        configured_meta_ids = self.settings.all().values_list("meta", flat=True)
         return required_metas.exclude(id__in=configured_meta_ids)
 
     def mark_synced(self):
@@ -144,7 +144,7 @@ class ProfileCategory(TimestampedModel):
 class SyncTaskManager(models.Manager):
     def register_task(
         self, category: ProfileCategory, operator: str, type_: SyncTaskType = SyncTaskType.MANUAL
-    ) -> 'SyncTask':
+    ) -> "SyncTask":
         qs = self.filter(category=category, status=SyncTaskStatus.RUNNING.value).order_by("-create_time")
         running = qs.first()
         if not running:
@@ -164,7 +164,7 @@ class SyncTaskManager(models.Manager):
 
 
 class SyncTask(TimestampedModel):
-    id = models.UUIDField('UUID', default=uuid4, primary_key=True, editable=False, auto_created=True, unique=True)
+    id = models.UUIDField("UUID", default=uuid4, primary_key=True, editable=False, auto_created=True, unique=True)
     category = models.ForeignKey(ProfileCategory, verbose_name="用户目录", on_delete=models.CASCADE, db_index=True)
     status = models.CharField(
         verbose_name="状态", max_length=16, choices=SyncTaskStatus.get_choices(), default=SyncTaskStatus.RUNNING.value
@@ -196,8 +196,8 @@ class SyncTask(TimestampedModel):
 
 
 class SyncProgressManager(models.Manager):
-    def init_progresses(self, category: ProfileCategory, task_id: UUID) -> Dict[SyncStep, 'SyncProgress']:
-        progresses: Dict[SyncStep, 'SyncProgress'] = {}
+    def init_progresses(self, category: ProfileCategory, task_id: UUID) -> Dict[SyncStep, "SyncProgress"]:
+        progresses: Dict[SyncStep, "SyncProgress"] = {}
         for step in [
             SyncStep.DEPARTMENTS,
             SyncStep.USERS,
@@ -211,7 +211,7 @@ class SyncProgressManager(models.Manager):
 
 
 class SyncProgress(TimestampedModel):
-    task_id = models.UUIDField(db_index=True, verbose_name='任务id')
+    task_id = models.UUIDField(db_index=True, verbose_name="任务id")
     category = models.ForeignKey(ProfileCategory, verbose_name="用户目录", on_delete=models.CASCADE)
     step = models.CharField(verbose_name="同步步骤", max_length=32, choices=SyncStep.get_choices())
     status = models.CharField(

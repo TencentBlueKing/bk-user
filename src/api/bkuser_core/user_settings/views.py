@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class SettingViewSet(AdvancedModelViewSet):
     """配置项"""
 
-    queryset = Setting.objects.filter(enabled=True)
+    queryset = Setting.objects.all()
     serializer_class = serializers.SettingSerializer
     lookup_field: str = "id"
 

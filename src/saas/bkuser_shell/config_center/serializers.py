@@ -147,6 +147,7 @@ class ListNamespaceSettingsSerializer(serializers.Serializer):
 class UpdateNamespaceSettingSerializer(serializers.Serializer):
     key = serializers.CharField()
     value = serializers.JSONField()
+    enabled = serializers.BooleanField(required=False, default=True)
 
 
 class SettingMetaSerializer(serializers.Serializer):

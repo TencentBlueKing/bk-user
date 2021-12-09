@@ -14,7 +14,7 @@ jobs:
     - name: Install modules
       run: |
         cd src/pages
-        npm i --force
+        npm i
     - name: Run ESLint
       run: |
         cd src/pages
