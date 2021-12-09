@@ -672,20 +672,6 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
         return data
 
-    @staticmethod
-    def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
-        data = {}
-        try:
-            token_holder = ProfileTokenHolder.objects.create(
-                profile=profile, token_expire_seconds=settings.PAGE_TOKEN_EXPIRE_SECONDS
-            )
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("failed to create token for password reset")
-        else:
-            data.update({"reset_password_url": make_passwd_reset_url_by_token(token_holder.token)})
-
-        return data
-
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=local_serializers.LoginUpsertSerializer)
     def upsert(self, request):

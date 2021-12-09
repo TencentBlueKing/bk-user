@@ -22,3 +22,4 @@ def escape_html_return_msg(func):
         # 对于字符串类型，进行html转义
         return [html_escape(item) if isinstance(item, str) else item for item in result]
 
+    return wrapper

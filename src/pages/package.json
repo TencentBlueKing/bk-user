@@ -41,9 +41,9 @@
         }
     },
     "dependencies": {
-        "bk-magic-vue": "2.2.16",
         "art-template": "4.1.0",
         "axios": "0.18.0",
+        "bk-magic-vue": "2.2.16",
         "connect-history-api-fallback": "1.6.0",
         "cookie": "0.4.0",
         "cookie-parser": "1.4.4",
@@ -52,6 +52,7 @@
         "express-art-template": "1.0.1",
         "intl-tel-input": "16.0.0",
         "jsonp": "0.2.1",
+        "node-sass": "^4.14.1",
         "query-string": "6.5.0",
         "sortablejs": "1.10.1",
         "url-parse": "1.4.7",
@@ -123,7 +124,6 @@
         "markdown-it-container": "2.0.0",
         "mini-css-extract-plugin": "0.6.0",
         "moment": "2.24.0",
-        "node-sass": "4.13.0",
         "npm": "6.9.0",
         "open": "6.3.0",
         "opencollective": "1.0.3",
