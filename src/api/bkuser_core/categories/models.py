@@ -132,7 +132,9 @@ class ProfileCategory(TimestampedModel):
         metas = SettingMeta.objects.filter(category_type=self.type)
         settings_result = []
         for meta in metas:
-            instance, _ = Setting.objects.get_or_create(category_id=self.id, meta=meta, value=meta.default)
+            instance, _ = Setting.objects.get_or_create(
+                category_id=self.id, meta=meta, defaults={"value": meta.default}
+            )
             settings_result.append(instance)
         return settings_result
 
