@@ -128,7 +128,7 @@
                         v-bk-tooltips="$t('目录未完成配置，无法操作')"
                         class="is-disabled">{{$t('同步')}}
                   </span>
-                  <span v-if="syncing"
+                  <span v-else-if="syncing"
                         v-bk-tooltips="$t('已有数据同步任务正在进行，请在数据更新记录中查看详情')"
                         class="is-disabled">
                     {{$t('同步')}}
