@@ -85,36 +85,36 @@ h6 {
 
 input::-webkit-input-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 input:-moz-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 input::-moz-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 input:-ms-input-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 
 textarea::-webkit-input-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 textarea:-moz-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 textarea::-moz-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 textarea:-ms-input-placeholder {
   font-family: "Microsoft YaHei";
-  color: #c3cdd7;
+  color: #C4C6CC;
 }
 
 .pb110 {
@@ -218,7 +218,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .logo-title {
   opacity: 1;
-  padding: 55px 0 50px 71px;
+  padding: 55px 0 50px 68px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -272,28 +272,28 @@ input[type="number"]::-webkit-outer-spin-button {
   .form-login.is-danger
   .group-control
   input::-webkit-input-placeholder {
-  color: #ff5656;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
   .form-login.is-danger
   .group-control
   input:-moz-placeholder {
-  color: #ff5656;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
   .form-login.is-danger
   .group-control
   input::-moz-placeholder {
-  color: #ff5656;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
   .form-login.is-danger
   .group-control
   input:-ms-input-placeholder {
-  color: #ff5656;
+  color: #C4C6CC;
 }
 .page-content .login-from .form-login.certificate-expired .group-control i {
   color: #cad3dc;
@@ -314,28 +314,28 @@ input[type="number"]::-webkit-outer-spin-button {
   .form-login.certificate-expired
   .group-control
   input::-webkit-input-placeholder {
-  color: #cad3dc;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
   .form-login.certificate-expired
   .group-control
   input:-moz-placeholder {
-  color: #cad3dc;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
   .form-login.certificate-expired
   .group-control
   input::-moz-placeholder {
-  color: #cad3dc;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
   .form-login.certificate-expired
   .group-control
   input:-ms-input-placeholder {
-  color: #cad3dc;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
@@ -391,20 +391,20 @@ input[type="number"]::-webkit-outer-spin-button {
   .form-login
   .group-control
   input::-webkit-input-placeholder {
-  color: #aaa;
+  color: #C4C6CC;
 }
 .page-content .login-from .form-login .group-control input:-moz-placeholder {
-  color: #aaa;
+  color: #C4C6CC;
 }
 .page-content .login-from .form-login .group-control input::-moz-placeholder {
-  color: #aaa;
+  color: #C4C6CC;
 }
 .page-content
   .login-from
   .form-login
   .group-control
   input:-ms-input-placeholder {
-  color: #aaa;
+  color: #C4C6CC;
 }
 .page-content .login-from .form-login .btn-content {
   font-size: 0;
