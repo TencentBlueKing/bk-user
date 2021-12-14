@@ -459,8 +459,13 @@ input[type="number"]::-webkit-outer-spin-button {
   transform: skew(-15deg, 0deg);
   display: inline-block;
   height: 24px;
-  border-radius: 2px;
   cursor: pointer;
+}
+.language-switcher .language-item:nth-child(1) {
+  border-radius: 2px 0 0 2px;
+}
+.language-switcher .language-item:nth-child(2) {
+  border-radius: 0 2px 2px 0;
 }
 .language-switcher .language-item .text-active {
   display: block;
