@@ -1278,7 +1278,7 @@ export default {
         const next = event.target.nextElementSibling;
         next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
         next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
-        if (differ <= 198) {
+        if (differ <= 280) {
           next.style.top = 'auto';
           next.style.bottom = `${differ}px`;
         }
