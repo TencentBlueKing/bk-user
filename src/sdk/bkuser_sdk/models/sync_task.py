@@ -36,7 +36,8 @@ class SyncTask(object):
         'type': 'str',
         'operator': 'str',
         'create_time': 'datetime',
-        'required_time': 'str'
+        'required_time': 'str',
+        'retry_count': 'int'
     }
 
     attribute_map = {
@@ -46,10 +47,11 @@ class SyncTask(object):
         'type': 'type',
         'operator': 'operator',
         'create_time': 'create_time',
-        'required_time': 'required_time'
+        'required_time': 'required_time',
+        'retry_count': 'retry_count'
     }
 
-    def __init__(self, id=None, category=None, status=None, type=None, operator=None, create_time=None, required_time=None):  # noqa: E501
+    def __init__(self, id=None, category=None, status=None, type=None, operator=None, create_time=None, required_time=None, retry_count=None):  # noqa: E501
         """SyncTask - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._category = None
@@ -58,6 +60,7 @@ class SyncTask(object):
         self._operator = None
         self._create_time = None
         self._required_time = None
+        self._retry_count = None
         self.discriminator = None
         self.id = id
         self.category = category
@@ -66,6 +69,7 @@ class SyncTask(object):
         self.operator = operator
         self.create_time = create_time
         self.required_time = required_time
+        self.retry_count = retry_count
 
     @property
     def id(self):
@@ -135,7 +139,7 @@ class SyncTask(object):
         """
         if status is None:
             raise ValueError("Invalid value for `status`, must not be `None`")  # noqa: E501
-        allowed_values = ["successful", "failed", "running"]  # noqa: E501
+        allowed_values = ["successful", "failed", "running", "retrying"]  # noqa: E501
         if status not in allowed_values:
             raise ValueError(
                 "Invalid value for `status` ({0}), must be one of {1}"  # noqa: E501
@@ -166,12 +170,6 @@ class SyncTask(object):
         """
         if type is None:
             raise ValueError("Invalid value for `type`, must not be `None`")  # noqa: E501
-        allowed_values = ["manual", "auto"]  # noqa: E501
-        if type not in allowed_values:
-            raise ValueError(
-                "Invalid value for `type` ({0}), must be one of {1}"  # noqa: E501
-                .format(type, allowed_values)
-            )
 
         self._type = type
 
@@ -249,6 +247,31 @@ class SyncTask(object):
             raise ValueError("Invalid value for `required_time`, must not be `None`")  # noqa: E501
 
         self._required_time = required_time
+
+    @property
+    def retry_count(self):
+        """Gets the retry_count of this SyncTask.  # noqa: E501
+
+        重试次数  # noqa: E501
+
+        :return: The retry_count of this SyncTask.  # noqa: E501
+        :rtype: int
+        """
+        return self._retry_count
+
+    @retry_count.setter
+    def retry_count(self, retry_count):
+        """Sets the retry_count of this SyncTask.
+
+        重试次数  # noqa: E501
+
+        :param retry_count: The retry_count of this SyncTask.  # noqa: E501
+        :type: int
+        """
+        if retry_count is None:
+            raise ValueError("Invalid value for `retry_count`, must not be `None`")  # noqa: E501
+
+        self._retry_count = retry_count
 
     def to_dict(self):
         """Returns the model properties as a dict"""

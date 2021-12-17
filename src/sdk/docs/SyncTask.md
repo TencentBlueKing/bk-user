@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **operator** | **str** | 操作人 | 
 **create_time** | **datetime** | 开始时间 | 
 **required_time** | **str** | 耗时 | 
+**retry_count** | **int** | 重试次数 | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

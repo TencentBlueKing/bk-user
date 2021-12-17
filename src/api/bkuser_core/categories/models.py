@@ -13,14 +13,7 @@ from typing import Dict, List
 from uuid import UUID, uuid4
 
 from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.categories.constants import (
-    TIMEOUT_THRESHOLD,
-    CategoryStatus,
-    CategoryType,
-    SyncStep,
-    SyncTaskStatus,
-    SyncTaskType,
-)
+from bkuser_core.categories.constants import TIMEOUT_THRESHOLD, CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.db_managers import ProfileCategoryManager
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError
 from bkuser_core.common.models import TimestampedModel
@@ -38,7 +31,7 @@ from django_celery_beat.models import PeriodicTask
 class ProfileCategory(TimestampedModel):
     """用户目录"""
 
-    type = models.CharField(verbose_name="类型", max_length=32, choices=CategoryType.get_choices())
+    type = models.CharField(verbose_name="类型", max_length=32)
     description = models.TextField("描述文字", null=True, blank=True)
     display_name = models.CharField(verbose_name="展示名称", max_length=64)
     domain = models.CharField(verbose_name="登陆域", max_length=64, db_index=True, unique=True)
