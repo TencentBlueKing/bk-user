@@ -16,9 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 class AlertIfFailedHook:
+    """当所有重试都失败时将告警通知"""
+
     def trigger(self, status: str, params: dict):
         if status == FAILURE:
             logger.error(
-                "failed to sync data for category<%s> after %s times tries", params["category"], params["retries"]
+                "failed to sync data for category<%s> after %s retries", params["category"], params["retries"]
             )
-            # you can send some alerts here
+            # 目前该 hook 更多是一个示例，并未实际实现告警通知功能
+            # TODO: 使用 ESB 通知到平台管理员

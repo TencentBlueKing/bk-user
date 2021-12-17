@@ -48,19 +48,20 @@ class RetryWithHookTask(Task):
 
 
 @contextmanager
-def sync_data_task(category: ProfileCategory, task_id: Union[uuid.UUID, Any], still_retrying: bool):
+def sync_data_task(category: ProfileCategory, task_id: Union[uuid.UUID, Any], should_retry: bool):
+    """同步数据任务，支持标记重试、失败、成功"""
     sync_task = SyncTask.objects.get(id=task_id)
     try:
         yield
     except Exception:
-        if still_retrying:
+        if should_retry:
             status = SyncTaskStatus.RETRYING.value
-            sync_task.retry_count += 1
+            sync_task.retried_count += 1
         else:
             status = SyncTaskStatus.FAILED.value
 
         sync_task.status = status
-        sync_task.save(update_fields=["retry_count", "status", "update_time"])
+        sync_task.save(update_fields=["retried_count", "status", "update_time"])
         raise
     else:
         # 标记同步

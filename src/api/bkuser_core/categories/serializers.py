@@ -110,7 +110,7 @@ class SyncTaskSerializer(Serializer):
     operator = CharField(help_text="操作人")
     create_time = DateTimeField(help_text="开始时间")
     required_time = DurationTotalSecondField(help_text="耗时")
-    retry_count = IntegerField(help_text="重试次数")
+    retried_count = IntegerField(help_text="重试次数")
 
 
 class SyncTaskProcessSerializer(Serializer):

@@ -44,4 +44,4 @@ class TestSyncDataTask:
             sync_task.status == SyncTaskStatus.RETRYING.value if retrying_status[-1] else SyncTaskStatus.FAILED.value
         )
 
-        assert sync_task.retry_count == len([x for x in retrying_status if x])
+        assert sync_task.retried_count == len([x for x in retrying_status if x])

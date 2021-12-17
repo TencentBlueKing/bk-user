@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="synctask",
-            name="retry_count",
+            name="retried_count",
             field=models.IntegerField(default=0, verbose_name="重试次数"),
         ),
         migrations.AlterField(

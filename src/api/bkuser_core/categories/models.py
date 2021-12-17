@@ -166,7 +166,7 @@ class SyncTask(TimestampedModel):
         verbose_name="触发类型", max_length=16, choices=SyncTaskType.get_choices(), default=SyncTaskType.MANUAL.value
     )
     operator = models.CharField(max_length=255, verbose_name="操作人", default="nobody")
-    retry_count = models.IntegerField(verbose_name="重试次数", default=0)
+    retried_count = models.IntegerField(verbose_name="重试次数", default=0)
 
     objects = SyncTaskManager()
 
