@@ -21,6 +21,7 @@ class SyncTaskSerializer(serializers.Serializer):
     operator = serializers.CharField(help_text="操作人")
     create_time = serializers.DateTimeField(help_text="开始时间")
     required_time = serializers.CharField(help_text="耗时, 单位秒")
+    retried_count = serializers.IntegerField(help_text="已重试次数")
 
 
 class SyncTaskProcessSerializer(serializers.Serializer):

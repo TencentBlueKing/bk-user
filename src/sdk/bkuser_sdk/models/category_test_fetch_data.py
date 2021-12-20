@@ -32,28 +32,33 @@ class CategoryTestFetchData(object):
         'basic_pull_node': 'str',
         'user_filter': 'str',
         'organization_class': 'str',
-        'user_group_filter': 'str'
+        'user_group_filter': 'str',
+        'user_member_of': 'str'
     }
 
     attribute_map = {
         'basic_pull_node': 'basic_pull_node',
         'user_filter': 'user_filter',
         'organization_class': 'organization_class',
-        'user_group_filter': 'user_group_filter'
+        'user_group_filter': 'user_group_filter',
+        'user_member_of': 'user_member_of'
     }
 
-    def __init__(self, basic_pull_node=None, user_filter=None, organization_class=None, user_group_filter=None):  # noqa: E501
+    def __init__(self, basic_pull_node=None, user_filter=None, organization_class=None, user_group_filter=None, user_member_of=None):  # noqa: E501
         """CategoryTestFetchData - a model defined in Swagger"""  # noqa: E501
         self._basic_pull_node = None
         self._user_filter = None
         self._organization_class = None
         self._user_group_filter = None
+        self._user_member_of = None
         self.discriminator = None
         self.basic_pull_node = basic_pull_node
         self.user_filter = user_filter
         self.organization_class = organization_class
         if user_group_filter is not None:
             self.user_group_filter = user_group_filter
+        if user_member_of is not None:
+            self.user_member_of = user_member_of
 
     @property
     def basic_pull_node(self):
@@ -144,6 +149,27 @@ class CategoryTestFetchData(object):
         """
 
         self._user_group_filter = user_group_filter
+
+    @property
+    def user_member_of(self):
+        """Gets the user_member_of of this CategoryTestFetchData.  # noqa: E501
+
+
+        :return: The user_member_of of this CategoryTestFetchData.  # noqa: E501
+        :rtype: str
+        """
+        return self._user_member_of
+
+    @user_member_of.setter
+    def user_member_of(self, user_member_of):
+        """Sets the user_member_of of this CategoryTestFetchData.
+
+
+        :param user_member_of: The user_member_of of this CategoryTestFetchData.  # noqa: E501
+        :type: str
+        """
+
+        self._user_member_of = user_member_of
 
     def to_dict(self):
         """Returns the model properties as a dict"""

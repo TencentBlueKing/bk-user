@@ -9,20 +9,29 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from dataclasses import dataclass, field
-from typing import Optional, Type
+from typing import Dict, Optional, Type
 from uuid import UUID
 
 from bkuser_core.categories.constants import SyncTaskStatus
 from bkuser_core.categories.loader import register_plugin
 from bkuser_core.categories.models import SyncProgress, SyncTask
 from bkuser_core.categories.plugins.base import LoginHandler, Syncer
+from bkuser_core.categories.plugins.constants import HookType
 from rest_framework import serializers
+from typing_extensions import Protocol
 
 
 class SyncRecordSLZ(serializers.Serializer):
     detail = serializers.DictField(child=serializers.CharField())
     success = serializers.BooleanField()
     dt = serializers.DateTimeField()
+
+
+class PluginHook(Protocol):
+    """插件钩子，用于各种事件后的回调"""
+
+    def trigger(self, status: str, params: dict):
+        raise NotImplementedError
 
 
 @dataclass
@@ -44,9 +53,15 @@ class DataSourcePlugin:
     # 其他额外配置
     extra_config: dict = field(default_factory=dict)
 
+    hooks: Dict[HookType, Type[PluginHook]] = field(default_factory=dict)
+
     def register(self):
         """注册插件"""
         register_plugin(self)
+
+    def get_hook(self, type_: HookType) -> Optional[PluginHook]:
+        hook_cls = self.hooks.get(type_)
+        return hook_cls() if hook_cls else None
 
     def sync(self, instance_id: int, task_id: UUID, *args, **kwargs):
         """同步数据"""

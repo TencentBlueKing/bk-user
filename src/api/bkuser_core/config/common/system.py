@@ -76,3 +76,9 @@ ENABLE_PROFILING = False
 
 # 是否使用进度条(本地开发方便)
 USE_PROGRESS_BAR = False
+
+# ==============================================================================
+# 数据同步
+# ==============================================================================
+TASK_MAX_RETRIES = env.int("TASK_MAX_RETRIES", default=3)
+RETRY_BACKOFF = env.int("RETRY_BACKOFF", default=30)
