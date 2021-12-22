@@ -558,7 +558,7 @@ export default {
           {
             key: 'update_time',
             name: 'update_time',
-          }
+          },
         );
         this.userMessage.tableHeardList = tableHeardList;
       } catch (e) {

@@ -57,12 +57,11 @@ export default {
     };
   },
   created() {
-    for (const item of this.catalogMetas) {
+    this.catalogMetas.map((item) => {
       if (item.authorized) {
         this.selectedItem = item;
-        break;
       }
-    }
+    });
   },
   methods: {
     handleSelectItem(item) {

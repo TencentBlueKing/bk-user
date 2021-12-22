@@ -468,7 +468,7 @@ export default {
     }
   }
 
-  /deep/ .audit-panel-class {
+  ::v-deep .audit-panel-class {
     margin-top: 20px;
 
     .bk-tab-section {

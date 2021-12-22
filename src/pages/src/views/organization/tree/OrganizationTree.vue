@@ -700,7 +700,7 @@ li.tree-first-node {
       height: 32px;
       line-height: initial;
 
-      /deep/ .bk-form-input {
+      ::v-deep .bk-form-input {
         padding-left: 41px;
       }
     }
