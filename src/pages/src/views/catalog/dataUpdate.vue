@@ -176,13 +176,13 @@ export default {
       if (60 <= row.required_time && row.required_time < 3600) {
         const time = row.required_time / 60;
         const min = time.toString().split('.')[0];
-        const sec = parseInt(time.toString().split('.')[1][0]) * 6;
+        const sec = parseInt(time.toString().split('.')[1][0], 10) * 6;
         return `${min}${this.$t('分钟')}${sec}${this.$t('秒')}`;
       }
       if (3600 <= row.required_time) {
         const time = row.required_time / 3600;
         const hour = time.toString().split('.')[0];
-        const min = parseInt(time.toString().split('.')[1][0]) * 6;
+        const min = parseInt(time.toString().split('.')[1][0], 10) * 6;
         return `${hour}${this.$t('小时')}${min}${this.$t('分钟')}`;
       }
     },
