@@ -39,5 +39,6 @@ class SyncTaskStatus(AutoLowerEnum):
     SUCCESSFUL = auto()
     FAILED = auto()
     RUNNING = auto()
+    RETRYING = auto()
 
-    _choices_labels = ((SUCCESSFUL, _("成功")), (FAILED, _("失败")), (RUNNING, _("同步中")))
+    _choices_labels = ((SUCCESSFUL, _("成功")), (FAILED, _("失败")), (RUNNING, _("同步中")), (RETRYING, _("失败重试中")))

@@ -56,8 +56,8 @@ def get_plugin_by_name(name: str) -> "DataSourcePlugin":
 
 def register_plugin(plugin: "DataSourcePlugin"):
     try:
-        get_plugin_by_name(plugin.name)
-        raise PluginAlreadyExisted(f"Plugin with name: {plugin.name} already existed")
+        if get_plugin_by_name(plugin.name):
+            logger.warning(f"Plugin with name: {plugin.name} already existed")
     except PluginDoesNotExist:
         _global_plugins[plugin.name] = plugin
         logger.info("➕Plugin[%s] added.", plugin.name)
