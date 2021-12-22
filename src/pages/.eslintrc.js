@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  extends: ['@bkui/eslint-config-bk/vue'],
+  extends: ['@blueking/eslint-config-bk/vue'],
   globals: {
     NODE_ENV: false,
   },
@@ -8,8 +8,8 @@ module.exports = {
     parser: 'babel-eslint',
     sourceType: 'module',
     ecmaFeatures: {
-        legacyDecorators: true
-    }
+      legacyDecorators: true,
+    },
   },
 
   rules: {
@@ -21,5 +21,5 @@ module.exports = {
     'no-nested-ternary': 'off',
     'arrow-body-style': 'off',
     'no-restricted-properties': 'off',
- },
+  },
 };
