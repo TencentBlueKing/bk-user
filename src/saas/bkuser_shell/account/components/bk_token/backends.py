@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-import traceback
+from typing import Tuple
 
 from bkuser_shell.account import get_user_model
 from bkuser_shell.account.conf import ConfFixture
@@ -18,14 +18,14 @@ from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.db import IntegrityError
 
-logger = logging.getLogger("component")
+logger = logging.getLogger(__name__)
 
 ROLE_TYPE_ADMIN = "1"
 
 
 class TokenBackend(ModelBackend):
-    def authenticate(self, request=None, bk_token=None):
-        logger.debug(u"Enter in TokenBackend")
+    def authenticate(self, request=None, bk_token=None, **kwargs):
+        logger.debug("Going to authenticate by TokenBackend")
         # 判断是否传入验证所需的bk_token,没传入则返回None
         if not bk_token:
             return None
@@ -35,56 +35,51 @@ class TokenBackend(ModelBackend):
         if not verify_result:
             return None
 
-        user_model = get_user_model()
         try:
-            user, _ = user_model.objects.get_or_create(username=username)
+            user, _ = get_user_model().objects.get_or_create(username=username)
             get_user_info_result, user_info = self.get_user_info(bk_token)
             # 判断是否获取到用户信息,获取不到则返回None
             if not get_user_info_result:
                 return None
 
             # 用户权限更新,保持与平台同步
-            role = user_info.get("role", "")
-            is_admin = True if str(role) == ROLE_TYPE_ADMIN else False
+            is_admin = True if str(user_info.get("role", "")) == ROLE_TYPE_ADMIN else False
             user.is_superuser = is_admin
             user.is_staff = is_admin
             user.save()
             return user
         except IntegrityError:
-            logger.exception(traceback.format_exc())
-            logger.exception(u"get_or_create UserModel fail or update_or_create UserProperty")
+            logger.exception("get_or_create UserModel fail or update_or_create UserProperty")
             return None
         except Exception:  # pylint: disable=broad-except
-            logger.exception(traceback.format_exc())
-            logger.exception(u"Auto create & update UserModel fail")
+            logger.exception("Auto create & update UserModel fail")
             return None
 
     @staticmethod
-    def get_user_info(bk_token):
+    def get_user_info(bk_token) -> Tuple[bool, dict]:
         """
-        请求平台ESB接口获取用户信息
+        请求 Login 服务 get_user 接口获取用户信息
         @param bk_token: bk_token
         @type bk_token: str
         @return:True, {
-            u'message': u'\u7528\u6237\u4fe1\u606f\u83b7\u53d6\u6210\u529f',
-            u'code': 0,
-            u'data': {
-                u'qq': u'',
-                u'wx_userid': u'',
-                u'language': u'zh-cn',
-                u'username': u'test',
-                u'time_zone': u'Asia/Shanghai',
-                u'role': 2,
-                u'phone': u'11111111111',
-                u'email': u'test',
-                u'chname': u'test'
+            'message': u'\u7528\u6237\u4fe1\u606f\u83b7\u53d6\u6210\u529f',
+            'code': 0,
+            'data': {
+                'qq': '',
+                'wx_userid': '',
+                'language': 'zh-cn',
+                'username': 'test',
+                'time_zone': 'Asia/Shanghai',
+                'role': 2,
+                'phone': '11111111111',
+                'email': 'test',
+                'chname': 'test'
             },
-            u'result': True,
-            u'request_id': u'eac0fee52ba24a47a335fd3fef75c099'
+            'result': True,
+            'request_id': 'eac0fee52ba24a47a335fd3fef75c099'
         }
-        @rtype: bool,dict
         """
-        api_params = {"bk_token": bk_token}
+        api_params = {settings.TOKEN_COOKIE_NAME: bk_token}
 
         try:
             response = send(ConfFixture.USER_INFO_URL, "GET", api_params, verify=False)
@@ -92,36 +87,20 @@ class TokenBackend(ModelBackend):
             logger.exception("Abnormal error in get_user_info...:%s" % e)
             return False, {}
 
-        if response.get("result") is True:
-            # 由于v1,v2的get_user存在差异,在这里屏蔽字段的差异,返回字段相同的字典
+        if response.get("result") is True or response.get("ret") == 0:
+            # 由于登录服务 v1, v2 的 get_user 存在差异,在这里屏蔽字段的差异,返回字段相同的字典
             origin_user_info = response.get("data", "")
             user_info = {}
-            # v1,v2字段相同的部分
-            user_info["wx_userid"] = origin_user_info.get("wx_userid", "")
-            user_info["language"] = origin_user_info.get("language", "")
-            user_info["time_zone"] = origin_user_info.get("time_zone", "")
-            user_info["phone"] = origin_user_info.get("phone", "")
-            user_info["chname"] = origin_user_info.get("chname", "")
-            user_info["email"] = origin_user_info.get("email", "")
-            user_info["qq"] = origin_user_info.get("qq", "")
-            user_info["role"] = origin_user_info.get("role", "")
-            # v2版本特有的字段
+            for k in ["wx_userid", "language", "time_zone", "phone", "chname", "email", "qq", "role"]:
+                user_info[k] = origin_user_info.get(k, "")
+
             if settings.DEFAULT_BK_API_VER == "v2":
                 user_info["username"] = origin_user_info.get("bk_username", "")
-            # v1版本特有的字段
             elif settings.DEFAULT_BK_API_VER == "":
                 user_info["username"] = origin_user_info.get("username", "")
             return True, user_info
         else:
-            error_msg = response.get("message", "")
-            error_data = response.get("data", "")
-            logger.error(
-                u"Failed to Get User Info: error=%(err)s, ret=%(ret)s"
-                % {
-                    u"err": error_msg,
-                    u"ret": error_data,
-                }
-            )
+            logger.error("Failed to Get User Info: error=%s, ret=%s", response.get("message", ""), response)
             return False, {}
 
     @staticmethod
@@ -133,7 +112,7 @@ class TokenBackend(ModelBackend):
         @return: False,None True,username
         @rtype: bool,None/str
         """
-        api_params = {"bk_token": bk_token}
+        api_params = {settings.TOKEN_COOKIE_NAME: bk_token}
 
         try:
             response = send(ConfFixture.VERIFY_URL, "GET", api_params, verify=False)
@@ -141,12 +120,12 @@ class TokenBackend(ModelBackend):
             logger.exception(u"Abnormal error in verify_bk_token...")
             return False, None
 
-        if response.get("result"):
+        if response.get("result") or response.get("ret") == 0:
             data = response.get("data")
             username = data.get("username")
             return True, username
         else:
-            error_msg = response.get("message", "")
-            error_data = response.get("data", "")
-            logger.error(u"Fail to verify bk_token, error=%s, ret=%s" % (error_msg, error_data))
+            logger.error(
+                "Fail to verify bk_token, error=%s, ret=%s", response.get("message", "<Unknown issue>"), response
+            )
             return False, None

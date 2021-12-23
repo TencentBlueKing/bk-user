@@ -13,7 +13,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
 
-class _ConfFixture(object):
+class _ConfFixture:
     def __init__(self, fixture_module):
         # store the module
         self._fixture = import_string(fixture_module)
@@ -36,19 +36,6 @@ class _ConfFixture(object):
         raise KeyError("%s not exist" % name)
 
 
-mod = "bkuser_shell.account.sites.conf.ConfFixture"
-ConfFixture = _ConfFixture(mod)
+ConfFixture = _ConfFixture("bkuser_shell.account.sites.conf.ConfFixture")
 
 AUTH_USER_MODEL = "account.User"
-
-######################
-# 二次验证配置默认参数 #
-######################
-
-# 短信验证有效时间
-SECOND_VERIFY_CONF = {
-    "VALID_MINUTES": 5,
-    "RETRY_MINUTES": 3,
-    "SMS_FORMAT": "您正在蓝鲸应用上执行敏感操作，验证码：{}",
-    "CODE_NAME": "bk_verify_code",
-}
