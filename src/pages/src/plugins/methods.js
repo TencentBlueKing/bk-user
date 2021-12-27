@@ -96,13 +96,13 @@ const methods = {
     Vue.prototype.$convertPassportRes = function (obj) {
       try {
         const objectData = {};
-        const enabled_keys = ['max_password_history', 'freeze_after_days'];
+        const enabledKeys = ['max_password_history', 'freeze_after_days'];
         obj.forEach((regionArray) => {
-          if (enabled_keys.includes(regionArray.key)) {
-            const {key, value, enabled} = regionArray;
+          if (enabledKeys.includes(regionArray.key)) {
+            const { key, value, enabled } = regionArray;
             this.$set(objectData, key, { value, enabled });
           } else {
-            const {key, value} = regionArray;
+            const { key, value } = regionArray;
             this.$set(objectData, key, value);
           }
         });
@@ -134,12 +134,12 @@ const methods = {
     Vue.prototype.$convertPassportInfoObject = function (obj) {
       try {
         const objectData = {};
-        const enabled_keys = ['max_password_history', 'freeze_after_days'];
+        const enabledKeys = ['max_password_history', 'freeze_after_days'];
         Object.entries(obj).forEach((regionArray) => {
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
             const value = regionData[1];
-            if (enabled_keys.includes(key)) {
+            if (enabledKeys.includes(key)) {
               const enabled = true;
               this.$set(objectData, key, { value, enabled });
             } else {
