@@ -67,9 +67,8 @@ const methods = {
           const region = regionArray[0];
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
-            const value = regionData[1].value;
-            const enabled = regionData[1].enabled;
-            arrayData.push({ key, value, region, enabled });
+            const value = regionData[1];
+            arrayData.push({ key, value, region });
           });
         });
         return arrayData;
@@ -82,14 +81,84 @@ const methods = {
       try {
         const objectData = {};
         arr.forEach((regionObject) => {
-          const { region, key, value, enabled } = regionObject;
+          const { region, key, value } = regionObject;
           if (!objectData[region]) {
             objectData[region] = {};
           }
-          objectData[region][key] = {
-            value,
-            enabled,
-          };
+          objectData[region][key] = value;
+        });
+        return objectData;
+      } catch (e) {
+        console.warn('参数错误', e);
+      }
+    };
+
+    Vue.prototype.$convertPassportRes = function (obj) {
+      try {
+        const objectData = {};
+        obj.forEach((regionArray) => {
+          if (regionArray.key === 'max_password_history') {
+            const key = regionArray.key;
+            const value = regionArray.value;
+            const enabled = regionArray.enabled;
+            this.$set(objectData, key, { value, enabled });
+          } else if (regionArray.key === 'freeze_after_days') {
+            const key = regionArray.key;
+            const value = regionArray.value;
+            const enabled = regionArray.enabled;
+            this.$set(objectData, key, { value, enabled });
+          } else {
+            const key = regionArray.key;
+            const value = regionArray.value;
+            this.$set(objectData, key, value);
+          }
+        });
+        return objectData;
+      } catch (e) {
+        console.warn('参数错误', e);
+      }
+    };
+
+    Vue.prototype.$convertPassportInfoArray = function (arr) {
+      try {
+        const arrayData = [];
+        Object.entries(arr).forEach((regionArray) => {
+          const key = regionArray[0];
+          if (regionArray[1].value) {
+            const value = regionArray[1].value;
+            const enabled = regionArray[1].enabled;
+            arrayData.push({ key, value, enabled });
+          } else {
+            const value = regionArray[1];
+            const enabled = true;
+            arrayData.push({ key, value, enabled });
+          }
+        });
+        return arrayData;
+      } catch (e) {
+        console.warn('参数错误', e);
+      }
+    };
+
+    Vue.prototype.$convertPassportInfoObject = function (obj) {
+      try {
+        const objectData = {};
+        Object.entries(obj).forEach((regionArray) => {
+          Object.entries(regionArray[1]).forEach((regionData) => {
+            const key = regionData[0];
+            if (key === 'max_password_history') {
+              const value = regionData[1];
+              const enabled = true;
+              this.$set(objectData, key, { value, enabled });
+            } else if (key === 'freeze_after_days') {
+              const value = regionData[1];
+              const enabled = true;
+              this.$set(objectData, key, { value, enabled });
+            } else {
+              const value = regionData[1];
+              this.$set(objectData, key, value);
+            }
+          });
         });
         return objectData;
       } catch (e) {
