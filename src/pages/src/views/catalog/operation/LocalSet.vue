@@ -102,7 +102,7 @@ export default {
           this.passwordHasCreated = false;
           this.current = 2;
         } else {
-          this.passwordInfo = this.$convertArrayToObject(passportRes.data);
+          this.passwordInfo = this.$convertPassportRes(passportRes.data);
         }
       } catch (e) {
         console.warn(e);
@@ -130,7 +130,7 @@ export default {
         const action = this.passwordHasCreated ? 'catalog/ajaxPutPassport' : 'catalog/ajaxPostPassport';
         await this.$store.dispatch(action, {
           id: this.catalogInfo.id,
-          data: this.$convertObjectToArray(this.passwordInfo),
+          data: this.$convertPassportInfoArray(this.passwordInfo),
         });
         this.handleSaveSuccess();
       } catch (e) {

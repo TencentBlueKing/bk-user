@@ -80,7 +80,7 @@ export default {
     };
   },
   created() {
-    this.passportInfo = JSON.parse(JSON.stringify(this.$store.state.catalog.defaults.password));
+    this.passportInfo = this.$convertPassportInfoObject(this.$store.state.catalog.defaults.password);
   },
   methods: {
     // 上一步
@@ -120,7 +120,7 @@ export default {
         this.isLoading = true;
         await this.$store.dispatch('catalog/ajaxPostPassport', {
           id: this.catalogId,
-          data: this.$convertObjectToArray(this.passportInfo),
+          data: this.$convertPassportInfoArray(this.passportInfo),
         });
         this.$bus.$emit('updateCatalogList');
         this.messageSuccess(this.$t('保存成功'));
