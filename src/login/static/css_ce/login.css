@@ -226,10 +226,6 @@ input[type="number"]::-webkit-outer-spin-button {
 .page-content .login-from .logo-title .logo-img {
   height: 34px;
 }
-.page-content .login-from .logo-title .logo_community img {
-  width: 46px;
-  margin-left: 4px;
-}
 .page-content .login-from .from-detail {
   position: relative;
   padding-bottom: 40px;
