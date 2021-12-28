@@ -94,10 +94,10 @@ const methods = {
     };
 
     Vue.prototype.$convertPassportRes = function (obj) {
-      try {
-        const objectData = {};
-        const enabledKeys = ['max_password_history', 'freeze_after_days'];
-        obj.forEach((regionArray) => {
+      const objectData = {};
+      const enabledKeys = ['max_password_history', 'freeze_after_days'];
+      obj.forEach((regionArray) => {
+        try {
           if (enabledKeys.includes(regionArray.key)) {
             const { key, value, enabled } = regionArray;
             this.$set(objectData, key, { value, enabled });
@@ -105,11 +105,11 @@ const methods = {
             const { key, value } = regionArray;
             this.$set(objectData, key, value);
           }
-        });
-        return objectData;
-      } catch (e) {
-        console.warn('数据结构异常', e);
-      }
+        } catch (e) {
+          console.warn('数据结构异常', e);
+        }
+      });
+      return objectData;
     };
 
     Vue.prototype.$convertPassportInfoArray = function (arr) {
