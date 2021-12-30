@@ -1,0 +1,86 @@
+global:
+  imageRegistry: ""
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  imagePullSecrets: []
+  storageClass: ""
+
+  ## 蓝鲸产品统一根域
+  bkDomain: "example.com"
+
+  ## --------------
+  ## 蓝鲸监控
+  ## --------------
+  serviceMonitor:
+    enabled: false
+
+  ## --------------
+  ## 蓝鲸日志采集
+  ## --------------
+  bkLogConfig:
+    enabled: false
+    dataId: 1
+
+api:
+  enabled: true
+
+  envFrom:
+  - configMapRef:
+      name: bk-user-api-general-envs
+  - configMapRef:
+      name: bk-user-api-mariadb-env
+  - configMapRef:
+      name: bk-user-api-redis-env
+
+saas:
+  enabled: true
+
+  envFrom:
+  - configMapRef:
+      name: bk-user-saas-general-envs
+  - configMapRef:
+      name: bk-user-saas-mariadb-env
+
+login:
+  enabled: true
+
+  envFrom:
+  - configMapRef:
+      name: bk-login-general-envs
+  - configMapRef:
+      name: bk-login-mariadb-env
+
+# -------------
+# 内建存储配置
+# 默认通过 .Release.Name 拼接访问，请不要配置 nameOverride 或 fullnameOverride
+# 否则会出现无法访问存储的异常
+# -------------
+mariadb:
+  enabled: true
+  architecture: standalone
+  auth:
+    username: "bk-user"
+    password: "maybe_a_strong_passwd"
+  primary:
+    # 默认我们未开启持久化，如有需求可以参考:
+    # - https://kubernetes.io/docs/user-guide/persistent-volumes/
+    # - https://github.com/bitnami/charts/blob/master/bitnami/mariadb/values.yaml#L360
+    # 当同时请注意，当开启 PVC 可能会导致首次安装部署时间延长
+    persistence:
+      enabled: false
+  initdbScriptsConfigMap: "bk-user-mariadb-init"
+
+redis:
+  enabled: true
+  sentinel:
+    enabled: false
+  auth:
+    password: "maybe_another_strong_passwd"
+  master:
+    persistence:
+      enabled: false
+  replica:
+    replicaCount: 1
+    persistence:
+      enabled: false

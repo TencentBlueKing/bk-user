@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bk-login-migrate-db-{{ .Release.Revision }}
+  labels:
+    {{- include "bk-user.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        {{- include "bk-user.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: OnFailure
+      initContainers:
+        - name: check-database-ready
+          image: "{{ .Values.migration.images.busybox.registry }}/{{ .Values.migration.images.busybox.repository }}:{{ .Values.migration.images.busybox.tag }}"
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+          args:
+            - "echo Start check database: $(DATABASE_HOST):$(DATABASE_PORT); until telnet $(DATABASE_HOST) $(DATABASE_PORT); do echo waiting for db $(DATABASE_NAME); sleep 2; done;"
+          envFrom:
+            {{- toYaml .Values.envFrom | nindent 12 }}
+      containers:
+        - name: login-db-migrate
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - python manage.py migrate --no-input
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12}}
+          {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12}}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

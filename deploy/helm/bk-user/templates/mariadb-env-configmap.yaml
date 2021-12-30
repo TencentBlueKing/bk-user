@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-user-api-mariadb-env
+  labels:
+    {{- include "bk-user.labels" . | nindent 4 }}
+data:
+  {{- if .Values.mariadb.enabled }}
+  DB_NAME: "{{ .Values.api.preferDBName }}"
+  DB_USER: "{{ .Values.mariadb.auth.username }}"
+  DB_PASSWORD: "{{ .Values.mariadb.auth.password }}"
+  DB_HOST: "{{ .Release.Name }}-mariadb"
+  DB_PORT: "3306"
+  {{- else -}}
+  DB_NAME: "{{ .Values.api.externalDatabase.default.name | default .Values.api.preferDBName }}"
+  DB_USER: "{{ .Values.api.externalDatabase.default.user }}"
+  DB_PASSWORD: "{{ .Values.api.externalDatabase.default.password }}"
+  DB_HOST: "{{ .Values.api.externalDatabase.default.host }}"
+  DB_PORT: "{{ .Values.api.externalDatabase.default.port }}"
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-user-saas-mariadb-env
+  labels:
+    {{- include "bk-user.labels" . | nindent 4 }}
+data:
+  {{- if .Values.mariadb.enabled }}
+  DB_NAME: "{{ .Values.saas.preferDBName }}"
+  DB_USER: "{{ .Values.mariadb.auth.username }}"
+  DB_PASSWORD: "{{ .Values.mariadb.auth.password }}"
+  DB_HOST: "{{ .Release.Name }}-mariadb"
+  DB_PORT: "3306"
+  {{- else -}}
+  DB_NAME: "{{ .Values.saas.externalDatabase.default.name | default .Values.saas.preferDBName }}"
+  DB_USER: "{{ .Values.saas.externalDatabase.default.user }}"
+  DB_PASSWORD: "{{ .Values.saas.externalDatabase.default.password }}"
+  DB_HOST: "{{ .Values.saas.externalDatabase.default.host }}"
+  DB_PORT: "{{ .Values.saas.externalDatabase.default.port }}"
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-login-mariadb-env
+  labels:
+    {{- include "bk-user.labels" . | nindent 4 }}
+data:
+  {{- if .Values.mariadb.enabled }}
+  DATABASE_NAME: "{{ .Values.login.preferDBName }}"
+  DATABASE_USER: "{{ .Values.mariadb.auth.username }}"
+  DATABASE_PASSWORD: "{{ .Values.mariadb.auth.password }}"
+  DATABASE_HOST: "{{ .Release.Name }}-mariadb"
+  DATABASE_PORT: "3306"
+  {{- else -}}
+  DATABASE_NAME: "{{ .Values.login.externalDatabase.default.name | default .Values.login.preferDBName }}"
+  DATABASE_USER: "{{ .Values.login.externalDatabase.default.user }}"
+  DATABASE_PASSWORD: "{{ .Values.login.externalDatabase.default.password }}"
+  DATABASE_HOST: "{{ .Values.login.externalDatabase.default.host }}"
+  DATABASE_PORT: "{{ .Values.login.externalDatabase.default.port }}"
+  {{- end -}}
