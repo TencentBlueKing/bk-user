@@ -17,7 +17,7 @@ data:
   # 权限中心后台访问地址
   BK_IAM_V3_INNER_HOST: "http://bkiam-web"
   # 默认我们会按照 BK_PAAS_URL/o/bk_iam 拼接权限中心 SaaS 访问地址，可以通过以下值覆盖
-  # BK_IAM_SAAS_HOST: "http://apps.bktencent-example.com/bkapp-bk-iam-saas-prod/"
+  # BK_IAM_SAAS_HOST: "http://bkiam.example.com"
   BKAPP_BK_USER_CORE_API_HOST: "{{ .Values.bkUserApiUrl }}"
   # 容器化版本默认采用子域名形式暴露服务
   BK_LOGIN_API_URL: "{{ .Values.bkLoginApiUrl }}"

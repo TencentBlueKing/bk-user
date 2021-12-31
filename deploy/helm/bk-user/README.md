@@ -37,13 +37,14 @@ global:
 
 api:
   enabeld: true
-  bkIamUrl: "http://apps.example.com/bk--iam"
+  bkIamUrl: "http://bkiam.example.com"
   bkPaasUrl: "http://paas.example.com"
   bkComponentApiUrl: "http://bkapi.example.com"
 
 saas:
   enabled: true
-  bkIamUrl: "http://apps.example.com/bk--iam"
+  bkUserAddr: bkuser.example.com
+  bkIamUrl: "http://bkiam.example.com"
   bkPaasUrl: "http://paas.example.comm"
   bkComponentApiUrl: "http://bkapi.example.comm"
 
