@@ -1,10 +1,10 @@
 恭喜，你已经成功安装了蓝鲸用户管理 !
 
 如果集群中已经安装了 IngressController，那么可以通过以下地址访问用户管理:
-- SaaS: {{ .Values.saas.bkUserUrl }}
+- SaaS: {{ .Values.global.bkDomainScheme }}://{{ .Values.saas.bkUserAddr }
 - Api: {{ .Values.api.bkUserApiUrl }}
 
-也可以通过 {{ .Values.login.bkLoginUrl }} 访问蓝鲸登录。
+也可以通过 {{ .Values.global.bkDomainScheme }}://{{ .Values.login.bkPaas3Addr } 访问蓝鲸登录。
 
 登录账户名密码:
 {{ .Values.api.initialAdminUsername }}/{{ .Values.api.initialAdminPassword }}
