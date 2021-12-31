@@ -45,12 +45,12 @@ saas:
   enabled: true
   bkUserAddr: bkuser.example.com
   bkIamUrl: "http://bkiam.example.com"
-  bkPaasUrl: "http://paas.example.comm"
+  bkPaasUrl: "http://paas.example.com"
   bkComponentApiUrl: "http://bkapi.example.comm"
 
 login:
   enabled: true
-  bkPaas3Addr: "paas.bk8s.woa.com"
+  bkPaas3Addr: "paas.example.com"
 ```
 
 #### 2. 确定应用鉴权信息
