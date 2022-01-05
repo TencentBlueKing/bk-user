@@ -10,7 +10,7 @@ global:
   bkDomain: "example.com"
 
   ## 是否开启权限中心
-  enableIAM: false
+  enableIAM: true
 
   ## --------------
   ## 蓝鲸监控

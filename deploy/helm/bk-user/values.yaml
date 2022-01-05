@@ -60,8 +60,8 @@ mariadb:
   enabled: true
   architecture: standalone
   auth:
-    username: "bk-user"
-    password: "maybe_a_strong_passwd"
+    username: "admin"
+    password: "blueking"
   primary:
     # 默认我们未开启持久化，如有需求可以参考:
     # - https://kubernetes.io/docs/user-guide/persistent-volumes/
@@ -76,7 +76,7 @@ redis:
   sentinel:
     enabled: false
   auth:
-    password: "maybe_another_strong_passwd"
+    password: "blueking"
   master:
     persistence:
       enabled: false
