@@ -7,8 +7,9 @@ namespace ?= "bk-user"
 test_release_name ?= "bk-user-test"
 
 generate-release-md:
-	cd src/saas/ && poetry run python manage.py generate_release_md > release.md
-	mv src/saas/release.md docs/
+	rm docs/changelogs/*.md || true
+	cd src/saas/ && mkdir -p changelogs/ && poetry run python manage.py generate_release_md
+	mv src/saas/changelogs docs/
 
 link:
 	ln -s ${PWD}/src/bkuser_global src/api || true
