@@ -10,6 +10,7 @@ generate-release-md:
 	rm docs/changelogs/*.md || true
 	cd src/saas/ && mkdir -p changelogs/ && poetry run python manage.py generate_release_md
 	mv src/saas/changelogs docs/
+	mv src/saas/release.md docs/
 
 link:
 	ln -s ${PWD}/src/bkuser_global src/api || true
