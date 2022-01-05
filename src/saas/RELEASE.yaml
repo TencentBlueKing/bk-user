@@ -320,29 +320,29 @@ versions:
     detail:
     - type: "NEW"
       content:
-      - "支持传递参数，可以拉取已软删除数据 [#1](https://github.com/TencentBlueKing/bk-user/issues/1)"
-      - "支持恢复已删除的数据 [#15](https://github.com/TencentBlueKing/bk-user/issues/15)"
-      - "支持记录 LDAP/AD 同步组织架构/人员信息的结构化日志 [#27](https://github.com/TencentBlueKing/bk-user/issues/27)"
+      - "支持传递参数，可以拉取已软删除数据 #1"
+      - "支持恢复已删除的数据 #15"
+      - "支持记录 LDAP/AD 同步组织架构/人员信息的结构化日志 #27"
     - type: "OPTIMIZATION"
       content:
-      - "优化数据源同步任务为后台执行 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)"
+      - "优化数据源同步任务为后台执行 #32"
     - type: "FIX"
       content:
-      - "修正 SettingMeta 默认路径参数为 id [#45](https://github.com/TencentBlueKing/bk-user/issues/45)"
-      - "修正 API /api/v2/batch/profiles/ 中 swagger 参数 query_ids 缺失问题 [#26](https://github.com/TencentBlueKing/bk-user/issues/26)"
+      - "修正 SettingMeta 默认路径参数为 id #45"
+      - "修正 API /api/v2/batch/profiles/ 中 swagger 参数 query_ids 缺失问题 #26"
   - project: "SaaS"
     detail:
     - type: "NEW"
       content:
-      - "支持数据源同步任务页面查看 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)"
-      - "支持登录日志导出 [#32](https://github.com/TencentBlueKing/bk-user/issues/32)"
+      - "支持数据源同步任务页面查看 #32"
+      - "支持登录日志导出 #32"
     - type: "OPTIMIZATION"
       content:
-      - "修改页面拉取上级组件，从全量拉取改为类似【人员选择器】的分页拉取组件 [#55](https://github.com/TencentBlueKing/bk-user/issues/55)"
+      - "修改页面拉取上级组件，从全量拉取改为类似【人员选择器】的分页拉取组件 #55"
     - type: "FIX"
       content:
-      - "修复数值型自定义字段在页面上输入时没有异常提示 [#101](https://github.com/TencentBlueKing/bk-user/issues/101)"
-      - "修复“从其他组织拉取用户”异常问题 [#102](https://github.com/TencentBlueKing/bk-user/issues/102)"
+      - "修复数值型自定义字段在页面上输入时没有异常提示 #101"
+      - "修复“从其他组织拉取用户”异常问题 #102"
 
 - version: "2.3.1"
   date: "2021-11-05"
@@ -351,23 +351,49 @@ versions:
     detail:
       - type: "NEW"
         content:
-        - "API 支持通过 POST body 筛选数据 [#88](https://github.com/TencentBlueKing/bk-user/issues/88)"
-        - "支持审计记录失败内容(仅数据) [#71](https://github.com/TencentBlueKing/bk-user/issues/71)"
+        - "API 支持通过 POST body 筛选数据 #88"
+        - "支持审计记录失败内容(仅数据) #71"
       - type: "FIX"
         content:
-        - "修复 ldap/mad 测试连接按钮报错问题 [#129](https://github.com/TencentBlueKing/bk-user/issues/129)"
-        - "修复手动关闭权限中心时，目录新建关联权限报错问题 [#99](https://github.com/TencentBlueKing/bk-user/issues/99)"
-        - "修复部门查询接口 ?lookup_field=name，当部门名称中含有 . 时返回 404 问题 [#147](https://github.com/TencentBlueKing/bk-user/issues/147)"
-        - "修复 Excel 模板字段名与内置字段名不统一，导致导入失败问题 [#150](https://github.com/TencentBlueKing/bk-user/issues/150)"
+        - "修复 ldap/mad 测试连接按钮报错问题 #129"
+        - "修复手动关闭权限中心时，目录新建关联权限报错问题 #99"
+        - "修复部门查询接口 ?lookup_field=name，当部门名称中含有 . 时返回 404 问题 #147"
+        - "修复 Excel 模板字段名与内置字段名不统一，导致导入失败问题 #150"
       - type: "OPTIMIZATION"
         content:
-        - "将「密码过期判断」逻辑调整到「密码校验成功」后，规避可能存在的安全风险 [#137](https://github.com/TencentBlueKing/bk-user/issues/137)"
+        - "将「密码过期判断」逻辑调整到「密码校验成功」后，规避可能存在的安全风险 #137"
   - project: "SaaS"
     detail:
       - type: "NEW"
         content:
-        - "支持搜索已删除的数据 [#80](https://github.com/TencentBlueKing/bk-user/issues/80)"
-        - "支持恢复已删除用户 [#15](https://github.com/TencentBlueKing/bk-user/issues/15)"
+        - "支持搜索已删除的数据 #80"
+        - "支持恢复已删除用户 #15"
       - type: "FIX"
         content:
         - "增大默认的 CPU 限制，保证容器正常启动"
+
+- version: "2.3.2"
+  date: "2022-01-05"
+  changeLogs:
+  - project: "API"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "登录时只查询近期一段时间的审计信息 #116"
+        - "支持在「密码配置」中设置「密码最大重复次数」 #149"
+        - "数据同步增加默认重试次数，当所有重试都失败时处理异常 #197"
+  - project: "SaaS"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "SaaS 登录支持多种 bk_token 后端"
+  - project: "Login"
+    detail:
+      - type: "NEW"
+        content:
+        - "支持密码过期时提供密码重置链接 #38"
+        - "支持初始密码强制修改"
+      - type: "OPTIMIZATION"
+        content:
+        - "重构 Login 项目部分代码，引入 blue-krill 加密"
+        - "重构社区登录页面 #144"
