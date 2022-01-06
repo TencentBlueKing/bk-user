@@ -6,6 +6,7 @@ metadata:
 data:
   # 登录态 Cookie 写入的域名
   BK_DOMAIN: {{ .Values.global.bkDomain }}
+  BK_LOGIN_HTTP_SCHEMA: {{ .Values.global.bkDomainScheme }}
   # 统一登录的外部访问域名
   BK_LOGIN_PUBLIC_ADDR: {{ .Values.bkLoginAddr }}
   # 用户管理后台API访问地址

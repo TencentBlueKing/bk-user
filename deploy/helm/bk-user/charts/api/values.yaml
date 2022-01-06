@@ -8,7 +8,7 @@ global:
 
   ## 蓝鲸产品统一根域
   bkDomain: "example.com"
-
+  bkDomainScheme: "http"
   ## 是否开启权限中心
   enableIAM: true
 
@@ -97,18 +97,17 @@ serviceAccount:
 ## 蓝鲸 PaaS url（浏览器访问蓝鲸入口）
 bkPaasUrl: http://paas.example.com
 ## 蓝鲸 ESB/APIGATEWAY url，注意集群内外都是统一域名。集群内可以配置域名解析到内网ip
-bkComponentApiUrl: http://bkapi.paas.example.com
+bkComponentApiUrl: http://bkapi.example.com
 ## 蓝鲸 Login url（浏览器跳转登录用的URL前缀）
 bkLoginUrl: http://paas.example.com/login/
 ## 蓝鲸登录后台的内部服务地址（一般用于校验登录token）
 bkLoginApiUrl: http://bk-login-web
 ## 蓝鲸用户管理 SaaS地址
-bkUserUrl: http://bkuser.paas.example.com
-bkUserAddr: bkuser.paas.example.com
+bkUserAddr: bkuser.example.com
 ## 蓝鲸用户管理后台 API 地址
 bkUserApiUrl: http://bkuserapi-web
 ## 蓝鲸权限中心 SaaS 地址
-bkIamUrl: http://bkiam.paas.example.com
+bkIamUrl: http://bkiam.example.com
 ## 蓝鲸权限中心后台 API 地址
 bkIamApiUrl: http://bkiam-web
 

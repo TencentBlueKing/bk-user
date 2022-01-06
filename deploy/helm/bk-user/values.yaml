@@ -8,6 +8,9 @@ global:
 
   ## 蓝鲸产品统一根域
   bkDomain: "example.com"
+  bkDomainScheme: "http"
+  ## 是否开启权限中心
+  enableIAM: false
 
   ## --------------
   ## 蓝鲸监控
