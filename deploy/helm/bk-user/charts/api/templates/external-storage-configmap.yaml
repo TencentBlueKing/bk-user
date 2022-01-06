@@ -15,6 +15,5 @@ data:
   # ---------------
   # Redis Related
   # ---------------
-  {{- $redis_url := printf "redis://:%s@%s-redis-master:%s/0" .Values.externalRedis.default.password .Release.Name (.Values.externalRedis.default.port | toString )}}
-  CELERY_BROKER_URL: {{ $redis_url }}
-  CELERY_RESULT_BACKEND: {{ $redis_url }}
+  CELERY_BROKER_URL: {{ include "bk-user.externalRedisBrokerUrl" . }}
+  CELERY_RESULT_BACKEND: {{ include "bk-user.externalRedisBrokerUrl" . }}

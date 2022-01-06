@@ -119,7 +119,7 @@ bkIamApiUrl: http://bkiam-web
 ## 请按照原生 env 格式填写
 ## env 优先级高于 envFrom，你可以用它来覆盖内置环境变量
 # env:
-#   - key: "FOO"
+#   - name: "FOO"
 #     value: "BAR"
 
 envFrom:
@@ -163,20 +163,27 @@ ingress:
   #      - chart-example.local
 
 resources:
-  limits:
-    cpu: 1024m
-    memory: 2048Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-
-celeryResource:
-  limits:
-    cpu: 1024m
-    memory: 2048Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
+  web:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "1024m"
+      memory: "2048Mi"
+  worker:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "1024m"
+      memory: "2048Mi"
+  beat:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "1024m"
+      memory: "1024Mi"
 
 ## ---------------
 ## 调度

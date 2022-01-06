@@ -6,11 +6,9 @@ metadata:
     {{- include "bk-user.labels" . | nindent 4 }}
 data:
   {{- if .Values.redis.enabled }}
-  {{- $redis_url := printf "redis://:%s@%s-redis-master:%s/0" .Values.redis.auth.password .Release.Name (.Values.redis.master.service.port | toString )}}
-  CELERY_BROKER_URL: {{ $redis_url }}
-  CELERY_RESULT_BACKEND: {{ $redis_url }}
-  {{- else -}}
-  {{- $redis_url := printf "redis://:%s@%s-redis-master:%s/0" .Values.api.externalRedis.default.password .Release.Name (.Values.api.externalRedis.default.port | toString )}}
-  CELERY_BROKER_URL: {{ $redis_url }}
-  CELERY_RESULT_BACKEND: {{ $redis_url }}
+  CELERY_BROKER_URL: {{ include "bk-user.builtinRedisBrokerUrl" . }}
+  CELERY_RESULT_BACKEND: {{ include "bk-user.builtinRedisBrokerUrl" . }}
+  {{- else }}
+  CELERY_BROKER_URL: {{ include "bk-user.apiExternalRedisBrokerUrl" . }}
+  CELERY_RESULT_BACKEND: {{ include "bk-user.apiExternalRedisBrokerUrl" . }}
   {{- end -}}
