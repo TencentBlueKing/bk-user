@@ -19,6 +19,7 @@ from bkuser_core.audit.utils import audit_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.common.error_codes import error_codes
@@ -837,10 +838,10 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # 内置字段不允许删除
         if instance.builtin:
             raise error_codes.BUILTIN_FIELD_CANNOT_BE_DELETED
-
         # 保证 order 密集
         DynamicFieldInfo.objects.filter(order__gt=instance.order).update(order=F("order") - 1)
 
+        post_dynamic_field_delete.send(sender=self, instance=instance, operator=request.operator)
         return super().destroy(request, *args, **kwargs)
 
 

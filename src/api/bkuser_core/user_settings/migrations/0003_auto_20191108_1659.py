@@ -67,8 +67,7 @@ def forwards_func(apps, schema_editor):
         )
 
     extend_fields_connection_settings = [
-        dict(key="bk_fields", choices=["职务", "性别", "年龄", "工作年限", "婚姻状态", "籍贯"]),
-        dict(key="mad_fields", choices=["job", "gender", "age", "year", "marry", "home"]),
+        dict(key="dynamic_fields_mapping", default={})
     ]
 
     for x in extend_fields_connection_settings:

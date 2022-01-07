@@ -21,7 +21,7 @@ from bkuser_core.common.db_sync import SyncOperation
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
-from bkuser_core.profiles.validators import validate_username
+from bkuser_core.profiles.validators import validate_username, validate_extras_value_type
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.db.models import Model
 from django.utils.functional import cached_property
@@ -154,6 +154,12 @@ class ProfileSyncHelper:
                 logger.warning("username<%s> does not meet format", info.username)
                 continue
 
+            try:
+                validate_extras_value_type(value=info.extras)
+            except ValidationError:
+                logger.warning("extras<%s> does not meet format", info.extras)
+                continue
+
             # 1. 先更新 profile 本身
             profile_params = {
                 "category_id": self.category.pk,
@@ -165,6 +171,7 @@ class ProfileSyncHelper:
                 "code": info.code,
                 "telephone": info.telephone,
                 "status": ProfileStatus.NORMAL.value,
+                "extras": info.extras
             }
 
             # 2. 更新或创建 Profile 对象

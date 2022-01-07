@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
+import logging
 import re
 
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum
@@ -65,6 +67,69 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
                 raise ValidationError(
                     _("自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录").format(f.display_name, category_id, target_value)
                 )
+
+
+def validate_extras_value_type(value: dict):
+    """检测 extras 中 value 是否自定义字段规定的格式一致：不一致尝试进行转换，无法转换的部分以自定义字段定义的默认值存储"""
+    from bkuser_core.profiles.models import DynamicFieldInfo
+
+    for dynamic_field in value.keys():
+
+        if not value[dynamic_field]:    # 存在值的情况下才进行格式校验或转换
+            continue
+
+        dynamic_field_info = DynamicFieldInfo.objects.filter(name=dynamic_field).first()
+        logging.info("going format dynamic field:{}, origin value:{}".format(dynamic_field, value[dynamic_field]))
+
+        if dynamic_field_info.type == DynamicFieldTypeEnum.NUMBER.value:
+            # 1.判断是否为数字字符串
+            if isinstance(value[dynamic_field], str) and (
+                    isinstance(eval(value[dynamic_field]), int) or isinstance(eval(value[dynamic_field]), float)):
+                continue
+
+            # 2.判断是否为整数或者浮点数
+            if isinstance(value[dynamic_field], int) or isinstance(value[dynamic_field], float):
+                value[dynamic_field] = str(value[dynamic_field])    # 实际存储的是数字字符串，所以进行转换
+                continue
+
+            value[dynamic_field] = dynamic_field_info.default
+            continue
+
+        if dynamic_field_info.type == DynamicFieldTypeEnum.STRING.value:
+            if isinstance(value[dynamic_field], str):
+                continue
+
+            value[dynamic_field] = str(value[dynamic_field])
+            continue
+
+        if dynamic_field_info.type == DynamicFieldTypeEnum.ONE_ENUM.value:
+            if isinstance(value[dynamic_field], int):
+                enums = [enum[0] for enum in dynamic_field_info.options]
+                if value[dynamic_field] in enums:
+                    continue
+
+            value[dynamic_field] = ""
+            continue
+
+        if dynamic_field_info.type == DynamicFieldTypeEnum.MULTI_ENUM.value:
+            if isinstance(value[dynamic_field], list):
+                enums = [enum[0] for enum in dynamic_field_info.options]
+                if set(value[dynamic_field]) <= set(enums):
+                    continue
+
+            continue
+
+        if dynamic_field_info.type == DynamicFieldTypeEnum.TIMER.value:
+            try:
+                datetime.datetime.strptime(str(value[dynamic_field]), '%Y-%m-%d')
+                continue
+            except ValueError:
+                value[dynamic_field] = dynamic_field_info.default
+
+            value[dynamic_field] = ""
+            continue
+
+    return value
 
 
 BLACK_FIELD_NAMES = ["extras"]

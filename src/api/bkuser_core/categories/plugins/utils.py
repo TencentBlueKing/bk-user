@@ -14,6 +14,7 @@ import logging
 from bkuser_core.categories.plugins.base import TypeList, TypeProtocol
 from bkuser_core.common.progress import progress
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from bkuser_core.user_settings.models import Setting, SettingMeta
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,17 @@ def delete_periodic_sync_task(category_id: int):
     except PeriodicTask.DoesNotExist:
         logger.warning("PeriodicTask %s has been deleted, skip it...", str(category_id))
         return
+
+
+def delete_dynamic_filed(dynamic_field: str):
+    """删除指定自定义字段配置"""
+    meta = SettingMeta.objects.filter(key="dynamic_fields_mapping").first()
+    settings = Setting.objects.filter(meta_id=meta.id)
+
+    for setting in settings:
+        if setting.value.get(dynamic_field):
+            setting.value.pop(dynamic_field)
+            Setting.objects.filter(id=setting.id).update(value=setting.value)
 
 
 def handle_with_progress_info(
