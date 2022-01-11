@@ -18,7 +18,7 @@ spec:
       restartPolicy: OnFailure
       initContainers:
         - name: check-database-ready
-          image: "{{ .Values.migration.images.busybox.registry }}/{{ .Values.migration.images.busybox.repository }}:{{ .Values.migration.images.busybox.tag }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.migration.images.busybox.registry }}/{{ .Values.migration.images.busybox.repository }}:{{ .Values.migration.images.busybox.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -29,7 +29,7 @@ spec:
             {{- toYaml .Values.envFrom | nindent 12 }}
       containers:
         - name: saas-db-migrate
-          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - /bin/bash

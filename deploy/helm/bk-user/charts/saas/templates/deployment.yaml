@@ -29,7 +29,7 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
         - name: check-migrate-db
-          image: "{{ .Values.migration.images.k8sWaitFor.registry }}/{{ .Values.migration.images.k8sWaitFor.repository }}:{{ .Values.migration.images.k8sWaitFor.tag }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.migration.images.k8sWaitFor.registry }}/{{ .Values.migration.images.k8sWaitFor.repository }}:{{ .Values.migration.images.k8sWaitFor.tag }}"
           imagePullPolicy: IfNotPresent
           args:
             - job
@@ -38,7 +38,7 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- with .Values.env }}
           env:

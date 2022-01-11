@@ -63,18 +63,19 @@ login:
 你需要为用户管理提供一个访问根域，类似 `example.com`，配置示例:
 ```yaml
 api:
-  appCode: "bk-user"
-  appSecret: "2cd2188d-88be-46c0-95bb-f7d105737757"
+  appCode: "bk_usermgr"
+  appSecret: "some-app-secret"
 
 saas:
-  appCode: "bk-user"
-  appSecret: "2cd2188d-88be-46c0-95bb-f7d105737757"
+  appCode: "bk_usermgr"
+  appSecret: "some-app-secret"
 
 login:
   # bk_paas 对应的 bk_app_secret 信息
-  bkPaasSerectKey: "9de9e906-5fa0-477d-b08c-73fdfa768ce3"
+  bkPaasSerectKey: "enter-paas-secret-key"
   # 32位随机字符串，用于加密登录态票据(bk_token)
-  encryptSecretKey: "qyIBEoRhwus48cvPS066iE1rqGnTBv"
+  # tr -dc A-Za-z0-9 </dev/urandom | head -c 32 | base64
+  encryptSecretKey: "somesecretkey"
 ```
 
 #### 3. 准备用户管理镜像
@@ -101,6 +102,15 @@ login:
     repository: blueking/bk-login
     tag: "1.0.0-beta.4"
 ```
+
+或者直接修改全局镜像变量
+
+```yaml
+global:
+  imageRegistry: "some-custom-registry.com"
+```
+
+> 注意这里同时也会修改 bitnami 内建存储的 Registry
 
 #### 4. 数据库依赖
 
@@ -161,10 +171,10 @@ redis:
 ```
 
 #### 5. 权限中心
-默认地，我们未开启权限中心，如果在权限中心已经就绪之后，想体验用户管理功能，那么你可以手动向权限中心注册模型:
+默认地，我们已开启权限中心，如果功能验证时想跳过权限中心，可以手动关闭
 ```yaml
 global:
-  enableIAM: true
+  enableIAM: false
 ```
 
 #### 6. 账号密码
@@ -205,7 +215,7 @@ global:
 ```bash
 # 假定你想在 bk-user 命名空间安装
 kubectl create namespace bk-user
-helm install bk-user bk-user-stack -n bk-user -f values.yaml
+helm install bk-user bk-user -n bk-user -f values.yaml
 ```
 
 
@@ -213,13 +223,5 @@ helm install bk-user bk-user-stack -n bk-user -f values.yaml
 
 ## 卸载
 ```bash
-# 卸载资源
 helm uninstall bk-user -n bk-user
-
-# 已安装的 mariadb & redis 并不会被删除，防止没有开启持久化期间产生的数据被销毁
-# 如果确认已不再需要相关内容，可以手动删除命名空间内的资源
-# 独立命名空间时
-kubectl delete ns bk-user
-# 非独立命名空间时
-kubectl delete deploy,sts,cronjob,pod,svc,ingress,secret,cm,sa,role,rolebinding,pvc -l app.kubernetes.io/instance=bk-user -n bk-user 
 ```

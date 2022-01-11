@@ -1,32 +1,23 @@
-apiVersion: apps/v1
-kind: Deployment
+{{- if .Values.global.enableIAM }}
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: bk-user-api-beat
+  name: bk-user-api-migrate-iam-{{ .Release.Revision }}
   labels:
     {{- include "bk-user.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
-  selector:
-    matchLabels:
-      {{- include "bk-user.selectorLabels" . | nindent 6 }}
+  backoffLimit: 10
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
-        {{- include "bk-user.selectorLabels" . | nindent 8 }}
+        {{- include "bk-user.labels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: bk-user-api
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      restartPolicy: OnFailure
       initContainers:
         - name: check-migrate-db
           image: "{{ .Values.global.imageRegistry | default .Values.migration.images.k8sWaitFor.registry }}/{{ .Values.migration.images.k8sWaitFor.repository }}:{{ .Values.migration.images.k8sWaitFor.tag }}"
@@ -35,34 +26,21 @@ spec:
             - job
             - "bk-user-api-migrate-db-{{ .Release.Revision }}"
       containers:
-        - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+        - name: api-db-migrate
           image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - bash
           args:
-            - /app/start_beat.sh
+            - /app/migrate_iam.sh
           {{- with .Values.env }}
           env:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml . | nindent 12}}
           {{- end }}
           {{- with .Values.envFrom }}
           envFrom:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml . | nindent 12}}
           {{- end }}
           resources:
-            {{- toYaml .Values.resources.beat | nindent 12 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+            {{- toYaml .Values.resources.web | nindent 12 }}
+{{- end }}
