@@ -15,6 +15,7 @@ import re
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
+from typing import Any, ClassVar, Type, Tuple
 
 USERNAME_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9._-]){0,31}"
 DOMAIN_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
@@ -69,65 +70,135 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
                 )
 
 
+class ExtrasNumberValidator:
+    target_types: ClassVar[Tuple[Type]] = (int, float)      # noqa
+    transform_types: ClassVar[Tuple[Type]] = (str,)     # noqa
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        if isinstance(value, cls.target_types):
+            return
+
+        if isinstance(value, cls.transform_types):
+            try:
+                value = cls.transform(value)
+                return value
+            except Exception:
+                raise ValidationError(_("{}不符合格式要求，无法转换".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        """格式转换"""
+        return float(value)
+
+
+class ExtrasStringValidator:
+    target_types: ClassVar[Tuple[Type]] = (str,)    # noqa
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        if isinstance(value, cls.target_types):
+            return
+
+        try:
+            value = cls.transform(value)
+            return value
+        except Exception:
+            raise ValidationError(_("{}不符合格式要求，无法转换".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        """格式转换"""
+        return str(value)
+
+
+class ExtrasOneEnumValidator:
+    target_types = (int,)
+    transform_types = (str,)
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        enums = [enum[0] for enum in field_info.options]
+        if isinstance(value, cls.target_types) and (value in enums):
+            return
+
+        if isinstance(value, cls.transform_types):
+            try:
+                value = cls.transform(value)
+            except Exception:
+                raise ValidationError(_("{}不符合格式要求，无法转换".format(value)))
+
+            if value in enums:
+                return value
+            raise ValidationError(_("{}不在枚举范围内".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        """格式转换"""
+        return int(value)
+
+
+class ExtrasMultlEnumValidator:
+    target_types = (list,)
+    transform_types = (str, set, tuple)
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        enums = [enum[0] for enum in field_info.options]
+        if isinstance(value, cls.target_types) and (set(value) <= set(enums)):
+            return
+        if isinstance(value, cls.transform_types):
+            try:
+                value = cls.transform(value)
+            except Exception:
+                raise ValidationError(_("{} 不符合格式要求，无法转换".format(value)))
+
+            if set(value) <= set(enums):
+                return value
+            raise ValidationError(_("{} 不在枚举范围内".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        return list(value)
+
+
+class ExtrasTimerValidator:
+    target_types: ClassVar[Tuple[Type]] = (str,)
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        if isinstance(value, cls.target_types):
+            try:
+                datetime.datetime.strptime(value, '%Y-%m-%d')
+                return
+            except Exception:
+                raise ValidationError(_("{} 不符合格式要求".format(value)))
+        raise ValidationError(_("{} 不符合格式要求".format(value)))
+
+
+EXTRAS_VALIDATOR_MAP = {
+    DynamicFieldTypeEnum.NUMBER.value: ExtrasNumberValidator,
+    DynamicFieldTypeEnum.STRING.value: ExtrasStringValidator,
+    DynamicFieldTypeEnum.ONE_ENUM.value: ExtrasOneEnumValidator,
+    DynamicFieldTypeEnum.MULTI_ENUM.value: ExtrasMultlEnumValidator,
+    DynamicFieldTypeEnum.TIMER.value: ExtrasTimerValidator
+
+}
+
+
 def validate_extras_value_type(value: dict):
-    """检测 extras 中 value 是否自定义字段规定的格式一致：不一致尝试进行转换，无法转换的部分以自定义字段定义的默认值存储"""
+    """检测 extras 中 value 是否自定义字段规定的格式是否一致：不一致尝试进行转换"""
     from bkuser_core.profiles.models import DynamicFieldInfo
 
-    for dynamic_field in value.keys():
+    dynamic_fields = DynamicFieldInfo.objects.filter(name__in=value.keys())
+    for field in dynamic_fields:
+        logging.info("going format dynamic field:{}, origin value:{}".format(field.name, value[field.name]))
 
-        if not value[dynamic_field]:    # 存在值的情况下才进行格式校验或转换
-            continue
-
-        dynamic_field_info = DynamicFieldInfo.objects.filter(name=dynamic_field).first()
-        logging.info("going format dynamic field:{}, origin value:{}".format(dynamic_field, value[dynamic_field]))
-
-        if dynamic_field_info.type == DynamicFieldTypeEnum.NUMBER.value:
-            # 1.判断是否为数字字符串
-            if isinstance(value[dynamic_field], str) and (
-                    isinstance(eval(value[dynamic_field]), int) or isinstance(eval(value[dynamic_field]), float)):
-                continue
-
-            # 2.判断是否为整数或者浮点数
-            if isinstance(value[dynamic_field], int) or isinstance(value[dynamic_field], float):
-                value[dynamic_field] = str(value[dynamic_field])    # 实际存储的是数字字符串，所以进行转换
-                continue
-
-            value[dynamic_field] = dynamic_field_info.default
-            continue
-
-        if dynamic_field_info.type == DynamicFieldTypeEnum.STRING.value:
-            if isinstance(value[dynamic_field], str):
-                continue
-
-            value[dynamic_field] = str(value[dynamic_field])
-            continue
-
-        if dynamic_field_info.type == DynamicFieldTypeEnum.ONE_ENUM.value:
-            if isinstance(value[dynamic_field], int):
-                enums = [enum[0] for enum in dynamic_field_info.options]
-                if value[dynamic_field] in enums:
-                    continue
-
-            value[dynamic_field] = ""
-            continue
-
-        if dynamic_field_info.type == DynamicFieldTypeEnum.MULTI_ENUM.value:
-            if isinstance(value[dynamic_field], list):
-                enums = [enum[0] for enum in dynamic_field_info.options]
-                if set(value[dynamic_field]) <= set(enums):
-                    continue
-
-            continue
-
-        if dynamic_field_info.type == DynamicFieldTypeEnum.TIMER.value:
-            try:
-                datetime.datetime.strptime(str(value[dynamic_field]), '%Y-%m-%d')
-                continue
-            except ValueError:
-                value[dynamic_field] = dynamic_field_info.default
-
-            value[dynamic_field] = ""
-            continue
+        try:
+            EXTRAS_VALIDATOR_MAP[field.type].validate(value=value[field.name], field_info=field)    # noqa
+        except Exception:
+            logging.info("fail to format dynamic field:{}".format(field.name))
+            value[field.name] = ""
 
     return value
 

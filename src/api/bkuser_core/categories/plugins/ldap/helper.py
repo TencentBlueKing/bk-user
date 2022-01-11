@@ -158,7 +158,6 @@ class ProfileSyncHelper:
                 validate_extras_value_type(value=info.extras)
             except ValidationError:
                 logger.warning("extras<%s> does not meet format", info.extras)
-                continue
 
             # 1. 先更新 profile 本身
             profile_params = {

@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, NamedTuple, Optional
 
 from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
+from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.utils.encoding import force_str
 from ldap3.utils import dn as dn_utils
@@ -33,10 +34,10 @@ class ProfileFieldMapper:
     dynamic_fields: List = field(default_factory=list)
 
     def __post_init__(self):
+        self.dynamic_fields_mapping = self.config_loader.get(DYNAMIC_FIELDS_SETTING_KEY)
 
         self.dynamic_fields = list(
-            self.config_loader["dynamic_fields_mapping"].keys()) if self.config_loader.get(
-            "dynamic_fields_mapping") else []
+            self.dynamic_fields_mapping.keys()) if self.dynamic_fields_mapping else []
 
     def get_value(self, field_name: str, user_meta: Dict[str, List[bytes]], remain_raw: bool = False,
                   dynamic_field: bool = False) -> Any:
@@ -45,7 +46,7 @@ class ProfileFieldMapper:
         # 获取自定义字段对应的属性值
         if dynamic_field:
             ldap_field_name = field_name
-            if ldap_field_name not in self.config_loader["dynamic_fields_mapping"].values():
+            if ldap_field_name not in self.dynamic_fields_mapping.values():
                 logger.info("no config[%s] in configs of dynamic_fields_mapping", field_name)
                 return ""
 
@@ -83,7 +84,7 @@ class ProfileFieldMapper:
         if self.dynamic_fields:
             values.update(
                 {field_name: self.get_value(
-                    field_name=self.config_loader["dynamic_fields_mapping"][field_name],
+                    field_name=self.dynamic_fields_mapping[field_name],
                     user_meta=user_meta,
                     dynamic_field=True) for field_name in self.dynamic_fields}
             )
@@ -93,8 +94,8 @@ class ProfileFieldMapper:
     def get_user_attributes(self) -> list:
         """获取远端属性名列表"""
         user_attributes = [self.config_loader[x] for x in self.embed_fields if self.config_loader.get(x)]
-        user_attributes.extend([self.config_loader["dynamic_fields_mapping"][x] for x in self.dynamic_fields if
-                                self.config_loader["dynamic_fields_mapping"].get(x)])
+        user_attributes.extend([self.dynamic_fields_mapping[x] for x in self.dynamic_fields if
+                                self.dynamic_fields_mapping.get(x)])
 
         return user_attributes
 
