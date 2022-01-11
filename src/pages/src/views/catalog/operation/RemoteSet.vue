@@ -61,6 +61,8 @@
           :catalog-id="catalogInfo.id"
           :catalog-name="catalogInfo.display_name"
           :fields-info="fieldsInfo"
+          :customField="customField"
+          :catalog-type="catalogInfo.type"
           @cancel="$emit('changePage', 'showPageHome')"
           @saveField="handleSaveField" />
       </div>
@@ -104,11 +106,18 @@ export default {
       // 第三步 字段配置：用户基础字段
       fieldsInfo: null,
       fieldsHasCreated: true,
+      // 自定义字段
+      customField: [],
     };
   },
   created() {
     this.getBasicInfo();
     this.getNamespaceInfo();
+  },
+  mounted() {
+    this.$store.dispatch('setting/getFields').then(res => {
+      this.customField = this.$convertCustomField(res.data);
+    })
   },
   methods: {
     getBasicInfo() {
@@ -185,9 +194,11 @@ export default {
         this.isLoading = false;
       }
     },
-    async handleSaveField() {
+    async handleSaveField(data) {
       try {
         this.isLoading = true;
+        const list = [...data];
+        this.fieldsInfo.extend.dynamic_fields_mapping = list;
         const action = this.fieldsHasCreated ? 'catalog/ajaxPutFields' : 'catalog/ajaxPostFields';
         await this.$store.dispatch(action, {
           id: this.catalogInfo.id,
@@ -204,7 +215,7 @@ export default {
       this.$bus.$emit('updateCatalogList');
       this.messageSuccess(this.$t('保存成功'));
       this.$emit('changePage', 'showPageHome');
-    },
+    }
   },
 };
 </script>

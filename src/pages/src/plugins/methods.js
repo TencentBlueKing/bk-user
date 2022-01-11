@@ -67,8 +67,18 @@ const methods = {
           const region = regionArray[0];
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
-            const value = regionData[1];
-            arrayData.push({ key, value, region });
+            if (regionData[0] === 'dynamic_fields_mapping') {
+              const value = {}
+              regionData[1].forEach((item) => {
+                const extendKey = item.key;
+                const extendValue = item.value;
+                this.$set(value, extendKey, extendValue);
+              })
+              arrayData.push({ key, value, region });
+            } else {
+              const value = regionData[1];
+              arrayData.push({ key, value, region });
+            }
           });
         });
         return arrayData;
@@ -86,6 +96,21 @@ const methods = {
             objectData[region] = {};
           }
           objectData[region][key] = value;
+          if (regionObject.key === 'dynamic_fields_mapping') {
+            const valueList = []
+            Object.entries(regionObject.value).forEach((regionData) => {
+              const key = regionData[0];
+              const value = regionData[1];
+              valueList.push({key, value});
+            })
+            objectData[region][regionObject.key] = valueList;
+          } else {
+            const { key, value } = regionObject;
+            if (!objectData[region]) {
+              objectData[region] = {};
+            }
+            objectData[region][key] = value;
+          }
         });
         return objectData;
       } catch (e) {
@@ -152,6 +177,23 @@ const methods = {
         console.warn('数据结构异常', e);
       }
     };
+    
+    Vue.prototype.$convertCustomField = function (arr) {
+      try {
+        const arrayData = [];
+        arr.forEach((regionArray) => {
+          const disabled = false;
+          if (!regionArray.builtin) {
+            this.$set(regionArray, 'disabled', disabled);
+            arrayData.push(regionArray);
+          }
+        });
+        return arrayData;
+      } catch (e) {
+        console.warn('数据结构异常', e);
+      }
+    }
+
     // 获取字符串长度，中文为 2 个字符长度
     Vue.prototype.$getStringLength = function (string) {
       // 匹配所有的中文
