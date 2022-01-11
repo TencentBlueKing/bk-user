@@ -8,8 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-"""Component API Client
-"""
 import json
 import logging
 import random
@@ -21,13 +19,6 @@ import requests
 
 from . import collections, conf
 from .utils import get_signature
-
-# shutdown urllib3's warning
-try:
-    requests.packages.urllib3.disable_warnings()
-except ImportError:
-    pass
-
 
 logger = logging.getLogger("component")
 
@@ -148,7 +139,7 @@ class ComponentClientWithSignature(BaseComponentClient):
         if method == "POST":
             params = {}
 
-        url_path = urlparse.urlparse(url).path
+        url_path = urlparse(url).path
         # signature always in GET params
         params.update(
             {

@@ -1,6 +1,6 @@
-# Bk-User-Helm-Stack
+# bk-user Chart 安装说明
 
-Bk-User-Helm-Stack 是一个旨在快速部署用户管理部署工具，它在 Helm Chart 的基础上开发，旨在为用户管理产品提供方便快捷的部署能力。
+bk-user 是一个旨在快速部署用户管理部署工具，它在 Helm Chart 的基础上开发，旨在为用户管理产品提供方便快捷的部署能力。
 
 ## 准备依赖服务
 
@@ -208,7 +208,7 @@ global:
     enabled: true
 ```
 
-### 安装
+### 9. 安装
 
 如果你已经准备好了 `values.yaml`，就可以直接进行安装操作了
 
@@ -220,6 +220,32 @@ helm install bk-user bk-user -n bk-user -f values.yaml
 
 
 如果在安装完成之后，访问 SaaS 地址出现 `503`，可以检查一下 `saas-web` 容器是否完全就绪，静候就绪后刷新页面即可。
+
+## 资源释义
+你可以通过 kubectl 获取安装详情:
+```bash
+# 获取所有 controller
+kubectl get deploy,job,sts -l app.kubernetes.io/instance=bk-user
+# 获取所有 Pod 
+kubectl get pod -l app.kubernetes.io/instance=bk-user
+# 获取访问入口
+kubectl get svc,ingress -l app.kubernetes.io/instance=bk-user
+```
+
+通常在安装后，我们会看到这些 Pod
+
+| Pod 前缀                  | 所属模块      | 作用          | 
+|-------------------------|-----------|-------------|
+| bk-login-web            | 蓝鲸登录      | 主进程         |
+| bk-login-migrate-db     | 蓝鲸登录      | 初始化数据库作业    |
+| bk-user-saas            | 用户管理 SaaS | 主进程         |
+| bk-user-saas-migrate-db | 用户管理 SaaS | 初始化数据库作业    |
+| bk-user-api-web         | 用户管理 API  | 主进程         |
+| bk-user-api-worker      | 用户管理 API  | 后台任务进程      |
+| bk-user-api-beat        | 用户管理 API  | 周期任务        |
+| bk-user-api-migrate-db  | 用户管理 API  | 初始化数据库作业    |
+| bk-user-api-migrate-db  | 用户管理 API  | 初始化数据库作业    |
+| bk-user-api-migrate-iam | 用户管理 API  | 初始化权限中心模型作业 |
 
 ## 卸载
 ```bash
