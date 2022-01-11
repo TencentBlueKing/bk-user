@@ -129,16 +129,17 @@ export default {
           fieldsMad: this.convertDefault(fieldsMad.data),
           fieldsLdap: this.convertDefault(fieldsLdap.data),
         };
-        try {
-          if (defaults.fieldsMad.extend.mad_fields.length === 0) {
-            defaults.fieldsMad.extend.mad_fields = new Array(defaults.fieldsMad.extend.bk_fields.length);
-          }
-          if (defaults.fieldsLdap.extend.mad_fields.length === 0) {
-            defaults.fieldsLdap.extend.mad_fields = new Array(defaults.fieldsLdap.extend.bk_fields.length);
-          }
-        } catch (e) {
-          console.warn('fields 默认值缺少 mad_fields 字段', e);
-        }
+        // console.log('defaults', defaults);
+        // try {
+        //   if (defaults.fieldsMad.extend.mad_fields.length === 0) {
+        //     defaults.fieldsMad.extend.mad_fields = new Array(defaults.fieldsMad.extend.bk_fields.length);
+        //   }
+        //   if (defaults.fieldsLdap.extend.mad_fields.length === 0) {
+        //     defaults.fieldsLdap.extend.mad_fields = new Array(defaults.fieldsLdap.extend.bk_fields.length);
+        //   }
+        // } catch (e) {
+        //   console.warn('fields 默认值缺少 mad_fields 字段', e);
+        // }
         this.$store.commit('catalog/updateDefaults', defaults);
       } catch (e) {
         console.warn(e);

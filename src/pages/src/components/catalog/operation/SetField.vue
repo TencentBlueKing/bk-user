@@ -76,91 +76,72 @@
                        :title="$t('组织架构类')"
                        :is-need="true"
                        @hasError="handleHasError" />
-
-          <!-- 用户名字段 -->
-          <CommonInput keyword="username"
-                       :info="basicFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户名字段')"
-                       :description="$t('用户名字段描述')"
-                       :is-need="true"
-                       @hasError="handleHasError" />
-
-          <!-- 中文名字段 -->
-          <CommonInput keyword="display_name"
-                       :info="basicFields"
-                       :input-bus="inputBus"
-                       :title="$t('中文名字段')"
-                       :is-need="true"
-                       @hasError="handleHasError" />
-
-          <!-- 邮箱字段 -->
-          <CommonInput keyword="email"
-                       :info="basicFields"
-                       :input-bus="inputBus"
-                       :title="$t('邮箱字段')"
-                       :is-need="true"
-                       @hasError="handleHasError" />
-
-          <!-- 手机号字段 -->
-          <CommonInput keyword="telephone"
-                       :info="basicFields"
-                       :input-bus="inputBus"
-                       :title="$t('手机号字段')"
-                       @hasError="handleHasError" />
         </div>
       </div>
     </div>
 
-    <!--    &lt;!&ndash; 用户扩展字段 &ndash;&gt;-->
-    <!--    <div class="collapse">-->
-    <!--      <div class="collapse-item">-->
-    <!--        <div class="header-container" @click="expandExtensional = !expandExtensional">-->
-    <!--          <div class="header">-->
-    <!--            <span class="title">{{$t('用户扩展字段')}}</span>-->
-    <!--            <div :class="{ 'collapse-group': true, expanded: expandExtensional }">-->
-    <!--              <i class="collapse-icon bk-icon icon-angle-double-down"></i>-->
-    <!--              <span class="collapse-text">{{expandExtensional ? $t('收起') : $t('展开')}}</span>-->
-    <!--            </div>-->
-    <!--          </div>-->
-    <!--        </div>-->
-    <!--        &lt;!&ndash; todo 动画 &ndash;&gt;-->
-    <!--        <div class="content extend-content catalog-setting-step" v-show="expandExtensional">-->
-    <!--          &lt;!&ndash; 蓝鲸用户管理字段 &ndash;&gt;-->
-    <!--          <div class="input-container">-->
-    <!--            <span class="description">{{$t('蓝鲸用户管理字段')}}</span>-->
-    <!--            <bk-input disabled class="extend-input" v-for="(item, index) in bkFieldsChoices"-->
-    <!--                      :key="index"-->
-    <!--                      :value="item"></bk-input>-->
-    <!--          </div>-->
-    <!--          &lt;!&ndash; = &ndash;&gt;-->
-    <!--          <div class="symbol">-->
-    <!--            <span></span><i v-for="item in bkFieldsChoices" :key="item">=</i>-->
-    <!--          </div>-->
-    <!--          &lt;!&ndash; 对应用户目录字段 &ndash;&gt;-->
-    <!--          <div class="input-container">-->
-    <!--            <span class="description">{{$t('对应字段1') + catalogName + $t('对应字段2')}}</span>-->
-    <!--            <bk-input-->
-    <!--              class="extend-input"-->
-    <!--              v-for="(item, index) in bkFieldsChoices"-->
-    <!--              v-model="extendFields.mad_fields[index]"-->
-    <!--              :key="index"-->
-    <!--            ></bk-input>-->
-    <!--            &lt;!&ndash;                        <bk-select&ndash;&gt;-->
-    <!--            &lt;!&ndash;                            class="extend-input"&ndash;&gt;-->
-    <!--            &lt;!&ndash;                            v-for="(item, index) in bkFieldsChoices"&ndash;&gt;-->
-    <!--            &lt;!&ndash;                            v-model="extendFields.mad_fields[index]"&ndash;&gt;-->
-    <!--            &lt;!&ndash;                            :key="index"&ndash;&gt;-->
-    <!--            &lt;!&ndash;                            :clearable="false"&ndash;&gt;-->
-    <!--            &lt;!&ndash;                            :placeholder="$t('请选择')">&ndash;&gt;-->
-    <!--            &lt;!&ndash;                            <bk-option v-for="option in madFieldsChoices"-->
-    <!--                                                       :key="option" :id="option"-->
-    <!--                                                       :name="option"></bk-option>&ndash;&gt;-->
-    <!--            &lt;!&ndash;                        </bk-select>&ndash;&gt;-->
-    <!--          </div>-->
-    <!--        </div>-->
-    <!--      </div>-->
-    <!--    </div>-->
+    <!-- 用户基础字段 -->
+    <div class="collapse">
+      <div class="collapse-item">
+        <div class="header-container" @click="expandUser = !expandUser">
+          <div class="header">
+            <span class="title">{{$t('用户基础字段')}}</span>
+            <div :class="{ 'collapse-group': true, expanded: expandUser }">
+              <i class="collapse-icon bk-icon icon-angle-double-down"></i>
+              <span class="collapse-text">{{expandUser ? $t('收起') : $t('展开')}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="content catalog-setting-step" v-show="expandUser">
+          <div class="user-directory">
+            <p>蓝鲸用户管理字段</p>
+            <p>对应{{catalogType}}目录字段</p>
+          </div>
+          <div class="user-content">
+            <div class="user-item">
+              <bk-input class="user-key" :value="$t('用户名')" :readonly="true" />
+              <bk-input class="user-value" v-model="basicFields.username" />
+            </div>
+            <div class="user-item">
+              <bk-input class="user-key" :value="$t('中文名')" :readonly="true" />
+              <bk-input class="user-value" v-model="basicFields.display_name" />
+            </div>
+            <div class="user-item">
+              <bk-input class="user-key" :value="$t('邮箱')" :readonly="true" />
+              <bk-input class="user-value" v-model="basicFields.email" />
+            </div>
+            <div class="user-item">
+              <bk-input class="user-key" :value="$t('手机号')" :readonly="true" />
+              <bk-input class="user-value" v-model="basicFields.telephone" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 自定义字段 -->
+    <div class="collapse">
+      <div class="collapse-item">
+        <div class="header-container" @click="expandCustom = !expandCustom">
+          <div class="header">
+            <span class="title">{{$t('自定义字段')}}
+            </span>
+            <div :class="{ 'collapse-group': true, expanded: expandCustom }">
+              <i class="collapse-icon bk-icon icon-angle-double-down"></i>
+              <span class="collapse-text">{{expandCustom ? $t('收起') : $t('展开')}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="content catalog-setting-step" v-show="expandCustom">
+          <div class="user-directory">
+            <p>蓝鲸用户管理字段</p>
+            <p>对应{{catalogType}}目录字段</p>
+          </div>
+          <addCustomField :type="type" :customField="customField" :addFieldList="addFieldList" />
+          <setCustomField :type="type" :extendFields="extendFields" :customField="customField" :setFieldList="setFieldList" />
+        </div>
+      </div>
+    </div>
 
     <!-- 用户组字段 -->
     <div class="collapse">
@@ -195,22 +176,22 @@
                        @hasError="handleHasError" />
 
           <!-- 用户组名字段 -->
-          <!-- <CommonInput keyword="user_group_name"
+          <CommonInput keyword="user_group_name"
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组名字段')"
                        :is-need="false"
                        @hasError="handleHasError" />
-          -->
+         
 
           <!-- 用户组描述字段 -->
-          <!-- <CommonInput keyword="user_group_description"
+          <CommonInput keyword="user_group_description"
                        :info="groupFields"
                        :input-bus="inputBus"
                        :title="$t('用户组描述字段')"
                        :is-need="false"
                        @hasError="handleHasError" />
-          -->
+         
 
           <!-- 用户组关联字段 -->
           <CommonInput keyword="user_member_of"
@@ -257,11 +238,15 @@
 import Vue from 'vue';
 import CommonInput from '@/components/catalog/operation/CommonInput';
 import TestConnection from '@/components/catalog/operation/TestConnection';
+import addCustomField  from './addCustomField.vue';
+import setCustomField from './setCustomField.vue';
 
 export default {
   components: {
     CommonInput,
     TestConnection,
+    addCustomField,
+    setCustomField
   },
   props: {
     // add 增加目录 set 修改目录设置
@@ -281,6 +266,14 @@ export default {
       type: String,
       default: '',
     },
+    customField: {
+      type: Array,
+      default: () => ([]),
+    },
+    catalogType: {
+      type: String,
+      default: '',
+    }
   },
   data() {
     return {
@@ -288,9 +281,13 @@ export default {
       expandBasic: true,
       expandExtensional: true,
       expandGroup: true,
+      expandUser: true,
+      expandCustom: true,
       // 表单验证是否有错误
       hasError: false,
       inputBus: new Vue(),
+      addFieldList: [{ key: '', value: '' }],
+      setFieldList: [],
     };
   },
   computed: {
@@ -298,7 +295,7 @@ export default {
       return this.fieldsInfo ? this.fieldsInfo.basic : null;
     },
     extendFields() {
-      return this.fieldsInfo ? this.fieldsInfo.extend : null;
+      return this.fieldsInfo ? this.fieldsInfo.extend.dynamic_fields_mapping : null;
     },
     groupFields() {
       return this.fieldsInfo ? this.fieldsInfo.group : null;
@@ -325,10 +322,10 @@ export default {
   },
   methods: {
     handlePush() {
-      this.validate() && this.$emit('push');
+      this.validate() && this.$emit('push', this.addFieldList);
     },
     handleSave() {
-      this.validate() && this.$emit('saveField');
+      this.validate() && this.$emit('saveField', this.setFieldList);
     },
     handleHasError() {
       this.hasError = true;
@@ -483,6 +480,71 @@ export default {
               font-weight: bold;
               font-style: normal;
               color: #ff9c01;
+            }
+          }
+        }
+
+        .user-directory {
+          display: flex;
+          p {
+            width: 400px;
+            margin-left: 30px;
+            line-height: 40px;
+            font-size: 16px;
+          }
+        }
+        .user-content {
+          .user-item {
+            display: flex;
+            margin: 15px 0;
+            .bk-form-control {
+              width: 400px;
+              margin-left: 30px;
+            }
+            .custom-select {
+              width: 400px;
+              margin-left: 30px;
+            }
+            .i-add, .i-del {
+              font-size: 18px;
+              color: #3A84FF;
+              line-height: 32px;
+              margin-left: 15px;
+              &:hover {
+                cursor: pointer;
+              }
+            }
+            .delete {
+              pointer-events: none;
+              cursor: default;
+            }
+            .user-key {
+              position: relative;
+              &::before {
+                content: '*';
+                display: inline;
+                width: 30px;
+                height: 30px;
+                position: absolute;
+                left: -19px;
+                top: 9px;
+                font-size: 14px;
+                color: #EA3536;
+              }
+            }
+            .user-value {
+              position: relative;
+              &::before {
+                content: '=';
+                display: inline;
+                width: 30px;
+                height: 30px;
+                position: absolute;
+                left: -20px;
+                top: 5px;
+                font-size: 14px;
+                color: #FE9C00;
+              }
             }
           }
         }
