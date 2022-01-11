@@ -27,7 +27,7 @@
         <h4 class="title">{{$t('密码长度')}}</h4>
         <span class="star">*</span>
       </div>
-      <bk-input v-model="defaultPassword.password_min_length.value"
+      <bk-input v-model="defaultPassword.password_min_length"
                 type="number"
                 style="width: 240px;"
                 :class="{ 'king-input': true, error: passwordLengthError }"
@@ -45,13 +45,13 @@
         <h4 class="title">{{$t('密码必须包含')}}</h4>
         <span class="star">*</span>
       </div>
-      <bk-checkbox-group v-model="defaultPassword.password_must_includes.value" style="display: flex;height: 19px;">
+      <bk-checkbox-group v-model="defaultPassword.password_must_includes" style="display: flex;height: 19px;">
         <bk-checkbox value="lower" style="margin-right: 28px;">{{$t('小写字母')}}</bk-checkbox>
         <bk-checkbox value="upper" style="margin-right: 28px;">{{$t('大写字母')}}</bk-checkbox>
         <bk-checkbox value="int" style="margin-right: 28px;">{{$t('数字')}}</bk-checkbox>
         <bk-checkbox value="special" style="margin-right: 28px;">{{$t('特殊字符（除空格）')}}</bk-checkbox>
       </bk-checkbox-group>
-      <p class="error-text" v-if="!defaultPassword.password_must_includes.value.length">{{$t('密码规则不得为空')}}</p>
+      <p class="error-text" v-if="!defaultPassword.password_must_includes.length">{{$t('密码规则不得为空')}}</p>
     </div>
 
     <!-- 密码有效期 -->
@@ -63,8 +63,8 @@
       <div class="bk-button-group">
         <bk-button v-for="(item, index) in passwordValidDaysList"
                    :key="index"
-                   :class="{ 'is-selected': defaultPassword.password_valid_days.value === item.days }"
-                   @click="defaultPassword.password_valid_days.value = item.days">
+                   :class="{ 'is-selected': defaultPassword.password_valid_days === item.days }"
+                   @click="defaultPassword.password_valid_days = item.days">
           {{item.text}}
         </bk-button>
       </div>
@@ -79,8 +79,8 @@
       <div class="bk-button-group">
         <bk-button v-for="(item, index) in maxTrailTimesList"
                    :key="index"
-                   :class="{ 'is-selected': defaultPassword.max_trail_times.value === item.times }"
-                   @click="defaultPassword.max_trail_times.value = item.times">
+                   :class="{ 'is-selected': defaultPassword.max_trail_times === item.times }"
+                   @click="defaultPassword.max_trail_times = item.times">
           {{item.text}}
         </bk-button>
       </div>
@@ -95,7 +95,7 @@
           <span class="icon-user--l" v-bk-tooltips="$t('自动解锁时间提示')"></span>
         </div>
       </div>
-      <bk-input v-model="defaultPassword.auto_unlock_seconds.value"
+      <bk-input v-model="defaultPassword.auto_unlock_seconds"
                 type="number"
                 style="width: 240px;"
                 :class="{ 'king-input': true, error: autoUnlockError }"
@@ -127,9 +127,9 @@
       </div>
       <!-- 设置初始密码 -->
       <div class="init-password-container"
-           :class="{ active: defaultPassword.init_password_method.value === 'fixed_preset', error: initPasswordError }"
-           @click="defaultPassword.init_password_method.value = 'fixed_preset'">
-        <bk-radio name="radio1" :checked="defaultPassword.init_password_method.value === 'fixed_preset'"
+           :class="{ active: defaultPassword.init_password_method === 'fixed_preset', error: initPasswordError }"
+           @click="defaultPassword.init_password_method = 'fixed_preset'">
+        <bk-radio name="radio1" :checked="defaultPassword.init_password_method === 'fixed_preset'"
                   class="king-radio">
           {{$t('统一初始密码')}}
         </bk-radio>
@@ -139,7 +139,7 @@
                autocomplete="new-password"
                :type="initPasswordSlash && 'password'"
                :placeholder="$t('请输入密码')"
-               v-model="defaultPassword.init_password.value"
+               v-model="defaultPassword.init_password"
                @input="validateInitPassword"
         />
         <i :class="['bk-icon', passwordIconClass]" @click="initPasswordSlash = !initPasswordSlash"></i>
@@ -147,15 +147,15 @@
       <p class="error-text" v-show="initPasswordError">{{$t('密码规则校验失败')}}</p>
       <!-- 邮箱发送随机密码 -->
       <div class="init-email-container"
-           :class="{ active: defaultPassword.init_password_method.value === 'random_via_mail',
+           :class="{ active: defaultPassword.init_password_method === 'random_via_mail',
                      error: initEmailConfigError }">
-        <div class="email-config-container" @click="defaultPassword.init_password_method.value = 'random_via_mail'">
+        <div class="email-config-container" @click="defaultPassword.init_password_method = 'random_via_mail'">
           <bk-radio class="king-radio" name="radio1"
-                    :checked="defaultPassword.init_password_method.value === 'random_via_mail'">
+                    :checked="defaultPassword.init_password_method === 'random_via_mail'">
             {{$t('邮箱发送随机密码')}}
           </bk-radio>
           <span class="edit-template"
-                :class="{ disable: defaultPassword.init_password_method.value === 'fixed_preset' }"
+                :class="{ disable: defaultPassword.init_password_method === 'fixed_preset' }"
                 @click.stop="toggleEmailTemplate">
             {{$t('编辑邮件模板')}}
           </span>
@@ -167,17 +167,17 @@
               <h3 class="email-block-name">{{$t('创建账户邮件')}}</h3>
               <div class="email-info clearfix">
                 <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.init_mail_config.value.title"
+                <input type="text" class="input-text" v-model="defaultPassword.init_mail_config.title"
                        @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.init_mail_config.value.sender"
+                <input type="text" class="input-text" v-model="defaultPassword.init_mail_config.sender"
                        @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title" style="height: 191px">{{$t('正文')}}<span class="star">*</span></p>
-                <textarea class="textarea-text" v-model="defaultPassword.init_mail_config.value.content"
+                <textarea class="textarea-text" v-model="defaultPassword.init_mail_config.content"
                           @input="validateEmailTemplate"></textarea>
               </div>
             </li>
@@ -185,17 +185,17 @@
               <h3 class="email-block-name">{{$t('重设密码后的邮件')}}</h3>
               <div class="email-info clearfix">
                 <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.reset_mail_config.value.title"
+                <input type="text" class="input-text" v-model="defaultPassword.reset_mail_config.title"
                        @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.reset_mail_config.value.sender"
+                <input type="text" class="input-text" v-model="defaultPassword.reset_mail_config.sender"
                        @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title" style="height: 191px">{{$t('正文')}}<span class="star">*</span></p>
-                <textarea class="textarea-text" v-model="defaultPassword.reset_mail_config.value.content"
+                <textarea class="textarea-text" v-model="defaultPassword.reset_mail_config.content"
                           @input="validateEmailTemplate"></textarea>
               </div>
             </li>
@@ -206,7 +206,7 @@
     </div>
 
     <div class="info-container">
-      <bk-checkbox v-model="defaultPassword.force_reset_first_login.value">{{$t('首次登录强制修改密码')}}</bk-checkbox>
+      <bk-checkbox v-model="defaultPassword.force_reset_first_login">{{$t('首次登录强制修改密码')}}</bk-checkbox>
     </div>
 
     <!-- 未登录自动冻结 -->
@@ -329,14 +329,14 @@ export default {
     },
     // default region
     defaultPassword() {
-      return this.passportInfo ? this.passportInfo.default : null;
+      return this.passportInfo ? this.passportInfo : null;
     },
     // 密码输入框右边的眼睛 icon
     passwordIconClass() {
       return this.initPasswordSlash ? 'icon-eye-slash' : 'icon-eye';
     },
     isDisabledSubmit() {
-      return !this.defaultPassword.password_must_includes.value.length
+      return !this.defaultPassword.password_must_includes.length
                     || this.passwordLengthError
                     || this.passwordHistoryError
                     || this.autoUnlockError
@@ -359,15 +359,15 @@ export default {
     init() {
       // 监听密码规则的变化去验证初始密码
       this.$watch(() => {
-        return this.passportInfo.default.password_must_includes.value.length;
+        return this.passportInfo.password_must_includes.length;
       }, () => {
         this.validateInitPassword();
       });
     },
     // 校验密码长度
     validatePasswordLength() {
-      this.passwordLengthError = this.defaultPassword.password_min_length.value < 8
-                                 || this.defaultPassword.password_min_length.value > 32;
+      this.passwordLengthError = this.defaultPassword.password_min_length < 8
+                                 || this.defaultPassword.password_min_length > 32;
     },
     // 校验密码重复次数
     validatePasswordHistory() {
@@ -375,7 +375,7 @@ export default {
     },
     // 校验密码解锁时间
     validateAutoUnlock() {
-      this.autoUnlockError = this.defaultPassword.auto_unlock_seconds.value < 30;
+      this.autoUnlockError = this.defaultPassword.auto_unlock_seconds < 30;
     },
     // 校验未登录自动冻结天数
     validateFreezeDays() {
@@ -383,17 +383,17 @@ export default {
     },
     // 验证初始密码是否符合密码规则
     validateInitPassword() {
-      const password = this.defaultPassword.init_password.value;
+      const password = this.defaultPassword.init_password;
       const passwordRules = {
-        passwordMinLength: this.defaultPassword.password_min_length.value,
-        passwordMustIncludes: this.defaultPassword.password_must_includes.value,
+        passwordMinLength: this.defaultPassword.password_min_length,
+        passwordMustIncludes: this.defaultPassword.password_must_includes,
       };
       this.initPasswordError = !this.$validatePassportByRules(password, passwordRules);
     },
     // 验证邮箱模板
     validateEmailTemplate() {
-      const contentList = [...Object.values(this.defaultPassword.init_mail_config.value),
-        ...Object.values(this.defaultPassword.reset_mail_config.value)];
+      const contentList = [...Object.values(this.defaultPassword.init_mail_config),
+        ...Object.values(this.defaultPassword.reset_mail_config)];
       for (let i = 0; i < contentList.length; i++) {
         if (!contentList[i].length) {
           this.initEmailConfigError = true;
@@ -426,7 +426,7 @@ export default {
     },
     // 展开或隐藏邮件模板
     toggleEmailTemplate() {
-      if (this.defaultPassword.init_password_method.value === 'random_via_mail') {
+      if (this.defaultPassword.init_password_method === 'random_via_mail') {
         this.showEmailTemplate = !this.showEmailTemplate;
       }
     },

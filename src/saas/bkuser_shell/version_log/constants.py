@@ -35,6 +35,7 @@ class ProjectTypes(str, ChoicesEnum):
 
     API = "API"
     SAAS = "SaaS"
+    LOGIN = "Login"
     GLOBAL = "__Global__"
 
     def __str__(self):

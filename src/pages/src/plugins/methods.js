@@ -67,9 +67,8 @@ const methods = {
           const region = regionArray[0];
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
-            const value = regionData[1].value;
-            const enabled = regionData[1].enabled;
-            arrayData.push({ key, value, region, enabled });
+            const value = regionData[1];
+            arrayData.push({ key, value, region });
           });
         });
         return arrayData;
@@ -82,18 +81,75 @@ const methods = {
       try {
         const objectData = {};
         arr.forEach((regionObject) => {
-          const { region, key, value, enabled } = regionObject;
+          const { region, key, value } = regionObject;
           if (!objectData[region]) {
             objectData[region] = {};
           }
-          objectData[region][key] = {
-            value,
-            enabled,
-          };
+          objectData[region][key] = value;
         });
         return objectData;
       } catch (e) {
         console.warn('参数错误', e);
+      }
+    };
+
+    Vue.prototype.$convertPassportRes = function (obj) {
+      const objectData = {};
+      const enabledKeys = ['max_password_history', 'freeze_after_days'];
+      obj.forEach((regionArray) => {
+        try {
+          if (enabledKeys.includes(regionArray.key)) {
+            const { key, value, enabled } = regionArray;
+            this.$set(objectData, key, { value, enabled });
+          } else {
+            const { key, value } = regionArray;
+            this.$set(objectData, key, value);
+          }
+        } catch (e) {
+          console.warn('数据结构异常', e);
+        }
+      });
+      return objectData;
+    };
+
+    Vue.prototype.$convertPassportInfoArray = function (arr) {
+      try {
+        const arrayData = [];
+        Object.entries(arr).forEach((regionArray) => {
+          const key = regionArray[0];
+          let value = regionArray[1];
+          let enabled = true;
+          if (regionArray[1].value) {
+            value = regionArray[1].value;
+            enabled = regionArray[1].enabled;
+          }
+          arrayData.push({ key, value, enabled });
+        });
+        return arrayData;
+      } catch (e) {
+        console.warn('数据结构异常', e);
+      }
+    };
+
+    Vue.prototype.$convertPassportInfoObject = function (obj) {
+      try {
+        const objectData = {};
+        const enabledKeys = ['max_password_history', 'freeze_after_days'];
+        Object.entries(obj).forEach((regionArray) => {
+          Object.entries(regionArray[1]).forEach((regionData) => {
+            const key = regionData[0];
+            const value = regionData[1];
+            if (enabledKeys.includes(key)) {
+              const enabled = true;
+              this.$set(objectData, key, { value, enabled });
+            } else {
+              this.$set(objectData, key, value);
+            }
+          });
+        });
+        return objectData;
+      } catch (e) {
+        console.warn('数据结构异常', e);
       }
     };
     // 获取字符串长度，中文为 2 个字符长度

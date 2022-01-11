@@ -1274,13 +1274,14 @@ export default {
       this.$set(item, 'showBackground', true);
       this.$nextTick(() => {
         const calculateDistance = this.calculate(event.target);
-        const differ = document.querySelector('body').offsetHeight - calculateDistance.getOffsetTop;
         const next = event.target.nextElementSibling;
         next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
         next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
-        if (differ <= 280) {
-          next.style.top = 'auto';
-          next.style.bottom = `${differ}px`;
+        const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
+        if ((bottomHeight < 0) && (next.offsetHeight === 146)) {
+          next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
+        } else if ((bottomHeight < 0) && (next.offsetHeight === 254)) {
+          next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
         }
       });
     },

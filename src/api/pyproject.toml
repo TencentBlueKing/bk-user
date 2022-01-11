@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bk-user-api"
-version = "2.3.1"
+version = "2.3.2-beta.1"
 description = "bk-user Api"
 authors = ["IMBlues <bluesedenyu@gmail.com>"]
 
