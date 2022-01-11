@@ -1,0 +1,15 @@
+{{- $namePrefix := include "bk-user.name" . -}}
+{{- if .Values.global.bkLogConfig.enabled }}
+apiVersion: bk.tencent.com/v1alpha1
+kind: BkLogConfig
+metadata:
+  name: bk-user-api-stdout-log
+  labels:
+    {{- include "bk-user.labels" . | nindent 4 }}
+spec:
+  dataId: {{ .Values.global.bkLogConfig.dataId }}
+  logConfigType: "std_log_config"
+  namespace: {{ .Release.Namespace | quote }}
+  labelSelector:
+    matchLabels: {{- include "bk-user.labels" . | nindent 6 }}
+{{- end }}

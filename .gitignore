@@ -221,7 +221,9 @@ src/pages/dist/
 /poetry.lock
 
 # helm
-deploy/helm/*/charts/
+deploy/helm/bk-user/charts/api/charts/
+deploy/helm/bk-user/charts/saas/charts/
+deploy/helm/bk-user/charts/login/charts/
 deploy/helm/local_values.yaml
 deploy/helm/dist/
 
