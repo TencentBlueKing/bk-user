@@ -146,6 +146,8 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ],
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "PAGE_SIZE": 50,
+    "ORDERING_PARAM": "ordering",
 }
 
 SWAGGER_SETTINGS = {

@@ -10,10 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.viewset import AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.user_settings import serializers
 from bkuser_core.user_settings.models import Setting, SettingMeta
 from bkuser_core.user_settings.serializers import SettingUpdateSerializer

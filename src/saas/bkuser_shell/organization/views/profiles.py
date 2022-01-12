@@ -13,10 +13,10 @@ import logging
 
 import bkuser_sdk
 from bkuser_sdk.rest import ApiException
-from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.apis.viewset import BkUserApiViewSet
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.organization.serializers import profiles as serializers
 from bkuser_shell.organization.utils import get_default_logo_url
 from rest_framework.permissions import IsAuthenticated
@@ -54,7 +54,7 @@ class LoginInfoViewSet(BkUserApiViewSet):
 class ProfilesViewSet(BkUserApiViewSet):
 
     permission_classes = [IsAuthenticated]
-    ACTION_ID = ActionEnum.MANAGE_DEPARTMENT.value
+    ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
 
     @inject_serializer(
         body_in=serializers.CreateProfileSerializer, out=serializers.ProfileSerializer, tags=["profiles"]
@@ -121,7 +121,7 @@ class ProfilesViewSet(BkUserApiViewSet):
             params.update({"wildcard_search": keyword, "wildcard_search_fields": ["username", "display_name", "id"]})
 
         api_instance = bkuser_sdk.ProfilesApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_DEPARTMENT.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_DEPARTMENT.value)
         )
         profiles = api_instance.v2_profiles_list(**params)
         return profiles
@@ -166,3 +166,13 @@ class ProfilesViewSet(BkUserApiViewSet):
         api_instance = bkuser_sdk.BatchApi(self.get_api_client_by_request(request))
         api_instance.v2_batch_profiles_delete(body=validated_data)
         return Response()
+
+
+class ProfilesApiViewSet(BkUserApiViewSet):
+    """用户信息模块"""
+
+    permission_classes = [IsAuthenticated]
+    ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
+
+    def get(self, request, *args, **kwargs):
+        return self.call_through_api(request)

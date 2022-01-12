@@ -10,9 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.version_log.models import VersionLog, VersionLogSet
 from bkuser_shell.version_log.utils import get_version_list
 from drf_yasg.utils import swagger_auto_schema
@@ -35,7 +35,6 @@ class VersionLogViewSet(BkUserApiViewSet):
     def retrieve(self, request, version_number):
         try:
             version_list = get_version_list()
-            print(version_list)
             return Response(data=version_list.get_by_version(version_number).dict())
         except ValueError:
             logger.exception("failed to parse release yaml")

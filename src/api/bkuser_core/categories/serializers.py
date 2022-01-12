@@ -10,10 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
+from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer, DurationTotalSecondField
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories import constants
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.common.serializers import CustomFieldsModelSerializer, DurationTotalSecondField
 from bkuser_core.profiles.validators import validate_domain
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.serializers import (
