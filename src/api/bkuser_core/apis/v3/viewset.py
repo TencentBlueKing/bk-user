@@ -15,9 +15,6 @@ from rest_framework import filters
 class MultipleFieldFilter(filters.SearchFilter):
     """多字段过滤器, 同时支持标准和非标准过滤"""
 
-    def filter_queryset(self, request, queryset, view):
-        """标准 filter"""
-
     def filter_by_params(self, params: dict, queryset):
         """非标准 filter"""
         available_fields = [
