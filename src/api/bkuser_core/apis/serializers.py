@@ -8,22 +8,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.viewset import BkUserApiViewSet
-from bkuser_shell.common.error_codes import error_codes
-from django.template.exceptions import TemplateDoesNotExist
-from django.template.loader import get_template
-from django.template.response import TemplateResponse
-
-from bkuser_global.drf_crown import inject_serializer
+from rest_framework import fields
 
 
-class LoginPageViewSet(BkUserApiViewSet):
+class StringArrayField(fields.ListField):
+    """
+    String representation of an array field.
+    """
 
-    permission_classes: list = []
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    @inject_serializer(tags=["account"])
-    def login_success(self, request):
-        try:
-            return TemplateResponse(request=request, template=get_template("login_success.html"))
-        except TemplateDoesNotExist:
-            raise error_codes.CANNOT_FIND_TEMPLATE
+        self.delimiter = kwargs.get("delimiter", ",")
+
+    def to_internal_value(self, data):
+        # convert string to list
+        target = []
+        for e in data:
+            target.extend(e.split(self.delimiter))
+
+        return super().to_internal_value(target)

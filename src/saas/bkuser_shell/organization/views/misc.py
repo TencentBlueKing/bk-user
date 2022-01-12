@@ -11,10 +11,10 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import bkuser_sdk
-from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.apis.viewset import BkUserApiViewSet
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.organization.constants import ProfileWildSearchFieldEnum
 from bkuser_shell.organization.serializers.departments import DepartmentSerializer
 from bkuser_shell.organization.serializers.misc import SearchResultSerializer, SearchSerializer
@@ -38,13 +38,13 @@ class SearchViewSet(BkUserApiViewSet):
     )
     def search(self, request, validated_data):
         fields_api_instance = bkuser_sdk.DynamicFieldsApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.MANAGE_FIELD.value, no_auth=True)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_FIELD.value, no_auth=True)
         )
         profiles_api_instance = bkuser_sdk.ProfilesApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.MANAGE_DEPARTMENT.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_DEPARTMENT.value)
         )
         departments_api_instance = bkuser_sdk.DepartmentsApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.MANAGE_DEPARTMENT.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_DEPARTMENT.value)
         )
         categories_api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request, no_auth=True))
 

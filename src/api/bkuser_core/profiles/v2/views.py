@@ -14,6 +14,14 @@ import logging
 from collections import defaultdict
 from operator import or_
 
+from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
+from bkuser_core.apis.v2.serializers import (
+    AdvancedListSerializer,
+    AdvancedRetrieveSerialzier,
+    BatchRetrieveSerializer,
+    EmptySerializer,
+)
+from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import audit_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
@@ -21,19 +29,10 @@ from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.cache import clear_cache_if_succeed
-from bkuser_core.common.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.serializers import (
-    AdvancedListSerializer,
-    AdvancedRetrieveSerialzier,
-    BatchRetrieveSerializer,
-    EmptySerializer,
-)
-from bkuser_core.common.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.departments import serializers as department_serializer
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
-from bkuser_core.profiles.filters import ProfileSearchFilter
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
@@ -46,7 +45,9 @@ from bkuser_core.profiles.utils import (
     make_password_by_config,
     parse_username_domain,
 )
+from bkuser_core.profiles.v2.filters import ProfileSearchFilter
 from bkuser_core.profiles.validators import validate_username
+from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -64,7 +65,6 @@ from rest_framework_jsonp.renderers import JSONPRenderer
 
 from bkuser_global.utils import force_str_2_bool
 
-from ..user_settings.exceptions import SettingHasBeenDisabledError
 from . import serializers as local_serializers
 
 logger = logging.getLogger(__name__)

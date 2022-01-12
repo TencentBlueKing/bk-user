@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import json
 import logging
 import math
 from collections import OrderedDict
@@ -19,6 +20,7 @@ from django.conf import settings
 from django.utils.translation import get_language
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response as RawResponse
 from rest_framework.viewsets import GenericViewSet
 
 from bkuser_global.utils import force_str_2_bool
@@ -72,11 +74,9 @@ class BkUserApiViewSet(GenericViewSet):
 
         return ip
 
-    def get_api_client_by_request(self, request, force_action_id: str = "", no_auth: bool = False):
-        """从 request 中获取 api client"""
+    def _prepare_headers(self, request, force_action_id: str = "", no_auth: bool = False):
+        """构建通用 Headers"""
         headers = make_default_headers(request.user.username)
-        # pass to backend
-        headers.update({"Accept-Language": get_language()})
         ip = self.get_client_ip(request)
         if ip:
             headers.update({settings.CLIENT_IP_FROM_SAAS_HEADER: ip})
@@ -92,8 +92,11 @@ class BkUserApiViewSet(GenericViewSet):
                 }
             )
 
-        logger.debug("headers to core: %s", headers)
-        return get_api_client(headers)
+        return headers
+
+    def get_api_client_by_request(self, request, force_action_id: str = "", no_auth: bool = False):
+        """从 request 中获取 api client"""
+        return get_api_client(self._prepare_headers(request, force_action_id, no_auth))
 
     @staticmethod
     def get_paging_results(list_func: Callable, page_size: int = 50, **kwargs) -> list:
@@ -125,6 +128,25 @@ class BkUserApiViewSet(GenericViewSet):
 
         return paging_results
 
+    def call_through_api(self, request):
+        client = self.get_api_client_by_request(request)
+
+        urllib3_resp = client.call_api(
+            resource_path=request.path,
+            method=request.method,
+            body=request.data,
+            query_params=request.query_params,
+            _return_http_data_only=True,
+            _preload_content=False,
+        )
+
+        resp = RawResponse(
+            data=json.loads(urllib3_resp.data),
+            status=urllib3_resp.status,
+            content_type=urllib3_resp.headers.get("Content-Type"),
+        )
+        return resp
+
 
 def make_default_headers(operator: str) -> dict:
     return {
@@ -133,4 +155,5 @@ def make_default_headers(operator: str) -> dict:
         settings.API_FORCE_RAW_USERNAME_HEADER_NAME: True,
         # SaaS 和 API 之间交互，走私有 token
         settings.API_AUTH_TOKEN_PAIR[0]: settings.API_AUTH_TOKEN_PAIR[1],
+        "Accept-Language": get_language(),
     }

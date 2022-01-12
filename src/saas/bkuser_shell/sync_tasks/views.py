@@ -9,15 +9,15 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import bkuser_sdk
-from bkuser_shell.bkiam.constants import ActionEnum
-from bkuser_shell.common.viewset import BkUserApiViewSet
+from bkuser_shell.apis.viewset import BkUserApiViewSet
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.sync_tasks import serializers as slzs
 
 from bkuser_global.drf_crown import inject_serializer
 
 
 class SyncTaskViewSet(BkUserApiViewSet):
-    ACTION_ID = ActionEnum.VIEW_CATEGORY.value
+    ACTION_ID = IAMAction.VIEW_CATEGORY.value
 
     @inject_serializer(query_in=slzs.SearchSerializer, out=slzs.SyncTaskResponseSerializer, tags=["sync_tasks"])
     def list(self, request, validated_data):

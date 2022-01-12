@@ -10,6 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Type
 
+from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, EmptySerializer
+from bkuser_core.apis.v2.viewset import (
+    AdvancedBatchOperateViewSet,
+    AdvancedListAPIView,
+    AdvancedModelViewSet,
+    AdvancedSearchFilter,
+)
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
@@ -18,19 +25,12 @@ from bkuser_core.bkiam.utils import need_iam
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.serializers import AdvancedRetrieveSerialzier, EmptySerializer
-from bkuser_core.common.viewset import (
-    AdvancedBatchOperateViewSet,
-    AdvancedListAPIView,
-    AdvancedModelViewSet,
-    AdvancedSearchFilter,
-)
 from bkuser_core.departments import serializers as local_serializers
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.departments.signals import post_department_create
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from bkuser_core.profiles.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
 from bkuser_core.profiles.utils import force_use_raw_username
+from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _

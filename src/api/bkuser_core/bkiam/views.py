@@ -13,7 +13,7 @@ from bkuser_core.categories.serializers import CategorySerializer
 from bkuser_core.departments.models import Department
 from bkuser_core.departments.serializers import DepartmentSerializer
 from bkuser_core.profiles.models import DynamicFieldInfo
-from bkuser_core.profiles.serializers import DynamicFieldsSerializer
+from bkuser_core.profiles.v2.serializers import DynamicFieldsSerializer
 
 from .base import BaseIAMViewSet
 from .constants import ResourceType

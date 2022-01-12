@@ -11,11 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import bkuser_sdk
-from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.apis.viewset import BkUserApiViewSet
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.organization.serializers.departments import (
     CreateDepartmentSerializer,
     DepartmentAddProfilesSerializer,
@@ -43,7 +43,7 @@ class DepartmentViewSet(BkUserApiViewSet):
         IsAuthenticated,
     ]
 
-    ACTION_ID = ActionEnum.MANAGE_DEPARTMENT.value
+    ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
 
     @inject_serializer(query_in=RetrieveDepartmentSLZ, out=DepartmentSerializer, tag=["departments"])
     def retrieve(self, request, department_id, validated_data):
@@ -82,7 +82,7 @@ class DepartmentViewSet(BkUserApiViewSet):
 
         # 获取当前部门的人员数量
         api_instance = bkuser_sdk.DepartmentsApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_DEPARTMENT.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_DEPARTMENT.value)
         )
         profiles_response = api_instance.v2_departments_profiles_read(**request_params)
 
@@ -107,13 +107,13 @@ class DepartmentViewSet(BkUserApiViewSet):
         # 默认拉取根部门
         profiles_api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, no_auth=True))
         categories_api_instance = bkuser_sdk.CategoriesApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.MANAGE_CATEGORY.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_CATEGORY.value)
         )
         no_auth_categories_api_instance = bkuser_sdk.CategoriesApi(
             self.get_api_client_by_request(request, no_auth=True)
         )
         departments_api_instance = bkuser_sdk.ShortcutsApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_DEPARTMENT.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_DEPARTMENT.value)
         )
 
         only_enabled = validated_data.get("only_enabled")
@@ -186,7 +186,7 @@ class DepartmentViewSet(BkUserApiViewSet):
     def search_in_category(self, request, category_id, validated_data):
         """在 category 中查找组织"""
         api_instance = bkuser_sdk.DepartmentsApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_DEPARTMENT.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_DEPARTMENT.value)
         )
         keyword = validated_data.get("keyword")
         max_items = validated_data.get("max_items")
@@ -209,9 +209,9 @@ class DepartmentViewSet(BkUserApiViewSet):
         """创建组织"""
         department = bkuser_sdk.Department(**validated_data)
         if not department.parent:
-            force_action_id = ActionEnum.MANAGE_CATEGORY.value
+            force_action_id = IAMAction.MANAGE_CATEGORY.value
         else:
-            force_action_id = ActionEnum.MANAGE_DEPARTMENT.value
+            force_action_id = IAMAction.MANAGE_DEPARTMENT.value
 
         client = self.get_api_client_by_request(request=request, force_action_id=force_action_id)
         api_instance = bkuser_sdk.DepartmentsApi(client)
