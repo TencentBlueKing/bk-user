@@ -34,7 +34,7 @@
       </bk-select>
       <bk-input class="user-value" v-model="item.value" />
       <i class="icon-user-plus_circle i-add" @click="handleClickAdd"></i>
-      <i :class="['icon-user-minus_circle i-del', {'delete': setFieldList.length === 1}]" @click="handleClickDel(item,index)"></i>
+      <i class="icon-user-minus_circle i-del" @click="handleClickDel(item,index)"></i>
     </div>
   </div>
 </template>
@@ -57,27 +57,32 @@ export default {
     setFieldList: {
       type: Array,
       default: () => {[]}
+    },
+    current: {
+      type: Number,
+      default: null,
     }
   },
   data() {
     return {}
   },
   watch: {
-    extendFields: {
+    current: {
       immediate: true,
       handler(val) {
-        if (JSON.stringify(val) == '{}') {
-          this.setFieldList.push({ key: '', value: '' });
-        } else {
-          val.forEach(item => {
-            this.customField.forEach(k => {
-              if (item.key === k.key) {
-                k.disabled = true;
-              }
+        if (val === 3) {
+          if (JSON.stringify(this.extendFields) == '{}' || this.extendFields.length === 0) {
+            this.setFieldList.push({ key: '', value: '' });
+          } else {
+            this.extendFields.forEach(item => {
+              this.customField.forEach(k => {
+                if (item.key === k.key) {
+                  k.disabled = true;
+                }
+              })
+              this.setFieldList.push(item);
             })
-            this.setFieldList.push(item);
-          })
-          
+          }
         }
       }
     }
@@ -87,6 +92,9 @@ export default {
       this.setFieldList.push({ key: '', value: '' });
     },
     handleClickDel(item, index) {
+      if (index === 0) {
+        this.setFieldList.push({ key: '', value: '' });
+      }
       this.setFieldList.splice(index, 1);
       this.customField.forEach(element => {
         if (element.key === item.key) {
@@ -128,10 +136,6 @@ export default {
       &:hover {
         cursor: pointer;
       }
-    }
-    .delete {
-      pointer-events: none;
-      cursor: default;
     }
     .user-key {
       position: relative;

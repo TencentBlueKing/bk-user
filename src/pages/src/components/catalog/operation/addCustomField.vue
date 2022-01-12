@@ -13,7 +13,7 @@
       </bk-select>
       <bk-input class="user-value" v-model="item.value" />
       <i class="icon-user-plus_circle i-add" @click="handleClickAdd"></i>
-      <i :class="['icon-user-minus_circle i-del', {'delete': addFieldList.length === 1}]" @click="handleClickDel(item, index)"></i>
+      <i class="icon-user-minus_circle i-del" @click="handleClickDel(item, index)"></i>
     </div>
   </div>
 </template>
@@ -42,6 +42,9 @@ export default {
       this.addFieldList.push({ key: '', value: '' });
     },
     handleClickDel(item, index) {
+      if (index === 0) {
+        this.setFieldList.push({ key: '', value: '' });
+      }
       this.addFieldList.splice(index, 1);
       this.customField.forEach(element => {
         if (element.key === item.key) {
@@ -83,10 +86,6 @@ export default {
       &:hover {
         cursor: pointer;
       }
-    }
-    .delete {
-      pointer-events: none;
-      cursor: default;
     }
     .user-key {
       position: relative;

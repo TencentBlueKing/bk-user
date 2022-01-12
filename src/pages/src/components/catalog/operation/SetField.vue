@@ -138,7 +138,8 @@
             <p>对应{{catalogType}}目录字段</p>
           </div>
           <addCustomField :type="type" :customField="customField" :addFieldList="addFieldList" />
-          <setCustomField :type="type" :extendFields="extendFields" :customField="customField" :setFieldList="setFieldList" />
+          <setCustomField :type="type" :extendFields="extendFields" :customField="customField"
+            :setFieldList="setFieldList" :current="current" />
         </div>
       </div>
     </div>
@@ -273,6 +274,10 @@ export default {
     catalogType: {
       type: String,
       default: '',
+    },
+    current: {
+      type: Number,
+      default: null,
     }
   },
   data() {

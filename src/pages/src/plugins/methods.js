@@ -70,9 +70,11 @@ const methods = {
             if (regionData[0] === 'dynamic_fields_mapping') {
               const value = {}
               regionData[1].forEach((item) => {
-                const extendKey = item.key;
-                const extendValue = item.value;
-                this.$set(value, extendKey, extendValue);
+                if (item.key && item.value) {
+                  const extendKey = item.key;
+                  const extendValue = item.value;
+                  this.$set(value, extendKey, extendValue);
+                }
               })
               arrayData.push({ key, value, region });
             } else {
@@ -182,9 +184,7 @@ const methods = {
       try {
         const arrayData = [];
         arr.forEach((regionArray) => {
-          const disabled = false;
           if (!regionArray.builtin) {
-            this.$set(regionArray, 'disabled', disabled);
             arrayData.push(regionArray);
           }
         });

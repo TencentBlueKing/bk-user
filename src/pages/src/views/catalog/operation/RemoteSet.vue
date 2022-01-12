@@ -63,6 +63,7 @@
           :fields-info="fieldsInfo"
           :customField="customField"
           :catalog-type="catalogInfo.type"
+          :current="current"
           @cancel="$emit('changePage', 'showPageHome')"
           @saveField="handleSaveField" />
       </div>
@@ -197,6 +198,7 @@ export default {
     async handleSaveField(data) {
       try {
         this.isLoading = true;
+        this.handleSaveSuccess();
         const list = [...data];
         this.fieldsInfo.extend.dynamic_fields_mapping = list;
         const action = this.fieldsHasCreated ? 'catalog/ajaxPutFields' : 'catalog/ajaxPostFields';
@@ -204,7 +206,6 @@ export default {
           id: this.catalogInfo.id,
           data: this.$convertObjectToArray(this.fieldsInfo),
         });
-        this.handleSaveSuccess();
       } catch (e) {
         console.warn(e);
       } finally {
