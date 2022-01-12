@@ -8,22 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.viewset import BkUserApiViewSet
-from bkuser_shell.common.error_codes import error_codes
-from django.template.exceptions import TemplateDoesNotExist
-from django.template.loader import get_template
-from django.template.response import TemplateResponse
+from django.conf.urls import url
 
-from bkuser_global.drf_crown import inject_serializer
+from . import views
 
-
-class LoginPageViewSet(BkUserApiViewSet):
-
-    permission_classes: list = []
-
-    @inject_serializer(tags=["account"])
-    def login_success(self, request):
-        try:
-            return TemplateResponse(request=request, template=get_template("login_success.html"))
-        except TemplateDoesNotExist:
-            raise error_codes.CANNOT_FIND_TEMPLATE
+urlpatterns = [
+    url(
+        r"^api/v3/profiles/$",
+        views.ProfileViewSet.as_view(
+            {
+                "get": "list",
+            }
+        ),
+        name="profiles.list",
+    ),
+]

@@ -11,9 +11,9 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import bkuser_sdk
+from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
-from bkuser_shell.common.viewset import BkUserApiViewSet
 
 from bkuser_global.drf_crown import inject_serializer
 

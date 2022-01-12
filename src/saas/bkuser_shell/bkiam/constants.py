@@ -17,7 +17,7 @@ class PrincipalTypeEnum(AutoLowerEnum):
     USER = auto()
 
 
-class ActionEnum(AutoLowerEnum):
+class IAMAction(AutoLowerEnum):
 
     # 用户字段
     MANAGE_FIELD = auto()
@@ -42,7 +42,7 @@ class ActionEnum(AutoLowerEnum):
     VIEW_DEPARTMENT = auto()
 
     @classmethod
-    def get_action_by_category_type(cls, category_type: str) -> "ActionEnum":
+    def get_action_by_category_type(cls, category_type: str) -> "IAMAction":
         from bkuser_shell.categories.constants import CategoryTypeEnum
 
         return {  # type: ignore

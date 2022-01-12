@@ -12,7 +12,7 @@ import pytest
 from bkuser_core.audit.utils import create_profile_log
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
-from bkuser_core.profiles.views import ProfileViewSet
+from bkuser_core.profiles.v2.views import ProfileViewSet
 from bkuser_core.tests.apis.utils import get_api_factory
 from bkuser_core.tests.utils import get_one_object, make_simple_department, make_simple_profile
 
