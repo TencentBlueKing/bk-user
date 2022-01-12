@@ -171,10 +171,8 @@ export default {
         this.isLoading = true;
         const list = [];
         data.forEach((element) => {
-          if (element.key !== '' && element.value !== '') {
-            list.push(element)
-            this.fieldsInfo.extend.dynamic_fields_mapping = list;  
-          } 
+          list.push(element)
+          this.fieldsInfo.extend.dynamic_fields_mapping = list;
         });
         await this.$store.dispatch('catalog/ajaxPostFields', {
           id: this.catalogId,
