@@ -20,16 +20,8 @@ class MultipleFieldFilter(filters.SearchFilter):
 
     def filter_by_params(self, params: dict, queryset):
         """非标准 filter"""
-        query_params = {}
         available_fields = [
             getattr(f, "name") for f in queryset.model._meta.get_fields() if not isinstance(f, ManyToOneRel)
         ]
-        for key, value in params.items():
-            if key not in available_fields:
-                continue
-
-            query_params[key] = value
-
-        queryset = queryset.filter(**query_params)
-        queryset = queryset.only(*params.get("fields", []))
-        return queryset
+        query_params = {key: value for key, value in params.items() if key in available_fields}
+        return queryset.filter(**query_params).only(*params.get("fields", []))
