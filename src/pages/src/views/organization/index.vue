@@ -340,6 +340,7 @@ import DetailsBar from './details/DetailsBar';
 import SetDepartment from '@/components/organization/SetDepartment';
 
 export default {
+  name: 'OrganizationIndex',
   components: {
     DetailsBar,
     DialogContent,

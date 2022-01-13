@@ -118,6 +118,7 @@
 
 <script>
 export default {
+  name: 'AuditIndex',
   filters: {
     convertIsoTime(iso) {
       const arr = iso.split('T');

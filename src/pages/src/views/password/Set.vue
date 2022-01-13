@@ -75,6 +75,7 @@
 
 <script>
 export default {
+  name: 'SetBox',
   data() {
     return {
       // 密码是否已经设置成功

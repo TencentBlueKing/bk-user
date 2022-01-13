@@ -80,6 +80,7 @@
 
 <script>
 export default {
+  name: 'ModifyBox',
   data() {
     return {
       isConfirmError: false,

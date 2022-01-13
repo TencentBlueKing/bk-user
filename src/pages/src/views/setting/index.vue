@@ -40,6 +40,7 @@
 import FieldsSetting from './FieldsSetting';
 
 export default {
+  name: 'SettingIndex',
   components: {
     FieldsSetting,
   },
