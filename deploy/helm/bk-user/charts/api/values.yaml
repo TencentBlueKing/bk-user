@@ -67,6 +67,9 @@ global:
 replicaCount: 1
 ## celery deployment 副本数
 celeryReplicaCount: 1
+## 自定义 Celery Broker 地址, 未定义时则默认拼接 redis 逻辑
+celeryBrokerUrl: ""
+celeryResultBackend: ""
 
 appCode: "bk_usermgr"
 appSecret: ""
@@ -81,7 +84,6 @@ image:
   pullPolicy: IfNotPresent
   tag: "v2.3.1"
 
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
@@ -234,5 +236,16 @@ migration:
       registry: "mirrors.tencent.com"
       repository: blueking/k8s-wait-for
       tag: "v1.5.1"
+
+volumes: []
+  ## 自定义插件示例
+  # - name: bk-user-plugin-example
+  #   configMap:
+  #     name: bk-user-plugin-example
+
+volumeMounts: []
+  ## 自定义插件示例
+  # - name: bk-user-plugin-example
+  #   mountPath: /app/bkuser_core/categories/plugins/example
 
 

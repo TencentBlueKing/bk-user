@@ -11,7 +11,7 @@ spec:
       labels:
         {{- include "bk-user.labels" . | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -27,6 +27,10 @@ spec:
             - "echo Start check database: $(DATABASE_HOST):$(DATABASE_PORT); until telnet $(DATABASE_HOST) $(DATABASE_PORT); do echo waiting for db $(DATABASE_NAME); sleep 2; done;"
           envFrom:
             {{- toYaml .Values.envFrom | nindent 12 }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: login-db-migrate
           image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -36,6 +40,10 @@ spec:
             - -c
           args:
             - python manage.py migrate --no-input
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.env }}
           env:
             {{- toYaml . | nindent 12}}
