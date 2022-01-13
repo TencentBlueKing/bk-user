@@ -137,8 +137,8 @@
         </div>
         <div class="content catalog-setting-step" v-show="expandCustom">
           <div class="user-directory">
-            <p>蓝鲸用户管理字段</p>
-            <p>对应{{catalogType}}目录字段</p>
+            <p>{{$t('蓝鲸用户管理字段')}}</p>
+            <p>{{$t('对应')}}{{catalogType}}{{$t('目录字段')}}</p>
           </div>
           <addCustomField :type="type" :custom-field="customField" @upAddFieldList="getAddFieldList" />
           <setCustomField

@@ -49,9 +49,7 @@ export default {
     },
     extendFields: {
       type: Array,
-      default: () => {
-        [];
-      },
+      default: () => ([]),
     },
     customField: {
       type: Object,
