@@ -61,7 +61,7 @@
           :catalog-id="catalogInfo.id"
           :catalog-name="catalogInfo.display_name"
           :fields-info="fieldsInfo"
-          :customField="customField"
+          :custom-field="customField"
           :catalog-type="catalogInfo.type"
           :current="current"
           @cancel="$emit('changePage', 'showPageHome')"
@@ -116,9 +116,9 @@ export default {
     this.getNamespaceInfo();
   },
   mounted() {
-    this.$store.dispatch('setting/getFields').then(res => {
+    this.$store.dispatch('setting/getFields').then((res) => {
       this.customField = this.$convertCustomField(res.data);
-    })
+    });
   },
   methods: {
     getBasicInfo() {
@@ -216,7 +216,7 @@ export default {
       this.$bus.$emit('updateCatalogList');
       this.messageSuccess(this.$t('保存成功'));
       this.$emit('changePage', 'showPageHome');
-    }
+    },
   },
 };
 </script>

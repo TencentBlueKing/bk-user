@@ -22,8 +22,9 @@
 <template>
   <div class="user-content" v-show="type === 'set'">
     <div class="user-item" v-for="(item, index) in setFieldList" :key="index">
-      <bk-select v-model="item.key" class="custom-select" :clearable="false" @change="handleChange" >
-        <bk-option class="custom-option"
+      <bk-select v-model="item.key" class="custom-select" :clearable="false" @change="handleChange">
+        <bk-option
+          class="custom-option"
           v-for="(value,key) in customField"
           :key="key"
           :id="value.key"
@@ -48,25 +49,28 @@ export default {
     },
     extendFields: {
       type: Array,
-      default: () => {[]},
+      default: () => {
+        [];
+      },
     },
     customField: {
       type: Object,
       default: () => {},
     },
-    setFieldList: {
-      type: Array,
-      default: () => {[]}
-    },
     current: {
       type: Number,
       default: null,
-    }
+    },
   },
   data() {
-    return {}
+    return {
+      setFieldList: [],
+    };
   },
   watch: {
+    setFieldList(val) {
+      this.$emit('upSetFieldList', val);
+    },
     current: {
       immediate: true,
       handler(val) {
@@ -74,18 +78,18 @@ export default {
           if (JSON.stringify(this.extendFields) == '{}' || this.extendFields.length === 0) {
             this.setFieldList.push({ key: '', value: '' });
           } else {
-            this.extendFields.forEach(item => {
-              this.customField.forEach(k => {
+            this.extendFields.forEach((item) => {
+              this.customField.forEach((k) => {
                 if (item.key === k.key) {
                   k.disabled = true;
                 }
-              })
+              });
               this.setFieldList.push(item);
-            })
+            });
           }
         }
-      }
-    }
+      },
+    },
   },
   methods: {
     handleClickAdd() {
@@ -96,23 +100,23 @@ export default {
         this.setFieldList.push({ key: '', value: '' });
       }
       this.setFieldList.splice(index, 1);
-      this.customField.forEach(element => {
+      this.customField.forEach((element) => {
         if (element.key === item.key) {
           element.disabled = false;
-        } 
+        }
       });
     },
     handleChange(newValue, oldValue) {
-      this.customField.forEach(element => {
+      this.customField.forEach((element) => {
         if (element.key === newValue) {
           element.disabled = true;
         } else if (element.key === oldValue) {
           element.disabled = false;
         }
       });
-    }
+    },
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>

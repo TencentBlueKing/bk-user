@@ -2,7 +2,8 @@
   <div class="user-content" v-show="type === 'add'">
     <div class="user-item" v-for="(item, index) in addFieldList" :key="index">
       <bk-select v-model="item.key" class="custom-select" @change="handleChange">
-        <bk-option class="custom-option"
+        <bk-option
+          class="custom-option"
           v-for="option in customField"
           :key="option.key"
           :id="option.key"
@@ -29,13 +30,16 @@ export default {
       type: Object,
       default: () => {},
     },
-    addFieldList: {
-      type: Array,
-      default: () => {[]}
-    }
   },
   data() {
-    return {}
+    return {
+      addFieldList: [{ key: '', value: '' }],
+    };
+  },
+  watch: {
+    addFieldList(val) {
+      this.$emit('upSetFieldList', val);
+    },
   },
   methods: {
     handleClickAdd() {
@@ -46,23 +50,23 @@ export default {
         this.setFieldList.push({ key: '', value: '' });
       }
       this.addFieldList.splice(index, 1);
-      this.customField.forEach(element => {
+      this.customField.forEach((element) => {
         if (element.key === item.key) {
           element.disabled = false;
-        } 
+        }
       });
     },
     handleChange(newValue, oldValue) {
-      this.customField.forEach(element => {
+      this.customField.forEach((element) => {
         if (element.key === newValue) {
           element.disabled = true;
         } else if (element.key === oldValue) {
           element.disabled = false;
         }
       });
-    }
+    },
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>

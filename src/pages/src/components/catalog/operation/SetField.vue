@@ -54,28 +54,31 @@
           </div>
 
           <!-- 用户对象类 -->
-          <CommonInput keyword="user_class"
-                       :info="basicFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户对象类')"
-                       :is-need="true"
-                       @hasError="handleHasError" />
+          <CommonInput
+            keyword="user_class"
+            :info="basicFields"
+            :input-bus="inputBus"
+            :title="$t('用户对象类')"
+            :is-need="true"
+            @hasError="handleHasError" />
 
           <!-- 用户对象过滤 -->
-          <CommonInput keyword="user_filter"
-                       :info="basicFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户对象过滤')"
-                       :is-need="true"
-                       @hasError="handleHasError" />
+          <CommonInput
+            keyword="user_filter"
+            :info="basicFields"
+            :input-bus="inputBus"
+            :title="$t('用户对象过滤')"
+            :is-need="true"
+            @hasError="handleHasError" />
 
           <!-- 组织架构类 -->
-          <CommonInput keyword="organization_class"
-                       :info="basicFields"
-                       :input-bus="inputBus"
-                       :title="$t('组织架构类')"
-                       :is-need="true"
-                       @hasError="handleHasError" />
+          <CommonInput
+            keyword="organization_class"
+            :info="basicFields"
+            :input-bus="inputBus"
+            :title="$t('组织架构类')"
+            :is-need="true"
+            @hasError="handleHasError" />
         </div>
       </div>
     </div>
@@ -137,9 +140,9 @@
             <p>蓝鲸用户管理字段</p>
             <p>对应{{catalogType}}目录字段</p>
           </div>
-          <addCustomField :type="type" :customField="customField" :addFieldList="addFieldList" />
-          <setCustomField :type="type" :extendFields="extendFields" :customField="customField"
-            :setFieldList="setFieldList" :current="current" />
+          <addCustomField :type="type" :custom-field="customField" @upAddFieldList="getAddFieldList" />
+          <setCustomField :type="type" :extend-fields="extendFields" :custom-field="customField"
+                          :current="current" @upSetFieldList="getSetFieldList"  />
         </div>
       </div>
     </div>
@@ -161,47 +164,52 @@
         <!-- todo 动画 -->
         <div class="content catalog-setting-step" v-show="expandGroup">
           <!-- 用户组对象类 -->
-          <CommonInput keyword="user_group_class"
-                       :info="groupFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户组对象类')"
-                       :is-need="false"
-                       @hasError="handleHasError" />
+          <CommonInput
+            keyword="user_group_class"
+            :info="groupFields"
+            :input-bus="inputBus"
+            :title="$t('用户组对象类')"
+            :is-need="false"
+            @hasError="handleHasError" />
 
           <!-- 用户组对象过滤 -->
-          <CommonInput keyword="user_group_filter"
-                       :info="groupFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户组对象过滤')"
-                       :is-need="false"
-                       @hasError="handleHasError" />
+          <CommonInput
+            keyword="user_group_filter"
+            :info="groupFields"
+            :input-bus="inputBus"
+            :title="$t('用户组对象过滤')"
+            :is-need="false"
+            @hasError="handleHasError" />
 
           <!-- 用户组名字段 -->
-          <CommonInput keyword="user_group_name"
-                       :info="groupFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户组名字段')"
-                       :is-need="false"
-                       @hasError="handleHasError" />
-         
+          <CommonInput
+            keyword="user_group_name"
+            :info="groupFields"
+            :input-bus="inputBus"
+            :title="$t('用户组名字段')"
+            :is-need="false"
+            @hasError="handleHasError" />
+
 
           <!-- 用户组描述字段 -->
-          <CommonInput keyword="user_group_description"
-                       :info="groupFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户组描述字段')"
-                       :is-need="false"
-                       @hasError="handleHasError" />
-         
+          <CommonInput
+            keyword="user_group_description"
+            :info="groupFields"
+            :input-bus="inputBus"
+            :title="$t('用户组描述字段')"
+            :is-need="false"
+            @hasError="handleHasError" />
+
 
           <!-- 用户组关联字段 -->
-          <CommonInput keyword="user_member_of"
-                       :info="groupFields"
-                       :input-bus="inputBus"
-                       :title="$t('用户组关联字段')"
-                       :description="$t('用户组关联字段描述')"
-                       :is-need="false"
-                       @hasError="handleHasError" />
+          <CommonInput
+            keyword="user_member_of"
+            :info="groupFields"
+            :input-bus="inputBus"
+            :title="$t('用户组关联字段')"
+            :description="$t('用户组关联字段描述')"
+            :is-need="false"
+            @hasError="handleHasError" />
 
         </div>
       </div>
@@ -247,7 +255,7 @@ export default {
     CommonInput,
     TestConnection,
     addCustomField,
-    setCustomField
+    setCustomField,
   },
   props: {
     // add 增加目录 set 修改目录设置
@@ -278,7 +286,7 @@ export default {
     current: {
       type: Number,
       default: null,
-    }
+    },
   },
   data() {
     return {
@@ -291,8 +299,7 @@ export default {
       // 表单验证是否有错误
       hasError: false,
       inputBus: new Vue(),
-      addFieldList: [{ key: '', value: '' }],
-      setFieldList: [],
+      fieldsList: [],
     };
   },
   computed: {
@@ -327,10 +334,10 @@ export default {
   },
   methods: {
     handlePush() {
-      this.validate() && this.$emit('push', this.addFieldList);
+      this.validate() && this.$emit('push', this.fieldsList);
     },
     handleSave() {
-      this.validate() && this.$emit('saveField', this.setFieldList);
+      this.validate() && this.$emit('saveField', this.fieldsList);
     },
     handleHasError() {
       this.hasError = true;
@@ -351,6 +358,12 @@ export default {
       });
       return false;
     },
+    getAddFieldList(data) {
+      this.fieldsList = data;
+    },
+    getSetFieldList(data) {
+      this.fieldsList = data;
+    }
   },
 };
 </script>
