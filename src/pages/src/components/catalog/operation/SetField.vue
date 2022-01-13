@@ -142,7 +142,7 @@
           </div>
           <addCustomField :type="type" :custom-field="customField" @upAddFieldList="getAddFieldList" />
           <setCustomField :type="type" :extend-fields="extendFields" :custom-field="customField"
-                          :current="current" @upSetFieldList="getSetFieldList"  />
+                          :current="current" @upSetFieldList="getSetFieldList" />
         </div>
       </div>
     </div>
