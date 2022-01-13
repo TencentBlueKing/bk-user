@@ -41,8 +41,9 @@
           <h4 class="infor-title">{{$t('用户信息')}}</h4>
           <div class="fill-infor-wrapper">
             <InputComponents :edit-status="detailsBarInfo.type === 'edit'" :profile-info-list="profileInfoList" />
-            <UploadAvatar @getBase64="getBase64"
-                          :img-src="currentProfile === null ? $store.state.localAvatar : currentProfile.logo" />
+            <UploadAvatar
+              @getBase64="getBase64"
+              :img-src="currentProfile === null ? $store.state.localAvatar : currentProfile.logo" />
           </div>
           <h4 class="infor-title" style="margin-top: 37px">{{$t('用户设置')}}</h4>
           <ul class="mark-width">
@@ -60,10 +61,11 @@
                   ext-popover-cls="scrollview"
                   @toggle="handleBranchToggle"
                   :scroll-height="188">
-                  <bk-option v-for="option in rtxList"
-                             :key="option.id"
-                             :id="option.id"
-                             :name="option.username">
+                  <bk-option
+                    v-for="option in rtxList"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.username">
                   </bk-option>
                 </bk-select>
                 <bk-select
@@ -73,10 +75,11 @@
                   display-tag
                   v-model="leaderIdList"
                   @toggle="handleBranchToggle">
-                  <bk-option v-for="option in currentProfile.leader"
-                             :key="option.id"
-                             :id="option.id"
-                             :name="option.username">
+                  <bk-option
+                    v-for="option in currentProfile.leader"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.username">
                   </bk-option>
                 </bk-select>
                 <div class="input-loading" @click.stop v-show="showLeaderLoading">
@@ -96,10 +99,11 @@
               <p class="desc">{{$t('密码有效期')}}<span class="star">*</span></p>
               <div class="input-text">
                 <bk-select v-model="passwordValidDays" :clearable="false">
-                  <bk-option v-for="option in passwordValidDaysList"
-                             :key="option.days"
-                             :id="option.days"
-                             :name="option.text">
+                  <bk-option
+                    v-for="option in passwordValidDaysList"
+                    :key="option.days"
+                    :id="option.days"
+                    :name="option.text">
                   </bk-option>
                 </bk-select>
               </div>

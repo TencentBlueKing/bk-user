@@ -24,25 +24,27 @@
     <div class="audit-heard-wrapper">
       <div class="date-input-container">
         <span class="desc">{{$t('时间')}}</span>
-        <bk-date-picker v-model="searchCondition.dateRange"
-                        class="king-date-picker"
-                        font-size="14"
-                        type="datetimerange"
-                        :clearable="false"
-                        :shortcuts="shortcuts"
-                        @pick-success="initUserList(panelActive)"
+        <bk-date-picker
+          v-model="searchCondition.dateRange"
+          class="king-date-picker"
+          font-size="14"
+          type="datetimerange"
+          :clearable="false"
+          :shortcuts="shortcuts"
+          @pick-success="initUserList(panelActive)"
         ></bk-date-picker>
       </div>
-      <bk-input v-model="searchCondition.keyword"
-                v-if="panelActive === 'operate'"
-                class="king-input-search"
-                style="width: 400px;"
-                :placeholder="$t('搜索操作人员、操作对象、操作类型')"
-                :clearable="true"
-                :left-icon="'bk-icon icon-search'"
-                @clear="handleClear"
-                @left-icon-click="getSearchInfo"
-                @enter="getSearchInfo">
+      <bk-input
+        v-model="searchCondition.keyword"
+        v-if="panelActive === 'operate'"
+        class="king-input-search"
+        style="width: 400px;"
+        :placeholder="$t('搜索操作人员、操作对象、操作类型')"
+        :clearable="true"
+        :left-icon="'bk-icon icon-search'"
+        @clear="handleClear"
+        @left-icon-click="getSearchInfo"
+        @enter="getSearchInfo">
       </bk-input>
     </div>
     <bk-tab :active.sync="panelActive" type="card" ext-cls="audit-panel-class">
@@ -116,6 +118,7 @@
 
 <script>
 export default {
+  name: 'AuditIndex',
   filters: {
     convertIsoTime(iso) {
       const arr = iso.split('T');

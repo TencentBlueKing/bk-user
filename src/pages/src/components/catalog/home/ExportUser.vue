@@ -25,25 +25,27 @@
       <div class="export-main-content" v-bkloading="{ isLoading: basicLoading }">
         <div class="department-content">
           <!-- 搜索框 -->
-          <bk-input v-model="searchKey"
-                    class="king-input-search"
-                    style="margin: 24px 24px 20px;width: calc(100% - 48px);"
-                    :placeholder="$t('搜索组织')"
-                    :clearable="true"
-                    :left-icon="'bk-icon icon-search'"
-                    @input="handleInput"
-                    @keydown="handleKeydown"
-                    @clear="clearSearchKey"
-                    @left-icon-click="handleSearchDepartment">
+          <bk-input
+            v-model="searchKey"
+            class="king-input-search"
+            style="margin: 24px 24px 20px;width: calc(100% - 48px);"
+            :placeholder="$t('搜索组织')"
+            :clearable="true"
+            :left-icon="'bk-icon icon-search'"
+            @input="handleInput"
+            @keydown="handleKeydown"
+            @clear="clearSearchKey"
+            @left-icon-click="handleSearchDepartment">
           </bk-input>
           <div class="department-result">
             <!-- 搜索结果 -->
             <div class="search-content-container" v-if="searchStatus">
               <template v-if="searchList.length">
-                <p v-for="(item, index) in searchList"
-                   :key="index" class="search-item"
-                   :class="[item.disabled && 'disabled', index === selectedIndex && 'selected']"
-                   @click.stop="selectSearchItem(item)">
+                <p
+                  v-for="(item, index) in searchList"
+                  :key="index" class="search-item"
+                  :class="[item.disabled && 'disabled', index === selectedIndex && 'selected']"
+                  @click.stop="selectSearchItem(item)">
                   <bk-checkbox :value="item.isChecked" :disabled="item.disabled" class="king-checkbox"></bk-checkbox>
                   <span class="search-item-text">{{item.name}}</span>
                 </p>
@@ -56,9 +58,10 @@
             </div>
             <!-- 组织树 -->
             <div class="department-tree-wrapper" v-else>
-              <ExportTree :tree-data-list="treeDataList"
-                          @handleClickToggle="handleClickToggle"
-                          @selectItem="selectItem" />
+              <ExportTree
+                :tree-data-list="treeDataList"
+                @handleClickToggle="handleClickToggle"
+                @selectItem="selectItem" />
             </div>
           </div>
         </div>

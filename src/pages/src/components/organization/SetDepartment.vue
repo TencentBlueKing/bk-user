@@ -25,24 +25,26 @@
       <h4 class="depart-title">{{$t('待选择列表')}}</h4>
       <div class="all-department">
         <!-- 搜索框 -->
-        <bk-input v-model="searchKey"
-                  class="king-input-search"
-                  style="margin: 24px 24px 20px;width: calc(100% - 48px);"
-                  :placeholder="$t('搜索组织')"
-                  :clearable="true"
-                  :left-icon="'bk-icon icon-search'"
-                  @input="handleInput"
-                  @keydown="handleKeydown"
-                  @clear="clearSearchKey"
-                  @left-icon-click="handleSearchDepartment">
+        <bk-input
+          v-model="searchKey"
+          class="king-input-search"
+          style="margin: 24px 24px 20px;width: calc(100% - 48px);"
+          :placeholder="$t('搜索组织')"
+          :clearable="true"
+          :left-icon="'bk-icon icon-search'"
+          @input="handleInput"
+          @keydown="handleKeydown"
+          @clear="clearSearchKey"
+          @left-icon-click="handleSearchDepartment">
         </bk-input>
         <div class="department-content-wrapper">
           <!-- 搜索结果 -->
           <div class="search-content-container" v-if="searchStatus">
             <template v-if="searchList.length">
               <div class="search-content">
-                <p v-for="(item, index) in searchList" class="search-item"
-                   :class="index === selectedIndex && 'selected'" :key="item.id" @click="selectItem(item)">
+                <p
+                  v-for="(item, index) in searchList" class="search-item"
+                  :class="index === selectedIndex && 'selected'" :key="item.id" @click="selectItem(item)">
                   <input type="checkbox" class="checkbox" :checked="item.isChecked" />{{item.name}}
                 </p>
                 <p v-if="searchList.length >= searchLength" class="search-item">{{$t('完善关键字搜索更多内容')}}</p>
@@ -55,9 +57,10 @@
           </div>
           <!-- 组织树 -->
           <div class="department-tree-wrapper" v-else>
-            <ExportTree v-if="treeDataList" :tree-data-list="treeDataList"
-                        @handleClickToggle="handleClickToggle"
-                        @selectItem="selectItem" />
+            <ExportTree
+              v-if="treeDataList" :tree-data-list="treeDataList"
+              @handleClickToggle="handleClickToggle"
+              @selectItem="selectItem" />
           </div>
         </div>
       </div>

@@ -386,4 +386,7 @@ export default {
   三个月: 'three months',
   '审计日志为空, 无法导出': 'the audit log is empty and cannot be exported',
   请输入数字: 'Please enter a number',
+  蓝鲸用户管理字段: 'Blue Whale User management field',
+  对应: 'The corresponding',
+  目录字段: 'Category field'
 };

@@ -49,6 +49,8 @@
           :catalog-id="catalogId"
           :catalog-name="catalogName"
           :fields-info="fieldsInfo"
+          :custom-field="customField"
+          :catalog-type="catalogType"
           @cancel="$emit('cancel')"
           @previous="handlePrevious"
           @push="handlePush" />
@@ -99,6 +101,8 @@ export default {
       },
       connectionInfo: null,
       fieldsInfo: null,
+      // 自定义字段
+      customField: [],
     };
   },
   created() {
@@ -108,6 +112,11 @@ export default {
     } else if (this.catalogType === 'ldap') {
       this.fieldsInfo = JSON.parse(JSON.stringify(this.$store.state.catalog.defaults.fieldsLdap));
     }
+  },
+  mounted() {
+    this.$store.dispatch('setting/getFields').then((res) => {
+      this.customField = this.$convertCustomField(res.data);
+    });
   },
   methods: {
     // 上一步
@@ -157,9 +166,14 @@ export default {
         this.isLoading = false;
       }
     },
-    async handlePush() {
+    async handlePush(data) {
       try {
         this.isLoading = true;
+        const list = [];
+        data.forEach((element) => {
+          list.push(element);
+          this.fieldsInfo.extend.dynamic_fields_mapping = list;
+        });
         await this.$store.dispatch('catalog/ajaxPostFields', {
           id: this.catalogId,
           data: this.$convertObjectToArray(this.fieldsInfo),

@@ -26,21 +26,24 @@
     <!-- 新增目录 -->
     <PageAdd v-if="showingPage === 'showPageAdd'" :catalog-metas="catalogMetas" @changePage="changePage" />
     <!-- 数据更新记录 -->
-    <ReDataupdate v-if="showingPage === 'showReDataupdate'" :catalog-metas="catalogMetas"
-                  @changePage="changePage">
+    <ReDataupdate
+      v-if="showingPage === 'showReDataupdate'" :catalog-metas="catalogMetas"
+      @changePage="changePage">
     </ReDataupdate>
     <!-- 本地用户 -->
     <LocalAdd v-if="showingPage === 'showLocalAdd'" @changePage="changePage" @cancel="handleCancel" />
     <LocalSet v-if="showingPage === 'showLocalSet'" @changePage="changePage" :catalog-info="catalogInfo" />
     <!-- MAD 用户 -->
-    <RemoteAdd v-if="showingPage === 'showRemoteAddMad'"
-               @changePage="changePage"
-               @cancel="handleCancel" catalog-type="mad" />
+    <RemoteAdd
+      v-if="showingPage === 'showRemoteAddMad'"
+      @changePage="changePage"
+      @cancel="handleCancel" catalog-type="mad" />
     <RemoteSet v-if="showingPage === 'showRemoteSetMad'" @changePage="changePage" :catalog-info="catalogInfo" />
     <!-- LDAP 用户 -->
-    <RemoteAdd v-if="showingPage === 'showRemoteAddLdap'"
-               @changePage="changePage"
-               @cancel="handleCancel" catalog-type="ldap" />
+    <RemoteAdd
+      v-if="showingPage === 'showRemoteAddLdap'"
+      @changePage="changePage"
+      @cancel="handleCancel" catalog-type="ldap" />
     <RemoteSet v-if="showingPage === 'showRemoteSetLdap'" @changePage="changePage" :catalog-info="catalogInfo" />
   </div>
 </template>
@@ -55,7 +58,7 @@ import RemoteAdd from './operation/RemoteAdd';
 import RemoteSet from './operation/RemoteSet';
 
 export default {
-  name: 'Catalog',
+  name: 'CatalogIndex',
   components: {
     PageHome,
     PageAdd,
@@ -129,16 +132,17 @@ export default {
           fieldsMad: this.convertDefault(fieldsMad.data),
           fieldsLdap: this.convertDefault(fieldsLdap.data),
         };
-        try {
-          if (defaults.fieldsMad.extend.mad_fields.length === 0) {
-            defaults.fieldsMad.extend.mad_fields = new Array(defaults.fieldsMad.extend.bk_fields.length);
-          }
-          if (defaults.fieldsLdap.extend.mad_fields.length === 0) {
-            defaults.fieldsLdap.extend.mad_fields = new Array(defaults.fieldsLdap.extend.bk_fields.length);
-          }
-        } catch (e) {
-          console.warn('fields 默认值缺少 mad_fields 字段', e);
-        }
+        // console.log('defaults', defaults);
+        // try {
+        //   if (defaults.fieldsMad.extend.mad_fields.length === 0) {
+        //     defaults.fieldsMad.extend.mad_fields = new Array(defaults.fieldsMad.extend.bk_fields.length);
+        //   }
+        //   if (defaults.fieldsLdap.extend.mad_fields.length === 0) {
+        //     defaults.fieldsLdap.extend.mad_fields = new Array(defaults.fieldsLdap.extend.bk_fields.length);
+        //   }
+        // } catch (e) {
+        //   console.warn('fields 默认值缺少 mad_fields 字段', e);
+        // }
         this.$store.commit('catalog/updateDefaults', defaults);
       } catch (e) {
         console.warn(e);

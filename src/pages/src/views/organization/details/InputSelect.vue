@@ -31,10 +31,11 @@
       :disabled="editStatus && !item.editable"
       :ext-cls="item.isError ? 'input-error' : ''"
       @change="verifyInput(item)">
-      <bk-option v-for="(option, index) in item.options"
-                 :key="index"
-                 :id="option.id"
-                 :name="option.value">
+      <bk-option
+        v-for="(option, index) in item.options"
+        :key="index"
+        :id="option.id"
+        :name="option.value">
       </bk-option>
     </bk-select>
   </div>

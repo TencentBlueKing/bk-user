@@ -27,11 +27,12 @@
         <h4 class="title">{{$t('密码长度')}}</h4>
         <span class="star">*</span>
       </div>
-      <bk-input v-model="defaultPassword.password_min_length"
-                type="number"
-                style="width: 240px;"
-                :class="{ 'king-input': true, error: passwordLengthError }"
-                @input="validatePasswordLength">
+      <bk-input
+        v-model="defaultPassword.password_min_length"
+        type="number"
+        style="width: 240px;"
+        :class="{ 'king-input': true, error: passwordLengthError }"
+        @input="validatePasswordLength">
         <template slot="append">
           <div class="group-text">{{$t('至32位')}}</div>
         </template>
@@ -61,10 +62,11 @@
         <span class="star">*</span>
       </div>
       <div class="bk-button-group">
-        <bk-button v-for="(item, index) in passwordValidDaysList"
-                   :key="index"
-                   :class="{ 'is-selected': defaultPassword.password_valid_days === item.days }"
-                   @click="defaultPassword.password_valid_days = item.days">
+        <bk-button
+          v-for="(item, index) in passwordValidDaysList"
+          :key="index"
+          :class="{ 'is-selected': defaultPassword.password_valid_days === item.days }"
+          @click="defaultPassword.password_valid_days = item.days">
           {{item.text}}
         </bk-button>
       </div>
@@ -77,10 +79,11 @@
         <span class="star">*</span>
       </div>
       <div class="bk-button-group">
-        <bk-button v-for="(item, index) in maxTrailTimesList"
-                   :key="index"
-                   :class="{ 'is-selected': defaultPassword.max_trail_times === item.times }"
-                   @click="defaultPassword.max_trail_times = item.times">
+        <bk-button
+          v-for="(item, index) in maxTrailTimesList"
+          :key="index"
+          :class="{ 'is-selected': defaultPassword.max_trail_times === item.times }"
+          @click="defaultPassword.max_trail_times = item.times">
           {{item.text}}
         </bk-button>
       </div>
@@ -95,11 +98,12 @@
           <span class="icon-user--l" v-bk-tooltips="$t('自动解锁时间提示')"></span>
         </div>
       </div>
-      <bk-input v-model="defaultPassword.auto_unlock_seconds"
-                type="number"
-                style="width: 240px;"
-                :class="{ 'king-input': true, error: autoUnlockError }"
-                @input="validateAutoUnlock">
+      <bk-input
+        v-model="defaultPassword.auto_unlock_seconds"
+        type="number"
+        style="width: 240px;"
+        :class="{ 'king-input': true, error: autoUnlockError }"
+        @input="validateAutoUnlock">
         <template slot="append">
           <div class="group-text">{{$t('秒')}}</div>
         </template>
@@ -126,37 +130,43 @@
         </div>
       </div>
       <!-- 设置初始密码 -->
-      <div class="init-password-container"
-           :class="{ active: defaultPassword.init_password_method === 'fixed_preset', error: initPasswordError }"
-           @click="defaultPassword.init_password_method = 'fixed_preset'">
-        <bk-radio name="radio1" :checked="defaultPassword.init_password_method === 'fixed_preset'"
-                  class="king-radio">
+      <div
+        class="init-password-container"
+        :class="{ active: defaultPassword.init_password_method === 'fixed_preset', error: initPasswordError }"
+        @click="defaultPassword.init_password_method = 'fixed_preset'">
+        <bk-radio
+          name="radio1" :checked="defaultPassword.init_password_method === 'fixed_preset'"
+          class="king-radio">
           {{$t('统一初始密码')}}
         </bk-radio>
         <input type="text" class="hidden-password-input">
         <input type="password" class="hidden-password-input">
-        <input class="input-text"
-               autocomplete="new-password"
-               :type="initPasswordSlash && 'password'"
-               :placeholder="$t('请输入密码')"
-               v-model="defaultPassword.init_password"
-               @input="validateInitPassword"
+        <input
+          class="input-text"
+          autocomplete="new-password"
+          :type="initPasswordSlash && 'password'"
+          :placeholder="$t('请输入密码')"
+          v-model="defaultPassword.init_password"
+          @input="validateInitPassword"
         />
         <i :class="['bk-icon', passwordIconClass]" @click="initPasswordSlash = !initPasswordSlash"></i>
       </div>
       <p class="error-text" v-show="initPasswordError">{{$t('密码规则校验失败')}}</p>
       <!-- 邮箱发送随机密码 -->
-      <div class="init-email-container"
-           :class="{ active: defaultPassword.init_password_method === 'random_via_mail',
-                     error: initEmailConfigError }">
+      <div
+        class="init-email-container"
+        :class="{ active: defaultPassword.init_password_method === 'random_via_mail',
+                  error: initEmailConfigError }">
         <div class="email-config-container" @click="defaultPassword.init_password_method = 'random_via_mail'">
-          <bk-radio class="king-radio" name="radio1"
-                    :checked="defaultPassword.init_password_method === 'random_via_mail'">
+          <bk-radio
+            class="king-radio" name="radio1"
+            :checked="defaultPassword.init_password_method === 'random_via_mail'">
             {{$t('邮箱发送随机密码')}}
           </bk-radio>
-          <span class="edit-template"
-                :class="{ disable: defaultPassword.init_password_method === 'fixed_preset' }"
-                @click.stop="toggleEmailTemplate">
+          <span
+            class="edit-template"
+            :class="{ disable: defaultPassword.init_password_method === 'fixed_preset' }"
+            @click.stop="toggleEmailTemplate">
             {{$t('编辑邮件模板')}}
           </span>
         </div>
@@ -167,36 +177,42 @@
               <h3 class="email-block-name">{{$t('创建账户邮件')}}</h3>
               <div class="email-info clearfix">
                 <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.init_mail_config.title"
-                       @input="validateEmailTemplate" />
+                <input
+                  type="text" class="input-text" v-model="defaultPassword.init_mail_config.title"
+                  @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.init_mail_config.sender"
-                       @input="validateEmailTemplate" />
+                <input
+                  type="text" class="input-text" v-model="defaultPassword.init_mail_config.sender"
+                  @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title" style="height: 191px">{{$t('正文')}}<span class="star">*</span></p>
-                <textarea class="textarea-text" v-model="defaultPassword.init_mail_config.content"
-                          @input="validateEmailTemplate"></textarea>
+                <textarea
+                  class="textarea-text" v-model="defaultPassword.init_mail_config.content"
+                  @input="validateEmailTemplate"></textarea>
               </div>
             </li>
             <li class="email-block">
               <h3 class="email-block-name">{{$t('重设密码后的邮件')}}</h3>
               <div class="email-info clearfix">
                 <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.reset_mail_config.title"
-                       @input="validateEmailTemplate" />
+                <input
+                  type="text" class="input-text" v-model="defaultPassword.reset_mail_config.title"
+                  @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                <input type="text" class="input-text" v-model="defaultPassword.reset_mail_config.sender"
-                       @input="validateEmailTemplate" />
+                <input
+                  type="text" class="input-text" v-model="defaultPassword.reset_mail_config.sender"
+                  @input="validateEmailTemplate" />
               </div>
               <div class="email-info clearfix">
                 <p class="title" style="height: 191px">{{$t('正文')}}<span class="star">*</span></p>
-                <textarea class="textarea-text" v-model="defaultPassword.reset_mail_config.content"
-                          @input="validateEmailTemplate"></textarea>
+                <textarea
+                  class="textarea-text" v-model="defaultPassword.reset_mail_config.content"
+                  @input="validateEmailTemplate"></textarea>
               </div>
             </li>
           </ul>
@@ -214,11 +230,12 @@
       <div class="auto-freeze-container">
         <bk-checkbox v-model="defaultPassword.freeze_after_days.enabled" class="king-checkbox"></bk-checkbox>
         <span>{{$t('连续')}}</span>
-        <bk-input v-model="defaultPassword.freeze_after_days.value"
-                  type="number"
-                  style="width: 120px;margin: 0 8px;"
-                  :class="{ 'king-input': true, error: freezeDaysError }"
-                  @input="validateFreezeDays">
+        <bk-input
+          v-model="defaultPassword.freeze_after_days.value"
+          type="number"
+          style="width: 120px;margin: 0 8px;"
+          :class="{ 'king-input': true, error: freezeDaysError }"
+          @input="validateFreezeDays">
           <template slot="append">
             <div class="group-text">{{$t('天')}}</div>
           </template>
@@ -233,11 +250,12 @@
       <div class="change-password">
         <bk-checkbox v-model="defaultPassword.max_password_history.enabled" class="king-checkbox"></bk-checkbox>
         <span>{{$t('修改密码时不能重复前')}}</span>
-        <bk-input v-model="defaultPassword.max_password_history.value"
-                  type="number"
-                  style="width: 120px;margin: 0 8px;"
-                  :class="{ 'king-input': true, error: passwordHistoryError }"
-                  @input="validatePasswordHistory">
+        <bk-input
+          v-model="defaultPassword.max_password_history.value"
+          type="number"
+          style="width: 120px;margin: 0 8px;"
+          :class="{ 'king-input': true, error: passwordHistoryError }"
+          @input="validatePasswordHistory">
           <template slot="append">
             <div class="group-text">{{$t('次')}}</div>
           </template>

@@ -98,9 +98,10 @@
             <template v-if="currentCategoryType === 'local'">
               <div class="table-actions-left-container local-type" data-test-id="list_operationUser">
                 <!-- 添加成员 -->
-                <bk-dropdown-menu ref="dropdownAdd" class="king-dropdown-menu"
-                                  :disabled="basicLoading" @show="isDropdownShowAdd = true"
-                                  @hide="isDropdownShowAdd = false">
+                <bk-dropdown-menu
+                  ref="dropdownAdd" class="king-dropdown-menu"
+                  :disabled="basicLoading" @show="isDropdownShowAdd = true"
+                  @hide="isDropdownShowAdd = false">
                   <bk-button slot="dropdown-trigger" class="king-button">
                     <span class="more-action">{{$t('添加用户')}}</span>
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowAdd }]"></i>
@@ -111,30 +112,34 @@
                   </ul>
                 </bk-dropdown-menu>
                 <!-- 更多操作 -->
-                <bk-dropdown-menu ref="dropdownMore" class="king-dropdown-menu"
-                                  :disabled="basicLoading" @show="isDropdownShowMore = true"
-                                  @hide="isDropdownShowMore = false">
+                <bk-dropdown-menu
+                  ref="dropdownMore" class="king-dropdown-menu"
+                  :disabled="basicLoading" @show="isDropdownShowMore = true"
+                  @hide="isDropdownShowMore = false">
                   <bk-button slot="dropdown-trigger" class="king-button">
                     <span class="more-action">{{$t('更多操作')}}</span>
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowMore }]"></i>
                   </bk-button>
                   <ul class="bk-dropdown-list" slot="dropdown-content">
                     <li>
-                      <a href="javascript:;" :class="{ 'disabled': !isClick }"
-                         @click="handleSetDepartment">{{$t('设置所在组织')}}
+                      <a
+                        href="javascript:;" :class="{ 'disabled': !isClick }"
+                        @click="handleSetDepartment">{{$t('设置所在组织')}}
                       </a>
                     </li>
                     <li>
-                      <a href="javascript:;" :class="{ 'disabled': !isClick }"
-                         @click="deleteProfiles">{{$t('批量删除')}}
+                      <a
+                        href="javascript:;" :class="{ 'disabled': !isClick }"
+                        @click="deleteProfiles">{{$t('批量删除')}}
                       </a>
                     </li>
                   </ul>
                 </bk-dropdown-menu>
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
-                  <bk-checkbox class="king-checkbox" :checked="isSearchCurrentDepartment"
-                               @change="changeSearchLevel">
+                  <bk-checkbox
+                    class="king-checkbox" :checked="isSearchCurrentDepartment"
+                    @change="changeSearchLevel">
                   </bk-checkbox>
                   <span class="text text-overflow-hidden" v-bk-overflow-tips @click="changeSearchLevel">
                     {{$t('仅显示本级组织成员') + (handleTabData.currentNumber === null ? ''
@@ -144,15 +149,16 @@
               </div>
               <div class="table-actions-right-container">
                 <!-- 用户搜索框 -->
-                <bk-input v-model="tableSearchKey"
-                          class="king-input-search"
-                          style="width: 280px;margin-right: 20px;"
-                          :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                          :clearable="true"
-                          :left-icon="'bk-icon icon-search'"
-                          @clear="handleClear"
-                          @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch">
+                <bk-input
+                  v-model="tableSearchKey"
+                  class="king-input-search"
+                  style="width: 280px;margin-right: 20px;"
+                  :placeholder="$t('输入用户名/中文名，按Enter搜索')"
+                  :clearable="true"
+                  :left-icon="'bk-icon icon-search'"
+                  @clear="handleClear"
+                  @left-icon-click="handleTableSearch"
+                  @enter="handleTableSearch">
                 </bk-input>
                 <!-- 设置列表字段 -->
                 <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
@@ -164,20 +170,22 @@
             <template v-else>
               <div class="table-actions-left-container">
                 <!-- 用户搜索框 -->
-                <bk-input v-model="tableSearchKey"
-                          class="king-input-search"
-                          style="width: 360px;margin-right: 20px;"
-                          :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                          :clearable="true"
-                          :left-icon="'bk-icon icon-search'"
-                          @clear="handleClear"
-                          @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch">
+                <bk-input
+                  v-model="tableSearchKey"
+                  class="king-input-search"
+                  style="width: 360px;margin-right: 20px;"
+                  :placeholder="$t('输入用户名/中文名，按Enter搜索')"
+                  :clearable="true"
+                  :left-icon="'bk-icon icon-search'"
+                  @clear="handleClear"
+                  @left-icon-click="handleTableSearch"
+                  @enter="handleTableSearch">
                 </bk-input>
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
-                  <bk-checkbox class="king-checkbox" :checked="isSearchCurrentDepartment"
-                               @change="changeSearchLevel"></bk-checkbox>
+                  <bk-checkbox
+                    class="king-checkbox" :checked="isSearchCurrentDepartment"
+                    @change="changeSearchLevel"></bk-checkbox>
                   <span class="text" @click="changeSearchLevel">
                     {{$t('仅显示本级组织成员') + (handleTabData.currentNumber === null ? ''
                       : `(${handleTabData.currentNumber})`)}}
@@ -230,13 +238,14 @@
       </template>
     </div>
     <!-- 新增用户 侧边栏 -->
-    <bk-sideslider class="king-sideslider"
-                   :width="520"
-                   :show-mask="false"
-                   :is-show.sync="detailsBarInfo.isShow"
-                   :quick-close="detailsBarInfo.quickClose"
-                   :title="detailsBarInfo.title"
-                   :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
+    <bk-sideslider
+      class="king-sideslider"
+      :width="520"
+      :show-mask="false"
+      :is-show.sync="detailsBarInfo.isShow"
+      :quick-close="detailsBarInfo.quickClose"
+      :title="detailsBarInfo.title"
+      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
       <div slot="content" class="member-content" v-if="detailsBarInfo.isShow">
         <DetailsBar
           :details-bar-info="detailsBarInfo"
@@ -276,15 +285,16 @@
           @onEnter="actionConfirmFn" />
       </bk-dialog>
       <!-- 设置所在组织的弹窗 -->
-      <bk-dialog width="721"
-                 class="king-dialog department-dialog"
-                 header-position="left"
-                 :position="{ top: setDepartmentTop }"
-                 :auto-close="false"
-                 :title="$t('设置所在组织')"
-                 v-model="isShowSetDepartments"
-                 @confirm="selectDeConfirmFn"
-                 @cancel="isShowSetDepartments = false">
+      <bk-dialog
+        width="721"
+        class="king-dialog department-dialog"
+        header-position="left"
+        :position="{ top: setDepartmentTop }"
+        :auto-close="false"
+        :title="$t('设置所在组织')"
+        v-model="isShowSetDepartments"
+        @confirm="selectDeConfirmFn"
+        @cancel="isShowSetDepartments = false">
         <div class="select-department-wrapper clearfix">
           <SetDepartment
             v-if="isShowSetDepartments"
@@ -312,8 +322,9 @@
     <div v-show="basicLoading || initLoading || isChangingWidth" class="loading-cover" @click.stop></div>
     <!-- 可拖拽页面布局宽度 -->
     <div ref="dragBar" :class="['drag-bar', isChangingWidth && 'dragging']" :style="{ left: treeBoxWidth - 1 + 'px' }">
-      <img src="../../images/svg/drag-icon.svg" alt="drag"
-           draggable="false" class="drag-icon" @mousedown.left="dragBegin">
+      <img
+        src="../../images/svg/drag-icon.svg" alt="drag"
+        draggable="false" class="drag-icon" @mousedown.left="dragBegin">
     </div>
   </div>
 </template>
@@ -329,6 +340,7 @@ import DetailsBar from './details/DetailsBar';
 import SetDepartment from '@/components/organization/SetDepartment';
 
 export default {
+  name: 'OrganizationIndex',
   components: {
     DetailsBar,
     DialogContent,

@@ -29,12 +29,13 @@
         <span class="icon-user--l" v-bk-tooltips="tips"></span>
       </div>
     </div>
-    <bk-input v-model="info[keyword]"
-              :type="inputType"
-              :style="{ width: inputWidth + 'px' }"
-              :class="{ 'king-input': true, error: error }"
-              :disabled="disabled"
-              @input="handleInput">
+    <bk-input
+      v-model="info[keyword]"
+      :type="inputType"
+      :style="{ width: inputWidth + 'px' }"
+      :class="{ 'king-input': true, error: error }"
+      :disabled="disabled"
+      @input="handleInput">
       <template v-if="append" slot="append">
         <div class="group-text">{{append}}</div>
       </template>

@@ -80,11 +80,13 @@
       <ul class="clearfix">
         <li class="select-infor-list" v-for="(item, index) in localSetTableFields" :key="index">
           <div class="king-checkbox">
-            <label class="label-text" :class="[mustSelect(item) && 'select-checked',
-                                               selectLength >= 10 && !item.visible && 'not-allowed']">
+            <label
+              class="label-text" :class="[mustSelect(item) && 'select-checked',
+                                          selectLength >= 10 && !item.visible && 'not-allowed']">
               <input type="checkbox" class="checkbox select-checked" disabled v-if="mustSelect(item)">
-              <input type="checkbox" class="checkbox" v-model="item.visible"
-                     @click="handleCheck($event, item.visible)" v-else>
+              <input
+                type="checkbox" class="checkbox" v-model="item.visible"
+                @click="handleCheck($event, item.visible)" v-else>
               {{item.name}}
             </label>
           </div>

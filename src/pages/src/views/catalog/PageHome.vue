@@ -49,8 +49,9 @@
         <div class="detail">{{$t('你没有相应资源的访问权限')}}</div>
         <bk-button class="king-button" theme="primary" @click="confirmPageApply">{{$t('去申请')}}</bk-button>
       </div>
-      <div class="tbody-container table-container" :class="catalogList.length >= 4 && 'overflow-auto'"
-           data-test-id="list_catalogData" v-else>
+      <div
+        class="tbody-container table-container" :class="catalogList.length >= 4 && 'overflow-auto'"
+        data-test-id="list_catalogData" v-else>
         <table>
           <tbody>
             <tr v-for="(item, index) in catalogList" :key="item.id">
@@ -58,8 +59,9 @@
               <td>
                 <div class="td-container">
                   <div class="catalog-name">
-                    <span class="text-overflow-hidden" v-bk-overflow-tips
-                          @click="goToSettingPage(item)">{{item.display_name}}
+                    <span
+                      class="text-overflow-hidden" v-bk-overflow-tips
+                      @click="goToSettingPage(item)">{{item.display_name}}
                     </span>
                     <span v-if="item.unfilled_namespaces.length" class="unfinished">{{$t('未完成')}}</span>
                   </div>
@@ -88,14 +90,16 @@
                 <div class="td-container">
                   <!-- warning 这里使用了 switcher 组件的样式，因为组件不能根据 value 控制状态 -->
                   <!-- 默认目录禁用 switch -->
-                  <label v-if="item.default"
-                         class="primary bk-switcher bk-switcher-small is-checked is-disabled"
-                         v-bk-tooltips="$t('默认目录不能被禁用')">
+                  <label
+                    v-if="item.default"
+                    class="primary bk-switcher bk-switcher-small is-checked is-disabled"
+                    v-bk-tooltips="$t('默认目录不能被禁用')">
                     <input type="checkbox" :value="true">
                   </label>
-                  <label v-else class="primary bk-switcher bk-switcher-small"
-                         :class="item.activated ? 'is-checked' : 'is-unchecked'"
-                         @click="switchStatus(item)">
+                  <label
+                    v-else class="primary bk-switcher bk-switcher-small"
+                    :class="item.activated ? 'is-checked' : 'is-unchecked'"
+                    @click="switchStatus(item)">
                     <input type="checkbox" :value="item.activated">
                   </label>
                 </div>
@@ -124,13 +128,15 @@
               </td>
               <td v-else>
                 <div class="td-container operation-container">
-                  <span v-if="item.unfilled_namespaces.length"
-                        v-bk-tooltips="$t('目录未完成配置，无法操作')"
-                        class="is-disabled">{{$t('同步')}}
+                  <span
+                    v-if="item.unfilled_namespaces.length"
+                    v-bk-tooltips="$t('目录未完成配置，无法操作')"
+                    class="is-disabled">{{$t('同步')}}
                   </span>
-                  <span v-else-if="syncing"
-                        v-bk-tooltips="$t('已有数据同步任务正在进行，请在数据更新记录中查看详情')"
-                        class="is-disabled">
+                  <span
+                    v-else-if="syncing"
+                    v-bk-tooltips="$t('已有数据同步任务正在进行，请在数据更新记录中查看详情')"
+                    class="is-disabled">
                     {{$t('同步')}}
                   </span>
                   <span v-else @click="syncCatalog(item)">{{$t('同步')}}</span>
