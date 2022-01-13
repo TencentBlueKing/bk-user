@@ -24,12 +24,13 @@
     <!-- 目录名 -->
     <!-- eslint-disable vue/no-mutating-props -->
     <div class="name-container">
-      <CommonInput keyword="display_name"
-                   :info="basicInfo"
-                   :input-bus="inputBus"
-                   :title="$t('目录名')"
-                   :is-need="true"
-                   @hasError="handleHasError" />
+      <CommonInput
+        keyword="display_name"
+        :info="basicInfo"
+        :input-bus="inputBus"
+        :title="$t('目录名')"
+        :is-need="true"
+        @hasError="handleHasError" />
       <div class="check-container">
         <bk-checkbox v-model="basicInfo.activated" class="king-checkbox">
           {{$t('启用目录')}}
@@ -41,15 +42,16 @@
     <!-- 登录域 -->
     <input type="text" class="hidden-password-input">
     <input type="password" class="hidden-password-input">
-    <CommonInput keyword="domain"
-                 :info="basicInfo"
-                 :input-bus="inputBus"
-                 :title="$t('登录域')"
-                 :is-need="true"
-                 :error-text="$t('登录域错误')"
-                 :disabled="type === 'set'"
-                 :description="$t('登录域描述')"
-                 @hasError="handleHasError" />
+    <CommonInput
+      keyword="domain"
+      :info="basicInfo"
+      :input-bus="inputBus"
+      :title="$t('登录域')"
+      :is-need="true"
+      :error-text="$t('登录域错误')"
+      :disabled="type === 'set'"
+      :description="$t('登录域描述')"
+      @hasError="handleHasError" />
 
     <!-- 新增用户目录 -->
     <div class="save-setting-buttons" v-if="type === 'add'">

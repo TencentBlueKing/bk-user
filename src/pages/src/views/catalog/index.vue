@@ -26,21 +26,24 @@
     <!-- 新增目录 -->
     <PageAdd v-if="showingPage === 'showPageAdd'" :catalog-metas="catalogMetas" @changePage="changePage" />
     <!-- 数据更新记录 -->
-    <ReDataupdate v-if="showingPage === 'showReDataupdate'" :catalog-metas="catalogMetas"
-                  @changePage="changePage">
+    <ReDataupdate
+      v-if="showingPage === 'showReDataupdate'" :catalog-metas="catalogMetas"
+      @changePage="changePage">
     </ReDataupdate>
     <!-- 本地用户 -->
     <LocalAdd v-if="showingPage === 'showLocalAdd'" @changePage="changePage" @cancel="handleCancel" />
     <LocalSet v-if="showingPage === 'showLocalSet'" @changePage="changePage" :catalog-info="catalogInfo" />
     <!-- MAD 用户 -->
-    <RemoteAdd v-if="showingPage === 'showRemoteAddMad'"
-               @changePage="changePage"
-               @cancel="handleCancel" catalog-type="mad" />
+    <RemoteAdd
+      v-if="showingPage === 'showRemoteAddMad'"
+      @changePage="changePage"
+      @cancel="handleCancel" catalog-type="mad" />
     <RemoteSet v-if="showingPage === 'showRemoteSetMad'" @changePage="changePage" :catalog-info="catalogInfo" />
     <!-- LDAP 用户 -->
-    <RemoteAdd v-if="showingPage === 'showRemoteAddLdap'"
-               @changePage="changePage"
-               @cancel="handleCancel" catalog-type="ldap" />
+    <RemoteAdd
+      v-if="showingPage === 'showRemoteAddLdap'"
+      @changePage="changePage"
+      @cancel="handleCancel" catalog-type="ldap" />
     <RemoteSet v-if="showingPage === 'showRemoteSetLdap'" @changePage="changePage" :catalog-info="catalogInfo" />
   </div>
 </template>

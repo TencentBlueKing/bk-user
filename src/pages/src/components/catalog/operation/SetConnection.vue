@@ -23,12 +23,13 @@
   <div v-if="connectionInfo" class="catalog-setting-step set-connection">
 
     <!-- 连接地址 -->
-    <CommonInput keyword="connection_url"
-                 :info="defaultConnection"
-                 :input-bus="inputBus"
-                 :title="$t('连接地址')"
-                 :is-need="true"
-                 @hasError="handleHasError" />
+    <CommonInput
+      keyword="connection_url"
+      :info="defaultConnection"
+      :input-bus="inputBus"
+      :title="$t('连接地址')"
+      :is-need="true"
+      @hasError="handleHasError" />
 
     <!-- SSL加密方式 -->
     <div class="info-container">
@@ -41,55 +42,60 @@
     </div>
 
     <!-- 超时设置 -->
-    <CommonInput keyword="timeout_setting"
-                 input-type="number"
-                 :info="defaultConnection"
-                 :input-bus="inputBus"
-                 :title="$t('超时设置')"
-                 :append="$t('秒')"
-                 :is-need="true"
-                 :input-width="240"
-                 @hasError="handleHasError" />
+    <CommonInput
+      keyword="timeout_setting"
+      input-type="number"
+      :info="defaultConnection"
+      :input-bus="inputBus"
+      :title="$t('超时设置')"
+      :append="$t('秒')"
+      :is-need="true"
+      :input-width="240"
+      @hasError="handleHasError" />
 
     <!-- 拉取周期 -->
-    <CommonInput keyword="pull_cycle"
-                 input-type="number"
-                 :info="defaultConnection"
-                 :input-bus="inputBus"
-                 :title="$t('拉取周期')"
-                 :description="$t('最小拉取周期为')"
-                 :error-text="$t('请输入正确的拉取周期')"
-                 :append="$t('秒')"
-                 :is-need="true"
-                 :input-width="240"
-                 @hasError="handleHasError" />
+    <CommonInput
+      keyword="pull_cycle"
+      input-type="number"
+      :info="defaultConnection"
+      :input-bus="inputBus"
+      :title="$t('拉取周期')"
+      :description="$t('最小拉取周期为')"
+      :error-text="$t('请输入正确的拉取周期')"
+      :append="$t('秒')"
+      :is-need="true"
+      :input-width="240"
+      @hasError="handleHasError" />
 
     <!-- 根目录 -->
-    <CommonInput keyword="base_dn"
-                 :info="defaultConnection"
-                 :input-bus="inputBus"
-                 :title="$t('根目录（Base DN）')"
-                 :is-need="true"
-                 @hasError="handleHasError" />
+    <CommonInput
+      keyword="base_dn"
+      :info="defaultConnection"
+      :input-bus="inputBus"
+      :title="$t('根目录（Base DN）')"
+      :is-need="true"
+      @hasError="handleHasError" />
 
     <!-- 用户名 -->
-    <CommonInput keyword="user"
-                 :info="defaultConnection"
-                 :input-bus="inputBus"
-                 :title="$t('用户名（Username）')"
-                 :is-need="true"
-                 @hasError="handleHasError" />
+    <CommonInput
+      keyword="user"
+      :info="defaultConnection"
+      :input-bus="inputBus"
+      :title="$t('用户名（Username）')"
+      :is-need="true"
+      @hasError="handleHasError" />
 
     <!-- 密码 -->
     <input type="text" class="hidden-password-input">
     <input type="password" class="hidden-password-input">
-    <CommonInput keyword="password"
-                 input-type="password"
-                 :info="defaultConnection"
-                 :input-bus="inputBus"
-                 :title="$t('密码（Password）')"
-                 :is-need="true"
-                 @hasError="handleHasError" />
+    <CommonInput
+      keyword="password"
+      input-type="password"
+      :info="defaultConnection"
+      :input-bus="inputBus"
+      :title="$t('密码（Password）')"
+      :is-need="true"
+      @hasError="handleHasError" />
 
     <!-- 测试连接 -->
     <TestConnection :test-info="testInfo" />

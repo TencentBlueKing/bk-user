@@ -27,23 +27,28 @@
         <span class="title">{{ $t('蓝鲸用户管理') }}</span>
       </h1>
       <p class="nav-list">
-        <a href="javascript:void(0);"
-           :class="$route.name === 'organization' && 'router-link-active'"
-           @click="goTo('organization')">{{ $t('组织架构') }}
+        <a
+          href="javascript:void(0);"
+          :class="$route.name === 'organization' && 'router-link-active'"
+          @click="goTo('organization')">{{ $t('组织架构') }}
         </a>
-        <a href="javascript:void(0);"
-           :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('用户目录') }}</a>
-        <a href="javascript:void(0);"
-           :class="$route.name === 'audit' && 'router-link-active'" @click="goTo('audit')">{{ $t('审计') }}</a>
-        <a href="javascript:void(0);"
-           :class="$route.name === 'setting' && 'router-link-active'" @click="goTo('setting')">{{ $t('设置') }}</a>
+        <a
+          href="javascript:void(0);"
+          :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('用户目录') }}</a>
+        <a
+          href="javascript:void(0);"
+          :class="$route.name === 'audit' && 'router-link-active'" @click="goTo('audit')">{{ $t('审计') }}</a>
+        <a
+          href="javascript:void(0);"
+          :class="$route.name === 'setting' && 'router-link-active'" @click="goTo('setting')">{{ $t('设置') }}</a>
       </p>
     </div>
     <div class="header-right" data-test-id="list_menuInfo">
-      <bk-dropdown-menu ref="dropdownHelp"
-                        align="center"
-                        @show="showHelpDropdown = true"
-                        @hide="showHelpDropdown = false">
+      <bk-dropdown-menu
+        ref="dropdownHelp"
+        align="center"
+        @show="showHelpDropdown = true"
+        @hide="showHelpDropdown = false">
         <div class="question-icon-trigger" :class="showHelpDropdown && 'active'" slot="dropdown-trigger">
           <div class="icon-circle-container">
             <span class="bk-icon icon-question-circle-shape"></span>

@@ -141,8 +141,9 @@
             <p>对应{{catalogType}}目录字段</p>
           </div>
           <addCustomField :type="type" :custom-field="customField" @upAddFieldList="getAddFieldList" />
-          <setCustomField :type="type" :extend-fields="extendFields" :custom-field="customField"
-                          :current="current" @upSetFieldList="getSetFieldList" />
+          <setCustomField
+            :type="type" :extend-fields="extendFields" :custom-field="customField"
+            :current="current" @upSetFieldList="getSetFieldList" />
         </div>
       </div>
     </div>
@@ -363,7 +364,7 @@ export default {
     },
     getSetFieldList(data) {
       this.fieldsList = data;
-    }
+    },
   },
 };
 </script>
