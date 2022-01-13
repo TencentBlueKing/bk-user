@@ -28,7 +28,7 @@ export default {
     },
     customField: {
       type: Object,
-      default: () => {},
+      default: () => ({}),
     },
   },
   data() {

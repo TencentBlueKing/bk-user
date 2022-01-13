@@ -53,7 +53,7 @@ export default {
     },
     customField: {
       type: Object,
-      default: () => {},
+      default: () => ({}),
     },
     current: {
       type: Number,
