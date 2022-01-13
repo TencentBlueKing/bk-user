@@ -41,6 +41,7 @@
 import cookie from 'cookie';
 
 export default {
+  name: 'FooterBox',
   data() {
     return {
       isEnglish: cookie.parse(document.cookie).blueking_language === 'en',

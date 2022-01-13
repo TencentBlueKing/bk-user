@@ -87,6 +87,7 @@
 
 <script>
 export default {
+  name: 'HeaderBox',
   data() {
     return {
       showHelpDropdown: false,

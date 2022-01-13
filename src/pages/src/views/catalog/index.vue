@@ -58,7 +58,7 @@ import RemoteAdd from './operation/RemoteAdd';
 import RemoteSet from './operation/RemoteSet';
 
 export default {
-  name: 'Catalog',
+  name: 'CatalogIndex',
   components: {
     PageHome,
     PageAdd,

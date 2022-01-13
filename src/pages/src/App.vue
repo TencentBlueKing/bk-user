@@ -21,20 +21,20 @@
   -->
 <template>
   <div id="app">
-    <Header v-if="showHeader" @reloadRouter="routerKey += 1" />
+    <HeaderBox v-if="showHeader" @reloadRouter="routerKey += 1" />
     <main class="main-content">
       <router-view :key="routerKey" />
       <KingLoading v-show="initLoading"></KingLoading>
       <NoAuthority v-if="noAuthData" :no-auth-data="noAuthData" @reloadRouter="routerKey += 1" />
     </main>
     <Login v-if="loginData" :login-data="loginData" />
-    <Footer />
+    <FooterBox />
   </div>
 </template>
 
 <script>
-import Header from './Header';
-import Footer from './Footer';
+import HeaderBox from './Header';
+import FooterBox from './Footer';
 import Login from '@/components/login';
 import NoAuthority from '@/components/authority/NoAuthority';
 import KingLoading from '@/components/KingLoading';
@@ -42,11 +42,11 @@ import KingLoading from '@/components/KingLoading';
 export default {
   name: 'App',
   components: {
-    Header,
+    HeaderBox,
     Login,
     NoAuthority,
     KingLoading,
-    Footer,
+    FooterBox,
   },
   data() {
     return {
