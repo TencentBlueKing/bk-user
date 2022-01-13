@@ -165,7 +165,7 @@ class ProfileSyncHelper:
                 "code": info.code,
                 "telephone": info.telephone,
                 "status": ProfileStatus.NORMAL.value,
-                "extras": info.extras
+                "extras": info.extras,
             }
 
             # 2. 更新或创建 Profile 对象

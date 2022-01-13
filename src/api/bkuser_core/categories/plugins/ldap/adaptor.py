@@ -12,8 +12,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, NamedTuple, Optional
 
-from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
+from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.utils.encoding import force_str
 from ldap3.utils import dn as dn_utils
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProfileFieldMapper:
     """从 ldap 对象属性中获取用户字段"""
+
     config_loader: ConfigProvider
     embed_fields = [
         "username",
@@ -36,11 +37,11 @@ class ProfileFieldMapper:
     def __post_init__(self):
         self.dynamic_fields_mapping = self.config_loader.get(DYNAMIC_FIELDS_SETTING_KEY)
 
-        self.dynamic_fields = list(
-            self.dynamic_fields_mapping.keys()) if self.dynamic_fields_mapping else []
+        self.dynamic_fields = list(self.dynamic_fields_mapping.keys()) if self.dynamic_fields_mapping else []
 
-    def get_value(self, field_name: str, user_meta: Dict[str, List[bytes]], remain_raw: bool = False,
-                  dynamic_field: bool = False) -> Any:
+    def get_value(
+        self, field_name: str, user_meta: Dict[str, List[bytes]], remain_raw: bool = False, dynamic_field: bool = False
+    ) -> Any:
         """通过 field_name 从 ldap 数据中获取具体值"""
 
         # 获取自定义字段对应的属性值
@@ -83,10 +84,12 @@ class ProfileFieldMapper:
 
         if self.dynamic_fields:
             values.update(
-                {field_name: self.get_value(
-                    field_name=self.dynamic_fields_mapping[field_name],
-                    user_meta=user_meta,
-                    dynamic_field=True) for field_name in self.dynamic_fields}
+                {
+                    field_name: self.get_value(
+                        field_name=self.dynamic_fields_mapping[field_name], user_meta=user_meta, dynamic_field=True
+                    )
+                    for field_name in self.dynamic_fields
+                }
             )
 
         return values
@@ -94,14 +97,15 @@ class ProfileFieldMapper:
     def get_user_attributes(self) -> list:
         """获取远端属性名列表"""
         user_attributes = [self.config_loader[x] for x in self.embed_fields if self.config_loader.get(x)]
-        user_attributes.extend([self.dynamic_fields_mapping[x] for x in self.dynamic_fields if
-                                self.dynamic_fields_mapping.get(x)])
+        user_attributes.extend(
+            [self.dynamic_fields_mapping[x] for x in self.dynamic_fields if self.dynamic_fields_mapping.get(x)]
+        )
 
         return user_attributes
 
 
 def user_adapter(
-        code: str, user_meta: Dict[str, Any], field_mapper: ProfileFieldMapper, restrict_types: List[str]
+    code: str, user_meta: Dict[str, Any], field_mapper: ProfileFieldMapper, restrict_types: List[str]
 ) -> LdapUserProfile:
     groups = field_mapper.get_value("user_member_of", user_meta["raw_attributes"], True) or []
 
