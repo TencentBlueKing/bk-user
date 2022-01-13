@@ -11,13 +11,12 @@ specific language governing permissions and limitations under the License.
 import datetime
 import logging
 import re
+from typing import Any, ClassVar, Dict, Tuple, Type
 
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
-from typing import Any, ClassVar, Type, Tuple, Dict
 from typing_extensions import Protocol
-
 
 USERNAME_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9._-]){0,31}"
 DOMAIN_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
@@ -74,17 +73,18 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
 
 class ExtrasValidator(Protocol):
     """自定义字段格式校验"""
-    target_types: ClassVar[Tuple[Type]]
-    transform_types: ClassVar[Tuple[Type]]
+
+    target_types: ClassVar[Tuple]
+    transform_types: ClassVar[Tuple]
 
     @classmethod
     def validate(cls, value: Any, field_info):
         raise NotImplementedError
 
 
-class ExtrasNumberValidator(ExtrasValidator):
-    target_types: ClassVar[Tuple[Type]] = (int, float)
-    transform_types: ClassVar[Tuple[Type]] = (str,)
+class ExtrasNumberValidator:
+    target_types: ClassVar[Tuple] = (int, float)
+    transform_types: ClassVar[Tuple] = (str,)
 
     @classmethod
     def validate(cls, value: Any, field_info):
@@ -104,8 +104,9 @@ class ExtrasNumberValidator(ExtrasValidator):
         return float(value)
 
 
-class ExtrasStringValidator(ExtrasValidator):
-    target_types: ClassVar[Tuple[Type]] = (str,)    # noqa
+class ExtrasStringValidator:
+    target_types: ClassVar[Tuple] = (str,)
+    transform_types: ClassVar[Tuple] = ()
 
     @classmethod
     def validate(cls, value: Any, field_info):
@@ -124,9 +125,9 @@ class ExtrasStringValidator(ExtrasValidator):
         return str(value)
 
 
-class ExtrasOneEnumValidator(ExtrasValidator):
-    target_types = (int,)
-    transform_types = (str,)
+class ExtrasOneEnumValidator:
+    target_types: ClassVar[Tuple] = (int,)
+    transform_types: ClassVar[Tuple] = (str,)
 
     @classmethod
     def validate(cls, value: Any, field_info):
@@ -150,9 +151,9 @@ class ExtrasOneEnumValidator(ExtrasValidator):
         return int(value)
 
 
-class ExtrasMultlEnumValidator(ExtrasValidator):
-    target_types = (list,)
-    transform_types = (str, set, tuple)
+class ExtrasMultiEnumValidator:
+    target_types: ClassVar[Tuple] = (list,)
+    transform_types: ClassVar[Tuple] = (str, set, tuple)
 
     @classmethod
     def validate(cls, value: Any, field_info):
@@ -174,14 +175,15 @@ class ExtrasMultlEnumValidator(ExtrasValidator):
         return list(value)
 
 
-class ExtrasTimerValidator(ExtrasValidator):
-    target_types: ClassVar[Tuple[Type]] = (str,)
+class ExtrasTimerValidator:
+    target_types: ClassVar[Tuple] = (str,)
+    transform_types: ClassVar[Tuple] = ()
 
     @classmethod
     def validate(cls, value: Any, field_info):
         if isinstance(value, cls.target_types):
             try:
-                datetime.datetime.strptime(value, '%Y-%m-%d')
+                datetime.datetime.strptime(value, "%Y-%m-%d")
                 return
             except Exception:
                 raise ValidationError(_("{} 不符合格式要求".format(value)))
@@ -192,9 +194,8 @@ EXTRAS_VALIDATOR_MAP: Dict[DynamicFieldTypeEnum, Type[ExtrasValidator]] = {
     DynamicFieldTypeEnum.NUMBER.value: ExtrasNumberValidator,
     DynamicFieldTypeEnum.STRING.value: ExtrasStringValidator,
     DynamicFieldTypeEnum.ONE_ENUM.value: ExtrasOneEnumValidator,
-    DynamicFieldTypeEnum.MULTI_ENUM.value: ExtrasMultlEnumValidator,
-    DynamicFieldTypeEnum.TIMER.value: ExtrasTimerValidator
-
+    DynamicFieldTypeEnum.MULTI_ENUM.value: ExtrasMultiEnumValidator,
+    DynamicFieldTypeEnum.TIMER.value: ExtrasTimerValidator,
 }
 
 

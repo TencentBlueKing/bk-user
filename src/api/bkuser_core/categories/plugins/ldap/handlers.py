@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.plugins.utils import (
+    delete_dynamic_filed,
     delete_periodic_sync_task,
     make_periodic_sync_task,
     update_periodic_sync_task,
-    delete_dynamic_filed,
 )
 from bkuser_core.categories.signals import post_category_create, post_category_delete, post_dynamic_field_delete
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
@@ -25,8 +25,8 @@ from django.dispatch import receiver
 
 if TYPE_CHECKING:
     from bkuser_core.categories.models import ProfileCategory
-    from bkuser_core.user_settings.models import Setting
     from bkuser_core.profiles.models import DynamicFieldInfo
+    from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
 
