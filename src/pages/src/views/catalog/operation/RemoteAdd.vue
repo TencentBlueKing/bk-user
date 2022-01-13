@@ -49,7 +49,7 @@
           :catalog-id="catalogId"
           :catalog-name="catalogName"
           :fields-info="fieldsInfo"
-          :customField="customField"
+          :custom-field="customField"
           :catalog-type="catalogType"
           @cancel="$emit('cancel')"
           @previous="handlePrevious"
@@ -114,9 +114,9 @@ export default {
     }
   },
   mounted() {
-    this.$store.dispatch('setting/getFields').then(res => {
+    this.$store.dispatch('setting/getFields').then((res) => {
       this.customField = this.$convertCustomField(res.data);
-    })
+    });
   },
   methods: {
     // 上一步
@@ -171,7 +171,7 @@ export default {
         this.isLoading = true;
         const list = [];
         data.forEach((element) => {
-          list.push(element)
+          list.push(element);
           this.fieldsInfo.extend.dynamic_fields_mapping = list;
         });
         await this.$store.dispatch('catalog/ajaxPostFields', {

@@ -68,14 +68,16 @@ const methods = {
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
             if (regionData[0] === 'dynamic_fields_mapping') {
-              const value = {}
-              regionData[1].forEach((item) => {
-                if (item.key && item.value) {
-                  const extendKey = item.key;
-                  const extendValue = item.value;
-                  this.$set(value, extendKey, extendValue);
-                }
-              })
+              const value = {};
+              if (regionData[1].length) {
+                regionData[1].forEach((item) => {
+                  if (item.key && item.value) {
+                    const extendKey = item.key;
+                    const extendValue = item.value;
+                    this.$set(value, extendKey, extendValue);
+                  }
+                });
+              }
               arrayData.push({ key, value, region });
             } else {
               const value = regionData[1];
@@ -99,12 +101,12 @@ const methods = {
           }
           objectData[region][key] = value;
           if (regionObject.key === 'dynamic_fields_mapping') {
-            const valueList = []
+            const valueList = [];
             Object.entries(regionObject.value).forEach((regionData) => {
               const key = regionData[0];
               const value = regionData[1];
-              valueList.push({key, value});
-            })
+              valueList.push({ key, value });
+            });
             objectData[region][regionObject.key] = valueList;
           } else {
             const { key, value } = regionObject;
@@ -179,7 +181,7 @@ const methods = {
         console.warn('数据结构异常', e);
       }
     };
-    
+
     Vue.prototype.$convertCustomField = function (arr) {
       try {
         const arrayData = [];
@@ -192,7 +194,7 @@ const methods = {
       } catch (e) {
         console.warn('数据结构异常', e);
       }
-    }
+    };
 
     // 获取字符串长度，中文为 2 个字符长度
     Vue.prototype.$getStringLength = function (string) {
