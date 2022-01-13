@@ -8,11 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
+import logging
 import re
 
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
+from typing import Any, ClassVar, Type, Tuple, Dict
+from typing_extensions import Protocol
+
 
 USERNAME_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9._-]){0,31}"
 DOMAIN_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
@@ -65,6 +70,149 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
                 raise ValidationError(
                     _("自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录").format(f.display_name, category_id, target_value)
                 )
+
+
+class ExtrasValidator(Protocol):
+    """自定义字段格式校验"""
+    target_types: ClassVar[Tuple[Type]]
+    transform_types: ClassVar[Tuple[Type]]
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        raise NotImplementedError
+
+
+class ExtrasNumberValidator(ExtrasValidator):
+    target_types: ClassVar[Tuple[Type]] = (int, float)
+    transform_types: ClassVar[Tuple[Type]] = (str,)
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        if isinstance(value, cls.target_types):
+            return
+
+        if isinstance(value, cls.transform_types):
+            try:
+                value = cls.transform(value)
+                return value
+            except Exception:
+                raise ValidationError(_("{}不符合格式要求，无法转换".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        """格式转换"""
+        return float(value)
+
+
+class ExtrasStringValidator(ExtrasValidator):
+    target_types: ClassVar[Tuple[Type]] = (str,)    # noqa
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        if isinstance(value, cls.target_types):
+            return
+
+        try:
+            value = cls.transform(value)
+            return value
+        except Exception:
+            raise ValidationError(_("{}不符合格式要求，无法转换".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        """格式转换"""
+        return str(value)
+
+
+class ExtrasOneEnumValidator(ExtrasValidator):
+    target_types = (int,)
+    transform_types = (str,)
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        enums = [enum[0] for enum in field_info.options]
+        if isinstance(value, cls.target_types) and (value in enums):
+            return
+
+        if isinstance(value, cls.transform_types):
+            try:
+                value = cls.transform(value)
+            except Exception:
+                raise ValidationError(_("{}不符合格式要求，无法转换".format(value)))
+
+            if value in enums:
+                return value
+            raise ValidationError(_("{}不在枚举范围内".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        """格式转换"""
+        return int(value)
+
+
+class ExtrasMultlEnumValidator(ExtrasValidator):
+    target_types = (list,)
+    transform_types = (str, set, tuple)
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        enums = [enum[0] for enum in field_info.options]
+        if isinstance(value, cls.target_types) and (set(value) <= set(enums)):
+            return
+        if isinstance(value, cls.transform_types):
+            try:
+                value = cls.transform(value)
+            except Exception:
+                raise ValidationError(_("{} 不符合格式要求，无法转换".format(value)))
+
+            if set(value) <= set(enums):
+                return value
+            raise ValidationError(_("{} 不在枚举范围内".format(value)))
+
+    @classmethod
+    def transform(cls, value):
+        return list(value)
+
+
+class ExtrasTimerValidator(ExtrasValidator):
+    target_types: ClassVar[Tuple[Type]] = (str,)
+
+    @classmethod
+    def validate(cls, value: Any, field_info):
+        if isinstance(value, cls.target_types):
+            try:
+                datetime.datetime.strptime(value, '%Y-%m-%d')
+                return
+            except Exception:
+                raise ValidationError(_("{} 不符合格式要求".format(value)))
+        raise ValidationError(_("{} 不符合格式要求".format(value)))
+
+
+EXTRAS_VALIDATOR_MAP: Dict[DynamicFieldTypeEnum, Type[ExtrasValidator]] = {
+    DynamicFieldTypeEnum.NUMBER.value: ExtrasNumberValidator,
+    DynamicFieldTypeEnum.STRING.value: ExtrasStringValidator,
+    DynamicFieldTypeEnum.ONE_ENUM.value: ExtrasOneEnumValidator,
+    DynamicFieldTypeEnum.MULTI_ENUM.value: ExtrasMultlEnumValidator,
+    DynamicFieldTypeEnum.TIMER.value: ExtrasTimerValidator
+
+}
+
+
+def validate_extras_value_type(value: dict):
+    """检测 extras 中 value 是否自定义字段规定的格式是否一致：不一致尝试进行转换"""
+    from bkuser_core.profiles.models import DynamicFieldInfo
+
+    dynamic_fields = DynamicFieldInfo.objects.filter(name__in=value.keys())
+    for field in dynamic_fields:
+        logging.info("going format dynamic field:{}, origin value:{}".format(field.name, value[field.name]))
+
+        try:
+            EXTRAS_VALIDATOR_MAP[field.type].validate(value=value[field.name], field_info=field)
+        except Exception:
+            logging.info("fail to format dynamic field:{}".format(field.name))
+            value[field.name] = ""
+
+    return value
 
 
 BLACK_FIELD_NAMES = ["extras"]

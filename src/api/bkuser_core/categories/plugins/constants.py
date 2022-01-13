@@ -15,6 +15,8 @@ from bkuser_core.common.enum import AutoNameEnum
 from django.utils.translation import gettext_lazy as _
 
 PLUGIN_NAME_SETTING_KEY = "plugin_name"
+DYNAMIC_FIELDS_SETTING_KEY = "dynamic_fields_mapping"
+
 SYNC_LOG_TEMPLATE_MAP = {
     (SyncStep.USERS, True): _("同步用户【{username}】成功"),
     (SyncStep.USERS, False): _("同步用户【{username}】失败, 失败原因: {error}"),
