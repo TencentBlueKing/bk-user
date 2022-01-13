@@ -15,5 +15,5 @@ data:
   # ---------------
   # Redis Related
   # ---------------
-  CELERY_BROKER_URL: {{ include "bk-user.externalRedisBrokerUrl" . }}
-  CELERY_RESULT_BACKEND: {{ include "bk-user.externalRedisBrokerUrl" . }}
+  CELERY_BROKER_URL: {{ .Values.celeryBrokerUrl | default (include "bk-user.externalRedisBrokerUrl" .) }}
+  CELERY_RESULT_BACKEND: {{ .Values.celeryResultBackend | default (include "bk-user.externalRedisBrokerUrl" .) }}

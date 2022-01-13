@@ -78,7 +78,6 @@ image:
   pullPolicy: IfNotPresent
   tag: "v2.3.1"
 
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
