@@ -22,8 +22,9 @@
 <template>
   <div class="catalog-operation-container">
     <div class="steps">
-      <bk-steps :steps="steps" :cur-step.sync="current"
-                direction="vertical" class="king-steps add-local-step">
+      <bk-steps
+        :steps="steps" :cur-step.sync="current"
+        direction="vertical" class="king-steps add-local-step">
       </bk-steps>
     </div>
     <div class="detail" v-bkloading="{ isLoading: isLoading }">

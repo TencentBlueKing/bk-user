@@ -22,10 +22,11 @@
 <template>
   <div class="setting-wrapper clearfix">
     <div class="setting-left">
-      <a href="javascript:void(0);"
-         :class="['nav-item', { 'active': index === curIndex }]"
-         v-for="(item, index) in settingList" :key="index"
-         @click="changTab(index)">
+      <a
+        href="javascript:void(0);"
+        :class="['nav-item', { 'active': index === curIndex }]"
+        v-for="(item, index) in settingList" :key="index"
+        @click="changTab(index)">
         {{item}}
       </a>
     </div>

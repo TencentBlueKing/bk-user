@@ -34,13 +34,15 @@
               <i class="icon icon-user-exclamation-circle-shape"></i>
               <span class="text">{{$t('邮箱格式错误，请重新输入')}}</span>
             </p>
-            <input type="text"
-                   :class="['select-text', { 'input-error': isError }]"
-                   :placeholder="$t('请输入邮箱')"
-                   v-model="resetEmail"
-                   @focus="hiddenError" />
-            <bk-button theme="primary" class="submit"
-                       :disabled="!resetEmail" @click="submitEmailPw">{{$t('发送密码重置邮件')}}</bk-button>
+            <input
+              type="text"
+              :class="['select-text', { 'input-error': isError }]"
+              :placeholder="$t('请输入邮箱')"
+              v-model="resetEmail"
+              @focus="hiddenError" />
+            <bk-button
+              theme="primary" class="submit"
+              :disabled="!resetEmail" @click="submitEmailPw">{{$t('发送密码重置邮件')}}</bk-button>
           </div>
         </div>
         <div class="reset-content" v-if="hasReset === true">
