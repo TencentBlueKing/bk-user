@@ -73,7 +73,7 @@ export default {
       immediate: true,
       handler(val) {
         if (val === 3) {
-          if (JSON.stringify(this.extendFields) === '{}' || this.extendFields.length === 0) {
+          if (Object.keys(this.extendFields).length === 0 || this.extendFields.length === 0) {
             this.setFieldList.push({ key: '', value: '' });
           } else {
             this.extendFields.forEach((item) => {
