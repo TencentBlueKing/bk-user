@@ -2,7 +2,7 @@ apiVersion: v2
 name: bk-user
 description: A Helm chart for bk-user
 type: application
-version: 1.1.5
+version: 1.1.6
 appVersion: v2.3.2-beta.1
 
 dependencies:
@@ -16,3 +16,15 @@ dependencies:
   version: "14.x.x"
   repository: "https://charts.bitnami.com/bitnami"
   condition: redis.enabled
+
+- name: api
+  version: "1.0.0"
+  condition: api.enabled
+
+- name: login
+  version: "1.0.0"
+  condition: login.enabled
+
+- name: saas
+  version: "1.0.0"
+  condition: saas.enabled
