@@ -15,5 +15,5 @@ data:
   BK_PAAS_SECRET_KEY: {{ .Values.bkPaasSerectKey }}
   # 32位随机字符串，用于加密登录态票据(bk_token)
   ENCRYPT_SECRET_KEY: {{ .Values.encryptSecretKey }}
-  # 登录服务 Http Schema
-  BK_LOGIN_HTTP_SCHEMA: {{ .Values.bkDomainScheme }}
+  # 用于拼接修改密码 URL
+  BK_USERMGR_SAAS_URL: {{ .Values.bkUserUrl }}
