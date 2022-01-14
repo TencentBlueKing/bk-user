@@ -38,7 +38,7 @@ export default {
   },
   watch: {
     addFieldList(val) {
-      this.$emit('upSetFieldList', val);
+      this.$emit('upAddFieldList', val);
     },
   },
   methods: {
@@ -47,7 +47,7 @@ export default {
     },
     handleClickDel(item, index) {
       if (index === 0) {
-        this.setFieldList.push({ key: '', value: '' });
+        this.addFieldList.push({ key: '', value: '' });
       }
       this.addFieldList.splice(index, 1);
       this.customField.forEach((element) => {

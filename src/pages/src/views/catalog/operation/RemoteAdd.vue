@@ -169,11 +169,7 @@ export default {
     async handlePush(data) {
       try {
         this.isLoading = true;
-        const list = [];
-        data.forEach((element) => {
-          list.push(element);
-          this.fieldsInfo.extend.dynamic_fields_mapping = list;
-        });
+        this.fieldsInfo.extend.dynamic_fields_mapping = data;
         await this.$store.dispatch('catalog/ajaxPostFields', {
           id: this.catalogId,
           data: this.$convertObjectToArray(this.fieldsInfo),

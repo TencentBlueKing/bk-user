@@ -1290,9 +1290,7 @@ export default {
         next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
         next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
         const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
-        if ((bottomHeight < 0) && (next.offsetHeight === 146)) {
-          next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
-        } else if ((bottomHeight < 0) && (next.offsetHeight === 254)) {
+        if ((bottomHeight < 0) && (next.offsetHeight === next.offsetHeight)) {
           next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
         }
       });
