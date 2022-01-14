@@ -94,8 +94,8 @@ export default {
       this.setFieldList.push({ key: '', value: '' });
     },
     handleClickDel(item, index) {
-      if (index === 0) {
-        this.setFieldList.push({ key: '', value: '' });
+      if (index === 0 && this.setFieldList.length === 1) {
+        this.handleClickAdd();
       }
       this.setFieldList.splice(index, 1);
       this.customField.forEach((element) => {

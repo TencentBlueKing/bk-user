@@ -199,8 +199,7 @@ export default {
       try {
         this.isLoading = true;
         this.handleSaveSuccess();
-        const list = [...data];
-        this.fieldsInfo.extend.dynamic_fields_mapping = list;
+        this.fieldsInfo.extend.dynamic_fields_mapping = data;
         const action = this.fieldsHasCreated ? 'catalog/ajaxPutFields' : 'catalog/ajaxPostFields';
         await this.$store.dispatch(action, {
           id: this.catalogInfo.id,
