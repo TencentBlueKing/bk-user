@@ -16,6 +16,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       restartPolicy: OnFailure
+      {{- with .Values.global.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: check-database-ready
           image: "{{ .Values.global.imageRegistry | default .Values.migration.images.busybox.registry }}/{{ .Values.migration.images.busybox.repository }}:{{ .Values.migration.images.busybox.tag }}"

@@ -12,6 +12,11 @@ global:
   ## 是否开启权限中心
   enableIAM: true
 
+  hostAliases: []
+    # - ip: ""
+    #   hostnames:
+    #   - ""
+
   ## --------------
   ## 蓝鲸监控
   ## --------------

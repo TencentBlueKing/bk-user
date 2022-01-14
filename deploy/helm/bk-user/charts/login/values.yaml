@@ -9,6 +9,11 @@ global:
   ## 蓝鲸产品统一根域
   bkDomain: "example.com"
 
+  hostAliases: []
+  # - ip: ""
+  #   hostnames:
+  #   - ""
+
   ## --------------
   ## 蓝鲸监控
   ## --------------
