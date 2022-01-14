@@ -8,22 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.viewset import BkUserApiViewSet
-from bkuser_shell.common.error_codes import error_codes
-from django.template.exceptions import TemplateDoesNotExist
-from django.template.loader import get_template
-from django.template.response import TemplateResponse
-
-from bkuser_global.drf_crown import inject_serializer
+from django.db.models import ManyToOneRel
+from rest_framework import filters
 
 
-class LoginPageViewSet(BkUserApiViewSet):
+class MultipleFieldFilter(filters.SearchFilter):
+    """多字段过滤器, 同时支持标准和非标准过滤"""
 
-    permission_classes: list = []
-
-    @inject_serializer(tags=["account"])
-    def login_success(self, request):
-        try:
-            return TemplateResponse(request=request, template=get_template("login_success.html"))
-        except TemplateDoesNotExist:
-            raise error_codes.CANNOT_FIND_TEMPLATE
+    def filter_by_params(self, params: dict, queryset):
+        """非标准 filter"""
+        available_fields = [
+            getattr(f, "name") for f in queryset.model._meta.get_fields() if not isinstance(f, ManyToOneRel)
+        ]
+        query_params = {key: value for key, value in params.items() if key in available_fields}
+        return queryset.filter(**query_params).only(*params.get("fields", []))

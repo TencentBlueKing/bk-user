@@ -12,7 +12,8 @@ import logging
 import os
 
 import bkuser_sdk
-from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.apis.viewset import BkUserApiViewSet
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.categories.serializers import (
     CategoryExportSerializer,
     CategoryMetaSLZ,
@@ -27,7 +28,6 @@ from bkuser_shell.categories.serializers import (
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 class CategoriesViewSet(BkUserApiViewSet):
     serializer_class = DetailCategorySerializer
-    ACTION_ID = ActionEnum.MANAGE_CATEGORY.value
+    ACTION_ID = IAMAction.MANAGE_CATEGORY.value
 
     def list_metas(self, request):
         """获取目录基本信息列表"""
@@ -60,7 +60,7 @@ class CategoriesViewSet(BkUserApiViewSet):
     @inject_serializer(out=DetailCategorySerializer, tags=["categories"])
     def get_default(self, request):
         api_instance = bkuser_sdk.CategoriesApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_CATEGORY.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_CATEGORY.value)
         )
         api_response = self.get_paging_results(
             api_instance.v2_categories_list, lookup_field="default", exact_lookups=[True]
@@ -82,7 +82,7 @@ class CategoriesViewSet(BkUserApiViewSet):
             }
 
         api_instance = bkuser_sdk.CategoriesApi(
-            self.get_api_client_by_request(request, force_action_id=ActionEnum.VIEW_CATEGORY.value)
+            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_CATEGORY.value)
         )
         return self.get_paging_results(api_instance.v2_categories_list, **lookup_params)
 
@@ -133,7 +133,7 @@ class CategoriesViewSet(BkUserApiViewSet):
         api_instance = bkuser_sdk.CategoriesApi(
             self.get_api_client_by_request(
                 request,
-                force_action_id=ActionEnum.get_action_by_category_type(category.type).value,
+                force_action_id=IAMAction.get_action_by_category_type(category.type).value,
             )
         )
         return api_instance.v2_categories_create(body=category)
@@ -141,7 +141,7 @@ class CategoriesViewSet(BkUserApiViewSet):
 
 class CategoriesSyncViewSet(BkUserApiViewSet):
     serializer_class = DetailCategorySerializer
-    ACTION_ID = ActionEnum.MANAGE_CATEGORY.value
+    ACTION_ID = IAMAction.MANAGE_CATEGORY.value
 
     @inject_serializer(body_in=CategorySyncSerializer, tags=["categories"])
     def sync(self, request, category_id, validated_data):
@@ -188,7 +188,7 @@ class CategoriesSyncViewSet(BkUserApiViewSet):
 
 
 class CategoriesExportViewSet(BkUserApiViewSet):
-    ACTION_ID = ActionEnum.MANAGE_CATEGORY.value
+    ACTION_ID = IAMAction.MANAGE_CATEGORY.value
 
     @inject_serializer(query_in=CategoryExportSerializer, out=EmptySerializer, tags=["categories"])
     def export(self, request, category_id, validated_data):

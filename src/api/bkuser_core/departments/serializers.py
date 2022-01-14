@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict, List
 
-from bkuser_core.common.serializers import (
+from bkuser_core.apis.v2.serializers import (
     AdvancedListSerializer,
     AdvancedRetrieveSerialzier,
     CustomFieldsMixin,

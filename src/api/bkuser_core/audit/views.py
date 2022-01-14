@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_core.common.viewset import AdvancedListAPIView, AdvancedModelViewSet
+from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
 
 from . import serializers as local_serializers
 from .models import GeneralLog, LogIn, ResetPassword

@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 from bkuser_core.common.http import _force_response_data, force_response_ee_format, force_response_raw_format
-from bkuser_core.profiles.views import ProfileViewSet
+from bkuser_core.profiles.v2.views import ProfileViewSet
 from django.conf import settings
 from rest_framework.test import APIRequestFactory
 

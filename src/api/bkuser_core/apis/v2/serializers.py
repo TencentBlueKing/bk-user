@@ -10,8 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 
-from django.conf import settings
-from django.utils import timezone
+from bkuser_core.apis.serializers import StringArrayField
 from django.utils.translation import ugettext as _
 from rest_framework import fields, serializers
 
@@ -68,43 +67,6 @@ def is_custom_fields_enabled(slz: serializers.Serializer) -> bool:
     if issubclass(slz.__class__, CustomFieldsMixin):
         return True
     return False
-
-
-def patch_datetime_field():
-    """Patch DateTimeField which respect current timezone
-    See also: https://github.com/encode/django-rest-framework/issues/3732
-    """
-
-    def to_representation(self, value):
-        # This is MAGIC!
-        if value and settings.USE_TZ:
-            try:
-                value = timezone.localtime(value)
-            except ValueError:
-                pass
-        return orig_to_representation(self, value)
-
-    orig_to_representation = fields.DateTimeField.to_representation
-    fields.DateTimeField.to_representation = to_representation
-
-
-class StringArrayField(fields.ListField):
-    """
-    String representation of an array field.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self.delimiter = kwargs.get("delimiter", ",")
-
-    def to_internal_value(self, data):
-        # convert string to list
-        target = []
-        for e in data:
-            target.extend(e.split(self.delimiter))
-
-        return super().to_internal_value(target)
 
 
 class AdvancedListSerializer(serializers.Serializer):

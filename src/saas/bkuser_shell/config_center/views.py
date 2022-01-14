@@ -12,9 +12,9 @@ import logging
 
 import bkuser_sdk
 from bkuser_sdk.rest import ApiException
-from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.apis.viewset import BkUserApiViewSet
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.config_center.serializers import ProfileFieldsSerializer, SettingMetaSerializer, SettingSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -32,7 +32,7 @@ class FieldsViewSet(BkUserApiViewSet):
         IsAuthenticated,
     ]
 
-    ACTION_ID = ActionEnum.MANAGE_FIELD.value
+    ACTION_ID = IAMAction.MANAGE_FIELD.value
 
     def manageable(self, request):
         """检测是否能够管理用户字段"""
