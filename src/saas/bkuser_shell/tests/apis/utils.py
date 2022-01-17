@@ -16,11 +16,8 @@ def get_api_factory(force_params: dict = None):
     """获取一个通用的 ApiFactory"""
     force_params = force_params or {}
     normal_params = {
-        "HTTP_FORCE_RAW_RESPONSE": True,
-        "HTTP_RAW_USERNAME": True,
         "Content-Type": "application/json",
-        "HTTP_AUTHORIZATION": "iBearer HVp5CNn4th87w5MLT8x1FJw6Rcc5cF3SRT7NlcFILgij",
-        "HTTP_X_BKUSER_OPERATOR": "tester",
+        # TODO: 单元测试需要跳过身份验证
     }
     normal_params.update(force_params)
 

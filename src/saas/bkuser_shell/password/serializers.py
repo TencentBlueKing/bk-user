@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser_shell.common.serializers import Base64OrPlainField
 from rest_framework import serializers
 
 
@@ -17,9 +18,9 @@ class ResetPasswordEmailSerializer(serializers.Serializer):
 
 class ResetByTokenSerialzier(serializers.Serializer):
     token = serializers.CharField(required=True, max_length=254)
-    password = serializers.CharField(required=True, max_length=254)
+    password = Base64OrPlainField(required=True, max_length=254)
 
 
 class ModifyPassWordSerialzier(serializers.Serializer):
-    old_password = serializers.CharField(required=True, max_length=254)
-    new_password = serializers.CharField(required=True, max_length=254)
+    old_password = Base64OrPlainField(required=True, max_length=254)
+    new_password = Base64OrPlainField(required=True, max_length=254)
