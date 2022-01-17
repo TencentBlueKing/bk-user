@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from bkuser_core.apis.v3.serializers import StringArrayField
 from bkuser_core.departments.serializers import SimpleDepartmentSerializer
 from bkuser_core.profiles.v2.serializers import LeaderSerializer
-from rest_framework.fields import BooleanField, CharField, JSONField
+from rest_framework.fields import BooleanField, CharField, IntegerField, JSONField
 from rest_framework.serializers import Serializer
 
 
@@ -64,7 +64,7 @@ class ResultProfileSerializer(ProfileSerializer):
 
 
 class PaginatedProfileSerializer(Serializer):
-    count = CharField(required=False, help_text="总数")
+    count = IntegerField(required=False, help_text="总数")
     next = CharField(required=False, help_text="下一页游标")
     previous = CharField(required=False, help_text="上一页游标")
     results = ResultProfileSerializer(many=True, help_text="结果")

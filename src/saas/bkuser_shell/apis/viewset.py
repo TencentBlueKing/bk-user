@@ -20,7 +20,6 @@ from django.conf import settings
 from django.utils.translation import get_language
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response as RawResponse
 from rest_framework.viewsets import GenericViewSet
 
 from bkuser_global.utils import force_str_2_bool
@@ -140,7 +139,7 @@ class BkUserApiViewSet(GenericViewSet):
             _preload_content=False,
         )
 
-        resp = RawResponse(
+        resp = Response(
             data=json.loads(urllib3_resp.data),
             status=urllib3_resp.status,
             content_type=urllib3_resp.headers.get("Content-Type"),
