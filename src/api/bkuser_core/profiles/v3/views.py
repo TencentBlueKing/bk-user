@@ -11,11 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from bkuser_core.apis.v3.serializers import AdvancedPagination
-from bkuser_core.apis.v3.viewset import MultipleFieldFilter
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMPermission
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.v3.filters import MultipleFieldFilter
 from bkuser_core.profiles.v3.serializers import PaginatedProfileSerializer, QueryProfileSerializer
 from rest_framework import filters, viewsets
 from rest_framework.generics import ListAPIView
@@ -34,6 +34,8 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
     pagination_class = AdvancedPagination
     ordering = "id"
 
+    supported_m2m_fields = ["leader", "departments"]
+
     @inject_serializer(query_in=QueryProfileSerializer, out=PaginatedProfileSerializer)
     def list(self, request, validated_data: dict, *args, **kwargs):
         """获取用户列表"""
@@ -41,7 +43,7 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
 
         try:
             queryset = MultipleFieldFilter().filter_by_params(
-                validated_data, self.filter_queryset(self.get_queryset())
+                validated_data, self.filter_queryset(self.get_queryset()), self
             )
         except IAMPermissionDenied:
             raise

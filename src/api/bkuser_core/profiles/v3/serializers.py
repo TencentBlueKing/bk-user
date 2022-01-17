@@ -8,6 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser_core.apis.v3.serializers import StringArrayField
+from bkuser_core.departments.serializers import SimpleDepartmentSerializer
+from bkuser_core.profiles.v2.serializers import LeaderSerializer
 from rest_framework.fields import BooleanField, CharField, JSONField
 from rest_framework.serializers import Serializer
 
@@ -15,6 +18,7 @@ from rest_framework.serializers import Serializer
 class ProfileSerializer(Serializer):
     """列出用户的 profile"""
 
+    id = CharField(required=False, help_text="用户ID")
     username = CharField(required=False, help_text="用户名")
     qq = CharField(required=False, help_text="QQ")
     email = CharField(required=False, help_text="邮箱")
@@ -37,13 +41,30 @@ class QueryProfileSerializer(ProfileSerializer):
     cursor = CharField(required=False, help_text="游标")
     # 暂不支持 fields 限制返回字段
     # fields = StringArrayField(required=False, help_text="返回字段")
+    departments = StringArrayField(required=False, help_text="部门id列表")
+    leaders = StringArrayField(required=False, help_text="上级id列表")
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+
+        if "leaders" in data:
+            data["leader"] = data.pop("leaders")
+
+        return data
 
 
 # ------------
 # Response
 # ------------
+class ResultProfileSerializer(ProfileSerializer):
+    """返回用户 profile"""
+
+    departments = SimpleDepartmentSerializer(many=True, required=False, help_text="部门列表")
+    leaders = LeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
+
+
 class PaginatedProfileSerializer(Serializer):
     count = CharField(required=False, help_text="总数")
     next = CharField(required=False, help_text="下一页游标")
     previous = CharField(required=False, help_text="上一页游标")
-    results = ProfileSerializer(many=True, help_text="结果")
+    results = ResultProfileSerializer(many=True, help_text="结果")
