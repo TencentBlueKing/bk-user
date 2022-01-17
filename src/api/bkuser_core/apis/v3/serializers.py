@@ -13,6 +13,7 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING
 from urllib import parse
 
+from rest_framework import fields
 from rest_framework.pagination import CursorPagination
 
 if TYPE_CHECKING:
@@ -48,3 +49,19 @@ class AdvancedPagination(CursorPagination):
                 ("results", data),
             ]
         )
+
+
+class StringArrayField(fields.CharField):
+    """
+    String representation of an array field.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.delimiter = kwargs.get("delimiter", ",")
+
+    def to_internal_value(self, data):
+        # convert string to list
+        data = super().to_internal_value(data)
+        return data.split(self.delimiter)
