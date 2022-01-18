@@ -30,3 +30,12 @@ class AdvancedModelManager(models.Manager):
         disable_param = kwargs.pop("disable_param", {"enabled": False})
         self.get_queryset().filter(*args, **kwargs).update(**disable_param)
         return
+
+
+def is_obj_needed_update(obj, updated_values: dict) -> bool:
+    """判断对象是否需要被更新"""
+    for attr, updated_value in updated_values.items():
+        if getattr(obj, attr) != updated_value:
+            return True
+
+    return False

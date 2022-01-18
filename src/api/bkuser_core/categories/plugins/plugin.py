@@ -8,17 +8,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, Optional, Type
 from uuid import UUID
 
+import yaml
 from bkuser_core.categories.constants import SyncTaskStatus
 from bkuser_core.categories.loader import register_plugin
-from bkuser_core.categories.models import SyncProgress, SyncTask
+from bkuser_core.categories.models import ProfileCategory, SyncProgress, SyncTask
 from bkuser_core.categories.plugins.base import LoginHandler, Syncer
 from bkuser_core.categories.plugins.constants import HookType
+from bkuser_core.common.models import is_obj_needed_update
+from bkuser_core.user_settings.models import Setting, SettingMeta
 from rest_framework import serializers
 from typing_extensions import Protocol
+
+logger = logging.getLogger(__name__)
 
 
 class SyncRecordSLZ(serializers.Serializer):
@@ -50,6 +57,7 @@ class DataSourcePlugin:
     # 是否允许通过 SaaS 修改，默认不允许
     allow_client_write: bool = field(default_factory=lambda: False)
     login_handler_cls: Optional[Type[LoginHandler]] = None
+    settings_path: Optional[Path] = None
     # 其他额外配置
     extra_config: dict = field(default_factory=dict)
 
@@ -58,6 +66,49 @@ class DataSourcePlugin:
     def register(self):
         """注册插件"""
         register_plugin(self)
+        if self.settings_path is not None:
+            self.load_settings_from_yaml()
+
+    def _init_settings(self, namespace: str, region: str, setting_meta_key: str, meta_info: dict):
+        try:
+            meta, created = SettingMeta.objects.get_or_create(
+                key=setting_meta_key, category_type=self.name, region=region, namespace=namespace, defaults=meta_info
+            )
+            if created:
+                logger.debug("------ SettingMeta<%s> of plugin<%s> created.", setting_meta_key, self.name)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("SettingMeta<%s> of plugin<%s> can not been created.", setting_meta_key, self.name)
+            return
+
+        if is_obj_needed_update(meta, meta_info):
+            for k, v in meta_info.items():
+                setattr(meta, k, v)
+
+            try:
+                meta.save()
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("SettingMeta<%s> of plugin<%s> can not been updated.", setting_meta_key, self.name)
+                return
+            logger.debug("------ SettingMeta<%s> of plugin<%s> updated.", setting_meta_key, self.name)
+
+        # 默认在创建 meta 后创建 settings，保证新增的配置能够被正确初始化
+        if meta.default is not None:
+            # 理论上目录不能够被直接恢复, 所以已经被删除的目录不会被更新
+            # 仅做新增，避免覆盖已有配置
+            for category in ProfileCategory.objects.filter(type=self.category_type, enabled=True):
+                ins, created = Setting.objects.get_or_create(
+                    meta=meta, category_id=category.id, defaults={"value": meta.default}
+                )
+                if created:
+                    logger.debug("------ Setting<%s> of category<%s> created.", ins, category)
+
+    def load_settings_from_yaml(self):
+        """从 yaml 中加载 SettingMeta 配置"""
+        with open(self.settings_path, "r") as f:
+            for namespace, regions in yaml.safe_load(f)["settings"].items():
+                for region, settings in regions.items():
+                    for key, values in settings.items():
+                        self._init_settings(namespace, region, key, values)
 
     def get_hook(self, type_: HookType) -> Optional[PluginHook]:
         hook_cls = self.hooks.get(type_)

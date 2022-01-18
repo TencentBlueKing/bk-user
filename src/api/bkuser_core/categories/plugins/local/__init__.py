@@ -13,6 +13,8 @@ from bkuser_core.categories.plugins.plugin import DataSourcePlugin
 from .login import LoginHandler
 from .syncer import ExcelSyncer
 
+# Q: 为什么 local 插件不使用 PluginConfig 注册 SettingMeta ?
+# A: 因为目前与 local 插件相关的大部分配置在整个登录流程中都有使用，相当于全局配置，所以暂不放在插件配置中
 DataSourcePlugin(
     name="local",
     syncer_cls=ExcelSyncer,

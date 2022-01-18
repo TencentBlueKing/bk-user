@@ -8,6 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import os
+from pathlib import Path
+
 from bkuser_core.categories.plugins.plugin import DataSourcePlugin
 
 from .login import LoginHandler
@@ -19,5 +22,5 @@ DataSourcePlugin(
     login_handler_cls=LoginHandler,
     allow_client_write=False,
     category_type="ldap",
-    extra_config={"default_sync_period": 60, "min_sync_period": 60, "ldap_max_paged_size": 1000},
+    settings_path=os.path.dirname(__file__) / Path("settings.yaml"),
 ).register()
