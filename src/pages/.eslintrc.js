@@ -21,5 +21,6 @@ module.exports = {
     'no-nested-ternary': 'off',
     'arrow-body-style': 'off',
     'no-restricted-properties': 'off',
+    'linebreak-style': [0, 'error", "windows'],
   },
 };
