@@ -79,6 +79,7 @@
 </template>
 
 <script>
+const Base64 = require('js-base64').Base64;
 export default {
   name: 'ModifyBox',
   data() {
@@ -102,8 +103,8 @@ export default {
           return;
         }
         const modifyParams = {
-          old_password: this.oldPassword,
-          new_password: this.confirmPassword.trim(),
+          old_password: Base64.encode(this.oldPassword),
+          new_password: Base64.encode(this.confirmPassword.trim()),
         };
         await this.$store.dispatch('password/modify', modifyParams);
         this.successDialog.isShow = true;

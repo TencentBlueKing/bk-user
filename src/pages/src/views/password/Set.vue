@@ -74,6 +74,7 @@
 </template>
 
 <script>
+const Base64 = require('js-base64').Base64;
 export default {
   name: 'SetBox',
   data() {
@@ -119,7 +120,7 @@ export default {
         }
         const sureParam = {
           token: this.$route.query.token,
-          password: this.password.trim(),
+          password: Base64.encode(this.password.trim()),
         };
         await this.$store.dispatch('password/setByToken', sureParam);
         this.successDialog.isShow = true;
