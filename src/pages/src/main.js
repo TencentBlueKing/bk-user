@@ -24,6 +24,7 @@ import i18n from '@/language/i18n';
 import methods from '@/plugins/methods';
 import bus from '@/common/bus';
 import cursor from '@/directives/cursor';
+import { Base64 } from 'js-base64';
 
 Vue.component(VueCropper);
 Vue.use(vClickOutside);
@@ -32,6 +33,7 @@ Vue.use(methods);
 Vue.directive('cursor', cursor);
 Vue.config.devtools = true;
 Vue.prototype.$bus = new Vue();
+Vue.use(Base64);
 
 injectCSRFTokenToHeaders();
 window.bus = bus;
