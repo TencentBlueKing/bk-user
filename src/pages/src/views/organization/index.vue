@@ -149,17 +149,14 @@
               </div>
               <div class="table-actions-right-container">
                 <!-- 用户搜索框 -->
-                <bk-input
-                  v-model="tableSearchKey"
+                <bk-search-select
                   class="king-input-search"
                   style="width: 280px;margin-right: 20px;"
                   :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                  :clearable="true"
-                  :left-icon="'bk-icon icon-search'"
-                  @clear="handleClear"
-                  @left-icon-click="handleTableSearch"
-                  @enter="handleTableSearch">
-                </bk-input>
+                  :data="searchFilterList"
+                  :show-condition="false"
+                  v-model="tableSearchKey"
+                  @change="handleTableSearch" />
                 <!-- 设置列表字段 -->
                 <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
                   <i class="icon icon-user-cog"></i>
@@ -170,17 +167,14 @@
             <template v-else>
               <div class="table-actions-left-container">
                 <!-- 用户搜索框 -->
-                <bk-input
-                  v-model="tableSearchKey"
+                <bk-search-select
                   class="king-input-search"
-                  style="width: 360px;margin-right: 20px;"
+                  style="width: 280px;margin-right: 20px;"
                   :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                  :clearable="true"
-                  :left-icon="'bk-icon icon-search'"
-                  @clear="handleClear"
-                  @left-icon-click="handleTableSearch"
-                  @enter="handleTableSearch">
-                </bk-input>
+                  :data="searchFilterList"
+                  :show-condition="false"
+                  v-model="tableSearchKey"
+                  @change="handleTableSearch" />
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
                   <bk-checkbox
@@ -434,12 +428,40 @@ export default {
         isShow: false,
         tags: [],
       },
-      tableSearchKey: '',
+      tableSearchKey: [],
       // 记录搜索过的关键字，blur 的时候如果和当前关键字不一样就刷新表格
-      tableSearchedKey: '',
+      tableSearchedKey: [],
       isDropdownShowAdd: false,
       isDropdownShowMore: false,
       setDepartmentTop: (window.document.body.offsetHeight - 519) / 2,
+      tableData: [],
+      searchDataList: [
+        { name: '用户名', id: 'username', key: 'username' },
+        { name: '全名', id: 'display_name', key: 'display_name' },
+        { name: '手机号', id: 'telephone', key: 'telephone' },
+        { name: '邮箱', id: 'email', key: 'email' },
+        { name: '账户状态', id: 'status', key: 'status', children: [
+          { name: '正常', id: 'NORMAL', status: 'NORMAL' },
+          { name: '被禁用', id: 'DISABLED', status: 'DISABLED' },
+          { name: '已删除', id: 'DELETED', status: 'DELETED' },
+          { name: '已冻结', id: 'LOCKED', status: 'LOCKED' },
+        ] },
+        { name: '在职状态', id: 'staff_status', key: 'staff_status', children: [
+          { name: '在职', id: 'IN', staff_status: 'IN' },
+          { name: '离职', id: 'OUT', staff_status: 'OUT' },
+        ] },
+        { name: '最近登录', id: 'last_login_time', children: [
+          { name: '1个月', id: '1m' },
+          { name: '2个月', id: '2m' },
+          { name: '3个月', id: '3m' },
+        ] },
+        { name: '最近未登录', id: 'update_time', children: [
+          { name: '1个月', id: '1m' },
+          { name: '2个月', id: '2m' },
+          { name: '3个月', id: '3m' },
+        ] },
+      ],
+      searchFilterList: [],
     };
   },
   computed: {
@@ -462,6 +484,21 @@ export default {
       }
       this.currentCategoryId = val.type ? val.id : this.findCategoryId(val);
       this.currentCategoryType = val.type ? val.type : this.findCategoryType(val);
+    },
+    'tableSearchKey'(val) {
+      this.searchFilterList = this.searchDataList;
+      if (val.length) {
+        val.filter((item) => {
+          if (!item.key) {
+            return;
+          }
+          this.searchFilterList = this.searchFilterList.filter((k) => {
+            if (!item.key.includes(k.key)) {
+              return k;
+            }
+          });
+        });
+      }
     },
   },
   async mounted() {
@@ -697,15 +734,32 @@ export default {
     },
 
     handleClear() {
-      if (this.tableSearchedKey !== '') {
+      if (this.tableSearchedKey !== []) {
         this.handleTableSearch();
       }
     },
-    handleTableSearch() {
-      if (!this.basicLoading) {
-        this.paginationConfig.current = 1;
-        this.getTableData();
-      }
+    // 搜索table
+    handleTableSearch(list) {
+      const valueList = [];
+      list.forEach((item) => {
+        if (item.key) {
+          const key = item.key;
+          const value = item.values[0].id;
+          valueList.push(`${key}=${value}`);
+        }
+      });
+      const params = valueList.join('&');
+      this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
+        if (res.result) {
+          this.filterUserData(res.data.results);
+        }
+      })
+        .catch((e) => {
+          console.warn(e);
+        })
+        .finally(() => {
+          this.clickSecond = false;
+        });
     },
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
@@ -1208,7 +1262,7 @@ export default {
         this.closeMenu(item);
       });
       if (this.tableSearchKey) {
-        this.tableSearchKey = '';
+        this.tableSearchKey = [];
       }
       this.currentParam.item = item;
       this.$set(item, 'showBackground', true);
