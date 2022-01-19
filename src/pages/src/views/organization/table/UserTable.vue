@@ -243,7 +243,7 @@ export default {
         .join(';');
     },
     getLeaderString(leader) {
-      return leader.map((item) => {
+      return leader && leader.map((item) => {
         return item.username;
       }).join(';');
     },
