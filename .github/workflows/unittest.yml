@@ -42,7 +42,7 @@ jobs:
     - name: Cache
       uses: actions/cache@v2
       with:
-        path: ~/.cache/pip
+        path: ${{ env.pythonLocation }}
         key: ${{ hashFiles('src/api/pyproject.toml') }}
     - name: Install dependencies
       run: |
