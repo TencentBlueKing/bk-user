@@ -38,7 +38,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd src/api/
-        poetry config virtualenvs.create false && poetry install --no-dev
+        poetry config virtualenvs.create false && poetry export -f requirements.txt --without-hashes -o requirements.txt --no-ansi && pip install -r requirements.txt -i https://pypi.org/simple/
     - name: Run api unittest
       env:
         DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.unittest"
