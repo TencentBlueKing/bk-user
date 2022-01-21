@@ -39,10 +39,6 @@ jobs:
       uses: abatilo/actions-poetry@v2.1.0
       with:
         poetry-version: ${{ matrix.poetry-version }}
-    - name: Get pip cache dir
-      id: pip-cache
-      run: |
-        echo "::set-output name=dir::$(pip cache dir)"
     - name: Install dependencies
       run: |
         cd src/api/
