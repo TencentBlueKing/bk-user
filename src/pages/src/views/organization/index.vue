@@ -151,7 +151,7 @@
                 <!-- 用户搜索框 -->
                 <bk-search-select
                   class="king-input-search"
-                  style="width: 280px;margin-right: 20px;"
+                  style="width: 400px;margin-right: 20px;"
                   :placeholder="$t('输入用户名/中文名，按Enter搜索')"
                   :data="searchFilterList"
                   :show-condition="false"
@@ -169,7 +169,7 @@
                 <!-- 用户搜索框 -->
                 <bk-search-select
                   class="king-input-search"
-                  style="width: 280px;margin-right: 20px;"
+                  style="width: 400px;margin-right: 20px;"
                   :placeholder="$t('输入用户名/中文名，按Enter搜索')"
                   :data="searchFilterList"
                   :show-condition="false"
