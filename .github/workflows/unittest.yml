@@ -20,12 +20,17 @@ jobs:
       DB_DATABASE: bk_user_api_test
       DB_USER: root
       DB_PASSWORD: root
+      DB_PORT: 3306
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up MySQL
-      run: |
-        sudo /etc/init.d/mysql start mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+    - uses: samin/mysql-action@v1.3
+      with:
+        mysql version: '5.7'
+        mysql database: ${{ env.DB_DATABASE }}
+        mysql root password: ${{ env.DB_PASSWORD }}
+        mysql user: ${{ env.DB_USER }}
+        mysql password: ${{ env.DB_PASSWORD }}
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -51,7 +56,7 @@ jobs:
         DB_USER: ${{ env.DB_USER }}
         DB_PASSWORD: ${{ env.DB_PASSWORD }}
         DB_HOST: "127.0.0.1"
-        DB_PORT: "3306"
+        DB_PORT: ${{ env.DB_PORT }}
       run: |
         make link
         cd src/api
