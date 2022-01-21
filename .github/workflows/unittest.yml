@@ -38,14 +38,7 @@ jobs:
       id: pip-cache
       run: |
         echo "::set-output name=dir::$(pip cache dir)"
-    - name: Cache
-      id: cache-venv
-      uses: actions/cache@v2
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ hashFiles('src/api/poetry.lock') }}
     - name: Install dependencies
-      if: steps.cache-venv.outputs.cache-hit != 'true'
       run: |
         cd src/api/
         poetry config virtualenvs.create false && bash bin/install_ci_dependencies.sh
