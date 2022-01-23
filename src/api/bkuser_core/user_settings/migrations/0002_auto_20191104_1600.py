@@ -43,10 +43,10 @@ def forwards_func(apps, schema_editor):
         dict(
             key="init_mail_config",
             default={
-                "title": "蓝鲸智云企业版 - 您的帐户已经成功创建！",
+                "title": "蓝鲸智云企业版 - 您的账户已经成功创建！",
                 "sender": "蓝鲸智云企业版",
-                "content": "您好！您的蓝鲸智云企业版帐户已经成功创建，以下是您的帐户信息:登录帐户：{username}， "
-                "初始登录密码：{password} 为了保障帐户安全，我们建议您尽快登录蓝鲸智云企业版修改密码：{url} "
+                "content": "您好！您的蓝鲸智云企业版账户已经成功创建，以下是您的账户信息:登录账户：{username}， "
+                "初始登录密码：{password} 为了保障账户安全，我们建议您尽快登录蓝鲸智云企业版修改密码：{url} "
                 "此邮件为系统自动发送，请勿回复。蓝鲸智云官网： http://bk.tencent.com",
             },
         ),
