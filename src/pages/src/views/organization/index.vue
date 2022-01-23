@@ -210,7 +210,8 @@
               @viewDetails="viewDetails"
               @showTableLoading="showTableLoading"
               @closeTableLoading="closeTableLoading"
-              @updateTableData="updateTableData" />
+              @updateTableData="updateTableData"
+              @updateHeardList="updateHeardList" />
             <div class="table-pagination" v-if="noSearchOrSearchDepartment && paginationConfig.count > 0">
               <div class="table-pagination-left">{{$t('共计')}}
                 {{Math.ceil(paginationConfig.count / paginationConfig.limit)}} {{$t('页')}}，
@@ -435,33 +436,9 @@ export default {
       isDropdownShowMore: false,
       setDepartmentTop: (window.document.body.offsetHeight - 519) / 2,
       tableData: [],
-      searchDataList: [
-        { name: '用户名', id: 'username', key: 'username' },
-        { name: '全名', id: 'display_name', key: 'display_name' },
-        { name: '手机号', id: 'telephone', key: 'telephone' },
-        { name: '邮箱', id: 'email', key: 'email' },
-        { name: '账户状态', id: 'status', key: 'status', children: [
-          { name: '正常', id: 'NORMAL', status: 'NORMAL' },
-          { name: '被禁用', id: 'DISABLED', status: 'DISABLED' },
-          { name: '已删除', id: 'DELETED', status: 'DELETED' },
-          { name: '已冻结', id: 'LOCKED', status: 'LOCKED' },
-        ] },
-        { name: '在职状态', id: 'staff_status', key: 'staff_status', children: [
-          { name: '在职', id: 'IN', staff_status: 'IN' },
-          { name: '离职', id: 'OUT', staff_status: 'OUT' },
-        ] },
-        { name: '最近登录', id: 'last_login_time', children: [
-          { name: '1个月', id: '1m' },
-          { name: '2个月', id: '2m' },
-          { name: '3个月', id: '3m' },
-        ] },
-        { name: '最近未登录', id: 'update_time', children: [
-          { name: '1个月', id: '1m' },
-          { name: '2个月', id: '2m' },
-          { name: '3个月', id: '3m' },
-        ] },
-      ],
+      searchDataList: [],
       searchFilterList: [],
+      heardList: [],
     };
   },
   computed: {
@@ -485,15 +462,30 @@ export default {
       this.currentCategoryId = val.type ? val.id : this.findCategoryId(val);
       this.currentCategoryType = val.type ? val.type : this.findCategoryType(val);
     },
+    searchDataList(val) {
+      this.heardList = [];
+      val.forEach((item) => {
+        const { name, options } = item;
+        const id = item.key;
+        const children = [];
+        const multiable = true;
+        if (options.length > 0) {
+          options.forEach((k) => {
+            children.push({ id: k.id, name: k.value });
+          });
+          this.heardList.push({ name, id, multiable, children });
+        } else {
+          this.heardList.push({ name, id });
+        }
+      });
+      this.searchFilterList = this.heardList;
+    },
     'tableSearchKey'(val) {
-      this.searchFilterList = this.searchDataList;
+      this.searchFilterList = this.heardList;
       if (val.length) {
         val.filter((item) => {
-          if (!item.key) {
-            return;
-          }
           this.searchFilterList = this.searchFilterList.filter((k) => {
-            if (!item.key.includes(k.key)) {
+            if (!item.id.includes(k.id)) {
               return k;
             }
           });
@@ -732,7 +724,9 @@ export default {
       this.paginationConfig.limit = limit;
       this.getTableData();
     },
-
+    updateHeardList(value) {
+      this.searchDataList = value;
+    },
     handleClear() {
       if (this.tableSearchedKey !== []) {
         this.handleTableSearch();
@@ -742,9 +736,12 @@ export default {
     handleTableSearch(list) {
       const valueList = [];
       list.forEach((item) => {
-        if (item.key) {
-          const key = item.key;
-          const value = item.values[0].id;
+        if (item.id) {
+          const key = item.id;
+          const value = [];
+          item.values.forEach((v) => {
+            value.push(v.id);
+          });
           valueList.push(`${key}=${value}`);
         }
       });
