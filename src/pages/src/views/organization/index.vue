@@ -156,7 +156,8 @@
                   :data="searchFilterList"
                   :show-condition="false"
                   v-model="tableSearchKey"
-                  @change="handleTableSearch" />
+                  @change="handleTableSearch"
+                  @input-click.once="handleSearchList" />
                 <!-- 设置列表字段 -->
                 <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
                   <i class="icon icon-user-cog"></i>
@@ -174,7 +175,8 @@
                   :data="searchFilterList"
                   :show-condition="false"
                   v-model="tableSearchKey"
-                  @change="handleTableSearch" />
+                  @change="handleTableSearch"
+                  @input-click.once="handleSearchList" />
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
                   <bk-checkbox
@@ -738,15 +740,20 @@ export default {
     // 搜索table
     handleTableSearch(list) {
       const valueList = [];
+      let key = '';
+      const value = [];
       list.forEach((item) => {
-        if (item.id) {
-          const key = item.id;
-          const value = [];
-          item.values.forEach((v) => {
-            value.push(v.id);
-          });
-          valueList.push(`${key}=${value}`);
+        if (item.id === 'department_name') {
+          key = 'departments';
+        } else if (item.id === 'leader') {
+          key = 'leaders';
+        } else {
+          key = item.id;
         }
+        item.values.forEach((v) => {
+          value.push(v.id);
+        });
+        valueList.push(`${key}=${value}`);
       });
       const params = valueList.join('&');
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
@@ -760,6 +767,59 @@ export default {
         .finally(() => {
           this.clickSecond = false;
         });
+    },
+    // 搜索文件配置列表
+    handleSearchList() {
+      this.getDepartmentsList();
+      this.getLeadersList();
+    },
+    // 获取部门列表
+    async getDepartmentsList() {
+      try {
+        const params = {
+          categoryId: this.currentCategoryId,
+        };
+        const list = [];
+        const res = await this.$store.dispatch('organization/getDepartmentsList', params);
+        res.data.results.forEach((item) => {
+          list.push({
+            id: item.id,
+            name: item.full_name,
+          });
+          this.heardList.filter((v) => {
+            if (v.id === 'department_name') {
+              this.$set(v, 'children', []);
+              this.$set(v, 'multiable', true);
+              v.children = list;
+            }
+          });
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    // 获取上级列表
+    async getLeadersList() {
+      try {
+        const params = `category_id=${this.currentCategoryId}`;
+        const list = [];
+        const res = await this.$store.dispatch('organization/getMultiConditionQuery', params);
+        res.data.results.forEach((item) => {
+          list.push({
+            id: item.id,
+            name: `${item.username}（${item.display_name}）`,
+          });
+          this.heardList.filter((v) => {
+            if (v.id === 'leader') {
+              this.$set(v, 'children', []);
+              this.$set(v, 'multiable', true);
+              v.children = list;
+            }
+          });
+        });
+      } catch (e) {
+        console.warn(e);
+      }
     },
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
