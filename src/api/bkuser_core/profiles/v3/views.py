@@ -34,8 +34,6 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
     pagination_class = AdvancedPagination
     ordering = "id"
 
-    supported_m2m_fields = ["leader", "departments"]
-
     @inject_serializer(query_in=QueryProfileSerializer, out=PaginatedProfileSerializer)
     def list(self, request, validated_data: dict, *args, **kwargs):
         """获取用户列表"""
@@ -43,7 +41,7 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
 
         try:
             queryset = MultipleFieldFilter().filter_by_params(
-                validated_data, self.filter_queryset(self.get_queryset()), self
+                self.filter_queryset(self.get_queryset()), validated_data, self
             )
         except IAMPermissionDenied:
             raise

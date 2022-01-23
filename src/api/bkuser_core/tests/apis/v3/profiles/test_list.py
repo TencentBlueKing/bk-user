@@ -51,6 +51,24 @@ class TestListApis:
                 "qq=aaaa&status=NORMAL",
                 "user-a-1",
             ),
+            (
+                {
+                    "user-a-1": {"qq": "aaaa", "status": "NORMAL"},
+                    "user-b-1": {"qq": "aaaa", "status": "DELETED"},
+                    "user-a-2": {"qq": "bbbb"},
+                },
+                "qq=aaaa&status__in=NORMAL,DELETED",
+                "user-a-1,user-b-1",
+            ),
+            (
+                {
+                    "user-a-1": {"qq": "aaaa", "status": "NORMAL"},
+                    "user-b-1": {"qq": "aaaa", "status": "DELETED"},
+                    "user-a-2": {"qq": "bbbb"},
+                },
+                "username__in=user-a-1,user-b-1&status__in=NORMAL",
+                "user-a-1",
+            ),
         ],
     )
     def test_multiple_fields(self, factory, view, samples, params, expected):

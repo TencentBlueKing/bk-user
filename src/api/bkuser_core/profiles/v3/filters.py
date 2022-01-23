@@ -7,21 +7,76 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.db.models import ManyToManyField, ManyToManyRel, ManyToOneRel
+from typing import Generator
+
+from django.db.models import CharField, DateTimeField, FloatField, IntegerField, TextField
 from rest_framework import filters
+
+
+class FieldFilter:
+    def extract_fields(self, queryset) -> Generator[str, None, None]:
+        raise NotImplementedError
+
+    def get_key(self, key: str) -> str:
+        raise NotImplementedError
+
+    def gen_query(self, queryset, params: dict) -> dict:
+        return {
+            self.get_key(key): value for key, value in params.items() if key in list(self.extract_fields(queryset))
+        }
+
+
+class M2MFieldFilter(FieldFilter):
+    def extract_fields(self, queryset) -> Generator[str, None, None]:
+        # TODO: maybe we can use `queryset.model._meta.get_field(key).m2m_field_name`
+        return (x for x in ["departments", "leader"])
+
+    def get_key(self, key: str) -> str:
+        return f"{key}__in"
+
+
+class IContainFieldFilter(FieldFilter):
+    def extract_fields(self, queryset) -> Generator[str, None, None]:
+        available_fields = queryset.model._meta.get_fields()
+        for f in available_fields:
+            if isinstance(f, (CharField, TextField, DateTimeField)):
+                yield f.name
+
+    def get_key(self, key) -> str:
+        return f"{key}__icontains"
+
+
+class PlainFieldFilter(FieldFilter):
+    def extract_fields(self, queryset) -> Generator[str, None, None]:
+        available_fields = queryset.model._meta.get_fields()
+        for f in available_fields:
+            if isinstance(f, (IntegerField, FloatField)):
+                yield f.name
+
+    def get_key(self, key) -> str:
+        return key
+
+
+class InFieldFilter(FieldFilter):
+    def extract_fields(self, queryset) -> Generator[str, None, None]:
+        # TODO: get from serializer?
+        return (x for x in ["username__in", "staff_status__in", "status__in"])
+
+    def get_key(self, key: str) -> str:
+        return key
 
 
 class MultipleFieldFilter(filters.SearchFilter):
     """多字段过滤器, 同时支持标准和非标准过滤"""
 
-    def filter_by_params(self, params: dict, queryset, view):
-        """非标准 filter"""
-        plain_fields = [
-            f.name
-            for f in queryset.model._meta.get_fields()
-            if not isinstance(f, (ManyToOneRel, ManyToManyRel, ManyToManyField))
-        ]
-        plain_query_params = {key: value for key, value in params.items() if key in plain_fields}
-        m2m_query_params = {f"{key}__in": value for key, value in params.items() if key in view.supported_m2m_fields}
+    field_filters: list = [M2MFieldFilter, IContainFieldFilter, PlainFieldFilter, InFieldFilter]
+
+    def filter_by_params(self, queryset, params: dict, view):
+        """根据不同字段类型进行多字段过滤"""
+
+        query = {}
+        for f_filter in self.field_filters:
+            query.update(f_filter().gen_query(queryset, params))
+
         # in operator on many-to-many fields may cause duplicate results, so we use distinct
-        return queryset.filter(**m2m_query_params, **plain_query_params).distinct()
+        return queryset.filter(**query).distinct()
