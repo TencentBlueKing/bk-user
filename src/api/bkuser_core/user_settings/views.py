@@ -101,8 +101,12 @@ class SettingViewSet(AdvancedModelViewSet):
 
     def _update(self, request, validated_data):
         instance = self.get_object()
+        try:
+            need_update = is_obj_needed_update(instance, validated_data)
+        except ValueError:
+            raise error_codes.CANNOT_UPDATE_SETTING
 
-        if is_obj_needed_update(instance, validated_data):
+        if need_update:
             try:
                 for k, v in validated_data.items():
                     setattr(instance, k, v)

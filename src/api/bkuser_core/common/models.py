@@ -35,6 +35,9 @@ class AdvancedModelManager(models.Manager):
 def is_obj_needed_update(obj, updated_values: dict) -> bool:
     """判断对象是否需要被更新"""
     for attr, updated_value in updated_values.items():
+        if not hasattr(obj, attr):
+            raise ValueError(f"{attr} is not a valid attribution for {obj}.")
+
         if getattr(obj, attr) != updated_value:
             return True
 

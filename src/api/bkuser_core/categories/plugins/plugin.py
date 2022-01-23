@@ -69,13 +69,16 @@ class DataSourcePlugin:
         if self.settings_path is not None:
             self.load_settings_from_yaml()
 
-    def _init_settings(self, namespace: str, region: str, setting_meta_key: str, meta_info: dict):
+    def _init_settings(self, setting_meta_key: str, meta_info: dict):
+        region = meta_info.pop("region", "default")
+        namespace = meta_info.pop("namespace", "general")
+
         try:
             meta, created = SettingMeta.objects.get_or_create(
                 key=setting_meta_key, category_type=self.name, region=region, namespace=namespace, defaults=meta_info
             )
             if created:
-                logger.debug("------ SettingMeta<%s> of plugin<%s> created.", setting_meta_key, self.name)
+                logger.debug("\n------ SettingMeta<%s> of plugin<%s> created.", setting_meta_key, self.name)
         except Exception:  # pylint: disable=broad-except
             logger.exception("SettingMeta<%s> of plugin<%s> can not been created.", setting_meta_key, self.name)
             return
@@ -89,7 +92,7 @@ class DataSourcePlugin:
             except Exception:  # pylint: disable=broad-except
                 logger.exception("SettingMeta<%s> of plugin<%s> can not been updated.", setting_meta_key, self.name)
                 return
-            logger.debug("------ SettingMeta<%s> of plugin<%s> updated.", setting_meta_key, self.name)
+            logger.debug("\n------ SettingMeta<%s> of plugin<%s> updated.", setting_meta_key, self.name)
 
         # 默认在创建 meta 后创建 settings，保证新增的配置能够被正确初始化
         if meta.default is not None:
@@ -100,15 +103,13 @@ class DataSourcePlugin:
                     meta=meta, category_id=category.id, defaults={"value": meta.default}
                 )
                 if created:
-                    logger.debug("------ Setting<%s> of category<%s> created.", ins, category)
+                    logger.debug("\n------ Setting<%s> of category<%s> created.", ins, category)
 
     def load_settings_from_yaml(self):
         """从 yaml 中加载 SettingMeta 配置"""
-        with open(self.settings_path, "r") as f:
-            for namespace, regions in yaml.safe_load(f)["settings"].items():
-                for region, settings in regions.items():
-                    for key, values in settings.items():
-                        self._init_settings(namespace, region, key, values)
+        with self.settings_path.open(mode="r") as f:
+            for key, meta_info in yaml.safe_load(f).items():
+                self._init_settings(key, meta_info)
 
     def get_hook(self, type_: HookType) -> Optional[PluginHook]:
         hook_cls = self.hooks.get(type_)
