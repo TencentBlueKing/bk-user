@@ -45,7 +45,6 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
     except IntervalSchedule.MultipleObjectsReturned:
         schedule = IntervalSchedule.objects.filter(every=interval_seconds, period=IntervalSchedule.SECONDS)[0]
 
-    # 通过 category_id 来做任务名
     kwargs = json.dumps({"instance_id": category_id, "operator": operator})
     try:
         p: PeriodicTask = PeriodicTask.objects.get(name=str(category_id))
@@ -55,7 +54,7 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
     except PeriodicTask.DoesNotExist:
         create_params = {
             "interval": schedule,
-            "name": str(category_id),
+            "name": f"plugin-sync-data-{category_id}",
             "task": "bkuser_core.categories.tasks.adapter_sync",
             "enabled": True,
             "kwargs": kwargs,
@@ -65,10 +64,11 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
 
 def delete_periodic_sync_task(category_id: int):
     """删除同步周期任务"""
+    guess_names = [f"plugin-sync-data-{category_id}", str(category_id)]
 
     # 通过 category_id 来做任务名
     try:
-        PeriodicTask.objects.get(name=str(category_id)).delete()
+        PeriodicTask.objects.filter(name__in=guess_names).delete()
     except PeriodicTask.DoesNotExist:
         logger.warning("PeriodicTask %s has been deleted, skip it...", str(category_id))
         return

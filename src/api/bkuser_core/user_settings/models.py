@@ -58,7 +58,7 @@ class SettingMeta(TimestampedModel):
     key = models.CharField("配置键", max_length=64)
     enabled = models.BooleanField(default=True)
     example = jsonfield.JSONField("示例", default="")
-    default = jsonfield.JSONField("默认值", default="")
+    default = jsonfield.JSONField("默认值", default=None)
     choices = jsonfield.JSONField("可选值", default=[])
     required = models.BooleanField("是否必要", default=False)
     namespace = models.CharField(

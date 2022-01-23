@@ -60,4 +60,4 @@ def register_plugin(plugin: "DataSourcePlugin"):
             logger.warning(f"Plugin with name: {plugin.name} already existed")
     except PluginDoesNotExist:
         _global_plugins[plugin.name] = plugin
-        logger.info("➕Plugin[%s] added.", plugin.name)
+        logger.info("➕Plugin[%s] loaded.", plugin.name)

@@ -14,6 +14,7 @@ from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSe
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.common.models import is_obj_needed_update
 from bkuser_core.user_settings import serializers
 from bkuser_core.user_settings.models import Setting, SettingMeta
 from bkuser_core.user_settings.serializers import SettingUpdateSerializer
@@ -22,6 +23,8 @@ from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
+
+from bkuser_global.drf_crown.crown import inject_serializer
 
 logger = logging.getLogger(__name__)
 
@@ -96,27 +99,38 @@ class SettingViewSet(AdvancedModelViewSet):
         )
         return Response(serializers.SettingSerializer(setting).data, status=status.HTTP_201_CREATED)
 
-    @swagger_auto_schema(
-        request_body=SettingUpdateSerializer(),
-        responses={"200": serializers.SettingSerializer()},
-    )
-    def update(self, request, *args, **kwargs):
-        result = super().update(request, *args, **kwargs)
-        post_setting_update.send(
-            sender=self, instance=self.get_object(), operator=request.operator, extra_values={"request": request}
-        )
-        return result
+    def _update(self, request, validated_data):
+        instance = self.get_object()
+        try:
+            need_update = is_obj_needed_update(instance, validated_data)
+        except ValueError:
+            raise error_codes.CANNOT_UPDATE_SETTING
 
-    @swagger_auto_schema(
-        request_body=SettingUpdateSerializer(),
-        responses={"200": serializers.SettingSerializer()},
-    )
-    def partial_update(self, request, *args, **kwargs):
-        result = super().partial_update(request, *args, **kwargs)
-        post_setting_update.send(
-            sender=self, instance=self.get_object(), operator=request.operator, extra_values={"request": request}
-        )
-        return result
+        if need_update:
+            try:
+                for k, v in validated_data.items():
+                    setattr(instance, k, v)
+                instance.save()
+            except Exception:
+                logger.exception("failed to update setting")
+                raise error_codes.CANNOT_UPDATE_SETTING
+            else:
+                # 仅当更新成功时才发送信号
+                post_setting_update.send(
+                    sender=self,
+                    instance=self.get_object(),
+                    operator=request.operator,
+                    extra_values={"request": request},
+                )
+        return instance
+
+    @inject_serializer(body_in=SettingUpdateSerializer(), out=serializers.SettingSerializer)
+    def update(self, request, validated_data, *args, **kwargs):
+        return self._update(request, validated_data)
+
+    @inject_serializer(body_in=SettingUpdateSerializer(), out=serializers.SettingSerializer)
+    def partial_update(self, request, validated_data, *args, **kwargs):
+        return self._update(request, validated_data)
 
 
 class SettingMetaViewSet(AdvancedModelViewSet, AdvancedListAPIView):

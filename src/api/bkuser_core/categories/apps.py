@@ -44,5 +44,5 @@ def import_plugins(base_file_path: str, module_prefix: str):
         module_path = module_prefix + d
         try:
             importlib.import_module(module_path)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.warning("⚠️ failed to import plugin: %s, for %s", module_path, e)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("⚠️ failed to import plugin: path[%s]", module_path)

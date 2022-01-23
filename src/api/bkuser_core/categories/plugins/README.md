@@ -54,6 +54,43 @@ python manage.py create_pluggable_category --name 插件化目录 --domain some-
 ```
 默认地，我们会创建一个 key 为 `plugin_name` 的 `Setting` 绑定到该目录。
 
+## 配置
+
+我们为插件增加了申明配置的能力，开发者可以通过 yaml 文件定义面向使用者的配置列表
+
+```python
+DataSourcePlugin(
+    name="custom",
+    syncer_cls=CustomSyncer,
+    login_handler_cls=LoginHandler,
+    allow_client_write=True,
+    category_type="custom",
+    hooks={HookType.POST_SYNC: AlertIfFailedHook},
+    # 在这里显式地告之插件配置的文件路径
+    settings_path=os.path.dirname(__file__) / Path("settings.yaml"),
+).register()
+```
+```yaml
+# 默认第一层
+settings:
+  # namespace
+  general:
+    # region
+    default:
+      # 具体配置的 key 值
+      paths:
+        # SettingMeta 具体内容
+        default:
+          # 可以以 yaml 原生写法定义 JSON 内容
+          profile: "profiles"
+          department: "departments"
+      api_host:
+        default: ""
+        example: "https://example.com"
+```
+当插件加载时，我们会做两件事：
+- 创建或更新 SettingMeta
+- 当 SettingMeta 的默认值存在时(所有不为 `None` 的内容，空字符串、空字典均被视作 **存在**), 使用默认值为所有已经存在对应目录初始化 Setting
 
 ## 同步类 Syncer 实现
 

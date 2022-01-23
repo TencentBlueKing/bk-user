@@ -18,35 +18,33 @@ from django.db import migrations
 def forwards_func(apps, schema_editor):
     """更新自定义字段配置"""
     SettingMeta = apps.get_model("user_settings", "SettingMeta")
-
-    extend_fields_connection_settings = [
-        dict(key="dynamic_fields_mapping", default={})
-    ]
-
-    for x in extend_fields_connection_settings:
-        SettingMeta.objects.create(
-            namespace=SettingsEnableNamespaces.FIELDS.value,
-            category_type=CategoryType.LDAP.value,
-            required=True,
-            region="extend",
-            **x
-        )
-
-    for x in extend_fields_connection_settings:
-        SettingMeta.objects.create(
-            namespace=SettingsEnableNamespaces.FIELDS.value,
-            category_type=CategoryType.MAD.value,
-            required=True,
-            region="extend",
-            **x
-        )
-
-    SettingMeta = apps.get_model("user_settings", "SettingMeta")
-    keys = ["bk_fields", "mad_fields"]
-    meta = SettingMeta.objects.filter(key__in=keys)
     Setting = apps.get_model("user_settings", "Setting")
+    ProfileCategory = apps.get_model("categories", "ProfileCategory")
+
+    for category_type in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+        meta, _ = SettingMeta.objects.get_or_create(
+            key="dynamic_fields_mapping",
+            namespace=SettingsEnableNamespaces.FIELDS.value,
+            category_type=category_type,
+            region="extend",
+            defaults={"default": {}, "required": False},
+        )
+
+        # 保证已存在的目录拥有默认配置
+        for c in ProfileCategory.objects.filter(type=category_type):
+            Setting.objects.get_or_create(meta=meta, category_id=c.id, value=meta.default)
+
+    meta = SettingMeta.objects.filter(key__in=["bk_fields", "mad_fields"])
     Setting.objects.filter(meta__in=meta).delete()
     meta.delete()
+
+
+def backwards_func(apps, schema_editor):
+    SettingMeta = apps.get_model("user_settings", "SettingMeta")
+    Setting = apps.get_model("user_settings", "Setting")
+
+    Setting.objects.filter(meta__key="dynamic_fields_mapping").delete()
+    SettingMeta.objects.filter(key="dynamic_fields_mapping").delete()
 
 
 class Migration(migrations.Migration):
@@ -55,4 +53,4 @@ class Migration(migrations.Migration):
         ("user_settings", "0010_auto_20211201_1601"),
     ]
 
-    operations = [migrations.RunPython(forwards_func)]
+    operations = [migrations.RunPython(forwards_func, backwards_func)]

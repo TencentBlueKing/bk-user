@@ -16,9 +16,6 @@ from bkuser_core.categories.signals import post_category_create
 from django.conf import settings
 from django.dispatch import receiver
 
-from .plugins.ldap.handlers import create_sync_tasks, delete_sync_tasks, update_sync_tasks  # noqa
-from .plugins.local.handlers import make_local_default_settings  # noqa
-
 logger = logging.getLogger(__name__)
 
 

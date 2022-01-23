@@ -12,14 +12,13 @@ import logging
 from typing import TYPE_CHECKING
 
 from bkuser_core.categories.constants import CategoryType
-from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.plugins.utils import (
     delete_dynamic_filed,
     delete_periodic_sync_task,
-    make_periodic_sync_task,
     update_periodic_sync_task,
 )
-from bkuser_core.categories.signals import post_category_create, post_category_delete, post_dynamic_field_delete
+from bkuser_core.categories.signals import post_category_delete, post_dynamic_field_delete
+from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
 from django.dispatch import receiver
 
@@ -31,17 +30,36 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@receiver(post_category_create)
-def create_sync_tasks(sender, instance: "ProfileCategory", operator: str, **kwargs):
-    if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+PULL_INTERVAL_SETTING_KEY = "pull_cycle"
+
+
+def update_or_create_sync_tasks(instance: "Setting", operator: str):
+    """尝试创建或更新同步数据任务"""
+    if not instance.meta.key == PULL_INTERVAL_SETTING_KEY:
         return
 
-    logger.info("going to add periodic task for Category<%s>", instance.id)
-    make_periodic_sync_task(
-        category_id=instance.id,
-        operator=operator,
-        interval_seconds=get_plugin_by_category(instance).extra_config["default_sync_period"],
+    cycle_value = int(instance.value)
+    config_provider = ConfigProvider(instance.category_id)
+
+    min_sync_period = config_provider.get("min_sync_period")
+    if cycle_value <= 0:
+        # 特殊约定，当设置 <= 0 时，删除周期任务
+        delete_periodic_sync_task(category_id=instance.category_id)
+        return
+    # 保证不会用户配置不会低于插件的最低间隔限制
+    elif cycle_value < min_sync_period:
+        cycle_value = min_sync_period
+
+    # 尝试更新周期任务周期
+    logger.info(
+        "going to update category<%s> sync interval to %s",
+        instance.category_id,
+        cycle_value,
     )
+    try:
+        update_periodic_sync_task(category_id=instance.category_id, operator=operator, interval_seconds=cycle_value)
+    except Exception:  # pylint: disable=broad-except
+        logger.exception("failed to update periodic task schedule")
 
 
 @receiver(post_category_delete)
@@ -59,31 +77,12 @@ def update_sync_tasks(sender, instance: "Setting", operator: str, **kwargs):
     if instance.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
-    if not instance.meta.key == "pull_cycle":
-        return
-
-    cycle_value = int(instance.value)
-    category_config = get_plugin_by_category(instance.category)
-    if cycle_value <= 0:
-        delete_periodic_sync_task(category_id=instance.category_id)
-        return
-
-    elif cycle_value < category_config.extra_config["min_sync_period"]:
-        cycle_value = category_config.extra_config["min_sync_period"]
-
-    # 尝试更新周期任务周期
-    logger.info(
-        "going to update category<%s> sync interval to %s",
-        instance.category_id,
-        cycle_value,
-    )
-    try:
-        update_periodic_sync_task(category_id=instance.category_id, operator=operator, interval_seconds=cycle_value)
-    except Exception:  # pylint: disable=broad-except
-        logger.exception("failed to update periodic task schedule")
+    # 针对 pull_cycle 配置更新同步任务
+    update_or_create_sync_tasks(instance, operator)
 
 
 @receiver(post_dynamic_field_delete)
 def update_dynamic_field_mapping(sender, instance: "DynamicFieldInfo", **kwargs):
+    """尝试刷新自定义字段映射配置"""
     delete_dynamic_filed(dynamic_field=instance.name)
     logger.info("going to delete <%s> from dynamic_field_mapping", instance.name)

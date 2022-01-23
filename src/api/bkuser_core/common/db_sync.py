@@ -94,7 +94,7 @@ class SyncModelManager:
         if self.meta.unique_key_field:
             unique_key = getattr(db_obj, self.meta.unique_key_field)
             if unique_key and unique_key in self._action_map_cache:
-                logger.info("action (%s-%s) already in item cache, skipping", operation, db_obj)
+                logger.debug("action (%s-%s) already in item cache, skipping", operation, db_obj)
                 return
 
             # 尚不存在，添加 unique_key cache
