@@ -178,6 +178,12 @@ export default {
     'userMessage.userInforList'(value) {
       this.handleOriginList(value);
     },
+    activeTableHeardList: {
+      immediate: true,
+      handler(value) {
+        this.$emit('updateHeardList', value);
+      },
+    },
   },
   mounted() {
     if (this.userMessage.userInforList && this.userMessage.userInforList.length) {
