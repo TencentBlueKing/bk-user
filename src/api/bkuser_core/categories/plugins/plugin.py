@@ -69,13 +69,12 @@ class DataSourcePlugin:
         if self.settings_path is not None:
             self.load_settings_from_yaml()
 
-    def _init_settings(self, setting_meta_key: str, meta_info: dict):
-        region = meta_info.pop("region", "default")
+    def init_settings(self, setting_meta_key: str, meta_info: dict):
         namespace = meta_info.pop("namespace", "general")
 
         try:
             meta, created = SettingMeta.objects.get_or_create(
-                key=setting_meta_key, category_type=self.name, region=region, namespace=namespace, defaults=meta_info
+                key=setting_meta_key, category_type=self.name, namespace=namespace, defaults=meta_info
             )
             if created:
                 logger.debug("\n------ SettingMeta<%s> of plugin<%s> created.", setting_meta_key, self.name)
@@ -109,7 +108,7 @@ class DataSourcePlugin:
         """从 yaml 中加载 SettingMeta 配置"""
         with self.settings_path.open(mode="r") as f:
             for key, meta_info in yaml.safe_load(f).items():
-                self._init_settings(key, meta_info)
+                self.init_settings(key, meta_info)
 
     def get_hook(self, type_: HookType) -> Optional[PluginHook]:
         hook_cls = self.hooks.get(type_)
