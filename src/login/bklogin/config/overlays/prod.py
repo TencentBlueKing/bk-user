@@ -14,13 +14,7 @@ from bklogin.config.common.logging import *  # noqa
 from bklogin.config.common.platform import *  # noqa
 from bklogin.config.common.storage import *  # noqa
 
-from bkuser_global.config import get_logging_config_dict
+from bkuser_global.logging import LoggingType, get_logging
 
 SITE_URL = "/login/"
-LOGGING = get_logging_config_dict(
-    log_level=LOG_LEVEL,
-    logging_dir=LOGGING_DIR,
-    log_class=LOG_CLASS,
-    file_name="bk-login",
-    package_name="bkuser_core",
-)
+LOGGING = get_logging(logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_core")
