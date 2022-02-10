@@ -38,7 +38,7 @@
             <p class="hint" v-show="handleTabData.isNameError">
               <i class="arrow"></i>
               <i class="icon-user-exclamation-circle-shape"></i>
-              <span class="text">{{$t('长度为1-64位')}}</span>
+              <span class="text">{{$t('不超过32个字')}}</span>
             </p>
           </div>
         </li>
@@ -67,7 +67,7 @@
             <p class="hint" v-show="handleTabData.isNameError">
               <i class="arrow"></i>
               <i class="icon-user-exclamation-circle-shape"></i>
-              <span class="text">{{$t('长度为1-64位')}}</span>
+              <span class="text">{{$t('不超过32个字')}}</span>
             </p>
           </div>
         </li>
