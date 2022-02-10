@@ -16,20 +16,15 @@ from bkuser_shell.account.conf import ConfFixture
 from bkuser_shell.account.handlers.response import ResponseHandler
 from django.conf import settings
 from django.contrib import auth
+from django.utils.deprecation import MiddlewareMixin
 
-try:
-    from django.utils.deprecation import MiddlewareMixin
-except ImportError:
-    MiddlewareMixin = object
-
-
-logger = logging.getLogger("component")
+logger = logging.getLogger(__name__)
 
 
 class LoginRequiredMiddleware(MiddlewareMixin):
     def process_view(self, request, view, args, kwargs):
         """
-        Login paas by two ways
+        Log into PaaS via two ways
         1. views decorated with 'login_exempt' keyword
         2. User has logged in calling auth.login
         """
@@ -49,13 +44,14 @@ class LoginRequiredMiddleware(MiddlewareMixin):
 
         form = AuthenticationForm(request.COOKIES)
         if form.is_valid():
-            bk_token = form.cleaned_data["bk_token"]
+            bk_token = form.cleaned_data[settings.TOKEN_COOKIE_NAME]
             user = auth.authenticate(request=request, bk_token=bk_token)
             if user:
-                # Succeed to login, recall self to exit process
+                # Succeed to log in, recall self to exit process
                 if user.username != request.user.username:
                     auth.login(request, user)
                 return None
+
         handler = ResponseHandler(ConfFixture, settings)
         if request.is_ajax():
             return handler.build_401_response(request)

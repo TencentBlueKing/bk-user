@@ -28,13 +28,14 @@
       <bk-button v-if="applyUrl" class="king-button" theme="primary" @click="confirmPageApply">{{$t('去申请')}}</bk-button>
     </div>
 
-    <bk-dialog v-model="showApplyDialog"
-               :mask-close="false"
-               :close-icon="false"
-               :width="740"
-               :ok-text="$t('去申请')"
-               @confirm="confirmSourceApply"
-               @cancel="closeAuth">
+    <bk-dialog
+      v-model="showApplyDialog"
+      :mask-close="false"
+      :close-icon="false"
+      :width="740"
+      :ok-text="$t('去申请')"
+      @confirm="confirmSourceApply"
+      @cancel="closeAuth">
       <div class="apply-authority-dialog-container" data-test-id="list_authorityManagement">
         <img src="../../images/svg/lock-radius.svg" alt="lock" class="lock-icon">
         <div class="title">{{$t('该操作需要以下权限')}}</div>
@@ -52,11 +53,12 @@
       </div>
     </bk-dialog>
 
-    <bk-dialog v-model="showConfirmDialog"
-               :title="$t('权限申请单已提交？')"
-               :ok-text="$t('刷新页面')"
-               @confirm="confirmAfterApply"
-               @cancel="closeAuth">
+    <bk-dialog
+      v-model="showConfirmDialog"
+      :title="$t('权限申请单已提交？')"
+      :ok-text="$t('刷新页面')"
+      @confirm="confirmAfterApply"
+      @cancel="closeAuth">
       {{$t('请在权限中心填写权限申请单')}}
     </bk-dialog>
   </div>
@@ -199,7 +201,7 @@ export default {
     margin-bottom: 30px;
   }
 
-  /deep/ .king-table {
+  ::v-deep .king-table {
     margin-bottom: 12px;
 
     .bk-table-body-wrapper {

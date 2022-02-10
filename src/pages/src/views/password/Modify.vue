@@ -33,38 +33,43 @@
         </p>
         <ul>
           <li class="input-list">
-            <input type="password"
-                   class="select-text"
-                   :placeholder="$t('旧密码')"
-                   v-model="oldPassword" />
+            <input
+              type="password"
+              class="select-text"
+              :placeholder="$t('旧密码')"
+              v-model="oldPassword" />
           </li>
           <li class="input-list">
-            <input type="password"
-                   :class="['select-text', { 'input-error': isConfirmError }]"
-                   :placeholder="$t('新密码')"
-                   v-model="newPassword"
-                   @focus="isConfirmError = false" />
+            <input
+              type="password"
+              :class="['select-text', { 'input-error': isConfirmError }]"
+              :placeholder="$t('新密码')"
+              v-model="newPassword"
+              @focus="isConfirmError = false" />
           </li>
           <li class="input-list">
-            <input type="password"
-                   :class="['select-text', { 'input-error': isConfirmError }]"
-                   :placeholder="$t('确认新密码')"
-                   v-model="confirmPassword"
-                   @focus="isConfirmError = false" />
+            <input
+              type="password"
+              :class="['select-text', { 'input-error': isConfirmError }]"
+              :placeholder="$t('确认新密码')"
+              v-model="confirmPassword"
+              @focus="isConfirmError = false" />
           </li>
         </ul>
-        <bk-button theme="primary"
-                   :disabled="!oldPassword || !newPassword || !confirmPassword" class="submit" @click="handlePush">
+        <bk-button
+          theme="primary"
+          :disabled="!oldPassword || !newPassword || !confirmPassword" class="submit" @click="handlePush">
           {{$t('提交')}}
         </bk-button>
       </div>
     </div>
     <div class="bk-open-set-password">
-      <bk-dialog width="440"
-                 header-position="left"
-                 v-model="successDialog.isShow"
-                 :title="successDialog.title"
-                 @confirm="register">
+      <bk-dialog
+        width="440"
+        header-position="left"
+        v-model="successDialog.isShow"
+        :title="successDialog.title"
+        @confirm="register">
         <div style="min-height: 20px;">
           <p class="text" style="margin: 0 0 18px 0">{{$t('点击确定后将跳到蓝鲸登录页面')}}</p>
         </div>
@@ -74,7 +79,9 @@
 </template>
 
 <script>
+const Base64 = require('js-base64').Base64;
 export default {
+  name: 'ModifyBox',
   data() {
     return {
       isConfirmError: false,
@@ -96,8 +103,8 @@ export default {
           return;
         }
         const modifyParams = {
-          old_password: this.oldPassword,
-          new_password: this.confirmPassword.trim(),
+          old_password: Base64.encode(this.oldPassword),
+          new_password: Base64.encode(this.confirmPassword.trim()),
         };
         await this.$store.dispatch('password/modify', modifyParams);
         this.successDialog.isShow = true;

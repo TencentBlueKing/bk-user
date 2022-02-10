@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import List
 
+from bkuser_core.apis.v2.serializers import EmptySerializer
+from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet, AdvancedSearchFilter
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.permissions import IAMAction, IAMHelper, IAMPermissionExtraInfo, need_iam
@@ -34,8 +36,6 @@ from bkuser_core.categories.signals import post_category_create, post_category_d
 from bkuser_core.categories.tasks import adapter_sync
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import CoreAPIError, error_codes
-from bkuser_core.common.serializers import EmptySerializer
-from bkuser_core.common.viewset import AdvancedListAPIView, AdvancedModelViewSet, AdvancedSearchFilter
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
@@ -81,7 +81,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             try:
                 action_id = IAMAction.get_action_by_category_type(type_)
             except KeyError:
-                # tof 属于隐藏目录，这里直接忽略掉
                 continue
 
             _meta = make_meta(type_)

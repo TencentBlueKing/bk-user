@@ -23,10 +23,12 @@
   <div class="user-head-portrait" :class="{ 'chang-en': $i18n.locale === 'en' }">
     <span class="head">{{$t('头像')}}</span>
     <div class="avatar-wrapper">
-      <img :src="images.avatarImg || imgSrc" alt=""
-           class="avatar-img" width="68" height="68" @error="handleLoadAvatarError" />
-      <input type="file" name="avatar" value="" accept="image/*"
-             class="avatar-input" @change="imgOnChange($event, 'avatar')" />
+      <img
+        :src="images.avatarImg || imgSrc" alt=""
+        class="avatar-img" width="68" height="68" @error="handleLoadAvatarError" />
+      <input
+        type="file" name="avatar" value="" accept="image/*"
+        class="avatar-input" @change="imgOnChange($event, 'avatar')" />
     </div>
     <!-- 选择头像的弹窗 -->
     <div class="personal-pops" v-if="images.isShowImageEditor">

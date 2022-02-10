@@ -64,14 +64,16 @@
     <div class="fill-text">
       <p class="desc">{{$t('字段类型')}}<span class="star">*</span></p>
       <!-- 有英文名就不能编辑，即只有新增字段才能编辑 -->
-      <bk-select v-model="defaultSelected"
-                 :clearable="false"
-                 :disabled="!!currentEditorData.key"
-                 @change="selectedType">
-        <bk-option v-for="(option, index) in typeList"
-                   :key="index"
-                   :id="option.id"
-                   :name="option.name"
+      <bk-select
+        v-model="defaultSelected"
+        :clearable="false"
+        :disabled="!!currentEditorData.key"
+        @change="selectedType">
+        <bk-option
+          v-for="(option, index) in typeList"
+          :key="index"
+          :id="option.id"
+          :name="option.name"
         ></bk-option>
       </bk-select>
     </div>
@@ -99,8 +101,9 @@
             <div class="select-box default-box">
               <div class="input-container">
                 <label v-if="fieldsInfor.type === 'one_enum'" class="king-radio">
-                  <input name="eg" type="radio" :value="index"
-                         v-model="fieldsInfor.default" :class="{ 'is-checked': fieldsInfor.default === index }">
+                  <input
+                    name="eg" type="radio" :value="index"
+                    v-model="fieldsInfor.default" :class="{ 'is-checked': fieldsInfor.default === index }">
                 </label>
                 <label v-else class="king-checkbox king-checkbox-small">
                   <input name="egCheckbox" type="checkbox" :value="index" v-model="fieldsInfor.default">
@@ -121,8 +124,9 @@
               </p>
             </div>
             <div class="select-box icon-box">
-              <i class="icon icon-user-minus_circle"
-                 :class="{ 'forbid': !isDeleteOption }" @click="deleteEg(index)"></i>
+              <i
+                class="icon icon-user-minus_circle"
+                :class="{ 'forbid': !isDeleteOption }" @click="deleteEg(index)"></i>
               <i class="icon icon-user-plus_circle" v-if="index === fieldsInfor.options.length - 1" @click="addEg"></i>
             </div>
           </li>
@@ -133,10 +137,11 @@
     <div class="select-type">
       <label class="king-checkbox king-checkbox-small">
         <!-- 内置字段不可设置：必填 -->
-        <input type="checkbox" name="selectType"
-               checked="checked"
-               :disabled="currentEditorData.builtin"
-               v-model="fieldsInfor.require">
+        <input
+          type="checkbox" name="selectType"
+          checked="checked"
+          :disabled="currentEditorData.builtin"
+          v-model="fieldsInfor.require">
         <span class="checkbox-text" v-bk-tooltips.top="$t('该字段在用户信息里必须填写')">{{$t('必填')}}</span>
       </label>
       <label class="king-checkbox king-checkbox-small">

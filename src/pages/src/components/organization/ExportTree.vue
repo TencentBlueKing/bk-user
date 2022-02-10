@@ -23,8 +23,9 @@
   <div data-test-id="list_treeData">
     <ul class="child-node">
       <li class="vue-tree-item" v-for="item in treeDataList" :key="item.id">
-        <div :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
-             :class="['tree-node', { 'down': item.showChildren, 'first-tree-node': treeIndex === 0 }]">
+        <div
+          :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
+          :class="['tree-node', { 'down': item.showChildren, 'first-tree-node': treeIndex === 0 }]">
           <!-- 开关 icon == -->
           <p class="unfold-icon" @click.stop="handleClickToggle(item)">
             <i class="icon icon-user-triangle" :class="{ 'hidden': !item.has_children }"></i>

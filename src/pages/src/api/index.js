@@ -50,7 +50,7 @@ axiosInstance.interceptors.request.use((config) => {
  */
 axiosInstance.interceptors.response.use(
   response => response.data,
-  error => Promise.reject(error)
+  error => Promise.reject(error),
 );
 
 const http = {

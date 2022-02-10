@@ -1,0 +1,19 @@
+{{- $namePrefix := include "bk-user.name" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-user-api-external-storage
+data:
+  # ---------------
+  # 数据库
+  # --------------- 
+  DB_NAME: "{{ .Values.externalDatabase.default.name | default .Values.preferDBName }}"
+  DB_USER: "{{ .Values.externalDatabase.default.user }}"
+  DB_PASSWORD: "{{ .Values.externalDatabase.default.password }}"
+  DB_HOST: "{{ .Values.externalDatabase.default.host }}"
+  DB_PORT: "{{ .Values.externalDatabase.default.port }}"
+  # ---------------
+  # Redis Related
+  # ---------------
+  CELERY_BROKER_URL: {{ .Values.celeryBrokerUrl | default (include "bk-user.externalRedisBrokerUrl" .) }}
+  CELERY_RESULT_BACKEND: {{ .Values.celeryResultBackend | default (include "bk-user.externalRedisBrokerUrl" .) }}

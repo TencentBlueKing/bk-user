@@ -23,10 +23,11 @@
   <div class="footer-content">
     <div class="link-container">
       <template v-for="(item, index) in footerList">
-        <a class="footer-link"
-           :key="index + 'link'"
-           :href="item.link"
-           :target="item.is_blank ? '_blank' : '_self'">
+        <a
+          class="footer-link"
+          :key="index + 'link'"
+          :href="item.link"
+          :target="item.is_blank ? '_blank' : '_self'">
           {{ isEnglish ? item.text_en : item.text }}
         </a>
         <span v-if="index !== footerList.length - 1" :key="index + 'gap'" class="gap"> | </span>
@@ -40,6 +41,7 @@
 import cookie from 'cookie';
 
 export default {
+  name: 'FooterBox',
   data() {
     return {
       isEnglish: cookie.parse(document.cookie).blueking_language === 'en',

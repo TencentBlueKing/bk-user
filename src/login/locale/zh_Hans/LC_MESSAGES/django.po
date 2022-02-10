@@ -1,0 +1,507 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-12-03 17:35+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: bklogin/api/views.py:43 bklogin/api/views.py:79 bklogin/api/views.py:115
+msgid "用户验证成功"
+msgstr ""
+
+#: bklogin/api/views.py:65 bklogin/api/views.py:101 bklogin/api/views.py:138
+msgid "用户信息获取成功"
+msgstr ""
+
+#: bklogin/bkaccount/manager.py:35
+msgid "记录成功"
+msgstr ""
+
+#: bklogin/bkaccount/manager.py:37
+msgid "用户登录记录失败"
+msgstr ""
+
+#: bklogin/bkauth/utils.py:64
+msgid "缺少参数bk_token"
+msgstr ""
+
+#: bklogin/bkauth/utils.py:75
+msgid "参数bk_token非法"
+msgstr ""
+
+#: bklogin/bkauth/utils.py:93
+#, python-format
+msgid "不存在bk_token[%s]的记录"
+msgstr ""
+
+#: bklogin/bkauth/utils.py:100
+msgid "登录态已注销"
+msgstr ""
+
+#: bklogin/bkauth/utils.py:104
+msgid "登录态已过期"
+msgstr ""
+
+#: bklogin/bkauth/utils.py:108
+msgid "登录态有效期不合法"
+msgstr ""
+
+#: bklogin/bkauth/utils.py:113
+msgid "长时间无操作，登录态已过期"
+msgstr ""
+
+#: bklogin/bkauth/views.py:128
+msgid "账户或者密码错误，请重新输入"
+msgstr ""
+
+#: bklogin/common/exceptions.py:46
+msgid "登录校验失败，请重置密码"
+msgstr ""
+
+#: bklogin/common/license.py:39
+#, python-format
+msgid "证书文件(platform.cert)不存在: %s"
+msgstr ""
+
+#: bklogin/common/license.py:42
+#, python-format
+msgid "密钥文件(platform.key)不存在: %s"
+msgstr ""
+
+#: bklogin/common/license.py:50
+msgid "证书文件(platform.cert)为空或已被损坏"
+msgstr ""
+
+#: bklogin/common/license.py:73
+msgid "license_server请求校验证书异常"
+msgstr ""
+
+#: bklogin/common/license.py:124
+msgid "证书不可用，请求未返回有效期或返回格式有误"
+msgstr ""
+
+#: bklogin/common/license.py:125
+msgid "证书校验成功"
+msgstr ""
+
+#: bklogin/healthz/views.py:75
+#, python-format
+msgid "配置文件不正确, 缺失对应配置: %s"
+msgstr ""
+
+#: bklogin/healthz/views.py:87
+#, python-format
+msgid "数据库连接存在问题: %s"
+msgstr ""
+
+#: bklogin/healthz/views.py:96
+#, python-format
+msgid "企业证书无效：%s; 只影响桌面版本信息的展示"
+msgstr ""
+
+#: bklogin/templates/401.html:6
+msgid "未登录蓝鲸智云平台(401页)"
+msgstr ""
+
+#: bklogin/templates/401.html:20
+msgid "您需要登录蓝鲸智云"
+msgstr ""
+
+#: bklogin/templates/401.html:21 bklogin/templates/account/login.html:51
+#: bklogin/templates/account/login_ce.html:73
+msgid "立即登录"
+msgstr ""
+
+#: bklogin/templates/403.html:6
+msgid "您没有访问权限(403页)"
+msgstr ""
+
+#: bklogin/templates/403.html:20
+msgid "您没有访问权限，请联系系统管理员添加"
+msgstr ""
+
+#: bklogin/templates/404.html:6
+msgid "页面找不到（404页）"
+msgstr ""
+
+#: bklogin/templates/404.html:20
+msgid "页面找不到了"
+msgstr ""
+
+#: bklogin/templates/500.html:6
+msgid "系统异常(500页)"
+msgstr ""
+
+#: bklogin/templates/500.html:20
+msgid "系统出现异常"
+msgstr ""
+
+#: bklogin/templates/500.html:21
+msgid "努力恢复中，请稍后再试......"
+msgstr ""
+
+#: bklogin/templates/50x.html:6 bklogin/templates/50x.html:19
+msgid "服务故障，努力修复中..."
+msgstr ""
+
+#: bklogin/templates/50x.html:20
+msgid "服务出现故障，我们正在紧急修复，给您带来不便，敬请谅解。"
+msgstr ""
+
+#: bklogin/templates/account/base.html:11
+msgid "用户管理|蓝鲸智云企业版"
+msgstr ""
+
+#: bklogin/templates/account/base.html:12
+msgid ""
+"开发者中心,游戏运维,运维,服务器管理,模块配置,监控,腾讯游戏,蓝鲸,智云,devops,"
+"运维开发,蓝鲸企业版,企业版,作业平台,集成平台,配置平台,管控平台"
+msgstr ""
+
+#: bklogin/templates/account/base.html:13
+msgid ""
+"蓝鲸智云软件企业版是由蓝鲸智云团队提供的一套基于PaaS的技术解决方案，旨在改变"
+"中国运维行业，帮助企业快速达到基础运维支撑能力，并提升技术人员的DevOps能力。"
+"该版本提供了配置平台，作业平台，集成平台等强大功能，用户在使用时，请查阅并遵"
+"守《蓝鲸智云软件用户服务协议》。"
+msgstr ""
+
+#: bklogin/templates/account/base.html:43
+#: bklogin/templates/account/base.html:98
+#: bklogin/templates/account/login.html:96
+msgid "蓝鲸智云桌面"
+msgstr ""
+
+#: bklogin/templates/account/base.html:44
+msgid "img/logo/logo_user_01.png"
+msgstr ""
+
+#: bklogin/templates/account/base.html:46
+msgid "蓝鲸智云用户管理"
+msgstr ""
+
+#: bklogin/templates/account/base.html:47
+msgid "img/logo/logo_user_02.png"
+msgstr ""
+
+#: bklogin/templates/account/base.html:68
+#: bklogin/templates/admin/base_site.html:14
+#: bklogin/templates/admin/login.html:21
+msgid "注销"
+msgstr ""
+
+#: bklogin/templates/account/base.html:83
+msgid "返回顶部"
+msgstr ""
+
+#: bklogin/templates/account/base.html:86
+msgid "返回底部"
+msgstr ""
+
+#: bklogin/templates/account/base.html:95
+#: bklogin/templates/account/login.html:93
+msgid "QQ咨询"
+msgstr ""
+
+#: bklogin/templates/account/base.html:96
+#: bklogin/templates/account/login.html:94
+msgid "蓝鲸论坛"
+msgstr ""
+
+#: bklogin/templates/account/base.html:97
+#: bklogin/templates/account/login.html:95
+msgid "蓝鲸官网"
+msgstr ""
+
+#: bklogin/templates/account/base.html:101
+#: bklogin/templates/account/login_ce.html:117
+msgid "蓝鲸智云 版权所有"
+msgstr ""
+
+#: bklogin/templates/account/login.html:11
+msgid "登录|蓝鲸智云企业版"
+msgstr ""
+
+#: bklogin/templates/account/login.html:17
+msgid "蓝鲸社区版"
+msgstr ""
+
+#: bklogin/templates/account/login.html:18
+msgid "img/logo/v7.png"
+msgstr ""
+
+#: bklogin/templates/account/login.html:29
+msgid "用户名"
+msgstr ""
+
+#: bklogin/templates/account/login.html:31
+#: bklogin/templates/account/login_ce.html:54
+msgid "请输入用户名"
+msgstr ""
+
+#: bklogin/templates/account/login.html:37
+msgid "密码"
+msgstr ""
+
+#: bklogin/templates/account/login.html:40
+#: bklogin/templates/account/login_ce.html:58
+msgid "请输入密码"
+msgstr ""
+
+#: bklogin/templates/account/login.html:43
+msgid "你的密码已过期，请"
+msgstr ""
+
+#: bklogin/templates/account/login.html:44
+#: bklogin/templates/admin/base_site.html:12
+msgid "修改密码"
+msgstr ""
+
+#: bklogin/templates/account/login.html:52
+msgid "查看用户协议"
+msgstr ""
+
+#: bklogin/templates/account/login.html:57
+#: bklogin/templates/account/login_ce.html:78
+msgid "用户协议 >"
+msgstr ""
+
+#: bklogin/templates/account/login.html:60
+#: bklogin/templates/account/login_ce.html:80
+msgid "忘记密码？"
+msgstr ""
+
+#: bklogin/templates/account/login.html:79
+msgid "img/logo/btn_cn.png"
+msgstr ""
+
+#: bklogin/templates/account/login.html:106
+#: bklogin/templates/account/login_ce.html:124
+msgid ""
+"您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果"
+msgstr ""
+
+#: bklogin/templates/account/login.html:110
+msgid "企业证书校验无效，请联系系统管理员处理"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:11
+msgid "登录|蓝鲸智云"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:42
+msgid "img/logo_ce/logo_ce.png"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:45
+msgid "社区版"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:64
+msgid "请修改密码"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:111
+msgid "QQ群支持"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:112
+msgid "社区论坛"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:113
+msgid "产品官网"
+msgstr ""
+
+#: bklogin/templates/account/login_ce.html:114
+msgid "关注我们"
+msgstr ""
+
+#: bklogin/templates/account/no_right.html:5
+msgid "你不是管理员, 没有用户管理的权限!"
+msgstr ""
+
+#: bklogin/templates/account/no_right.html:6
+msgid "请找管理员申请权限!"
+msgstr ""
+
+#: bklogin/templates/account/users.html:11
+msgid "导出"
+msgstr ""
+
+#: bklogin/templates/account/users.html:12
+msgid "批量导入"
+msgstr ""
+
+#: bklogin/templates/account/users.html:13
+msgid "新增用户"
+msgstr ""
+
+#: bklogin/templates/account/users.html:15
+msgid "用户信息"
+msgstr ""
+
+#: bklogin/templates/account/users.html:23
+msgid "查询：按用户名、中文名"
+msgstr ""
+
+#: bklogin/templates/account/users.html:25
+msgid "所有用户"
+msgstr ""
+
+#: bklogin/templates/account/users.html:26
+msgid "管理员"
+msgstr ""
+
+#: bklogin/templates/account/users.html:27
+msgid "普通用户"
+msgstr ""
+
+#: bklogin/templates/account/users.html:28
+msgid "开发者"
+msgstr ""
+
+#: bklogin/templates/account/users.html:29
+msgid "职能化用户"
+msgstr ""
+
+#: bklogin/templates/account/users.html:30
+msgid "审计员"
+msgstr ""
+
+#: bklogin/templates/account/users.html:32
+msgid "查询"
+msgstr ""
+
+#: bklogin/templates/account/users.html:33
+msgid "新增用户的默认密码为："
+msgstr ""
+
+#: bklogin/templates/account/users.html:38
+msgid "温馨提示:"
+msgstr ""
+
+#: bklogin/templates/account/users.html:41
+msgid ""
+"<p><code>管理员</code>可以管理所有用户的信息，具有所有权限</p> <p><code>普通"
+"用户</code>可以管理自己的用户信息和访问 “桌面”</p> <p><code>开发者</code>可以"
+"管理自己的用户信息、访问 “桌面” 和访问 “开发者中心”</p> <p><code>职能化用户</"
+"code>在普通用户权限上还拥有SaaS应用 “标准运维” 的职能化权限</p> <p><code>审计"
+"员</code>在普通用户权限上还拥有SaaS应用 “标准运维”和“作业平台”的审计权限</p>"
+msgstr ""
+
+#: bklogin/templates/account/users.html:54
+msgid "选择文件："
+msgstr ""
+
+#: bklogin/templates/account/users.html:56
+msgid "导入用户"
+msgstr ""
+
+#: bklogin/templates/account/users.html:57
+msgid "提交"
+msgstr ""
+
+#: bklogin/templates/account/users.html:60
+msgid "bk_user_import.xls"
+msgstr ""
+
+#: bklogin/templates/account/users.html:60
+msgid "点击下载EXCEL模板"
+msgstr ""
+
+#: bklogin/templates/account/users.html:64
+msgid "注意："
+msgstr ""
+
+#: bklogin/templates/account/users.html:65
+#, python-format
+msgid ""
+"<p>1.请下载<a href=\"%(STATIC_URL)sbk_user_import.xls\">EXCEL模板</a>文件填写"
+"用户数据</p> <p>2.<code>用户名</code>为必填，包含数字、字母、下划线和点，长度"
+"在4-20个字符</p> <p>3.<code>用户名</code>为唯一标识，重复导入会覆盖已有数据</"
+"p> <p>4.导入用户默认密码为：<code>%(default_paasword)s</code></p> <p>5.文件后"
+"缀名必须为：<code>.xls</code>或<code>.xlsx</code> </p> <p>6.导入失败请检查"
+"EXCEL格式规范，或重新下载模板填写</p>"
+msgstr ""
+
+#: bklogin/templates/account/users.html:80
+msgid "新密码："
+msgstr ""
+
+#: bklogin/templates/account/users.html:85
+#: bklogin/templates/account/users.html:91
+msgid "必填"
+msgstr ""
+
+#: bklogin/templates/account/users.html:86
+#, python-format
+msgid ""
+"请输入密码，长度在8-20个字符，可支持数字、字母以及%(sp_char)s，必须保证密码包"
+"含大小写字母和数字 "
+msgstr ""
+
+#: bklogin/templates/account/users.html:89
+msgid "确认密码"
+msgstr ""
+
+#: bklogin/templates/account/users.html:90
+msgid "再次输入密码"
+msgstr ""
+
+#: bklogin/templates/admin/base_site.html:4
+msgid "管理"
+msgstr ""
+
+#: bklogin/templates/admin/base_site.html:7
+msgid "蓝鲸智云后台管理"
+msgstr ""
+
+#: bklogin/templates/admin/login.html:7
+msgid "您暂时不能访问该站点的后台管理，这是以下原因造成的："
+msgstr ""
+
+#: bklogin/templates/admin/login.html:15 bklogin/templates/admin/login.html:17
+msgid "用户"
+msgstr ""
+
+#: bklogin/templates/admin/login.html:15
+msgid "未激活！"
+msgstr ""
+
+#: bklogin/templates/admin/login.html:17
+msgid "没有管理员权限，请联系管理员！"
+msgstr ""
+
+#: bklogin/templates/csrf_failure.html:6 bklogin/templates/csrf_failure.html:20
+msgid "CSRF验证失败"
+msgstr ""
+
+#: bklogin/templates/csrf_failure.html:22
+msgid ""
+"您看到此消息是由于该站点在提交表单时需要一个CSRF cookie。此项是出于安全考虑，"
+"以确保您的浏览器没有被第三方劫持。"
+msgstr ""
+
+#: bklogin/templates/csrf_failure.html:23
+msgid ""
+"如果您已经设置浏览器禁用cookies，请重新启用，至少针对这个站点，全部HTTPS请"
+"求，或者同源请求（same-origin）启用cookies。"
+msgstr ""
+
+#: bklogin/templates/csrf_failure.html:24
+msgid "重新登录"
+msgstr ""

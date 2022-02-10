@@ -23,9 +23,10 @@
   <div data-test-id="opOrganizaData">
     <ul class="tree-menu">
       <li class="tree-first-node" v-for="(item, index) in treeDataList" :key="item.id">
-        <div :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
-             :class="{ 'tree-node': true, 'first-tree-node': treeIndex === 0,
-                       'expand': item.showChildren, 'active': item.showBackground }">
+        <div
+          :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
+          :class="{ 'tree-node': true, 'first-tree-node': treeIndex === 0,
+                    'expand': item.showChildren, 'active': item.showBackground }">
           <!-- 组织开关图标 -->
           <div class="toggle-icon" v-if="treeIndex !== 0 && treeSearchResult === null" @click="handleClickToggle(item)">
             <i class="icon icon-user-triangle" :class="{ 'hidden': !item.has_children }"></i>
@@ -43,20 +44,22 @@
           <!-- 用户目录，扩展操作 -->
           <div class="option" v-if="item.type && treeSearchResult === null">
             <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
-            <div v-if="item.showOption" :class="{ 'dropdown-list': true,
-                                                  'chang-en': $i18n.locale === 'en' }"
-                 @click.stop="item.showOption = false">
+            <div
+              v-if="item.showOption" :class="{ 'dropdown-list': true,
+                                               'chang-en': $i18n.locale === 'en' }"
+              @click.stop="item.showOption = false">
               <!-- 本地用户目录添加下级组织 -->
               <div class="specific-menu" v-if="item.type === 'local'">
                 <a href="javascript:;" @click="addRootDepartment(item)">{{$t('添加根组织')}}</a>
               </div>
               <!-- 上移 -->
               <div class="specific-menu">
-                <a href="javascript:;"
-                   :class="{ 'disable': index === 0 }"
-                   @click="shiftNodeUp(item, index)"
-                   @mouseenter="checkUpTips(item, index)"
-                   @mouseleave="closeUpTips(item)">
+                <a
+                  href="javascript:;"
+                  :class="{ 'disable': index === 0 }"
+                  @click="shiftNodeUp(item, index)"
+                  @mouseenter="checkUpTips(item, index)"
+                  @mouseleave="closeUpTips(item)">
                   {{$t('上移')}}
                 </a>
                 <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
@@ -66,11 +69,12 @@
               </div>
               <!-- 下移 -->
               <div class="specific-menu">
-                <a href="javascript:;"
-                   :class="{ 'disable': index === treeDataList.length - 1 }"
-                   @click="shiftNodeDown(item, index)"
-                   @mouseenter="checkDownTips(item, index)"
-                   @mouseleave="closeDownTips(item)">
+                <a
+                  href="javascript:;"
+                  :class="{ 'disable': index === treeDataList.length - 1 }"
+                  @click="shiftNodeDown(item, index)"
+                  @mouseenter="checkDownTips(item, index)"
+                  @mouseleave="closeDownTips(item)">
                   {{$t('下移')}}
                 </a>
                 <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
@@ -88,15 +92,17 @@
           <!-- 本地用户目录下的组织，扩展操作，包括搜索结果为组织 -->
           <div class="option" v-if="item.isLocalDepartment && noSearchOrSearchDepartment">
             <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
-            <div v-if="item.showOption" :class="{ 'dropdown-list': true, 'chang-en': $i18n.locale === 'en' }"
-                 @click.stop="item.showOption = false">
+            <div
+              v-if="item.showOption" :class="{ 'dropdown-list': true, 'chang-en': $i18n.locale === 'en' }"
+              @click.stop="item.showOption = false">
               <!-- 添加下级组织 -->
               <div class="specific-menu" v-if="!treeSearchResult">
-                <a href="javascript:;"
-                   :class="{ 'disable': treeIndex === 9 }"
-                   @click="addChild(item)"
-                   @mouseenter="checkAddTips(item)"
-                   @mouseleave="closeAddTips(item)">
+                <a
+                  href="javascript:;"
+                  :class="{ 'disable': treeIndex === 9 }"
+                  @click="addChild(item)"
+                  @mouseenter="checkAddTips(item)"
+                  @mouseleave="closeAddTips(item)">
                   {{$t('添加下级组织')}}
                 </a>
                 <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showAddChildTips }">
@@ -106,11 +112,12 @@
               </div>
               <!-- 上移 -->
               <div class="specific-menu" v-if="!treeSearchResult">
-                <a href="javascript:;"
-                   :class="{ 'disable': index === 0 }"
-                   @click="shiftNodeUp(item, index)"
-                   @mouseenter="checkUpTips(item, index)"
-                   @mouseleave="closeUpTips(item)">
+                <a
+                  href="javascript:;"
+                  :class="{ 'disable': index === 0 }"
+                  @click="shiftNodeUp(item, index)"
+                  @mouseenter="checkUpTips(item, index)"
+                  @mouseleave="closeUpTips(item)">
                   {{$t('上移')}}
                 </a>
                 <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
@@ -120,11 +127,12 @@
               </div>
               <!-- 下移 -->
               <div class="specific-menu" v-if="!treeSearchResult">
-                <a href="javascript:;"
-                   :class="{ 'disable': index === treeDataList.length - 1 }"
-                   @click="shiftNodeDown(item, index)"
-                   @mouseenter="checkDownTips(item, index)"
-                   @mouseleave="closeDownTips(item)">
+                <a
+                  href="javascript:;"
+                  :class="{ 'disable': index === treeDataList.length - 1 }"
+                  @click="shiftNodeDown(item, index)"
+                  @mouseenter="checkDownTips(item, index)"
+                  @mouseleave="closeDownTips(item)">
                   {{$t('下移')}}
                 </a>
                 <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
@@ -138,25 +146,28 @@
               </div>
               <!-- 复制组织ID -->
               <div class="specific-menu">
-                <a href="javascript:;" v-clipboard:copy="item.id" v-clipboard:success="handleCopyIdSuccess"
-                   v-clipboard:error="handleCopyIdError">
+                <a
+                  href="javascript:;" v-clipboard:copy="item.id" v-clipboard:success="handleCopyIdSuccess"
+                  v-clipboard:error="handleCopyIdError">
                   {{$t('复制组织ID')}}
                 </a>
               </div>
               <!-- 复制组织名称 -->
               <div class="specific-menu">
-                <a href="javascript:;" v-clipboard:copy="item.full_name" v-clipboard:success="handleCopyNameSuccess"
-                   v-clipboard:error="handleCopyNameError">
+                <a
+                  href="javascript:;" v-clipboard:copy="item.full_name" v-clipboard:success="handleCopyNameSuccess"
+                  v-clipboard:error="handleCopyNameError">
                   {{$t('复制组织名称')}}
                 </a>
               </div>
               <!-- 删除 -->
               <div class="specific-menu">
-                <a href="javascript:;"
-                   :class="['delete', { 'delete-disable': item.has_children }]"
-                   @click="deleteDepartment(item, index)"
-                   @mouseenter="checkDeleteTips(item)"
-                   @mouseleave="closeDeleteTips(item)">
+                <a
+                  href="javascript:;"
+                  :class="['delete', { 'delete-disable': item.has_children }]"
+                  @click="deleteDepartment(item, index)"
+                  @mouseenter="checkDeleteTips(item)"
+                  @mouseleave="closeDeleteTips(item)">
                   {{$t('删除')}}
                 </a>
                 <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showDeleteTips }">
@@ -700,7 +711,7 @@ li.tree-first-node {
       height: 32px;
       line-height: initial;
 
-      /deep/ .bk-form-input {
+      ::v-deep .bk-form-input {
         padding-left: 41px;
       }
     }

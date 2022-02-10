@@ -29,18 +29,23 @@ class SettingUpdate(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'value': 'object'
+        'value': 'object',
+        'enabled': 'bool'
     }
 
     attribute_map = {
-        'value': 'value'
+        'value': 'value',
+        'enabled': 'enabled'
     }
 
-    def __init__(self, value=None):  # noqa: E501
+    def __init__(self, value=None, enabled=True):  # noqa: E501
         """SettingUpdate - a model defined in Swagger"""  # noqa: E501
         self._value = None
+        self._enabled = None
         self.discriminator = None
         self.value = value
+        if enabled is not None:
+            self.enabled = enabled
 
     @property
     def value(self):
@@ -64,6 +69,27 @@ class SettingUpdate(object):
             raise ValueError("Invalid value for `value`, must not be `None`")  # noqa: E501
 
         self._value = value
+
+    @property
+    def enabled(self):
+        """Gets the enabled of this SettingUpdate.  # noqa: E501
+
+
+        :return: The enabled of this SettingUpdate.  # noqa: E501
+        :rtype: bool
+        """
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, enabled):
+        """Sets the enabled of this SettingUpdate.
+
+
+        :param enabled: The enabled of this SettingUpdate.  # noqa: E501
+        :type: bool
+        """
+
+        self._enabled = enabled
 
     def to_dict(self):
         """Returns the model properties as a dict"""

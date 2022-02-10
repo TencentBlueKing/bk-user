@@ -45,7 +45,13 @@ const webpackConfig = merge(baseConf, {
               },
             },
           },
-          'sass-loader',
+          {
+            loader: "sass-loader",
+            options: {
+              implementation: require("sass") //使用dart-sass代替node-sass
+            }
+          },
+          // 'sass-loader',
         ],
       },
     ],

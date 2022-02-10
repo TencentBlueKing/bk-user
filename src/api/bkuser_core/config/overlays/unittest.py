@@ -6,7 +6,7 @@ from bkuser_core.config.common.platform import *  # noqa
 from bkuser_core.config.common.storage import *  # noqa
 from bkuser_core.config.common.system import *  # noqa
 
-from bkuser_global.config import get_logging_config_dict
+from bkuser_global.logging import LoggingType, get_logging
 
 DEBUG = True
 
@@ -14,14 +14,7 @@ DEBUG = True
 # 日志设置
 # ===============================================================================
 LOG_LEVEL = "DEBUG"
-LOGGING = get_logging_config_dict(
-    log_level=LOG_LEVEL,
-    logging_dir=LOGGING_DIR,
-    log_class=LOG_CLASS,
-    file_name=APP_ID,
-    package_name="bkuser_core",
-)
-LOGGING["loggers"]["bkuser_core"]["handlers"] = ["console"]
+LOGGING = get_logging(logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_core")
 
 # ==============================================================================
 # Test Ldap
@@ -55,8 +48,3 @@ FLUSH_PROGRESS_BAR = False
 # profiling
 # ==============================================================================
 ENABLE_PROFILING = False
-
-# ==============================================================================
-# SaaS
-# ==============================================================================
-SAAS_URL = urllib.parse.urljoin(BK_PAAS_URL, f"/o/{SAAS_CODE}/")

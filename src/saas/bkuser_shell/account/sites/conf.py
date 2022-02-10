@@ -11,17 +11,17 @@ specific language governing permissions and limitations under the License.
 from django.conf import settings
 
 
-class ConfFixture(object):
+class ConfFixture:
     BACKEND_TYPE = "bk_token"
     USER_BACKEND = "bk_token.backends.TokenBackend"
     LOGIN_REQUIRED_MIDDLEWARE = "bk_token.middlewares.LoginRequiredMiddleware"
     USER_MODEL = "bk_token.models.UserProxy"
 
     CONSOLE_LOGIN_URL = settings.BK_PAAS_URL
-    LOGIN_URL = settings.BK_PAAS_URL + "/login/"
-    LOGIN_PLAIN_URL = settings.BK_PAAS_URL + "/login/plain/"
-    VERIFY_URL = settings.BK_LOGIN_API_URL + "/accounts/is_login/"
-    USER_INFO_URL = settings.BK_LOGIN_API_URL + "/accounts/get_user/"
+    LOGIN_URL = settings.BK_LOGIN_URL
+    LOGIN_PLAIN_URL = settings.BK_LOGIN_URL + "/plain/"
+    VERIFY_URL = settings.BK_LOGIN_API_URL + settings.LOGIN_VERIFY_URI
+    USER_INFO_URL = settings.BK_LOGIN_API_URL + settings.LOGIN_USER_INFO_URI
     HAS_PLAIN = False
     ADD_CROSS_PREFIX = False
     ADD_APP_CODE = True

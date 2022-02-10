@@ -12,6 +12,7 @@ import logging
 import random
 import re
 import string
+import urllib.parse
 from typing import TYPE_CHECKING, Tuple
 
 from bkuser_core.categories.models import ProfileCategory
@@ -179,10 +180,15 @@ def get_username(force_use_raw: bool, category_id: int, username: str, domain: s
 def check_former_passwords(
     instance: "Profile",
     new_password: str,
-    max_history: int = settings.MAX_PASSWORD_HISTORY,
+    max_history: int = settings.DEFAULT_MAX_PASSWORD_HISTORY,
 ) -> bool:
     """Check if new password in last passwords"""
     reset_records = ResetPassword.objects.filter(profile=instance).order_by("-create_time")[:max_history]
     former_passwords = [x.password for x in reset_records]
 
     return new_password in former_passwords
+
+
+def make_passwd_reset_url_by_token(token: str):
+    """make reset"""
+    return urllib.parse.urljoin(settings.SAAS_URL, f"set_password?token={token}")

@@ -17,7 +17,7 @@ class PrincipalTypeEnum(AutoLowerEnum):
     USER = auto()
 
 
-class ActionEnum(AutoLowerEnum):
+class IAMAction(AutoLowerEnum):
 
     # 用户字段
     MANAGE_FIELD = auto()
@@ -29,7 +29,6 @@ class ActionEnum(AutoLowerEnum):
     CREATE_LOCAL_CATEGORY = auto()
     CREATE_LDAP_CATEGORY = auto()
     CREATE_MAD_CATEGORY = auto()
-    CREATE_TOF_CATEGORY = auto()
     CREATE_CUSTOM_CATEGORY = auto()
     MANAGE_CATEGORY = auto()
     VIEW_CATEGORY = auto()
@@ -43,14 +42,13 @@ class ActionEnum(AutoLowerEnum):
     VIEW_DEPARTMENT = auto()
 
     @classmethod
-    def get_action_by_category_type(cls, category_type: str) -> "ActionEnum":
+    def get_action_by_category_type(cls, category_type: str) -> "IAMAction":
         from bkuser_shell.categories.constants import CategoryTypeEnum
 
         return {  # type: ignore
             CategoryTypeEnum.LOCAL.value: cls.CREATE_LOCAL_CATEGORY,
             CategoryTypeEnum.LDAP.value: cls.CREATE_LDAP_CATEGORY,
             CategoryTypeEnum.MAD.value: cls.CREATE_MAD_CATEGORY,
-            CategoryTypeEnum.TOF.value: cls.CREATE_LOCAL_CATEGORY,
         }[category_type]
 
 

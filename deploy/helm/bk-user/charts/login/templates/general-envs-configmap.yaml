@@ -1,0 +1,20 @@
+{{- $namePrefix := include "bk-user.name" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-login-general-envs
+data:
+  DJANGO_SETTINGS_MODULE: "bklogin.config.overlays.prod"
+  # 登录态 Cookie 写入的域名
+  BK_DOMAIN: {{ .Values.global.bkDomain }}
+  BK_LOGIN_HTTP_SCHEMA: {{ .Values.global.bkDomainScheme }}
+  # 统一登录的外部访问域名
+  BK_LOGIN_PUBLIC_ADDR: {{ .Values.bkLoginAddr }}
+  # 用户管理后台API访问地址
+  BK_USERMGR_API_URL: {{ .Values.bkUserApiUrl }}
+  # 与 ESB 的通信凭证，应用(bk_paas) 对应的 bk_app_secret
+  BK_PAAS_SECRET_KEY: {{ .Values.bkPaasSerectKey }}
+  # 32位随机字符串，用于加密登录态票据(bk_token)
+  ENCRYPT_SECRET_KEY: {{ .Values.encryptSecretKey }}
+  # 用于拼接修改密码 URL
+  BK_USERMGR_SAAS_URL: {{ .Values.bkUserUrl }}

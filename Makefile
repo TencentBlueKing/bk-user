@@ -1,4 +1,5 @@
 version ?= "development"
+login_version ?= "development"
 values ?=
 image_repo ?= "ccr.ccs.tencentyun.com/bk.io"
 chart_repo ?=
@@ -6,12 +7,20 @@ namespace ?= "bk-user"
 test_release_name ?= "bk-user-test"
 
 generate-release-md:
-	cd src/saas/ && poetry run python manage.py generate_release_md > release.md
+	rm docs/changelogs/*.md || true
+	cd src/saas/ && mkdir -p changelogs/ && poetry run python manage.py generate_release_md
+	mv src/saas/changelogs docs/
 	mv src/saas/release.md docs/
 
 link:
+	rm src/api/bkuser_global || true
+	rm src/saas/bkuser_global || true
+	rm src/login/bkuser_global || true
+	rm src/saas/bkuser_sdk || true
+
 	ln -s ${PWD}/src/bkuser_global src/api || true
 	ln -s ${PWD}/src/bkuser_global src/saas || true
+	ln -s ${PWD}/src/bkuser_global src/login || true
 	ln -s ${PWD}/src/sdk/bkuser_sdk src/saas || true
 
 generate-sdk:
@@ -23,17 +32,23 @@ build-api:
 build-saas:
 	docker build -f src/saas/Dockerfile . -t ${image_repo}/bk-user-saas:${version}
 
-build-all: build-api build-saas
+build-login:
+	docker build -f src/login/Dockerfile . -t ${image_repo}/bk-login:${login_version}
+
+build-all: build-api build-saas build-login
 
 push:
 	docker push ${image_repo}/bk-user-api:${version}
 	docker push ${image_repo}/bk-user-saas:${version}
+	docker push ${image_repo}/bk-login:${login_version}
 
 helm-sync:
 	mkdir -p deploy/helm/api/templates/
 	mkdir -p deploy/helm/saas/templates/
+	mkdir -p deploy/helm/login/templates/
 	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/api/templates/ || true
 	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/saas/templates/ || true
+	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/login/templates/ || true
 
 	ln -s ${PWD}/deploy/helm/chartty/c_*.tpl deploy/helm/bk-user-stack/templates/ || true
 

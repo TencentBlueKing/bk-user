@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper
 from bkuser_core.categories.plugins.ldap.client import LDAPClient
 from bkuser_core.categories.plugins.ldap.exceptions import FetchUserMetaInfoFailed
-from bkuser_core.categories.plugins.ldap.syncer import SETTING_FIELD_MAP
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.utils.encoding import force_str
 
@@ -19,7 +18,7 @@ from django.utils.encoding import force_str
 class LoginHandler:
     @staticmethod
     def fetch_username(field_fetcher, user_info: dict) -> str:
-        return force_str(field_fetcher.get_field(user_meta=user_info["raw_attributes"], field_name="username"))
+        return force_str(field_fetcher.get_value(field_name="username", user_meta=user_info["raw_attributes"]))
 
     @staticmethod
     def fetch_dn(user_info: dict) -> str:
@@ -29,7 +28,7 @@ class LoginHandler:
         category_id = profile.category_id
         config_loader = ConfigProvider(category_id=category_id)
         client = LDAPClient(config_loader)
-        field_fetcher = ProfileFieldMapper(config_loader, SETTING_FIELD_MAP)
+        field_fetcher = ProfileFieldMapper(config_loader)
 
         users = client.search(
             object_class=config_loader["user_class"],

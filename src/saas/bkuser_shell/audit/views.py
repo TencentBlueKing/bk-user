@@ -12,12 +12,12 @@ import logging
 import math
 
 import bkuser_sdk
+from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.audit import serializers
 from bkuser_shell.audit.constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
-from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.export import ProfileExcelExporter
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from django.conf import settings
 from django.utils.timezone import make_aware
 from openpyxl import load_workbook
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class AuditLogViewSet(BkUserApiViewSet):
-    ACTION_ID = ActionEnum.VIEW_AUDIT.value
+    ACTION_ID = IAMAction.VIEW_AUDIT.value
 
     def _get_categories_map(self, request) -> dict:
         """Get categories id map"""

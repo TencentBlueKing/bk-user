@@ -13,14 +13,7 @@ from typing import Dict, List
 from uuid import UUID, uuid4
 
 from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.categories.constants import (
-    TIMEOUT_THRESHOLD,
-    CategoryStatus,
-    CategoryType,
-    SyncStep,
-    SyncTaskStatus,
-    SyncTaskType,
-)
+from bkuser_core.categories.constants import TIMEOUT_THRESHOLD, CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.db_managers import ProfileCategoryManager
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError
 from bkuser_core.common.models import TimestampedModel
@@ -38,7 +31,7 @@ from django_celery_beat.models import PeriodicTask
 class ProfileCategory(TimestampedModel):
     """用户目录"""
 
-    type = models.CharField(verbose_name="类型", max_length=32, choices=CategoryType.get_choices())
+    type = models.CharField(verbose_name="类型", max_length=32)
     description = models.TextField("描述文字", null=True, blank=True)
     display_name = models.CharField(verbose_name="展示名称", max_length=64)
     domain = models.CharField(verbose_name="登陆域", max_length=64, db_index=True, unique=True)
@@ -118,7 +111,7 @@ class ProfileCategory(TimestampedModel):
     def get_unfilled_settings(self):
         """获取未就绪的配置"""
         required_metas = self.get_required_metas()
-        configured_meta_ids = self.settings.filter(enabled=True).values_list("meta", flat=True)
+        configured_meta_ids = self.settings.all().values_list("meta", flat=True)
         return required_metas.exclude(id__in=configured_meta_ids)
 
     def mark_synced(self):
@@ -144,7 +137,7 @@ class ProfileCategory(TimestampedModel):
 class SyncTaskManager(models.Manager):
     def register_task(
         self, category: ProfileCategory, operator: str, type_: SyncTaskType = SyncTaskType.MANUAL
-    ) -> 'SyncTask':
+    ) -> "SyncTask":
         qs = self.filter(category=category, status=SyncTaskStatus.RUNNING.value).order_by("-create_time")
         running = qs.first()
         if not running:
@@ -164,7 +157,7 @@ class SyncTaskManager(models.Manager):
 
 
 class SyncTask(TimestampedModel):
-    id = models.UUIDField('UUID', default=uuid4, primary_key=True, editable=False, auto_created=True, unique=True)
+    id = models.UUIDField("UUID", default=uuid4, primary_key=True, editable=False, auto_created=True, unique=True)
     category = models.ForeignKey(ProfileCategory, verbose_name="用户目录", on_delete=models.CASCADE, db_index=True)
     status = models.CharField(
         verbose_name="状态", max_length=16, choices=SyncTaskStatus.get_choices(), default=SyncTaskStatus.RUNNING.value
@@ -173,20 +166,13 @@ class SyncTask(TimestampedModel):
         verbose_name="触发类型", max_length=16, choices=SyncTaskType.get_choices(), default=SyncTaskType.MANUAL.value
     )
     operator = models.CharField(max_length=255, verbose_name="操作人", default="nobody")
+    retried_count = models.IntegerField(verbose_name="重试次数", default=0)
 
     objects = SyncTaskManager()
 
     @property
     def required_time(self) -> datetime.timedelta:
         return self.update_time - self.create_time
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_val is not None:
-            self.status = SyncTaskStatus.FAILED.value
-            self.save(update_fields=["status", "update_time"])
 
     @property
     def progresses(self):
@@ -196,8 +182,8 @@ class SyncTask(TimestampedModel):
 
 
 class SyncProgressManager(models.Manager):
-    def init_progresses(self, category: ProfileCategory, task_id: UUID) -> Dict[SyncStep, 'SyncProgress']:
-        progresses: Dict[SyncStep, 'SyncProgress'] = {}
+    def init_progresses(self, category: ProfileCategory, task_id: UUID) -> Dict[SyncStep, "SyncProgress"]:
+        progresses: Dict[SyncStep, "SyncProgress"] = {}
         for step in [
             SyncStep.DEPARTMENTS,
             SyncStep.USERS,
@@ -211,7 +197,7 @@ class SyncProgressManager(models.Manager):
 
 
 class SyncProgress(TimestampedModel):
-    task_id = models.UUIDField(db_index=True, verbose_name='任务id')
+    task_id = models.UUIDField(db_index=True, verbose_name="任务id")
     category = models.ForeignKey(ProfileCategory, verbose_name="用户目录", on_delete=models.CASCADE)
     step = models.CharField(verbose_name="同步步骤", max_length=32, choices=SyncStep.get_choices())
     status = models.CharField(

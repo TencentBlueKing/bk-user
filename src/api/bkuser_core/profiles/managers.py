@@ -79,11 +79,10 @@ class DynamicFieldInfoManager(models.Manager):
 
 
 class ProfileTokenManager(models.Manager):
-    def create(self, profile):
+    def create(self, profile, token_expire_seconds: int = settings.DEFAULT_TOKEN_EXPIRE_SECONDS):
         token = secrets.token_urlsafe(32)
-
         # TODO: use another way generate token, - is not safe for swagger sdk, still not know why
         token = token.replace("-", "0")
 
-        expire_time = now() + datetime.timedelta(seconds=settings.DEFAULT_TOKEN_EXPIRE_SECONDS)
+        expire_time = now() + datetime.timedelta(seconds=token_expire_seconds)
         return super().create(token=token, profile=profile, expire_time=expire_time)

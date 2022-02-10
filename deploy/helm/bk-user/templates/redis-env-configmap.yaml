@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-user-api-redis-env
+  labels:
+    {{- include "bk-user.labels" . | nindent 4 }}
+data:
+  {{- if .Values.redis.enabled }}
+  CELERY_BROKER_URL: {{ include "bk-user.builtinRedisBrokerUrl" . }}
+  CELERY_RESULT_BACKEND: {{ include "bk-user.builtinRedisBrokerUrl" . }}
+  {{- else }}
+  CELERY_BROKER_URL: {{ .Values.api.celeryBrokerUrl | default (include "bk-user.apiExternalRedisBrokerUrl" .) }}
+  CELERY_RESULT_BACKEND: {{ .Values.api.celeryResultBackend | default (include "bk-user.apiExternalRedisBrokerUrl" .) }}
+  {{- end -}}

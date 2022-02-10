@@ -69,10 +69,16 @@
             <div class="td-container" v-else-if="row.status === 'failed'">
               <span class="fail"></span>
               <span v-bk-tooltips="$t('同步操作失败，请在用户管理后台 API 日志中查询详情')">{{$t('失败')}}</span>
+              <span v-if="row.retried_count !== 0">(已重试{{row.retried_count}}次)</span>
             </div>
             <div class="td-container" v-else-if="row.status === 'running'">
               <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
               <span class="syncing">{{$t('同步中')}}</span>
+            </div>
+            <div class="td-container" v-else-if="row.status === 'retrying'">
+              <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
+              <span v-if="row.retried_count !== 0">第{{row.retried_count}}次</span>
+              <span class="syncing">{{$t('失败重试中')}}</span>
             </div>
           </template>
         </bk-table-column>
@@ -170,13 +176,13 @@ export default {
       if (60 <= row.required_time && row.required_time < 3600) {
         const time = row.required_time / 60;
         const min = time.toString().split('.')[0];
-        const sec = parseInt(time.toString().split('.')[1][0]) * 6;
+        const sec = parseInt(time.toString().split('.')[1][0], 10) * 6;
         return `${min}${this.$t('分钟')}${sec}${this.$t('秒')}`;
       }
       if (3600 <= row.required_time) {
         const time = row.required_time / 3600;
         const hour = time.toString().split('.')[0];
-        const min = parseInt(time.toString().split('.')[1][0]) * 6;
+        const min = parseInt(time.toString().split('.')[1][0], 10) * 6;
         return `${hour}${this.$t('小时')}${min}${this.$t('分钟')}`;
       }
     },

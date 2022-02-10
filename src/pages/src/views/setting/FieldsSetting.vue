@@ -21,9 +21,10 @@
   -->
 <template>
   <div class="info-set-wrapper">
-    <bk-button theme="primary" class="king-button"
-               v-cursor="{ active: Boolean(authData) }"
-               @click="addField">
+    <bk-button
+      theme="primary" class="king-button"
+      v-cursor="{ active: Boolean(authData) }"
+      @click="addField">
       {{$t('添加字段')}}
     </bk-button>
 
@@ -87,15 +88,18 @@
                 <td>
                   <div class="td-container">
                     <!-- 内置字段（除了potion）不可编辑 -->
-                    <span v-if="item.builtin && item.key !== 'position'"
-                          class="name operate gray" v-bk-tooltips="editTips">{{$t('编辑')}}
+                    <span
+                      v-if="item.builtin && item.key !== 'position'"
+                      class="name operate gray" v-bk-tooltips="editTips">{{$t('编辑')}}
                     </span>
-                    <span v-else class="name operate" v-cursor="{ active: Boolean(authData) }"
-                          @click="editorField(item)">{{$t('编辑')}}
+                    <span
+                      v-else class="name operate" v-cursor="{ active: Boolean(authData) }"
+                      @click="editorField(item)">{{$t('编辑')}}
                     </span>
                     <span v-if="item.builtin" class="name operate gray" v-bk-tooltips="deleteTips">{{$t('删除')}}</span>
-                    <span v-else class="name operate" v-cursor="{ active: Boolean(authData) }"
-                          @click="deleteField(item)">{{$t('删除')}}
+                    <span
+                      v-else class="name operate" v-cursor="{ active: Boolean(authData) }"
+                      @click="deleteField(item)">{{$t('删除')}}
                     </span>
                   </div>
                 </td>
@@ -107,13 +111,14 @@
     </div>
 
     <!-- 添加字段的侧边栏 -->
-    <bk-sideslider class="king-sideslider"
-                   :show-mask="false"
-                   :quick-close="false"
-                   :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
-                   :is-show.sync="fieldData.isShow"
-                   :title="fieldData.title"
-                   :width="fieldData.width">
+    <bk-sideslider
+      class="king-sideslider"
+      :show-mask="false"
+      :quick-close="false"
+      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
+      :is-show.sync="fieldData.isShow"
+      :title="fieldData.title"
+      :width="fieldData.width">
       <div slot="content" class="member-content" v-if="fieldData.isShow">
         <FieldsAdd
           :set-type="setType"

@@ -22,8 +22,9 @@
 <template>
   <div class="catalog-operation-container">
     <div class="steps">
-      <bk-steps :steps="steps" :cur-step.sync="current"
-                direction="vertical" class="king-steps add-local-step">
+      <bk-steps
+        :steps="steps" :cur-step.sync="current"
+        direction="vertical" class="king-steps add-local-step">
       </bk-steps>
     </div>
     <div class="detail" v-bkloading="{ isLoading: isLoading }">
@@ -80,7 +81,7 @@ export default {
     };
   },
   created() {
-    this.passportInfo = JSON.parse(JSON.stringify(this.$store.state.catalog.defaults.password));
+    this.passportInfo = this.$convertPassportInfoObject(this.$store.state.catalog.defaults.password);
   },
   methods: {
     // 上一步
@@ -120,7 +121,7 @@ export default {
         this.isLoading = true;
         await this.$store.dispatch('catalog/ajaxPostPassport', {
           id: this.catalogId,
-          data: this.$convertObjectToArray(this.passportInfo),
+          data: this.$convertPassportInfoArray(this.passportInfo),
         });
         this.$bus.$emit('updateCatalogList');
         this.messageSuccess(this.$t('保存成功'));

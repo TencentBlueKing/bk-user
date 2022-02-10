@@ -24,20 +24,23 @@
     <h1 class="page-title">{{$t('新增用户目录')}}</h1>
     <p class="description">{{$t('选择目录类型')}}</p>
     <ul class="catalog-list">
-      <li v-for="(item, index) in catalogMetas" :key="index" v-cursor="{ active: Boolean(!item.authorized) }"
-          :class="['catalog-item', !item.authorized && 'has-not-authority']" @click="handleSelectItem(item)">
+      <li
+        v-for="(item, index) in catalogMetas" :key="index" v-cursor="{ active: Boolean(!item.authorized) }"
+        :class="['catalog-item', !item.authorized && 'has-not-authority']" @click="handleSelectItem(item)">
         <bk-radio :checked="selectedItem === item" :disabled="!item.authorized"></bk-radio>
         <span class="label">{{item.name}}</span>
         <span class="detail">{{item.description}}</span>
-        <bk-button v-if="!item.authorized" text style="margin-left: 8px;"
-                   @click="applyAuth(item)">{{$t('前往申请权限')}}
+        <bk-button
+          v-if="!item.authorized" text style="margin-left: 8px;"
+          @click="applyAuth(item)">{{$t('前往申请权限')}}
         </bk-button>
       </li>
     </ul>
     <div class="button-container">
       <bk-button @click="handleCancel">{{$t('取消')}}</bk-button>
-      <bk-button class="king-button" theme="primary"
-                 :disabled="!selectedItem" @click="handleContinue">{{$t('继续')}}
+      <bk-button
+        class="king-button" theme="primary"
+        :disabled="!selectedItem" @click="handleContinue">{{$t('继续')}}
       </bk-button>
     </div>
   </div>
@@ -57,12 +60,11 @@ export default {
     };
   },
   created() {
-    for (const item of this.catalogMetas) {
+    this.catalogMetas.map((item) => {
       if (item.authorized) {
         this.selectedItem = item;
-        break;
       }
-    }
+    });
   },
   methods: {
     handleSelectItem(item) {

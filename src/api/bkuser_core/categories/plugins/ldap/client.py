@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List
 
 import ldap3
-from bkuser_core.categories.loader import get_plugin_by_name
 from django.conf import settings
 from ldap3 import ALL, SIMPLE, Connection, Server
 
@@ -97,7 +96,7 @@ class LDAPClient:
             search_filter=search_filter,
             get_operational_attributes=True,
             attributes=attributes or [],
-            paged_size=get_plugin_by_name("ldap").extra_config["ldap_max_paged_size"],
+            paged_size=self.config_provider.get("ldap_max_paged_size"),
             generator=False,
         )
 

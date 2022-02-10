@@ -9,9 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from bkuser_core.common.serializers import is_custom_fields_enabled
+from bkuser_core.apis.v2.serializers import is_custom_fields_enabled
 from bkuser_core.departments.serializers import DepartmentAddProfilesSerializer, DepartmentSerializer
-from bkuser_core.profiles.serializers import ProfileSerializer
+from bkuser_core.profiles.v2.serializers import ProfileSerializer
 
 
 class TestSerializers:

@@ -19,7 +19,7 @@ from . import env
 # 最大密码长度（明文）
 PASSWORD_MAX_LENGTH = 32
 # 重复密码最大历史数量
-MAX_PASSWORD_HISTORY = 3
+DEFAULT_MAX_PASSWORD_HISTORY = 3
 # 用于加密密码历史
 try:
     # there is a bug in django-environ, the default in bytes() is unused.
@@ -48,8 +48,10 @@ OPERATOR_HEADER = "HTTP_X_BKUSER_OPERATOR"
 # 最大的自定义字段数量（暂未启用）
 MAX_DYNAMIC_FIELDS = 20
 
-# 默认用户 Token 的过期时间
+# 默认用户 Token 的过期时间(用于发送邮件)
 DEFAULT_TOKEN_EXPIRE_SECONDS = 12 * 60 * 60
+# 页面临时生成用户 Token
+PAGE_TOKEN_EXPIRE_SECONDS = 5 * 60
 
 # 国际号码段默认值
 DEFAULT_COUNTRY_CODE = "86"
@@ -63,6 +65,11 @@ FAKE_SEND_EMAIL = env.bool("FAKE_SEND_EMAIL", default=False)
 
 # 最大分页数量
 MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=2000)
+
+# 登录次数统计时间周期, 默认为一个月
+LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)
+
+DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
 # ==============================================================================
 # 开发调试
 # ==============================================================================
@@ -71,3 +78,9 @@ ENABLE_PROFILING = False
 
 # 是否使用进度条(本地开发方便)
 USE_PROGRESS_BAR = False
+
+# ==============================================================================
+# 数据同步
+# ==============================================================================
+TASK_MAX_RETRIES = env.int("TASK_MAX_RETRIES", default=3)
+RETRY_BACKOFF = env.int("RETRY_BACKOFF", default=30)

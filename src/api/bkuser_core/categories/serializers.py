@@ -10,10 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
+from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer, DurationTotalSecondField
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories import constants
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.common.serializers import CustomFieldsModelSerializer, DurationTotalSecondField
 from bkuser_core.profiles.validators import validate_domain
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.serializers import (
@@ -98,7 +98,8 @@ class CategoryTestFetchDataSerializer(Serializer):
     basic_pull_node = CharField()
     user_filter = CharField()
     organization_class = CharField()
-    user_group_filter = CharField()
+    user_group_filter = CharField(required=False, allow_blank=True, allow_null=True)
+    user_member_of = CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class SyncTaskSerializer(Serializer):
@@ -109,6 +110,7 @@ class SyncTaskSerializer(Serializer):
     operator = CharField(help_text="操作人")
     create_time = DateTimeField(help_text="开始时间")
     required_time = DurationTotalSecondField(help_text="耗时")
+    retried_count = IntegerField(help_text="重试次数")
 
 
 class SyncTaskProcessSerializer(Serializer):

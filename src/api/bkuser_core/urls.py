@@ -10,13 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser_core.common.serializers import patch_datetime_field
 from django.conf import settings
 from django.conf.urls import include, url
 from django.utils.module_loading import import_module
-
-patch_datetime_field()
-
 
 logger = logging.getLogger(__name__)
 

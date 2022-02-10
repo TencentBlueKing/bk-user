@@ -12,9 +12,9 @@ import logging
 
 import bkuser_sdk
 from bkuser_sdk.rest import ApiException
-from bkuser_shell.bkiam.constants import ActionEnum
+from bkuser_shell.apis.viewset import BkUserApiViewSet
+from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from bkuser_shell.config_center.serializers import ProfileFieldsSerializer, SettingMetaSerializer, SettingSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -32,7 +32,7 @@ class FieldsViewSet(BkUserApiViewSet):
         IsAuthenticated,
     ]
 
-    ACTION_ID = ActionEnum.MANAGE_FIELD.value
+    ACTION_ID = IAMAction.MANAGE_FIELD.value
 
     def manageable(self, request):
         """检测是否能够管理用户字段"""
@@ -214,7 +214,7 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
         # TODO:  后续改为批量接口
         result = []
         for setting_info in validated_data:
-            body = {"value": setting_info["value"]}
+            body = {"value": setting_info["value"], "enabled": setting_info["enabled"]}
             try:
                 setting_id = setting_instances[setting_info["key"]].id
             except KeyError:
@@ -224,7 +224,7 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
             try:
                 api_response = api_instance.v2_settings_partial_update(body=body, lookup_value=setting_id)
             except ApiException:
-                logger.exception("更新 Setting<%s> 失败", setting_info["id"])
+                logger.exception("在目录<%s>中更新 Setting<%s>-<%s> 失败", category_id, setting_info["key"], setting_id)
                 continue
 
             result.append(api_response)

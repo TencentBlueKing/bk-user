@@ -17,7 +17,6 @@ class CategoryTypeEnum(Enum):
     LOCAL = "local"
     MAD = "mad"
     LDAP = "ldap"
-    TOF = "tof"
     CUSTOM = "custom"
     # 特殊的类型，仅在未解耦前桥接
     PLUGGABLE = "pluggable"
@@ -26,7 +25,6 @@ class CategoryTypeEnum(Enum):
         (LOCAL, _("本地目录")),
         (MAD, _("Microsoft Active Directory")),
         (LDAP, _("LDAP")),
-        (TOF, _("TOF 目录")),
         (CUSTOM, _("自定义目录")),
         (PLUGGABLE, "可插拔目录"),
     )

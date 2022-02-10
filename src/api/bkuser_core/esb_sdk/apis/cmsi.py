@@ -29,10 +29,10 @@ class CollectionsCMSI(object):
             path="/api/c/compapi{bk_api_ver}/cmsi/send_mp_weixin/",
             description=u"发送公众号微信消息",
         )
-        self.send_qy_weixin = ComponentAPI(
+        self.send_rtx = ComponentAPI(
             client=self.client,
             method="POST",
-            path="/api/c/compapi{bk_api_ver}/cmsi/send_qy_weixin/",
+            path="/api/c/compapi{bk_api_ver}/cmsi/send_rtx/",
             description=u"发送企业微信",
         )
         self.send_sms = ComponentAPI(

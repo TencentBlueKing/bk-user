@@ -9,8 +9,10 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django import forms
+from django.conf import settings
 
 
 class AuthenticationForm(forms.Form):
-    # bk_token format: KH7P4-VSFi_nOEoV3kj0ytcs0uZnGOegIBLV-eM3rw8
-    bk_token = forms.CharField()
+    """动态生成校验表单"""
+
+    locals()[settings.TOKEN_COOKIE_NAME] = forms.CharField()

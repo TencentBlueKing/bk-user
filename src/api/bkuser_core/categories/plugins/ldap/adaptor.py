@@ -8,13 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, NamedTuple, Optional
 
+from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
 from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.user_settings.loader import ConfigProvider
 from django.utils.encoding import force_str
 from ldap3.utils import dn as dn_utils
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -22,56 +26,99 @@ class ProfileFieldMapper:
     """从 ldap 对象属性中获取用户字段"""
 
     config_loader: ConfigProvider
-    setting_field_map: dict
+    embed_fields = [
+        "username",
+        "display_name",
+        "email",
+        "telephone",
+    ]
+    dynamic_fields: List = field(default_factory=list)
 
-    def get_field(self, user_meta: Dict[str, List[bytes]], field_name: str, raise_exception: bool = False) -> str:
+    def __post_init__(self):
+        self.dynamic_fields_mapping = self.config_loader.get(DYNAMIC_FIELDS_SETTING_KEY)
+
+        self.dynamic_fields = list(self.dynamic_fields_mapping.keys()) if self.dynamic_fields_mapping else []
+
+    def get_value(
+        self, field_name: str, user_meta: Dict[str, List[bytes]], remain_raw: bool = False, dynamic_field: bool = False
+    ) -> Any:
+        """通过 field_name 从 ldap 数据中获取具体值"""
+
+        # 获取自定义字段对应的属性值
+        if dynamic_field:
+            ldap_field_name = field_name
+            if ldap_field_name not in self.dynamic_fields_mapping.values():
+                logger.info("no config[%s] in configs of dynamic_fields_mapping", field_name)
+                return ""
+
+        else:
+            # 从目录配置中获取 字段名
+            ldap_field_name = self.config_loader.get(field_name)
+            if not ldap_field_name:
+                logger.info("no config[%s] in configs of category", field_name)
+                return ""
+
+        # 1. 通过字段名，获取具体值
+        if ldap_field_name not in user_meta or not user_meta[ldap_field_name]:
+            logger.info("field[%s] is missing in raw attributes of user data from ldap", field_name)
+            return ""
+
+        # 2. 类似 memberOf 字段，将会返回原始列表
+        if remain_raw:
+            return user_meta[ldap_field_name]
+
+        return force_str(user_meta[ldap_field_name][0])
+
+    def get_values(self, user_meta: Dict[str, List[bytes]]) -> Dict[str, Any]:
         """根据字段映射关系, 从 ldap 中获取 `field_name` 的值"""
-        try:
-            setting_name = self.setting_field_map[field_name]
-        except KeyError:
-            if raise_exception:
-                raise ValueError("该用户字段没有在配置中有对应项，无法同步")
-            return ""
 
-        try:
-            ldap_field_name = self.config_loader[setting_name]
-        except KeyError:
-            if raise_exception:
-                raise ValueError(f"用户目录配置中缺失字段 {setting_name}")
-            return ""
+        values = {}
+        for field_name in self.embed_fields:
+            values.update({field_name: self.get_value(field_name, user_meta)})
 
-        try:
-            if user_meta[ldap_field_name]:
-                return force_str(user_meta[ldap_field_name][0])
+        return values
 
-            return ""
-        except KeyError:
-            if raise_exception:
-                raise ValueError(f"搜索数据中没有对应的字段 {ldap_field_name}")
-            return ""
+    def get_dynamic_values(self, user_meta: Dict[str, List[bytes]]) -> Dict[str, Any]:
+        """获取自定义字段 在ldap中的对应值"""
+        values = {}
+
+        if self.dynamic_fields:
+            values.update(
+                {
+                    field_name: self.get_value(
+                        field_name=self.dynamic_fields_mapping[field_name], user_meta=user_meta, dynamic_field=True
+                    )
+                    for field_name in self.dynamic_fields
+                }
+            )
+
+        return values
 
     def get_user_attributes(self) -> list:
         """获取远端属性名列表"""
-        return [self.config_loader[x] for x in self.setting_field_map.values() if self.config_loader[x]]
+        user_attributes = [self.config_loader[x] for x in self.embed_fields if self.config_loader.get(x)]
+        user_attributes.extend(
+            [self.dynamic_fields_mapping[x] for x in self.dynamic_fields if self.dynamic_fields_mapping.get(x)]
+        )
+
+        return user_attributes
 
 
 def user_adapter(
     code: str, user_meta: Dict[str, Any], field_mapper: ProfileFieldMapper, restrict_types: List[str]
 ) -> LdapUserProfile:
-    groups = user_meta["attributes"][field_mapper.config_loader["user_member_of"]]
+    groups = field_mapper.get_value("user_member_of", user_meta["raw_attributes"], True) or []
 
     return LdapUserProfile(
-        username=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="username"),
-        email=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="email"),
-        telephone=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="telephone"),
-        display_name=field_mapper.get_field(user_meta=user_meta["raw_attributes"], field_name="display_name"),
+        **field_mapper.get_values(user_meta["raw_attributes"]),
         code=code,
+        extras=field_mapper.get_dynamic_values(user_meta["raw_attributes"]),
         # TODO: 完成转换 departments 的逻辑
         departments=[
             # 根据约定, dn 中除去第一个成分以外的部分即为用户所在的部门, 因此需要取 [1:]
             list(reversed(parse_dn_value_list(user_meta["dn"], restrict_types)[1:])),
             # 用户与用户组之间的关系
-            *[list(reversed(parse_dn_value_list(group, restrict_types))) for group in groups],
+            *[list(reversed(parse_dn_value_list(force_str(group), restrict_types))) for group in groups],
         ],
     )
 

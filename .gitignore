@@ -203,6 +203,7 @@ src/pages/index-dev.html
 # ignore global code
 src/api/bkuser_global
 src/saas/bkuser_global
+src/login/bkuser_global
 # sdk
 src/saas/bkuser_sdk
 
@@ -220,12 +221,15 @@ src/pages/dist/
 /poetry.lock
 
 # helm
-deploy/helm/*/charts/
+deploy/helm/bk-user/charts/api/charts/
+deploy/helm/bk-user/charts/saas/charts/
+deploy/helm/bk-user/charts/login/charts/
 deploy/helm/local_values.yaml
 deploy/helm/dist/
 
 deploy/helm/api/templates/c_*.*
 deploy/helm/saas/templates/c_*.*
+deploy/helm/login/templates/c_*.*
 deploy/helm/bk-user-stack/templates/c_*.*
 
 # local hooks

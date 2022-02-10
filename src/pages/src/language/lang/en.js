@@ -350,6 +350,7 @@ export default {
   数据更新记录: 'Data update record',
   日记详细: 'Log in detail',
   同步中: 'In the synchronous',
+  失败重试中: 'Retrying after failed',
   用户数据更新: 'User Data Update',
   组织数据更新: 'Organizing data updates',
   用户间关系数据更新: 'Update relationship data between users',
@@ -385,4 +386,7 @@ export default {
   三个月: 'three months',
   '审计日志为空, 无法导出': 'the audit log is empty and cannot be exported',
   请输入数字: 'Please enter a number',
+  蓝鲸用户管理字段: 'Blue Whale User management field',
+  对应: 'The corresponding',
+  目录字段: 'Category field',
 };

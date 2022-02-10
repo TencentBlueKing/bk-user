@@ -36,7 +36,6 @@ class CategoryType(AutoLowerEnum):
     LOCAL = auto()
     MAD = auto()
     LDAP = auto()
-    TOF = auto()
     CUSTOM = auto()
     # 特殊的类型，仅在未解耦前桥接
     PLUGGABLE = auto()
@@ -45,7 +44,6 @@ class CategoryType(AutoLowerEnum):
         (LOCAL, _("本地目录")),
         (MAD, _("Microsoft Active Directory")),
         (LDAP, _("OpenLDAP")),
-        (TOF, _("TOF")),
         (CUSTOM, "自定义目录"),
         (PLUGGABLE, "可插拔目录"),
     )
@@ -56,12 +54,10 @@ class CategoryType(AutoLowerEnum):
             cls.LOCAL: _("本地支持用户的新增、删除、编辑、查询，以及用户的登录认证。"),
             cls.MAD: _("支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证。"),
             cls.LDAP: _("支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"),
-            cls.TOF: _("支持 TOF 信息同步"),
             cls.CUSTOM: _("支持对接任意符合自定义数据拉取协议的用户系统。"),
             cls.LOCAL.value: _("本地支持用户的新增、删除、编辑、查询，以及用户的登录认证。"),
             cls.MAD.value: _("支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证。"),
             cls.LDAP.value: _("支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"),
-            cls.TOF.value: _("支持 TOF 信息同步"),
             cls.CUSTOM.value: _("支持对接任意符合自定义数据拉取协议的用户系统。"),
         }
         return _map[value]
@@ -92,5 +88,6 @@ class SyncTaskStatus(AutoLowerEnum):
     SUCCESSFUL = auto()
     FAILED = auto()
     RUNNING = auto()
+    RETRYING = auto()
 
-    _choices_labels = ((SUCCESSFUL, _("成功")), (FAILED, _("失败")), (RUNNING, _("同步中")))
+    _choices_labels = ((SUCCESSFUL, _("成功")), (FAILED, _("失败")), (RUNNING, _("同步中")), (RETRYING, _("失败重试中")))

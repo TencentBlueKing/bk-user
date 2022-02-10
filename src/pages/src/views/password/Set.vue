@@ -34,18 +34,21 @@
               <i class="icon icon-user-exclamation-circle-shape"></i>
               <span class="text">{{errorText}}</span>
             </p>
-            <input type="password"
-                   :class="['select-text', { 'input-error': isError }]"
-                   :placeholder="$t('请输入新密码')"
-                   v-model="password"
-                   @focus="isError = false" />
-            <input type="password"
-                   :class="['select-text', { 'input-error': isError }]"
-                   :placeholder="$t('请再次确认新密码')"
-                   v-model="confirmPassword"
-                   @focus="isError = false" />
-            <bk-button theme="primary" class="submit"
-                       :disabled="!password || !confirmPassword" @click="handlePush">{{$t('提交')}}</bk-button>
+            <input
+              type="password"
+              :class="['select-text', { 'input-error': isError }]"
+              :placeholder="$t('请输入新密码')"
+              v-model="password"
+              @focus="isError = false" />
+            <input
+              type="password"
+              :class="['select-text', { 'input-error': isError }]"
+              :placeholder="$t('请再次确认新密码')"
+              v-model="confirmPassword"
+              @focus="isError = false" />
+            <bk-button
+              theme="primary" class="submit"
+              :disabled="!password || !confirmPassword" @click="handlePush">{{$t('提交')}}</bk-button>
           </div>
           <div class="reset-content" v-if="hasSet === true">
             <h4 class="common-title">{{$t('密码修改成功')}}</h4>
@@ -56,11 +59,12 @@
       </div>
     </div>
     <div class="bk-open-set-password">
-      <bk-dialog width="440"
-                 header-position="left"
-                 v-model="successDialog.isShow"
-                 :title="successDialog.title"
-                 @confirm="register">
+      <bk-dialog
+        width="440"
+        header-position="left"
+        v-model="successDialog.isShow"
+        :title="successDialog.title"
+        @confirm="register">
         <div style="min-height: 20px;">
           <p class="text" style="margin: 0 0 18px 0;">{{$t('点击确定后将跳到蓝鲸登录页面')}}</p>
         </div>
@@ -70,7 +74,9 @@
 </template>
 
 <script>
+const Base64 = require('js-base64').Base64;
 export default {
+  name: 'SetBox',
   data() {
     return {
       // 密码是否已经设置成功
@@ -114,7 +120,7 @@ export default {
         }
         const sureParam = {
           token: this.$route.query.token,
-          password: this.password.trim(),
+          password: Base64.encode(this.password.trim()),
         };
         await this.$store.dispatch('password/setByToken', sureParam);
         this.successDialog.isShow = true;

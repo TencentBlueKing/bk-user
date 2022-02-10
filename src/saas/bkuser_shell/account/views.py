@@ -8,8 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.error_codes import error_codes
-from bkuser_shell.common.viewset import BkUserApiViewSet
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.template.response import TemplateResponse

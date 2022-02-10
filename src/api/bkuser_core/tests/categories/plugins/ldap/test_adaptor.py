@@ -191,6 +191,7 @@ def test_parse_dn_tree(dn, restrict_types, expected):
                     ["com", "center", "Users", "Schema Admins"],
                     ["com", "center", "Builtin", "Administrators"],
                 ],
+                extras={},
             ),
         ),
         (
@@ -222,6 +223,7 @@ def test_parse_dn_tree(dn, restrict_types, expected):
                     ["Users"],
                     ["Builtin", "Guests"],
                 ],
+                extras={},
             ),
         ),
     ],

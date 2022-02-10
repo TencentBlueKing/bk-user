@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from . import env
 from .django_basic import MEDIA_ROOT
 from .platform import BK_PAAS_URL
 
@@ -21,6 +22,11 @@ LOGIN_EXEMPT_WHITE_LIST = (
     r"api/footer/$",
     r"/metrics$",
 )
+
+# name for bk_token in cookie
+TOKEN_COOKIE_NAME = env("TOKEN_COOKIE_NAME", default="bk_token")
+LOGIN_VERIFY_URI = env("LOGIN_VERIFY_URI", default="/accounts/is_login/")
+LOGIN_USER_INFO_URI = env("LOGIN_USER_INFO_URI", default="/accounts/get_user/")
 
 # put on s3 maybe better
 DEFAULT_LOGO_URL = "img/logo_default.png"

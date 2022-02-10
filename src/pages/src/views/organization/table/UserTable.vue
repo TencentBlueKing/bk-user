@@ -37,8 +37,9 @@
         </thead>
       </table>
     </div>
-    <div class="tbody-container table-container" ref="scrollWrapper"
-         @scroll.passive="handleTableScroll" data-test-id="list_organizationData">
+    <div
+      class="tbody-container table-container" ref="scrollWrapper"
+      @scroll.passive="handleTableScroll" data-test-id="list_organizationData">
       <table v-if="!isEmptySearch">
         <tbody v-if="userMessage.userInforList.length">
           <tr v-for="(item, index) in dataList" :key="item.id + Date.now()" @click.stop="viewDetails(item)">
@@ -47,18 +48,20 @@
                 <input type="checkbox" name="checkbox1" :checked="item.isCheck">
               </label>
             </td>
-            <td :class="{ 'hidden': labelName.indexOf(key) !== -1 }"
-                v-for="(key, keyIndex) in Object.keys(item)"
-                :key="keyIndex">
+            <td
+              :class="{ 'hidden': labelName.indexOf(key) !== -1 }"
+              v-for="(key, keyIndex) in Object.keys(item)"
+              :key="keyIndex">
               <!-- 组织 -->
               <div v-if="key === 'department_name'" class="king-tooltips">
-                <span class="staff-text" v-bk-tooltips="{
-                  allowHtml: true,
-                  content: '#' + key + keyIndex + index,
-                  distance: 12,
-                  theme: 'light',
-                  placement: 'bottom-start'
-                }">{{departmentShift(item[key])}}</span>
+                <span
+                  class="staff-text" v-bk-tooltips="{
+                    allowHtml: true,
+                    content: '#' + key + keyIndex + index,
+                    distance: 12,
+                    theme: 'light',
+                    placement: 'bottom-start'
+                  }">{{departmentShift(item[key])}}</span>
                 <div :id="key + keyIndex + index">
                   <div v-for="(deItem, deIndex) in item[key]" :key="deIndex">
                     {{deItem}}
@@ -175,6 +178,12 @@ export default {
     'userMessage.userInforList'(value) {
       this.handleOriginList(value);
     },
+    activeTableHeardList: {
+      immediate: true,
+      handler(value) {
+        this.$emit('updateHeardList', value);
+      },
+    },
   },
   mounted() {
     if (this.userMessage.userInforList && this.userMessage.userInforList.length) {
@@ -240,7 +249,7 @@ export default {
         .join(';');
     },
     getLeaderString(leader) {
-      return leader.map((item) => {
+      return leader && leader.map((item) => {
         return item.username;
       }).join(';');
     },

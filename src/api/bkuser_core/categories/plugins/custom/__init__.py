@@ -8,8 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_core.categories.plugins.plugin import DataSourcePlugin
+import os
+from pathlib import Path
 
+from bkuser_core.categories.plugins.plugin import DataSourcePlugin, HookType
+
+from .hooks import AlertIfFailedHook
 from .login import LoginHandler
 from .sycner import CustomSyncer
 
@@ -19,4 +23,6 @@ DataSourcePlugin(
     login_handler_cls=LoginHandler,
     allow_client_write=True,
     category_type="custom",
+    hooks={HookType.POST_SYNC: AlertIfFailedHook},
+    settings_path=os.path.dirname(__file__) / Path("settings.yaml"),
 ).register()

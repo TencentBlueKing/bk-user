@@ -22,7 +22,8 @@ def forwards_func(apps, schema_editor):
     new_setting_meta_map = {}
     for category_type in need_connect_types:
         meta = SettingMeta.objects.create(
-            namespace=SettingsEnableNamespaces.CONNECTION.value,
+            namespace=SettingsEnableNamespaces.FIELDS.value,
+            region="group",
             category_type=category_type,
             required=False,
             **dict(key="user_member_of", example="memberOf", default="memberOf")
@@ -46,7 +47,8 @@ def backwards_func(apps, schema_editor):
     SettingMeta = apps.get_model("user_settings", "SettingMeta")
     need_connect_types = [CategoryType.MAD.value, CategoryType.LDAP.value]
     meta = SettingMeta.objects.filter(
-        namespace=SettingsEnableNamespaces.CONNECTION.value,
+        namespace=SettingsEnableNamespaces.FIELDS.value,
+        region="group",
         category_type__in=need_connect_types,
         key="user_member_of",
     )

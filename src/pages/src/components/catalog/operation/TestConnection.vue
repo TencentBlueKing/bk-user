@@ -21,8 +21,9 @@
   -->
 <template>
   <div class="test-connection">
-    <div :class="{ button: true, loading: testLoading }"
-         @click="testConnection">
+    <div
+      :class="{ button: true, loading: testLoading }"
+      @click="testConnection">
       <span v-if="!testLoading">{{$t('测试连接')}}</span>
       <div v-if="testLoading" class="bk-loading" style="background: rgba(0, 0, 0, 0);transform: scale(.5)" @click.stop>
         <div class="bk-loading-wrapper">

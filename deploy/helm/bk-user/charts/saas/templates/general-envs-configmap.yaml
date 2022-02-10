@@ -1,0 +1,30 @@
+{{- $namePrefix := include "bk-user.name" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bk-user-saas-general-envs
+data:
+  # -------------
+  # 默认配置，不了解详情时请不要修改
+  # -------------
+  BK_APP_CODE: "{{ .Values.appCode }}"
+  BK_APP_SECRET: "{{ .Values.appSecret }}"
+  DJANGO_SETTINGS_MODULE: "bkuser_shell.config.overlays.prod"
+  # -------------
+  # 权限中心相关配置
+  # -------------
+  BK_IAM_SYSTEM_ID: "bk_usermgr"
+  # 权限中心后台访问地址
+  BK_IAM_V3_INNER_HOST: "http://bkiam-web"
+  # 默认我们会按照 BK_PAAS_URL/o/bk_iam 拼接权限中心 SaaS 访问地址，可以通过以下值覆盖
+  # BK_IAM_SAAS_HOST: "http://bkiam.example.com"
+  BKAPP_BK_USER_CORE_API_HOST: "{{ .Values.bkUserApiUrl }}"
+  # 容器化版本默认采用子域名形式暴露服务
+  BK_LOGIN_API_URL: "{{ .Values.bkLoginApiUrl }}"
+  SITE_URL: "/"
+  # PaaS 平台访问地址
+  BK_PAAS_URL: "{{ .Values.bkPaasUrl }}"
+  # ESB Api 访问地址
+  BK_COMPONENT_API_URL: "{{ .Values.bkComponentApiUrl }}"
+  # 由于用户管理先于权限中心拉起，所以默认禁用，后期所有产品就绪后，可手动开启
+  ENABLE_IAM: "{{ .Values.global.enableIAM }}"

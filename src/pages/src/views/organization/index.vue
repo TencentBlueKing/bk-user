@@ -98,9 +98,10 @@
             <template v-if="currentCategoryType === 'local'">
               <div class="table-actions-left-container local-type" data-test-id="list_operationUser">
                 <!-- 添加成员 -->
-                <bk-dropdown-menu ref="dropdownAdd" class="king-dropdown-menu"
-                                  :disabled="basicLoading" @show="isDropdownShowAdd = true"
-                                  @hide="isDropdownShowAdd = false">
+                <bk-dropdown-menu
+                  ref="dropdownAdd" class="king-dropdown-menu"
+                  :disabled="basicLoading" @show="isDropdownShowAdd = true"
+                  @hide="isDropdownShowAdd = false">
                   <bk-button slot="dropdown-trigger" class="king-button">
                     <span class="more-action">{{$t('添加用户')}}</span>
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowAdd }]"></i>
@@ -111,30 +112,34 @@
                   </ul>
                 </bk-dropdown-menu>
                 <!-- 更多操作 -->
-                <bk-dropdown-menu ref="dropdownMore" class="king-dropdown-menu"
-                                  :disabled="basicLoading" @show="isDropdownShowMore = true"
-                                  @hide="isDropdownShowMore = false">
+                <bk-dropdown-menu
+                  ref="dropdownMore" class="king-dropdown-menu"
+                  :disabled="basicLoading" @show="isDropdownShowMore = true"
+                  @hide="isDropdownShowMore = false">
                   <bk-button slot="dropdown-trigger" class="king-button">
                     <span class="more-action">{{$t('更多操作')}}</span>
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowMore }]"></i>
                   </bk-button>
                   <ul class="bk-dropdown-list" slot="dropdown-content">
                     <li>
-                      <a href="javascript:;" :class="{ 'disabled': !isClick }"
-                         @click="handleSetDepartment">{{$t('设置所在组织')}}
+                      <a
+                        href="javascript:;" :class="{ 'disabled': !isClick }"
+                        @click="handleSetDepartment">{{$t('设置所在组织')}}
                       </a>
                     </li>
                     <li>
-                      <a href="javascript:;" :class="{ 'disabled': !isClick }"
-                         @click="deleteProfiles">{{$t('批量删除')}}
+                      <a
+                        href="javascript:;" :class="{ 'disabled': !isClick }"
+                        @click="deleteProfiles">{{$t('批量删除')}}
                       </a>
                     </li>
                   </ul>
                 </bk-dropdown-menu>
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
-                  <bk-checkbox class="king-checkbox" :checked="isSearchCurrentDepartment"
-                               @change="changeSearchLevel">
+                  <bk-checkbox
+                    class="king-checkbox" :checked="isSearchCurrentDepartment"
+                    @change="changeSearchLevel">
                   </bk-checkbox>
                   <span class="text text-overflow-hidden" v-bk-overflow-tips @click="changeSearchLevel">
                     {{$t('仅显示本级组织成员') + (handleTabData.currentNumber === null ? ''
@@ -144,16 +149,14 @@
               </div>
               <div class="table-actions-right-container">
                 <!-- 用户搜索框 -->
-                <bk-input v-model="tableSearchKey"
-                          class="king-input-search"
-                          style="width: 280px;margin-right: 20px;"
-                          :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                          :clearable="true"
-                          :left-icon="'bk-icon icon-search'"
-                          @clear="handleClear"
-                          @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch">
-                </bk-input>
+                <bk-search-select
+                  class="king-input-search"
+                  style="width: 400px;margin-right: 20px;"
+                  :placeholder="$t('输入用户名/中文名，按Enter搜索')"
+                  :data="searchFilterList"
+                  :show-condition="false"
+                  v-model="tableSearchKey"
+                  @change="handleTableSearch" />
                 <!-- 设置列表字段 -->
                 <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
                   <i class="icon icon-user-cog"></i>
@@ -164,20 +167,19 @@
             <template v-else>
               <div class="table-actions-left-container">
                 <!-- 用户搜索框 -->
-                <bk-input v-model="tableSearchKey"
-                          class="king-input-search"
-                          style="width: 360px;margin-right: 20px;"
-                          :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                          :clearable="true"
-                          :left-icon="'bk-icon icon-search'"
-                          @clear="handleClear"
-                          @left-icon-click="handleTableSearch"
-                          @enter="handleTableSearch">
-                </bk-input>
+                <bk-search-select
+                  class="king-input-search"
+                  style="width: 400px;margin-right: 20px;"
+                  :placeholder="$t('输入用户名/中文名，按Enter搜索')"
+                  :data="searchFilterList"
+                  :show-condition="false"
+                  v-model="tableSearchKey"
+                  @change="handleTableSearch" />
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
-                  <bk-checkbox class="king-checkbox" :checked="isSearchCurrentDepartment"
-                               @change="changeSearchLevel"></bk-checkbox>
+                  <bk-checkbox
+                    class="king-checkbox" :checked="isSearchCurrentDepartment"
+                    @change="changeSearchLevel"></bk-checkbox>
                   <span class="text" @click="changeSearchLevel">
                     {{$t('仅显示本级组织成员') + (handleTabData.currentNumber === null ? ''
                       : `(${handleTabData.currentNumber})`)}}
@@ -208,7 +210,8 @@
               @viewDetails="viewDetails"
               @showTableLoading="showTableLoading"
               @closeTableLoading="closeTableLoading"
-              @updateTableData="updateTableData" />
+              @updateTableData="updateTableData"
+              @updateHeardList="updateHeardList" />
             <div class="table-pagination" v-if="noSearchOrSearchDepartment && paginationConfig.count > 0">
               <div class="table-pagination-left">{{$t('共计')}}
                 {{Math.ceil(paginationConfig.count / paginationConfig.limit)}} {{$t('页')}}，
@@ -230,13 +233,14 @@
       </template>
     </div>
     <!-- 新增用户 侧边栏 -->
-    <bk-sideslider class="king-sideslider"
-                   :width="520"
-                   :show-mask="false"
-                   :is-show.sync="detailsBarInfo.isShow"
-                   :quick-close="detailsBarInfo.quickClose"
-                   :title="detailsBarInfo.title"
-                   :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
+    <bk-sideslider
+      class="king-sideslider"
+      :width="520"
+      :show-mask="false"
+      :is-show.sync="detailsBarInfo.isShow"
+      :quick-close="detailsBarInfo.quickClose"
+      :title="detailsBarInfo.title"
+      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
       <div slot="content" class="member-content" v-if="detailsBarInfo.isShow">
         <DetailsBar
           :details-bar-info="detailsBarInfo"
@@ -276,15 +280,16 @@
           @onEnter="actionConfirmFn" />
       </bk-dialog>
       <!-- 设置所在组织的弹窗 -->
-      <bk-dialog width="721"
-                 class="king-dialog department-dialog"
-                 header-position="left"
-                 :position="{ top: setDepartmentTop }"
-                 :auto-close="false"
-                 :title="$t('设置所在组织')"
-                 v-model="isShowSetDepartments"
-                 @confirm="selectDeConfirmFn"
-                 @cancel="isShowSetDepartments = false">
+      <bk-dialog
+        width="721"
+        class="king-dialog department-dialog"
+        header-position="left"
+        :position="{ top: setDepartmentTop }"
+        :auto-close="false"
+        :title="$t('设置所在组织')"
+        v-model="isShowSetDepartments"
+        @confirm="selectDeConfirmFn"
+        @cancel="isShowSetDepartments = false">
         <div class="select-department-wrapper clearfix">
           <SetDepartment
             v-if="isShowSetDepartments"
@@ -312,8 +317,9 @@
     <div v-show="basicLoading || initLoading || isChangingWidth" class="loading-cover" @click.stop></div>
     <!-- 可拖拽页面布局宽度 -->
     <div ref="dragBar" :class="['drag-bar', isChangingWidth && 'dragging']" :style="{ left: treeBoxWidth - 1 + 'px' }">
-      <img src="../../images/svg/drag-icon.svg" alt="drag"
-           draggable="false" class="drag-icon" @mousedown.left="dragBegin">
+      <img
+        src="../../images/svg/drag-icon.svg" alt="drag"
+        draggable="false" class="drag-icon" @mousedown.left="dragBegin">
     </div>
   </div>
 </template>
@@ -329,6 +335,7 @@ import DetailsBar from './details/DetailsBar';
 import SetDepartment from '@/components/organization/SetDepartment';
 
 export default {
+  name: 'OrganizationIndex',
   components: {
     DetailsBar,
     DialogContent,
@@ -422,12 +429,16 @@ export default {
         isShow: false,
         tags: [],
       },
-      tableSearchKey: '',
+      tableSearchKey: [],
       // 记录搜索过的关键字，blur 的时候如果和当前关键字不一样就刷新表格
-      tableSearchedKey: '',
+      tableSearchedKey: [],
       isDropdownShowAdd: false,
       isDropdownShowMore: false,
       setDepartmentTop: (window.document.body.offsetHeight - 519) / 2,
+      tableData: [],
+      searchDataList: [],
+      searchFilterList: [],
+      heardList: [],
     };
   },
   computed: {
@@ -450,6 +461,36 @@ export default {
       }
       this.currentCategoryId = val.type ? val.id : this.findCategoryId(val);
       this.currentCategoryType = val.type ? val.type : this.findCategoryType(val);
+    },
+    searchDataList(val) {
+      this.heardList = [];
+      val.forEach((item) => {
+        const { name, options } = item;
+        const id = item.key;
+        const children = [];
+        const multiable = true;
+        if (options.length > 0) {
+          options.forEach((k) => {
+            children.push({ id: k.id, name: k.value });
+          });
+          this.heardList.push({ name, id, multiable, children });
+        } else {
+          this.heardList.push({ name, id });
+        }
+      });
+      this.searchFilterList = this.heardList;
+    },
+    'tableSearchKey'(val) {
+      this.searchFilterList = this.heardList;
+      if (val.length) {
+        val.filter((item) => {
+          this.searchFilterList = this.searchFilterList.filter((k) => {
+            if (!item.id.includes(k.id)) {
+              return k;
+            }
+          });
+        });
+      }
     },
   },
   async mounted() {
@@ -509,6 +550,9 @@ export default {
       if (tree.type) {
         this.$set(tree, 'has_children', !!tree.departments.length);
       }
+      if (!Object.prototype.hasOwnProperty.call(tree, 'children')) {
+        this.$set(tree, 'children', []);
+      }
       // 组织节点添加一个类型标记
       if (isLocalDepartment !== null) {
         tree.isLocalDepartment = isLocalDepartment;
@@ -558,7 +602,7 @@ export default {
           {
             key: 'update_time',
             name: 'update_time',
-          }
+          },
         );
         this.userMessage.tableHeardList = tableHeardList;
       } catch (e) {
@@ -683,17 +727,39 @@ export default {
       this.paginationConfig.limit = limit;
       this.getTableData();
     },
-
+    updateHeardList(value) {
+      this.searchDataList = value;
+    },
     handleClear() {
-      if (this.tableSearchedKey !== '') {
+      if (this.tableSearchedKey !== []) {
         this.handleTableSearch();
       }
     },
-    handleTableSearch() {
-      if (!this.basicLoading) {
-        this.paginationConfig.current = 1;
-        this.getTableData();
-      }
+    // 搜索table
+    handleTableSearch(list) {
+      const valueList = [];
+      list.forEach((item) => {
+        if (item.id) {
+          const key = item.id;
+          const value = [];
+          item.values.forEach((v) => {
+            value.push(v.id);
+          });
+          valueList.push(`${key}=${value}`);
+        }
+      });
+      const params = valueList.join('&');
+      this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
+        if (res.result) {
+          this.filterUserData(res.data.results);
+        }
+      })
+        .catch((e) => {
+          console.warn(e);
+        })
+        .finally(() => {
+          this.clickSecond = false;
+        });
     },
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
@@ -1196,7 +1262,7 @@ export default {
         this.closeMenu(item);
       });
       if (this.tableSearchKey) {
-        this.tableSearchKey = '';
+        this.tableSearchKey = [];
       }
       this.currentParam.item = item;
       this.$set(item, 'showBackground', true);
@@ -1274,13 +1340,12 @@ export default {
       this.$set(item, 'showBackground', true);
       this.$nextTick(() => {
         const calculateDistance = this.calculate(event.target);
-        const differ = document.querySelector('body').offsetHeight - calculateDistance.getOffsetTop;
         const next = event.target.nextElementSibling;
         next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
         next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
-        if (differ <= 198) {
-          next.style.top = 'auto';
-          next.style.bottom = `${differ}px`;
+        const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
+        if (bottomHeight < 0) {
+          next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
         }
       });
     },

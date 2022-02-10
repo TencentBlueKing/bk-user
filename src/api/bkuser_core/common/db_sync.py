@@ -32,7 +32,7 @@ class SyncModelMeta:
 
     例如，
     excel 导入数据时，是用 username 而不是 code 作为唯一标识
-    ldap or mad 是有 uuid 作为 code 的，tof 是有也有数字 id 作为 code
+    ldap or mad 是有 uuid 作为 code 的
     """
 
     target_model: ClassVar[Type[models.Model]]
@@ -94,7 +94,7 @@ class SyncModelManager:
         if self.meta.unique_key_field:
             unique_key = getattr(db_obj, self.meta.unique_key_field)
             if unique_key and unique_key in self._action_map_cache:
-                logger.info("action (%s-%s) already in item cache, skipping", operation, db_obj)
+                logger.debug("action (%s-%s) already in item cache, skipping", operation, db_obj)
                 return
 
             # 尚不存在，添加 unique_key cache

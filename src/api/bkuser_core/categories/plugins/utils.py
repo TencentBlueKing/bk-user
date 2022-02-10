@@ -12,7 +12,9 @@ import json
 import logging
 
 from bkuser_core.categories.plugins.base import TypeList, TypeProtocol
+from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
 from bkuser_core.common.progress import progress
+from bkuser_core.user_settings.models import Setting
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 logger = logging.getLogger(__name__)
@@ -43,7 +45,6 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
     except IntervalSchedule.MultipleObjectsReturned:
         schedule = IntervalSchedule.objects.filter(every=interval_seconds, period=IntervalSchedule.SECONDS)[0]
 
-    # 通过 category_id 来做任务名
     kwargs = json.dumps({"instance_id": category_id, "operator": operator})
     try:
         p: PeriodicTask = PeriodicTask.objects.get(name=str(category_id))
@@ -53,7 +54,7 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
     except PeriodicTask.DoesNotExist:
         create_params = {
             "interval": schedule,
-            "name": str(category_id),
+            "name": f"plugin-sync-data-{category_id}",
             "task": "bkuser_core.categories.tasks.adapter_sync",
             "enabled": True,
             "kwargs": kwargs,
@@ -63,13 +64,24 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
 
 def delete_periodic_sync_task(category_id: int):
     """删除同步周期任务"""
+    guess_names = [f"plugin-sync-data-{category_id}", str(category_id)]
 
     # 通过 category_id 来做任务名
     try:
-        PeriodicTask.objects.get(name=str(category_id)).delete()
+        PeriodicTask.objects.filter(name__in=guess_names).delete()
     except PeriodicTask.DoesNotExist:
         logger.warning("PeriodicTask %s has been deleted, skip it...", str(category_id))
         return
+
+
+def delete_dynamic_filed(dynamic_field: str):
+    """删除指定自定义字段配置"""
+    settings = Setting.objects.filter(meta__key=DYNAMIC_FIELDS_SETTING_KEY)
+
+    for setting in settings:
+        if dynamic_field in setting.value:
+            setting.value.pop(dynamic_field)
+            setting.save()
 
 
 def handle_with_progress_info(

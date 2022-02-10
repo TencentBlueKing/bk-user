@@ -358,7 +358,7 @@ class SettingMeta(object):
         """
         if category_type is None:
             raise ValueError("Invalid value for `category_type`, must not be `None`")  # noqa: E501
-        allowed_values = ["local", "mad", "ldap", "tof", "custom", "pluggable"]  # noqa: E501
+        allowed_values = ["local", "mad", "ldap", "custom", "pluggable"]  # noqa: E501
         if category_type not in allowed_values:
             raise ValueError(
                 "Invalid value for `category_type` ({0}), must be one of {1}"  # noqa: E501
