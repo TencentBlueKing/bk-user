@@ -550,6 +550,9 @@ export default {
       if (tree.type) {
         this.$set(tree, 'has_children', !!tree.departments.length);
       }
+      if (!Object.prototype.hasOwnProperty.call(tree, 'children')) {
+        this.$set(tree, 'children', []);
+      }
       // 组织节点添加一个类型标记
       if (isLocalDepartment !== null) {
         tree.isLocalDepartment = isLocalDepartment;
@@ -1341,7 +1344,7 @@ export default {
         next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
         next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
         const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
-        if ((bottomHeight < 0) && (next.offsetHeight === next.offsetHeight)) {
+        if (bottomHeight < 0) {
           next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
         }
       });
