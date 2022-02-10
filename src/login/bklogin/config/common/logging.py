@@ -9,11 +9,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import os
+from pathlib import Path
 
-from . import BASE_DIR
+from . import PROJECT_ROOT, env
 
 # logging config
-LOG_LEVEL = "INFO"
-LOGGING_DIR = os.environ.get("PAAS_LOGGING_DIR") or os.path.join(os.path.dirname(BASE_DIR), "logs")
-LOG_CLASS = "logging.handlers.RotatingFileHandler"
+LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+LOGGING_DIR = env("LOGGING_DIR", default=Path(PROJECT_ROOT) / "logs")

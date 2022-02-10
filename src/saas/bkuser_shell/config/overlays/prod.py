@@ -14,7 +14,7 @@ from bkuser_shell.config.common.platform import *  # noqa
 from bkuser_shell.config.common.storage import *  # noqa
 from bkuser_shell.config.common.system import *  # noqa
 
-from bkuser_global.config import get_logging_config_dict
+from bkuser_global.logging import LoggingType, get_logging
 
 # ===============================================================================
 # 应用运行环境配置信息
@@ -26,10 +26,4 @@ BUILD_STATIC = "%sstatic" % SITE_URL
 # ===============================================================================
 # 日志设置
 # ===============================================================================
-LOGGING = get_logging_config_dict(
-    log_level=LOG_LEVEL,
-    logging_dir=LOGGING_DIR,
-    log_class=LOG_CLASS,
-    file_name=APP_ID,
-    package_name="bkuser_shell",
-)
+LOGGING = get_logging(logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_shell")
