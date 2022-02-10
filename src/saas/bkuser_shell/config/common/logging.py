@@ -17,5 +17,4 @@ from . import PROJECT_ROOT, env
 # ==============================================================================
 
 LOGGING_DIR = env("LOGGING_DIR", default=Path(PROJECT_ROOT) / "logs")
-LOG_CLASS = "logging.handlers.RotatingFileHandler"
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")

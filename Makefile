@@ -13,6 +13,11 @@ generate-release-md:
 	mv src/saas/release.md docs/
 
 link:
+	rm src/api/bkuser_global || true
+	rm src/saas/bkuser_global || true
+	rm src/login/bkuser_global || true
+	rm src/saas/bkuser_sdk || true
+
 	ln -s ${PWD}/src/bkuser_global src/api || true
 	ln -s ${PWD}/src/bkuser_global src/saas || true
 	ln -s ${PWD}/src/bkuser_global src/login || true
