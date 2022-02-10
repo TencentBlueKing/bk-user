@@ -80,7 +80,7 @@ image:
   registry: mirrors.tencent.com
   repository: blueking/bk-login
   pullPolicy: IfNotPresent
-  tag: "1.0.0-beta.4"
+  tag: "v2.3.2"
 
 nameOverride: ""
 fullnameOverride: ""

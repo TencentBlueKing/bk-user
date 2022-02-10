@@ -100,7 +100,7 @@ login:
   image:
     registry: mirrors.tencent.com
     repository: blueking/bk-login
-    tag: "1.0.0-beta.4"
+    tag: "v2.3.1"
 ```
 
 或者直接修改全局镜像变量
