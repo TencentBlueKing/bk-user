@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "蓝鲸用户管理"
-version = "2.3.2-beta.1"
+version = "2.3.2"
 description = "project description file for ci"
 authors = ["IMBlues <bluesedenyu@gmail.com>"]
 
