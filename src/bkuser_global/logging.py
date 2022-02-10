@@ -75,10 +75,9 @@ def get_loggers(package_name: str, log_level: str) -> dict:
             "level": log_level,
             "propagate": True,
         },
-        "root": {
+        "": {
             "handlers": ["root"],
             "level": log_level,
-            "propagate": True,
         },
         "requests": {
             "handlers": ["root"],
@@ -92,7 +91,7 @@ def get_loggers(package_name: str, log_level: str) -> dict:
         },
         "iam": {
             "handlers": ["root"],
-            "level": "DEBUG",
+            "level": log_level,
             "propagate": True,
         },
     }
@@ -126,6 +125,7 @@ def get_stdout_logging(log_level: str, package_name: str, formatter: str = "json
 
 
 def get_file_logging(log_level: str, logging_dir: str, file_name: str, package_name: str, formatter: str = "json"):
+    """获取文件日志配置"""
     log_class = "logging.handlers.RotatingFileHandler"
 
     if not os.path.exists(logging_dir):
