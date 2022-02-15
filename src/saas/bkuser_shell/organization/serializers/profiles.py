@@ -132,8 +132,8 @@ class CreateProfileSerializer(Serializer):
 class UpdateProfileSerializer(Serializer):
     id = IntegerField(required=False)
     telephone = CharField(required=False)
-    wx_userid = CharField(required=False, allow_null=True, default="", allow_blank=True)
-    qq = CharField(required=False, allow_blank=True, allow_null=True, default="")
+    wx_userid = CharField(required=False, allow_null=True, allow_blank=True)
+    qq = CharField(required=False, allow_blank=True, allow_null=True)
     password_valid_days = IntegerField(required=False)
     password = CharField(required=False)
     email = CharField(required=False)
