@@ -3,7 +3,7 @@
 
 ---
 [![license](https://img.shields.io/badge/license-mit-green.svg?style=flat)](https://github.com/TencentBlueKing/bk-user/blob/master/LICENSE) 
-[![Release Version](https://img.shields.io/badge/bk--user-2.3.1-green)](https://github.com/TencentBlueKing/bk-user/releases) 
+[![Release Version](https://img.shields.io/badge/bk--user-2.3.2-green)](https://github.com/TencentBlueKing/bk-user/releases) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](https://github.com/TencentBlueKing/bk-user/pulls) 
 
 [简体中文](readme.md) | English
