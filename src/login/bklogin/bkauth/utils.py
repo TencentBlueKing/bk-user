@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 import datetime
 import time
 import unicodedata
+import urllib.parse
 from urllib.parse import urlparse
 
 from bklogin.bkaccount.models import BkToken, LoginLog
@@ -45,10 +46,8 @@ def get_bk_token(username):
         plain_token = "%s|%s|%s" % (expire_time, username, salt())
         bk_token = EncryptHandler().encrypt(plain_token)
         try:
-            # BkToken.objects.create(token=bk_token)
             BkToken.objects.create(token=bk_token, inactive_expire_time=inactive_expire_time)
         except Exception:
-            # logger.exception(u"登录票据保存失败")
             logger.exception("Login ticket failed to be saved during ticket generation")
             # 循环结束前将bk_token置空后重新生成
             bk_token = "" if retry_count < 4 else bk_token
@@ -61,18 +60,17 @@ def is_bk_token_valid(bk_token):  # NOQA
     验证用户登录态
     """
     if not bk_token:
-        error_msg = _("缺少参数bk_token")
+        error_msg = _("参数 bk_token 缺失")
         return False, error_msg
 
+    bk_token = urllib.parse.unquote(bk_token)
     try:
         plain_bk_token = EncryptHandler().decrypt(bk_token)
     except Exception:
+        logger.exception("参数[%s] 解析失败" % bk_token)
         plain_bk_token = ""
-        # logger.exception(u"参数[%s]解析失败" % bk_token)
-        logger.exception("Parameter[%s] parse failed" % bk_token)
 
-    # 参数bk_token非法
-    error_msg = _("参数bk_token非法")
+    error_msg = _("参数 bk_token 非法")
     if not plain_bk_token:
         return False, error_msg
 
@@ -81,16 +79,15 @@ def is_bk_token_valid(bk_token):  # NOQA
         if not token_info or len(token_info) < 3:
             return False, error_msg
     except Exception:
-        logger.exception("split token fail: %s" % bk_token)
+        logger.exception("分割 bk_token[%s] 失败" % bk_token)
         return False, error_msg
 
     try:
-        # is_logout = BkToken.objects.get(token=bk_token).is_logout
-        bktoken_obj = BkToken.objects.get(token=bk_token)
-        is_logout = bktoken_obj.is_logout
-        inactive_expire_time = bktoken_obj.inactive_expire_time
+        bk_token_obj = BkToken.objects.get(token=bk_token)
+        is_logout = bk_token_obj.is_logout
+        inactive_expire_time = bk_token_obj.inactive_expire_time
     except Exception:
-        error_msg = _("不存在bk_token[%s]的记录") % bk_token
+        error_msg = _("不存在 bk_token[%s] 的记录") % bk_token
         return False, error_msg
 
     expire_time = int(token_info[0])
@@ -108,7 +105,7 @@ def is_bk_token_valid(bk_token):  # NOQA
         error_msg = _("登录态有效期不合法")
         return False, error_msg
 
-    # token 无操作有效期已过，
+    # token 无操作有效期已过
     if now_time > inactive_expire_time + settings.BK_TOKEN_OFFSET_ERROR_TIME:
         error_msg = _("长时间无操作，登录态已过期")
         return False, error_msg
