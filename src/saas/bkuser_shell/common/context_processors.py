@@ -23,7 +23,7 @@ def shell(request):
         "APP_ID": settings.APP_ID,
         "SITE_URL": settings.SITE_URL,
         "AJAX_URL": settings.SITE_URL,
-        "TITLE": _("用户管理 | 蓝鲸智云"),
+        "TITLE": _("用户管理 | 腾讯蓝鲸智云"),
         # 静态资源
         "STATIC_URL": settings.STATIC_URL,
         "STATIC_VERSION": settings.STATIC_VERSION,
