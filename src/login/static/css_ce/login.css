@@ -205,7 +205,7 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 100%;
 }
 .page-content .login-from {
-  width: 450px;
+  width: 400px;
   position: absolute;
   top: 17%;
   left: 50%;
@@ -218,7 +218,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .logo-title {
   opacity: 1;
-  padding: 55px 0 50px 68px;
+  padding: 40px 0 40px 56px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -228,7 +228,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .from-detail {
   position: relative;
-  padding-bottom: 40px;
+  padding-bottom: 28px;
 }
 .page-content .login-from .from-detail .is-danger-tip {
   position: absolute;
@@ -359,7 +359,7 @@ input[type="number"]::-webkit-outer-spin-button {
   position: relative;
 }
 .page-content .login-from .form-login .user {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 .page-content .login-from .form-login .group-control i {
   position: absolute;
@@ -408,7 +408,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .form-login .btn-content {
   font-size: 0;
-  padding-top: 32px;
+  padding-top: 28px;
 }
 .page-content .login-from .form-login .btn-content .login-btn {
   width: 100%;
@@ -450,7 +450,7 @@ input[type="number"]::-webkit-outer-spin-button {
   line-height: 24px;
   justify-content: end;
   text-align: right;
-	margin-top: 47px;
+	margin-top: 23px;
 }
 .language-switcher .language-item {
   width: 70px;
