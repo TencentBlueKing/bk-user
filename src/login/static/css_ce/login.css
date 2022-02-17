@@ -218,7 +218,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .page-content .login-from .logo-title {
   opacity: 1;
-  padding: 40px 0 40px 56px;
+  padding: 39px 0 40px 56px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
