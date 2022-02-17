@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 from . import env
 from .django_basic import MEDIA_ROOT
-from .platform import BK_PAAS_URL
 
 # paths for exempting of login
 LOGIN_EXEMPT_WHITE_LIST = (
@@ -54,31 +53,25 @@ BK_DOC_URL = "https://bk.tencent.com/docs/markdown/用户管理/产品白皮书/
 FOOTER_CONFIG = {
     "footer": [
         {
-            "text": "QQ咨询(800802001)",
-            "text_en": "QQ(800802001)",
-            "link": "wxwork://message?uin=8444252571319680;",
+            "text": "技术支持",
+            "text_en": "Support",
+            "link": "https://wpa1.qq.com/KziXGWJs?_type=wpa&qidian=true",
             "is_blank": False,
         },
         {
-            "text": "蓝鲸论坛",
-            "text_en": "BlueKing Forum",
+            "text": "社区论坛",
+            "text_en": "Forum",
             "link": "https://bk.tencent.com/s-mart/community/",
             "is_blank": True,
         },
         {
             "text": "蓝鲸官网",
-            "text_en": "BlueKing Official",
+            "text_en": "Official",
             "link": "https://bk.tencent.com/",
             "is_blank": True,
         },
-        {
-            "text": "蓝鲸智云桌面",
-            "text_en": "BlueKing Desktop",
-            "link": BK_PAAS_URL,
-            "is_blank": True,
-        },
     ],
-    "copyright": "Copyright © 2012-2021 Tencent BlueKing. All Rights Reserved.",
+    "copyright": "Copyright © 2012-2022 Tencent BlueKing. All Rights Reserved. V1.1.1",
 }
 
 #############
