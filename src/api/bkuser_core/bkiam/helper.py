@@ -136,14 +136,15 @@ class IAMHelper:
         try:
             actions = [get_action(x, obj) for x in actions]
         except Exception:  # pylint: disable=broad-except
-            iam_logger.exception("failed to assemble apply url params")
+            iam_logger.exception("failed to assemble apply url params.[username=%s, actions=%s]",
+                                username, actions)
             return self.config_loader.callback_url
 
         app = Application(system_id=self.system_id, actions=actions)
         try:
             ok, msg, url = self.iam.get_apply_url(application=app, bk_username=username)
         except Exception:  # pylint: disable=broad-except
-            iam_logger.exception("failed to get apply url")
+            iam_logger.exception("failed to get apply url. [username=%s, application=%s", username, app)
             return self.config_loader.callback_url
 
         if not ok:

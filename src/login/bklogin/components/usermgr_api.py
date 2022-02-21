@@ -31,13 +31,14 @@ def _call_usermgr_api(http_func, url, data, headers=None):
         if not ok:
             return False, -1, "verify from usermgr server fail", None
     except Exception:
-        logger.exception("_call_usermgr_api fail: url=%s, data=%s", url, data)
+        logger.exception("_call_usermgr_api fail: method=%s, url=%s, data=%s", http_func.__name__, url, data)
         return False, -1, "verify from usermgr server fail", None
 
     if not _data.get("result"):
         if data and "password" in data:
             data["password"] = "******"
-        logger.info("_call_usermgr_api fail: url=%s, data=%s, _data=%s", url, data, _data)
+        logger.info("_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s",
+                    http_func.__name__, url, data, _data)
         return False, _data.get("code", -1), _data.get("message", "usermgr api fail"), _data.get("data")
 
     return True, 0, "ok", _data.get("data")

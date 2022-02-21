@@ -75,7 +75,7 @@ class LDAPClient:
         except ldap3.core.exceptions.LDAPSocketReceiveError:
             raise local_exceptions.LdapCannotBeInitialized
         except Exception:
-            logger.exception("failed to initialize ldap server")
+            logger.exception("failed to initialize ldap server. [url=%s]", connection_url)
             raise local_exceptions.LdapCannotBeInitialized
 
     def search(

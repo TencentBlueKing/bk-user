@@ -60,7 +60,7 @@ def parse_username_domain(username_with_domain, known_domain: str = None) -> tup
         try:
             username = pattern.group("username")
         except AttributeError:
-            logger.exception("can not parse raw_username<%s>")
+            logger.exception("can not parse raw_username<%s>", username_with_domain)
             raise UsernameWithDomainFormatError(f"parse {username_with_domain} failed")
 
         logger.debug(
@@ -79,7 +79,7 @@ def parse_username_domain(username_with_domain, known_domain: str = None) -> tup
         username = pattern.group("username")
         domain = pattern.group("domain")
     except AttributeError:
-        logger.exception("can not parse raw_username<%s>")
+        logger.exception("parse username with domain fail. [raw_username=%s]", username_with_domain)
         raise UsernameWithDomainFormatError(f"parse {username_with_domain} failed")
 
     logger.debug(

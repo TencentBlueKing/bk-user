@@ -49,10 +49,10 @@ class TokenBackend(ModelBackend):
             user.save()
             return user
         except IntegrityError:
-            logger.exception("get_or_create UserModel fail or update_or_create UserProperty")
+            logger.exception("get_or_create UserModel fail or update UserProperty fail. username=%s", username)
             return None
         except Exception:  # pylint: disable=broad-except
-            logger.exception("Auto create & update UserModel fail")
+            logger.exception("Auto create & update UserModel fail. username=%s", username)
             return None
 
     @staticmethod
@@ -84,7 +84,7 @@ class TokenBackend(ModelBackend):
         try:
             response = send(ConfFixture.USER_INFO_URL, "GET", api_params, verify=False)
         except Exception as e:  # pylint: disable=broad-except
-            logger.exception("Abnormal error in get_user_info...:%s" % e)
+            logger.exception("Abnormal error in get_user_info: bk_token=%s***", bk_token[:6])
             return False, {}
 
         if response.get("result") is True or response.get("ret") == 0:
@@ -117,7 +117,7 @@ class TokenBackend(ModelBackend):
         try:
             response = send(ConfFixture.VERIFY_URL, "GET", api_params, verify=False)
         except Exception:  # pylint: disable=broad-except
-            logger.exception(u"Abnormal error in verify_bk_token...")
+            logger.exception("Abnormal error in verify_bk_token: bk_token=%s***", bk_token[:6])
             return False, None
 
         if response.get("result") or response.get("ret") == 0:
