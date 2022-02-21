@@ -266,7 +266,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             )
         except FetchDataFromRemoteFailed as e:
             logger.exception(
-                "failed to sync data. fetch data from remote fail. " "[instance.id=%s, operator=%s, task_id=%s]",
+                "failed to sync data. fetch data from remote fail. [instance.id=%s, operator=%s, task_id=%s]",
                 instance.id,
                 request.operator,
                 task_id,
