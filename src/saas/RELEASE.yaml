@@ -405,3 +405,21 @@ versions:
         content:
         - "重构 Login 项目部分代码，引入 blue-krill 加密"
         - "重构社区登录页面 #144"
+
+- version: "2.3.3"
+  date: "2022-02-21"
+  changeLogs:
+  - project: "SaaS"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "更新页面 Header & Footer"
+      - type: "FIX"
+        content:
+        - "SaaS 上重置密码时会清空该用户的 weixin、QQ 等字段 #275"
+  - project: "Login"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "修复 Login bk_token 引号问题"
+        - "更新页面 Header & Footer"

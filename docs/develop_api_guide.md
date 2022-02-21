@@ -76,12 +76,3 @@ python manage.py makemessages --all
 python manage.py compilemessages -l en
 python manage.py compilemessages -l zh-hans
 ```
-
-## 关于缓存
-
-用户管理默认是没有开启缓存能力的，可以通过环境变量控制缓存使用与否
-
-``` bash
-# 关闭缓存
-export BK_USER_NO_CACHE=1
-```

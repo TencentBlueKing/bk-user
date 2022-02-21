@@ -80,7 +80,7 @@ image:
   registry: mirrors.tencent.com
   repository: blueking/bk-login
   pullPolicy: IfNotPresent
-  tag: "v2.3.3-alpha.2"
+  tag: "v2.3.3"
 
 nameOverride: ""
 fullnameOverride: ""
@@ -236,4 +236,4 @@ volumes: []
 volumeMounts: []
   ## 自定义登录插件示例
   # - name: bk-login-plugin-example
-  #   mountPath: /app/ee_login/
+  #   mountPath: /app/bklogin/ee_login/
