@@ -59,8 +59,12 @@ def update_or_create_sync_tasks(instance: "Setting", operator: str):
     try:
         update_periodic_sync_task(category_id=instance.category_id, operator=operator, interval_seconds=cycle_value)
     except Exception:  # pylint: disable=broad-except
-        logger.exception("failed to update periodic task schedule. [category_id=%s, operator=%s, interval_seconds=%s",
-                        instance.category_id, operator, cycle_value)
+        logger.exception(
+            "failed to update periodic task schedule. [category_id=%s, operator=%s, interval_seconds=%s",
+            instance.category_id,
+            operator,
+            cycle_value,
+        )
 
 
 @receiver(post_category_delete)
