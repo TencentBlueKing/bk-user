@@ -3,7 +3,7 @@
 
 ---
 [![license](https://img.shields.io/badge/license-mit-green.svg?style=flat)](https://github.com/TencentBlueKing/bk-user/blob/master/LICENSE) 
-[![Release Version](https://img.shields.io/badge/bk--user-2.3.1-green)](https://github.com/TencentBlueKing/bk-user/releases) 
+[![Release Version](https://img.shields.io/badge/bk--user-2.3.3-green)](https://github.com/TencentBlueKing/bk-user/releases) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](https://github.com/TencentBlueKing/bk-user/pulls) 
 
 [简体中文](readme.md) | English
@@ -26,7 +26,7 @@ For details, please refer to [features](https://bk.tencent.com/docs/document/6.0
 
 ## Getting Started
 
-- [Deploy by Helm](/deploy/helm/bk-user-stack/README.md)
+- [Deploy by Helm](/deploy/helm/bk-user/README.md)
 - [Local Developing](/docs/develop_guide.md)
 
 ## Roadmap

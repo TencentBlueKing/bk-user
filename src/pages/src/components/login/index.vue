@@ -61,9 +61,11 @@ export default {
   .bk-login-wrapper {
     display: flex;
     background-color: #fff;
+    border-radius: 2%;
 
     iframe {
       border: none;
+      border-radius: 2%;
     }
   }
 }

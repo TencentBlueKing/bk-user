@@ -85,7 +85,12 @@ def login_success_response(request, user_or_form, redirect_to, app_id):
     bk_token, expire_time = get_bk_token(username)
     response = HttpResponseRedirect(redirect_to)
     response.set_cookie(
-        BK_COOKIE_NAME, bk_token, expires=expire_time, domain=settings.BK_COOKIE_DOMAIN, httponly=True, secure=secure
+        BK_COOKIE_NAME,
+        urllib.parse.quote_plus(bk_token),
+        expires=expire_time,
+        domain=settings.BK_COOKIE_DOMAIN,
+        httponly=True,
+        secure=secure,
     )
 
     # set cookie for app or platform

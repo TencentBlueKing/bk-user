@@ -1,7 +1,7 @@
 version ?= "development"
 login_version ?= "development"
 values ?=
-image_repo ?= "ccr.ccs.tencentyun.com/bk.io"
+image_repo ?= "mirrors.tencent.com/blueking"
 chart_repo ?=
 namespace ?= "bk-user"
 test_release_name ?= "bk-user-test"
@@ -42,31 +42,20 @@ push:
 	docker push ${image_repo}/bk-user-saas:${version}
 	docker push ${image_repo}/bk-login:${login_version}
 
-helm-sync:
-	mkdir -p deploy/helm/api/templates/
-	mkdir -p deploy/helm/saas/templates/
-	mkdir -p deploy/helm/login/templates/
-	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/api/templates/ || true
-	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/saas/templates/ || true
-	ln -s ${PWD}/deploy/helm/chartty/* deploy/helm/login/templates/ || true
-
-	ln -s ${PWD}/deploy/helm/chartty/c_*.tpl deploy/helm/bk-user-stack/templates/ || true
-
-helm-refresh: helm-sync
-	cd deploy/helm && helm dependency update bk-user-stack --skip-refresh
+helm-refresh:
+	cd deploy/helm && helm dependency update bk-user --skip-refresh
 
 helm-debug: helm-refresh
-	cd deploy/helm && helm install ${test_release_name} bk-user-stack --debug --dry-run -f local_values.yaml
+	cd deploy/helm && helm install ${test_release_name} bk-user --debug --dry-run -f local_values.yaml
 
 helm-install: helm-refresh
-	cd deploy/helm && helm upgrade --install ${test_release_name} bk-user-stack -n ${namespace} -f local_values.yaml
+	cd deploy/helm && helm upgrade --install ${test_release_name} bk-user -n ${namespace} -f local_values.yaml
 
 helm-uninstall:
 	helm uninstall ${test_release_name} -n ${namespace} || true
-	kubectl delete deploy,sts,cronjob,pod,svc,ingress,secret,cm,sa,pvc -n ${namespace} -l app.kubernetes.io/instance=${test_release_name}
 
 helm-package: helm-refresh
-	cd deploy/helm && helm package bk-user-stack -d dist/
+	cd deploy/helm && helm package bk-user -d dist/
 
 helm-publish: deploy/helm/dist/*.tgz
 	for f in $^; do \

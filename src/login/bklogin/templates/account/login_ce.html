@@ -8,13 +8,13 @@
         <link href="{{STATIC_URL}}assets/bk-icon-2.0/iconfont.css" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}assets/blueking-icon/index.css" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}css_ce/login.{{CSS_SUFFIX}}?v={{STATIC_VERSION}}" rel="stylesheet" type="text/css" />
-        <title>{% trans '登录|蓝鲸智云' %}</title>
+        <title>{% trans '登录 | 腾讯蓝鲸智云' %}</title>
 
         {% if is_plain %}
           <style>
               .login-from {
                 left: 50% !important;
-                top: 50% !important;
+                top: 58% !important;
                 margin: 0 !important;
                 transform: translate(-50%, -58%);
               }
@@ -101,12 +101,11 @@
             </div>
             <footer class="footer">
                 <p>
-                    <a id="contact_us" class="link">{% trans 'QQ群支持' %}(495299374)</a>
+                    <a href="https://wpa1.qq.com/KziXGWJs?_type=wpa&qidian=true" >{% trans '技术支持' %}</a>
                     | <a href="https://bk.tencent.com/s-mart/community/" target="_blank" hotrep="hp.footer.feedback" class="link">{% trans '社区论坛' %}</a>
                     | <a href="http://bk.tencent.com/" target="_blank" hotrep="hp.footer.feedback" class="link">{% trans '产品官网' %}</a>
-                    |<a class="follow-us" href="###">{% trans '关注我们' %}</a>
                 </p>
-                <p>Copyright © 2012-{{NOW.year}} Tencent BlueKing. All Rights Reserved.</p>
+                <p>Copyright © 2012-{{NOW.year}} Tencent BlueKing. All Rights Reserved. V1.1.1</p>
                 <p>{% trans '蓝鲸智云 版权所有' %}</p>
             </footer>
         </div>

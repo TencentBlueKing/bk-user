@@ -3,7 +3,7 @@
 
 ---
 [![license](https://img.shields.io/badge/license-mit-green.svg?style=flat)](https://github.com/TencentBlueKing/bk-user/blob/master/LICENSE) 
-[![Release Version](https://img.shields.io/badge/bk--user-2.3.1-green)](https://github.com/TencentBlueKing/bk-user/releases) 
+[![Release Version](https://img.shields.io/badge/bk--user-2.3.3-green)](https://github.com/TencentBlueKing/bk-user/releases) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](https://github.com/TencentBlueKing/bk-user/pulls)
 
 简体中文 | [English](readme_en.md)
@@ -25,7 +25,7 @@
 
 ## 快速开始 
 
-- [Helm 快速部署指引](/deploy/helm/bk-user-stack/README.md)
+- [Helm 快速部署指引](/deploy/helm/bk-user/README.md)
 - [本地开发部署指引](/docs/develop_guide.md)
 
 ## 路线图

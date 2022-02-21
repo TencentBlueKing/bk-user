@@ -8,11 +8,12 @@
     ├── api  # 后台 API 代码目录
     ├── bkuser_global  # 公共代码目录
     ├── pages  # SaaS 前端代码
+    ├── login  # 蓝鲸登录代码（包含前端 + 后台）
     ├── sdk  # 由 API 生成的 SDK 代码
     └── saas  # SaaS 后端代码
 ```
 
-本地开发时，你需要分别为三个模块——后台 API、SaaS 前端、SaaS 后端——创建开发环境。
+本地开发时，你需要分别为四个模块——后台 API、SaaS 前端、SaaS 后端、蓝鲸登录——创建开发环境。
 
 在开始开发前，你需要为整个项目安装并初始化 `pre-commit`， 
 
@@ -46,7 +47,7 @@ poetry install
 
 运行
 ```bash
-bin/start_dev.sh
+bash bin/start_dev.sh
 ```
 
 ## SaaS 前端开发
@@ -64,4 +65,21 @@ npm install
 ### 运行
 ```bash
 npm run dev
+```
+
+## 蓝鲸登录开发
+与 SaaS 类似，你需要首先链接公共代码（前面任意一步做过即可跳过）
+```bash
+make link
+```
+
+### 安装依赖
+```bash
+cd src/login
+poetry install
+```
+
+运行
+```bash
+bash bin/start_dev.sh
 ```

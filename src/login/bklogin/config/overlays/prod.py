@@ -12,9 +12,13 @@ specific language governing permissions and limitations under the License.
 from bklogin.config.common.django_basic import *  # noqa
 from bklogin.config.common.logging import *  # noqa
 from bklogin.config.common.platform import *  # noqa
+from bklogin.config.common.plugin import *  # noqa
 from bklogin.config.common.storage import *  # noqa
 
 from bkuser_global.logging import LoggingType, get_logging
 
 SITE_URL = "/login/"
-LOGGING = get_logging(logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_core")
+LOGIN_COMPLETE_URL = f"{HTTP_SCHEMA}://{BK_LOGIN_PUBLIC_ADDR}{SITE_URL}"
+LOGGING = get_logging(
+    logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_core", formatter="verbose"
+)
