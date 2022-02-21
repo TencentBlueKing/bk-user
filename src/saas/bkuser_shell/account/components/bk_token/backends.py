@@ -83,7 +83,7 @@ class TokenBackend(ModelBackend):
 
         try:
             response = send(ConfFixture.USER_INFO_URL, "GET", api_params, verify=False)
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception("Abnormal error in get_user_info: bk_token=%s***", bk_token[:6])
             return False, {}
 

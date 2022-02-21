@@ -218,12 +218,8 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
             try:
                 setting_id = setting_instances[setting_info["key"]].id
             except KeyError:
-                logger.exception(
-                    "找不到 Setting<%s>. [category_id=%s, namesapce_name=%s]",
-                    setting_info["key"],
-                    category_id,
-                    namespace_name,
-                )
+                logger.exception("找不到 Setting<%s>. [category_id=%s, namesapce_name=%s]",
+                                setting_info["key"], category_id, namespace_name)
                 continue
 
             try:
@@ -255,9 +251,8 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
             try:
                 api_response = api_instance.v2_settings_create(setting_info)
             except ApiException:
-                logger.exception(
-                    "创建配置信息<%s-%s> 失败. [category_id=%s]", namespace_name, setting_info["key"], category_id
-                )
+                logger.exception("创建配置信息<%s-%s> 失败. [category_id=%s]",
+                                namespace_name, setting_info["key"], category_id)
                 continue
 
             if api_response:

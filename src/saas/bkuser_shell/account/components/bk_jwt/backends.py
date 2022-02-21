@@ -29,7 +29,7 @@ class BkJwtBackend(ModelBackend):
 
         try:
             verify_data = self.verify_bk_jwt_request(request)
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception(u"[BK_JWT]校验异常")
             return None
 
@@ -43,7 +43,7 @@ class BkJwtBackend(ModelBackend):
             user, _ = user_model.objects.get_or_create(username=user_info["bk_username"])
             user.nickname = user_info["bk_username"]
             user.save()
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception(u"自动创建 & 更新 User Model 失败: user_info=%s", user_info)
             return None
 
