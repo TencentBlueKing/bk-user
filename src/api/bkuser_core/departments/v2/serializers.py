@@ -16,10 +16,9 @@ from bkuser_core.apis.v2.serializers import (
     CustomFieldsMixin,
     CustomFieldsModelSerializer,
 )
+from bkuser_core.departments.models import Department
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
-
-from .models import Department
 
 # ===============================================================================
 # Response

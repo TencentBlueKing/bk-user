@@ -7,13 +7,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Generator
+import logging
+from dataclasses import dataclass, field
+from typing import Generator, List
 
 from django.db.models import CharField, DateTimeField, FloatField, IntegerField, TextField
-from rest_framework import filters
+from rest_framework import filters, viewsets
+
+logger = logging.getLogger(__name__)
 
 
+@dataclass
 class FieldFilter:
+    view_set: viewsets.ViewSet
+
     def extract_fields(self, queryset) -> Generator[str, None, None]:
         raise NotImplementedError
 
@@ -26,10 +33,9 @@ class FieldFilter:
         }
 
 
-class M2MFieldFilter(FieldFilter):
+class ForeignFieldFilter(FieldFilter):
     def extract_fields(self, queryset) -> Generator[str, None, None]:
-        # TODO: maybe we can use `queryset.model._meta.get_field(key).m2m_field_name`
-        return (x for x in ["departments", "leader"])
+        return (x for x in getattr(self.view_set, "foreign_fields", []))
 
     def get_key(self, key: str) -> str:
         return f"{key}__in"
@@ -59,24 +65,27 @@ class PlainFieldFilter(FieldFilter):
 
 class InFieldFilter(FieldFilter):
     def extract_fields(self, queryset) -> Generator[str, None, None]:
-        # TODO: get from serializer?
-        return (x for x in ["username__in", "staff_status__in", "status__in"])
+        return (x for x in getattr(self.view_set, "in_fields", []))
 
     def get_key(self, key: str) -> str:
         return key
 
 
+@dataclass
 class MultipleFieldFilter(filters.SearchFilter):
     """多字段过滤器, 同时支持标准和非标准过滤"""
 
-    field_filters: list = [M2MFieldFilter, IContainFieldFilter, PlainFieldFilter, InFieldFilter]
+    field_filters: List = field(
+        default_factory=lambda: [ForeignFieldFilter, IContainFieldFilter, PlainFieldFilter, InFieldFilter]
+    )
 
     def filter_by_params(self, queryset, params: dict, view):
         """根据不同字段类型进行多字段过滤"""
 
         query = {}
         for f_filter in self.field_filters:
-            query.update(f_filter().gen_query(queryset, params))
+            query.update(f_filter(view).gen_query(queryset, params))
 
         # in operator on many-to-many fields may cause duplicate results, so we use distinct
+        logger.debug(f"trying to query via multiple fields: {query}")
         return queryset.filter(**query).distinct()

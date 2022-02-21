@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 from bkuser_core.departments.models import Department
-from bkuser_core.departments.views import DepartmentViewSet
+from bkuser_core.departments.v2.views import DepartmentViewSet
 from bkuser_core.tests.apis.utils import get_api_factory, make_request_operator_aware
 from bkuser_core.tests.utils import (
     attach_pd_relation,

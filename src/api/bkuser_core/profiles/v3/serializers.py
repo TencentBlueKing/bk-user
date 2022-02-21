@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from bkuser_core.apis.v3.serializers import StringArrayField
-from bkuser_core.departments.serializers import SimpleDepartmentSerializer
+from bkuser_core.departments.v3.serializers import DepartmentSerializer
 from bkuser_core.profiles.v2.serializers import LeaderSerializer
 from rest_framework.fields import BooleanField, CharField, DateTimeField, IntegerField, JSONField
 from rest_framework.serializers import Serializer
@@ -72,7 +72,7 @@ class QueryProfileSerializer(ProfileSerializer):
 class ResultProfileSerializer(ProfileSerializer):
     """返回用户 profile"""
 
-    departments = SimpleDepartmentSerializer(many=True, required=False, help_text="部门列表")
+    departments = DepartmentSerializer(many=True, required=False, help_text="部门列表")
     leaders = LeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
 
 

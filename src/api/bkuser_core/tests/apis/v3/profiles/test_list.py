@@ -76,7 +76,7 @@ class TestListApis:
         for k, v in samples.items():
             make_simple_profile(k, force_create_params=v)
 
-        url = f"/api/v2/profiles/?{params}"
+        url = f"/api/v3/profiles/?{params}"
         request = factory.get(url)
         response = view(request=request)
 
@@ -116,7 +116,7 @@ class TestListApis:
             for d in Department.objects.filter(id__in=departments):
                 d.add_profile(p)
 
-        url = f"/api/v2/profiles/?{query_params}"
+        url = f"/api/v3/profiles/?{query_params}"
         request = factory.get(url)
         response = view(request=request)
         assert ",".join([r["username"] for r in response.data["results"]]) == expected
