@@ -147,6 +147,7 @@ export default {
         const projectMap = {
           SaaS: 'SaaS',
           API: 'API',
+          Login: 'Login',
           __Global__: '',
         };
         this.versionList = res.data.versions.map((item) => {

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bk-login"
-version = "2.3.2"
+version = "2.3.3"
 description = "bk-login"
 authors = ["IMBlues <bluesedenyu@gmail.com>"]
 
