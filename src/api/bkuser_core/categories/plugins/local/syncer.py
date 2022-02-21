@@ -166,7 +166,6 @@ class ExcelSyncer(Syncer):
                 logger.exception(f"同步用户解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")
                 continue
             except Exception:  # pylint: disable=broad-except
-                # TODO
                 logger.exception("同步用户解析字段异常. [user_raw_info=%s]", user_raw_info)
                 continue
 
