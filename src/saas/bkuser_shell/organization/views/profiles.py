@@ -39,7 +39,7 @@ class LoginInfoViewSet(BkUserApiViewSet):
             profile = api_instance.v2_profiles_read(request.user.username)
         except Exception:  # pylint: disable=broad-except
             logger.exception(
-                "Exception when calling ProfilesApi->profiles_read<%s> \n",
+                "Exception when calling ProfilesApi->v2_profiles_read<%s> \n",
                 request.user.username,
             )
             # 兼容测试环境

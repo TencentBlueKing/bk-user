@@ -31,7 +31,11 @@ def create_creator_actions(sender, instance, **kwargs):
     try:
         helper.create_creator_actions(kwargs["creator"], instance)
     except Exception:  # pylint: disable=broad-except
-        logger.exception("failed to create resource_creator_action (category related)")
+        logger.exception(
+            "failed to create resource_creator_action (category related). [creator=%s, instance=%s]",
+            kwargs["creator"],
+            instance,
+        )
 
     # 创建目录之后，默认拥有了目录 & 组织的管理能力
     try:
@@ -42,4 +46,8 @@ def create_creator_actions(sender, instance, **kwargs):
             action_ids=[IAMAction.MANAGE_DEPARTMENT, IAMAction.VIEW_DEPARTMENT],
         )
     except Exception:  # pylint: disable=broad-except
-        logger.exception("failed to create resource_creator_action (department related)")
+        logger.exception(
+            "failed to create resource_creator_action (department related). [creator=%s, instance=%s]",
+            kwargs["creator"],
+            instance,
+        )
