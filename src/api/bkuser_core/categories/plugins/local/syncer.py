@@ -12,7 +12,6 @@ import logging
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Type
-from unicodedata import category
 
 from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
 from bkuser_core.common.db_sync import SyncOperation
