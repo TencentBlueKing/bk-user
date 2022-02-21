@@ -41,7 +41,9 @@ class IAMBasicAuthentication(BasicAuthentication):
             raise exceptions.AuthenticationFailed(_("无法从权限中心获取到鉴权 token, 原因: %s") % msg)
 
         if token != password:
-            logger.warning("bkiam callback basic auth password error. [token=%s, password=%s]", token[:6], password[:6])
+            logger.warning(
+                "bkiam callback basic auth password error. [token=%s, password=%s]", token[:6], password[:6]
+            )
             raise exceptions.AuthenticationFailed(_("Invalid username/password."))
 
         SimpleUser = namedtuple("SimpleUser", "username,is_authenticated")
