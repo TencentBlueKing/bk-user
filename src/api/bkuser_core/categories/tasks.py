@@ -88,13 +88,8 @@ def adapter_sync(instance_id: int, operator: str, task_id: Optional[uuid.UUID] =
     try:
         plugin = get_plugin_by_category(category)
     except ValueError:
-        logger.exception(
-            "category type<%s> is not support. [instance.id=%s, operator=%s, task_id=%s]",
-            category.type,
-            instance_id,
-            operator,
-            task_id,
-        )
+        logger.exception("category type<%s> is not support. [instance.id=%s, operator=%s, task_id=%s]",
+                        category.type, instance_id, operator, task_id)
         raise error_codes.CATEGORY_TYPE_NOT_SUPPORTED
     except Exception:
         logger.exception(
