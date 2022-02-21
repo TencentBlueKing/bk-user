@@ -87,7 +87,7 @@ image:
   registry: mirrors.tencent.com
   repository: blueking/bk-user-api
   pullPolicy: IfNotPresent
-  tag: "v2.3.3-alpha.2"
+  tag: "v2.3.3"
 
 nameOverride: ""
 fullnameOverride: ""
