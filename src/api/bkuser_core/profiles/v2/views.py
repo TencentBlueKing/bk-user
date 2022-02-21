@@ -455,11 +455,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         except ProfileEmailEmpty:
             raise error_codes.EMAIL_NOT_PROVIDED
         except Exception:  # pylint: disable=broad-except
-            logger.exception(
-                "failed to send password via email. [profile.id=%s, profile.username=%s]",
-                instance.id,
-                instance.username,
-            )
+            logger.exception("failed to send password via email. [profile.id=%s, profile.username=%s]",
+                            instance.id, instance.username)
 
         return Response(data=local_serializers.ProfileTokenSerializer(token_holder).data)
 

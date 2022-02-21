@@ -265,22 +265,16 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 kwargs={"instance_id": instance.id, "operator": request.operator, "task_id": task_id}
             )
         except FetchDataFromRemoteFailed as e:
-            logger.exception(
-                "failed to sync data. fetch data from remote fail. [instance.id=%s, operator=%s, task_id=%s]",
-                instance.id,
-                request.operator,
-                task_id,
-            )
+            logger.exception("failed to sync data. fetch data from remote fail. "
+                             "[instance.id=%s, operator=%s, task_id=%s]",
+                            instance.id, request.operator, task_id)
             raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
         except CoreAPIError:
             raise
         except Exception:
-            logger.exception(
-                "failed to sync data. " "[instance.id=%s, operator=%s, task_id=%s]",
-                instance.id,
-                request.operator,
-                task_id,
-            )
+            logger.exception("failed to sync data. "
+                            "[instance.id=%s, operator=%s, task_id=%s]",
+                            instance.id, request.operator, task_id)
             raise error_codes.SYNC_DATA_FAILED
 
         return Response({"task_id": task_id})
@@ -318,22 +312,13 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
             adapter_sync(lookup_value, operator=request.operator, task_id=task_id, **params)
         except DataFormatError as e:
-            logger.exception(
-                "failed to sync data, dataformat error. " "[instance_id=%s, operator=%s, task_id=%s, params=%s]",
-                lookup_value,
-                request.operator,
-                task_id,
-                params,
-            )
+            logger.exception("failed to sync data, dataformat error. "
+                            "[instance_id=%s, operator=%s, task_id=%s, params=%s]",
+                            lookup_value, request.operator, task_id, params)
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
         except Exception as e:
-            logger.exception(
-                "failed to sync data. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
-                lookup_value,
-                request.operator,
-                task_id,
-                params,
-            )
+            logger.exception("failed to sync data. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
+                            lookup_value, request.operator, task_id, params)
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
 
         return Response()

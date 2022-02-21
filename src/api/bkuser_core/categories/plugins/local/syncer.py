@@ -12,6 +12,7 @@ import logging
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Type
+from unicodedata import category
 
 from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
 from bkuser_core.common.db_sync import SyncOperation
@@ -166,6 +167,7 @@ class ExcelSyncer(Syncer):
                 logger.exception(f"同步用户解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")
                 continue
             except Exception:  # pylint: disable=broad-except
+                # TODO
                 logger.exception("同步用户解析字段异常. [user_raw_info=%s]", user_raw_info)
                 continue
 
