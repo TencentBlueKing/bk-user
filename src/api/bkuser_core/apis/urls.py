@@ -33,7 +33,7 @@ schema_view = get_schema_view(
     generator_class=CustomOpenAPISchemaGenerator,
     patterns=[
         url(r"^", include("bkuser_core.monitoring.urls")),
-        url(r"^", include("bkuser_core.departments.v2.urls")),
+        url(r"^", include("bkuser_core.departments.urls")),
         url(r"^", include("bkuser_core.profiles.urls")),
         url(r"^", include("bkuser_core.categories.urls")),
         url(r"^", include("bkuser_core.user_settings.urls")),
