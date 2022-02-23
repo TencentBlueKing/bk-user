@@ -32,7 +32,7 @@ class BlueException(Exception):
         :param context: 错误消息 format dict
         :param args: 其他参数
         """
-        super(BlueException, self).__init__(*args)
+        super(BlueException, self).__init__(message, data, *args)
         self.message = self.MESSAGE if message is None else message
         self.data = data
 
@@ -46,6 +46,9 @@ class BlueException(Exception):
             "message": self.message,
             "data": self.render_data(),
         }
+
+    def __str__(self):
+        return f"code={self.ERROR_CODE}, message={self.message}"
 
 
 class ClientBlueException(BlueException):
