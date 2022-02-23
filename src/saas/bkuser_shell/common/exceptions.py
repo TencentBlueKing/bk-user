@@ -32,7 +32,7 @@ class BlueException(Exception):
         :param context: 错误消息 format dict
         :param args: 其他参数
         """
-        super().__init__(message, data, *args)
+        super(BlueException, self).__init__(message, data, *args)
         self.message = self.MESSAGE if message is None else message
         self.data = data
 
