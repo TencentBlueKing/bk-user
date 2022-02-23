@@ -744,7 +744,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
             domain_username_map[domain].append(username)
 
-        logger.info("going to query username list: %s", username_list)
+        logger.debug("going to query username list: %s", username_list)
         if not domain_username_map:
             profiles = Profile.objects.filter(enabled=True)
         else:
