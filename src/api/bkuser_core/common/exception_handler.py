@@ -68,7 +68,7 @@ def get_ee_exception_response(exc, context):
     elif isinstance(exc, AuthenticationFailed):
         data["message"] = "403, authentication failed"
     else:
-        logger.exception("request apiServer failed")
+        logger.exception("unknown exception while handling the request")
         data["message"] = UNKNOWN_ERROR_HINT
         data["code"] = -1
 
@@ -79,7 +79,6 @@ def get_ee_exception_response(exc, context):
             setattr(response, "from_exception", True)
             return response
 
-    logger.exception("request apiServer failed")
     response = Response(data=data, status=EE_GENERAL_STATUS_CODE)
     setattr(response, "from_exception", True)
     return response
