@@ -18,13 +18,9 @@ class SettingsEnableNamespaces(AutoLowerEnum):
     PASSWORD = auto()
     CONNECTION = auto()
     FIELDS = auto()
+    NOTIFICATION = auto()
 
-    _choices_labels = (
-        (GENERAL, "通用"),
-        (PASSWORD, "密码"),
-        (CONNECTION, "连接"),
-        (FIELDS, "连接"),
-    )
+    _choices_labels = ((GENERAL, "通用"), (PASSWORD, "密码"), (CONNECTION, "连接"), (FIELDS, "连接"), (NOTIFICATION, "通知"))
 
 
 class InitPasswordMethod(AutoLowerEnum):
