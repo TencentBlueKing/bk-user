@@ -20,16 +20,11 @@ from rest_framework.exceptions import ValidationError
 class PasswordElement:
     name: ClassVar[str] = ""
     display_name: ClassVar[str] = ""
-    regex_template: ClassVar[str] = ""
-    include: ClassVar[bool] = True
-
-    @classmethod
-    def get_regex(cls, *args, **kwargs) -> str:
-        return cls.regex_template
+    regex_pattern: ClassVar[str] = ""
 
     @classmethod
     def match(cls, value: str, *args, **kwargs):
-        result = regex.match(cls.get_regex(), value)
+        result = regex.match(cls.regex_pattern, value)
         if not result:
             raise ValidationError(_("密码需要包含{}").format(cls.display_name))
 
@@ -37,35 +32,40 @@ class PasswordElement:
 class UpperElement(PasswordElement):
     name = "upper"
     display_name = "大写字母"
-    regex_template = r"(?=.*?[A-Z])"
+    regex_pattern = r"(?=.*?[A-Z])"
 
 
 class LowerElement(PasswordElement):
     name = "lower"
     display_name = "小写字母"
-    regex_template = r"(?=.*?[a-z])"
+    regex_pattern = r"(?=.*?[a-z])"
 
 
 class IntElement(PasswordElement):
     name = "int"
     display_name = "数字"
-    regex_template = r"(?=.*?[0-9])"
+    regex_pattern = r"(?=.*?[0-9])"
 
 
 class SpecialElement(PasswordElement):
     name = "special"
     display_name = "特殊字符（除空格）"
-    regex_template = r"(?=.*?[_#?~.,!;@$%^&*-])"
+    regex_pattern = r"(?=.*?[_#?~.,!;@$%^&*-])"
 
 
 class SeqElement(PasswordElement):
-    regex_templates: list
-    include: ClassVar[bool] = False
+    name: ClassVar[str] = ""
+    display_name: ClassVar[str] = ""
+    seq_list: List[str]
 
     @classmethod
     def make_sub_regex_list(cls, max_seq_len: int) -> Generator[str, None, None]:
-        for t in cls.regex_templates:
+        """切割出可能存在的所有序列
+        max_seq_len=3, abcdefg -> abc, bcd, cde, def, efg
+        """
+        for t in cls.seq_list:
             for index, char in enumerate(t):
+                # 当已经切割到字符串尾部时
                 if index + max_seq_len > len(t):
                     continue
 
@@ -86,7 +86,7 @@ class KeyboardSeq(SeqElement):
 
     name = "keyboard_seq"
     display_name = "键盘序"
-    regex_templates = ["qwertyuiopasdfghjklzxcvbnm", "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-['=]\\"]
+    seq_list = ["qwertyuiopasdfghjklzxcvbnm", "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-['=]\\"]
 
 
 class NumSeq(SeqElement):
@@ -94,7 +94,7 @@ class NumSeq(SeqElement):
 
     name = "num_seq"
     display_name = "连续数字序"
-    regex_templates = [r"1234567890"]
+    seq_list = ["1234567890"]
 
 
 class AlphabetSeq(SeqElement):
@@ -102,7 +102,7 @@ class AlphabetSeq(SeqElement):
 
     name = "alphabet_seq"
     display_name = "连续字母序"
-    regex_templates = [r"abcdefghijklmnopqrstuvwxyz"]
+    seq_list = ["abcdefghijklmnopqrstuvwxyz"]
 
 
 class SpecialSeq(SeqElement):
@@ -110,7 +110,7 @@ class SpecialSeq(SeqElement):
 
     name = "special_seq"
     display_name = "连续特殊字符序"
-    regex_templates = [r"!@#$%^&*()_+"]
+    seq_list = ["!@#$%^&*()_+"]
 
 
 class DuplicateChar(PasswordElement):
@@ -118,7 +118,6 @@ class DuplicateChar(PasswordElement):
 
     name = "duplicate_char"
     display_name = "连续重复字符"
-    include = False
 
     @classmethod
     def match(cls, value: str, *args, **kwargs):
