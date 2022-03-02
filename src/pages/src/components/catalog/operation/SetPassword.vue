@@ -55,6 +55,34 @@
       <p class="error-text" v-if="!defaultPassword.password_must_includes.length">{{$t('密码规则不得为空')}}</p>
     </div>
 
+    <!-- 密码不允许 -->
+    <div class="info-container">
+      <div class="auto-freeze-container" style="margin-bottom: 10px;">
+        <span>{{$t('密码不允许连续')}}</span>
+        <bk-input
+          v-model="defaultPassword.password_rult_length"
+          type="number"
+          style="width: 120px;margin: 0 8px;"
+          :class="{ 'king-input': true, error: passwordRuleError }"
+          @input="validatePasswordRule">
+          <template slot="append">
+            <div class="group-text">{{$t('位')}}</div>
+          </template>
+        </bk-input>
+        <span>{{$t('出现')}}：</span>
+      </div>
+      <p class="error-text" v-show="passwordRuleError">{{$t('不能小于3位，大于8位')}}</p>
+      <bk-checkbox-group
+        v-model="defaultPassword.exclude_elements_config"
+        style="display: flex;height: 19px;margin-top: 10px;">
+        <bk-checkbox value="keyboard_seq" style="margin-right: 28px;">{{$t('键盘序')}}</bk-checkbox>
+        <bk-checkbox value="alphabet_seq" style="margin-right: 28px;">{{$t('连续字母序')}}</bk-checkbox>
+        <bk-checkbox value="num_seq" style="margin-right: 28px;">{{$t('连续数字序')}}</bk-checkbox>
+        <bk-checkbox value="special_seq" style="margin-right: 28px;">{{$t('连续特殊符号序')}}</bk-checkbox>
+        <bk-checkbox value="duplicate_char" style="margin-right: 28px;">{{$t('重复字母、数字、特殊符号')}}</bk-checkbox>
+      </bk-checkbox-group>
+    </div>
+
     <!-- 密码有效期 -->
     <div class="info-container">
       <div class="title-container">
@@ -314,6 +342,8 @@ export default {
       // 密码长度是否错误
       passwordLengthError: false,
       passwordHistoryError: false,
+      // 密码不允许连续出现
+      passwordRuleError: false,
       // 密码解锁时间是否错误
       autoUnlockError: false,
       // 未登录自动冻结天数是否错误
@@ -357,6 +387,7 @@ export default {
       return !this.defaultPassword.password_must_includes.length
                     || this.passwordLengthError
                     || this.passwordHistoryError
+                    || this.passwordRuleError
                     || this.autoUnlockError
                     || this.freezeDaysError
                     || this.initPasswordError
@@ -386,6 +417,10 @@ export default {
     validatePasswordLength() {
       this.passwordLengthError = this.defaultPassword.password_min_length < 8
                                  || this.defaultPassword.password_min_length > 32;
+    },
+    validatePasswordRule() {
+      this.passwordRuleError = this.defaultPassword.password_rult_length < 3
+                                 || this.defaultPassword.password_rult_length > 8;
     },
     // 校验密码重复次数
     validatePasswordHistory() {
@@ -423,6 +458,7 @@ export default {
     // 提交前验证是否有错误
     validate() {
       this.validatePasswordLength();
+      this.validatePasswordRule();
       this.validateAutoUnlock();
       this.validateFreezeDays();
       this.validateInitPassword();
