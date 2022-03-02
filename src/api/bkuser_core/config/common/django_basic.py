@@ -155,10 +155,3 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {},
     "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser_core.apis.swagger.AutoModelTagSchema",
 }
-
-# ==============================================================================
-# Celery
-# ==============================================================================
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
-CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="bk_user")
