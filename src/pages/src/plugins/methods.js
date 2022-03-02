@@ -125,6 +125,8 @@ const methods = {
     Vue.prototype.$convertPassportRes = function (obj) {
       const objectData = {};
       const enabledKeys = ['max_password_history', 'freeze_after_days'];
+      const list = [];
+      let num = null;
       obj.forEach((regionArray) => {
         try {
           if (enabledKeys.includes(regionArray.key)) {
@@ -138,19 +140,32 @@ const methods = {
           console.warn('数据结构异常', e);
         }
       });
+      Object.entries(objectData.exclude_elements_config).forEach((k) => {
+        list.push(k[0]);
+        num = k[1];
+      });
+      objectData.exclude_elements_config = list;
+      this.$set(objectData, 'password_rult_length', num);
       return objectData;
     };
 
-    Vue.prototype.$convertPassportInfoArray = function (arr) {
+    Vue.prototype.$convertPassportInfoArray = function (arr, arr2) {
       try {
         const arrayData = [];
+        const num = arr2.password_rult_length;
         Object.entries(arr).forEach((regionArray) => {
           const key = regionArray[0];
           let value = regionArray[1];
           let enabled = true;
+          const obj = {};
           if (regionArray[1].value) {
             value = regionArray[1].value;
             enabled = regionArray[1].enabled;
+          } else if (key === 'exclude_elements_config') {
+            Object.entries(value).forEach((k) => {
+              this.$set(obj, k[1], num);
+            });
+            value = obj;
           }
           arrayData.push({ key, value, enabled });
         });
@@ -165,6 +180,7 @@ const methods = {
         const objectData = {};
         const enabledKeys = ['max_password_history', 'freeze_after_days'];
         Object.entries(obj).forEach((regionArray) => {
+          console.log('regionArray', regionArray);
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
             const value = regionData[1];
@@ -176,6 +192,9 @@ const methods = {
             }
           });
         });
+        objectData.exclude_elements_config = [];
+        this.$set(objectData, 'password_rult_length', 3);
+        console.log('objectData', objectData);
         return objectData;
       } catch (e) {
         console.warn('数据结构异常', e);
@@ -193,6 +212,18 @@ const methods = {
         return arrayData;
       } catch (e) {
         console.warn('数据结构异常', e);
+      }
+    };
+
+    Vue.prototype.$ArrayToObject = function (arr) {
+      try {
+        const objectData = {};
+        arr.forEach((regionObject) => {
+          console.log('regionObject', regionObject);
+        });
+        return objectData;
+      } catch (e) {
+        console.warn('参数错误', e);
       }
     };
 

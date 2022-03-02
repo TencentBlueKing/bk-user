@@ -130,7 +130,7 @@ export default {
         const action = this.passwordHasCreated ? 'catalog/ajaxPutPassport' : 'catalog/ajaxPostPassport';
         await this.$store.dispatch(action, {
           id: this.catalogInfo.id,
-          data: this.$convertPassportInfoArray(this.passwordInfo),
+          data: this.$convertPassportInfoArray(this.passwordInfo, this.passwordInfo),
         });
         this.handleSaveSuccess();
       } catch (e) {

@@ -389,4 +389,13 @@ export default {
   蓝鲸用户管理字段: 'Blue Whale User management field',
   对应: 'The corresponding',
   目录字段: 'Category field',
+  密码不允许连续: 'Passwords cannot be consecutive',
+  位: 'position',
+  出现: 'appear',
+  '不能小于3位，大于8位': 'No less than 3 bits, no more than 8 bits',
+  键盘序: 'Keyboard sequence',
+  连续字母序: 'Continuous alphabetic order',
+  连续数字序: 'Continuous numeric sequence',
+  连续特殊符号序: 'Continuous special sign order',
+  '重复字母、数字、特殊符号': 'Repeat letters, numbers, special symbols',
 };
