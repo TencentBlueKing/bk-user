@@ -180,7 +180,6 @@ const methods = {
         const objectData = {};
         const enabledKeys = ['max_password_history', 'freeze_after_days'];
         Object.entries(obj).forEach((regionArray) => {
-          console.log('regionArray', regionArray);
           Object.entries(regionArray[1]).forEach((regionData) => {
             const key = regionData[0];
             const value = regionData[1];
@@ -194,7 +193,6 @@ const methods = {
         });
         objectData.exclude_elements_config = [];
         this.$set(objectData, 'password_rult_length', 3);
-        console.log('objectData', objectData);
         return objectData;
       } catch (e) {
         console.warn('数据结构异常', e);
@@ -212,18 +210,6 @@ const methods = {
         return arrayData;
       } catch (e) {
         console.warn('数据结构异常', e);
-      }
-    };
-
-    Vue.prototype.$ArrayToObject = function (arr) {
-      try {
-        const objectData = {};
-        arr.forEach((regionObject) => {
-          console.log('regionObject', regionObject);
-        });
-        return objectData;
-      } catch (e) {
-        console.warn('参数错误', e);
       }
     };
 

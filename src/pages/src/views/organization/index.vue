@@ -441,6 +441,10 @@ export default {
       searchDataList: [],
       searchFilterList: [],
       heardList: [],
+      enumList: {
+        department_name: 'departments',
+        leader: 'leaders',
+      },
     };
   },
   computed: {
@@ -741,15 +745,12 @@ export default {
     handleTableSearch(list) {
       const valueList = [];
       let key = '';
-      const value = [];
       list.forEach((item) => {
-        if (item.id === 'department_name') {
-          key = 'departments';
-        } else if (item.id === 'leader') {
-          key = 'leaders';
-        } else {
-          key = item.id;
+        const value = [];
+        if (Object.keys(this.enumList).includes(item.id)) {
+          key = this.enumList[item.id];
         }
+        key = item.id;
         item.values.forEach((v) => {
           value.push(v.id);
         });
@@ -763,9 +764,6 @@ export default {
       })
         .catch((e) => {
           console.warn(e);
-        })
-        .finally(() => {
-          this.clickSecond = false;
         });
     },
     // 搜索文件配置列表
@@ -776,9 +774,7 @@ export default {
     // 获取部门列表
     async getDepartmentsList() {
       try {
-        const params = {
-          categoryId: this.currentCategoryId,
-        };
+        const params = `category_id=${this.currentCategoryId}`;
         const list = [];
         const res = await this.$store.dispatch('organization/getDepartmentsList', params);
         res.data.results.forEach((item) => {
@@ -786,14 +782,8 @@ export default {
             id: item.id,
             name: item.full_name,
           });
-          this.heardList.filter((v) => {
-            if (v.id === 'department_name') {
-              this.$set(v, 'children', []);
-              this.$set(v, 'multiable', true);
-              v.children = list;
-            }
-          });
         });
+        this.getChildrenList(list, 'department_name');
       } catch (e) {
         console.warn(e);
       }
@@ -809,17 +799,20 @@ export default {
             id: item.id,
             name: `${item.username}（${item.display_name}）`,
           });
-          this.heardList.filter((v) => {
-            if (v.id === 'leader') {
-              this.$set(v, 'children', []);
-              this.$set(v, 'multiable', true);
-              v.children = list;
-            }
-          });
         });
+        this.getChildrenList(list, 'leader');
       } catch (e) {
         console.warn(e);
       }
+    },
+    // 获取组织和上级的子列表
+    getChildrenList(list, value) {
+      this.heardList.filter((item) => {
+        if (item.id === value) {
+          this.$set(item, 'children', list);
+          this.$set(item, 'multiable', true);
+        }
+      });
     },
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
