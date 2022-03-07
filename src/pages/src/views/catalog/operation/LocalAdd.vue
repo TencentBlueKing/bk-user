@@ -121,7 +121,7 @@ export default {
         this.isLoading = true;
         await this.$store.dispatch('catalog/ajaxPostPassport', {
           id: this.catalogId,
-          data: this.$convertPassportInfoArray(this.passportInfo),
+          data: this.$convertPassportInfoArray(this.passportInfo, this.passportInfo),
         });
         this.$bus.$emit('updateCatalogList');
         this.messageSuccess(this.$t('保存成功'));

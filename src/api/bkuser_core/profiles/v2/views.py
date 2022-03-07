@@ -332,7 +332,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             PasswordValidator(
                 min_length=int(config_loader["password_min_length"]),
                 max_length=settings.PASSWORD_MAX_LENGTH,
-                required_element_names=config_loader["password_must_includes"],
+                include_elements=config_loader["password_must_includes"],
+                exclude_elements_config=config_loader["exclude_elements_config"],
             ).validate(pending_password)
 
             instance.password = make_password(pending_password)
@@ -418,7 +419,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         PasswordValidator(
             min_length=int(config_loader["password_min_length"]),
             max_length=settings.PASSWORD_MAX_LENGTH,
-            required_element_names=config_loader["password_must_includes"],
+            include_elements=config_loader["password_must_includes"],
+            exclude_elements_config=config_loader["exclude_elements_config"],
         ).validate(new_password)
 
         instance.password = make_password(new_password)

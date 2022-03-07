@@ -31,6 +31,13 @@ REDIS_KEY_PREFIX = env("CACHE_REDIS_KEY_PREFIX", default="bk-user-")
 
 REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
+# ==============================================================================
+# Celery
+# ==============================================================================
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
+CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="bk_user")
+
 
 # ==============================================================================
 # 缓存配置

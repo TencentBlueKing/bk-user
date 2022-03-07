@@ -86,19 +86,19 @@ login:
 ```yaml
 api:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-user-api
     tag: "v2.3.1"
 
 saas:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-user-saas
     tag: "v2.3.1"
 
 login:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-login
     tag: "v2.3.1"
 ```
