@@ -18,3 +18,5 @@ data:
   ENCRYPT_SECRET_KEY: {{ .Values.encryptSecretKey }}
   # 用于拼接修改密码 URL
   BK_USERMGR_SAAS_URL: {{ .Values.bkUserUrl }}
+  # Sentry DSN配置, 非空则开启
+  SENTRY_DSN: "{{ .Values.global.sentryDsn }}"
