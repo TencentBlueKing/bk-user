@@ -33,11 +33,11 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
     try:
         profile = Profile.objects.get(id=profile_id)
     except Exception:
-        logger.exception("get profile<%s> failed during send mail")
+        logger.exception("get profile<id=%s> failed during send mail", profile_id)
         raise
 
     if not profile.email:
-        logger.exception("profiles<%s> has no valid email", profile.username)
+        logger.exception("profiles<username=%s> has no valid email", profile.username)
         raise exceptions.ProfileEmailEmpty
 
     config_loader = ConfigProvider(profile.category_id)

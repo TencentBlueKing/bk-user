@@ -11,6 +11,8 @@ global:
   bkDomainScheme: "http"
   ## 是否开启权限中心
   enableIAM: false
+  ## sentry dsn
+  sentryDsn: ""
 
   hostAliases: []
     # - ip: ""

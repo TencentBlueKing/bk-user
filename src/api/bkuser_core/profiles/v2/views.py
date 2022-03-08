@@ -332,7 +332,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             PasswordValidator(
                 min_length=int(config_loader["password_min_length"]),
                 max_length=settings.PASSWORD_MAX_LENGTH,
-                required_element_names=config_loader["password_must_includes"],
+                include_elements=config_loader["password_must_includes"],
+                exclude_elements_config=config_loader["exclude_elements_config"],
             ).validate(pending_password)
 
             instance.password = make_password(pending_password)
@@ -418,7 +419,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         PasswordValidator(
             min_length=int(config_loader["password_min_length"]),
             max_length=settings.PASSWORD_MAX_LENGTH,
-            required_element_names=config_loader["password_must_includes"],
+            include_elements=config_loader["password_must_includes"],
+            exclude_elements_config=config_loader["exclude_elements_config"],
         ).validate(new_password)
 
         instance.password = make_password(new_password)
@@ -455,7 +457,11 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         except ProfileEmailEmpty:
             raise error_codes.EMAIL_NOT_PROVIDED
         except Exception:  # pylint: disable=broad-except
-            logger.exception("failed to send password via email")
+            logger.exception(
+                "failed to send password via email. [profile.id=%s, profile.username=%s]",
+                instance.id,
+                instance.username,
+            )
 
         return Response(data=local_serializers.ProfileTokenSerializer(token_holder).data)
 
@@ -674,7 +680,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 profile=profile, token_expire_seconds=settings.PAGE_TOKEN_EXPIRE_SECONDS
             )
         except Exception:  # pylint: disable=broad-except
-            logger.exception("failed to create token for password reset")
+            logger.exception("failed to create token for password reset. [profile.username=%s]", profile.username)
         else:
             data.update({"reset_password_url": make_passwd_reset_url_by_token(token_holder.token)})
 
@@ -740,7 +746,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
             domain_username_map[domain].append(username)
 
-        logger.info("going to query username list: %s", username_list)
+        logger.debug("going to query username list: %s", username_list)
         if not domain_username_map:
             profiles = Profile.objects.filter(enabled=True)
         else:

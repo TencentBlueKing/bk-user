@@ -70,7 +70,7 @@ def delete_periodic_sync_task(category_id: int):
     try:
         PeriodicTask.objects.filter(name__in=guess_names).delete()
     except PeriodicTask.DoesNotExist:
-        logger.warning("PeriodicTask %s has been deleted, skip it...", str(category_id))
+        logger.warning("PeriodicTask %s has been deleted, skip it. [guess_names=%s]", str(category_id), guess_names)
         return
 
 

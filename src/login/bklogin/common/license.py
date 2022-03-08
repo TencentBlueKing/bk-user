@@ -65,7 +65,7 @@ def _validate_remote_license(cert_server_url, cert_file, key_file, cert_raw_stri
     # do retry
     retry_count = 0
     while (not ok) and retry_count < 3:
-        logger.info("validate remote license  http post failed! retry %s" % (retry_count + 1))
+        logger.info("validate remote license  http post failed! retry %s", retry_count + 1)
         ok, data = http_post(cert_server_url, param, verify=False, cert=(cert_file, key_file), timeout=30)
         retry_count += 1
 
@@ -110,7 +110,7 @@ def check_license():
     is_valid, message, message_cn, valid_start_time, valid_end_time = remote_license_result
 
     if not is_valid:
-        logger.error(message)
+        logger.error("validate remote license fail, it's invald because: %s", message)
         # TODO to write a function for selecting data of current lageuage
         error_message = message_cn if translation.get_language() in ["zh-hans"] else message
         return False, error_message, None, None

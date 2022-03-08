@@ -54,7 +54,7 @@ class SettingViewSet(AdvancedModelViewSet):
         try:
             metas = SettingMeta.objects.filter(category_type=category.type, **validated_data)
         except Exception:
-            logger.exception("cannot find setting meta")
+            logger.exception("cannot find setting meta: [category=%s, data=%s]", category, validated_data)
             raise error_codes.CANNOT_FIND_SETTING_META
 
         return metas
@@ -91,7 +91,7 @@ class SettingViewSet(AdvancedModelViewSet):
             # 暂时忽略已创建报错
             setting, _ = Setting.objects.update_or_create(meta=metas[0], value=value, category=category)
         except Exception:
-            logger.exception("cannot create setting")
+            logger.exception("cannot create setting. [meta=%s, value=%s, category=%s]", metas[0], value, category)
             raise error_codes.CANNOT_CREATE_SETTING
 
         post_setting_create.send(

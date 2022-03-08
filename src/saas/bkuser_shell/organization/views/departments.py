@@ -151,7 +151,7 @@ class DepartmentViewSet(BkUserApiViewSet):
                 else:
                     x["profile_count"] = 0
             except Exception:  # pylint: disable=broad-except
-                logger.exception("fetch profiles count failed")
+                logger.exception("fetch profiles count failed. [category_id=%s]", x["id"])
                 x["profile_count"] = 0
 
             x["departments"] = []

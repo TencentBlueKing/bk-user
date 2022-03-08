@@ -42,8 +42,8 @@ class PasswordViewSet(BkUserApiViewSet):
             # 调用后台接口重置密码
             api_instance.v2_profiles_generate_token(lookup_value=profile.id, body={}, lookup_field="id")
         except Exception:  # pylint: disable=broad-except
-            """吞掉异常，保证不能判断出邮箱是否存在"""
-            logger.exception("failed to generate token of profile<%s>", profile.username)
+            logger.exception("failed to generate token of profile<%s>. [profile.id=%s]", profile.username, profile.id)
+
         return Response(data={})
 
     @inject_serializer(body_in=serializers.ResetByTokenSerialzier, tags=["password"])

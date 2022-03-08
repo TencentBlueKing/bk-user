@@ -86,19 +86,19 @@ login:
 ```yaml
 api:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-user-api
     tag: "v2.3.1"
 
 saas:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-user-saas
     tag: "v2.3.1"
 
 login:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-login
     tag: "v2.3.1"
 ```
@@ -202,13 +202,22 @@ global:
 默认未开启，如需开启请将 `global.serviceMonitor.enabled` 设置为 true。
 
 ##### `values.yaml` 配置示例：
+
 ```yaml
 global:
   serviceMonitor:
     enabled: true
 ```
 
-### 9. 安装
+### 9. 配置sentry
+
+```yaml
+global:
+  ## sentry dsn
+  sentryDsn: "http://12927b5f211046b575ee51fd8b1ac34f@{SENTRY_DOMAIN}/{PROJECT_ID}"
+```
+
+### 10. 安装
 
 如果你已经准备好了 `values.yaml`，就可以直接进行安装操作了
 
