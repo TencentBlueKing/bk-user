@@ -16,7 +16,7 @@ def init_sentry_sdk():
     """Register celery error events to sentry"""
     from django.conf import settings
 
-    if hasattr(settings, 'SENTRY_DSN'):
+    if settings.SENTRY_DSN:
         # 初始化 sentry_sdk
         sentry_sdk.init(
             # debug=True,
