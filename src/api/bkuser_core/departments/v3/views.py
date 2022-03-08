@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from bkuser_core.apis.v3.exceptions import QueryTooLong
 from bkuser_core.apis.v3.filters import MultipleFieldFilter
 from bkuser_core.apis.v3.serializers import AdvancedPagination
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
@@ -46,8 +47,10 @@ class DepartmentViewSet(viewsets.ModelViewSet, ListAPIView):
             )
         except IAMPermissionDenied:
             raise
+        except QueryTooLong as e:
+            raise error_codes.QUERIES_TOO_LONG.f(e)
         except Exception:
-            logger.exception("failed to get department list")
+            logger.exception("failed to get department list with validated_data: %s", validated_data)
             raise error_codes.QUERY_PARAMS_ERROR
 
         return self.get_paginated_response(self.paginate_queryset(queryset))

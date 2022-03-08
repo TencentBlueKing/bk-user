@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from bkuser_core.apis.v3.exceptions import QueryTooLong
 from bkuser_core.apis.v3.filters import MultipleFieldFilter
 from bkuser_core.apis.v3.serializers import AdvancedPagination
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
@@ -48,6 +49,8 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
             )
         except IAMPermissionDenied:
             raise
+        except QueryTooLong as e:
+            raise error_codes.QUERY_TOO_LONG.f(e)
         except Exception:
             logger.exception("failed to get profile list")
             raise error_codes.QUERY_PARAMS_ERROR

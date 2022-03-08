@@ -9,10 +9,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from dataclasses import dataclass, field
-from typing import Generator, List
+from typing import ClassVar, Generator, List, Optional
 
 from django.db.models import CharField, DateTimeField, FloatField, IntegerField, TextField
 from rest_framework import filters, viewsets
+
+from .exceptions import QueryTooLong
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FieldFilter:
     view_set: viewsets.ViewSet
+    limit: ClassVar[Optional[int]] = None
 
     def extract_fields(self, queryset) -> Generator[str, None, None]:
         raise NotImplementedError
@@ -28,12 +31,23 @@ class FieldFilter:
         raise NotImplementedError
 
     def gen_query(self, queryset, params: dict) -> dict:
-        return {
-            self.get_key(key): value for key, value in params.items() if key in list(self.extract_fields(queryset))
-        }
+
+        query = {}
+        for key, value in params.items():
+            if key not in list(self.extract_fields(queryset)):
+                continue
+
+            if self.limit and len(value) > self.limit:
+                raise QueryTooLong(f"当前过滤长度[{len(value)}]超过字段[{key}]限制[{self.limit}]")
+
+            query[self.get_key(key)] = value
+
+        return query
 
 
 class ForeignFieldFilter(FieldFilter):
+    limit = 100
+
     def extract_fields(self, queryset) -> Generator[str, None, None]:
         return (x for x in getattr(self.view_set, "foreign_fields", []))
 
@@ -42,6 +56,8 @@ class ForeignFieldFilter(FieldFilter):
 
 
 class IContainFieldFilter(FieldFilter):
+    limit = 100
+
     def extract_fields(self, queryset) -> Generator[str, None, None]:
         available_fields = queryset.model._meta.get_fields()
         for f in available_fields:
@@ -64,6 +80,8 @@ class PlainFieldFilter(FieldFilter):
 
 
 class InFieldFilter(FieldFilter):
+    limit = 1000
+
     def extract_fields(self, queryset) -> Generator[str, None, None]:
         return (x for x in getattr(self.view_set, "in_fields", []))
 
