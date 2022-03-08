@@ -14,6 +14,7 @@ from bklogin.config.common.logging import *  # noqa
 from bklogin.config.common.platform import *  # noqa
 from bklogin.config.common.plugin import *  # noqa
 from bklogin.config.common.storage import *  # noqa
+from bklogin.config.common.system import *  # noqa
 
 from bkuser_global.logging import LoggingType, get_logging
 

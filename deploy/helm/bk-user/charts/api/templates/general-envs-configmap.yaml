@@ -30,3 +30,5 @@ data:
   BK_COMPONENT_API_URL: "{{ .Values.bkComponentApiUrl }}"
   # 由于用户管理先于权限中心拉起，所以默认禁用，后期所有产品就绪后，可手动开启
   ENABLE_IAM: "{{ .Values.global.enableIAM }}"
+  # Sentry DSN配置, 非空则开启
+  SENTRY_DSN: "{{ .Values.global.sentryDsn }}"

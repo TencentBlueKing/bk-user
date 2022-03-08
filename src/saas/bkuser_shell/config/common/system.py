@@ -79,3 +79,8 @@ FOOTER_CONFIG = {
 #############
 DRF_CROWN_RESP_CLS = "bkuser_shell.common.response.Response"
 DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
+
+# ==============================================================================
+# Sentry
+# ==============================================================================
+SENTRY_DSN = env("SENTRY_DSN", default="")

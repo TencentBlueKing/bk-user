@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     "bklogin.bkaccount",
     "bklogin.bkauth",
     "bklogin.bk_i18n",
+    "bklogin.monitoring",
 )
 
 MIDDLEWARE = (
