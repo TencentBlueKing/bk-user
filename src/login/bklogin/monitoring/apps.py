@@ -9,17 +9,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bklogin.config.common.django_basic import *  # noqa
-from bklogin.config.common.logging import *  # noqa
-from bklogin.config.common.platform import *  # noqa
-from bklogin.config.common.plugin import *  # noqa
-from bklogin.config.common.storage import *  # noqa
-from bklogin.config.common.system import *  # noqa
+from django.apps import AppConfig
 
-from bkuser_global.logging import LoggingType, get_logging
+from .sentry import init_sentry_sdk
 
-SITE_URL = "/login/"
-LOGIN_COMPLETE_URL = f"{HTTP_SCHEMA}://{BK_LOGIN_PUBLIC_ADDR}{SITE_URL}"
-LOGGING = get_logging(
-    logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_core", formatter="verbose"
-)
+
+class MonitoringConfig(AppConfig):
+    name = 'bklogin.monitoring'
+
+    def ready(self):
+        init_sentry_sdk()
