@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
@@ -9,7 +8,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from bkuser_core.departments.v2.urls import urlpatterns as v2_urlpatterns
-from bkuser_core.departments.v3.urls import urlpatterns as v3_urlpatterns
 
-urlpatterns = v2_urlpatterns + v3_urlpatterns
+class QueryTooLong(Exception):
+    """Query too long"""

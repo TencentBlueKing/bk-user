@@ -51,6 +51,24 @@ class TestListApis:
                 "qq=aaaa&status=NORMAL",
                 "user-a-1",
             ),
+            (
+                {
+                    "user-a-1": {"qq": "aaaa", "status": "NORMAL"},
+                    "user-b-1": {"qq": "aaaa", "status": "DELETED"},
+                    "user-a-2": {"qq": "bbbb"},
+                },
+                "qq=aaaa&status__in=NORMAL,DELETED",
+                "user-a-1,user-b-1",
+            ),
+            (
+                {
+                    "user-a-1": {"qq": "aaaa", "status": "NORMAL"},
+                    "user-b-1": {"qq": "aaaa", "status": "DELETED"},
+                    "user-a-2": {"qq": "bbbb"},
+                },
+                "username__in=user-a-1,user-b-1&status__in=NORMAL",
+                "user-a-1",
+            ),
         ],
     )
     def test_multiple_fields(self, factory, view, samples, params, expected):
@@ -58,7 +76,7 @@ class TestListApis:
         for k, v in samples.items():
             make_simple_profile(k, force_create_params=v)
 
-        url = f"/api/v2/profiles/?{params}"
+        url = f"/api/v3/profiles/?{params}"
         request = factory.get(url)
         response = view(request=request)
 
@@ -98,7 +116,26 @@ class TestListApis:
             for d in Department.objects.filter(id__in=departments):
                 d.add_profile(p)
 
-        url = f"/api/v2/profiles/?{query_params}"
+        url = f"/api/v3/profiles/?{query_params}"
         request = factory.get(url)
         response = view(request=request)
         assert ",".join([r["username"] for r in response.data["results"]]) == expected
+
+    @pytest.mark.parametrize(
+        "queries,target_field",
+        [
+            ("a" * 101, "username"),
+            ("a" * 101, "telephone"),
+            (",".join(["a"] * 1001), "departments"),
+            (",".join(["a"] * 1001), "leaders"),
+        ],
+    )
+    def test_too_long(self, factory, view, queries, target_field):
+        """测试过滤条件过长"""
+        query_params = f"{target_field}=" + queries
+        url = f"/api/v3/profiles/?{query_params}"
+
+        request = factory.get(url)
+        response = view(request=request)
+        assert response.status_code == 400
+        assert response.data["code"] == "QUERY_TOO_LONG"

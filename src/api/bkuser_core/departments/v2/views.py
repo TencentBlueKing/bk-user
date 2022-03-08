@@ -25,9 +25,9 @@ from bkuser_core.bkiam.utils import need_iam
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.departments import serializers as local_serializers
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.departments.signals import post_department_create
+from bkuser_core.departments.v2 import serializers as local_serializers
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import force_use_raw_username
 from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
