@@ -109,7 +109,6 @@ def healthz(request):
     _check_funcs = [
         ("settings", _check_settings),
         ("database", _check_database),
-        # ("license", _check_license),
     ]
 
     if settings.EDITION == "ee":
