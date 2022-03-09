@@ -15,7 +15,6 @@ from bklogin.components import usermgr_api
 from blue_krill.data_types.enum import StructuredEnum
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.core.exceptions import ObjectDoesNotExist
 
 
 def _split_username(username):
@@ -82,11 +81,8 @@ class BkUserBackend(ModelBackend):
 
         # set the username to real username
         username = extra_values.get("username", username)
-        user_model = get_user_model()
-        try:
-            user = user_model.objects.get(username=username)
-        except ObjectDoesNotExist:
-            user = user_model.objects.create_user(username=username)
+        UserModel = get_user_model()
+        user = UserModel(username)
 
         user.fill_with_userinfo(extra_values)
         return user

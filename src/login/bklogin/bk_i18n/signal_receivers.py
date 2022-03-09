@@ -13,6 +13,7 @@ specific language governing permissions and limitations under the License.
 from __future__ import unicode_literals
 
 from bklogin.bk_i18n.constants import BK_LANG_TO_DJANGO_LANG, DJANGO_LANG_TO_BK_LANG
+from bklogin.common.log import logger
 from bklogin.components.usermgr_api import upsert_user
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
@@ -33,12 +34,20 @@ def _get_language_from_request(request, user):
     # session 有language，说明在登录页面有进行修改或设置，则需要同步到用户个人信息中
     lang_code = request.session.get(translation.LANGUAGE_SESSION_KEY)
     if lang_code in supported_lang_codes and lang_code is not None and check_for_language(lang_code):
+        logger.debug(
+            "user %s's request lang_code is %s. supported_lang_codes: %s",
+            user.username,
+            lang_code,
+            supported_lang_codes,
+        )
         return lang_code
 
     # 个人信息中已有language
     if user.language:
+        logger.debug("user %s already has language: %s", user.username, user.language)
         return None
 
+    logger.debug("user %s has no language, and can't get from session, do a guess", user.username)
     # session 情况不满足同步到用户个人信息，且目前个人信息中无language设置
     # 查询header头
     accept = request.META.get("HTTP_ACCEPT_LANGUAGE", "")
@@ -69,20 +78,40 @@ def update_user_i18n_info(sender, request, user, *args, **kwargs):
         # 默认使用settings中配置
         time_zone = settings.TIME_ZONE
         # sync time_zone to usermgr
-        upsert_user(username=user.username, time_zone=time_zone)
+        ok, message, _ = upsert_user(username=user.username, time_zone=time_zone)
+        if not ok:
+            logger.error(
+                "fail to update user %s's timezone to %s. %s",
+                user.username,
+                time_zone,
+                message,
+            )
 
     # 设置language
     lang_code = _get_language_from_request(request, user)
+    logger.debug(
+        "get language code from user %s's request, language code is %s",
+        user.username,
+        lang_code,
+    )
     bk_lang_code = user.language
     if lang_code:
         # 蓝鲸约定的语言代号与Django的有不同，需要进行转换
         bk_lang_code = DJANGO_LANG_TO_BK_LANG[lang_code]
         # sync language to usermgr
-        upsert_user(username=user.username, language=bk_lang_code)
+        ok, message, _ = upsert_user(username=user.username, language=bk_lang_code)
+        if not ok:
+            logger.error(
+                "fail to update user %s's language to %s. %s",
+                user.username,
+                bk_lang_code,
+                message,
+            )
         request.user.language = bk_lang_code
 
     lang_code = BK_LANG_TO_DJANGO_LANG[bk_lang_code]
     # set session for render html when logged in not redirect
+    logger.debug("session.set language code to %s, timezone to %s", lang_code, time_zone)
     request.session[translation.LANGUAGE_SESSION_KEY] = lang_code
     translation.activate(lang_code)
     request.LANGUAGE_CODE = translation.get_language()

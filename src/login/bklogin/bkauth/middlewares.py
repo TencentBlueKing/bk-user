@@ -16,10 +16,8 @@ from urllib.parse import urlparse
 
 from bklogin.bk_i18n.constants import BK_LANG_TO_DJANGO_LANG
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
-from bklogin.bkauth.utils import validate_bk_token
-from bklogin.common.log import logger
 from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpResponse
@@ -62,27 +60,12 @@ class LoginMiddleware(MiddlewareMixin):
         if full_path in [settings.SITE_URL + "i18n/setlang/", "/i18n/setlang/"]:
             return None
 
-        user = None
-        bk_token = request.COOKIES.get("bk_token")
-
-        path_prefix = settings.FORCE_SCRIPT_NAME or ""
-        if bk_token and full_path.startswith("%s/oauth/authorize/" % path_prefix):
-            is_valid, username, message = validate_bk_token(request.COOKIES)
-            if is_valid:
-                try:
-                    UserModel = get_user_model()
-                    user = UserModel.objects.get(username=username)
-                    user.bk_token = bk_token
-                except Exception:
-                    logger.exception("get user via username=%s fail", username)
-                    user = None
-        else:
-            user = authenticate(request=request)
-            if user:
-                # 设置timezone session
-                request.session[settings.TIMEZONE_SESSION_KEY] = user.time_zone
-                # 设置language session
-                request.session[translation.LANGUAGE_SESSION_KEY] = BK_LANG_TO_DJANGO_LANG[user.language]
+        user = authenticate(request=request)
+        if user:
+            # 设置timezone session
+            request.session[settings.TIMEZONE_SESSION_KEY] = user.time_zone
+            # 设置language session
+            request.session[translation.LANGUAGE_SESSION_KEY] = BK_LANG_TO_DJANGO_LANG[user.language]
 
         request.user = user or AnonymousUser()
 

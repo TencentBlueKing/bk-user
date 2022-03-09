@@ -17,9 +17,10 @@ from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
-from bklogin.common.license import check_license
+from bklogin.common.log import logger
 from bklogin.common.mixins.exempt import LoginExemptMixin
 from bklogin.common.usermgr import get_categories_str
+from bklogin.components.license import check_license
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
@@ -27,7 +28,6 @@ from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 
@@ -70,13 +70,16 @@ class LoginView(LoginExemptMixin, View):
         return self._login(request)
 
     def _login(self, request):
+        logger.debug(
+            "login_type is %s, using custom_login: %s", settings.LOGIN_TYPE, settings.LOGIN_TYPE == "custom_login"
+        )
         # 判断调用方式
         if settings.LOGIN_TYPE != "custom_login":
             return _bk_login(request)
 
         if settings.EDITION == "ee":
             # 校验企业正式是否有效，无效则不可登录
-            is_license_ok, message, vaild_start_time, vaild_end_time = check_license()
+            is_license_ok, _, _, _ = check_license()
             if not is_license_ok:
                 return login_license_fail_response(request)
 
@@ -96,15 +99,12 @@ def _bk_login(request):
     token_set_password_url = ""
 
     redirect_to = request.POST.get(REDIRECT_FIELD_NAME, request.GET.get(REDIRECT_FIELD_NAME, ""))
-    # support oauth2 redirect ?next=
-    if not redirect_to and "next" in request.GET:
-        redirect_to = request.GET.get("next")
 
     app_id = request.POST.get("app_id", request.GET.get("app_id", ""))
 
     if settings.EDITION == "ee":
         # 校验企业证书是否有效，无效则不可登录
-        is_license_ok, message, vaild_start_time, vaild_end_time = check_license()
+        is_license_ok, _, _, _ = check_license()
     else:
         is_license_ok = True
         template_name = "account/login_ce.html"
