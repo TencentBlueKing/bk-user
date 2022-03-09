@@ -442,8 +442,17 @@ export default {
       searchFilterList: [],
       heardList: [],
       enumList: {
+        username: 'username',
+        display_name: 'display_name',
+        email: 'email',
+        telephone: 'telephone',
+        status: 'status',
+        staff_status: 'staff_status',
         department_name: 'departments',
         leader: 'leaders',
+        position: 'position',
+        wx_userid: 'wx_userid',
+        qq: 'qq',
       },
     };
   },
@@ -750,7 +759,6 @@ export default {
         if (Object.keys(this.enumList).includes(item.id)) {
           key = this.enumList[item.id];
         }
-        key = item.id;
         item.values.forEach((v) => {
           value.push(v.id);
         });
