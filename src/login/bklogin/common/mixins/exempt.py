@@ -10,23 +10,10 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
-
 from builtins import object
 
 from bklogin.bkauth.decorators import login_exempt
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-
-
-class CsrfExemptMixin(object):
-    """
-    Mixin allows you to request without `csrftoken`.
-    """
-
-    @method_decorator(csrf_exempt)
-    def dispatch(self, *args, **kwargs):
-        return super(CsrfExemptMixin, self).dispatch(*args, **kwargs)
 
 
 class LoginExemptMixin(object):
@@ -37,14 +24,3 @@ class LoginExemptMixin(object):
     @method_decorator(login_exempt)
     def dispatch(self, *args, **kwargs):
         return super(LoginExemptMixin, self).dispatch(*args, **kwargs)
-
-
-class CsrfAndLoginExemptMixin(object):
-    """
-    Mixin allows you to request without `login` and `csrftoken`.
-    """
-
-    @method_decorator(csrf_exempt)
-    @method_decorator(login_exempt)
-    def dispatch(self, *args, **kwargs):
-        return super(CsrfAndLoginExemptMixin, self).dispatch(*args, **kwargs)

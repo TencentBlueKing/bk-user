@@ -25,7 +25,7 @@ def site_settings(request):
     real_static_url = urllib.parse.urljoin(str(settings.SITE_URL), str("." + settings.STATIC_URL))
     cur_domain = request.get_host()
     return {
-        "LOGIN_URL": settings.LOGIN_URL,
+        # "LOGIN_URL": settings.LOGIN_URL,
         "LOGOUT_URL": settings.LOGOUT_URL,
         "STATIC_URL": real_static_url,
         "SITE_URL": settings.SITE_URL,
@@ -33,7 +33,7 @@ def site_settings(request):
         "CUR_DOMIAN": cur_domain,
         "APP_PATH": request.get_full_path(),
         "NOW": timezone.now(),
-        "EDITION": settings.EDITION,
+        # "EDITION": settings.EDITION,
         # 本地 js 后缀名
         "JS_SUFFIX": settings.JS_SUFFIX,
         # 本地 css 后缀名
