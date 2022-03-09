@@ -18,6 +18,7 @@ from builtins import str
 
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid
+from bklogin.common.log import logger
 from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
@@ -46,6 +47,8 @@ def login_failed_response(request, redirect_to, app_id):
 
     if query:
         redirect_url = "%s?%s" % (BK_LOGIN_URL, urllib.parse.urlencode(query))
+
+    logger.debug("login_failed_response, redirect_to=%s, app_id=%s", redirect_to, app_id)
     response = HttpResponseRedirect(redirect_url)
     response = set_bk_token_invalid(request, response)
     return response
@@ -73,7 +76,10 @@ def login_success_response(request, user_or_form, redirect_to, app_id):
     if redirect_to == "/logout/":
         redirect_to = "/console/"
 
+    logger.debug("login_success_response, username=%s, redirect_to=%s, app_id=%s", username, redirect_to, app_id)
+
     # 设置用户登录
+    # TODO: 这个是django默认的login函数, 调用如果报错可以注解, 目前无实际作用
     auth_login(request, user)
     # 记录登录日志
     record_login_log(request, username, app_id)
