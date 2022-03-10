@@ -28,6 +28,7 @@ from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.utils.module_loading import import_string
+from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 
@@ -79,7 +80,7 @@ class LoginView(LoginExemptMixin, View):
 
         if settings.EDITION == "ee":
             # 校验企业正式是否有效，无效则不可登录
-            is_license_ok, _, _, _ = check_license()
+            is_license_ok, msg, valid_start_time, valid_end_time = check_license()
             if not is_license_ok:
                 return login_license_fail_response(request)
 
@@ -104,7 +105,7 @@ def _bk_login(request):
 
     if settings.EDITION == "ee":
         # 校验企业证书是否有效，无效则不可登录
-        is_license_ok, _, _, _ = check_license()
+        is_license_ok, msg, valid_start_time, valid_end_time = check_license()
     else:
         is_license_ok = True
         template_name = "account/login_ce.html"
