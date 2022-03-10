@@ -23,6 +23,7 @@ class BkAuthenticationForm(AuthenticationForm):
         password = self.cleaned_data.get("password")
 
         if username and password:
+            # will call backend/bk.py: BkUserBackend.authenticate()
             self.user_cache = authenticate(
                 username=username,
                 password=password,

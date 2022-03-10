@@ -16,7 +16,7 @@ from builtins import str
 
 from bklogin.bkauth.decorators import login_exempt
 from bklogin.common.exceptions import LoginErrorCodes
-from bklogin.common.license import check_license
+from bklogin.components.license import check_license
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.utils.translation import ugettext as _
@@ -109,7 +109,6 @@ def healthz(request):
     _check_funcs = [
         ("settings", _check_settings),
         ("database", _check_database),
-        # ("license", _check_license),
     ]
 
     if settings.EDITION == "ee":

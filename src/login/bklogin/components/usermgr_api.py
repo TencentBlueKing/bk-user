@@ -27,22 +27,23 @@ BK_USERMGR_HOST = settings.BK_USERMGR_API_URL
 def _call_usermgr_api(http_func, url, data, headers=None):
     # TODO: 后续添加Token Header进行服务间认证
     try:
-        ok, _data = http_func(url, data, headers=headers)
+        ok, resp_data = http_func(url, data, headers=headers)
         if not ok:
-            return False, -1, "verify from usermgr server fail", None
+            return False, -1, "verify from usermgr server fail: %s" % resp_data.get("error"), None
     except Exception:
         logger.exception("_call_usermgr_api fail: method=%s, url=%s, data=%s", http_func.__name__, url, data)
-        return False, -1, "verify from usermgr server fail", None
+        return False, -1, "verify from usermgr server fail, error happended", None
 
-    if not _data.get("result"):
+    # TODO: still use the result to verify?
+    if not resp_data.get("result"):
         if data and "password" in data:
             data["password"] = "******"
         logger.info(
-            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s", http_func.__name__, url, data, _data
+            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s", http_func.__name__, url, data, resp_data
         )
-        return False, _data.get("code", -1), _data.get("message", "usermgr api fail"), _data.get("data")
+        return False, resp_data.get("code", -1), resp_data.get("message", "usermgr api fail"), resp_data.get("data")
 
-    return True, 0, "ok", _data.get("data")
+    return True, 0, "ok", resp_data.get("data")
 
 
 def authenticate(username, password, language="", domain=""):

@@ -41,13 +41,3 @@ def parse_local_datetime(date_string, format_string=DATETIME_FORMAT_STRING, zone
     :param zone:时间字符串的时区，默认为本地时区
     """
     return _parse_datetime(date_string, format_string, zone=zone)
-
-
-def parse_utc_datetime(date_string, format_string=DATETIME_FORMAT_STRING, zone=None):
-    """
-    将不带时区的字符串转为UTC时区的时间
-    :param date_string:时间字符串
-    :param format_string:时间字符串格式
-    :param zone:时间字符串的时区，默认为本地时区
-    """
-    return _parse_datetime(date_string, format_string, zone=zone, target_zone=timezone.utc)
