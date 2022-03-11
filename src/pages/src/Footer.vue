@@ -33,7 +33,7 @@
         <span v-if="index !== footerList.length - 1" :key="index + 'gap'" class="gap"> | </span>
       </template>
     </div>
-    <div>Copyright © 2012-{{ new Date().getFullYear() }} Tencent BlueKing. All Rights Reserved.</div>
+    <div>Copyright © 2012-{{ new Date().getFullYear() }} Tencent BlueKing. All Rights Reserved. V{{ version }}</div>
   </div>
 </template>
 
@@ -46,15 +46,18 @@ export default {
     return {
       isEnglish: cookie.parse(document.cookie).blueking_language === 'en',
       footerList: [],
+      version: '',
     };
   },
-  created() {
-    this.$store.dispatch('getFooter').then((res) => {
+  async created() {
+    try {
+      const res = await this.$store.dispatch('getFooter');
       this.footerList = res.data.footer || [];
-    })
-      .catch((e) => {
-        console.warn(e);
-      });
+      const versionList = await this.$store.dispatch('getVersionLog');
+      this.version = versionList.data.versions[0].version;
+    } catch (e) {
+      console.warn(e);
+    }
   },
 };
 </script>
