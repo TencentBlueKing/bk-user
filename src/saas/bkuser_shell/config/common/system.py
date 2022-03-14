@@ -70,8 +70,7 @@ FOOTER_CONFIG = {
             "link": "https://bk.tencent.com/",
             "is_blank": True,
         },
-    ],
-    "copyright": "Copyright © 2012-2022 Tencent BlueKing. All Rights Reserved. V1.1.1",
+    ]
 }
 
 #############
