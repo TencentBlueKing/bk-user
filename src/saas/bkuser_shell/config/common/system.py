@@ -71,7 +71,7 @@ FOOTER_CONFIG = {
             "is_blank": True,
         },
     ],
-    "copyright": "Copyright © 2012-2022 Tencent BlueKing. All Rights Reserved. V1.1.1",
+    "copyright": "Copyright © 2012-2022 Tencent BlueKing. All Rights Reserved. V2.3.4",
 }
 
 #############
