@@ -175,10 +175,6 @@ msgstr ""
 msgid "用户管理|蓝鲸智云企业版"
 msgstr "User Management|BlueKing"
 
-#: bklogin/templates/account/base.html:11
-msgid "用户管理|腾讯蓝鲸智云"
-msgstr "User Management|Tencent BlueKing"
-
 #: bklogin/templates/account/base.html:12
 msgid ""
 "开发者中心,游戏运维,运维,服务器管理,模块配置,监控,腾讯游戏,蓝鲸,智云,devops,"
