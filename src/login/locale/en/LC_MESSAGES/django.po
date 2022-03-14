@@ -175,6 +175,10 @@ msgstr ""
 msgid "用户管理|蓝鲸智云企业版"
 msgstr "User Management|BlueKing"
 
+#: bklogin/templates/account/base.html:11
+msgid "用户管理|腾讯蓝鲸智云"
+msgstr "User Management|Tencent BlueKing"
+
 #: bklogin/templates/account/base.html:12
 msgid ""
 "开发者中心,游戏运维,运维,服务器管理,模块配置,监控,腾讯游戏,蓝鲸,智云,devops,"
@@ -245,7 +249,7 @@ msgid "蓝鲸官网"
 msgstr "Blueking Official"
 
 #: bklogin/templates/account/base.html:101
-#: bklogin/templates/account/login_ce.html:110
+#: bklogin/templates/account/login_ce.html:113
 msgid "蓝鲸智云 版权所有"
 msgstr "BlueKing Copyright"
 
@@ -309,7 +313,7 @@ msgid "img/logo/btn_cn.png"
 msgstr "img/logo/btn_en.png"
 
 #: bklogin/templates/account/login.html:106
-#: bklogin/templates/account/login_ce.html:117
+#: bklogin/templates/account/login_ce.html:120
 msgid ""
 "您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果"
 msgstr ""
@@ -348,7 +352,7 @@ msgstr "Community"
 msgid "产品官网"
 msgstr "Home"
 
-#: bklogin/templates/account/login_ce.html:107
+#: bklogin/templates/account/login_ce.html:108
 msgid "关注我们"
 msgstr "Follow us"
 
