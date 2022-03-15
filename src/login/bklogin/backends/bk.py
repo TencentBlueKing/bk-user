@@ -10,12 +10,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
+from bklogin.common.log import logger
 from bklogin.common.usermgr import get_categories_str
 from bklogin.components import usermgr_api
 from blue_krill.data_types.enum import StructuredEnum
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.core.exceptions import ObjectDoesNotExist
 
 
 def _split_username(username):
@@ -59,6 +59,7 @@ class BkUserBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         # NOTE: username here maybe: username/phone/email
         if not username or not password:
+            logger.debug("username or password empty, username=%s, password=%s", username, password)
             return None
 
         domain_list = get_categories_str().split(";")
@@ -73,6 +74,13 @@ class BkUserBackend(ModelBackend):
         ok, code, message, extra_values = usermgr_api.authenticate(
             username, password, language=kwargs.get("language"), domain=domain
         )
+        logger.debug(
+            "usermgr_api.authenticate result: ok=%s, code=%s, message=%s, extra_values=%s",
+            ok,
+            code,
+            message,
+            extra_values,
+        )
 
         # 认证不通过
         if not ok:
@@ -82,11 +90,8 @@ class BkUserBackend(ModelBackend):
 
         # set the username to real username
         username = extra_values.get("username", username)
-        user_model = get_user_model()
-        try:
-            user = user_model.objects.get(username=username)
-        except ObjectDoesNotExist:
-            user = user_model.objects.create_user(username=username)
+        UserModel = get_user_model()
+        user = UserModel(username)
 
         user.fill_with_userinfo(extra_values)
         return user

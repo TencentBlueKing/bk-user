@@ -98,6 +98,7 @@ error_codes.add_codes(
         # 通用
         ErrorCode("FIELDS_NOT_SUPPORTED_YET", _("存在不支持动态返回的字段")),
         ErrorCode("QUERY_PARAMS_ERROR", _("查询参数错误，请检查")),
+        ErrorCode("QUERY_TOO_LONG", _("查询参数过长")),
         ErrorCode("USERNAME_MISSING", _("用户名信息缺失")),
         ErrorCode("RESOURCE_ALREADY_ENABLED", _("资源数据未被删除")),
         ErrorCode("RESOURCE_RESTORATION_FAILED", _("资源恢复失败")),

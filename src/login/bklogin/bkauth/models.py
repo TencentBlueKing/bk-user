@@ -14,7 +14,6 @@ from __future__ import unicode_literals
 
 from builtins import object
 
-from bklogin.bkauth.manager import BkUserManager
 from bklogin.bkauth.utils import is_bk_token_valid
 from bklogin.components.usermgr_api import upsert_user
 from django.contrib.auth import models
@@ -27,8 +26,6 @@ class User(models.AbstractBaseUser, models.AnonymousUser):
 
     username = db_models.CharField(primary_key=True, max_length=255)
     USERNAME_FIELD = "username"
-
-    objects = BkUserManager()
 
     def __init__(self, *args, **kwargs):
         self.init_fields()

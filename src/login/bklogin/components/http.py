@@ -12,6 +12,8 @@ specific language governing permissions and limitations under the License.
 
 from __future__ import unicode_literals
 
+from urllib.parse import urlparse
+
 import requests
 from bklogin.common.log import logger
 
@@ -47,22 +49,21 @@ def _http_request(method, url, headers=None, data=None, timeout=None, verify=Fal
             resp = requests.put(
                 url=url, headers=headers, json=data, timeout=timeout, verify=verify, cert=cert, cookies=cookies
             )
+        elif method == "PATCH":
+            resp = requests.patch(
+                url=url, headers=headers, json=data, timeout=timeout, verify=verify, cert=cert, cookies=cookies
+            )
         else:
-            return False, None
-    except requests.exceptions.RequestException:
-        logger.exception("http request error! method: %s, url: %s, data: %s", method, url, data)
-        return False, None
+            return False, {"error": "method not supported"}
+    except requests.exceptions.RequestException as e:
+        logger.exception("http request error! method: %s, url: %s, data: %s", method, urlparse(url).path, data)
+        return False, {"error": str(e)}
     else:
         if resp.status_code != 200:
-            content = resp.content[:100] if resp.content else ""
+            content = resp.content[:256] if resp.content else ""
             error_msg = "http request fail! method: %s, url: %s, " "response_status_code: %s, response_content: %s"
-            # if isinstance(content, str):
-            #     try:
-            #         content = content.decode('utf-8')
-            #     except Exception:
-            #         content = content
             logger.error(error_msg, method, url, resp.status_code, content)
-            return False, None
+            return False, {"error": f"status_code is {resp.status_code}, not 200! {method} {urlparse(url).path}"}
 
         return True, resp.json()
 
@@ -88,6 +89,14 @@ def http_put(url, data, headers=None, verify=False, cert=None, timeout=None, coo
         headers = _gen_header()
     return _http_request(
         method="PUT", url=url, headers=headers, data=data, timeout=timeout, verify=verify, cert=cert, cookies=cookies
+    )
+
+
+def http_patch(url, data, headers=None, verify=False, cert=None, timeout=None, cookies=None):
+    if not headers:
+        headers = _gen_header()
+    return _http_request(
+        method="PATCH", url=url, headers=headers, data=data, timeout=timeout, verify=verify, cert=cert, cookies=cookies
     )
 
 

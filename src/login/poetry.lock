@@ -351,50 +351,12 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent-mirrors"
 
 [[package]]
-name = "django-decorator-include"
-version = "3.0"
-description = "Include Django URL patterns with decorators"
-category = "main"
-optional = false
-python-versions = ">=3.4"
-
-[package.dependencies]
-Django = ">=2.0"
-
-[package.extras]
-dev = ["flake8", "isort"]
-
-[package.source]
-type = "legacy"
-url = "https://mirrors.tencent.com/pypi/simple"
-reference = "tencent-mirrors"
-
-[[package]]
 name = "django-environ"
 version = "0.4.5"
 description = "Django-environ allows you to utilize 12factor inspired environment variables to configure your Django application."
 category = "main"
 optional = false
 python-versions = "*"
-
-[package.source]
-type = "legacy"
-url = "https://mirrors.tencent.com/pypi/simple"
-reference = "tencent-mirrors"
-
-[[package]]
-name = "django-oauth-toolkit"
-version = "0.12.0"
-description = "OAuth2 goodies for Django"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-django = ">=1.8"
-django-braces = ">=1.11.0"
-oauthlib = "2.0.1"
-six = "*"
 
 [package.source]
 type = "legacy"
@@ -691,25 +653,6 @@ description = "Experimental type system extensions for programs checked with the
 category = "dev"
 optional = false
 python-versions = "*"
-
-[package.source]
-type = "legacy"
-url = "https://mirrors.tencent.com/pypi/simple"
-reference = "tencent-mirrors"
-
-[[package]]
-name = "oauthlib"
-version = "2.0.1"
-description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.extras]
-rsa = ["cryptography"]
-signals = ["blinker"]
-signedtoken = ["cryptography", "pyjwt (>=1.0.0)"]
-test = ["nose", "cryptography", "pyjwt (>=1.0.0)", "blinker"]
 
 [package.source]
 type = "legacy"
@@ -1186,6 +1129,41 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent-mirrors"
 
 [[package]]
+name = "sentry-sdk"
+version = "1.5.6"
+description = "Python client for Sentry (https://sentry.io)"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+certifi = "*"
+urllib3 = ">=1.10.0"
+
+[package.extras]
+aiohttp = ["aiohttp (>=3.5)"]
+beam = ["apache-beam (>=2.12)"]
+bottle = ["bottle (>=0.12.13)"]
+celery = ["celery (>=3)"]
+chalice = ["chalice (>=1.16.0)"]
+django = ["django (>=1.8)"]
+falcon = ["falcon (>=1.4)"]
+flask = ["flask (>=0.11)", "blinker (>=1.1)"]
+httpx = ["httpx (>=0.16.0)"]
+pure_eval = ["pure-eval", "executing", "asttokens"]
+pyspark = ["pyspark (>=2.4.4)"]
+quart = ["quart (>=0.16.1)", "blinker (>=1.1)"]
+rq = ["rq (>=0.6)"]
+sanic = ["sanic (>=0.8)"]
+sqlalchemy = ["sqlalchemy (>=1.2)"]
+tornado = ["tornado (>=5)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1428,7 +1406,7 @@ reference = "tencent-mirrors"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "666e7b7bd853cc41cadd2b0fdb252e81e331b306242d8a0a86a537b82fe229b5"
+content-hash = "896bac78e8a4663372932dfcf2196cb4330d871df1078f5527c8496f068121ca"
 
 [metadata.files]
 appnope = [
@@ -1623,17 +1601,9 @@ django-braces = [
     {file = "django-braces-1.13.0.tar.gz", hash = "sha256:ba68e98b817c6f01d71d10849f359979617b3fe4cefb7f289adefddced092ddc"},
     {file = "django_braces-1.13.0-py2.py3-none-any.whl", hash = "sha256:a457d74ea29478123c0c4652272681b3cea0bf1232187fd9f9b6f1d97d32a890"},
 ]
-django-decorator-include = [
-    {file = "django-decorator-include-3.0.tar.gz", hash = "sha256:18db98e0e48dbb3977ab79b5520dbf5ecbb35f0bced8e15ed62dc66762345856"},
-    {file = "django_decorator_include-3.0-py3-none-any.whl", hash = "sha256:fe7a96afb23f66dcbc6227d3c48430e53cc5704eab30841ddb8bd940e5ea8a5a"},
-]
 django-environ = [
     {file = "django-environ-0.4.5.tar.gz", hash = "sha256:6c9d87660142608f63ec7d5ce5564c49b603ea8ff25da595fd6098f6dc82afde"},
     {file = "django_environ-0.4.5-py2.py3-none-any.whl", hash = "sha256:c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"},
-]
-django-oauth-toolkit = [
-    {file = "django-oauth-toolkit-0.12.0.tar.gz", hash = "sha256:4e50e6e4ba59bc09502ee39d7e7ad8f14e1fe1e15f93e7f4422791c9ecc3b1e0"},
-    {file = "django_oauth_toolkit-0.12.0-py2.py3-none-any.whl", hash = "sha256:7b368b6440c7c0bb5f9fe00e6a81e7bcee46d399e7f831f91e9cb15afcb77770"},
 ]
 django-prometheus = [
     {file = "django-prometheus-1.0.15.tar.gz", hash = "sha256:e8da2eb91cb20cfe0b8130305d34f3503766b7a08a244ce1031c36136beeb7a5"},
@@ -1799,9 +1769,6 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
-oauthlib = [
-    {file = "oauthlib-2.0.1.tar.gz", hash = "sha256:132ad46df25e53a84b33f1fd43f80e973cda2cb018cc0168d7d0c8c4d5cef9b5"},
-]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
@@ -1939,6 +1906,10 @@ pytz = [
 requests = [
     {file = "requests-2.21.0-py2.py3-none-any.whl", hash = "sha256:7bf2a778576d825600030a110f3c0e3e8edc51dfaafe1c146e39a2027784957b"},
     {file = "requests-2.21.0.tar.gz", hash = "sha256:502a824f31acdacb3a35b6690b5fbf0bc41d63a24a45c4004352b0242707598e"},
+]
+sentry-sdk = [
+    {file = "sentry-sdk-1.5.6.tar.gz", hash = "sha256:ac2a50128409d57655279817aedcb7800cace1f76b266f3dd62055d5afd6e098"},
+    {file = "sentry_sdk-1.5.6-py2.py3-none-any.whl", hash = "sha256:1ab34e3851a34aeb3d1af1a0f77cec73978c4e9698e5210d050e4932953cb241"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

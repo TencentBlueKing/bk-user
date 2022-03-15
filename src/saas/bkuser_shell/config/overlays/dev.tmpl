@@ -26,9 +26,7 @@ DEBUG = True
 # 日志设置
 # ===============================================================================
 LOG_LEVEL = "DEBUG"
-LOGGING = get_logging(
-    logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_shell", formatter="simple"
-)
+LOGGING = get_logging(logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_shell")
 
 # ===============================================================================
 # 跨域设置（独立开发前端域名不同时启用）

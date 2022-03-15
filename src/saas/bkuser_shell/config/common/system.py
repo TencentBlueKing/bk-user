@@ -70,8 +70,7 @@ FOOTER_CONFIG = {
             "link": "https://bk.tencent.com/",
             "is_blank": True,
         },
-    ],
-    "copyright": "Copyright © 2012-2022 Tencent BlueKing. All Rights Reserved. V1.1.1",
+    ]
 }
 
 #############
@@ -79,3 +78,8 @@ FOOTER_CONFIG = {
 #############
 DRF_CROWN_RESP_CLS = "bkuser_shell.common.response.Response"
 DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
+
+# ==============================================================================
+# Sentry
+# ==============================================================================
+SENTRY_DSN = env("SENTRY_DSN", default="")

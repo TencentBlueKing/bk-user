@@ -493,14 +493,6 @@ input[type="number"]::-webkit-outer-spin-button {
   background: url(../img/logo_ce/footer.png) no-repeat center;
   background-size: 100% 100%;
 }
-.footer .logo-qt {
-  margin-bottom: 10px;
-}
-.footer .logo-qt .img-logo {
-  position: relative;
-  top: 4px;
-  margin-right: 8px;
-}
 .footer a {
   color: #bfcbd7;
   margin: 0 5px;
@@ -508,43 +500,38 @@ input[type="number"]::-webkit-outer-spin-button {
 .footer a:hover {
   color: #fff;
 }
-.footer .follow-us {
+.follow-us {
   position: relative;
 }
-.footer .follow-us:hover .qr-box {
-  display: inline-block;
-  padding-bottom: 20px;
+.follow-us:hover {
+  cursor: pointer;
 }
-.footer .qr-box {
+.follow-us:hover .qr-box{
+  display: inline-block;
+}
+.follow-us .qr-box {
+  position: absolute;
+  bottom: 25px;
+  right: 18px;
   display: none;
-  left: -25px;
-  top: -110px;
+  width: 100px;
+  height: 100px;
+  background-color: #fff;
+  z-index: 111;
 }
-.footer .qr {
-  padding: 4px;
-  border: 1px solid #e4e4e4;
-  background: #fff;
-  display: inline-block;
-}
-.footer .qr-caret {
-  width: 0;
-  height: 0;
-  border: 7px solid transparent;
-  border-top: 7px solid #fff;
-  top: 101px;
-  left: 42px;
+.follow-us .qr-box::before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  border-top: 6px solid #fff;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
   position: absolute;
+  top: 100px;
+  left: 50px;
 }
-.footer .follow-us:hover .qr-box {
-  display: inline-block;
-}
-.footer a:hover {
-  color: #fff;
-}
-.footer .qr-box {
-  position: absolute;
-  top: 0;
-  margin-top: -118px;
+.follow-us .qr-box .qr {
+  padding-top: 5px;
 }
 
 .protocol-pop {

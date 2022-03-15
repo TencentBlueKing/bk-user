@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import Union
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
-from bkuser_core.departments.serializers import SimpleDepartmentSerializer
+from bkuser_core.departments.v2.serializers import SimpleDepartmentSerializer
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import force_use_raw_username, get_username

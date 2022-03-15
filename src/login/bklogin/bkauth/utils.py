@@ -129,6 +129,7 @@ def validate_bk_token(data):
     # 验证Token参数
     is_valid, username = is_bk_token_valid(bk_token)
     if not is_valid:
+        logger.debug("bk_token %s not valid, %s", bk_token, username)
         return False, None, username
 
     # TODO: ? use usermgr get user check if user exists?

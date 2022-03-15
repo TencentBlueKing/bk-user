@@ -30,7 +30,6 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.departments import serializers as department_serializer
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
@@ -65,6 +64,7 @@ from rest_framework_jsonp.renderers import JSONPRenderer
 
 from bkuser_global.utils import force_str_2_bool
 
+from ...departments.v2 import serializers as department_serializer
 from . import serializers as local_serializers
 
 logger = logging.getLogger(__name__)

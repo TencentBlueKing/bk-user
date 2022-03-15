@@ -64,4 +64,4 @@ class StringArrayField(fields.CharField):
     def to_internal_value(self, data):
         # convert string to list
         data = super().to_internal_value(data)
-        return data.split(self.delimiter)
+        return [x for x in data.split(self.delimiter) if x]
