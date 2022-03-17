@@ -75,6 +75,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     serializer_class = local_serializers.ProfileSerializer
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
+    operate_type = None
 
     relation_fields = ["departments", "leader", "login_set"]
 
@@ -320,6 +321,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         update_summary = {"request": request}
         # 密码修改加密
         if validated_data.get("password"):
+            self.operate_type = OperationType.RESET_PASSWORD.value
             pending_password = validated_data.get("password")
             config_loader = ConfigProvider(category_id=instance.category_id)
             try:
@@ -389,6 +391,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """
         return super().destroy(request, *args, **kwargs)
 
+    @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
     @swagger_auto_schema(
         query_serializer=AdvancedRetrieveSerialzier(),
         request_body=local_serializers.ProfileModifyPasswordSerializer,
@@ -440,6 +443,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         )
         return Response(data=local_serializers.ProfileMinimalSerializer(instance).data)
 
+    @audit_general_log(OperationType.FORGET_PASSWORD.value)
     @swagger_auto_schema(
         query_serializer=AdvancedRetrieveSerialzier(),
         request_body=EmptySerializer,

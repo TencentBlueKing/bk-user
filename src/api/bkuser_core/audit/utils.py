@@ -134,6 +134,9 @@ def audit_general_log(operate_type: str):
                 if operate_type == OperationType.UPDATE.value:
                     _params["operator_obj"] = self.get_object()
 
+                if getattr(self, "operate_type", None):
+                    _params["operate_type"] = self.operate_type
+
                 create_general_log(**_params)
                 return _result
 
