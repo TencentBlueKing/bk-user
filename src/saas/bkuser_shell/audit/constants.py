@@ -32,6 +32,10 @@ OPERATION_NAME_TUPLE = (
     ("export", _("导出")),
     ("import", _("导入")),
     ("restoration", _("恢复")),
+    ("forget_password", _("忘记密码")),
+    ("reset_password", _("重置密码")),
+    ("modify_password", _("修改密码"))
+
 )
 
 OPERATION_NAME_MAP = {x[0]: x[1] for x in OPERATION_NAME_TUPLE}
