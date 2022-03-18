@@ -911,11 +911,12 @@ class ProfilesApi(object):
                  returns the request thread.
         """
 
-        all_params = ['body', 'lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
+        all_params = ['body', 'lookup_value', 'fields', 'lookup_field', 'include_disabled', 'user_from_token']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
         all_params.append('_request_timeout')
+        all_params.append('user_from_token')
 
         params = locals()
         for key, val in six.iteritems(params['kwargs']):
@@ -964,6 +965,10 @@ class ProfilesApi(object):
         # HTTP header `Content-Type`
         header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
             ['application/json'])  # noqa: E501
+
+        if 'user_from_token' in params:
+            header_params['user-from-token'] = params["user_from_token"]
+
 
         # Authentication setting
         auth_settings = []  # noqa: E501
