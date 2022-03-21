@@ -108,7 +108,7 @@ class BkUserApiViewSet(GenericViewSet):
             self,
             request,
             force_action_id: str = "",
-            no_auth: bool = False, 
+            no_auth: bool = False,
             user_from_token: bool = False
     ):
         """从 request 中获取 api client"""
