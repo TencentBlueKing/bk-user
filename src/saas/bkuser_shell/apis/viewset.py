@@ -73,7 +73,12 @@ class BkUserApiViewSet(GenericViewSet):
 
         return ip
 
-    def _prepare_headers(self, request, force_action_id: str = "", no_auth: bool = False):
+    def _prepare_headers(
+            self, request,
+            force_action_id: str = "",
+            no_auth: bool = False,
+            user_from_token: bool = False
+    ):
         """构建通用 Headers"""
         headers = make_default_headers(request.user.username)
         ip = self.get_client_ip(request)
@@ -90,12 +95,24 @@ class BkUserApiViewSet(GenericViewSet):
                     settings.API_FORCE_NO_CACHE_HEADER_NAME: True,
                 }
             )
+        if user_from_token:
+            headers.update(
+                {
+                    'user_from_token': True,
+                }
+            )
 
         return headers
 
-    def get_api_client_by_request(self, request, force_action_id: str = "", no_auth: bool = False):
+    def get_api_client_by_request(
+            self,
+            request,
+            force_action_id: str = "",
+            no_auth: bool = False,
+            user_from_token: bool = False
+    ):
         """从 request 中获取 api client"""
-        return get_api_client(self._prepare_headers(request, force_action_id, no_auth))
+        return get_api_client(self._prepare_headers(request, force_action_id, no_auth, user_from_token))
 
     @staticmethod
     def get_paging_results(list_func: Callable, page_size: int = 50, **kwargs) -> list:

@@ -57,7 +57,7 @@ class PasswordViewSet(BkUserApiViewSet):
         # 由于该接口无登录态，我们只能认为访问该链接的人即用户所有者
         request.user.username = profile.username
 
-        profiles_api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
+        profiles_api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, user_from_token=True))
         body = {"password": password}
 
         # 调用后台接口重置密码
