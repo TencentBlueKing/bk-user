@@ -98,7 +98,7 @@ class BkUserApiViewSet(GenericViewSet):
         if user_from_token:
             headers.update(
                 {
-                    'user-from-token': True
+                    'user_from_token': True,
                 }
             )
 
