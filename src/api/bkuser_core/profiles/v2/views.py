@@ -23,7 +23,7 @@ from bkuser_core.apis.v2.serializers import (
 )
 from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
-from bkuser_core.audit.utils import audit_general_log, create_profile_log
+from bkuser_core.audit.utils import audit_general_log, create_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -75,7 +75,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     serializer_class = local_serializers.ProfileSerializer
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
-
     relation_fields = ["departments", "leader", "login_set"]
 
     def get_object(self):
@@ -287,13 +286,13 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         )
         return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
 
-    @audit_general_log(OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def _update(self, request, partial):
         instance = self.get_object()
         serializer = local_serializers.UpdateProfileSerializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
+        operate_type = OperationType.UPDATE.value
 
         # 只允许本地目录修改
         if not ProfileCategory.objects.check_writable(instance.category_id):
@@ -320,6 +319,12 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         update_summary = {"request": request}
         # 密码修改加密
         if validated_data.get("password"):
+            operate_type = (
+                OperationType.FORGET_PASSWORD.value
+                if request.headers.get("User-From-Token")
+                else OperationType.ADMIN_RESET_PASSWORD.value
+            )
+
             pending_password = validated_data.get("password")
             config_loader = ConfigProvider(category_id=instance.category_id)
             try:
@@ -362,6 +367,13 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operator=request.operator,
             extra_values=update_summary,
         )
+
+        create_general_log(
+            operator=request.operator,
+            operate_type=operate_type,
+            operator_obj=instance,
+            request=request,
+        )
         return Response(self.serializer_class(instance).data)
 
     @swagger_auto_schema(
@@ -389,6 +401,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """
         return super().destroy(request, *args, **kwargs)
 
+    @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
     @swagger_auto_schema(
         query_serializer=AdvancedRetrieveSerialzier(),
         request_body=local_serializers.ProfileModifyPasswordSerializer,
