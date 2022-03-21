@@ -34,14 +34,13 @@ OPERATION_NAME_TUPLE = (
     ("restoration", _("恢复")),
     ("forget_password", _("用户通过token重置密码")),
     ("admin_reset_password", _("管理员重置密码")),
-    ("modify_password", _("用户通过旧密码修改"))
-
+    ("modify_password", _("用户通过旧密码修改")),
 )
 
 OPERATION_ABOUT_PASSWORD = (
     "forget_password",  # 用户通过 token 重置密码
-    "admin_reset_password",   # 管理员重置密码
-    "modify_password"   # 用户通过旧密码修改
+    "admin_reset_password",  # 管理员重置密码
+    "modify_password",  # 用户通过旧密码修改
 )
 
 OPERATION_NAME_MAP = {x[0]: x[1] for x in OPERATION_NAME_TUPLE}
