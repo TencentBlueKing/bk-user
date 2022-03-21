@@ -48,7 +48,8 @@ class OperationLogListSerializer(serializers.Serializer):
         extra_value = instance["extra_value"]
         categories = self.context.get("categories")
         instance["target_obj"] = f"{extra_value['display_name']}<{extra_value['key']}>"
-        instance["operation"] = f"{OPERATION_NAME_MAP[extra_value['operation']]}" if extra_value['operation'] in OPERATION_ABOUT_PASSWORD else(
+        instance["operation"] = f"{OPERATION_NAME_MAP[extra_value['operation']]}" \
+            if extra_value['operation'] in OPERATION_ABOUT_PASSWORD else(
             f"{OPERATION_NAME_MAP[extra_value['operation']]}" f"{OPERATION_OBJ_NAME_MAP[extra_value.get('obj_type')]}"
         )
 

@@ -73,7 +73,11 @@ class BkUserApiViewSet(GenericViewSet):
 
         return ip
 
-    def _prepare_headers(self, request, force_action_id: str = "", no_auth: bool = False, user_from_token: bool = False):
+    def _prepare_headers(
+            self, request,
+            force_action_id: str = "",
+            no_auth: bool = False,
+            user_from_token: bool = False):
         """构建通用 Headers"""
         headers = make_default_headers(request.user.username)
         ip = self.get_client_ip(request)
