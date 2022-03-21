@@ -61,8 +61,7 @@ class PasswordViewSet(BkUserApiViewSet):
         body = {"password": password}
 
         # 调用后台接口重置密码
-        profiles_api_instance.v2_profiles_partial_update(
-            lookup_value=profile.id, body=body, lookup_field="id")
+        profiles_api_instance.v2_profiles_partial_update(lookup_value=profile.id, body=body, lookup_field="id")
 
         return Response(data={})
 

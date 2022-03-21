@@ -77,7 +77,8 @@ class BkUserApiViewSet(GenericViewSet):
             self, request,
             force_action_id: str = "",
             no_auth: bool = False,
-            user_from_token: bool = False):
+            user_from_token: bool = False
+    ):
         """构建通用 Headers"""
         headers = make_default_headers(request.user.username)
         ip = self.get_client_ip(request)
@@ -94,7 +95,6 @@ class BkUserApiViewSet(GenericViewSet):
                     settings.API_FORCE_NO_CACHE_HEADER_NAME: True,
                 }
             )
-
         if user_from_token:
             headers.update(
                 {
