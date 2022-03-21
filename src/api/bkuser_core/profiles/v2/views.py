@@ -75,8 +75,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     serializer_class = local_serializers.ProfileSerializer
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
-    operate_type = None
-
     relation_fields = ["departments", "leader", "login_set"]
 
     def get_object(self):
@@ -324,7 +322,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operate_type = (
                 OperationType.FORGET_PASSWORD.value
                 if request.headers.get("User-From-Token")
-                else OperationType.RESET_PASSWORD.value
+                else OperationType.ADMIN_RESET_PASSWORD.value
             )
 
             pending_password = validated_data.get("password")

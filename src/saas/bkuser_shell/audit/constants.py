@@ -32,10 +32,16 @@ OPERATION_NAME_TUPLE = (
     ("export", _("导出")),
     ("import", _("导入")),
     ("restoration", _("恢复")),
-    ("forget_password", _("忘记密码")),
-    ("reset_password", _("重置密码")),
-    ("modify_password", _("修改密码"))
+    ("forget_password", _("用户通过token重置密码")),
+    ("admin_reset_password", _("管理员重置密码")),
+    ("modify_password", _("用户通过旧密码修改"))
 
+)
+
+OPERATION_ABOUT_PASSWORD = (
+    "forget_password",  # 用户通过 token 重置密码
+    "admin_reset_password",   # 管理员重置密码
+    "modify_password"   # 用户通过旧密码修改
 )
 
 OPERATION_NAME_MAP = {x[0]: x[1] for x in OPERATION_NAME_TUPLE}
