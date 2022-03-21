@@ -84,6 +84,7 @@ class TestPasswordValidate:
             (["lower"], ["alphabet_seq"], 3, "ABcd"),
             (["lower"], ["alphabet_seq"], 2, "abdc"),
             (["lower"], ["special_seq"], 3, "qwfasd^&*asd"),
+            (["lower"], ["special_seq"], 3, "!@#132Qss5"),
             (["lower"], ["keyboard_seq"], 3, "asdfjfudieasdf"),
             (["lower"], ["keyboard_seq"], 3, "1qaz98*&fjwla%"),
             (["lower"], ["num_seq"], 2, "ncvkahei&593))12"),
