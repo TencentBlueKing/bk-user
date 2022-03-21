@@ -73,7 +73,7 @@ class SeqElement(PasswordElement):
 
     @classmethod
     def match(cls, value: str, *args, **kwargs):
-        max_seq_len = kwargs.get("max_seq_len", 3)
+        max_seq_len = int(kwargs.get("max_seq_len", 3))
         value = value.lower()
         for sub_regex in cls.make_sub_regex_list(max_seq_len):
             result = regex.findall(regex.compile(regex.escape(sub_regex)), value)
