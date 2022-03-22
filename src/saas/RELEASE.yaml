@@ -423,3 +423,25 @@ versions:
         content:
         - "修复 Login bk_token 引号问题"
         - "更新页面 Header & Footer"
+
+- version: "2.3.4"
+  date: "2022-03-22"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "NEW"
+        content:
+        - "人员列表页搜索强化 #73"
+        - "新增多种密码强度规则 #238"
+        - "支持 sentry 错误检测 #291"
+  - project: "SaaS"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "审计增加口令修改记录 #289"
+        - "规范化 Footer"
+  - project: "Login"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "优化日志输出 #297"
