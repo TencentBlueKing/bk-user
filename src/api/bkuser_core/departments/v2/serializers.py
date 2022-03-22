@@ -61,6 +61,7 @@ class V2DepartmentSerializer(CustomFieldsModelSerializer):
         return obj.get_descendants(include_self=False).filter(enabled=True).exists()
 
     class Meta:
+        ref_name = "v2_department"
         model = Department
         exclude = ("profiles", "update_time", "create_time")
 

@@ -18,6 +18,9 @@ class DepartmentSerializer(Serializer):
     full_name = CharField(required=False)
     category_id = IntegerField(required=False)
 
+    class Meta:
+        ref_name = "v3_department"
+
 
 # ------------
 # Request
