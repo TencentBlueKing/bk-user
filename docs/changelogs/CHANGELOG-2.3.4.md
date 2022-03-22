@@ -16,10 +16,6 @@
 - 审计增加口令修改记录 #289
 - 规范化 Footer
 
-### FIX
-
-- SaaS 上重置密码时会清空该用户的 weixin、QQ 等字段 #275
-
 ## Login
 
 ### OPTIMIZATION
