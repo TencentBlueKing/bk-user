@@ -23,7 +23,6 @@ class SettingsEnableNamespaces(AutoLowerEnum):
         (GENERAL, "通用"),
         (PASSWORD, "密码"),
         (CONNECTION, "连接"),
-        # revert #300
         (FIELDS, "字段"),
     )
 
