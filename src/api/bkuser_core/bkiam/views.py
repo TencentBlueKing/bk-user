@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.serializers import CategorySerializer
 from bkuser_core.departments.models import Department
-from bkuser_core.departments.v2.serializers import DepartmentSerializer
+from bkuser_core.departments.v2.serializers import V2DepartmentSerializer
 from bkuser_core.profiles.models import DynamicFieldInfo
 from bkuser_core.profiles.v2.serializers import DynamicFieldsSerializer
 
@@ -42,7 +42,7 @@ class DepartmentIAMViewSet(BaseIAMViewSet):
     """组织 IAM 回调"""
 
     resource_type = ResourceType.DEPARTMENT  # type: ignore
-    serializer_class = DepartmentSerializer
+    serializer_class = V2DepartmentSerializer
     available_attr = ["id", "name", "category_id", "level"]
     queryset = Department.objects.filter(enabled=True)
     parent_field_map = {"department": "parent_id", "category": "category_id"}

@@ -43,7 +43,7 @@ from rest_framework.serializers import Serializer
 
 class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     queryset = Department.objects.filter()
-    serializer_class = local_serializers.DepartmentSerializer
+    serializer_class = local_serializers.V2DepartmentSerializer
     lookup_field: str = "id"
     filter_backends = [
         AdvancedSearchFilter,
@@ -223,14 +223,14 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     @swagger_auto_schema(
         request_body=local_serializers.DepartmentUpdateSerializer(),
-        responses={200: local_serializers.DepartmentSerializer()},
+        responses={200: local_serializers.V2DepartmentSerializer()},
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
         request_body=local_serializers.DepartmentUpdateSerializer(),
-        responses={200: local_serializers.DepartmentSerializer()},
+        responses={200: local_serializers.V2DepartmentSerializer()},
     )
     def update(self, request, *args, **kwargs):
         """更新部门"""
