@@ -43,7 +43,7 @@ class SimpleDepartmentSerializer(CustomFieldsModelSerializer):
         fields = ("id", "name", "order", "full_name")
 
 
-class V2DepartmentSerializer(CustomFieldsModelSerializer):
+class DepartmentSerializer(CustomFieldsModelSerializer):
     name = serializers.CharField(required=True)
     has_children = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
@@ -66,7 +66,7 @@ class V2DepartmentSerializer(CustomFieldsModelSerializer):
         exclude = ("profiles", "update_time", "create_time")
 
 
-class DepartmentWithChildrenSLZ(V2DepartmentSerializer):
+class DepartmentWithChildrenSLZ(DepartmentSerializer):
     children = serializers.SerializerMethodField()
 
     def get_children(self, obj) -> List[Dict]:

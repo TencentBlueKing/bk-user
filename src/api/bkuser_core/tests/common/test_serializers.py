@@ -10,14 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 
 from bkuser_core.apis.v2.serializers import is_custom_fields_enabled
-from bkuser_core.departments.v2.serializers import DepartmentAddProfilesSerializer, V2DepartmentSerializer
+from bkuser_core.departments.v2.serializers import DepartmentAddProfilesSerializer, DepartmentSerializer
 from bkuser_core.profiles.v2.serializers import ProfileSerializer
 
 
 class TestSerializers:
     def test_mixin(self):
         """测试mixin"""
-        assert is_custom_fields_enabled(V2DepartmentSerializer())
+        assert is_custom_fields_enabled(DepartmentSerializer())
         assert not is_custom_fields_enabled(DepartmentAddProfilesSerializer())
 
     def test_subclass(self):
