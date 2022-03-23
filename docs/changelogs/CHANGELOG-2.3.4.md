@@ -16,6 +16,10 @@
 - 审计增加口令修改记录 #289
 - 规范化 Footer
 
+### FIX
+
+- 修复登录跳转 404 问题
+
 ## Login
 
 ### OPTIMIZATION
