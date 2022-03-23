@@ -440,6 +440,9 @@ versions:
         content:
         - "审计增加口令修改记录 #289"
         - "规范化 Footer"
+      - type: "FIX"
+        content:
+        - "修复登录跳转 404 问题"
   - project: "Login"
     detail:
       - type: "OPTIMIZATION"
