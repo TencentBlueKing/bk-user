@@ -175,7 +175,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if fields:
             self._check_fields(fields)
         else:
-            fields = self.get_serializer().fields
+            fields = [x for x in self.get_serializer().fields if x in self._get_model_field_names()]
+
         self._ensure_enabled_field(request, fields=fields)
 
         try:
