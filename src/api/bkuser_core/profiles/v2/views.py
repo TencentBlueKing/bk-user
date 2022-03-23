@@ -175,7 +175,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if fields:
             self._check_fields(fields)
         else:
-            fields = [x for x in self.get_serializer().fields if x in self._get_model_field_names()]
+            fields = self.get_serializer().fields
 
         self._ensure_enabled_field(request, fields=fields)
 
@@ -204,6 +204,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             serializer = self.get_serializer(page, fields=fields, many=True)
             return self.get_paginated_response(serializer.data)
 
+        fields = [x for x in fields if x in self._get_model_field_names()]
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
         # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
