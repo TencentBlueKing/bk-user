@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class VersionLogViewSet(BkUserApiViewSet):
-    permission_classes = []
+    permission_classes: list = []
 
     @swagger_auto_schema(responses={status.HTTP_200_OK: VersionLogSet}, tags=["version_log"])
     def list(self, request):
