@@ -20,6 +20,7 @@ LOGIN_EXEMPT_WHITE_LIST = (
     r"/api/v1/password/reset_by_token/$",
     r"api/footer/$",
     r"/metrics$",
+    r"/api/v2/version_logs_list/$",
 )
 
 # name for bk_token in cookie
