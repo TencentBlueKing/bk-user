@@ -92,8 +92,6 @@ urlpatterns = [
     url(r"^ping/$", healthz_views.ping),
     # 检查统一登录是否正常运行
     url(r"^healthz/", include("bklogin.healthz.urls")),
-    # bk_metadata
-    url(r"^metadata/", include("bklogin.metadata.urls")),
     # 反搜索
     url(r"^robots\.txt$", lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")),
     # prometheus metrics
