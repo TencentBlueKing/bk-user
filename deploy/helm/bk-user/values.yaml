@@ -34,6 +34,7 @@ global:
 
 api:
   enabled: true
+  bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
 
   envFrom:
   - configMapRef:

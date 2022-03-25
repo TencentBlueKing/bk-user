@@ -26,7 +26,7 @@ helm repo update
 
 ### 准备 `values.yaml`
 
-#### 1. 获取蓝鲸平台访问地址 
+#### 1. 获取蓝鲸平台访问地址
 首先，你需要获取到蓝鲸平台的访问地址，例如 `https://paas.example.com`，确保 `https://paas.example.com/login` 可以访问蓝鲸登录，然后将该值的内容填入全局环境变量中。
 
 配置示例：
@@ -40,6 +40,7 @@ api:
   bkIamUrl: "http://bkiam.example.com"
   bkPaasUrl: "http://paas.example.com"
   bkComponentApiUrl: "http://bkapi.example.com"
+  bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
 
 saas:
   enabled: true
@@ -165,7 +166,7 @@ login:
 
 mariadb:
   enabled: false
-  
+
 redis:
   enabled: false
 ```
@@ -235,7 +236,7 @@ helm install bk-user bk-user -n bk-user -f values.yaml
 ```bash
 # 获取所有 controller
 kubectl get deploy,job,sts -l app.kubernetes.io/instance=bk-user
-# 获取所有 Pod 
+# 获取所有 Pod
 kubectl get pod -l app.kubernetes.io/instance=bk-user
 # 获取访问入口
 kubectl get svc,ingress -l app.kubernetes.io/instance=bk-user
@@ -243,7 +244,7 @@ kubectl get svc,ingress -l app.kubernetes.io/instance=bk-user
 
 通常在安装后，我们会看到这些 Pod
 
-| Pod 前缀                  | 所属模块      | 作用          | 
+| Pod 前缀                  | 所属模块      | 作用          |
 |-------------------------|-----------|-------------|
 | bk-login-web            | 蓝鲸登录      | 主进程         |
 | bk-login-migrate-db     | 蓝鲸登录      | 初始化数据库作业    |

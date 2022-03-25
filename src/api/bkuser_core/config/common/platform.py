@@ -8,9 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import os
 import urllib.parse
 
-from . import env
+from . import PROJECT_ROOT, env
 from .django_basic import SITE_URL
 
 # ==============================================================================
@@ -84,6 +85,20 @@ IAM_CONFIG = get_iam_config(APP_ID, APP_TOKEN)
 # 与 SaaS 约定的权限校验头，未传递时跳过权限校验
 NEED_IAM_HEADER = "HTTP_NEED_IAM"
 ACTION_ID_HEADER = "HTTP_ACTION_ID"
+
+# APIGateway相关配置
+## Open API接入APIGW后，需要对APIGW请求来源认证，使用公钥解开jwt
+BK_APIGW_PUBLIC_KEY = env("BKAPP_APIGW_PUBLIC_KEY")
+
+## apigateway 相关配置
+# NOTE: it sdk will read settings.APP_CODE and settings.APP_SECRET, so you should set it
+APP_CODE = APP_ID
+APP_SECRET = APP_TOKEN
+BK_API_URL_TMPL = env("BK_API_URL_TMPL", default="")
+BK_USER_API_URL = os.getenv("BK_USER_API_URL", "http://bkuserapi-web")
+BK_APIGW_NAME = "bk-user"
+BK_APIGW_RESOURCE_DOCS_BASE_DIR = os.path.join(PROJECT_ROOT, "resources/apigateway/docs/")
+
 
 # ===============================================================================
 # API 访问限制（暂未开启）

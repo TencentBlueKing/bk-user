@@ -32,3 +32,5 @@ data:
   ENABLE_IAM: "{{ .Values.global.enableIAM }}"
   # Sentry DSN配置, 非空则开启
   SENTRY_DSN: "{{ .Values.global.sentryDsn }}"
+  # APIGateway url模板
+  BK_API_URL_TMPL: "{{ .Values.bkApiUrlTmpl }}"

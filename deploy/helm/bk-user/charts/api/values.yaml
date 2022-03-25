@@ -105,6 +105,8 @@ serviceAccount:
 bkPaasUrl: http://paas.example.com
 ## 蓝鲸 ESB/APIGATEWAY url，注意集群内外都是统一域名。集群内可以配置域名解析到内网ip
 bkComponentApiUrl: http://bkapi.example.com
+## 蓝鲸 APIGateway url模板
+bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
 ## 蓝鲸 Login url（浏览器跳转登录用的URL前缀）
 bkLoginUrl: http://paas.example.com/login/
 ## 蓝鲸登录后台的内部服务地址（一般用于校验登录token）
