@@ -512,12 +512,12 @@ input[type="number"]::-webkit-outer-spin-button {
 .follow-us .qr-box {
   position: absolute;
   bottom: 25px;
-  right: 18px;
+  right: -20px;
   display: none;
   width: 100px;
   height: 100px;
   background-color: #fff;
-  z-index: 111;
+  z-index: 101;
 }
 .follow-us .qr-box::before {
   content: "";

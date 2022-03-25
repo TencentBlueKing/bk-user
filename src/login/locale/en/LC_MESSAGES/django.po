@@ -337,6 +337,10 @@ msgid "请修改密码"
 msgstr "Change Password"
 
 #: bklogin/templates/account/login_ce.html:104
+msgid "技术支持"
+msgstr "Technical support"
+
+#: bklogin/templates/account/login_ce.html:104
 msgid "QQ群支持"
 msgstr "QQ group"
 
