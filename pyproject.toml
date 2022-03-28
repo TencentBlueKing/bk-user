@@ -6,6 +6,7 @@ authors = ["IMBlues <bluesedenyu@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "3.6.14"
+apigw-manager = "^1.0.3"
 
 [tool.poetry.dev-dependencies]
 # black

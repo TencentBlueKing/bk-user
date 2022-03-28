@@ -107,6 +107,8 @@ bkPaasUrl: http://paas.example.com
 bkComponentApiUrl: http://bkapi.example.com
 ## 蓝鲸 APIGateway url模板
 bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
+## 配置 bkApigatewayPublicKey 用于对接apigateway解析jwt, base64
+bkApigatewayPublicKey: ""
 ## 蓝鲸 Login url（浏览器跳转登录用的URL前缀）
 bkLoginUrl: http://paas.example.com/login/
 ## 蓝鲸登录后台的内部服务地址（一般用于校验登录token）

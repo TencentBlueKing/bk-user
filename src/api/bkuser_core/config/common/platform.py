@@ -87,10 +87,8 @@ NEED_IAM_HEADER = "HTTP_NEED_IAM"
 ACTION_ID_HEADER = "HTTP_ACTION_ID"
 
 # APIGateway相关配置
-## Open API接入APIGW后，需要对APIGW请求来源认证，使用公钥解开jwt
-BK_APIGW_PUBLIC_KEY = env("BKAPP_APIGW_PUBLIC_KEY")
-
-## apigateway 相关配置
+## Open API接入APIGW后，需要对APIGW请求来源认证，使用公钥解开jwt(base64 string)
+BK_APIGW_PUBLIC_KEY = env("BK_APIGW_PUBLIC_KEY", default="")
 # NOTE: it sdk will read settings.APP_CODE and settings.APP_SECRET, so you should set it
 APP_CODE = APP_ID
 APP_SECRET = APP_TOKEN
@@ -105,3 +103,8 @@ BK_APIGW_RESOURCE_DOCS_BASE_DIR = os.path.join(PROJECT_ROOT, "resources/apigatew
 # ===============================================================================
 INTERNAL_AUTH_TOKENS = {"TCwCnoiuUgPccj8y0Wx187vJBqzqddfLlm": {"username": "iadmin"}}
 ACCESS_APP_WHITE_LIST = {"bk-iam": "lLP3gabV8M0C9vbwHQwzSYJX3WumcJsDSdVNQtq6FJVCLqJX6o"}
+
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
+    "bkuser_core.enhanced_account.authentication.MultipleAuthentication",
+)
+AUTH_EXEMPT_PATHS = (r"/swagger/$", r"/redoc/$", r"/ping")

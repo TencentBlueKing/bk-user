@@ -28,6 +28,28 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent-mirrors"
 
 [[package]]
+name = "apigw-manager"
+version = "1.0.3"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.6.1,<4.0.0"
+
+[package.dependencies]
+bkapi-bk-apigateway = ">=1.0.3,<2.0.0"
+bkapi-client-core = ">=1.0.8,<2.0.0"
+future = "0.18.2"
+pyjwt = ">=1.6.4"
+python-dateutil = "2.8.1"
+pyyaml = ">=5.4.1"
+urllib3 = ">=1.25.3"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
+
+[[package]]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
@@ -143,6 +165,46 @@ cachetools = "3.1.1"
 curlify = "2.2.1"
 requests = "*"
 six = ">=1.11.0"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
+
+[[package]]
+name = "bkapi-bk-apigateway"
+version = "1.0.5"
+description = "蓝鲸API网关"
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,<4.0,>=2.7"
+
+[package.dependencies]
+bkapi-client-core = ">=1.0.2,<2.0.0"
+
+[package.extras]
+django = ["bkapi-client-core[django] (>=1.0.2,<2.0.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
+
+[[package]]
+name = "bkapi-client-core"
+version = "1.1.3"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+
+[package.dependencies]
+curlify = ">=2.0"
+requests = ">=2.20"
+typing-extensions = ">=3.7.4"
+
+[package.extras]
+django = ["bkoauth (>=0.0.10)"]
 
 [package.source]
 type = "legacy"
@@ -689,6 +751,19 @@ python-versions = ">=3.6"
 [package.dependencies]
 flake8 = ">=3.0,<3.2.0 || >3.2.0,<4"
 importlib-metadata = {version = "*", markers = "python_version < \"3.8\""}
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
+
+[[package]]
+name = "future"
+version = "0.18.2"
+description = "Clean single-source support for Python 3 and 2"
+category = "main"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [package.source]
 type = "legacy"
@@ -1321,6 +1396,25 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent-mirrors"
 
 [[package]]
+name = "pyjwt"
+version = "2.3.0"
+description = "JSON Web Token implementation in Python"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+crypto = ["cryptography (>=3.3.1)"]
+dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
+docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
+
+[[package]]
 name = "pymysql"
 version = "1.0.2"
 description = "Pure Python MySQL Driver"
@@ -1457,7 +1551,7 @@ reference = "tencent-mirrors"
 
 [[package]]
 name = "python-dateutil"
-version = "2.8.2"
+version = "2.8.1"
 description = "Extensions to the standard Python datetime module"
 category = "main"
 optional = false
@@ -1926,7 +2020,7 @@ reference = "tencent-mirrors"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "121b8fd23dc2f3c80b781c154571a7227c9e88ced6b05520d2350da5493fb447"
+content-hash = "50c8f1b73e83f95f9b257bafae6197f7ab86abeb2545e1e5198d86cb5e4d0fca"
 
 [metadata.files]
 aenum = [
@@ -1937,6 +2031,9 @@ aenum = [
 amqp = [
     {file = "amqp-2.6.1-py2.py3-none-any.whl", hash = "sha256:aa7f313fb887c91f15474c1229907a04dac0b8135822d6603437803424c0aa59"},
     {file = "amqp-2.6.1.tar.gz", hash = "sha256:70cdb10628468ff14e57ec2f751c7aa9e48e7e3651cfd62d431213c0c4e58f21"},
+]
+apigw-manager = [
+    {file = "apigw_manager-1.0.3-py3-none-any.whl", hash = "md5:efb710b6d7e9cb999e76e4b3905ae352"},
 ]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
@@ -1969,6 +2066,12 @@ billiard = [
 bk-iam = [
     {file = "bk-iam-1.1.10.tar.gz", hash = "sha256:f7700ac9b8dd1956237bb01e41a4a9b30ec829835f0d2e8aa0a3a16018e2cced"},
     {file = "bk_iam-1.1.10-py2.py3-none-any.whl", hash = "sha256:83b01016c54e77b39ad474d5265686117bf4b9a70d120397e9c4ae493ce6e8ee"},
+]
+bkapi-bk-apigateway = [
+    {file = "bkapi-bk-apigateway-1.0.5.tar.gz", hash = "md5:0e8579d862761197fe35aa6420f1390f"},
+]
+bkapi-client-core = [
+    {file = "bkapi_client_core-1.1.3-py2.py3-none-any.whl", hash = "md5:3cdd48cd8f059177d38687005db288a7"},
 ]
 black = [
     {file = "black-21.7b0-py3-none-any.whl", hash = "sha256:1c7aa6ada8ee864db745b22790a32f94b2795c253a75d6d9b5e439ff10d23116"},
@@ -2192,6 +2295,9 @@ flake8 = [
 flake8-comprehensions = [
     {file = "flake8-comprehensions-3.5.0.tar.gz", hash = "sha256:f24be9032587127f7a5bc6d066bf755b6e66834f694383adb8a673e229c1f559"},
     {file = "flake8_comprehensions-3.5.0-py3-none-any.whl", hash = "sha256:b07aef3277623db32310aa241a1cec67212b53c1d18e767d7e26d4d83aa05bf7"},
+]
+future = [
+    {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
 gevent = [
     {file = "gevent-1.1.2-cp26-cp26m-macosx_10_11_intel.whl", hash = "sha256:ca934dc30f26e84c79e483db4de433702283ff02344d029635730ff9e7c1d416"},
@@ -2517,6 +2623,10 @@ pygments = [
     {file = "Pygments-2.9.0-py3-none-any.whl", hash = "sha256:d66e804411278594d764fc69ec36ec13d9ae9147193a1740cd34d272ca383b8e"},
     {file = "Pygments-2.9.0.tar.gz", hash = "sha256:a18f47b506a429f6f4b9df81bb02beab9ca21d0a5fee38ed15aef65f0545519f"},
 ]
+pyjwt = [
+    {file = "PyJWT-2.3.0-py3-none-any.whl", hash = "sha256:e0c4bb8d9f0af0c7f5b1ec4c5036309617d03d56932877f2f7a0beeb5318322f"},
+    {file = "PyJWT-2.3.0.tar.gz", hash = "sha256:b888b4d56f06f6dcd777210c334e69c737be74755d3e5e9ee3fe67dc18a0ee41"},
+]
 pymysql = [
     {file = "PyMySQL-1.0.2-py3-none-any.whl", hash = "sha256:41fc3a0c5013d5f039639442321185532e3e2c8924687abe6537de157d403641"},
     {file = "PyMySQL-1.0.2.tar.gz", hash = "sha256:816927a350f38d56072aeca5dfb10221fe1dc653745853d30a216637f5d7ad36"},
@@ -2545,8 +2655,8 @@ python-crontab = [
     {file = "python-crontab-2.5.1.tar.gz", hash = "sha256:4bbe7e720753a132ca4ca9d4094915f40e9d9dc8a807a4564007651018ce8c31"},
 ]
 python-dateutil = [
-    {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
-    {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
+    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
+    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
 ]
 python-json-logger = [
     {file = "python-json-logger-0.1.11.tar.gz", hash = "sha256:b7a31162f2a01965a5efb94453ce69230ed208468b0bbc7fdfc56e6d8df2e281"},

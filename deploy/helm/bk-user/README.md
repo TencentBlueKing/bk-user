@@ -41,6 +41,7 @@ api:
   bkPaasUrl: "http://paas.example.com"
   bkComponentApiUrl: "http://bkapi.example.com"
   bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
+  bkApigatewayPublicKey: ""
 
 saas:
   enabled: true
