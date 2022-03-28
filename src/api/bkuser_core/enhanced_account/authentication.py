@@ -91,12 +91,6 @@ class InternalTokenAuthentication(BaseAuthentication):
 
 class ESBOrAPIGatewayAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        # # withe list
-        # for white_url in settings.AUTH_EXEMPT_PATHS:
-        #     if re.search(white_url, request.path):
-        #         logger.info("%s path in white_url<%s>, exempting auth", request.path, white_url)
-        #         return None, None
-
         # get jwt from header
         jwt_content = request.META.get(HEADER_JWT_KEY_NAME, '')
         if not jwt_content:
@@ -192,8 +186,9 @@ class AppCodeAppSecretAuthentication(BaseAuthentication):
 
 
 class MultipleAuthentication(BaseAuthentication):
+    """it's a dispatcher"""
+
     def authenticate(self, request):
-        # it's a dispatcher
         # withe list
         for white_url in settings.AUTH_EXEMPT_PATHS:
             if re.search(white_url, request.path):
