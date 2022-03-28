@@ -163,7 +163,7 @@ def make_default_headers(operator: str) -> dict:
         settings.API_FORCE_RAW_RESP_HEADER_NAME: True,
         settings.API_FORCE_RAW_USERNAME_HEADER_NAME: True,
         # SaaS 和 API 之间交互，走私有 token
-        settings.API_AUTH_TOKEN_PAIR[0]: settings.API_AUTH_TOKEN_PAIR[1],
+        # settings.API_AUTH_TOKEN_PAIR[0]: settings.API_AUTH_TOKEN_PAIR[1],
         # use app_code + app_secret as the new auth between saas and api
         settings.API_APP_CODE_HEADER_NAME: settings.APP_ID,
         settings.API_APP_SECRET_HEADER_NAME: settings.APP_TOKEN,

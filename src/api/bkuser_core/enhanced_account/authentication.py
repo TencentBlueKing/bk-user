@@ -22,9 +22,9 @@ from rest_framework.authentication import BaseAuthentication, get_authorization_
 logger = logging.getLogger(__name__)
 
 
-HEADER_JWT_KEY_NAME = 'HTTP_X_BKAPI_JWT'
-HEADER_APP_CODE_KEY_NAME = 'HTTP_X_BKAPP_CODE'
-HEADER_APP_SECRET_KEY_NAME = 'HTTP_X_BKAPP_SECRET'
+HEADER_JWT_KEY_NAME = "HTTP_X_BKAPI_JWT"
+HEADER_APP_CODE_KEY_NAME = "HTTP_X_BK_APP_CODE"
+HEADER_APP_SECRET_KEY_NAME = "HTTP_X_BK_APP_SECRET"
 
 
 def create_user(username="admin"):
@@ -92,7 +92,7 @@ class InternalTokenAuthentication(BaseAuthentication):
 class ESBOrAPIGatewayAuthentication(BaseAuthentication):
     def authenticate(self, request):
         # get jwt from header
-        jwt_content = request.META.get(HEADER_JWT_KEY_NAME, '')
+        jwt_content = request.META.get(HEADER_JWT_KEY_NAME, "")
         if not jwt_content:
             return None, None
 
