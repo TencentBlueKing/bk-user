@@ -12,7 +12,7 @@ import os
 import urllib.parse
 
 from . import PROJECT_ROOT, env
-from .django_basic import SITE_URL
+from .django_basic import REST_FRAMEWORK, SITE_URL
 
 # ==============================================================================
 # 应用基本信息配置
