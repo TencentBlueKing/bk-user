@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: bk-user-api-migrate-iam-{{ .Release.Revision }}
+  name: bk-user-api-migrate-apigateway-{{ .Release.Revision }}
   labels:
     {{- include "bk-user.labels" . | nindent 4 }}
 spec:
@@ -30,13 +30,13 @@ spec:
             - job
             - "bk-user-api-migrate-db-{{ .Release.Revision }}"
       containers:
-        - name: api-iam-migrate
+        - name: api-apigateway-migrate
           image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - bash
           args:
-            - /app/migrate_iam.sh
+            - /app/sync_apigateway.sh
           {{- with .Values.env }}
           env:
             {{- toYaml . | nindent 12}}
