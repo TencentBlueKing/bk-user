@@ -13,6 +13,7 @@ from pathlib import Path
 
 from bkuser_core.categories.plugins.plugin import DataSourcePlugin
 
+from .handlers import *  # noqa
 from .login import LoginHandler
 from .syncer import LDAPSyncer
 
