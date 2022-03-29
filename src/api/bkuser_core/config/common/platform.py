@@ -107,4 +107,4 @@ ACCESS_APP_WHITE_LIST = {"bk-iam": "lLP3gabV8M0C9vbwHQwzSYJX3WumcJsDSdVNQtq6FJVC
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
     "bkuser_core.enhanced_account.authentication.MultipleAuthentication",
 )
-AUTH_EXEMPT_PATHS = (r"/swagger/$", r"/redoc/$", r"/ping")
+AUTH_EXEMPT_PATHS = (r"/swagger/$", r"/redoc/$", r"/ping/", r"/healthz/")
