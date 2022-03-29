@@ -16,6 +16,7 @@ import jwt
 from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import caches
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
 
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 HEADER_JWT_KEY_NAME = "HTTP_X_BKAPI_JWT"
 HEADER_APP_CODE_KEY_NAME = "HTTP_X_BK_APP_CODE"
 HEADER_APP_SECRET_KEY_NAME = "HTTP_X_BK_APP_SECRET"
+
+ESB_PUBLIC_KEY_CACHE_KEY = "bk_user:esb_public_key"
 
 
 def create_user(username="admin"):
@@ -100,10 +103,11 @@ class ESBOrAPIGatewayAuthentication(BaseAuthentication):
         jwt_header = jwt.get_unverified_header(jwt_content)
         api_name = jwt_header.get("kid") or ""
         public_key = self._get_public_key(api_name)
+        algorithm = jwt_header.get("alg") or "RS512"
 
         # do decode
         try:
-            jwt_playload = jwt.decode(jwt_content, public_key, issuer="APIGW")
+            jwt_playload = jwt.decode(jwt_content, public_key, algorithm, issuer="APIGW")
         except Exception:  # pylint: disable=broad-except
             logger.exception("JWT decode failed! jwt_payload: %s, public_key: %s", jwt_content, public_key)
             return exceptions.AuthenticationFailed("decode jwt token fail")
@@ -144,14 +148,32 @@ class ESBOrAPIGatewayAuthentication(BaseAuthentication):
         return public_key
 
     def _get_esb_public_key(self):
+        cache = caches["locmem"]
+        public_key = cache.get(ESB_PUBLIC_KEY_CACHE_KEY)
+        if public_key is not None:
+            return public_key
+
+        # get from esb
         client = get_client_by_raw_username("admin")
         try:
-            data = client.esb.get_public_key()
+            ret = client.esb.get_public_key()
         except Exception:  # pylint: disable=broad-except
             logger.exception("Get ESB Public Key failed!")
             raise exceptions.AuthenticationFailed("Get ESB Public Key failed!")
 
-        return data["public_key"]
+        if not ret.get("result", False):
+            msg = ret.get("message", "unknown error")
+            logger.error("Get ESB Public Key failed! %s", msg)
+            raise exceptions.AuthenticationFailed(f"Get ESB Public Key failed! {msg}")
+
+        public_key = ret.get("data", {}).get("public_key", "")
+        if public_key is not None:
+            cache.set(ESB_PUBLIC_KEY_CACHE_KEY, public_key, 60 * 60)
+            return public_key
+
+        logger.error("Get ESB Public Key failed! public_key is empty, ret=%s", ret)
+        raise exceptions.AuthenticationFailed("Get ESB Public Key failed! the public key is empty")
+        # return ret.get("data", {}).get("public_key")
 
     def _get_app_code_from_jwt_payload(self, jwt_payload):
         """从jwt里获取app_code"""
@@ -192,7 +214,7 @@ class MultipleAuthentication(BaseAuthentication):
         # withe list
         for white_url in settings.AUTH_EXEMPT_PATHS:
             if re.search(white_url, request.path):
-                logger.info("%s path in white_url<%s>, exempting auth", request.path, white_url)
+                logger.debug("%s path in white_url<%s>, exempting auth", request.path, white_url)
                 return None, None
 
         # jwt

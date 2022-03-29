@@ -45,7 +45,11 @@ CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="bk_user")
 CACHES = {
     "default": {
         "BACKEND": "bkuser_core.common.cache.DummyRedisCache",
-    }
+    },
+    'locmem': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'memory_cache_0',
+    },
 }
 # 全局缓存过期时间，默认为一小时
 GLOBAL_CACHES_TIMEOUT = env.int("GLOBAL_CACHES_TIMEOUT", default=60 * 60)

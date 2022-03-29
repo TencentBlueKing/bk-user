@@ -17,7 +17,7 @@ class CollectionsESB(object):
     def __init__(self, client):
         self.client = client
 
-        self.get_all_users = ComponentAPI(
+        self.get_public_key = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/esb/get_api_public_key/",
