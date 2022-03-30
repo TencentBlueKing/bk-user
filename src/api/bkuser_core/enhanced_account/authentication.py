@@ -167,12 +167,12 @@ class ESBOrAPIGatewayAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed(f"Get ESB Public Key failed! {msg}")
 
         public_key = ret.get("data", {}).get("public_key", "")
-        if public_key is not None:
-            cache.set(ESB_PUBLIC_KEY_CACHE_KEY, public_key, 60 * 60)
-            return public_key
+        if public_key is None:
+            logger.error("Get ESB Public Key failed! public_key is empty, ret=%s", ret)
+            raise exceptions.AuthenticationFailed("Get ESB Public Key failed! the public key is empty")
 
-        logger.error("Get ESB Public Key failed! public_key is empty, ret=%s", ret)
-        raise exceptions.AuthenticationFailed("Get ESB Public Key failed! the public key is empty")
+        cache.set(ESB_PUBLIC_KEY_CACHE_KEY, public_key, 60 * 60)
+        return public_key
 
     def _get_app_code_from_jwt_payload(self, jwt_payload):
         """从jwt里获取app_code"""
