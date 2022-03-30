@@ -11,6 +11,9 @@ global:
   bkDomainScheme: "http"
   ## 是否开启权限中心
   enableIAM: false
+  ## 是否开启 API AUTH, 默认开启
+  enableApiAuth: true
+
   ## sentry dsn
   sentryDsn: ""
 
