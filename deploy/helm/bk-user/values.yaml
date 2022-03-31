@@ -58,6 +58,7 @@ saas:
 
 login:
   enabled: true
+  bkComponentApiUrl: "http://bkapi.example.com"
 
   envFrom:
   - configMapRef:

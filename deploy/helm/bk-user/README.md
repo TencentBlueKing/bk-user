@@ -219,6 +219,26 @@ global:
   sentryDsn: "http://12927b5f211046b575ee51fd8b1ac34f@{SENTRY_DOMAIN}/{PROJECT_ID}"
 ```
 
+### 10. 开启api auth
+
+默认值是true, 可以关闭, 关闭之后用户管理 API 将不受任何保护
+
+开启之后, 只能通过 ESB 访问用户管理接口
+
+注意, 配置文件中下面两个值必须一致, 并且如果开启, login必须配置组件访问地址`bkLoginApiAuthEnabled`
+
+```yaml
+global:
+  ## 是否开启 API AUTH, 默认开启
+  enableApiAuth: true
+
+login:
+  # Login API Auth Enabled 登录是否开启了 API 认证
+  bkLoginApiAuthEnabled : true
+  # 蓝鲸 ESB/APIGATEWAY url，注意集群内外都是统一域名。集群内可以配置域名解析到内网ip
+  bkComponentApiUrl: "http://bkapi.example.com"
+```
+
 ### 10. 安装
 
 如果你已经准备好了 `values.yaml`，就可以直接进行安装操作了

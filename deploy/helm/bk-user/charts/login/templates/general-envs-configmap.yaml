@@ -12,6 +12,8 @@ data:
   BK_LOGIN_PUBLIC_ADDR: {{ .Values.bkLoginAddr }}
   # 用户管理后台API访问地址
   BK_USERMGR_API_URL: {{ .Values.bkUserApiUrl }}
+  # ESB Api 访问地址
+  BK_COMPONENT_API_URL: "{{ .Values.bkComponentApiUrl }}"
   # 与 ESB 的通信凭证，应用(bk_paas) 对应的 bk_app_secret
   BK_PAAS_SECRET_KEY: {{ .Values.bkPaasSerectKey }}
   # 32位随机字符串，用于加密登录态票据(bk_token)
@@ -20,3 +22,5 @@ data:
   BK_USERMGR_SAAS_URL: {{ .Values.bkUserUrl }}
   # Sentry DSN配置, 非空则开启
   SENTRY_DSN: "{{ .Values.global.sentryDsn }}"
+  # Login API Auth Enabled 登录是否开启了 API 认证
+  BK_LOGIN_API_AUTH_ENABLED: "{{ Values.bkLoginApiAuthEnabled }}"
