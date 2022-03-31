@@ -18,27 +18,27 @@ if_error_then_exit() {
 echo "====== begin to register apis to apigateway ======"
 
 log_info "do sync_apigw_config..."
-python manage.py sync_apigw_config -f resources/apigateway/definition.yaml
+python manage.py sync_apigw_config -f /app/resources/apigateway/definition.yaml
 if_error_then_exit $? "sync_apigw_config fail"
 log_info "done sync_apigw_config"
 
 log_info "do sync_apigw_stage..."
-python manage.py sync_apigw_stage -f resources/apigateway/definition.yaml
+python manage.py sync_apigw_stage -f /app/resources/apigateway/definition.yaml
 if_error_then_exit $? "sync_apigw_stage fail"
 log_info "done sync_apigw_stage"
 
 log_info "do sync_apigw_resources..."
-python manage.py sync_apigw_resources -f resources/apigateway/bk_apigw_resources_bk-user.yaml --delete
+python manage.py sync_apigw_resources -f /app/resources/apigateway/bk_apigw_resources_bk-user.yaml --delete
 if_error_then_exit $? "sync_apigw_resources fail"
 log_info "done sync_apigw_resources"
 
 log_info "do sync_resource_docs_by_archive..."
-python manage.py sync_resource_docs_by_archive -f resources/apigateway/definition.yaml
+python manage.py sync_resource_docs_by_archive -f /app/resources/apigateway/definition.yaml
 if_error_then_exit $? "sync_resource_docs_by_archive fail"
 log_info "done sync_resource_docs_by_archive"
 
 log_info "do create_version_and_release_apigw..."
-python manage.py create_version_and_release_apigw -f resources/apigateway/definition.yaml
+python manage.py create_version_and_release_apigw -f /app/resources/apigateway/definition.yaml
 if_error_then_exit $? "create_version_and_release_apigw fail"
 log_info "done create_version_and_release_apigw"
 

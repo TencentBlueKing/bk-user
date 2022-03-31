@@ -25,12 +25,12 @@ ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
 
 WORKDIR /app
-RUN pip install --upgrade pip
-RUN pip install poetry==1.1.7
+RUN pip install --upgrade pip setuptools
+RUN pip install poetry==1.1.13
 
 COPY src/saas/pyproject.toml /app
 COPY src/saas/poetry.lock /app
-RUN poetry config experimental.new-installer false && poetry config virtualenvs.create false && poetry install --no-dev
+RUN poetry config virtualenvs.create false && poetry install --no-dev
 
 COPY src/saas/wsgi.py /app
 COPY src/saas/bkuser_shell /app/bkuser_shell

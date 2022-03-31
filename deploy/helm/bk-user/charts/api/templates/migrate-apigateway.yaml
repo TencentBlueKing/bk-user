@@ -1,4 +1,3 @@
-{{- if .Values.global.enableIAM }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -47,4 +46,3 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources.web | nindent 12 }}
-{{- end }}

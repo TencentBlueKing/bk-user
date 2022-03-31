@@ -13,6 +13,7 @@ specific language governing permissions and limitations under the License.
 from __future__ import unicode_literals
 
 import copy
+from urllib.parse import urljoin
 
 from bklogin.common.log import logger
 from django.conf import settings
@@ -35,7 +36,8 @@ def _call_esb_api(http_func, url_path, data, timeout=30):
     }
     data.update(common_params)
 
-    url = "http://{}{}".format(settings.BK_COMPONENT_API_URL, url_path)
+    # url = "{}{}".format(settings.BK_COMPONENT_API_URL, url_path)
+    url = urljoin(settings.BK_COMPONENT_API_URL, url_path)
 
     ok, resp_data = http_func(url, data, headers=headers)
     if not ok:

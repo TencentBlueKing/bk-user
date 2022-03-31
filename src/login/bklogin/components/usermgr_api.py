@@ -187,7 +187,7 @@ def esb_get_categories():
 if settings.BK_LOGIN_API_AUTH_ENABLED:
     message = "bk_login api auth enabled=True, will call usermgr api via esb"
     print(message)
-    logger.info(message)
+    logger.debug(message)
 
     authenticate = esb_authenticate
     batch_query_users = esb_batch_query_users
@@ -196,7 +196,7 @@ if settings.BK_LOGIN_API_AUTH_ENABLED:
 else:
     message = "bk_login api auth enabled=False, will call usermgr api directly"
     print(message)
-    logger.info(message)
+    logger.debug(message)
 
     authenticate = direct_authenticate
     batch_query_users = direct_batch_query_users

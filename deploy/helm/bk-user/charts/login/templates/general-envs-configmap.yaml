@@ -23,4 +23,4 @@ data:
   # Sentry DSN配置, 非空则开启
   SENTRY_DSN: "{{ .Values.global.sentryDsn }}"
   # Login API Auth Enabled 登录是否开启了 API 认证
-  BK_LOGIN_API_AUTH_ENABLED: "{{ Values.bkLoginApiAuthEnabled }}"
+  BK_LOGIN_API_AUTH_ENABLED: "{{ .Values.bkLoginApiAuthEnabled }}"

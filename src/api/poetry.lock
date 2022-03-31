@@ -29,7 +29,7 @@ reference = "tencent-mirrors"
 
 [[package]]
 name = "apigw-manager"
-version = "1.0.3"
+version = "1.0.4"
 description = ""
 category = "main"
 optional = false
@@ -37,7 +37,7 @@ python-versions = ">=3.6.1,<4.0.0"
 
 [package.dependencies]
 bkapi-bk-apigateway = ">=1.0.3,<2.0.0"
-bkapi-client-core = ">=1.0.8,<2.0.0"
+bkapi-client-core = ">=1.1.0"
 future = "0.18.2"
 pyjwt = ">=1.6.4"
 python-dateutil = "2.8.1"
@@ -2033,7 +2033,7 @@ amqp = [
     {file = "amqp-2.6.1.tar.gz", hash = "sha256:70cdb10628468ff14e57ec2f751c7aa9e48e7e3651cfd62d431213c0c4e58f21"},
 ]
 apigw-manager = [
-    {file = "apigw_manager-1.0.3-py3-none-any.whl", hash = "md5:efb710b6d7e9cb999e76e4b3905ae352"},
+    {file = "apigw_manager-1.0.4-py3-none-any.whl", hash = "md5:033030c902623881e444152e416fa414"},
 ]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},

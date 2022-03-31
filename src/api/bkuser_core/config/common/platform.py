@@ -104,7 +104,7 @@ BK_APIGW_RESOURCE_DOCS_BASE_DIR = os.path.join(PROJECT_ROOT, "resources/apigatew
 INTERNAL_AUTH_TOKENS = {"TCwCnoiuUgPccj8y0Wx187vJBqzqddfLlm": {"username": "iadmin"}}
 ACCESS_APP_WHITE_LIST = {"bk-iam": "lLP3gabV8M0C9vbwHQwzSYJX3WumcJsDSdVNQtq6FJVCLqJX6o"}
 
-ENABLE_API_AUTH = env.bool("ENABLE_API_AUTH ", default=False)
+ENABLE_API_AUTH = env.bool("ENABLE_API_AUTH", default=False)
 if ENABLE_API_AUTH:
     REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
         "bkuser_core.enhanced_account.authentication.MultipleAuthentication",
