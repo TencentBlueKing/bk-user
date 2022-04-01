@@ -95,7 +95,7 @@ class BkUserApiViewSet(GenericViewSet):
         if user_from_token:
             headers.update(
                 {
-                    'user_from_token': True,
+                    "user_from_token": True,
                 }
             )
 
@@ -137,11 +137,18 @@ class BkUserApiViewSet(GenericViewSet):
 
         return paging_results
 
+    def get_api_path(self, request) -> str:
+        """获取真实 API Path"""
+        if settings.SITE_URL == "/":
+            return request.path
+
+        return "/" + request.path.replace(settings.SITE_URL, "")
+
     def call_through_api(self, request):
         client = self.get_api_client_by_request(request)
 
         urllib3_resp = client.call_api(
-            resource_path=request.path,
+            resource_path=self.get_api_path(request),
             method=request.method,
             body=request.data,
             query_params=request.query_params,
