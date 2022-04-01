@@ -92,6 +92,7 @@ class TestPasswordValidate:
             (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], 3, "a@##b1222dc*(12&**"),
             (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], 3, "a@##BbB12dc*(12&**"),
             (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], 3, "a@###b122dc*(12&**"),
+            (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], "3", "a@###b122dc*(12&**"),
         ],
     )
     def test_exclude_fail(self, include_elements, exclude_elements, max_length, test_case):
