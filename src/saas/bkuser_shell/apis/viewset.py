@@ -142,7 +142,7 @@ class BkUserApiViewSet(GenericViewSet):
         if settings.SITE_URL == "/":
             return request.path
 
-        return request.path.replace(settings.SITE_URL, "") + "/"
+        return "/" + request.path.replace(settings.SITE_URL, "")
 
     def call_through_api(self, request):
         client = self.get_api_client_by_request(request)
