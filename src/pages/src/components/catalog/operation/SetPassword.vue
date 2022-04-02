@@ -458,7 +458,6 @@ export default {
     // 提交前验证是否有错误
     validate() {
       this.validatePasswordLength();
-      this.validatePasswordRule();
       this.validateAutoUnlock();
       this.validateFreezeDays();
       this.validateInitPassword();
@@ -476,7 +475,7 @@ export default {
     },
     // 保存
     saveInfo() {
-      this.validate() && this.$emit('savePassport');
+      this.validate() && this.$emit('savePassport', this.passwordRuleError);
     },
     // 展开或隐藏邮件模板
     toggleEmailTemplate() {
