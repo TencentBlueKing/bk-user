@@ -11,5 +11,5 @@ spec:
   logConfigType: "std_log_config"
   namespace: {{ .Release.Namespace | quote }}
   labelSelector:
-    matchLabels: {{- include "bk-user.labels" . | nindent 6 }}
+    matchLabels: {{- include "bk-user.selectorLabels" . | nindent 6 }}
 {{- end }}
