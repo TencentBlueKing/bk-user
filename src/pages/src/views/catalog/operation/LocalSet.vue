@@ -124,15 +124,9 @@ export default {
         this.isLoading = false;
       }
     },
-    async handleSavePassport(state) {
+    async handleSavePassport() {
       try {
         this.isLoading = true;
-        console.log(state);
-        if (this.passwordInfo.password_rult_length === null) {
-          this.passwordInfo.password_rult_length = '';
-        } else {
-          state = true;
-        }
         const action = this.passwordHasCreated ? 'catalog/ajaxPutPassport' : 'catalog/ajaxPostPassport';
         await this.$store.dispatch(action, {
           id: this.catalogInfo.id,
