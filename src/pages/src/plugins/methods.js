@@ -158,14 +158,18 @@ const methods = {
           let value = regionArray[1];
           let enabled = true;
           const obj = {};
-          if (regionArray[1].value) {
+          if (regionArray[1] && regionArray[1].value) {
             value = regionArray[1].value;
             enabled = regionArray[1].enabled;
           } else if (key === 'exclude_elements_config') {
-            Object.entries(value).forEach((k) => {
-              this.$set(obj, k[1], num);
-            });
-            value = obj;
+            if (value.length) {
+              Object.entries(value).forEach((k) => {
+                this.$set(obj, k[1], num);
+              });
+              value = obj;
+            }
+          } else if (key === 'password_rult_length') {
+            if (!value) value = '';
           }
           arrayData.push({ key, value, enabled });
         });
@@ -192,7 +196,7 @@ const methods = {
           });
         });
         objectData.exclude_elements_config = [];
-        this.$set(objectData, 'password_rult_length', 3);
+        this.$set(objectData, 'password_rult_length', '');
         return objectData;
       } catch (e) {
         console.warn('数据结构异常', e);
