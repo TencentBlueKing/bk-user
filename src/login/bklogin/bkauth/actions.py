@@ -80,7 +80,13 @@ def login_success_response(request, user_or_form, redirect_to, app_id):
 
     # 设置用户登录
     # TODO: 这个是django默认的login函数, 调用如果报错可以注解, 目前无实际作用
-    auth_login(request, user)
+    try:
+        auth_login(request, user)
+    except Exception:  # pylint: disable=broad-except
+        # will raise django.db.utils.DatabaseError: Save with update_fields did not affect any rows.
+        # while auth_login at the final step user_logged_in.send, but it DO NOT MATTERS!
+        logger.debug("auth_login fail", exec_info=True)
+
     # 记录登录日志
     record_login_log(request, username, app_id)
 
