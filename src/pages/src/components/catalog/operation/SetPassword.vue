@@ -64,7 +64,7 @@
           type="number"
           style="width: 120px;margin: 0 8px;"
           :class="{ 'king-input': true, error: passwordRuleError }"
-          @input="validatePasswordRule">
+          @change="handleChange">
           <template slot="append">
             <div class="group-text">{{$t('位')}}</div>
           </template>
@@ -81,6 +81,7 @@
         <bk-checkbox value="special_seq" style="margin-right: 28px;">{{$t('连续特殊符号序')}}</bk-checkbox>
         <bk-checkbox value="duplicate_char" style="margin-right: 28px;">{{$t('重复字母、数字、特殊符号')}}</bk-checkbox>
       </bk-checkbox-group>
+      <p class="error-text" v-show="passwordConfigError">{{$t('密码规则不得为空')}}</p>
     </div>
 
     <!-- 密码有效期 -->
@@ -344,6 +345,7 @@ export default {
       passwordHistoryError: false,
       // 密码不允许连续出现
       passwordRuleError: false,
+      passwordConfigError: false,
       // 密码解锁时间是否错误
       autoUnlockError: false,
       // 未登录自动冻结天数是否错误
@@ -388,6 +390,7 @@ export default {
                     || this.passwordLengthError
                     || this.passwordHistoryError
                     || this.passwordRuleError
+                    || this.passwordConfigError
                     || this.autoUnlockError
                     || this.freezeDaysError
                     || this.initPasswordError
@@ -398,6 +401,17 @@ export default {
     passportInfo() {
       this.init();
     },
+    'defaultPassword.exclude_elements_config'(newVal) {
+      if (newVal.length) {
+        this.validatePasswordRule();
+        this.passwordConfigError = false;
+      } else if (!newVal.length && this.defaultPassword.password_rult_length) {
+        this.passwordConfigError = true;
+      } else {
+        this.passwordRuleError = false;
+        this.passwordConfigError = false;
+      }
+    },
   },
   created() {
     if (this.passportInfo) {
@@ -405,6 +419,20 @@ export default {
     }
   },
   methods: {
+    handleChange(value) {
+      if (value !== '') {
+        this.validatePasswordRule();
+        if (!this.defaultPassword.exclude_elements_config.length) {
+          this.passwordConfigError = true;
+        }
+      } else if (this.defaultPassword.exclude_elements_config.length) {
+        this.passwordRuleError = true;
+        this.passwordConfigError = false;
+      } else {
+        this.passwordRuleError = false;
+        this.passwordConfigError = false;
+      }
+    },
     init() {
       // 监听密码规则的变化去验证初始密码
       this.$watch(() => {
@@ -458,7 +486,6 @@ export default {
     // 提交前验证是否有错误
     validate() {
       this.validatePasswordLength();
-      this.validatePasswordRule();
       this.validateAutoUnlock();
       this.validateFreezeDays();
       this.validateInitPassword();

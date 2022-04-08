@@ -121,7 +121,7 @@ class DuplicateChar(PasswordElement):
 
     @classmethod
     def match(cls, value: str, *args, **kwargs):
-        max_seq_len = kwargs.get("max_seq_len", 3)
+        max_seq_len = int(kwargs.get("max_seq_len", 3))
         value = value.lower()
         for d in [list(g) for k, g in itertools.groupby(value)]:
             if len(d) >= max_seq_len:

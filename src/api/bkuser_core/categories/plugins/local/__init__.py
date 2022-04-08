@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from bkuser_core.categories.plugins.plugin import DataSourcePlugin
 
+from .handlers import *  # noqa
 from .login import LoginHandler
 from .syncer import ExcelSyncer
 

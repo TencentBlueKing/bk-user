@@ -752,7 +752,7 @@ export default {
     },
     // 搜索table
     handleTableSearch(list) {
-      const valueList = [];
+      const valueList = [`category_id=${this.currentCategoryId}`];
       let key = '';
       list.forEach((item) => {
         const value = [];
