@@ -402,4 +402,5 @@ export default {
   恢复: 'restore',
   修改密码时不能重复前: 'Do not repeat the preceding part when changing the password',
   用过的密码: 'Used password',
+  请输入手机号: 'Please enter your mobile phone number',
 };
