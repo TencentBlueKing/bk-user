@@ -28,6 +28,7 @@
       :disabled="editStatus && !item.editable"
       :class="['select-text', { 'input-error': item.isError }]"
       v-model="item.value"
+      :placeholder="$t('请输入手机号')"
       @blur="verifyInput(item)"
       @focus="hiddenVerify(item)" />
     <i class="icon icon-user-exclamation-circle-shape" v-if="item.isError"></i>
