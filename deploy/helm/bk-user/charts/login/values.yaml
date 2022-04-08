@@ -76,11 +76,14 @@ bkPaasSerectKey: ""
 encryptSecretKey: ""
 bkDomainScheme: "http"
 
+# Login API Auth Enabled 登录是否开启了 API 认证
+bkLoginApiAuthEnabled : true
+
 image:
   registry: hub.bktencent.com
   repository: blueking/bk-login
   pullPolicy: IfNotPresent
-  tag: "v2.3.4-beta.8"
+  tag: "v2.3.4-beta.9"
 
 nameOverride: ""
 fullnameOverride: ""

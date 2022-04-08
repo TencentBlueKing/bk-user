@@ -77,6 +77,8 @@ INSTALLED_APPS = [
     "bkuser_core.bkiam",
     # 数据库字段翻译，需要后置于需要翻译的 Django App
     "modeltranslation",
+    # apigateway sdk
+    "apigw_manager.apigw",
 ]
 
 # ==============================================================================

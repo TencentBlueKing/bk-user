@@ -169,7 +169,11 @@ def make_default_headers(operator: str) -> dict:
         settings.API_OPERATOR_HEADER_NAME: operator,
         settings.API_FORCE_RAW_RESP_HEADER_NAME: True,
         settings.API_FORCE_RAW_USERNAME_HEADER_NAME: True,
-        # SaaS 和 API 之间交互，走私有 token
+        # SaaS 和 API 之间交互，走私有 token NOTE: 暂时还是放着, 没有完全所有环境切完之前需要兼容
         settings.API_AUTH_TOKEN_PAIR[0]: settings.API_AUTH_TOKEN_PAIR[1],
+        # FIXME: 这里有个问题, SaaS 跟 API 在二进制版本, 其app_code/app_secret是不一致的
+        # use app_code + app_secret as the new auth between saas and api
+        settings.API_APP_CODE_HEADER_NAME: settings.APP_ID,
+        settings.API_APP_SECRET_HEADER_NAME: settings.APP_TOKEN,
         "Accept-Language": get_language(),
     }

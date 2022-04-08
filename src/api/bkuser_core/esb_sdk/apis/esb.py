@@ -8,16 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from . import env
-
-# ==============================================================================
-# Sentry
-# ==============================================================================
-SENTRY_DSN = env("SENTRY_DSN", default="")
+from ..base import ComponentAPI
 
 
-# ==============================================================================
-# HTTP CONNECTIONS
-# ==============================================================================
-REQUESTS_POOL_CONNECTIONS = 20
-REQUESTS_POOL_MAXSIZE = 20
+class CollectionsESB(object):
+    """Collections of ESB APIS"""
+
+    def __init__(self, client):
+        self.client = client
+
+        self.get_public_key = ComponentAPI(
+            client=self.client,
+            method="GET",
+            path="/api/c/compapi{bk_api_ver}/esb/get_api_public_key/",
+            description=u"获取所有用户信息",
+        )

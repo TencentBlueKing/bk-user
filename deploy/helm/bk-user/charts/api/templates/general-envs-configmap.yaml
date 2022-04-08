@@ -28,7 +28,13 @@ data:
   BK_PAAS_URL: "{{ .Values.bkPaasUrl }}"
   # ESB Api 访问地址
   BK_COMPONENT_API_URL: "{{ .Values.bkComponentApiUrl }}"
+  ## 配置 bkApigatewayPublicKey 用于对接apigateway解析jwt, base64
+  BK_APIGW_PUBLIC_KEY: "{{ .Values.bkApigatewayPublicKey }}"
   # 由于用户管理先于权限中心拉起，所以默认禁用，后期所有产品就绪后，可手动开启
   ENABLE_IAM: "{{ .Values.global.enableIAM }}"
+  # 是否开启 API AUTH, 默认开启
+  ENABLE_API_AUTH: "{{ .Values.global.enableApiAuth }}"
   # Sentry DSN配置, 非空则开启
   SENTRY_DSN: "{{ .Values.global.sentryDsn }}"
+  # APIGateway url模板
+  BK_API_URL_TMPL: "{{ .Values.bkApiUrlTmpl }}"

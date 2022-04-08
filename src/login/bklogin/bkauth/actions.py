@@ -79,8 +79,8 @@ def login_success_response(request, user_or_form, redirect_to, app_id):
     logger.debug("login_success_response, username=%s, redirect_to=%s, app_id=%s", username, redirect_to, app_id)
 
     # 设置用户登录
-    # TODO: 这个是django默认的login函数, 调用如果报错可以注解, 目前无实际作用
     try:
+        # 这个是django默认的login函数
         auth_login(request, user)
     except Exception:  # pylint: disable=broad-except
         # will raise django.db.utils.DatabaseError: Save with update_fields did not affect any rows.
