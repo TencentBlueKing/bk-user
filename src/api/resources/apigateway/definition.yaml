@@ -9,6 +9,8 @@ release:
 
 stage:
   name: "prod"
+  vars:
+    environ: "prod"
   proxy_http:
     timeout: 180
     upstreams:

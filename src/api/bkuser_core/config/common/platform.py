@@ -89,9 +89,9 @@ ACTION_ID_HEADER = "HTTP_ACTION_ID"
 # APIGateway相关配置
 ## Open API接入APIGW后，需要对APIGW请求来源认证，使用公钥解开jwt(base64 string)
 BK_APIGW_PUBLIC_KEY = env("BK_APIGW_PUBLIC_KEY", default="")
-# NOTE: it sdk will read settings.APP_CODE and settings.APP_SECRET, so you should set it
-APP_CODE = APP_ID
-APP_SECRET = APP_TOKEN
+# NOTE: it sdk will read settings.BK_APP_CODE and settings.BK_APP_SECRET, so you should set it
+BK_APP_CODE = APP_ID
+BK_APP_SECRET = APP_TOKEN
 BK_API_URL_TMPL = env("BK_API_URL_TMPL", default="")
 BK_USER_API_URL = os.getenv("BK_USER_API_URL", "http://bkuserapi-web")
 BK_APIGW_NAME = "bk-user"
