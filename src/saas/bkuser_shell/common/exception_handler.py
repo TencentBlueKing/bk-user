@@ -100,6 +100,7 @@ class ApiExceptionParser:
         return self.body.get("code", -1)
 
     def get_message(self) -> str:
+        # TODO: should expose the api error detail! currently, always be this message, not helpfully at all
         if not self.body:
             return _("API 服务返回异常，请检查 API 服务日志")
 
