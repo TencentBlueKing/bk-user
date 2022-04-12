@@ -136,7 +136,8 @@ class HttpProbe(VirtualProbe):
             raise ValueError("probe has to fulfill the simple diagnose config before use it")
 
         if result.status_code != 200:
-            raise SystemNotHealthyError(system_name=self.name, message=result.text)
+            message = result.text[:512] if result.text else ""
+            raise SystemNotHealthyError(system_name=self.name, message=message)
         # if not result.json().get("result"):
         #     raise SystemNotHealthyError(system_name=self.name, message=result.json().get("message"))
 
