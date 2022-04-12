@@ -136,7 +136,7 @@ def esb_authenticate(username, password, language="", domain=""):
         data["domain"] = domain
 
     ok, code, message, _data = _call_esb_api(http_post, path, data)
-    return ok, code, message, _data
+    return ok, code, message, _data or {}
 
 
 def esb_batch_query_users(username_list=[], is_complete=False):
