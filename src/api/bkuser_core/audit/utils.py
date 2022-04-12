@@ -69,6 +69,9 @@ def create_general_log(
     }
     if request:
         extra_value["client_ip"] = get_client_ip(request)
+        # from esb/apigateway, will got a valid bk_app_code
+        if hasattr(request, "bk_app_code"):
+            extra_value["bk_app_code"] = request.bk_app_code
 
     extra_value.update(audit_info.to_dict())
     extra_value.update(extra_info or {})

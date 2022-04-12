@@ -55,6 +55,8 @@ def custom_exception_handler(exc, context):
             detail["method"] = req.method
             detail["query_params"] = req.query_params
             detail["request_id"] = req.headers.get("X-Request-Id")
+            if hasattr(req, "bk_app_code"):
+                detail["bk_app_code"] = req.bk_app_code
         except Exception:  # pylint: disable=broad-except
             # do nothing if get extra details fail
             pass
