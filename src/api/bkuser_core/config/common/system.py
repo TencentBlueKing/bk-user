@@ -33,7 +33,7 @@ except ImproperlyConfigured:
 # 探针配置
 # ==============================================================================
 COMMON_HEALTHZ_TOKEN = "56f17d8034234e92801ab59479e1259d"
-HEALTHZ_PROBES: list = []
+HEALTHZ_PROBES: list = ["bkuser_core.monitoring.probes.DefaultDBProbe", "bkuser_core.monitoring.probes.ESBProbe"]
 
 # ==============================================================================
 # Sentry

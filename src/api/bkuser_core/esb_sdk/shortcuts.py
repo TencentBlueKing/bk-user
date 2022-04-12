@@ -57,3 +57,16 @@ def get_client_by_raw_username(user, **kwargs):
     common_args = {"bk_username": username}
     common_args.update(kwargs)
     return ComponentClient(conf.APP_ID, conf.APP_TOKEN, common_args=common_args)
+
+
+def get_client_with_app_code_app_secret_by_user(app_code, app_secret, user, **kwargs):
+    """根据app_code/app_secret/user实例返回一个client, 解决跨环境调用时需要多套app_code/app_secret调用esb接口的问题
+
+    :param app_code: 调用方app_code
+    :param app_secret: 调用方app_secret
+    :param user: User实例或者User.username数据
+    :returns: 一个初始化好的ComponentClint对象
+    """
+    common_args = {"bk_username": user}
+    common_args.update(kwargs)
+    return ComponentClient(app_code, app_secret, common_args=common_args)
