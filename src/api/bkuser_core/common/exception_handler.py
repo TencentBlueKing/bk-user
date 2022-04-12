@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+import traceback
 
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from django.core.exceptions import PermissionDenied
@@ -16,7 +17,7 @@ from django.db import ProgrammingError
 from django.http import Http404
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import exception_handler
 from sentry_sdk import capture_exception
 
@@ -126,11 +127,38 @@ def get_raw_exception_response(exc, context):
         data = {"code": "PROGRAMMING_ERROR", "detail": UNKNOWN_ERROR_HINT}
         return Response(data, status=HTTP_400_BAD_REQUEST, headers={})
 
+    # extra details
+    _d = {
+        "error": "unknown",
+    }
+    if context:
+        try:
+            req = context.get("request")
+            _d["path"] = req.path
+            _d["method"] = req.method
+            _d["query_params"] = req.query_params
+        except Exception:  # pylint: disable=broad-except
+            # do nothing if get extra details fail
+            pass
+    # log
+    logger.exception("unknown exception while handling the request, detail=%s", _d)
+    # report to sentry
+    capture_exception(exc)
+
     # Call REST framework's default exception handler to get the standard error response.
     response = exception_handler(exc, context)
     # Use a default error code
     if response is not None:
         response.data.update(code="ERROR")
         setattr(response, "from_exception", True)
+        return response
 
+    # NOTE: 不暴露给前端, 只打日志, 所以不放入data.detail
+    # error detail
+    if exc is not None:
+        _d["error"] = traceback.format_exc()
+
+    data = {"result": False, "data": _d, "code": -1, "message": UNKNOWN_ERROR_HINT}
+    response = Response(data=data, status=HTTP_500_INTERNAL_SERVER_ERROR)
+    setattr(response, "from_exception", True)
     return response

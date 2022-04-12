@@ -75,10 +75,16 @@ def get_loggers(package_name: str, log_level: str) -> dict:
             "level": log_level,
             "propagate": True,
         },
-        "": {
+        # NOTE: if use "" instead of "root", should change all propagate to False! and test it
+        # currently, use the same settings as blueapps, even it's wrong root config
+        "root": {
             "handlers": ["root"],
             "level": log_level,
         },
+        # "": {
+        #     "handlers": ["root"],
+        #     "level": log_level,
+        # },
         "requests": {
             "handlers": ["root"],
             "level": log_level,
