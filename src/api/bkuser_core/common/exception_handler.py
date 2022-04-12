@@ -44,13 +44,28 @@ def custom_exception_handler(exc, context):
     #     # Only presents in ValidationError
     #     "fields_detail": {"field1": ["error message"]}
     # }
+    # extra details
+    detail = {
+        "error": "unknown",
+    }
+    if context:
+        try:
+            req = context.get("request")
+            detail["path"] = req.path
+            detail["method"] = req.method
+            detail["query_params"] = req.query_params
+            detail["request_id"] = req.headers.get("X-Request-Id")
+        except Exception:  # pylint: disable=broad-except
+            # do nothing if get extra details fail
+            pass
+
     if exist_force_raw_header(context["request"]):
-        return get_raw_exception_response(exc, context)
+        return get_raw_exception_response(exc, context, detail)
     else:
-        return get_ee_exception_response(exc, context)
+        return get_ee_exception_response(exc, context, detail)
 
 
-def get_ee_exception_response(exc, context):
+def get_ee_exception_response(exc, context, detail):
     """针对企业版异常返回封装"""
     data = {"result": False, "data": None, "code": -1}
 
@@ -71,7 +86,7 @@ def get_ee_exception_response(exc, context):
         data["message"] = "403, authentication failed"
     else:
         # log
-        logger.exception("unknown exception while handling the request")
+        logger.exception("unknown exception while handling the request, detail=%s", detail)
         # report to sentry
         capture_exception(exc)
         # build response
@@ -105,7 +120,7 @@ def one_line_error(detail):
         return "参数格式错误"
 
 
-def get_raw_exception_response(exc, context):
+def get_raw_exception_response(exc, context, detail):
     if isinstance(exc, ValidationError):
         data = {
             "code": "VALIDATION_ERROR",
@@ -127,22 +142,8 @@ def get_raw_exception_response(exc, context):
         data = {"code": "PROGRAMMING_ERROR", "detail": UNKNOWN_ERROR_HINT}
         return Response(data, status=HTTP_400_BAD_REQUEST, headers={})
 
-    # extra details
-    _d = {
-        "error": "unknown",
-    }
-    if context:
-        try:
-            req = context.get("request")
-            _d["path"] = req.path
-            _d["method"] = req.method
-            _d["query_params"] = req.query_params
-            _d["request_id"] = req.headers.get("X-Request-Id")
-        except Exception:  # pylint: disable=broad-except
-            # do nothing if get extra details fail
-            pass
     # log
-    logger.exception("unknown exception while handling the request, detail=%s", _d)
+    logger.exception("unknown exception while handling the request, detail=%s", detail)
     # report to sentry
     capture_exception(exc)
 
@@ -157,9 +158,9 @@ def get_raw_exception_response(exc, context):
     # NOTE: 不暴露给前端, 只打日志, 所以不放入data.detail
     # error detail
     if exc is not None:
-        _d["error"] = traceback.format_exc()
+        detail["error"] = traceback.format_exc()
 
-    data = {"result": False, "data": _d, "code": -1, "message": UNKNOWN_ERROR_HINT}
+    data = {"result": False, "data": detail, "code": -1, "message": UNKNOWN_ERROR_HINT}
     response = Response(data=data, status=HTTP_500_INTERNAL_SERVER_ERROR)
     setattr(response, "from_exception", True)
     return response
