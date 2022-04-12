@@ -137,6 +137,7 @@ def get_raw_exception_response(exc, context):
             _d["path"] = req.path
             _d["method"] = req.method
             _d["query_params"] = req.query_params
+            _d["request_id"] = req.headers.get("X-Request-Id")
         except Exception:  # pylint: disable=broad-except
             # do nothing if get extra details fail
             pass
