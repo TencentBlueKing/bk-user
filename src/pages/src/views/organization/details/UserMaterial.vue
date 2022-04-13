@@ -189,6 +189,10 @@ export default {
         return [];
       },
     },
+    statusMap: {
+      type: Object,
+      default: {},
+    },
   },
   data() {
     return {
@@ -242,7 +246,7 @@ export default {
       try {
         for (let i = 0; i < options.length; i++) {
           if (value === options[i].id) {
-            return options[i].value;
+            return this.statusMap[options[i].value];
           }
         }
       } catch (e) {

@@ -209,6 +209,7 @@
               :fields-list="fieldsList"
               :current-category-type="currentCategoryType"
               :no-search-or-search-department="noSearchOrSearchDepartment"
+              :status-map="statusMap"
               @viewDetails="viewDetails"
               @showTableLoading="showTableLoading"
               @closeTableLoading="closeTableLoading"
@@ -250,6 +251,7 @@
           :current-category-id="currentCategoryId"
           :current-category-type="currentCategoryType"
           :fields-list="fieldsList"
+          :status-map="statusMap"
           @hideBar="hideBar"
           @showBar="showBar"
           @showBarLoading="showBarLoading"
@@ -454,6 +456,16 @@ export default {
         wx_userid: 'wx_userid',
         qq: 'qq',
       },
+      statusMap: {
+        正常: this.$t('正常'),
+        被冻结: this.$t('被锁定'),
+        被删除: this.$t('被删除'),
+        被禁用: this.$t('被禁用'),
+        在职: this.$t('在职'),
+        离职: this.$t('离职'),
+        员工: this.$t('员工'),
+        组长: this.$t('组长'),
+      },
     };
   },
   computed: {
@@ -619,7 +631,14 @@ export default {
             name: 'update_time',
           },
         );
-        this.userMessage.tableHeardList = tableHeardList;
+        tableHeardList.forEach((item) => {
+          if (item.options && item.options.length) {
+            item.options.forEach((key) => {
+              key.value = this.statusMap[key.value];
+            });
+          }
+          this.userMessage.tableHeardList.push(item);
+        });
       } catch (e) {
         console.warn(e);
       }

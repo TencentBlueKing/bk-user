@@ -62,7 +62,7 @@
         <bk-input
           v-model="defaultPassword.password_rult_length"
           type="number"
-          style="width: 120px;margin: 0 8px;"
+          style="width: 140px;margin: 0 8px;"
           :class="{ 'king-input': true, error: passwordRuleError }"
           @change="handleChange">
           <template slot="append">
@@ -74,7 +74,7 @@
       <p class="error-text" v-show="passwordRuleError">{{$t('不能小于3位，大于8位')}}</p>
       <bk-checkbox-group
         v-model="defaultPassword.exclude_elements_config"
-        style="display: flex;height: 19px;margin-top: 10px;">
+        style="line-height: 28px;margin-top: 10px;">
         <bk-checkbox value="keyboard_seq" style="margin-right: 28px;">{{$t('键盘序')}}</bk-checkbox>
         <bk-checkbox value="alphabet_seq" style="margin-right: 28px;">{{$t('连续字母序')}}</bk-checkbox>
         <bk-checkbox value="num_seq" style="margin-right: 28px;">{{$t('连续数字序')}}</bk-checkbox>
