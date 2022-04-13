@@ -60,6 +60,7 @@
               :type="passwordInputType"
               :placeholder="$t('请输入新密码')"
               :class="['editor-password',{ 'input-error': isCorrectPw }]"
+              :maxlength="32"
               v-model="newPassword"
               v-focus
               @focus="isCorrectPw = false" />
