@@ -195,7 +195,7 @@ const methods = {
             }
           });
         });
-        objectData.exclude_elements_config = [];
+        objectData.exclude_elements_config = {};
         this.$set(objectData, 'password_rult_length', '');
         return objectData;
       } catch (e) {
