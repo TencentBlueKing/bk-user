@@ -165,5 +165,10 @@ class PasswordValidator:
         for e_name in self.include_elements:
             get_element_cls_by_name(e_name).match(value)
 
+        # FIXME: currently the user_settings value type json is not checked before save into database
+        # so, we do a protect here, but should fix it in the future, and remove these codes
+        if isinstance(self.exclude_elements_config, list) and not self.exclude_elements_config:
+            self.exclude_elements_config = {}
+
         for e_name, max_length in self.exclude_elements_config.items():
             get_element_cls_by_name(e_name).match(value, max_seq_len=max_length)

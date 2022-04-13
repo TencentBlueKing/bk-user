@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 import math
+import uuid
 from collections import OrderedDict
 from typing import Callable, Optional
 
@@ -176,4 +177,5 @@ def make_default_headers(operator: str) -> dict:
         settings.API_APP_CODE_HEADER_NAME: settings.APP_ID,
         settings.API_APP_SECRET_HEADER_NAME: settings.APP_TOKEN,
         "Accept-Language": get_language(),
+        "X-Request-ID": uuid.uuid4().hex,
     }
