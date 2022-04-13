@@ -58,47 +58,42 @@ def get_loggers(package_name: str, log_level: str) -> dict:
         "django.request": {
             "handlers": ["root"],
             "level": "ERROR",
-            "propagate": True,
+            "propagate": False,
         },
         "django.db.backends": {
             "handlers": ["root"],
             "level": "INFO",
-            "propagate": True,
+            "propagate": False,
         },
         "django.security": {
             "handlers": ["root"],
             "level": "INFO",
-            "propagate": True,
+            "propagate": False,
         },
         package_name: {
             "handlers": ["root"],
             "level": log_level,
-            "propagate": True,
+            "propagate": False,
         },
-        # NOTE: if use "" instead of "root", should change all propagate to False! and test it
-        # currently, use the same settings as blueapps, even it's wrong root config
-        "root": {
+        "": {
             "handlers": ["root"],
             "level": log_level,
         },
-        # "": {
-        #     "handlers": ["root"],
-        #     "level": log_level,
-        # },
         "requests": {
             "handlers": ["root"],
             "level": log_level,
+            "propagate": False,
         },
         # 组件调用日志
         "component": {
             "handlers": ["root"],
             "level": "WARN",
-            "propagate": True,
+            "propagate": False,
         },
         "iam": {
             "handlers": ["root"],
             "level": log_level,
-            "propagate": True,
+            "propagate": False,
         },
     }
 
