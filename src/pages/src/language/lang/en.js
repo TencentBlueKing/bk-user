@@ -135,6 +135,8 @@ export default {
   用户组对象过滤: 'User group object filter',
   用户组名字段: 'User group name filed',
   用户组描述字段: 'User group description field',
+  用户组关联字段: 'User group associated field',
+  自定义字段: 'Custom field',
   // 密码设置
   密码长度: 'Password length',
   至32位: 'to 32',
@@ -403,4 +405,10 @@ export default {
   修改密码时不能重复前: 'Do not repeat the preceding part when changing the password',
   用过的密码: 'Used password',
   请输入手机号: 'Please enter your mobile phone number',
+  字段的值应该是数值或字符串: 'The value of the field should be either a numeric value or a string',
+  字段的值应该是数组: 'The value of the field should be an array',
+  被锁定: 'locked',
+  被删除: 'deleted',
+  员工: 'employees',
+  组长: 'group leader',
 };

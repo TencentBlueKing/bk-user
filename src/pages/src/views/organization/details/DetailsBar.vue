@@ -28,6 +28,7 @@
       :current-category-id="currentCategoryId"
       :current-category-type="currentCategoryType"
       :fields-list="fieldsList"
+      :status-map="statusMap"
       @editProfile="editProfile"
       @deleteProfile="$emit('deleteProfile')"
       @restoreProfile="$emit('restoreProfile')"
@@ -40,7 +41,10 @@
         <div class="information-box" data-test-id="superiorData">
           <h4 class="infor-title">{{$t('用户信息')}}</h4>
           <div class="fill-infor-wrapper">
-            <InputComponents :edit-status="detailsBarInfo.type === 'edit'" :profile-info-list="profileInfoList" />
+            <InputComponents
+              :edit-status="detailsBarInfo.type === 'edit'"
+              :profile-info-list="profileInfoList"
+              :status-map="statusMap" />
             <UploadAvatar
               @getBase64="getBase64"
               :img-src="currentProfile === null ? $store.state.localAvatar : currentProfile.logo" />
@@ -179,6 +183,10 @@ export default {
       type: Array,
       required: true,
     },
+    statusMap: {
+      type: Object,
+      default: {},
+    },
   },
   data() {
     return {
@@ -217,7 +225,16 @@ export default {
   created() {
     // 新增用户
     if (this.detailsBarInfo.type === 'add') {
-      const fieldsList = JSON.parse(JSON.stringify(this.fieldsList));
+      const list = JSON.parse(JSON.stringify(this.fieldsList));
+      const fieldsList = [];
+      list.forEach((item) => {
+        if (item.options && item.options.length) {
+          item.options.forEach((key) => {
+            key.value = this.statusMap[key.value];
+          });
+        }
+        fieldsList.push(item);
+      });
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
         if (fieldInfo.key === 'department_name' || fieldInfo.key === 'leader') {
           return false;
