@@ -76,6 +76,7 @@ class CustomTypeList:
         return type(list(self.items_map.values())[0])
 
 
+@dataclass
 class CustomProfile(CustomType):
     """自定义的 Profile 对象"""
 
@@ -122,6 +123,7 @@ class CustomProfile(CustomType):
         self.position = position
 
 
+@dataclass
 class CustomDepartment(CustomType):
     """自定义的 Department 对象"""
 
