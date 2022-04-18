@@ -45,6 +45,8 @@ SENTRY_DSN = env("SENTRY_DSN", default="")
 # ==============================================================================
 
 # 强制数据返回格式为原生格式 请求头
+#### 1. SaaS调用api
+#### 2. for_sync场景从一个用户管理同步数据到另一个用户管理中使用
 FORCE_RAW_RESPONSE_HEADER = "HTTP_FORCE_RAW_RESPONSE"
 # 强制返回原始用户名（不带登陆域）请求头
 FORCE_RAW_USERNAME_HEADER = "HTTP_RAW_USERNAME"
@@ -75,6 +77,12 @@ MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=2000)
 LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)
 
 DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
+
+# sync, 用户管理本身做业务 HTTP API 数据源, 可以被另一个用户管理同步过去
+# 复用 API, 接口参数中存在 SYNC_API_PARAM 时, 以sync的接口协议返回
+SYNC_API_PARAM = "for_sync"
+
+
 # ==============================================================================
 # 开发调试
 # ==============================================================================

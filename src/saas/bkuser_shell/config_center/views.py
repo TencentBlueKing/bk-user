@@ -219,7 +219,7 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
                 setting_id = setting_instances[setting_info["key"]].id
             except KeyError:
                 logger.exception(
-                    "找不到 Setting<%s>. [category_id=%s, namesapce_name=%s]",
+                    "找不到 Setting<%s>. [category_id=%s, namespace_name=%s]",
                     setting_info["key"],
                     category_id,
                     namespace_name,

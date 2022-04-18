@@ -43,6 +43,20 @@ class SimpleDepartmentSerializer(CustomFieldsModelSerializer):
         fields = ("id", "name", "order", "full_name")
 
 
+class ForSyncDepartmentSerializer(CustomFieldsModelSerializer):
+    """this serializer is for sync data from one bk-user to another
+    the api protocol:
+    https://github.com/TencentBlueKing/bk-user/blob/development/src/api/bkuser_core/categories/plugins/custom/README.md
+    """
+
+    class Meta:
+        model = Department
+        fields = ("code",)
+
+    def to_representation(self, instance):
+        return instance.code
+
+
 class DepartmentSerializer(CustomFieldsModelSerializer):
     name = serializers.CharField(required=True)
     has_children = serializers.SerializerMethodField()

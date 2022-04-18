@@ -111,8 +111,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """Serializer 路由"""
         if self.action in ("create", "update", "partial_update"):
             return local_serializers.CreateProfileSerializer
-        elif self.action in ("list",):
-            return local_serializers.RapidProfileSerializer
+        # NOTE: "list" 比较特殊, 放到self.list方法中处理
         else:
             return self.serializer_class
 
@@ -171,11 +170,18 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         _query_slz.is_valid(True)
         query_data = _query_slz.validated_data
 
+        serializer_class = local_serializers.RapidProfileSerializer
+
+        # NOTE: 用于两套用户管理之间的数据同步
+        if settings.SYNC_API_PARAM in request.query_params:
+            serializer_class = local_serializers.ForSyncRapidProfileSerializer
+            request.META[settings.FORCE_RAW_RESPONSE_HEADER] = "true"
+
         fields = query_data.get("fields", [])
         if fields:
             self._check_fields(fields)
         else:
-            fields = self.get_serializer().fields
+            fields = serializer_class().fields
 
         self._ensure_enabled_field(request, fields=fields)
 
@@ -201,7 +207,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         page = self.paginate_queryset(queryset)
         # page may be empty list
         if page is not None:
-            serializer = self.get_serializer(page, fields=fields, many=True)
+            serializer = serializer_class(page, fields=fields, many=True)
             return self.get_paginated_response(serializer.data)
 
         fields = [x for x in fields if x in self._get_model_field_names()]
