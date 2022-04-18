@@ -167,6 +167,8 @@ const methods = {
                 this.$set(obj, k[1], num);
               });
               value = obj;
+            } else {
+              value = {};
             }
           } else if (key === 'password_rult_length') {
             if (!value) value = '';
@@ -195,7 +197,7 @@ const methods = {
             }
           });
         });
-        objectData.exclude_elements_config = {};
+        objectData.exclude_elements_config = [];
         this.$set(objectData, 'password_rult_length', '');
         return objectData;
       } catch (e) {
