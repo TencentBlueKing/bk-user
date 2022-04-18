@@ -76,18 +76,19 @@ class CustomTypeList:
         return type(list(self.items_map.values())[0])
 
 
-@dataclass
 class CustomProfile(CustomType):
     """自定义的 Profile 对象"""
 
     __db_class = Profile
-    __require_fields = ("username", "email", "telephone")
+    # NOTE: 多渠道来源登录, email和telephone数据可能没有
+    # __require_fields = ("code", "username")
 
+    code: str
     username: str
+
     email: str
     telephone: str
     display_name: str
-    code: str
 
     leaders: List[str]
     departments: List[str]
@@ -95,18 +96,47 @@ class CustomProfile(CustomType):
     extras: Dict
     position: str
 
+    # currently, only code and username required, other fields will be optional
+    # NOTE: the dataclass fields order should be the same with __init__ params
+    def __init__(
+        self,
+        code,
+        username,
+        email="",
+        telephone="",
+        display_name="",
+        leaders=None,
+        departments=None,
+        extras=None,
+        position="0",
+        **kwrags
+    ):
+        self.code = code
+        self.username = username
+        self.email = email
+        self.telephone = telephone
+        self.display_name = display_name
+        self.leaders = leaders or []
+        self.departments = departments or []
+        self.extras = extras or {}
+        self.position = position
 
-@dataclass
+
 class CustomDepartment(CustomType):
     """自定义的 Department 对象"""
 
     __db_class = Department
     __display_field = "name"
-    __require_fields = ("name", "parent")
+    __require_fields = ("code", "name")
 
+    code: str
     name: str
     parent: str
-    code: str
+
+    def __init__(self, code, name, parent=None):
+        self.code = code
+        self.name = name
+        self.parent = parent
 
     @property
     def display_str(self) -> str:
