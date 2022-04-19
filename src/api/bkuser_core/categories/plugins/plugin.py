@@ -67,9 +67,7 @@ class DataSourcePlugin:
         """注册插件"""
         register_plugin(self)
         if self.settings_path is not None:
-            pass
-            # TODO: 最好只进行一次配置加载，而不是每个进程都执行
-            # self.load_settings_from_yaml()
+            self.load_settings_from_yaml()
 
     def init_settings(self, setting_meta_key: str, meta_info: dict):
         namespace = meta_info.pop("namespace", "general")

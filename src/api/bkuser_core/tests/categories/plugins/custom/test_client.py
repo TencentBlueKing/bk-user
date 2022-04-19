@@ -91,9 +91,9 @@ class TestClient:
             (
                 [
                     {
+                        # "code": "code-1",
                         "username": "fake-user",
                         "email": "fake@test.com",
-                        "code": "code-1",
                         "extras": {"aaa": "xxxx", "bbb": "qqqq", "uniquetest": "vvvv"},
                         "position": 0,
                     }

@@ -14,6 +14,7 @@ from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, EmptySer
 from bkuser_core.apis.v2.viewset import (
     AdvancedBatchOperateViewSet,
     AdvancedListAPIView,
+    AdvancedListSerializer,
     AdvancedModelViewSet,
     AdvancedSearchFilter,
 )
@@ -85,6 +86,15 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         origin = super().get_serializer_context()
         origin.update({"extra_defaults": DynamicFieldInfo.objects.get_extras_default_values()})
         return origin
+
+    @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
+    @swagger_auto_schema(query_serializer=AdvancedListSerializer())
+    def list(self, request, *args, **kwargs):
+        # NOTE: 用于两套用户管理之间的数据同步
+        if settings.SYNC_API_PARAM in request.query_params:
+            request.META[settings.FORCE_RAW_RESPONSE_HEADER] = "true"
+
+        return super().list(request, *args, **kwargs)
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     @swagger_auto_schema(

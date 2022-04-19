@@ -11,10 +11,10 @@ specific language governing permissions and limitations under the License.
 from typing import Union
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
-from bkuser_core.departments.v2.serializers import SimpleDepartmentSerializer
+from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from bkuser_core.profiles.utils import force_use_raw_username, get_username
+from bkuser_core.profiles.utils import force_use_raw_username, get_username, parse_username_domain
 from bkuser_core.profiles.validators import validate_domain, validate_username
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
@@ -124,6 +124,24 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
         return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
+
+
+class ForSyncRapidProfileSerializer(RapidProfileSerializer):
+    """this serializer is for sync data from one bk-user to another
+    the api protocol:
+    https://github.com/TencentBlueKing/bk-user/blob/development/src/api/bkuser_core/categories/plugins/custom/README.md
+    """
+
+    code = serializers.CharField(required=True)
+    departments = ForSyncDepartmentSerializer(many=True, required=False)
+
+    username = serializers.SerializerMethodField()
+
+    def get_username(self, obj):
+        """change username with domain to raw username
+        for sync data between bk-user instances
+        """
+        return parse_username_domain(obj.username)[0]
 
 
 class ProfileDepartmentSerializer(AdvancedRetrieveSerialzier):
