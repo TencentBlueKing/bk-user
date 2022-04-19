@@ -171,7 +171,7 @@ const methods = {
               value = {};
             }
           } else if (key === 'password_rult_length') {
-            if (!value) value = '';
+            return;
           }
           arrayData.push({ key, value, enabled });
         });
