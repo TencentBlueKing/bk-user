@@ -8,8 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from dataclasses import dataclass
-from typing import Any, Dict, List, Type
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Type
 
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -48,6 +48,11 @@ class CustomType:
     def display_str(self) -> str:
         return getattr(self, self.__display_field)
 
+    def __post_init__(self):
+        for k in self.__require_fields:
+            if not getattr(self, k):
+                raise ValueError(f"{k} field is required.")
+
 
 @dataclass
 class CustomTypeList:
@@ -76,50 +81,26 @@ class CustomTypeList:
         return type(list(self.items_map.values())[0])
 
 
+@dataclass
 class CustomProfile(CustomType):
     """自定义的 Profile 对象"""
 
     __db_class = Profile
     # NOTE: 多渠道来源登录, email和telephone数据可能没有
-    # __require_fields = ("code", "username")
+    __require_fields = ("code", "username")
 
     code: str
     username: str
 
-    email: str
-    telephone: str
-    display_name: str
+    email: Optional[str] = ""
+    telephone: Optional[str] = ""
+    display_name: Optional[str] = ""
 
-    leaders: List[str]
-    departments: List[str]
+    leaders: List[str] = field(default_factory=list)
+    departments: List[str] = field(default_factory=list)
 
-    extras: Dict
-    position: str
-
-    # currently, only code and username required, other fields will be optional
-    # NOTE: the dataclass fields order should be the same with __init__ params
-    def __init__(
-        self,
-        code,
-        username,
-        email="",
-        telephone="",
-        display_name="",
-        leaders=None,
-        departments=None,
-        extras=None,
-        position="0",
-        **kwrags
-    ):
-        self.code = code
-        self.username = username
-        self.email = email
-        self.telephone = telephone
-        self.display_name = display_name
-        self.leaders = leaders or []
-        self.departments = departments or []
-        self.extras = extras or {}
-        self.position = position
+    extras: Optional[Dict] = field(default_factory=dict)
+    position: Optional[str] = "0"
 
 
 class CustomDepartment(CustomType):
@@ -131,7 +112,7 @@ class CustomDepartment(CustomType):
 
     code: str
     name: str
-    parent: str
+    parent: Optional[str] = ""
 
     def __init__(self, code, name, parent=None):
         self.code = code

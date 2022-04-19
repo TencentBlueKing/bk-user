@@ -83,6 +83,7 @@ def adapter_sync(instance_id: int, operator: str, task_id: Optional[uuid.UUID] =
         try:
             task_id = SyncTask.objects.register_task(category=category, operator=operator, type_=SyncTaskType.AUTO).id
         except ExistsSyncingTaskError as e:
+            logger.exception("register task fail, the task is already exists")
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
     try:
