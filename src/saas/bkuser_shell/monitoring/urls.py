@@ -22,4 +22,13 @@ urlpatterns = [
         ),
         name="healthz",
     ),
+    url(
+        r"^ping/$",
+        views.HealthzViewSet.as_view(
+            {
+                "get": "pong",
+            }
+        ),
+        name="pong",
+    ),
 ]
