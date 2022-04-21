@@ -22,6 +22,7 @@ LOGIN_EXEMPT_WHITE_LIST = (
     r"/metrics$",
     r"/api/v2/version_logs_list/$",
     r"/healthz/$",
+    r"/ping/$",
 )
 
 # name for bk_token in cookie

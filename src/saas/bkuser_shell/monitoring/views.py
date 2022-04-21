@@ -13,6 +13,8 @@ import logging
 from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.response import Response
+from django.http import HttpResponse
+from rest_framework import status
 
 logger = logging.getLogger(__name__)
 
@@ -31,4 +33,10 @@ class HealthzViewSet(BkUserApiViewSet):
             )
             return resp
         except Exception as e:
-            raise e
+            return HttpResponse(
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content=str(e),
+            )
+
+    def pong(self, request):
+        return HttpResponse(content="pong")
