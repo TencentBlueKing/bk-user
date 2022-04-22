@@ -3,4 +3,4 @@ name: api
 description: Api module for bk-user
 type: application
 version: 1.0.0
-appVersion: "v2.3.4-beta.15"
+appVersion: "v2.3.4-beta.16"
