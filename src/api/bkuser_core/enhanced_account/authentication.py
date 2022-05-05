@@ -29,6 +29,8 @@ HEADER_APP_SECRET_KEY_NAME = "HTTP_X_BK_APP_SECRET"
 
 ESB_PUBLIC_KEY_CACHE_KEY = "bk_user:esb_public_key"
 
+TOKEN_KEY_NAME = "token"
+
 
 def create_user(username="admin"):
     return get_user_model()(username=username, is_staff=True, is_superuser=True)
@@ -39,7 +41,7 @@ class InternalTokenAuthentication(BaseAuthentication):
     keyword = "iBearer"
     model = None
 
-    query_params_keyword = "token"
+    query_params_keyword = TOKEN_KEY_NAME
 
     def get_token_from_query_params(self, request):
         try:
@@ -105,12 +107,12 @@ class ESBOrAPIGatewayAuthentication(BaseAuthentication):
         public_key = self._get_public_key(api_name)
         algorithm = jwt_header.get("alg") or "RS512"
 
-        # do decode
+        # do decode, without verify issuer
         try:
-            jwt_playload = jwt.decode(jwt_content, public_key, algorithm, issuer="APIGW")
+            jwt_playload = jwt.decode(jwt_content, public_key, algorithm)
         except Exception:  # pylint: disable=broad-except
             logger.exception("JWT decode failed! jwt_payload: %s, public_key: %s", jwt_content, public_key)
-            return exceptions.AuthenticationFailed("decode jwt token fail")
+            raise exceptions.AuthenticationFailed("decode jwt token fail")
 
         # username = self._get_username_from_jwt_payload(payload)
         app_code = self._get_app_code_from_jwt_payload(jwt_playload)
@@ -210,18 +212,26 @@ class MultipleAuthentication(BaseAuthentication):
     """it's a dispatcher"""
 
     def authenticate(self, request):
+        # FIXME: 最终, 下掉token, 只保留 jwt + app_code/app_secret
         # withe list
         for white_url in settings.AUTH_EXEMPT_PATHS:
             if re.search(white_url, request.path):
                 logger.debug("%s path in white_url<%s>, exempting auth", request.path, white_url)
                 return None, None
+        # NOTE: some case we want to use token as credentials, call through APIGateway(set default headers)
+        # so we should verify others first, not jwt
+        if get_authorization_header(request) or request.query_params.get(TOKEN_KEY_NAME):
+            # token
+            return InternalTokenAuthentication().authenticate(request)
+
+        # app_code and app_secret
+        if HEADER_APP_CODE_KEY_NAME in request.META and HEADER_APP_SECRET_KEY_NAME in request.META:
+            return AppCodeAppSecretAuthentication().authenticate(request)
 
         # jwt
         if HEADER_JWT_KEY_NAME in request.META:
             return ESBOrAPIGatewayAuthentication().authenticate(request)
 
-        # app_code and app_secret
-        if HEADER_APP_CODE_KEY_NAME in request.META and HEADER_APP_SECRET_KEY_NAME in request.META:
-            return AppCodeAppSecretAuthentication().authenticate(request)
-        # token
-        return InternalTokenAuthentication().authenticate(request)
+        raise exceptions.AuthenticationFailed(
+            "no valid authentication credentials provided! should call through APIGateway/ESB"
+        )

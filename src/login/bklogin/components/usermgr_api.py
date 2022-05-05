@@ -121,6 +121,16 @@ def direct_get_categories():
     return ok, message, _data
 
 
+def direct_get_profile_by_code(code, fields="username"):
+    path = "/api/v2/profiles/{code}/".format(code=code)
+    url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
+
+    data = {"fields": fields, "lookup_field": "code"}
+
+    ok, _, message, _data = _call_usermgr_api(http_get, url, data)
+    return ok, message, _data
+
+
 def esb_authenticate(username, password, language="", domain=""):
     """
     认证用户名和密码
@@ -184,6 +194,19 @@ def esb_get_categories():
     return ok, message, _data
 
 
+def esb_get_profile_by_code(code, fields="username"):
+    path = "/api/c/compapi/v2/usermanage/retrieve_user/"
+
+    data = {
+        "id": code,
+        "lookup_field": "code",
+        "fields": fields,
+    }
+
+    ok, _, message, _data = _call_esb_api(http_get, path, data)
+    return ok, message, _data
+
+
 if settings.BK_LOGIN_API_AUTH_ENABLED:
     message = "bk_login api auth enabled=True, will call usermgr api via esb"
     print(message)
@@ -193,6 +216,7 @@ if settings.BK_LOGIN_API_AUTH_ENABLED:
     batch_query_users = esb_batch_query_users
     upsert_user = esb_upsert_user
     get_categories = esb_get_categories
+    get_profile_by_code = esb_get_profile_by_code
 else:
     message = "bk_login api auth enabled=False, will call usermgr api directly"
     print(message)
@@ -202,3 +226,4 @@ else:
     batch_query_users = direct_batch_query_users
     upsert_user = direct_upsert_user
     get_categories = direct_get_categories
+    get_profile_by_code = direct_get_profile_by_code
