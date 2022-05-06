@@ -14,6 +14,22 @@ import logging
 from collections import defaultdict
 from operator import or_
 
+from django.conf import settings
+from django.contrib.auth.hashers import make_password
+from django.core.exceptions import FieldError, MultipleObjectsReturned
+from django.db.models import F, Q
+from django.utils.decorators import method_decorator
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+from django.views.decorators.cache import cache_page
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import filters, status, viewsets
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+from rest_framework_jsonp.renderers import JSONPRenderer
+
+from ...departments.v2 import serializers as department_serializer
+from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.apis.v2.serializers import (
     AdvancedListSerializer,
@@ -48,24 +64,7 @@ from bkuser_core.profiles.v2.filters import ProfileSearchFilter
 from bkuser_core.profiles.validators import validate_username
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.conf import settings
-from django.contrib.auth.hashers import make_password
-from django.core.exceptions import FieldError, MultipleObjectsReturned
-from django.db.models import F, Q
-from django.utils.decorators import method_decorator
-from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_page
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, status, viewsets
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework_jsonp.renderers import JSONPRenderer
-
 from bkuser_global.utils import force_str_2_bool
-
-from ...departments.v2 import serializers as department_serializer
-from . import serializers as local_serializers
 
 logger = logging.getLogger(__name__)
 

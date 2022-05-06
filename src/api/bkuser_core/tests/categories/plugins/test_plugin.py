@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import time
 
 import pytest
+
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.base import Syncer
 from bkuser_core.categories.plugins.plugin import DataSourcePlugin

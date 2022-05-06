@@ -9,6 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+from django.conf import settings
+
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.ldap.syncer import LDAPSyncer
@@ -19,7 +21,6 @@ from bkuser_core.tests.categories.plugins.ldap.utils import make_default_setting
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import Setting, SettingMeta
-from django.conf import settings
 
 pytestmark = pytest.mark.django_db
 

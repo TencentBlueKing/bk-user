@@ -10,6 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from rest_framework import filters, viewsets
+from rest_framework.generics import ListAPIView
+
 from bkuser_core.apis.v3.exceptions import QueryTooLong
 from bkuser_core.apis.v3.filters import MultipleFieldFilter
 from bkuser_core.apis.v3.serializers import AdvancedPagination
@@ -18,9 +21,6 @@ from bkuser_core.bkiam.permissions import IAMPermission
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.v3.serializers import PaginatedProfileSerializer, QueryProfileSerializer
-from rest_framework import filters, viewsets
-from rest_framework.generics import ListAPIView
-
 from bkuser_global.drf_crown.crown import inject_serializer
 
 logger = logging.getLogger(__name__)

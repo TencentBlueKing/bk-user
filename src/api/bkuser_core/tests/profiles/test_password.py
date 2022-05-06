@@ -9,8 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser_core.profiles.password import PasswordValidator
 from rest_framework.exceptions import ValidationError
+
+from bkuser_core.profiles.password import PasswordValidator
 
 
 class TestPasswordValidate:

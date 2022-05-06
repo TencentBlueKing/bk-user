@@ -14,14 +14,14 @@ from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, Generator, List
 
 import phonenumbers
-from bkuser_core.departments.models import Department
-from bkuser_core.profiles.models import Profile
-from bkuser_core.profiles.utils import align_country_iso_code
-from bkuser_core.profiles.validators import validate_username
 from django.core.exceptions import MultipleObjectsReturned
 from django.utils.translation import ugettext_lazy as _
 
 from .exceptions import ParseFailedException
+from bkuser_core.departments.models import Department
+from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.utils import align_country_iso_code
+from bkuser_core.profiles.validators import validate_username
 
 logger = logging.getLogger(__name__)
 

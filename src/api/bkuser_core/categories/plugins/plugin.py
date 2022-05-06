@@ -15,6 +15,9 @@ from typing import Dict, Optional, Type
 from uuid import UUID
 
 import yaml
+from rest_framework import serializers
+from typing_extensions import Protocol
+
 from bkuser_core.categories.constants import SyncTaskStatus
 from bkuser_core.categories.loader import register_plugin
 from bkuser_core.categories.models import ProfileCategory, SyncProgress, SyncTask
@@ -22,8 +25,6 @@ from bkuser_core.categories.plugins.base import LoginHandler, Syncer
 from bkuser_core.categories.plugins.constants import HookType
 from bkuser_core.common.models import is_obj_needed_update
 from bkuser_core.user_settings.models import Setting, SettingMeta
-from rest_framework import serializers
-from typing_extensions import Protocol
 
 logger = logging.getLogger(__name__)
 

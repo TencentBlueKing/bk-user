@@ -13,12 +13,13 @@ import logging
 import re
 
 import jwt
-from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
+
+from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 
 logger = logging.getLogger(__name__)
 

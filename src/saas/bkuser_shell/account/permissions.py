@@ -8,12 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import bkuser_sdk
-from bkuser_shell.common.core_client import get_api_client
 from django.conf import settings
 from rest_framework import permissions
 
+import bkuser_sdk
 from .constants import RoleCodeEnum
+from bkuser_shell.common.core_client import get_api_client
 
 
 class IsSuperUser(permissions.BasePermission):

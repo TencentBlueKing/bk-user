@@ -10,11 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.core.management.base import BaseCommand
+
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.constants import PLUGIN_NAME_SETTING_KEY
 from bkuser_core.user_settings.models import Setting, SettingMeta
-from django.core.management.base import BaseCommand
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,15 @@ specific language governing permissions and limitations under the License.
 import logging
 import os
 
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from openpyxl import load_workbook
+
 import bkuser_sdk
+from ..common.export import ProfileExcelExporter
+from .constants import TEST_CONNECTION_TYPES, CategoryStatus, CategoryTypeEnum
+from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.categories.serializers import (
@@ -28,15 +36,6 @@ from bkuser_shell.categories.serializers import (
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
-from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
-from openpyxl import load_workbook
-
-from bkuser_global.drf_crown import inject_serializer
-
-from ..common.export import ProfileExcelExporter
-from .constants import TEST_CONNECTION_TYPES, CategoryStatus, CategoryTypeEnum
 
 logger = logging.getLogger(__name__)
 

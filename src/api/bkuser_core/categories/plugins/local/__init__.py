@@ -8,11 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_core.categories.plugins.plugin import DataSourcePlugin
-
 from .handlers import *  # noqa
 from .login import LoginHandler
 from .syncer import ExcelSyncer
+from bkuser_core.categories.plugins.plugin import DataSourcePlugin
 
 # Q: 为什么 local 插件不使用 PluginConfig 注册 SettingMeta ?
 # A: 因为目前与 local 插件相关的大部分配置在整个登录流程中都有使用，相当于全局配置，所以暂不放在插件配置中

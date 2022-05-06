@@ -49,17 +49,24 @@ force_grid_wrap = 0
 use_parentheses = 'true'
 line_length = 119
 skip_glob = ["*/migrations/**", "*/sdk/**", "*/node_modules/**"]
+known_local_folder =["bkuser_core", "bkuser_shell", "bkuser_global", "bkuser_sdk"]
 
 [tool.flake8]
 ignore = "C901,E203,W503"
 max-line-length = 119
 max-complexity = 8
 format = "pylint"
+show_source = "true"
+statistics = "true"
+count = "true"
 exclude = "*migrations*,*.pyc,.git,__pycache__,*/node_modules/*,*/templates_module*,*/bin/*,*/config/*,*sdk*"
 
 [tool.mypy]
 ignore_missing_imports = true
+follow_imports="skip"
 show_error_codes = true
+strict_optional=true
+pretty=true
 
 [[tool.mypy.overrides]]
 module = [

@@ -8,13 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.organization.views.misc import HeaderFooterViewSet, WebPageViewSet
 from django.conf import settings
 from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
 from django.views.i18n import JavaScriptCatalog
+
+from bkuser_shell.organization.views.misc import HeaderFooterViewSet, WebPageViewSet
 
 urlpatterns = [
     url(r"^", include("bkuser_shell.account.urls")),

@@ -13,14 +13,6 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Type
 
-from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
-from bkuser_core.common.db_sync import SyncOperation
-from bkuser_core.common.progress import progress
-from bkuser_core.departments.models import Department, DepartmentThroughModel
-from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
-from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
-from bkuser_core.profiles.utils import make_password_by_config
-from bkuser_core.user_settings.loader import ConfigProvider
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
@@ -36,6 +28,14 @@ from .parsers import (
     PhoneNumberParser,
     UsernameCellParser,
 )
+from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
+from bkuser_core.common.db_sync import SyncOperation
+from bkuser_core.common.progress import progress
+from bkuser_core.departments.models import Department, DepartmentThroughModel
+from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
+from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
+from bkuser_core.profiles.utils import make_password_by_config
+from bkuser_core.user_settings.loader import ConfigProvider
 
 logger = logging.getLogger(__name__)
 

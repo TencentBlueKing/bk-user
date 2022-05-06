@@ -13,6 +13,9 @@ import uuid
 from contextlib import contextmanager
 from typing import Any, Optional, Union
 
+from celery import Task
+from django.conf import settings
+
 from bkuser_core.categories.constants import SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError
 from bkuser_core.categories.loader import get_plugin_by_category
@@ -22,8 +25,6 @@ from bkuser_core.categories.utils import catch_time
 from bkuser_core.celery import app
 from bkuser_core.common.cache import clear_cache
 from bkuser_core.common.error_codes import error_codes
-from celery import Task
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 

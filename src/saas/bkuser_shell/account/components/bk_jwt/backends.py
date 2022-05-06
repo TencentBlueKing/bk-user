@@ -10,9 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser_shell.account import get_user_model
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
+
+from bkuser_shell.account import get_user_model
 
 BKOAUTH_JWT_CLIENT_EXISTS = True
 try:

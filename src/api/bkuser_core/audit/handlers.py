@@ -11,13 +11,14 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import TYPE_CHECKING
 
+from django.dispatch import receiver
+
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.signals import post_category_create
 from bkuser_core.departments.signals import post_department_create
 from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
-from django.dispatch import receiver
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile

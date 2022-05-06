@@ -10,17 +10,16 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from rest_framework.permissions import IsAuthenticated
+
 import bkuser_sdk
+from . import serializers
+from bkuser_global.drf_crown import inject_serializer
 from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
 from bkuser_shell.config_center.serializers import ProfileFieldsSerializer, SettingMetaSerializer, SettingSerializer
-from rest_framework.permissions import IsAuthenticated
-
-from bkuser_global.drf_crown import inject_serializer
-
-from . import serializers
 
 logger = logging.getLogger(__name__)
 

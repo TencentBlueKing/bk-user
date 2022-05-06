@@ -9,9 +9,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_global.config import get_db_config
-
 from . import env
+from bkuser_global.config import get_db_config
 
 # ==============================================================================
 # 数据库

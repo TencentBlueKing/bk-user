@@ -15,8 +15,6 @@ import uuid
 from collections import OrderedDict
 from typing import Callable, Optional
 
-from bkuser_shell.common.core_client import get_api_client
-from bkuser_shell.common.response import Response
 from django.conf import settings
 from django.utils.translation import get_language
 from rest_framework.pagination import PageNumberPagination
@@ -24,6 +22,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
 from bkuser_global.utils import force_str_2_bool
+from bkuser_shell.common.core_client import get_api_client
+from bkuser_shell.common.response import Response
 
 logger = logging.getLogger(__name__)
 

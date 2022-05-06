@@ -17,6 +17,9 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import Any, ClassVar, Dict, List, MutableMapping, Optional, Type, TypeVar
 
+from django.db.models import Model
+from typing_extensions import Protocol
+
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.constants import SYNC_LOG_TEMPLATE_MAP, SyncStep
 from bkuser_core.categories.plugins.metas import DepartmentMeta, DepartmentProfileMeta, LeaderProfileMeta, ProfileMeta
@@ -24,8 +27,6 @@ from bkuser_core.common.db_sync import SyncModelManager, SyncModelMeta, SyncOper
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.db.models import Model
-from typing_extensions import Protocol
 
 logger = logging.getLogger(__name__)
 

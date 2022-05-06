@@ -12,12 +12,13 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional
 
+from django.db import models
+from jsonfield import JSONField
+
 from bkuser_core.audit.constants import LogInFailReason, OperationStatus
 from bkuser_core.audit.managers import LogInManager, ResetPasswordManager
 from bkuser_core.common.fields import EncryptField
 from bkuser_core.common.models import TimestampedModel
-from django.db import models
-from jsonfield import JSONField
 
 
 @dataclass
