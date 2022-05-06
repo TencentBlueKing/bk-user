@@ -219,15 +219,17 @@ class MultipleAuthentication(BaseAuthentication):
             if re.search(white_url, request.path):
                 logger.debug("%s path in white_url<%s>, exempting auth", request.path, white_url)
                 return None, None
+
+        # app_code and app_secret
+        if HEADER_APP_CODE_KEY_NAME in request.META and HEADER_APP_SECRET_KEY_NAME in request.META:
+            return AppCodeAppSecretAuthentication().authenticate(request)
+
+        # FIXME: should remove this totally
         # NOTE: some case we want to use token as credentials, call through APIGateway(set default headers)
         # so we should verify others first, not jwt
         if get_authorization_header(request) or request.query_params.get(TOKEN_KEY_NAME):
             # token
             return InternalTokenAuthentication().authenticate(request)
-
-        # app_code and app_secret
-        if HEADER_APP_CODE_KEY_NAME in request.META and HEADER_APP_SECRET_KEY_NAME in request.META:
-            return AppCodeAppSecretAuthentication().authenticate(request)
 
         # jwt
         if HEADER_JWT_KEY_NAME in request.META:
