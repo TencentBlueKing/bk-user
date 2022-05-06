@@ -15,15 +15,15 @@ from __future__ import unicode_literals
 import os
 from builtins import str
 
-from bklogin.common.constants import DATETIME_FORMAT_STRING, LICENSE_VAILD_CACHE_KEY
-from bklogin.common.log import logger
-from bklogin.common.utils.time import parse_local_datetime
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone, translation
 from django.utils.translation import ugettext as _
 
 from .http import http_post
+from bklogin.common.constants import DATETIME_FORMAT_STRING, LICENSE_VAILD_CACHE_KEY
+from bklogin.common.log import logger
+from bklogin.common.utils.time import parse_local_datetime
 
 """
 企业证书校验等相关通用函数

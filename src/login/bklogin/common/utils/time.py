@@ -12,8 +12,9 @@ specific language governing permissions and limitations under the License.
 
 import datetime
 
-from bklogin.common.constants import DATETIME_FORMAT_STRING
 from django.utils import timezone
+
+from bklogin.common.constants import DATETIME_FORMAT_STRING
 
 
 def _parse_datetime(date_string, format_string, zone=None, target_zone=None):

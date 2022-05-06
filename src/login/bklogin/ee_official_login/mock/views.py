@@ -11,14 +11,15 @@ specific language governing permissions and limitations under the License.
 """
 
 
+from django.contrib.auth import authenticate
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.response import TemplateResponse
+
 from bklogin.bkauth.actions import login_failed_response, login_success_response
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import set_bk_token_invalid
 from bklogin.common.log import logger
-from django.contrib.auth import authenticate
-from django.contrib.sites.shortcuts import get_current_site
-from django.template.response import TemplateResponse
 
 
 def login(request):

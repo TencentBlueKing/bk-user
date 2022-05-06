@@ -18,14 +18,15 @@ import unicodedata
 import urllib.parse
 from urllib.parse import urlparse
 
-from bklogin.bkaccount.models import BkToken, LoginLog
-from bklogin.common.encrypt import salt
-from bklogin.common.log import logger
-from bklogin.common.utils.basic import escape_html_return_msg
 from blue_krill.encrypt.handler import EncryptHandler
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import ugettext as _
+
+from bklogin.bkaccount.models import BkToken, LoginLog
+from bklogin.common.encrypt import salt
+from bklogin.common.log import logger
+from bklogin.common.utils.basic import escape_html_return_msg
 
 BK_COOKIE_AGE = settings.BK_COOKIE_AGE
 BK_INACTIVE_COOKIE_AGE = settings.BK_INACTIVE_COOKIE_AGE

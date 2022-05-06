@@ -14,11 +14,12 @@ specific language governing permissions and limitations under the License.
 from __future__ import unicode_literals
 
 import pytz
-from bklogin.bk_i18n.constants import LOGIN_API_URL_SUFFIX_LIST
 from django.conf import settings
 from django.utils import timezone, translation
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import trans_real as trans
+
+from bklogin.bk_i18n.constants import LOGIN_API_URL_SUFFIX_LIST
 
 
 class TimezoneMiddleware(MiddlewareMixin):

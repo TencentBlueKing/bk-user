@@ -15,8 +15,9 @@ from __future__ import unicode_literals
 import copy
 from urllib.parse import urljoin
 
-from bklogin.common.log import logger
 from django.conf import settings
+
+from bklogin.common.log import logger
 
 
 def _call_esb_api(http_func, url_path, data, timeout=30):

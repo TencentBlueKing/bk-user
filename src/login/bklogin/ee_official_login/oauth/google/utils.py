@@ -16,10 +16,10 @@ import urllib.request
 from builtins import range, str
 
 import requests
-from bklogin.common.log import logger
 from django.conf import settings as bk_settings
 
 from . import settings as google_setting
+from bklogin.common.log import logger
 
 
 def gen_oauth_state_security_token(length=32):

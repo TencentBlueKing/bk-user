@@ -14,10 +14,11 @@ from __future__ import unicode_literals
 
 from builtins import str
 
+from cachetools import TTLCache, cached
+
 from bklogin.common.constants import BKLOGIN_USERMGR_FIELD_MAP
 from bklogin.common.log import logger
 from bklogin.components import usermgr_api
-from cachetools import TTLCache, cached
 
 
 def _user_info(usermgr_userinfo):
