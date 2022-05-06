@@ -11,9 +11,10 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import TYPE_CHECKING
 
+from django.dispatch import receiver
+
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.signals import post_category_create
-from django.dispatch import receiver
 
 if TYPE_CHECKING:
     from bkuser_core.categories.models import ProfileCategory

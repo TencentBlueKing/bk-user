@@ -14,11 +14,12 @@ from __future__ import unicode_literals
 
 from builtins import object
 
-from bklogin.bkauth.utils import is_bk_token_valid
-from bklogin.components.usermgr_api import upsert_user
 from django.contrib.auth import models
 from django.db import models as db_models
 from django.utils import timezone
+
+from bklogin.bkauth.utils import is_bk_token_valid
+from bklogin.components.usermgr_api import upsert_user
 
 
 class User(models.AbstractBaseUser, models.AnonymousUser):

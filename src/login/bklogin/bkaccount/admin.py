@@ -12,8 +12,9 @@ specific language governing permissions and limitations under the License.
 
 from __future__ import unicode_literals
 
-from bklogin.bkaccount.models import LoginLog
 from django.contrib import admin
+
+from bklogin.bkaccount.models import LoginLog
 
 
 class LoginLogAdmin(admin.ModelAdmin):

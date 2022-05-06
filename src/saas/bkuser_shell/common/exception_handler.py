@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
-from bkuser_sdk.rest import ApiException
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import status
@@ -21,6 +20,7 @@ from rest_framework.views import exception_handler
 from sentry_sdk import capture_exception
 
 from .error_codes import APIError
+from bkuser_sdk.rest import ApiException
 
 logger = logging.getLogger(__name__)
 

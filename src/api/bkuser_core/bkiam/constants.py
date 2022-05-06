@@ -12,12 +12,13 @@ from enum import auto
 from typing import Any, Callable, Dict, List
 
 import regex
+from django.utils.translation import ugettext_lazy as _
+
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory, SyncTask
 from bkuser_core.common.enum import AutoLowerEnum
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from django.utils.translation import ugettext_lazy as _
 
 
 class IAMCallbackMethods(AutoLowerEnum):

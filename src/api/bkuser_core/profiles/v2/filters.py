@@ -11,9 +11,10 @@ specific language governing permissions and limitations under the License.
 import logging
 from itertools import chain
 
+from django.db.models import QuerySet
+
 from bkuser_core.apis.v2.viewset import AdvancedSearchFilter
 from bkuser_core.categories.models import ProfileCategory
-from django.db.models import QuerySet
 
 logger = logging.getLogger(__name__)
 

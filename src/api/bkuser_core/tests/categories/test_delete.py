@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.models import Setting

@@ -11,9 +11,10 @@ specific language governing permissions and limitations under the License.
 import logging
 import uuid
 
+from django.core.management.base import BaseCommand
+
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.tasks import adapter_sync
-from django.core.management.base import BaseCommand
 
 logger = logging.getLogger(__name__)
 

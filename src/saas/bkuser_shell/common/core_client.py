@@ -10,9 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict
 
+from django.conf import settings
+
 import bkuser_sdk
 from bkuser_sdk.configuration import Configuration
-from django.conf import settings
 
 client_configuration = Configuration()
 

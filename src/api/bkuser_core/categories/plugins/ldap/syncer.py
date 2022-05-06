@@ -15,6 +15,9 @@ from dataclasses import dataclass
 from itertools import chain, product
 from typing import List, Optional, Tuple
 
+from django.db import transaction
+from django.utils.encoding import force_bytes
+
 from bkuser_core.categories.exceptions import FetchDataFromRemoteFailed
 from bkuser_core.categories.plugins.base import DBSyncManager, Fetcher, SyncContext, Syncer, SyncStep, TypeList
 from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper, department_adapter, user_adapter
@@ -24,8 +27,6 @@ from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapPr
 from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
-from django.db import transaction
-from django.utils.encoding import force_bytes
 
 logger = logging.getLogger(__name__)
 

@@ -12,6 +12,11 @@ import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Type
 
+from django.db.models import Model
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import ValidationError
+
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.base import DBSyncManager, SyncContext, SyncStep, TypeList
 from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapProfileMeta
@@ -23,10 +28,6 @@ from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.db.models import Model
-from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
-from rest_framework.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 

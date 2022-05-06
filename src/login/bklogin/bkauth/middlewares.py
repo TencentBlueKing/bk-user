@@ -14,8 +14,6 @@ from __future__ import unicode_literals
 
 from urllib.parse import urlparse
 
-from bklogin.bk_i18n.constants import BK_LANG_TO_DJANGO_LANG
-from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
@@ -24,6 +22,9 @@ from django.http import HttpResponse
 from django.shortcuts import resolve_url
 from django.utils import translation
 from django.utils.deprecation import MiddlewareMixin
+
+from bklogin.bk_i18n.constants import BK_LANG_TO_DJANGO_LANG
+from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 
 BK_LOGIN_URL = str(settings.LOGIN_URL)
 

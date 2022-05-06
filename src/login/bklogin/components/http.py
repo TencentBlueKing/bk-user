@@ -16,8 +16,9 @@ import time
 from urllib.parse import urlparse
 
 import requests
-from bklogin.common.log import logger
 from django.conf import settings
+
+from bklogin.common.log import logger
 
 # NOTE: all new components should use the http.py here!
 

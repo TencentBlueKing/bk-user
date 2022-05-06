@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import TYPE_CHECKING
 
+from django.dispatch import receiver
+
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.plugins.utils import (
     delete_dynamic_filed,
@@ -20,7 +22,6 @@ from bkuser_core.categories.plugins.utils import (
 from bkuser_core.categories.signals import post_category_delete, post_dynamic_field_delete
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
-from django.dispatch import receiver
 
 if TYPE_CHECKING:
     from bkuser_core.categories.models import ProfileCategory

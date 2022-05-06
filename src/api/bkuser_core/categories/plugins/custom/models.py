@@ -11,11 +11,11 @@ specific language governing permissions and limitations under the License.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Type
 
-from bkuser_core.departments.models import Department
-from bkuser_core.profiles.models import Profile
 from django.db.models import Model
 
 from .exceptions import NoKeyItemAvailable
+from bkuser_core.departments.models import Department
+from bkuser_core.profiles.models import Profile
 
 
 @dataclass

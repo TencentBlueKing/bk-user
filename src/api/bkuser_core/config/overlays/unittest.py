@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import ldap3
+
 from bkuser_core.config.common.django_basic import *  # noqa
 from bkuser_core.config.common.logging import *  # noqa
 from bkuser_core.config.common.platform import *  # noqa
 from bkuser_core.config.common.storage import *  # noqa
 from bkuser_core.config.common.system import *  # noqa
-
 from bkuser_global.logging import LoggingType, get_logging
 
 DEBUG = True

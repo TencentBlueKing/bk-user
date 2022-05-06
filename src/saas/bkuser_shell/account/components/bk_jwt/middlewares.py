@@ -10,11 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser_shell.account.conf import ConfFixture
-from bkuser_shell.account.handlers.response import ResponseHandler
 from django.conf import settings
 from django.contrib import auth
 from django.utils.deprecation import MiddlewareMixin
+
+from bkuser_shell.account.conf import ConfFixture
+from bkuser_shell.account.handlers.response import ResponseHandler
 
 logger = logging.getLogger("component")
 

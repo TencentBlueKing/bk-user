@@ -11,9 +11,10 @@ specific language governing permissions and limitations under the License.
 """
 
 
-from bklogin.common.log import logger
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
+
+from bklogin.common.log import logger
 
 
 class MockBackend(ModelBackend):

@@ -1,9 +1,10 @@
 import datetime
 
 import pytest
+from django.utils.timezone import now
+
 from bkuser_core.audit.constants import LogInFailReason
 from bkuser_core.audit.models import LogIn
-from django.utils.timezone import now
 
 pytestmark = pytest.mark.django_db
 

@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth.hashers import check_password
+
 from bkuser_core.audit.utils import create_profile_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
@@ -23,7 +25,6 @@ from bkuser_core.profiles.utils import (
 )
 from bkuser_core.user_settings.constants import InitPasswordMethod
 from bkuser_core.user_settings.models import Setting
-from django.contrib.auth.hashers import check_password
 
 pytestmark = pytest.mark.django_db
 

@@ -9,8 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser_core.bkiam.views import BaseIAMViewSet, DynamicFieldIAMViewSet
 from rest_framework.test import APIRequestFactory
+
+from bkuser_core.bkiam.views import BaseIAMViewSet, DynamicFieldIAMViewSet
 
 pytestmark = pytest.mark.django_db
 

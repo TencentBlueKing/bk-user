@@ -12,10 +12,11 @@ specific language governing permissions and limitations under the License.
 
 from __future__ import absolute_import, unicode_literals
 
+from django.conf import settings
+
 from bklogin.common.log import logger
 from bklogin.components.esb import _call_esb_api
 from bklogin.components.http import http_get, http_post
-from django.conf import settings
 
 """
 usermgr api

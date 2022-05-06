@@ -12,11 +12,12 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, NamedTuple, Optional
 
+from django.utils.encoding import force_str
+from ldap3.utils import dn as dn_utils
+
 from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
 from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.utils.encoding import force_str
-from ldap3.utils import dn as dn_utils
 
 logger = logging.getLogger(__name__)
 

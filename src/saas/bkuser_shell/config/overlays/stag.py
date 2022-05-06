@@ -8,13 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser_global.logging import LoggingType, get_logging
 from bkuser_shell.config.common.django_basic import *  # noqa
 from bkuser_shell.config.common.logging import *  # noqa
 from bkuser_shell.config.common.platform import *  # noqa
 from bkuser_shell.config.common.storage import *  # noqa
 from bkuser_shell.config.common.system import *  # noqa
-
-from bkuser_global.logging import LoggingType, get_logging
 
 DEBUG = True
 

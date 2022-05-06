@@ -13,10 +13,11 @@ import random
 import secrets
 import string
 
-from bkuser_core.common.models import AdvancedModelManager
 from django.conf import settings
 from django.db import models
 from django.utils.timezone import now
+
+from bkuser_core.common.models import AdvancedModelManager
 
 
 def gen_password(length):

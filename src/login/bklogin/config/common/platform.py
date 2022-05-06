@@ -11,10 +11,9 @@ specific language governing permissions and limitations under the License.
 """
 import os
 
+from . import env
 from bklogin.config.common.django_basic import SITE_URL
 from bklogin.config.common.plugin import CUSTOM_AUTHENTICATION_BACKEND, LOGIN_TYPE
-
-from . import env
 
 EDITION = env.str("EDITION", default="ce")
 

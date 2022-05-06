@@ -13,7 +13,6 @@ from bkuser_core.config.common.logging import *  # noqa
 from bkuser_core.config.common.platform import *  # noqa
 from bkuser_core.config.common.storage import *  # noqa
 from bkuser_core.config.common.system import *  # noqa
-
 from bkuser_global.logging import LoggingType, get_logging
 
 LOGGING = get_logging(logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_core")

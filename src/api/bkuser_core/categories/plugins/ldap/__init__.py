@@ -11,11 +11,10 @@ specific language governing permissions and limitations under the License.
 import os
 from pathlib import Path
 
-from bkuser_core.categories.plugins.plugin import DataSourcePlugin
-
 from .handlers import *  # noqa
 from .login import LoginHandler
 from .syncer import LDAPSyncer
+from bkuser_core.categories.plugins.plugin import DataSourcePlugin
 
 DataSourcePlugin(
     name="ldap",

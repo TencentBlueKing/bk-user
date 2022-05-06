@@ -12,6 +12,12 @@ import datetime
 from typing import Dict, List
 from uuid import UUID, uuid4
 
+from django.db import models
+from django.utils import timezone
+from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
+from django_celery_beat.models import PeriodicTask
+
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.categories.constants import TIMEOUT_THRESHOLD, CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.db_managers import ProfileCategoryManager
@@ -21,11 +27,6 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.models import Setting, SettingMeta
-from django.db import models
-from django.utils import timezone
-from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
-from django_celery_beat.models import PeriodicTask
 
 
 class ProfileCategory(TimestampedModel):
