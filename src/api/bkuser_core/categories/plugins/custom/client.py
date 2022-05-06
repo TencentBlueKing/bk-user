@@ -56,10 +56,23 @@ class CustomDataClient:
             raise CustomAPIRequestFailed()
 
         try:
-            return resp.json().get("results", [])
+            resp_body = resp.json()
         except Exception as e:
             logger.exception("failed to parse resp as json, cUrl format: %s", curl_format)
             raise CustomAPIRequestFailed() from e
+
+        # results not present in response body
+        if "results" not in resp_body:
+            logger.error("no `results` in response, cUrl format: %s", curl_format)
+            raise CustomAPIRequestFailed("there got no `results` in response body")
+
+        results = resp_body.get("results", [])
+        # results not a list
+        if not isinstance(results, list):
+            logger.error("`results` in response is not a list, cUrl format: %s", curl_format)
+            raise CustomAPIRequestFailed("the `results` in response is not a list")
+
+        return results
 
     def fetch_profiles(self, page_info: Optional[PageInfo] = None) -> CustomTypeList:
         """获取 profile 对象列表"""
