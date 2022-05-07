@@ -48,21 +48,24 @@ class InternalTokenAuthentication(BaseAuthentication):
         try:
             return request.query_params[self.query_params_keyword]
         except KeyError:
-            msg = "Invalid token header. No credentials provided."
+            msg = f"Invalid token header. No credentials provided. {self.query_params_keyword} is not in query params"
             raise exceptions.AuthenticationFailed(msg)
 
     def get_token_from_header(self, request):
         auth = get_authorization_header(request).split()
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
-            msg = "Invalid token header. No credentials provided."
+            msg = "Invalid token header. No credentials provided. The format should be `iBearer THE_TOKEN`"
             raise exceptions.AuthenticationFailed(msg)
 
         if len(auth) == 1:
-            msg = "Invalid token header. No credentials provided."
+            msg = "Invalid token header. No credentials provided. The size of auth array credentials is 0"
             raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
-            msg = "Invalid token header. Token string should not contain spaces."
+            msg = (
+                "Invalid token header. Token string should not contain spaces. "
+                + "The size of auth array credentials is more than 2"
+            )
             raise exceptions.AuthenticationFailed(msg)
 
         try:
@@ -74,11 +77,6 @@ class InternalTokenAuthentication(BaseAuthentication):
         return token
 
     def authenticate(self, request):
-        for white_url in settings.AUTH_EXEMPT_PATHS:
-            if re.search(white_url, request.path):
-                logger.info("%s path in white_url<%s>, exempting auth", request.path, white_url)
-                return None, None
-
         try:
             token = self.get_token_from_query_params(request)
         except exceptions.AuthenticationFailed:
