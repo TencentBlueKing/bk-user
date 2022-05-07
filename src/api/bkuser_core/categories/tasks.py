@@ -82,7 +82,16 @@ def adapter_sync(instance_id: int, operator: str, task_id: Optional[uuid.UUID] =
     if task_id is None:
         # 只有定时任务未传递 task_id
         try:
-            task_id = SyncTask.objects.register_task(category=category, operator=operator, type_=SyncTaskType.AUTO).id
+            # 查询最近的一个状态处于retrying的task;
+            # 因为register_task做了防御(如果有正在运行的, 报错, 如果运行时间超过一个小时, 会设为失效后重新建一个)
+            retrying_task = SyncTask.objects.get_crontab_retrying_task(category=category)
+            if retrying_task:
+                task_id = retrying_task.id
+            else:
+                # TODO: change to get_or_create
+                task_id = SyncTask.objects.register_task(
+                    category=category, operator=operator, type_=SyncTaskType.AUTO
+                ).id
         except ExistsSyncingTaskError as e:
             logger.exception("register task fail, the task is already exists")
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
