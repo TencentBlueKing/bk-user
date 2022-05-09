@@ -88,7 +88,6 @@ def adapter_sync(instance_id: int, operator: str, task_id: Optional[uuid.UUID] =
             if retrying_task:
                 task_id = retrying_task.id
             else:
-                # TODO: change to get_or_create
                 task_id = SyncTask.objects.register_task(
                     category=category, operator=operator, type_=SyncTaskType.AUTO
                 ).id
