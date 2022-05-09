@@ -6,7 +6,7 @@ metadata:
 data:
   # ---------------
   # 数据库
-  # --------------- 
+  # ---------------
   DB_NAME: "{{ .Values.externalDatabase.default.name | default .Values.preferDBName }}"
   DB_USER: "{{ .Values.externalDatabase.default.user }}"
   DB_PASSWORD: "{{ .Values.externalDatabase.default.password }}"
@@ -16,4 +16,3 @@ data:
   # Redis Related
   # ---------------
   CELERY_BROKER_URL: {{ .Values.celeryBrokerUrl | default (include "bk-user.externalRedisBrokerUrl" .) }}
-  CELERY_RESULT_BACKEND: {{ .Values.celeryResultBackend | default (include "bk-user.externalRedisBrokerUrl" .) }}

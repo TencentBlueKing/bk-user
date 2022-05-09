@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "mptt",
     "django_celery_beat",
+    "django_celery_results",
     "django_prometheus",
     # core API
     "bkuser_core.apis",
