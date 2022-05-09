@@ -90,7 +90,9 @@ class InternalTokenAuthentication(BaseAuthentication):
         if key in settings.INTERNAL_AUTH_TOKENS:
             user_info = settings.INTERNAL_AUTH_TOKENS[key]
             return create_user(user_info["username"]), None
-        raise exceptions.AuthenticationFailed("request failed: Invalid token header. No credentials provided.")
+        raise exceptions.AuthenticationFailed(
+            "request failed: Invalid token header. No credentials provided or Wrong credentials."
+        )
 
 
 class ESBOrAPIGatewayAuthentication(BaseAuthentication):
