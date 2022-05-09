@@ -456,16 +456,7 @@ export default {
         wx_userid: 'wx_userid',
         qq: 'qq',
       },
-      statusMap: {
-        正常: this.$t('正常'),
-        被冻结: this.$t('被锁定'),
-        被删除: this.$t('被删除'),
-        被禁用: this.$t('被禁用'),
-        在职: this.$t('在职'),
-        离职: this.$t('离职'),
-        员工: this.$t('员工'),
-        组长: this.$t('组长'),
-      },
+      statusMap: {},
     };
   },
   computed: {
@@ -608,6 +599,13 @@ export default {
         if (!fieldsList) return;
         this.fieldsList = JSON.parse(JSON.stringify(fieldsList));
         this.setTableFields = JSON.parse(JSON.stringify(fieldsList));
+        this.setTableFields.forEach((item) => {
+          if (item.options && item.options.length) {
+            item.options.forEach((key) => {
+              this.$set(this.statusMap, key.value, key.value);
+            });
+          }
+        });
         const tableHeardList = fieldsList.filter(field => field.visible);
         tableHeardList.push(
           {
@@ -632,11 +630,6 @@ export default {
           },
         );
         tableHeardList.forEach((item) => {
-          if (item.options && item.options.length) {
-            item.options.forEach((key) => {
-              key.value = this.statusMap[key.value];
-            });
-          }
           this.userMessage.tableHeardList.push(item);
         });
       } catch (e) {
