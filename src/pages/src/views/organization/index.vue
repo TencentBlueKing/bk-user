@@ -489,7 +489,11 @@ export default {
         const multiable = true;
         if (options.length > 0) {
           options.forEach((k) => {
-            children.push({ id: k.id, name: k.value });
+            if (this.$i18n.locale === 'en') {
+              children.push({ id: k.id, name: k.id });
+            } else {
+              children.push({ id: k.id, name: k.value });
+            }
           });
           this.heardList.push({ name, id, multiable, children });
         } else {
@@ -602,7 +606,7 @@ export default {
         this.setTableFields.forEach((item) => {
           if (item.options && item.options.length) {
             item.options.forEach((key) => {
-              this.$set(this.statusMap, key.value, key.value);
+              this.$set(this.statusMap, key.id, key.value);
             });
           }
         });
