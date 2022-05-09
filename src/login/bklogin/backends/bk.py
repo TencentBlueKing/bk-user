@@ -60,6 +60,8 @@ class BkUserBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         # NOTE: username here maybe: username/phone/email
         if not username or not password:
+            if password:
+                password = password[:4] + "***"
             logger.debug("username or password empty, username=%s, password=%s", username, password)
             return None
 

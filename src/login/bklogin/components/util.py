@@ -10,23 +10,20 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import copy
 
-import logging
 
-logger = logging.getLogger("root")
+def _remove_sensitive_info(info):
+    """
+    去除敏感信息
+    """
+    if info is None:
+        return ""
 
-"""
-Usage:
+    data = copy.copy(info)
+    sensitive_info_keys = ["bk_token", "bk_app_secret", "app_secret", "password"]
 
-    from common.log import logger
-
-    logger.info("test")
-    logger.error("wrong1")
-    logger.exception("wrong2")
-
-    # with traceback
-    try:
-        1 / 0
-    except Exception:
-        logger.exception("wrong3")
-"""
+    for key in sensitive_info_keys:
+        if key in data:
+            data[key] = data[key][:6] + "******"
+    return str(data)

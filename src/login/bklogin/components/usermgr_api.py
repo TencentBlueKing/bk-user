@@ -14,6 +14,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.conf import settings
 
+from .util import _remove_sensitive_info
 from bklogin.common.log import logger
 from bklogin.components.esb import _call_esb_api
 from bklogin.components.http import http_get, http_post
@@ -31,15 +32,19 @@ def _call_usermgr_api(http_func, url, data, headers=None):
         if not ok:
             return False, -1, "verify from usermgr server fail: %s" % resp_data.get("error"), None
     except Exception:
-        logger.exception("_call_usermgr_api fail: method=%s, url=%s, data=%s", http_func.__name__, url, data)
+        logger.exception(
+            "_call_usermgr_api fail: method=%s, url=%s, data=%s", http_func.__name__, url, _remove_sensitive_info(data)
+        )
         return False, -1, "verify from usermgr server fail, error happended", None
 
     # TODO: still use the result to verify?
     if not resp_data.get("result"):
-        if data and "password" in data:
-            data["password"] = "******"
         logger.info(
-            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s", http_func.__name__, url, data, resp_data
+            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s",
+            http_func.__name__,
+            url,
+            _remove_sensitive_info(data),
+            resp_data,
         )
         return False, resp_data.get("code", -1), resp_data.get("message", "usermgr api fail"), resp_data.get("data")
 
