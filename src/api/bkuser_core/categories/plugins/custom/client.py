@@ -72,6 +72,12 @@ class CustomDataClient:
             logger.error("`results` in response is not a list, cUrl format: %s", curl_format)
             raise CustomAPIRequestFailed("the `results` in response is not a list")
 
+        # currently, if the results is empty, CustomTypeList.custom_type will raise IndexError(task fail)
+        # so, here, we should check here: results size should not be empty
+        if not results:
+            logger.error("`results` in response is empty, cUrl format: %s", curl_format)
+            raise CustomAPIRequestFailed("the `results` in response is empty")
+
         return results
 
     def fetch_profiles(self, page_info: Optional[PageInfo] = None) -> CustomTypeList:
