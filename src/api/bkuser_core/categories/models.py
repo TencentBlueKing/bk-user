@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
 from django.db import models
@@ -155,6 +155,12 @@ class SyncTaskManager(models.Manager):
         raise ExistsSyncingTaskError(
             _("当前目录处于同步状态, 请在 {timeout}s 后重试.").format(timeout=(TIMEOUT_THRESHOLD - delta).total_seconds())
         )
+
+    def get_crontab_retrying_task(self, category: ProfileCategory) -> Optional["SyncTask"]:
+        qs = self.filter(
+            category=category, status=SyncTaskStatus.RETRYING.value, type=SyncTaskType.AUTO.value
+        ).order_by("-create_time")
+        return qs.first()
 
 
 class SyncTask(TimestampedModel):
