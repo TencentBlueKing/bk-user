@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 import ldap3
 
 from bkuser_core.config.common.django_basic import *  # noqa
@@ -84,6 +86,9 @@ TEST_LDAP = {
 
 # Ldap connection mock
 LDAP_CONNECTION_EXTRAS_PARAMS = {"client_strategy": ldap3.MOCK_SYNC}
+
+# celery results backend use from env(in unittest)
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
 
 # ==============================================================================
