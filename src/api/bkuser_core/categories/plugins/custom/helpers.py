@@ -163,6 +163,10 @@ class ProSyncHelper(DBSyncHelper):
 
             # 1. 先更新 profile 本身
             code = self._get_code(info.code)
+            extras = {"code": info.code}
+            if info.extras:
+                # note: the priority of extras from origin api is higher than `code=info.code`
+                extras.update(info.extras)
             profile_params = {
                 "category_id": self.category.pk,
                 "domain": self.category.domain,
@@ -173,7 +177,7 @@ class ProSyncHelper(DBSyncHelper):
                 "code": code,
                 "telephone": info.telephone,
                 "position": info.position,
-                "extras": info.extras,
+                "extras": extras,
                 "status": ProfileStatus.NORMAL.value,
             }
 
