@@ -759,7 +759,12 @@ export default {
       this.getTableData();
     },
     updateHeardList(value) {
-      this.searchDataList = value;
+      this.searchDataList = [];
+      value.forEach((item) => {
+        if (item.builtin) {
+          this.searchDataList.push(item);
+        }
+      });
     },
     handleClear() {
       if (this.tableSearchedKey !== []) {
