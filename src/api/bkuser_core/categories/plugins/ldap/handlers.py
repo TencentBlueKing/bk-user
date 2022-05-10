@@ -73,7 +73,7 @@ def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
     if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
-    logger.info("going to delete periodic task for Category<%s>", instance.id)
+    logger.info("going to delete periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
     delete_periodic_sync_task(instance.id)
 
 
