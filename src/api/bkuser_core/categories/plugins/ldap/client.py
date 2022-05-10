@@ -71,8 +71,10 @@ class LDAPClient:
             return Connection(**connection_params)
 
         except KeyError:
+            logger.exception("failed to initialize ldap server. KeyError. [url=%s]", connection_url)
             raise local_exceptions.LDAPSettingNotReady
         except ldap3.core.exceptions.LDAPSocketReceiveError:
+            logger.exception("failed to initialize ldap server. LDAPSocketReceiveError. [url=%s]", connection_url)
             raise local_exceptions.LdapCannotBeInitialized
         except Exception:
             logger.exception("failed to initialize ldap server. [url=%s]", connection_url)

@@ -99,9 +99,7 @@ class DepSyncHelper(DBSyncHelper):
                     error=_("父组织【{department}】不存在").format(department=dept_info.parent),
                 )
                 raise ValueError(
-                    "the given parent<%s> of department<%s> not found",
-                    dept_info.parent,
-                    dept_code,
+                    f"the given parent<{dept_info.parent}> of department<{dept_code}:{dept_info.name}> not found"
                 )
             parent_id = parent_dept.pk
 
@@ -158,7 +156,7 @@ class ProSyncHelper(DBSyncHelper):
                 validate_username(value=info.username)
             except ValidationError as e:
                 self.context.add_record(step=SyncStep.USERS, success=False, username=info.username, error=str(e))
-                logger.warning("username<%s> does not meet format", info.username)
+                logger.warning("username<%s:%s> does not meet format", info.code, info.username)
                 continue
 
             # 1. 先更新 profile 本身
@@ -211,7 +209,7 @@ class ProSyncHelper(DBSyncHelper):
                         department=dep_id,
                         error=_("部门不存在"),
                     )
-                    logger.warning("the department<%s> of profile<%s> is missing", dep_id, info.code)
+                    logger.warning("the department<%s> of profile<%s:%s> is missing", dep_id, info.code, info.username)
                     continue
 
                 self.try_add_relation(
@@ -233,7 +231,7 @@ class ProSyncHelper(DBSyncHelper):
                 self.context.add_record(
                     step=SyncStep.USERS_RELATIONSHIP, success=False, username=info.username, error=_("用户信息不存在")
                 )
-                logger.warning("profile<%s> will not be synced, skip", info.code)
+                logger.warning("profile<%s:%s> not exists, will not be synced, skip", info.code, info.username)
                 continue
 
             for leader_id in info.leaders:
@@ -241,7 +239,7 @@ class ProSyncHelper(DBSyncHelper):
                     self.context.add_record(
                         step=SyncStep.USERS_RELATIONSHIP, success=False, username=info.username, error=_("无法设置自己为上级")
                     )
-                    logger.warning("profile can not regard self as leader, skip")
+                    logger.warning("profile<%s:%s> can not regard self as leader, skip", info.code, info.username)
                     continue
 
                 leader = self.db_sync_manager.magic_get(self._get_code(leader_id), CustomProfileMeta)
@@ -252,7 +250,7 @@ class ProSyncHelper(DBSyncHelper):
                         username=info.username,
                         error=_("上级【{username}】不存在").format(username=leader_id),
                     )
-                    logger.warning("the leader<%s> of profile<%s> is missing", leader_id, info.code)
+                    logger.warning("the leader<%s> of profile<%s:%s> is missing", leader_id, info.code, info.username)
                     continue
 
                 self.try_add_relation(
