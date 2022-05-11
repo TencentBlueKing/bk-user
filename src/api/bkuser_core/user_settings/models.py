@@ -39,6 +39,7 @@ class Setting(TimestampedModel):
         verbose_name = "配置表"
         verbose_name_plural = "配置表"
         ordering = ["-create_time"]
+        unique_together = ["category", "meta"]
 
     def __str__(self):
         return f"{self.meta.namespace}-{self.meta.region}-{self.meta.key}"
