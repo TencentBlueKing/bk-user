@@ -53,13 +53,13 @@ class CustomDataClient:
                 resp.status_code,
                 curl_format,
             )
-            raise CustomAPIRequestFailed()
+            raise CustomAPIRequestFailed(f"failed to request api, status code: {resp.status_code}")
 
         try:
             resp_body = resp.json()
         except Exception as e:
             logger.exception("failed to parse resp as json, cUrl format: %s", curl_format)
-            raise CustomAPIRequestFailed() from e
+            raise CustomAPIRequestFailed("failed to parse resp as json") from e
 
         # results not present in response body
         if "results" not in resp_body:
