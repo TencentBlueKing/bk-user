@@ -99,11 +99,20 @@ class DataSourcePlugin:
             # 理论上目录不能够被直接恢复, 所以已经被删除的目录不会被更新
             # 仅做新增，避免覆盖已有配置
             for category in ProfileCategory.objects.filter(type=self.category_type, enabled=True):
-                ins, created = Setting.objects.get_or_create(
-                    meta=meta, category_id=category.id, defaults={"value": meta.default}
-                )
-                if created:
-                    logger.debug("\n------ Setting<%s> of category<%s> created.", ins, category)
+                try:
+                    ins, created = Setting.objects.get_or_create(
+                        meta=meta, category_id=category.id, defaults={"value": meta.default}
+                    )
+                    if created:
+                        logger.debug("\n------ Setting<%s> of category<%s> created.", ins, category)
+                except Exception:  # pylint: disable=broad-except
+                    logger.exception(
+                        "Setting default of meta<%s>, category_id<%s>, defaults<%s> can not been created.",
+                        meta,
+                        category.id,
+                        meta.default,
+                    )
+                    continue
 
     def load_settings_from_yaml(self):
         """从 yaml 中加载 SettingMeta 配置"""
