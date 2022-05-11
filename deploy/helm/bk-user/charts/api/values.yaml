@@ -89,7 +89,7 @@ image:
   registry: hub.bktencent.com
   repository: blueking/bk-user-api
   pullPolicy: IfNotPresent
-  tag: "v2.3.4-beta.20"
+  tag: "v2.3.4-beta.21"
 
 nameOverride: ""
 fullnameOverride: ""
