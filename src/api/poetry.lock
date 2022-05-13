@@ -1078,14 +1078,14 @@ reference = "tencent-mirrors"
 
 [[package]]
 name = "ldap3"
-version = "2.6.1"
+version = "2.9.1"
 description = "A strictly RFC 4510 conforming LDAP V3 pure Python client library"
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-pyasn1 = ">=0.1.8"
+pyasn1 = ">=0.4.6"
 
 [package.source]
 type = "legacy"
@@ -2081,7 +2081,7 @@ reference = "tencent-mirrors"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "e2701b960d2736959b1933e3908249986502db08074a9e567832cf5c1a93813b"
+content-hash = "7ce4925a3c33a27862fc3a4bb60f2505ed30ab1dd8eec9e2632c97044e05d1cc"
 
 [metadata.files]
 aenum = [
@@ -2498,8 +2498,8 @@ kombu = [
     {file = "kombu-4.6.11.tar.gz", hash = "sha256:ca1b45faac8c0b18493d02a8571792f3c40291cf2bcf1f55afed3d8f3aa7ba74"},
 ]
 ldap3 = [
-    {file = "ldap3-2.6.1-py2.py3-none-any.whl", hash = "sha256:1898194d872539670a2f36d4b56fe5a35d4b9ead28103bec78f05a8993e8122f"},
-    {file = "ldap3-2.6.1.tar.gz", hash = "sha256:27cb673e7afcb539f6adcae5a3ecac4e74eb37ca0a2d50dc98f29a3829eee529"},
+    {file = "ldap3-2.9.1-py2.py3-none-any.whl", hash = "sha256:5869596fc4948797020d3f03b7939da938778a0f9e2009f7a072ccf92b8e8d70"},
+    {file = "ldap3-2.9.1.tar.gz", hash = "sha256:f3e7fc4718e3f09dda568b57100095e0ce58633bcabbed8667ce3f8fbaa4229f"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.0.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d8446c54dc28c01e5a2dbac5a25f071f6653e6e40f3a8818e8b45d790fe6ef53"},
