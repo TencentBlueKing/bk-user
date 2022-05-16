@@ -12,8 +12,8 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List
 
-import ldap3
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from ldap3 import ALL, SIMPLE, Connection, Server
 
 from . import exceptions as local_exceptions
@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 class LDAPClient:
     config_provider: "ConfigProvider"
 
+    # FIXME: 执行test_connection的时候, 实际上在这里就执行init了, 使用的是db中存储的, 而不是用户表单传入的!
+    #        异常在这里就被抛出了
     def __post_init__(self):
         self.con = self.initialize(
             connection_url=self.config_provider.get("connection_url"),
@@ -69,16 +71,13 @@ class LDAPClient:
                 connection_params.update({"user": user, "password": password, "authentication": SIMPLE})
 
             return Connection(**connection_params)
-
         except KeyError:
             logger.exception("failed to initialize ldap server. KeyError. [url=%s]", connection_url)
             raise local_exceptions.LDAPSettingNotReady
-        except ldap3.core.exceptions.LDAPSocketReceiveError:
-            logger.exception("failed to initialize ldap server. LDAPSocketReceiveError. [url=%s]", connection_url)
-            raise local_exceptions.LdapCannotBeInitialized
-        except Exception:
-            logger.exception("failed to initialize ldap server. [url=%s]", connection_url)
-            raise local_exceptions.LdapCannotBeInitialized
+        except Exception as e:
+            logger.exception("failed to initialize ldap server. %s [url=%s]", type(e).__name__, connection_url)
+            error_detail = f" ({type(e).__name__}: {str(e)})"
+            raise local_exceptions.LdapCannotBeInitialized(_("LDAP服务器连接失败") + error_detail)
 
     def search(
         self,
