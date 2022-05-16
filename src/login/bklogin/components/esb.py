@@ -17,12 +17,14 @@ from django.conf import settings
 
 from .util import _remove_sensitive_info
 from bklogin.common.log import logger
+from bkuser_global.local import local
 
 
 def _call_esb_api(http_func, url_path, data, timeout=30):
     # 默认请求头
     headers = {
         "Content-Type": "application/json",
+        "X-Request-Id": local.request_id,
     }
 
     # Note: 目前企业版ESB调用的鉴权信息都是与接口的参数一起的，并非在header头里
