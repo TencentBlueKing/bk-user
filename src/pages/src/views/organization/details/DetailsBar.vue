@@ -29,6 +29,7 @@
       :current-category-type="currentCategoryType"
       :fields-list="fieldsList"
       :status-map="statusMap"
+      :timer-map="timerMap"
       @editProfile="editProfile"
       @deleteProfile="$emit('deleteProfile')"
       @restoreProfile="$emit('restoreProfile')"
@@ -186,6 +187,10 @@ export default {
     statusMap: {
       type: Object,
       default: {},
+    },
+    timerMap: {
+      type: Array,
+      required: true,
     },
   },
   data() {
@@ -443,7 +448,9 @@ export default {
           password_valid_days: this.passwordValidDays,
         };
         this.profileInfoList.forEach((info) => {
-          params[info.key] = info.value;
+          if (info.key !== 'last_login_time' && info.key !== 'create_time') {
+            params[info.key] = info.value;
+          }
           if (info.key === 'telephone') {
             params.iso_code = info.iso_code;
           }

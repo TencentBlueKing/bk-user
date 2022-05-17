@@ -20,6 +20,7 @@ export default {
       connection: null,
       fieldsMad: null,
       fieldsLdap: null,
+      account: null,
     },
     // 下拉列表可选值
     choices: {
@@ -198,6 +199,16 @@ export default {
       });
       return http.post(url, obj, config);
       // return http.get(`?mock-file=catalog&invoke=ajaxTestConnection`, config)
+    },
+
+    // 账号设置
+    ajaxGetAccount(_context, params, config = {}) {
+      const url = `api/v2/categories/${params.id}/settings/namespaces/account/`;
+      return http.get(url, config);
+    },
+    ajaxPutAccount(_context, params, config = {}) {
+      const url = `api/v2/categories/${params.id}/settings/namespaces/account/`;
+      return http.put(url, params.data, config);
     },
   },
 };
