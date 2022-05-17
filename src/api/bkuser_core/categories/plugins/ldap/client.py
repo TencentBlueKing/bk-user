@@ -71,13 +71,18 @@ class LDAPClient:
                 connection_params.update({"user": user, "password": password, "authentication": SIMPLE})
 
             return Connection(**connection_params)
-        except KeyError:
+        except KeyError as e:
             logger.exception("failed to initialize ldap server. KeyError. [url=%s]", connection_url)
-            raise local_exceptions.LDAPSettingNotReady
+            raise local_exceptions.LDAPSettingNotReady from e
         except Exception as e:
-            logger.exception("failed to initialize ldap server. %s [url=%s]", type(e).__name__, connection_url)
-            error_detail = f" ({type(e).__name__}: {str(e)})"
-            raise local_exceptions.LdapCannotBeInitialized(_("LDAP服务器连接失败") + error_detail)
+            logger.exception(
+                "failed to initialize ldap server. %s.%s [url=%s]",
+                type(e).__module__,
+                type(e).__name__,
+                connection_url,
+            )
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise local_exceptions.LdapCannotBeInitialized(_("LDAP服务器连接失败") + error_detail) from e
 
     def search(
         self,

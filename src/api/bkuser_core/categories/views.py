@@ -196,9 +196,9 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         try:
             syncer_cls(instance.id).fetcher.client.initialize(**serializer.validated_data)
-        except Exception:
+        except Exception as e:
             logger.exception("failed to test initialize category<%s>", instance.id)
-            raise error_codes.TEST_CONNECTION_FAILED
+            raise error_codes.TEST_CONNECTION_FAILED.format(str(e), replace=True)
 
         return Response()
 
