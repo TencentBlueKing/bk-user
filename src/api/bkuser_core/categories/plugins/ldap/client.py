@@ -29,14 +29,17 @@ logger = logging.getLogger(__name__)
 class LDAPClient:
     config_provider: "ConfigProvider"
 
+    with_initialize_client: bool = True
+
     def __post_init__(self):
-        self.con = self.initialize(
-            connection_url=self.config_provider.get("connection_url"),
-            user=self.config_provider.get("user"),
-            password=self.config_provider.get("password"),
-            timeout_setting=self.config_provider.get("timeout_setting", 120),
-            use_ssl=bool(self.config_provider.get("ssl_encryption") == "SSL"),
-        )
+        if self.with_initialize_client:
+            self.con = self.initialize(
+                connection_url=self.config_provider.get("connection_url"),
+                user=self.config_provider.get("user"),
+                password=self.config_provider.get("password"),
+                timeout_setting=self.config_provider.get("timeout_setting", 120),
+                use_ssl=bool(self.config_provider.get("ssl_encryption") == "SSL"),
+            )
 
         self.start_root = self.config_provider.get("basic_pull_node")
 

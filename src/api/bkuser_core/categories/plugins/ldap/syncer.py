@@ -37,8 +37,11 @@ class LDAPFetcher(Fetcher):
 
     DN_REGEX = re.compile("(?P<key>[ \\w-]+)=(?P<value>[ \\w-]+)")
 
+    # 决定是否初始化client, 默认为True, 即默认会初始化; 某些场景不需要初始化(例如test_connection), 需要设置为False
+    with_initialize_client: bool = True
+
     def __post_init__(self):
-        self.client = LDAPClient(self.config_loader)
+        self.client = LDAPClient(self.config_loader, self.with_initialize_client)
         self.field_mapper = ProfileFieldMapper(config_loader=self.config_loader)
         self._data: Tuple[List, List, List] = None
 

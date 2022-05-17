@@ -195,7 +195,9 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.LOAD_LDAP_CLIENT_FAILED
 
         try:
-            syncer_cls(instance.id).fetcher.client.initialize(**serializer.validated_data)
+            syncer_cls(instance.id, with_initialize_client=False).fetcher.client.initialize(
+                **serializer.validated_data
+            )
         except Exception:
             logger.exception("failed to test initialize category<%s>", instance.id)
             raise error_codes.TEST_CONNECTION_FAILED
