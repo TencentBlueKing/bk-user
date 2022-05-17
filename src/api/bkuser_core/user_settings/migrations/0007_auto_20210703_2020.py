@@ -21,7 +21,7 @@ def forwards_func(apps, schema_editor):
     need_connect_types = [CategoryType.MAD.value, CategoryType.LDAP.value]
     new_setting_meta_map = {}
     for category_type in need_connect_types:
-        meta = SettingMeta.objects.get_or_create(
+        meta, _ = SettingMeta.objects.get_or_create(
             namespace=SettingsEnableNamespaces.FIELDS.value,
             region="group",
             category_type=category_type,
