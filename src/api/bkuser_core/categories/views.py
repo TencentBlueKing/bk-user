@@ -230,16 +230,15 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         try:
             syncer = syncer_cls(instance.id)
-        except Exception:
+        except Exception as e:
             logger.exception("failed to test initialize category<%s>", instance.id)
-            raise error_codes.TEST_CONNECTION_FAILED.f("请确保连接设置正确")
+            raise error_codes.TEST_CONNECTION_FAILED.f(f"请确保连接设置正确 {str(e)}")
 
         try:
             syncer.fetcher.test_fetch_data(serializer.validated_data)
-        except FetchDataFromRemoteFailed as e:
-            raise error_codes.TEST_FETCH_DATA_FAILED.f(f"{e}")
-        except Exception:  # pylint: disable=broad-except
-            raise error_codes.TEST_FETCH_DATA_FAILED
+        except Exception as e:  # pylint: disable=broad-except
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise error_codes.TEST_FETCH_DATA_FAILED.f(error_detail)
 
         return Response()
 
@@ -275,14 +274,14 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
         except CoreAPIError:
             raise
-        except Exception:
+        except Exception as e:
             logger.exception(
                 "failed to sync data. " "[instance.id=%s, operator=%s, task_id=%s]",
                 instance.id,
                 request.operator,
                 task_id,
             )
-            raise error_codes.SYNC_DATA_FAILED
+            raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
 
         return Response({"task_id": task_id})
 
