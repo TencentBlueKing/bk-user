@@ -557,6 +557,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         password = serializer.validated_data.get("password")
         domain = serializer.validated_data.get("domain", None)
 
+        logger.debug("do login check, username<%s>, domain=<%s>", username, domain)
         # 无指定 domain 时, 选择默认域
         if not domain:
             category = ProfileCategory.objects.get_default()
@@ -569,6 +570,14 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             if category.inactive:
                 raise error_codes.CATEGORY_NOT_ENABLED
 
+        logger.debug(
+            "do login check, will check in category<%s-%s-%s>", category.type, category.display_name, category.id
+        )
+
+        message_detail = (
+            f"username={username}, domain={domain} in category<{category.type}-{category.display_name}-{category.id}>"
+        )
+
         # 这里不检查具体的用户名格式，只判断是否能够获取到对应用户
         try:
             profile = Profile.objects.get(
@@ -576,8 +585,10 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 domain=category.domain,
             )
         except Profile.DoesNotExist:
+            logger.info("login check, can't find the %s", message_detail)
             raise error_codes.PASSWORD_ERROR
         except MultipleObjectsReturned:
+            logger.info("login check, find multiple profiles via %s", message_detail)
             raise error_codes.PASSWORD_ERROR
 
         time_aware_now = now()
@@ -596,6 +607,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
                 )
+                logger.info("login check, profile<%s> of %s is disabled or deleted", profile.username, message_detail)
                 raise error_codes.PASSWORD_ERROR
             elif profile.status == ProfileStatus.LOCKED.value:
                 create_profile_log(
@@ -604,6 +616,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.LOCKED_USER.value},
                 )
+                logger.info("login check, profile<%s> of %s is locked", profile.username, message_detail)
                 raise error_codes.PASSWORD_ERROR
 
             # 获取密码配置
@@ -625,13 +638,18 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
                     logger.info(f"用户<{profile}> 登录失败错误过多，已被锁定，请 {retry_after_wait}s 后再试")
                     # 当密码输入错误时，不暴露不同的信息，避免用户名爆破
+                    logger.info(
+                        "login check, profile<%s> of %s entered wrong password too many times",
+                        profile.username,
+                        message_detail,
+                    )
                     raise error_codes.PASSWORD_ERROR
 
         try:
             login_class = get_plugin_by_category(category).login_handler_cls
         except Exception:
             logger.exception(
-                "category<%s-%s-%s> load login handler failed",
+                "login check, category<%s-%s-%s> load login handler failed",
                 category.type,
                 category.display_name,
                 category.id,
@@ -647,7 +665,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 request=request,
                 params={"is_success": False, "reason": LogInFailReason.BAD_PASSWORD.value},
             )
-            logger.exception("check profile<%s> failed", profile.username)
+            logger.exception("login check, check profile<%s> of %s failed", profile.username, message_detail)
             raise error_codes.PASSWORD_ERROR
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
