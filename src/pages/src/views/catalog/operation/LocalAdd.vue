@@ -37,8 +37,16 @@
           @cancel="$emit('cancel')"
           @next="handleNext" />
         <!--  步骤二 -->
-        <SetPassword
+        <SetAccount
           v-show="current === 2"
+          type="add"
+          :account-info="accountInfo"
+          @cancel="$emit('cancel')"
+          @previous="handlePrevious"
+          @next="handleNext" />
+        <!--  步骤三 -->
+        <SetPassword
+          v-show="current === 3"
           type="add"
           :passport-info="passportInfo"
           @cancel="$emit('cancel')"
@@ -53,11 +61,13 @@
 
 <script>
 import SetBasic from '@/components/catalog/operation/SetBasic';
+import SetAccount from '@/components/catalog/operation/SetAccount';
 import SetPassword from '@/components/catalog/operation/SetPassword';
 
 export default {
   components: {
     SetBasic,
+    SetAccount,
     SetPassword,
   },
   data() {
@@ -66,7 +76,8 @@ export default {
       current: 1,
       steps: [
         { title: this.$t('基本设置'), icon: 1 },
-        { title: this.$t('密码设置'), icon: 2 },
+        { title: this.$t('账号设置'), icon: 2 },
+        { title: this.$t('密码设置'), icon: 3 },
       ],
       catalogId: null,
       basicInfo: {
@@ -78,6 +89,7 @@ export default {
         activated: true,
       },
       passportInfo: null,
+      accountInfo: {},
     };
   },
   created() {
@@ -101,6 +113,7 @@ export default {
           this.$bus.$emit('updateCatalogList');
           this.catalogId = res.data.id;
           this.current += 1;
+          this.getAccountInfo();
         } else {
           // 配置基本信息
           await this.$store.dispatch('catalog/ajaxPutCatalog', {
@@ -126,6 +139,17 @@ export default {
         this.$bus.$emit('updateCatalogList');
         this.messageSuccess(this.$t('保存成功'));
         this.$emit('changePage', 'showPageHome');
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getAccountInfo() {
+      try {
+        this.isLoading = true;
+        const accountRes = await this.$store.dispatch('catalog/ajaxGetAccount', { id: this.catalogId });
+        this.accountInfo = this.$convertAccountRes(accountRes.data);
       } catch (e) {
         console.warn(e);
       } finally {

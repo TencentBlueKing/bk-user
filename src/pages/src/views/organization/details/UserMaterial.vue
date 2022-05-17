@@ -93,6 +93,11 @@
             <div class="desc" v-else-if="fieldInfo.type === 'multi_enum'">
               <p class="text">{{mapMultipleEnum(currentProfile[fieldInfo.key], fieldInfo.options) || '--'}}</p>
             </div>
+            <div class="desc" v-else-if="timerMap.includes(fieldInfo.key)">
+              <p class="text">
+                {{mapTimeEnum(currentProfile[fieldInfo.key]) || '--'}}
+              </p>
+            </div>
             <div class="desc" v-else>
               <p class="text">{{currentProfile[fieldInfo.key] || '--'}}</p>
             </div>
@@ -126,20 +131,6 @@
               <span class="text">{{passwordValidDays}}</span>
             </p>
           </div>
-          <div class="specific-text">
-            <span class="name">{{$t('创建时间')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <span class="text">{{currentProfile.create_time | convertIsoTime}}</span>
-            </p>
-          </div>
-          <div class="specific-text">
-            <span class="name">{{$t('最近一次登录时间')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <span class="text">{{currentProfile.last_login_time | convertIsoTime}}</span>
-            </p>
-          </div>
         </li>
       </ul>
     </div>
@@ -147,19 +138,8 @@
 </template>
 
 <script>
+import moment from 'moment';
 export default {
-  filters: {
-    convertIsoTime(iso) {
-      if (iso === null) {
-        return '--';
-      }
-
-      const arr = iso.split('T');
-      const year = arr[0];
-      const time = arr[1].split('.')[0];
-      return `${year} ${time}`;
-    },
-  },
   directives: {
     focus: {
       // 输入框自动获焦
@@ -193,6 +173,10 @@ export default {
     statusMap: {
       type: Object,
       default: {},
+    },
+    timerMap: {
+      type: Array,
+      required: true,
     },
   },
   data() {
@@ -277,6 +261,12 @@ export default {
         console.warn(e, '枚举值转换出错');
         return '';
       }
+    },
+    mapTimeEnum(value) {
+      if (value === '2100-01-01') {
+        return value = this.$t('永久');
+      }
+      return value = moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
     },
     // 编辑
     editProfile() {

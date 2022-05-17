@@ -210,6 +210,7 @@
               :current-category-type="currentCategoryType"
               :no-search-or-search-department="noSearchOrSearchDepartment"
               :status-map="statusMap"
+              :timer-map="timerMap"
               @viewDetails="viewDetails"
               @showTableLoading="showTableLoading"
               @closeTableLoading="closeTableLoading"
@@ -252,6 +253,7 @@
           :current-category-type="currentCategoryType"
           :fields-list="fieldsList"
           :status-map="statusMap"
+          :timer-map="timerMap"
           @hideBar="hideBar"
           @showBar="showBar"
           @showBarLoading="showBarLoading"
@@ -457,6 +459,7 @@ export default {
         qq: 'qq',
       },
       statusMap: {},
+      timerMap: ['account_expiration_date', 'last_login_time', 'create_time'],
     };
   },
   computed: {
@@ -623,14 +626,6 @@ export default {
           {
             key: 'departments',
             name: 'departments',
-          },
-          {
-            key: 'create_time',
-            name: 'create_time',
-          },
-          {
-            key: 'update_time',
-            name: 'update_time',
           },
         );
         tableHeardList.forEach((item) => {
