@@ -115,6 +115,7 @@ error_codes.add_codes(
         ErrorCode("CATEGORY_NOT_ENABLED", _("用户目录未启用"), 3210019),
         ErrorCode("ERROR_FORMAT", _("传入参数错误"), 3210020),
         ErrorCode("SHOULD_CHANGE_INITIAL_PASSWORD", _("平台分配的初始密码未修改"), 3210021),
+        ErrorCode("USER_IS_DELETED", _("账号已被删除，请联系管理员"), 3210022),
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
@@ -143,6 +144,7 @@ error_codes.add_codes(
         ErrorCode("CANNOT_MANUAL_WRITE_INTO", _("该用户目录不能够手动写入数据")),
         ErrorCode("CATEGORY_TYPE_NOT_SUPPORTED", _("当前运行版本不支持此用户目录类型")),
         ErrorCode("PLUGIN_NOT_FOUND", _("找不到指定名称的插件")),
+        ErrorCode("PLUGIN_LOAD_FAIL", _("插件加载失败")),
         # 配置相关
         ErrorCode("CANNOT_FIND_SETTING_META", _("找不到对应的配置元信息")),
         ErrorCode("CANNOT_CREATE_SETTING", _("无法创建配置")),

@@ -586,10 +586,11 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
         except Profile.DoesNotExist:
             logger.info("login check, can't find the %s", message_detail)
+            # NOTE: 这里不能使用 USER_DOES_NOT_EXIST, 安全问题
             raise error_codes.PASSWORD_ERROR
         except MultipleObjectsReturned:
             logger.info("login check, find multiple profiles via %s", message_detail)
-            raise error_codes.PASSWORD_ERROR
+            raise error_codes.USER_EXIST_MANY
 
         time_aware_now = now()
         config_loader = ConfigProvider(category_id=category.id)
@@ -608,7 +609,10 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
                 )
                 logger.info("login check, profile<%s> of %s is disabled or deleted", profile.username, message_detail)
-                raise error_codes.PASSWORD_ERROR
+                if profile.status == ProfileStatus.DISABLED.value:
+                    raise error_codes.USER_IS_DISABLED
+                else:
+                    raise error_codes.USER_IS_DELETED
             elif profile.status == ProfileStatus.LOCKED.value:
                 create_profile_log(
                     profile=profile,
@@ -617,7 +621,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     params={"is_success": False, "reason": LogInFailReason.LOCKED_USER.value},
                 )
                 logger.info("login check, profile<%s> of %s is locked", profile.username, message_detail)
-                raise error_codes.PASSWORD_ERROR
+                raise error_codes.USER_IS_LOCKED
 
             # 获取密码配置
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
@@ -643,7 +647,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                         profile.username,
                         message_detail,
                     )
-                    raise error_codes.PASSWORD_ERROR
+                    raise error_codes.TOO_MANY_TRY
 
         try:
             login_class = get_plugin_by_category(category).login_handler_cls
@@ -654,7 +658,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 category.display_name,
                 category.id,
             )
-            raise error_codes.PASSWORD_ERROR
+            raise error_codes.PLUGIN_LOAD_FAIL
 
         try:
             login_class().check(profile, password)
@@ -666,6 +670,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 params={"is_success": False, "reason": LogInFailReason.BAD_PASSWORD.value},
             )
             logger.exception("login check, check profile<%s> of %s failed", profile.username, message_detail)
+            # NOTE: 这里不能使用其他错误, 一律是 PASSWORD_ERROR, 安全问题
             raise error_codes.PASSWORD_ERROR
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
