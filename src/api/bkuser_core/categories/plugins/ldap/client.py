@@ -29,8 +29,6 @@ logger = logging.getLogger(__name__)
 class LDAPClient:
     config_provider: "ConfigProvider"
 
-    # FIXME: 执行test_connection的时候, 实际上在这里就执行init了, 使用的是db中存储的, 而不是用户表单传入的!
-    #        异常在这里就被抛出了
     def __post_init__(self):
         self.con = self.initialize(
             connection_url=self.config_provider.get("connection_url"),

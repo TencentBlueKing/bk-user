@@ -271,7 +271,8 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 request.operator,
                 task_id,
             )
-            raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise error_codes.SYNC_DATA_FAILED.f(error_detail)
         except CoreAPIError:
             raise
         except Exception as e:
