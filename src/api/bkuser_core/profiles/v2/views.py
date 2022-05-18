@@ -653,8 +653,8 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                         profile.username,
                         message_detail,
                     )
-                    # NOTE: 返回 `密码输入错误次数过多，已被锁定`, 没有安全因素
-                    raise error_codes.TOO_MANY_TRY
+                    # NOTE: 安全原因, 不能返回账户状态
+                    raise error_codes.PASSWORD_ERROR
 
         try:
             login_class = get_plugin_by_category(category).login_handler_cls
