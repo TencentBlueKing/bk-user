@@ -97,8 +97,7 @@ def get_profiles_for_account_expiration():
         logined_profiles = get_logined_profiles()
 
         expiring_profiles = logined_profiles.filter(
-            Q(account_expiration_time__lt=datetime.date.today()) |
-            Q(account_expiration_time__in=expiration_times),
+            Q(account_expiration_time__lt=datetime.date.today()) | Q(account_expiration_time__in=expiration_times),
             category_id=category_id)
         profiles.extend(expiring_profiles)
 
