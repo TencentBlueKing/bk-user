@@ -239,7 +239,38 @@ login:
   bkComponentApiUrl: "http://bkapi.example.com"
 ```
 
-### 10. 安装
+### 11. 环境变量注入
+
+
+```yaml
+api:
+  env:
+    - name: "THE_VAR_NAME"
+      value: ""
+
+saas:
+  env:
+    - name: "THE_VAR_NAME"
+      value: ""
+
+login:
+  env:
+    - name: "THE_VAR_NAME"
+      value: ""
+```
+
+例如, 开启api的ldap3调试(注意此时需要同时设置环境变量`LOG_LEVEL=DEBUG`)
+
+```yaml
+api:
+  env:
+    - name: "LOG_LEVEL"
+      value: "DEBUG"
+    - name: "ENABLE_LDAP3_DEBUG"
+      value: true
+```
+
+### 12. 安装
 
 如果你已经准备好了 `values.yaml`，就可以直接进行安装操作了
 

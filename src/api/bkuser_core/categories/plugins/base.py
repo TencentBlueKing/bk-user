@@ -214,6 +214,9 @@ class Syncer:
 
     context: SyncContext = field(default_factory=SyncContext)
 
+    # 决定是否初始化client, 默认为True, 即默认会初始化; 某些场景不需要初始化(例如test_connection), 需要设置为False
+    with_initialize_client: bool = True
+
     def __post_init__(self):
         try:
             self.category = ProfileCategory.objects.get(pk=self.category_id)
@@ -228,7 +231,7 @@ class Syncer:
         raise NotImplementedError
 
     def get_fetcher(self):
-        return self.fetcher_cls(self.category_id, self.config_loader)
+        return self.fetcher_cls(self.category_id, self.config_loader, self.with_initialize_client)
 
     def disable_departments_before_sync(self, exempt_ids: list = None):
         """全同步前禁用该目录下的组织

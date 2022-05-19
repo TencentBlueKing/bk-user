@@ -73,6 +73,8 @@ class BkUserBackend(ModelBackend):
         else:
             domain = ""
 
+        logger.debug("parse the domain from username, result: username=%s, domain=%s", username, domain)
+
         # 调用用户管理接口进行验证
         ok, code, message, extra_values = usermgr_api.authenticate(
             username, password, language=kwargs.get("language"), domain=domain
