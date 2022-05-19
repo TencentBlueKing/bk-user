@@ -666,7 +666,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 category.id,
             )
             # NOTE: 代码异常, 可以返回加载失败
-            raise error_codes.PLUGIN_LOAD_FAIL
+            raise error_codes.CATEGORY_PLUGIN_LOAD_FAIL
 
         try:
             login_class().check(profile, password)
