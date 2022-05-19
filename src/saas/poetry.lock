@@ -1447,6 +1447,25 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent-mirrors"
 
 [[package]]
+name = "werkzeug"
+version = "2.0.3"
+description = "The comprehensive WSGI web application library."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+dataclasses = {version = "*", markers = "python_version < \"3.7\""}
+
+[package.extras]
+watchdog = ["watchdog"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
+
+[[package]]
 name = "whitenoise"
 version = "5.2.0"
 description = "Radically simplified static file serving for WSGI applications"
@@ -1482,7 +1501,7 @@ reference = "tencent-mirrors"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "5c0be13d56627a0b3d41328d9242a0e3e9b67dc32dfd105207b29f31df896dbe"
+content-hash = "23fddded1879ec5bd032316179edb7ebfa4f91ec07da75b9599134c4f7a3324c"
 
 [metadata.files]
 aenum = [
@@ -2149,6 +2168,10 @@ urllib3 = [
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
     {file = "wcwidth-0.2.5.tar.gz", hash = "sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83"},
+]
+werkzeug = [
+    {file = "Werkzeug-2.0.3-py3-none-any.whl", hash = "sha256:1421ebfc7648a39a5c58c601b154165d05cf47a3cd0ccb70857cbdacf6c8f2b8"},
+    {file = "Werkzeug-2.0.3.tar.gz", hash = "sha256:b863f8ff057c522164b6067c9e28b041161b4be5ba4d0daceeaa50a163822d3c"},
 ]
 whitenoise = [
     {file = "whitenoise-5.2.0-py2.py3-none-any.whl", hash = "sha256:05d00198c777028d72d8b0bbd234db605ef6d60e9410125124002518a48e515d"},
