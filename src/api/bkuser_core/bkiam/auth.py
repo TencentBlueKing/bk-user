@@ -11,10 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 from collections import namedtuple
 
-from bkuser_core.bkiam.helper import IAMHelper
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import exceptions
 from rest_framework.authentication import BasicAuthentication
+
+from bkuser_core.bkiam.helper import IAMHelper
 
 logger = logging.getLogger(__name__)
 

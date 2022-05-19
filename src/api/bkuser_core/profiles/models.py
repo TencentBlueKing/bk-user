@@ -12,10 +12,6 @@ import datetime
 from typing import Optional
 
 import jsonfield
-from bkuser_core.audit.constants import LogInFailReason
-from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.common.bulk_update.manager import BulkUpdateManager
-from bkuser_core.common.models import TimestampedModel
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 from django.utils.timezone import now
@@ -33,6 +29,10 @@ from .constants import (
 )
 from .managers import DynamicFieldInfoManager, ProfileAllManager, ProfileManager, ProfileTokenManager
 from .validators import validate_domain, validate_dynamic_field_name, validate_extras_value_unique, validate_username
+from bkuser_core.audit.constants import LogInFailReason
+from bkuser_core.audit.models import AuditObjMetaInfo
+from bkuser_core.common.bulk_update.manager import BulkUpdateManager
+from bkuser_core.common.models import TimestampedModel
 
 
 class Profile(TimestampedModel):

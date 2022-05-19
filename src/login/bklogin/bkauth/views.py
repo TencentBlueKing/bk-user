@@ -12,15 +12,6 @@ specific language governing permissions and limitations under the License.
 
 from functools import wraps
 
-from bklogin.bkauth.actions import login_license_fail_response, login_success_response
-from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
-from bklogin.bkauth.forms import BkAuthenticationForm
-from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
-from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
-from bklogin.common.log import logger
-from bklogin.common.mixins.exempt import LoginExemptMixin
-from bklogin.common.usermgr import get_categories_str
-from bklogin.components.license import check_license
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
@@ -30,6 +21,16 @@ from django.template.response import TemplateResponse
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from django.views.generic import View
+
+from bklogin.bkauth.actions import login_license_fail_response, login_success_response
+from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
+from bklogin.bkauth.forms import BkAuthenticationForm
+from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
+from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
+from bklogin.common.log import logger
+from bklogin.common.mixins.exempt import LoginExemptMixin
+from bklogin.common.usermgr import get_categories_str
+from bklogin.components.license import check_license
 
 
 def only_plain_xframe_options_exempt(view_func):

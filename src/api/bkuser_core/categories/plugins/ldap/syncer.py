@@ -15,6 +15,10 @@ from dataclasses import dataclass
 from itertools import chain, product
 from typing import List, Optional, Tuple
 
+from django.db import transaction
+from django.utils.encoding import force_bytes
+from django.utils.translation import gettext_lazy as _
+
 from bkuser_core.categories.exceptions import FetchDataFromRemoteFailed
 from bkuser_core.categories.plugins.base import DBSyncManager, Fetcher, SyncContext, Syncer, SyncStep, TypeList
 from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper, department_adapter, user_adapter
@@ -24,8 +28,6 @@ from bkuser_core.categories.plugins.ldap.metas import LdapDepartmentMeta, LdapPr
 from bkuser_core.categories.plugins.ldap.models import LdapDepartment, LdapUserProfile
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
-from django.db import transaction
-from django.utils.encoding import force_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +38,11 @@ class LDAPFetcher(Fetcher):
 
     DN_REGEX = re.compile("(?P<key>[ \\w-]+)=(?P<value>[ \\w-]+)")
 
+    # 决定是否初始化client, 默认为True, 即默认会初始化; 某些场景不需要初始化(例如test_connection), 需要设置为False
+    with_initialize_client: bool = True
+
     def __post_init__(self):
-        self.client = LDAPClient(self.config_loader)
+        self.client = LDAPClient(self.config_loader, self.with_initialize_client)
         self.field_mapper = ProfileFieldMapper(config_loader=self.config_loader)
         self._data: Tuple[List, List, List] = None
 
@@ -73,15 +78,17 @@ class LDAPFetcher(Fetcher):
                 groups = self.client.search(start_root=basic_pull_node, force_filter_str=user_group_filter)
             else:
                 groups = []
-        except Exception:
+        except Exception as e:
             logger.exception("failed to get groups from remote server")
-            raise FetchDataFromRemoteFailed("无法获取用户组，请检查配置")
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise FetchDataFromRemoteFailed(_("无法获取用户组，请检查配置") + error_detail)
 
         try:
             departments = self.client.search(start_root=basic_pull_node, object_class=organization_class)
-        except Exception:
+        except Exception as e:
             logger.exception("failed to get departments from remote server")
-            raise FetchDataFromRemoteFailed("无法获取组织部门，请检查配置")
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise FetchDataFromRemoteFailed(_("无法获取组织部门，请检查配置") + error_detail)
 
         try:
             users = self.client.search(
@@ -89,9 +96,10 @@ class LDAPFetcher(Fetcher):
                 force_filter_str=user_filter,
                 attributes=attributes or [],
             )
-        except Exception:
+        except Exception as e:
             logger.exception("failed to get users from remote server")
-            raise FetchDataFromRemoteFailed("无法获取用户数据, 请检查配置")
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise FetchDataFromRemoteFailed(_("无法获取用户数据, 请检查配置") + error_detail)
 
         return groups, departments, users
 

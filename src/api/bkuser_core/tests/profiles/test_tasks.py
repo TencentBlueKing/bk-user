@@ -12,12 +12,13 @@ import urllib.parse
 from unittest.mock import patch
 
 import pytest
+from django.conf import settings
+
 from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL
 from bkuser_core.profiles.exceptions import ProfileEmailEmpty
 from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.tests.utils import make_simple_profile
 from bkuser_core.user_settings.models import Setting
-from django.conf import settings
 
 pytestmark = pytest.mark.django_db
 

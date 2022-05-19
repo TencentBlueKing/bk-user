@@ -12,16 +12,18 @@ import functools
 import logging
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+
 from bkuser_core.audit import models as log_models_module
 from bkuser_core.audit.constants import OperationStatus, OperationType
 from bkuser_core.audit.models import GeneralLog, ProfileRelatedLog
 from bkuser_core.common.error_codes import CoreAPIError
-from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
 
 if TYPE_CHECKING:
-    from bkuser_core.profiles.models import Profile
     from rest_framework.request import Request
+
+    from bkuser_core.profiles.models import Profile
 
 logger = logging.getLogger(__name__)
 

@@ -11,10 +11,9 @@ specific language governing permissions and limitations under the License.
 import os
 from pathlib import Path
 
-from bkuser_core.categories.plugins.plugin import DataSourcePlugin
-
 from .login import LoginHandler
 from .syncer import MADSyncer
+from bkuser_core.categories.plugins.plugin import DataSourcePlugin
 
 DataSourcePlugin(
     name="mad",

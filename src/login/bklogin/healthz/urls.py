@@ -11,7 +11,8 @@ specific language governing permissions and limitations under the License.
 """
 
 
-from bklogin.healthz import views
 from django.conf.urls import url
+
+from bklogin.healthz import views
 
 urlpatterns = [url("^$", views.healthz)]

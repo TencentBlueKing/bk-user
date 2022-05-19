@@ -8,9 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.account.sites.default import ConfFixture as default_fixture
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
+
+from bkuser_shell.account.sites.default import ConfFixture as default_fixture
 
 
 class _ConfFixture:

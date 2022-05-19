@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from unittest import mock
 
 import pytest
+
 from bkuser_core.categories.plugins.metas import ProfileMeta
 from bkuser_core.departments.models import Department
 from bkuser_core.tests.utils import make_simple_profile

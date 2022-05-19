@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from unittest import mock
 
 import pytest
+
 from bkuser_core.bkiam.constants import IAMAction
 from bkuser_core.bkiam.permissions import IAMPermissionExtraInfo
 from bkuser_core.departments.models import Department

@@ -9,8 +9,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bklogin.bkaccount.manager import LoginLogManager
 from django.db import models
+
+from bklogin.bkaccount.manager import LoginLogManager
 
 
 class LoginLog(models.Model):

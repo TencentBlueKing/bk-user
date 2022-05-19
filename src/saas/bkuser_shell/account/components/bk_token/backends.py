@@ -11,12 +11,13 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Tuple
 
-from bkuser_shell.account import get_user_model
-from bkuser_shell.account.conf import ConfFixture
-from bkuser_shell.account.http import send
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.db import IntegrityError
+
+from bkuser_shell.account import get_user_model
+from bkuser_shell.account.conf import ConfFixture
+from bkuser_shell.account.http import send
 
 logger = logging.getLogger(__name__)
 

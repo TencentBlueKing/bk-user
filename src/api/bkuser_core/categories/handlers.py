@@ -10,11 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.conf import settings
+from django.dispatch import receiver
+
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.bkiam.helper import IAMHelper
 from bkuser_core.categories.signals import post_category_create
-from django.conf import settings
-from django.dispatch import receiver
 
 logger = logging.getLogger(__name__)
 

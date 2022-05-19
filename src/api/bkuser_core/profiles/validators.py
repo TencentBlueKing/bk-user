@@ -13,10 +13,11 @@ import logging
 import re
 from typing import Any, ClassVar, Dict, Tuple, Type
 
-from bkuser_core.profiles.constants import DynamicFieldTypeEnum
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 from typing_extensions import Protocol
+
+from bkuser_core.profiles.constants import DynamicFieldTypeEnum
 
 USERNAME_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9._-]){0,31}"
 DOMAIN_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"

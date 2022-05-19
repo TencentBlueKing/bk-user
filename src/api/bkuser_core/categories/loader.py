@@ -11,10 +11,9 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import TYPE_CHECKING, Dict
 
-from bkuser_core.user_settings.loader import ConfigProvider
-
 from .constants import CategoryType
 from .plugins.constants import PLUGIN_NAME_SETTING_KEY
+from bkuser_core.user_settings.loader import ConfigProvider
 
 if TYPE_CHECKING:
     from bkuser_core.categories.models import ProfileCategory  # noqa

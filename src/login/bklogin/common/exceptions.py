@@ -13,8 +13,9 @@ specific language governing permissions and limitations under the License.
 
 from typing import Optional
 
-from bklogin.common.constants import enum
 from django.utils.translation import ugettext_lazy as _
+
+from bklogin.common.constants import enum
 
 LoginErrorCodes = enum(
     E1302000_DEFAULT_CODE=1302000,

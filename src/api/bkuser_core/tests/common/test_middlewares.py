@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import json
 
 import pytest
+
 from bkuser_core.common.middlewares import MethodOverrideMiddleware
 from bkuser_core.tests.apis.utils import get_api_factory
 

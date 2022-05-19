@@ -9,11 +9,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bklogin.common.log import logger
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
 from .utils import get_access_token, get_scope_data
+from bklogin.common.log import logger
 
 
 class OauthBackend(ModelBackend):

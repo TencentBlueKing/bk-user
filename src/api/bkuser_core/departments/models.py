@@ -10,16 +10,17 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.common.bulk_update.manager import BulkUpdateManager
-from bkuser_core.departments.managers import DepartmentManager
-from bkuser_core.profiles.constants import ProfileStatus
-from bkuser_core.profiles.models import Profile
 from django.db import models
 from django.db.models import Q
 from jsonfield import JSONField
 from mptt.managers import TreeManager
 from mptt.models import MPTTModel, TreeForeignKey
+
+from bkuser_core.audit.models import AuditObjMetaInfo
+from bkuser_core.common.bulk_update.manager import BulkUpdateManager
+from bkuser_core.departments.managers import DepartmentManager
+from bkuser_core.profiles.constants import ProfileStatus
+from bkuser_core.profiles.models import Profile
 
 logger = logging.getLogger(__name__)
 

@@ -12,9 +12,10 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List
 
-import ldap3
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from ldap3 import ALL, SIMPLE, Connection, Server
+from ldap3.utils import log as ldap3log
 
 from . import exceptions as local_exceptions
 
@@ -24,19 +25,27 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# reference: https://ldap3.readthedocs.io/en/latest/logging.html
+if settings.ENABLE_LDAP3_DEBUG:
+    ldap3log.set_library_log_detail_level(ldap3log.EXTENDED)
+    ldap3log.set_library_log_activation_level(logging.DEBUG)
+
 
 @dataclass
 class LDAPClient:
     config_provider: "ConfigProvider"
 
+    with_initialize_client: bool = True
+
     def __post_init__(self):
-        self.con = self.initialize(
-            connection_url=self.config_provider.get("connection_url"),
-            user=self.config_provider.get("user"),
-            password=self.config_provider.get("password"),
-            timeout_setting=self.config_provider.get("timeout_setting", 120),
-            use_ssl=bool(self.config_provider.get("ssl_encryption") == "SSL"),
-        )
+        if self.with_initialize_client:
+            self.con = self.initialize(
+                connection_url=self.config_provider.get("connection_url"),
+                user=self.config_provider.get("user"),
+                password=self.config_provider.get("password"),
+                timeout_setting=self.config_provider.get("timeout_setting", 120),
+                use_ssl=bool(self.config_provider.get("ssl_encryption") == "SSL"),
+            )
 
         self.start_root = self.config_provider.get("basic_pull_node")
 
@@ -69,14 +78,18 @@ class LDAPClient:
                 connection_params.update({"user": user, "password": password, "authentication": SIMPLE})
 
             return Connection(**connection_params)
-
-        except KeyError:
-            raise local_exceptions.LDAPSettingNotReady
-        except ldap3.core.exceptions.LDAPSocketReceiveError:
-            raise local_exceptions.LdapCannotBeInitialized
-        except Exception:
-            logger.exception("failed to initialize ldap server. [url=%s]", connection_url)
-            raise local_exceptions.LdapCannotBeInitialized
+        except KeyError as e:
+            logger.exception("failed to initialize ldap server. KeyError. [url=%s]", connection_url)
+            raise local_exceptions.LDAPSettingNotReady from e
+        except Exception as e:
+            logger.exception(
+                "failed to initialize ldap server. %s.%s [url=%s]",
+                type(e).__module__,
+                type(e).__name__,
+                connection_url,
+            )
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise local_exceptions.LdapCannotBeInitialized(_("LDAP服务器连接失败") + error_detail) from e
 
     def search(
         self,

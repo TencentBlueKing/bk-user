@@ -12,10 +12,10 @@ from pathlib import Path
 from shutil import copyfile
 
 import pytest
-from bkuser_core.categories.plugins.local.syncer import ExcelFetcher
 from openpyxl import load_workbook
 
 from .constants import COMMON_TITLES
+from bkuser_core.categories.plugins.local.syncer import ExcelFetcher
 
 pytestmark = pytest.mark.django_db
 

@@ -11,11 +11,10 @@ specific language governing permissions and limitations under the License.
 """
 
 
-from __future__ import unicode_literals
-
-from bklogin.api.constants import ApiErrorCodeEnum, ApiErrorCodeEnumV2, ApiErrorCodeEnumV3
 from django.conf import settings
 from django.http import JsonResponse
+
+from bklogin.api.constants import ApiErrorCodeEnum, ApiErrorCodeEnumV2, ApiErrorCodeEnumV3
 
 
 def is_request_from_esb(request):

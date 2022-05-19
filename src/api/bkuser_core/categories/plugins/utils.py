@@ -11,11 +11,12 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
 from bkuser_core.categories.plugins.base import TypeList, TypeProtocol
 from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
 from bkuser_core.common.progress import progress
 from bkuser_core.user_settings.models import Setting
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 logger = logging.getLogger(__name__)
 

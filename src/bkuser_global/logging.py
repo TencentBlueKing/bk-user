@@ -8,7 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 import os
+
+from .local import local
+
+
+class RequestIDFilter(logging.Filter):
+    """
+    request id log filter
+    日志记录中增加request id
+    """
+
+    def filter(self, record):
+        record.request_id = local.request_id
+        return True
 
 
 class LoggingType:
@@ -43,8 +57,8 @@ formatters = {
             "%(funcName)s %(process)d %(thread)d %(request_id)s %(message)s"
         ),
     },
-    "simple": {"format": "%(levelname)s %(message)s"},
-    "iam": {"format": "[IAM] %(asctime)s %(message)s"},
+    "simple": {"format": "%(levelname)s [%(asctime)s] %(message)s"},
+    "iam": {"format": "[IAM] %(levelname)s [%(asctime)s] %(message)s"},
 }
 
 
@@ -105,20 +119,28 @@ def get_stdout_logging(log_level: str, package_name: str, formatter: str = "json
     return {
         "version": 1,
         "disable_existing_loggers": False,
+        "filters": {
+            "request_id_filter": {
+                "()": RequestIDFilter,
+            }
+        },
         "formatters": formatters,
         "handlers": {
             "null": {"level": "DEBUG", "class": "logging.NullHandler"},
             "root": {
                 "class": log_class,
                 "formatter": formatter,
+                "filters": ["request_id_filter"],
             },
             "component": {
                 "class": log_class,
                 "formatter": formatter,
+                "filters": ["request_id_filter"],
             },
             "iam": {
                 "class": log_class,
                 "formatter": "iam",
+                "filters": ["request_id_filter"],
             },
         },
         "loggers": get_loggers(package_name, log_level),
@@ -135,6 +157,11 @@ def get_file_logging(log_level: str, logging_dir: str, file_name: str, package_n
     return {
         "version": 1,
         "disable_existing_loggers": False,
+        "filters": {
+            "request_id_filter": {
+                "()": RequestIDFilter,
+            }
+        },
         "formatters": formatters,
         "handlers": {
             "null": {"level": "DEBUG", "class": "logging.NullHandler"},
@@ -144,6 +171,7 @@ def get_file_logging(log_level: str, logging_dir: str, file_name: str, package_n
                 "filename": os.path.join(logging_dir, f"{file_name}.log"),
                 "maxBytes": 1024 * 1024 * 10,
                 "backupCount": 5,
+                "filters": ["request_id_filter"],
             },
             "component": {
                 "class": log_class,
@@ -151,6 +179,7 @@ def get_file_logging(log_level: str, logging_dir: str, file_name: str, package_n
                 "filename": os.path.join(logging_dir, "component.log"),
                 "maxBytes": 1024 * 1024 * 10,
                 "backupCount": 5,
+                "filters": ["request_id_filter"],
             },
             "iam": {
                 "class": log_class,
@@ -158,6 +187,7 @@ def get_file_logging(log_level: str, logging_dir: str, file_name: str, package_n
                 "filename": os.path.join(logging_dir, "iam.log"),
                 "maxBytes": 1024 * 1024 * 10,
                 "backupCount": 5,
+                "filters": ["request_id_filter"],
             },
         },
         "loggers": get_loggers(package_name, log_level),

@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from enum import Enum, auto
 
 import pytz
+
 from bkuser_core.common.enum import AutoLowerEnum, AutoNameEnum, ChoicesEnum
 
 

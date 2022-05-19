@@ -9,6 +9,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.utils.translation import ugettext as _
+from django.views.generic import View
+
 from bklogin.api.constants import ApiErrorCodeEnum, ApiErrorCodeEnumV2, ApiErrorCodeEnumV3
 from bklogin.api.utils import (
     APIV1FailJsonResponse,
@@ -22,8 +25,6 @@ from bklogin.api.utils import (
 from bklogin.bkauth.utils import validate_bk_token
 from bklogin.common import usermgr
 from bklogin.common.mixins.exempt import LoginExemptMixin
-from django.utils.translation import ugettext as _
-from django.views.generic import View
 
 ########
 #  v1  #

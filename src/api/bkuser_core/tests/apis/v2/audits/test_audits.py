@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+
 from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.audit.views import GeneralLogViewSet, LoginLogViewSet, ResetPasswordLogViewSet

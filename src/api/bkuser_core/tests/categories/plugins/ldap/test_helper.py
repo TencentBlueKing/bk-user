@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+
 from bkuser_core.categories.plugins.base import TypeList
 from bkuser_core.categories.plugins.ldap.adaptor import department_adapter, user_adapter
 from bkuser_core.categories.plugins.ldap.helper import DepartmentSyncHelper, ProfileSyncHelper

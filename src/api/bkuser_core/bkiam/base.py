@@ -13,7 +13,6 @@ import logging
 from operator import and_, or_
 from typing import List
 
-from bkuser_core.common.error_codes import error_codes
 from django.conf import settings
 from django.db.models import Q
 from rest_framework import viewsets
@@ -32,6 +31,7 @@ from .serializers import (
     IAMMethodSerializer,
     IAMPageResponseSerializer,
 )
+from bkuser_core.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
 

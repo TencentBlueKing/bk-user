@@ -9,11 +9,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+from rest_framework.exceptions import ValidationError
+
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo
 from bkuser_core.profiles.validators import validate_domain, validate_extras_value_unique, validate_username
 from bkuser_core.tests.utils import make_simple_category, make_simple_profile
-from rest_framework.exceptions import ValidationError
 
 pytestmark = pytest.mark.django_db
 

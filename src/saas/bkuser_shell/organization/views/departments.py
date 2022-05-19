@@ -10,7 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.utils.translation import ugettext_lazy as _
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
 import bkuser_sdk
+from bkuser_global.drf_crown import ResponseParams, inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
@@ -28,11 +33,6 @@ from bkuser_shell.organization.serializers.departments import (
     UpdateDepartmentSerializer,
 )
 from bkuser_shell.organization.serializers.profiles import DepartmentGetProfileResultSerializer
-from django.utils.translation import ugettext_lazy as _
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-
-from bkuser_global.drf_crown import ResponseParams, inject_serializer
 
 logger = logging.getLogger(__name__)
 
