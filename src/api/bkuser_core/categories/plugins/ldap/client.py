@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Dict, List
 import ldap3
 from django.conf import settings
 from ldap3 import ALL, SIMPLE, Connection, Server
+from ldap3.utils import log as ldap3log
 
 from . import exceptions as local_exceptions
 
@@ -23,6 +24,11 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+# reference: https://ldap3.readthedocs.io/en/latest/logging.html
+if settings.ENABLE_LDAP3_DEBUG:
+    ldap3log.set_library_log_detail_level(ldap3log.EXTENDED)
+    ldap3log.set_library_log_activation_level(logging.DEBUG)
 
 
 @dataclass
