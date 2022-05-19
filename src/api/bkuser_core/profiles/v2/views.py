@@ -611,7 +611,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
                 )
                 logger.info("login check, profile<%s> of %s is disabled or deleted", profile.username, message_detail)
-                return error_codes.PASSWORD_ERROR
+                raise error_codes.PASSWORD_ERROR
                 # NOTE: 安全原因, 不能返回账户状态
                 # if profile.status == ProfileStatus.DISABLED.value:
                 #     raise error_codes.USER_IS_DISABLED
@@ -625,7 +625,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     params={"is_success": False, "reason": LogInFailReason.LOCKED_USER.value},
                 )
                 logger.info("login check, profile<%s> of %s is locked", profile.username, message_detail)
-                return error_codes.PASSWORD_ERROR
+                raise error_codes.PASSWORD_ERROR
                 # NOTE: 安全原因, 不能返回账户状态
                 # raise error_codes.USER_IS_LOCKED
 
