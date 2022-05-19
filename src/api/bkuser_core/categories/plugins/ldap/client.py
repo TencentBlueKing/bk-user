@@ -12,8 +12,8 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List
 
-import ldap3
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from ldap3 import ALL, SIMPLE, Connection, Server
 from ldap3.utils import log as ldap3log
 
@@ -78,16 +78,18 @@ class LDAPClient:
                 connection_params.update({"user": user, "password": password, "authentication": SIMPLE})
 
             return Connection(**connection_params)
-
-        except KeyError:
+        except KeyError as e:
             logger.exception("failed to initialize ldap server. KeyError. [url=%s]", connection_url)
-            raise local_exceptions.LDAPSettingNotReady
-        except ldap3.core.exceptions.LDAPSocketReceiveError:
-            logger.exception("failed to initialize ldap server. LDAPSocketReceiveError. [url=%s]", connection_url)
-            raise local_exceptions.LdapCannotBeInitialized
-        except Exception:
-            logger.exception("failed to initialize ldap server. [url=%s]", connection_url)
-            raise local_exceptions.LdapCannotBeInitialized
+            raise local_exceptions.LDAPSettingNotReady from e
+        except Exception as e:
+            logger.exception(
+                "failed to initialize ldap server. %s.%s [url=%s]",
+                type(e).__module__,
+                type(e).__name__,
+                connection_url,
+            )
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise local_exceptions.LdapCannotBeInitialized(_("LDAP服务器连接失败") + error_detail) from e
 
     def search(
         self,

@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 
 from django.db import transaction
 from django.utils.encoding import force_bytes
+from django.utils.translation import gettext_lazy as _
 
 from bkuser_core.categories.exceptions import FetchDataFromRemoteFailed
 from bkuser_core.categories.plugins.base import DBSyncManager, Fetcher, SyncContext, Syncer, SyncStep, TypeList
@@ -77,15 +78,17 @@ class LDAPFetcher(Fetcher):
                 groups = self.client.search(start_root=basic_pull_node, force_filter_str=user_group_filter)
             else:
                 groups = []
-        except Exception:
+        except Exception as e:
             logger.exception("failed to get groups from remote server")
-            raise FetchDataFromRemoteFailed("无法获取用户组，请检查配置")
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise FetchDataFromRemoteFailed(_("无法获取用户组，请检查配置") + error_detail)
 
         try:
             departments = self.client.search(start_root=basic_pull_node, object_class=organization_class)
-        except Exception:
+        except Exception as e:
             logger.exception("failed to get departments from remote server")
-            raise FetchDataFromRemoteFailed("无法获取组织部门，请检查配置")
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise FetchDataFromRemoteFailed(_("无法获取组织部门，请检查配置") + error_detail)
 
         try:
             users = self.client.search(
@@ -93,9 +96,10 @@ class LDAPFetcher(Fetcher):
                 force_filter_str=user_filter,
                 attributes=attributes or [],
             )
-        except Exception:
+        except Exception as e:
             logger.exception("failed to get users from remote server")
-            raise FetchDataFromRemoteFailed("无法获取用户数据, 请检查配置")
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise FetchDataFromRemoteFailed(_("无法获取用户数据, 请检查配置") + error_detail)
 
         return groups, departments, users
 

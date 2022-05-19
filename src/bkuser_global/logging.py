@@ -43,8 +43,8 @@ formatters = {
             "%(funcName)s %(process)d %(thread)d %(request_id)s %(message)s"
         ),
     },
-    "simple": {"format": "%(levelname)s %(message)s"},
-    "iam": {"format": "[IAM] %(asctime)s %(message)s"},
+    "simple": {"format": "%(levelname)s [%(asctime)s] %(message)s"},
+    "iam": {"format": "[IAM] %(levelname)s [%(asctime)s] %(message)s"},
 }
 
 
