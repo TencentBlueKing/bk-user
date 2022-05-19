@@ -10,11 +10,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
 
-from bklogin.bk_i18n.constants import BK_LANG_TO_DJANGO_LANG, DJANGO_LANG_TO_BK_LANG
-from bklogin.common.log import logger
-from bklogin.components.usermgr_api import upsert_user
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
@@ -26,6 +22,10 @@ from django.utils.translation.trans_real import (
     language_code_re,
     parse_accept_lang_header,
 )
+
+from bklogin.bk_i18n.constants import BK_LANG_TO_DJANGO_LANG, DJANGO_LANG_TO_BK_LANG
+from bklogin.common.log import logger
+from bklogin.components.usermgr_api import upsert_user
 
 
 def _get_language_from_request(request, user):

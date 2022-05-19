@@ -10,11 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.http import HttpResponse
+from rest_framework import status
+
 from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.response import Response
-from django.http import HttpResponse
-from rest_framework import status
 
 logger = logging.getLogger(__name__)
 

@@ -9,8 +9,14 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import UUID, uuid4
+
+from django.db import models
+from django.utils import timezone
+from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
+from django_celery_beat.models import PeriodicTask
 
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.categories.constants import TIMEOUT_THRESHOLD, CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
@@ -21,11 +27,6 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.models import Setting, SettingMeta
-from django.db import models
-from django.utils import timezone
-from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
-from django_celery_beat.models import PeriodicTask
 
 
 class ProfileCategory(TimestampedModel):
@@ -154,6 +155,12 @@ class SyncTaskManager(models.Manager):
         raise ExistsSyncingTaskError(
             _("当前目录处于同步状态, 请在 {timeout}s 后重试.").format(timeout=(TIMEOUT_THRESHOLD - delta).total_seconds())
         )
+
+    def get_crontab_retrying_task(self, category: ProfileCategory) -> Optional["SyncTask"]:
+        qs = self.filter(
+            category=category, status=SyncTaskStatus.RETRYING.value, type=SyncTaskType.AUTO.value
+        ).order_by("-create_time")
+        return qs.first()
 
 
 class SyncTask(TimestampedModel):

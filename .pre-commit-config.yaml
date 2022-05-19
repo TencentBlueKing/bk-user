@@ -16,19 +16,19 @@ repos:
         language: python
         types: [python]
         pass_filenames: false
-        entry: isort --settings-path=pyproject.toml .
+        entry: isort --settings-path=pyproject.toml src
       - id: black
         name: black
         language: python
         types: [python]
         pass_filenames: false
-        entry: black --config=pyproject.toml .
+        entry: black --config=pyproject.toml src
       - id: flake8
         name: flak8
         language: python
         types: [python]
         pass_filenames: false
-        entry: pflake8 --config=pyproject.toml
+        entry: pflake8 --config=pyproject.toml src
       - id: mypy
         name: mypy
         language: python

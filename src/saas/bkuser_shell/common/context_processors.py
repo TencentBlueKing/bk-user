@@ -10,9 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 
-from bkuser_shell.account.conf import ConfFixture
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
+
+from bkuser_shell.account.conf import ConfFixture
 
 
 def shell(request):

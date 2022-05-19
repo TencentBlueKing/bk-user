@@ -92,6 +92,9 @@ ENABLE_PROFILING = False
 # 是否使用进度条(本地开发方便)
 USE_PROGRESS_BAR = False
 
+# 是否开启ldap3 debug
+ENABLE_LDAP3_DEBUG = env.bool("ENABLE_LDAP3_DEBUG", default=False)
+
 # ==============================================================================
 # 数据同步
 # ==============================================================================

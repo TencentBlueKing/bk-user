@@ -9,8 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser_core.common.kits import convert_camelcase, convert_camelcase_dict
 
+from bkuser_core.common.kits import convert_camelcase, convert_camelcase_dict
 from bkuser_global.utils import force_str_2_bool
 
 

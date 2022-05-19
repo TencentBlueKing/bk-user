@@ -11,12 +11,12 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import TYPE_CHECKING
 
-from bkuser_core.common.error_codes import error_codes
-from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 from django.dispatch import receiver
 
 from .exceptions import ProfileEmailEmpty
 from .tasks import send_password_by_email
+from bkuser_core.common.error_codes import error_codes
+from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile

@@ -39,6 +39,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "bkuser_global.middlewares.RequestProvider",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -65,6 +66,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "mptt",
     "django_celery_beat",
+    "django_celery_results",
     "django_prometheus",
     # core API
     "bkuser_core.apis",

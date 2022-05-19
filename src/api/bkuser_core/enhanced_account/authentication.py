@@ -13,12 +13,13 @@ import logging
 import re
 
 import jwt
-from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
+
+from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,8 @@ HEADER_APP_CODE_KEY_NAME = "HTTP_X_BK_APP_CODE"
 HEADER_APP_SECRET_KEY_NAME = "HTTP_X_BK_APP_SECRET"
 
 ESB_PUBLIC_KEY_CACHE_KEY = "bk_user:esb_public_key"
+
+TOKEN_KEY_NAME = "token"
 
 
 def create_user(username="admin"):
@@ -39,27 +42,30 @@ class InternalTokenAuthentication(BaseAuthentication):
     keyword = "iBearer"
     model = None
 
-    query_params_keyword = "token"
+    query_params_keyword = TOKEN_KEY_NAME
 
     def get_token_from_query_params(self, request):
         try:
             return request.query_params[self.query_params_keyword]
         except KeyError:
-            msg = "Invalid token header. No credentials provided."
+            msg = f"Invalid token header. No credentials provided. {self.query_params_keyword} is not in query params"
             raise exceptions.AuthenticationFailed(msg)
 
     def get_token_from_header(self, request):
         auth = get_authorization_header(request).split()
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
-            msg = "Invalid token header. No credentials provided."
+            msg = "Invalid token header. No credentials provided. The format should be `iBearer THE_TOKEN`"
             raise exceptions.AuthenticationFailed(msg)
 
         if len(auth) == 1:
-            msg = "Invalid token header. No credentials provided."
+            msg = "Invalid token header. No credentials provided. The size of auth array credentials is 0"
             raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
-            msg = "Invalid token header. Token string should not contain spaces."
+            msg = (
+                "Invalid token header. Token string should not contain spaces. "
+                + "The size of auth array credentials is more than 2"
+            )
             raise exceptions.AuthenticationFailed(msg)
 
         try:
@@ -71,11 +77,6 @@ class InternalTokenAuthentication(BaseAuthentication):
         return token
 
     def authenticate(self, request):
-        for white_url in settings.AUTH_EXEMPT_PATHS:
-            if re.search(white_url, request.path):
-                logger.info("%s path in white_url<%s>, exempting auth", request.path, white_url)
-                return None, None
-
         try:
             token = self.get_token_from_query_params(request)
         except exceptions.AuthenticationFailed:
@@ -89,7 +90,9 @@ class InternalTokenAuthentication(BaseAuthentication):
         if key in settings.INTERNAL_AUTH_TOKENS:
             user_info = settings.INTERNAL_AUTH_TOKENS[key]
             return create_user(user_info["username"]), None
-        raise exceptions.AuthenticationFailed("request failed: Invalid token header. No credentials provided.")
+        raise exceptions.AuthenticationFailed(
+            "request failed: Invalid token header. No credentials provided or Wrong credentials."
+        )
 
 
 class ESBOrAPIGatewayAuthentication(BaseAuthentication):
@@ -105,12 +108,12 @@ class ESBOrAPIGatewayAuthentication(BaseAuthentication):
         public_key = self._get_public_key(api_name)
         algorithm = jwt_header.get("alg") or "RS512"
 
-        # do decode
+        # do decode, without verify issuer
         try:
-            jwt_playload = jwt.decode(jwt_content, public_key, algorithm, issuer="APIGW")
+            jwt_playload = jwt.decode(jwt_content, public_key, algorithm)
         except Exception:  # pylint: disable=broad-except
             logger.exception("JWT decode failed! jwt_payload: %s, public_key: %s", jwt_content, public_key)
-            return exceptions.AuthenticationFailed("decode jwt token fail")
+            raise exceptions.AuthenticationFailed("decode jwt token fail")
 
         # username = self._get_username_from_jwt_payload(payload)
         app_code = self._get_app_code_from_jwt_payload(jwt_playload)
@@ -210,18 +213,28 @@ class MultipleAuthentication(BaseAuthentication):
     """it's a dispatcher"""
 
     def authenticate(self, request):
+        # FIXME: 最终, 下掉token, 只保留 jwt + app_code/app_secret
         # withe list
         for white_url in settings.AUTH_EXEMPT_PATHS:
             if re.search(white_url, request.path):
                 logger.debug("%s path in white_url<%s>, exempting auth", request.path, white_url)
                 return None, None
 
+        # app_code and app_secret
+        if HEADER_APP_CODE_KEY_NAME in request.META and HEADER_APP_SECRET_KEY_NAME in request.META:
+            return AppCodeAppSecretAuthentication().authenticate(request)
+
+        # FIXME: should remove this totally
+        # NOTE: some case we want to use token as credentials, call through APIGateway(set default headers)
+        # so we should verify others first, not jwt
+        if get_authorization_header(request) or request.query_params.get(TOKEN_KEY_NAME):
+            # token
+            return InternalTokenAuthentication().authenticate(request)
+
         # jwt
         if HEADER_JWT_KEY_NAME in request.META:
             return ESBOrAPIGatewayAuthentication().authenticate(request)
 
-        # app_code and app_secret
-        if HEADER_APP_CODE_KEY_NAME in request.META and HEADER_APP_SECRET_KEY_NAME in request.META:
-            return AppCodeAppSecretAuthentication().authenticate(request)
-        # token
-        return InternalTokenAuthentication().authenticate(request)
+        raise exceptions.AuthenticationFailed(
+            "no valid authentication credentials provided! should call through APIGateway/ESB"
+        )

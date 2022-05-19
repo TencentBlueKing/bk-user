@@ -10,8 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 from enum import auto
 
-from bkuser_shell.common.constants import AutoLowerEnum
 from django.utils.translation import ugettext_lazy as _
+
+from bkuser_shell.common.constants import AutoLowerEnum
 
 
 class SyncStep(AutoLowerEnum):

@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import Dict
 
 import pytest
+
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile

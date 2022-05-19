@@ -11,19 +11,19 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 import math
-import uuid
 from collections import OrderedDict
 from typing import Callable, Optional
 
-from bkuser_shell.common.core_client import get_api_client
-from bkuser_shell.common.response import Response
 from django.conf import settings
 from django.utils.translation import get_language
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
+from bkuser_global.local import local
 from bkuser_global.utils import force_str_2_bool
+from bkuser_shell.common.core_client import get_api_client
+from bkuser_shell.common.response import Response
 
 logger = logging.getLogger(__name__)
 
@@ -177,5 +177,5 @@ def make_default_headers(operator: str) -> dict:
         settings.API_APP_CODE_HEADER_NAME: settings.APP_ID,
         settings.API_APP_SECRET_HEADER_NAME: settings.APP_TOKEN,
         "Accept-Language": get_language(),
-        "X-Request-ID": uuid.uuid4().hex,
+        "X-Request-ID": local.request_id,
     }

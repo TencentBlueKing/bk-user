@@ -10,19 +10,21 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
 
-import copy
 from urllib.parse import urljoin
 
-from bklogin.common.log import logger
 from django.conf import settings
+
+from .util import _remove_sensitive_info
+from bklogin.common.log import logger
+from bkuser_global.local import local
 
 
 def _call_esb_api(http_func, url_path, data, timeout=30):
     # 默认请求头
     headers = {
         "Content-Type": "application/json",
+        "X-Request-Id": local.request_id,
     }
 
     # Note: 目前企业版ESB调用的鉴权信息都是与接口的参数一起的，并非在header头里
@@ -73,19 +75,3 @@ def _call_esb_api(http_func, url_path, data, timeout=30):
     )
 
     return False, code, message, _data
-
-
-def _remove_sensitive_info(info):
-    """
-    去除敏感信息
-    """
-    if info is None:
-        return ""
-
-    data = copy.copy(info)
-    sensitive_info_keys = ["bk_token", "bk_app_secret", "app_secret", "password"]
-
-    for key in sensitive_info_keys:
-        if key in data:
-            data[key] = data[key][:6] + "******"
-    return str(data)

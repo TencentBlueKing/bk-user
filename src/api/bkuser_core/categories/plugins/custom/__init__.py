@@ -11,11 +11,10 @@ specific language governing permissions and limitations under the License.
 import os
 from pathlib import Path
 
-from bkuser_core.categories.plugins.plugin import DataSourcePlugin, HookType
-
 from .hooks import AlertIfFailedHook
 from .login import LoginHandler
 from .sycner import CustomSyncer
+from bkuser_core.categories.plugins.plugin import DataSourcePlugin, HookType
 
 DataSourcePlugin(
     name="custom",

@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.organization.utils import expand_extra_fields, get_default_logo_url
 from rest_framework.serializers import (
     CharField,
     DateTimeField,
@@ -20,6 +19,7 @@ from rest_framework.serializers import (
 )
 
 from .departments import SubDepartmentSerializer
+from bkuser_shell.organization.utils import expand_extra_fields, get_default_logo_url
 
 
 class LeaderSerializer(Serializer):

@@ -14,11 +14,12 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List
 
+from django.http import HttpResponse
+from openpyxl.styles import Alignment, Font, colors
+
 from bkuser_shell.config_center.constants import DynamicFieldTypeEnum
 from bkuser_shell.organization.serializers.profiles import ProfileExportSerializer
 from bkuser_shell.organization.utils import get_options_values_by_key
-from django.http import HttpResponse
-from openpyxl.styles import Alignment, Font, colors
 
 if TYPE_CHECKING:
     from openpyxl.workbook.workbook import Workbook

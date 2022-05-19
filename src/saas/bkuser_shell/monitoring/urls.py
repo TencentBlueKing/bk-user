@@ -8,8 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.monitoring import views
 from django.conf.urls import url
+
+from bkuser_shell.monitoring import views
 
 urlpatterns = [
     ###########

@@ -48,6 +48,7 @@ INSTALLED_APPS = (
 
 MIDDLEWARE = (
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "bkuser_global.middlewares.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",

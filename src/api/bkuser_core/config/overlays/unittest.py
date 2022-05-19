@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+import os
+
 import ldap3
+
 from bkuser_core.config.common.django_basic import *  # noqa
 from bkuser_core.config.common.logging import *  # noqa
 from bkuser_core.config.common.platform import *  # noqa
 from bkuser_core.config.common.storage import *  # noqa
 from bkuser_core.config.common.system import *  # noqa
-
 from bkuser_global.logging import LoggingType, get_logging
 
 DEBUG = True
@@ -84,6 +86,9 @@ TEST_LDAP = {
 
 # Ldap connection mock
 LDAP_CONNECTION_EXTRAS_PARAMS = {"client_strategy": ldap3.MOCK_SYNC}
+
+# celery results backend use from env(in unittest)
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
 
 # ==============================================================================

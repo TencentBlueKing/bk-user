@@ -17,10 +17,11 @@ import traceback
 from urllib.parse import urlparse, urlunparse
 
 import requests
-from bkuser_shell.common.exceptions import ApiNetworkError, ApiResultError
 from django.http import QueryDict
 from django.shortcuts import resolve_url
 from django.utils.translation import ugettext_lazy as _
+
+from bkuser_shell.common.exceptions import ApiNetworkError, ApiResultError
 
 logger = logging.getLogger("component")
 

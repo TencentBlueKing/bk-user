@@ -35,7 +35,7 @@
         v-for="(option, index) in item.options"
         :key="index"
         :id="option.id"
-        :name="statusMap[option.value]">
+        :name="$i18n.locale === 'en' ? option.id : statusMap[option.id]">
       </bk-option>
     </bk-select>
   </div>

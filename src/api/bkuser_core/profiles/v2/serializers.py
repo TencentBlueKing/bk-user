@@ -10,15 +10,16 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Union
 
+from django.utils.translation import ugettext_lazy as _
+from rest_framework import serializers
+from rest_framework.validators import ValidationError
+
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import force_use_raw_username, get_username, parse_username_domain
 from bkuser_core.profiles.validators import validate_domain, validate_username
-from django.utils.translation import ugettext_lazy as _
-from rest_framework import serializers
-from rest_framework.validators import ValidationError
 
 # ===============================================================================
 # Response

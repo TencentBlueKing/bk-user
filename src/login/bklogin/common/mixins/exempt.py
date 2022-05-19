@@ -12,8 +12,9 @@ specific language governing permissions and limitations under the License.
 
 from builtins import object
 
-from bklogin.bkauth.decorators import login_exempt
 from django.utils.decorators import method_decorator
+
+from bklogin.bkauth.decorators import login_exempt
 
 
 class LoginExemptMixin(object):

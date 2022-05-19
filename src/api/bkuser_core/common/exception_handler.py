@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 import logging
 import traceback
 
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from django.core.exceptions import PermissionDenied
 from django.db import ProgrammingError
 from django.http import Http404
@@ -23,6 +22,7 @@ from sentry_sdk import capture_exception
 
 from .error_codes import CoreAPIError
 from .http import exist_force_raw_header
+from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 
 logger = logging.getLogger(__name__)
 

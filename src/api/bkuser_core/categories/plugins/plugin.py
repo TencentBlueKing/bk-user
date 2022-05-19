@@ -15,6 +15,9 @@ from typing import Dict, Optional, Type
 from uuid import UUID
 
 import yaml
+from rest_framework import serializers
+from typing_extensions import Protocol
+
 from bkuser_core.categories.constants import SyncTaskStatus
 from bkuser_core.categories.loader import register_plugin
 from bkuser_core.categories.models import ProfileCategory, SyncProgress, SyncTask
@@ -22,8 +25,6 @@ from bkuser_core.categories.plugins.base import LoginHandler, Syncer
 from bkuser_core.categories.plugins.constants import HookType
 from bkuser_core.common.models import is_obj_needed_update
 from bkuser_core.user_settings.models import Setting, SettingMeta
-from rest_framework import serializers
-from typing_extensions import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -98,11 +99,20 @@ class DataSourcePlugin:
             # 理论上目录不能够被直接恢复, 所以已经被删除的目录不会被更新
             # 仅做新增，避免覆盖已有配置
             for category in ProfileCategory.objects.filter(type=self.category_type, enabled=True):
-                ins, created = Setting.objects.get_or_create(
-                    meta=meta, category_id=category.id, defaults={"value": meta.default}
-                )
-                if created:
-                    logger.debug("\n------ Setting<%s> of category<%s> created.", ins, category)
+                try:
+                    ins, created = Setting.objects.get_or_create(
+                        meta=meta, category_id=category.id, defaults={"value": meta.default}
+                    )
+                    if created:
+                        logger.debug("\n------ Setting<%s> of category<%s> created.", ins, category)
+                except Exception:  # pylint: disable=broad-except
+                    logger.exception(
+                        "Setting default of meta<%s>, category_id<%s>, defaults<%s> can not been created.",
+                        meta,
+                        category.id,
+                        meta.default,
+                    )
+                    continue
 
     def load_settings_from_yaml(self):
         """从 yaml 中加载 SettingMeta 配置"""

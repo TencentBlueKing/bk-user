@@ -14,6 +14,7 @@ from typing import Optional
 
 import curlify
 import requests
+
 from bkuser_core.categories.plugins.custom.exceptions import CustomAPIRequestFailed
 from bkuser_core.categories.plugins.custom.models import CustomDepartment, CustomProfile, CustomTypeList
 from bkuser_core.user_settings.loader import ConfigProvider
@@ -52,13 +53,32 @@ class CustomDataClient:
                 resp.status_code,
                 curl_format,
             )
-            raise CustomAPIRequestFailed()
+            raise CustomAPIRequestFailed(f"failed to request api, status code: {resp.status_code}")
 
         try:
-            return resp.json().get("results", [])
+            resp_body = resp.json()
         except Exception as e:
             logger.exception("failed to parse resp as json, cUrl format: %s", curl_format)
-            raise CustomAPIRequestFailed() from e
+            raise CustomAPIRequestFailed("failed to parse resp as json") from e
+
+        # results not present in response body
+        if "results" not in resp_body:
+            logger.error("no `results` in response, cUrl format: %s", curl_format)
+            raise CustomAPIRequestFailed("there got no `results` in response body")
+
+        results = resp_body.get("results", [])
+        # results not a list
+        if not isinstance(results, list):
+            logger.error("`results` in response is not a list, cUrl format: %s", curl_format)
+            raise CustomAPIRequestFailed("the `results` in response is not a list")
+
+        # currently, if the results is empty, CustomTypeList.custom_type will raise IndexError(task fail)
+        # so, here, we should check here: results size should not be empty
+        if not results:
+            logger.error("`results` in response is empty, cUrl format: %s", curl_format)
+            raise CustomAPIRequestFailed("the `results` in response is empty")
+
+        return results
 
     def fetch_profiles(self, page_info: Optional[PageInfo] = None) -> CustomTypeList:
         """获取 profile 对象列表"""

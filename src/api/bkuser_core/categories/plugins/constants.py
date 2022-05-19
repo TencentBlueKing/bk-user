@@ -10,9 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 from enum import auto
 
+from django.utils.translation import gettext_lazy as _
+
 from bkuser_core.categories.constants import SyncStep
 from bkuser_core.common.enum import AutoNameEnum
-from django.utils.translation import gettext_lazy as _
 
 PLUGIN_NAME_SETTING_KEY = "plugin_name"
 DYNAMIC_FIELDS_SETTING_KEY = "dynamic_fields_mapping"

@@ -10,14 +10,14 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
 
 from builtins import str
+
+from cachetools import TTLCache, cached
 
 from bklogin.common.constants import BKLOGIN_USERMGR_FIELD_MAP
 from bklogin.common.log import logger
 from bklogin.components import usermgr_api
-from cachetools import TTLCache, cached
 
 
 def _user_info(usermgr_userinfo):

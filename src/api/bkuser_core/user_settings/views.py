@@ -10,6 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+from rest_framework.response import Response
+
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
@@ -19,11 +24,6 @@ from bkuser_core.user_settings import serializers
 from bkuser_core.user_settings.models import Setting, SettingMeta
 from bkuser_core.user_settings.serializers import SettingUpdateSerializer
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
-from django.utils.decorators import method_decorator
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status
-from rest_framework.response import Response
-
 from bkuser_global.drf_crown.crown import inject_serializer
 
 logger = logging.getLogger(__name__)

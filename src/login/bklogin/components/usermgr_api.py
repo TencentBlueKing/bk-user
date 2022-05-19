@@ -12,10 +12,12 @@ specific language governing permissions and limitations under the License.
 
 from __future__ import absolute_import, unicode_literals
 
+from django.conf import settings
+
+from .util import _remove_sensitive_info
 from bklogin.common.log import logger
 from bklogin.components.esb import _call_esb_api
 from bklogin.components.http import http_get, http_post
-from django.conf import settings
 
 """
 usermgr api
@@ -30,15 +32,19 @@ def _call_usermgr_api(http_func, url, data, headers=None):
         if not ok:
             return False, -1, "verify from usermgr server fail: %s" % resp_data.get("error"), None
     except Exception:
-        logger.exception("_call_usermgr_api fail: method=%s, url=%s, data=%s", http_func.__name__, url, data)
+        logger.exception(
+            "_call_usermgr_api fail: method=%s, url=%s, data=%s", http_func.__name__, url, _remove_sensitive_info(data)
+        )
         return False, -1, "verify from usermgr server fail, error happended", None
 
     # TODO: still use the result to verify?
     if not resp_data.get("result"):
-        if data and "password" in data:
-            data["password"] = "******"
         logger.info(
-            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s", http_func.__name__, url, data, resp_data
+            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s",
+            http_func.__name__,
+            url,
+            _remove_sensitive_info(data),
+            resp_data,
         )
         return False, resp_data.get("code", -1), resp_data.get("message", "usermgr api fail"), resp_data.get("data")
 
@@ -121,6 +127,16 @@ def direct_get_categories():
     return ok, message, _data
 
 
+def direct_get_profile_by_code(code, fields="username"):
+    path = "/api/v2/profiles/{code}/".format(code=code)
+    url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
+
+    data = {"fields": fields, "lookup_field": "code"}
+
+    ok, _, message, _data = _call_usermgr_api(http_get, url, data)
+    return ok, message, _data
+
+
 def esb_authenticate(username, password, language="", domain=""):
     """
     认证用户名和密码
@@ -184,6 +200,19 @@ def esb_get_categories():
     return ok, message, _data
 
 
+def esb_get_profile_by_code(code, fields="username"):
+    path = "/api/c/compapi/v2/usermanage/retrieve_user/"
+
+    data = {
+        "id": code,
+        "lookup_field": "code",
+        "fields": fields,
+    }
+
+    ok, _, message, _data = _call_esb_api(http_get, path, data)
+    return ok, message, _data
+
+
 if settings.BK_LOGIN_API_AUTH_ENABLED:
     message = "bk_login api auth enabled=True, will call usermgr api via esb"
     print(message)
@@ -193,6 +222,7 @@ if settings.BK_LOGIN_API_AUTH_ENABLED:
     batch_query_users = esb_batch_query_users
     upsert_user = esb_upsert_user
     get_categories = esb_get_categories
+    get_profile_by_code = esb_get_profile_by_code
 else:
     message = "bk_login api auth enabled=False, will call usermgr api directly"
     print(message)
@@ -202,3 +232,4 @@ else:
     batch_query_users = direct_batch_query_users
     upsert_user = direct_upsert_user
     get_categories = direct_get_categories
+    get_profile_by_code = direct_get_profile_by_code

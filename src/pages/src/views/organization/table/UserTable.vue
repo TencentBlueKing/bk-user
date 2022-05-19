@@ -259,7 +259,10 @@ export default {
           }
           for (let i = 0; i < options.length; i++) {
             if (options[i].id === value) {
-              return this.statusMap[options[i].value];
+              if (this.$i18n.locale === 'en') {
+                return value;
+              }
+              return this.statusMap[options[i].id];
             }
           }
         } else {

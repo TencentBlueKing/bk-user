@@ -9,13 +9,13 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import jsonfield
-from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.categories.constants import CategoryType
-from bkuser_core.common.models import TimestampedModel
 from django.db import models
 
 from .constants import SettingsEnableNamespaces
 from .managers import SettingManager, SettingMetaManager
+from bkuser_core.audit.models import AuditObjMetaInfo
+from bkuser_core.categories.constants import CategoryType
+from bkuser_core.common.models import TimestampedModel
 
 
 class Setting(TimestampedModel):
@@ -39,6 +39,7 @@ class Setting(TimestampedModel):
         verbose_name = "配置表"
         verbose_name_plural = "配置表"
         ordering = ["-create_time"]
+        unique_together = ["category", "meta"]
 
     def __str__(self):
         return f"{self.meta.namespace}-{self.meta.region}-{self.meta.key}"
