@@ -61,7 +61,7 @@ class Profile(TimestampedModel):
     # ----------------------- 目录相关 -----------------------
     # 由写入时保证 domain & category_id 对应性
     domain = models.CharField(verbose_name=_("域"), max_length=64, null=True, blank=True, db_index=True)
-    category_id = models.IntegerField(verbose_name=_("用户目录ID"), null=True, blank=True, db_index=True)
+    category_id = models.IntegerField(verbose_name=_("用户目录ID"), null=True, blank=True)
     # ----------------------- 目录相关 -----------------------
 
     display_name = models.CharField(verbose_name=_("全名"), null=True, blank=True, default="", max_length=255)
@@ -102,6 +102,10 @@ class Profile(TimestampedModel):
         symmetrical=False,
     )
     # ----------------------- 职位相关 -----------------------
+
+    # ----------------------- 账号相关 -----------------------
+    account_expiration_time = models.DateField(verbose_name=_("账号过期时间"), null=True, blank=True)
+    # ----------------------- 账号相关 -----------------------
 
     # ----------------------- 国际化相关 -----------------------
     time_zone = models.CharField(
@@ -147,6 +151,7 @@ class Profile(TimestampedModel):
         verbose_name = "用户信息"
         verbose_name_plural = "用户信息"
         unique_together = ("username", "category_id")
+        index_together = ("category_id", "account_expiration_time")
 
     def custom_validate(self):
         validate_domain(self.domain)

@@ -18,5 +18,9 @@ class ProfileEmailEmpty(Exception):
     """用户邮箱为空"""
 
 
+class ProfileTelephoneEmpty(Exception):
+    """用户手机号码为空"""
+
+
 class CountryISOCodeNotMatch(Exception):
     """Country Code 不匹配"""
