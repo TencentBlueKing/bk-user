@@ -35,12 +35,14 @@
       :style="{ width: inputWidth + 'px' }"
       :class="{ 'king-input': true, error: error }"
       :disabled="disabled"
+      :placeholder="placeholder"
       @input="handleInput">
       <template v-if="append" slot="append">
         <div class="group-text">{{append}}</div>
       </template>
     </bk-input>
     <p v-show="error" class="error-text">{{errorText || $t('请输入') + title}}</p>
+    <p v-show="!regError" class="error-text">{{$t('请输入合法的ldap地址')}}</p>
     <p v-if="description" class="description">{{description}}</p>
   </div>
 </template>
@@ -102,11 +104,21 @@ export default {
       type: String,
       default: '',
     },
+    placeholder: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
       error: false,
+      regError: true,
     };
+  },
+  watch: {
+    'info.connection_url'() {
+      this.regError = true;
+    },
   },
   mounted() {
     this.inputBus.$on('validateCatalogInfo', () => {
@@ -117,6 +129,7 @@ export default {
         this.info[this.keyword] = value.trim();
       }
       this.validate();
+      this.regUrl();
     });
   },
   methods: {
@@ -155,6 +168,22 @@ export default {
           this.error = false;
         } else {
           this.error = true;
+          this.$emit('hasError');
+        }
+      }
+    },
+    regUrl() {
+      const key = this.keyword;
+      const value = this.info[this.keyword];
+      if (key === 'connection_url') {
+        const url = value.split('://')[0];
+        this.$emit('updateUrl', url);
+        // IP | IP + 端口号
+        const ipReg = new RegExp(/^ldap(s)?:\/\/(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d{1,3})$/);
+        // 域名 | 域名 + 端口号
+        const reg = new RegExp(/^ldap(s)?:\/\/(([a-zA-Z0-9]([-a-zA-Z0-9])*){1,62}\.)+[a-zA-Z]{2,62}(:([0-9]|[1-9]\d{1,3}))?$/);
+        this.regError = reg.test(value) || ipReg.test(value);
+        if (this.regError === false) {
           this.$emit('hasError');
         }
       }
