@@ -411,4 +411,7 @@ export default {
   被删除: 'deleted',
   员工: 'employees',
   组长: 'group leader',
+  请输入合法的ldap地址: 'Please enter a valid LDAP address',
+  例如: 'For example',
+  请选择正确的加密方式: 'Select the correct encryption mode',
 };
