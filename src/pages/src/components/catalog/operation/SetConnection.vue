@@ -209,10 +209,8 @@ export default {
       return false;
     },
     updateUrl(val) {
-      if (val === 'ldaps' && this.defaultConnection.ssl_encryption === '无') {
-        this.sslError = true;
-        this.hasError = true;
-      } else if (val === 'ldap' && this.defaultConnection.ssl_encryption === 'SSL') {
+      if ((val === 'ldaps' && this.defaultConnection.ssl_encryption === '无')
+        || (val === 'ldap' && this.defaultConnection.ssl_encryption === 'SSL')) {
         this.sslError = true;
         this.hasError = true;
       } else {
