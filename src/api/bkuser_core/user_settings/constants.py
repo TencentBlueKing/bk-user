@@ -32,3 +32,6 @@ class SettingsEnableNamespaces(AutoLowerEnum):
 class InitPasswordMethod(AutoLowerEnum):
     FIXED_PRESET = auto()
     RANDOM_VIA_MAIL = auto()
+
+
+ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY = "account_expiration_notice_interval"

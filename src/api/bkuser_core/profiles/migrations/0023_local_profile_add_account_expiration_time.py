@@ -31,10 +31,10 @@ def forwards_func(apps, schema_editor):
     # 保证已存在的本地目录下用户拥有过期时间
     for c in ProfileCategory.objects.filter(type=CategoryType.LOCAL.value):
         # 获取对应目录下的 账号有效期配置
-        meta = SettingMeta.objects.get(
+        meta = SettingMeta.objects.filter(
             key="expired_after_days",
-            namespace=SettingsEnableNamespaces.ACCOUNT.value,
-        )
+            namespace=SettingsEnableNamespaces.ACCOUNT.value
+        ).first()
 
         expired_after_days = Setting.objects.filter(
             category_id=c.id,
@@ -43,18 +43,19 @@ def forwards_func(apps, schema_editor):
 
         if expired_after_days == -1:
             Profile.objects.filter(category_id=c.id).update(
-                account_expiration_time=datetime.date(year=2100, month=1, day=1))
+                account_expiration_date=datetime.date(year=2100, month=1, day=1))
 
         # 过期时间=用户创建时间+账号有效期
         else:
             Profile.objects.filter(category_id=c.id).update(
-                account_expiration_time=F("create_time")+datetime.timedelta(days=expired_after_days))
+                account_expiration_date=F("create_time")+datetime.timedelta(days=expired_after_days))
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("profiles", "0022_auto_20220517_1726"),
+        ("profiles", "0022_auto_20220520_1028"),
+        ("user_settings", "0015_add_default_fields_account_settings")
     ]
 
     operations = [migrations.RunPython(forwards_func)]

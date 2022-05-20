@@ -35,64 +35,64 @@ def forwards_func(apps, schema_editor):
             default=["send_email"],
         ),
         dict(
-            key="account_expiration_notice_times",
+            key="account_expiration_notice_interval",
             example=[1, 7, 15],
             default=[1, 7, 15]
         ),
         dict(
             key="expiring_account_email_config",
             example={
-                "title": "蓝鲸智云企业版 - 账号到期提醒",
-                "sender": "蓝鲸智云企业版",
-                "content": "{username}，您好：您的蓝鲸智云企业版平台账号将于{expire_at}天后到期，"
+                "title": "蓝鲸智云 - 账号到期提醒",
+                "sender": "蓝鲸智云",
+                "content": "{username}，您好：您的蓝鲸智云平台账号将于{expire_at}天后到期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
 
             },
             default={
-                "title": "蓝鲸智云企业版 - 账号到期提醒",
-                "sender": "蓝鲸智云企业版",
-                "content": "{username}，您好：您的蓝鲸智云企业版平台账号将于{expire_at}天后到期，"
+                "title": "蓝鲸智云 - 账号到期提醒",
+                "sender": "蓝鲸智云",
+                "content": "{username}，您好：您的蓝鲸智云平台账号将于{expire_at}天后到期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
             }
         ),
         dict(
             key="expired_account_email_config",
             example={
-                "title": "蓝鲸智云企业版 - 账号到期提醒",
-                "sender": "蓝鲸智云企业版",
-                "content": "{username}，您好：您的蓝鲸智云企业版平台账号已过期，为避免影响使用，"
+                "title": "蓝鲸智云 - 账号到期提醒",
+                "sender": "蓝鲸智云",
+                "content": "{username}，您好：您的蓝鲸智云平台账号已过期，为避免影响使用，"
                 "请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
             },
             default={
-                "title": "蓝鲸智云企业版 - 账号到期提醒",
-                "sender": "蓝鲸智云企业版",
-                "content": "{username}，您好：您的蓝鲸智云企业版平台账号已过期，为避免影响使用，"
+                "title": "蓝鲸智云 - 账号到期提醒",
+                "sender": "蓝鲸智云",
+                "content": "{username}，您好：您的蓝鲸智云平台账号已过期，为避免影响使用，"
                 "请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
             },
         ),
         dict(
             key="expiring_account_sms_config",
             example={
-                "sender": "蓝鲸智云企业版",
-                "content": "【蓝鲸智云企业版】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expire_at}天后到期，"
+                "sender": "蓝鲸智云",
+                "content": "【蓝鲸智云】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expire_at}天后到期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。"
             },
             default={
-                "sender": "蓝鲸智云企业版",
-                "content": "【蓝鲸智云企业版】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expire_at}天后到期，"
+                "sender": "蓝鲸智云",
+                "content": "【蓝鲸智云】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expire_at}天后到期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。"
             },
         ),
         dict(
             key="expired_account_sms_config",
             example={
-                "sender": "蓝鲸智云企业版",
-                "content": "【蓝鲸智云企业版】账号到期提醒！{username}，您好！您的蓝鲸智云企业版平台账号已过期，"
+                "sender": "蓝鲸智云",
+                "content": "【蓝鲸智云】账号到期提醒！{username}，您好！您的蓝鲸智云平台账号已过期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。",
             },
             default={
-                "sender": "蓝鲸智云企业版",
-                "content": "【蓝鲸智云企业版】账号到期提醒！{username}，您好！您的蓝鲸智云企业版平台账号已过期，"
+                "sender": "蓝鲸智云",
+                "content": "【蓝鲸智云】账号到期提醒！{username}，您好！您的蓝鲸智云平台账号已过期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。",
             },
         ),
@@ -100,7 +100,7 @@ def forwards_func(apps, schema_editor):
     ]
 
     for x in local_account_settings:
-        meta = SettingMeta.objects.create(
+        meta, _ = SettingMeta.objects.get_or_create(
             namespace=SettingsEnableNamespaces.ACCOUNT.value,
             category_type=CategoryType.LOCAL.value,
             required=True,
@@ -125,7 +125,7 @@ def backwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user_settings", "0013_auto_20220511_1433"),
+        ("user_settings", "0014_alter_settingmeta_namespace"),
     ]
 
     operations = [migrations.RunPython(forwards_func, backwards_func)]
