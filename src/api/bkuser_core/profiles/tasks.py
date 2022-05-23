@@ -26,7 +26,7 @@ from bkuser_core.celery import app
 from bkuser_core.common.notifier import send_mail
 from bkuser_core.profiles import exceptions
 from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL
-from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.models import AccountExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -85,17 +85,30 @@ def notice_for_account_expiration():
     """
     用户账号过期通知
     """
-    profiles = get_profiles_for_account_expiration()
+    expiring_profile_list, expired_profile_list = get_profiles_for_account_expiration()
 
-    for profile in profiles:
+    for profile in expiring_profile_list:
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
             return
-        if profile.account_expiration_notice:
-            return
         AccountExpirationNotifier().handler(notice_config)
-        if profile.account_expiration_date < datetime.date.today():
-            profile.account_expiration_notice = True
-            profile.save()
-
         time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+
+    for profile in expired_profile_list:
+        notice_config = get_notice_config_for_account_expiration(profile)
+        if not notice_config:
+            return
+        notice_record = AccountExpirationNoticeRecord.objects.filter(profile_id=profile.id)
+
+        if not notice_record:
+            AccountExpirationNotifier().handler(notice_config)
+            AccountExpirationNoticeRecord.objects.create(notice_date=datetime.date.today(), profile_id=profile.id)
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+            return
+
+        # 上一次过期通知的时间距离现在超过一个月则进行通知
+        if notice_record.notice_date < datetime.date.today() - datetime.timedelta(days=30):
+            AccountExpirationNotifier().handler(notice_config)
+            notice_record.objects.update(notice_date=datetime.date.today())
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+            return

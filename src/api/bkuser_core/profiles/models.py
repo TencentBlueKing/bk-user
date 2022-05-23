@@ -106,7 +106,6 @@ class Profile(TimestampedModel):
     # ----------------------- 账号相关 -----------------------
     account_expiration_date = models.DateField(verbose_name=_("账号过期时间"), null=True, blank=True,
                                                default=datetime.date(year=2100, month=1, day=1))
-    account_expiration_notice = models.BooleanField(verbose_name=_("账号过期通知标识"), default=False)
     # ----------------------- 账号相关 -----------------------
 
     # ----------------------- 国际化相关 -----------------------
@@ -292,3 +291,13 @@ class ProfileTokenHolder(TimestampedModel):
     def expired(self):
         """是否过期"""
         return now() > self.expire_time
+
+
+class AccountExpirationNoticeRecord(TimestampedModel):
+    notice_date = models.DateField(verbose_name=_("账号过期通知时间"), null=False, blank=False)
+    profile = models.ForeignKey("profiles.Profile", verbose_name="登陆用户", on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "账号过期通知记录"
+        verbose_name_plural = "账号过期通知记录"

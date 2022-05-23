@@ -83,7 +83,7 @@ DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
 SYNC_API_PARAM = "for_sync"
 
 # 通知发送时间间隔
-NOTICE_INTERVAL_SECONDS = env.int("NOTICE_INTERVAL_SECONDS", default=15)
+NOTICE_INTERVAL_SECONDS = env.int("NOTICE_INTERVAL_SECONDS", default=3)
 
 
 # ==============================================================================

@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import datetime
 import logging
 
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Exists, OuterRef
 
 from bkuser_core.audit.models import LogIn
 from bkuser_core.categories.constants import CategoryType
@@ -32,8 +32,8 @@ def get_profiles_for_account_expiration():
     """
     获取 需要进行账号过期相关通知的用户
     """
-
-    profiles = []
+    expiring_profile_list = []
+    expired_profile_list = []
     category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
 
     for category_id in category_ids:
@@ -47,10 +47,18 @@ def get_profiles_for_account_expiration():
         logined_profiles = get_logined_profiles()
 
         expiring_profiles = logined_profiles.filter(
-            Q(account_expiration_date__lt=datetime.date.today()) | Q(account_expiration_date__in=expiration_times),
-            category_id=category_id)
-        profiles.extend(expiring_profiles)
-    return profiles
+            account_expiration_date__in=expiration_times,
+            category_id=category_id).values(
+            "id", "username", "category_id", "email", "telephone", "account_expiration_date")
+        expiring_profile_list.extend(expiring_profiles)
+
+        expired_profiles = logined_profiles.filter(
+            account_expiration_date__lt=datetime.date.today(),
+            category_id=category_id).values(
+            "id", "username", "category_id", "email", "telephone", "account_expiration_date")
+        expired_profile_list.extend(expired_profiles)
+
+    return expiring_profile_list, expired_profile_list
 
 
 def get_expiration_dates(notice_interval):
@@ -82,9 +90,9 @@ def get_notice_config_for_account_expiration(profile):
     整合 账号过期 通知内容
     """
     notice_config = {}
-    expire_at = datetime.date.today() - profile.account_expiration_date
+    expire_at = profile["account_expiration_date"] - datetime.date.today()
 
-    config_loader = ConfigProvider(profile.category_id)
+    config_loader = ConfigProvider(profile["category_id"])
     notice_methods = config_loader["account_expiration_notice_methods"]
 
     if not notice_methods:
@@ -98,10 +106,10 @@ def get_notice_config_for_account_expiration(profile):
         )
 
         message = (
-            email_config["content"].format(username=profile.username)
+            email_config["content"].format(username=profile["username"])
             if expire_at.days < 0
             else email_config["content"].format(
-                username=profile.username, expire_at=expire_at.days
+                username=profile["username"], expire_at=expire_at.days
             )
         )
 
@@ -110,7 +118,7 @@ def get_notice_config_for_account_expiration(profile):
                 "send_email":
                     {
                         "sender": email_config["sender"],
-                        "receiver": [profile.email],
+                        "receiver": [profile["email"]],
                         "message": message,
                         "title": email_config["title"]
                     }
@@ -126,10 +134,10 @@ def get_notice_config_for_account_expiration(profile):
         )
 
         message = (
-            sms_config["content"].format(username=profile.username)
+            sms_config["content"].format(username=profile["username"])
             if expire_at.days < 0
             else sms_config["content"].format(
-                username=profile.username, expire_at=expire_at.days
+                username=profile["username"], expire_at=expire_at.days
             )
         )
 
@@ -137,7 +145,7 @@ def get_notice_config_for_account_expiration(profile):
             {
                 "send_sms":
                     {
-                        "receivers": [profile.telephone],
+                        "receivers": [profile["telephone"]],
                         "message": message
                     }
 
