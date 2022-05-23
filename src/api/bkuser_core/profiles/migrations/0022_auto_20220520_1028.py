@@ -16,6 +16,11 @@ class Migration(migrations.Migration):
             name='account_expiration_date',
             field=models.DateField(blank=True, default=datetime.date(2100, 1, 1), null=True, verbose_name='账号过期时间'),
         ),
+        migrations.AddField(
+            model_name='profile',
+            name='account_expiration_notice',
+            field=models.BooleanField(default=False, verbose_name='账号过期通知标识'),
+        ),
         migrations.AlterField(
             model_name='profile',
             name='category_id',

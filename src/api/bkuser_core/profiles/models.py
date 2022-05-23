@@ -106,6 +106,7 @@ class Profile(TimestampedModel):
     # ----------------------- 账号相关 -----------------------
     account_expiration_date = models.DateField(verbose_name=_("账号过期时间"), null=True, blank=True,
                                                default=datetime.date(year=2100, month=1, day=1))
+    account_expiration_notice = models.BooleanField(verbose_name=_("账号过期通知标识"), default=False)
     # ----------------------- 账号相关 -----------------------
 
     # ----------------------- 国际化相关 -----------------------

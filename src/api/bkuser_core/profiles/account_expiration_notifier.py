@@ -17,9 +17,8 @@ from bkuser_core.audit.models import LogIn
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.notifier import send_mail, send_sms
-from bkuser_core.user_settings.constants import ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY
 from bkuser_core.profiles.models import Profile
-from bkuser_core.user_settings.constants import SettingsEnableNamespaces
+from bkuser_core.user_settings.constants import ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY, SettingsEnableNamespaces
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import Setting
 

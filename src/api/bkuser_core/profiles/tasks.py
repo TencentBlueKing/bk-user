@@ -8,10 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 import logging
 import time
 import urllib.parse
 
+from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
 
@@ -78,7 +80,7 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
     )
 
 
-@periodic_task(run_every=86400)
+@periodic_task(run_every=crontab(minute='0', hour='2'))
 def notice_for_account_expiration():
     """
     用户账号过期通知
@@ -89,5 +91,11 @@ def notice_for_account_expiration():
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
             return
+        if profile.account_expiration_notice:
+            return
         AccountExpirationNotifier().handler(notice_config)
-        time.sleep(settings.NOTICE_INTERVAL)
+        if profile.account_expiration_date < datetime.date.today():
+            profile.account_expiration_notice = True
+            profile.save()
+
+        time.sleep(settings.NOTICE_INTERVAL_SECONDS)
