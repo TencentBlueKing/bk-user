@@ -179,9 +179,9 @@ export default {
         const url = value.split('://')[0];
         this.$emit('updateUrl', url);
         // IP | IP + 端口号
-        const ipReg = new RegExp(/^ldap(s)?:\/\/(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5]):([0-9]|[1-9]\d{1,3})$/);
+        const ipReg = new RegExp(/^(ldap(s)?:\/\/)?(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(:([0-9]|[1-9]\d{1,3}))?$/);
         // 域名 | 域名 + 端口号
-        const reg = new RegExp(/^ldap(s)?:\/\/(([a-zA-Z0-9]([-a-zA-Z0-9])*){1,62}\.)+[a-zA-Z]{2,62}(:([0-9]|[1-9]\d{1,3}))?$/);
+        const reg = new RegExp(/^(ldap(s)?:\/\/)?(([a-zA-Z0-9]([-a-zA-Z0-9])*){1,62}\.)+[a-zA-Z]{2,62}(:([0-9]|[1-9]\d{1,3}))?$/);
         this.regError = reg.test(value) || ipReg.test(value);
         if (this.regError === false) {
           this.$emit('hasError');
