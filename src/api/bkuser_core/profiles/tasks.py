@@ -99,11 +99,11 @@ def notice_for_account_expiration():
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
             return
-        notice_record = AccountExpirationNoticeRecord.objects.filter(profile_id=profile.id)
+        notice_record = AccountExpirationNoticeRecord.objects.filter(profile_id=profile["id"])
 
         if not notice_record:
             AccountExpirationNotifier().handler(notice_config)
-            AccountExpirationNoticeRecord.objects.create(notice_date=datetime.date.today(), profile_id=profile.id)
+            AccountExpirationNoticeRecord.objects.create(notice_date=datetime.date.today(), profile_id=profile["id"])
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
             return
 
