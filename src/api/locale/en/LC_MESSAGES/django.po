@@ -412,4 +412,3 @@ msgid "自定义字段 {} 需要保证唯一，而该目录< {} >中已经存在
 msgstr ""
 "Dynamic field {} should be unique，and there is another record in category<{}> with "
 "value<{}>"
-

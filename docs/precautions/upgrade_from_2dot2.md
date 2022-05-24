@@ -61,4 +61,3 @@ def get_paging_results(list_func: Callable, page_size: int = 50, **kwargs) -> li
 ```
 
 默认地，我们设置了 [每页最大条目数 2000](https://github.com/TencentBlueKing/bk-user/blob/master/src/api/bkuser_core/config/common/system.py#L65) ，可以通过部署的环境变量修改。
-

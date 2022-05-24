@@ -13,7 +13,7 @@
       animation-name: #{$base}Out#{$name};
     }
   }
-    
+
   .#{$base}-enter-active, .#{$base}In,
   .#{$base}-leave-active, .#{$base}Out {
     animation-duration: $animationDuration;

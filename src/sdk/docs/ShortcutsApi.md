@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**v2_shortcuts_departments_list_tops**](ShortcutsApi.md#v2_shortcuts_departments_list_tops) | **GET** /api/v2/shortcuts/departments/tops/ | 
+[**v2_shortcuts_departments_list_tops**](ShortcutsApi.md#v2_shortcuts_departments_list_tops) | **GET** /api/v2/shortcuts/departments/tops/ |
 
 # **v2_shortcuts_departments_list_tops**
 > object v2_shortcuts_departments_list_tops(lookup_field=lookup_field, ordering=ordering, page=page, page_size=page_size)
@@ -39,10 +39,10 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_field** | **str**| A search term. | [optional] 
- **ordering** | **str**| Which field to use when ordering the results. | [optional] 
- **page** | **int**| A page number within the paginated result set. | [optional] 
- **page_size** | **int**| Number of results to return per page. | [optional] 
+ **lookup_field** | **str**| A search term. | [optional]
+ **ordering** | **str**| Which field to use when ordering the results. | [optional]
+ **page** | **int**| A page number within the paginated result set. | [optional]
+ **page_size** | **int**| Number of results to return per page. | [optional]
 
 ### Return type
 
@@ -58,4 +58,3 @@ No authorization required
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

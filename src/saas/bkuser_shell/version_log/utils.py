@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_version_list(version_log_file: str) -> dict:
-    with open(version_log_file, "r") as f:
+    with open(version_log_file, "rb") as f:
         logger.debug("loading version log from file<%s>", f.name)
         version_content = yaml.load(f, Loader=yaml.FullLoader)
     return version_content

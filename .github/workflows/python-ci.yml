@@ -33,4 +33,3 @@ jobs:
       run: pflake8 src/ --config=pyproject.toml
     - name: Lint with mypy
       run:  mypy src/ --config-file=pyproject.toml
-

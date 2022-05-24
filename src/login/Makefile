@@ -1,6 +1,6 @@
 i18n_all: i18n_tpl i18n_js i18n_mo
 
-# make messages of python file and django template file to django.po 
+# make messages of python file and django template file to django.po
 i18n_tpl:
 	django-admin.py makemessages -d django -l en -e html,part -e py
 	django-admin.py makemessages -d django -l zh_Hans -e html,part -e py

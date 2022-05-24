@@ -4,12 +4,12 @@ All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**v2_settings_create**](SettingsApi.md#v2_settings_create) | **POST** /api/v2/settings/ | 
-[**v2_settings_delete**](SettingsApi.md#v2_settings_delete) | **DELETE** /api/v2/settings/{lookup_value}/ | 
-[**v2_settings_list**](SettingsApi.md#v2_settings_list) | **GET** /api/v2/settings/ | 
-[**v2_settings_partial_update**](SettingsApi.md#v2_settings_partial_update) | **PATCH** /api/v2/settings/{lookup_value}/ | 
-[**v2_settings_read**](SettingsApi.md#v2_settings_read) | **GET** /api/v2/settings/{lookup_value}/ | 
-[**v2_settings_update**](SettingsApi.md#v2_settings_update) | **PUT** /api/v2/settings/{lookup_value}/ | 
+[**v2_settings_create**](SettingsApi.md#v2_settings_create) | **POST** /api/v2/settings/ |
+[**v2_settings_delete**](SettingsApi.md#v2_settings_delete) | **DELETE** /api/v2/settings/{lookup_value}/ |
+[**v2_settings_list**](SettingsApi.md#v2_settings_list) | **GET** /api/v2/settings/ |
+[**v2_settings_partial_update**](SettingsApi.md#v2_settings_partial_update) | **PATCH** /api/v2/settings/{lookup_value}/ |
+[**v2_settings_read**](SettingsApi.md#v2_settings_read) | **GET** /api/v2/settings/{lookup_value}/ |
+[**v2_settings_update**](SettingsApi.md#v2_settings_update) | **PUT** /api/v2/settings/{lookup_value}/ |
 
 # **v2_settings_create**
 > Setting v2_settings_create(body)
@@ -28,7 +28,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.SettingsApi()
-body = bkuser_sdk.SettingCreate() # SettingCreate | 
+body = bkuser_sdk.SettingCreate() # SettingCreate |
 
 try:
     api_response = api_instance.v2_settings_create(body)
@@ -41,7 +41,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**SettingCreate**](SettingCreate.md)|  | 
+ **body** | [**SettingCreate**](SettingCreate.md)|  |
 
 ### Return type
 
@@ -75,7 +75,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.SettingsApi()
-lookup_value = 'lookup_value_example' # str | 
+lookup_value = 'lookup_value_example' # str |
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
 include_disabled = true # bool | 是否包含已软删除的数据 (optional)
@@ -90,10 +90,10 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_value** | **str**|  | 
- **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
- **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
- **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
+ **lookup_value** | **str**|  |
+ **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional]
+ **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional]
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional]
 
 ### Return type
 
@@ -127,7 +127,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.SettingsApi()
-category_id = 56 # int | 
+category_id = 56 # int |
 key = 'key_example' # str |  (optional)
 namespace = 'namespace_example' # str |  (optional)
 region = 'region_example' # str |  (optional)
@@ -144,11 +144,11 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **category_id** | **int**|  | 
- **key** | **str**|  | [optional] 
- **namespace** | **str**|  | [optional] 
- **region** | **str**|  | [optional] 
- **domain** | **str**|  | [optional] 
+ **category_id** | **int**|  |
+ **key** | **str**|  | [optional]
+ **namespace** | **str**|  | [optional]
+ **region** | **str**|  | [optional]
+ **domain** | **str**|  | [optional]
 
 ### Return type
 
@@ -182,8 +182,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.SettingsApi()
-body = bkuser_sdk.SettingUpdate() # SettingUpdate | 
-lookup_value = 'lookup_value_example' # str | 
+body = bkuser_sdk.SettingUpdate() # SettingUpdate |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_settings_partial_update(body, lookup_value)
@@ -196,8 +196,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**SettingUpdate**](SettingUpdate.md)|  | 
- **lookup_value** | **str**|  | 
+ **body** | [**SettingUpdate**](SettingUpdate.md)|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -231,7 +231,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.SettingsApi()
-lookup_value = 'lookup_value_example' # str | 
+lookup_value = 'lookup_value_example' # str |
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
 include_disabled = true # bool | 是否包含已软删除的数据 (optional)
@@ -247,10 +247,10 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_value** | **str**|  | 
- **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
- **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
- **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
+ **lookup_value** | **str**|  |
+ **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional]
+ **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional]
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional]
 
 ### Return type
 
@@ -284,8 +284,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.SettingsApi()
-body = bkuser_sdk.SettingUpdate() # SettingUpdate | 
-lookup_value = 'lookup_value_example' # str | 
+body = bkuser_sdk.SettingUpdate() # SettingUpdate |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_settings_update(body, lookup_value)
@@ -298,8 +298,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**SettingUpdate**](SettingUpdate.md)|  | 
- **lookup_value** | **str**|  | 
+ **body** | [**SettingUpdate**](SettingUpdate.md)|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -315,4 +315,3 @@ No authorization required
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

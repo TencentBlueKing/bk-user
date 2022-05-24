@@ -18,12 +18,14 @@ class SettingsEnableNamespaces(AutoLowerEnum):
     PASSWORD = auto()
     CONNECTION = auto()
     FIELDS = auto()
+    ACCOUNT = auto()
 
     _choices_labels = (
         (GENERAL, "通用"),
         (PASSWORD, "密码"),
         (CONNECTION, "连接"),
         (FIELDS, "字段"),
+        (ACCOUNT, "账号"),
     )
 
 

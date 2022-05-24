@@ -258,5 +258,3 @@ volumeMounts: []
   ## 自定义插件示例
   # - name: bk-user-plugin-example
   #   mountPath: /app/bkuser_core/categories/plugins/example
-
-

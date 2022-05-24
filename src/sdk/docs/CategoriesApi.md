@@ -4,18 +4,18 @@ All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**v2_categories_create**](CategoriesApi.md#v2_categories_create) | **POST** /api/v2/categories/ | 
-[**v2_categories_delete**](CategoriesApi.md#v2_categories_delete) | **DELETE** /api/v2/categories/{lookup_value}/ | 
-[**v2_categories_import_data_file**](CategoriesApi.md#v2_categories_import_data_file) | **POST** /api/v2/categories/{lookup_value}/import/ | 
-[**v2_categories_list**](CategoriesApi.md#v2_categories_list) | **GET** /api/v2/categories/ | 
-[**v2_categories_list_metas**](CategoriesApi.md#v2_categories_list_metas) | **GET** /api/v2/categories_metas/ | 
-[**v2_categories_partial_update**](CategoriesApi.md#v2_categories_partial_update) | **PATCH** /api/v2/categories/{lookup_value}/ | 
-[**v2_categories_read**](CategoriesApi.md#v2_categories_read) | **GET** /api/v2/categories/{lookup_value}/ | 
-[**v2_categories_restoration**](CategoriesApi.md#v2_categories_restoration) | **POST** /api/v2/categories/{lookup_value}/restoration/ | 
-[**v2_categories_sync**](CategoriesApi.md#v2_categories_sync) | **POST** /api/v2/categories/{lookup_value}/sync/ | 
-[**v2_categories_test_connection**](CategoriesApi.md#v2_categories_test_connection) | **POST** /api/v2/categories/{lookup_value}/test_connection/ | 
-[**v2_categories_test_fetch_data**](CategoriesApi.md#v2_categories_test_fetch_data) | **POST** /api/v2/categories/{lookup_value}/test_fetch_data/ | 
-[**v2_categories_update**](CategoriesApi.md#v2_categories_update) | **PUT** /api/v2/categories/{lookup_value}/ | 
+[**v2_categories_create**](CategoriesApi.md#v2_categories_create) | **POST** /api/v2/categories/ |
+[**v2_categories_delete**](CategoriesApi.md#v2_categories_delete) | **DELETE** /api/v2/categories/{lookup_value}/ |
+[**v2_categories_import_data_file**](CategoriesApi.md#v2_categories_import_data_file) | **POST** /api/v2/categories/{lookup_value}/import/ |
+[**v2_categories_list**](CategoriesApi.md#v2_categories_list) | **GET** /api/v2/categories/ |
+[**v2_categories_list_metas**](CategoriesApi.md#v2_categories_list_metas) | **GET** /api/v2/categories_metas/ |
+[**v2_categories_partial_update**](CategoriesApi.md#v2_categories_partial_update) | **PATCH** /api/v2/categories/{lookup_value}/ |
+[**v2_categories_read**](CategoriesApi.md#v2_categories_read) | **GET** /api/v2/categories/{lookup_value}/ |
+[**v2_categories_restoration**](CategoriesApi.md#v2_categories_restoration) | **POST** /api/v2/categories/{lookup_value}/restoration/ |
+[**v2_categories_sync**](CategoriesApi.md#v2_categories_sync) | **POST** /api/v2/categories/{lookup_value}/sync/ |
+[**v2_categories_test_connection**](CategoriesApi.md#v2_categories_test_connection) | **POST** /api/v2/categories/{lookup_value}/test_connection/ |
+[**v2_categories_test_fetch_data**](CategoriesApi.md#v2_categories_test_fetch_data) | **POST** /api/v2/categories/{lookup_value}/test_fetch_data/ |
+[**v2_categories_update**](CategoriesApi.md#v2_categories_update) | **PUT** /api/v2/categories/{lookup_value}/ |
 
 # **v2_categories_create**
 > Category v2_categories_create(body)
@@ -34,7 +34,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-body = bkuser_sdk.CreateCategory() # CreateCategory | 
+body = bkuser_sdk.CreateCategory() # CreateCategory |
 
 try:
     api_response = api_instance.v2_categories_create(body)
@@ -47,7 +47,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**CreateCategory**](CreateCategory.md)|  | 
+ **body** | [**CreateCategory**](CreateCategory.md)|  |
 
 ### Return type
 
@@ -81,7 +81,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-lookup_value = 'lookup_value_example' # str | 
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_instance.v2_categories_delete(lookup_value)
@@ -93,7 +93,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_value** | **str**|  | 
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -127,8 +127,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-raw_data_file = 'raw_data_file_example' # file | 
-lookup_value = 'lookup_value_example' # str | 
+raw_data_file = 'raw_data_file_example' # file |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_categories_import_data_file(raw_data_file, lookup_value)
@@ -141,8 +141,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **raw_data_file** | **file**|  | 
- **lookup_value** | **str**|  | 
+ **raw_data_file** | **file**|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -202,20 +202,20 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ordering** | **str**| Which field to use when ordering the results. | [optional] 
- **page** | **int**| A page number within the paginated result set. | [optional] 
- **page_size** | **int**| Number of results to return per page. | [optional] 
- **fields** | [**list[str]**](str.md)| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
- **lookup_field** | **str**| 查询字段，针对 exact_lookups,fuzzy_lookups 生效 | [optional] 
- **exact_lookups** | [**list[str]**](str.md)| 精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish | [optional] 
- **fuzzy_lookups** | [**list[str]**](str.md)| 模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish | [optional] 
- **wildcard_search** | **str**| 在多个字段模糊搜索的内容 | [optional] 
- **wildcard_search_fields** | [**list[str]**](str.md)| 指定多个模糊搜索字段 | [optional] 
- **best_match** | **bool**| 是否按照最短匹配排序 | [optional] 
- **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional] 
- **since** | **datetime**| 筛选某个时间点后的记录 | [optional] 
- **until** | **datetime**| 筛选某个时间点前的记录 | [optional] 
- **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
+ **ordering** | **str**| Which field to use when ordering the results. | [optional]
+ **page** | **int**| A page number within the paginated result set. | [optional]
+ **page_size** | **int**| Number of results to return per page. | [optional]
+ **fields** | [**list[str]**](str.md)| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional]
+ **lookup_field** | **str**| 查询字段，针对 exact_lookups,fuzzy_lookups 生效 | [optional]
+ **exact_lookups** | [**list[str]**](str.md)| 精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish | [optional]
+ **fuzzy_lookups** | [**list[str]**](str.md)| 模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish | [optional]
+ **wildcard_search** | **str**| 在多个字段模糊搜索的内容 | [optional]
+ **wildcard_search_fields** | [**list[str]**](str.md)| 指定多个模糊搜索字段 | [optional]
+ **best_match** | **bool**| 是否按照最短匹配排序 | [optional]
+ **time_field** | **str**| 时间过滤字段，支持 update_time, create_time | [optional]
+ **since** | **datetime**| 筛选某个时间点后的记录 | [optional]
+ **until** | **datetime**| 筛选某个时间点前的记录 | [optional]
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional]
 
 ### Return type
 
@@ -265,10 +265,10 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_field** | **str**| A search term. | [optional] 
- **ordering** | **str**| Which field to use when ordering the results. | [optional] 
- **page** | **int**| A page number within the paginated result set. | [optional] 
- **page_size** | **int**| Number of results to return per page. | [optional] 
+ **lookup_field** | **str**| A search term. | [optional]
+ **ordering** | **str**| Which field to use when ordering the results. | [optional]
+ **page** | **int**| A page number within the paginated result set. | [optional]
+ **page_size** | **int**| Number of results to return per page. | [optional]
 
 ### Return type
 
@@ -300,8 +300,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-body = bkuser_sdk.Category() # Category | 
-lookup_value = 'lookup_value_example' # str | 
+body = bkuser_sdk.Category() # Category |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_categories_partial_update(body, lookup_value)
@@ -314,8 +314,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**Category**](Category.md)|  | 
- **lookup_value** | **str**|  | 
+ **body** | [**Category**](Category.md)|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -349,7 +349,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-lookup_value = 'lookup_value_example' # str | 
+lookup_value = 'lookup_value_example' # str |
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
 include_disabled = true # bool | 是否包含已软删除的数据 (optional)
@@ -365,10 +365,10 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_value** | **str**|  | 
- **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
- **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
- **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
+ **lookup_value** | **str**|  |
+ **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional]
+ **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional]
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional]
 
 ### Return type
 
@@ -402,8 +402,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-body = NULL # object | 
-lookup_value = 'lookup_value_example' # str | 
+body = NULL # object |
+lookup_value = 'lookup_value_example' # str |
 fields = 'fields_example' # str | 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id (optional)
 lookup_field = 'lookup_field_example' # str | 指定查询字段，内容为 lookup_value 所属字段, 例如: username (optional)
 include_disabled = true # bool | 是否包含已软删除的数据 (optional)
@@ -419,11 +419,11 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | 
- **lookup_value** | **str**|  | 
- **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional] 
- **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional] 
- **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional] 
+ **body** | [**object**](object.md)|  |
+ **lookup_value** | **str**|  |
+ **fields** | **str**| 指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id | [optional]
+ **lookup_field** | **str**| 指定查询字段，内容为 lookup_value 所属字段, 例如: username | [optional]
+ **include_disabled** | **bool**| 是否包含已软删除的数据 | [optional]
 
 ### Return type
 
@@ -457,8 +457,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-body = bkuser_sdk.CategorySync() # CategorySync | 
-lookup_value = 'lookup_value_example' # str | 
+body = bkuser_sdk.CategorySync() # CategorySync |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_categories_sync(body, lookup_value)
@@ -471,8 +471,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**CategorySync**](CategorySync.md)|  | 
- **lookup_value** | **str**|  | 
+ **body** | [**CategorySync**](CategorySync.md)|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -506,8 +506,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-body = bkuser_sdk.CategoryTestConnection() # CategoryTestConnection | 
-lookup_value = 'lookup_value_example' # str | 
+body = bkuser_sdk.CategoryTestConnection() # CategoryTestConnection |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_categories_test_connection(body, lookup_value)
@@ -520,8 +520,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**CategoryTestConnection**](CategoryTestConnection.md)|  | 
- **lookup_value** | **str**|  | 
+ **body** | [**CategoryTestConnection**](CategoryTestConnection.md)|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -555,8 +555,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-body = bkuser_sdk.CategoryTestFetchData() # CategoryTestFetchData | 
-lookup_value = 'lookup_value_example' # str | 
+body = bkuser_sdk.CategoryTestFetchData() # CategoryTestFetchData |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_categories_test_fetch_data(body, lookup_value)
@@ -569,8 +569,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**CategoryTestFetchData**](CategoryTestFetchData.md)|  | 
- **lookup_value** | **str**|  | 
+ **body** | [**CategoryTestFetchData**](CategoryTestFetchData.md)|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -604,8 +604,8 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.CategoriesApi()
-body = bkuser_sdk.Category() # Category | 
-lookup_value = 'lookup_value_example' # str | 
+body = bkuser_sdk.Category() # Category |
+lookup_value = 'lookup_value_example' # str |
 
 try:
     api_response = api_instance.v2_categories_update(body, lookup_value)
@@ -618,8 +618,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**Category**](Category.md)|  | 
- **lookup_value** | **str**|  | 
+ **body** | [**Category**](Category.md)|  |
+ **lookup_value** | **str**|  |
 
 ### Return type
 
@@ -635,4 +635,3 @@ No authorization required
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

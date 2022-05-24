@@ -164,7 +164,7 @@ reference = "tencent-mirrors"
 [[package]]
 name = "bkapi-bk-apigateway"
 version = "1.0.6"
-description = "蓝鲸API网关"
+description = "钃濋哺API缃戝叧"
 category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,<4.0,>=2.7"
@@ -2144,7 +2144,7 @@ amqp = [
     {file = "amqp-2.6.1.tar.gz", hash = "sha256:70cdb10628468ff14e57ec2f751c7aa9e48e7e3651cfd62d431213c0c4e58f21"},
 ]
 apigw-manager = [
-    {file = "apigw_manager-1.0.10-py3-none-any.whl", hash = "md5:ec5bb61bfae9e55d5cf37a59022473dc"},
+    {file = "apigw_manager-1.0.10-py3-none-any.whl", hash = "sha256:536af6938c1fc12478e55b8d5a03065a9aae89c48f67e9f73b0e5e78e363f719"},
 ]
 appnope = [
     {file = "appnope-0.1.3-py2.py3-none-any.whl", hash = "sha256:265a455292d0bd8a72453494fa24df5a11eb18373a60c7c0430889f22548605e"},
@@ -2175,10 +2175,10 @@ bk-iam = [
     {file = "bk_iam-1.1.10-py2.py3-none-any.whl", hash = "sha256:83b01016c54e77b39ad474d5265686117bf4b9a70d120397e9c4ae493ce6e8ee"},
 ]
 bkapi-bk-apigateway = [
-    {file = "bkapi-bk-apigateway-1.0.6.tar.gz", hash = "md5:a29cfd774a9185c920a394cdec0a9493"},
+    {file = "bkapi-bk-apigateway-1.0.6.tar.gz", hash = "sha256:561bca6fcdb84f7cc9e7b3aee2b70318859b4bd8d374995df68f7dc394ea8a5d"},
 ]
 bkapi-client-core = [
-    {file = "bkapi_client_core-1.1.5-py2.py3-none-any.whl", hash = "md5:30099edee4570333fe103e71fe8735f5"},
+    {file = "bkapi_client_core-1.1.5-py2.py3-none-any.whl", hash = "sha256:780d35d6d1804851e5fcd8c4a3fc785cee9b760d6209ca61a1bafe20de13436b"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},

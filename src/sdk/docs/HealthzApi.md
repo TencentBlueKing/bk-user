@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**healthz**](HealthzApi.md#healthz) | **GET** /healthz/ | 
+[**healthz**](HealthzApi.md#healthz) | **GET** /healthz/ |
 
 # **healthz**
 > healthz()
@@ -45,4 +45,3 @@ No authorization required
  - **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

@@ -60,12 +60,12 @@
                 wrapper.addClass('is-checked');
             } else {
                 wrapper.removeClass('is-checked');
-            } 
+            }
             if (isDisabled) {
                 wrapper.addClass('is-disabled');
             } else {
                 wrapper.removeClass('is-disabled');
-            } 
+            }
 
             // 缁戝畾浜嬩欢
             target.on('click', function() {
@@ -129,7 +129,7 @@
                     _toggleActive();
                 }
             });
-        } 
+        }
 
         $.each(this, function() {
             var target = $(this);

@@ -1,5 +1,5 @@
 [run]
-omit = 
+omit =
     */migrations/*
     */bkuser_core/apis/*
     */bkuser_core/monitoring/*

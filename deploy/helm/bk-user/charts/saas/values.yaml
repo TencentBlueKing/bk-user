@@ -217,5 +217,3 @@ migration:
       registry: "hub.bktencent.com"
       repository: blueking/k8s-wait-for
       tag: "v1.5.1"
-
-

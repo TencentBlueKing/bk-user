@@ -3,8 +3,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**username_list** | **list[str]** |  | [optional] 
-**is_complete** | **bool** |  | [optional] 
+**username_list** | **list[str]** |  | [optional]
+**is_complete** | **bool** |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-

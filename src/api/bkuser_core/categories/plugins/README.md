@@ -96,15 +96,15 @@ settings:
 
 在 `src/api/bkuser_core/categories/plugins/base.py` 中，我们实现了一个 `Syncer` 同步器的基类，
 
-原则上我们将给予插件较高的自由度，只需要继承并实现 `sync` 方法即可接入。不过考虑到整体的代码质量和维护性，在内嵌的几个插件中，我们都采用了类似的 `sync` 逻辑实现，可以作为后续开发和评审的参考。 
+原则上我们将给予插件较高的自由度，只需要继承并实现 `sync` 方法即可接入。不过考虑到整体的代码质量和维护性，在内嵌的几个插件中，我们都采用了类似的 `sync` 逻辑实现，可以作为后续开发和评审的参考。
 
 ### DBSyncManager
 DB 同步管理器，主要目的是将数据处理操作和 DB 插入（内存操作和 IO 操作）二者分开，提升整体同步速度。支持在将数据模型放入内存对象池，并附带上对应操作（新增 or 更新），然后批量同步到数据库。
 
 具体的使用请参看 `src/api/bkuser_core/categories/plugins/base.py` 中的实现，以及内嵌插件使用样例。
 
-### SyncModelMeta 
-   
+### SyncModelMeta
+
 在 `src/api/bkuser_core/categories/plugins/base.py` 中我们定义了一个 `SyncModelMeta`，作为同步数据模型的元信息描述，通常情况下不需要关心和修改，已经集成在 `DBSyncManager` 中。
 
 如果需要修改可以参考 `custom` 插件中 `metas.py` 的元信息描述。

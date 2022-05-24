@@ -4,9 +4,9 @@ All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**v1_login_login**](V1Api.md#v1_login_login) | **POST** /api/v1/login/check/ | 
-[**v1_login_profile_batch_query**](V1Api.md#v1_login_profile_batch_query) | **POST** /api/v1/login/profile/query/ | 
-[**v1_login_upsert**](V1Api.md#v1_login_upsert) | **POST** /api/v1/login/profile/ | 
+[**v1_login_login**](V1Api.md#v1_login_login) | **POST** /api/v1/login/check/ |
+[**v1_login_profile_batch_query**](V1Api.md#v1_login_profile_batch_query) | **POST** /api/v1/login/profile/query/ |
+[**v1_login_upsert**](V1Api.md#v1_login_upsert) | **POST** /api/v1/login/profile/ |
 
 # **v1_login_login**
 > Profile v1_login_login(body)
@@ -25,7 +25,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.V1Api()
-body = bkuser_sdk.ProfileLogin() # ProfileLogin | 
+body = bkuser_sdk.ProfileLogin() # ProfileLogin |
 
 try:
     api_response = api_instance.v1_login_login(body)
@@ -38,7 +38,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**ProfileLogin**](ProfileLogin.md)|  | 
+ **body** | [**ProfileLogin**](ProfileLogin.md)|  |
 
 ### Return type
 
@@ -72,7 +72,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.V1Api()
-body = bkuser_sdk.LoginBatchQuery() # LoginBatchQuery | 
+body = bkuser_sdk.LoginBatchQuery() # LoginBatchQuery |
 
 try:
     api_response = api_instance.v1_login_profile_batch_query(body)
@@ -85,7 +85,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**LoginBatchQuery**](LoginBatchQuery.md)|  | 
+ **body** | [**LoginBatchQuery**](LoginBatchQuery.md)|  |
 
 ### Return type
 
@@ -119,7 +119,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.V1Api()
-body = bkuser_sdk.LoginUpsert() # LoginUpsert | 
+body = bkuser_sdk.LoginUpsert() # LoginUpsert |
 
 try:
     api_response = api_instance.v1_login_upsert(body)
@@ -132,7 +132,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**LoginUpsert**](LoginUpsert.md)|  | 
+ **body** | [**LoginUpsert**](LoginUpsert.md)|  |
 
 ### Return type
 
@@ -148,4 +148,3 @@ No authorization required
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

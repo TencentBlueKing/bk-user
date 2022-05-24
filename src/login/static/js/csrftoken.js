@@ -18,7 +18,7 @@ $.ajaxSetup({
         art.dialog({
             id: 'bktips',
             title: gettext("提示"),
-            lock: true, 
+            lock: true,
             content: ajax_content
       });
         return;
@@ -29,7 +29,7 @@ $.ajaxSetup({
           art.dialog({
               id: 'bktips',
               title: gettext("提示"),
-              lock: true, 
+              lock: true,
               content: gettext("系统出现异常：")+textStatus+"---"+xhr.status+'===='
         });
       }

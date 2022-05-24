@@ -4,10 +4,10 @@ All URIs are relative to *http://localhost:8004/*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**v2_batch_departments_multiple_retrieve_profiles**](BatchApi.md#v2_batch_departments_multiple_retrieve_profiles) | **GET** /api/v2/batch/departments/profiles/ | 
-[**v2_batch_profiles_delete**](BatchApi.md#v2_batch_profiles_delete) | **DELETE** /api/v2/batch/profiles/ | 
-[**v2_batch_profiles_partial_update**](BatchApi.md#v2_batch_profiles_partial_update) | **PATCH** /api/v2/batch/profiles/ | 
-[**v2_batch_profiles_read**](BatchApi.md#v2_batch_profiles_read) | **GET** /api/v2/batch/profiles/ | 
+[**v2_batch_departments_multiple_retrieve_profiles**](BatchApi.md#v2_batch_departments_multiple_retrieve_profiles) | **GET** /api/v2/batch/departments/profiles/ |
+[**v2_batch_profiles_delete**](BatchApi.md#v2_batch_profiles_delete) | **DELETE** /api/v2/batch/profiles/ |
+[**v2_batch_profiles_partial_update**](BatchApi.md#v2_batch_profiles_partial_update) | **PATCH** /api/v2/batch/profiles/ |
+[**v2_batch_profiles_read**](BatchApi.md#v2_batch_profiles_read) | **GET** /api/v2/batch/profiles/ |
 
 # **v2_batch_departments_multiple_retrieve_profiles**
 > list[Profile] v2_batch_departments_multiple_retrieve_profiles(department_ids, recursive=recursive)
@@ -40,8 +40,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **department_ids** | **str**| department id 列表，以 , 分隔 | 
- **recursive** | **bool**|  | [optional] 
+ **department_ids** | **str**| department id 列表，以 , 分隔 |
+ **recursive** | **bool**|  | [optional]
 
 ### Return type
 
@@ -75,7 +75,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.BatchApi()
-body = [bkuser_sdk.UpdateProfile()] # list[UpdateProfile] | 
+body = [bkuser_sdk.UpdateProfile()] # list[UpdateProfile] |
 
 try:
     api_response = api_instance.v2_batch_profiles_delete(body)
@@ -88,7 +88,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**list[UpdateProfile]**](UpdateProfile.md)|  | 
+ **body** | [**list[UpdateProfile]**](UpdateProfile.md)|  |
 
 ### Return type
 
@@ -122,7 +122,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = bkuser_sdk.BatchApi()
-body = [bkuser_sdk.UpdateProfile()] # list[UpdateProfile] | 
+body = [bkuser_sdk.UpdateProfile()] # list[UpdateProfile] |
 
 try:
     api_response = api_instance.v2_batch_profiles_partial_update(body)
@@ -135,7 +135,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**list[UpdateProfile]**](UpdateProfile.md)|  | 
+ **body** | [**list[UpdateProfile]**](UpdateProfile.md)|  |
 
 ### Return type
 
@@ -182,7 +182,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **query_ids** | **str**| 查询 id 列表，以 , 分隔 | 
+ **query_ids** | **str**| 查询 id 列表，以 , 分隔 |
 
 ### Return type
 
@@ -198,4 +198,3 @@ No authorization required
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

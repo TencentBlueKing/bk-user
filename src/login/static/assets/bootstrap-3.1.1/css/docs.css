@@ -1558,10 +1558,10 @@ h1[id] {
 .navbar-collapse{max-height:600px;}
 
 @media (max-width: 768px) {
-	.navbar-nav{float:left; margin:0;}	
+	.navbar-nav{float:left; margin:0;}
 	.navbar-nav>li{float:left;}
 	.bs-example{margin:0; margin-bottom:15px; border-width:1px; -webkit-box-shadow:none; -moz-box-shadow:none; box-shadow:none; border-color:#ddd; -webkit-border-radius:4px; -moz-border-radius:4px; border-radius:4px;}
 }
 @media (min-width: 768px) and (max-width: 1200px){
-	.container{width:970px;}	
+	.container{width:970px;}
 }

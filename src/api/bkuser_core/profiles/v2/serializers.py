@@ -72,6 +72,7 @@ class ProfileSerializer(CustomFieldsModelSerializer):
     extras = serializers.SerializerMethodField(required=False)
     leader = LeaderSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
+    account_expiration_date = serializers.DateField()
 
     def get_extras(self, obj) -> dict:
         """尝试从 context 中获取默认字段值"""
@@ -121,6 +122,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     staff_status = serializers.CharField(read_only=True)
     status = serializers.CharField(read_only=True)
     logo = serializers.CharField(read_only=True, allow_blank=True)
+    account_expiration_date = serializers.DateField()
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""

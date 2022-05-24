@@ -130,27 +130,27 @@ body{font-family:"Microsoft Yahei";}
 .sidebar .navi li ul li a:hover{background:#131313; border-bottom:1px solid #222;}
 
 /* Sidebar colors */
-.sidebar .navi > li.nlightblue > a:hover, 
-.sidebar .navi > li.open.nlightblue > a, 
+.sidebar .navi > li.nlightblue > a:hover,
+.sidebar .navi > li.open.nlightblue > a,
 .sidebar .navi > li.current.nlightblue > a{background:#52b9e9 !important; -webkit-transition:background 0.5s ease; -moz-transition:background 0.5s ease; -o-transition:background 0.5s ease; transition:background 0.5s ease;}
 
-.sidebar .navi > li.nblue > a:hover, 
+.sidebar .navi > li.nblue > a:hover,
 .sidebar .navi > li.open.nblue > a,
 .sidebar .navi > li.current.nblue > a{background:#1171a3 !important; -webkit-transition:background 0.5s ease; -moz-transition:background 0.5s ease; -o-transition:background 0.5s ease; transition:background 0.5s ease;}
 
-.sidebar .navi > li.ngreen > a:hover, 
+.sidebar .navi > li.ngreen > a:hover,
 .sidebar .navi > li.open.ngreen > a,
 .sidebar .navi > li.current.ngreen > a{background:#43c83c !important; -webkit-transition:background 0.5s ease; -moz-transition:background 0.5s ease; -o-transition:background 0.5s ease; transition:background 0.5s ease;}
 
-.sidebar .navi > li.norange > a:hover, 
+.sidebar .navi > li.norange > a:hover,
 .sidebar .navi > li.open.norange > a,
 .sidebar .navi > li.current.norange > a{background:#f88529 !important; -webkit-transition:background 0.5s ease; -moz-transition:background 0.5s ease; -o-transition:background 0.5s ease; transition:background 0.5s ease;}
 
-.sidebar .navi > li.nred > a:hover, 
+.sidebar .navi > li.nred > a:hover,
 .sidebar .navi > li.open.nred > a,
 .sidebar .navi > li.current.nred > a{background:#fa3031 !important; -webkit-transition:background 0.5s ease; -moz-transition:background 0.5s ease; -o-transition:background 0.5s ease; transition:background 0.5s ease;}
 
-.sidebar .navi > li.nviolet > a:hover, 
+.sidebar .navi > li.nviolet > a:hover,
 .sidebar .navi > li.open.nviolet > a,
 .sidebar .navi > li.current.nviolet > a{background:#932ab6 !important; -webkit-transition:background 0.5s ease; -moz-transition:background 0.5s ease; -o-transition:background 0.5s ease; transition:background 0.5s ease;}
 

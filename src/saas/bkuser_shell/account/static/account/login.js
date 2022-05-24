@@ -11,7 +11,7 @@
 */
 /**
  * 登录相关 JS，其中 remote_static_url & static_url 来源于全局变量
- */ 
+ */
 
 document.write(" <script lanague=\"javascript\" src=\""+remote_static_url+"artdialog/jquery.artDialog.js?skin=simple\"> <\/script>");
 
