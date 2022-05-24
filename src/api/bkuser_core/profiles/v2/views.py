@@ -682,6 +682,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             raise error_codes.PASSWORD_ERROR
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
+        self._check_account_status(request, profile)
 
         create_profile_log(profile=profile, operation="LogIn", request=request, params={"is_success": True})
         return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)
@@ -722,6 +723,16 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
 
             raise error_codes.PASSWORD_EXPIRED.format(data=self._generate_reset_passwd_url_with_token(profile))
+
+    def _check_account_status(self, request, profile: Profile):
+        if (profile.account_expiration_date - datetime.date.today()).days < 0:
+            create_profile_log(
+                profile=profile,
+                operation="LogIn",
+                request=request,
+                params={"is_success": False, "reason": LogInFailReason.EXPIRED_USER.value},
+            )
+            raise error_codes.ACCOUNT_EXPIRED
 
     @staticmethod
     def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
