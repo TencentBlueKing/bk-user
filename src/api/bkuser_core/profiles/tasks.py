@@ -84,6 +84,7 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
 def notice_for_account_expiration():
     """
     用户账号过期通知
+    #TODO:存在大数量级用户的情况下，当天的任务可能无法当天执行完毕，新一天的任务又同步开启，这里考虑做优化
     """
     expiring_profile_list, expired_profile_list = get_profiles_for_account_expiration()
 
