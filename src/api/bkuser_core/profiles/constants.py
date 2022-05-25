@@ -22,7 +22,13 @@ class ProfileStatus(AutoNameEnum):
     DISABLED = auto()
     EXPIRED = auto()
 
-    _choices_labels = ((NORMAL, "正常"), (LOCKED, "被冻结"), (DELETED, "被删除"), (DISABLED, "被禁用"), (EXPIRED, "账号已过期"))
+    _choices_labels = (
+        (NORMAL, "正常"),
+        (LOCKED, "被冻结"),
+        (DELETED, "被删除"),
+        (DISABLED, "被禁用"),
+        (EXPIRED, "账号已过期")
+    )
 
 
 class StaffStatus(AutoNameEnum):
