@@ -71,7 +71,7 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
     )
 
 
-@periodic_task(run_every=crontab(minute='11', hour='19', day_of_week="*"))
+@periodic_task(run_every=crontab(minute='00', hour='03', day_of_week="*"))
 def account_status_test():
     expericed_profiles = Profile.objects.filter(account_expiration_date__lt=datetime.date.today()).filter(
         status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value]
