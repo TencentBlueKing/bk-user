@@ -91,6 +91,10 @@ class Profile(TimestampedModel):
     )
     password_update_time = models.DateTimeField(verbose_name=_("密码最后更新时间"), null=True, blank=True)
     # ----------------------- 密码相关 -----------------------
+    # ----------------------- 账号相关 -----------------------
+    account_expiration_date = models.DateField(verbose_name=_("账号过期时间"), null=True, blank=True,
+                                               default=datetime.date(year=2100, month=1, day=1))
+    # ----------------------- 账号相关 -----------------------
 
     # ----------------------- 职位相关 -----------------------
     position = models.IntegerField(verbose_name=_("职务"), null=True, blank=True, default=0)
