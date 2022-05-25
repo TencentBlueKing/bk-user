@@ -732,7 +732,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 request=request,
                 params={"is_success": False, "reason": LogInFailReason.EXPIRED_USER.value},
             )
-            raise error_codes.ACCOUNT_EXPIRED
+            raise error_codes.USER_IS_EXPIRED
 
     @staticmethod
     def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
