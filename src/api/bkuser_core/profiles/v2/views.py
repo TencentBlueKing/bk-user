@@ -682,7 +682,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             raise error_codes.PASSWORD_ERROR
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
-        self._check_account_status(request, profile)
+        # self._check_account_status(request, profile)
 
         create_profile_log(profile=profile, operation="LogIn", request=request, params={"is_success": True})
         return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)
