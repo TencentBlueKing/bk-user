@@ -8,15 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 import logging
 import urllib.parse
 
+from celery.schedules import crontab
+from celery.task import periodic_task
 from django.conf import settings
 
 from bkuser_core.celery import app
 from bkuser_core.common.notifier import send_mail
 from bkuser_core.profiles import exceptions
-from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL
+from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, ProfileStatus
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
@@ -66,3 +69,11 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
         message=message,
         title=email_config["title"],
     )
+
+
+@periodic_task(run_every=crontab(minute='0', hour='3', day_of_week="*"))
+def account_status_test():
+    expericed_profiles = Profile.objects.filter(account_expiration_date__lt=datetime.date.today()).filter(
+        status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value]
+    )
+    expericed_profiles.update(status=ProfileStatus.EXPIRED.value)
