@@ -55,7 +55,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("profiles", "0022_auto_20220522_1637"),
+        ("profiles", "0022_auto_20220520_1028"),
         ("user_settings", "0015_add_default_fields_account_settings")
     ]
 
