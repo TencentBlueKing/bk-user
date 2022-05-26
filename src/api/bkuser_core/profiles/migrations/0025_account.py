@@ -19,15 +19,14 @@ def forwards_func(apps, schema_editor):
     DynamicFieldInfo = apps.get_model("profiles", "DynamicFieldInfo")
 
     builtin_fields_info = dict(
-        account_expiration_date=dict(display_name="账号过期时间", display_name_en="DisplayName", display_name_zh_hans="账号过期时间")
+        account_expiration_date=dict(display_name="账号过期时间", display_name_en="account_expiration_date", display_name_zh_hans="账号过期时间")
     )
 
+
+    for k, info in builtin_fields_info.items():
+        DynamicFieldInfo.objects.create(name=k,order=12,type="string",builtin=True)
     for k, info in builtin_fields_info.items():
         DynamicFieldInfo.objects.filter(name=k).update(**info)
-
-    for d in DynamicFieldInfo.objects.filter(builtin=False):
-        d.display_name_en = d.display_name_zh_hans = d.display_name
-        d.save(update_fields=["display_name_en", "display_name_zh_hans"])
 
 
 class Migration(migrations.Migration):
