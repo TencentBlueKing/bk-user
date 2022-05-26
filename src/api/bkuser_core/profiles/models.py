@@ -82,6 +82,12 @@ class Profile(TimestampedModel):
     )
     # ----------------------- 状态相关 -----------------------
 
+    # ------------------------ 账号相关------------------------
+    account_expiration_date = models.DateField(
+        verbose_name=_("账号过期时间"), null=True, blank=True, default=datetime.date(year=2100, month=1, day=1)
+    )
+    # ----------------------- 账号相关------------------------
+
     # ----------------------- 密码相关 -----------------------
     password = models.CharField(verbose_name=_("用户密码"), null=True, blank=True, default="", max_length=255)
     password_valid_days = models.IntegerField(
