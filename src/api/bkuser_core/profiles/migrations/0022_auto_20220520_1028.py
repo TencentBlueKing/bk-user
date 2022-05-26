@@ -21,6 +21,13 @@ class Migration(migrations.Migration):
             name='category_id',
             field=models.IntegerField(blank=True, null=True, verbose_name='用户目录ID'),
         ),
+        migrations.AlterField(
+            model_name='profile',
+            name='status',
+            field=models.CharField(
+                choices=[('NORMAL', '正常'), ('LOCKED', '被冻结'), ('DELETED', '被删除'), ('DISABLED', '被禁用'),
+                         ('EXPIRED', '账号已过期')], default='NORMAL', max_length=64, verbose_name='账户状态'),
+        ),
         migrations.AlterIndexTogether(
             name='profile',
             index_together={('category_id', 'account_expiration_date')},

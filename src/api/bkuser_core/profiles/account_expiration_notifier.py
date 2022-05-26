@@ -118,7 +118,7 @@ def get_notice_config_for_account_expiration(profile):
                 "send_email":
                     {
                         "sender": email_config["sender"],
-                        "receiver": [profile["email"]],
+                        "receivers": [profile["email"]],
                         "message": message,
                         "title": email_config["title"]
                     }
@@ -145,6 +145,7 @@ def get_notice_config_for_account_expiration(profile):
             {
                 "send_sms":
                     {
+                        "sender": sms_config["sender"],
                         "receivers": [profile["telephone"]],
                         "message": message
                     }

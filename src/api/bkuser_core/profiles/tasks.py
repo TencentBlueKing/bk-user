@@ -99,7 +99,7 @@ def notice_for_account_expiration():
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
             return
-        notice_record = AccountExpirationNoticeRecord.objects.filter(profile_id=profile["id"])
+        notice_record = AccountExpirationNoticeRecord.objects.filter(profile_id=profile["id"]).first()
 
         if not notice_record:
             AccountExpirationNotifier().handler(notice_config)
