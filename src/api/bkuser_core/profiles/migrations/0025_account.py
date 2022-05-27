@@ -24,7 +24,7 @@ def forwards_func(apps, schema_editor):
 
 
     for k, info in builtin_fields_info.items():
-        DynamicFieldInfo.objects.create(name=k,order=12,type="string",builtin=True)
+        DynamicFieldInfo.objects.create(name=k,order=12,type="string",builtin=True,visible=True)
     for k, info in builtin_fields_info.items():
         DynamicFieldInfo.objects.filter(name=k).update(**info)
 

@@ -73,7 +73,6 @@ class ProfileSerializer(CustomFieldsModelSerializer):
     leader = LeaderSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
 
-
     def get_extras(self, obj) -> dict:
         """尝试从 context 中获取默认字段值"""
         return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())

@@ -18,7 +18,7 @@ class SettingsEnableNamespaces(AutoLowerEnum):
     PASSWORD = auto()
     CONNECTION = auto()
     FIELDS = auto()
-    ACCOUNT =auto()
+    ACCOUNT = auto()
 
     _choices_labels = (
         (GENERAL, "通用"),
