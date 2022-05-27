@@ -18,15 +18,17 @@ def forwards_func(apps, schema_editor):
     """添加内建字段信息"""
     DynamicFieldInfo = apps.get_model("profiles", "DynamicFieldInfo")
 
-    builtin_fields_info = dict(
-        account_expiration_date=dict(display_name="账号过期时间", display_name_en="account_expiration_date", display_name_zh_hans="账号过期时间")
-    )
-
-
-    for k, info in builtin_fields_info.items():
-        DynamicFieldInfo.objects.create(name=k,order=12,type="string",builtin=True,visible=True)
-    for k, info in builtin_fields_info.items():
-        DynamicFieldInfo.objects.filter(name=k).update(**info)
+    DynamicFieldInfo.objects.create(name='account_expiration_date',
+                                    display_name='账号过期时间',
+                                    type='string',
+                                    require=False,
+                                    unique=False,
+                                    editable=True,
+                                    builtin=True,
+                                    order=12,
+                                    display_name_en='account_expiration_date',
+                                    display_name_zh_hans='账号过期时间',
+                                    visible=True)
 
 
 class Migration(migrations.Migration):

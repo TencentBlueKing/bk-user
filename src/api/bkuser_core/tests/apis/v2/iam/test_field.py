@@ -80,7 +80,7 @@ class TestIAMFieldsApis:
         body = {
             "type": "field",
             "method": "list_attr_value",
-            "filter": {"attr": "name", "keyword": "usernam"},
+            "filter": {"attr": "name", "keyword": "username"},
             "page": {"offset": 0, "limit": 20},
         }
         request = factory.post("/api/iam/v1/fields/", body, format="json")
