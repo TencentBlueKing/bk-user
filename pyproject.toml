@@ -67,12 +67,16 @@ follow_imports="skip"
 show_error_codes = true
 strict_optional=true
 pretty=true
+exclude = '''(?x)(
+    instrumentor\.py$
+    | otel\.py$
+)'''
 
 [[tool.mypy.overrides]]
 module = [
     "*.migrations.*",
     "*.config.*",
     "bkuser_sdk.*",
-    "*.bkuser_sdk.*"
+    "*.bkuser_sdk.*",
 ]
 ignore_errors = true

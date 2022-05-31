@@ -9,13 +9,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
-
-from bkuser_global.tracing.sentry import init_sentry_sdk
-
-
-class MonitoringConfig(AppConfig):
-    name = "bklogin.monitoring"
-
-    def ready(self):
-        init_sentry_sdk("bk-login", django_integrated=True)

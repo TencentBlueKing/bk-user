@@ -41,6 +41,18 @@ HEALTHZ_PROBES: list = ["bkuser_core.monitoring.probes.DefaultDBProbe"]
 SENTRY_DSN = env("SENTRY_DSN", default="")
 
 # ==============================================================================
+# OTEL
+# ==============================================================================
+# tracing: otel 相关配置
+# if enable, default false
+ENABLE_OTEL_TRACE = env.bool("BKAPP_ENABLE_OTEL_TRACE", default=False)
+BKAPP_OTEL_INSTRUMENT_DB_API = env.bool("BKAPP_OTEL_INSTRUMENT_DB_API", default=True)
+BKAPP_OTEL_SERVICE_NAME = env("BKAPP_OTEL_SERVICE_NAME", default="bk-user")
+BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", "parentbased_always_off")
+BKAPP_OTEL_BK_DATA_ID = env.int("BKAPP_OTEL_BK_DATA_ID", default=-1)
+BKAPP_OTEL_GRPC_HOST = env("BKAPP_OTEL_GRPC_HOST")
+
+# ==============================================================================
 # 全局应用配置
 # ==============================================================================
 
