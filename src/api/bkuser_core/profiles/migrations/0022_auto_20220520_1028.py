@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
             name='status',
             field=models.CharField(
                 choices=[('NORMAL', '正常'), ('LOCKED', '被冻结'), ('DELETED', '被删除'), ('DISABLED', '被禁用'),
-                         ('EXPIRED', '账号已过期')], default='NORMAL', max_length=64, verbose_name='账户状态'),
+                         ('EXPIRED', '已过期')], default='NORMAL', max_length=64, verbose_name='账户状态'),
         ),
         migrations.AlterIndexTogether(
             name='profile',

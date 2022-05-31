@@ -25,7 +25,7 @@ from .account_expiration_notifier import (
 from bkuser_core.celery import app
 from bkuser_core.common.notifier import send_mail
 from bkuser_core.profiles import exceptions
-from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL
+from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, ProfileStatus
 from bkuser_core.profiles.models import AccountExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
@@ -113,3 +113,15 @@ def notice_for_account_expiration():
             notice_record.objects.update(notice_date=datetime.date.today())
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
             return
+
+
+@periodic_task(run_every=crontab(minute='0', hour='3'))
+def account_status_test():
+    """
+    用户状态检测
+    """
+    expired_profiles = Profile.objects.filter(
+        account_expiration_date__lt=datetime.date.today(),
+        status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],
+    )
+    expired_profiles.update(status=ProfileStatus.EXPIRED.value)

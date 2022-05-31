@@ -27,7 +27,7 @@ class ProfileStatus(AutoNameEnum):
         (LOCKED, "被冻结"),
         (DELETED, "被删除"),
         (DISABLED, "被禁用"),
-        (EXPIRED, "账号已过期")
+        (EXPIRED, "已过期")
     )
 
 
