@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import json
+from http import HTTPStatus
 from typing import Collection
 
 from django.conf import settings
@@ -49,16 +50,18 @@ def requests_callback(span: Span, response):
     # }
 
     # NOTE: esb got a result, but apigateway  /iam backend / search-engine got not result
-    code = json_result.get("code", 0)
-    try:
-        code = int(code)
-    except Exception:  # pylint: disable=broad-except
-        pass
-    span.set_attribute("result_code", code)
-    if code in [0, "0", "00"]:
-        span.set_status(Status(StatusCode.OK))
-    else:
-        span.set_status(Status(StatusCode.ERROR))
+    # only 200 will do those check and set
+    if response.status_code == HTTPStatus.OK.value:
+        code = json_result.get("code", 0)
+        try:
+            code = int(code)
+        except Exception:  # pylint: disable=broad-except
+            pass
+        span.set_attribute("result_code", code)
+        if code in [0, "0", "00"]:
+            span.set_status(Status(StatusCode.OK))
+        else:
+            span.set_status(Status(StatusCode.ERROR))
 
     span.set_attribute("result_message", json_result.get("message", ""))
 
@@ -82,6 +85,10 @@ def django_response_hook(span, request, response):
     """
     处理蓝鲸标准协议 Django 响应
     """
+    # the status of non-200 should not be changed
+    if response.status_code != HTTPStatus.OK.value:
+        return
+
     if hasattr(response, "data"):
         result = response.data
     else:
