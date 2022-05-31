@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import os
+
 from django.conf import settings
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
@@ -21,8 +23,8 @@ from .instrumentor import BKAppInstrumentor
 
 
 def setup_trace_config():
-    environment = getattr(settings, "ENVIRONMENT", "dev")
-    if environment == "dev":
+    is_environment_dev = os.getenv("DJANGO_SETTINGS_MODULE", "").endswith(".dev")
+    if is_environment_dev:
         # local environment, use jaeger as trace service
         # docker run -p 16686:16686 -p 6831:6831/udp jaegertracing/all-in-one
         trace.set_tracer_provider(
