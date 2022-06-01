@@ -23,6 +23,8 @@ from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, Pro
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
+from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.constants import CategoryType
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +72,11 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
         title=email_config["title"],
     )
 
-
 @periodic_task(run_every=crontab(minute='0', hour='3'))
 def account_status_test():
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
     expired_profiles = Profile.objects.filter(
         account_expiration_date__lt=datetime.date.today(),
-        status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],
+        status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],category_id__in=category_ids
     )
     expired_profiles.update(status=ProfileStatus.EXPIRED.value)
