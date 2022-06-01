@@ -17,15 +17,13 @@ from bkuser_core.audit.models import LogIn
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.notifier import send_mail, send_sms
+from bkuser_core.profiles.constants import NOTICE_METHOD_EMAIL, NOTICE_METHOD_SMS
 from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.constants import ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY, SettingsEnableNamespaces
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
-
-EMAIL_NOTICE_METHOD = "send_email"
-SMS_NOTICE_METHOD = "send_sms"
 
 
 def get_profiles_for_account_expiration():
@@ -98,7 +96,7 @@ def get_notice_config_for_account_expiration(profile):
     if not notice_methods:
         return
 
-    if EMAIL_NOTICE_METHOD in notice_methods:
+    if NOTICE_METHOD_EMAIL in notice_methods:
         email_config = (
             config_loader["expired_account_email_config"]
             if expire_at.days < 0
@@ -126,7 +124,7 @@ def get_notice_config_for_account_expiration(profile):
             }
         )
 
-    if SMS_NOTICE_METHOD in notice_methods:
+    if NOTICE_METHOD_SMS in notice_methods:
         sms_config = (
             config_loader["expired_account_sms_config"]
             if expire_at.days < 0

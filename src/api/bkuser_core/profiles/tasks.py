@@ -22,6 +22,8 @@ from .account_expiration_notifier import (
     get_notice_config_for_account_expiration,
     get_profiles_for_account_expiration,
 )
+from bkuser_core.categories.constants import CategoryType
+from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
 from bkuser_core.common.notifier import send_mail
 from bkuser_core.profiles import exceptions
@@ -31,9 +33,6 @@ from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
 
 logger = logging.getLogger(__name__)
-
-EMAIL_NOTICE_METHOD = "send_email"
-SMS_NOTICE_METHOD = "send_sms"
 
 
 @app.task
@@ -120,7 +119,9 @@ def account_status_test():
     """
     用户状态检测
     """
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
     expired_profiles = Profile.objects.filter(
+        category_id__in=category_ids,
         account_expiration_date__lt=datetime.date.today(),
         status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],
     )
