@@ -108,8 +108,8 @@ def notice_for_account_expiration():
             ExpirationNoticeRecord.objects.create(
                 type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
                 notice_date=datetime.date.today(),
-                profile_id=profile["id"]
-                )
+                profile_id=profile["id"],
+            )
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
             continue
 
