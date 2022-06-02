@@ -26,6 +26,7 @@ from .constants import (
     ProfileStatus,
     RoleCodeEnum,
     StaffStatus,
+    TypeOfExpiration,
 )
 from .managers import DynamicFieldInfoManager, ProfileAllManager, ProfileManager, ProfileTokenManager
 from .validators import validate_domain, validate_dynamic_field_name, validate_extras_value_unique, validate_username
@@ -293,11 +294,17 @@ class ProfileTokenHolder(TimestampedModel):
         return now() > self.expire_time
 
 
-class AccountExpirationNoticeRecord(TimestampedModel):
-    notice_date = models.DateField(verbose_name=_("账号过期通知时间"), null=False, blank=False)
-    profile = models.ForeignKey("profiles.Profile", verbose_name="登陆用户", on_delete=models.CASCADE)
+class ExpirationNoticeRecord(TimestampedModel):
+    notice_date = models.DateField(verbose_name=_("过期通知时间"), null=False, blank=False)
+    type = models.CharField(
+        verbose_name=_("过期类型"),
+        choices=TypeOfExpiration.get_choices(),
+        db_index=True,
+        max_length=64,
+    )
+    profile = models.ForeignKey("profiles.Profile", verbose_name="用户", on_delete=models.CASCADE)
 
     class Meta:
         ordering = ["id"]
-        verbose_name = "账号过期通知记录"
-        verbose_name_plural = "账号过期通知记录"
+        verbose_name = "过期通知记录"
+        verbose_name_plural = "过期通知记录"

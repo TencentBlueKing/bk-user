@@ -36,7 +36,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("profiles", "0024_accountexpirationnoticerecord"),
+        ("profiles", "0024_expirationnoticerecord"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]

@@ -12,17 +12,18 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='AccountExpirationNoticeRecord',
+            name='ExpirationNoticeRecord',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
-                ('notice_date', models.DateField(verbose_name='账号过期通知时间')),
-                ('profile', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiles.profile', verbose_name='登陆用户')),
+                ('notice_date', models.DateField(verbose_name='过期通知时间')),
+                ('type', models.CharField(choices=[('account_expiration', '账号过期'), ('password_expiration', '密码过期')], db_index=True, max_length=64, verbose_name='过期类型')),
+                ('profile', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiles.profile', verbose_name='用户')),
             ],
             options={
-                'verbose_name': '账号过期通知记录',
-                'verbose_name_plural': '账号过期通知记录',
+                'verbose_name': '过期通知记录',
+                'verbose_name_plural': '过期通知记录',
                 'ordering': ['id'],
             },
         ),

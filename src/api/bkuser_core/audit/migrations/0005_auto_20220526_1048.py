@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='login',
             name='reason',
-            field=models.CharField(blank=True, choices=[('bad_password', '密码错误'), ('expired_password', '密码过期'), ('too_many_failure', '密码错误次数过多'), ('locked_user', '用户已锁定'), ('disabled_user', '用户已删除'), ('should_change_initial_password', '需要修改初始密码'), ('expired_user', '用户账号已过期')], max_length=32, null=True, verbose_name='登陆失败原因'),
+            field=models.CharField(blank=True, choices=[('bad_password', '密码错误'), ('expired_password', '密码过期'), ('too_many_failure', '密码错误次数过多'), ('locked_user', '用户已锁定'), ('disabled_user', '用户已删除'), ('expired_user', '用户账号已过期'), ('should_change_initial_password', '需要修改初始密码')], max_length=32, null=True, verbose_name='登陆失败原因'),
         ),
     ]

@@ -22,13 +22,14 @@ from .account_expiration_notifier import (
     get_notice_config_for_account_expiration,
     get_profiles_for_account_expiration,
 )
+from .constants import TypeOfExpiration
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
 from bkuser_core.common.notifier import send_mail
 from bkuser_core.profiles import exceptions
 from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, ProfileStatus
-from bkuser_core.profiles.models import AccountExpirationNoticeRecord, Profile
+from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -90,28 +91,33 @@ def notice_for_account_expiration():
     for profile in expiring_profile_list:
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
-            return
+            continue
         AccountExpirationNotifier().handler(notice_config)
         time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
     for profile in expired_profile_list:
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
-            return
-        notice_record = AccountExpirationNoticeRecord.objects.filter(profile_id=profile["id"]).first()
+            continue
+        notice_record = ExpirationNoticeRecord.objects.filter(
+            type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
+            profile_id=profile["id"]).first()
 
         if not notice_record:
             AccountExpirationNotifier().handler(notice_config)
-            AccountExpirationNoticeRecord.objects.create(notice_date=datetime.date.today(), profile_id=profile["id"])
+            ExpirationNoticeRecord.objects.create(
+                type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
+                notice_date=datetime.date.today(),
+                profile_id=profile["id"]
+                )
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
-            return
+            continue
 
         # 上一次过期通知的时间距离现在超过一个月则进行通知
         if notice_record.notice_date < datetime.date.today() - datetime.timedelta(days=30):
             AccountExpirationNotifier().handler(notice_config)
             notice_record.objects.update(notice_date=datetime.date.today())
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
-            return
 
 
 @periodic_task(run_every=crontab(minute='0', hour='3'))
