@@ -18,15 +18,20 @@ class SettingsEnableNamespaces(AutoLowerEnum):
     PASSWORD = auto()
     CONNECTION = auto()
     FIELDS = auto()
+    ACCOUNT = auto()
 
     _choices_labels = (
         (GENERAL, "通用"),
         (PASSWORD, "密码"),
         (CONNECTION, "连接"),
         (FIELDS, "字段"),
+        (ACCOUNT, "账号"),
     )
 
 
 class InitPasswordMethod(AutoLowerEnum):
     FIXED_PRESET = auto()
     RANDOM_VIA_MAIL = auto()
+
+
+ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY = "account_expiration_notice_interval"

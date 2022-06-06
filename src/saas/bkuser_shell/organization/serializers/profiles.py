@@ -53,6 +53,7 @@ class ProfileSerializer(Serializer):
     update_time = DateTimeField(required=False)
     create_time = DateTimeField(required=False)
     last_login_time = DateTimeField(required=False)
+    account_expiration_date = CharField()
 
     def get_logo(self, data):
         if isinstance(data, dict):
@@ -127,6 +128,7 @@ class CreateProfileSerializer(Serializer):
     iso_code = CharField(required=False, default="CN")
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False, default=[])
+    account_expiration_date = CharField()
 
 
 class UpdateProfileSerializer(Serializer):
@@ -146,6 +148,7 @@ class UpdateProfileSerializer(Serializer):
     iso_code = CharField(required=False)
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False)
+    account_expiration_date = CharField()
 
 
 class ProfileExportSerializer(Serializer):

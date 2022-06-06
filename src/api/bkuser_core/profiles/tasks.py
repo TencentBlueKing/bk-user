@@ -8,16 +8,28 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 import logging
+import time
 import urllib.parse
 
+from celery.schedules import crontab
+from celery.task import periodic_task
 from django.conf import settings
 
+from .account_expiration_notifier import (
+    AccountExpirationNotifier,
+    get_notice_config_for_account_expiration,
+    get_profiles_for_account_expiration,
+)
+from .constants import TypeOfExpiration
+from bkuser_core.categories.constants import CategoryType
+from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
 from bkuser_core.common.notifier import send_mail
 from bkuser_core.profiles import exceptions
-from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL
-from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, ProfileStatus
+from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -66,3 +78,57 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
         message=message,
         title=email_config["title"],
     )
+
+
+@periodic_task(run_every=crontab(minute='0', hour='2'))
+def notice_for_account_expiration():
+    """
+    用户账号过期通知
+    #TODO:存在大数量级用户的情况下，当天的任务可能无法当天执行完毕，新一天的任务又同步开启，这里考虑做优化
+    """
+    expiring_profile_list, expired_profile_list = get_profiles_for_account_expiration()
+
+    for profile in expiring_profile_list:
+        notice_config = get_notice_config_for_account_expiration(profile)
+        if not notice_config:
+            continue
+        AccountExpirationNotifier().handler(notice_config)
+        time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+
+    for profile in expired_profile_list:
+        notice_config = get_notice_config_for_account_expiration(profile)
+        if not notice_config:
+            continue
+        notice_record = ExpirationNoticeRecord.objects.filter(
+            type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
+            profile_id=profile["id"]).first()
+
+        if not notice_record:
+            AccountExpirationNotifier().handler(notice_config)
+            ExpirationNoticeRecord.objects.create(
+                type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
+                notice_date=datetime.date.today(),
+                profile_id=profile["id"],
+            )
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+            continue
+
+        # 上一次过期通知的时间距离现在超过一个月则进行通知
+        if notice_record.notice_date < datetime.date.today() - datetime.timedelta(days=30):
+            AccountExpirationNotifier().handler(notice_config)
+            notice_record.objects.update(notice_date=datetime.date.today())
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+
+
+@periodic_task(run_every=crontab(minute='0', hour='3'))
+def account_status_test():
+    """
+    用户状态检测
+    """
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
+    expired_profiles = Profile.objects.filter(
+        category_id__in=category_ids,
+        account_expiration_date__lt=datetime.date.today(),
+        status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],
+    )
+    expired_profiles.update(status=ProfileStatus.EXPIRED.value)

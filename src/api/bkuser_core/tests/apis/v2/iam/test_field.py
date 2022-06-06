@@ -71,7 +71,7 @@ class TestIAMFieldsApis:
         }
         request = factory.post("/api/iam/v1/fields/", body, format="json")
         response = view(request=request)
-        assert response.data["count"] == 11
+        assert response.data["count"] == 12
         assert response.status_code == 200
 
     def test_list_keyword_attr_value(self, factory, view):
@@ -80,7 +80,7 @@ class TestIAMFieldsApis:
         body = {
             "type": "field",
             "method": "list_attr_value",
-            "filter": {"attr": "name", "keyword": "usernam"},
+            "filter": {"attr": "name", "keyword": "username"},
             "page": {"offset": 0, "limit": 20},
         }
         request = factory.post("/api/iam/v1/fields/", body, format="json")
@@ -202,7 +202,7 @@ class TestIAMFieldsApis:
         request = factory.post("/api/iam/v1/fields/", body, format="json")
         response = view(request=request)
 
-        assert response.data["count"] == 11
+        assert response.data["count"] == 12
         assert len(response.data["results"]) == 5
         assert response.status_code == 200
 
@@ -216,7 +216,7 @@ class TestIAMFieldsApis:
         request = factory.post("/api/iam/v1/fields/", body, format="json")
         response = view(request=request)
 
-        assert response.data["count"] == 11
+        assert response.data["count"] == 12
         assert len(response.data["results"]) == 1
         assert response.status_code == 200
 
@@ -229,7 +229,7 @@ class TestIAMFieldsApis:
         body = {"type": "field", "method": "list_instance", "page": {"offset": 0, "limit": 20}}
         request = factory.post("/api/iam/v1/fields/", body, format="json")
         response = view(request=request)
-        assert response.data["count"] == 11
+        assert response.data["count"] == 12
 
     def test_list_parent_instances(self):
         """测试拉取实例列表, parent 过滤"""
