@@ -8,13 +8,25 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from celery.signals import worker_process_init
 from django.apps import AppConfig
 
-from .sentry import init_sentry_sdk
+from bkuser_global.tracing.otel import setup_by_settings
+from bkuser_global.tracing.sentry import init_sentry_sdk
 
 
 class MonitoringConfig(AppConfig):
-    name = 'bkuser_core.monitoring'
+    name = "bkuser_core.monitoring"
 
     def ready(self):
-        init_sentry_sdk()
+        init_sentry_sdk("bk-user-api", django_integrated=True, redis_integrated=True, celery_integrated=True)
+
+
+@worker_process_init.connect(weak=False)
+def worker_process_init_otel_trace_setup(*args, **kwargs):
+    setup_by_settings()
+
+
+@worker_process_init.connect(weak=False)
+def worker_process_init_sentry_setup(*args, **kwargs):
+    init_sentry_sdk()
