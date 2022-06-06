@@ -10,11 +10,16 @@ specific language governing permissions and limitations under the License.
 """
 from django.apps import AppConfig
 
-from .sentry import init_sentry_sdk
+from bkuser_global.tracing.otel import setup_by_settings
+from bkuser_global.tracing.sentry import init_sentry_sdk
 
 
 class MonitoringConfig(AppConfig):
-    name = 'bkuser_shell.monitoring'
+    name = "bkuser_shell.monitoring"
 
     def ready(self):
-        init_sentry_sdk()
+        setup_by_settings()
+        init_sentry_sdk(
+            "bk-user-saas",
+            django_integrated=True,
+        )
