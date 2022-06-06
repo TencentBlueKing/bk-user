@@ -17,7 +17,6 @@ from opentelemetry.instrumentation import dbapi
 from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.trace import Span, Status, StatusCode
 
@@ -125,6 +124,8 @@ class BKAppInstrumentor(BaseInstrumentor):
         RequestsInstrumentor().instrument(span_callback=requests_callback)
         DjangoInstrumentor().instrument(response_hook=django_response_hook)
         try:
+            from opentelemetry.instrumentation.redis import RedisInstrumentor
+
             RedisInstrumentor().instrument()
         except Exception:  # pylint: disable=broad-except
             # ignore redis instrumentor if it's not installed
