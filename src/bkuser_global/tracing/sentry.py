@@ -12,9 +12,6 @@ from typing import List
 
 import sentry_sdk
 from sentry_sdk.integrations import Integration
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
 
 
 def init_sentry_sdk(
@@ -25,10 +22,18 @@ def init_sentry_sdk(
 
     integrations: List[Integration] = []
     if django_integrated:
+        from sentry_sdk.integrations.django import DjangoIntegration
+
         integrations.append(DjangoIntegration())
+
     if redis_integrated:
+        from sentry_sdk.integrations.redis import RedisIntegration
+
         integrations.append(RedisIntegration())
+
     if celery_integrated:
+        from sentry_sdk.integrations.celery import CeleryIntegration
+
         integrations.append(CeleryIntegration())
 
     if settings.SENTRY_DSN:
