@@ -8,12 +8,12 @@ appVersion: "v2.3.4-beta.26"
 dependencies:
 
 - name: mariadb
-  version: "9.x.x"
+  version: "10.x.x"
   repository: "https://charts.bitnami.com/bitnami"
   condition: mariadb.enabled
 
 - name: redis
-  version: "14.x.x"
+  version: "15.x.x"
   repository: "https://charts.bitnami.com/bitnami"
   condition: redis.enabled
 
