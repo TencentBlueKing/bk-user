@@ -14,7 +14,6 @@ from typing import Collection
 
 from django.conf import settings
 from opentelemetry.instrumentation import dbapi
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
@@ -125,9 +124,15 @@ class BKAppInstrumentor(BaseInstrumentor):
         LoggingInstrumentor().instrument()
         RequestsInstrumentor().instrument(span_callback=requests_callback)
         DjangoInstrumentor().instrument(response_hook=django_response_hook)
-        RedisInstrumentor().instrument()
+        try:
+            RedisInstrumentor().instrument()
+        except Exception:  # pylint: disable=broad-except
+            # ignore redis instrumentor if it's not installed
+            pass
 
         if getattr(settings, "IS_USE_CELERY", False):
+            from opentelemetry.instrumentation.celery import CeleryInstrumentor
+
             CeleryInstrumentor().instrument()
 
         if getattr(settings, "BKAPP_OTEL_INSTRUMENT_DB_API", False):
