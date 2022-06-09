@@ -31,7 +31,32 @@ def forwards_func(apps, schema_editor):
         display_name_zh_hans='账号过期时间',
         visible=True
     )
-
+    DynamicFieldInfo.objects.create(
+        name='last_login_time',
+        display_name='最近登陆时间',
+        type='string',
+        require=False,
+        unique=False,
+        editable=False,
+        builtin=True,
+        order=13,
+        display_name_en='last_login_time',
+        display_name_zh_hans='最近登录时间',
+        visible=False)
+    DynamicFieldInfo.objects.create(
+        name='create_time',
+        display_name='创建时间',
+        type='string',
+        require=False,
+        unique=False,
+        editable=False,
+        builtin=True,
+        order=14,
+        display_name_en='create_time',
+        display_name_zh_hans='创建时间',
+        visible=True)
+    DynamicFieldInfo.objects.filter(name='qq').update(visible=False)
+    DynamicFieldInfo.objects.filter(name='wx_userid').update(visible=False)
 
 class Migration(migrations.Migration):
 
