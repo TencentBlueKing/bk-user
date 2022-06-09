@@ -42,6 +42,7 @@ def forwards_func(apps, schema_editor):
         order=13,
         display_name_en='last_login_time',
         display_name_zh_hans='最近登录时间',
+        configurable= False,
         visible=False)
     DynamicFieldInfo.objects.create(
         name='create_time',
@@ -54,6 +55,7 @@ def forwards_func(apps, schema_editor):
         order=14,
         display_name_en='create_time',
         display_name_zh_hans='创建时间',
+        configurable=False,
         visible=True)
     DynamicFieldInfo.objects.filter(name='qq').update(visible=False)
     DynamicFieldInfo.objects.filter(name='wx_userid').update(visible=False)
