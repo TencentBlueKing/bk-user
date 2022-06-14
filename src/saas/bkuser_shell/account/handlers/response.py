@@ -62,9 +62,9 @@ class ResponseHandler(object):
         return HttpResponseRedirect(_login_url)
 
     def _build_extra_args(self):
-        extra_args = None
+        extra_args = {"size": "big"}
         if self._conf.ADD_APP_CODE:
-            extra_args = {self._conf.APP_KEY: getattr(self._settings, self._conf.SETTINGS_APP_KEY)}
+            extra_args.update({self._conf.APP_KEY: getattr(self._settings, self._conf.SETTINGS_APP_KEY)})
         return extra_args
 
     def build_bk_jwt_401_response(self, request):
