@@ -129,6 +129,8 @@ class CreateProfileSerializer(Serializer):
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False, default=[])
     account_expiration_date = CharField()
+    create_time = DateTimeField(required=False)
+    last_login_time = DateTimeField(required=False )
 
 
 class UpdateProfileSerializer(Serializer):
@@ -148,7 +150,9 @@ class UpdateProfileSerializer(Serializer):
     iso_code = CharField(required=False)
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False)
-    account_expiration_date = CharField()
+    account_expiration_date = CharField(required=False)
+    create_time = DateTimeField(required=False, read_only=True)
+    last_login_time = DateTimeField(required=False, read_only=True)
 
 
 class ProfileExportSerializer(Serializer):
