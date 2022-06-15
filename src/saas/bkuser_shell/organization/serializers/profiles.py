@@ -148,7 +148,7 @@ class UpdateProfileSerializer(Serializer):
     iso_code = CharField(required=False)
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False)
-    account_expiration_date = CharField()
+    account_expiration_date = CharField(required=False)
 
 
 class ProfileExportSerializer(Serializer):
