@@ -151,8 +151,6 @@ class UpdateProfileSerializer(Serializer):
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False)
     account_expiration_date = CharField(required=False)
-    create_time = DateTimeField(required=False, read_only=True)
-    last_login_time = DateTimeField(required=False, read_only=True)
 
 
 class ProfileExportSerializer(Serializer):
