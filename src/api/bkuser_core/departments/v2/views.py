@@ -157,11 +157,15 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if page is not None:
             return self.get_paginated_response(_serializer(page, many=True).data)
 
+        # NOTE: no_page=True, will hit this branch. should not use no_page=True in the future
         serializer_fields = list(_serializer().get_fields().keys())
+        model_fields_keys = [x.name for x in profiles.model._meta.get_fields()]
+        values_fields = [x for x in serializer_fields if x in model_fields_keys]
+
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
         # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#values
-        return Response(data=list(profiles.only(*serializer_fields).values(*serializer_fields)))
+        return Response(data=list(profiles.only(*values_fields).values(*values_fields)))
 
     @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
