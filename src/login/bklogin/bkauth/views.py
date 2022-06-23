@@ -13,6 +13,7 @@ specific language governing permissions and limitations under the License.
 from functools import wraps
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponseForbidden, HttpResponseRedirect
@@ -22,6 +23,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from django.views.generic import View
 
+from bklogin.api.utils import APIV1FailJsonResponse, APIV1OKJsonResponse
 from bklogin.bkauth.actions import login_license_fail_response, login_success_response
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.forms import BkAuthenticationForm
@@ -30,6 +32,7 @@ from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
 from bklogin.common.log import logger
 from bklogin.common.mixins.exempt import LoginExemptMixin
 from bklogin.common.usermgr import get_categories_str
+from bklogin.components import usermgr_api
 from bklogin.components.license import check_license
 
 
@@ -90,6 +93,81 @@ class LoginView(LoginExemptMixin, View):
         return custom_login_view(request)
 
 
+class CaptchaView(LoginExemptMixin, View):
+    def get(self, request):
+        # 获取参数
+        query_params = request.GET
+        request_data = {
+            "username": query_params["username"],
+            "domain": query_params.get("domain", "default.local"),
+            "email": query_params.get("email", None),
+            "telephone": query_params.get("telephone", None),
+        }
+        # 发送验证码
+        ok, code, message, data = usermgr_api.send_captcha(request_data)
+        logger.debug(
+            "usermgr_api.send_captcha result: ok=%s, message=%s, data=%s",
+            ok,
+            message,
+            data,
+        )
+        if not ok:
+            return APIV1FailJsonResponse(code=code, message=message)
+        return APIV1OKJsonResponse(_("验证码信息发送成功"), data=data)
+
+    def post(self, request):
+        post_data = request.POST
+        domain = "default.local" if not post_data.get("domain") else post_data["domain"]
+        username = post_data["username"]
+        redirect_to = post_data.get("redirect_to")
+
+        # 构建验证码检验数据
+        verify_data = {
+            "token": post_data["token"],
+            "captcha": post_data["captcha"],
+            "username": username,
+            "domain": domain,
+        }
+        # 调用接口校验
+        ok, code, message, data = usermgr_api.verify_captcha(verify_data)
+
+        # 认证不通过
+        if not ok:
+            return APIV1FailJsonResponse(code=code, message=message)
+
+        ok, message, user_list = usermgr_api.batch_query_users(username_list=[f"{username}@{domain}"])
+        # 验证成功，查看是否需要进行绑定邮箱或者手机号
+        logger.debug(
+            "usermgr_api.batch_query_users result: ok=%s, message=%s, user_list=%s",
+            ok,
+            message,
+            user_list,
+        )
+        if not ok:
+            return APIV1FailJsonResponse(code=code, message=message)
+
+        # 查看是否绑定相应发送方法
+        user_data = user_list[0]
+        if not getattr(user_data, data["send_method"]):
+            update_data = {data["send_method"]: data["authenticated_value"]}
+            ok, message, data = usermgr_api.upsert_user(username, **update_data)
+            if not ok:
+                logger.error(
+                    "fail to update user %s's bind %s = %s: %s",
+                    user_data["username"],
+                    data["send_method"],
+                    data["authenticated_value"],
+                    message,
+                )
+                return APIV1FailJsonResponse(message=message)
+
+        UserModel = get_user_model()
+        user = UserModel(post_data["username"])
+        user.fill_with_userinfo(user_data)
+
+        return login_success_response(request, user, redirect_to, app_id=None)
+
+
 def _bk_login(request):
     """
     登录页面和登录动作
@@ -119,7 +197,7 @@ def _bk_login(request):
         form = authentication_form(request, data=request.POST)
         try:
             if form.is_valid():
-                return login_success_response(request, form, redirect_to, app_id)
+                return login_success_response(request, form, redirect_to, app_id, secondary_verify=True)
         except AuthenticationError as e:
             login_redirect_to = e.redirect_to
             error_message = e.message

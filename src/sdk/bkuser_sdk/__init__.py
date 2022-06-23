@@ -21,6 +21,8 @@ from bkuser_sdk.api.categories_api import CategoriesApi
 from bkuser_sdk.api.departments_api import DepartmentsApi
 from bkuser_sdk.api.dynamic_fields_api import DynamicFieldsApi
 from bkuser_sdk.api.edges_api import EdgesApi
+from bkuser_sdk.api.global_settings_api import GlobalSettingsApi
+from bkuser_sdk.api.global_settings_meta_api import GlobalSettingsMetaApi
 from bkuser_sdk.api.healthz_api import HealthzApi
 from bkuser_sdk.api.pong_api import PongApi
 from bkuser_sdk.api.profiles_api import ProfilesApi
@@ -52,6 +54,9 @@ from bkuser_sdk.models.dynamic_fields import DynamicFields
 from bkuser_sdk.models.empty import Empty
 from bkuser_sdk.models.extra_info_slz import ExtraInfoSLZ
 from bkuser_sdk.models.general_log import GeneralLog
+from bkuser_sdk.models.global_settings import GlobalSettings
+from bkuser_sdk.models.global_settings_meta import GlobalSettingsMeta
+from bkuser_sdk.models.global_settings_update import GlobalSettingsUpdate
 from bkuser_sdk.models.leader import Leader
 from bkuser_sdk.models.leader_edge import LeaderEdge
 from bkuser_sdk.models.login_batch_query import LoginBatchQuery

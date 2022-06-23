@@ -73,6 +73,7 @@ class User(models.AbstractBaseUser, models.AnonymousUser):
         self.logo_url = userinfo.get("logo_url")
         self.time_zone = userinfo.get("time_zone")
         self.language = userinfo.get("language")
+        self.domain = userinfo.get("domain")
 
         role = 1 if userinfo.get("role") == 1 else 0
         self.is_superuser = role == 1

@@ -9,6 +9,8 @@ from bkuser_sdk.api.categories_api import CategoriesApi
 from bkuser_sdk.api.departments_api import DepartmentsApi
 from bkuser_sdk.api.dynamic_fields_api import DynamicFieldsApi
 from bkuser_sdk.api.edges_api import EdgesApi
+from bkuser_sdk.api.global_settings_api import GlobalSettingsApi
+from bkuser_sdk.api.global_settings_meta_api import GlobalSettingsMetaApi
 from bkuser_sdk.api.healthz_api import HealthzApi
 from bkuser_sdk.api.pong_api import PongApi
 from bkuser_sdk.api.profiles_api import ProfilesApi

@@ -10,14 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 from django.conf.urls import url
 
-from .views import FieldsViewSet, SettingsNamespaceViewSet, SettingsViewSet
+from .views import FieldsViewSet, GlobalSettingsNamespaceViewSet, SettingsNamespaceViewSet, SettingsViewSet
 
 PVAR_FIELD_ID = r"(?P<field_id>[0-9]+)"
 PVAR_SETTING_ID = r"(?P<setting_id>[0-9]+)"
 NEW_PVAR_ORDER = r"(?P<new_order>[0-9]+)"
 PVAR_CATEGORY_ID = r"(?P<category_id>[0-9]+)"
 PVAR_MODULE_NAME = r"(?P<module_name>[a-z0-9-]+)"
-PVAR_NAMESPACE_NAME = r"(?P<namespace_name>[a-z0-9-]+)"
+PVAR_NAMESPACE_NAME = r"(?P<namespace_name>[a-z0-9-_]+)"
 
 
 urlpatterns = [
@@ -106,6 +106,23 @@ urlpatterns = [
     url(
         r"^api/v2/settings/metas/$",
         SettingsNamespaceViewSet.as_view(
+            {
+                "get": "list_defaults",
+            }
+        ),
+        name="config_center.settings.namespaces.metas",
+    ),
+    ####################################
+    # 针对 global_settings 操作 #
+    ####################################
+    url(
+        r"^api/v2/global_settings/namespaces/%s/$" % PVAR_NAMESPACE_NAME,
+        GlobalSettingsNamespaceViewSet.as_view({"get": "list", "put": "update"}),
+        name="config_center.global_settings.namespaces",
+    ),
+    url(
+        r"^api/v2/global_settings/metas/$",
+        GlobalSettingsNamespaceViewSet.as_view(
             {
                 "get": "list_defaults",
             }

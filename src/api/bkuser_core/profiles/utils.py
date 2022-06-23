@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import hashlib
 import logging
 import random
 import re
@@ -191,3 +192,9 @@ def check_former_passwords(
 def make_passwd_reset_url_by_token(token: str):
     """make reset"""
     return urllib.parse.urljoin(settings.SAAS_URL, f"set_password?token={token}")
+
+
+def general_captcha_token(username: str):
+    md = hashlib.md5()
+    md.update(username.encode("utf-8"))
+    return md.hexdigest()

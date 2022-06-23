@@ -23,6 +23,7 @@ from bklogin.healthz import views as healthz_views
 urlpatterns = [
     # 登录页面
     url(r"^$", auth_views.LoginView.as_view()),
+    url(r"^captcha/$", auth_views.CaptchaView.as_view()),
     # 登录弹窗
     url(r"^plain/$", auth_views.LoginView.as_view(is_plain=True)),
     url(r"^logout/$", auth_views.LogoutView.as_view()),

@@ -53,6 +53,7 @@ class ProfileSerializer(Serializer):
     update_time = DateTimeField(required=False)
     create_time = DateTimeField(required=False)
     last_login_time = DateTimeField(required=False)
+    two_factor_enable = CharField(required=False)
 
     def get_logo(self, data):
         if isinstance(data, dict):

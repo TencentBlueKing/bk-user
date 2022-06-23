@@ -26,6 +26,7 @@ from bklogin.bkaccount.models import BkToken, LoginLog
 from bklogin.common.encrypt import salt
 from bklogin.common.log import logger
 from bklogin.common.utils.basic import escape_html_return_msg
+from bklogin.components import usermgr_api
 
 BK_COOKIE_AGE = settings.BK_COOKIE_AGE
 BK_INACTIVE_COOKIE_AGE = settings.BK_INACTIVE_COOKIE_AGE
@@ -198,3 +199,26 @@ def record_login_log(request, username, app_id):
     login_ip = request.META.get("HTTP_X_FORWARDED_FOR", "REMOTE_ADDR")
 
     LoginLog.objects.record_login(username, login_browser, login_ip, host, app_id)
+
+
+def validate_scope(user, verification_settings):
+    scope = verification_settings["scope"]
+    profiles, departments, categories = scope["profiles"], scope["departments"], scope["categories"]
+    # 三者为空默认为应用范围为全员
+    if profiles or departments or categories:
+        ok, message, user_data = usermgr_api.direct_get_profile_by_username(username=f"{user.username}@{user.domain}")
+        if not ok:
+            logger.error(
+                "usermgr_api.direct_get_profile_by_username(username=%s) error: message=%s"
+                % (f"{user.username}@{user.domain}", message)
+            )
+        # 判断用户所处的目录，部门和自身是否处于应用范围
+        if user_data["category_id"] not in categories:
+            return False
+        if not [
+            department_item for department_item in user_data["departments"] if department_item["id"] in departments
+        ]:
+            return False
+        if not user_data["id"] not in profiles:
+            return False
+    return True

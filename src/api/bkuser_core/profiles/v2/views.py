@@ -10,10 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 import functools
+import json
 import logging
 from collections import defaultdict
 from operator import or_
 
+import redis
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import FieldError, MultipleObjectsReturned
@@ -51,7 +53,7 @@ from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmail
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
-from bkuser_core.profiles.tasks import send_password_by_email
+from bkuser_core.profiles.tasks import send_captcha, send_password_by_email
 from bkuser_core.profiles.utils import (
     align_country_iso_code,
     check_former_passwords,
@@ -810,6 +812,28 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         # 由于当前只继承了 viewSet，需要需要额外添加 context
         return Response(
             data=local_serializers.LoginBatchResponseSerializer(profiles, many=True, context={"request": request}).data
+        )
+
+    @swagger_auto_schema(query_serializer=local_serializers.CaptchaSendSerializer())
+    def send_captcha(self, request):
+        serializers = local_serializers.CaptchaSendSerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        validated_data = serializers.validated_data
+        token = validated_data.pop("token")
+        send_captcha.delay(validated_data)
+        redis.Redis().setex(name=token, time=validated_data["expire_seconds"], value=json.dumps(validated_data))
+        return Response({"token": token})
+
+    @swagger_auto_schema(request_body=local_serializers.CaptchaVerifySerializer())
+    def verify_captcha(self, request):
+        serializers = local_serializers.CaptchaVerifySerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        redis.Redis().delete(serializers.validated_data["token"])
+        return Response(
+            {
+                "send_method": serializers.validated_data["send_method"],
+                "authenticated_value": serializers.validated_data["authenticated_value"],
+            }
         )
 
 

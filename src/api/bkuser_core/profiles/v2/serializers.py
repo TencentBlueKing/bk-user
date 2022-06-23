@@ -8,18 +8,33 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import json
+import logging
+import random
+import string
 from typing import Union
 
+import redis
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
+from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
+from bkuser_core.global_settings.constants import GlobalSettingsEnableNamespaces
+from bkuser_core.global_settings.models import GlobalSettings
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from bkuser_core.profiles.utils import force_use_raw_username, get_username, parse_username_domain
+from bkuser_core.profiles.utils import (
+    force_use_raw_username,
+    general_captcha_token,
+    get_username,
+    parse_username_domain,
+)
 from bkuser_core.profiles.validators import validate_domain, validate_username
+from bkuser_core.user_settings.loader import GlobalConfigProvider
 
 # ===============================================================================
 # Response
@@ -29,6 +44,7 @@ from bkuser_core.profiles.validators import validate_domain, validate_username
 ###########
 # Profile #
 ###########
+logger = logging.getLogger(__name__)
 
 
 def get_extras(extras_from_db: Union[dict, list], defaults: dict) -> dict:
@@ -72,6 +88,7 @@ class ProfileSerializer(CustomFieldsModelSerializer):
     extras = serializers.SerializerMethodField(required=False)
     leader = LeaderSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
+    two_factor_enable = serializers.CharField(required=False, read_only=True)
 
     def get_extras(self, obj) -> dict:
         """尝试从 context 中获取默认字段值"""
@@ -99,6 +116,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     departments = SimpleDepartmentSerializer(many=True, required=False)
     leader = LeaderSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
+    two_factor_enable = serializers.CharField(required=False, read_only=True)
 
     create_time = serializers.DateTimeField(required=False, read_only=True)
     update_time = serializers.DateTimeField(required=False, read_only=True)
@@ -307,3 +325,85 @@ class LoginBatchQuerySerializer(serializers.Serializer):
 class ProfileModifyPasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, max_length=254)
     new_password = serializers.CharField(required=True, max_length=254)
+
+
+############
+# Captcha  #
+############
+class CaptchaSendSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True, max_length=254)
+    domain = serializers.CharField(required=False, help_text="用户所属目录 domain，当登录用户不属于默认目录时必填")
+    email = serializers.CharField(required=False, allow_null=True)
+    telephone = serializers.CharField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        domain = attrs.pop("domain", None)
+        # 根据域，判定用户
+        if not domain:
+            category = ProfileCategory.objects.get_default()
+        else:
+            try:
+                category = ProfileCategory.objects.get(domain=domain)
+            except ProfileCategory.DoesNotExist:
+                raise error_codes.DOMAIN_UNKNOWN
+        username = attrs.pop("username")
+        profile = Profile.objects.get(username=username, domain=category.domain)
+        attrs["profile"] = profile.id
+
+        authentication_type = GlobalSettings.objects.get(meta__key="verification_type").value
+        attrs["authentication_type"] = authentication_type
+        authentication_settings = GlobalConfigProvider(authentication_type)
+
+        if authentication_type == GlobalSettingsEnableNamespaces.TWO_FACTOR.value:
+            token = general_captcha_token(f"{username}@{profile.domain}")
+            # 校验是否重复发送
+            if redis.Redis().get(token):
+                raise error_codes.DUPLICATE_SENDING.f(
+                    expire_time=int(authentication_settings.get("expire_seconds") / 60)
+                )
+            attrs["send_method"] = authentication_settings.get("send_method")
+            # 已绑定，attrs["authenticated_value"] 有值
+            attrs["authenticated_value"] = getattr(profile, authentication_settings.get("send_method"))
+            if not attrs["authenticated_value"]:
+                # 未绑定，attrs["authenticated_value"] 为空字符串
+                try:
+                    attrs["authenticated_value"] = attrs[authentication_settings.get("send_method")]
+                except KeyError:
+                    raise serializers.ValidationError("用户未绑定{}，请提供".format(authentication_settings.get("send_method")))
+
+            attrs["expire_seconds"] = authentication_settings.get("expire_seconds")
+            attrs["captcha"] = "".join(random.sample(string.ascii_letters + string.digits, 8))
+            attrs["token"] = token
+            attrs.pop("email")
+            attrs.pop("telephone")
+
+        return attrs
+
+
+class CaptchaVerifySerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    captcha = serializers.CharField(required=True)
+    username = serializers.CharField(required=True)
+    domain = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        captcha_data = redis.Redis().get(attrs["token"])
+
+        # token 校验
+        if not captcha_data:
+            raise error_codes.CAPTCHA_TOKEN_HAD_EXPIRED
+        captcha_data = json.loads(captcha_data)
+        # 安全校验，token被串改，为其它用户的token
+        profile = Profile.objects.get(id=captcha_data["profile"])
+        # 用户名
+        if profile.username != attrs["username"]:
+            raise error_codes.CAPTCHA_TOKEN_HAD_EXPIRED
+        # 目录域
+        if profile.domain != attrs["domain"]:
+            raise error_codes.CAPTCHA_TOKEN_HAD_EXPIRED
+        # 验证码
+        if captcha_data["captcha"] != attrs["captcha"]:
+            raise error_codes.ERROR_CAPTCHA
+        attrs["send_method"] = captcha_data["send_method"]
+        attrs["authenticated_value"] = captcha_data["authenticated_value"]
+        return attrs

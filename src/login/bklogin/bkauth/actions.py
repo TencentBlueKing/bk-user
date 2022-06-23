@@ -9,8 +9,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
-
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -22,14 +20,15 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 
+from bklogin.api.utils import APIV1FailJsonResponse
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
-from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid
+from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid, validate_scope
 from bklogin.common.log import logger
+from bklogin.components import usermgr_api
 
 """
 actions for login success/fail
 """
-
 
 BK_LOGIN_URL = str(settings.LOGIN_URL)
 BK_COOKIE_NAME = settings.BK_COOKIE_NAME
@@ -55,7 +54,53 @@ def login_failed_response(request, redirect_to, app_id):
     return response
 
 
-def login_success_response(request, user_or_form, redirect_to, app_id):
+def redirect_secondary_authenticate(user, original_redirect_to, request):
+    ok, message, verification_type = usermgr_api.get_global_settings(namespace="general", key="verification_type")
+    # 接口调用失败
+    if not ok:
+        logger.error("usermgr_api.get_global_settings error: message=%s namespace=general" % message)
+        return APIV1FailJsonResponse(message=message)
+    # 认证方式选择
+    if not verification_type[0]["value"]:
+        return
+
+    ok, message, verification_settings_list = usermgr_api.get_global_settings(
+        namespace=verification_type[0]["value"],
+    )
+    if not ok:
+        logger.error(
+            "usermgr_api.get_global_settings error: message=%s namespace=%s" % (message, verification_type[0]["value"])
+        )
+        return APIV1FailJsonResponse(message=message)
+
+    # 数据结构重组
+    verification_settings = {}
+    for item in verification_settings_list:
+        verification_settings.setdefault(item["key"], item["value"])
+    # 认证未开启
+    if not verification_settings["verification_enable"]:
+        return
+    # 用户是否属于应用范围内：
+    if not validate_scope(user, verification_settings):
+        return
+
+    response_data = {
+        "send_method": verification_settings["send_method"],
+        "username": user.username,
+        "domain": user.domain,
+        "receive_address": "",
+        "original_redirect_to": original_redirect_to,
+    }
+
+    if getattr(user, verification_settings["send_method"]):
+        redirect_to = "captcha.html"
+        response_data["receive_address"] = getattr(user, verification_settings["send_method"])
+    else:
+        redirect_to = "captcha_bind.html"
+    return HttpResponseRedirect(redirect_to=redirect_to, content=response_data)
+
+
+def login_success_response(request, user_or_form, redirect_to, app_id, secondary_verify=False):
     """
     用户验证成功后，登录处理
     """
@@ -67,6 +112,12 @@ def login_success_response(request, user_or_form, redirect_to, app_id):
     else:
         user = user_or_form
         username = user.username
+
+    # 二级验证
+    if secondary_verify:
+        response = redirect_secondary_authenticate(user, redirect_to, request)
+        if response:
+            return response
 
     # 检查回调URL是否安全，防钓鱼
     if not is_safe_url(url=redirect_to, host=request.get_host()):

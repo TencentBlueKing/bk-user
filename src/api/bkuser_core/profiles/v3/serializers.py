@@ -41,6 +41,8 @@ class ProfileSerializer(Serializer):
     create_time = DateTimeField(required=False, help_text="创建时间")
     update_time = DateTimeField(required=False, help_text="更新时间")
 
+    two_factor_enable = CharField(required=False, read_only=True)
+
 
 # ------------
 # Request

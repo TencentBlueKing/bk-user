@@ -33,6 +33,7 @@ from bkuser_core.audit.constants import LogInFailReason
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.common.bulk_update.manager import BulkUpdateManager
 from bkuser_core.common.models import TimestampedModel
+from bkuser_core.global_settings.models import GlobalSettings
 
 
 class Profile(TimestampedModel):
@@ -190,6 +191,11 @@ class Profile(TimestampedModel):
             return latest_logins.latest().create_time
 
         return None
+
+    @property
+    def two_factor_enable(self):
+        verification_enable = GlobalSettings.objects.get(meta__key="verification_enable", meta__namespace="two_factor")
+        return verification_enable.value
 
     def enable(self):
         self.enabled = True

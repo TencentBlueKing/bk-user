@@ -267,3 +267,85 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
     @inject_serializer(tags=["config_center"])
     def delete(self, request, category_name, namespace_name):
         raise NotImplementedError
+
+
+class GlobalSettingsNamespaceViewSet(BkUserApiViewSet):
+    """namespace 维度批量 settings 接口"""
+
+    serializer_class = SettingMetaSerializer
+
+    @inject_serializer(
+        query_in=serializers.ListSettingsSerializer(),
+        out=serializers.SettingSerializer(many=True),
+        tags=["config_center"],
+    )
+    def list(self, request, namespace_name, validated_data):
+        """获取 namespace 下的所有配置"""
+
+        api_instance = bkuser_sdk.GlobalSettingsApi(self.get_api_client_by_request(request))
+        settings = api_instance.v2_global_settings_list(namespace=namespace_name, **validated_data)
+        # settings = api_instance.v2_global_settings_list()
+
+        region = validated_data.get("region", None)
+        if region:
+            settings = [x for x in settings if x["region"] == region]
+
+        return settings
+
+    @inject_serializer(
+        query_in=serializers.ListSettingMetasSerializer(),
+        out=serializers.SettingMetaSerializer(many=True),
+        tags=["config_center"],
+    )
+    def list_defaults(self, request, validated_data):
+        """获取 namespace 下的所有示例配置"""
+        category_type = validated_data["category_type"]
+
+        api_instance = bkuser_sdk.SettingMetasApi(self.get_api_client_by_request(request))
+        setting_metas = self.get_paging_results(
+            api_instance.v2_setting_metas_list, lookup_field="category_type", exact_lookups=[category_type]
+        )
+
+        filter_keys = ["region", "namespace"]
+        for key in filter_keys:
+            if not validated_data.get(key, None):
+                continue
+
+            setting_metas = [x for x in setting_metas if x[key] == validated_data[key]]
+
+        return setting_metas
+
+    @inject_serializer(
+        body_in=serializers.UpdateNamespaceSettingSerializer(many=True),
+        out=serializers.SettingSerializer(many=True),
+        tags=["config_center"],
+    )
+    def update(self, request, namespace_name, validated_data):
+        api_instance = bkuser_sdk.GlobalSettingsApi(self.get_api_client_by_request(request))
+        settings = api_instance.v2_global_settings_list(namespace=namespace_name)
+
+        setting_instances = {x.key: x for x in settings if x.namespace == namespace_name}
+
+        # TODO:  后续改为批量接口
+        result = []
+        for setting_info in validated_data:
+            body = {"value": setting_info["value"], "enabled": setting_info["enabled"]}
+            try:
+                setting_id = setting_instances[setting_info["key"]].id
+            except KeyError:
+                logger.exception(
+                    "找不到 GlobalSetting<%s>. [namespace_name=%s]",
+                    setting_info["key"],
+                    namespace_name,
+                )
+                continue
+
+            try:
+                api_response = api_instance.v2_global_settings_partial_update(data=body, lookup_value=setting_id)
+            except ApiException:
+                logger.exception("更新 GlobalSetting<%s>-<%s> 失败", setting_info["key"], setting_id)
+                continue
+
+            result.append(api_response)
+
+        return result
