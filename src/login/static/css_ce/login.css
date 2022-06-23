@@ -216,6 +216,49 @@ input[type="number"]::-webkit-outer-spin-button {
   border-radius: 8px;
   box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.10);
 }
+.page-content .login-from .account-content {
+  position: relative;
+}
+.page-content .login-from .account-content .error-text {
+  margin: 10px 0;
+  color: #ea3636;
+}
+.page-content .login-from .account-content .error-text #admin {
+  color: #5C7AC6;
+}
+.page-content .login-from .account-content .error-text #admin:hover {
+  cursor: pointer;
+}
+.page-content .login-from .account-content .tips {
+  display: none;
+}
+.show-tips {
+  max-width: 200px;
+  padding: 5px;
+  background-color: rgba(0, 0, 0, 0.4);
+  font-size: 13px;
+  color: #ffffffA5;
+  position: absolute;
+  bottom: 25px;
+  left: 200px;
+  border-radius: 5px;
+  display: block !important;
+}
+.page-content .login-from .account-content .show-tips span {
+  width: 100%;
+}
+.page-content .login-from .account-content .show-tips:after {
+  display: block;
+  content: '';
+  width: 0;
+  height: 0;
+  border-top: 6px solid rgba(0, 0, 0, 0.4);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  position: absolute;
+  bottom: -6px;
+  left: 27px;
+}
 .page-content .login-from .logo-title {
   opacity: 1;
   padding: 39px 0 40px 0;
