@@ -118,9 +118,10 @@ error_codes.add_codes(
         ErrorCode("USER_IS_DELETED", _("账号已被删除，请联系管理员"), 3210022),
         ErrorCode("CATEGORY_PLUGIN_LOAD_FAIL", _("目录登录插件加载失败"), 3210023),
         # captcha
-        ErrorCode("DUPLICATE_SENDING", _("验证码已经发送，请等待{expire_time}分钟后发送"), 3210024),
+        ErrorCode("DUPLICATE_SENDING", _("验证码已经发送，请等待{expire_time}分钟后发送"), 3210027),
         ErrorCode("CAPTCHA_TOKEN_HAD_EXPIRED", _("验证码过期，请重新点击发送"), 3210025),
         ErrorCode("ERROR_CAPTCHA", _("验证码错误，请重新输入"), 3210026),
+        ErrorCode("USER_IS_EXPIRED", _("该用户账号已过期"), 3210024),
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),

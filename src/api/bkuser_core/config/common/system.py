@@ -94,6 +94,9 @@ DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
 # 复用 API, 接口参数中存在 SYNC_API_PARAM 时, 以sync的接口协议返回
 SYNC_API_PARAM = "for_sync"
 
+# 通知发送时间间隔
+NOTICE_INTERVAL_SECONDS = env.int("NOTICE_INTERVAL_SECONDS", default=3)
+
 
 # ==============================================================================
 # 开发调试

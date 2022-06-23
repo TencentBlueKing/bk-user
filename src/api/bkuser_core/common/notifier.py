@@ -48,7 +48,7 @@ def send_mail(receivers: List[str], message: str, sender: str = None, title: str
     client = get_client_by_raw_username(user=sender or DEFAULT_EMAIL_SENDER)
 
     message_encoded = force_text(base64.b64encode(message.encode("utf-8")))
-    logger.info(
+    logger.debug(
         "going to send email to %s, title: %s, via %s",
         receivers_str,
         title,

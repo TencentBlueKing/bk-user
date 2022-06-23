@@ -25,12 +25,13 @@
       <div class="catalog-name-container text-overflow-hidden">
         <span class="catalog-name">{{catalogInfo.display_name}}</span>
       </div>
-      <div :class="{ 'setting-text': true, active: current === 1 }" @click="current = 1">
-        <span>{{$t('基本设置')}}</span>
-      </div>
-      <div :class="{ 'setting-text': true, active: current === 2 }" @click="current = 2">
-        <span>{{$t('密码设置')}}</span>
-        <span v-if="passwordHasCreated === false" class="unfinished">{{$t('待完善')}}</span>
+      <div
+        v-for="(item, index) in localSetConfig"
+        :key="index"
+        :class="{ 'setting-text': true, active: current === item.key }"
+        @click="current = item.key">
+        <span>{{item.title}}</span>
+        <span v-if="!item.show" class="unfinished">{{$t('待完善')}}</span>
       </div>
     </div>
     <div class="detail" v-bkloading="{ isLoading: isLoading }">
@@ -42,9 +43,16 @@
           :basic-info="basicInfo"
           @cancel="$emit('changePage', 'showPageHome')"
           @saveBasic="handleSaveBasic" />
+        <!-- 账号设置 -->
+        <SetAccount
+          v-show="current === 2"
+          type="set"
+          :account-info="accountInfo"
+          @cancel="$emit('changePage', 'showPageHome')"
+          @saveAccount="handleSaveAccount" />
         <!-- 密码设置 -->
         <SetPassword
-          v-show="current === 2"
+          v-show="current === 3"
           type="set"
           :passport-info="passwordInfo"
           @cancel="$emit('changePage', 'showPageHome')"
@@ -58,11 +66,13 @@
 
 <script>
 import SetBasic from '@/components/catalog/operation/SetBasic';
+import SetAccount from '@/components/catalog/operation/SetAccount';
 import SetPassword from '@/components/catalog/operation/SetPassword';
 
 export default {
   components: {
     SetBasic,
+    SetAccount,
     SetPassword,
   },
   props: {
@@ -78,11 +88,26 @@ export default {
       basicInfo: null,
       passwordInfo: null,
       passwordHasCreated: true,
+      accountInfo: {},
+      localSetConfig: [
+        { title: this.$t('基本设置'), icon: 1, key: 1, show: true },
+        { title: this.$t('账号设置'), icon: 2, key: 2, show: true },
+        { title: this.$t('密码设置'), icon: 3, key: 3, show: this.passwordHasCreated },
+      ],
     };
+  },
+  watch: {
+    passwordHasCreated: {
+      immediate: true,
+      handler(value) {
+        this.localSetConfig[2].show = value;
+      },
+    },
   },
   created() {
     this.getBasicInfo();
     this.getNamespaceInfo();
+    this.getAccountInfo();
   },
   methods: {
     getBasicInfo() {
@@ -100,10 +125,21 @@ export default {
           // password 信息未创建
           this.passwordInfo = JSON.parse(JSON.stringify(this.$store.state.catalog.defaults.password.default));
           this.passwordHasCreated = false;
-          this.current = 2;
+          this.current = 3;
         } else {
           this.passwordInfo = this.$convertPassportRes(passportRes.data);
         }
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getAccountInfo() {
+      try {
+        this.isLoading = true;
+        const accountRes = await this.$store.dispatch('catalog/ajaxGetAccount', { id: this.catalogInfo.id });
+        this.accountInfo = this.$convertAccountRes(accountRes.data);
       } catch (e) {
         console.warn(e);
       } finally {
@@ -116,6 +152,20 @@ export default {
         await this.$store.dispatch('catalog/ajaxPutCatalog', {
           id: this.catalogInfo.id,
           data: this.basicInfo,
+        });
+        this.handleSaveSuccess();
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async handleSaveAccount() {
+      try {
+        this.isLoading = true;
+        await this.$store.dispatch('catalog/ajaxPutAccount', {
+          id: this.catalogInfo.id,
+          data: this.$convertAccountInfo(this.accountInfo),
         });
         this.handleSaveSuccess();
       } catch (e) {

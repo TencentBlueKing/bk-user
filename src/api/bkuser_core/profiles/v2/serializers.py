@@ -117,6 +117,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     leader = LeaderSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
     two_factor_enable = serializers.CharField(required=False, read_only=True)
+    account_expiration_date = serializers.CharField(required=False)
 
     create_time = serializers.DateTimeField(required=False, read_only=True)
     update_time = serializers.DateTimeField(required=False, read_only=True)
