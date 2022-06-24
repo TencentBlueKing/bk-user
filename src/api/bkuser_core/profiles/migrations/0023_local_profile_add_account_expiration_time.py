@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("profiles", "0022_auto_20220520_1028"),
-        ("user_settings", "0015_add_default_fields_account_settings")
+        ("user_settings", "0016_add_default_fields_account_settings")
     ]
 
     operations = [migrations.RunPython(forwards_func)]

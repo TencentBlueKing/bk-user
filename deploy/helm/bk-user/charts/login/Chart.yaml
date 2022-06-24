@@ -3,4 +3,4 @@ name: login
 description: login module for blueking
 type: application
 version: 1.0.0
-appVersion: "v2.3.4-beta.27"
+appVersion: "v2.3.4-beta.28"

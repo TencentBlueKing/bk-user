@@ -29,4 +29,4 @@ def worker_process_init_otel_trace_setup(*args, **kwargs):
 
 @worker_process_init.connect(weak=False)
 def worker_process_init_sentry_setup(*args, **kwargs):
-    init_sentry_sdk()
+    init_sentry_sdk("bk-user-api")
