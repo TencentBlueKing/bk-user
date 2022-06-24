@@ -35,6 +35,7 @@ class LoginHandler:
             object_class=config_loader["user_class"],
             attributes=field_fetcher.get_user_attributes(),
         )
+        # NOTE: 这里 1.没有log debug过程 2.target_dn可能被后面命中的覆盖?
         target_dn = None
         for user in users:
             if not user.get("raw_attributes"):

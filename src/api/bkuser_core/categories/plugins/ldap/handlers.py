@@ -71,6 +71,9 @@ def update_or_create_sync_tasks(instance: "Setting", operator: str):
 @receiver(post_category_delete)
 def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
     if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+        logger.info(
+            "category<%s> is %s, not a ldap or mad category, skip delete sync tasks", instance.id, instance.type
+        )
         return
 
     logger.info("going to delete periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
@@ -81,9 +84,13 @@ def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
 @receiver(post_setting_create)
 def update_sync_tasks(sender, instance: "Setting", operator: str, **kwargs):
     if instance.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+        logger.info(
+            "category<%s> is %s, not a ldap or mad category, skip update sync tasks", instance.id, instance.type
+        )
         return
 
     # 针对 pull_cycle 配置更新同步任务
+    logger.info("going to update periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
     update_or_create_sync_tasks(instance, operator)
 
 

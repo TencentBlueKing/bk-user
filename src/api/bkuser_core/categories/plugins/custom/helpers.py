@@ -51,7 +51,7 @@ class DBSyncHelper:
         # 添加 category_id ，code 可以在多目录中唯一
         code = f"{self.category.pk}-{str(raw_key)}"
         sha = hashlib.sha256(force_bytes(code)).hexdigest()
-        logger.debug("transform code to sha: %s -> %s", code, sha)
+        logger.info("transform code to sha: %s -> %s", code, sha)
         return sha
 
 
@@ -156,7 +156,7 @@ class ProSyncHelper(DBSyncHelper):
                 validate_username(value=info.username)
             except ValidationError as e:
                 self.context.add_record(step=SyncStep.USERS, success=False, username=info.username, error=str(e))
-                logger.warning("username<%s:%s> does not meet format", info.code, info.username)
+                logger.warning("username<%s:%s> does not meet format, will skip", info.code, info.username)
                 continue
 
             # 1. 先更新 profile 本身
@@ -165,6 +165,7 @@ class ProSyncHelper(DBSyncHelper):
             if info.extras:
                 # note: the priority of extras from origin api is higher than `code=info.code`
                 extras.update(info.extras)
+
             profile_params = {
                 "category_id": self.category.pk,
                 "domain": self.category.domain,
@@ -209,7 +210,9 @@ class ProSyncHelper(DBSyncHelper):
                         department=dep_id,
                         error=_("部门不存在"),
                     )
-                    logger.warning("the department<%s> of profile<%s:%s> is missing", dep_id, info.code, info.username)
+                    logger.warning(
+                        "the department<%s> of profile<%s:%s> is missing, will skip", dep_id, info.code, info.username
+                    )
                     continue
 
                 self.try_add_relation(
@@ -231,7 +234,9 @@ class ProSyncHelper(DBSyncHelper):
                 self.context.add_record(
                     step=SyncStep.USERS_RELATIONSHIP, success=False, username=info.username, error=_("用户信息不存在")
                 )
-                logger.warning("profile<%s:%s> not exists, will not be synced, skip", info.code, info.username)
+                logger.warning(
+                    "profile<%s:%s> not exists, the profile leaders will not be synced, skip", info.code, info.username
+                )
                 continue
 
             for leader_id in info.leaders:
