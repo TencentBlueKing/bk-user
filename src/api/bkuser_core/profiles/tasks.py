@@ -22,7 +22,7 @@ from .account_expiration_notifier import (
     get_notice_config_for_account_expiration,
     get_profiles_for_account_expiration,
 )
-from .constants import TypeOfExpiration
+from .constants import SEND_METHOD_EMAIL, SEND_METHOD_SMS, TypeOfExpiration
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
@@ -85,7 +85,7 @@ def send_captcha(send_data_config: dict):
     profile = Profile.objects.get(id=send_data_config.pop("profile"))
     config_loader = GlobalConfigProvider(send_data_config["authentication_type"])
 
-    if config_loader.get("send_method") == "email":
+    if config_loader.get("send_method") == SEND_METHOD_EMAIL:
         email_config = config_loader.get("email_config")
         message = email_config["content"].format(
             captcha=send_data_config["captcha"], expire_seconds=int(send_data_config["expire_seconds"] / 60)
@@ -100,7 +100,7 @@ def send_captcha(send_data_config: dict):
             message=message,
             title=email_config["title"],
         )
-    elif config_loader.get("send_method") == "telephone":
+    elif config_loader.get("send_method") == SEND_METHOD_SMS:
         logger.info(
             "--------- going to send captcha of Profile(%s) via telephone ----------",
             profile.id,

@@ -21,7 +21,7 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 
 from bklogin.api.utils import APIV1FailJsonResponse
-from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
+from bklogin.bkauth.constants import NOT_VERIFICATION, REDIRECT_FIELD_NAME
 from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid, validate_scope
 from bklogin.common.log import logger
 from bklogin.components import usermgr_api
@@ -61,7 +61,7 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
         logger.error("usermgr_api.get_global_settings error: message=%s namespace=general" % message)
         return APIV1FailJsonResponse(message=message)
     # 认证方式选择
-    if not verification_type[0]["value"]:
+    if not verification_type[0]["value"] == NOT_VERIFICATION:
         return
 
     ok, message, verification_settings_list = usermgr_api.get_global_settings(

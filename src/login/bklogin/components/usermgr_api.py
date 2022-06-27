@@ -224,7 +224,6 @@ def esb_upsert_user(username, **kwargs):
         "username": username,
     }
     data.update(kwargs)
-    # ok, _, message, _data = _call_usermgr_api(http_post, url, data)
     ok, _, message, _data = _call_esb_api(http_post, path, data)
     return ok, message, _data
 

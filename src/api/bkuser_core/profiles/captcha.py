@@ -10,7 +10,7 @@ from django.core.cache import caches
 
 class CaptchaOperator:
     def __init__(self):
-        self.cache = caches["captcha"]
+        self.cache = caches["locmem"]
 
     def generate_token_of_captcha(self, username: str):
         # APP_Secret 区别环境差异
@@ -28,7 +28,8 @@ class CaptchaOperator:
             return True
 
     def get_captcha_data(self, token):
-        return json.loads(self.cache.get(token))
+        data = self.cache.get(token)
+        return json.loads(data) if data else None
 
     def set_captcha_data(self, token, data):
         self.cache.set(key=token, timeout=data["expire_seconds"], value=json.dumps(data))

@@ -12,3 +12,5 @@ specific language governing permissions and limitations under the License.
 
 
 REDIRECT_FIELD_NAME = "c_url"
+
+NOT_VERIFICATION = "NOT_VERIFICATION"

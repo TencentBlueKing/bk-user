@@ -8,11 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import json
 import logging
 from typing import Union
 
-import redis
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
@@ -42,7 +40,6 @@ logger = logging.getLogger(__name__)
 
 
 def get_extras(extras_from_db: Union[dict, list], defaults: dict) -> dict:
-
     if not defaults:
         defaults = DynamicFieldInfo.objects.get_extras_default_values()
 
@@ -371,7 +368,6 @@ class CaptchaSendSerializer(serializers.Serializer):
             attrs["token"] = token
             attrs.pop("email")
             attrs.pop("telephone")
-
         return attrs
 
 
@@ -382,12 +378,11 @@ class CaptchaVerifySerializer(serializers.Serializer):
     domain = serializers.CharField(required=True)
 
     def validate(self, attrs):
-        captcha_data = redis.Redis().get(attrs["token"])
+        captcha_data = CaptchaOperator().get_captcha_data(token=attrs["token"])
 
         # token 校验
         if not captcha_data:
             raise error_codes.CAPTCHA_TOKEN_HAD_EXPIRED
-        captcha_data = json.loads(captcha_data)
         # 安全校验，token被串改，为其它用户的token
         profile = Profile.objects.get(id=captcha_data["profile"])
         # 用户名
