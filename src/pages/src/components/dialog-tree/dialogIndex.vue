@@ -110,26 +110,14 @@
         <div class="right">
           <div class="header">
             <div class="has-selected">
-              <template v-if="curLanguageIsCn">
-                {{ $t('已选择') }}
-                <template v-if="isShowSelectedText">
-                  <span class="organization-count">{{ hasSelectedDepartments.length }}</span>
-                  {{ $t('个') }} {{ $t('组织') }}，
-                  <span class="user-count">{{ hasSelectedUsers.length }}</span>{{ $t('个') }} {{ $t('用户') }}
-                </template>
-                <template v-else>
-                  <span class="user-count">0</span>
-                </template>
+              {{ $t('已选择') }}
+              <template v-if="isShowSelectedText">
+                <span class="organization-count">{{ hasSelectedDepartments.length }}</span>
+                {{ $t('个') }} {{ $t('组织') }}，
+                <span class="user-count">{{ hasSelectedUsers.length }}</span>{{ $t('个') }} {{ $t('用户') }}
               </template>
               <template v-else>
-                {{ $t('已选择') }}
-                <template v-if="isShowSelectedText">
-                  <span class="organization-count">{{ hasSelectedDepartments.length }}</span>Org，
-                  <span class="user-count">{{ hasSelectedUsers.length }}</span>User
-                </template>
-                <template v-else>
-                  <span class="user-count">0</span>
-                </template>
+                <span class="user-count">0</span>
               </template>
             </div>
             <bk-button theme="primary" text :disabled="!isShowSelectedText || isAll" @click="handleDeleteAll">
@@ -152,7 +140,7 @@
                 <Icon bk type="user-shape" class="user-icon" />
                 <span class="user-name" :title="item.name !== '' ? `${item.username}(${item.name})` : item.username">
                   {{ item.username }}
-                  <template v-if="item.name !== ''">({{ item.name }})</template>
+                  <template v-if="item.display_name !== ''">({{ item.display_name }})</template>
                 </span>
                 <Icon bk type="close-circle-shape" class="delete-icon" @click="handleDelete(item, 'user')" />
               </div>
@@ -261,7 +249,7 @@ export default {
       searchedUsers: [],
       searchedDepartment: [],
       hasSelectedDepartments: [],
-      // treeList: [],
+      treeList: [],
       infiniteTreeKey: -1,
       searchedResult: [],
       // 搜索时 键盘上下键 hover 的 index
@@ -283,42 +271,6 @@ export default {
       manualValueBackup: [],
       isAll: false,
       isAllFlag: false,
-      treeList: [{
-        id: 2,
-        name: '腾讯',
-        departments: [{
-          child_count: 0,
-          id: 2872,
-          member_count: 76,
-          name: '虚拟账号',
-          recursive_member_count: 76,
-        },
-        {
-          child_count: 16,
-          id: 2874,
-          member_count: 0,
-          name: '腾讯公司',
-          recursive_member_count: 123235,
-        }],
-      },
-      {
-        id: 3,
-        name: '合作开发商',
-        departments: [{
-          child_count: 0,
-          id: 30782,
-          member_count: 0,
-          name: 'wgame斗战神',
-          recursive_member_count: 0,
-        },
-        {
-          child_count: 0,
-          id: 30783,
-          member_count: 0,
-          name: 'QQ炫舞2',
-          recursive_member_count: 0,
-        }],
-      }],
     };
   },
   computed: {
@@ -458,6 +410,7 @@ export default {
     async handleAddManualUser() {
       this.manualAddLoading = true;
       try {
+        // 手动输入查询
         const url = this.isRatingManager ? 'role/queryRolesUsers' : 'organization/verifyManualUser';
         const res = await this.$store.dispatch(url, {
           usernames: this.manualValueActual.split(';').filter(item => item !== '')
@@ -623,8 +576,8 @@ export default {
     async fetchCategories(isTreeLoading = false, isDialogLoading = false) {
       this.treeLoading = isTreeLoading;
       try {
-        // const res = await this.$store.dispatch('organization/getCategories');
-        const categories = this.treeList;
+        const res = await this.$store.dispatch('organization/getOrganizationTree');
+        const categories = [...res.data];
         categories.forEach((item) => {
           item.visiable = true;
           item.level = 0;
@@ -641,6 +594,7 @@ export default {
           item.is_selected = false;
           item.parentNodeId = '';
           item.id = `${item.id}&${item.level}`;
+          item.name = item.display_name;
           if (item.departments && item.departments.length > 0) {
             item.departments.forEach((child) => {
               child.visiable = false;
@@ -653,7 +607,7 @@ export default {
               child.type = 'depart';
               child.count = child.recursive_member_count;
               child.showCount = true;
-              child.async = child.child_count > 0 || child.member_count > 0;
+              child.async = child.has_children;
               child.isNewMember = false;
               child.parentNodeId = item.id;
               if (this.hasSelectedDepartments.length > 0) {
@@ -730,18 +684,18 @@ export default {
         return;
       }
 
-      if (this.searchedResult.length === 1) {
-        if (this.searchedDepartment.length === 1) {
-          this.hasSelectedDepartments.push(this.searchedDepartment[0]);
-        } else {
-          this.hasSelectedUsers.push(this.searchedUsers[0]);
-        }
-        this.keyword = '';
-        this.searchedResult.splice(0, this.searchedResult.length, ...[]);
-        this.searchedDepartment.splice(0, this.searchedDepartment.length, ...[]);
-        this.searchedUsers.splice(0, this.searchedUsers.length, ...[]);
-        return;
-      }
+      // if (this.searchedResult.length === 1) {
+      //   if (this.searchedDepartment.length === 1) {
+      //     this.hasSelectedDepartments.push(this.searchedDepartment[0]);
+      //   } else {
+      //     this.hasSelectedUsers.push(this.searchedUsers[0]);
+      //   }
+      //   this.keyword = '';
+      //   this.searchedResult.splice(0, this.searchedResult.length, ...[]);
+      //   this.searchedDepartment.splice(0, this.searchedDepartment.length, ...[]);
+      //   this.searchedUsers.splice(0, this.searchedUsers.length, ...[]);
+      //   return;
+      // }
 
       if (this.focusItemIndex !== -1) {
         this.$refs.searchedResultsRef.setCheckStatusByIndex();
@@ -765,7 +719,6 @@ export default {
         is_exact: this.searchConditionValue === 'exact',
       };
       try {
-        // 搜索调用接口
         const res = await this.$store.dispatch('organization/getSeachOrganizations', params);
         if (res.data.is_too_much) {
           this.isShowTooMuch = true;
@@ -846,10 +799,19 @@ export default {
       }
       payload.loading = true;
       try {
-        // 点击tree的字节的调用接口
-        const res = await this.$store.dispatch('organization/getOrganizations', { departmentId: payload.id });
-        // const { child_count, children, id, member_count, members, name, recursive_member_count } = res.data
-        const { children, members } = res.data;
+        // 点击tree子节点调用
+        const params = {
+          id: payload.id,
+          pageSize: 100,
+          page: 1,
+          keyword: '',
+          recursive: true,
+        };
+        const res = await this.$store.dispatch('organization/getDataById', { id: payload.id });
+        const membersList = await this.$store.dispatch('organization/getProfiles', params);
+        // const { child_count, children, id, member_count, members, name, recursive_member_count } = res.data;
+        const { children } = res.data;
+        const members = membersList.data.data;
         if (children.length < 1 && members.length < 1) {
           payload.expanded = false;
           return;
@@ -874,7 +836,7 @@ export default {
             child.type = 'depart';
             child.count = child.recursive_member_count;
             child.showCount = true;
-            child.async = child.child_count > 0 || child.member_count > 0;
+            child.async = payload.has_children;
             child.isNewMember = false;
             child.parentNodeId = payload.id;
 
@@ -1085,6 +1047,7 @@ export default {
         }
       }
       .tree {
+        margin-right: 10px;
         max-height: 309px;
         overflow: auto;
         &::-webkit-scrollbar {

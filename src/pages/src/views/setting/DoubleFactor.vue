@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import _ from 'lodash';
 import DialogIndex from '../../components/dialog-tree/dialogIndex.vue';
 import renderMember from '../../components/dialog-tree/renderMember.vue';
 export default {
@@ -97,30 +98,30 @@ export default {
           };
         });
         this.isShowMemberAdd = false;
-        // const list = [];
-        // res.data.authorization_scopes.forEach((item) => {
-        //   item.actions.forEach((act) => {
-        //     const tempResource = _.cloneDeep(act.resource_groups);
-        //     tempResource.forEach((groupItem) => {
-        //       groupItem.related_resource_types.forEach((subItem) => {
-        //         subItem.condition = null;
-        //       });
-        //     });
-        //     list.push({
-        //       description: act.description,
-        //       expired_at: act.expired_at,
-        //       id: act.id,
-        //       name: act.name,
-        //       system_id: item.system.id,
-        //       system_name: item.system.name,
-        //       $id: `${item.system.id}&${act.id}`,
-        //       tag: act.tag,
-        //       type: act.type,
-        //       resource_groups: tempResource,
-        //     });
-        //   });
-        // });
-        // this.originalList = _.cloneDeep(list);
+        const list = [];
+        res.data.authorization_scopes.forEach((item) => {
+          item.actions.forEach((act) => {
+            const tempResource = _.cloneDeep(act.resource_groups);
+            tempResource.forEach((groupItem) => {
+              groupItem.related_resource_types.forEach((subItem) => {
+                subItem.condition = null;
+              });
+            });
+            list.push({
+              description: act.description,
+              expired_at: act.expired_at,
+              id: act.id,
+              name: act.name,
+              system_id: item.system.id,
+              system_name: item.system.name,
+              $id: `${item.system.id}&${act.id}`,
+              tag: act.tag,
+              type: act.type,
+              resource_groups: tempResource,
+            });
+          });
+        });
+        this.originalList = _.cloneDeep(list);
       } catch (e) {
         console.error(e);
         this.bkMessageInstance = this.$bkMessage({
@@ -153,10 +154,10 @@ export default {
     },
     handleSumbitAdd(payload) {
       window.changeDialog = true;
-      // const { users, departments } = payload;
+      const { users, departments } = payload;
       this.isAll = payload.isAll;
-      // this.users = _.cloneDeep(users);
-      // this.departments = _.cloneDeep(departments);
+      this.users = _.cloneDeep(users);
+      this.departments = _.cloneDeep(departments);
       this.isShowMemberAdd = false;
       this.isShowAddMemberDialog = false;
       this.isShowMemberEmptyError = false;
