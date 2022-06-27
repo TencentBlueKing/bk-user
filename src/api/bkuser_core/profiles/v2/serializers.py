@@ -10,8 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import json
 import logging
-import random
-import string
 from typing import Union
 
 import redis
@@ -25,14 +23,10 @@ from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.global_settings.constants import GlobalSettingsEnableNamespaces
 from bkuser_core.global_settings.models import GlobalSettings
+from bkuser_core.profiles.captcha import CaptchaOperator
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from bkuser_core.profiles.utils import (
-    force_use_raw_username,
-    general_captcha_token,
-    get_username,
-    parse_username_domain,
-)
+from bkuser_core.profiles.utils import force_use_raw_username, get_username, parse_username_domain
 from bkuser_core.profiles.validators import validate_domain, validate_username
 from bkuser_core.user_settings.loader import GlobalConfigProvider
 
@@ -354,11 +348,11 @@ class CaptchaSendSerializer(serializers.Serializer):
         authentication_type = GlobalSettings.objects.get(meta__key="verification_type").value
         attrs["authentication_type"] = authentication_type
         authentication_settings = GlobalConfigProvider(authentication_type)
-
+        captcha_operator = CaptchaOperator()
         if authentication_type == GlobalSettingsEnableNamespaces.TWO_FACTOR.value:
-            token = general_captcha_token(f"{username}@{profile.domain}")
+            token = captcha_operator.generate_token_of_captcha(f"{username}@{profile.domain}")
             # 校验是否重复发送
-            if redis.Redis().get(token):
+            if captcha_operator.captcha_is_exist(token):
                 raise error_codes.DUPLICATE_SENDING.f(
                     expire_time=int(authentication_settings.get("expire_seconds") / 60)
                 )
@@ -373,7 +367,7 @@ class CaptchaSendSerializer(serializers.Serializer):
                     raise serializers.ValidationError("用户未绑定{}，请提供".format(authentication_settings.get("send_method")))
 
             attrs["expire_seconds"] = authentication_settings.get("expire_seconds")
-            attrs["captcha"] = "".join(random.sample(string.ascii_letters + string.digits, 8))
+            attrs["captcha"] = captcha_operator.set_captcha()
             attrs["token"] = token
             attrs.pop("email")
             attrs.pop("telephone")
@@ -401,7 +395,7 @@ class CaptchaVerifySerializer(serializers.Serializer):
             raise error_codes.CAPTCHA_TOKEN_HAD_EXPIRED
         # 目录域
         if profile.domain != attrs["domain"]:
-            raise error_codes.CAPTCHA_TOKEN_HAD_EXPIRED
+            raise error_codes.DOMAIN_UNKNOWN
         # 验证码
         if captcha_data["captcha"] != attrs["captcha"]:
             raise error_codes.ERROR_CAPTCHA

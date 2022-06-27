@@ -7,8 +7,8 @@ from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSe
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.common.models import is_obj_needed_update
 from bkuser_core.global_settings.models import GlobalSettings, GlobalSettingsMeta
+from bkuser_core.global_settings.signals import post_global_setting_update
 from bkuser_core.global_settings.v2 import serializers as local_serializers
-from bkuser_core.user_settings.signals import post_setting_update
 from bkuser_global.drf_crown import inject_serializer
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class GlobalSettingModelViewSet(AdvancedModelViewSet):
                 raise error_codes.CANNOT_UPDATE_GLOBAL_SETTING
             else:
                 # 仅当更新成功时才发送信号
-                post_setting_update.send(
+                post_global_setting_update.send(
                     sender=self,
                     instance=self.get_object(),
                     operator=request.operator,

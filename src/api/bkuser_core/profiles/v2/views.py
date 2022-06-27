@@ -10,12 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 import functools
-import json
 import logging
 from collections import defaultdict
 from operator import or_
 
-import redis
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import FieldError, MultipleObjectsReturned
@@ -31,6 +29,7 @@ from rest_framework.response import Response
 from rest_framework_jsonp.renderers import JSONPRenderer
 
 from ...departments.v2 import serializers as department_serializer
+from ..captcha import CaptchaOperator
 from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.apis.v2.serializers import (
@@ -836,14 +835,14 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         validated_data = serializers.validated_data
         token = validated_data.pop("token")
         send_captcha.delay(validated_data)
-        redis.Redis().setex(name=token, time=validated_data["expire_seconds"], value=json.dumps(validated_data))
+        CaptchaOperator().set_captcha_data(token=token, data=validated_data)
         return Response({"token": token})
 
     @swagger_auto_schema(request_body=local_serializers.CaptchaVerifySerializer())
     def verify_captcha(self, request):
         serializers = local_serializers.CaptchaVerifySerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
-        redis.Redis().delete(serializers.validated_data["token"])
+        CaptchaOperator().delete_captcha(token=serializers.validated_data["token"])
         return Response(
             {
                 "send_method": serializers.validated_data["send_method"],

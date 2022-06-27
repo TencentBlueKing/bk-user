@@ -7,7 +7,7 @@ VERIFICATION_TYPE_META = {
     'key': 'verification_type',
     'example': 'two_factor',
     'default': 'two_factor',
-    'choices': [None, "two_factor"],
+    'choices': ["not", "two_factor"],
 }
 
 email_config = {
