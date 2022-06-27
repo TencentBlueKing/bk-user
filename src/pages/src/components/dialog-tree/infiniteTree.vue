@@ -26,13 +26,13 @@
             type="work-manage"
             class="node-icon" />
         </template>
-        <Icon v-else type="user-shape" class="node-svg" />
+        <Icon v-else bk type="user-shape" class="node-svg" />
         <!-- eslint-disable max-len -->
         <span
           :style="nameStyle(item)"
           :class="['node-title', { 'node-selected': item.selected }]"
           :title="item.type === 'user' ? item.name !== '' ? `${item.username}(${item.name})` : item.username : item.name">
-          {{ item.type === 'user' ? item.username : item.name }}<template v-if="item.type === 'user' && item.name !== ''">({{ item.name }})</template>
+          {{ item.type === 'user' ? item.username : item.name }}<template v-if="item.type === 'user' && item.display_name !== ''">({{ item.display_name }})</template>
         </span><span class="red-dot" v-if="item.isNewMember"></span><span class="node-user-count" v-if="item.showCount">{{ '(' + item.count + `)` }}</span>
         <spin-loading ext-cls="loading" v-if="item.loading" />
         <div class="node-radio" v-if="item.showRadio">
@@ -205,7 +205,7 @@ export default {
       if (this.isDisabled) {
         return;
       }
-      if ((node.level === 0 || (node.async && node.disabled)) && !this.isRatingManager) {
+      if (node.level === 0 || node.async) {
         this.expandNode(node);
         return;
       }
