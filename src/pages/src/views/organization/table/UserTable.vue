@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import moment from 'moment';
+import { dateConvert } from '@/common/util';
 export default {
   props: {
     fieldsList: {
@@ -289,11 +289,7 @@ export default {
         }
       } else {
         if (this.timerMap.includes(key)) {
-          if (value === '2100-01-01') {
-            value = this.$t('永久');
-          } else {
-            value = moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
-          }
+          return dateConvert(value);
         }
         return value;
       }

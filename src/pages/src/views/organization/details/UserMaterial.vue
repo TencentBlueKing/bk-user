@@ -138,7 +138,7 @@
 </template>
 
 <script>
-import moment from 'moment';
+import { dateConvert } from '@/common/util';
 export default {
   directives: {
     focus: {
@@ -263,10 +263,7 @@ export default {
       }
     },
     mapTimeEnum(value) {
-      if (value === '2100-01-01') {
-        return value = this.$t('永久');
-      }
-      return value = moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
+      return dateConvert(value);
     },
     // 编辑
     editProfile() {
