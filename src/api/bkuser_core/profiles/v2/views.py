@@ -834,7 +834,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         serializers.is_valid(raise_exception=True)
         validated_data = serializers.validated_data
         token = validated_data.pop("token")
-        send_captcha(validated_data)
+        send_captcha.delay(send_data_config=validated_data)
         CaptchaOperator().set_captcha_data(token=token, data=validated_data)
         return Response({"token": token})
 
