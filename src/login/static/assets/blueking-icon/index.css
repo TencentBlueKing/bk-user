@@ -44,3 +44,33 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-lanjingzhiyunen:before {
 	content: "\e107";
 }
+.icon-add-hollow:before {
+	content: "\e10a";
+}
+.icon-close-fill:before {
+	content: "\e108";
+}
+.icon-file-close:before {
+	content: "\e109";
+}
+.icon-organization-fill:before {
+	content: "\e10b";
+}
+.icon-info-fill:before {
+	content: "\e10e";
+}
+.icon-outline-list:before {
+	content: "\e10c";
+}
+.icon-personal-user:before {
+	content: "\e110";
+}
+.icon-user-directory:before {
+	content: "\e10d";
+}
+.icon-duihao:before {
+	content: "\e10f";
+}
+.icon-email:before {
+	content: "\e111";
+}

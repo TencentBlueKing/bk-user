@@ -364,6 +364,7 @@ export function dateConvert(value) {
     default:
       return moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
   }
+}
 
 /**
 * 复制到剪切板
@@ -382,4 +383,17 @@ export function clipboardCopy(content, callback) {
   transfer.blur();
   callback && callback();
   document.body.removeChild(transfer);
+}
+
+/**
+ * 生成 guid
+ *
+ * @return {string} guid
+ */
+export function guid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r && 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
