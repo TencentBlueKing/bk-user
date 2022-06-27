@@ -71,7 +71,7 @@ def update_or_create_sync_tasks(instance: "Setting", operator: str):
 @receiver(post_category_delete)
 def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
     if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
-        logger.info(
+        logger.warning(
             "category<%s> is %s, not a ldap or mad category, skip delete sync tasks", instance.id, instance.type
         )
         return
@@ -84,7 +84,7 @@ def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
 @receiver(post_setting_create)
 def update_sync_tasks(sender, instance: "Setting", operator: str, **kwargs):
     if instance.category.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
-        logger.info(
+        logger.warning(
             "category<%s> is %s, not a ldap or mad category, skip update sync tasks", instance.id, instance.type
         )
         return
@@ -97,5 +97,5 @@ def update_sync_tasks(sender, instance: "Setting", operator: str, **kwargs):
 @receiver(post_dynamic_field_delete)
 def update_dynamic_field_mapping(sender, instance: "DynamicFieldInfo", **kwargs):
     """尝试刷新自定义字段映射配置"""
-    delete_dynamic_filed(dynamic_field=instance.name)
     logger.info("going to delete <%s> from dynamic_field_mapping", instance.name)
+    delete_dynamic_filed(dynamic_field=instance.name)

@@ -235,7 +235,9 @@ class ProSyncHelper(DBSyncHelper):
                     step=SyncStep.USERS_RELATIONSHIP, success=False, username=info.username, error=_("用户信息不存在")
                 )
                 logger.warning(
-                    "profile<%s:%s> not exists, the profile leaders will not be synced, skip", info.code, info.username
+                    "profile<%s:%s> not exists, the profile leaders will not be synced, will skip",
+                    info.code,
+                    info.username,
                 )
                 continue
 
@@ -244,7 +246,7 @@ class ProSyncHelper(DBSyncHelper):
                     self.context.add_record(
                         step=SyncStep.USERS_RELATIONSHIP, success=False, username=info.username, error=_("无法设置自己为上级")
                     )
-                    logger.warning("profile<%s:%s> can not regard self as leader, skip", info.code, info.username)
+                    logger.warning("profile<%s:%s> can not regard self as leader, will skip", info.code, info.username)
                     continue
 
                 leader = self.db_sync_manager.magic_get(self._get_code(leader_id), CustomProfileMeta)
@@ -255,7 +257,9 @@ class ProSyncHelper(DBSyncHelper):
                         username=info.username,
                         error=_("上级【{username}】不存在").format(username=leader_id),
                     )
-                    logger.warning("the leader<%s> of profile<%s:%s> is missing", leader_id, info.code, info.username)
+                    logger.warning(
+                        "the leader<%s> of profile<%s:%s> is missing, will skip", leader_id, info.code, info.username
+                    )
                     continue
 
                 self.try_add_relation(

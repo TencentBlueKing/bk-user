@@ -8,12 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
+
 from django.utils.encoding import force_str
 
 from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper
 from bkuser_core.categories.plugins.ldap.client import LDAPClient
 from bkuser_core.categories.plugins.ldap.exceptions import FetchUserMetaInfoFailed
 from bkuser_core.user_settings.loader import ConfigProvider
+
+logger = logging.getLogger(__name__)
 
 
 class LoginHandler:
@@ -31,14 +35,22 @@ class LoginHandler:
         client = LDAPClient(config_loader)
         field_fetcher = ProfileFieldMapper(config_loader)
 
+        logger.debug(
+            "going to search users, object_class: %s, attributes: %s",
+            config_loader["user_class"],
+            field_fetcher.get_user_attributes(),
+        )
         users = client.search(
             object_class=config_loader["user_class"],
             attributes=field_fetcher.get_user_attributes(),
         )
-        # NOTE: 这里 1.没有log debug过程 2.target_dn可能被后面命中的覆盖?
+        logger.debug("search results users: %s", users)
+
+        # NOTE: 1. 如果用户反馈登录一直不成功, 怎么排查? 2.target_dn可能被后面命中的覆盖?
         target_dn = None
         for user in users:
             if not user.get("raw_attributes"):
+                logger.debug("user %s has no raw_attributes, skip", user)
                 continue
 
             if self.fetch_username(field_fetcher, user) == profile.username:
@@ -48,4 +60,5 @@ class LoginHandler:
             raise FetchUserMetaInfoFailed("获取用户基本信息失败")
 
         # 检验
+        logger.debug("going to check user, dn: %s", target_dn)
         client.check(username=target_dn, password=password)
