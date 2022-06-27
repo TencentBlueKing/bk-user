@@ -140,7 +140,7 @@ def backwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user_settings", "0014_alter_settingmeta_namespace"),
+        ("user_settings", "0015_alter_settingmeta_namespace"),
     ]
 
     operations = [migrations.RunPython(forwards_func, backwards_func)]
