@@ -105,7 +105,6 @@ class ProfileExcelExporter:
                 value=field_name,
             )
             _cell.font = red_ft
-            # 所在列设置数据格式为文本
 
         for index, field_name in enumerate(not_required_field_names):
             _cell = self.first_sheet.cell(
@@ -113,7 +112,6 @@ class ProfileExcelExporter:
                 column=index + 1 + len(required_field_names),
                 value=field_name,
             )
-            # 所在列设置数据格式为文本
             _cell.font = black_ft
 
     def to_response(self) -> HttpResponse:
