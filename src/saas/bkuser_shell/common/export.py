@@ -17,13 +17,13 @@ from typing import TYPE_CHECKING, List
 from django.http import HttpResponse
 from openpyxl.styles import Alignment, Font, colors
 
+from bkuser_shell.common.constants import PURE_TEXT
 from bkuser_shell.config_center.constants import DynamicFieldTypeEnum
 from bkuser_shell.organization.serializers.profiles import ProfileExportSerializer
 from bkuser_shell.organization.utils import get_options_values_by_key
 
 if TYPE_CHECKING:
     from openpyxl.workbook.workbook import Workbook
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,15 @@ class ProfileExcelExporter:
 
     def __post_init__(self):
         self.first_sheet = self.workbook.worksheets[0]
+        # 样式加载
         self.first_sheet.alignment = Alignment(wrapText=True)
+        # 初始化全表的单元格数据格式
+        __all_columns = self.first_sheet.columns
+        for columns in __all_columns:
+            [self.set_number_format(cell) for cell in columns]
+
+    def set_number_format(self, cell):
+        cell.number_format = PURE_TEXT
 
     def update_profiles(self, profiles: List[dict], extra_infos: dict = None):
         self._update_sheet_titles()
@@ -97,6 +105,7 @@ class ProfileExcelExporter:
                 value=field_name,
             )
             _cell.font = red_ft
+            # 所在列设置数据格式为文本
 
         for index, field_name in enumerate(not_required_field_names):
             _cell = self.first_sheet.cell(
@@ -104,6 +113,7 @@ class ProfileExcelExporter:
                 column=index + 1 + len(required_field_names),
                 value=field_name,
             )
+            # 所在列设置数据格式为文本
             _cell.font = black_ft
 
     def to_response(self) -> HttpResponse:
