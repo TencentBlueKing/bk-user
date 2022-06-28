@@ -60,7 +60,3 @@ class AutoNameEnum(ChoicesEnum):
 
     def _generate_next_value_(name, start, count, last_values):
         return name
-
-
-# 模板导出，单元格数据格式为纯文本
-PURE_TEXT = "@"
