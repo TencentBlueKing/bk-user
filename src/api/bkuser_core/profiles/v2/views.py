@@ -29,7 +29,7 @@ from rest_framework.response import Response
 from rest_framework_jsonp.renderers import JSONPRenderer
 
 from ...departments.v2 import serializers as department_serializer
-from ..captcha import CaptchaOperator
+from ..captcha import Captcha
 from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.apis.v2.serializers import (
@@ -833,20 +833,19 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         serializers = local_serializers.CaptchaSendSerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
         validated_data = serializers.validated_data
-        token = validated_data.pop("token")
-        send_captcha.delay(send_data_config=validated_data)
-        CaptchaOperator().set_captcha_data(token=token, data=validated_data)
+        token, captcha_data = Captcha().generate_captcha(data=validated_data)
+        send_captcha.delay(authentication_type=validated_data["authentication_type"], send_data_config=captcha_data)
         return Response({"token": token})
 
     @swagger_auto_schema(request_body=local_serializers.CaptchaVerifySerializer())
     def verify_captcha(self, request):
         serializers = local_serializers.CaptchaVerifySerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
-        CaptchaOperator().delete_captcha(token=serializers.validated_data["token"])
+        captcha_data = Captcha().verify_captcha(data=serializers.validated_data)
         return Response(
             {
-                "send_method": serializers.validated_data["send_method"],
-                "authenticated_value": serializers.validated_data["authenticated_value"],
+                "send_method": captcha_data["send_method"],
+                "authenticated_value": captcha_data["authenticated_value"],
             }
         )
 

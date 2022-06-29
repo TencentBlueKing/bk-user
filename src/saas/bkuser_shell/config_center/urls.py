@@ -127,6 +127,6 @@ urlpatterns = [
                 "get": "list_defaults",
             }
         ),
-        name="config_center.settings.namespaces.metas",
+        name="config_center.global_settings.namespaces.metas",
     ),
 ]

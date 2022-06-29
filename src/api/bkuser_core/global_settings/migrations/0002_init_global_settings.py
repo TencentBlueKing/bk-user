@@ -2,8 +2,11 @@
 
 from django.db import migrations
 
-from bkuser_core.global_settings.constants import TWO_FACTOR_VERIFICATION_META, GlobalSettingsEnableNamespaces, \
-    VERIFICATION_TYPE_META
+from bkuser_core.global_settings.constants import (
+    TWO_FACTOR_AUTHENTICATION_META,
+    GlobalSettingsEnableNamespaces,
+    AUTHENTICATION_TYPE_META
+)
 
 
 def init_global_meta(apps):
@@ -12,13 +15,13 @@ def init_global_meta(apps):
     # 全局配置元数据初始化
     general_instance = global_setting_meta.objects.create(
         required=True,
-        **VERIFICATION_TYPE_META
+        **AUTHENTICATION_TYPE_META
     )
     global_settings_meta = [general_instance]
 
-    for item in TWO_FACTOR_VERIFICATION_META:
+    for item in TWO_FACTOR_AUTHENTICATION_META:
         instance = global_setting_meta.objects.create(
-            namespace=GlobalSettingsEnableNamespaces.TWO_FACTOR.value,
+            namespace=GlobalSettingsEnableNamespaces.TWO_FACTOR_AUTHENTICATION.value,
             required=True,
             **item
         )

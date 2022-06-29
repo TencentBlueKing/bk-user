@@ -38,7 +38,6 @@ class Profile(object):
         'extras': 'object',
         'leader': 'list[Leader]',
         'last_login_time': 'datetime',
-        'two_factor_enable': 'str',
         'create_time': 'datetime',
         'update_time': 'datetime',
         'qq': 'str',
@@ -73,7 +72,6 @@ class Profile(object):
         'extras': 'extras',
         'leader': 'leader',
         'last_login_time': 'last_login_time',
-        'two_factor_enable': 'two_factor_enable',
         'create_time': 'create_time',
         'update_time': 'update_time',
         'qq': 'qq',
@@ -105,7 +103,7 @@ class Profile(object):
                             telephone=None, wx_userid=None, wx_openid=None, code=None, domain=None, category_id=None, 
                             display_name=None, logo=None, status=None, staff_status=None, password_update_time=None, position=None,
                              account_expiration_date=None, time_zone=None, language=None, country_code=None, iso_code=None, enabled=None, type=None,
-                              role=None, two_factor_enable=None):  # noqa: E501
+                              role=None):  # noqa: E501
         """Profile - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._username = None
@@ -114,7 +112,6 @@ class Profile(object):
         self._extras = None
         self._leader = None
         self._last_login_time = None
-        self._two_factor_enable = None
         self._create_time = None
         self._update_time = None
         self._qq = None
@@ -154,8 +151,6 @@ class Profile(object):
             self.leader = leader
         if last_login_time is not None:
             self.last_login_time = last_login_time
-        if two_factor_enable is not None:
-            self.two_factor_enable = two_factor_enable
         if create_time is not None:
             self.create_time = create_time
         if update_time is not None:
@@ -350,30 +345,6 @@ class Profile(object):
         """
 
         self._last_login_time = last_login_time
-
-    @property
-    def two_factor_enable(self):
-        """Gets the two_factor_enable of this Profile.  # noqa: E501
-
-
-        :return: The two_factor_enable of this Profile.  # noqa: E501
-        :rtype: str
-        """
-        return self._two_factor_enable
-
-    @two_factor_enable.setter
-    def two_factor_enable(self, two_factor_enable):
-        """Sets the two_factor_enable of this Profile.
-
-
-        :param two_factor_enable: The two_factor_enable of this Profile.  # noqa: E501
-        :type: str
-        """
-        if two_factor_enable is not None and len(two_factor_enable) < 1:
-            raise ValueError(
-                "Invalid value for `two_factor_enable`, length must be greater than or equal to `1`")  # noqa: E501
-
-        self._two_factor_enable = two_factor_enable
 
     @property
     def create_time(self):

@@ -137,6 +137,19 @@ urlpatterns = [
         views.LeaderEdgeViewSet.as_view({"get": "list"}),
         name="edge.leader",
     ),
+    ########
+    # captcha #
+    ########
+    url(
+        r"^api/v2/authentication/send_captcha/$",
+        views.ProfileLoginViewSet.as_view({"post": "send_captcha"}),
+        name="login.send_captcha",
+    ),
+    url(
+        r"^api/v2/authentication/verify_captcha/$",
+        views.ProfileLoginViewSet.as_view({"post": "verify_captcha"}),
+        name="login.verify_captcha",
+    ),
 ]
 
 urlpatterns += [
@@ -154,15 +167,5 @@ urlpatterns += [
         r"^api/v1/login/profile/query/$",
         views.ProfileLoginViewSet.as_view({"post": "batch_query"}),
         name="login.batch_query",
-    ),
-    url(
-        r"^api/v1/login/send_captcha/$",
-        views.ProfileLoginViewSet.as_view({"post": "send_captcha"}),
-        name="login.send_captcha",
-    ),
-    url(
-        r"^api/v1/login/verify_captcha/$",
-        views.ProfileLoginViewSet.as_view({"post": "verify_captcha"}),
-        name="login.verify_captcha",
     ),
 ]

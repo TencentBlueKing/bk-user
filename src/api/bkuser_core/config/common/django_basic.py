@@ -74,10 +74,10 @@ INSTALLED_APPS = [
     "bkuser_core.profiles",
     "bkuser_core.departments",
     "bkuser_core.user_settings",
+    "bkuser_core.global_settings",
     "bkuser_core.audit",
     "bkuser_core.categories",
     "bkuser_core.bkiam",
-    "bkuser_core.global_settings",
     # 数据库字段翻译，需要后置于需要翻译的 Django App
     "modeltranslation",
     # apigateway sdk

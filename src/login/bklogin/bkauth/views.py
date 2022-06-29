@@ -25,7 +25,7 @@ from django.views.generic import View
 
 from bklogin.api.utils import APIV1FailJsonResponse, APIV1OKJsonResponse
 from bklogin.bkauth.actions import login_license_fail_response, login_success_response
-from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
+from bklogin.bkauth.constants import BUILTIN_USER__CONTACT, REDIRECT_FIELD_NAME
 from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
@@ -116,6 +116,7 @@ class CaptchaView(LoginExemptMixin, View):
         return APIV1OKJsonResponse(_("验证码信息发送成功"), data=data)
 
     def post(self, request):
+        app_id = request.POST.get("app_id", request.GET.get("app_id", ""))
         post_data = request.POST
         domain = "default.local" if not post_data.get("domain") else post_data["domain"]
         username = post_data["username"]
@@ -148,7 +149,7 @@ class CaptchaView(LoginExemptMixin, View):
 
         # 查看是否绑定相应发送方法
         user_data = user_list[0]
-        if not getattr(user_data, data["send_method"]):
+        if data["send_method"] in BUILTIN_USER__CONTACT and not user_data.get(data["send_method"]):
             update_data = {data["send_method"]: data["authenticated_value"]}
             ok, message, data = usermgr_api.upsert_user(username, **update_data)
             if not ok:
@@ -165,7 +166,7 @@ class CaptchaView(LoginExemptMixin, View):
         user = UserModel(post_data["username"])
         user.fill_with_userinfo(user_data)
 
-        return login_success_response(request, user, redirect_to, app_id=None)
+        return login_success_response(request, user, redirect_to, app_id)
 
 
 def _bk_login(request):
@@ -197,7 +198,7 @@ def _bk_login(request):
         form = authentication_form(request, data=request.POST)
         try:
             if form.is_valid():
-                return login_success_response(request, form, redirect_to, app_id, secondary_verify=True)
+                return login_success_response(request, form, redirect_to, app_id, two_refactor_authentication=True)
         except AuthenticationError as e:
             login_redirect_to = e.redirect_to
             error_message = e.message

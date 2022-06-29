@@ -38,7 +38,6 @@ class RapidProfile(object):
         'departments': 'list[SimpleDepartment]',
         'leader': 'list[Leader]',
         'last_login_time': 'datetime',
-        'two_factor_enable': 'str',
         'create_time': 'datetime',
         'update_time': 'datetime',
         'extras': 'object',
@@ -69,7 +68,6 @@ class RapidProfile(object):
         'last_login_time': 'last_login_time',
         'create_time': 'create_time',
         'update_time': 'update_time',
-        'two_factor_enable': 'two_factor_enable',
         'extras': 'extras',
         'qq': 'qq',
         'email': 'email',
@@ -92,7 +90,7 @@ class RapidProfile(object):
                  leader=None, last_login_time=None, create_time=None, update_time=None, extras=None, qq=None,
                  email=None, telephone=None, wx_userid=None, domain=None, category_id=None, enabled=None, iso_code=None,
                  country_code=None, language=None, time_zone=None, position=None, staff_status=None, status=None,
-                 logo=None, two_factor_enable=None):  # noqa: E501
+                 logo=None):  # noqa: E501
         """RapidProfile - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._username = None
@@ -101,7 +99,6 @@ class RapidProfile(object):
         self._departments = None
         self._leader = None
         self._last_login_time = None
-        self._two_factor_enable = None
         self._create_time = None
         self._update_time = None
         self._extras = None
@@ -134,8 +131,6 @@ class RapidProfile(object):
             self.leader = leader
         if last_login_time is not None:
             self.last_login_time = last_login_time
-        if two_factor_enable is not None:
-            self.two_factor_enable = two_factor_enable
         if create_time is not None:
             self.create_time = create_time
         if update_time is not None:
@@ -321,27 +316,6 @@ class RapidProfile(object):
         """
 
         self._last_login_time = last_login_time
-
-    @property
-    def two_factor_enable(self):
-        """Gets the two_factor_enable of this RapidProfile.  # noqa: E501
-
-
-        :return: The two_factor_enable of this RapidProfile.  # noqa: E501
-        :rtype: str
-        """
-        return self._two_factor_enable
-
-    @two_factor_enable.setter
-    def two_factor_enable(self, two_factor_enable):
-        """Sets the last_login_time of this RapidProfile.
-
-
-        :param last_login_time: The last_login_time of this RapidProfile.  # noqa: E501
-        :type: str
-        """
-
-        self._two_factor_enable = two_factor_enable
 
     @property
     def create_time(self):

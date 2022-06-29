@@ -128,5 +128,5 @@ PASSWD_RESET_VIA_SAAS_EMAIL_TMPL = "您的蓝鲸账号【{username}】的密码�
 NOTICE_METHOD_EMAIL = "send_email"
 NOTICE_METHOD_SMS = "send_sms"
 
-SEND_METHOD_EMAIL = "email"
-SEND_METHOD_SMS = "telephone"
+CAPTCHA_SEND_METHOD_EMAIL = "email"
+CAPTCHA_SEND_METHOD_SMS = "telephone"

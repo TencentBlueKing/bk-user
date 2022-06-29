@@ -165,7 +165,7 @@ def direct_get_global_settings(namespace=None, *args, **kwargs):
 
 
 def direct_send_captcha(data, *args, **kwargs):
-    path = "/api/v1/login/send_captcha/"
+    path = "/api/v2/authentication/send_captcha/"
     url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
 
     ok, code, message, _data = _call_usermgr_api(http_post, url, data)
@@ -173,7 +173,7 @@ def direct_send_captcha(data, *args, **kwargs):
 
 
 def direct_verify_captcha(data, *args, **kwargs):
-    path = "/api/v1/login/verify_captcha/"
+    path = "/api/v2/authentication/verify_captcha/"
     url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
 
     ok, code, message, _data = _call_usermgr_api(http_post, url, data)
@@ -281,13 +281,13 @@ def esb_get_global_settings(namespace=None, *args, **kwargs):
 
 
 def esb_send_captcha(data, *args, **kwargs):
-    path = "/api/c/compapi/v1/usermanage/login/send_captcha/"
+    path = "/api/c/compapi/v2/usermanage/login/send_captcha/"
     ok, code, message, _data = _call_usermgr_api(http_post, path, data)
     return ok, code, message, _data
 
 
 def esb_verify_captcha(data, *args, **kwargs):
-    path = "/api/c/compapi/v1/usermanage/login/verify_captcha/"
+    path = "/api/c/compapi/v2/usermanage/login/verify_captcha/"
 
     ok, code, message, _data = _call_usermgr_api(http_post, path, data)
     return ok, code, message, _data
