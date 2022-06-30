@@ -35,3 +35,4 @@ class InitPasswordMethod(AutoLowerEnum):
 
 
 ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY = "account_expiration_notice_interval"
+PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY = "password_expiration_notice_interval"
