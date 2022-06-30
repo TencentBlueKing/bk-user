@@ -31,8 +31,4 @@ class ExpirationNotifier:
         )
 
     def _notice_by_sms(self, sms_config):
-        send_sms(
-            sender=sms_config["sender"],
-            receivers=sms_config["receivers"],
-            message=sms_config["message"]
-        )
+        send_sms(sender=sms_config["sender"], receivers=sms_config["receivers"], message=sms_config["message"])

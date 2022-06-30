@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import datetime,time
+import datetime, time
 import logging
 
 from django.db.models import Exists, OuterRef
@@ -35,13 +35,25 @@ def get_profiles_for_password_expiration():
     logined_profiles = get_logined_profiles()
 
     for category_id in category_ids:
-        notice_interval = Setting.objects.filter(
+        notice_interval = (
+            Setting.objects.filter(
                 category_id=category_id,
                 meta__key=PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY,
                 meta__namespace=SettingsEnableNamespaces.PASSWORD.value,
-            ).first().value
-        expire_profiles = logined_profiles.objects.filter(category_id=category_id, password_valid_days__gt=0).values("id", "username", "category_id", "email", "telephone", "password_valid_days","password_update_time",
-                "create_time")
+            )
+            .first()
+            .value
+        )
+        expire_profiles = logined_profiles.objects.filter(category_id=category_id, password_valid_days__gt=0).values(
+            "id",
+            "username",
+            "category_id",
+            "email",
+            "telephone",
+            "password_valid_days",
+            "password_update_time",
+            "create_time",
+        )
         expiration_times = get_expiration_dates(notice_interval)
         for profile in expire_profiles:
             valid_period = datetime.timedelta(days=profile["password_valid_days"])
@@ -90,9 +102,9 @@ def get_notice_config_for_password_expiration(profile):
         )
 
         message = (
-            email_config["content"].format(username=profile["username"],url="")
+            email_config["content"].format(username=profile["username"], url="")
             if expire_at.days < 0
-            else email_config["content"].format(username=profile["username"], expire_at=expire_at.days,url="")
+            else email_config["content"].format(username=profile["username"], expire_at=expire_at.days, url="")
         )
 
         notice_config.update(
