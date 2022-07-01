@@ -8,8 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import datetime, time
+import datetime
 import logging
+from django.conf import settings
 
 from django.db.models import Exists, OuterRef
 
@@ -102,9 +103,9 @@ def get_notice_config_for_password_expiration(profile):
         )
 
         message = (
-            email_config["content"].format(username=profile["username"], url="")
+            email_config["content"].format(username=profile["username"], url=settings.LOGIN_REDIRECT_TO)
             if expire_at.days < 0
-            else email_config["content"].format(username=profile["username"], expire_at=expire_at.days, url="")
+            else email_config["content"].format(username=profile["username"], expire_at=expire_at.days,url=settings.LOGIN_REDIRECT_TO)
         )
 
         notice_config.update(
