@@ -23,12 +23,12 @@ AUTHENTICATION_TYPE_META = {
 email_config = {
     "title": "鲸智云-登录申请",
     "sender": "蓝鲸智云",
-    "content": "您正在申请登录平台 " "验证码为：{captcha}" "为保证您账号的安全性，该验证码有效期为{expire_seconds}分钟。如非本人操作，请忽略此邮件",
+    "content": "您正在申请登录平台 " "验证码为：{captcha}" "为保证您账号的安全性，该验证码有效期为{expire_time}分钟。如非本人操作，请忽略此邮件",
 }
 sms_config = {
     "sender": "蓝鲸智云",
-    "content": "【蓝鲸智云】您的验证码为{captcha}，请在{expire_seconds}分钟内输入验证码。如非本人操作请忽略",
-    "content_html": '<p>【蓝鲸智云】您的验证码为{captcha}，请在{expire_seconds}分钟内输入验证码。如非本人操作请忽略</p>',
+    "content": "【蓝鲸智云】您的验证码为{captcha}，请在{expire_time}分钟内输入验证码。如非本人操作请忽略",
+    "content_html": '<p>【蓝鲸智云】您的验证码为{captcha}，请在{expire_time}分钟内输入验证码。如非本人操作请忽略</p>',
 }
 TWO_FACTOR_AUTHENTICATION_META = [
     {'key': 'send_method', 'example': 'email', 'default': 'email', 'choices': ['email', 'telephone']},

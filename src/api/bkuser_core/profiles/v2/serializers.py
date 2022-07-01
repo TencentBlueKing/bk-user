@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import copy
 import logging
 from typing import Union
 
@@ -17,17 +16,11 @@ from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
-from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
-from bkuser_core.global_settings.constants import GlobalSettingsEnableNamespaces
-from bkuser_core.global_settings.models import GlobalSettings
-from bkuser_core.profiles.captcha import Captcha
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import force_use_raw_username, get_username, parse_username_domain
 from bkuser_core.profiles.validators import validate_domain, validate_username
-from bkuser_core.user_settings.loader import GlobalConfigProvider
 
 # ===============================================================================
 # Response
@@ -326,47 +319,6 @@ class CaptchaSendSerializer(serializers.Serializer):
     domain = serializers.CharField(required=False, help_text="用户所属目录 domain，当登录用户不属于默认目录时必填")
     email = serializers.CharField(required=False, allow_null=True)
     telephone = serializers.CharField(required=False, allow_null=True)
-
-    def validate(self, attrs):
-        new_attrs = copy.deepcopy(attrs)
-        domain = attrs.get("domain")
-        # 根据域，判定用户
-        if not domain:
-            category = ProfileCategory.objects.get_default()
-        else:
-            try:
-                category = ProfileCategory.objects.get(domain=domain)
-            except ProfileCategory.DoesNotExist:
-                raise error_codes.DOMAIN_UNKNOWN
-        username = attrs.get("username")
-        profile = Profile.objects.get(username=username, domain=category.domain)
-
-        new_attrs["profile"] = profile
-
-        authentication_type = GlobalSettings.objects.get(meta__key="authentication_type").value
-        new_attrs["authentication_type"] = authentication_type
-
-        authentication_settings = GlobalConfigProvider(authentication_type)
-
-        captcha_operator = Captcha()
-        if authentication_type == GlobalSettingsEnableNamespaces.TWO_FACTOR_AUTHENTICATION.value:
-            # 校验是否重复发送
-            if captcha_operator.is_username_has_generate_captcha(f"{username}@{category.domain}"):
-                raise error_codes.CAPTCHA_DUPLICATE_SENDING.f(
-                    expire_time=int(authentication_settings.get("expire_seconds") / 60)
-                )
-        new_attrs["send_method"] = authentication_settings.get("send_method")
-        # 已绑定，attrs["authenticated_value"] 有值
-        new_attrs["authenticated_value"] = getattr(profile, authentication_settings.get("send_method"))
-        if not new_attrs["authenticated_value"]:
-            # 未绑定，new_attrs["authenticated_value"] 为空字符串
-            try:
-                new_attrs["authenticated_value"] = attrs[authentication_settings.get("send_method")]
-            except KeyError:
-                raise serializers.ValidationError("用户未绑定{}，请提供".format(authentication_settings.get("send_method")))
-
-        new_attrs["expire_seconds"] = authentication_settings.get("expire_seconds")
-        return new_attrs
 
 
 class CaptchaVerifySerializer(serializers.Serializer):

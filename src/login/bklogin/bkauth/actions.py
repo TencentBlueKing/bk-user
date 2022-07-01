@@ -87,11 +87,11 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
     authentication_type = global_settings[0]["value"]
     # 接口调用失败
     if not ok:
-        logger.error(
-            "redirect_secondary_authenticate: usermgr_api.get_global_settings error: message=%s namespace=general"
-            % message
+        message = (
+            "redirect_secondary_authenticate: usermgr_api.get_global_settings error: message={} namespace=general"
         )
-        return APIV1FailJsonResponse(message=message)
+        logger.error(message.format(message))
+        return APIV1FailJsonResponse(message=message.format(message))
     # 认证方式选择
     if authentication_type == NO_AUTHENTICATION:
         return None

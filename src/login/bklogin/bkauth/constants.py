@@ -15,4 +15,4 @@ REDIRECT_FIELD_NAME = "c_url"
 
 NO_AUTHENTICATION = "no_authentication"
 
-BUILTIN_USER__CONTACT = ["telephone", "email"]
+SEND_METHOD_TO_PROFILE_FIELD_MAP = {"telephone": "telephone", "email": "email"}

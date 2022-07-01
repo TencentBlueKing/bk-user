@@ -29,6 +29,7 @@ from rest_framework.response import Response
 from rest_framework_jsonp.renderers import JSONPRenderer
 
 from ...departments.v2 import serializers as department_serializer
+from ...global_settings.models import GlobalSettings
 from ..captcha import Captcha
 from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
@@ -833,8 +834,23 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         serializers = local_serializers.CaptchaSendSerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
         validated_data = serializers.validated_data
-        token, captcha_data = Captcha().generate_captcha(data=validated_data)
-        send_captcha.delay(authentication_type=validated_data["authentication_type"], send_data_config=captcha_data)
+
+        authentication_type = GlobalSettings.objects.get(meta__key="authentication_type").value
+        captcha = Captcha()
+        captcha_validated_data = captcha.validate_before_generate_captcha(authentication_type, validated_data)
+        if not captcha_validated_data:
+            return Response()
+        token, captcha = captcha.generate_captcha(data=captcha_validated_data)
+        send_data_config = {
+            "send_method": captcha_validated_data["send_method"],
+            "authenticated_value": captcha_validated_data["authenticated_value"],
+            "expire_seconds": captcha_validated_data["expire_seconds"],
+            "profile": captcha_validated_data["profile"].id,
+            "captcha": captcha,
+        }
+        send_captcha.delay(
+            authentication_type=validated_data["authentication_type"], send_data_config=send_data_config
+        )
         return Response({"token": token})
 
     @swagger_auto_schema(request_body=local_serializers.CaptchaVerifySerializer())

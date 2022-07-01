@@ -87,7 +87,7 @@ def send_captcha(authentication_type: str, send_data_config: dict):
     if config_loader.get("send_method") == CAPTCHA_SEND_METHOD_EMAIL:
         email_config = config_loader.get("email_config")
         message = email_config["content"].format(
-            captcha=send_data_config["captcha"], expire_seconds=int(send_data_config["expire_seconds"] / 60)
+            captcha=send_data_config["captcha"], expire_time=int(send_data_config["expire_seconds"] / 60)
         )
         logger.info(
             "--------- going to send captcha of Profile(%s) via email ----------",
@@ -106,7 +106,7 @@ def send_captcha(authentication_type: str, send_data_config: dict):
         )
         sms_config = config_loader.get("sms_config")
         message = sms_config["content"].format(
-            captcha=send_data_config["captcha"], expire_seconds=int(send_data_config["expire_seconds"] / 60)
+            captcha=send_data_config["captcha"], expire_time=int(send_data_config["expire_seconds"] / 60)
         )
         send_sms(
             sender=sms_config["sender"],

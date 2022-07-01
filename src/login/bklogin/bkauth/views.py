@@ -25,7 +25,7 @@ from django.views.generic import View
 
 from bklogin.api.utils import APIV1FailJsonResponse, APIV1OKJsonResponse
 from bklogin.bkauth.actions import login_license_fail_response, login_success_response
-from bklogin.bkauth.constants import BUILTIN_USER__CONTACT, REDIRECT_FIELD_NAME
+from bklogin.bkauth.constants import REDIRECT_FIELD_NAME, SEND_METHOD_TO_PROFILE_FIELD_MAP
 from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
@@ -149,8 +149,10 @@ class CaptchaView(LoginExemptMixin, View):
 
         # 查看是否绑定相应发送方法
         user_data = user_list[0]
-        if data["send_method"] in BUILTIN_USER__CONTACT and not user_data.get(data["send_method"]):
-            update_data = {data["send_method"]: data["authenticated_value"]}
+
+        # 发送方法为profile的内部字段且用户没有进行绑定，对用户进行更新
+        if data["send_method"] in SEND_METHOD_TO_PROFILE_FIELD_MAP and not user_data.get(data["send_method"]):
+            update_data = {SEND_METHOD_TO_PROFILE_FIELD_MAP[data["send_method"]]: data["authenticated_value"]}
             ok, message, data = usermgr_api.upsert_user(username, **update_data)
             if not ok:
                 logger.error(
