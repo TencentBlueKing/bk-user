@@ -44,7 +44,7 @@ class SyncModelMeta:
     use_bulk: bool = True
     # TODO: support unique_together
     unique_key_field: ClassVar[str] = ""
-    sharding_size: int = 5000
+    sharding_size: int = 1000
 
     @classmethod
     def has_unique_key(cls) -> bool:
@@ -218,15 +218,54 @@ class SyncModelManager:
             len(items),
             self.meta.target_model.__name__,
         )
+
+        current_count = 0
+        total_fail_count = 0
         slices = self.make_slices(items)
         for idx, part in enumerate(slices):
-            logger.debug(
-                "======== Syncing part of %s(%s/%s) =========", self.meta.target_model.__name__, idx + 1, len(slices)
+            logger.info(
+                "======== Syncing part of %s(%s/%s) current: %d + %d =========",
+                self.meta.target_model.__name__,
+                idx + 1,
+                len(slices),
+                current_count,
+                len(part),
             )
+            current_count = current_count + len(part)
+            # NOTE: 批量插入失败, 会导致整体同步任务失败
+            # - 优化: 批量插入失败, 切换成单条插入
+            # - 优化: 单条插入失败, continue (会打详细日志)
             try:
                 getattr(getattr(self.meta.target_model, manager), method)(part, **extra_params)
             except Exception:
-                logger.exception("%s %s failed", self.meta.target_model.__name__, method)
-                raise
-
-        logger.info("======== %s synced. ✅ ========", self.meta.target_model.__name__)
+                logger.warning(
+                    "%s %s failed, count=%d, extra_params=%s, will try to sync one by one",
+                    self.meta.target_model.__name__,
+                    method,
+                    len(part),
+                    extra_params,
+                )
+                for one in part:
+                    try:
+                        one.save()
+                        continue
+                    except Exception:
+                        total_fail_count += 1
+                        logger.exception(
+                            "%s %s: save one by one fail(total_fail_count=%d), item=%s, will not be updated",
+                            self.meta.target_model.__name__,
+                            method,
+                            one,
+                        )
+                        continue
+                # 原先的逻辑: raise
+                # raise
+        if total_fail_count > 0:
+            logger.error(
+                "%s %s failed, total_fail_count=%d", self.meta.target_model.__name__, method, total_fail_count
+            )
+            logger.info(
+                "======== %s synced. and got %d fail ✅ ========", self.meta.target_model.__name__, total_fail_count
+            )
+        else:
+            logger.info("======== %s synced. ✅ ========", self.meta.target_model.__name__)
