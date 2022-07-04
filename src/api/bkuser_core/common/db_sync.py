@@ -204,20 +204,12 @@ class SyncModelManager:
         self._sync(items, manager, method, extra_params)
 
     def _sync(self, items: List, manager: str, method: str, extra_params: dict):
+        target_model_name = self.meta.target_model.__name__
         if not items:
-            logger.info(
-                "======== %s is empty to %s 📭 =========",
-                self.meta.target_model.__name__,
-                method,
-            )
+            logger.info("======== %s is empty to %s 📭 =========", target_model_name, method)
             return
 
-        logger.info(
-            "======== Going to %s(count: %s) for %s =========",
-            method,
-            len(items),
-            self.meta.target_model.__name__,
-        )
+        logger.info("======== Going to %s(count: %s) for %s =========", method, len(items), target_model_name)
 
         current_count = 0
         total_fail_count = 0
@@ -225,7 +217,7 @@ class SyncModelManager:
         for idx, part in enumerate(slices):
             logger.info(
                 "======== Syncing part of %s(%s/%s) current: %d + %d =========",
-                self.meta.target_model.__name__,
+                target_model_name,
                 idx + 1,
                 len(slices),
                 current_count,
@@ -240,7 +232,7 @@ class SyncModelManager:
             except Exception:
                 logger.warning(
                     "%s %s failed, count=%d, extra_params=%s, will try to sync one by one",
-                    self.meta.target_model.__name__,
+                    target_model_name,
                     method,
                     len(part),
                     extra_params,
@@ -252,20 +244,17 @@ class SyncModelManager:
                     except Exception:
                         total_fail_count += 1
                         logger.exception(
-                            "%s %s: save one by one fail(total_fail_count=%d), item=%s, will not be updated",
-                            self.meta.target_model.__name__,
+                            "%s %s: save one by one fail, item=%s, will not be updated, detail=%s",
+                            target_model_name,
                             method,
                             one,
+                            vars(one),
                         )
                         continue
                 # 原先的逻辑: raise
                 # raise
         if total_fail_count > 0:
-            logger.error(
-                "%s %s failed, total_fail_count=%d", self.meta.target_model.__name__, method, total_fail_count
-            )
-            logger.info(
-                "======== %s synced. and got %d fail ✅ ========", self.meta.target_model.__name__, total_fail_count
-            )
+            logger.error("%s %s failed, total_fail_count=%d", target_model_name, method, total_fail_count)
+            logger.info("======== %s synced. and got %d fail ✅ ========", target_model_name, total_fail_count)
         else:
-            logger.info("======== %s synced. ✅ ========", self.meta.target_model.__name__)
+            logger.info("======== %s synced. ✅ ========", target_model_name)
