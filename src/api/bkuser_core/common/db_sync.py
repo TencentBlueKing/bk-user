@@ -213,6 +213,7 @@ class SyncModelManager:
 
         current_count = 0
         total_fail_count = 0
+        total_fail_records = []
         slices = self.make_slices(items)
         for idx, part in enumerate(slices):
             logger.info(
@@ -250,11 +251,19 @@ class SyncModelManager:
                             one,
                             vars(one),
                         )
+                        total_fail_records.append(one)
                         continue
                 # 原先的逻辑: raise
                 # raise
         if total_fail_count > 0:
-            logger.error("%s %s failed, total_fail_count=%d", target_model_name, method, total_fail_count)
+            logger.error(
+                "%s %s failed, total_fail_count=%d, total_fail_records=%s",
+                target_model_name,
+                method,
+                total_fail_count,
+                total_fail_records,
+            )
             logger.info("======== %s synced. and got %d fail ✅ ========", target_model_name, total_fail_count)
+            # TODO: should do something to let the admin know some record fail!
         else:
             logger.info("======== %s synced. ✅ ========", target_model_name)
