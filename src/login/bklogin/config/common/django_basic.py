@@ -136,9 +136,9 @@ AUTH_USER_MODEL = "bkauth.User"
 # RSA
 # ==============================================================================
 
-ENABLE_PASSWORD_RSA_ENCRYPTED = os.getenv("ENABLE_PASSWORD_RSA_ENCRYPTED", "True").lower() == "true"
-PASSWORD_RSA_PUBLIC_KEY = os.getenv("BK_PASSWORD_RSA_PUBLIC_KEY", "")
-PASSWORD_RSA_PRIVATE_KEY = os.getenv("BK_PASSWORD_RSA_PRIVATE_KEY", "")
+ENABLE_PASSWORD_RSA_ENCRYPTED = env.bool("ENABLE_PASSWORD_RSA_ENCRYPTED", False)
+PASSWORD_RSA_PUBLIC_KEY = env.str("BK_PASSWORD_RSA_PUBLIC_KEY", "")
+PASSWORD_RSA_PRIVATE_KEY = env.str("BK_PASSWORD_RSA_PRIVATE_KEY", "")
 
 if ENABLE_PASSWORD_RSA_ENCRYPTED:
     message = "enable password rsa encrypted"
@@ -154,4 +154,4 @@ if ENABLE_PASSWORD_RSA_ENCRYPTED:
         )
         message = f"password rsa encrypted is enabled, but b64decode fail, {rsa_key_info}"
         logger.error(message)
-        raise Exception
+        raise e

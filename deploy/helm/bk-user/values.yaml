@@ -17,6 +17,11 @@ global:
   ## sentry dsn
   sentryDsn: ""
 
+  # rsa 登录密码明文加密
+  enablePasswordRSAEncrypted: false
+  passwordRSAPublicKey: ""
+  passwordRSAPrivateKey: ""
+
   hostAliases: []
     # - ip: ""
     #   hostnames:
