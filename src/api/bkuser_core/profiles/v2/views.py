@@ -198,6 +198,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
             if "username" in fields:
                 default_domain = ProfileCategory.objects.get_default().domain
+                # 这里拼装的 username@domain, 没有走到serializer中的get_username
                 queryset = queryset.extra(
                     select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
                     select_params=(default_domain,),
@@ -206,7 +207,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         page = self.paginate_queryset(queryset)
         # page may be empty list
         if page is not None:
-            serializer = serializer_class(page, fields=fields, many=True)
+            # BUG: 这里必须显式传递 context给到slz, 下层self.context.get("request") 用到, 判断拼接 username@domain
+            # 坑, 修改或重构需要注意; 不要通过这种方式来决定字段格式, 非常容易遗漏
+            serializer = serializer_class(page, fields=fields, many=True, context={"request": request})
             return self.get_paginated_response(serializer.data)
 
         fields = [x for x in fields if x in self._get_model_field_names()]
