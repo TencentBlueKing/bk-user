@@ -221,7 +221,7 @@ export default {
           }
           fieldsListShadow.push(item);
         });
-        this.fieldsList = fieldsListShadow;
+        this.fieldsList = fieldsListShadow.sort((a, b) => a.order - b.order) || [];
       } catch (e) {
         console.warn(e);
       } finally {
