@@ -123,7 +123,8 @@ error_codes.add_codes(
         ErrorCode("CAPTCHA_TOKEN_EXPIRED", _("验证码过期，请重新点击发送"), 3210025),
         ErrorCode("CAPTCHA_WRONG", _("验证码错误，请重新输入"), 3210026),
         ErrorCode("CAPTCHA_DUPLICATE_SENDING", _("验证码已经发送，请等待{expire_time}分钟后发送"), 3210027),
-        ErrorCode("USER_NOT_BIND_EMAIL_TELEPHONE", _("用户未绑定{send_method}，请提供联系方式"), 3210028),
+        ErrorCode("USER_NOT_BIND_CONTACT_DETAILS", _("用户未绑定{send_method}，请提供联系方式"), 3210028),
+        ErrorCode("NOT_TWO_FACTOR_AUTHENTICATION", _("当前认证方式非双因子认证"), 3210029),
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),

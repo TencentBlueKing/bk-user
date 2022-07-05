@@ -93,15 +93,14 @@ class LoginView(LoginExemptMixin, View):
         return custom_login_view(request)
 
 
-class CaptchaView(LoginExemptMixin, View):
-    def get(self, request):
+class CaptchaSendView(LoginExemptMixin, View):
+    def post(self, request):
         # 获取参数
-        query_params = request.GET
+        post_data = request.POST
         request_data = {
-            "username": query_params["username"],
-            "domain": query_params.get("domain", "default.local"),
-            "email": query_params.get("email", None),
-            "telephone": query_params.get("telephone", None),
+            "username": post_data["username"],
+            "email": post_data.get("email", None),
+            "telephone": post_data.get("telephone", None),
         }
         # 发送验证码
         ok, code, message, data = usermgr_api.send_captcha(request_data)
@@ -115,6 +114,8 @@ class CaptchaView(LoginExemptMixin, View):
             return APIV1FailJsonResponse(code=code, message=message)
         return APIV1OKJsonResponse(_("验证码信息发送成功"), data=data)
 
+
+class CaptchaVerifyView(LoginExemptMixin, View):
     def post(self, request):
         app_id = request.POST.get("app_id", request.GET.get("app_id", ""))
         post_data = request.POST
@@ -200,7 +201,9 @@ def _bk_login(request):
         form = authentication_form(request, data=request.POST)
         try:
             if form.is_valid():
-                return login_success_response(request, form, redirect_to, app_id, two_refactor_authentication=True)
+                return login_success_response(
+                    request, form, redirect_to, app_id, two_refactor_authentication_enabled=True
+                )
         except AuthenticationError as e:
             login_redirect_to = e.redirect_to
             error_message = e.message

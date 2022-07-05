@@ -52,6 +52,9 @@ CACHES = {
     "captcha": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": REDIS_URL,
+        "TIMEOUT": 30 * 60,
+        "KEY_PREFIX": f"{REDIS_KEY_PREFIX}captcha",
+        "VERSION": 1,
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWORD},
     },
 }

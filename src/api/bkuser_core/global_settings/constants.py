@@ -21,7 +21,7 @@ AUTHENTICATION_TYPE_META = {
 }
 
 email_config = {
-    "title": "鲸智云-登录申请",
+    "title": "蓝鲸智云-登录申请",
     "sender": "蓝鲸智云",
     "content": "您正在申请登录平台 " "验证码为：{captcha}" "为保证您账号的安全性，该验证码有效期为{expire_time}分钟。如非本人操作，请忽略此邮件",
 }

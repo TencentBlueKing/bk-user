@@ -120,7 +120,6 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
     content = {
         "send_method": authentication_settings["send_method"],
         "username": user.username,
-        "domain": user.domain,
         "receive_address": "",
         "original_redirect_to": original_redirect_to,
     }
@@ -134,7 +133,7 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
 
 
 def login_success_response(
-    request, user_or_form, redirect_to, app_id, two_refactor_authentication=settings.TWO_REFACTOR_ENABLED
+    request, user_or_form, redirect_to, app_id, two_refactor_authentication_enabled=settings.TWO_REFACTOR_ENABLED
 ):
     """
     用户验证成功后，登录处理
@@ -149,7 +148,7 @@ def login_success_response(
         username = user.username
 
     # 二级验证
-    if two_refactor_authentication:
+    if two_refactor_authentication_enabled:
         response = redirect_secondary_authenticate(user, redirect_to, request)
         if response:
             return response

@@ -316,7 +316,6 @@ class ProfileModifyPasswordSerializer(serializers.Serializer):
 ############
 class CaptchaSendSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, max_length=254)
-    domain = serializers.CharField(required=False, help_text="用户所属目录 domain，当登录用户不属于默认目录时必填")
     email = serializers.CharField(required=False, allow_null=True)
     telephone = serializers.CharField(required=False, allow_null=True)
 
@@ -325,4 +324,3 @@ class CaptchaVerifySerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
     captcha = serializers.CharField(required=True)
     username = serializers.CharField(required=True)
-    domain = serializers.CharField(required=True)

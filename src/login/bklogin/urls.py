@@ -23,7 +23,15 @@ from bklogin.healthz import views as healthz_views
 urlpatterns = [
     # 登录页面
     url(r"^$", auth_views.LoginView.as_view()),
-    url(r"^captcha/$", auth_views.CaptchaView.as_view()),
+    url(
+        r"^captcha/",
+        include(
+            [
+                url(r"^send_captcha/$", auth_views.CaptchaSendView.as_view()),
+                url(r"^verify_captcha/$", auth_views.CaptchaVerifyView.as_view()),
+            ]
+        ),
+    ),
     # 登录弹窗
     url(r"^plain/$", auth_views.LoginView.as_view(is_plain=True)),
     url(r"^logout/$", auth_views.LogoutView.as_view()),
@@ -106,7 +114,6 @@ urlpatterns += [
     # 处理JS翻译
     url(r"^jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
 ]
-
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns  # noqa
 
