@@ -21,277 +21,456 @@
   -->
 <template>
   <div v-if="passportInfo" class="catalog-setting-step local-passport">
-    <!-- 密码长度 -->
-    <div class="info-container">
-      <div class="title-container">
-        <h4 class="title">{{$t('密码长度')}}</h4>
-        <span class="star">*</span>
-      </div>
-      <bk-input
-        v-model="defaultPassword.password_min_length"
-        type="number"
-        style="width: 240px;"
-        :class="{ 'king-input': true, error: passwordLengthError }"
-        @input="validatePasswordLength">
-        <template slot="append">
-          <div class="group-text">{{$t('至32位')}}</div>
-        </template>
-      </bk-input>
-      <p v-show="passwordLengthError" class="error-text">{{$t('密码的长度为8-32位')}}</p>
-    </div>
-
-    <!-- 密码必须包含 -->
-    <div class="info-container">
-      <div class="title-container">
-        <h4 class="title">{{$t('密码必须包含')}}</h4>
-        <span class="star">*</span>
-      </div>
-      <bk-checkbox-group v-model="defaultPassword.password_must_includes" style="display: flex;height: 19px;">
-        <bk-checkbox value="lower" style="margin-right: 28px;">{{$t('小写字母')}}</bk-checkbox>
-        <bk-checkbox value="upper" style="margin-right: 28px;">{{$t('大写字母')}}</bk-checkbox>
-        <bk-checkbox value="int" style="margin-right: 28px;">{{$t('数字')}}</bk-checkbox>
-        <bk-checkbox value="special" style="margin-right: 28px;">{{$t('特殊字符（除空格）')}}</bk-checkbox>
-      </bk-checkbox-group>
-      <p class="error-text" v-if="!defaultPassword.password_must_includes.length">{{$t('密码规则不得为空')}}</p>
-    </div>
-
-    <!-- 密码不允许 -->
-    <div class="info-container">
-      <div class="auto-freeze-container" style="margin-bottom: 10px;">
-        <span>{{$t('密码不允许连续')}}</span>
+    <!-- 基础规则 -->
+    <div class="info-container-box">
+      <p class="info-container-title">{{$t('基础规则')}}</p>
+      <!-- 密码长度 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('密码长度')}}</h4>
+          <span class="star">*</span>
+        </div>
         <bk-input
-          v-model="defaultPassword.password_rult_length"
+          v-model="defaultPassword.password_min_length"
           type="number"
-          style="width: 140px;margin: 0 8px;"
-          :class="{ 'king-input': true, error: passwordRuleError }"
-          @change="handleChange">
+          style="width: 240px;"
+          :class="{ 'king-input': true, error: passwordLengthError }"
+          @input="validatePasswordLength">
           <template slot="append">
-            <div class="group-text">{{$t('位')}}</div>
+            <div class="group-text">{{$t('至32位')}}</div>
           </template>
         </bk-input>
-        <span>{{$t('出现')}}：</span>
+        <p v-show="passwordLengthError" class="error-text">{{$t('密码的长度为8-32位')}}</p>
       </div>
-      <p class="error-text" v-show="passwordRuleError">{{$t('不能小于3位，大于8位')}}</p>
-      <bk-checkbox-group
-        v-model="defaultPassword.exclude_elements_config"
-        style="line-height: 28px;margin-top: 10px;">
-        <bk-checkbox value="keyboard_seq" style="margin-right: 28px;">{{$t('键盘序')}}</bk-checkbox>
-        <bk-checkbox value="alphabet_seq" style="margin-right: 28px;">{{$t('连续字母序')}}</bk-checkbox>
-        <bk-checkbox value="num_seq" style="margin-right: 28px;">{{$t('连续数字序')}}</bk-checkbox>
-        <bk-checkbox value="special_seq" style="margin-right: 28px;">{{$t('连续特殊符号序')}}</bk-checkbox>
-        <bk-checkbox value="duplicate_char" style="margin-right: 28px;">{{$t('重复字母、数字、特殊符号')}}</bk-checkbox>
-      </bk-checkbox-group>
-      <p class="error-text" v-show="passwordConfigError">{{$t('密码规则不得为空')}}</p>
-    </div>
 
-    <!-- 密码有效期 -->
-    <div class="info-container">
-      <div class="title-container">
-        <h4 class="title">{{$t('密码有效期')}}</h4>
-        <span class="star">*</span>
+      <!-- 密码必须包含 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('密码必须包含')}}</h4>
+          <span class="star">*</span>
+        </div>
+        <bk-checkbox-group v-model="defaultPassword.password_must_includes" style="display: flex;height: 19px;">
+          <bk-checkbox value="lower" style="margin-right: 28px;">{{$t('小写字母')}}</bk-checkbox>
+          <bk-checkbox value="upper" style="margin-right: 28px;">{{$t('大写字母')}}</bk-checkbox>
+          <bk-checkbox value="int" style="margin-right: 28px;">{{$t('数字')}}</bk-checkbox>
+          <bk-checkbox value="special" style="margin-right: 28px;">{{$t('特殊字符（除空格）')}}</bk-checkbox>
+        </bk-checkbox-group>
+        <p class="error-text" v-if="!defaultPassword.password_must_includes.length">{{$t('密码规则不得为空')}}</p>
       </div>
-      <div class="bk-button-group">
-        <bk-button
-          v-for="(item, index) in passwordValidDaysList"
-          :key="index"
-          :class="{ 'is-selected': defaultPassword.password_valid_days === item.days }"
-          @click="defaultPassword.password_valid_days = item.days">
-          {{item.text}}
-        </bk-button>
-      </div>
-    </div>
 
-    <!-- 密码试错次数 -->
-    <div class="info-container">
-      <div class="title-container">
-        <h4 class="title">{{$t('密码试错次数')}}</h4>
-        <span class="star">*</span>
+      <!-- 密码不允许 -->
+      <div class="info-container">
+        <div class="auto-freeze-container">
+          <span>{{$t('密码不允许连续')}}</span>
+          <bk-input
+            v-model="defaultPassword.password_rult_length"
+            type="number"
+            style="width: 140px;margin: 0 8px;"
+            :class="{ 'king-input': true, error: passwordRuleError }"
+            @change="handleChange">
+            <template slot="append">
+              <div class="group-text">{{$t('位')}}</div>
+            </template>
+          </bk-input>
+          <span>{{$t('出现')}}：</span>
+        </div>
+        <p class="error-text" v-show="passwordRuleError">{{$t('不能小于3位，大于8位')}}</p>
+        <bk-checkbox-group
+          v-model="defaultPassword.exclude_elements_config"
+          style="line-height: 28px;margin-top: 10px;">
+          <bk-checkbox value="keyboard_seq" style="margin-right: 28px;">{{$t('键盘序')}}</bk-checkbox>
+          <bk-checkbox value="alphabet_seq" style="margin-right: 28px;">{{$t('连续字母序')}}</bk-checkbox>
+          <bk-checkbox value="num_seq" style="margin-right: 28px;">{{$t('连续数字序')}}</bk-checkbox>
+          <bk-checkbox value="special_seq" style="margin-right: 28px;">{{$t('连续特殊符号序')}}</bk-checkbox>
+          <bk-checkbox value="duplicate_char" style="margin-right: 28px;">{{$t('重复字母、数字、特殊符号')}}</bk-checkbox>
+        </bk-checkbox-group>
+        <p class="error-text" v-show="passwordConfigError">{{$t('密码规则不得为空')}}</p>
       </div>
-      <div class="bk-button-group">
-        <bk-button
-          v-for="(item, index) in maxTrailTimesList"
-          :key="index"
-          :class="{ 'is-selected': defaultPassword.max_trail_times === item.times }"
-          @click="defaultPassword.max_trail_times = item.times">
-          {{item.text}}
-        </bk-button>
-      </div>
-    </div>
 
-    <!-- 密码解锁时间 -->
-    <div class="info-container">
-      <div class="title-container">
-        <h4 class="title">{{$t('自动解锁时间')}}</h4>
-        <span class="star">*</span>
-        <div class="tips">
-          <span class="icon-user--l" v-bk-tooltips="$t('自动解锁时间提示')"></span>
+      <!-- 密码有效期 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('密码有效期')}}</h4>
+          <span class="star">*</span>
+        </div>
+        <div class="bk-button-group">
+          <bk-button
+            v-for="(item, index) in passwordValidDaysList"
+            :key="index"
+            :class="{ 'is-selected': defaultPassword.password_valid_days === item.days }"
+            @click="defaultPassword.password_valid_days = item.days">
+            {{item.text}}
+          </bk-button>
         </div>
       </div>
-      <bk-input
-        v-model="defaultPassword.auto_unlock_seconds"
-        type="number"
-        style="width: 240px;"
-        :class="{ 'king-input': true, error: autoUnlockError }"
-        @input="validateAutoUnlock">
-        <template slot="append">
-          <div class="group-text">{{$t('秒')}}</div>
-        </template>
-      </bk-input>
-      <p v-show="autoUnlockError" class="error-text">{{$t('自动解锁时间应不少于30秒')}}</p>
-    </div>
 
-    <!-- 初始密码获取方式 -->
-    <div class="info-container">
-      <div class="title-container">
-        <h4 class="title">{{$t('初始密码获取方式')}}</h4>
-        <span class="star">*</span>
-        <div class="tips">
-          <span class="icon-user--l" v-bk-tooltips="tipsConfig" ref="tooltipsHtml"></span>
+      <!-- 密码试错次数 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('密码试错次数')}}</h4>
+          <span class="star">*</span>
         </div>
-        <div id="initialPasswordTips" class="initialPasswordTips">
-          <p>
-            <span>{{$t('初始密码提示1')}}</span>
-          </p>
-          <p>
-            <span>{{$t('初始密码提示2')}}</span>
-            <a :href="mailGateway" target="_blank">{{$t('初始密码提示3')}}</a><span>{{$t('初始密码提示4')}}</span>
-          </p>
+        <div class="bk-button-group">
+          <bk-button
+            v-for="(item, index) in maxTrailTimesList"
+            :key="index"
+            :class="{ 'is-selected': defaultPassword.max_trail_times === item.times }"
+            @click="defaultPassword.max_trail_times = item.times">
+            {{item.text}}
+          </bk-button>
         </div>
       </div>
-      <!-- 设置初始密码 -->
-      <div
-        class="init-password-container"
-        :class="{ active: defaultPassword.init_password_method === 'fixed_preset', error: initPasswordError }"
-        @click="defaultPassword.init_password_method = 'fixed_preset'">
-        <bk-radio
-          name="radio1" :checked="defaultPassword.init_password_method === 'fixed_preset'"
-          class="king-radio">
-          {{$t('统一初始密码')}}
-        </bk-radio>
-        <input type="text" class="hidden-password-input">
-        <input type="password" class="hidden-password-input">
-        <input
-          class="input-text"
-          autocomplete="new-password"
-          :type="initPasswordSlash && 'password'"
-          :placeholder="$t('请输入密码')"
-          v-model="defaultPassword.init_password"
-          @input="validateInitPassword"
-        />
-        <i :class="['bk-icon', passwordIconClass]" @click="initPasswordSlash = !initPasswordSlash"></i>
-      </div>
-      <p class="error-text" v-show="initPasswordError">{{$t('密码规则校验失败')}}</p>
-      <!-- 邮箱发送随机密码 -->
-      <div
-        class="init-email-container"
-        :class="{ active: defaultPassword.init_password_method === 'random_via_mail',
-                  error: initEmailConfigError }">
-        <div class="email-config-container" @click="defaultPassword.init_password_method = 'random_via_mail'">
-          <bk-radio
-            class="king-radio" name="radio1"
-            :checked="defaultPassword.init_password_method === 'random_via_mail'">
-            {{$t('邮箱发送随机密码')}}
-          </bk-radio>
-          <span
-            class="edit-template"
-            :class="{ disable: defaultPassword.init_password_method === 'fixed_preset' }"
-            @click.stop="toggleEmailTemplate">
-            {{$t('编辑邮件模板')}}
-          </span>
-        </div>
-        <div class="template-config-container" v-show="showEmailTemplate" data-test-id="list_emailInfo">
-          <i class="arrow"></i>
-          <ul class="template-config clearfix">
-            <li class="email-block">
-              <h3 class="email-block-name">{{$t('创建账户邮件')}}</h3>
-              <div class="email-info clearfix">
-                <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                <input
-                  type="text" class="input-text" v-model="defaultPassword.init_mail_config.title"
-                  @input="validateEmailTemplate" />
-              </div>
-              <div class="email-info clearfix">
-                <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                <input
-                  type="text" class="input-text" v-model="defaultPassword.init_mail_config.sender"
-                  @input="validateEmailTemplate" />
-              </div>
-              <div class="email-info clearfix">
-                <p class="title" style="height: 191px">{{$t('正文')}}<span class="star">*</span></p>
-                <textarea
-                  class="textarea-text" v-model="defaultPassword.init_mail_config.content"
-                  @input="validateEmailTemplate"></textarea>
-              </div>
-            </li>
-            <li class="email-block">
-              <h3 class="email-block-name">{{$t('重设密码后的邮件')}}</h3>
-              <div class="email-info clearfix">
-                <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                <input
-                  type="text" class="input-text" v-model="defaultPassword.reset_mail_config.title"
-                  @input="validateEmailTemplate" />
-              </div>
-              <div class="email-info clearfix">
-                <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                <input
-                  type="text" class="input-text" v-model="defaultPassword.reset_mail_config.sender"
-                  @input="validateEmailTemplate" />
-              </div>
-              <div class="email-info clearfix">
-                <p class="title" style="height: 191px">{{$t('正文')}}<span class="star">*</span></p>
-                <textarea
-                  class="textarea-text" v-model="defaultPassword.reset_mail_config.content"
-                  @input="validateEmailTemplate"></textarea>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <p class="error-text" v-if="initEmailConfigError">{{$t('请完善模板内容')}}</p>
-    </div>
 
-    <div class="info-container">
-      <bk-checkbox v-model="defaultPassword.force_reset_first_login">{{$t('首次登录强制修改密码')}}</bk-checkbox>
-    </div>
-
-    <!-- 未登录自动冻结 -->
-    <div class="info-container">
-      <div class="auto-freeze-container">
-        <bk-checkbox v-model="defaultPassword.freeze_after_days.enabled" class="king-checkbox"></bk-checkbox>
-        <span>{{$t('连续')}}</span>
+      <!-- 密码解锁时间 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('自动解锁时间')}}</h4>
+          <span class="star">*</span>
+          <div class="tips">
+            <span class="icon-user--l" v-bk-tooltips="$t('自动解锁时间提示')"></span>
+          </div>
+        </div>
         <bk-input
-          v-model="defaultPassword.freeze_after_days.value"
+          v-model="defaultPassword.auto_unlock_seconds"
           type="number"
-          style="width: 120px;margin: 0 8px;"
-          :class="{ 'king-input': true, error: freezeDaysError }"
-          @input="validateFreezeDays">
+          style="width: 240px;"
+          :class="{ 'king-input': true, error: autoUnlockError }"
+          @input="validateAutoUnlock">
           <template slot="append">
-            <div class="group-text">{{$t('天')}}</div>
+            <div class="group-text">{{$t('秒')}}</div>
           </template>
         </bk-input>
-        <span>{{$t('未登录自动冻结')}}</span>
+        <p v-show="autoUnlockError" class="error-text">{{$t('自动解锁时间应不少于30秒')}}</p>
       </div>
-      <p class="error-text" v-if="freezeDaysError">{{$t('请填写正确的登录天数')}}</p>
+
+      <!-- 未登录自动冻结 -->
+      <div class="info-container">
+        <div class="auto-freeze-container">
+          <bk-checkbox v-model="defaultPassword.freeze_after_days.enabled" class="king-checkbox"></bk-checkbox>
+          <span>{{$t('连续')}}</span>
+          <bk-input
+            v-model="defaultPassword.freeze_after_days.value"
+            type="number"
+            style="width: 120px;margin: 0 8px;"
+            :class="{ 'king-input': true, error: freezeDaysError }"
+            @input="validateFreezeDays">
+            <template slot="append">
+              <div class="group-text">{{$t('天')}}</div>
+            </template>
+          </bk-input>
+          <span>{{$t('未登录自动冻结')}}</span>
+        </div>
+        <p class="error-text" v-if="freezeDaysError">{{$t('请填写正确的登录天数')}}</p>
+      </div>
     </div>
 
-    <!-- 密码重复次数设置 -->
-    <div class="info-container">
-      <div class="change-password">
-        <bk-checkbox v-model="defaultPassword.max_password_history.enabled" class="king-checkbox"></bk-checkbox>
-        <span>{{$t('修改密码时不能重复前')}}</span>
-        <bk-input
-          v-model="defaultPassword.max_password_history.value"
-          type="number"
-          style="width: 120px;margin: 0 8px;"
-          :class="{ 'king-input': true, error: passwordHistoryError }"
-          @input="validatePasswordHistory">
-          <template slot="append">
-            <div class="group-text">{{$t('次')}}</div>
-          </template>
-        </bk-input>
-        <span>{{$t('用过的密码')}}</span>
+    <!-- 初始密码 -->
+    <div class="info-container-box" style="margin-top: 40px">
+      <p class="info-container-title">{{$t('初始密码')}}</p>
+      <!-- 首次登录强制修改密码 -->
+      <div class="info-container">
+        <bk-checkbox v-model="defaultPassword.force_reset_first_login">{{$t('首次登录强制修改密码')}}</bk-checkbox>
       </div>
-      <p v-show="passwordHistoryError" class="error-text">{{$t('不能小于1次')}}</p>
+      <!-- 密码重复次数设置 -->
+      <div class="info-container">
+        <div class="change-password">
+          <bk-checkbox v-model="defaultPassword.max_password_history.enabled" class="king-checkbox"></bk-checkbox>
+          <span>{{$t('修改密码时不能重复前')}}</span>
+          <bk-input
+            v-model="defaultPassword.max_password_history.value"
+            type="number"
+            style="width: 120px;margin: 0 8px;"
+            :class="{ 'king-input': true, error: passwordHistoryError }"
+            @input="validatePasswordHistory">
+            <template slot="append">
+              <div class="group-text">{{$t('次')}}</div>
+            </template>
+          </bk-input>
+          <span>{{$t('用过的密码')}}</span>
+        </div>
+        <p v-show="passwordHistoryError" class="error-text">{{$t('不能小于1次')}}</p>
+      </div>
+      <!-- 初始密码获取方式 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('获取方式')}}</h4>
+          <span class="star">*</span>
+          <div class="tips">
+            <span class="icon-user--l" v-bk-tooltips="tipsConfig" ref="tooltipsHtml"></span>
+          </div>
+          <div id="initialPasswordTips" class="initialPasswordTips">
+            <p>
+              <span>{{$t('初始密码提示1')}}</span>
+            </p>
+            <p>
+              <span>{{$t('初始密码提示2')}}</span>
+              <a :href="mailGateway" target="_blank">{{$t('初始密码提示3')}}</a><span>{{$t('初始密码提示4')}}</span>
+            </p>
+          </div>
+        </div>
+        <!-- 邮箱发送随机密码 -->
+        <div
+          class="init-email-container"
+          :class="{ active: defaultPassword.init_password_method === 'random_via_mail',
+                    error: initEmailConfigError }">
+          <div class="email-config-container" @click="defaultPassword.init_password_method = 'random_via_mail'">
+            <bk-radio
+              class="king-radio" name="radio1"
+              :checked="defaultPassword.init_password_method === 'random_via_mail'">
+              {{$t('发送随机密码')}}
+            </bk-radio>
+          </div>
+          <div :class="['tab-password', isEmailTemplate ? 'show-tab-color' : '']">
+            <div
+              :class="['password-header', defaultPassword.init_password_method !== 'random_via_mail' ? 'hide' : '']">
+              <bk-checkbox-group v-model="randomPasswordList">
+                <div :class="['password-tab', showEmail ? 'active-tab' : '']" style="margin-left: 5px;">
+                  <bk-checkbox
+                    value="send_email"
+                    :disabled="defaultPassword.init_password_method !== 'random_via_mail'" />
+                  <span class="checkbox-item" @click="clickEmail">{{$t('邮箱')}}</span>
+                </div>
+                <div :class="['password-tab', showSms ? 'active-tab' : '']">
+                  <bk-checkbox
+                    value="send_sms"
+                    :disabled="defaultPassword.init_password_method !== 'random_via_mail'" />
+                  <span class="checkbox-item" @click="clickSms">{{$t('短信')}}</span>
+                </div>
+              </bk-checkbox-group>
+              <div class="edit-info" @click="toggleEmailTemplate">
+                <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
+                <i :class="['bk-icon', isDropdownPassword ? 'icon-angle-up' : 'icon-angle-down']"></i>
+              </div>
+            </div>
+            <div class="password-content">
+              <div
+                class="template-config-container"
+                v-show="showEmail && isEmailTemplate"
+                data-test-id="list_emailInfo">
+                <ul class="template-config clearfix">
+                  <li class="email-block">
+                    <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
+                    <div class="email-info clearfix">
+                      <p class="title">{{$t('标题')}}<span class="star">*</span></p>
+                      <bk-input
+                        type="text" class="input-style" />
+                    </div>
+                    <div class="email-info clearfix">
+                      <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
+                      <bk-input
+                        type="text" class="input-style" />
+                    </div>
+                    <div class="email-info clearfix">
+                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                      <edtiorTemplate
+                        :toolbar-config="emailConfig"
+                        @updateContent="expiringEmailText" />
+                    </div>
+                  </li>
+                  <li class="email-block">
+                    <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
+                    <div class="email-info clearfix">
+                      <p class="title">{{$t('标题')}}<span class="star">*</span></p>
+                      <bk-input
+                        type="text" class="input-style" />
+                    </div>
+                    <div class="email-info clearfix">
+                      <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
+                      <bk-input
+                        type="text" class="input-style" />
+                    </div>
+                    <div class="email-info clearfix">
+                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                      <edtiorTemplate
+                        :toolbar-config="emailConfig"
+                        @updateContent="expiredEmailText" />
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div
+                class="template-config-container"
+                v-show="showSms && isEmailTemplate"
+                data-test-id="list_emailInfo">
+                <ul class="template-config clearfix">
+                  <li class="email-block">
+                    <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
+                    <div class="email-info clearfix">
+                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                      <edtiorTemplate
+                        :toolbar-config="infoConfig"
+                        @updateContent="expiringSmslText" />
+                    </div>
+                  </li>
+                  <li class="email-block">
+                    <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
+                    <div class="email-info clearfix">
+                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                      <edtiorTemplate
+                        :toolbar-config="infoConfig"
+                        @updateContent="expiredSmsText" />
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="error-text" v-if="initEmailConfigError">{{$t('请完善模板内容')}}</p>
+        <!-- 设置初始密码 -->
+        <div
+          class="init-password-container"
+          :class="{ active: defaultPassword.init_password_method === 'fixed_preset', error: initPasswordError }">
+          <div class="king-radio" @click="defaultPassword.init_password_method = 'fixed_preset'">
+            <bk-radio
+              name="radio1" :checked="defaultPassword.init_password_method === 'fixed_preset'">
+              {{$t('统一初始密码')}}
+            </bk-radio>
+          </div>
+          <div class="input-content">
+            <input type="text" class="hidden-password-input">
+            <input type="password" class="hidden-password-input">
+            <input
+              class="input-text"
+              autocomplete="new-password"
+              :type="initPasswordSlash && 'password'"
+              :placeholder="$t('请输入密码')"
+              :disabled="defaultPassword.init_password_method !== 'fixed_preset'"
+              v-model="defaultPassword.init_password"
+              @input="validateInitPassword"
+            />
+            <i :class="['bk-icon', passwordIconClass]" @click="initPasswordSlash = !initPasswordSlash"></i>
+          </div>
+        </div>
+        <p class="error-text" v-show="initPasswordError">{{$t('密码规则校验失败')}}</p>
+      </div>
+    </div>
+
+    <!-- 密码到期提醒 -->
+    <div class="info-container-box" style="margin-top: 40px">
+      <p class="info-container-title">{{$t('密码到期提醒')}}</p>
+      <!-- 提醒时间 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('提醒时间')}}</h4>
+          <span class="star">*</span>
+          <i class="hint-message icon-user--l" v-bk-tooltips="$t('密码快到期前提醒_如选择_7天__则在密码到期七天前提醒一次')"></i>
+        </div>
+        <bk-checkbox-group
+          style="display: flex;height: 19px;"
+          v-model="defaultPassword.password_expiration_notice_interval">
+          <bk-checkbox :value="1" style="margin-right: 50px;">{{$t('1天')}}</bk-checkbox>
+          <bk-checkbox :value="7" style="margin-right: 50px;">{{$t('7天')}}</bk-checkbox>
+          <bk-checkbox :value="15" style="margin-right: 50px;">{{$t('15天')}}</bk-checkbox>
+        </bk-checkbox-group>
+        <p class="error-text" v-if="passwordDateError">{{$t('账号到期提醒时间不得为空')}}</p>
+      </div>
+
+      <!-- 通知方式 -->
+      <div class="info-container">
+        <div class="title-container">
+          <h4 class="title">{{$t('通知方式')}}</h4>
+          <span class="star">*</span>
+        </div>
+        <div :class="['tab-box', isInfoTemplate ? 'show-tab-color' : '']">
+          <div class="password-header">
+            <bk-checkbox-group v-model="defaultPassword.password_expiration_notice_methods">
+              <div :class="['password-tab', showEmail ? 'active-tab' : '']" style="margin-left: 5px;">
+                <bk-checkbox value="send_email" />
+                <span class="checkbox-item" @click="clickEmail">{{$t('邮箱')}}</span>
+              </div>
+              <div :class="['password-tab', showSms ? 'active-tab' : '']">
+                <bk-checkbox value="send_sms" />
+                <span class="checkbox-item" @click="clickSms">{{$t('短信')}}</span>
+              </div>
+            </bk-checkbox-group>
+            <div class="edit-info" @click="toggleInfoTemplate">
+              <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
+              <i :class="['bk-icon', isDropdownInfo ? 'icon-angle-up' : 'icon-angle-down']"></i>
+            </div>
+          </div>
+          <div class="password-content">
+            <div
+              class="template-config-container"
+              v-show="showEmail && isInfoTemplate"
+              data-test-id="list_emailInfo">
+              <ul class="template-config clearfix">
+                <li class="email-block">
+                  <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
+                  <div class="email-info clearfix">
+                    <p class="title">{{$t('标题')}}<span class="star">*</span></p>
+                    <bk-input
+                      type="text" class="input-style"
+                      v-model="expiringEmail.title" />
+                  </div>
+                  <div class="email-info clearfix">
+                    <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
+                    <bk-input
+                      type="text" class="input-style"
+                      v-model="expiringEmail.sender" />
+                  </div>
+                  <div class="email-info clearfix">
+                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                    <edtiorTemplate
+                      :toolbar-config="emailConfig"
+                      :html-text="expiringEmail.content_html"
+                      @updateContent="(html, text) => handleEditorText(html, text, 'expiring_password_email_config')" />
+                  </div>
+                </li>
+                <li class="email-block">
+                  <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
+                  <div class="email-info clearfix">
+                    <p class="title">{{$t('标题')}}<span class="star">*</span></p>
+                    <bk-input
+                      type="text" class="input-style"
+                      v-model="expiredEmail.title" />
+                  </div>
+                  <div class="email-info clearfix">
+                    <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
+                    <bk-input
+                      type="text" class="input-style"
+                      v-model="expiredEmail.sender" />
+                  </div>
+                  <div class="email-info clearfix">
+                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                    <edtiorTemplate
+                      :toolbar-config="emailConfig"
+                      :html-text="expiredEmail.content_html"
+                      @updateContent="(html, text) => handleEditorText(html, text, 'expired_password_email_config')" />
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div
+              class="template-config-container"
+              v-show="showSms && isInfoTemplate"
+              data-test-id="list_emailInfo">
+              <ul class="template-config clearfix">
+                <li class="email-block">
+                  <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
+                  <div class="email-info clearfix">
+                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                    <edtiorTemplate
+                      :toolbar-config="infoConfig"
+                      :html-text="expiringSms.content_html"
+                      @updateContent="(html, text) => handleEditorText(html, text, 'expiring_password_sms_config')" />
+                  </div>
+                </li>
+                <li class="email-block">
+                  <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
+                  <div class="email-info clearfix">
+                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
+                    <edtiorTemplate
+                      :toolbar-config="infoConfig"
+                      :html-text="expiredSms.content_html"
+                      @updateContent="(html, text) => handleEditorText(html, text, 'expired_password_sms_config')" />
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 新增用户目录 -->
@@ -320,8 +499,10 @@
 </template>
 
 <script>
+import edtiorTemplate from '../operation/editorTemplate.vue';
+
 export default {
-  components: {},
+  components: { edtiorTemplate },
   props: {
     // add 添加用户目录 set 设置密码相关
     type: {
@@ -357,8 +538,6 @@ export default {
 
       // 初始密码是否以星号展示
       initPasswordSlash: true,
-      // 编辑邮件模板
-      showEmailTemplate: false,
       // 密码试错次数
       maxTrailTimesList: [{
         times: 3,
@@ -370,6 +549,35 @@ export default {
         times: 10,
         text: `10${this.$t('次')}`,
       }],
+      showEmail: true,
+      showSms: false,
+      // 显示获取方式编辑模板
+      isEmailTemplate: false,
+      // 显示通知方式编辑模板
+      isInfoTemplate: false,
+      randomPasswordList: ['send_email', 'send_sms'],
+      isDropdownPassword: false,
+      isDropdownInfo: false,
+      /* 邮箱工具栏配置 */
+      emailConfig: {
+        toolbarKeys: [
+          'bold', 'italic', 'color',
+          {
+            key: 'group-justify',
+            iconSvg: `<svg viewBox="0 0 1024 1024">
+              <path d="M768 793.6v102.4H51.2v-102.4h716.8z m204.8-230.4v102.4H51.2v-102.4h921.6z
+                m-204.8-230.4v102.4H51.2v-102.4h716.8zM972.8 102.4v102.4H51.2V102.4h921.6z"></path>
+            </svg>`,
+            menuKeys: ['justifyLeft', 'justifyRight', 'justifyCenter', 'justifyJustify'],
+          },
+          'insertLink',
+        ],
+      },
+      /* 短信工具栏配置 */
+      infoConfig: {
+        toolbarKeys: ['insertLink'],
+      },
+      passwordDateError: false,
     };
   },
   computed: {
@@ -394,7 +602,20 @@ export default {
                     || this.autoUnlockError
                     || this.freezeDaysError
                     || this.initPasswordError
-                    || this.initEmailConfigError;
+                    || this.initEmailConfigError
+                    || this.passwordDateError;
+    },
+    expiredEmail() {
+      return this.passportInfo.expired_password_email_config || {};
+    },
+    expiringEmail() {
+      return this.passportInfo.expiring_password_email_config || {};
+    },
+    expiringSms() {
+      return this.passportInfo.expiring_password_sms_config || {};
+    },
+    expiredSms() {
+      return this.passportInfo.expired_password_sms_config || {};
     },
   },
   watch: {
@@ -410,6 +631,20 @@ export default {
       } else {
         this.passwordRuleError = false;
         this.passwordConfigError = false;
+      }
+    },
+    'defaultPassword.password_expiration_notice_methods'(val) {
+      if (val.length && !this.defaultPassword.password_expiration_notice_interval.length) {
+        this.passwordDateError = true;
+      } else {
+        this.passwordDateError = false;
+      }
+    },
+    'defaultPassword.password_expiration_notice_interval'(val) {
+      if (!val.length && this.defaultPassword.password_expiration_notice_methods.length) {
+        this.passwordDateError = true;
+      } else {
+        this.passwordDateError = false;
       }
     },
   },
@@ -508,8 +743,25 @@ export default {
     // 展开或隐藏邮件模板
     toggleEmailTemplate() {
       if (this.defaultPassword.init_password_method === 'random_via_mail') {
-        this.showEmailTemplate = !this.showEmailTemplate;
+        this.isDropdownPassword = !this.isDropdownPassword;
+        this.isEmailTemplate = !this.isEmailTemplate;
       }
+    },
+    toggleInfoTemplate() {
+      this.isDropdownInfo = !this.isDropdownInfo;
+      this.isInfoTemplate = !this.isInfoTemplate;
+    },
+    clickEmail() {
+      this.showEmail = true;
+      this.showSms = false;
+    },
+    clickSms() {
+      this.showEmail = false;
+      this.showSms = true;
+    },
+    handleEditorText(html, text, key) {
+      this.defaultPassword[key].content_html = html;
+      this.defaultPassword[key].content = text;
     },
   },
 };
@@ -528,8 +780,17 @@ export default {
   }
 }
 
-#catalog .catalog-setting-step.local-passport {
+#catalog .catalog-setting-step.local-passport .info-container-box {
+  > .info-container-title {
+    font-size: 14px;
+    font-family: MicrosoftYaHei, MicrosoftYaHei-Bold;
+    font-weight: 700;
+    color: #63656e;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dcdee5;
+  }
   > .info-container {
+    margin: 17px 0;
     // 设置初始密码
     > .init-password-container {
       position: relative;
@@ -540,9 +801,21 @@ export default {
       font-size: 0;
       border: 1px solid #c4c6cc;
       border-radius: 2px;
+      margin-top: 9px;
+      display: flex;
+      align-items: center;
+      &:hover {
+        border: 1px solid #A3C5FD;
+      }
 
       &.active {
         border: 1px solid #699df4;
+        .input-content {
+          color: #63656e;
+          .input-text, .bk-icon {
+            cursor: pointer;
+          }
+        }
       }
 
       &.error {
@@ -554,40 +827,50 @@ export default {
         display: inline-block;
         vertical-align: middle;
         font-size: 14px;
+        cursor: pointer;
+        width: 90%;
       }
 
       > .king-radio {
         cursor: pointer;
-        padding: 0 38px 0 8px;
+        padding: 0 38px 0 25px;
+        width: 20%;
       }
+      .input-content {
+        display: flex;
+        width: 80%;
+        color: #DCDEE5;
+        > .input-text {
+          line-height: 19px;
+          width: 70%;
+          border: none;
+          resize: none;
+          outline: none;
+          cursor: not-allowed;
+          &::input-placeholder {
+            color: #c3cdd7;
+          }
+        }
 
-      > .input-text {
-        line-height: 19px;
-        width: 70%;
-        border: none;
-        resize: none;
-        outline: none;
-
-        &::input-placeholder {
-          color: #c3cdd7;
+        > .bk-icon {
+          position: absolute;
+          right: 12px;
+          top: 11px;
+          font-size: 18px;
+          cursor: not-allowed;
+          width: 10%;
         }
       }
-
-      > .bk-icon {
-        position: absolute;
-        right: 12px;
-        top: 11px;
-        font-size: 18px;
-        cursor: pointer;
-      }
     }
-    // 邮箱发送随机密码
+    // 发送随机密码
     > .init-email-container {
-      margin-top: 9px;
       width: 860px;
       border: 1px solid #c4c6cc;
       border-radius: 2px;
       cursor: pointer;
+      &:hover {
+        border: 1px solid #A3C5FD;
+      }
 
       &.active {
         border: 1px solid #699df4;
@@ -614,7 +897,7 @@ export default {
           vertical-align: middle;
           font-size: 14px;
           cursor: pointer;
-          padding: 0 38px 0 8px;
+          padding: 0 38px 0 25px;
         }
 
         > .edit-template {
@@ -630,97 +913,6 @@ export default {
           }
         }
       }
-
-      > .template-config-container {
-        position: relative;
-        width: 100%;
-        border-top: 1px solid #c4c6cc;
-
-        > .arrow {
-          position: absolute;
-          top: -6px;
-          right: 50px;
-          width: 10px;
-          height: 10px;
-          border-top: 1px solid #dcdee5;
-          border-left: 1px solid #dcdee5;
-          background: #fafbfd;
-          transform: rotate(45deg);
-          z-index: 10;
-        }
-
-        > ul.template-config > li.email-block {
-          width: 50%;
-          float: left;
-
-          &:first-child {
-            border-right: 1px solid #dcdee5;
-          }
-
-          > .email-block-name {
-            height: 42px;
-            line-height: 42px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: bold;
-            background: #fafbfd;
-          }
-
-          > .email-info {
-            font-size: 0;
-            border-top: 1px solid #dcdee5;
-
-            input,
-            textarea {
-              resize: none;
-              outline: none;
-              border: none;
-            }
-
-            .title,
-            .input-text,
-            .textarea-text {
-              font-size: 14px;
-            }
-
-            .title {
-              padding: 13px 0 10px 0;
-              width: 20%;
-              float: left;
-              text-align: center;
-              border-right: 1px solid #dcdee5;
-
-              .star {
-                display: inline-block;
-                vertical-align: middle;
-                margin: 0 0 0 3px;
-                line-height: 19px;
-                color: #ff5e5e;
-              }
-            }
-
-            .input-text {
-              width: 80%;
-              padding: 13px 0 10px 19px;
-            }
-
-            .textarea-text {
-              padding: 12px 20px 0 20px;
-              width: 80%;
-              height: 191px;
-              line-height: 20px;
-              font-size: 14px;
-              font-weight: 400;
-              word-break: break-all;
-              background: #fff;
-              overflow: hidden;
-              overflow-y: auto;
-
-              @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-            }
-          }
-        }
-      }
     }
 
     > .auto-freeze-container, .change-password {
@@ -731,6 +923,212 @@ export default {
       > .king-checkbox {
         padding: 0;
         margin-right: 8px;
+      }
+    }
+    .edit-template {
+      font-size: 14px;
+      color: #3a84ff;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    .template-config-container {
+      position: relative;
+      width: 100%;
+
+      > ul.template-config > li.email-block {
+        width: 50%;
+        float: left;
+
+        &:first-child {
+          border-right: 1px solid #dcdee5;
+        }
+
+        > .email-block-name {
+          height: 42px;
+          line-height: 42px;
+          text-align: center;
+          font-size: 14px;
+          font-weight: bold;
+          background: #fafbfd;
+        }
+
+        > .email-info {
+          font-size: 0;
+          border-top: 1px solid #dcdee5;
+          display: flex;
+
+          input,
+          textarea {
+            resize: none;
+            outline: none;
+            border: none;
+          }
+
+          .title,
+          .input-text,
+          .textarea-text {
+            font-size: 14px;
+          }
+
+          .title {
+            padding: 13px 0 10px 0;
+            width: 20%;
+            // float: left;
+            text-align: center;
+            border-right: 1px solid #dcdee5;
+
+            .star {
+              display: inline-block;
+              vertical-align: middle;
+              margin: 0 0 0 3px;
+              line-height: 19px;
+              color: #ff5e5e;
+            }
+          }
+
+          .input-text {
+            width: 80%;
+            padding: 13px 0 10px 19px;
+          }
+
+          ::v-deep .input-style {
+            width: 80%;
+            .bk-input-text .bk-form-input {
+              height: 44px;
+              border: 1px solid #fff;
+            }
+          }
+
+          .focus-editor {
+            border: 1px solid #3c96ff;
+          }
+
+          ::v-deep .textarea-text {
+            width: 80%;
+            height: 260px;
+            line-height: 20px;
+            font-size: 14px;
+            font-weight: 400;
+            word-break: break-all;
+            background: #fff;
+            overflow: hidden;
+            overflow-y: auto;
+
+            @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+
+            .bk-textarea-wrapper {
+              height: 100%;
+              border: none;
+              .bk-form-textarea {
+                height: 100%;
+                &::-webkit-scrollbar {
+                  width: 4px;
+                  background-color: transparent;
+                }
+                &::-webkit-scrollbar-thumb {
+                  border-radius: 4px;
+                  background-color: #dcdee5;
+                }
+              }
+            }
+          }
+
+          ::v-deep .bk-form-control.control-active .bk-textarea-wrapper {
+            border: 1px solid #3A84FF;
+          }
+
+          ::v-deep .markdown-box {
+            width: 80%;
+            height: 260px;
+            line-height: 20px;
+            font-size: 14px;
+            font-weight: 400;
+            word-break: break-all;
+            background: #fff;
+            overflow: hidden;
+            .toolbar-content {
+              height: 40px;
+              .w-e-toolbar {
+                background-color: #F0F2F5;
+                padding-left: 15px;
+              }
+            }
+            .editor-content {
+              width: 100%;
+              height: calc(100% - 40px);
+              overflow-y: auto;
+              @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+              .w-e-text-container .w-e-scroll {
+                overflow: inherit !important;
+              }
+            }
+          }
+        }
+      }
+    }
+    ::v-deep .tab-box {
+      border: 1px solid #3A84FF;
+    }
+
+    ::v-deep .tab-box, .tab-password {
+      width: 860px;
+      .password-header {
+        display: flex;
+        line-height: 50px;
+        .bk-form-control {
+          display: flex;
+          width: 85%;
+          .password-tab {
+            padding-left: 20px;
+            .checkbox-item {
+              font-size: 14px;
+              display: inline-block;
+              padding: 0 20px 0 5px;
+            }
+          }
+        }
+        .edit-info {
+          color: #3A84FF;
+          :hover {
+            cursor: pointer;
+          }
+        }
+      }
+      .hide {
+        cursor: not-allowed;
+        .edit-info {
+          color: #DCDEE5;
+          :hover {
+            cursor: not-allowed;
+          }
+        }
+      }
+    }
+    ::v-deep .show-tab-color {
+      .password-header {
+        display: flex;
+        border-bottom: 1px solid #dcdee5;
+        .active-tab {
+          border-bottom: 2px solid #3A84FF;
+        }
+        .password-tab span:hover {
+          cursor: pointer;
+          color: #3a84ff;
+        }
+      }
+      .password-content {
+        padding: 20px;
+        .template-config-container {
+          border: 1px solid #dcdee5;
+        }
+      }
+      .bk-tab-label-list .bk-tab-label-item.active:after {
+        height: 2px;
+      }
+      .bk-tab-header {
+        background-image: linear-gradient(transparent 41px, #dcdee5 0);
       }
     }
   }
