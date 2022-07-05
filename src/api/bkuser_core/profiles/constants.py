@@ -125,6 +125,9 @@ class TypeOfExpiration(AutoLowerEnum):
 
 PASSWD_RESET_VIA_SAAS_EMAIL_TMPL = "您的蓝鲸账号【{username}】的密码已被重置，若非本人操作，请及时修改"
 
+
+CAPTCHA_LENGTH = 8
+
 NOTICE_METHOD_EMAIL = "send_email"
 NOTICE_METHOD_SMS = "send_sms"
 

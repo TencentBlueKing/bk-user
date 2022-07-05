@@ -53,7 +53,7 @@ from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmail
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
-from bkuser_core.profiles.tasks import send_captcha, send_password_by_email
+from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import (
     align_country_iso_code,
     check_former_passwords,
@@ -835,43 +835,31 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         serializers.is_valid(raise_exception=True)
         validated_data = serializers.validated_data
 
-        data = {
-            "username": validated_data["username"],
-            "email": validated_data["email"],
-            "telephone": validated_data["telephone"],
-        }
-
         authentication_type = GlobalSettings.objects.get(meta__key="authentication_type").value
         captcha = Captcha()
-        captcha.validate_before_generate_captcha(data, authentication_type)
-
-        captcha_config = captcha.generate_captcha_config(data, authentication_type)
-        token, captcha = captcha.generate_captcha(data=captcha_config)
-        send_data_config = {
-            "send_method": captcha_config["send_method"],
-            "authenticated_value": captcha_config["authenticated_value"],
-            "expire_seconds": captcha_config["expire_seconds"],
-            "profile": captcha_config["profile"].id,
-            "captcha": captcha,
-        }
-        send_captcha.delay(authentication_type=authentication_type, send_data_config=send_data_config)
+        token = captcha.generate(
+            username=validated_data["username"],
+            authentication_type=authentication_type,
+            email=validated_data["email"],
+            telephone=validated_data["telephone"],
+        )
         return Response({"token": token})
 
     @swagger_auto_schema(request_body=local_serializers.CaptchaVerifySerializer())
     def verify_captcha(self, request):
         serializers = local_serializers.CaptchaVerifySerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
+        validated_data = serializers.validated_data
 
-        verify_data = {
-            "username": serializers.validated_data["username"],
-            "captcha": serializers.validated_data["captcha"],
-            "token": serializers.validated_data["token"],
-        }
-        captcha_data = Captcha().verify_captcha(data=verify_data)
+        send_method, contact_detail = Captcha().verify_and_get_contact_detail(
+            username=validated_data["username"],
+            captcha=validated_data["captcha"],
+            token=validated_data["token"],
+        )
         return Response(
             {
-                "send_method": captcha_data["send_method"],
-                "authenticated_value": captcha_data["authenticated_value"],
+                "send_method": send_method,
+                "contact_detail": contact_detail,
             }
         )
 

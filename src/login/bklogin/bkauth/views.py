@@ -119,7 +119,6 @@ class CaptchaVerifyView(LoginExemptMixin, View):
     def post(self, request):
         app_id = request.POST.get("app_id", request.GET.get("app_id", ""))
         post_data = request.POST
-        domain = "default.local" if not post_data.get("domain") else post_data["domain"]
         username = post_data["username"]
         redirect_to = post_data.get("redirect_to")
 
@@ -128,7 +127,6 @@ class CaptchaVerifyView(LoginExemptMixin, View):
             "token": post_data["token"],
             "captcha": post_data["captcha"],
             "username": username,
-            "domain": domain,
         }
         # 调用接口校验
         ok, code, message, data = usermgr_api.verify_captcha(verify_data)
@@ -137,7 +135,7 @@ class CaptchaVerifyView(LoginExemptMixin, View):
         if not ok:
             return APIV1FailJsonResponse(code=code, message=message)
 
-        ok, message, user_list = usermgr_api.batch_query_users(username_list=[f"{username}@{domain}"])
+        ok, message, user_list = usermgr_api.batch_query_users(username_list=[username])
         # 验证成功，查看是否需要进行绑定邮箱或者手机号
         logger.debug(
             "usermgr_api.batch_query_users result: ok=%s, message=%s, user_list=%s",
@@ -152,15 +150,16 @@ class CaptchaVerifyView(LoginExemptMixin, View):
         user_data = user_list[0]
 
         # 发送方法为profile的内部字段且用户没有进行绑定，对用户进行更新
-        if data["send_method"] in SEND_METHOD_TO_PROFILE_FIELD_MAP and not user_data.get(data["send_method"]):
-            update_data = {SEND_METHOD_TO_PROFILE_FIELD_MAP[data["send_method"]]: data["authenticated_value"]}
+        send_method = data["send_method"]
+        if send_method in SEND_METHOD_TO_PROFILE_FIELD_MAP and not user_data.get(data["send_method"]):
+            update_data = {SEND_METHOD_TO_PROFILE_FIELD_MAP[send_method]: data["contact_value"]}
             ok, message, data = usermgr_api.upsert_user(username, **update_data)
             if not ok:
                 logger.error(
                     "fail to update user %s's bind %s = %s: %s",
                     user_data["username"],
-                    data["send_method"],
-                    data["authenticated_value"],
+                    send_method,
+                    data["contact_value"],
                     message,
                 )
                 return APIV1FailJsonResponse(message=message)
@@ -169,7 +168,7 @@ class CaptchaVerifyView(LoginExemptMixin, View):
         user = UserModel(post_data["username"])
         user.fill_with_userinfo(user_data)
 
-        return login_success_response(request, user, redirect_to, app_id)
+        return login_success_response(request, user, redirect_to, app_id, two_refactor_authentication_enabled=False)
 
 
 def _bk_login(request):
@@ -201,9 +200,7 @@ def _bk_login(request):
         form = authentication_form(request, data=request.POST)
         try:
             if form.is_valid():
-                return login_success_response(
-                    request, form, redirect_to, app_id, two_refactor_authentication_enabled=True
-                )
+                return login_success_response(request, form, redirect_to, app_id)
         except AuthenticationError as e:
             login_redirect_to = e.redirect_to
             error_message = e.message

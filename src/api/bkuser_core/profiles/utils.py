@@ -191,18 +191,3 @@ def check_former_passwords(
 def make_passwd_reset_url_by_token(token: str):
     """make reset"""
     return urllib.parse.urljoin(settings.SAAS_URL, f"set_password?token={token}")
-
-
-def split_origin_username(username):
-    """
-    admin => ("admin", "")
-    admin@123.com => ("admin", "123.com")
-    admin@123.com@456.com => ("admin@123.com", "145.com")
-    """
-    if "@" not in username:
-        return username, ""
-    parts = username.split("@")
-    length = len(parts)
-    if length == 2:
-        return parts[0], parts[1]
-    return "@".join(parts[: length - 1]), parts[length - 1]

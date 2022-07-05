@@ -120,13 +120,13 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
     content = {
         "send_method": authentication_settings["send_method"],
         "username": user.username,
-        "receive_address": "",
+        "contact_details": "",
         "original_redirect_to": original_redirect_to,
     }
 
     if getattr(user, authentication_settings["send_method"]):
         redirect_to = "captcha.html"
-        content["receive_address"] = getattr(user, authentication_settings["send_method"])
+        content["contact_detail"] = getattr(user, authentication_settings["send_method"])
     else:
         redirect_to = "captcha_bind.html"
     return HttpResponseRedirect(redirect_to=redirect_to, content=content)

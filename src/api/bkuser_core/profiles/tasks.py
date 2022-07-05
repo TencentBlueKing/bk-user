@@ -81,36 +81,36 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
 
 
 @app.task
-def send_captcha(authentication_type: str, send_data_config: dict):
+def send_captcha(authentication_type: str, send_config: dict):
     config_loader = GlobalConfigProvider(authentication_type)
 
     if config_loader.get("send_method") == CAPTCHA_SEND_METHOD_EMAIL:
         email_config = config_loader.get("email_config")
         message = email_config["content"].format(
-            captcha=send_data_config["captcha"], expire_time=int(send_data_config["expire_seconds"] / 60)
+            captcha=send_config["captcha"], expire_time=int(send_config["expire_seconds"] / 60)
         )
         logger.info(
             "--------- going to send captcha of Profile(%s) via email ----------",
-            send_data_config["profile"],
+            send_config["profile"],
         )
         send_mail(
             sender=email_config["sender"],
-            receivers=[send_data_config["authenticated_value"]],
+            receivers=[send_config["contact_detail"]],
             message=message,
             title=email_config["title"],
         )
     elif config_loader.get("send_method") == CAPTCHA_SEND_METHOD_SMS:
         logger.info(
             "--------- going to send captcha of Profile(%s) via telephone ----------",
-            send_data_config["profile"],
+            send_config["profile"],
         )
         sms_config = config_loader.get("sms_config")
         message = sms_config["content"].format(
-            captcha=send_data_config["captcha"], expire_time=int(send_data_config["expire_seconds"] / 60)
+            captcha=send_config["captcha"], expire_time=int(send_config["expire_seconds"] / 60)
         )
         send_sms(
             sender=sms_config["sender"],
-            receivers=[send_data_config["authenticated_value"]],
+            receivers=[send_config["contact_detail"]],
             message=message,
         )
 
