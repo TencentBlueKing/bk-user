@@ -209,7 +209,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if page is not None:
             # BUG: 这里必须显式传递 context给到slz, 下层self.context.get("request") 用到, 判断拼接 username@domain
             # 坑, 修改或重构需要注意; 不要通过这种方式来决定字段格式, 非常容易遗漏
-            serializer = serializer_class(page, fields=fields, many=True, context={"request": request})
+            serializer = serializer_class(page, fields=fields, many=True, context=self.get_serializer_context())
             return self.get_paginated_response(serializer.data)
 
         fields = [x for x in fields if x in self._get_model_field_names()]
