@@ -123,6 +123,13 @@ export default {
           this.$bus.$emit('updateCatalogList');
           this.current += 1;
         }
+        if (this.current === 3) {
+          await this.$store.dispatch('catalog/ajaxPutAccount', {
+            id: this.catalogId,
+            data: this.$convertAccountInfo(this.accountInfo),
+          });
+          this.$bus.$emit('updateCatalogList');
+        }
       } catch (e) {
         console.warn(e);
       } finally {
