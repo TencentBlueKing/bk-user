@@ -26,7 +26,7 @@ from bklogin.bkauth.actions import login_license_fail_response, login_success_re
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
-from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
+from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset, UserExpiredException
 from bklogin.common.log import logger
 from bklogin.common.mixins.exempt import LoginExemptMixin
 from bklogin.common.usermgr import get_categories_str
@@ -113,6 +113,7 @@ def _bk_login(request):
 
     error_message = ""
     login_redirect_to = ""
+    user_expired = False
 
     # POST
     if request.method == "POST" and is_license_ok:
@@ -126,6 +127,9 @@ def _bk_login(request):
         except PasswordNeedReset as e:
             token_set_password_url = e.reset_password_url
             error_message = e.message
+        except UserExpiredException as e:
+            login_redirect_to = e.redirect_to
+            user_expired = e.user_expired
         else:
             error_message = _("账户或者密码错误，请重新输入")
     # GET
@@ -139,6 +143,7 @@ def _bk_login(request):
     context = {
         "form": form,
         "error_message": error_message,
+        "user_expired": user_expired,
         REDIRECT_FIELD_NAME: redirect_to,
         "site": current_site,
         "site_name": current_site.name,
