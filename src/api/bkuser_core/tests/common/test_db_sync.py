@@ -36,7 +36,7 @@ class TestModelSet:
         """测试长列表切片"""
         long_list = range(120002)
         slices = model_manager.make_slices(list(long_list))
-        assert len(slices) == 25
+        assert len(slices) == 121
         assert len(slices[0]) == model_manager.meta.sharding_size
         assert len(slices[1]) == model_manager.meta.sharding_size
         assert len(slices[-1]) == 2

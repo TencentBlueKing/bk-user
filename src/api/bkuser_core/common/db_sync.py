@@ -44,7 +44,7 @@ class SyncModelMeta:
     use_bulk: bool = True
     # TODO: support unique_together
     unique_key_field: ClassVar[str] = ""
-    sharding_size: int = 5000
+    sharding_size: int = 1000
 
     @classmethod
     def has_unique_key(cls) -> bool:
@@ -204,29 +204,66 @@ class SyncModelManager:
         self._sync(items, manager, method, extra_params)
 
     def _sync(self, items: List, manager: str, method: str, extra_params: dict):
+        target_model_name = self.meta.target_model.__name__
         if not items:
-            logger.info(
-                "======== %s is empty to %s 📭 =========",
-                self.meta.target_model.__name__,
-                method,
-            )
+            logger.info("======== %s is empty to %s 📭 =========", target_model_name, method)
             return
 
-        logger.info(
-            "======== Going to %s(count: %s) for %s =========",
-            method,
-            len(items),
-            self.meta.target_model.__name__,
-        )
+        logger.info("======== Going to %s(count: %s) for %s =========", method, len(items), target_model_name)
+
+        current_count = 0
+        total_fail_count = 0
+        total_fail_records = []
         slices = self.make_slices(items)
         for idx, part in enumerate(slices):
-            logger.debug(
-                "======== Syncing part of %s(%s/%s) =========", self.meta.target_model.__name__, idx + 1, len(slices)
+            logger.info(
+                "======== Syncing part of %s(%s/%s) current: %d + %d =========",
+                target_model_name,
+                idx + 1,
+                len(slices),
+                current_count,
+                len(part),
             )
+            current_count = current_count + len(part)
+            # NOTE: 批量插入失败, 会导致整体同步任务失败
+            # - 优化: 批量插入失败, 切换成单条插入
+            # - 优化: 单条插入失败, continue (会打详细日志)
             try:
                 getattr(getattr(self.meta.target_model, manager), method)(part, **extra_params)
             except Exception:
-                logger.exception("%s %s failed", self.meta.target_model.__name__, method)
-                raise
-
-        logger.info("======== %s synced. ✅ ========", self.meta.target_model.__name__)
+                logger.warning(
+                    "%s %s failed, count=%d, extra_params=%s, will try to sync one by one",
+                    target_model_name,
+                    method,
+                    len(part),
+                    extra_params,
+                )
+                for one in part:
+                    try:
+                        one.save()
+                        continue
+                    except Exception:
+                        total_fail_count += 1
+                        logger.exception(
+                            "%s %s: save one by one fail, item=%s, will not be updated, detail=%s",
+                            target_model_name,
+                            method,
+                            one,
+                            vars(one),
+                        )
+                        total_fail_records.append(one)
+                        continue
+                # 原先的逻辑: raise
+                # raise
+        if total_fail_count > 0:
+            logger.error(
+                "%s %s failed, total_fail_count=%d, total_fail_records=%s",
+                target_model_name,
+                method,
+                total_fail_count,
+                total_fail_records,
+            )
+            logger.info("======== %s synced. and got %d fail ✅ ========", target_model_name, total_fail_count)
+            # TODO: should do something to let the admin know some record fail!
+        else:
+            logger.info("======== %s synced. ✅ ========", target_model_name)
