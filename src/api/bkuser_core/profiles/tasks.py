@@ -17,12 +17,9 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
 
-from .account_expiration_notifier import (
-    AccountExpirationNotifier,
-    get_notice_config_for_account_expiration,
-    get_profiles_for_account_expiration,
-)
+from .account_expiration_notifier import get_notice_config_for_account_expiration, get_profiles_for_account_expiration
 from .constants import TypeOfExpiration
+from .notifier import ExpirationNotifier
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
@@ -88,13 +85,21 @@ def notice_for_account_expiration():
     """
     expiring_profile_list, expired_profile_list = get_profiles_for_account_expiration()
 
+    logger.info(
+        "--------- going to notice expiring_profiles(%s) for account expiration ----------",
+        expiring_profile_list
+    )
     for profile in expiring_profile_list:
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
             continue
-        AccountExpirationNotifier().handler(notice_config)
+        ExpirationNotifier().handler(notice_config)
         time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
+    logger.info(
+        "--------- going to notice expired_profiles(%s) for account expiration ----------",
+        expired_profile_list
+    )
     for profile in expired_profile_list:
         notice_config = get_notice_config_for_account_expiration(profile)
         if not notice_config:
@@ -104,7 +109,7 @@ def notice_for_account_expiration():
             profile_id=profile["id"]).first()
 
         if not notice_record:
-            AccountExpirationNotifier().handler(notice_config)
+            ExpirationNotifier().handler(notice_config)
             ExpirationNoticeRecord.objects.create(
                 type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
                 notice_date=datetime.date.today(),
@@ -115,8 +120,9 @@ def notice_for_account_expiration():
 
         # 上一次过期通知的时间距离现在超过一个月则进行通知
         if notice_record.notice_date < datetime.date.today() - datetime.timedelta(days=30):
-            AccountExpirationNotifier().handler(notice_config)
-            notice_record.objects.update(notice_date=datetime.date.today())
+            ExpirationNotifier().handler(notice_config)
+            notice_record.notice_date = datetime.date.today()
+            notice_record.save()
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
 

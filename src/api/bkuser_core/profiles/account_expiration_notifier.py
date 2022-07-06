@@ -150,32 +150,10 @@ def get_notice_config_for_account_expiration(profile):
 
             }
         )
+    logger.debug(
+        "--------- notice_config(%s) of profile(%s) ----------",
+        notice_config,
+        profile
+    )
 
     return notice_config
-
-
-class AccountExpirationNotifier:
-    def handler(self, notice_config):
-
-        notice_method_map = {
-            "send_email": self._notice_by_email,
-            "send_sms": self._notice_by_sms,
-        }
-
-        for notice_method in notice_config:
-            notice_method_map[notice_method](notice_config[notice_method])
-
-    def _notice_by_email(self, email_config):
-        send_mail(
-            sender=email_config["sender"],
-            receivers=email_config["receivers"],
-            message=email_config["message"],
-            title=email_config["title"],
-        )
-
-    def _notice_by_sms(self, sms_config):
-        send_sms(
-            sender=sms_config["sender"],
-            receivers=sms_config["receivers"],
-            message=sms_config["message"]
-        )
