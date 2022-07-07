@@ -159,7 +159,7 @@ def account_expired_to_locked():
             # 当用户从未登录过，以用户创建时间为基准：
             if not profile_last_operate_time:
                 profile_last_operate_time = profile.create_time
-            # 更换时区
+
             if profile_last_operate_time + datetime.timedelta(days=freeze_after_days) < now():
                 frozen_profile_ids.append(profile.id)
     # 批量冻结
