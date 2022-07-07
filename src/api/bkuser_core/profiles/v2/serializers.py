@@ -90,6 +90,10 @@ class ProfileSerializer(CustomFieldsModelSerializer):
             data.domain,
         )
 
+    def to_representation(self, obj):
+        data = super().to_representation(obj)
+        return remove_sensitive_fields_for_profile(self.context.get("request", {}), data)
+
     class Meta:
         model = Profile
         exclude = ["password"]
