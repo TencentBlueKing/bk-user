@@ -13,6 +13,7 @@ import logging
 import time
 import urllib.parse
 
+import pytz
 from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
@@ -100,8 +101,8 @@ def notice_for_account_expiration():
         if not notice_config:
             continue
         notice_record = ExpirationNoticeRecord.objects.filter(
-            type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
-            profile_id=profile["id"]).first()
+            type=TypeOfExpiration.ACCOUNT_EXPIRATION.value, profile_id=profile["id"]
+        ).first()
 
         if not notice_record:
             AccountExpirationNotifier().handler(notice_config)
@@ -132,3 +133,34 @@ def account_status_test():
         status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],
     )
     expired_profiles.update(status=ProfileStatus.EXPIRED.value)
+
+
+@periodic_task(run_every=crontab(minute='0', hour='3'))
+def account_expired_to_locked():
+    """
+    目录中长时间未登录，用户过期，状态冻结
+    """
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
+    frozen_profile_ids = []
+    # 获取用户目录设置
+    for category_id in category_ids:
+        config_loader = ConfigProvider(category_id=category_id)
+        freeze_after_days = config_loader.get("freeze_after_days")
+        profiles = Profile.objects.filter(
+            category_id__in=category_id,
+            status__in=[ProfileStatus.NORMAL.value],
+        )
+
+        for profile in profiles:
+            # 最后登录时间
+            profile_last_operate_time = profile.last_login_time
+            # 当用户从未登录过，以用户创建时间为基准：
+            if not profile_last_operate_time:
+                profile_last_operate_time = profile.create_time
+            # 更换时区
+            profile_last_operate_time = profile_last_operate_time.astimezone(pytz.timezone(profile.time_zone))
+            current_date = datetime.datetime.now(pytz.timezone(profile.time_zone))
+            if profile_last_operate_time + datetime.timedelta(days=freeze_after_days) < current_date:
+                frozen_profile_ids.append(profile.id)
+    # 批量冻结
+    Profile.objects.filter(id__in=frozen_profile_ids).update(status=ProfileStatus.LOCKED.value)
