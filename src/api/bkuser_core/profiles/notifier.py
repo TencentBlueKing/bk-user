@@ -10,7 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.db.models import Exists, OuterRef
+
+from bkuser_core.audit.models import LogIn
 from bkuser_core.common.notifier import send_mail, send_sms
+from bkuser_core.profiles.models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -40,3 +44,15 @@ class ExpirationNotifier:
             receivers=sms_config["receivers"],
             message=sms_config["message"]
         )
+
+
+def get_logined_profiles():
+    """
+    获取在平台登录过的所有用户
+    """
+    subquery = LogIn.objects.filter(profile=OuterRef('pk')).values_list('id')
+    logined_profile_ids = Profile.objects.annotate(
+        temp=Exists(subquery)).filter(temp=True).values_list('id', flat=True)
+    logined_profiles = Profile.objects.filter(id__in=logined_profile_ids)
+
+    return logined_profiles

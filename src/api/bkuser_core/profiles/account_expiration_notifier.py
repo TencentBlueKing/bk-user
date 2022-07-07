@@ -11,14 +11,10 @@ specific language governing permissions and limitations under the License.
 import datetime
 import logging
 
-from django.db.models import Exists, OuterRef
-
-from bkuser_core.audit.models import LogIn
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.common.notifier import send_mail, send_sms
 from bkuser_core.profiles.constants import NOTICE_METHOD_EMAIL, NOTICE_METHOD_SMS
-from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.notifier import get_logined_profiles
 from bkuser_core.user_settings.constants import ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY, SettingsEnableNamespaces
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import Setting
@@ -69,18 +65,6 @@ def get_expiration_dates(notice_interval):
         expiration_times.append(expiration_time)
 
     return expiration_times
-
-
-def get_logined_profiles():
-    """
-    获取在平台登录过的所有用户
-    """
-    subquery = LogIn.objects.filter(profile=OuterRef('pk')).values_list('id')
-    logined_profile_ids = Profile.objects.annotate(
-        temp=Exists(subquery)).filter(temp=True).values_list('id', flat=True)
-    logined_profiles = Profile.objects.filter(id__in=logined_profile_ids)
-
-    return logined_profiles
 
 
 def get_notice_config_for_account_expiration(profile):
