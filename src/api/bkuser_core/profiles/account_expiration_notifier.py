@@ -37,11 +37,11 @@ def get_profiles_for_account_expiration():
             meta__namespace=SettingsEnableNamespaces.ACCOUNT.value
         ).first().value
 
-        expiration_times = get_expiration_dates(notice_interval)
+        expiration_dates = get_expiration_dates(notice_interval)
         logined_profiles = get_logined_profiles()
 
         expiring_profiles = logined_profiles.filter(
-            account_expiration_date__in=expiration_times,
+            account_expiration_date__in=expiration_dates,
             category_id=category_id).values(
             "id", "username", "category_id", "email", "telephone", "account_expiration_date")
         expiring_profile_list.extend(expiring_profiles)
@@ -59,12 +59,12 @@ def get_expiration_dates(notice_interval):
     """
     获取需要进行通知的 过期时间列表
     """
-    expiration_times = []
-    for t in notice_interval:
-        expiration_time = datetime.date.today() + datetime.timedelta(days=t)
-        expiration_times.append(expiration_time)
+    expiration_dates = []
+    for day in notice_interval:
+        expiration_date = datetime.date.today() + datetime.timedelta(days=day)
+        expiration_dates.append(expiration_date)
 
-    return expiration_times
+    return expiration_dates
 
 
 def get_notice_config_for_account_expiration(profile):
@@ -72,7 +72,7 @@ def get_notice_config_for_account_expiration(profile):
     整合 账号过期 通知内容
     """
     notice_config = {}
-    expire_at = profile["account_expiration_date"] - datetime.date.today()
+    expired_at = profile["account_expiration_date"] - datetime.date.today()
 
     config_loader = ConfigProvider(profile["category_id"])
     notice_methods = config_loader["account_expiration_notice_methods"]
@@ -83,15 +83,15 @@ def get_notice_config_for_account_expiration(profile):
     if NOTICE_METHOD_EMAIL in notice_methods:
         email_config = (
             config_loader["expired_account_email_config"]
-            if expire_at.days < 0
+            if expired_at.days < 0
             else config_loader["expiring_account_email_config"]
         )
 
         message = (
             email_config["content"].format(username=profile["username"])
-            if expire_at.days < 0
+            if expired_at.days < 0
             else email_config["content"].format(
-                username=profile["username"], expire_at=expire_at.days
+                username=profile["username"], expired_at=expired_at.days
             )
         )
 
@@ -111,15 +111,15 @@ def get_notice_config_for_account_expiration(profile):
     if NOTICE_METHOD_SMS in notice_methods:
         sms_config = (
             config_loader["expired_account_sms_config"]
-            if expire_at.days < 0
+            if expired_at.days < 0
             else config_loader["expiring_account_sms_config"]
         )
 
         message = (
             sms_config["content"].format(username=profile["username"])
-            if expire_at.days < 0
+            if expired_at.days < 0
             else sms_config["content"].format(
-                username=profile["username"], expire_at=expire_at.days
+                username=profile["username"], expired_at=expired_at.days
             )
         )
 
