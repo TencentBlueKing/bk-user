@@ -160,4 +160,4 @@ class Captcha:
         }
         send_captcha.delay(authentication_type=authentication_type, send_config=send_config)
 
-        return token, send_config
+        return token
