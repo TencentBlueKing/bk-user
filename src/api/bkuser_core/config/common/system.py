@@ -94,6 +94,24 @@ DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
 # 复用 API, 接口参数中存在 SYNC_API_PARAM 时, 以sync的接口协议返回
 SYNC_API_PARAM = "for_sync"
 
+# ==============================================================================
+# 黑白名单/禁用等
+# ==============================================================================
+
+# 全局开关
+ENABLE_PROFILE_SENSITIVE_FILTER = env.bool("ENABLE_PROFILE_SENSITIVE_FILTER", default=False)
+
+# profile中敏感字段, 默认接口不返回, 只有加白的app_code才允许访问
+PROFILE_SENSITIVE_FIELDS = tuple(env.list("PROFILE_SENSITIVE_FIELDS", default=[]))
+PROFILE_SENSITIVE_FIELDS_WHITELIST_APP_CODES = tuple(
+    env.list("PROFILE_SENSITIVE_FIELDS_WHITELIST_APP_CODES", default=[])
+)
+
+# extras中的敏感字段, 以及只有白名单中的 TOKEN 请求才能获取到这批字段; 安全考虑
+PROFILE_EXTRAS_SENSITIVE_FIELDS = tuple(env.list("PROFILE_EXTRAS_SENSITIVE_FIELDS", default=[]))
+PROFILE_EXTRAS_SENSITIVE_FIELDS_WHITELIST_APP_CODES = tuple(
+    env.list("PROFILE_EXTRAS_SENSITIVE_FIELDS_WHITELIST_APP_CODES", default=[])
+)
 
 # ==============================================================================
 # 开发调试

@@ -10,6 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 
 from bkuser_core.profiles.v2.urls import urlpatterns as v2_urlpatterns
-from bkuser_core.profiles.v3.urls import urlpatterns as v3_urlpatterns
 
-urlpatterns = v2_urlpatterns + v3_urlpatterns
+urlpatterns = v2_urlpatterns
+
+# from bkuser_core.profiles.v3.urls import urlpatterns as v3_urlpatterns
+# ;2022-07 disabled /api/v3 now!
+# urlpatterns = v2_urlpatterns + v3_urlpatterns
