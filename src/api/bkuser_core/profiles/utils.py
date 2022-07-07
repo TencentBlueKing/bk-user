@@ -213,17 +213,7 @@ def _is_saas_request(request) -> bool:
     if not request:
         return False
 
-    # FIXME: later, all the enable_api_auth will be always True
-    if not settings.ENABLE_API_AUTH:
-        return settings.FORCE_RAW_USERNAME_HEADER in request.META
-
-    # 由于目前saas有 token 和 app_code/app_secret 两种调用, 所以这里要判断两种
-    saas_internal_token_valid_usernames = set({"SAAS"})
-    for k, v in settings.INTERNAL_AUTH_TOKENS.items():
-        if v and v.get("username"):
-            saas_internal_token_valid_usernames.add(v["username"])
-
-    return local.request_username in saas_internal_token_valid_usernames
+    return local.request_username == "SAAS"
 
 
 def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
