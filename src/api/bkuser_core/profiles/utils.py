@@ -236,7 +236,8 @@ def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
     # remove sensitive fields, except the app_code in whitelist
     for key in settings.PROFILE_SENSITIVE_FIELDS:
         if key in data and bk_app_code not in settings.PROFILE_SENSITIVE_FIELDS_WHITELIST_APP_CODES:
-            data.pop(key)
+            data[key] = ""
+            # data.pop(key)
 
     # remove sensitive extras fields, except the app_code in whitelist
     if "extras" in data:
