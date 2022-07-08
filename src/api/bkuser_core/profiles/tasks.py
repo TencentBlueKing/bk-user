@@ -29,7 +29,11 @@ from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, Pro
 from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
-
+from bkuser_core.profiles.password_expiration_notifier import (
+    get_profiles_for_password_expiration,
+    get_notice_config_for_password_expiration,
+)
+from bkuser_core.profiles.notifier import ExpirationNotifier
 logger = logging.getLogger(__name__)
 
 
@@ -138,3 +142,40 @@ def account_status_test():
         status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],
     )
     expired_profiles.update(status=ProfileStatus.EXPIRED.value)
+
+
+@periodic_task(run_every=crontab(minute='0', hour='2'))
+def notice_for_password_expiration():
+    """
+    用户密码过期通知
+    """
+    expiring_profile_list, expired_profile_list = get_profiles_for_password_expiration()
+    for profile in expiring_profile_list:
+        notice_config = get_notice_config_for_password_expiration(profile)
+        if not notice_config:
+            continue
+        ExpirationNotifier().handler(notice_config)
+        time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+
+    for profile in expired_profile_list:
+        notice_config = get_notice_config_for_password_expiration(profile)
+        if not notice_config:
+            continue
+        notice_record = ExpirationNoticeRecord.objects.filter(
+            type=TypeOfExpiration.PASSWORD_EXPIRATION.value, profile_id=profile["id"]
+        ).first()
+
+        if not notice_record:
+            ExpirationNotifier().handler(notice_config)
+            ExpirationNoticeRecord.objects.create(
+                type=TypeOfExpiration.PASSWORD_EXPIRATION.value,
+                notice_date=datetime.date.today(),
+                profile_id=profile["id"],
+            )
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+            continue
+        if notice_record.notice_date < datetime.date.today() - datetime.timedelta(days=30):
+            ExpirationNotifier().handler(notice_config)
+            notice_record.notice_date = datetime.date.today()
+            notice_record.save()
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
