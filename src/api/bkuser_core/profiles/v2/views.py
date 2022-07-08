@@ -59,6 +59,7 @@ from bkuser_core.profiles.utils import (
     make_passwd_reset_url_by_token,
     make_password_by_config,
     parse_username_domain,
+    remove_sensitive_fields_for_profile,
 )
 from bkuser_core.profiles.v2.filters import ProfileSearchFilter
 from bkuser_core.profiles.validators import validate_username
@@ -216,7 +217,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
         # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
-        return Response(data=list(queryset.values(*fields)))
+        data = list(queryset.values(*fields))
+        data = [remove_sensitive_fields_for_profile(request, d) for d in data]
+        return Response(data=data)
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(
