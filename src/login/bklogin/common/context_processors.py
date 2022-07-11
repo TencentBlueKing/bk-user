@@ -27,7 +27,6 @@ def site_settings(request):
     cur_domain = request.get_host()
     password_rsa_public_key = base64.b64encode(settings.PASSWORD_RSA_PUBLIC_KEY.encode()).decode()
     enable_password_rsa_encrypted = str(settings.ENABLE_PASSWORD_RSA_ENCRYPTED).lower()
-    print(password_rsa_public_key)
     return {
         # "LOGIN_URL": settings.LOGIN_URL,
         "LOGOUT_URL": settings.LOGOUT_URL,
