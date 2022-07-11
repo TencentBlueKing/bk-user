@@ -48,7 +48,7 @@ class ProfileExcelExporter:
                 cell.number_format = FORMAT_TEXT
 
     def update_profiles(self, profiles: List[dict], extra_infos: dict = None):
-        self._update_sheet_titles()
+        field_col_map = self._update_sheet_titles()
 
         for p_index, p in enumerate(profiles):
 
@@ -87,30 +87,38 @@ class ProfileExcelExporter:
                 if raw_value is None:
                     continue
 
-                self.first_sheet.cell(row=p_index + self.title_row_index + 1, column=f_index + 1, value=value)
+                self.first_sheet.cell(row=p_index + self.title_row_index + 1, column=field_col_map[f["display_name"]], value=value)
 
     def _update_sheet_titles(self):
         """更新表格标题"""
         required_field_names = [x["display_name"] for x in self.fields if x["builtin"]]
         not_required_field_names = [x["display_name"] for x in self.fields if not x["builtin"]]
 
+        field_col_map = {}
+
         red_ft = Font(color=colors.COLOR_INDEX[2])
         black_ft = Font(color=colors.BLACK)
         for index, field_name in enumerate(required_field_names):
+            column = index + 1
             _cell = self.first_sheet.cell(
                 row=self.title_row_index,
-                column=index + 1,
+                column=column,
                 value=field_name,
             )
             _cell.font = red_ft
+            field_col_map[field_name] = index + 1
 
         for index, field_name in enumerate(not_required_field_names):
+            column = index + 1 + len(required_field_names)
             _cell = self.first_sheet.cell(
                 row=self.title_row_index,
-                column=index + 1 + len(required_field_names),
+                column=column,
                 value=field_name,
             )
             _cell.font = black_ft
+            field_col_map[field_name] = column
+
+        return field_col_map
 
     def to_response(self) -> HttpResponse:
         response = HttpResponse(content_type="application/ms-excel")
