@@ -9,9 +9,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
 import os
 
 from . import PROJECT_ROOT, env
+from bklogin.common.log import logger
 
 ALLOWED_HOSTS = ["*"]
 
@@ -129,3 +131,27 @@ LOCALE_PATHS = (os.path.join(PROJECT_ROOT, "locale"),)
 # AUTHENTICATION
 # ==============================================================================
 AUTH_USER_MODEL = "bkauth.User"
+
+# ==============================================================================
+# RSA
+# ==============================================================================
+
+ENABLE_PASSWORD_RSA_ENCRYPTED = env.bool("ENABLE_PASSWORD_RSA_ENCRYPTED", False)
+PASSWORD_RSA_PUBLIC_KEY = env.str("BK_PASSWORD_RSA_PUBLIC_KEY", "")
+PASSWORD_RSA_PRIVATE_KEY = env.str("BK_PASSWORD_RSA_PRIVATE_KEY", "")
+
+if ENABLE_PASSWORD_RSA_ENCRYPTED:
+    message = "enable password rsa encrypted"
+    print(message)
+    logger.debug(message)
+
+    try:
+        PASSWORD_RSA_PUBLIC_KEY = base64.b64decode(PASSWORD_RSA_PUBLIC_KEY).decode()
+        PASSWORD_RSA_PRIVATE_KEY = base64.b64decode(PASSWORD_RSA_PRIVATE_KEY).decode()
+    except Exception as e:
+        rsa_key_info = (
+            f"PASSWORD_RSA_PUBLIC_KEY={PASSWORD_RSA_PUBLIC_KEY},PASSWORD_RSA_PRIVATE_KEY={PASSWORD_RSA_PRIVATE_KEY}"
+        )
+        message = f"password rsa encrypted is enabled, but b64decode fail, {rsa_key_info}"
+        logger.error(message)
+        raise e
