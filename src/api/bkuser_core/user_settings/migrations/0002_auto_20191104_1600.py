@@ -61,7 +61,7 @@ def forwards_func(apps, schema_editor):
             },
         ),
         dict(key="force_reset_first_login", example=True, default=True),
-        dict(key="enable_auto_freeze", example=True, default=True),
+        dict(key="enable_auto_freeze", example=False, default=True),
         dict(key="freeze_after_days", example=180, default=180),
     ]
 

@@ -145,9 +145,11 @@ def account_expired_to_locked():
     # 获取用户目录设置
     for category_id in category_ids:
         config_loader = ConfigProvider(category_id=category_id)
-        freeze_after_days = config_loader.get("freeze_after_days")
-        if not freeze_after_days:
+
+        enable_auto_freeze = config_loader.get("enable_auto_freeze")
+        if not enable_auto_freeze:
             continue
+
         profiles = Profile.objects.filter(
             category_id__in=category_id,
             status__in=[ProfileStatus.NORMAL.value],
