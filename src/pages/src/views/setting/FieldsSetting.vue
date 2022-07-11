@@ -113,6 +113,7 @@
     <!-- 添加字段的侧边栏 -->
     <bk-sideslider
       class="king-sideslider"
+      :transfer="true"
       :show-mask="false"
       :quick-close="false"
       :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
