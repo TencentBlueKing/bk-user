@@ -153,7 +153,16 @@ def account_expired_to_locked():
         config_loader = ConfigProvider(category_id=category_id)
 
         enable_auto_freeze = config_loader.get("enable_auto_freeze")
+        freeze_after_days = config_loader.get("freeze_after_days")
         if not enable_auto_freeze:
+            continue
+
+        try:
+            if int(freeze_after_days) <= 0:
+                logger.info("account_expired_to_locked: freeze_after_days should be more than 0")
+                continue
+        except Exception as e:
+            logger.error(f"account_expired_to_locked error: freeze_after_days must be a numbers {e}")
             continue
 
         profiles = Profile.objects.filter(
