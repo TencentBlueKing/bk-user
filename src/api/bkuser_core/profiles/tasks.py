@@ -169,9 +169,6 @@ def account_expired_to_locked():
         except SettingHasBeenDisabledError:
             logger.info("category<%s> has disabled freeze_after_days", category_id)
             continue
-        except Exception as e:
-            logger.exception("account_expired_to_locked error: freeze_after_days must be a integer")
-            continue
 
         profiles = Profile.objects.filter(
             category_id__in=category_id,
