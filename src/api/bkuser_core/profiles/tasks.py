@@ -171,8 +171,8 @@ def account_expired_to_locked():
             continue
 
         profiles = Profile.objects.filter(
-            category_id__in=category_id,
-            status__in=[ProfileStatus.NORMAL.value],
+            category_idin=category_id,
+            statusin=ProfileStatus.NORMAL.value,
         )
 
         for profile in profiles:
