@@ -30,6 +30,7 @@ from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, Pro
 from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
+from ..user_settings.exceptions import SettingHasBeenDisabledError
 
 logger = logging.getLogger(__name__)
 
@@ -151,18 +152,25 @@ def account_expired_to_locked():
     # 获取用户目录设置
     for category_id in category_ids:
         config_loader = ConfigProvider(category_id=category_id)
-
-        enable_auto_freeze = config_loader.get("enable_auto_freeze")
-        freeze_after_days = config_loader.get("freeze_after_days")
-        if not enable_auto_freeze:
+        try:
+            enable_auto_freeze = config_loader.get("enable_auto_freeze")
+            logger.info("category<%s> enable_auto_freeze = %s", category_id, enable_auto_freeze)
+            if not enable_auto_freeze:
+                continue
+        except SettingHasBeenDisabledError:
+            logger.info("category<%s> has disabled enable_auto_freeze", category_id)
             continue
 
         try:
+            freeze_after_days = config_loader.get("freeze_after_days")
             if int(freeze_after_days) <= 0:
-                logger.info("account_expired_to_locked: freeze_after_days should be more than 0")
+                logger.error("account_expired_to_locked: freeze_after_days should be more than 0")
                 continue
+        except SettingHasBeenDisabledError:
+            logger.info("category<%s> has disabled freeze_after_days", category_id)
+            continue
         except Exception as e:
-            logger.error(f"account_expired_to_locked error: freeze_after_days must be a numbers {e}")
+            logger.exception("account_expired_to_locked error: freeze_after_days must be a integer")
             continue
 
         profiles = Profile.objects.filter(
@@ -180,4 +188,5 @@ def account_expired_to_locked():
             if profile_last_operate_time + datetime.timedelta(days=freeze_after_days) < now():
                 frozen_profile_ids.append(profile.id)
     # 批量冻结
-    Profile.objects.filter(id__in=frozen_profile_ids).update(status=ProfileStatus.LOCKED.value)
+    if frozen_profile_ids:
+        Profile.objects.filter(id__in=frozen_profile_ids).update(status=ProfileStatus.LOCKED.value)
