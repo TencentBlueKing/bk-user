@@ -465,9 +465,8 @@ export default {
               return getUsername(item);
             }),
         });
-        const temps = res.data.filter(
-          item => !this.hasSelectedUsers.map(subItem => subItem.username).includes(item.username)
-        );
+        const temps = res.data
+          .filter(item => !this.hasSelectedUsers.map(subItem => subItem.username).includes(item.username));
         this.hasSelectedUsers.push(...temps);
         if (res.data.length > 0) {
           const usernameList = res.data.map(item => item.username);
@@ -503,7 +502,7 @@ export default {
         return;
       }
       const len = this.$refs.searchedResultsRef.renderData.length;
-      this.focusItemIndex--;
+      this.focusItemIndex -= 1;
       this.focusItemIndex = this.focusItemIndex < 0 ? -1 : this.focusItemIndex;
       if (this.focusItemIndex === -1) {
         this.focusItemIndex = len - 1;
@@ -515,7 +514,7 @@ export default {
         return;
       }
       const len = this.$refs.searchedResultsRef.renderData.length;
-      this.focusItemIndex++;
+      this.focusItemIndex += 1;
       this.focusItemIndex = this.focusItemIndex > len - 1
         ? len
         : this.focusItemIndex;
