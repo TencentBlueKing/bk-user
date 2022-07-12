@@ -74,3 +74,6 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-email:before {
 	content: "\e111";
 }
+.icon-yanzhengma:before {
+	content: "\e112";
+}
