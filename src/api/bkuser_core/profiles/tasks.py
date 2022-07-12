@@ -30,7 +30,7 @@ from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, Pro
 from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
-from ..user_settings.exceptions import SettingHasBeenDisabledError
+from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 
 logger = logging.getLogger(__name__)
 
