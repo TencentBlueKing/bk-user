@@ -61,6 +61,7 @@ from bkuser_core.profiles.utils import (
     make_passwd_reset_url_by_token,
     make_password_by_config,
     parse_username_domain,
+    remove_sensitive_fields_for_profile,
 )
 from bkuser_core.profiles.v2.filters import ProfileSearchFilter
 from bkuser_core.profiles.validators import validate_username
@@ -200,6 +201,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
             if "username" in fields:
                 default_domain = ProfileCategory.objects.get_default().domain
+                # 这里拼装的 username@domain, 没有走到serializer中的get_username
                 queryset = queryset.extra(
                     select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
                     select_params=(default_domain,),
@@ -208,14 +210,18 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         page = self.paginate_queryset(queryset)
         # page may be empty list
         if page is not None:
-            serializer = serializer_class(page, fields=fields, many=True)
+            # BUG: 这里必须显式传递 context给到slz, 下层self.context.get("request") 用到, 判断拼接 username@domain
+            # 坑, 修改或重构需要注意; 不要通过这种方式来决定字段格式, 非常容易遗漏
+            serializer = serializer_class(page, fields=fields, many=True, context=self.get_serializer_context())
             return self.get_paginated_response(serializer.data)
 
         fields = [x for x in fields if x in self._get_model_field_names()]
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
         # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
-        return Response(data=list(queryset.values(*fields)))
+        data = list(queryset.values(*fields))
+        data = [remove_sensitive_fields_for_profile(request, d) for d in data]
+        return Response(data=data)
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(

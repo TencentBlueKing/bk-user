@@ -44,19 +44,19 @@ def forwards_func(apps, schema_editor):
             example={
                 "title": "蓝鲸智云 - 账号到期提醒",
                 "sender": "蓝鲸智云",
-                "content": "{username}，您好：您的蓝鲸智云平台账号将于{expire_at}天后到期，"
+                "content": "{username}，您好：您的蓝鲸智云平台账号将于{expired_at}天后到期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
                 "content_html": '<p>{username}，您好：</p><p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云'
-                '平台账号将于<span style="color: rgb(225, 60, 57);">{expire_at}</span>天后到期，为避免影响使用，请尽快联系平台管'
+                '平台账号将于<span style="color: rgb(225, 60, 57);">{expired_at}</span>天后到期，为避免影响使用，请尽快联系平台管'
                 '理员进行续期。</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
             },
             default={
                 "title": "蓝鲸智云 - 账号到期提醒",
                 "sender": "蓝鲸智云",
-                "content": "{username}，您好：您的蓝鲸智云平台账号将于{expire_at}天后到期，"
+                "content": "{username}，您好：您的蓝鲸智云平台账号将于{expired_at}天后到期，"
                 "为避免影响使用，请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
                 "content_html": '<p>{username}，您好：</p><p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云'
-                '平台账号将于<span style="color: rgb(225, 60, 57);">{expire_at}</span>天后到期，为避免影响使用，请尽快联系平台管'
+                '平台账号将于<span style="color: rgb(225, 60, 57);">{expired_at}</span>天后到期，为避免影响使用，请尽快联系平台管'
                 '理员进行续期。</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
             },
         ),
@@ -83,14 +83,14 @@ def forwards_func(apps, schema_editor):
             key="expiring_account_sms_config",
             example={
                 "sender": "蓝鲸智云",
-                "content": "【蓝鲸智云】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expire_at}天后到期，为避免影响使用，请尽快联系平台管理员进行续期。",
-                "content_html": '<p>【蓝鲸智云】账号到期提醒！{username}您好，您的蓝鲸平台账号将于{expire_at}天后到期，为避免'
+                "content": "【蓝鲸智云】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expired_at}天后到期，为避免影响使用，请尽快联系平台管理员进行续期。",
+                "content_html": '<p>【蓝鲸智云】账号到期提醒！{username}您好，您的蓝鲸平台账号将于{expired_at}天后到期，为避免'
                 '影响使用，请尽快联系平台管理员进行续期。</p>',
             },
             default={
                 "sender": "蓝鲸智云",
-                "content": "【蓝鲸智云】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expire_at}天后到期，为避免影响使用，请尽快联系平台管理员进行续期。",
-                "content_html": '<p>【蓝鲸智云】账号到期提醒！{username}您好，您的蓝鲸平台账号将于{expire_at}天后到期，为避免'
+                "content": "【蓝鲸智云】账号到期提醒！{username}，您好，您的蓝鲸平台账号将于{expired_at}天后到期，为避免影响使用，请尽快联系平台管理员进行续期。",
+                "content_html": '<p>【蓝鲸智云】账号到期提醒！{username}您好，您的蓝鲸平台账号将于{expired_at}天后到期，为避免'
                 '影响使用，请尽快联系平台管理员进行续期。</p>',
             },
         ),
