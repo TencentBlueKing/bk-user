@@ -284,7 +284,6 @@ class GlobalSettingsNamespaceViewSet(BkUserApiViewSet):
 
         api_instance = bkuser_sdk.GlobalSettingsApi(self.get_api_client_by_request(request))
         settings = api_instance.v2_global_settings_list(namespace=namespace_name, **validated_data)
-        # settings = api_instance.v2_global_settings_list()
 
         region = validated_data.get("region", None)
         if region:
@@ -293,27 +292,24 @@ class GlobalSettingsNamespaceViewSet(BkUserApiViewSet):
         return settings
 
     @inject_serializer(
-        query_in=serializers.ListSettingMetasSerializer(),
-        out=serializers.SettingMetaSerializer(many=True),
+        query_in=serializers.ListGlobalSettingMetasSerializer(),
+        out=serializers.GlobalSettingMetaSerializer(many=True),
         tags=["config_center"],
     )
     def list_defaults(self, request, validated_data):
-        """获取 namespace 下的所有示例配置"""
-        category_type = validated_data["category_type"]
+        """获取所有示例配置"""
 
-        api_instance = bkuser_sdk.SettingMetasApi(self.get_api_client_by_request(request))
-        setting_metas = self.get_paging_results(
-            api_instance.v2_setting_metas_list, lookup_field="category_type", exact_lookups=[category_type]
-        )
+        api_instance = bkuser_sdk.GlobalSettingsMetaApi(self.get_api_client_by_request(request))
+        global_setting_metas = self.get_paging_results(api_instance.v2_global_settings_meta_list)
 
         filter_keys = ["region", "namespace"]
         for key in filter_keys:
             if not validated_data.get(key, None):
                 continue
 
-            setting_metas = [x for x in setting_metas if x[key] == validated_data[key]]
+            global_setting_metas = [x for x in global_setting_metas if x[key] == validated_data[key]]
 
-        return setting_metas
+        return global_setting_metas
 
     @inject_serializer(
         body_in=serializers.UpdateNamespaceSettingSerializer(many=True),
