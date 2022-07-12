@@ -87,7 +87,11 @@ class ProfileExcelExporter:
                 if raw_value is None:
                     continue
 
-                self.first_sheet.cell(row=p_index + self.title_row_index + 1, column=field_col_map[f["display_name"]], value=value)
+                self.first_sheet.cell(
+                    row=p_index + self.title_row_index + 1,
+                    column=field_col_map[f["display_name"]],
+                    value=value
+                )
 
     def _update_sheet_titles(self):
         """更新表格标题"""
