@@ -21,6 +21,10 @@ from django.utils.timezone import now
 from .account_expiration_notifier import get_notice_config_for_account_expiration, get_profiles_for_account_expiration
 from .constants import TypeOfExpiration
 from .notifier import ExpirationNotifier
+from .password_expiration_notifier import (
+    get_profiles_for_password_expiration,
+    get_notice_config_for_password_expiration,
+)
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
@@ -30,11 +34,6 @@ from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, Pro
 from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
-from bkuser_core.profiles.password_expiration_notifier import (
-    get_profiles_for_password_expiration,
-    get_notice_config_for_password_expiration,
-)
-from bkuser_core.profiles.notifier import ExpirationNotifier
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 
 logger = logging.getLogger(__name__)
