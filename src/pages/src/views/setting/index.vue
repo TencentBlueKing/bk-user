@@ -31,23 +31,26 @@
       </a>
     </div>
     <div class="setting-right">
-      <FieldsSetting v-if="curIndex === 0" />
+      <FieldsSetting v-show="curIndex === 0" />
+      <DoubleFactor v-show="curIndex === 1" />
     </div>
   </div>
 </template>
 
 <script>
 import FieldsSetting from './FieldsSetting';
+import DoubleFactor from './DoubleFactor.vue';
 
 export default {
   name: 'SettingIndex',
   components: {
     FieldsSetting,
+    DoubleFactor,
   },
   data() {
     return {
       isNav: false,
-      settingList: [this.$t('用户字段设置')],
+      settingList: [this.$t('用户字段设置'), this.$t('双因子认证')],
       curIndex: 0,
     };
   },
