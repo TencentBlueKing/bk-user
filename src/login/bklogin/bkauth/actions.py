@@ -118,18 +118,19 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
         return None
 
     content = {
-        "send_method": authentication_settings["send_method"],
-        "username": user.username,
-        "contact_details": "",
-        "original_redirect_to": original_redirect_to,
+        "send_method": authentication_settings["send_method"],  # 发送方式
+        "username": user.username,  # 用户名
+        "contact_details": "",  # 发送地址，bind页面不为空字符串
+        "original_redirect_to": original_redirect_to,  # 登录来源
+        "expire_seconds": authentication_settings["expire_seconds"],  # 过期时间
     }
 
     if getattr(user, authentication_settings["send_method"]):
-        redirect_to = "login_ce_bind.html"
+        redirect_to = "account/login_ce_bind.html"
         content["contact_detail"] = getattr(user, authentication_settings["send_method"])
     else:
-        redirect_to = "login_ce_nobind.html"
-    return HttpResponseRedirect(redirect_to=redirect_to, content=content)
+        redirect_to = "account/login_ce_nobind.html"
+    return TemplateResponse(request, redirect_to, content)
 
 
 def login_success_response(
