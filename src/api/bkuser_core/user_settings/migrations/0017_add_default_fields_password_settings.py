@@ -109,13 +109,26 @@ def forwards_func(apps, schema_editor):
 
 def backwards_func(apps, schema_editor):
     SettingMeta = apps.get_model("user_settings", "SettingMeta")
-    meta = SettingMeta.objects.get(
-        namespace=SettingsEnableNamespaces.PASSWORD.value,
-        category_type=CategoryType.LOCAL.value
-    )
     Setting = apps.get_model("user_settings", "Setting")
-    Setting.objects.filter(category__type=CategoryType.LOCAL.value, meta=meta).delete()
-    meta.delete()
+
+    meta_keys = [
+        "password_expiration_notice_methods",
+        "password_expiration_notice_interval",
+        "expiring_password_email_config",
+        "expired_password_email_config",
+        "expiring_password_sms_config",
+        "expired_password_sms_config"
+    ]
+
+    for meta_key in meta_keys:
+        meta = SettingMeta.objects.get(
+            namespace=SettingsEnableNamespaces.PASSWORD.value,
+            category_type=CategoryType.LOCAL.value,
+            key=meta_key
+        )
+
+        Setting.objects.filter(category__type=CategoryType.LOCAL.value, meta=meta).delete()
+        meta.delete()
 
 
 class Migration(migrations.Migration):
