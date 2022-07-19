@@ -215,4 +215,11 @@ $(document).ready(function(){
       }
     })
 
+    // rsa 加密
+    if (ENABLE_PASSWORD_RSA_ENCRYPTED) {
+        $('#login-form').submit(() => {
+            rsa_encrypt_password();
+        });
+    }
+
 });

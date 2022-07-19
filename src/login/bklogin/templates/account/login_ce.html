@@ -150,12 +150,5 @@
             var encrypted = encrypt.encrypt(password);
             $('#password').val(encrypted);
         }
-        $(document).ready(function(){
-             if (ENABLE_PASSWORD_RSA_ENCRYPTED) {
-                 $('#login-form').submit(() => {
-                     rsa_encrypt_password();
-                });
-            }
-        })
     </script>
 </html>
