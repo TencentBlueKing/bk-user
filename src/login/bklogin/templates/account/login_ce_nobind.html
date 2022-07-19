@@ -40,17 +40,18 @@
                         <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
                             <div class="user group-control">
                                 <i class="bk-icon icon-email"></i>
-                                <input id="user" type="text" name="username" placeholder="{% trans '邮箱（手机号）' %}">
+                                <input id="user" type="text" name="username" placeholder="{{user.username}}">
                             </div>
                             <p class="error">
-                                {% trans '请输入正确的邮箱（手机号）' %}
+                                {% trans '请输入正确的{{user.username}}' %}
                             </p>
                             <div class="validation group-control">
                                 <div class="validation-left">
                                     <i class="bk-icon icon-yanzhengma"></i>
-                                    <span>{% trans '验证码' %}</span>
+                                    <span class="code-btn" id="code-btn">{% trans '获取验证码' %}</span>
                                 </div>
-                                <input class="validation-right" id="validation" type="number" name="validation" placeholder="{% trans '获取验证码（60S）' %}">
+                                    <input class="validation-right" id="validation" type="number" name="validation" value=""
+                                        autocomplete="off" oninput="if(value.length>8)value=value.slice(0,8)">
                             </div>
                             <p class="error">
                                 {% trans '验证码错误' %}
