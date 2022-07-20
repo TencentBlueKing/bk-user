@@ -18,13 +18,10 @@ from celery.task import periodic_task
 from django.conf import settings
 from django.utils.timezone import now
 
-from .account_expiration_notifier import get_notice_config_for_account_expiration, get_profiles_for_account_expiration
+from .account_expiration_notifier import get_profiles_for_account_expiration
 from .constants import TypeOfExpiration
-from .notifier import ExpirationNotifier
-from .password_expiration_notifier import (
-    get_profiles_for_password_expiration,
-    get_notice_config_for_password_expiration,
-)
+from .notifier import ExpirationNotifier, get_config_from_all_local_categories, get_notice_config_for_expiration
+from .password_expiration_notifier import get_profiles_for_password_expiration
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
@@ -33,11 +30,10 @@ from bkuser_core.profiles import exceptions
 from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, ProfileStatus
 from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
-from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
+from bkuser_core.user_settings.loader import ConfigProvider
 
 logger = logging.getLogger(__name__)
-
 
 @app.task
 def send_password_by_email(profile_id: int, raw_password: str = None, init: bool = True, token: str = None):
@@ -90,15 +86,21 @@ def notice_for_account_expiration():
     #TODO:存在大数量级用户的情况下，当天的任务可能无法当天执行完毕，新一天的任务又同步开启，这里考虑做优化
     """
     expiring_profile_list, expired_profile_list = get_profiles_for_account_expiration()
+    category_config_map = get_config_from_all_local_categories()
 
     logger.info(
         "--------- going to notice expiring_profiles(%s) for account expiration ----------",
         expiring_profile_list
     )
     for profile in expiring_profile_list:
-        notice_config = get_notice_config_for_account_expiration(profile)
+        notice_config = get_notice_config_for_expiration(
+            expiration_type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
+            profile=profile,
+            config_loader=category_config_map[profile["category_id"]]
+        )
         if not notice_config:
             continue
+
         ExpirationNotifier().handler(notice_config)
         time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
@@ -107,13 +109,17 @@ def notice_for_account_expiration():
         expired_profile_list
     )
     for profile in expired_profile_list:
-        notice_config = get_notice_config_for_account_expiration(profile)
+        notice_config = get_notice_config_for_expiration(
+            expiration_type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
+            profile=profile,
+            config_loader=category_config_map[profile["category_id"]]
+        )
         if not notice_config:
             continue
+
         notice_record = ExpirationNoticeRecord.objects.filter(
             type=TypeOfExpiration.ACCOUNT_EXPIRATION.value, profile_id=profile["id"]
         ).first()
-
         if not notice_record:
             ExpirationNotifier().handler(notice_config)
             ExpirationNoticeRecord.objects.create(
@@ -133,9 +139,66 @@ def notice_for_account_expiration():
 
 
 @periodic_task(run_every=crontab(minute='0', hour='3'))
-def account_status_test():
+def notice_for_password_expiration():
     """
-    用户状态检测
+    用户密码过期通知
+    """
+    expiring_profile_list, expired_profile_list = get_profiles_for_password_expiration()
+    category_config_map = get_config_from_all_local_categories()
+
+    logger.info(
+        "--------- going to notice expiring_profiles(%s) for password expiration ----------",
+        expiring_profile_list
+    )
+    for profile in expiring_profile_list:
+        notice_config = get_notice_config_for_expiration(
+            expiration_type=TypeOfExpiration.PASSWORD_EXPIRATION.value,
+            profile=profile,
+            config_loader=category_config_map[profile["category_id"]]
+        )
+        if not notice_config:
+            continue
+
+        ExpirationNotifier().handler(notice_config)
+        time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+
+    logger.info(
+        "--------- going to notice expired_profiles(%s) for password expiration ----------",
+        expired_profile_list
+    )
+    for profile in expired_profile_list:
+        notice_config = get_notice_config_for_expiration(
+            expiration_type=TypeOfExpiration.PASSWORD_EXPIRATION.value,
+            profile=profile,
+            config_loader=category_config_map[profile["category_id"]]
+        )
+        if not notice_config:
+            continue
+
+        notice_record = ExpirationNoticeRecord.objects.filter(
+            type=TypeOfExpiration.PASSWORD_EXPIRATION.value, profile_id=profile["id"]
+        ).first()
+        if not notice_record:
+            ExpirationNotifier().handler(notice_config)
+            ExpirationNoticeRecord.objects.create(
+                type=TypeOfExpiration.PASSWORD_EXPIRATION.value,
+                notice_date=datetime.date.today(),
+                profile_id=profile["id"],
+            )
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+            continue
+
+        if notice_record.notice_date < datetime.date.today() - datetime.timedelta(days=30):
+            ExpirationNotifier().handler(notice_config)
+            notice_record.notice_date = datetime.date.today()
+            notice_record.save()
+            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
+
+
+@periodic_task(run_every=crontab(minute='0', hour='4'))
+def change_profile_status_for_account_expiration():
+    """
+    对账号过期的用户进行状态变更
     """
     category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
     expired_profiles = Profile.objects.filter(
@@ -146,47 +209,10 @@ def account_status_test():
     expired_profiles.update(status=ProfileStatus.EXPIRED.value)
 
 
-@periodic_task(run_every=crontab(minute='0', hour='3'))
-def notice_for_password_expiration():
+@periodic_task(run_every=crontab(minute='0', hour='5'))
+def change_profile_status_for_account_locking():
     """
-    用户密码过期通知
-    """
-    expiring_profile_list, expired_profile_list = get_profiles_for_password_expiration()
-    for profile in expiring_profile_list:
-        notice_config = get_notice_config_for_password_expiration(profile)
-        if not notice_config:
-            continue
-        ExpirationNotifier().handler(notice_config)
-        time.sleep(settings.NOTICE_INTERVAL_SECONDS)
-
-    for profile in expired_profile_list:
-        notice_config = get_notice_config_for_password_expiration(profile)
-        if not notice_config:
-            continue
-        notice_record = ExpirationNoticeRecord.objects.filter(
-            type=TypeOfExpiration.PASSWORD_EXPIRATION.value, profile_id=profile["id"]
-        ).first()
-
-        if not notice_record:
-            ExpirationNotifier().handler(notice_config)
-            ExpirationNoticeRecord.objects.create(
-                type=TypeOfExpiration.PASSWORD_EXPIRATION.value,
-                notice_date=datetime.date.today(),
-                profile_id=profile["id"],
-            )
-            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
-            continue
-        if notice_record.notice_date < datetime.date.today() - datetime.timedelta(days=30):
-            ExpirationNotifier().handler(notice_config)
-            notice_record.notice_date = datetime.date.today()
-            notice_record.save()
-            time.sleep(settings.NOTICE_INTERVAL_SECONDS)
-
-
-@periodic_task(run_every=crontab(minute='0', hour='4'))
-def account_expired_to_locked():
-    """
-    目录中长时间未登录，用户过期，状态冻结
+    对长时间未登录的用户进行状态冻结
     """
     category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
     frozen_profile_ids = []

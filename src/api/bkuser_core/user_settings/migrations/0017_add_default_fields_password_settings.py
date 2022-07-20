@@ -40,20 +40,20 @@ def forwards_func(apps, schema_editor):
                 "title": "【蓝鲸智云】密码到期提醒",
                 "sender": "蓝鲸智云",
                 "content": "{username}，您好：您的蓝鲸智云平台账号将于{expired_at}天后到期，"
-                "为避免影响使用，请尽快登陆平台({url})修改密码。蓝鲸智云平台用户管理处",
+                "为避免影响使用，请尽快登陆平台修改密码。蓝鲸智云平台用户管理处",
                 "content_html": '<p style="text-align: left;">{username}，您好：</p><p style="text-align: left;">&nbsp;'
                 '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台账号将于<span style="color: rgb(225, 60, 57);">'
-                '{expired_at}</span>天后到期，为避免影响使用，请尽快登陆平台({<a href="url" target="_blank">url</a>})修改密码。'
+                '{expired_at}</span>天后到期，为避免影响使用，请尽快登陆平台修改密码。'
                 '</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
             },
             default={
                 "title": "【蓝鲸智云】密码到期提醒",
                 "sender": "蓝鲸智云",
                 "content": "{username}，您好：您的蓝鲸智云平台账号将于{expired_at}天后到期，"
-                "为避免影响使用，请尽快登陆平台({url})修改密码。蓝鲸智云平台用户管理处",
+                "为避免影响使用，请尽快登陆平台修改密码。蓝鲸智云平台用户管理处",
                 "content_html": '<p style="text-align: left;">{username}，您好：</p><p style="text-align: left;">&nbsp;'
                 '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台账号将于<span style="color: rgb(225, 60, 57);">'
-                '{expired_at}</span>天后到期，为避免影响使用，请尽快登陆平台({<a href="url" target="_blank">url</a>})修改密码。'
+                '{expired_at}</span>天后到期，为避免影响使用，请尽快登陆平台修改密码。'
                 '</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
             },
         ),
@@ -62,48 +62,50 @@ def forwards_func(apps, schema_editor):
             example={
                 "title": "【蓝鲸智云】密码到期提醒",
                 "sender": "蓝鲸智云",
-                "content": "{username}，您好：您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台({url})修改密码。蓝鲸智云平台用户管理处",
+                "content": "{username}，您好：您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。蓝鲸智云平台用户管理处",
                 "content_html": '<p style="text-align: left;">{username}，您好：</p><p style="text-align: left;">&nbsp;'
-                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台({<a href="url"'
-                ' target="_blank">url</a>})修改密码。</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
+                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。</p>'
+                '<p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
             },
             default={
                 "title": "【蓝鲸智云】密码到期提醒",
                 "sender": "蓝鲸智云",
-                "content": "{username}，您好：您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台({url})修改密码。蓝鲸智云平台用户管理处",
+                "content": "{username}，您好：您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。蓝鲸智云平台用户管理处",
                 "content_html": '<p style="text-align: left;">{username}，您好：</p><p style="text-align: left;">&nbsp;'
-                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台({<a href="url"'
-                ' target="_blank">url</a>})修改密码。</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
+                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。</p>'
+                '<p style="text-align: right;">蓝鲸智云平台用户管理处</p>',
             },
         ),
         dict(
             key="expiring_password_sms_config",
             example={
                 "sender": "蓝鲸智云",
-                "content": "【蓝鲸智云】密码到期提醒！{username}，您好，您的蓝鲸平台密码将于{expired_at}天后到期，为避免影响使用，请尽快登陆平台({url})修改密码。",
+                "content": "【蓝鲸智云】密码到期提醒！{username}，您好，您的蓝鲸平台密码将于{expired_at}天后到期，为避免影响使用，请尽快"
+                "登陆平台修改密码。",
                 "content_html": '<p>【蓝鲸智云】密码到期提醒！{username}，您好，您的蓝鲸平台密码将于&nbsp;{expired_at}&nbsp;天后到期，'
-                '为避免影响使用，请尽快登陆平台({<a href="url" target="_blank">url</a>})修改密码。</p>',
+                '为避免影响使用，请尽快登陆平台修改密码。</p>',
             },
             default={
                 "sender": "蓝鲸智云",
-                "content": "【蓝鲸智云】密码到期提醒！{username}，您好，您的蓝鲸平台密码将于{expired_at}天后到期，为避免影响使用，请尽快登陆平台({url})修改密码。",
+                "content": "【蓝鲸智云】密码到期提醒！{username}，您好，您的蓝鲸平台密码将于{expired_at}天后到期，为避免影响使用，请尽快"
+                "登陆平台修改密码。",
                 "content_html": '<p>【蓝鲸智云】密码到期提醒！{username}，您好，您的蓝鲸平台密码将于&nbsp;{expired_at}&nbsp;天后到期，'
-                '为避免影响使用，请尽快登陆平台({<a href="url" target="_blank">url</a>})修改密码。</p>',
+                '为避免影响使用，请尽快登陆平台修改密码。</p>',
             },
         ),
         dict(
             key="expired_password_sms_config",
             example={
                 "sender": "蓝鲸智云",
-                "content": "【蓝鲸智云】密码到期提醒！{username}您好！您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台({url})修改密码。",
+                "content": "【蓝鲸智云】密码到期提醒！{username}您好！您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。",
                 "content_html": '<p>【蓝鲸智云】密码到期提醒！{username}您好！您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台'
-                '({<a href="url" target="_blank">url</a>})修改密码。</p>',
+                '修改密码。</p>',
             },
             default={
                 "sender": "蓝鲸智云",
-                "content": "【蓝鲸智云】密码到期提醒！{username}您好！您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台({url})修改密码。",
+                "content": "【蓝鲸智云】密码到期提醒！{username}您好！您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。",
                 "content_html": '<p>【蓝鲸智云】密码到期提醒！{username}您好！您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台'
-                '({<a href="url" target="_blank">url</a>})修改密码。</p>',
+                '修改密码。</p>',
             },
         ),
 
