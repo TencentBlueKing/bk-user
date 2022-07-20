@@ -111,7 +111,7 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
     for item in authentication_settings_list:
         authentication_settings.setdefault(item["key"], item["value"])
     # 认证未开启
-    if not authentication_settings["authentication_enabled"]:
+    if not authentication_settings["authentication_enabled"].lower() == "true":
         return None
     # 用户是否属于应用范围内：
     if not _validate_authentication_scope(user, authentication_settings):
@@ -120,9 +120,10 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
     content = {
         "send_method": authentication_settings["send_method"],  # 发送方式
         "username": user.username,  # 用户名
-        "contact_details": "",  # 发送地址，bind页面不为空字符串
-        "original_redirect_to": original_redirect_to,  # 登录来源
+        "contact_detail": "",  # 发送地址，bind页面不为空字符串
+        "redirect_to": original_redirect_to,  # 登录来源
         "expire_seconds": authentication_settings["expire_seconds"],  # 过期时间
+        "verify_path": "/captcha/verify_captcha/",  # 过期时间
     }
 
     if getattr(user, authentication_settings["send_method"]):
