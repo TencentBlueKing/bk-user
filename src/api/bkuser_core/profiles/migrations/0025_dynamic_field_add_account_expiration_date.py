@@ -18,6 +18,8 @@ def forwards_func(apps, schema_editor):
     """添加内建字段信息"""
     DynamicFieldInfo = apps.get_model("profiles", "DynamicFieldInfo")
 
+    max_order = max(DynamicFieldInfo.objects.all().values_list("order", flat=True))
+
     DynamicFieldInfo.objects.create(
         name='account_expiration_date',
         display_name='账号过期时间',
@@ -26,7 +28,7 @@ def forwards_func(apps, schema_editor):
         unique=False,
         editable=True,
         builtin=True,
-        order=12,
+        order=max_order+1,
         display_name_en='account_expiration_date',
         display_name_zh_hans='账号过期时间',
         visible=True
@@ -39,10 +41,10 @@ def forwards_func(apps, schema_editor):
         unique=False,
         editable=False,
         builtin=True,
-        order=13,
+        order=max_order+2,
         display_name_en='last_login_time',
         display_name_zh_hans='最近登录时间',
-        configurable= False,
+        configurable=False,
         visible=False)
     DynamicFieldInfo.objects.create(
         name='create_time',
@@ -52,13 +54,15 @@ def forwards_func(apps, schema_editor):
         unique=False,
         editable=False,
         builtin=True,
-        order=14,
+        order=max_order+3,
         display_name_en='create_time',
         display_name_zh_hans='创建时间',
         configurable=False,
         visible=True)
+
     DynamicFieldInfo.objects.filter(name='qq').update(visible=False)
     DynamicFieldInfo.objects.filter(name='wx_userid').update(visible=False)
+
 
 class Migration(migrations.Migration):
 

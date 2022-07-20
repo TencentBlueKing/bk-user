@@ -13,10 +13,8 @@ import logging
 
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.profiles.constants import NOTICE_METHOD_EMAIL, NOTICE_METHOD_SMS
-from bkuser_core.profiles.notifier import get_logined_profiles
+from bkuser_core.profiles.notifier import get_expiration_dates, get_logined_profiles
 from bkuser_core.user_settings.constants import ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY, SettingsEnableNamespaces
-from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
@@ -53,91 +51,3 @@ def get_profiles_for_account_expiration():
         expired_profile_list.extend(expired_profiles)
 
     return expiring_profile_list, expired_profile_list
-
-
-def get_expiration_dates(notice_interval):
-    """
-    获取需要进行通知的 过期时间列表
-    """
-    expiration_dates = []
-    for day in notice_interval:
-        expiration_date = datetime.date.today() + datetime.timedelta(days=day)
-        expiration_dates.append(expiration_date)
-
-    return expiration_dates
-
-
-def get_notice_config_for_account_expiration(profile):
-    """
-    整合 账号过期 通知内容
-    """
-    notice_config = {}
-    expired_at = profile["account_expiration_date"] - datetime.date.today()
-
-    config_loader = ConfigProvider(profile["category_id"])
-    notice_methods = config_loader["account_expiration_notice_methods"]
-
-    if not notice_methods:
-        return
-
-    if NOTICE_METHOD_EMAIL in notice_methods:
-        email_config = (
-            config_loader["expired_account_email_config"]
-            if expired_at.days < 0
-            else config_loader["expiring_account_email_config"]
-        )
-
-        message = (
-            email_config["content"].format(username=profile["username"])
-            if expired_at.days < 0
-            else email_config["content"].format(
-                username=profile["username"], expired_at=expired_at.days
-            )
-        )
-
-        notice_config.update(
-            {
-                "send_email":
-                    {
-                        "sender": email_config["sender"],
-                        "receivers": [profile["email"]],
-                        "message": message,
-                        "title": email_config["title"]
-                    }
-
-            }
-        )
-
-    if NOTICE_METHOD_SMS in notice_methods:
-        sms_config = (
-            config_loader["expired_account_sms_config"]
-            if expired_at.days < 0
-            else config_loader["expiring_account_sms_config"]
-        )
-
-        message = (
-            sms_config["content"].format(username=profile["username"])
-            if expired_at.days < 0
-            else sms_config["content"].format(
-                username=profile["username"], expired_at=expired_at.days
-            )
-        )
-
-        notice_config.update(
-            {
-                "send_sms":
-                    {
-                        "sender": sms_config["sender"],
-                        "receivers": [profile["telephone"]],
-                        "message": message
-                    }
-
-            }
-        )
-    logger.debug(
-        "--------- notice_config(%s) of profile(%s) ----------",
-        notice_config,
-        profile
-    )
-
-    return notice_config
