@@ -364,6 +364,7 @@ export function dateConvert(value) {
     default:
       return moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
   }
+}
 
 /**
 * 复制到剪切板
