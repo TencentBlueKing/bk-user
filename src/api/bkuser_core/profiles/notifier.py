@@ -109,11 +109,10 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
             "--------- get notice config for password expiration ----------"
         )
         notice_methods = config_loader["password_expiration_notice_methods"]
-        expired_at = (
-                (profile["password_update_time"].date() or profile["create_time"].date())
-                + datetime.timedelta(days=profile["password_valid_days"])
-                - datetime.date.today()
-        )
+        expired_at = ((profile["password_update_time"].date() or profile["create_time"].date())
+                      + datetime.timedelta(days=profile["password_valid_days"])
+                      - datetime.date.today()
+                      )
         expired_email_config = config_loader["expired_password_email_config"]
         expiring_email_config = config_loader["expiring_password_email_config"]
         expired_sms_config = config_loader["expired_password_sms_config"]
