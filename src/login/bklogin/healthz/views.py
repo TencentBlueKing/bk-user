@@ -20,7 +20,6 @@ from django.utils.translation import ugettext as _
 
 from bklogin.bkauth.decorators import login_exempt
 from bklogin.common.exceptions import LoginErrorCodes
-from bklogin.components.license import check_license
 
 # ====================  helpers =========================
 
@@ -90,15 +89,6 @@ def _check_database():
     return True, "ok", 0
 
 
-def _check_license():
-    # check license
-    is_license_ok, message, valid_start_time, valid_end_time = check_license()
-    if not is_license_ok:
-        return False, _(u"企业证书无效：%s; 只影响桌面版本信息的展示") % message, LoginErrorCodes.E1302005_BASE_LICENSE_ERROR
-
-    return True, "ok", 0
-
-
 @login_exempt
 def healthz(request):
     """
@@ -111,9 +101,6 @@ def healthz(request):
         ("settings", _check_settings),
         ("database", _check_database),
     ]
-
-    if settings.EDITION == "ee":
-        _check_funcs.append(("license", _check_license))
 
     for name, func in _check_funcs:
         is_health, message, code = func()

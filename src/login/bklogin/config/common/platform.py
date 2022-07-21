@@ -47,11 +47,6 @@ BK_COOKIE_DOMAIN = "." + env.str("BK_DOMAIN")
 BK_USERMGR_API_URL = env.str("BK_USERMGR_API_URL", "http://bkuserapi-web")
 BK_USERMGR_SAAS_URL = env.str("BK_USERMGR_SAAS_URL", "http://bkusersaas-web")
 
-# external config
-# license
-CERTIFICATE_DIR = env.str("BK_LOGIN_LOGIN_CERT_PATH", "")
-CERTIFICATE_SERVER_DOMAIN = env.str("BK_LOGIN_LOGIN_CERT_SERVER_LOCAL_ADDR", "")
-
 # cookie名称
 BK_COOKIE_NAME = "bk_token"
 LANGUAGE_COOKIE_DOMAIN = BK_COOKIE_DOMAIN
@@ -62,13 +57,6 @@ BK_TOKEN_OFFSET_ERROR_TIME = env.int("BK_LOGIN_LOGIN_TOKEN_OFFSET_ERROR_TIME", 6
 # 无操作 失效期，默认2个小时. 长时间误操作, 登录态已过期
 BK_INACTIVE_COOKIE_AGE = env.int("BK_LOGIN_LOGIN_INACTIVE_COOKIE_AGE", 60 * 60 * 2)
 
-
-# ==============================================================================
-# 企业证书校验相关
-# ==============================================================================
-CLIENT_CERT_FILE_PATH = os.path.join(CERTIFICATE_DIR, "platform.cert")
-CLIENT_KEY_FILE_PATH = os.path.join(CERTIFICATE_DIR, "platform.key")
-CERTIFICATE_SERVER_URL = f"https://{CERTIFICATE_SERVER_DOMAIN}/certificate"
 
 # ===============================================================================
 # AUTHENTICATION

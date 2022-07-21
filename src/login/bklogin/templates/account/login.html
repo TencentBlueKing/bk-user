@@ -105,10 +105,6 @@
         <div class="error-message-content is-chrome">
             <span>{% trans '您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果' %}</span><i class="bk-icon icon-close-circle-shape" id="close-chrome"></i>
         </div>
-        <!-- 和证书过期验证 -->
-        <div class="error-message-content is-certificate" {% if not is_license_ok %} data-ok="0" {% endif %}>
-            <span>{% trans '企业证书校验无效，请联系系统管理员处理' %}</span><i class="bk-icon icon-close-circle-shape" id="close-certificate"></i>
-        </div>
     </body>
     <!-- js 国际化 -->
     <script type="text/javascript" src="{{SITE_URL}}jsi18n/i18n/"></script>

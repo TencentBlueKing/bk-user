@@ -56,20 +56,20 @@ $(document).ready(function(){
          $('.is-certificate').hide();
     });
 
-    var is_license_ok = $(".is-certificate").attr('data-ok') != '0';
+    // var is_license_ok = $(".is-certificate").attr('data-ok') != '0';
 
-    //  证书过期验证
-    if (!is_license_ok) {
-        $('.is-certificate').show();
-        $('.form-login').addClass('certificate-expired');
-        $('.form-login').find('.group-control input').attr('disabled','disabled');
-        $('.btn-content').find('.login-btn').attr('disabled','disabled');
+    // //  证书过期验证
+    // if (!is_license_ok) {
+    //     $('.is-certificate').show();
+    //     $('.form-login').addClass('certificate-expired');
+    //     $('.form-login').find('.group-control input').attr('disabled','disabled');
+    //     $('.btn-content').find('.login-btn').attr('disabled','disabled');
 
-    }
+    // }
 
     var isChrome = navigator.userAgent.toLowerCase().match(/chrome/) != null;
     // 当前不是谷歌浏览器  并且证书未过期
-    if (!isChrome && is_license_ok) {
+    if (!isChrome) { // && is_license_ok
         $('.is-chrome').show();
     } else {
         $('.is-chrome').hide();
