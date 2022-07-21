@@ -35,6 +35,7 @@ from bkuser_core.user_settings.loader import ConfigProvider
 
 logger = logging.getLogger(__name__)
 
+
 @app.task
 def send_password_by_email(profile_id: int, raw_password: str = None, init: bool = True, token: str = None):
     """发送密码到邮箱，支持初始化 & 重置"""

@@ -31,10 +31,10 @@ def get_profiles_for_password_expiration():
 
     for category_id in category_ids:
         notice_interval = Setting.objects.filter(
-                category_id=category_id,
-                meta__key=PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY,
-                meta__namespace=SettingsEnableNamespaces.PASSWORD.value,
-            ).first().value
+            category_id=category_id,
+            meta__key=PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY,
+            meta__namespace=SettingsEnableNamespaces.PASSWORD.value,
+        ).first().value
 
         expiration_dates = get_expiration_dates(notice_interval)
         profiles = logined_profiles.filter(
