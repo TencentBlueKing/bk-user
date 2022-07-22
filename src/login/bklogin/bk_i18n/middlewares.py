@@ -37,6 +37,7 @@ class LanguageMiddleware(MiddlewareMixin):
             request.LANGUAGE_CODE = translation.get_language()
 
 
+# FIXME: remove it? currently api not respect the language settings in headers => make all message english
 class ApiLanguageMiddleware(MiddlewareMixin):
     def process_request(self, request):
         # check api url

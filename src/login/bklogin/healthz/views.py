@@ -48,7 +48,7 @@ def _check_settings():
         settings.ESB_TOKEN
         {
             "debug": settings.DEBUG,
-            "env": os.getenv("BK_ENV", "unknow"),
+            "env": os.getenv("BK_ENV", "unknown"),
             "cookie_domain": settings.BK_COOKIE_DOMAIN,
             "mysql": {
                 "host": settings.DATABASES.get("default", {}).get("HOST"),
@@ -65,7 +65,7 @@ def _check_settings():
 
 def _check_database():
     try:
-        from bkaccount.models import BkToken
+        from bklogin.bkaccount.models import BkToken
 
         objs = BkToken.objects.all()[:3]
         [o.token for o in objs]
