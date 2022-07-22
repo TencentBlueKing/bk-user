@@ -354,7 +354,7 @@
         <div class="title-container">
           <h4 class="title">{{$t('提醒时间')}}</h4>
           <span class="star">*</span>
-          <i class="hint-message icon-user--l" v-bk-tooltips="$t('账号快到期前提醒，如选择“7天”，则在账号到期七天前提醒一次')"></i>
+          <i class="hint-message icon-user--l" v-bk-tooltips="$t('密码快到期前提醒_如选择_7天__则在密码到期七天前提醒一次')"></i>
         </div>
         <bk-checkbox-group
           style="display: flex;height: 19px;"
@@ -473,7 +473,7 @@
       </div>
 
       <div class="info-container">
-        <bk-checkbox>{{$t('从未登录蓝鲸平台的用户，不发送密码到期提醒通知')}}</bk-checkbox>
+        <bk-checkbox>{{$t('从未登录蓝鲸平台的用户_不发送密码到期提醒通知')}}</bk-checkbox>
       </div>
     </div>
 
