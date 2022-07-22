@@ -36,20 +36,6 @@ def _gen_json_response(ok, code, message, data):
     return JsonResponse({"ok": ok, "code:": code, "message": message, "data": data}, status=200)
 
 
-def _gen_success_json_response(data):
-    """
-    成功
-    """
-    return _gen_json_response(ok=True, code=LOGIN_MODULE_CODE, message="OK", data=data)
-
-
-def _gen_fail_json_response(code, message, data):
-    """
-    失败
-    """
-    return _gen_json_response(ok=False, code=code, message=message, data=data)
-
-
 # ====================  check =========================
 
 
@@ -107,9 +93,9 @@ def healthz(request):
         if is_health:
             data[name] = "ok"
         else:
-            return _gen_fail_json_response(code=code, message=message, data={})
+            return _gen_json_response(ok=False, code=code, message=message, data={})
 
-    return _gen_success_json_response(data)
+    return _gen_json_response(ok=True, code=LOGIN_MODULE_CODE, message="OK", data=data)
 
 
 @login_exempt
