@@ -15,8 +15,6 @@ from . import env
 from bklogin.config.common.django_basic import SITE_URL
 from bklogin.config.common.plugin import CUSTOM_AUTHENTICATION_BACKEND, LOGIN_TYPE
 
-EDITION = env.str("EDITION", default="ce")
-
 # 用于加密登录态票据(bk_token)
 BKKRILL_ENCRYPT_SECRET_KEY = env.str("ENCRYPT_SECRET_KEY")
 

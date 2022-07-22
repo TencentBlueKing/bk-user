@@ -36,7 +36,6 @@ def site_settings(request):
         "CUR_DOMIAN": cur_domain,
         "APP_PATH": request.get_full_path(),
         "NOW": timezone.now(),
-        # "EDITION": settings.EDITION,
         # 本地 js 后缀名
         "JS_SUFFIX": settings.JS_SUFFIX,
         # 本地 css 后缀名
