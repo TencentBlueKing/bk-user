@@ -24,10 +24,10 @@ from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 from bklogin.api.utils import APIV1FailJsonResponse, APIV1OKJsonResponse
-from bklogin.bkauth.actions import login_license_fail_response, login_success_response
+from bklogin.bkauth.actions import captcha_verify_success_response, login_license_fail_response, login_success_response
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME, SEND_METHOD_TO_PROFILE_FIELD_MAP
 from bklogin.bkauth.forms import BkAuthenticationForm
-from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
+from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid, validate_contact_detail
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset, UserExpiredException
 from bklogin.common.log import logger
 from bklogin.common.mixins.exempt import LoginExemptMixin
@@ -94,6 +94,9 @@ class LoginView(LoginExemptMixin, View):
 
 
 class CaptchaSendView(LoginExemptMixin, View):
+
+    is_plain = False
+
     def post(self, request):
         # 获取参数
         post_data = request.POST
@@ -102,6 +105,8 @@ class CaptchaSendView(LoginExemptMixin, View):
             "email": post_data.get("email", None),
             "telephone": post_data.get("telephone", None),
         }
+        if not validate_contact_detail(request_data):
+            return APIV1FailJsonResponse(message="联系方式格式错误")
         # 发送验证码
         ok, code, message, data = usermgr_api.send_captcha(request_data)
         logger.debug(
@@ -128,12 +133,6 @@ class CaptchaVerifyView(LoginExemptMixin, View):
             "captcha": post_data["captcha"],
             "username": username,
         }
-        # 调用接口校验
-        ok, code, message, data = usermgr_api.verify_captcha(verify_data)
-
-        # 认证不通过
-        if not ok:
-            return APIV1FailJsonResponse(code=code, message=message)
 
         ok, message, user_list = usermgr_api.batch_query_users(username_list=[username])
         # 验证成功，查看是否需要进行绑定邮箱或者手机号
@@ -144,15 +143,20 @@ class CaptchaVerifyView(LoginExemptMixin, View):
             user_list,
         )
         if not ok:
-            return APIV1FailJsonResponse(code=code, message=message)
-
+            return APIV1FailJsonResponse(message=message)
         # 查看是否绑定相应发送方法
         user_data = user_list[0]
 
+        # 调用接口校验
+        ok, code, message, data = usermgr_api.verify_captcha(verify_data)
+
+        # 认证不通过
+        send_method = post_data["send_method"]
+        if not ok:
+            return APIV1FailJsonResponse(code=code, message=message)
         # 发送方法为profile的内部字段且用户没有进行绑定，对用户进行更新
-        send_method = data["send_method"]
-        if send_method in SEND_METHOD_TO_PROFILE_FIELD_MAP and not user_data.get(data["send_method"]):
-            update_data = {SEND_METHOD_TO_PROFILE_FIELD_MAP[send_method]: data["contact_value"]}
+        if send_method in SEND_METHOD_TO_PROFILE_FIELD_MAP and not user_data.get(send_method):
+            update_data = {SEND_METHOD_TO_PROFILE_FIELD_MAP[send_method]: post_data["contact_detail"]}
             ok, message, data = usermgr_api.upsert_user(username, **update_data)
             if not ok:
                 logger.error(
@@ -168,7 +172,7 @@ class CaptchaVerifyView(LoginExemptMixin, View):
         user = UserModel(post_data["username"])
         user.fill_with_userinfo(user_data)
 
-        return login_success_response(request, user, redirect_to, app_id, two_refactor_authentication_enabled=False)
+        return captcha_verify_success_response(request, user, redirect_to, app_id=app_id)
 
 
 def _bk_login(request):

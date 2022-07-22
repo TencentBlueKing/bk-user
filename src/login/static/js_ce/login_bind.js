@@ -1,10 +1,10 @@
 /**
-* Tencent is pleased to support the open source community by making 蓝鲸智云PaaS平台社区版 (BlueKing PaaS Community Edition) available.
-* Copyright (C) 2017-2018 THL A29 Limited, a Tencent company. All rights reserved.
-* Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-* http://opensource.org/licenses/MIT
-* Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-*/
+ * Tencent is pleased to support the open source community by making 蓝鲸智云PaaS平台社区版 (BlueKing PaaS Community Edition) available.
+ * Copyright (C) 2017-2018 THL A29 Limited, a Tencent company. All rights reserved.
+ * Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+ * http://opensource.org/licenses/MIT
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+ */
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {
@@ -20,31 +20,32 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-function refresh_token(){
+
+function refresh_token() {
     var csrftoken = getCookie('bklogin_csrftoken');
     $('input[name="csrfmiddlewaretoken"]').val(csrftoken);
-    return true;
+    return false;
 }
 
 
-$(document).ready(function(){
+$(document).ready(function () {
     // 点击查看协议
-    $('.action .protocol-btn').click(function(event) {
+    $('.action .protocol-btn').click(function (event) {
         $('.protocol-pop').show();
     });
 
     // 关闭协议弹窗
-    $('.protocol-pop .close').click(function(event) {
+    $('.protocol-pop .close').click(function (event) {
         $('.protocol-pop').hide();
     });
 
-    $('.consent-content .consent-btn').click(function(){
+    $('.consent-content .consent-btn').click(function () {
         $('.protocol-pop').hide();
     });
 
 
     // 判断当前的浏览器是谷歌 及证书验证过期
-    $('#close-chrome').click(function() {
+    $('#close-chrome').click(function () {
         $('.is-chrome').hide();
     })
     var isChrome = navigator.userAgent.toLowerCase().match(/chrome/) != null;
@@ -54,21 +55,67 @@ $(document).ready(function(){
         $('.is-chrome').hide();
     }
 
-    $('#code-btn').click(function() {
+    $('#code-btn').click(function () {
         if ($('#code-btn').html() !== '验证码') {
             getCode();
         }
-    })
+    });
+
+    var login_form = $("#login-form");
+    $('#login-btn').on('click', function () {
+        login_form.submit(function () {
+            return false;
+        });
+        $.ajax({
+            type: "POST",
+            url: "/captcha/verify_captcha/",
+            data: login_form.serialize(),
+            success: function (resp) {
+                if (!resp.result) {
+                    $("#error_message").html(resp.message);
+                } else {
+                    window.location.href = resp.data.redirect_to;
+                    localStorage.removeItem("token")
+                };
+            },
+        });
+    });
 });
+
+
+function postSendCaptcha() {
+    var login_form = $("#login-form");
+    var data = {};
+    data["username"] = $("#username").val();
+    data[$("#send_method").val()] = $("#contact_detail").val();
+    $.ajax({
+        type: "post",
+        url: "/captcha/send_captcha/",
+        data: data,
+        dataType: "json",
+        success: function (data) {
+            login_form.append('<input hidden type="text" name="token" id="token">');
+            if (data.result) {
+                localStorage.setItem("token", data.data.token);
+                $("#token").val(data.data.token);
+            } else {
+                $("#error_message").html(data.message);
+                $("#token").val(localStorage.getItem("token"));
+            }
+        },
+    });
+}
 
 function getCode() {
     // 获取验证码
     var btn = $('#code-btn');
     var code = $('#validation');
-    var count = 60;
+    var count = expire_seconds;
+    this.postSendCaptcha();
     var timer = setInterval(() => {
         if (count > 1) {
-            count --;
+            count--;
+            $("#expire_seconds").val(count);
             btn.attr('class', 'code-btn-hide');
             btn.html('验证码');
             code.attr('placeholder', `获取验证码（${count}s）`);
@@ -81,6 +128,6 @@ function getCode() {
     }, 1000);
 }
 
-window.onload = function() {
+window.onload = function () {
     this.getCode();
 }

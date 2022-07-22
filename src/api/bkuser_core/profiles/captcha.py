@@ -132,8 +132,6 @@ class Captcha:
         self.delete(token)
         logger.info("Clean the captcha_data in redis , token: {}".format(token))
 
-        return captcha_data["send_method"], captcha_data["contact_detail"]
-
     def generate(self, username, authentication_type, **kwargs):
         self.validate_before_generate(username=username, authentication_type=authentication_type, **kwargs)
         config = self.generate_config(username=username, authentication_type=authentication_type, **kwargs)
