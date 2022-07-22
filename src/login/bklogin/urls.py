@@ -97,15 +97,12 @@ urlpatterns = [
     url(r"^robots\.txt$", lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")),
     # prometheus metrics
     url(r"", decorator_include(login_exempt, "django_prometheus.urls")),
-]
-
-urlpatterns += [
+    # ========================= i18n =========================
     # 无登录态下切换语言
     url(r"^i18n/setlang/$", django_i18n_views.set_language, name="set_language"),
     # 处理JS翻译
     url(r"^jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
 ]
-
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns  # noqa
 

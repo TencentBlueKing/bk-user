@@ -72,6 +72,4 @@ AUTHENTICATION_BACKENDS_DICT = {
     "bk_login": ["bklogin.backends.bk.BkUserBackend"],
     "custom_login": [CUSTOM_AUTHENTICATION_BACKEND],
 }
-AUTHENTICATION_BACKENDS = AUTHENTICATION_BACKENDS_DICT.get(
-    LOGIN_TYPE, ["bklogin.bkaccount.backends.BkRemoteUserBackend"]
-)
+AUTHENTICATION_BACKENDS = AUTHENTICATION_BACKENDS_DICT.get(LOGIN_TYPE, ["bklogin.backends.bk.BkUserBackend"])
