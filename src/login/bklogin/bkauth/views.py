@@ -22,7 +22,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from django.views.generic import View
 
-from bklogin.bkauth.actions import login_license_fail_response, login_success_response
+from bklogin.bkauth.actions import login_success_response
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
@@ -30,7 +30,6 @@ from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
 from bklogin.common.log import logger
 from bklogin.common.mixins.exempt import LoginExemptMixin
 from bklogin.common.usermgr import get_categories_str
-from bklogin.components.license import check_license
 
 
 def only_plain_xframe_options_exempt(view_func):
@@ -79,12 +78,6 @@ class LoginView(LoginExemptMixin, View):
         if settings.LOGIN_TYPE != "custom_login":
             return _bk_login(request)
 
-        if settings.EDITION == "ee":
-            # 校验企业正式是否有效，无效则不可登录
-            is_license_ok, msg, valid_start_time, valid_end_time = check_license()
-            if not is_license_ok:
-                return login_license_fail_response(request)
-
         # 调用自定义login view
         custom_login_view = import_string(settings.CUSTOM_LOGIN_VIEW)
         return custom_login_view(request)
@@ -96,7 +89,7 @@ def _bk_login(request):
     """
     authentication_form = BkAuthenticationForm
     # NOTE: account/login.html 为支持自适应大小的模板
-    template_name = "account/login.html"
+    template_name = "account/login_ce.html"
     forget_reset_password_url = f"{settings.BK_USERMGR_SAAS_URL}/reset_password"
     token_set_password_url = ""
 
@@ -104,18 +97,11 @@ def _bk_login(request):
 
     app_id = request.POST.get("app_id", request.GET.get("app_id", ""))
 
-    if settings.EDITION == "ee":
-        # 校验企业证书是否有效，无效则不可登录
-        is_license_ok, msg, valid_start_time, valid_end_time = check_license()
-    else:
-        is_license_ok = True
-        template_name = "account/login_ce.html"
-
     error_message = ""
     login_redirect_to = ""
 
     # POST
-    if request.method == "POST" and is_license_ok:
+    if request.method == "POST":
         form = authentication_form(request, data=request.POST)
         try:
             if form.is_valid():
@@ -143,7 +129,6 @@ def _bk_login(request):
         "site": current_site,
         "site_name": current_site.name,
         "app_id": app_id,
-        "is_license_ok": is_license_ok,
         "token_set_password_url": token_set_password_url,
         "forget_password_url": forget_reset_password_url,
         "login_redirect_to": login_redirect_to,

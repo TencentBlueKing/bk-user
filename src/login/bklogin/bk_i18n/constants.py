@@ -21,6 +21,4 @@ BK_LANG_TO_DJANGO_LANG = {v: k for k, v in DJANGO_LANG_TO_BK_LANG.items()}
 LOGIN_API_URL_SUFFIX_LIST = [
     "is_login",
     "get_user",
-    "get_all_user",
-    "get_batch_user",
 ]

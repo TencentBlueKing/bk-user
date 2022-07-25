@@ -20,7 +20,6 @@ from django.utils.translation import ugettext as _
 
 from bklogin.bkauth.decorators import login_exempt
 from bklogin.common.exceptions import LoginErrorCodes
-from bklogin.components.license import check_license
 
 # ====================  helpers =========================
 
@@ -37,20 +36,6 @@ def _gen_json_response(ok, code, message, data):
     return JsonResponse({"ok": ok, "code:": code, "message": message, "data": data}, status=200)
 
 
-def _gen_success_json_response(data):
-    """
-    成功
-    """
-    return _gen_json_response(ok=True, code=LOGIN_MODULE_CODE, message="OK", data=data)
-
-
-def _gen_fail_json_response(code, message, data):
-    """
-    失败
-    """
-    return _gen_json_response(ok=False, code=code, message=message, data=data)
-
-
 # ====================  check =========================
 
 
@@ -63,7 +48,7 @@ def _check_settings():
         settings.ESB_TOKEN
         {
             "debug": settings.DEBUG,
-            "env": os.getenv("BK_ENV", "unknow"),
+            "env": os.getenv("BK_ENV", "unknown"),
             "cookie_domain": settings.BK_COOKIE_DOMAIN,
             "mysql": {
                 "host": settings.DATABASES.get("default", {}).get("HOST"),
@@ -80,21 +65,12 @@ def _check_settings():
 
 def _check_database():
     try:
-        from bkaccount.models import BkToken
+        from bklogin.bkaccount.models import BkToken
 
         objs = BkToken.objects.all()[:3]
         [o.token for o in objs]
     except Exception as e:
         return False, _(u"数据库连接存在问题: %s") % str(e), LoginErrorCodes.E1302002_BASE_DATABASE_ERROR
-
-    return True, "ok", 0
-
-
-def _check_license():
-    # check license
-    is_license_ok, message, valid_start_time, valid_end_time = check_license()
-    if not is_license_ok:
-        return False, _(u"企业证书无效：%s; 只影响桌面版本信息的展示") % message, LoginErrorCodes.E1302005_BASE_LICENSE_ERROR
 
     return True, "ok", 0
 
@@ -112,17 +88,14 @@ def healthz(request):
         ("database", _check_database),
     ]
 
-    if settings.EDITION == "ee":
-        _check_funcs.append(("license", _check_license))
-
     for name, func in _check_funcs:
         is_health, message, code = func()
         if is_health:
             data[name] = "ok"
         else:
-            return _gen_fail_json_response(code=code, message=message, data={})
+            return _gen_json_response(ok=False, code=code, message=message, data={})
 
-    return _gen_success_json_response(data)
+    return _gen_json_response(ok=True, code=LOGIN_MODULE_CODE, message="OK", data=data)
 
 
 @login_exempt

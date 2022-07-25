@@ -65,6 +65,7 @@ class BkUserBackend(ModelBackend):
             logger.debug("username or password empty, username=%s, password=%s", username, password)
             return None
 
+        # FIXME: refactor here, all into a single method
         domain_list = get_categories_str().split(";")
 
         s_username, s_domain = _split_username(username)

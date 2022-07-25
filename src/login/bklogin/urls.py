@@ -27,8 +27,9 @@ urlpatterns = [
     url(r"^plain/$", auth_views.LoginView.as_view(is_plain=True)),
     url(r"^logout/$", auth_views.LogoutView.as_view()),
     # ========================= the apis =========================
-    # TODO: 所有get_all_user/get_batch_user api应该直接调用usermgr的esb接口或者后台接口, 不应该走login
-    # please use api get_all_user/get_batch_user via esb, should not from login
+    # NOTE: 所有get_all_user/get_batch_user api应该直接调用usermgr的esb接口或者后台接口, 不应该走login
+    # please use api get_all_user/get_batch_user via esb, should not from login directly
+    # FIXME: move into api/urls.py => check v1/v2/v3 is called or not?
     url(
         r"^accounts/",
         include(
@@ -92,20 +93,17 @@ urlpatterns = [
     # 连通性检查
     url(r"^ping/$", healthz_views.ping),
     # 检查统一登录是否正常运行
-    url(r"^healthz/", include("bklogin.healthz.urls")),
+    url(r"^healthz/", healthz_views.healthz),
     # 反搜索
     url(r"^robots\.txt$", lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")),
     # prometheus metrics
     url(r"", decorator_include(login_exempt, "django_prometheus.urls")),
-]
-
-urlpatterns += [
+    # ========================= i18n =========================
     # 无登录态下切换语言
     url(r"^i18n/setlang/$", django_i18n_views.set_language, name="set_language"),
     # 处理JS翻译
     url(r"^jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
 ]
-
 
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns  # noqa
 

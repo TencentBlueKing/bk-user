@@ -35,7 +35,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Application definition
 INSTALLED_APPS = (
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -132,6 +131,8 @@ LOCALE_PATHS = (os.path.join(PROJECT_ROOT, "locale"),)
 # ==============================================================================
 AUTH_USER_MODEL = "bkauth.User"
 
+
+# FIXME: should not be here
 # ==============================================================================
 # RSA
 # ==============================================================================
