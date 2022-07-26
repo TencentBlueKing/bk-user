@@ -13,6 +13,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Type
 
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
@@ -30,10 +31,13 @@ from .parsers import (
 )
 from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
 from bkuser_core.common.db_sync import SyncOperation
+from bkuser_core.common.error_codes import error_codes
 from bkuser_core.common.progress import progress
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
+from bkuser_core.profiles.exceptions import ProfileEmailEmpty
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
+from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import make_password_by_config
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -106,8 +110,23 @@ class ExcelSyncer(Syncer):
             self._sync_departments(departments)
 
         with transaction.atomic():
-            self._sync_users(self.fetcher.parser_set, user_rows)
+            _, should_notify = make_password_by_config(self.category_id)
+            new_user_password_map = self._sync_users(self.fetcher.parser_set, user_rows)
             self._sync_leaders(self.fetcher.parser_set, user_rows)
+
+            # 是否发送初始化密码邮件
+        if should_notify:
+            for instance, password in new_user_password_map.items():
+                try:
+                    send_password_by_email.delay(instance.id, raw_password=password, init=True)
+                except ProfileEmailEmpty:
+                    raise error_codes.EMAIL_NOT_PROVIDED
+                except Exception:  # pylint: disable=broad-except
+                    logger.exception(
+                        "failed to send init password via email. [profile.id=%s, profile.username=%s",
+                        instance.id,
+                        instance.username,
+                    )
 
     def _sync_departments(self, raw_department_groups):
         """由于部门之间存在比较多的父子关系，不适合使用批量插入，目前使用按照逻辑顺序插入"""
@@ -153,6 +172,8 @@ class ExcelSyncer(Syncer):
         logger.info("=========== trying to load profiles into memory ===========")
 
         total = len(users)
+        # 新增的用户密码映射
+        new_user_password_map = {}
         for index, user_raw_info in enumerate(users):
             if self._judge_data_all_none(user_raw_info):
                 logger.debug("empty line, skipping")
@@ -204,7 +225,7 @@ class ExcelSyncer(Syncer):
 
             except ObjectDoesNotExist:
                 profile_id = self.db_sync_manager.register_id(ProfileMeta)
-                password, _ = make_password_by_config(self.category_id)
+                raw_password, should_notify = make_password_by_config(self.category_id, return_raw=True)
                 initial_params = {
                     "id": profile_id,
                     "status": ProfileStatus.NORMAL.name,
@@ -214,13 +235,15 @@ class ExcelSyncer(Syncer):
                     "category_id": self.category_id,
                     "domain": self.category.domain,
                     "password_valid_days": self._default_password_valid_days,
-                    "password": password,
+                    "password": make_password(raw_password),
                 }
                 initial_params.update(profile_params)
 
                 adding_profile = Profile(**initial_params)
                 self.db_sync_manager.magic_add(adding_profile)
                 logger.debug("(%s/%s): adding profile %s", index, total, username)
+                if should_notify:
+                    new_user_password_map[adding_profile] = raw_password
 
             # 2 获取关联的部门DB实例，创建关联对象
             progress(index, total, "adding profile & department relation")
@@ -238,6 +261,7 @@ class ExcelSyncer(Syncer):
         # 需要在处理 leader 之前全部插入 DB
         self.db_sync_manager[Profile].sync_to_db()
         self.db_sync_manager[DepartmentThroughModel].sync_to_db()
+        return new_user_password_map
 
     def _sync_leaders(self, parser_set: "ParserSet", users: list):
         # 由于 leader 需要等待 profiles 全部插入后才能引用
