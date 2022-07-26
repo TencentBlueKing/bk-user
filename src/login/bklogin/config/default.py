@@ -58,8 +58,8 @@ INSTALLED_APPS = (
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_prometheus",
-    "bklogin.bkaccount",
     "bklogin.bkauth",
+    "bklogin.bkaccount",
     "bklogin.bk_i18n",
     "bklogin.monitoring",
 )
