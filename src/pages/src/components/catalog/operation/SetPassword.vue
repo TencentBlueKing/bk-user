@@ -50,10 +50,9 @@
           <span class="star">*</span>
         </div>
         <bk-checkbox-group v-model="defaultPassword.password_must_includes" style="display: flex;height: 19px;">
-          <bk-checkbox value="lower" style="margin-right: 28px;">{{$t('小写字母')}}</bk-checkbox>
-          <bk-checkbox value="upper" style="margin-right: 28px;">{{$t('大写字母')}}</bk-checkbox>
-          <bk-checkbox value="int" style="margin-right: 28px;">{{$t('数字')}}</bk-checkbox>
-          <bk-checkbox value="special" style="margin-right: 28px;">{{$t('特殊字符（除空格）')}}</bk-checkbox>
+          <bk-checkbox
+            v-for="(item, index) in passwordMustIncludes" :key="index"
+            :value="item.value" style="margin-right: 28px;">{{item.label}}</bk-checkbox>
         </bk-checkbox-group>
         <p class="error-text" v-if="!defaultPassword.password_must_includes.length">{{$t('密码规则不得为空')}}</p>
       </div>
@@ -78,11 +77,9 @@
         <bk-checkbox-group
           v-model="defaultPassword.exclude_elements_config"
           style="line-height: 28px;margin-top: 10px;">
-          <bk-checkbox value="keyboard_seq" style="margin-right: 28px;">{{$t('键盘序')}}</bk-checkbox>
-          <bk-checkbox value="alphabet_seq" style="margin-right: 28px;">{{$t('连续字母序')}}</bk-checkbox>
-          <bk-checkbox value="num_seq" style="margin-right: 28px;">{{$t('连续数字序')}}</bk-checkbox>
-          <bk-checkbox value="special_seq" style="margin-right: 28px;">{{$t('连续特殊符号序')}}</bk-checkbox>
-          <bk-checkbox value="duplicate_char" style="margin-right: 28px;">{{$t('重复字母、数字、特殊符号')}}</bk-checkbox>
+          <bk-checkbox
+            v-for="(item, index) in excludeElementsConfig" :key="index"
+            :value="item.value" style="margin-right: 28px;">{{item.label}}</bk-checkbox>
         </bk-checkbox-group>
         <p class="error-text" v-show="passwordConfigError">{{$t('密码规则不得为空')}}</p>
       </div>
@@ -224,17 +221,14 @@
             <div
               :class="['password-header', defaultPassword.init_password_method !== 'random_via_mail' ? 'hide' : '']">
               <bk-checkbox-group v-model="randomPasswordList">
-                <div :class="['password-tab', showEmail ? 'active-tab' : '']" style="margin-left: 5px;">
+                <div
+                  v-for="(item, index) in checkboxInfo" :key="index"
+                  :class="['password-tab', item.status ? 'active-tab' : '']"
+                  style="margin-left: 5px;">
                   <bk-checkbox
-                    value="send_email"
+                    :value="item.value"
                     :disabled="defaultPassword.init_password_method !== 'random_via_mail'" />
-                  <span class="checkbox-item" @click="clickEmail">{{$t('邮箱')}}</span>
-                </div>
-                <div :class="['password-tab', showSms ? 'active-tab' : '']">
-                  <bk-checkbox
-                    value="send_sms"
-                    :disabled="defaultPassword.init_password_method !== 'random_via_mail'" />
-                  <span class="checkbox-item" @click="clickSms">{{$t('短信')}}</span>
+                  <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
                 </div>
               </bk-checkbox-group>
               <div class="edit-info" @click="toggleEmailTemplate">
@@ -359,9 +353,9 @@
         <bk-checkbox-group
           style="display: flex;height: 19px;"
           v-model="defaultPassword.password_expiration_notice_interval">
-          <bk-checkbox :value="1" style="margin-right: 50px;">{{$t('1天')}}</bk-checkbox>
-          <bk-checkbox :value="7" style="margin-right: 50px;">{{$t('7天')}}</bk-checkbox>
-          <bk-checkbox :value="15" style="margin-right: 50px;">{{$t('15天')}}</bk-checkbox>
+          <bk-checkbox
+            v-for="(item, index) in noticeTime" :key="index"
+            :value="item.value" style="margin-right: 50px;">{{item.label}}</bk-checkbox>
         </bk-checkbox-group>
         <p class="error-text" v-if="passwordDateError">{{$t('账号到期提醒时间不得为空')}}</p>
       </div>
@@ -375,13 +369,13 @@
         <div :class="['tab-box', isInfoTemplate ? 'show-tab-color' : '']">
           <div class="password-header">
             <bk-checkbox-group v-model="defaultPassword.password_expiration_notice_methods">
-              <div :class="['password-tab', showEmail ? 'active-tab' : '']" style="margin-left: 5px;">
-                <bk-checkbox value="send_email" />
-                <span class="checkbox-item" @click="clickEmail">{{$t('邮箱')}}</span>
-              </div>
-              <div :class="['password-tab', showSms ? 'active-tab' : '']">
-                <bk-checkbox value="send_sms" />
-                <span class="checkbox-item" @click="clickSms">{{$t('短信')}}</span>
+              <div
+                v-for="(item, index) in checkboxInfo" :key="index"
+                :class="['password-tab', item.status ? 'active-tab' : '']"
+                style="margin-left: 5px;">
+                <bk-checkbox
+                  :value="item.value" />
+                <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
               </div>
             </bk-checkbox-group>
             <div class="edit-info" @click="toggleInfoTemplate">
@@ -578,6 +572,28 @@ export default {
         toolbarKeys: ['insertLink'],
       },
       passwordDateError: false,
+      passwordMustIncludes: [
+        { value: 'lower', label: this.$t('小写字母') },
+        { value: 'upper', label: this.$t('大写字母') },
+        { value: 'int', label: this.$t('数字') },
+        { value: 'special', label: this.$t('特殊字符（除空格）') },
+      ],
+      excludeElementsConfig: [
+        { value: 'keyboard_seq', label: this.$t('键盘序') },
+        { value: 'alphabet_seq', label: this.$t('连续字母序') },
+        { value: 'num_seq', label: this.$t('连续数字序') },
+        { value: 'special_seq', label: this.$t('连续特殊符号序') },
+        { value: 'duplicate_char', label: this.$t('重复字母、数字、特殊符号') },
+      ],
+      noticeTime: [
+        { value: 1, label: this.$t('1天') },
+        { value: 7, label: this.$t('7天') },
+        { value: 15, label: this.$t('15天') },
+      ],
+      checkboxInfo: [
+        { value: 'send_email', label: this.$t('邮箱'), status: true },
+        { value: 'send_sms', label: this.$t('短信'), status: false },
+      ],
     };
   },
   computed: {
@@ -758,6 +774,15 @@ export default {
     clickSms() {
       this.showEmail = false;
       this.showSms = true;
+    },
+    handleClickLabel(item) {
+      this.checkboxInfo.map((element) => {
+        if (element.value === item.value) {
+          element.status = true;
+        } else {
+          element.status = false;
+        }
+      });
     },
     handleEditorText(html, text, key) {
       this.defaultPassword[key].content_html = html;
