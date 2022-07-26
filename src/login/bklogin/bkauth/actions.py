@@ -19,8 +19,9 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
+from django.utils.translation import ugettext as _
 
-from bklogin.api.utils import APIV1FailJsonResponse
+from bklogin.api.utils import APIV1FailJsonResponse, APIV1OKJsonResponse
 from bklogin.bkauth.constants import NO_AUTHENTICATION, REDIRECT_FIELD_NAME
 from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid
 from bklogin.common.log import logger
@@ -111,7 +112,7 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
     for item in authentication_settings_list:
         authentication_settings.setdefault(item["key"], item["value"])
     # 认证未开启
-    if not authentication_settings["authentication_enabled"]:
+    if not authentication_settings["authentication_enabled"].lower() == "true":
         return None
     # 用户是否属于应用范围内：
     if not _validate_authentication_scope(user, authentication_settings):
@@ -120,8 +121,8 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
     content = {
         "send_method": authentication_settings["send_method"],  # 发送方式
         "username": user.username,  # 用户名
-        "contact_details": "",  # 发送地址，bind页面不为空字符串
-        "original_redirect_to": original_redirect_to,  # 登录来源
+        "contact_detail": "",  # 发送地址，bind页面不为空字符串
+        "redirect_to": original_redirect_to,  # 登录来源
         "expire_seconds": authentication_settings["expire_seconds"],  # 过期时间
     }
 
@@ -162,7 +163,6 @@ def login_success_response(
     # if from logout
     if redirect_to == "/logout/":
         redirect_to = "/console/"
-
     logger.debug("login_success_response, username=%s, redirect_to=%s, app_id=%s", username, redirect_to, app_id)
 
     # 设置用户登录
@@ -221,4 +221,56 @@ def login_license_fail_response(request, template_name="account/login.html"):
     """
     response = TemplateResponse(request, template_name, {"custom_login": True})
     response = set_bk_token_invalid(request, response)
+    return response
+
+
+def captcha_verify_success_response(request, user_or_form, redirect_to, app_id=None):
+    # 判读是form还是user
+    if isinstance(user_or_form, AuthenticationForm):
+        user = user_or_form.get_user()
+        username = user.username
+    else:
+        user = user_or_form
+        username = user.username
+
+    # 检查回调URL是否安全，防钓鱼
+    if not is_safe_url(url=redirect_to, host=request.get_host()):
+        # 调整到根目录
+        redirect_to = "/console/"
+
+    if redirect_to == "/logout/":
+        redirect_to = "/console/"
+    logger.debug("login_success_response, username=%s, redirect_to=%s, app_id=%s", username, redirect_to, app_id)
+
+    # 设置用户登录
+    try:
+        auth_login(request, user)
+    except Exception:
+        logger.debug("auth_login fail", exec_info=True)
+
+    # 记录登录日志
+    record_login_log(request, username, app_id)
+
+    secure = False
+    bk_token, expire_time = get_bk_token(username)
+    data = {"redirect_to": redirect_to}
+    response = APIV1OKJsonResponse(_("验证码校验成功"), data=data)
+    response.set_cookie(
+        BK_COOKIE_NAME,
+        urllib.parse.quote_plus(bk_token),
+        expires=expire_time,
+        domain=settings.BK_COOKIE_DOMAIN,
+        httponly=True,
+        secure=secure,
+    )
+
+    # set cookie for app or platform
+    response.set_cookie(
+        settings.LANGUAGE_COOKIE_NAME,
+        request.user.language,
+        # max_age=settings.LANGUAGE_COOKIE_AGE,
+        expires=expire_time,
+        path=settings.LANGUAGE_COOKIE_PATH,
+        domain=settings.LANGUAGE_COOKIE_DOMAIN,
+    )
     return response

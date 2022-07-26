@@ -856,18 +856,12 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         serializers = local_serializers.CaptchaVerifySerializer(data=request.data)
         serializers.is_valid(raise_exception=True)
         validated_data = serializers.validated_data
-
-        send_method, contact_detail = Captcha().verify_and_get_contact_detail(
+        Captcha().verify(
             username=validated_data["username"],
             captcha=validated_data["captcha"],
             token=validated_data["token"],
         )
-        return Response(
-            {
-                "send_method": send_method,
-                "contact_detail": contact_detail,
-            }
-        )
+        return Response()
 
 
 class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):

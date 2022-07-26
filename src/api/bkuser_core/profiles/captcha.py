@@ -112,7 +112,7 @@ class Captcha:
         if not authenticated_value and not contact_detail:
             raise error_codes.USER_NOT_BIND_CONTACT_DETAILS.f(send_method=send_method)
 
-    def verify_and_get_contact_detail(self, username, token, captcha):
+    def verify(self, username, token, captcha):
         captcha_data = self.get_data(token=token)
 
         logger.info(f"verify captcha, captcha_data is {captcha_data}. Posted token is {token}, captcha={captcha}")
@@ -131,8 +131,6 @@ class Captcha:
         # 验证通过删除缓存
         self.delete(token)
         logger.info("Clean the captcha_data in redis , token: {}".format(token))
-
-        return captcha_data["send_method"], captcha_data["contact_detail"]
 
     def generate(self, username, authentication_type, **kwargs):
         self.validate_before_generate(username=username, authentication_type=authentication_type, **kwargs)

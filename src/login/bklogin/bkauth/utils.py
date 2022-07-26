@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 
 
 import datetime
+import re
 import time
 import unicodedata
 import urllib.parse
@@ -198,3 +199,14 @@ def record_login_log(request, username, app_id):
     login_ip = request.META.get("HTTP_X_FORWARDED_FOR", "REMOTE_ADDR")
 
     LoginLog.objects.record_login(username, login_browser, login_ip, host, app_id)
+
+
+def validate_contact_detail(data):
+    if data.get("email"):
+        if re.match("^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$", data.get("email")):
+            return True
+    elif data.get("telephone"):
+        if re.match(r"^1[35678]\d{9}$", data.get("telephone")):
+            return True
+    else:
+        return False
