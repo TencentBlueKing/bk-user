@@ -24,7 +24,7 @@ from bklogin.api.utils import (
 )
 from bklogin.bkauth.utils import validate_bk_token
 from bklogin.common import usermgr
-from bklogin.common.mixins.exempt import LoginExemptMixin
+from bklogin.common.mixins import LoginExemptMixin
 
 ########
 #  v1  #

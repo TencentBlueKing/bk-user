@@ -28,7 +28,7 @@ from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
 from bklogin.common.log import logger
-from bklogin.common.mixins.exempt import LoginExemptMixin
+from bklogin.common.mixins import LoginExemptMixin
 from bklogin.common.usermgr import get_categories_str
 
 

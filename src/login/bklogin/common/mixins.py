@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making 蓝鲸智云PaaS平台社区版 (BlueKing PaaS
 Community Edition) available.
@@ -9,3 +8,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+from builtins import object
+
+from django.utils.decorators import method_decorator
+
+from bklogin.bkauth.decorators import login_exempt
+
+
+class LoginExemptMixin(object):
+    """
+    Mixin allows you to request without `login`.
+    """
+
+    @method_decorator(login_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super(LoginExemptMixin, self).dispatch(*args, **kwargs)
