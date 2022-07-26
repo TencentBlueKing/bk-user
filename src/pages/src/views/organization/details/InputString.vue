@@ -70,7 +70,7 @@ export default {
       const wxReg = /^[a-zA-Z]{1}[-_a-zA-Z0-9]{5,19}$/;
       // 验证邮箱
       // eslint-disable-next-line no-useless-escape
-      const emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+      const emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.[A-Za-z]+$/;
 
       if ((item.key === 'username' && !usernameReg.test(item.value))
                     || (item.key === 'display_name' && !displayNameReg.test(item.value))
