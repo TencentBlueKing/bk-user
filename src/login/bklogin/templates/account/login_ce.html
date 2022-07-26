@@ -4,10 +4,10 @@
     <head>
         <meta charset="utf-8">
         <link rel="icon" type="image/x-icon" href="{{STATIC_URL}}favicon.ico">
-        <link href="{{STATIC_URL}}css_ce/bk.{{CSS_SUFFIX}}" rel="stylesheet" type="text/css" />
+        <link href="{{STATIC_URL}}css/bk.{{CSS_SUFFIX}}" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}assets/bk-icon-2.0/iconfont.css" rel="stylesheet" type="text/css" />
         <link href="{{STATIC_URL}}assets/blueking-icon/index.css" rel="stylesheet" type="text/css" />
-        <link href="{{STATIC_URL}}css_ce/login.{{CSS_SUFFIX}}?v={{STATIC_VERSION}}" rel="stylesheet" type="text/css" />
+        <link href="{{STATIC_URL}}css/login.{{CSS_SUFFIX}}?v={{STATIC_VERSION}}" rel="stylesheet" type="text/css" />
         <title>{% trans '登录 | 腾讯蓝鲸智云' %}</title>
 
         {% if is_plain %}
@@ -125,10 +125,10 @@
     <script type="text/javascript" src="{{SITE_URL}}jsi18n/i18n/"></script>
 
     <script src="{{STATIC_URL}}assets/jquery-1.10.2.min.js"></script>
-    <script src="{{STATIC_URL}}js_ce/login.js"></script>
-    <script src="{{STATIC_URL}}js_ce/particles.js"></script>
-    <script src="{{STATIC_URL}}js_ce/app.js"></script>
-    <script src="{{STATIC_URL}}js_ce/stats.js"></script>
+    <script src="{{STATIC_URL}}js/login.js"></script>
+    <script src="{{STATIC_URL}}js/particles.js"></script>
+    <script src="{{STATIC_URL}}js/app.js"></script>
+    <script src="{{STATIC_URL}}js/stats.js"></script>
     <script type="text/javascript">
         {% if login_redirect_to %}
         window.open("{{login_redirect_to}}");
