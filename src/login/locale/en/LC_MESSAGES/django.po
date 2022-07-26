@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-03 17:35+0800\n"
+"POT-Creation-Date: 2022-07-26 17:35+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -128,7 +128,7 @@ msgid "您需要登录蓝鲸智云"
 msgstr "You need to log in BlueKing"
 
 #: bklogin/templates/401.html:21 bklogin/templates/account/login.html:51
-#: bklogin/templates/account/login_ce.html:66
+#: bklogin/templates/login.html:66
 msgid "立即登录"
 msgstr "Log in"
 
@@ -245,7 +245,7 @@ msgid "蓝鲸官网"
 msgstr "Blueking Official"
 
 #: bklogin/templates/account/base.html:101
-#: bklogin/templates/account/login_ce.html:113
+#: bklogin/templates/login.html:113
 msgid "蓝鲸智云 版权所有"
 msgstr "BlueKing Copyright"
 
@@ -268,7 +268,7 @@ msgid "用户名"
 msgstr "username"
 
 #: bklogin/templates/account/login.html:31
-#: bklogin/templates/account/login_ce.html:47
+#: bklogin/templates/login.html:47
 msgid "请输入用户名"
 msgstr "Please enter your username"
 
@@ -277,7 +277,7 @@ msgid "密码"
 msgstr "password"
 
 #: bklogin/templates/account/login.html:40
-#: bklogin/templates/account/login_ce.html:51
+#: bklogin/templates/login.html:51
 msgid "请输入密码"
 msgstr "Please enter your password"
 
@@ -295,12 +295,12 @@ msgid "查看用户协议"
 msgstr "Agreement"
 
 #: bklogin/templates/account/login.html:57
-#: bklogin/templates/account/login_ce.html:71
+#: bklogin/templates/login.html:71
 msgid "用户协议 >"
 msgstr "Agreement >"
 
 #: bklogin/templates/account/login.html:60
-#: bklogin/templates/account/login_ce.html:73
+#: bklogin/templates/login.html:73
 msgid "忘记密码？"
 msgstr "Forget password?"
 
@@ -309,7 +309,7 @@ msgid "img/logo/btn_cn.png"
 msgstr "img/logo/btn_en.png"
 
 #: bklogin/templates/account/login.html:106
-#: bklogin/templates/account/login_ce.html:120
+#: bklogin/templates/login.html:120
 msgid ""
 "您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果"
 msgstr ""
@@ -322,37 +322,37 @@ msgstr ""
 "Enterprise certificate verification ineffective, please contact the system "
 "administrator"
 
-#: bklogin/templates/account/login_ce.html:11
+#: bklogin/templates/login.html:11
 msgid "登录|蓝鲸智云"
 msgstr "Login|BlueKing"
 
-#: bklogin/templates/account/login_ce.html:41
+#: bklogin/templates/login.html:41
 msgid "img/logo_ce/logo_ch.png"
 msgstr "img/logo_ce/logo_en.png"
 
-#: bklogin/templates/account/login_ce.html:57
+#: bklogin/templates/login.html:57
 #, fuzzy
 #| msgid "修改密码"
 msgid "请修改密码"
 msgstr "Change Password"
 
-#: bklogin/templates/account/login_ce.html:104
+#: bklogin/templates/login.html:104
 msgid "技术支持"
 msgstr "Technical support"
 
-#: bklogin/templates/account/login_ce.html:104
+#: bklogin/templates/login.html:104
 msgid "QQ群支持"
 msgstr "QQ group"
 
-#: bklogin/templates/account/login_ce.html:105
+#: bklogin/templates/login.html:105
 msgid "社区论坛"
 msgstr "Community"
 
-#: bklogin/templates/account/login_ce.html:106
+#: bklogin/templates/login.html:106
 msgid "产品官网"
 msgstr "Home"
 
-#: bklogin/templates/account/login_ce.html:108
+#: bklogin/templates/login.html:108
 msgid "关注我们"
 msgstr "Follow us"
 

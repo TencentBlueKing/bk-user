@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-03 17:35+0800\n"
+"POT-Creation-Date: 2022-07-26 17:35+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -121,7 +121,7 @@ msgid "您需要登录蓝鲸智云"
 msgstr ""
 
 #: bklogin/templates/401.html:21 bklogin/templates/account/login.html:51
-#: bklogin/templates/account/login_ce.html:73
+#: bklogin/templates/login.html:73
 msgid "立即登录"
 msgstr ""
 
@@ -227,7 +227,7 @@ msgid "蓝鲸官网"
 msgstr ""
 
 #: bklogin/templates/account/base.html:101
-#: bklogin/templates/account/login_ce.html:117
+#: bklogin/templates/login.html:117
 msgid "蓝鲸智云 版权所有"
 msgstr ""
 
@@ -248,7 +248,7 @@ msgid "用户名"
 msgstr ""
 
 #: bklogin/templates/account/login.html:31
-#: bklogin/templates/account/login_ce.html:54
+#: bklogin/templates/login.html:54
 msgid "请输入用户名"
 msgstr ""
 
@@ -257,7 +257,7 @@ msgid "密码"
 msgstr ""
 
 #: bklogin/templates/account/login.html:40
-#: bklogin/templates/account/login_ce.html:58
+#: bklogin/templates/login.html:58
 msgid "请输入密码"
 msgstr ""
 
@@ -275,12 +275,12 @@ msgid "查看用户协议"
 msgstr ""
 
 #: bklogin/templates/account/login.html:57
-#: bklogin/templates/account/login_ce.html:78
+#: bklogin/templates/login.html:78
 msgid "用户协议 >"
 msgstr ""
 
 #: bklogin/templates/account/login.html:60
-#: bklogin/templates/account/login_ce.html:80
+#: bklogin/templates/login.html:80
 msgid "忘记密码？"
 msgstr ""
 
@@ -289,7 +289,7 @@ msgid "img/logo/btn_cn.png"
 msgstr ""
 
 #: bklogin/templates/account/login.html:106
-#: bklogin/templates/account/login_ce.html:124
+#: bklogin/templates/login.html:124
 msgid ""
 "您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果"
 msgstr ""
@@ -298,35 +298,35 @@ msgstr ""
 msgid "企业证书校验无效，请联系系统管理员处理"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:11
+#: bklogin/templates/login.html:11
 msgid "登录|蓝鲸智云"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:42
+#: bklogin/templates/login.html:42
 msgid "img/logo_ce/logo_ce.png"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:45
+#: bklogin/templates/login.html:45
 msgid "社区版"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:64
+#: bklogin/templates/login.html:64
 msgid "请修改密码"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:111
+#: bklogin/templates/login.html:111
 msgid "QQ群支持"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:112
+#: bklogin/templates/login.html:112
 msgid "社区论坛"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:113
+#: bklogin/templates/login.html:113
 msgid "产品官网"
 msgstr ""
 
-#: bklogin/templates/account/login_ce.html:114
+#: bklogin/templates/login.html:114
 msgid "关注我们"
 msgstr ""
 

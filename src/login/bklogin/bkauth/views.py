@@ -89,7 +89,7 @@ def _bk_login(request):
     """
     authentication_form = BkAuthenticationForm
     # NOTE: account/login.html 为支持自适应大小的模板
-    template_name = "account/login_ce.html"
+    template_name = "login.html"
     forget_reset_password_url = f"{settings.BK_USERMGR_SAAS_URL}/reset_password"
     token_set_password_url = ""
 
