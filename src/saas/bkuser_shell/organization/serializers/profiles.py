@@ -16,6 +16,7 @@ from rest_framework.serializers import (
     ListField,
     Serializer,
     SerializerMethodField,
+    DateField
 )
 
 from .departments import SubDepartmentSerializer
@@ -166,6 +167,9 @@ class ProfileExportSerializer(Serializer):
     wx_userid = CharField()
     iso_code = CharField()
     country_code = CharField()
+    last_login_time = CharField()
+    create_time = DateTimeField()
+    account_expiration_date = DateField()
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
