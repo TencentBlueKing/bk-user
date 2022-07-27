@@ -9,7 +9,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from decorator_include import decorator_include
 from django.conf.urls import include, url
 from django.http import HttpResponse
 from django.views import i18n as django_i18n_views
@@ -17,7 +16,6 @@ from django.views.i18n import JavaScriptCatalog
 
 from bklogin.api import views as views_api
 from bklogin.bkauth import views as auth_views
-from bklogin.bkauth.decorators import login_exempt
 from bklogin.healthz import views as healthz_views
 
 urlpatterns = [
@@ -97,7 +95,7 @@ urlpatterns = [
     # 反搜索
     url(r"^robots\.txt$", lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")),
     # prometheus metrics
-    url(r"", decorator_include(login_exempt, "django_prometheus.urls")),
+    url(r"", include("django_prometheus.urls")),
     # ========================= i18n =========================
     # 无登录态下切换语言
     url(r"^i18n/setlang/$", django_i18n_views.set_language, name="set_language"),

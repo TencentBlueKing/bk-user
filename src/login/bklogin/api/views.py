@@ -24,14 +24,13 @@ from bklogin.api.utils import (
 )
 from bklogin.bkauth.utils import validate_bk_token
 from bklogin.common import usermgr
-from bklogin.common.mixins import LoginExemptMixin
 
 ########
 #  v1  #
 ########
 
 
-class CheckLoginView(LoginExemptMixin, View):
+class CheckLoginView(View):
     def get(self, request):
         # 验证Token参数
         is_valid, username, message = validate_bk_token(request.GET)
@@ -40,7 +39,7 @@ class CheckLoginView(LoginExemptMixin, View):
         return APIV1OKJsonResponse(_("用户验证成功"), data={"username": username})
 
 
-class UserView(LoginExemptMixin, View):
+class UserView(View):
     def get(self, request):
         """
         获取用户信息API
@@ -67,7 +66,7 @@ class UserView(LoginExemptMixin, View):
 ########
 
 
-class CheckLoginViewV2(LoginExemptMixin, View):
+class CheckLoginViewV2(View):
     def get(self, request):
         # 验证Token参数
         is_valid, username, message = validate_bk_token(request.GET)
@@ -76,7 +75,7 @@ class CheckLoginViewV2(LoginExemptMixin, View):
         return APIV2OKJsonResponse(_("用户验证成功"), data={"bk_username": username})
 
 
-class UserViewV2(LoginExemptMixin, View):
+class UserViewV2(View):
     def get(self, request):
         """
         获取用户信息API
@@ -103,7 +102,7 @@ class UserViewV2(LoginExemptMixin, View):
 ########
 
 
-class CheckLoginViewV3(LoginExemptMixin, View):
+class CheckLoginViewV3(View):
     def get(self, request):
         # 验证Token参数
         is_valid, username, message = validate_bk_token(request.GET)
@@ -112,7 +111,7 @@ class CheckLoginViewV3(LoginExemptMixin, View):
         return APIV3OKJsonResponse(_("用户验证成功"), data={"bk_username": username})
 
 
-class UserViewV3(LoginExemptMixin, View):
+class UserViewV3(View):
     def get(self, request):
         """
         获取用户信息API

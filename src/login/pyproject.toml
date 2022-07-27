@@ -24,7 +24,6 @@ django-prometheus = "2.1.0"
 blue-krill = "1.0.15"
 python-json-logger = "^2.0.2"
 sentry-sdk = "1.5.6"
-django-decorator-include = "^3.0"
 werkzeug = "2.0.3"
 rsa = "3.4.2"
 

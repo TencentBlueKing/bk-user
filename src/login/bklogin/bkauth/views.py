@@ -28,7 +28,6 @@ from bklogin.bkauth.forms import BkAuthenticationForm
 from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
 from bklogin.common.log import logger
-from bklogin.common.mixins import LoginExemptMixin
 from bklogin.common.usermgr import get_categories_str
 
 
@@ -53,7 +52,7 @@ def only_plain_xframe_options_exempt(view_func):
     return wraps(view_func)(wrapped_view)
 
 
-class LoginView(LoginExemptMixin, View):
+class LoginView(View):
     """
     登录 & 登录弹窗
     """
@@ -141,7 +140,7 @@ def _bk_login(request):
     return response
 
 
-class LogoutView(LoginExemptMixin, View):
+class LogoutView(View):
     """
     登出并重定向到登录页面
     """

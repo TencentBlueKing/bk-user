@@ -18,7 +18,6 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.utils.translation import ugettext as _
 
-from bklogin.bkauth.decorators import login_exempt
 from bklogin.common.exceptions import LoginErrorCodes
 
 # ====================  helpers =========================
@@ -75,7 +74,6 @@ def _check_database():
     return True, "ok", 0
 
 
-@login_exempt
 def healthz(request):
     """
     health check
@@ -98,6 +96,5 @@ def healthz(request):
     return _gen_json_response(ok=True, code=LOGIN_MODULE_CODE, message="OK", data=data)
 
 
-@login_exempt
 def ping(request):
     return HttpResponse("pong", content_type="text/plain")
