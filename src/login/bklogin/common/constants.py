@@ -11,10 +11,6 @@ specific language governing permissions and limitations under the License.
 """
 
 
-def enum(**enums):
-    return type("Enum", (), enums)
-
-
 # 用户管理与登录自身提供的用户信息字段KeyMap
 USERMGR_BKLOGIN_FIELD_MAP = {
     "display_name": "chname",

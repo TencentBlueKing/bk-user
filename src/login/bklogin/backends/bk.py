@@ -9,9 +9,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from enum import Enum
 from typing import Tuple
 
-from blue_krill.data_types.enum import StructuredEnum
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
@@ -36,7 +36,7 @@ def _split_username(username):
     return "@".join(parts[: length - 1]), parts[length - 1]
 
 
-class BkUserCheckCode(int, StructuredEnum):
+class BkUserCheckCode(Enum):
     """Bk user check code, defined by api module"""
 
     # TODO: move into global code
@@ -97,7 +97,7 @@ class BkUserBackend(ModelBackend):
 
         # 认证不通过
         if not ok:
-            if code in [BkUserCheckCode.SHOULD_CHANGE_INITIAL_PASSWORD, BkUserCheckCode.PASSWORD_EXPIRED]:
+            if code in [BkUserCheckCode.SHOULD_CHANGE_INITIAL_PASSWORD.value, BkUserCheckCode.PASSWORD_EXPIRED.value]:
                 raise PasswordNeedReset(message=message, reset_password_url=extra_values.get("reset_password_url"))
             raise AuthenticationError(message=message, redirect_to=extra_values.get("redirect_to"))
 

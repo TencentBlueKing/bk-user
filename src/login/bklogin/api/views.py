@@ -35,7 +35,7 @@ class CheckLoginView(View):
         # 验证Token参数
         is_valid, username, message = validate_bk_token(request.GET)
         if not is_valid:
-            return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.PARAM_NOT_VALID)
+            return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.PARAM_NOT_VALID.value)
         return APIV1OKJsonResponse(_("用户验证成功"), data={"username": username})
 
 
@@ -51,12 +51,12 @@ class UserView(View):
             is_from_esb = is_request_from_esb(request)
             username = request.GET.get("username")
             if not is_from_esb or not username:
-                return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.PARAM_NOT_VALID)
+                return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.PARAM_NOT_VALID.value)
 
         # 获取用户数据
         ok, message, data = usermgr.get_user(username)
         if not ok:
-            return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.USER_NOT_EXISTS2)
+            return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.USER_NOT_EXISTS2.value)
 
         return APIV1OKJsonResponse(_("用户信息获取成功"), data=data)
 
@@ -71,7 +71,7 @@ class CheckLoginViewV2(View):
         # 验证Token参数
         is_valid, username, message = validate_bk_token(request.GET)
         if not is_valid:
-            return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.PARAM_NOT_VALID)
+            return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.PARAM_NOT_VALID.value)
         return APIV2OKJsonResponse(_("用户验证成功"), data={"bk_username": username})
 
 
@@ -87,12 +87,12 @@ class UserViewV2(View):
             is_from_esb = is_request_from_esb(request)
             username = request.GET.get("bk_username")
             if not is_from_esb or not username:
-                return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.PARAM_NOT_VALID)
+                return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.PARAM_NOT_VALID.value)
 
         # 获取用户数据
         ok, message, data = usermgr.get_user(username, "v2")
         if not ok:
-            return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.USER_NOT_EXISTS2)
+            return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.USER_NOT_EXISTS2.value)
 
         return APIV2OKJsonResponse(_("用户信息获取成功"), data=data)
 
@@ -107,7 +107,7 @@ class CheckLoginViewV3(View):
         # 验证Token参数
         is_valid, username, message = validate_bk_token(request.GET)
         if not is_valid:
-            return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.PARAM_NOT_VALID)
+            return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.PARAM_NOT_VALID.value)
         return APIV3OKJsonResponse(_("用户验证成功"), data={"bk_username": username})
 
 
@@ -124,11 +124,11 @@ class UserViewV3(View):
             is_from_esb = is_request_from_esb(request)
             username = request.GET.get("bk_username")
             if not is_from_esb or not username:
-                return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.PARAM_NOT_VALID)
+                return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.PARAM_NOT_VALID.value)
 
         # 获取用户数据
         ok, message, data = usermgr.get_user(username, "v3")
         if not ok:
-            return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.USER_NOT_EXISTS2)
+            return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.USER_NOT_EXISTS2.value)
 
         return APIV3OKJsonResponse(_("用户信息获取成功"), data=data)

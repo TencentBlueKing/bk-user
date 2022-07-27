@@ -42,7 +42,7 @@ class APIV1BaseJsonResponse(JsonResponse):
 
 class APIV1FailJsonResponse(APIV1BaseJsonResponse):
     def __init__(self, message, **kwargs):
-        code = kwargs.get("code") or ApiErrorCodeEnum.PARAM_NOT_VALID
+        code = kwargs.get("code") or ApiErrorCodeEnum.PARAM_NOT_VALID.value
         data = kwargs.get("data")
         super(APIV1FailJsonResponse, self).__init__(False, code, message, data=data)
 
@@ -50,7 +50,7 @@ class APIV1FailJsonResponse(APIV1BaseJsonResponse):
 class APIV1OKJsonResponse(APIV1BaseJsonResponse):
     def __init__(self, message, **kwargs):
         data = kwargs.get("data")
-        super(APIV1OKJsonResponse, self).__init__(True, ApiErrorCodeEnum.SUCCESS, message, data=data)
+        super(APIV1OKJsonResponse, self).__init__(True, ApiErrorCodeEnum.SUCCESS.value, message, data=data)
 
 
 ########
@@ -67,7 +67,7 @@ class APIV2BaseJsonResponse(JsonResponse):
 
 class APIV2FailJsonResponse(APIV2BaseJsonResponse):
     def __init__(self, message, **kwargs):
-        code = kwargs.get("code") or ApiErrorCodeEnumV2.PARAM_NOT_VALID
+        code = kwargs.get("code") or ApiErrorCodeEnumV2.PARAM_NOT_VALID.value
         data = kwargs.get("data")
         super(APIV2FailJsonResponse, self).__init__(False, code, message, data=data)
 
@@ -75,7 +75,7 @@ class APIV2FailJsonResponse(APIV2BaseJsonResponse):
 class APIV2OKJsonResponse(APIV2BaseJsonResponse):
     def __init__(self, message, **kwargs):
         data = kwargs.get("data")
-        super(APIV2OKJsonResponse, self).__init__(True, ApiErrorCodeEnumV2.SUCCESS, message, data=data)
+        super(APIV2OKJsonResponse, self).__init__(True, ApiErrorCodeEnumV2.SUCCESS.value, message, data=data)
 
 
 ########
@@ -99,7 +99,7 @@ class APIV3BaseJsonResponse(JsonResponse):
 
 class APIV3FailJsonResponse(APIV3BaseJsonResponse):
     def __init__(self, message, **kwargs):
-        code = kwargs.get("code") or ApiErrorCodeEnumV3.PARAM_NOT_VALID
+        code = kwargs.get("code") or ApiErrorCodeEnumV3.PARAM_NOT_VALID.value
         data = kwargs.get("data")
         super(APIV3FailJsonResponse, self).__init__(False, code, message, data=data)
 
@@ -107,4 +107,4 @@ class APIV3FailJsonResponse(APIV3BaseJsonResponse):
 class APIV3OKJsonResponse(APIV3BaseJsonResponse):
     def __init__(self, message, **kwargs):
         data = kwargs.get("data")
-        super(APIV3OKJsonResponse, self).__init__(True, ApiErrorCodeEnumV3.SUCCESS, message, data=data)
+        super(APIV3OKJsonResponse, self).__init__(True, ApiErrorCodeEnumV3.SUCCESS.value, message, data=data)
