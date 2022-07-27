@@ -17,6 +17,7 @@ from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.signals import post_category_create
 from bkuser_core.departments.signals import post_department_create
+from bkuser_core.global_settings.signals import post_global_setting_update
 from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
 
@@ -54,7 +55,7 @@ def create_audit_log(sender, instance: "Profile", operator: str, extra_values: d
     )
 
 
-@receiver([post_setting_update])
+@receiver([post_setting_update, post_global_setting_update])
 def update_audit_log(sender, instance: "Profile", operator: str, extra_values: dict, **kwargs):
     """Create an audit log for instance"""
     create_general_log(

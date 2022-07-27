@@ -58,16 +58,64 @@ $(document).ready(function(){
             getCode();
         }
     })
+
+    var login_form = $("#login-form");
+    $('#login-btn').on('click', function () {
+        login_form.submit(function () {
+            return false;
+        });
+        $.ajax({
+            type: "POST",
+            url: "/captcha/verify_captcha/",
+            data: login_form.serialize(),
+            success: function (resp) {
+                if (!resp.result) {
+                    $("#error_message").html(resp.message);
+                } else {
+                    window.location.href = resp.data.redirect_to;
+                    localStorage.removeItem("token");
+                };
+            },
+        });
+    });
+
+
 });
+
+function postSendCaptcha() {
+    var login_form = $("#login-form");
+    var data = {};
+    data["username"] = $("#username").val();
+    data[$("#send_method").val()] = $("#contact_detail").val();
+
+    $.ajax({
+        type: "post",
+        url: "/captcha/send_captcha/",
+        data: data,
+        dataType: "json",
+        success: function (resp) {
+            login_form.append('<input hidden type="text" name="token" id="token">');
+            if (resp.result) {
+                localStorage.setItem("token", resp.data.token);
+                $("#token").val(resp.data.token);
+            } else {
+                $("#error_message").html(resp.message);
+                $("#token").val(localStorage.getItem("token"));
+            }
+        },
+    });
+}
 
 function getCode() {
     // 获取验证码
     var btn = $('#code-btn');
     var code = $('#validation');
-    var count = 60;
+    var count = expire_seconds;
+    this.postSendCaptcha();
     var timer = setInterval(() => {
         if (count > 1) {
-            count --;
+            count--;
+            $("#expire_seconds").val(count);
             btn.attr('class', 'code-btn-hide');
             btn.html('验证码');
             code.attr('placeholder', `获取验证码（${count}s）`);

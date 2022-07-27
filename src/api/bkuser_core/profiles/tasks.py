@@ -19,7 +19,7 @@ from django.conf import settings
 from django.utils.timezone import now
 
 from .account_expiration_notifier import get_notice_config_for_account_expiration, get_profiles_for_account_expiration
-from .constants import TypeOfExpiration
+from .constants import CAPTCHA_SEND_METHOD_EMAIL, CAPTCHA_SEND_METHOD_SMS, TypeOfExpiration
 from .notifier import ExpirationNotifier
 from .password_expiration_notifier import (
     get_profiles_for_password_expiration,
@@ -28,13 +28,13 @@ from .password_expiration_notifier import (
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
-from bkuser_core.common.notifier import send_mail
+from bkuser_core.common.notifier import send_mail, send_sms
 from bkuser_core.profiles import exceptions
 from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL, ProfileStatus
 from bkuser_core.profiles.models import ExpirationNoticeRecord, Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
-from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
+from bkuser_core.user_settings.loader import ConfigProvider, GlobalConfigProvider
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,41 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
     )
 
 
+@app.task
+def send_captcha(authentication_type: str, send_config: dict):
+    config_loader = GlobalConfigProvider(authentication_type)
+
+    if config_loader.get("send_method") == CAPTCHA_SEND_METHOD_EMAIL:
+        email_config = config_loader.get("email_config")
+        message = email_config["content"].format(
+            captcha=send_config["captcha"], expire_time=int(send_config["expire_seconds"] / 60)
+        )
+        logger.info(
+            "--------- going to send captcha of Profile(%s) via email ----------",
+            send_config["profile"],
+        )
+        send_mail(
+            sender=email_config["sender"],
+            receivers=[send_config["contact_detail"]],
+            message=message,
+            title=email_config["title"],
+        )
+    elif config_loader.get("send_method") == CAPTCHA_SEND_METHOD_SMS:
+        logger.info(
+            "--------- going to send captcha of Profile(%s) via telephone ----------",
+            send_config["profile"],
+        )
+        sms_config = config_loader.get("sms_config")
+        message = sms_config["content"].format(
+            captcha=send_config["captcha"], expire_time=int(send_config["expire_seconds"] / 60)
+        )
+        send_sms(
+            sender=sms_config["sender"],
+            receivers=[send_config["contact_detail"]],
+            message=message,
+        )
+
+
 @periodic_task(run_every=crontab(minute='0', hour='2'))
 def notice_for_account_expiration():
     """
@@ -92,8 +127,7 @@ def notice_for_account_expiration():
     expiring_profile_list, expired_profile_list = get_profiles_for_account_expiration()
 
     logger.info(
-        "--------- going to notice expiring_profiles(%s) for account expiration ----------",
-        expiring_profile_list
+        "--------- going to notice expiring_profiles(%s) for account expiration ----------", expiring_profile_list
     )
     for profile in expiring_profile_list:
         notice_config = get_notice_config_for_account_expiration(profile)
@@ -103,8 +137,7 @@ def notice_for_account_expiration():
         time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
     logger.info(
-        "--------- going to notice expired_profiles(%s) for account expiration ----------",
-        expired_profile_list
+        "--------- going to notice expired_profiles(%s) for account expiration ----------", expired_profile_list
     )
     for profile in expired_profile_list:
         notice_config = get_notice_config_for_account_expiration(profile)

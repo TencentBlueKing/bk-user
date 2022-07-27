@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "bkuser_core.profiles",
     "bkuser_core.departments",
     "bkuser_core.user_settings",
+    "bkuser_core.global_settings",
     "bkuser_core.audit",
     "bkuser_core.categories",
     "bkuser_core.bkiam",

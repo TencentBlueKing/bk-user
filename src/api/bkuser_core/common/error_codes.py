@@ -93,6 +93,7 @@ class ErrorCodeCollection:
 
 
 error_codes = ErrorCodeCollection()
+
 error_codes.add_codes(
     [
         # 通用
@@ -118,6 +119,13 @@ error_codes.add_codes(
         ErrorCode("USER_IS_DELETED", _("账号已被删除，请联系管理员"), 3210022),
         ErrorCode("CATEGORY_PLUGIN_LOAD_FAIL", _("目录登录插件加载失败"), 3210023),
         ErrorCode("USER_IS_EXPIRED", _("该用户账号已过期"), 3210024),
+        # captcha
+        ErrorCode("CAPTCHA_TOKEN_EXPIRED", _("验证码过期，请重新点击发送"), 3210025),
+        ErrorCode("CAPTCHA_WRONG", _("验证码错误，请重新输入"), 3210026),
+        ErrorCode("CAPTCHA_DUPLICATE_SENDING", _("验证码已经发送，请等待{expire_time}分钟后发送"), 3210027),
+        ErrorCode("USER_NOT_BIND_CONTACT_DETAILS", _("用户未绑定{send_method}，请提供联系方式"), 3210028),
+        ErrorCode("NOT_TWO_FACTOR_AUTHENTICATION", _("当前认证方式非双因子认证"), 3210029),
+        ErrorCode("TOKEN_INVALID", _("验证码失效 "), 3210030),
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
@@ -148,8 +156,10 @@ error_codes.add_codes(
         ErrorCode("PLUGIN_NOT_FOUND", _("找不到指定名称的插件")),
         # 配置相关
         ErrorCode("CANNOT_FIND_SETTING_META", _("找不到对应的配置元信息")),
+        ErrorCode("CANNOT_FIND_GLOBAL_SETTING_META", _("找不到对应的全局配置元信息")),
         ErrorCode("CANNOT_CREATE_SETTING", _("无法创建配置")),
         ErrorCode("CANNOT_UPDATE_SETTING", _("无法更新配置")),
+        ErrorCode("CANNOT_UPDATE_GLOBAL_SETTING", _("无法更新全局配置")),
         # 组织架构相关
         ErrorCode("DEPARTMENT_NAME_CONFLICT", _("同一个部门下子部门命名冲突")),
         # 用户字段相关

@@ -137,6 +137,49 @@ def direct_get_profile_by_code(code, fields="username"):
     return ok, message, _data
 
 
+def direct_get_profile_by_username(username, *args, **kwargs):
+    path = "/api/v2/profiles/{username}/".format(username=username)
+    url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
+
+    data = {
+        "lookup_field": "username",
+    }
+    ok, _, message, _data = _call_usermgr_api(http_get, url, data)
+    return ok, message, _data
+
+
+def direct_get_global_settings(namespace=None, *args, **kwargs):
+    path = "/api/v2/global_settings/"
+    url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
+
+    data = {
+        "enabled": True,
+    }
+    if namespace:
+        data.setdefault("namespace", namespace)
+
+    ok, _, message, _data = _call_usermgr_api(http_get, url, data)
+    if "results" in _data:
+        _data = _data["results"]
+    return ok, message, _data
+
+
+def direct_send_captcha(data, *args, **kwargs):
+    path = "/api/v2/authentication/send_captcha/"
+    url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
+
+    ok, code, message, _data = _call_usermgr_api(http_post, url, data)
+    return ok, code, message, _data
+
+
+def direct_verify_captcha(data, *args, **kwargs):
+    path = "/api/v2/authentication/verify_captcha/"
+    url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
+
+    ok, code, message, _data = _call_usermgr_api(http_post, url, data)
+    return ok, code, message, _data
+
+
 def esb_authenticate(username, password, language="", domain=""):
     """
     认证用户名和密码
@@ -181,7 +224,6 @@ def esb_upsert_user(username, **kwargs):
         "username": username,
     }
     data.update(kwargs)
-    # ok, _, message, _data = _call_usermgr_api(http_post, url, data)
     ok, _, message, _data = _call_esb_api(http_post, path, data)
     return ok, message, _data
 
@@ -213,6 +255,44 @@ def esb_get_profile_by_code(code, fields="username"):
     return ok, message, _data
 
 
+def esb_get_profile_by_username(username, *args, **kwargs):
+    path = "/api/c/compapi/v2/usermanage/retrieve_user/"
+
+    data = {
+        "id": username,
+        "lookup_field": "username",
+    }
+
+    ok, _, message, _data = _call_esb_api(http_get, path, data)
+    return ok, message, _data
+
+
+def esb_get_global_settings(namespace=None, *args, **kwargs):
+    path = "/api/c/compapi/v2/usermanage/global_settings/"
+
+    data = {
+        "enabled": True,
+    }
+    if namespace:
+        data.setdefault("namespace", namespace)
+
+    ok, _, message, _data = _call_usermgr_api(http_get, path, data)
+    return ok, message, _data
+
+
+def esb_send_captcha(data, *args, **kwargs):
+    path = "/api/c/compapi/v2/usermanage/login/send_captcha/"
+    ok, code, message, _data = _call_usermgr_api(http_post, path, data)
+    return ok, code, message, _data
+
+
+def esb_verify_captcha(data, *args, **kwargs):
+    path = "/api/c/compapi/v2/usermanage/login/verify_captcha/"
+
+    ok, code, message, _data = _call_usermgr_api(http_post, path, data)
+    return ok, code, message, _data
+
+
 if settings.BK_LOGIN_API_AUTH_ENABLED:
     message = "bk_login api auth enabled=True, will call usermgr api via esb"
     print(message)
@@ -223,6 +303,10 @@ if settings.BK_LOGIN_API_AUTH_ENABLED:
     upsert_user = esb_upsert_user
     get_categories = esb_get_categories
     get_profile_by_code = esb_get_profile_by_code
+    get_global_settings = esb_get_global_settings
+    send_captcha = esb_send_captcha
+    verify_captcha = esb_verify_captcha
+    get_profile_by_username = esb_get_profile_by_username
 else:
     message = "bk_login api auth enabled=False, will call usermgr api directly"
     print(message)
@@ -233,3 +317,7 @@ else:
     upsert_user = direct_upsert_user
     get_categories = direct_get_categories
     get_profile_by_code = direct_get_profile_by_code
+    get_global_settings = direct_get_global_settings
+    send_captcha = direct_send_captcha
+    verify_captcha = direct_verify_captcha
+    get_profile_by_username = direct_get_profile_by_username

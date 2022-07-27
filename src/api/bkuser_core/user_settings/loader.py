@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from dataclasses import dataclass, field
 
 from .models import Setting
+from bkuser_core.global_settings.models import GlobalSettings
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 
 
@@ -26,6 +27,38 @@ class ConfigProvider:
 
     def _refresh_config(self):
         settings = Setting.objects.prefetch_related("meta").filter(category_id=self.category_id)
+        self._raws = {x.meta.key: x for x in settings}
+        self._config = {x.meta.key: x.value for x in settings}
+
+    def get(self, k, d=None):
+        if k in self._raws and not self._raws.get(k).enabled:
+            raise SettingHasBeenDisabledError(k)
+
+        return self._config.get(k, d)
+
+    def __getitem__(self, key):
+        return self._config[key]
+
+    def __setitem__(self, key, value):
+        _raw = self._raws[key]
+        _raw.value = value
+        _raw.save(update_fields=["value"])
+
+        self._refresh_config()
+        return
+
+
+@dataclass
+class GlobalConfigProvider:
+    namespace: str
+    _config: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self._refresh_config()
+
+    def _refresh_config(self):
+
+        settings = GlobalSettings.objects.prefetch_related("meta").filter(meta__namespace=self.namespace)
         self._raws = {x.meta.key: x for x in settings}
         self._config = {x.meta.key: x.value for x in settings}
 

@@ -39,11 +39,7 @@ class ExpirationNotifier:
         )
 
     def _notice_by_sms(self, sms_config):
-        send_sms(
-            sender=sms_config["sender"],
-            receivers=sms_config["receivers"],
-            message=sms_config["message"]
-        )
+        send_sms(sender=sms_config["sender"], receivers=sms_config["receivers"], message=sms_config["message"])
 
 
 def get_logined_profiles():
@@ -51,8 +47,9 @@ def get_logined_profiles():
     获取在平台登录过的所有用户
     """
     subquery = LogIn.objects.filter(profile=OuterRef('pk')).values_list('id')
-    logined_profile_ids = Profile.objects.annotate(
-        temp=Exists(subquery)).filter(temp=True).values_list('id', flat=True)
+    logined_profile_ids = (
+        Profile.objects.annotate(temp=Exists(subquery)).filter(temp=True).values_list('id', flat=True)
+    )
     logined_profiles = Profile.objects.filter(id__in=logined_profile_ids)
 
     return logined_profiles

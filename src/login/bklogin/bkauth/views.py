@@ -13,6 +13,7 @@ specific language governing permissions and limitations under the License.
 from functools import wraps
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponseForbidden, HttpResponseRedirect
@@ -22,14 +23,16 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 from django.views.generic import View
 
-from bklogin.bkauth.actions import login_license_fail_response, login_success_response
-from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
+from bklogin.api.utils import APIV1FailJsonResponse, APIV1OKJsonResponse
+from bklogin.bkauth.actions import captcha_verify_success_response, login_license_fail_response, login_success_response
+from bklogin.bkauth.constants import REDIRECT_FIELD_NAME, SEND_METHOD_TO_PROFILE_FIELD_MAP
 from bklogin.bkauth.forms import BkAuthenticationForm
-from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid
+from bklogin.bkauth.utils import is_safe_url, set_bk_token_invalid, validate_contact_detail
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset, UserExpiredException
 from bklogin.common.log import logger
 from bklogin.common.mixins.exempt import LoginExemptMixin
 from bklogin.common.usermgr import get_categories_str
+from bklogin.components import usermgr_api
 from bklogin.components.license import check_license
 
 
@@ -88,6 +91,88 @@ class LoginView(LoginExemptMixin, View):
         # 调用自定义login view
         custom_login_view = import_string(settings.CUSTOM_LOGIN_VIEW)
         return custom_login_view(request)
+
+
+class CaptchaSendView(LoginExemptMixin, View):
+
+    is_plain = False
+
+    def post(self, request):
+        # 获取参数
+        post_data = request.POST
+        request_data = {
+            "username": post_data["username"],
+            "email": post_data.get("email", None),
+            "telephone": post_data.get("telephone", None),
+        }
+        if not validate_contact_detail(request_data):
+            return APIV1FailJsonResponse(message="联系方式格式错误")
+        # 发送验证码
+        ok, code, message, data = usermgr_api.send_captcha(request_data)
+        logger.debug(
+            "usermgr_api.send_captcha result: ok=%s, message=%s, data=%s",
+            ok,
+            message,
+            data,
+        )
+        if not ok:
+            return APIV1FailJsonResponse(code=code, message=message)
+        return APIV1OKJsonResponse(_("验证码信息发送成功"), data=data)
+
+
+class CaptchaVerifyView(LoginExemptMixin, View):
+    def post(self, request):
+        app_id = request.POST.get("app_id", request.GET.get("app_id", ""))
+        post_data = request.POST
+        username = post_data["username"]
+        redirect_to = post_data.get("redirect_to")
+
+        # 构建验证码检验数据
+        verify_data = {
+            "token": post_data["token"],
+            "captcha": post_data["captcha"],
+            "username": username,
+        }
+
+        ok, message, user_list = usermgr_api.batch_query_users(username_list=[username])
+        # 验证成功，查看是否需要进行绑定邮箱或者手机号
+        logger.debug(
+            "usermgr_api.batch_query_users result: ok=%s, message=%s, user_list=%s",
+            ok,
+            message,
+            user_list,
+        )
+        if not ok:
+            return APIV1FailJsonResponse(message=message)
+        # 查看是否绑定相应发送方法
+        user_data = user_list[0]
+
+        # 调用接口校验
+        ok, code, message, data = usermgr_api.verify_captcha(verify_data)
+
+        # 认证不通过
+        send_method = post_data["send_method"]
+        if not ok:
+            return APIV1FailJsonResponse(code=code, message=message)
+        # 发送方法为profile的内部字段且用户没有进行绑定，对用户进行更新
+        if send_method in SEND_METHOD_TO_PROFILE_FIELD_MAP and not user_data.get(send_method):
+            update_data = {SEND_METHOD_TO_PROFILE_FIELD_MAP[send_method]: post_data["contact_detail"]}
+            ok, message, data = usermgr_api.upsert_user(username, **update_data)
+            if not ok:
+                logger.error(
+                    "fail to update user %s's bind %s = %s: %s",
+                    user_data["username"],
+                    send_method,
+                    data["contact_value"],
+                    message,
+                )
+                return APIV1FailJsonResponse(message=message)
+
+        UserModel = get_user_model()
+        user = UserModel(post_data["username"])
+        user.fill_with_userinfo(user_data)
+
+        return captcha_verify_success_response(request, user, redirect_to, app_id=app_id)
 
 
 def _bk_login(request):

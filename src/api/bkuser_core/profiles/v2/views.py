@@ -28,7 +28,6 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework_jsonp.renderers import JSONPRenderer
 
-from ...departments.v2 import serializers as department_serializer
 from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.apis.v2.serializers import (
@@ -46,6 +45,9 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.departments.v2 import serializers as department_serializer
+from bkuser_core.global_settings.models import GlobalSettings
+from bkuser_core.profiles.captcha import Captcha
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
@@ -832,6 +834,34 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         return Response(
             data=local_serializers.LoginBatchResponseSerializer(profiles, many=True, context={"request": request}).data
         )
+
+    @swagger_auto_schema(query_serializer=local_serializers.CaptchaSendSerializer())
+    def send_captcha(self, request):
+        serializers = local_serializers.CaptchaSendSerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        validated_data = serializers.validated_data
+
+        authentication_type = GlobalSettings.objects.get(meta__key="authentication_type").value
+        captcha = Captcha()
+        token = captcha.generate(
+            username=validated_data["username"],
+            authentication_type=authentication_type,
+            email=validated_data["email"],
+            telephone=validated_data["telephone"],
+        )
+        return Response({"token": token})
+
+    @swagger_auto_schema(request_body=local_serializers.CaptchaVerifySerializer())
+    def verify_captcha(self, request):
+        serializers = local_serializers.CaptchaVerifySerializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        validated_data = serializers.validated_data
+        Captcha().verify(
+            username=validated_data["username"],
+            captcha=validated_data["captcha"],
+            token=validated_data["token"],
+        )
+        return Response()
 
 
 class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):

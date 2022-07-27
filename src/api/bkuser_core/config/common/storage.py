@@ -49,6 +49,14 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'memory_cache_0',
     },
+    "captcha": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "TIMEOUT": 30 * 60,
+        "KEY_PREFIX": f"{REDIS_KEY_PREFIX}captcha",
+        "VERSION": 1,
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWORD},
+    },
 }
 # 全局缓存过期时间，默认为一小时
 GLOBAL_CACHES_TIMEOUT = env.int("GLOBAL_CACHES_TIMEOUT", default=60 * 60)

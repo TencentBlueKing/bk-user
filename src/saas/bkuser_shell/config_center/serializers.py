@@ -163,3 +163,17 @@ class SettingMetaSerializer(serializers.Serializer):
 class ListSettingMetasSerializer(serializers.Serializer):
     category_type = serializers.CharField()
     namespace = serializers.CharField(required=False)
+
+
+class GlobalSettingMetaSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    example = serializers.JSONField()
+    choices = serializers.JSONField()
+    default = serializers.JSONField()
+    namespace = serializers.CharField(required=False)
+    region = serializers.CharField()
+    enabled = serializers.BooleanField(required=False, default=True)
+
+
+class ListGlobalSettingMetasSerializer(serializers.Serializer):
+    namespace = serializers.CharField(required=False)

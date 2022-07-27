@@ -22,13 +22,7 @@ class ProfileStatus(AutoNameEnum):
     DISABLED = auto()
     EXPIRED = auto()
 
-    _choices_labels = (
-        (NORMAL, "正常"),
-        (LOCKED, "被冻结"),
-        (DELETED, "被删除"),
-        (DISABLED, "被禁用"),
-        (EXPIRED, "已过期")
-    )
+    _choices_labels = ((NORMAL, "正常"), (LOCKED, "被冻结"), (DELETED, "被删除"), (DISABLED, "被禁用"), (EXPIRED, "已过期"))
 
 
 class StaffStatus(AutoNameEnum):
@@ -131,5 +125,11 @@ class TypeOfExpiration(AutoLowerEnum):
 
 PASSWD_RESET_VIA_SAAS_EMAIL_TMPL = "您的蓝鲸账号【{username}】的密码已被重置，若非本人操作，请及时修改"
 
+
+CAPTCHA_LENGTH = 8
+
 NOTICE_METHOD_EMAIL = "send_email"
 NOTICE_METHOD_SMS = "send_sms"
+
+CAPTCHA_SEND_METHOD_EMAIL = "email"
+CAPTCHA_SEND_METHOD_SMS = "telephone"

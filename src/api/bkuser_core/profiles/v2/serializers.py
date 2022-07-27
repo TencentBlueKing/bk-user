@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import Union
 
 from django.utils.translation import ugettext_lazy as _
@@ -34,10 +35,10 @@ from bkuser_core.profiles.validators import validate_domain, validate_username
 ###########
 # Profile #
 ###########
+logger = logging.getLogger(__name__)
 
 
 def get_extras(extras_from_db: Union[dict, list], defaults: dict) -> dict:
-
     if not defaults:
         defaults = DynamicFieldInfo.objects.get_extras_default_values()
 
@@ -321,3 +322,18 @@ class LoginBatchQuerySerializer(serializers.Serializer):
 class ProfileModifyPasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, max_length=254)
     new_password = serializers.CharField(required=True, max_length=254)
+
+
+############
+# Captcha  #
+############
+class CaptchaSendSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True, max_length=254)
+    email = serializers.CharField(required=False, allow_null=True)
+    telephone = serializers.CharField(required=False, allow_null=True)
+
+
+class CaptchaVerifySerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    captcha = serializers.CharField(required=True)
+    username = serializers.CharField(required=True)
