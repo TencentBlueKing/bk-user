@@ -83,6 +83,58 @@ def _validate_authentication_scope(user, verification_settings):
     return True
 
 
+def _set_login_and_cookie(request, user, response, app_id):
+    # 设置用户登录
+    try:
+        # 这个是django默认的login函数
+        auth_login(request, user)
+    except Exception:  # pylint: disable=broad-except
+        # will raise django.db.utils.DatabaseError: Save with update_fields did not affect any rows.
+        # while auth_login at the final step user_logged_in.send, but it DO NOT MATTERS!
+        logger.debug("auth_login fail", exec_info=True)
+
+    # 记录登录日志
+    record_login_log(request, user.username, app_id)
+
+    secure = False
+    # uncomment this if you need a secure cookie;
+    # the http domain will not access the bk_token in secure cookie
+    # secure = (settings.HTTP_SCHEMA == "https")
+
+    bk_token, expire_time = get_bk_token(user.username)
+    response.set_cookie(
+        BK_COOKIE_NAME,
+        urllib.parse.quote_plus(bk_token),
+        expires=expire_time,
+        domain=settings.BK_COOKIE_DOMAIN,
+        httponly=True,
+        secure=secure,
+    )
+
+    # set cookie for app or platform
+    response.set_cookie(
+        settings.LANGUAGE_COOKIE_NAME,
+        request.user.language,
+        # max_age=settings.LANGUAGE_COOKIE_AGE,
+        expires=expire_time,
+        path=settings.LANGUAGE_COOKIE_PATH,
+        domain=settings.LANGUAGE_COOKIE_DOMAIN,
+    )
+    return response
+
+
+def _redirect_to_set(request, redirect_to):
+    if not is_safe_url(url=redirect_to, host=request.get_host()):
+        # 调整到根目录
+        redirect_to = "/console/"
+
+    # if from logout
+    if redirect_to == "/logout/":
+        redirect_to = "/console/"
+
+    return redirect_to
+
+
 def redirect_secondary_authenticate(user, original_redirect_to, request):
     ok, message, global_settings = usermgr_api.get_global_settings(namespace="general", key="authentication_type")
     authentication_type = global_settings[0]["value"]
@@ -135,7 +187,7 @@ def redirect_secondary_authenticate(user, original_redirect_to, request):
 
 
 def login_success_response(
-    request, user_or_form, redirect_to, app_id, two_refactor_authentication_enabled=settings.TWO_REFACTOR_ENABLED
+        request, user_or_form, redirect_to, app_id, two_refactor_authentication_enabled=settings.TWO_REFACTOR_ENABLED
 ):
     """
     用户验证成功后，登录处理
@@ -156,52 +208,11 @@ def login_success_response(
             return response
 
     # 检查回调URL是否安全，防钓鱼
-    if not is_safe_url(url=redirect_to, host=request.get_host()):
-        # 调整到根目录
-        redirect_to = "/console/"
-
-    # if from logout
-    if redirect_to == "/logout/":
-        redirect_to = "/console/"
+    redirect_to = _redirect_to_set(request, redirect_to)
     logger.debug("login_success_response, username=%s, redirect_to=%s, app_id=%s", username, redirect_to, app_id)
 
-    # 设置用户登录
-    try:
-        # 这个是django默认的login函数
-        auth_login(request, user)
-    except Exception:  # pylint: disable=broad-except
-        # will raise django.db.utils.DatabaseError: Save with update_fields did not affect any rows.
-        # while auth_login at the final step user_logged_in.send, but it DO NOT MATTERS!
-        logger.debug("auth_login fail", exec_info=True)
-
-    # 记录登录日志
-    record_login_log(request, username, app_id)
-
-    secure = False
-    # uncomment this if you need a secure cookie;
-    # the http domain will not access the bk_token in secure cookie
-    # secure = (settings.HTTP_SCHEMA == "https")
-    bk_token, expire_time = get_bk_token(username)
     response = HttpResponseRedirect(redirect_to)
-    response.set_cookie(
-        BK_COOKIE_NAME,
-        urllib.parse.quote_plus(bk_token),
-        expires=expire_time,
-        domain=settings.BK_COOKIE_DOMAIN,
-        httponly=True,
-        secure=secure,
-    )
-
-    # set cookie for app or platform
-    response.set_cookie(
-        settings.LANGUAGE_COOKIE_NAME,
-        request.user.language,
-        # max_age=settings.LANGUAGE_COOKIE_AGE,
-        expires=expire_time,
-        path=settings.LANGUAGE_COOKIE_PATH,
-        domain=settings.LANGUAGE_COOKIE_DOMAIN,
-    )
-    return response
+    return _set_login_and_cookie(request, user, response, app_id)
 
 
 def login_redirect_response(request, redirect_url, is_from_logout):
@@ -234,43 +245,10 @@ def captcha_verify_success_response(request, user_or_form, redirect_to, app_id=N
         username = user.username
 
     # 检查回调URL是否安全，防钓鱼
-    if not is_safe_url(url=redirect_to, host=request.get_host()):
-        # 调整到根目录
-        redirect_to = "/console/"
+    redirect_to = _redirect_to_set(request, redirect_to)
 
-    if redirect_to == "/logout/":
-        redirect_to = "/console/"
     logger.debug("login_success_response, username=%s, redirect_to=%s, app_id=%s", username, redirect_to, app_id)
 
-    # 设置用户登录
-    try:
-        auth_login(request, user)
-    except Exception:
-        logger.debug("auth_login fail", exec_info=True)
-
-    # 记录登录日志
-    record_login_log(request, username, app_id)
-
-    secure = False
-    bk_token, expire_time = get_bk_token(username)
     data = {"redirect_to": redirect_to}
     response = APIV1OKJsonResponse(_("验证码校验成功"), data=data)
-    response.set_cookie(
-        BK_COOKIE_NAME,
-        urllib.parse.quote_plus(bk_token),
-        expires=expire_time,
-        domain=settings.BK_COOKIE_DOMAIN,
-        httponly=True,
-        secure=secure,
-    )
-
-    # set cookie for app or platform
-    response.set_cookie(
-        settings.LANGUAGE_COOKIE_NAME,
-        request.user.language,
-        # max_age=settings.LANGUAGE_COOKIE_AGE,
-        expires=expire_time,
-        path=settings.LANGUAGE_COOKIE_PATH,
-        domain=settings.LANGUAGE_COOKIE_DOMAIN,
-    )
-    return response
+    return _set_login_and_cookie(request, user, response, app_id)

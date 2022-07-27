@@ -88,13 +88,14 @@ function postSendCaptcha() {
     var data = {};
     data["username"] = $("#username").val();
     data[$("#send_method").val()] = $("#contact_detail").val();
+    login_form.append('<input hidden type="text" name="token" id="token">');
     $.ajax({
         type: "post",
         url: "/captcha/send_captcha/",
         data: data,
         dataType: "json",
         success: function (data) {
-            login_form.append('<input hidden type="text" name="token" id="token">');
+
             if (data.result) {
                 localStorage.setItem("token", data.data.token);
                 $("#token").val(data.data.token);

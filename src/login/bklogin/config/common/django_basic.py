@@ -52,7 +52,7 @@ MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -130,4 +130,4 @@ LOCALE_PATHS = (os.path.join(PROJECT_ROOT, "locale"),)
 # ==============================================================================
 AUTH_USER_MODEL = "bkauth.User"
 # 默认关闭，可配置环境变量进行开启
-TWO_REFACTOR_ENABLED = os.getenv("TWO_REFACTOR_ENABLED", False)
+TWO_REFACTOR_ENABLED = os.getenv("TWO_REFACTOR_ENABLED", True)
