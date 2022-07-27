@@ -84,6 +84,11 @@ class APIV2OKJsonResponse(APIV2BaseJsonResponse):
 # result/code/message/data
 # code is int
 
+# FIXME: /api/v3 no usage for now
+# TODO:
+# 1. remove result
+# 2. make a plan, upgrade esb to v3? and how about v2?
+
 
 class APIV3BaseJsonResponse(JsonResponse):
     def __init__(self, result, code, message, data=None):

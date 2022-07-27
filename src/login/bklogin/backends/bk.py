@@ -9,6 +9,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Tuple
+
 from blue_krill.data_types.enum import StructuredEnum
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -57,15 +59,10 @@ class BkUserBackend(ModelBackend):
     蓝鲸用户管理提供的认证
     """
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
-        # NOTE: username here maybe: username/phone/email
-        if not username or not password:
-            if password:
-                password = password[:4] + "***"
-            logger.debug("username or password empty, username=%s, password=%s", username, password)
-            return None
-
-        # FIXME: refactor here, all into a single method
+    def _parse_username(self, username: str) -> Tuple[str, str]:
+        """
+        parse the username, return the username and domain
+        """
         domain_list = get_categories_str().split(";")
 
         s_username, s_domain = _split_username(username)
@@ -75,7 +72,17 @@ class BkUserBackend(ModelBackend):
             domain = ""
 
         logger.debug("parse the domain from username, result: username=%s, domain=%s", username, domain)
+        return username, domain
 
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        # NOTE: username here maybe: username/phone/email
+        if not username or not password:
+            if password:
+                password = password[:4] + "***"
+            logger.debug("username or password empty, username=%s, password=%s", username, password)
+            return None
+
+        username, domain = self._parse_username(username)
         # 调用用户管理接口进行验证
         ok, code, message, extra_values = usermgr_api.authenticate(
             username, password, language=kwargs.get("language"), domain=domain
