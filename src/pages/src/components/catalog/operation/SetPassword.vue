@@ -217,98 +217,31 @@
               {{$t('发送随机密码')}}
             </bk-radio>
           </div>
-          <div :class="['tab-password', isEmailTemplate ? 'show-tab-color' : '']">
-            <div
-              :class="['password-header', defaultPassword.init_password_method !== 'random_via_mail' ? 'hide' : '']">
-              <bk-checkbox-group v-model="randomPasswordList">
-                <div
-                  v-for="(item, index) in checkboxInfo" :key="index"
-                  :class="['password-tab', item.status ? 'active-tab' : '']"
-                  style="margin-left: 5px;">
-                  <bk-checkbox
-                    :value="item.value"
-                    :disabled="defaultPassword.init_password_method !== 'random_via_mail'" />
-                  <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+          <notifyEditorTemplate
+            :checkbox-info="checkboxInfo"
+            :data-list="passportInfo"
+            :is-template="isEmailTemplate">
+            <template slot="label">
+              <div
+                :class="['password-header', defaultPassword.init_password_method !== 'random_via_mail' ? 'hide' : '']">
+                <bk-checkbox-group v-model="randomPasswordList">
+                  <div
+                    v-for="(item, index) in checkboxInfo" :key="index"
+                    :class="['password-tab', item.status ? 'active-tab' : '']"
+                    style="margin-left: 5px;">
+                    <bk-checkbox
+                      :value="item.value"
+                      :disabled="defaultPassword.init_password_method !== 'random_via_mail'" />
+                    <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+                  </div>
+                </bk-checkbox-group>
+                <div class="edit-info" @click="toggleEmailTemplate">
+                  <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
+                  <i :class="['bk-icon', isDropdownPassword ? 'icon-angle-up' : 'icon-angle-down']"></i>
                 </div>
-              </bk-checkbox-group>
-              <div class="edit-info" @click="toggleEmailTemplate">
-                <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
-                <i :class="['bk-icon', isDropdownPassword ? 'icon-angle-up' : 'icon-angle-down']"></i>
               </div>
-            </div>
-            <div class="password-content">
-              <div
-                class="template-config-container"
-                v-show="showEmail && isEmailTemplate"
-                data-test-id="list_emailInfo">
-                <ul class="template-config clearfix">
-                  <li class="email-block">
-                    <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
-                    <div class="email-info clearfix">
-                      <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                      <bk-input
-                        type="text" class="input-style" />
-                    </div>
-                    <div class="email-info clearfix">
-                      <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                      <bk-input
-                        type="text" class="input-style" />
-                    </div>
-                    <div class="email-info clearfix">
-                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                      <edtiorTemplate
-                        :toolbar-config="emailConfig"
-                        @updateContent="expiringEmailText" />
-                    </div>
-                  </li>
-                  <li class="email-block">
-                    <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
-                    <div class="email-info clearfix">
-                      <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                      <bk-input
-                        type="text" class="input-style" />
-                    </div>
-                    <div class="email-info clearfix">
-                      <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                      <bk-input
-                        type="text" class="input-style" />
-                    </div>
-                    <div class="email-info clearfix">
-                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                      <edtiorTemplate
-                        :toolbar-config="emailConfig"
-                        @updateContent="expiredEmailText" />
-                    </div>
-                  </li>
-                </ul>
-              </div>
-              <div
-                class="template-config-container"
-                v-show="showSms && isEmailTemplate"
-                data-test-id="list_emailInfo">
-                <ul class="template-config clearfix">
-                  <li class="email-block">
-                    <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
-                    <div class="email-info clearfix">
-                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                      <edtiorTemplate
-                        :toolbar-config="infoConfig"
-                        @updateContent="expiringSmslText" />
-                    </div>
-                  </li>
-                  <li class="email-block">
-                    <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
-                    <div class="email-info clearfix">
-                      <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                      <edtiorTemplate
-                        :toolbar-config="infoConfig"
-                        @updateContent="expiredSmsText" />
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+            </template>
+          </notifyEditorTemplate>
         </div>
         <p class="error-text" v-if="initEmailConfigError">{{$t('请完善模板内容')}}</p>
         <!-- 设置初始密码 -->
@@ -366,104 +299,33 @@
           <h4 class="title">{{$t('通知方式')}}</h4>
           <span class="star">*</span>
         </div>
-        <div :class="['tab-box', isInfoTemplate ? 'show-tab-color' : '']">
-          <div class="password-header">
-            <bk-checkbox-group v-model="defaultPassword.password_expiration_notice_methods">
-              <div
-                v-for="(item, index) in checkboxInfo" :key="index"
-                :class="['password-tab', item.status ? 'active-tab' : '']"
-                style="margin-left: 5px;">
-                <bk-checkbox
-                  :value="item.value" />
-                <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+        <notifyEditorTemplate
+          :checkbox-info="checkboxInfo"
+          :data-list="passportInfo"
+          :is-template="isInfoTemplate"
+          :expiring-email-key="'expiring_password_email_config'"
+          :expired-email-key="'expired_password_email_config'"
+          :expiring-sms-key="'expiring_password_sms_config'"
+          :expired-sms-key="'expired_password_sms_config'"
+          @handleEditorText="handleEditorText">
+          <template slot="label">
+            <div class="password-header">
+              <bk-checkbox-group v-model="defaultPassword.password_expiration_notice_methods">
+                <div
+                  v-for="(item, index) in checkboxInfo" :key="index"
+                  :class="['password-tab', item.status ? 'active-tab' : '']"
+                  style="margin-left: 5px;">
+                  <bk-checkbox :value="item.value" />
+                  <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+                </div>
+              </bk-checkbox-group>
+              <div class="edit-info" @click="toggleInfoTemplate">
+                <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
+                <i :class="['bk-icon', isDropdownInfo ? 'icon-angle-up' : 'icon-angle-down']"></i>
               </div>
-            </bk-checkbox-group>
-            <div class="edit-info" @click="toggleInfoTemplate">
-              <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
-              <i :class="['bk-icon', isDropdownInfo ? 'icon-angle-up' : 'icon-angle-down']"></i>
             </div>
-          </div>
-          <div class="password-content">
-            <div
-              class="template-config-container"
-              v-show="showEmail && isInfoTemplate"
-              data-test-id="list_emailInfo">
-              <ul class="template-config clearfix">
-                <li class="email-block">
-                  <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
-                  <div class="email-info clearfix">
-                    <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                    <bk-input
-                      type="text" class="input-style"
-                      v-model="expiringEmail.title" />
-                  </div>
-                  <div class="email-info clearfix">
-                    <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                    <bk-input
-                      type="text" class="input-style"
-                      v-model="expiringEmail.sender" />
-                  </div>
-                  <div class="email-info clearfix">
-                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                    <edtiorTemplate
-                      :toolbar-config="emailConfig"
-                      :html-text="expiringEmail.content_html"
-                      @updateContent="(html, text) => handleEditorText(html, text, 'expiring_password_email_config')" />
-                  </div>
-                </li>
-                <li class="email-block">
-                  <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
-                  <div class="email-info clearfix">
-                    <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                    <bk-input
-                      type="text" class="input-style"
-                      v-model="expiredEmail.title" />
-                  </div>
-                  <div class="email-info clearfix">
-                    <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                    <bk-input
-                      type="text" class="input-style"
-                      v-model="expiredEmail.sender" />
-                  </div>
-                  <div class="email-info clearfix">
-                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                    <edtiorTemplate
-                      :toolbar-config="emailConfig"
-                      :html-text="expiredEmail.content_html"
-                      @updateContent="(html, text) => handleEditorText(html, text, 'expired_password_email_config')" />
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <div
-              class="template-config-container"
-              v-show="showSms && isInfoTemplate"
-              data-test-id="list_emailInfo">
-              <ul class="template-config clearfix">
-                <li class="email-block">
-                  <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
-                  <div class="email-info clearfix">
-                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                    <edtiorTemplate
-                      :toolbar-config="infoConfig"
-                      :html-text="expiringSms.content_html"
-                      @updateContent="(html, text) => handleEditorText(html, text, 'expiring_password_sms_config')" />
-                  </div>
-                </li>
-                <li class="email-block">
-                  <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
-                  <div class="email-info clearfix">
-                    <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                    <edtiorTemplate
-                      :toolbar-config="infoConfig"
-                      :html-text="expiredSms.content_html"
-                      @updateContent="(html, text) => handleEditorText(html, text, 'expired_password_sms_config')" />
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+          </template>
+        </notifyEditorTemplate>
       </div>
     </div>
 
@@ -493,10 +355,10 @@
 </template>
 
 <script>
-import edtiorTemplate from '../operation/editorTemplate.vue';
+import notifyEditorTemplate from './NotifyEditorTemplate.vue';
 
 export default {
-  components: { edtiorTemplate },
+  components: { notifyEditorTemplate },
   props: {
     // add 添加用户目录 set 设置密码相关
     type: {
@@ -543,8 +405,6 @@ export default {
         times: 10,
         text: `10${this.$t('次')}`,
       }],
-      showEmail: true,
-      showSms: false,
       // 显示获取方式编辑模板
       isEmailTemplate: false,
       // 显示通知方式编辑模板
@@ -552,25 +412,6 @@ export default {
       randomPasswordList: ['send_email', 'send_sms'],
       isDropdownPassword: false,
       isDropdownInfo: false,
-      /* 邮箱工具栏配置 */
-      emailConfig: {
-        toolbarKeys: [
-          'bold', 'italic', 'color',
-          {
-            key: 'group-justify',
-            iconSvg: `<svg viewBox="0 0 1024 1024">
-              <path d="M768 793.6v102.4H51.2v-102.4h716.8z m204.8-230.4v102.4H51.2v-102.4h921.6z
-                m-204.8-230.4v102.4H51.2v-102.4h716.8zM972.8 102.4v102.4H51.2V102.4h921.6z"></path>
-            </svg>`,
-            menuKeys: ['justifyLeft', 'justifyRight', 'justifyCenter', 'justifyJustify'],
-          },
-          'insertLink',
-        ],
-      },
-      /* 短信工具栏配置 */
-      infoConfig: {
-        toolbarKeys: ['insertLink'],
-      },
       passwordDateError: false,
       passwordMustIncludes: [
         { value: 'lower', label: this.$t('小写字母') },
@@ -620,18 +461,6 @@ export default {
                     || this.initPasswordError
                     || this.initEmailConfigError
                     || this.passwordDateError;
-    },
-    expiredEmail() {
-      return this.passportInfo.expired_password_email_config || {};
-    },
-    expiringEmail() {
-      return this.passportInfo.expiring_password_email_config || {};
-    },
-    expiringSms() {
-      return this.passportInfo.expiring_password_sms_config || {};
-    },
-    expiredSms() {
-      return this.passportInfo.expired_password_sms_config || {};
     },
   },
   watch: {
@@ -766,14 +595,6 @@ export default {
     toggleInfoTemplate() {
       this.isDropdownInfo = !this.isDropdownInfo;
       this.isInfoTemplate = !this.isInfoTemplate;
-    },
-    clickEmail() {
-      this.showEmail = true;
-      this.showSms = false;
-    },
-    clickSms() {
-      this.showEmail = false;
-      this.showSms = true;
     },
     handleClickLabel(item) {
       this.checkboxInfo.map((element) => {
@@ -938,6 +759,9 @@ export default {
           }
         }
       }
+      .tab-box {
+        border: none;
+      }
     }
 
     > .auto-freeze-container, .change-password {
@@ -958,147 +782,7 @@ export default {
       }
     }
 
-    .template-config-container {
-      position: relative;
-      width: 100%;
-
-      > ul.template-config > li.email-block {
-        width: 50%;
-        float: left;
-
-        &:first-child {
-          border-right: 1px solid #dcdee5;
-        }
-
-        > .email-block-name {
-          height: 42px;
-          line-height: 42px;
-          text-align: center;
-          font-size: 14px;
-          font-weight: bold;
-          background: #fafbfd;
-        }
-
-        > .email-info {
-          font-size: 0;
-          border-top: 1px solid #dcdee5;
-          display: flex;
-
-          input,
-          textarea {
-            resize: none;
-            outline: none;
-            border: none;
-          }
-
-          .title,
-          .input-text,
-          .textarea-text {
-            font-size: 14px;
-          }
-
-          .title {
-            padding: 13px 0 10px 0;
-            width: 20%;
-            // float: left;
-            text-align: center;
-            border-right: 1px solid #dcdee5;
-
-            .star {
-              display: inline-block;
-              vertical-align: middle;
-              margin: 0 0 0 3px;
-              line-height: 19px;
-              color: #ff5e5e;
-            }
-          }
-
-          .input-text {
-            width: 80%;
-            padding: 13px 0 10px 19px;
-          }
-
-          ::v-deep .input-style {
-            width: 80%;
-            .bk-input-text .bk-form-input {
-              height: 44px;
-              border: 1px solid #fff;
-            }
-          }
-
-          .focus-editor {
-            border: 1px solid #3c96ff;
-          }
-
-          ::v-deep .textarea-text {
-            width: 80%;
-            height: 260px;
-            line-height: 20px;
-            font-size: 14px;
-            font-weight: 400;
-            word-break: break-all;
-            background: #fff;
-            overflow: hidden;
-            overflow-y: auto;
-
-            @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-
-            .bk-textarea-wrapper {
-              height: 100%;
-              border: none;
-              .bk-form-textarea {
-                height: 100%;
-                &::-webkit-scrollbar {
-                  width: 4px;
-                  background-color: transparent;
-                }
-                &::-webkit-scrollbar-thumb {
-                  border-radius: 4px;
-                  background-color: #dcdee5;
-                }
-              }
-            }
-          }
-
-          ::v-deep .bk-form-control.control-active .bk-textarea-wrapper {
-            border: 1px solid #3A84FF;
-          }
-
-          ::v-deep .markdown-box {
-            width: 80%;
-            height: 260px;
-            line-height: 20px;
-            font-size: 14px;
-            font-weight: 400;
-            word-break: break-all;
-            background: #fff;
-            overflow: hidden;
-            .toolbar-content {
-              height: 40px;
-              .w-e-toolbar {
-                background-color: #F0F2F5;
-                padding-left: 15px;
-              }
-            }
-            .editor-content {
-              width: 100%;
-              height: calc(100% - 40px);
-              overflow-y: auto;
-              @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-              .w-e-text-container .w-e-scroll {
-                overflow: inherit !important;
-              }
-            }
-          }
-        }
-      }
-    }
-    ::v-deep .tab-box {
-      border: 1px solid #3A84FF;
-    }
-
-    ::v-deep .tab-box, .tab-password {
-      width: 860px;
+    .tab-box {
       .password-header {
         display: flex;
         line-height: 50px;
@@ -1141,12 +825,6 @@ export default {
         .password-tab span:hover {
           cursor: pointer;
           color: #3a84ff;
-        }
-      }
-      .password-content {
-        padding: 20px;
-        .template-config-container {
-          border: 1px solid #dcdee5;
         }
       }
       .bk-tab-label-list .bk-tab-label-item.active:after {
