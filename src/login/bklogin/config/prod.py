@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tencent is pleased to support the open source community by making 蓝鲸智云PaaS平台社区版 (BlueKing PaaS
 Community Edition) available.
@@ -8,18 +9,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import os
+from .default import *  # noqa
+from bkuser_global.logging import LoggingType, get_logging
 
-import environ
-
-from bkuser_global.config import init_patch
-
-init_patch()
-
-env = environ.Env()
-# reading .env file
-environ.Env.read_env()
-
-PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-PROJECT_ROOT, PROJECT_MODULE_NAME = os.path.split(PROJECT_PATH)
-BASE_DIR = os.path.dirname(os.path.dirname(PROJECT_PATH))
+SITE_URL = "/login/"
+LOGIN_COMPLETE_URL = f"{HTTP_SCHEMA}://{BK_LOGIN_PUBLIC_ADDR}{SITE_URL}"
+LOGGING = get_logging(
+    logging_type=LoggingType.STDOUT, log_level=LOG_LEVEL, package_name="bkuser_core", formatter="verbose"
+)

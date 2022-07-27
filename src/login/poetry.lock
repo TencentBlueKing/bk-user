@@ -1473,7 +1473,7 @@ reference = "tencent-mirrors"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "fc8c256ec22a47e031e3c5017aebe9b387b3a05e1fdfa133f847b2d67643e817"
+content-hash = "a41ab74ed863dd5601d9b7a9b549286dcf1a2f705781d06f94fd917cae3088e3"
 
 [metadata.files]
 appnope = [
@@ -1501,8 +1501,8 @@ black = [
     {file = "black-21.12b0.tar.gz", hash = "sha256:77b80f693a569e2e527958459634f18df9b0ba2625ba4e0c2d5da5be42e6f2b3"},
 ]
 blue-krill = [
-    {file = "blue-krill-1.0.15.tar.gz", hash = "sha256:d919626e9853ae3deb39ea31f56867d38a11045c2843da5d7e3db5e4240036a3"},
-    {file = "blue_krill-1.0.15-py3-none-any.whl", hash = "sha256:1dcac31abd3afba30ccbce74135352519c4839c0f58b1775f07fbd70a97d0d51"},
+    {file = "blue-krill-1.0.15.tar.gz", hash = "md5:62c1ce7688b87434d53a16acc1bfb76a"},
+    {file = "blue_krill-1.0.15-py3-none-any.whl", hash = "md5:b15667779ec92aa47bd33ad140835851"},
 ]
 cachetools = [
     {file = "cachetools-3.1.1-py2.py3-none-any.whl", hash = "sha256:428266a1c0d36dc5aca63a2d7c5942e88c2c898d72139fca0e97fdd2380517ae"},

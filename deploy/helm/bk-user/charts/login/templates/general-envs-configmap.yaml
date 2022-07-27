@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: bk-login-general-envs
 data:
-  DJANGO_SETTINGS_MODULE: "bklogin.config.overlays.prod"
+  DJANGO_SETTINGS_MODULE: "bklogin.config.prod"
   # 登录态 Cookie 写入的域名
   BK_DOMAIN: {{ .Values.global.bkDomain }}
   BK_LOGIN_HTTP_SCHEMA: {{ .Values.global.bkDomainScheme }}
