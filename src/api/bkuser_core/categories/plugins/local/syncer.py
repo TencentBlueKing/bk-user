@@ -31,11 +31,9 @@ from .parsers import (
 )
 from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
 from bkuser_core.common.db_sync import SyncOperation
-from bkuser_core.common.error_codes import error_codes
 from bkuser_core.common.progress import progress
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
-from bkuser_core.profiles.exceptions import ProfileEmailEmpty
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
 from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import make_password_by_config
@@ -110,17 +108,14 @@ class ExcelSyncer(Syncer):
             self._sync_departments(departments)
 
         with transaction.atomic():
-            _, should_notify = make_password_by_config(self.category_id)
-            new_user_password_map = self._sync_users(self.fetcher.parser_set, user_rows)
+            should_notify_user_password_map = self._sync_users(self.fetcher.parser_set, user_rows)
             self._sync_leaders(self.fetcher.parser_set, user_rows)
 
-            # 是否发送初始化密码邮件
-        if should_notify:
-            for instance, password in new_user_password_map.items():
+        # 是否发送初始化密码邮件
+        if should_notify_user_password_map:
+            for instance, password in should_notify_user_password_map.items():
                 try:
                     send_password_by_email.delay(instance.id, raw_password=password, init=True)
-                except ProfileEmailEmpty:
-                    raise error_codes.EMAIL_NOT_PROVIDED
                 except Exception:  # pylint: disable=broad-except
                     logger.exception(
                         "failed to send init password via email. [profile.id=%s, profile.username=%s",
