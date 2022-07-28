@@ -98,6 +98,10 @@ input::-webkit-inner-spin-button {
   position: relative;
 }
 
+input::-webkit-input-placeholder {
+  color : #c4c6cc;
+}
+
 .select-text {
   display: block;
   padding: 0 30px 0 12px;
