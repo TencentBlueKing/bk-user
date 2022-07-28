@@ -28,6 +28,7 @@ urlpatterns = [
     # NOTE: 所有get_all_user/get_batch_user api应该直接调用usermgr的esb接口或者后台接口, 不应该走login
     # please use api get_all_user/get_batch_user via esb, should not from login directly
     # FIXME: move into api/urls.py => check v1/v2/v3 is called or not?
+    # FIXME: remove /login/api/v[1,2,3]/ ?
     url(
         r"^accounts/",
         include(

@@ -9,12 +9,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from enum import Enum
 from typing import Tuple
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
+from bklogin.backends.constants import BkUserCheckCodeEnum
 from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
 from bklogin.common.log import logger
 from bklogin.common.usermgr import get_categories_str
@@ -34,24 +34,6 @@ def _split_username(username):
     if length == 2:
         return parts[0], parts[1]
     return "@".join(parts[: length - 1]), parts[length - 1]
-
-
-class BkUserCheckCode(Enum):
-    """Bk user check code, defined by api module"""
-
-    # TODO: move into global code
-    USER_DOES_NOT_EXIST = 3210010
-    TOO_MANY_TRY = 3210011
-    USERNAME_FORMAT_ERROR = 3210012
-    PASSWORD_ERROR = 3210013
-    USER_EXIST_MANY = 3210014
-    USER_IS_LOCKED = 3210015
-    USER_IS_DISABLED = 3210016
-    DOMAIN_UNKNOWN = 3210017
-    PASSWORD_EXPIRED = 3210018
-    CATEGORY_NOT_ENABLED = 3210019
-    ERROR_FORMAT = 3210020
-    SHOULD_CHANGE_INITIAL_PASSWORD = 3210021
 
 
 class BkUserBackend(ModelBackend):
@@ -97,7 +79,10 @@ class BkUserBackend(ModelBackend):
 
         # 认证不通过
         if not ok:
-            if code in [BkUserCheckCode.SHOULD_CHANGE_INITIAL_PASSWORD.value, BkUserCheckCode.PASSWORD_EXPIRED.value]:
+            if code in [
+                BkUserCheckCodeEnum.SHOULD_CHANGE_INITIAL_PASSWORD.value,
+                BkUserCheckCodeEnum.PASSWORD_EXPIRED.value,
+            ]:
                 raise PasswordNeedReset(message=message, reset_password_url=extra_values.get("reset_password_url"))
             raise AuthenticationError(message=message, redirect_to=extra_values.get("redirect_to"))
 

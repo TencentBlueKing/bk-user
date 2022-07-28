@@ -26,6 +26,7 @@ class User(models.AbstractBaseUser, models.AnonymousUser):
     """Blueking User Model, It's abstract and will not create table in database"""
 
     username = db_models.CharField(primary_key=True, max_length=255)
+
     USERNAME_FIELD = "username"
 
     objects = BkUserManager()
@@ -104,7 +105,7 @@ class User(models.AbstractBaseUser, models.AnonymousUser):
         if not data:
             return False, "all the fields are None"
 
-        ok, message, _data = upsert_user(self.username, **data)
+        ok, message, _ = upsert_user(self.username, **data)
         return ok, message
 
     @property

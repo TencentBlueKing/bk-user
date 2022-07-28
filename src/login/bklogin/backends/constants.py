@@ -10,26 +10,22 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-
-from django.db import models
-from django.utils import timezone
+from enum import Enum
 
 
-class LoginLogManager(models.Manager):
-    """
-    User login log manager
-    """
+class BkUserCheckCodeEnum(Enum):
+    """Bk user check code, defined by api module"""
 
-    def record_login(self, _username, _login_browser, _login_ip, host, app_id):
-        try:
-            self.model(
-                username=_username,
-                login_browser=_login_browser,
-                login_ip=_login_ip,
-                login_host=host,
-                login_time=timezone.now(),
-                app_id=app_id,
-            ).save()
-            return (True, "login record saved success")
-        except Exception:
-            return (False, "login record saved failed")
+    # TODO: move into global code
+    USER_DOES_NOT_EXIST = 3210010
+    TOO_MANY_TRY = 3210011
+    USERNAME_FORMAT_ERROR = 3210012
+    PASSWORD_ERROR = 3210013
+    USER_EXIST_MANY = 3210014
+    USER_IS_LOCKED = 3210015
+    USER_IS_DISABLED = 3210016
+    DOMAIN_UNKNOWN = 3210017
+    PASSWORD_EXPIRED = 3210018
+    CATEGORY_NOT_ENABLED = 3210019
+    ERROR_FORMAT = 3210020
+    SHOULD_CHANGE_INITIAL_PASSWORD = 3210021

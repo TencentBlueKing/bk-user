@@ -61,8 +61,6 @@ class LoginView(View):
 
     @only_plain_xframe_options_exempt
     def get(self, request):
-        # TODO1: from django.views.decorators.clickjacking import xframe_options_exempt
-        # TODO2: should check if the request from the legal domain
         return self._login(request)
 
     @only_plain_xframe_options_exempt
@@ -86,22 +84,16 @@ def _bk_login(request):
     """
     登录页面和登录动作
     """
-    authentication_form = BkAuthenticationForm
-    # NOTE: account/login.html 为支持自适应大小的模板
-    template_name = "login.html"
-    forget_reset_password_url = f"{settings.BK_USERMGR_SAAS_URL}/reset_password"
-    token_set_password_url = ""
-
     redirect_to = request.POST.get(REDIRECT_FIELD_NAME, request.GET.get(REDIRECT_FIELD_NAME, ""))
-
     app_id = request.POST.get("app_id", request.GET.get("app_id", ""))
 
+    token_set_password_url = ""
     error_message = ""
     login_redirect_to = ""
 
     # POST
     if request.method == "POST":
-        form = authentication_form(request, data=request.POST)
+        form = BkAuthenticationForm(request, data=request.POST)
         try:
             if form.is_valid():
                 return login_success_response(request, form, redirect_to, app_id)
@@ -115,7 +107,7 @@ def _bk_login(request):
             error_message = _("账户或者密码错误，请重新输入")
     # GET
     else:
-        form = authentication_form(request)
+        form = BkAuthenticationForm(request)
 
     # NOTE: get categories from usermgr
     categories = get_categories_str()
@@ -129,13 +121,14 @@ def _bk_login(request):
         "site_name": current_site.name,
         "app_id": app_id,
         "token_set_password_url": token_set_password_url,
-        "forget_password_url": forget_reset_password_url,
+        "forget_password_url": f"{settings.BK_USERMGR_SAAS_URL}/reset_password",
         "login_redirect_to": login_redirect_to,
         "categories": categories,
         "is_plain": request.path_info == "/plain/",
     }
 
-    response = TemplateResponse(request, template_name, context)
+    # NOTE: account/login.html 为支持自适应大小的模板
+    response = TemplateResponse(request, "login.html", context)
     response = set_bk_token_invalid(request, response)
     return response
 
