@@ -29,18 +29,18 @@ class BkAuthenticationForm(AuthenticationForm):
 
         if username and password:
             # will call backend/bk.py: BkUserBackend.authenticate()
-            self._user = authenticate(
+            self.user_cache = authenticate(
                 username=username,
                 password=password,
                 language=getattr(self.request, "LANGUAGE_CODE", ""),
             )
-            if self._user is None:
+            if self.user_cache is None:
                 raise forms.ValidationError(
                     self.error_messages["invalid_login"],
                     code="invalid_login",
                     params={"username": self.username_field.verbose_name},
                 )
             else:
-                self.confirm_login_allowed(self._user)
+                self.confirm_login_allowed(self.user_cache)
 
         return self.cleaned_data
