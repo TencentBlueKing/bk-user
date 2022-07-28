@@ -87,7 +87,10 @@ class RequestBaseInfo:
         return cls(
             remote_addr=request.META.get("REMOTE_ADDR", cls.__missing_term),
             path_info=request.META.get("PATH_INFO", "None"),
-            request_id=request.META.get("HTTP_X_BKAPI_REQUEST_ID", cls.__missing_term),
+            request_id=(
+                request.META.get("HTTP_X_REQUEST_ID")
+                or request.META.get("HTTP_X_BKAPI_REQUEST_ID", cls.__missing_term)
+            ),
             query_string=request.META.get("QUERY_STRING", "None"),
             method=request.META.get("REQUEST_METHOD", cls.__missing_term),
             agent_header=request.META.get("HTTP_USER_AGENT", cls.__missing_term),
@@ -116,7 +119,7 @@ class OperatorMiddleware(MiddlewareMixin):
         setattr(request, "operator", operator)
 
         base_info.operator = operator
-        logger.info(base_info)
+        logger.debug(base_info)
         return
 
 

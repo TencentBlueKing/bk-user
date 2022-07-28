@@ -1,7 +1,7 @@
 version ?= "development"
 login_version ?= "development"
 values ?=
-image_repo ?= "mirrors.tencent.com/blueking"
+image_repo ?= "mirrors.tencent.com/build/blueking"
 chart_repo ?=
 namespace ?= "bk-user"
 test_release_name ?= "bk-user-test"

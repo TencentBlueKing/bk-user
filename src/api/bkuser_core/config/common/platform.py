@@ -8,10 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import os
 import urllib.parse
 
-from . import env
-from .django_basic import SITE_URL
+from . import PROJECT_ROOT, env
+from .django_basic import REST_FRAMEWORK, SITE_URL
 
 # ==============================================================================
 # 应用基本信息配置
@@ -85,8 +86,27 @@ IAM_CONFIG = get_iam_config(APP_ID, APP_TOKEN)
 NEED_IAM_HEADER = "HTTP_NEED_IAM"
 ACTION_ID_HEADER = "HTTP_ACTION_ID"
 
+# APIGateway相关配置
+## Open API接入APIGW后，需要对APIGW请求来源认证，使用公钥解开jwt(base64 string)
+BK_APIGW_PUBLIC_KEY = env("BK_APIGW_PUBLIC_KEY", default="")
+# NOTE: it sdk will read settings.BK_APP_CODE and settings.BK_APP_SECRET, so you should set it
+BK_APP_CODE = APP_ID
+BK_APP_SECRET = APP_TOKEN
+BK_API_URL_TMPL = env("BK_API_URL_TMPL", default="")
+BK_USER_API_URL = os.getenv("BK_USER_API_URL", "http://bkuserapi-web")
+BK_APIGW_NAME = "bk-user"
+BK_APIGW_RESOURCE_DOCS_BASE_DIR = os.path.join(PROJECT_ROOT, "resources/apigateway/docs/")
+
+
 # ===============================================================================
 # API 访问限制（暂未开启）
 # ===============================================================================
 INTERNAL_AUTH_TOKENS = {"TCwCnoiuUgPccj8y0Wx187vJBqzqddfLlm": {"username": "iadmin"}}
 ACCESS_APP_WHITE_LIST = {"bk-iam": "lLP3gabV8M0C9vbwHQwzSYJX3WumcJsDSdVNQtq6FJVCLqJX6o"}
+
+ENABLE_API_AUTH = env.bool("ENABLE_API_AUTH", default=False)
+if ENABLE_API_AUTH:
+    REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
+        "bkuser_core.enhanced_account.authentication.MultipleAuthentication",
+    )
+    AUTH_EXEMPT_PATHS = (r"/swagger/$", r"/redoc/$", r"/ping/", r"/healthz/")

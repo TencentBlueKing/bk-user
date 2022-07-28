@@ -11,8 +11,9 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import yaml
-from bkuser_shell.version_log.models import VersionLogSet
 from django.conf import settings
+
+from bkuser_shell.version_log.models import VersionLogSet
 
 logger = logging.getLogger(__name__)
 

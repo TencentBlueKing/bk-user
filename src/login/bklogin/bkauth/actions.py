@@ -16,13 +16,15 @@ import urllib.parse
 import urllib.request
 from builtins import str
 
-from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
-from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid
 from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
+
+from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
+from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid
+from bklogin.common.log import logger
 
 """
 actions for login success/fail
@@ -46,6 +48,8 @@ def login_failed_response(request, redirect_to, app_id):
 
     if query:
         redirect_url = "%s?%s" % (BK_LOGIN_URL, urllib.parse.urlencode(query))
+
+    logger.debug("login_failed_response, redirect_to=%s, app_id=%s", redirect_to, app_id)
     response = HttpResponseRedirect(redirect_url)
     response = set_bk_token_invalid(request, response)
     return response
@@ -73,8 +77,17 @@ def login_success_response(request, user_or_form, redirect_to, app_id):
     if redirect_to == "/logout/":
         redirect_to = "/console/"
 
+    logger.debug("login_success_response, username=%s, redirect_to=%s, app_id=%s", username, redirect_to, app_id)
+
     # 设置用户登录
-    auth_login(request, user)
+    try:
+        # 这个是django默认的login函数
+        auth_login(request, user)
+    except Exception:  # pylint: disable=broad-except
+        # will raise django.db.utils.DatabaseError: Save with update_fields did not affect any rows.
+        # while auth_login at the final step user_logged_in.send, but it DO NOT MATTERS!
+        logger.debug("auth_login fail", exec_info=True)
+
     # 记录登录日志
     record_login_log(request, username, app_id)
 

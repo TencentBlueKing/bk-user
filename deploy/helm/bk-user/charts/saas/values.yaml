@@ -78,10 +78,10 @@ appCode: "bk_usermgr"
 appSecret: ""
 
 image:
-  registry: mirrors.tencent.com
+  registry: hub.bktencent.com
   repository: blueking/bk-user-saas
   pullPolicy: IfNotPresent
-  tag: "v2.3.3"
+  tag: "v2.3.4-beta.28"
 
 command: []
 args: []
@@ -210,11 +210,11 @@ externalRedis:
 migration:
   images:
     busybox:
-      registry: "mirrors.tencent.com"
+      registry: "hub.bktencent.com"
       repository: blueking/busybox
       tag: "1.34.0"
     k8sWaitFor:
-      registry: "mirrors.tencent.com"
+      registry: "hub.bktencent.com"
       repository: blueking/k8s-wait-for
       tag: "v1.5.1"
 

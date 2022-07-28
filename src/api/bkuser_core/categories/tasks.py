@@ -13,6 +13,9 @@ import uuid
 from contextlib import contextmanager
 from typing import Any, Optional, Union
 
+from celery import Task
+from django.conf import settings
+
 from bkuser_core.categories.constants import SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError
 from bkuser_core.categories.loader import get_plugin_by_category
@@ -22,8 +25,6 @@ from bkuser_core.categories.utils import catch_time
 from bkuser_core.celery import app
 from bkuser_core.common.cache import clear_cache
 from bkuser_core.common.error_codes import error_codes
-from celery import Task
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -81,14 +82,29 @@ def adapter_sync(instance_id: int, operator: str, task_id: Optional[uuid.UUID] =
     if task_id is None:
         # 只有定时任务未传递 task_id
         try:
-            task_id = SyncTask.objects.register_task(category=category, operator=operator, type_=SyncTaskType.AUTO).id
+            # 查询最近的一个状态处于retrying的task;
+            # 因为register_task做了防御(如果有正在运行的, 报错, 如果运行时间超过一个小时, 会设为失效后重新建一个)
+            retrying_task = SyncTask.objects.get_crontab_retrying_task(category=category)
+            if retrying_task:
+                task_id = retrying_task.id
+            else:
+                task_id = SyncTask.objects.register_task(
+                    category=category, operator=operator, type_=SyncTaskType.AUTO
+                ).id
         except ExistsSyncingTaskError as e:
+            logger.exception("register task fail, the task is already exists")
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
     try:
         plugin = get_plugin_by_category(category)
     except ValueError:
-        logger.exception("category type<%s> is not support", category.type)
+        logger.exception(
+            "category type<%s> is not support. [instance.id=%s, operator=%s, task_id=%s]",
+            category.type,
+            instance_id,
+            operator,
+            task_id,
+        )
         raise error_codes.CATEGORY_TYPE_NOT_SUPPORTED
     except Exception:
         logger.exception(

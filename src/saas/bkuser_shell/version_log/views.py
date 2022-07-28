@@ -10,18 +10,21 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.version_log.models import VersionLog, VersionLogSet
 from bkuser_shell.version_log.utils import get_version_list
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status
 
 logger = logging.getLogger(__name__)
 
 
 class VersionLogViewSet(BkUserApiViewSet):
+    permission_classes: list = []
+
     @swagger_auto_schema(responses={status.HTTP_200_OK: VersionLogSet}, tags=["version_log"])
     def list(self, request):
         try:

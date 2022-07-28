@@ -20,6 +20,9 @@ LOGIN_EXEMPT_WHITE_LIST = (
     r"/api/v1/password/reset_by_token/$",
     r"api/footer/$",
     r"/metrics$",
+    r"/api/v2/version_logs_list/$",
+    r"/healthz/$",
+    r"/ping/$",
 )
 
 # name for bk_token in cookie
@@ -70,8 +73,7 @@ FOOTER_CONFIG = {
             "link": "https://bk.tencent.com/",
             "is_blank": True,
         },
-    ],
-    "copyright": "Copyright © 2012-2022 Tencent BlueKing. All Rights Reserved. V1.1.1",
+    ]
 }
 
 #############
@@ -79,3 +81,20 @@ FOOTER_CONFIG = {
 #############
 DRF_CROWN_RESP_CLS = "bkuser_shell.common.response.Response"
 DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
+
+# ==============================================================================
+# Sentry
+# ==============================================================================
+SENTRY_DSN = env("SENTRY_DSN", default="")
+
+# ==============================================================================
+# OTEL
+# ==============================================================================
+# tracing: otel 相关配置
+# if enable, default false
+ENABLE_OTEL_TRACE = env.bool("BKAPP_ENABLE_OTEL_TRACE", default=False)
+BKAPP_OTEL_INSTRUMENT_DB_API = env.bool("BKAPP_OTEL_INSTRUMENT_DB_API", default=True)
+BKAPP_OTEL_SERVICE_NAME = env("BKAPP_OTEL_SERVICE_NAME", default="bk-user")
+BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", default="parentbased_always_off")
+BKAPP_OTEL_BK_DATA_ID = env.int("BKAPP_OTEL_BK_DATA_ID", default=-1)
+BKAPP_OTEL_GRPC_HOST = env("BKAPP_OTEL_GRPC_HOST", default="")

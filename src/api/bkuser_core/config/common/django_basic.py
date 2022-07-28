@@ -39,6 +39,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "bkuser_global.middlewares.RequestProvider",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -65,6 +66,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "mptt",
     "django_celery_beat",
+    "django_celery_results",
     "django_prometheus",
     # core API
     "bkuser_core.apis",
@@ -77,6 +79,8 @@ INSTALLED_APPS = [
     "bkuser_core.bkiam",
     # 数据库字段翻译，需要后置于需要翻译的 Django App
     "modeltranslation",
+    # apigateway sdk
+    "apigw_manager.apigw",
 ]
 
 # ==============================================================================
@@ -155,10 +159,3 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {},
     "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser_core.apis.swagger.AutoModelTagSchema",
 }
-
-# ==============================================================================
-# Celery
-# ==============================================================================
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
-CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="bk_user")

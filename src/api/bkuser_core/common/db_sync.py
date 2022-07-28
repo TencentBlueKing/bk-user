@@ -15,8 +15,9 @@ from enum import auto
 from threading import RLock
 from typing import Any, ClassVar, List, Optional, Type
 
-from bkuser_core.common.enum import AutoLowerEnum
 from django.db import connections, models
+
+from bkuser_core.common.enum import AutoLowerEnum
 
 logger = logging.getLogger(__name__)
 

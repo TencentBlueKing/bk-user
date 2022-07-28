@@ -11,7 +11,10 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
+from rest_framework.permissions import IsAuthenticated
+
 import bkuser_sdk
+from bkuser_global.drf_crown import ResponseParams, inject_serializer
 from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
@@ -19,9 +22,6 @@ from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.organization.serializers import profiles as serializers
 from bkuser_shell.organization.utils import get_default_logo_url
-from rest_framework.permissions import IsAuthenticated
-
-from bkuser_global.drf_crown import ResponseParams, inject_serializer
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class LoginInfoViewSet(BkUserApiViewSet):
             profile = api_instance.v2_profiles_read(request.user.username)
         except Exception:  # pylint: disable=broad-except
             logger.exception(
-                "Exception when calling ProfilesApi->profiles_read<%s> \n",
+                "Exception when calling ProfilesApi->v2_profiles_read<%s> \n",
                 request.user.username,
             )
             # 兼容测试环境

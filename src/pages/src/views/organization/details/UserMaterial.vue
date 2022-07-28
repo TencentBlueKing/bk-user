@@ -60,6 +60,7 @@
               :type="passwordInputType"
               :placeholder="$t('请输入新密码')"
               :class="['editor-password',{ 'input-error': isCorrectPw }]"
+              :maxlength="32"
               v-model="newPassword"
               v-focus
               @focus="isCorrectPw = false" />
@@ -189,6 +190,10 @@ export default {
         return [];
       },
     },
+    statusMap: {
+      type: Object,
+      default: {},
+    },
   },
   data() {
     return {
@@ -242,7 +247,10 @@ export default {
       try {
         for (let i = 0; i < options.length; i++) {
           if (value === options[i].id) {
-            return options[i].value;
+            if (this.$i18n.locale === 'en') {
+              return value;
+            }
+            return this.statusMap[options[i].id];
           }
         }
       } catch (e) {

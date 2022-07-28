@@ -28,7 +28,7 @@
           <i
             class="account-msg icon-user--l"
             v-if="item.key === 'username'"
-            v-bk-tooltips="$t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头')"
+            v-bk-tooltips="usernameTips"
           ></i>
           <i
             class="account-msg icon-user--l"
@@ -44,7 +44,11 @@
             :item="item"
             :edit-status="editStatus" />
           <InputDate v-else-if="item.type === 'timer'" :item="item" :edit-status="editStatus" />
-          <InputSelect v-else-if="item.type.indexOf('enum') !== -1" :item="item" :edit-status="editStatus" />
+          <InputSelect
+            v-else-if="item.type.indexOf('enum') !== -1"
+            :item="item"
+            :edit-status="editStatus"
+            :status-map="statusMap" />
         </div>
       </li>
     </ul>
@@ -74,6 +78,19 @@ export default {
       type: Array,
       required: true,
     },
+    statusMap: {
+      type: Object,
+      default: {},
+    },
+  },
+  data() {
+    return {
+      usernameTips: {
+        width: 500,
+        placement: 'top-middle',
+        content: this.$t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
+      },
+    };
   },
 };
 </script>
@@ -149,5 +166,8 @@ export default {
       color: #ea3636;
     }
   }
+}
+.tips-style {
+  color: #ea3636;
 }
 </style>

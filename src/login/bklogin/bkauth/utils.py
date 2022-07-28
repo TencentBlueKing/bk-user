@@ -10,7 +10,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
 
 import datetime
 import time
@@ -18,14 +17,15 @@ import unicodedata
 import urllib.parse
 from urllib.parse import urlparse
 
-from bklogin.bkaccount.models import BkToken, LoginLog
-from bklogin.common.encrypt import salt
-from bklogin.common.log import logger
-from bklogin.common.utils.basic import escape_html_return_msg
 from blue_krill.encrypt.handler import EncryptHandler
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import ugettext as _
+
+from bklogin.bkaccount.models import BkToken, LoginLog
+from bklogin.common.encrypt import salt
+from bklogin.common.log import logger
+from bklogin.common.utils.basic import escape_html_return_msg
 
 BK_COOKIE_AGE = settings.BK_COOKIE_AGE
 BK_INACTIVE_COOKIE_AGE = settings.BK_INACTIVE_COOKIE_AGE
@@ -129,6 +129,7 @@ def validate_bk_token(data):
     # 验证Token参数
     is_valid, username = is_bk_token_valid(bk_token)
     if not is_valid:
+        logger.debug("bk_token %s not valid, %s", bk_token, username)
         return False, None, username
 
     # TODO: ? use usermgr get user check if user exists?

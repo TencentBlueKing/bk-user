@@ -10,9 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 from dataclasses import dataclass, field
 
-from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
-
 from .models import Setting
+from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 
 
 @dataclass

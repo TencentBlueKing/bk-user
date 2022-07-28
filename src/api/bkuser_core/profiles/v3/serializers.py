@@ -8,11 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_core.apis.v3.serializers import StringArrayField
-from bkuser_core.departments.serializers import SimpleDepartmentSerializer
-from bkuser_core.profiles.v2.serializers import LeaderSerializer
-from rest_framework.fields import BooleanField, CharField, IntegerField, JSONField
+from rest_framework.fields import BooleanField, CharField, DateTimeField, IntegerField, JSONField
 from rest_framework.serializers import Serializer
+
+from bkuser_core.apis.v3.serializers import StringArrayField
+from bkuser_core.departments.v3.serializers import DepartmentSerializer
+from bkuser_core.profiles.v2.serializers import LeaderSerializer
 
 
 class ProfileSerializer(Serializer):
@@ -31,6 +32,14 @@ class ProfileSerializer(Serializer):
     position = CharField(required=False, help_text="职位")
     enabled = BooleanField(required=False, help_text="是否启用", default=True)
     extras = JSONField(required=False, help_text="扩展字段")
+    password_valid_days = IntegerField(required=False, help_text="密码有效期")
+    country_code = CharField(required=False, help_text="国家码")
+    iso_code = CharField(required=False, help_text="国家码")
+    time_zone = CharField(required=False, help_text="时区")
+
+    last_login_time = DateTimeField(required=False, help_text="最后登录时间")
+    create_time = DateTimeField(required=False, help_text="创建时间")
+    update_time = DateTimeField(required=False, help_text="更新时间")
 
 
 # ------------
@@ -44,9 +53,14 @@ class QueryProfileSerializer(ProfileSerializer):
     departments = StringArrayField(required=False, help_text="部门id列表")
     leaders = StringArrayField(required=False, help_text="上级id列表")
 
+    username__in = StringArrayField(required=False, help_text="用户名列表")
+    staff_status__in = StringArrayField(required=False, help_text="在职状态列表")
+    status__in = StringArrayField(required=False, help_text="账户状态列表")
+
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
 
+        # leaders 更符合规范，兼容 leader
         if "leaders" in data:
             data["leader"] = data.pop("leaders")
 
@@ -59,7 +73,7 @@ class QueryProfileSerializer(ProfileSerializer):
 class ResultProfileSerializer(ProfileSerializer):
     """返回用户 profile"""
 
-    departments = SimpleDepartmentSerializer(many=True, required=False, help_text="部门列表")
+    departments = DepartmentSerializer(many=True, required=False, help_text="部门列表")
     leaders = LeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
 
 

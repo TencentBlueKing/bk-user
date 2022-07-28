@@ -9,18 +9,14 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser_core.profiles.password import PasswordValidator, get_element_by_name
 from rest_framework.exceptions import ValidationError
+
+from bkuser_core.profiles.password import PasswordValidator
 
 
 class TestPasswordValidate:
-    @pytest.mark.parametrize("case", ["aaa"])
-    def test_get_unknown_element(self, case):
-        with pytest.raises(ValueError):
-            get_element_by_name(case)
-
     @pytest.mark.parametrize(
-        "required_elements,test_case",
+        "include_elements,test_case",
         [
             (["upper"], "DDDD"),
             (["lower"], "dddd"),
@@ -33,12 +29,14 @@ class TestPasswordValidate:
             (["lower", "int", "special", "upper"], "1dD*"),
         ],
     )
-    def test_pass(self, required_elements, test_case):
-        pv = PasswordValidator(max_length=6, min_length=4, required_element_names=required_elements)
+    def test_include(self, include_elements, test_case):
+        pv = PasswordValidator(
+            max_length=6, min_length=4, include_elements=include_elements, exclude_elements_config={}
+        )
         pv.validate(test_case)
 
     @pytest.mark.parametrize(
-        "required_elements,test_case",
+        "include_elements,test_case",
         [
             # 即使包含，但是超长
             (["upper"], "dDDdfaslkj;;lkjl89798761"),
@@ -56,7 +54,56 @@ class TestPasswordValidate:
             (["int", "special", "upper"], "Ddkfa88ljD"),
         ],
     )
-    def test_not_pass(self, required_elements, test_case):
-        pv = PasswordValidator(max_length=12, min_length=8, required_element_names=required_elements)
+    def test_include_fail(self, include_elements, test_case):
+        pv = PasswordValidator(
+            max_length=6, min_length=4, include_elements=include_elements, exclude_elements_config={}
+        )
+        with pytest.raises(ValidationError):
+            pv.validate(test_case)
+
+    @pytest.mark.parametrize(
+        "include_elements,exclude_elements,max_length,test_case",
+        [
+            (["lower"], ["alphabet_seq", "special_seq", "num_seq"], 3, "a@#b12dc*(12&*"),
+            (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], 3, "ab@#bb122ddc*(112&**"),
+        ],
+    )
+    def test_exclude(self, include_elements, exclude_elements, max_length, test_case):
+
+        # 由于指定了 custom_regex，这里的长度和内置验证规则不再生效
+        pv = PasswordValidator(
+            max_length=20,
+            min_length=4,
+            include_elements=include_elements,
+            exclude_elements_config={e: max_length for e in exclude_elements},
+        )
+        pv.validate(test_case)
+
+    @pytest.mark.parametrize(
+        "include_elements,exclude_elements,max_length,test_case",
+        [
+            (["lower"], ["alphabet_seq"], 3, "ABcd"),
+            (["lower"], ["alphabet_seq"], 2, "abdc"),
+            (["lower"], ["special_seq"], 3, "qwfasd^&*asd"),
+            (["lower"], ["special_seq"], 3, "!@#132Qss5"),
+            (["lower"], ["keyboard_seq"], 3, "asdfjfudieasdf"),
+            (["lower"], ["keyboard_seq"], 3, "1qaz98*&fjwla%"),
+            (["lower"], ["num_seq"], 2, "ncvkahei&593))12"),
+            (["upper"], ["alphabet_seq", "special_seq", "num_seq"], 3, "a@#b12dc*(12&*"),
+            (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], 3, "a@##b1222dc*(12&**"),
+            (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], 3, "a@##BbB12dc*(12&**"),
+            (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], 3, "a@###b122dc*(12&**"),
+            (["lower"], ["alphabet_seq", "special_seq", "num_seq", "duplicate_char"], "3", "a@###b122dc*(12&**"),
+        ],
+    )
+    def test_exclude_fail(self, include_elements, exclude_elements, max_length, test_case):
+
+        # 由于指定了 custom_regex，这里的长度和内置验证规则不再生效
+        pv = PasswordValidator(
+            max_length=20,
+            min_length=4,
+            include_elements=include_elements,
+            exclude_elements_config={e: max_length for e in exclude_elements},
+        )
         with pytest.raises(ValidationError):
             pv.validate(test_case)

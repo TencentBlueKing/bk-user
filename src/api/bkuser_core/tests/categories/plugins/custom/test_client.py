@@ -12,10 +12,11 @@ import json
 from unittest.mock import patch
 
 import pytest
+from requests import Request, Response
+
 from bkuser_core.categories.plugins.custom.client import CustomDataClient
 from bkuser_core.categories.plugins.custom.exceptions import CustomAPIRequestFailed
 from bkuser_core.categories.plugins.custom.models import CustomTypeList
-from requests import Request, Response
 
 pytestmark = pytest.mark.django_db
 
@@ -91,9 +92,9 @@ class TestClient:
             (
                 [
                     {
+                        # "code": "code-1",
                         "username": "fake-user",
                         "email": "fake@test.com",
-                        "code": "code-1",
                         "extras": {"aaa": "xxxx", "bbb": "qqqq", "uniquetest": "vvvv"},
                         "position": 0,
                     }

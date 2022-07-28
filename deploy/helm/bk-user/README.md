@@ -26,7 +26,7 @@ helm repo update
 
 ### 准备 `values.yaml`
 
-#### 1. 获取蓝鲸平台访问地址 
+#### 1. 获取蓝鲸平台访问地址
 首先，你需要获取到蓝鲸平台的访问地址，例如 `https://paas.example.com`，确保 `https://paas.example.com/login` 可以访问蓝鲸登录，然后将该值的内容填入全局环境变量中。
 
 配置示例：
@@ -40,6 +40,8 @@ api:
   bkIamUrl: "http://bkiam.example.com"
   bkPaasUrl: "http://paas.example.com"
   bkComponentApiUrl: "http://bkapi.example.com"
+  bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
+  bkApigatewayPublicKey: ""
 
 saas:
   enabled: true
@@ -86,19 +88,19 @@ login:
 ```yaml
 api:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-user-api
     tag: "v2.3.1"
 
 saas:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-user-saas
     tag: "v2.3.1"
 
 login:
   image:
-    registry: mirrors.tencent.com
+    registry: hub.bktencent.com
     repository: blueking/bk-login
     tag: "v2.3.1"
 ```
@@ -165,7 +167,7 @@ login:
 
 mariadb:
   enabled: false
-  
+
 redis:
   enabled: false
 ```
@@ -202,13 +204,73 @@ global:
 默认未开启，如需开启请将 `global.serviceMonitor.enabled` 设置为 true。
 
 ##### `values.yaml` 配置示例：
+
 ```yaml
 global:
   serviceMonitor:
     enabled: true
 ```
 
-### 9. 安装
+### 9. 配置sentry
+
+```yaml
+global:
+  ## sentry dsn
+  sentryDsn: "http://12927b5f211046b575ee51fd8b1ac34f@{SENTRY_DOMAIN}/{PROJECT_ID}"
+```
+
+### 10. 开启api auth
+
+默认值是true, 可以关闭, 关闭之后用户管理 API 将不受任何保护
+
+开启之后, 只能通过 ESB 访问用户管理接口
+
+注意, 配置文件中下面两个值必须一致, 并且如果开启, login必须配置组件访问地址`bkLoginApiAuthEnabled`
+
+```yaml
+global:
+  ## 是否开启 API AUTH, 默认开启
+  enableApiAuth: true
+
+login:
+  # Login API Auth Enabled 登录是否开启了 API 认证
+  bkLoginApiAuthEnabled : true
+  # 蓝鲸 ESB/APIGATEWAY url，注意集群内外都是统一域名。集群内可以配置域名解析到内网ip
+  bkComponentApiUrl: "http://bkapi.example.com"
+```
+
+### 11. 环境变量注入
+
+
+```yaml
+api:
+  env:
+    - name: "THE_VAR_NAME"
+      value: ""
+
+saas:
+  env:
+    - name: "THE_VAR_NAME"
+      value: ""
+
+login:
+  env:
+    - name: "THE_VAR_NAME"
+      value: ""
+```
+
+例如, 开启api的ldap3调试(注意此时需要同时设置环境变量`LOG_LEVEL=DEBUG`)
+
+```yaml
+api:
+  env:
+    - name: "LOG_LEVEL"
+      value: "DEBUG"
+    - name: "ENABLE_LDAP3_DEBUG"
+      value: true
+```
+
+### 12. 安装
 
 如果你已经准备好了 `values.yaml`，就可以直接进行安装操作了
 
@@ -226,7 +288,7 @@ helm install bk-user bk-user -n bk-user -f values.yaml
 ```bash
 # 获取所有 controller
 kubectl get deploy,job,sts -l app.kubernetes.io/instance=bk-user
-# 获取所有 Pod 
+# 获取所有 Pod
 kubectl get pod -l app.kubernetes.io/instance=bk-user
 # 获取访问入口
 kubectl get svc,ingress -l app.kubernetes.io/instance=bk-user
@@ -234,7 +296,7 @@ kubectl get svc,ingress -l app.kubernetes.io/instance=bk-user
 
 通常在安装后，我们会看到这些 Pod
 
-| Pod 前缀                  | 所属模块      | 作用          | 
+| Pod 前缀                  | 所属模块      | 作用          |
 |-------------------------|-----------|-------------|
 | bk-login-web            | 蓝鲸登录      | 主进程         |
 | bk-login-migrate-db     | 蓝鲸登录      | 初始化数据库作业    |

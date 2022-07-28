@@ -11,12 +11,13 @@ specific language governing permissions and limitations under the License.
 import logging
 import re
 
-from bkuser_shell.account.components.bk_token.forms import AuthenticationForm
-from bkuser_shell.account.conf import ConfFixture
-from bkuser_shell.account.handlers.response import ResponseHandler
 from django.conf import settings
 from django.contrib import auth
 from django.utils.deprecation import MiddlewareMixin
+
+from bkuser_shell.account.components.bk_token.forms import AuthenticationForm
+from bkuser_shell.account.conf import ConfFixture
+from bkuser_shell.account.handlers.response import ResponseHandler
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class LoginRequiredMiddleware(MiddlewareMixin):
 
         for white_url in settings.LOGIN_EXEMPT_WHITE_LIST:
             if re.search(white_url, request.path):
-                logger.info("%s path in white_url<%s>, exempting login", request.path, white_url)
+                logger.debug("%s path in white_url<%s>, exempting login", request.path, white_url)
                 return None
 
         form = AuthenticationForm(request.COOKIES)

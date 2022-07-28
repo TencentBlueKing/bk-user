@@ -33,13 +33,32 @@ except ImproperlyConfigured:
 # 探针配置
 # ==============================================================================
 COMMON_HEALTHZ_TOKEN = "56f17d8034234e92801ab59479e1259d"
-HEALTHZ_PROBES: list = []
+HEALTHZ_PROBES: list = ["bkuser_core.monitoring.probes.DefaultDBProbe"]
+
+# ==============================================================================
+# Sentry
+# ==============================================================================
+SENTRY_DSN = env("SENTRY_DSN", default="")
+
+# ==============================================================================
+# OTEL
+# ==============================================================================
+# tracing: otel 相关配置
+# if enable, default false
+ENABLE_OTEL_TRACE = env.bool("BKAPP_ENABLE_OTEL_TRACE", default=False)
+BKAPP_OTEL_INSTRUMENT_DB_API = env.bool("BKAPP_OTEL_INSTRUMENT_DB_API", default=True)
+BKAPP_OTEL_SERVICE_NAME = env("BKAPP_OTEL_SERVICE_NAME", default="bk-user")
+BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", default="parentbased_always_off")
+BKAPP_OTEL_BK_DATA_ID = env.int("BKAPP_OTEL_BK_DATA_ID", default=-1)
+BKAPP_OTEL_GRPC_HOST = env("BKAPP_OTEL_GRPC_HOST", default="")
 
 # ==============================================================================
 # 全局应用配置
 # ==============================================================================
 
 # 强制数据返回格式为原生格式 请求头
+#### 1. SaaS调用api
+#### 2. for_sync场景从一个用户管理同步数据到另一个用户管理中使用
 FORCE_RAW_RESPONSE_HEADER = "HTTP_FORCE_RAW_RESPONSE"
 # 强制返回原始用户名（不带登陆域）请求头
 FORCE_RAW_USERNAME_HEADER = "HTTP_RAW_USERNAME"
@@ -70,6 +89,12 @@ MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=2000)
 LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)
 
 DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
+
+# sync, 用户管理本身做业务 HTTP API 数据源, 可以被另一个用户管理同步过去
+# 复用 API, 接口参数中存在 SYNC_API_PARAM 时, 以sync的接口协议返回
+SYNC_API_PARAM = "for_sync"
+
+
 # ==============================================================================
 # 开发调试
 # ==============================================================================
@@ -78,6 +103,9 @@ ENABLE_PROFILING = False
 
 # 是否使用进度条(本地开发方便)
 USE_PROGRESS_BAR = False
+
+# 是否开启ldap3 debug
+ENABLE_LDAP3_DEBUG = env.bool("ENABLE_LDAP3_DEBUG", default=False)
 
 # ==============================================================================
 # 数据同步

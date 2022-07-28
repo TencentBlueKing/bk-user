@@ -12,10 +12,12 @@ specific language governing permissions and limitations under the License.
 
 from __future__ import absolute_import, unicode_literals
 
-from bklogin.common.log import logger
 from django.conf import settings
 
-from .http import http_get, http_post
+from .util import _remove_sensitive_info
+from bklogin.common.log import logger
+from bklogin.components.esb import _call_esb_api
+from bklogin.components.http import http_get, http_post
 
 """
 usermgr api
@@ -25,25 +27,31 @@ BK_USERMGR_HOST = settings.BK_USERMGR_API_URL
 
 
 def _call_usermgr_api(http_func, url, data, headers=None):
-    # TODO: 后续添加Token Header进行服务间认证
     try:
-        ok, _data = http_func(url, data, headers=headers)
+        ok, resp_data = http_func(url, data, headers=headers)
         if not ok:
-            return False, -1, "verify from usermgr server fail", None
+            return False, -1, "verify from usermgr server fail: %s" % resp_data.get("error"), None
     except Exception:
-        logger.exception("_call_usermgr_api fail: url=%s, data=%s", url, data)
-        return False, -1, "verify from usermgr server fail", None
+        logger.exception(
+            "_call_usermgr_api fail: method=%s, url=%s, data=%s", http_func.__name__, url, _remove_sensitive_info(data)
+        )
+        return False, -1, "verify from usermgr server fail, error happended", None
 
-    if not _data.get("result"):
-        if data and "password" in data:
-            data["password"] = "******"
-        logger.info("_call_usermgr_api fail: url=%s, data=%s, _data=%s", url, data, _data)
-        return False, _data.get("code", -1), _data.get("message", "usermgr api fail"), _data.get("data")
+    # TODO: still use the result to verify?
+    if not resp_data.get("result"):
+        logger.info(
+            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s",
+            http_func.__name__,
+            url,
+            _remove_sensitive_info(data),
+            resp_data,
+        )
+        return False, resp_data.get("code", -1), resp_data.get("message", "usermgr api fail"), resp_data.get("data")
 
-    return True, 0, "ok", _data.get("data")
+    return True, 0, "ok", resp_data.get("data")
 
 
-def authenticate(username, password, language="", domain=""):
+def direct_authenticate(username, password, language="", domain=""):
     """
     认证用户名和密码
     username: 用户名、电话号码、邮箱三选一，如果存在重名，会验证失败
@@ -70,7 +78,7 @@ def authenticate(username, password, language="", domain=""):
     return ok, code, message, _data or {}
 
 
-def batch_query_users(username_list=[], is_complete=False):
+def direct_batch_query_users(username_list=[], is_complete=False):
     """
     批量获取用户，可以获取所有
     """
@@ -86,7 +94,7 @@ def batch_query_users(username_list=[], is_complete=False):
     return ok, message, _data
 
 
-def upsert_user(username, **kwargs):
+def direct_upsert_user(username, **kwargs):
     """
     创建或更新用户
     主要用于ee_login，企业第三方应用某些情况下需要支持将用户存储到用户管理
@@ -102,7 +110,7 @@ def upsert_user(username, **kwargs):
     return ok, message, _data
 
 
-def get_categories():
+def direct_get_categories():
     path = "/api/v2/categories/"
     url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
 
@@ -117,3 +125,111 @@ def get_categories():
     if "results" in _data:
         _data = _data["results"]
     return ok, message, _data
+
+
+def direct_get_profile_by_code(code, fields="username"):
+    path = "/api/v2/profiles/{code}/".format(code=code)
+    url = "{host}{path}".format(host=BK_USERMGR_HOST, path=path)
+
+    data = {"fields": fields, "lookup_field": "code"}
+
+    ok, _, message, _data = _call_usermgr_api(http_get, url, data)
+    return ok, message, _data
+
+
+def esb_authenticate(username, password, language="", domain=""):
+    """
+    认证用户名和密码
+    username: 用户名、电话号码、邮箱三选一，如果存在重名，会验证失败
+    """
+    path = "/api/c/compapi/v1/usermanage/login/check/"
+
+    data = {
+        "username": username,
+        "password": password,
+    }
+    if domain:
+        data["domain"] = domain
+
+    ok, code, message, _data = _call_esb_api(http_post, path, data)
+    return ok, code, message, _data or {}
+
+
+def esb_batch_query_users(username_list=[], is_complete=False):
+    """
+    批量获取用户，可以获取所有
+    """
+    path = "/api/c/compapi/v1/usermanage/login/profile/query/"
+
+    data = {
+        "username_list": username_list,
+        "is_complete": is_complete,
+    }
+
+    ok, _, message, _data = _call_esb_api(http_post, path, data)
+    return ok, message, _data
+
+
+def esb_upsert_user(username, **kwargs):
+    """
+    创建或更新用户
+    主要用于ee_login，企业第三方应用某些情况下需要支持将用户存储到用户管理
+    """
+    path = "/api/c/compapi/v1/usermanage/login/profile/"
+
+    data = {
+        "username": username,
+    }
+    data.update(kwargs)
+    # ok, _, message, _data = _call_usermgr_api(http_post, url, data)
+    ok, _, message, _data = _call_esb_api(http_post, path, data)
+    return ok, message, _data
+
+
+def esb_get_categories():
+    path = "/api/c/compapi/v2/usermanage/list_categories/"
+
+    data = {
+        "no_page": True,
+        "fields": "domain,id,default",
+        "lookup_field": "enabled",
+        "exact_lookups": True,
+    }
+
+    ok, _, message, _data = _call_esb_api(http_get, path, data)
+    return ok, message, _data
+
+
+def esb_get_profile_by_code(code, fields="username"):
+    path = "/api/c/compapi/v2/usermanage/retrieve_user/"
+
+    data = {
+        "id": code,
+        "lookup_field": "code",
+        "fields": fields,
+    }
+
+    ok, _, message, _data = _call_esb_api(http_get, path, data)
+    return ok, message, _data
+
+
+if settings.BK_LOGIN_API_AUTH_ENABLED:
+    message = "bk_login api auth enabled=True, will call usermgr api via esb"
+    print(message)
+    logger.debug(message)
+
+    authenticate = esb_authenticate
+    batch_query_users = esb_batch_query_users
+    upsert_user = esb_upsert_user
+    get_categories = esb_get_categories
+    get_profile_by_code = esb_get_profile_by_code
+else:
+    message = "bk_login api auth enabled=False, will call usermgr api directly"
+    print(message)
+    logger.debug(message)
+
+    authenticate = direct_authenticate
+    batch_query_users = direct_batch_query_users
+    upsert_user = direct_upsert_user
+    get_categories = direct_get_categories
+    get_profile_by_code = direct_get_profile_by_code

@@ -10,9 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 from dataclasses import dataclass
 
-from bkuser_core.common.error_codes import error_codes
-
 from .exceptions import LoginCheckFailed
+from bkuser_core.common.error_codes import error_codes
 
 
 @dataclass

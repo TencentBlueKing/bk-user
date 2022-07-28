@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 import urllib.parse
 
+from django.conf import settings
+
 from bkuser_core.celery import app
 from bkuser_core.common.notifier import send_mail
 from bkuser_core.profiles import exceptions
@@ -18,7 +20,6 @@ from bkuser_core.profiles.constants import PASSWD_RESET_VIA_SAAS_EMAIL_TMPL
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.utils import make_passwd_reset_url_by_token
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +34,11 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
     try:
         profile = Profile.objects.get(id=profile_id)
     except Exception:
-        logger.exception("get profile<%s> failed during send mail")
+        logger.exception("get profile<id=%s> failed during send mail", profile_id)
         raise
 
     if not profile.email:
-        logger.exception("profiles<%s> has no valid email", profile.username)
+        logger.exception("profiles<username=%s> has no valid email", profile.username)
         raise exceptions.ProfileEmailEmpty
 
     config_loader = ConfigProvider(profile.category_id)

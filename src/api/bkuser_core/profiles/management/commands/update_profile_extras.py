@@ -10,8 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser_core.profiles.models import Profile
 from django.core.management.base import BaseCommand
+
+from bkuser_core.profiles.models import Profile
 
 logger = logging.getLogger(__name__)
 

@@ -12,13 +12,14 @@ import logging
 from dataclasses import dataclass
 from typing import Optional
 
+from django.db import transaction
+
 from bkuser_core.categories.plugins.base import Syncer, SyncStep
 from bkuser_core.categories.plugins.custom.client import CustomDataClient, CustomTypeList
 from bkuser_core.categories.plugins.custom.helpers import init_helper
 from bkuser_core.categories.plugins.custom.metas import CustomDepartmentMeta, CustomProfileMeta
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 

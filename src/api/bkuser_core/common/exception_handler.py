@@ -9,18 +9,20 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+import traceback
 
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from django.core.exceptions import PermissionDenied
 from django.db import ProgrammingError
 from django.http import Http404
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import exception_handler
+from sentry_sdk import capture_exception
 
 from .error_codes import CoreAPIError
 from .http import exist_force_raw_header
+from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +44,30 @@ def custom_exception_handler(exc, context):
     #     # Only presents in ValidationError
     #     "fields_detail": {"field1": ["error message"]}
     # }
+    # extra details
+    detail = {
+        "error": "unknown",
+    }
+    if context:
+        try:
+            req = context.get("request")
+            detail["path"] = req.path
+            detail["method"] = req.method
+            detail["query_params"] = req.query_params
+            detail["request_id"] = req.headers.get("X-Request-Id")
+            if hasattr(req, "bk_app_code"):
+                detail["bk_app_code"] = req.bk_app_code
+        except Exception:  # pylint: disable=broad-except
+            # do nothing if get extra details fail
+            pass
+
     if exist_force_raw_header(context["request"]):
-        return get_raw_exception_response(exc, context)
+        return get_raw_exception_response(exc, context, detail)
     else:
-        return get_ee_exception_response(exc, context)
+        return get_ee_exception_response(exc, context, detail)
 
 
-def get_ee_exception_response(exc, context):
+def get_ee_exception_response(exc, context, detail):
     """针对企业版异常返回封装"""
     data = {"result": False, "data": None, "code": -1}
 
@@ -68,7 +87,11 @@ def get_ee_exception_response(exc, context):
     elif isinstance(exc, AuthenticationFailed):
         data["message"] = "403, authentication failed"
     else:
-        logger.exception("request apiServer failed")
+        # log
+        logger.exception("unknown exception while handling the request, detail=%s", detail)
+        # report to sentry
+        capture_exception(exc)
+        # build response
         data["message"] = UNKNOWN_ERROR_HINT
         data["code"] = -1
 
@@ -79,7 +102,6 @@ def get_ee_exception_response(exc, context):
             setattr(response, "from_exception", True)
             return response
 
-    logger.exception("request apiServer failed")
     response = Response(data=data, status=EE_GENERAL_STATUS_CODE)
     setattr(response, "from_exception", True)
     return response
@@ -100,7 +122,7 @@ def one_line_error(detail):
         return "参数格式错误"
 
 
-def get_raw_exception_response(exc, context):
+def get_raw_exception_response(exc, context, detail):
     if isinstance(exc, ValidationError):
         data = {
             "code": "VALIDATION_ERROR",
@@ -122,11 +144,25 @@ def get_raw_exception_response(exc, context):
         data = {"code": "PROGRAMMING_ERROR", "detail": UNKNOWN_ERROR_HINT}
         return Response(data, status=HTTP_400_BAD_REQUEST, headers={})
 
+    # log
+    logger.exception("unknown exception while handling the request, detail=%s", detail)
+    # report to sentry
+    capture_exception(exc)
+
     # Call REST framework's default exception handler to get the standard error response.
     response = exception_handler(exc, context)
     # Use a default error code
     if response is not None:
         response.data.update(code="ERROR")
         setattr(response, "from_exception", True)
+        return response
 
+    # NOTE: 不暴露给前端, 只打日志, 所以不放入data.detail
+    # error detail
+    if exc is not None:
+        detail["error"] = traceback.format_exc()
+
+    data = {"result": False, "data": detail, "code": -1, "message": UNKNOWN_ERROR_HINT}
+    response = Response(data=data, status=HTTP_500_INTERNAL_SERVER_ERROR)
+    setattr(response, "from_exception", True)
     return response

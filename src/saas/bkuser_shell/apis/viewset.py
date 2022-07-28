@@ -14,15 +14,16 @@ import math
 from collections import OrderedDict
 from typing import Callable, Optional
 
-from bkuser_shell.common.core_client import get_api_client
-from bkuser_shell.common.response import Response
 from django.conf import settings
 from django.utils.translation import get_language
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
+from bkuser_global.local import local
 from bkuser_global.utils import force_str_2_bool
+from bkuser_shell.common.core_client import get_api_client
+from bkuser_shell.common.response import Response
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,9 @@ class BkUserApiViewSet(GenericViewSet):
 
         return ip
 
-    def _prepare_headers(self, request, force_action_id: str = "", no_auth: bool = False):
+    def _prepare_headers(
+        self, request, force_action_id: str = "", no_auth: bool = False, user_from_token: bool = False
+    ):
         """构建通用 Headers"""
         headers = make_default_headers(request.user.username)
         ip = self.get_client_ip(request)
@@ -90,12 +93,20 @@ class BkUserApiViewSet(GenericViewSet):
                     settings.API_FORCE_NO_CACHE_HEADER_NAME: True,
                 }
             )
+        if user_from_token:
+            headers.update(
+                {
+                    "user_from_token": True,
+                }
+            )
 
         return headers
 
-    def get_api_client_by_request(self, request, force_action_id: str = "", no_auth: bool = False):
+    def get_api_client_by_request(
+        self, request, force_action_id: str = "", no_auth: bool = False, user_from_token: bool = False
+    ):
         """从 request 中获取 api client"""
-        return get_api_client(self._prepare_headers(request, force_action_id, no_auth))
+        return get_api_client(self._prepare_headers(request, force_action_id, no_auth, user_from_token))
 
     @staticmethod
     def get_paging_results(list_func: Callable, page_size: int = 50, **kwargs) -> list:
@@ -127,11 +138,18 @@ class BkUserApiViewSet(GenericViewSet):
 
         return paging_results
 
+    def get_api_path(self, request) -> str:
+        """获取真实 API Path"""
+        if settings.SITE_URL == "/":
+            return request.path
+
+        return "/" + request.path.replace(settings.SITE_URL, "")
+
     def call_through_api(self, request):
         client = self.get_api_client_by_request(request)
 
         urllib3_resp = client.call_api(
-            resource_path=request.path,
+            resource_path=self.get_api_path(request),
             method=request.method,
             body=request.data,
             query_params=request.query_params,
@@ -152,7 +170,12 @@ def make_default_headers(operator: str) -> dict:
         settings.API_OPERATOR_HEADER_NAME: operator,
         settings.API_FORCE_RAW_RESP_HEADER_NAME: True,
         settings.API_FORCE_RAW_USERNAME_HEADER_NAME: True,
-        # SaaS 和 API 之间交互，走私有 token
+        # SaaS 和 API 之间交互，走私有 token NOTE: 暂时还是放着, 没有完全所有环境切完之前需要兼容
         settings.API_AUTH_TOKEN_PAIR[0]: settings.API_AUTH_TOKEN_PAIR[1],
+        # FIXME: 这里有个问题, SaaS 跟 API 在二进制版本, 其app_code/app_secret是不一致的
+        # use app_code + app_secret as the new auth between saas and api
+        settings.API_APP_CODE_HEADER_NAME: settings.APP_ID,
+        settings.API_APP_SECRET_HEADER_NAME: settings.APP_TOKEN,
         "Accept-Language": get_language(),
+        "X-Request-ID": local.request_id,
     }

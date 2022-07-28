@@ -13,14 +13,6 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Type
 
-from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
-from bkuser_core.common.db_sync import SyncOperation
-from bkuser_core.common.progress import progress
-from bkuser_core.departments.models import Department, DepartmentThroughModel
-from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
-from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
-from bkuser_core.profiles.utils import make_password_by_config
-from bkuser_core.user_settings.loader import ConfigProvider
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
@@ -36,6 +28,14 @@ from .parsers import (
     PhoneNumberParser,
     UsernameCellParser,
 )
+from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
+from bkuser_core.common.db_sync import SyncOperation
+from bkuser_core.common.progress import progress
+from bkuser_core.departments.models import Department, DepartmentThroughModel
+from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
+from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
+from bkuser_core.profiles.utils import make_password_by_config
+from bkuser_core.user_settings.loader import ConfigProvider
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class ExcelSyncer(Syncer):
                 name=department_names[0], parent=None, category_id=self.category_id
             )
             if created:
-                logger.info("created root department %s" % department_names[0])
+                logger.info("created root department %s", department_names[0])
 
             # 逐级创建组织
             current_parent = root_depart
@@ -136,7 +136,7 @@ class ExcelSyncer(Syncer):
                     defaults={"order": _get_order(current_parent)},
                 )
                 if created:
-                    logger.info("created department %s" % department_name)
+                    logger.info("created department %s", department_name)
 
                 current_parent = new_department
 
@@ -163,10 +163,10 @@ class ExcelSyncer(Syncer):
                 profile_params = parser_set.parse_row(user_raw_info, skip_keys=["department_name", "leader"])
                 logger.debug("profile_params: %s", profile_params)
             except ParseFailedException as e:
-                logger.exception(f"解析字段 <{e.field_name}> 失败: {e.reason}")
+                logger.exception(f"同步用户解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")
                 continue
             except Exception:  # pylint: disable=broad-except
-                logger.exception("解析字段异常")
+                logger.exception("同步用户解析字段异常. [user_raw_info=%s]", user_raw_info)
                 continue
 
             username = profile_params["username"]
@@ -252,16 +252,16 @@ class ExcelSyncer(Syncer):
                     parser_set.get_cell_data("leader", user_raw_info)
                 )
             except ParseFailedException as e:
-                logger.exception(f"同步上级时，解析字段 <{e.field_name}> 失败: {e.reason}")
+                logger.exception(f"同步上级解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")
                 continue
             except Exception:  # pylint: disable=broad-except
-                logger.exception("解析字段异常")
+                logger.exception("同步上级解析字段异常. [user_raw_info=%s]", user_raw_info)
                 continue
 
             try:
                 from_profile = Profile.objects.get(category_id=self.category_id, username=username)
             except ObjectDoesNotExist:
-                logger.error("profile %s does not exist", username)
+                logger.error("profile %s does not exist. [category_id=%s]", username, self.category_id)
                 continue
 
             for leader in leaders:

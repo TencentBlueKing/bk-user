@@ -11,7 +11,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
 
 import logging
 
@@ -32,7 +31,7 @@ class BlueException(Exception):
         :param context: 错误消息 format dict
         :param args: 其他参数
         """
-        super(BlueException, self).__init__(*args)
+        super().__init__(message, data, *args)
         self.message = self.MESSAGE if message is None else message
         self.data = data
 
@@ -46,6 +45,9 @@ class BlueException(Exception):
             "message": self.message,
             "data": self.render_data(),
         }
+
+    def __str__(self):
+        return f"code={self.ERROR_CODE}, message={self.message}"
 
 
 class ClientBlueException(BlueException):

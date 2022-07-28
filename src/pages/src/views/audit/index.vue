@@ -351,7 +351,7 @@ export default {
     color: #3a84ff;
     right: 0px;
     top: 65px;
-    z-index: 9999;
+    z-index: 999;
   }
   // 表格
   .audit-content-wrapper {

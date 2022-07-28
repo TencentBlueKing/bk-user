@@ -29,16 +29,23 @@
       :input-bus="inputBus"
       :title="$t('连接地址')"
       :is-need="true"
-      @hasError="handleHasError" />
+      :placeholder="`${$t('例如')}：ldap://127.0.0.1:389 ${$t('或')} ldaps://127.0.0.1:636`"
+      @hasError="handleHasError"
+      @updateUrl="updateUrl" />
 
     <!-- SSL加密方式 -->
     <div class="info-container">
       <div class="title-container">
         <h4 class="title">{{$t('SSL加密方式')}}</h4>
       </div>
-      <bk-select v-model="defaultConnection.ssl_encryption" :clearable="false" style="width: 360px;">
+      <bk-select
+        v-model="defaultConnection.ssl_encryption"
+        :clearable="false"
+        style="width: 360px;"
+        @toggle="toggleSelect">
         <bk-option v-for="option in sslEncryptionChoices" :key="option" :id="option" :name="option"></bk-option>
       </bk-select>
+      <p v-show="sslError" class="error-text">{{sslErrorText}}</p>
     </div>
 
     <!-- 超时设置 -->
@@ -155,6 +162,8 @@ export default {
       // 表单验证是否有错误
       hasError: false,
       inputBus: new Vue(),
+      sslError: false,
+      sslErrorText: '',
     };
   },
   computed: {
@@ -199,6 +208,25 @@ export default {
         }
       });
       return false;
+    },
+    updateUrl(val) {
+      if ((val === 'ldaps' && this.defaultConnection.ssl_encryption === '无')
+        || (val === 'ldap' && this.defaultConnection.ssl_encryption === 'SSL')) {
+        this.sslError = true;
+        this.hasError = true;
+        this.sslErrorText = this.$t('请选择正确的加密方式，ldap://必须选择“无”, ldaps://必须选择“SSL”');
+      } else {
+        if (val !== 'ldaps' && val !== 'ldap' && this.defaultConnection.ssl_encryption === 'SSL') {
+          this.sslError = true;
+          this.hasError = true;
+          this.sslErrorText = this.$t('加密方式不合法');
+        } else {
+          this.sslError = false;
+        }
+      }
+    },
+    toggleSelect() {
+      this.sslError = false;
     },
   },
 };

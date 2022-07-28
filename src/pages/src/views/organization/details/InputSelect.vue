@@ -35,7 +35,7 @@
         v-for="(option, index) in item.options"
         :key="index"
         :id="option.id"
-        :name="option.value">
+        :name="$i18n.locale === 'en' ? option.id : statusMap[option.id]">
       </bk-option>
     </bk-select>
   </div>
@@ -51,6 +51,10 @@ export default {
     editStatus: {
       type: Boolean,
       required: true,
+    },
+    statusMap: {
+      type: Object,
+      default: {},
     },
   },
   methods: {

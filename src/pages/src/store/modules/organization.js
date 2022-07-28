@@ -122,5 +122,9 @@ export default {
     getMultiConditionQuery(context, params, config = {}) {
       return http.get(`api/v3/profiles/?${params}`);
     },
+    // 获取部门列表
+    getDepartmentsList(context, params, config = {}) {
+      return http.get(`api/v3/departments/?${params}`);
+    },
   },
 };

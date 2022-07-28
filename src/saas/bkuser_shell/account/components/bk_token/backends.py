@@ -11,12 +11,13 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Tuple
 
-from bkuser_shell.account import get_user_model
-from bkuser_shell.account.conf import ConfFixture
-from bkuser_shell.account.http import send
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.db import IntegrityError
+
+from bkuser_shell.account import get_user_model
+from bkuser_shell.account.conf import ConfFixture
+from bkuser_shell.account.http import send
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +50,10 @@ class TokenBackend(ModelBackend):
             user.save()
             return user
         except IntegrityError:
-            logger.exception("get_or_create UserModel fail or update_or_create UserProperty")
+            logger.exception("get_or_create UserModel fail or update UserProperty fail. username=%s", username)
             return None
         except Exception:  # pylint: disable=broad-except
-            logger.exception("Auto create & update UserModel fail")
+            logger.exception("Auto create & update UserModel fail. username=%s", username)
             return None
 
     @staticmethod
@@ -83,8 +84,8 @@ class TokenBackend(ModelBackend):
 
         try:
             response = send(ConfFixture.USER_INFO_URL, "GET", api_params, verify=False)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.exception("Abnormal error in get_user_info...:%s" % e)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("Abnormal error in get_user_info: bk_token=%s***", bk_token[:6])
             return False, {}
 
         if response.get("result") is True or response.get("ret") == 0:
@@ -117,7 +118,7 @@ class TokenBackend(ModelBackend):
         try:
             response = send(ConfFixture.VERIFY_URL, "GET", api_params, verify=False)
         except Exception:  # pylint: disable=broad-except
-            logger.exception(u"Abnormal error in verify_bk_token...")
+            logger.exception("Abnormal error in verify_bk_token: bk_token=%s***", bk_token[:6])
             return False, None
 
         if response.get("result") or response.get("ret") == 0:

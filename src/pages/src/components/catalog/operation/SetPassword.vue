@@ -55,6 +55,35 @@
       <p class="error-text" v-if="!defaultPassword.password_must_includes.length">{{$t('密码规则不得为空')}}</p>
     </div>
 
+    <!-- 密码不允许 -->
+    <div class="info-container">
+      <div class="auto-freeze-container" style="margin-bottom: 10px;">
+        <span>{{$t('密码不允许连续')}}</span>
+        <bk-input
+          v-model="defaultPassword.password_rult_length"
+          type="number"
+          style="width: 140px;margin: 0 8px;"
+          :class="{ 'king-input': true, error: passwordRuleError }"
+          @change="handleChange">
+          <template slot="append">
+            <div class="group-text">{{$t('位')}}</div>
+          </template>
+        </bk-input>
+        <span>{{$t('出现')}}：</span>
+      </div>
+      <p class="error-text" v-show="passwordRuleError">{{$t('不能小于3位，大于8位')}}</p>
+      <bk-checkbox-group
+        v-model="defaultPassword.exclude_elements_config"
+        style="line-height: 28px;margin-top: 10px;">
+        <bk-checkbox value="keyboard_seq" style="margin-right: 28px;">{{$t('键盘序')}}</bk-checkbox>
+        <bk-checkbox value="alphabet_seq" style="margin-right: 28px;">{{$t('连续字母序')}}</bk-checkbox>
+        <bk-checkbox value="num_seq" style="margin-right: 28px;">{{$t('连续数字序')}}</bk-checkbox>
+        <bk-checkbox value="special_seq" style="margin-right: 28px;">{{$t('连续特殊符号序')}}</bk-checkbox>
+        <bk-checkbox value="duplicate_char" style="margin-right: 28px;">{{$t('重复字母、数字、特殊符号')}}</bk-checkbox>
+      </bk-checkbox-group>
+      <p class="error-text" v-show="passwordConfigError">{{$t('密码规则不得为空')}}</p>
+    </div>
+
     <!-- 密码有效期 -->
     <div class="info-container">
       <div class="title-container">
@@ -314,6 +343,9 @@ export default {
       // 密码长度是否错误
       passwordLengthError: false,
       passwordHistoryError: false,
+      // 密码不允许连续出现
+      passwordRuleError: false,
+      passwordConfigError: false,
       // 密码解锁时间是否错误
       autoUnlockError: false,
       // 未登录自动冻结天数是否错误
@@ -357,6 +389,8 @@ export default {
       return !this.defaultPassword.password_must_includes.length
                     || this.passwordLengthError
                     || this.passwordHistoryError
+                    || this.passwordRuleError
+                    || this.passwordConfigError
                     || this.autoUnlockError
                     || this.freezeDaysError
                     || this.initPasswordError
@@ -367,6 +401,17 @@ export default {
     passportInfo() {
       this.init();
     },
+    'defaultPassword.exclude_elements_config'(newVal) {
+      if (newVal.length) {
+        this.validatePasswordRule();
+        this.passwordConfigError = false;
+      } else if (!newVal.length && this.defaultPassword.password_rult_length) {
+        this.passwordConfigError = true;
+      } else {
+        this.passwordRuleError = false;
+        this.passwordConfigError = false;
+      }
+    },
   },
   created() {
     if (this.passportInfo) {
@@ -374,6 +419,20 @@ export default {
     }
   },
   methods: {
+    handleChange(value) {
+      if (value !== '') {
+        this.validatePasswordRule();
+        if (!this.defaultPassword.exclude_elements_config.length) {
+          this.passwordConfigError = true;
+        }
+      } else if (this.defaultPassword.exclude_elements_config.length) {
+        this.passwordRuleError = true;
+        this.passwordConfigError = false;
+      } else {
+        this.passwordRuleError = false;
+        this.passwordConfigError = false;
+      }
+    },
     init() {
       // 监听密码规则的变化去验证初始密码
       this.$watch(() => {
@@ -386,6 +445,10 @@ export default {
     validatePasswordLength() {
       this.passwordLengthError = this.defaultPassword.password_min_length < 8
                                  || this.defaultPassword.password_min_length > 32;
+    },
+    validatePasswordRule() {
+      this.passwordRuleError = this.defaultPassword.password_rult_length < 3
+                                 || this.defaultPassword.password_rult_length > 8;
     },
     // 校验密码重复次数
     validatePasswordHistory() {

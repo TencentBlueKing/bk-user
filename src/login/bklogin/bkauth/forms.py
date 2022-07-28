@@ -10,7 +10,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -23,6 +22,7 @@ class BkAuthenticationForm(AuthenticationForm):
         password = self.cleaned_data.get("password")
 
         if username and password:
+            # will call backend/bk.py: BkUserBackend.authenticate()
             self.user_cache = authenticate(
                 username=username,
                 password=password,

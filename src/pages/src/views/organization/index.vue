@@ -156,7 +156,8 @@
                   :data="searchFilterList"
                   :show-condition="false"
                   v-model="tableSearchKey"
-                  @change="handleTableSearch" />
+                  @change="handleTableSearch"
+                  @input-click.once="handleSearchList" />
                 <!-- 设置列表字段 -->
                 <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
                   <i class="icon icon-user-cog"></i>
@@ -174,7 +175,8 @@
                   :data="searchFilterList"
                   :show-condition="false"
                   v-model="tableSearchKey"
-                  @change="handleTableSearch" />
+                  @change="handleTableSearch"
+                  @input-click.once="handleSearchList" />
                 <!-- 仅显示本级组织成员 -->
                 <p class="filter-current">
                   <bk-checkbox
@@ -207,6 +209,7 @@
               :fields-list="fieldsList"
               :current-category-type="currentCategoryType"
               :no-search-or-search-department="noSearchOrSearchDepartment"
+              :status-map="statusMap"
               @viewDetails="viewDetails"
               @showTableLoading="showTableLoading"
               @closeTableLoading="closeTableLoading"
@@ -248,6 +251,7 @@
           :current-category-id="currentCategoryId"
           :current-category-type="currentCategoryType"
           :fields-list="fieldsList"
+          :status-map="statusMap"
           @hideBar="hideBar"
           @showBar="showBar"
           @showBarLoading="showBarLoading"
@@ -439,6 +443,20 @@ export default {
       searchDataList: [],
       searchFilterList: [],
       heardList: [],
+      enumList: {
+        username: 'username',
+        display_name: 'display_name',
+        email: 'email',
+        telephone: 'telephone',
+        status: 'status',
+        staff_status: 'staff_status',
+        department_name: 'departments',
+        leader: 'leaders',
+        position: 'position',
+        wx_userid: 'wx_userid',
+        qq: 'qq',
+      },
+      statusMap: {},
     };
   },
   computed: {
@@ -471,7 +489,11 @@ export default {
         const multiable = true;
         if (options.length > 0) {
           options.forEach((k) => {
-            children.push({ id: k.id, name: k.value });
+            if (this.$i18n.locale === 'en') {
+              children.push({ id: k.id, name: k.id });
+            } else {
+              children.push({ id: k.id, name: k.value });
+            }
           });
           this.heardList.push({ name, id, multiable, children });
         } else {
@@ -581,6 +603,13 @@ export default {
         if (!fieldsList) return;
         this.fieldsList = JSON.parse(JSON.stringify(fieldsList));
         this.setTableFields = JSON.parse(JSON.stringify(fieldsList));
+        this.setTableFields.forEach((item) => {
+          if (item.options && item.options.length) {
+            item.options.forEach((key) => {
+              this.$set(this.statusMap, key.id, key.value);
+            });
+          }
+        });
         const tableHeardList = fieldsList.filter(field => field.visible);
         tableHeardList.push(
           {
@@ -604,7 +633,9 @@ export default {
             name: 'update_time',
           },
         );
-        this.userMessage.tableHeardList = tableHeardList;
+        tableHeardList.forEach((item) => {
+          this.userMessage.tableHeardList.push(item);
+        });
       } catch (e) {
         console.warn(e);
       }
@@ -728,7 +759,12 @@ export default {
       this.getTableData();
     },
     updateHeardList(value) {
-      this.searchDataList = value;
+      this.searchDataList = [];
+      value.forEach((item) => {
+        if (item.builtin) {
+          this.searchDataList.push(item);
+        }
+      });
     },
     handleClear() {
       if (this.tableSearchedKey !== []) {
@@ -737,16 +773,17 @@ export default {
     },
     // 搜索table
     handleTableSearch(list) {
-      const valueList = [];
+      const valueList = [`category_id=${this.currentCategoryId}`];
+      let key = '';
       list.forEach((item) => {
-        if (item.id) {
-          const key = item.id;
-          const value = [];
-          item.values.forEach((v) => {
-            value.push(v.id);
-          });
-          valueList.push(`${key}=${value}`);
+        const value = [];
+        if (Object.keys(this.enumList).includes(item.id)) {
+          key = this.enumList[item.id];
         }
+        item.values.forEach((v) => {
+          value.push(v.id);
+        });
+        valueList.push(`${key}=${value}`);
       });
       const params = valueList.join('&');
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
@@ -756,10 +793,55 @@ export default {
       })
         .catch((e) => {
           console.warn(e);
-        })
-        .finally(() => {
-          this.clickSecond = false;
         });
+    },
+    // 搜索文件配置列表
+    handleSearchList() {
+      this.getDepartmentsList();
+      this.getLeadersList();
+    },
+    // 获取部门列表
+    async getDepartmentsList() {
+      try {
+        const params = `category_id=${this.currentCategoryId}`;
+        const list = [];
+        const res = await this.$store.dispatch('organization/getDepartmentsList', params);
+        res.data.results.forEach((item) => {
+          list.push({
+            id: item.id,
+            name: item.full_name,
+          });
+        });
+        this.getChildrenList(list, 'department_name');
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    // 获取上级列表
+    async getLeadersList() {
+      try {
+        const params = `category_id=${this.currentCategoryId}`;
+        const list = [];
+        const res = await this.$store.dispatch('organization/getMultiConditionQuery', params);
+        res.data.results.forEach((item) => {
+          list.push({
+            id: item.id,
+            name: `${item.username}（${item.display_name}）`,
+          });
+        });
+        this.getChildrenList(list, 'leader');
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    // 获取组织和上级的子列表
+    getChildrenList(list, value) {
+      this.heardList.filter((item) => {
+        if (item.id === value) {
+          this.$set(item, 'children', list);
+          this.$set(item, 'multiable', true);
+        }
+      });
     },
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {

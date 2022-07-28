@@ -10,7 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.utils.translation import ugettext_lazy as _
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
 import bkuser_sdk
+from bkuser_global.drf_crown import ResponseParams, inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
@@ -28,11 +33,6 @@ from bkuser_shell.organization.serializers.departments import (
     UpdateDepartmentSerializer,
 )
 from bkuser_shell.organization.serializers.profiles import DepartmentGetProfileResultSerializer
-from django.utils.translation import ugettext_lazy as _
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-
-from bkuser_global.drf_crown import ResponseParams, inject_serializer
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +151,7 @@ class DepartmentViewSet(BkUserApiViewSet):
                 else:
                     x["profile_count"] = 0
             except Exception:  # pylint: disable=broad-except
-                logger.exception("fetch profiles count failed")
+                logger.exception("fetch profiles count failed. [category_id=%s]", x["id"])
                 x["profile_count"] = 0
 
             x["departments"] = []
@@ -263,3 +263,13 @@ class DepartmentViewSet(BkUserApiViewSet):
         api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
         api_instance.v2_departments_profiles_create(body=validated_data, lookup_value=department_id)
         return Response(data={})
+
+
+class DepartmentsApiViewSet(BkUserApiViewSet):
+    """用户信息模块"""
+
+    permission_classes = [IsAuthenticated]
+    ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
+
+    def get(self, request, *args, **kwargs):
+        return self.call_through_api(request)

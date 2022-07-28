@@ -11,6 +11,8 @@ global:
   bkDomainScheme: "http"
   ## 是否开启权限中心
   enableIAM: true
+  ## 是否开启 API AUTH, 默认开启
+  enableApiAuth: true
 
   hostAliases: []
     # - ip: ""
@@ -84,10 +86,10 @@ initialAdminUsername: "admin"
 initialAdminPassword: "Blueking@2019"
 
 image:
-  registry: mirrors.tencent.com
+  registry: hub.bktencent.com
   repository: blueking/bk-user-api
   pullPolicy: IfNotPresent
-  tag: "v2.3.3"
+  tag: "v2.3.4-beta.28"
 
 nameOverride: ""
 fullnameOverride: ""
@@ -105,6 +107,10 @@ serviceAccount:
 bkPaasUrl: http://paas.example.com
 ## 蓝鲸 ESB/APIGATEWAY url，注意集群内外都是统一域名。集群内可以配置域名解析到内网ip
 bkComponentApiUrl: http://bkapi.example.com
+## 蓝鲸 APIGateway url模板
+bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
+## 配置 bkApigatewayPublicKey 用于对接apigateway解析jwt, base64
+bkApigatewayPublicKey: ""
 ## 蓝鲸 Login url（浏览器跳转登录用的URL前缀）
 bkLoginUrl: http://paas.example.com/login/
 ## 蓝鲸登录后台的内部服务地址（一般用于校验登录token）
@@ -234,11 +240,11 @@ externalRedis:
 migration:
   images:
     busybox:
-      registry: "mirrors.tencent.com"
+      registry: "hub.bktencent.com"
       repository: blueking/busybox
       tag: "1.34.0"
     k8sWaitFor:
-      registry: "mirrors.tencent.com"
+      registry: "hub.bktencent.com"
       repository: blueking/k8s-wait-for
       tag: "v1.5.1"
 

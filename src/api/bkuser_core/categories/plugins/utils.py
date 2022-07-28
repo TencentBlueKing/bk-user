@@ -11,11 +11,12 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
 from bkuser_core.categories.plugins.base import TypeList, TypeProtocol
 from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
 from bkuser_core.common.progress import progress
 from bkuser_core.user_settings.models import Setting
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ def delete_periodic_sync_task(category_id: int):
     try:
         PeriodicTask.objects.filter(name__in=guess_names).delete()
     except PeriodicTask.DoesNotExist:
-        logger.warning("PeriodicTask %s has been deleted, skip it...", str(category_id))
+        logger.warning("PeriodicTask %s has been deleted, skip it. [guess_names=%s]", str(category_id), guess_names)
         return
 
 

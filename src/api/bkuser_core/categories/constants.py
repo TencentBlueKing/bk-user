@@ -11,8 +11,9 @@ specific language governing permissions and limitations under the License.
 from datetime import timedelta
 from enum import auto
 
-from bkuser_core.common.enum import AutoLowerEnum
 from django.utils.translation import ugettext_lazy as _
+
+from bkuser_core.common.enum import AutoLowerEnum
 
 TIMEOUT_THRESHOLD = timedelta(hours=1)
 

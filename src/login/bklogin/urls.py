@@ -9,15 +9,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bklogin.api import views as views_api
-from bklogin.bkauth import views as auth_views
-from bklogin.bkauth.decorators import login_exempt
-from bklogin.healthz import views as healthz_views
 from decorator_include import decorator_include
 from django.conf.urls import include, url
 from django.http import HttpResponse
 from django.views import i18n as django_i18n_views
 from django.views.i18n import JavaScriptCatalog
+
+from bklogin.api import views as views_api
+from bklogin.bkauth import views as auth_views
+from bklogin.bkauth.decorators import login_exempt
+from bklogin.healthz import views as healthz_views
 
 urlpatterns = [
     # 登录页面
@@ -92,8 +93,6 @@ urlpatterns = [
     url(r"^ping/$", healthz_views.ping),
     # 检查统一登录是否正常运行
     url(r"^healthz/", include("bklogin.healthz.urls")),
-    # bk_metadata
-    url(r"^metadata/", include("bklogin.metadata.urls")),
     # 反搜索
     url(r"^robots\.txt$", lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")),
     # prometheus metrics

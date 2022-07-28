@@ -8,9 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_global.config import get_db_config
-
 from . import env
+from bkuser_global.config import get_db_config
 
 # ==============================================================================
 # 数据库
@@ -31,6 +30,13 @@ REDIS_KEY_PREFIX = env("CACHE_REDIS_KEY_PREFIX", default="bk-user-")
 
 REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
+# ==============================================================================
+# Celery
+# ==============================================================================
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="bk_user")
+
 
 # ==============================================================================
 # 缓存配置
@@ -38,7 +44,11 @@ REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 CACHES = {
     "default": {
         "BACKEND": "bkuser_core.common.cache.DummyRedisCache",
-    }
+    },
+    'locmem': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'memory_cache_0',
+    },
 }
 # 全局缓存过期时间，默认为一小时
 GLOBAL_CACHES_TIMEOUT = env.int("GLOBAL_CACHES_TIMEOUT", default=60 * 60)

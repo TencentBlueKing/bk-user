@@ -12,16 +12,18 @@ import functools
 import logging
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+
 from bkuser_core.audit import models as log_models_module
 from bkuser_core.audit.constants import OperationStatus, OperationType
 from bkuser_core.audit.models import GeneralLog, ProfileRelatedLog
 from bkuser_core.common.error_codes import CoreAPIError
-from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
 
 if TYPE_CHECKING:
-    from bkuser_core.profiles.models import Profile
     from rest_framework.request import Request
+
+    from bkuser_core.profiles.models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +71,9 @@ def create_general_log(
     }
     if request:
         extra_value["client_ip"] = get_client_ip(request)
+        # from esb/apigateway, will got a valid bk_app_code
+        if hasattr(request, "bk_app_code"):
+            extra_value["bk_app_code"] = request.bk_app_code
 
     extra_value.update(audit_info.to_dict())
     extra_value.update(extra_info or {})

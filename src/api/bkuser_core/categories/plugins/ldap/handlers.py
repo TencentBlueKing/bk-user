@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import TYPE_CHECKING
 
+from django.dispatch import receiver
+
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.plugins.utils import (
     delete_dynamic_filed,
@@ -20,7 +22,6 @@ from bkuser_core.categories.plugins.utils import (
 from bkuser_core.categories.signals import post_category_delete, post_dynamic_field_delete
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
-from django.dispatch import receiver
 
 if TYPE_CHECKING:
     from bkuser_core.categories.models import ProfileCategory
@@ -59,7 +60,12 @@ def update_or_create_sync_tasks(instance: "Setting", operator: str):
     try:
         update_periodic_sync_task(category_id=instance.category_id, operator=operator, interval_seconds=cycle_value)
     except Exception:  # pylint: disable=broad-except
-        logger.exception("failed to update periodic task schedule")
+        logger.exception(
+            "failed to update periodic task schedule. [category_id=%s, operator=%s, interval_seconds=%s",
+            instance.category_id,
+            operator,
+            cycle_value,
+        )
 
 
 @receiver(post_category_delete)
@@ -67,7 +73,7 @@ def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
     if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         return
 
-    logger.info("going to delete periodic task for Category<%s>", instance.id)
+    logger.info("going to delete periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
     delete_periodic_sync_task(instance.id)
 
 

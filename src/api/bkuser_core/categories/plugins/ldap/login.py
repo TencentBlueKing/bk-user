@@ -8,11 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.utils.encoding import force_str
+
 from bkuser_core.categories.plugins.ldap.adaptor import ProfileFieldMapper
 from bkuser_core.categories.plugins.ldap.client import LDAPClient
 from bkuser_core.categories.plugins.ldap.exceptions import FetchUserMetaInfoFailed
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.utils.encoding import force_str
 
 
 class LoginHandler:

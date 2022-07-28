@@ -11,6 +11,13 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import List
 
+from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import filters, status
+from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.response import Response
+
 from bkuser_core.apis.v2.serializers import EmptySerializer
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet, AdvancedSearchFilter
 from bkuser_core.audit.constants import OperationType
@@ -36,12 +43,6 @@ from bkuser_core.categories.signals import post_category_create, post_category_d
 from bkuser_core.categories.tasks import adapter_sync
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import CoreAPIError, error_codes
-from django.utils.decorators import method_decorator
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, status
-from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
@@ -194,10 +195,12 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.LOAD_LDAP_CLIENT_FAILED
 
         try:
-            syncer_cls(instance.id).fetcher.client.initialize(**serializer.validated_data)
-        except Exception:
+            syncer_cls(instance.id, with_initialize_client=False).fetcher.client.initialize(
+                **serializer.validated_data
+            )
+        except Exception as e:
             logger.exception("failed to test initialize category<%s>", instance.id)
-            raise error_codes.TEST_CONNECTION_FAILED
+            raise error_codes.TEST_CONNECTION_FAILED.format(str(e), replace=True)
 
         return Response()
 
@@ -229,16 +232,15 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         try:
             syncer = syncer_cls(instance.id)
-        except Exception:
+        except Exception as e:
             logger.exception("failed to test initialize category<%s>", instance.id)
-            raise error_codes.TEST_CONNECTION_FAILED.f("请确保连接设置正确")
+            raise error_codes.TEST_CONNECTION_FAILED.f(f"请确保连接设置正确 {str(e)}")
 
         try:
             syncer.fetcher.test_fetch_data(serializer.validated_data)
-        except FetchDataFromRemoteFailed as e:
-            raise error_codes.TEST_FETCH_DATA_FAILED.f(f"{e}")
-        except Exception:  # pylint: disable=broad-except
-            raise error_codes.TEST_FETCH_DATA_FAILED
+        except Exception as e:  # pylint: disable=broad-except
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise error_codes.TEST_FETCH_DATA_FAILED.f(error_detail)
 
         return Response()
 
@@ -265,13 +267,24 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 kwargs={"instance_id": instance.id, "operator": request.operator, "task_id": task_id}
             )
         except FetchDataFromRemoteFailed as e:
-            logger.exception("failed to sync data")
-            raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
+            logger.exception(
+                "failed to sync data. fetch data from remote fail. [instance.id=%s, operator=%s, task_id=%s]",
+                instance.id,
+                request.operator,
+                task_id,
+            )
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise error_codes.SYNC_DATA_FAILED.f(error_detail)
         except CoreAPIError:
             raise
-        except Exception:
-            logger.exception("failed to sync data")
-            raise error_codes.SYNC_DATA_FAILED
+        except Exception as e:
+            logger.exception(
+                "failed to sync data. " "[instance.id=%s, operator=%s, task_id=%s]",
+                instance.id,
+                request.operator,
+                task_id,
+            )
+            raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
 
         return Response({"task_id": task_id})
 
@@ -308,10 +321,22 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
             adapter_sync(lookup_value, operator=request.operator, task_id=task_id, **params)
         except DataFormatError as e:
-            logger.exception("failed to sync data")
+            logger.exception(
+                "failed to sync data, dataformat error. " "[instance_id=%s, operator=%s, task_id=%s, params=%s]",
+                lookup_value,
+                request.operator,
+                task_id,
+                params,
+            )
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
         except Exception as e:
-            logger.exception("failed to sync data")
+            logger.exception(
+                "failed to sync data. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
+                lookup_value,
+                request.operator,
+                task_id,
+                params,
+            )
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
 
         return Response()

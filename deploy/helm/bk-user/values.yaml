@@ -11,6 +11,11 @@ global:
   bkDomainScheme: "http"
   ## 是否开启权限中心
   enableIAM: false
+  ## 是否开启 API AUTH, 默认开启
+  enableApiAuth: true
+
+  ## sentry dsn
+  sentryDsn: ""
 
   hostAliases: []
     # - ip: ""
@@ -32,6 +37,7 @@ global:
 
 api:
   enabled: true
+  bkApiUrlTmpl: "http://bkapi.example.com/api/{api_name}"
 
   envFrom:
   - configMapRef:
@@ -52,6 +58,7 @@ saas:
 
 login:
   enabled: true
+  bkComponentApiUrl: "http://bkapi.example.com"
 
   envFrom:
   - configMapRef:

@@ -98,7 +98,7 @@ export default {
         const passportRes = await this.$store.dispatch('catalog/ajaxGetPassport', { id: this.catalogInfo.id });
         if (passportRes.data.length === 0 && this.catalogInfo.unfilled_namespaces.includes('password')) {
           // password 信息未创建
-          this.passwordInfo = JSON.parse(JSON.stringify(this.$store.state.catalog.defaults.password));
+          this.passwordInfo = JSON.parse(JSON.stringify(this.$store.state.catalog.defaults.password.default));
           this.passwordHasCreated = false;
           this.current = 2;
         } else {
@@ -130,7 +130,7 @@ export default {
         const action = this.passwordHasCreated ? 'catalog/ajaxPutPassport' : 'catalog/ajaxPostPassport';
         await this.$store.dispatch(action, {
           id: this.catalogInfo.id,
-          data: this.$convertPassportInfoArray(this.passwordInfo),
+          data: this.$convertPassportInfoArray(this.passwordInfo, this.passwordInfo),
         });
         this.handleSaveSuccess();
       } catch (e) {

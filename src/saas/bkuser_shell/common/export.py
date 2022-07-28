@@ -14,11 +14,12 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List
 
+from django.http import HttpResponse
+from openpyxl.styles import Alignment, Font, colors
+
 from bkuser_shell.config_center.constants import DynamicFieldTypeEnum
 from bkuser_shell.organization.serializers.profiles import ProfileExportSerializer
 from bkuser_shell.organization.utils import get_options_values_by_key
-from django.http import HttpResponse
-from openpyxl.styles import Alignment, Font, colors
 
 if TYPE_CHECKING:
     from openpyxl.workbook.workbook import Workbook
@@ -57,13 +58,13 @@ class ProfileExcelExporter:
                 except KeyError:
                     # 当无法从当前用户属性中找到对应字段时，尝试从 extra_infos 中获取
                     if extra_infos is None:
-                        logger.exception("failed to get value from field<%s>", f)
+                        logger.exception("failed to get value from extra_infos field<%s>, extra_infos is empty", f)
                         continue
 
                     try:
                         raw_value = extra_infos[str(p["id"])][field_name]
                     except KeyError:
-                        logger.exception("failed to get value from field<%s>", f)
+                        logger.exception("failed to get value from extra_infos field<%s>, key missing", f)
                         continue
 
                 value = raw_value

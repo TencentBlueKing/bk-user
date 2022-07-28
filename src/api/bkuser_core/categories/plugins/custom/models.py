@@ -8,14 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from dataclasses import dataclass
-from typing import Any, Dict, List, Type
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Type
 
-from bkuser_core.departments.models import Department
-from bkuser_core.profiles.models import Profile
 from django.db.models import Model
 
 from .exceptions import NoKeyItemAvailable
+from bkuser_core.departments.models import Department
+from bkuser_core.profiles.models import Profile
 
 
 @dataclass
@@ -47,6 +47,11 @@ class CustomType:
     @property
     def display_str(self) -> str:
         return getattr(self, self.__display_field)
+
+    def __post_init__(self):
+        for k in self.__require_fields:
+            if not getattr(self, k):
+                raise ValueError(f"{k} field is required.")
 
 
 @dataclass
@@ -81,32 +86,38 @@ class CustomProfile(CustomType):
     """自定义的 Profile 对象"""
 
     __db_class = Profile
-    __require_fields = ("username", "email", "telephone")
+    # NOTE: 多渠道来源登录, email和telephone数据可能没有
+    __require_fields = ("code", "username")
 
-    username: str
-    email: str
-    telephone: str
-    display_name: str
     code: str
+    username: str
 
-    leaders: List[str]
-    departments: List[str]
+    email: Optional[str] = ""
+    telephone: Optional[str] = ""
+    display_name: Optional[str] = ""
 
-    extras: Dict
-    position: str
+    leaders: List[str] = field(default_factory=list)
+    departments: List[str] = field(default_factory=list)
+
+    extras: Optional[Dict] = field(default_factory=dict)
+    position: Optional[str] = "0"
 
 
-@dataclass
 class CustomDepartment(CustomType):
     """自定义的 Department 对象"""
 
     __db_class = Department
     __display_field = "name"
-    __require_fields = ("name", "parent")
+    __require_fields = ("code", "name")
 
-    name: str
-    parent: str
     code: str
+    name: str
+    parent: Optional[str] = ""
+
+    def __init__(self, code, name, parent=None):
+        self.code = code
+        self.name = name
+        self.parent = parent
 
     @property
     def display_str(self) -> str:

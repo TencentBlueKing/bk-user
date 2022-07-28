@@ -11,9 +11,6 @@ specific language governing permissions and limitations under the License.
 from dataclasses import dataclass
 from typing import List
 
-from bkuser_core.bkiam.constants import IAMAction, ResourceType
-from bkuser_core.departments.models import Department
-from bkuser_core.profiles.models import Profile
 from django.conf import settings
 from django.utils.translation import gettext as _
 from rest_framework.permissions import BasePermission
@@ -21,6 +18,9 @@ from rest_framework.permissions import BasePermission
 from .base import IAMMiXin
 from .helper import IAMHelper
 from .utils import need_iam
+from bkuser_core.bkiam.constants import IAMAction, ResourceType
+from bkuser_core.departments.models import Department
+from bkuser_core.profiles.models import Profile
 
 
 @dataclass

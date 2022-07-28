@@ -12,14 +12,15 @@ import datetime
 import time
 
 import pytest
+from django.contrib.auth.hashers import make_password
+from django.utils.timezone import now
+
 from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.profiles.constants import ProfileStatus, RoleCodeEnum
 from bkuser_core.profiles.v2.views import ProfileLoginViewSet
 from bkuser_core.tests.apis.utils import get_api_factory
 from bkuser_core.tests.utils import make_simple_category, make_simple_profile
 from bkuser_core.user_settings.models import Setting
-from django.contrib.auth.hashers import make_password
-from django.utils.timezone import now
 
 pytestmark = pytest.mark.django_db
 

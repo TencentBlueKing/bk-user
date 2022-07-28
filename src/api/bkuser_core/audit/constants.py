@@ -44,6 +44,10 @@ class OperationType(AutoLowerEnum):
     EXPORT = auto()
     RESTORATION = auto()
 
+    FORGET_PASSWORD = auto()  # 用户通过 token 重置
+    ADMIN_RESET_PASSWORD = auto()  # 管理员重置密码
+    MODIFY_PASSWORD = auto()  # 用户通过旧密码修改
+
     _choices_labels = (
         (CREATE, "创建"),
         (UPDATE, "更新"),
@@ -53,6 +57,9 @@ class OperationType(AutoLowerEnum):
         (EXPORT, "导出"),
         (IMPORT, "导入"),
         (RESTORATION, "恢复"),
+        (FORGET_PASSWORD, "用户通过token重置密码"),
+        (ADMIN_RESET_PASSWORD, "管理员重置密码"),
+        (MODIFY_PASSWORD, "用户通过旧密码修改"),
     )
 
 

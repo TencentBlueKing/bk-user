@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bk-user-api-migrate-apigateway-{{ .Release.Revision }}
+  labels:
+    {{- include "bk-user.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        {{- include "bk-user.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: bk-user-api
+      restartPolicy: OnFailure
+      {{- with .Values.global.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: check-migrate-db
+          image: "{{ .Values.global.imageRegistry | default .Values.migration.images.k8sWaitFor.registry }}/{{ .Values.migration.images.k8sWaitFor.repository }}:{{ .Values.migration.images.k8sWaitFor.tag }}"
+          imagePullPolicy: IfNotPresent
+          args:
+            - job
+            - "bk-user-api-migrate-db-{{ .Release.Revision }}"
+      containers:
+        - name: api-apigateway-migrate
+          image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - bash
+          args:
+            - /app/sync_apigateway.sh
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12}}
+          {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12}}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources.web | nindent 12 }}

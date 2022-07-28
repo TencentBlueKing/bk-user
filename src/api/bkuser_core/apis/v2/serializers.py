@@ -10,9 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 
-from bkuser_core.apis.serializers import StringArrayField
 from django.utils.translation import ugettext as _
 from rest_framework import fields, serializers
+
+from bkuser_core.apis.serializers import StringArrayField
 
 
 class CustomFieldsModelSerializer(serializers.ModelSerializer):

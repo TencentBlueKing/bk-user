@@ -21,7 +21,7 @@ APP_TOKEN = env("BK_APP_SECRET")
 BK_PAAS_URL = env("BK_PAAS_URL")
 
 # 蓝鲸登录跳转页面
-BK_LOGIN_URL = env("BK_LOGIN_URL", default=f"{BK_PAAS_URL}/login")
+BK_LOGIN_URL = env("BK_LOGIN_URL", default=f"{BK_PAAS_URL}/login/")
 # 蓝鲸登录 API URL
 BK_LOGIN_API_URL = env("BK_LOGIN_API_URL", default=f"{BK_PAAS_URL}/login")
 
@@ -49,6 +49,8 @@ API_AUTH_TOKEN_PAIR = (
 )
 
 API_OPERATOR_HEADER_NAME = "X-BkUser-Operator"
+API_APP_CODE_HEADER_NAME = "X-Bk-App-Code"
+API_APP_SECRET_HEADER_NAME = "X-Bk-App-Secret"
 API_FORCE_RAW_RESP_HEADER_NAME = "Force-Raw-Response"
 API_FORCE_NO_CACHE_HEADER_NAME = "Force-No-Cache"
 API_FORCE_RAW_USERNAME_HEADER_NAME = "Raw-Username"

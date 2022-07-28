@@ -11,15 +11,16 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
-from bkuser_sdk.rest import ApiException
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
+from sentry_sdk import capture_exception
 
 from .error_codes import APIError
+from bkuser_sdk.rest import ApiException
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,9 @@ def ee_exception_response(exc, context):
     elif isinstance(exc, ValidationError):
         data.update({"code": -1, "message": parse_validation_error(exc)})
     else:
+        # report to sentry
+        capture_exception(exc)
+
         # Call REST framework's default exception handler to get the standard error response.
         response = exception_handler(exc, context)
         if response is not None:
@@ -96,6 +100,7 @@ class ApiExceptionParser:
         return self.body.get("code", -1)
 
     def get_message(self) -> str:
+        # TODO: should expose the api error detail! currently, always be this message, not helpfully at all
         if not self.body:
             return _("API 服务返回异常，请检查 API 服务日志")
 

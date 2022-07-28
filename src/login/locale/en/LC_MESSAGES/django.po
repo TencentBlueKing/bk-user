@@ -245,7 +245,7 @@ msgid "蓝鲸官网"
 msgstr "Blueking Official"
 
 #: bklogin/templates/account/base.html:101
-#: bklogin/templates/account/login_ce.html:110
+#: bklogin/templates/account/login_ce.html:113
 msgid "蓝鲸智云 版权所有"
 msgstr "BlueKing Copyright"
 
@@ -309,7 +309,7 @@ msgid "img/logo/btn_cn.png"
 msgstr "img/logo/btn_en.png"
 
 #: bklogin/templates/account/login.html:106
-#: bklogin/templates/account/login_ce.html:117
+#: bklogin/templates/account/login_ce.html:120
 msgid ""
 "您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果"
 msgstr ""
@@ -337,6 +337,10 @@ msgid "请修改密码"
 msgstr "Change Password"
 
 #: bklogin/templates/account/login_ce.html:104
+msgid "技术支持"
+msgstr "Technical support"
+
+#: bklogin/templates/account/login_ce.html:104
 msgid "QQ群支持"
 msgstr "QQ group"
 
@@ -348,7 +352,7 @@ msgstr "Community"
 msgid "产品官网"
 msgstr "Home"
 
-#: bklogin/templates/account/login_ce.html:107
+#: bklogin/templates/account/login_ce.html:108
 msgid "关注我们"
 msgstr "Follow us"
 

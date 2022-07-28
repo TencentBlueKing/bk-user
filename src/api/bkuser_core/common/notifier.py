@@ -12,10 +12,11 @@ import base64
 import logging
 from typing import List
 
-from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 from django.conf import settings
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
+
+from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 
 logger = logging.getLogger(__name__)
 

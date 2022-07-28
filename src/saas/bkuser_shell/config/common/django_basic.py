@@ -35,6 +35,7 @@ X_FRAME_OPTIONS = "SAMEORIGIN"
 # ==============================================================================
 MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "bkuser_global.middlewares.RequestProvider",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -67,6 +68,7 @@ INSTALLED_APPS = [
     "bkuser_shell.categories",
     "bkuser_shell.apis",
     "bkuser_shell.version_log",
+    "bkuser_shell.monitoring",
 ]
 
 # ==============================================================================

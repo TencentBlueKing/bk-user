@@ -30,7 +30,7 @@ spec:
             - job
             - "bk-user-api-migrate-db-{{ .Release.Revision }}"
       containers:
-        - name: api-db-migrate
+        - name: api-iam-migrate
           image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:

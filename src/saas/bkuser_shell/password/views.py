@@ -11,13 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import bkuser_sdk
+from . import serializers
+from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
-
-from bkuser_global.drf_crown import inject_serializer
-
-from . import serializers
 
 logger = logging.getLogger("root")
 
@@ -42,8 +40,8 @@ class PasswordViewSet(BkUserApiViewSet):
             # 调用后台接口重置密码
             api_instance.v2_profiles_generate_token(lookup_value=profile.id, body={}, lookup_field="id")
         except Exception:  # pylint: disable=broad-except
-            """吞掉异常，保证不能判断出邮箱是否存在"""
-            logger.exception("failed to generate token of profile<%s>", profile.username)
+            logger.exception("failed to generate token of profile<%s>. [profile.id=%s]", profile.username, profile.id)
+
         return Response(data={})
 
     @inject_serializer(body_in=serializers.ResetByTokenSerialzier, tags=["password"])
@@ -57,7 +55,7 @@ class PasswordViewSet(BkUserApiViewSet):
         # 由于该接口无登录态，我们只能认为访问该链接的人即用户所有者
         request.user.username = profile.username
 
-        profiles_api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
+        profiles_api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, user_from_token=True))
         body = {"password": password}
 
         # 调用后台接口重置密码

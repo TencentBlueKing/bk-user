@@ -10,7 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.conf import settings
+from django.template.exceptions import TemplateDoesNotExist
+from django.template.loader import get_template
+from django.template.response import TemplateResponse
+from django.utils.translation import ugettext_lazy as _
+
 import bkuser_sdk
+from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
@@ -19,13 +26,6 @@ from bkuser_shell.organization.constants import ProfileWildSearchFieldEnum
 from bkuser_shell.organization.serializers.departments import DepartmentSerializer
 from bkuser_shell.organization.serializers.misc import SearchResultSerializer, SearchSerializer
 from bkuser_shell.organization.serializers.profiles import ProfileSerializer
-from django.conf import settings
-from django.template.exceptions import TemplateDoesNotExist
-from django.template.loader import get_template
-from django.template.response import TemplateResponse
-from django.utils.translation import ugettext_lazy as _
-
-from bkuser_global.drf_crown import inject_serializer
 
 logger = logging.getLogger(__name__)
 

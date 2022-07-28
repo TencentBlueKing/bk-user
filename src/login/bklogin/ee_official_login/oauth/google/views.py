@@ -11,12 +11,12 @@ specific language governing permissions and limitations under the License.
 """
 import urllib.parse
 
-from bklogin.bkauth import actions
-from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
-from bklogin.common.log import logger
 from django.contrib.auth import authenticate
 
 from .utils import gen_oauth_login_url
+from bklogin.bkauth import actions
+from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
+from bklogin.common.log import logger
 
 
 def login(request):

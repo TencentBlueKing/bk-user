@@ -10,16 +10,17 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from rest_framework import filters, viewsets
+from rest_framework.generics import ListAPIView
+
+from bkuser_core.apis.v3.exceptions import QueryTooLong
+from bkuser_core.apis.v3.filters import MultipleFieldFilter
 from bkuser_core.apis.v3.serializers import AdvancedPagination
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMPermission
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.models import Profile
-from bkuser_core.profiles.v3.filters import MultipleFieldFilter
 from bkuser_core.profiles.v3.serializers import PaginatedProfileSerializer, QueryProfileSerializer
-from rest_framework import filters, viewsets
-from rest_framework.generics import ListAPIView
-
 from bkuser_global.drf_crown.crown import inject_serializer
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,8 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
     pagination_class = AdvancedPagination
     ordering = "id"
 
-    supported_m2m_fields = ["leader", "departments"]
+    foreign_fields = ["departments", "leader"]
+    in_fields = ["username__in", "staff_status__in", "status__in"]
 
     @inject_serializer(query_in=QueryProfileSerializer, out=PaginatedProfileSerializer)
     def list(self, request, validated_data: dict, *args, **kwargs):
@@ -43,10 +45,12 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
 
         try:
             queryset = MultipleFieldFilter().filter_by_params(
-                validated_data, self.filter_queryset(self.get_queryset()), self
+                self.filter_queryset(self.get_queryset()), validated_data, self
             )
         except IAMPermissionDenied:
             raise
+        except QueryTooLong as e:
+            raise error_codes.QUERY_TOO_LONG.f(e)
         except Exception:
             logger.exception("failed to get profile list")
             raise error_codes.QUERY_PARAMS_ERROR

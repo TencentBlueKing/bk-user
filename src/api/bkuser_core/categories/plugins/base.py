@@ -17,6 +17,9 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import Any, ClassVar, Dict, List, MutableMapping, Optional, Type, TypeVar
 
+from django.db.models import Model
+from typing_extensions import Protocol
+
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.constants import SYNC_LOG_TEMPLATE_MAP, SyncStep
 from bkuser_core.categories.plugins.metas import DepartmentMeta, DepartmentProfileMeta, LeaderProfileMeta, ProfileMeta
@@ -24,8 +27,6 @@ from bkuser_core.common.db_sync import SyncModelManager, SyncModelMeta, SyncOper
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import LeaderThroughModel, Profile
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.db.models import Model
-from typing_extensions import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +214,9 @@ class Syncer:
 
     context: SyncContext = field(default_factory=SyncContext)
 
+    # 决定是否初始化client, 默认为True, 即默认会初始化; 某些场景不需要初始化(例如test_connection), 需要设置为False
+    with_initialize_client: bool = True
+
     def __post_init__(self):
         try:
             self.category = ProfileCategory.objects.get(pk=self.category_id)
@@ -227,7 +231,7 @@ class Syncer:
         raise NotImplementedError
 
     def get_fetcher(self):
-        return self.fetcher_cls(self.category_id, self.config_loader)
+        return self.fetcher_cls(self.category_id, self.config_loader, self.with_initialize_client)
 
     def disable_departments_before_sync(self, exempt_ids: list = None):
         """全同步前禁用该目录下的组织

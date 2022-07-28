@@ -123,20 +123,14 @@ export default {
       type: Boolean,
       default: true,
     },
+    statusMap: {
+      type: Object,
+      default: {},
+    },
   },
   data() {
     return {
       isAllChecked: false,
-      statusMap: {
-        NORMAL: '正常',
-        LOCKED: '被锁定',
-        DELETED: '被删除',
-        DISABLED: '被禁用',
-      },
-      staffStatusMap: {
-        IN: '在职',
-        OUT: '离职',
-      },
       dataList: [], // 展示的列表数据
       dataListPaged: [], // 将列表数据按 pageSize 分页
       throttle: false, // 滚动节流 是否进入cd
@@ -260,18 +254,21 @@ export default {
         if (this.enumInfo[key].type === 'one_enum') {
           // 单选 value 期望是数值或字符串
           if (typeof value !== 'number' && typeof value !== 'string') {
-            console.warn(`${key}字段的值应该是数值或字符串（options.id）`);
+            console.warn(`${key} ${this.$t('字段的值应该是数值或字符串')}（options.id）`);
             return '';
           }
           for (let i = 0; i < options.length; i++) {
             if (options[i].id === value) {
-              return options[i].value;
+              if (this.$i18n.locale === 'en') {
+                return value;
+              }
+              return this.statusMap[options[i].id];
             }
           }
         } else {
           // 多选 value 期望是数组
           if (!Array.isArray(value)) {
-            console.warn(`${key}字段的值应该是数组`);
+            console.warn(`${key} ${this.$t('字段的值应该是数组')}`);
             return '';
           }
           const results = [];

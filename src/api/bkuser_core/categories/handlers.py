@@ -10,11 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.conf import settings
+from django.dispatch import receiver
+
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.bkiam.helper import IAMHelper
 from bkuser_core.categories.signals import post_category_create
-from django.conf import settings
-from django.dispatch import receiver
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +30,25 @@ def create_creator_actions(sender, instance, **kwargs):
     logger.info("going to create resource_creator_action for Category<%s>", instance.id)
     helper = IAMHelper()
     try:
-        helper.create_creator_actions(kwargs["creator"], instance)
+        helper.create_creator_actions(kwargs["operator"], instance)
     except Exception:  # pylint: disable=broad-except
-        logger.exception("failed to create resource_creator_action (category related)")
+        logger.exception(
+            "failed to create resource_creator_action (category related). [operator=%s, instance=%s]",
+            kwargs["creator"],
+            instance,
+        )
 
     # 创建目录之后，默认拥有了目录 & 组织的管理能力
     try:
         helper.create_auth_by_ancestor(
-            username=kwargs["creator"],
+            username=kwargs["operator"],
             ancestor=instance,
             target_type=ResourceType.DEPARTMENT.value,
             action_ids=[IAMAction.MANAGE_DEPARTMENT, IAMAction.VIEW_DEPARTMENT],
         )
     except Exception:  # pylint: disable=broad-except
-        logger.exception("failed to create resource_creator_action (department related)")
+        logger.exception(
+            "failed to create resource_creator_action (department related). [operator=%s, instance=%s]",
+            kwargs["operator"],
+            instance,
+        )

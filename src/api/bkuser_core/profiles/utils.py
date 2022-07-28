@@ -15,18 +15,17 @@ import string
 import urllib.parse
 from typing import TYPE_CHECKING, Tuple
 
-from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
-from bkuser_core.user_settings.constants import InitPasswordMethod
-from bkuser_core.user_settings.loader import ConfigProvider
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from phonenumbers.phonenumberutil import UNKNOWN_REGION, country_code_for_region, region_code_for_country_code
 
-from bkuser_global.utils import force_str_2_bool
-
 from ..audit.models import ResetPassword
 from .exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
+from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
+from bkuser_core.user_settings.constants import InitPasswordMethod
+from bkuser_core.user_settings.loader import ConfigProvider
+from bkuser_global.utils import force_str_2_bool
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
@@ -60,7 +59,7 @@ def parse_username_domain(username_with_domain, known_domain: str = None) -> tup
         try:
             username = pattern.group("username")
         except AttributeError:
-            logger.exception("can not parse raw_username<%s>")
+            logger.exception("can not parse raw_username<%s>", username_with_domain)
             raise UsernameWithDomainFormatError(f"parse {username_with_domain} failed")
 
         logger.debug(
@@ -79,7 +78,7 @@ def parse_username_domain(username_with_domain, known_domain: str = None) -> tup
         username = pattern.group("username")
         domain = pattern.group("domain")
     except AttributeError:
-        logger.exception("can not parse raw_username<%s>")
+        logger.exception("parse username with domain fail. [raw_username=%s]", username_with_domain)
         raise UsernameWithDomainFormatError(f"parse {username_with_domain} failed")
 
     logger.debug(

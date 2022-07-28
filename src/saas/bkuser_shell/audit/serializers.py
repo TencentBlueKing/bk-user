@@ -14,7 +14,7 @@ from typing import Optional
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from .constants import LOGIN_FAILED_REASON_MAP, OPERATION_NAME_MAP, OPERATION_OBJ_NAME_MAP
+from .constants import LOGIN_FAILED_REASON_MAP, OPERATION_ABOUT_PASSWORD, OPERATION_NAME_MAP, OPERATION_OBJ_NAME_MAP
 
 PLACE_HOLDER = "--"
 
@@ -49,7 +49,12 @@ class OperationLogListSerializer(serializers.Serializer):
         categories = self.context.get("categories")
         instance["target_obj"] = f"{extra_value['display_name']}<{extra_value['key']}>"
         instance["operation"] = (
-            f"{OPERATION_NAME_MAP[extra_value['operation']]}" f"{OPERATION_OBJ_NAME_MAP[extra_value.get('obj_type')]}"
+            f"{OPERATION_NAME_MAP[extra_value['operation']]}"
+            if extra_value['operation'] in OPERATION_ABOUT_PASSWORD
+            else (
+                f"{OPERATION_NAME_MAP[extra_value['operation']]}"
+                f"{OPERATION_OBJ_NAME_MAP[extra_value.get('obj_type')]}"
+            )
         )
 
         category_id = extra_value.get("category_id")

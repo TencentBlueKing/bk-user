@@ -14,6 +14,22 @@ import logging
 from collections import defaultdict
 from operator import or_
 
+from django.conf import settings
+from django.contrib.auth.hashers import make_password
+from django.core.exceptions import FieldError, MultipleObjectsReturned
+from django.db.models import F, Q
+from django.utils.decorators import method_decorator
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+from django.views.decorators.cache import cache_page
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import filters, status, viewsets
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+from rest_framework_jsonp.renderers import JSONPRenderer
+
+from ...departments.v2 import serializers as department_serializer
+from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from bkuser_core.apis.v2.serializers import (
     AdvancedListSerializer,
@@ -23,14 +39,13 @@ from bkuser_core.apis.v2.serializers import (
 )
 from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
-from bkuser_core.audit.utils import audit_general_log, create_profile_log
+from bkuser_core.audit.utils import audit_general_log, create_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.departments import serializers as department_serializer
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
@@ -49,23 +64,7 @@ from bkuser_core.profiles.v2.filters import ProfileSearchFilter
 from bkuser_core.profiles.validators import validate_username
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 from bkuser_core.user_settings.loader import ConfigProvider
-from django.conf import settings
-from django.contrib.auth.hashers import make_password
-from django.core.exceptions import FieldError, MultipleObjectsReturned
-from django.db.models import F, Q
-from django.utils.decorators import method_decorator
-from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_page
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, status, viewsets
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework_jsonp.renderers import JSONPRenderer
-
 from bkuser_global.utils import force_str_2_bool
-
-from . import serializers as local_serializers
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +74,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     serializer_class = local_serializers.ProfileSerializer
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
-
     relation_fields = ["departments", "leader", "login_set"]
 
     def get_object(self):
@@ -112,8 +110,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """Serializer 路由"""
         if self.action in ("create", "update", "partial_update"):
             return local_serializers.CreateProfileSerializer
-        elif self.action in ("list",):
-            return local_serializers.RapidProfileSerializer
+        # NOTE: "list" 比较特殊, 放到self.list方法中处理
         else:
             return self.serializer_class
 
@@ -172,11 +169,19 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         _query_slz.is_valid(True)
         query_data = _query_slz.validated_data
 
+        serializer_class = local_serializers.RapidProfileSerializer
+
+        # NOTE: 用于两套用户管理之间的数据同步
+        if settings.SYNC_API_PARAM in request.query_params:
+            serializer_class = local_serializers.ForSyncRapidProfileSerializer
+            request.META[settings.FORCE_RAW_RESPONSE_HEADER] = "true"
+
         fields = query_data.get("fields", [])
         if fields:
             self._check_fields(fields)
         else:
-            fields = self.get_serializer().fields
+            fields = serializer_class().fields
+
         self._ensure_enabled_field(request, fields=fields)
 
         try:
@@ -201,9 +206,10 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         page = self.paginate_queryset(queryset)
         # page may be empty list
         if page is not None:
-            serializer = self.get_serializer(page, fields=fields, many=True)
+            serializer = serializer_class(page, fields=fields, many=True)
             return self.get_paginated_response(serializer.data)
 
+        fields = [x for x in fields if x in self._get_model_field_names()]
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
         # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
@@ -287,13 +293,13 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         )
         return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
 
-    @audit_general_log(OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
     def _update(self, request, partial):
         instance = self.get_object()
         serializer = local_serializers.UpdateProfileSerializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
+        operate_type = OperationType.UPDATE.value
 
         # 只允许本地目录修改
         if not ProfileCategory.objects.check_writable(instance.category_id):
@@ -320,6 +326,12 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         update_summary = {"request": request}
         # 密码修改加密
         if validated_data.get("password"):
+            operate_type = (
+                OperationType.FORGET_PASSWORD.value
+                if request.headers.get("User-From-Token")
+                else OperationType.ADMIN_RESET_PASSWORD.value
+            )
+
             pending_password = validated_data.get("password")
             config_loader = ConfigProvider(category_id=instance.category_id)
             try:
@@ -332,7 +344,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             PasswordValidator(
                 min_length=int(config_loader["password_min_length"]),
                 max_length=settings.PASSWORD_MAX_LENGTH,
-                required_element_names=config_loader["password_must_includes"],
+                include_elements=config_loader["password_must_includes"],
+                exclude_elements_config=config_loader["exclude_elements_config"],
             ).validate(pending_password)
 
             instance.password = make_password(pending_password)
@@ -361,6 +374,13 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             operator=request.operator,
             extra_values=update_summary,
         )
+
+        create_general_log(
+            operator=request.operator,
+            operate_type=operate_type,
+            operator_obj=instance,
+            request=request,
+        )
         return Response(self.serializer_class(instance).data)
 
     @swagger_auto_schema(
@@ -388,6 +408,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """
         return super().destroy(request, *args, **kwargs)
 
+    @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
     @swagger_auto_schema(
         query_serializer=AdvancedRetrieveSerialzier(),
         request_body=local_serializers.ProfileModifyPasswordSerializer,
@@ -418,7 +439,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         PasswordValidator(
             min_length=int(config_loader["password_min_length"]),
             max_length=settings.PASSWORD_MAX_LENGTH,
-            required_element_names=config_loader["password_must_includes"],
+            include_elements=config_loader["password_must_includes"],
+            exclude_elements_config=config_loader["exclude_elements_config"],
         ).validate(new_password)
 
         instance.password = make_password(new_password)
@@ -455,7 +477,11 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         except ProfileEmailEmpty:
             raise error_codes.EMAIL_NOT_PROVIDED
         except Exception:  # pylint: disable=broad-except
-            logger.exception("failed to send password via email")
+            logger.exception(
+                "failed to send password via email. [profile.id=%s, profile.username=%s]",
+                instance.id,
+                instance.username,
+            )
 
         return Response(data=local_serializers.ProfileTokenSerializer(token_holder).data)
 
@@ -531,6 +557,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         password = serializer.validated_data.get("password")
         domain = serializer.validated_data.get("domain", None)
 
+        logger.debug("do login check, username<%s>, domain=<%s>", username, domain)
         # 无指定 domain 时, 选择默认域
         if not domain:
             category = ProfileCategory.objects.get_default()
@@ -543,6 +570,14 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             if category.inactive:
                 raise error_codes.CATEGORY_NOT_ENABLED
 
+        logger.debug(
+            "do login check, will check in category<%s-%s-%s>", category.type, category.display_name, category.id
+        )
+
+        message_detail = (
+            f"username={username}, domain={domain} in category<{category.type}-{category.display_name}-{category.id}>"
+        )
+
         # 这里不检查具体的用户名格式，只判断是否能够获取到对应用户
         try:
             profile = Profile.objects.get(
@@ -550,9 +585,14 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 domain=category.domain,
             )
         except Profile.DoesNotExist:
+            logger.info("login check, can't find the %s", message_detail)
+            # NOTE: 这里不能使用 USER_DOES_NOT_EXIST, 安全问题
             raise error_codes.PASSWORD_ERROR
         except MultipleObjectsReturned:
+            logger.info("login check, find multiple profiles via %s", message_detail)
+            # NOTE: 安全原因, 不能返回账户状态
             raise error_codes.PASSWORD_ERROR
+            # raise error_codes.USER_EXIST_MANY
 
         time_aware_now = now()
         config_loader = ConfigProvider(category_id=category.id)
@@ -570,7 +610,13 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
                 )
+                logger.info("login check, profile<%s> of %s is disabled or deleted", profile.username, message_detail)
                 raise error_codes.PASSWORD_ERROR
+                # NOTE: 安全原因, 不能返回账户状态
+                # if profile.status == ProfileStatus.DISABLED.value:
+                #     raise error_codes.USER_IS_DISABLED
+                # else:
+                #     raise error_codes.USER_IS_DELETED
             elif profile.status == ProfileStatus.LOCKED.value:
                 create_profile_log(
                     profile=profile,
@@ -578,7 +624,10 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.LOCKED_USER.value},
                 )
+                logger.info("login check, profile<%s> of %s is locked", profile.username, message_detail)
                 raise error_codes.PASSWORD_ERROR
+                # NOTE: 安全原因, 不能返回账户状态
+                # raise error_codes.USER_IS_LOCKED
 
             # 获取密码配置
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
@@ -599,18 +648,25 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
                     logger.info(f"用户<{profile}> 登录失败错误过多，已被锁定，请 {retry_after_wait}s 后再试")
                     # 当密码输入错误时，不暴露不同的信息，避免用户名爆破
+                    logger.info(
+                        "login check, profile<%s> of %s entered wrong password too many times",
+                        profile.username,
+                        message_detail,
+                    )
+                    # NOTE: 安全原因, 不能返回账户状态
                     raise error_codes.PASSWORD_ERROR
 
         try:
             login_class = get_plugin_by_category(category).login_handler_cls
         except Exception:
             logger.exception(
-                "category<%s-%s-%s> load login handler failed",
+                "login check, category<%s-%s-%s> load login handler failed",
                 category.type,
                 category.display_name,
                 category.id,
             )
-            raise error_codes.PASSWORD_ERROR
+            # NOTE: 代码异常, 可以返回加载失败
+            raise error_codes.CATEGORY_PLUGIN_LOAD_FAIL
 
         try:
             login_class().check(profile, password)
@@ -621,7 +677,8 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 request=request,
                 params={"is_success": False, "reason": LogInFailReason.BAD_PASSWORD.value},
             )
-            logger.exception("check profile<%s> failed", profile.username)
+            logger.exception("login check, check profile<%s> of %s failed", profile.username, message_detail)
+            # NOTE: 这里不能使用其他错误, 一律是 PASSWORD_ERROR, 安全问题
             raise error_codes.PASSWORD_ERROR
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
@@ -674,7 +731,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 profile=profile, token_expire_seconds=settings.PAGE_TOKEN_EXPIRE_SECONDS
             )
         except Exception:  # pylint: disable=broad-except
-            logger.exception("failed to create token for password reset")
+            logger.exception("failed to create token for password reset. [profile.username=%s]", profile.username)
         else:
             data.update({"reset_password_url": make_passwd_reset_url_by_token(token_holder.token)})
 
@@ -740,7 +797,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
             domain_username_map[domain].append(username)
 
-        logger.info("going to query username list: %s", username_list)
+        logger.debug("going to query username list: %s", username_list)
         if not domain_username_map:
             profiles = Profile.objects.filter(enabled=True)
         else:

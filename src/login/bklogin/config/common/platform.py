@@ -11,10 +11,9 @@ specific language governing permissions and limitations under the License.
 """
 import os
 
+from . import env
 from bklogin.config.common.django_basic import SITE_URL
 from bklogin.config.common.plugin import CUSTOM_AUTHENTICATION_BACKEND, LOGIN_TYPE
-
-from . import env
 
 EDITION = env.str("EDITION", default="ce")
 
@@ -23,6 +22,12 @@ BKKRILL_ENCRYPT_SECRET_KEY = env.str("ENCRYPT_SECRET_KEY")
 
 # 与 ESB 通信的密钥
 ESB_TOKEN = env.str("BK_PAAS_SECRET_KEY")
+
+# ESB Api URL
+BK_COMPONENT_API_URL = env("BK_COMPONENT_API_URL", default="")
+
+# Login API Auth Enabled 登录是否开启了 API 认证
+BK_LOGIN_API_AUTH_ENABLED = env.bool("BK_LOGIN_API_AUTH_ENABLED", default=False)
 
 # domain
 BK_LOGIN_PUBLIC_ADDR = env.str("BK_LOGIN_PUBLIC_ADDR")
