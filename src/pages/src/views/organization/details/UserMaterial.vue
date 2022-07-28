@@ -87,19 +87,8 @@
             <div class="desc" v-if="fieldInfo.key === 'telephone'" @click="viewTelephone">
               <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
             </div>
-            <div class="desc" v-else-if="fieldInfo.type === 'one_enum'">
-              <p class="text">{{mapOneEnum(currentProfile[fieldInfo.key], fieldInfo.options) || '--'}}</p>
-            </div>
-            <div class="desc" v-else-if="fieldInfo.type === 'multi_enum'">
-              <p class="text">{{mapMultipleEnum(currentProfile[fieldInfo.key], fieldInfo.options) || '--'}}</p>
-            </div>
-            <div class="desc" v-else-if="timerMap.includes(fieldInfo.key)">
-              <p class="text">
-                {{mapTimeEnum(currentProfile[fieldInfo.key]) || '--'}}
-              </p>
-            </div>
             <div class="desc" v-else>
-              <p class="text">{{currentProfile[fieldInfo.key] || '--'}}</p>
+              <p class="text">{{fieldInfo.value || '--'}}</p>
             </div>
           </div>
         </li>
@@ -215,6 +204,9 @@ export default {
       return this.currentProfile.status === 'DELETED';
     },
   },
+  created() {
+    this.getUserInfo();
+  },
   mounted() {
     this.$nextTick(() => {
       this.isForbid = (this.currentProfile.status === 'DISABLED' || this.currentProfile.status === 'LOCKED');
@@ -226,44 +218,21 @@ export default {
       const getUserList = tagList.map(item => item.username);
       return getUserList.join(' , ');
     },
-    // 单选类型转换
-    mapOneEnum(value, options) {
-      try {
-        for (let i = 0; i < options.length; i++) {
-          if (value === options[i].id) {
-            if (this.$i18n.locale === 'en') {
-              return value;
+    // 获取用户信息
+    getUserInfo() {
+      this.activeFieldsList.forEach((item) => {
+        if (item.options.length > 0) {
+          item.options.map((key) => {
+            if (key.id === item.default) {
+              item.value = key.value;
             }
-            return this.statusMap[options[i].id];
-          }
+          });
+        } else if (this.timerMap.includes(item.key)) {
+          item.value = dateConvert(this.currentProfile[item.key]);
+        } else if (item.key !== 'telephone') {
+          item.value = this.currentProfile[item.key];
         }
-      } catch (e) {
-        console.warn(e, '枚举值转换出错');
-        return '';
-      }
-    },
-    // 多选类型转换
-    mapMultipleEnum(value, options) {
-      // 新增枚举值，旧数据相关字段没有值
-      if (value === null) return '';
-      try {
-        const result = [];
-        value.forEach((item) => {
-          for (let i = 0; i < options.length; i++) {
-            if (item === options[i].id) {
-              result.push(options[i].value);
-              break;
-            }
-          }
-        });
-        return result.join(';');
-      } catch (e) {
-        console.warn(e, '枚举值转换出错');
-        return '';
-      }
-    },
-    mapTimeEnum(value) {
-      return dateConvert(value);
+      });
     },
     // 编辑
     editProfile() {
