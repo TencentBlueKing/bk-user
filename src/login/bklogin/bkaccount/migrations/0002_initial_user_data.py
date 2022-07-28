@@ -10,10 +10,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
 from django.db import migrations
-from django.conf import settings
-from django.contrib.auth import get_user_model
 
 
 def initial_user_data(apps, schema_editor):
@@ -23,7 +20,7 @@ def initial_user_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bkaccount', '0001_initial'),
+        ("bkaccount", "0001_initial"),
     ]
 
     operations = [

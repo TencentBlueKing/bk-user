@@ -79,14 +79,22 @@ class LDAPFetcher(Fetcher):
             else:
                 groups = []
         except Exception as e:
-            logger.exception("failed to get groups from remote server")
+            logger.exception(
+                "failed to get groups from remote server. basic_pull_node: %s, user_group_filter: %s",
+                basic_pull_node,
+                user_group_filter,
+            )
             error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
             raise FetchDataFromRemoteFailed(_("无法获取用户组，请检查配置") + error_detail)
 
         try:
             departments = self.client.search(start_root=basic_pull_node, object_class=organization_class)
         except Exception as e:
-            logger.exception("failed to get departments from remote server")
+            logger.exception(
+                "failed to get departments from remote server. basic_pull_node: %s, organization_class: %s",
+                basic_pull_node,
+                organization_class,
+            )
             error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
             raise FetchDataFromRemoteFailed(_("无法获取组织部门，请检查配置") + error_detail)
 
@@ -97,7 +105,12 @@ class LDAPFetcher(Fetcher):
                 attributes=attributes or [],
             )
         except Exception as e:
-            logger.exception("failed to get users from remote server")
+            logger.exception(
+                "failed to get users from remote server. basic_pull_node: %s, user_filter: %s, attributes: %s",
+                basic_pull_node,
+                user_filter,
+                attributes,
+            )
             error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
             raise FetchDataFromRemoteFailed(_("无法获取用户数据, 请检查配置") + error_detail)
 
@@ -122,7 +135,7 @@ class LDAPFetcher(Fetcher):
         profiles = []
         for user in users:
             if not user.get("dn"):
-                logger.info("no dn field, skipping for %s", user)
+                logger.warning("no dn field, skipping for profile: %s", user)
                 continue
 
             profiles.append(
@@ -141,7 +154,7 @@ class LDAPFetcher(Fetcher):
         results = []
         for is_group, dept_meta in chain.from_iterable(iter([product([False], departments), product([True], groups)])):
             if not dept_meta.get("dn"):
-                logger.info("no dn field, skipping for %s", dept_meta)
+                logger.warning("no dn field, skipping for %s:%s", ("group" if is_group else "department"), dept_meta)
                 continue
             results.append(
                 department_adapter(

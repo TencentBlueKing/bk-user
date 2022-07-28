@@ -350,3 +350,22 @@ export function loadScript(url, callback) {
 
   document.getElementsByTagName('head')[0].appendChild(script);
 }
+
+/**
+ * 复制到剪切板
+ * @param {*} content : ;
+ * @param {*} callback
+ */
+export function clipboardCopy(content, callback) {
+  const transfer = document.createElement('textarea');
+  document.body.appendChild(transfer);
+  transfer.value = content; // 这里表示想要复制的内容
+  transfer.focus();
+  transfer.select();
+  if (document.execCommand('copy')) {
+    document.execCommand('copy');
+  }
+  transfer.blur();
+  callback && callback();
+  document.body.removeChild(transfer);
+}

@@ -17,8 +17,8 @@ from urllib.parse import urlparse
 import requests
 from django.conf import settings
 
-from .util import _remove_sensitive_info
 from bklogin.common.log import logger
+from bklogin.components.util import _remove_sensitive_info
 
 # NOTE: all new components should use the http.py here!
 

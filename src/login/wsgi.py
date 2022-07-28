@@ -15,6 +15,6 @@ import os
 from dj_static import Cling
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bklogin.config.overlays.prod")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bklogin.config.prod")
 
 application = Cling(get_wsgi_application())

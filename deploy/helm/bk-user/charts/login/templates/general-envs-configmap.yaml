@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: bk-login-general-envs
 data:
-  DJANGO_SETTINGS_MODULE: "bklogin.config.overlays.prod"
+  DJANGO_SETTINGS_MODULE: "bklogin.config.prod"
   # 登录态 Cookie 写入的域名
   BK_DOMAIN: {{ .Values.global.bkDomain }}
   BK_LOGIN_HTTP_SCHEMA: {{ .Values.global.bkDomainScheme }}
@@ -24,3 +24,7 @@ data:
   SENTRY_DSN: "{{ .Values.global.sentryDsn }}"
   # Login API Auth Enabled 登录是否开启了 API 认证
   BK_LOGIN_API_AUTH_ENABLED: "{{ .Values.bkLoginApiAuthEnabled }}"
+  # Rsa 登录密码加密
+  ENABLE_PASSWORD_RSA_ENCRYPTED: "{{ .Values.enablePasswordRSAEncrypted }}"
+  PASSWORD_RSA_PUBLIC_KEY: "{{ .Values.passwordRSAPublicKeyBase64 }}"
+  PASSWORD_RSA_PRIVATE_KEY: "{{ .Values.passwordRSAPrivateKeyBase64 }}"

@@ -34,7 +34,7 @@
         </a>
         <a
           href="javascript:void(0);"
-          :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('用户目录') }}</a>
+          :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('组织') }}</a>
         <a
           href="javascript:void(0);"
           :class="$route.name === 'audit' && 'router-link-active'" @click="goTo('audit')">{{ $t('审计') }}</a>

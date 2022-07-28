@@ -11,21 +11,20 @@ specific language governing permissions and limitations under the License.
 """
 
 
+from enum import Enum
 from typing import Optional
 
 from django.utils.translation import ugettext_lazy as _
 
-from bklogin.common.constants import enum
 
-LoginErrorCodes = enum(
-    E1302000_DEFAULT_CODE=1302000,
-    E1302001_BASE_SETTINGS_ERROR=1302001,
-    E1302002_BASE_DATABASE_ERROR=1302002,
-    E1302003_BASE_HTTP_DEPENDENCE_ERROR=1302003,
-    E1302004_BASE_BKSUITE_DATABASE_ERROR=1302004,
-    E1302005_BASE_LICENSE_ERROR=1302005,
+class LoginErrorCodes(Enum):
+    # E1302000_DEFAULT_CODE = 1302000
+    E1302001_BASE_SETTINGS_ERROR = 1302001
+    E1302002_BASE_DATABASE_ERROR = 1302002
+    # E1302003_BASE_HTTP_DEPENDENCE_ERROR=1302003,
+    # E1302004_BASE_BKSUITE_DATABASE_ERROR=1302004,
+    # E1302005_BASE_LICENSE_ERROR=1302005,
     # E1302006_ENTERPRISE_LOGIN_ERROR=1302006,
-)
 
 
 class AuthenticationError(Exception):

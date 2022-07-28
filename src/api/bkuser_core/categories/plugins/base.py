@@ -281,7 +281,7 @@ class Syncer:
                 profile=profile, department_id__in=exempt_department_ids
             ).exists()
         ):
-            logger.debug(
+            logger.info(
                 "profile<%s> is in the exempted department<%s>, skip",
                 profile,
                 department,

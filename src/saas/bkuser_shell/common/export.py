@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, List
 
 from django.http import HttpResponse
 from openpyxl.styles import Alignment, Font, colors
+from openpyxl.styles.numbers import FORMAT_TEXT
 
 from bkuser_shell.config_center.constants import DynamicFieldTypeEnum
 from bkuser_shell.organization.serializers.profiles import ProfileExportSerializer
@@ -23,7 +24,6 @@ from bkuser_shell.organization.utils import get_options_values_by_key
 
 if TYPE_CHECKING:
     from openpyxl.workbook.workbook import Workbook
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,13 @@ class ProfileExcelExporter:
 
     def __post_init__(self):
         self.first_sheet = self.workbook.worksheets[0]
+        # 样式加载
         self.first_sheet.alignment = Alignment(wrapText=True)
+        # 初始化全表的单元格数据格式
+        # 将单元格设置为纯文本模式，预防DDE
+        for columns in self.first_sheet.columns:
+            for cell in columns:
+                cell.number_format = FORMAT_TEXT
 
     def update_profiles(self, profiles: List[dict], extra_infos: dict = None):
         self._update_sheet_titles()

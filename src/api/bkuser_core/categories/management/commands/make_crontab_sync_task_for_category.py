@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+import traceback
 
 from django.core.management.base import BaseCommand
 
@@ -44,4 +45,5 @@ class Command(BaseCommand):
         try:
             make_periodic_sync_task(int(category_id), operator, interval)
         except Exception:  # pylint: disable=broad-except
+            self.stdout.write(traceback.format_exc())
             self.stdout.write(f"Failed to add sync task for category {category_id}")

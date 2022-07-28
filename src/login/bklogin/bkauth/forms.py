@@ -12,14 +12,20 @@ specific language governing permissions and limitations under the License.
 
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
+
+from bkuser_global.crypt import rsa_decrypt_password
 
 
 class BkAuthenticationForm(AuthenticationForm):
     def clean(self):
         username = self.cleaned_data.get("username")
         password = self.cleaned_data.get("password")
+
+        if settings.ENABLE_PASSWORD_RSA_ENCRYPTED:
+            password = rsa_decrypt_password(password, settings.PASSWORD_RSA_PRIVATE_KEY)
 
         if username and password:
             # will call backend/bk.py: BkUserBackend.authenticate()

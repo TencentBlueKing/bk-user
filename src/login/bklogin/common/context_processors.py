@@ -9,6 +9,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
 import urllib.parse
 from builtins import str
 
@@ -23,19 +24,23 @@ context_processor for common(setting)
 
 def site_settings(request):
     real_static_url = urllib.parse.urljoin(str(settings.SITE_URL), str("." + settings.STATIC_URL))
-    cur_domain = request.get_host()
+    password_rsa_public_key = base64.b64encode(settings.PASSWORD_RSA_PUBLIC_KEY.encode()).decode()
+    enable_password_rsa_encrypted = str(settings.ENABLE_PASSWORD_RSA_ENCRYPTED).lower()
+
     return {
         # "LOGIN_URL": settings.LOGIN_URL,
         "LOGOUT_URL": settings.LOGOUT_URL,
         "STATIC_URL": real_static_url,
         "SITE_URL": settings.SITE_URL,
         "STATIC_VERSION": settings.STATIC_VERSION,
-        "CUR_DOMIAN": cur_domain,
+        "CUR_DOMIAN": request.get_host(),
         "APP_PATH": request.get_full_path(),
         "NOW": timezone.now(),
-        # "EDITION": settings.EDITION,
         # 本地 js 后缀名
         "JS_SUFFIX": settings.JS_SUFFIX,
         # 本地 css 后缀名
         "CSS_SUFFIX": settings.CSS_SUFFIX,
+        # password encrypted
+        "PASSWORD_RSA_PUBLIC_KEY": password_rsa_public_key,
+        "ENABLE_PASSWORD_RSA_ENCRYPTED": enable_password_rsa_encrypted,
     }
