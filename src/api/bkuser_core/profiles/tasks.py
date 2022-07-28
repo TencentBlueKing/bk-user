@@ -90,14 +90,14 @@ def notice_for_account_expiration():
     category_config_map = get_config_from_all_local_categories()
 
     logger.info(
-        "--------- going to notice expiring_profiles(%s) for account expiration ----------",
-        expiring_profile_list
+        "--------- going to notice expiring_profiles count:(%s) for account expiration ----------",
+        len(expiring_profile_list)
     )
     for profile in expiring_profile_list:
         notice_config = get_notice_config_for_expiration(
             expiration_type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
             profile=profile,
-            config_loader=category_config_map[profile["category_id"]]
+            config_loader=category_config_map[profile["category_id"]],
         )
         if not notice_config:
             continue
@@ -106,14 +106,14 @@ def notice_for_account_expiration():
         time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
     logger.info(
-        "--------- going to notice expired_profiles(%s) for account expiration ----------",
-        expired_profile_list
+        "--------- going to notice expired_profiles count:(%s) for account expiration ----------",
+        len(expired_profile_list)
     )
     for profile in expired_profile_list:
         notice_config = get_notice_config_for_expiration(
             expiration_type=TypeOfExpiration.ACCOUNT_EXPIRATION.value,
             profile=profile,
-            config_loader=category_config_map[profile["category_id"]]
+            config_loader=category_config_map[profile["category_id"]],
         )
         if not notice_config:
             continue
@@ -148,14 +148,14 @@ def notice_for_password_expiration():
     category_config_map = get_config_from_all_local_categories()
 
     logger.info(
-        "--------- going to notice expiring_profiles(%s) for password expiration ----------",
-        expiring_profile_list
+        "--------- going to notice expiring_profiles count:(%s) for password expiration ----------",
+        len(expiring_profile_list)
     )
     for profile in expiring_profile_list:
         notice_config = get_notice_config_for_expiration(
             expiration_type=TypeOfExpiration.PASSWORD_EXPIRATION.value,
             profile=profile,
-            config_loader=category_config_map[profile["category_id"]]
+            config_loader=category_config_map[profile["category_id"]],
         )
         if not notice_config:
             continue
@@ -164,14 +164,14 @@ def notice_for_password_expiration():
         time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
     logger.info(
-        "--------- going to notice expired_profiles(%s) for password expiration ----------",
-        expired_profile_list
+        "--------- going to notice expired_profiles count:(%s) for password expiration ----------",
+        len(expired_profile_list)
     )
     for profile in expired_profile_list:
         notice_config = get_notice_config_for_expiration(
             expiration_type=TypeOfExpiration.PASSWORD_EXPIRATION.value,
             profile=profile,
-            config_loader=category_config_map[profile["category_id"]]
+            config_loader=category_config_map[profile["category_id"]],
         )
         if not notice_config:
             continue
@@ -215,7 +215,7 @@ def change_profile_status_for_account_locking():
     """
     对长时间未登录的用户进行状态冻结
     """
-    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
     frozen_profile_ids = []
     # 获取用户目录设置
     for category_id in category_ids:
@@ -246,9 +246,11 @@ def change_profile_status_for_account_locking():
         for profile in profiles:
             # 最后登录时间
             profile_last_operate_time = profile.last_login_time
-            # 当用户从未登录过，以用户创建时间为基准：
+            # 当用户从未登录过
             if not profile_last_operate_time:
-                profile_last_operate_time = profile.create_time
+                # 场景考虑：该用户被管理员关注
+                # 精确到秒
+                profile_last_operate_time = profile.update_time.replace(microsecond=0)
 
             if profile_last_operate_time + datetime.timedelta(days=freeze_after_days) < now():
                 frozen_profile_ids.append(profile.id)
