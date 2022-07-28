@@ -76,9 +76,7 @@ MIDDLEWARE = (
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "bklogin.bkauth.middlewares.LoginMiddleware",
     "bklogin.bk_i18n.middlewares.LanguageMiddleware",
-    "bklogin.bk_i18n.middlewares.ApiLanguageMiddleware",
     "bklogin.bk_i18n.middlewares.TimezoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 )

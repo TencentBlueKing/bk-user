@@ -9,3 +9,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+from enum import Enum
+
+
+class BkUserCheckCodeEnum(Enum):
+    """Bk user check code, defined by api module"""
+
+    # TODO: move into global code
+    USER_DOES_NOT_EXIST = 3210010
+    TOO_MANY_TRY = 3210011
+    USERNAME_FORMAT_ERROR = 3210012
+    PASSWORD_ERROR = 3210013
+    USER_EXIST_MANY = 3210014
+    USER_IS_LOCKED = 3210015
+    USER_IS_DISABLED = 3210016
+    DOMAIN_UNKNOWN = 3210017
+    PASSWORD_EXPIRED = 3210018
+    CATEGORY_NOT_ENABLED = 3210019
+    ERROR_FORMAT = 3210020
+    SHOULD_CHANGE_INITIAL_PASSWORD = 3210021

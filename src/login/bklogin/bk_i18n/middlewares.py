@@ -15,9 +15,6 @@ import pytz
 from django.conf import settings
 from django.utils import timezone, translation
 from django.utils.deprecation import MiddlewareMixin
-from django.utils.translation import trans_real as trans
-
-from bklogin.bk_i18n.constants import LOGIN_API_URL_SUFFIX_LIST
 
 
 class TimezoneMiddleware(MiddlewareMixin):
@@ -35,25 +32,3 @@ class LanguageMiddleware(MiddlewareMixin):
         if language:
             translation.activate(language)
             request.LANGUAGE_CODE = translation.get_language()
-
-
-# FIXME: remove it? currently api not respect the language settings in headers => make all message english
-class ApiLanguageMiddleware(MiddlewareMixin):
-    def process_request(self, request):
-        # check api url
-        full_path = request.get_full_path()
-        is_api_url = False
-        for i in LOGIN_API_URL_SUFFIX_LIST:
-            if full_path.startswith("/accounts/" + i + "/") or full_path.startswith("/login/accounts/" + i + "/"):
-                is_api_url = True
-                break
-        # only api url do
-        if is_api_url:
-            try:
-                language = request.META.get("HTTP_BLUEKING_LANGUAGE", "en")
-                language = trans.get_supported_language_variant(language)
-            except Exception:
-                language = "en"
-            if language:
-                translation.activate(language)
-                request.LANGUAGE_CODE = translation.get_language()

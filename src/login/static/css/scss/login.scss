@@ -13,32 +13,32 @@
 *{
     box-sizing:border-box;
 }
-body, 
+body,
 div,
 dl,
 dt,
-dd, 
+dd,
 ul,
-ol, 
+ol,
 li,
 h1,
 h2,
 h3,
 h4,
-h5, 
-h6, 
-i, 
+h5,
+h6,
+i,
 pre,
-form, 
-fieldset, 
+form,
+fieldset,
 input,
-blockquote, 
+blockquote,
 th,
 td,
-p, 
-span, 
-button, 
-textarea, 
+p,
+span,
+button,
+textarea,
 b {
   margin: 0;
   padding: 0;
@@ -69,7 +69,7 @@ a:hover {
 ul,
 ol,
 li {
-    list-style: none; 
+    list-style: none;
 }
 h1,h2,h3,h4,h5,h6{
     font-weight:normal;
@@ -78,15 +78,15 @@ input{
     &::-webkit-input-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
-    }    
+    }
     &:-moz-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
-    }                 
+    }
     &::-moz-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
-    }                 
+    }
     &:-ms-input-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
@@ -96,15 +96,15 @@ textarea{
     &::-webkit-input-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
-    }    
+    }
     &:-moz-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
-    }                 
+    }
     &::-moz-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
-    }                 
+    }
     &:-ms-input-placeholder{
         font-family: "Microsoft YaHei";
         color: #c3cdd7;
@@ -145,7 +145,7 @@ input[type=number]::-webkit-outer-spin-button {
     height:100%;
     width: 100%;
     position: relative;
-    background: url(../img/logo_ce/bg.png) no-repeat center;
+    background: url(../img/logo/bg.png) no-repeat center;
     margin: 0 auto;
     background-size: 100% 100%;
     .login-from{
@@ -173,7 +173,7 @@ input[type=number]::-webkit-outer-spin-button {
             position: relative;
             background: #fff;
             height: 279px;
-            .is-danger-tip{ 
+            .is-danger-tip{
                 position: absolute;
                 color: #ff5656;
                 top: 25px;
@@ -200,18 +200,18 @@ input[type=number]::-webkit-outer-spin-button {
                         }
                         &::-webkit-input-placeholder{
                             color: #ff5656;
-                        }    
+                        }
                         &:-moz-placeholder{
                             color: #ff5656;
-                        }                 
+                        }
                         &::-moz-placeholder{
                             color: #ff5656;
-                        }                 
+                        }
                         &:-ms-input-placeholder{
                             color: #ff5656;
                         }
                     }
-               } 
+               }
             }
             &.certificate-expired{
                 .group-control{
@@ -226,13 +226,13 @@ input[type=number]::-webkit-outer-spin-button {
                         }
                         &::-webkit-input-placeholder{
                             color: #cad3dc;
-                        }    
+                        }
                         &:-moz-placeholder{
                             color: #cad3dc;
-                        }                 
+                        }
                         &::-moz-placeholder{
                             color: #cad3dc;
-                        }                 
+                        }
                         &:-ms-input-placeholder{
                             color: #cad3dc;
                         }
@@ -277,13 +277,13 @@ input[type=number]::-webkit-outer-spin-button {
                     }
                     &::-webkit-input-placeholder{
                         color: #aaa;
-                    }    
+                    }
                     &:-moz-placeholder{
                         color: #aaa;
-                    }                 
+                    }
                     &::-moz-placeholder{
                         color: #aaa;
-                    }                 
+                    }
                     &:-ms-input-placeholder{
                         color: #aaa;
                     }
@@ -303,7 +303,7 @@ input[type=number]::-webkit-outer-spin-button {
                     font-size: 16px;
                     line-height: 18px;
                     letter-spacing: 0px;
-                    color: #ffffff; 
+                    color: #ffffff;
                     cursor: pointer;
                     float: left;
                     &:hover{
@@ -333,7 +333,7 @@ input[type=number]::-webkit-outer-spin-button {
 .footer{
     width: 100%;
     position: absolute;
-    bottom: 3%; 
+    bottom: 3%;
     color: #bfcbd7;
     font-size: 12px;
     text-align: center;
