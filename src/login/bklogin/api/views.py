@@ -9,7 +9,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.utils.translation import ugettext as _
 from django.views.generic import View
 
 from bklogin.api.constants import ApiErrorCodeEnum, ApiErrorCodeEnumV2, ApiErrorCodeEnumV3
@@ -36,7 +35,7 @@ class CheckLoginView(View):
         is_valid, username, message = validate_bk_token(request.GET)
         if not is_valid:
             return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.PARAM_NOT_VALID.value)
-        return APIV1OKJsonResponse(_("用户验证成功"), data={"username": username})
+        return APIV1OKJsonResponse("user authentication succeeded", data={"username": username})
 
 
 class UserView(View):
@@ -58,7 +57,7 @@ class UserView(View):
         if not ok:
             return APIV1FailJsonResponse(message, code=ApiErrorCodeEnum.USER_NOT_EXISTS2.value)
 
-        return APIV1OKJsonResponse(_("用户信息获取成功"), data=data)
+        return APIV1OKJsonResponse("get user information succeeded", data=data)
 
 
 ########
@@ -72,7 +71,7 @@ class CheckLoginViewV2(View):
         is_valid, username, message = validate_bk_token(request.GET)
         if not is_valid:
             return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.PARAM_NOT_VALID.value)
-        return APIV2OKJsonResponse(_("用户验证成功"), data={"bk_username": username})
+        return APIV2OKJsonResponse("user authentication succeeded", data={"bk_username": username})
 
 
 class UserViewV2(View):
@@ -94,7 +93,7 @@ class UserViewV2(View):
         if not ok:
             return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.USER_NOT_EXISTS2.value)
 
-        return APIV2OKJsonResponse(_("用户信息获取成功"), data=data)
+        return APIV2OKJsonResponse("get user information succeeded", data=data)
 
 
 ########
@@ -108,7 +107,7 @@ class CheckLoginViewV3(View):
         is_valid, username, message = validate_bk_token(request.GET)
         if not is_valid:
             return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.PARAM_NOT_VALID.value)
-        return APIV3OKJsonResponse(_("用户验证成功"), data={"bk_username": username})
+        return APIV3OKJsonResponse("user authentication succeeded", data={"bk_username": username})
 
 
 class UserViewV3(View):
@@ -131,4 +130,4 @@ class UserViewV3(View):
         if not ok:
             return APIV3FailJsonResponse(message, code=ApiErrorCodeEnumV3.USER_NOT_EXISTS2.value)
 
-        return APIV3OKJsonResponse(_("用户信息获取成功"), data=data)
+        return APIV3OKJsonResponse("get user information succeeded", data=data)

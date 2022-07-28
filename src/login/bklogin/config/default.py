@@ -77,7 +77,6 @@ MIDDLEWARE = (
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "bklogin.bk_i18n.middlewares.LanguageMiddleware",
-    "bklogin.bk_i18n.middlewares.ApiLanguageMiddleware",
     "bklogin.bk_i18n.middlewares.TimezoneMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 )
