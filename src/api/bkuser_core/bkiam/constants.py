@@ -211,6 +211,8 @@ class ResourceType(AutoLowerEnum):
             cls.CATEGORY: ("id", "display_name"),
             cls.FIELD: ("id", "display_name"),
             cls.PROFILE: ("id", "username"),
+            # FIXME: not sure
+            cls.SYNCTASK: ("id", "id"),
         }
         return _map[resource_type]
 

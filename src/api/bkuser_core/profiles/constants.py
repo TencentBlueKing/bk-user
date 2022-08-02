@@ -20,12 +20,14 @@ class ProfileStatus(AutoNameEnum):
     LOCKED = auto()
     DELETED = auto()
     DISABLED = auto()
+    EXPIRED = auto()
 
     _choices_labels = (
         (NORMAL, "正常"),
         (LOCKED, "被冻结"),
         (DELETED, "被删除"),
         (DISABLED, "被禁用"),
+        (EXPIRED, "已过期")
     )
 
 
@@ -117,4 +119,17 @@ class FieldMapMethod(AutoLowerEnum):
     )
 
 
+class TypeOfExpiration(AutoLowerEnum):
+    ACCOUNT_EXPIRATION = auto()
+    PASSWORD_EXPIRATION = auto()
+
+    _choices_labels = (
+        (ACCOUNT_EXPIRATION, "账号过期"),
+        (PASSWORD_EXPIRATION, "密码过期"),
+    )
+
+
 PASSWD_RESET_VIA_SAAS_EMAIL_TMPL = "您的蓝鲸账号【{username}】的密码已被重置，若非本人操作，请及时修改"
+
+NOTICE_METHOD_EMAIL = "send_email"
+NOTICE_METHOD_SMS = "send_sms"

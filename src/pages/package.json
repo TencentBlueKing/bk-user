@@ -41,6 +41,8 @@
         }
     },
     "dependencies": {
+        "@wangeditor/editor": "^5.0.1",
+        "@wangeditor/editor-for-vue": "^1.0.1",
         "art-template": "4.1.0",
         "axios": "0.18.0",
         "babel-preset-env": "^1.7.0",

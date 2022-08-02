@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @receiver(post_category_create)
 def make_local_default_settings(sender, instance: "ProfileCategory", **kwargs):
     if instance.type not in [CategoryType.LOCAL.value]:
+        logger.info("category<%s> is not local, skip make_local_default_settings", instance.id)
         return
 
     logger.info("going to make default settings for Category<%s>", instance.id)

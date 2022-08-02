@@ -85,4 +85,12 @@ $(document).ready(function(){
             $('#invisible').attr('class', 'bk-icon icon-invisible-eye');
         }
     })
+
+    // 管理员
+    $('#admin').on('mouseover', function () {
+        $('.tips').addClass('show-tips');
+    })
+    $('#admin').on('mouseout', function () {
+        $('.tips').removeClass('show-tips');
+    })
 });

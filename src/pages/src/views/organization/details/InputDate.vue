@@ -27,6 +27,7 @@
       :placeholder="$t('请选择日期')"
       :value="item.value"
       :disabled="editStatus && !item.editable"
+      :options="starttimePickerOptions"
       @change="changeDate">
     </bk-date-picker>
     <p class="hint" v-show="item.isError">
@@ -38,6 +39,7 @@
 </template>
 
 <script>
+import moment from 'moment';
 export default {
   props: {
     item: {
@@ -48,6 +50,23 @@ export default {
       type: Boolean,
       required: true,
     },
+  },
+  data() {
+    return {
+      starttimePickerOptions: {},
+    };
+  },
+  mounted() {
+    // 初始化高级配置启动时间
+    this.starttimePickerOptions = {
+      disabledDate(time) {
+        return (
+          time.getTime() < moment(new Date())
+            .subtract(1, 'days')
+            .valueOf()
+        );
+      },
+    };
   },
   methods: {
     changeDate(date) {

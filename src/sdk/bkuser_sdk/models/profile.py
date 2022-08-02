@@ -54,6 +54,7 @@ class Profile(object):
         'staff_status': 'str',
         'password_update_time': 'datetime',
         'position': 'int',
+        'account_expiration_date': 'date',
         'time_zone': 'str',
         'language': 'str',
         'country_code': 'str',
@@ -87,6 +88,7 @@ class Profile(object):
         'staff_status': 'staff_status',
         'password_update_time': 'password_update_time',
         'position': 'position',
+        'account_expiration_date': 'account_expiration_date',
         'time_zone': 'time_zone',
         'language': 'language',
         'country_code': 'country_code',
@@ -96,7 +98,7 @@ class Profile(object):
         'role': 'role'
     }
 
-    def __init__(self, id=None, username=None, password_valid_days=None, departments=None, extras=None, leader=None, last_login_time=None, create_time=None, update_time=None, qq=None, email=None, telephone=None, wx_userid=None, wx_openid=None, code=None, domain=None, category_id=None, display_name=None, logo=None, status=None, staff_status=None, password_update_time=None, position=None, time_zone=None, language=None, country_code=None, iso_code=None, enabled=None, type=None, role=None):  # noqa: E501
+    def __init__(self, id=None, username=None, password_valid_days=None, departments=None, extras=None, leader=None, last_login_time=None, create_time=None, update_time=None, qq=None, email=None, telephone=None, wx_userid=None, wx_openid=None, code=None, domain=None, category_id=None, display_name=None, logo=None, status=None, staff_status=None, password_update_time=None, position=None, account_expiration_date=None, time_zone=None, language=None, country_code=None, iso_code=None, enabled=None, type=None, role=None):  # noqa: E501
         """Profile - a model defined in Swagger"""  # noqa: E501
         self._id = None
         self._username = None
@@ -121,6 +123,7 @@ class Profile(object):
         self._staff_status = None
         self._password_update_time = None
         self._position = None
+        self._account_expiration_date = None
         self._time_zone = None
         self._language = None
         self._country_code = None
@@ -174,6 +177,8 @@ class Profile(object):
             self.password_update_time = password_update_time
         if position is not None:
             self.position = position
+        if account_expiration_date is not None:
+            self.account_expiration_date = account_expiration_date
         if time_zone is not None:
             self.time_zone = time_zone
         if language is not None:
@@ -608,7 +613,7 @@ class Profile(object):
         :param status: The status of this Profile.  # noqa: E501
         :type: str
         """
-        allowed_values = ["NORMAL", "LOCKED", "DELETED", "DISABLED"]  # noqa: E501
+        allowed_values = ["NORMAL", "LOCKED", "DELETED", "DISABLED", "EXPIRED"]  # noqa: E501
         if status not in allowed_values:
             raise ValueError(
                 "Invalid value for `status` ({0}), must be one of {1}"  # noqa: E501
@@ -685,6 +690,27 @@ class Profile(object):
         """
 
         self._position = position
+
+    @property
+    def account_expiration_date(self):
+        """Gets the account_expiration_date of this Profile.  # noqa: E501
+
+
+        :return: The account_expiration_date of this Profile.  # noqa: E501
+        :rtype: date
+        """
+        return self._account_expiration_date
+
+    @account_expiration_date.setter
+    def account_expiration_date(self, account_expiration_date):
+        """Sets the account_expiration_date of this Profile.
+
+
+        :param account_expiration_date: The account_expiration_date of this Profile.  # noqa: E501
+        :type: date
+        """
+
+        self._account_expiration_date = account_expiration_date
 
     @property
     def time_zone(self):

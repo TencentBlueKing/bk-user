@@ -24,3 +24,5 @@ DataSourcePlugin(
     category_type="ldap",
     settings_path=os.path.dirname(__file__) / Path("settings.yaml"),
 ).register()
+
+# NOTE: 策略-每一次排查, 都简化复杂度, 加相关的日志等, 为未来的排查降低成本

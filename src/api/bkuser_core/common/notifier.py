@@ -21,6 +21,7 @@ from bkuser_core.esb_sdk.shortcuts import get_client_by_raw_username
 logger = logging.getLogger(__name__)
 
 DEFAULT_EMAIL_SENDER = "bk-user-core-api"
+DEFAULT_SMS_SENDER = "bk-user-core-api"
 
 
 class ReceiversCouldNotBeEmpty(Exception):
@@ -29,6 +30,10 @@ class ReceiversCouldNotBeEmpty(Exception):
 
 class SendMailFailed(Exception):
     """发送邮件失败"""
+
+
+class SendSmsFailed(Exception):
+    """发送短信失败"""
 
 
 def send_mail(receivers: List[str], message: str, sender: str = None, title: str = None):
@@ -43,7 +48,7 @@ def send_mail(receivers: List[str], message: str, sender: str = None, title: str
     client = get_client_by_raw_username(user=sender or DEFAULT_EMAIL_SENDER)
 
     message_encoded = force_text(base64.b64encode(message.encode("utf-8")))
-    logger.info(
+    logger.debug(
         "going to send email to %s, title: %s, via %s",
         receivers_str,
         title,
@@ -71,3 +76,35 @@ def send_mail(receivers: List[str], message: str, sender: str = None, title: str
             ret.get("message", "unknown error"),
         )
         raise SendMailFailed(ret.get("message", "unknown error"))
+
+
+def send_sms(receivers: List[str], message: str, sender: str = None):
+    """发短信"""
+    if not receivers:
+        raise ReceiversCouldNotBeEmpty(_("收件人不能为空"))
+
+    receivers_str = ",".join(receivers)
+
+    client = get_client_by_raw_username(user=sender or DEFAULT_SMS_SENDER)
+
+    message_encoded = force_text(base64.b64encode(message.encode("utf-8")))
+    logger.debug(
+        "going to send sms to %s, via %s",
+        receivers_str,
+        DEFAULT_EMAIL_SENDER,
+    )
+
+    send_sms_params = {
+        "content": message_encoded,
+        "receiver": receivers_str,
+        "is_content_base64": True,
+    }
+    ret = client.cmsi.send_sms(**send_sms_params)
+
+    if not ret.get("result", False):
+        logger.error(
+            "Failed to send sms notification %s for %s",
+            receivers_str,
+            ret.get("message", "unknown error"),
+        )
+        raise SendSmsFailed(ret.get("message", "unknown error"))

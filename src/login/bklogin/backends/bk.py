@@ -13,7 +13,7 @@ from blue_krill.data_types.enum import StructuredEnum
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
-from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
+from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset, UserExpiredException
 from bklogin.common.log import logger
 from bklogin.common.usermgr import get_categories_str
 from bklogin.components import usermgr_api
@@ -50,6 +50,7 @@ class BkUserCheckCode(int, StructuredEnum):
     CATEGORY_NOT_ENABLED = 3210019
     ERROR_FORMAT = 3210020
     SHOULD_CHANGE_INITIAL_PASSWORD = 3210021
+    USER_IS_EXPIRED = 3210024
 
 
 class BkUserBackend(ModelBackend):
@@ -91,6 +92,8 @@ class BkUserBackend(ModelBackend):
         if not ok:
             if code in [BkUserCheckCode.SHOULD_CHANGE_INITIAL_PASSWORD, BkUserCheckCode.PASSWORD_EXPIRED]:
                 raise PasswordNeedReset(message=message, reset_password_url=extra_values.get("reset_password_url"))
+            elif code == BkUserCheckCode.USER_IS_EXPIRED:
+                raise UserExpiredException
             raise AuthenticationError(message=message, redirect_to=extra_values.get("redirect_to"))
 
         # set the username to real username

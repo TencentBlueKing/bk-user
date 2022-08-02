@@ -18,7 +18,12 @@ from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFi
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from bkuser_core.profiles.utils import force_use_raw_username, get_username, parse_username_domain
+from bkuser_core.profiles.utils import (
+    force_use_raw_username,
+    get_username,
+    parse_username_domain,
+    remove_sensitive_fields_for_profile,
+)
 from bkuser_core.profiles.validators import validate_domain, validate_username
 
 # ===============================================================================
@@ -85,6 +90,10 @@ class ProfileSerializer(CustomFieldsModelSerializer):
             data.domain,
         )
 
+    def to_representation(self, obj):
+        data = super().to_representation(obj)
+        return remove_sensitive_fields_for_profile(self.context.get("request", {}), data)
+
     class Meta:
         model = Profile
         exclude = ["password"]
@@ -99,6 +108,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     departments = SimpleDepartmentSerializer(many=True, required=False)
     leader = LeaderSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
+    account_expiration_date = serializers.CharField(required=False)
 
     create_time = serializers.DateTimeField(required=False, read_only=True)
     update_time = serializers.DateTimeField(required=False, read_only=True)
@@ -125,6 +135,10 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
         return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
+
+    def to_representation(self, obj):
+        data = super().to_representation(obj)
+        return remove_sensitive_fields_for_profile(self.context.get("request", {}), data)
 
 
 class ForSyncRapidProfileSerializer(RapidProfileSerializer):

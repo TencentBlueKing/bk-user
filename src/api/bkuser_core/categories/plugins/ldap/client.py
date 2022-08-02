@@ -114,6 +114,7 @@ class LDAPClient:
         )
 
         if not result and not self.con.result["result"] == 0 and not self.con.last_error:
+            logger.error("failed to search %s from %s, last_error: %s", search_filter, start_root, self.con.last_error)
             raise local_exceptions.SearchFailed
 
         return self.con.response

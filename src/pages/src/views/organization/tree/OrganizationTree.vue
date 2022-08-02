@@ -146,17 +146,14 @@
               </div>
               <!-- 复制组织ID -->
               <div class="specific-menu">
-                <a
-                  href="javascript:;" v-clipboard:copy="item.id" v-clipboard:success="handleCopyIdSuccess"
-                  v-clipboard:error="handleCopyIdError">
+                <a href="javascript:;" @click="handleCopyId(item.id)">
                   {{$t('复制组织ID')}}
                 </a>
               </div>
               <!-- 复制组织名称 -->
               <div class="specific-menu">
                 <a
-                  href="javascript:;" v-clipboard:copy="item.full_name" v-clipboard:success="handleCopyNameSuccess"
-                  v-clipboard:error="handleCopyNameError">
+                  href="javascript:;" @click="handleCopyFullName(item.full_name)">
                   {{$t('复制组织名称')}}
                 </a>
               </div>
@@ -223,6 +220,7 @@
 </template>
 
 <script>
+import { clipboardCopy } from '@/common/util';
 export default {
   name: 'OrganizationTree',
   directives: {
@@ -312,18 +310,12 @@ export default {
       this.$emit('handleRename', item, type);
     },
 
-    // 复制id或名称
-    handleCopyIdSuccess() {
-      this.messageSuccess(this.$t('复制id成功'));
+    //  复制id或名称
+    handleCopyId(id) {
+      clipboardCopy(id, this.messageSuccess(this.$t('复制id成功')));
     },
-    handleCopyIdError() {
-      this.messageError(this.$t('复制id失败'));
-    },
-    handleCopyNameSuccess() {
-      this.messageSuccess(this.$t('复制组织名称成功'));
-    },
-    handleCopyNameError() {
-      this.messageError(this.$t('复制组织名称失败'));
+    handleCopyFullName(name) {
+      clipboardCopy(name, this.messageSuccess(this.$t('复制组织名称成功')));
     },
 
     // 删除组织节点

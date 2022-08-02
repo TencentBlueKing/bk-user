@@ -39,11 +39,11 @@
         <!-- 输入框 -->
         <div class="input-text">
           <InputPhone v-if="item.key === 'telephone'" :item="item" :edit-status="editStatus" />
+          <InputDate v-else-if="item.key.includes(dateKey)" :item="item" :edit-status="editStatus" />
           <InputString
             v-else-if="item.type === 'string' || item.type === 'number'"
             :item="item"
             :edit-status="editStatus" />
-          <InputDate v-else-if="item.type === 'timer'" :item="item" :edit-status="editStatus" />
           <InputSelect
             v-else-if="item.type.indexOf('enum') !== -1"
             :item="item"
@@ -90,6 +90,7 @@ export default {
         placement: 'top-middle',
         content: this.$t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
       },
+      dateKey: ['account_expiration_date'],
     };
   },
 };

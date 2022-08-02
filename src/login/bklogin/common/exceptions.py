@@ -45,3 +45,14 @@ class PasswordNeedReset(Exception):
     def __init__(self, reset_password_url: str, message: Optional[str] = None):
         self.reset_password_url = reset_password_url
         self.message = message or _("登录校验失败，请重置密码")
+
+
+class UserExpiredException(Exception):
+    """Auth failure due to user had expired"""
+
+    redirect_to = ""
+
+    def __init__(self, redirect_to=None):
+        self.user_expired = True
+        if redirect_to:
+            self.redirect_to = redirect_to

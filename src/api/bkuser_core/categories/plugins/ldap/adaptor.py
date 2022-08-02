@@ -49,19 +49,19 @@ class ProfileFieldMapper:
         if dynamic_field:
             ldap_field_name = field_name
             if ldap_field_name not in self.dynamic_fields_mapping.values():
-                logger.info("no config[%s] in configs of dynamic_fields_mapping", field_name)
+                logger.warning("no config[%s] in configs of dynamic_fields_mapping", field_name)
                 return ""
 
         else:
             # 从目录配置中获取 字段名
             ldap_field_name = self.config_loader.get(field_name)
             if not ldap_field_name:
-                logger.info("no config[%s] in configs of category", field_name)
+                logger.warning("no config[%s] in configs of category", field_name)
                 return ""
 
         # 1. 通过字段名，获取具体值
         if ldap_field_name not in user_meta or not user_meta[ldap_field_name]:
-            logger.info("field[%s] is missing in raw attributes of user data from ldap", field_name)
+            logger.warning("field[%s] is missing in raw attributes of user data from ldap", field_name)
             return ""
 
         # 2. 类似 memberOf 字段，将会返回原始列表

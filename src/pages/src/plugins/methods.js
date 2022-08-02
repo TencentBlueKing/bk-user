@@ -219,6 +219,34 @@ const methods = {
       }
     };
 
+    Vue.prototype.$convertAccountRes = function (obj) {
+      const objectData = {};
+      obj.forEach((regionArray) => {
+        try {
+          const { key, value } = regionArray;
+          this.$set(objectData, key, value);
+        } catch (e) {
+          console.warn('数据结构异常', e);
+        }
+      });
+      return objectData;
+    };
+
+    Vue.prototype.$convertAccountInfo = function (arr) {
+      try {
+        const arrayData = [];
+        Object.entries(arr).forEach((regionArray) => {
+          const key = regionArray[0];
+          const value = regionArray[1];
+          const enabled = true;
+          arrayData.push({ key, value, enabled });
+        });
+        return arrayData;
+      } catch (e) {
+        console.warn('数据结构异常', e);
+      }
+    };
+
     // 获取字符串长度，中文为 2 个字符长度
     Vue.prototype.$getStringLength = function (string) {
       // 匹配所有的中文

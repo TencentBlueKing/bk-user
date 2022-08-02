@@ -152,7 +152,7 @@ class ProfileSyncHelper:
                     username=info.username,
                     error=str(e),
                 )
-                logger.warning("username<%s> does not meet format", info.username)
+                logger.warning("username<%s> does not meet format, will skip", info.username)
                 continue
 
             # 1. 先更新 profile 本身
@@ -201,7 +201,7 @@ class ProfileSyncHelper:
                         error=_("部门不存在"),
                     )
                     logger.warning(
-                        "the department<%s> of profile<%s> is missing",
+                        "the department<%s> of profile<%s> is missing, will skip",
                         department_key,
                         info.username,
                     )

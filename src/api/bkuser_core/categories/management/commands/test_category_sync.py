@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+import traceback
 import uuid
 
 from django.core.management.base import BaseCommand
@@ -42,10 +43,12 @@ class Command(BaseCommand):
                     raw_data_file=excel_file,
                 )
             except Exception:  # pylint: disable=broad-except
+                self.stdout.write(traceback.format_exc())
                 logger.exception("can not find category by type<%s>", category_type)
             return
 
         try:
             adapter_sync(ProfileCategory.objects.filter(type=category_type)[0].pk, task_id=task_id)
         except Exception:  # pylint: disable=broad-except
+            self.stdout.write(traceback.format_exc())
             logger.exception("can not find category by type<%s>", category_type)

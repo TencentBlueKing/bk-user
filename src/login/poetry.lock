@@ -384,14 +384,14 @@ reference = "tencent-mirrors"
 
 [[package]]
 name = "django-prometheus"
-version = "1.0.15"
+version = "2.1.0"
 description = "Django middlewares to monitor your application with Prometheus.io."
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-prometheus-client = ">=0.0.21"
+prometheus-client = ">=0.7"
 
 [package.source]
 type = "legacy"
@@ -1444,7 +1444,7 @@ reference = "tencent-mirrors"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "bee2dfd1cd594de6e23e029362b86d1c05c7edbd6a64bc1af608092e456e9de5"
+content-hash = "fc8c256ec22a47e031e3c5017aebe9b387b3a05e1fdfa133f847b2d67643e817"
 
 [metadata.files]
 appnope = [
@@ -1648,8 +1648,8 @@ django-environ = [
     {file = "django_environ-0.4.5-py2.py3-none-any.whl", hash = "sha256:c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"},
 ]
 django-prometheus = [
-    {file = "django-prometheus-1.0.15.tar.gz", hash = "sha256:e8da2eb91cb20cfe0b8130305d34f3503766b7a08a244ce1031c36136beeb7a5"},
-    {file = "django_prometheus-1.0.15-py3-none-any.whl", hash = "sha256:571d89a13e2547e1c3d19901f155bde8e101323fbcb0439363d670bc61c8c541"},
+    {file = "django-prometheus-2.1.0.tar.gz", hash = "sha256:dd3f8da1399140fbef5c00d1526a23d1ade286b144281c325f8e409a781643f2"},
+    {file = "django_prometheus-2.1.0-py2.py3-none-any.whl", hash = "sha256:c338d6efde1ca336e90c540b5e87afe9287d7bcc82d651a778f302b0be17a933"},
 ]
 flake8 = [
     {file = "flake8-4.0.1-py2.py3-none-any.whl", hash = "sha256:479b1304f72536a55948cb40a32dce8bb0ffe3501e26eaf292c7e60eb5e0428d"},
