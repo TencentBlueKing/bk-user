@@ -245,14 +245,15 @@ def change_profile_status_for_account_locking():
 
         for profile in profiles:
             # 最后登录时间
-            profile_last_operate_time = profile.last_login_time
             # 当用户从未登录过
-            if not profile_last_operate_time:
+            if not profile.last_login_time:
                 # 场景考虑：该用户被管理员关注
-                # 精确到秒
-                profile_last_operate_time = profile.update_time.replace(microsecond=0)
-
-            if profile_last_operate_time + datetime.timedelta(days=freeze_after_days) < now():
+                profile_last_operate_time = profile.update_time
+            else:
+                # 登录过，长久未登录，但是被管理员关注
+                profile_last_operate_time = max(profile.last_login_time, profile.update_time)
+            # 被冻结用户集合添加
+            if profile_last_operate_time + datetime.timedelta(days=int(freeze_after_days)) < now():
                 frozen_profile_ids.append(profile.id)
     # 批量冻结
     if frozen_profile_ids:
