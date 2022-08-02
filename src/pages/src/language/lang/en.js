@@ -432,4 +432,12 @@ export default {
   账号到期提醒时间不得为空: 'The account expiration reminder time must not be empty',
   请输入内容: 'Please enter the content',
   永久: 'permanent',
+  基础规则: 'Ground rules',
+  初始密码: 'Initial password',
+  获取方式: 'access',
+  发送随机密码: 'Send a random password',
+  密码到期提醒: 'Password Expiration Reminder',
+  提醒时间: 'Remind the time',
+  密码快到期前提醒_如选择_7天__则在密码到期七天前提醒一次: 'If you select 7 days, the password will be notified 7 days before the expiration date',
+  通知方式: 'Inform the way',
 };

@@ -39,104 +39,33 @@
       <div class="title-container">
         <h4 class="title">{{$t('账号到期提醒通知方式')}}</h4>
       </div>
-      <div :class="['account-box', isAccountTemplate ? 'show-tab-color' : '']">
-        <div class="account-header">
-          <bk-checkbox-group v-model="defaultAccount.account_expiration_notice_methods">
-            <div :class="['account-tab', showEmail ? 'active-tab' : '']" style="margin-left: 5px;">
-              <bk-checkbox value="send_email" />
-              <span class="checkbox-item" @click="clickEmail">{{$t('邮箱')}}</span>
+      <notifyEditorTemplate
+        :checkbox-info="checkboxInfo"
+        :data-list="accountInfo"
+        :is-template="isAccountTemplate"
+        :expiring-email-key="'expiring_account_email_config'"
+        :expired-email-key="'expired_account_email_config'"
+        :expiring-sms-key="'expiring_account_sms_config'"
+        :expired-sms-key="'expired_account_sms_config'"
+        @handleEditorText="handleEditorText">
+        <template slot="label">
+          <div class="password-header">
+            <bk-checkbox-group v-model="defaultAccount.account_expiration_notice_methods">
+              <div
+                v-for="(item, index) in checkboxInfo" :key="index"
+                :class="['password-tab', item.status ? 'active-tab' : '']"
+                style="margin-left: 5px;">
+                <bk-checkbox :value="item.value" />
+                <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+              </div>
+            </bk-checkbox-group>
+            <div class="edit-info" @click="toggleAccountTemplate">
+              <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
+              <i :class="['bk-icon', isDropdownInfo ? 'icon-angle-up' : 'icon-angle-down']"></i>
             </div>
-            <div :class="['account-tab', showSms ? 'active-tab' : '']">
-              <bk-checkbox value="send_sms" />
-              <span class="checkbox-item" @click="clickSms">{{$t('短信')}}</span>
-            </div>
-          </bk-checkbox-group>
-          <div class="edit-info" @click="toggleAccountTemplate">
-            <span style="font-size:14px">{{$t('编辑通知模板')}}</span>
-            <i :class="['bk-icon', isDropdownInfo ? 'icon-angle-up' : 'icon-angle-down']"></i>
           </div>
-        </div>
-        <div class="account-content">
-          <div
-            class="template-config-container"
-            v-show="showEmail && isAccountTemplate"
-            data-test-id="list_emailInfo">
-            <ul class="template-config clearfix">
-              <li class="email-block">
-                <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
-                <div class="email-info clearfix">
-                  <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                  <bk-input
-                    type="text" class="input-style"
-                    v-model="expiringEmail.title" />
-                </div>
-                <div class="email-info clearfix">
-                  <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                  <bk-input
-                    type="text" class="input-style"
-                    v-model="expiringEmail.sender" />
-                </div>
-                <div class="email-info clearfix">
-                  <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                  <edtiorTemplate
-                    :toolbar-config="emailConfig"
-                    :html-text="expiringEmail.content_html"
-                    @updateContent="(html, text) => handleEditorText(html, text, 'expiring_account_email_config')" />
-                </div>
-              </li>
-              <li class="email-block">
-                <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
-                <div class="email-info clearfix">
-                  <p class="title">{{$t('标题')}}<span class="star">*</span></p>
-                  <bk-input
-                    type="text" class="input-style"
-                    v-model="expiredEmail.title" />
-                </div>
-                <div class="email-info clearfix">
-                  <p class="title">{{$t('发件人')}}<span class="star">*</span></p>
-                  <bk-input
-                    type="text" class="input-style"
-                    v-model="expiredEmail.sender" />
-                </div>
-                <div class="email-info clearfix">
-                  <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                  <edtiorTemplate
-                    :toolbar-config="emailConfig"
-                    :html-text="expiredEmail.content_html"
-                    @updateContent="(html, text) => handleEditorText(html, text, 'expired_account_email_config')" />
-                </div>
-              </li>
-            </ul>
-          </div>
-          <div
-            class="template-config-container"
-            v-show="showSms && isAccountTemplate"
-            data-test-id="list_emailInfo">
-            <ul class="template-config clearfix">
-              <li class="email-block">
-                <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
-                <div class="email-info clearfix">
-                  <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                  <edtiorTemplate
-                    :toolbar-config="infoConfig"
-                    :html-text="expiringSms.content_html"
-                    @updateContent="(html, text) => handleEditorText(html, text, 'expiring_account_sms_config')" />
-                </div>
-              </li>
-              <li class="email-block">
-                <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
-                <div class="email-info clearfix">
-                  <p class="title" style="height: 260px">{{$t('正文')}}<span class="star">*</span></p>
-                  <edtiorTemplate
-                    :toolbar-config="infoConfig"
-                    :html-text="expiredSms.content_html"
-                    @updateContent="(html, text) => handleEditorText(html, text, 'expired_account_sms_config')" />
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+        </template>
+      </notifyEditorTemplate>
     </div>
 
     <!-- 新增账号设置 -->
@@ -165,9 +94,9 @@
 </template>
 
 <script>
-import edtiorTemplate from '../operation/editorTemplate.vue';
+import notifyEditorTemplate from './NotifyEditorTemplate.vue';
 export default {
-  components: { edtiorTemplate },
+  components: { notifyEditorTemplate },
   props: {
     // add 增加目录 set 修改目录设置
     type: {
@@ -182,46 +111,17 @@ export default {
   data() {
     return {
       accountDateError: false,
-      showEmail: true,
-      showSms: false,
       // 显示编辑通知模板
       isAccountTemplate: false,
-      /* 邮箱工具栏配置 */
-      emailConfig: {
-        toolbarKeys: [
-          'bold', 'italic', 'color',
-          {
-            key: 'group-justify',
-            iconSvg: `<svg viewBox="0 0 1024 1024">
-              <path d="M768 793.6v102.4H51.2v-102.4h716.8z m204.8-230.4v102.4H51.2v-102.4h921.6z
-                m-204.8-230.4v102.4H51.2v-102.4h716.8zM972.8 102.4v102.4H51.2V102.4h921.6z"></path>
-            </svg>`,
-            menuKeys: ['justifyLeft', 'justifyRight', 'justifyCenter', 'justifyJustify'],
-          },
-          'insertLink',
-        ],
-      },
-      /* 短信工具栏配置 */
-      infoConfig: {
-        toolbarKeys: ['insertLink'],
-      },
+      checkboxInfo: [
+        { value: 'send_email', label: this.$t('邮箱'), status: true },
+        { value: 'send_sms', label: this.$t('短信'), status: false },
+      ],
     };
   },
   computed: {
     defaultAccount() {
       return this.accountInfo;
-    },
-    expiredEmail() {
-      return this.accountInfo.expired_account_email_config || {};
-    },
-    expiringEmail() {
-      return this.accountInfo.expiring_account_email_config || {};
-    },
-    expiringSms() {
-      return this.accountInfo.expiring_account_sms_config || {};
-    },
-    expiredSms() {
-      return this.accountInfo.expired_account_sms_config || {};
     },
     // 账号有效期
     accountValidDaysList() {
@@ -259,17 +159,18 @@ export default {
       this.isAccountTemplate = !this.isAccountTemplate;
       this.isDropdownInfo = !this.isDropdownInfo;
     },
-    clickEmail() {
-      this.showEmail = true;
-      this.showSms = false;
-    },
-    clickSms() {
-      this.showEmail = false;
-      this.showSms = true;
-    },
     handleEditorText(html, text, key) {
       this.defaultAccount[key].content_html = html;
       this.defaultAccount[key].content = text;
+    },
+    handleClickLabel(item) {
+      this.checkboxInfo.map((element) => {
+        if (element.value === item.value) {
+          element.status = true;
+        } else {
+          element.status = false;
+        }
+      });
     },
   },
 };
@@ -417,41 +318,14 @@ export default {
         }
       }
     }
-    ::v-deep .show-tab-color {
-      .account-header {
-        display: flex;
-        border-bottom: 1px solid #dcdee5;
-        .active-tab {
-          border-bottom: 2px solid #3A84FF;
-        }
-        .account-tab span:hover {
-          cursor: pointer;
-          color: #3a84ff;
-        }
-      }
-      .account-content {
-        padding: 20px;
-        .template-config-container {
-          border: 1px solid #dcdee5;
-        }
-      }
-      .bk-tab-label-list .bk-tab-label-item.active:after {
-        height: 2px;
-      }
-      .bk-tab-header {
-        background-image: linear-gradient(transparent 41px, #dcdee5 0);
-      }
-    }
-    ::v-deep .account-box {
-      width: 860px;
-      border: 1px solid #3A84FF;
-      .account-header {
+    .tab-box {
+      .password-header {
         display: flex;
         line-height: 50px;
         .bk-form-control {
           display: flex;
           width: 85%;
-          .account-tab {
+          .password-tab {
             padding-left: 20px;
             .checkbox-item {
               font-size: 14px;
@@ -466,6 +340,25 @@ export default {
             cursor: pointer;
           }
         }
+      }
+    }
+    ::v-deep .show-tab-color {
+      .password-header {
+        display: flex;
+        border-bottom: 1px solid #dcdee5;
+        .active-tab {
+          border-bottom: 2px solid #3A84FF;
+        }
+        .password-tab span:hover {
+          cursor: pointer;
+          color: #3a84ff;
+        }
+      }
+      .bk-tab-label-list .bk-tab-label-item.active:after {
+        height: 2px;
+      }
+      .bk-tab-header {
+        background-image: linear-gradient(transparent 41px, #dcdee5 0);
       }
     }
   }
