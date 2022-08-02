@@ -31,7 +31,7 @@
           <span class="star">*</span>
         </div>
         <bk-input
-          v-model="defaultPassword.password_min_length"
+          v-model.number="defaultPassword.password_min_length"
           type="number"
           style="width: 240px;"
           :class="{ 'king-input': true, error: passwordLengthError }"
@@ -62,7 +62,7 @@
         <div class="auto-freeze-container">
           <span>{{$t('密码不允许连续')}}</span>
           <bk-input
-            v-model="defaultPassword.password_rult_length"
+            v-model.number="defaultPassword.password_rult_length"
             type="number"
             style="width: 140px;margin: 0 8px;"
             :class="{ 'king-input': true, error: passwordRuleError }"
@@ -128,7 +128,7 @@
           </div>
         </div>
         <bk-input
-          v-model="defaultPassword.auto_unlock_seconds"
+          v-model.number="defaultPassword.auto_unlock_seconds"
           type="number"
           style="width: 240px;"
           :class="{ 'king-input': true, error: autoUnlockError }"
@@ -146,7 +146,7 @@
           <bk-checkbox v-model="defaultPassword.freeze_after_days.enabled" class="king-checkbox"></bk-checkbox>
           <span>{{$t('连续')}}</span>
           <bk-input
-            v-model="defaultPassword.freeze_after_days.value"
+            v-model.number="defaultPassword.freeze_after_days.value"
             type="number"
             style="width: 120px;margin: 0 8px;"
             :class="{ 'king-input': true, error: freezeDaysError }"
@@ -174,7 +174,7 @@
           <bk-checkbox v-model="defaultPassword.max_password_history.enabled" class="king-checkbox"></bk-checkbox>
           <span>{{$t('修改密码时不能重复前')}}</span>
           <bk-input
-            v-model="defaultPassword.max_password_history.value"
+            v-model.number="defaultPassword.max_password_history.value"
             type="number"
             style="width: 120px;margin: 0 8px;"
             :class="{ 'king-input': true, error: passwordHistoryError }"
