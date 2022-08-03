@@ -4,8 +4,8 @@ repos:
       - id: Name check
         name: Check sensitive info
         verbose: true
-        language: script
-        entry: pre_commit_hooks/rtx.sh
+        language: system
+        entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/rtx.sh $@; fi"
       - id: IP check
         name: Check sensitive info
         verbose: true
