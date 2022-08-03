@@ -9,8 +9,9 @@ repos:
       - id: IP check
         name: Check sensitive info
         verbose: true
-        language: script
-        entry: pre_commit_hooks/ip.sh
+        language: system
+        exclude: "^(.*/poetry.lock|.*/requirements.txt)|src/login/locale/en/LC_MESSAGES/django.po|src/login/bklogin/templates/account/agreement.part"
+        entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/ip.sh $@; fi"
       - id: isort
         name: isort
         language: python

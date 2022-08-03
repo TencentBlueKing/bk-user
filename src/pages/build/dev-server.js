@@ -61,7 +61,7 @@ app.use(history({
   rewrites: [
     {
       // connect-history-api-fallback 默认会对 url 中有 . 的 url 当成静态资源处理而不是当成页面地址来处理
-      // 兼容 /router/10.121.23.12 这样以 IP 结尾的 url
+      // 兼容 /router/127.0.0.1 这样以 IP 结尾的 url
       from: /(\d+\.)*\d+$/,
       to: '/',
     },
