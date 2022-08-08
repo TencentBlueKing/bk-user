@@ -6,7 +6,7 @@ authors = ["IMBlues <bluesedenyu@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "3.6.14"
-django = "3.2.13"
+Django = "3.2.15"
 django-braces = "1.13.0"
 dj-static = "0.0.6"
 pycrypto = "2.6.1"
