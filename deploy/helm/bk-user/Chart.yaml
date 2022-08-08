@@ -2,8 +2,8 @@ apiVersion: v2
 name: bk-user
 description: A Helm chart for bk-user
 type: application
-version: 1.2.19
-appVersion: "v2.3.4-beta.28"
+version: 1.2.20
+appVersion: "v2.3.5"
 
 dependencies:
 
@@ -18,13 +18,13 @@ dependencies:
   condition: redis.enabled
 
 - name: api
-  version: "1.0.0"
+  version: "1.0.1"
   condition: api.enabled
 
 - name: login
-  version: "1.0.0"
+  version: "1.0.1"
   condition: login.enabled
 
 - name: saas
-  version: "1.0.0"
+  version: "1.0.1"
   condition: saas.enabled
