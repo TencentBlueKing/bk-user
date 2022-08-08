@@ -24,7 +24,7 @@ def forwards_func(apps, schema_editor):
         name='account_expiration_date',
         display_name='账号过期时间',
         type='string',
-        require=True,
+        require=False,
         unique=False,
         editable=True,
         builtin=True,

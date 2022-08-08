@@ -10,13 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 from rest_framework.serializers import (
     CharField,
+    DateField,
     DateTimeField,
     IntegerField,
     JSONField,
     ListField,
     Serializer,
     SerializerMethodField,
-    DateField
 )
 
 from .departments import SubDepartmentSerializer
@@ -129,7 +129,7 @@ class CreateProfileSerializer(Serializer):
     iso_code = CharField(required=False, default="CN")
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False, default=[])
-    account_expiration_date = CharField()
+    account_expiration_date = CharField(required=False, allow_null=True, allow_blank=True)
 
 
 class UpdateProfileSerializer(Serializer):

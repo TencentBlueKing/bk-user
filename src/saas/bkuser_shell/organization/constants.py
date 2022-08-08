@@ -33,3 +33,11 @@ class ProfileWildSearchFieldEnum(ChoicesEnum):
     @classmethod
     def to_list(cls):
         return [e[0] for e in cls.get_choices()]
+
+
+# 账户设置类型
+ACCOUNT_NAMESPACE = "account"
+# 账户有效期选项
+ACCOUNT_EXPIRATION_DATE = "expired_after_days"
+# 账户有效期为永久
+PERMANENT = -1
