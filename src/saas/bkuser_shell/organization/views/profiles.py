@@ -69,17 +69,16 @@ class ProfilesViewSet(BkUserApiViewSet):
         if not validated_data.get("account_expiration_date"):
             # 目录设置: 用户项
             api_instance = bkuser_sdk.SettingsApi(self.get_api_client_by_request(request, no_auth=True))
-            category_account_settings = api_instance.v2_settings_list(
+            account_expiration_date = api_instance.v2_settings_list(
                 category_id=validated_data["category_id"],
                 namespace=ACCOUNT_NAMESPACE,
                 key=ACCOUNT_EXPIRATION_DATE,
             )[0]
             # 账户有效期，不传，默认设置为目录设置项
-            expired_after_days = category_account_settings.value
-            if expired_after_days == PERMANENT:
+            if account_expiration_date.value == PERMANENT:
                 account_expiration_date = datetime.date(year=2100, month=1, day=1)
             else:
-                account_expiration_date = now().date() + datetime.timedelta(days=int(expired_after_days))
+                account_expiration_date = now().date() + datetime.timedelta(days=account_expiration_date.value)
             validated_data["account_expiration_date"] = account_expiration_date
 
         api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
