@@ -66,17 +66,13 @@ def forwards_func(apps, schema_editor):
                 "title": "蓝鲸智云 - 账号到期提醒",
                 "sender": "蓝鲸智云",
                 "content": "{username}，您好：您的蓝鲸智云平台账号已过期，为避免影响使用，请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
-                "content_html": '<p>{username}，您好：</p><p style="text-align: right;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-                '&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台账号已过期，为避免影响使用，请尽快联系平台管理员进行续期。</p><p style="text-align: '
-                'right;">蓝鲸智云平台用户管理处</p>'
+                "content_html": '<p>{username}，您好：</p><p style="text-align: left;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台账号已过期，为避免影响使用，请尽快联系平台管理员进行续期。</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>'
             },
             default={
                 "title": "蓝鲸智云 - 账号到期提醒",
                 "sender": "蓝鲸智云",
                 "content": "{username}，您好：您的蓝鲸智云平台账号已过期，为避免影响使用，请尽快联系平台管理员进行续期。蓝鲸智云平台用户管理处",
-                "content_html": '<p>{username}，您好：</p><p style="text-align: right;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-                '&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台账号已过期，为避免影响使用，请尽快联系平台管理员进行续期。</p><p style="text-align: '
-                'right;">蓝鲸智云平台用户管理处</p>'
+                "content_html": '<p>{username}，您好：</p><p style="text-align: left;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;您的蓝鲸智云平台账号已过期，为避免影响使用，请尽快联系平台管理员进行续期。</p><p style="text-align: right;">蓝鲸智云平台用户管理处</p>'
             },
         ),
         dict(
