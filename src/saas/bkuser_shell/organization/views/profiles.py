@@ -22,7 +22,11 @@ from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
-from bkuser_shell.organization.constants import ACCOUNT_EXPIRATION_DATE, ACCOUNT_NAMESPACE, PERMANENT
+from bkuser_shell.organization.constants import (
+    ACCOUNT_EXPIRATION_DATE_KEY,
+    ACCOUNT_NAMESPACE,
+    ACCOUNT_EXPIRATION_TYPE_PERMANENT
+)
 from bkuser_shell.organization.serializers import profiles as serializers
 from bkuser_shell.organization.utils import get_default_logo_url
 
@@ -72,10 +76,10 @@ class ProfilesViewSet(BkUserApiViewSet):
             account_expiration_date = api_instance.v2_settings_list(
                 category_id=validated_data["category_id"],
                 namespace=ACCOUNT_NAMESPACE,
-                key=ACCOUNT_EXPIRATION_DATE,
+                key=ACCOUNT_EXPIRATION_DATE_KEY,
             )[0]
             # 账户有效期，不传，默认设置为目录设置项
-            if account_expiration_date.value == PERMANENT:
+            if account_expiration_date.value == ACCOUNT_EXPIRATION_TYPE_PERMANENT:
                 account_expiration_date = datetime.date(year=2100, month=1, day=1)
             else:
                 account_expiration_date = now().date() + datetime.timedelta(days=account_expiration_date.value)
