@@ -40,6 +40,7 @@ from bkuser_core.apis.v2.serializers import (
 from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import audit_general_log, create_general_log, create_profile_log
+from bkuser_core.bkiam.constants import IAMAction
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -75,6 +76,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
     relation_fields = ["departments", "leader", "login_set"]
+
+    iam_filter_actions: tuple = ("list",)
 
     def get_object(self):
         _default_lookup_field = self.lookup_field
@@ -228,6 +231,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         from bkuser_core.departments.models import Department
 
+        # departments为空, 则绕过了第一次权限控制
         deps = Department.objects.filter(id__in=validated_data.get("departments", []))
         for dep in deps:
             self.check_object_permissions(request, obj=dep)
@@ -245,6 +249,11 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # `ConfigProvider._refresh_config` 过滤 enabled=True
         if not ProfileCategory.objects.get(pk=validated_data["category_id"]).enabled:
             raise error_codes.CATEGORY_NOT_ENABLED
+
+        # 必须要有这个category的管理权限, 才能添加用户到这个目录下
+        # 注意这里 saas 传的 action_id = manage_department, 必须先改成manage_category才能检查category权限
+        request.META[settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
+        self.check_object_permissions(request, obj=ProfileCategory.objects.get(pk=validated_data["category_id"]))
 
         try:
             existed = Profile.objects.get(
