@@ -241,6 +241,10 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         responses={200: local_serializers.DepartmentSerializer()},
     )
     def partial_update(self, request, *args, **kwargs):
+        # check permission first, call check_object_permission
+        instance = self.get_object()
+        self.check_object_permissions(request, obj=instance)
+
         return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(

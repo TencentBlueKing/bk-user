@@ -10,12 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.conf import settings as dj_settings
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
+from bkuser_core.bkiam.constants import IAMAction
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
@@ -35,6 +37,18 @@ class SettingViewSet(AdvancedModelViewSet):
     queryset = Setting.objects.all()
     serializer_class = serializers.SettingSerializer
     lookup_field: str = "id"
+
+    def clean_iam_header(self, request):
+        if dj_settings.ACTION_ID_HEADER in request.META:
+            request.META.pop(dj_settings.ACTION_ID_HEADER)
+        if dj_settings.NEED_IAM_HEADER in request.META:
+            request.META.pop(dj_settings.NEED_IAM_HEADER)
+
+    def check_category_permission(self, request, category):
+        # NOTE: 必须有manage_category权限才能查看/变更settings
+        request.META[dj_settings.NEED_IAM_HEADER] = "True"
+        request.META[dj_settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
+        self.check_object_permissions(request, category)
 
     @staticmethod
     def _get_category(category_id: int):
@@ -67,6 +81,8 @@ class SettingViewSet(AdvancedModelViewSet):
         category_id = validated_data.pop("category_id")
         category = self._get_category(category_id=category_id)
 
+        self.check_category_permission(request, category)
+
         metas = self._get_metas(category, validated_data)
         settings = Setting.objects.filter(meta__in=metas, category_id=category_id)
         return Response(data=serializers.SettingSerializer(settings, many=True).data)
@@ -82,6 +98,8 @@ class SettingViewSet(AdvancedModelViewSet):
         validated_data = serializer.validated_data
         category = self._get_category(category_id=validated_data.pop("category_id"))
         value = validated_data.pop("value")
+
+        self.check_category_permission(request, category)
 
         metas = self._get_metas(category, validated_data)
         if metas.count() != 1:
@@ -100,7 +118,11 @@ class SettingViewSet(AdvancedModelViewSet):
         return Response(serializers.SettingSerializer(setting).data, status=status.HTTP_201_CREATED)
 
     def _update(self, request, validated_data):
+        self.clean_iam_header(request)
         instance = self.get_object()
+
+        self.check_category_permission(request, instance.category)
+
         try:
             need_update = is_obj_needed_update(instance, validated_data)
         except ValueError:
@@ -132,9 +154,33 @@ class SettingViewSet(AdvancedModelViewSet):
     def partial_update(self, request, validated_data, *args, **kwargs):
         return self._update(request, validated_data)
 
+    # NOTE: saas没有用到, 暂时不需要封装check permission
+    # def retrieve(self, request, *args, **kwargs):
+    #     fields = self._get_fields()
+    #     self._check_fields(fields)
+
+    #     self.clean_iam_header(request)
+    #     instance = self.get_object()
+    #     self.check_category_permission(request, instance.category)
+
+    #     return Response(
+    #         data=self.get_serializer(instance, fields=fields).data,
+    #         status=status.HTTP_200_OK,
+    #     )
+
+    def destroy(self, request, *args, **kwargs):
+        self.clean_iam_header(request)
+        instance = self.get_object()
+
+        self.check_category_permission(request, instance.category)
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class SettingMetaViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     """配置信息"""
+
+    # FIXME: 没有任何权限管控
 
     queryset = SettingMeta.objects.all()
     serializer_class = serializers.SettingMetaSerializer

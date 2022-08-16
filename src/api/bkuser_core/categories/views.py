@@ -358,6 +358,12 @@ class SyncTaskViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     @swagger_auto_schema(responses={200: SyncTaskProcessSerializer(many=True)})
     def show_logs(self, request, lookup_value):
         task: SyncTask = self.get_object()
+
+        # NOTE: 必须有manage_category权限才能查看/变更settings => SaaS已经传递了 ACTION_ID = IAMAction.VIEW_CATEGORY.value
+        # request.META[dj_settings.NEED_IAM_HEADER] = "True"
+        # request.META[dj_settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
+        self.check_object_permissions(request, task.category)
+
         processes = task.progresses.order_by("-create_time")
 
         slz = SyncTaskProcessSerializer(processes, many=True)
