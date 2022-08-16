@@ -139,7 +139,9 @@ class ProfilesViewSet(BkUserApiViewSet):
     @inject_serializer(tag=["profiles"])
     def restoration(self, request, profile_id):
         """恢复 profile"""
-        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, no_auth=True))
+        # TODO: 为什么no_auth=True?
+        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
+        # api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, no_auth=True))
         try:
             api_instance.v2_profiles_restoration(
                 lookup_value=profile_id, lookup_field="id", body={}, include_disabled=True

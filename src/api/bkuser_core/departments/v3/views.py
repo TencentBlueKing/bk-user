@@ -10,10 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from rest_framework import filters, viewsets
+from rest_framework import filters
 from rest_framework.generics import ListAPIView
 
 from .serializers import PaginatedDeptSerializer, QueryDeptSerializer
+from bkuser_core.apis.v2.viewset import AdvancedModelViewSet
 from bkuser_core.apis.v3.exceptions import QueryTooLong
 from bkuser_core.apis.v3.filters import MultipleFieldFilter
 from bkuser_core.apis.v3.serializers import AdvancedPagination
@@ -26,7 +27,8 @@ from bkuser_global.drf_crown.crown import inject_serializer
 logger = logging.getLogger(__name__)
 
 
-class DepartmentViewSet(viewsets.ModelViewSet, ListAPIView):
+# class DepartmentViewSet(viewsets.ModelViewSet, ListAPIView):
+class DepartmentViewSet(AdvancedModelViewSet, ListAPIView):
     queryset = Department.objects.all()
     permission_classes = [IAMPermission]
     filter_backends = [filters.OrderingFilter]
@@ -34,6 +36,9 @@ class DepartmentViewSet(viewsets.ModelViewSet, ListAPIView):
     ordering = "id"
 
     foreign_fields = ["parent", "children"]
+
+    # 使用 filter 进行过滤的操作
+    iam_filter_actions: tuple = ("list",)
 
     @inject_serializer(query_in=QueryDeptSerializer, out=PaginatedDeptSerializer)
     def list(self, request, validated_data: dict, *args, **kwargs):
