@@ -91,7 +91,7 @@ def notice_for_account_expiration():
 
     logger.info(
         "--------- going to notice expiring_profiles count:(%s) for account expiration ----------",
-        len(expiring_profile_list)
+        len(expiring_profile_list),
     )
     for profile in expiring_profile_list:
         notice_config = get_notice_config_for_expiration(
@@ -107,7 +107,7 @@ def notice_for_account_expiration():
 
     logger.info(
         "--------- going to notice expired_profiles count:(%s) for account expiration ----------",
-        len(expired_profile_list)
+        len(expired_profile_list),
     )
     for profile in expired_profile_list:
         notice_config = get_notice_config_for_expiration(
@@ -149,7 +149,7 @@ def notice_for_password_expiration():
 
     logger.info(
         "--------- going to notice expiring_profiles count:(%s) for password expiration ----------",
-        len(expiring_profile_list)
+        len(expiring_profile_list),
     )
     for profile in expiring_profile_list:
         notice_config = get_notice_config_for_expiration(
@@ -165,7 +165,7 @@ def notice_for_password_expiration():
 
     logger.info(
         "--------- going to notice expired_profiles count:(%s) for password expiration ----------",
-        len(expired_profile_list)
+        len(expired_profile_list),
     )
     for profile in expired_profile_list:
         notice_config = get_notice_config_for_expiration(

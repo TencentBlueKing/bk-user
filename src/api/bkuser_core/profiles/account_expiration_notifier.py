@@ -29,25 +29,27 @@ def get_profiles_for_account_expiration():
     category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
 
     for category_id in category_ids:
-        notice_interval = Setting.objects.filter(
-            category_id=category_id,
-            meta__key=ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY,
-            meta__namespace=SettingsEnableNamespaces.ACCOUNT.value
-        ).first().value
+        notice_interval = (
+            Setting.objects.filter(
+                category_id=category_id,
+                meta__key=ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY,
+                meta__namespace=SettingsEnableNamespaces.ACCOUNT.value,
+            )
+            .first()
+            .value
+        )
 
         expiration_dates = get_expiration_dates(notice_interval)
         logined_profiles = get_logined_profiles()
 
         expiring_profiles = logined_profiles.filter(
-            account_expiration_date__in=expiration_dates,
-            category_id=category_id).values(
-            "id", "username", "category_id", "email", "telephone", "account_expiration_date")
+            account_expiration_date__in=expiration_dates, category_id=category_id
+        ).values("id", "username", "category_id", "email", "telephone", "account_expiration_date")
         expiring_profile_list.extend(expiring_profiles)
 
         expired_profiles = logined_profiles.filter(
-            account_expiration_date__lt=datetime.date.today(),
-            category_id=category_id).values(
-            "id", "username", "category_id", "email", "telephone", "account_expiration_date")
+            account_expiration_date__lt=datetime.date.today(), category_id=category_id
+        ).values("id", "username", "category_id", "email", "telephone", "account_expiration_date")
         expired_profile_list.extend(expired_profiles)
 
     return expiring_profile_list, expired_profile_list

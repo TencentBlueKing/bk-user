@@ -44,11 +44,7 @@ class ExpirationNotifier:
         )
 
     def _notice_by_sms(self, sms_config):
-        send_sms(
-            sender=sms_config["sender"],
-            receivers=sms_config["receivers"],
-            message=sms_config["message"]
-        )
+        send_sms(sender=sms_config["sender"], receivers=sms_config["receivers"], message=sms_config["message"])
 
 
 def get_logined_profiles():
@@ -56,8 +52,9 @@ def get_logined_profiles():
     获取在平台登录过的所有用户
     """
     subquery = LogIn.objects.filter(profile=OuterRef('pk')).values_list('id')
-    logined_profile_ids = Profile.objects.annotate(
-        temp=Exists(subquery)).filter(temp=True).values_list('id', flat=True)
+    logined_profile_ids = (
+        Profile.objects.annotate(temp=Exists(subquery)).filter(temp=True).values_list('id', flat=True)
+    )
     logined_profiles = Profile.objects.filter(id__in=logined_profile_ids)
 
     return logined_profiles
@@ -94,9 +91,7 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
     notice_config = {}
 
     if expiration_type == TypeOfExpiration.ACCOUNT_EXPIRATION.value:
-        logger.info(
-            "--------- get notice config for account expiration ----------"
-        )
+        logger.info("--------- get notice config for account expiration ----------")
         notice_methods = config_loader["account_expiration_notice_methods"]
         expired_at = profile["account_expiration_date"] - datetime.date.today()
         expired_email_config = config_loader["expired_account_email_config"]
@@ -105,14 +100,13 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
         expiring_sms_config = config_loader["expiring_account_sms_config"]
 
     elif expiration_type == TypeOfExpiration.PASSWORD_EXPIRATION.value:
-        logger.info(
-            "--------- get notice config for password expiration ----------"
-        )
+        logger.info("--------- get notice config for password expiration ----------")
         notice_methods = config_loader["password_expiration_notice_methods"]
-        expired_at = ((profile["password_update_time"].date() or profile["create_time"].date())
-                      + datetime.timedelta(days=profile["password_valid_days"])
-                      - datetime.date.today()
-                      )
+        expired_at = (
+            (profile["password_update_time"].date() or profile["create_time"].date())
+            + datetime.timedelta(days=profile["password_valid_days"])
+            - datetime.date.today()
+        )
         expired_email_config = config_loader["expired_password_email_config"]
         expiring_email_config = config_loader["expiring_password_email_config"]
         expired_sms_config = config_loader["expired_password_sms_config"]
@@ -127,21 +121,17 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
         message = (
             email_config["content"].format(username=profile["username"])
             if expired_at.days < 0
-            else email_config["content"].format(
-                username=profile["username"], expired_at=expired_at.days
-            )
+            else email_config["content"].format(username=profile["username"], expired_at=expired_at.days)
         )
 
         notice_config.update(
             {
-                "send_email":
-                    {
-                        "sender": email_config["sender"],
-                        "receivers": [profile["email"]],
-                        "message": message,
-                        "title": email_config["title"]
-                    }
-
+                "send_email": {
+                    "sender": email_config["sender"],
+                    "receivers": [profile["email"]],
+                    "message": message,
+                    "title": email_config["title"],
+                }
             }
         )
 
@@ -151,26 +141,12 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
         message = (
             sms_config["content"].format(username=profile["username"])
             if expired_at.days < 0
-            else sms_config["content"].format(
-                username=profile["username"], expired_at=expired_at.days
-            )
+            else sms_config["content"].format(username=profile["username"], expired_at=expired_at.days)
         )
 
         notice_config.update(
-            {
-                "send_sms":
-                    {
-                        "sender": sms_config["sender"],
-                        "receivers": [profile["telephone"]],
-                        "message": message
-                    }
-
-            }
+            {"send_sms": {"sender": sms_config["sender"], "receivers": [profile["telephone"]], "message": message}}
         )
-    logger.debug(
-        "--------- notice_config(%s) of profile(%s) ----------",
-        notice_config,
-        profile
-    )
+    logger.debug("--------- notice_config(%s) of profile(%s) ----------", notice_config, profile)
 
     return notice_config
