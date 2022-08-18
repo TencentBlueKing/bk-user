@@ -42,6 +42,7 @@ class TestListCreateApis:
     # --------------- List ---------------
     def test_category_id_list(self, factory, view, local_category):
         """测试拉取配置列表"""
+        SettingViewSet.permission_classes = []
         request = factory.get(f"/api/v2/settings/?category_id={local_category.pk}")
         response = view(request=request)
         assert len(response.data) == SettingMeta.objects.filter(category_type="local").count()
