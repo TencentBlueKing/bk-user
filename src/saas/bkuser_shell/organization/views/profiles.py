@@ -24,8 +24,8 @@ from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.organization.constants import (
     ACCOUNT_EXPIRATION_DATE_KEY,
+    ACCOUNT_EXPIRATION_TYPE_PERMANENT,
     ACCOUNT_NAMESPACE,
-    ACCOUNT_EXPIRATION_TYPE_PERMANENT
 )
 from bkuser_shell.organization.serializers import profiles as serializers
 from bkuser_shell.organization.utils import get_default_logo_url

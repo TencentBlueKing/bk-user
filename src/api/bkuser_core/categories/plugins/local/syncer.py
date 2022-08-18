@@ -89,6 +89,7 @@ class ExcelFetcher(Fetcher):
         except ValueError:
             raise ColumnNotFound(f"查找的列 {column_key} 不存在")
 
+
 @dataclass
 class ExcelSyncer(Syncer):
     """Excel 数据同步类"""
@@ -293,7 +294,6 @@ class ExcelSyncer(Syncer):
                         instance.id,
                         instance.username,
                     )
-
 
 
 @dataclass

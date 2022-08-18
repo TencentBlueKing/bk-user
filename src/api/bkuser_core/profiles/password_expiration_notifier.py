@@ -30,16 +30,18 @@ def get_profiles_for_password_expiration():
     logined_profiles = get_logined_profiles()
 
     for category_id in category_ids:
-        notice_interval = Setting.objects.filter(
-            category_id=category_id,
-            meta__key=PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY,
-            meta__namespace=SettingsEnableNamespaces.PASSWORD.value,
-        ).first().value
+        notice_interval = (
+            Setting.objects.filter(
+                category_id=category_id,
+                meta__key=PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY,
+                meta__namespace=SettingsEnableNamespaces.PASSWORD.value,
+            )
+            .first()
+            .value
+        )
 
         expiration_dates = get_expiration_dates(notice_interval)
-        profiles = logined_profiles.filter(
-            category_id=category_id,
-            password_valid_days__gt=0).values(
+        profiles = logined_profiles.filter(category_id=category_id, password_valid_days__gt=0).values(
             "id",
             "username",
             "category_id",
@@ -47,7 +49,7 @@ def get_profiles_for_password_expiration():
             "telephone",
             "password_valid_days",
             "password_update_time",
-            "create_time"
+            "create_time",
         )
         for profile in profiles:
             valid_period = datetime.timedelta(days=profile["password_valid_days"])
