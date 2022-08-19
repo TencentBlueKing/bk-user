@@ -81,7 +81,7 @@ image:
   registry: hub.bktencent.com
   repository: blueking/bk-user-saas
   pullPolicy: IfNotPresent
-  tag: "v2.3.6-alpha.1"
+  tag: "v2.3.6-alpha.2"
 
 command: []
 args: []
