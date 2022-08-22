@@ -198,7 +198,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.QUERY_PARAMS_ERROR
 
         # 提前将关系表拿出来
-        queryset = queryset.prefetch_related(*self.relation_fields)
+        # BUG: 这里需要去掉 login_set(百万级的表), 大表会导致prefetch就失败
+        # queryset = queryset.prefetch_related(*self.relation_fields)
+        queryset = queryset.prefetch_related("departments", "leader")
 
         # 当用户请求数据时，判断其是否强制输出原始 username
         if not force_use_raw_username(request):
