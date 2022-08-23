@@ -123,10 +123,10 @@ bkUserApiUrl: http://bkuserapi-web
 
 ## 蓝鲸调用链
 trace:
-  service_name: "bk-login"
+  serviceName: "bk-login"
   sampler: parentbased_always_on
   instrument:
-    db_api: false
+    dbApi: false
 
 ## ---------------
 ## 环境变量

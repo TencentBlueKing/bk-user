@@ -124,10 +124,10 @@ bkUserApiUrl: http://bkuserapi-web
 
 ## 蓝鲸调用链
 trace:
-  service_name: "bk-user-saas"
+  serviceName: "bk-user-saas"
   sampler: always_on
   instrument:
-    db_api: false
+    dbApi: false
 
 ## ---------------
 ## 环境变量

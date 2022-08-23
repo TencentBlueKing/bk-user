@@ -40,8 +40,8 @@ data:
   BK_API_URL_TMPL: "{{ .Values.bkApiUrlTmpl }}"
   # 蓝鲸调用链
   BKAPP_ENABLE_OTEL_TRACE: "{{ .Values.global.trace.enabled }}"
-  BKAPP_OTEL_SERVICE_NAME:  "{{ .Values.trace.service_name }}"
+  BKAPP_OTEL_SERVICE_NAME:  "{{ .Values.trace.serviceName }}"
   BKAPP_OTEL_SAMPLER: "{{ .Values.trace.sampler }}"
   BKAPP_OTEL_GRPC_HOST: {{ include "bk-user.trace.grpcUrl" . }}
   BKAPP_OTEL_DATA_TOKEN: "{{ .Values.global.trace.otlp.token }}"
-  BKAPP_OTEL_INSTRUMENT_DB_API: "{{ .Values.trace.instrument.db_api }}"
+  BKAPP_OTEL_INSTRUMENT_DB_API: "{{ .Values.trace.instrument.dbApi }}"

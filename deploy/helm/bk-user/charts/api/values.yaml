@@ -137,10 +137,10 @@ bkIamApiUrl: http://bkiam-web
 
 ## 蓝鲸调用链
 trace:
-  service_name: "bk-user-api"
+  serviceName: "bk-user-api"
   sampler: parentbased_always_on
   instrument:
-    db_api: false
+    dbApi: false
 
 ## ---------------
 ## 环境变量

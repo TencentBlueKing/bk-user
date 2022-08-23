@@ -224,24 +224,24 @@ global:
       type: grpc
 api:
   trace:
-    service_name: "bk-user-api"
+    serviceName: "bk-user-api"
     sampler: parentbased_always_on
     instrument:
-      db_api: false
+      dbApi: false
 
 saas:
   trace:
-    service_name: "bk-user-saas"
+    serviceName: "bk-user-saas"
     sampler: always_on
     instrument:
-      db_api: false
+      dbApi: false
 
 login:
   trace:
-    service_name: "bk-login"
+    serviceName: "bk-login"
     sampler: parentbased_always_on
     instrument:
-      db_api: false
+      dbApi: false
 ```
 
 ### 10. 配置sentry
