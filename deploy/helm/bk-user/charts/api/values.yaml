@@ -70,6 +70,17 @@ global:
     enabled: false
     dataId: 1
 
+  ## --------------
+  ## 蓝鲸调用链
+  ## --------------
+  trace:
+    enabled: false
+    otlp:
+      host: 127.0.0.1
+      port: 4317
+      token: ""
+      type: grpc
+
 ## web deployment 副本数
 replicaCount: 1
 ## celery deployment 副本数
@@ -124,6 +135,12 @@ bkIamUrl: http://bkiam.example.com
 ## 蓝鲸权限中心后台 API 地址
 bkIamApiUrl: http://bkiam-web
 
+## 蓝鲸调用链
+trace:
+  service_name: "bk-user-api"
+  sampler: parentbased_always_on
+  instrument:
+    db_api: false
 
 ## ---------------
 ## 环境变量

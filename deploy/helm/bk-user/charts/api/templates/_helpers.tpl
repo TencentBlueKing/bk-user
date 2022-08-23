@@ -60,3 +60,10 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+bk_monitor provides grpc url must add http protocol header
+*/}}
+{{- define "bk-user.trace.grpcUrl" -}}
+"http://{{ .Values.global.trace.otlp.host }}:{{ .Values.global.trace.otlp.port }}"
+{{- end -}}

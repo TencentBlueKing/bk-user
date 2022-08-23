@@ -211,7 +211,40 @@ global:
     enabled: true
 ```
 
-### 9. 配置sentry
+### 9. 调用链 APM
+
+```yaml
+global:
+  trace:
+    enabled: false
+    otlp:
+      host: 127.0.0.1
+      port: 4317
+      token: ""
+      type: grpc
+api:
+  trace:
+    service_name: "bk-user-api"
+    sampler: parentbased_always_on
+    instrument:
+      db_api: false
+
+saas:
+  trace:
+    service_name: "bk-user-saas"
+    sampler: always_on
+    instrument:
+      db_api: false
+
+login:
+  trace:
+    service_name: "bk-login"
+    sampler: parentbased_always_on
+    instrument:
+      db_api: false
+```
+
+### 10. 配置sentry
 
 ```yaml
 global:
@@ -219,7 +252,7 @@ global:
   sentryDsn: "http://12927b5f211046b575ee51fd8b1ac34f@{SENTRY_DOMAIN}/{PROJECT_ID}"
 ```
 
-### 10. 开启api auth
+### 11. 开启api auth
 
 默认值是true, 可以关闭, 关闭之后用户管理 API 将不受任何保护
 
@@ -239,7 +272,7 @@ login:
   bkComponentApiUrl: "http://bkapi.example.com"
 ```
 
-### 11. 环境变量注入
+### 12. 环境变量注入
 
 
 ```yaml
@@ -270,7 +303,7 @@ api:
       value: true
 ```
 
-### 12. 安装
+### 13. 安装
 
 如果你已经准备好了 `values.yaml`，就可以直接进行安装操作了
 
