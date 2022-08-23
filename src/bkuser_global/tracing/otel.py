@@ -21,6 +21,10 @@ from opentelemetry.sdk.trace.sampling import _KNOWN_SAMPLERS
 
 from .instrumentor import BKAppInstrumentor
 
+DEFAULT_LOGGING_TRACE_FORMAT = (
+    "[trace_id]: %(otelTraceID)s [span_id]: %(otelSpanID)s [resource.service.name]: %(otelServiceName)s"
+)
+
 
 def setup_trace_config():
     is_environment_dev = os.getenv("DJANGO_SETTINGS_MODULE", "").endswith(".dev")
@@ -40,7 +44,7 @@ def setup_trace_config():
                 resource=Resource.create(
                     {
                         "service.name": settings.BKAPP_OTEL_SERVICE_NAME,
-                        "bk_data_id": settings.BKAPP_OTEL_BK_DATA_ID,
+                        "bk.data.token": settings.BKAPP_OTEL_DATA_TOKEN,
                     },
                 ),
                 sampler=_KNOWN_SAMPLERS[settings.BKAPP_OTEL_SAMPLER],
