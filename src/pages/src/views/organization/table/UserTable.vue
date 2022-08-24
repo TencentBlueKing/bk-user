@@ -267,7 +267,7 @@ export default {
               if (this.$i18n.locale === 'en') {
                 return value;
               }
-              return this.statusMap[options[i].id];
+              return this.statusMap[key][i];
             }
           }
         } else {
