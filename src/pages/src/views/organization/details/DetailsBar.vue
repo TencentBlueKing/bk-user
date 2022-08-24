@@ -233,11 +233,6 @@ export default {
       const list = JSON.parse(JSON.stringify(this.fieldsList));
       const fieldsList = [];
       list.forEach((item) => {
-        if (item.options && item.options.length) {
-          item.options.forEach((key) => {
-            key.value = this.statusMap[key.value];
-          });
-        }
         fieldsList.push(item);
       });
       this.profileInfoList = fieldsList.filter((fieldInfo) => {

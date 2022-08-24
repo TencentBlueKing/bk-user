@@ -608,8 +608,13 @@ export default {
         this.setTableFields = JSON.parse(JSON.stringify(fieldsList));
         this.setTableFields.forEach((item) => {
           if (item.options && item.options.length) {
+            this.$set(this.statusMap, [item.key], {});
             item.options.forEach((key) => {
-              this.$set(this.statusMap, key.id, key.value);
+              Object.entries(this.statusMap).map((k) => {
+                if (k[0] === item.key) {
+                  this.$set(k[1], key.id, key.value);
+                }
+              });
             });
           }
         });
