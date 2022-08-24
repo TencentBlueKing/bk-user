@@ -129,12 +129,16 @@ class BKAppInstrumentor(BaseInstrumentor):
 
     def _instrument(self, **kwargs):
         LoggingInstrumentor().instrument()
+        print("otel instructment: logging")
         RequestsInstrumentor().instrument(span_callback=requests_callback)
+        print("otel instructment: requests")
         DjangoInstrumentor().instrument(request_hook=django_request_hook, response_hook=django_response_hook)
+        print("otel instructment: django")
         try:
             from opentelemetry.instrumentation.redis import RedisInstrumentor
 
             RedisInstrumentor().instrument()
+            print("otel instructment: redis")
         except Exception:  # pylint: disable=broad-except
             # ignore redis instrumentor if it's not installed
             pass
@@ -143,6 +147,7 @@ class BKAppInstrumentor(BaseInstrumentor):
             from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
             CeleryInstrumentor().instrument()
+            print("otel instructment: celery")
 
         if getattr(settings, "BKAPP_OTEL_INSTRUMENT_DB_API", False):
             import MySQLdb  # noqa
@@ -154,7 +159,9 @@ class BKAppInstrumentor(BaseInstrumentor):
                 "mysql",
                 {"database": "db", "port": "port", "host": "host", "user": "user"},
             )
+            print("otel instructment: database api")
 
     def _uninstrument(self, **kwargs):
         for instrumentor in self.instrumentors:
+            print("otel uninstrument", instrumentor)
             instrumentor.uninstrument()
