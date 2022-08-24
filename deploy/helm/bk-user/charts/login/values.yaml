@@ -124,7 +124,7 @@ bkUserApiUrl: http://bkuserapi-web
 ## 蓝鲸调用链
 trace:
   serviceName: "bk-login"
-  sampler: parentbased_always_on
+  sampler: always_on
   instrument:
     dbApi: false
 

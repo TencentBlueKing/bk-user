@@ -48,7 +48,7 @@ SENTRY_DSN = env("SENTRY_DSN", default="")
 ENABLE_OTEL_TRACE = env.bool("BKAPP_ENABLE_OTEL_TRACE", default=False)
 BKAPP_OTEL_INSTRUMENT_DB_API = env.bool("BKAPP_OTEL_INSTRUMENT_DB_API", default=False)
 BKAPP_OTEL_SERVICE_NAME = env("BKAPP_OTEL_SERVICE_NAME", default="bk-user-api")
-BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", default="parentbased_always_off")
+BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", default="always_on")
 BKAPP_OTEL_GRPC_HOST = env("BKAPP_OTEL_GRPC_HOST", default="")
 BKAPP_OTEL_DATA_TOKEN = env("BKAPP_OTEL_DATA_TOKEN", default="")
 

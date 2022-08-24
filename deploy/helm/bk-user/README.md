@@ -225,7 +225,7 @@ global:
 api:
   trace:
     serviceName: "bk-user-api"
-    sampler: parentbased_always_on
+    sampler: always_on
     instrument:
       dbApi: false
 
@@ -239,7 +239,7 @@ saas:
 login:
   trace:
     serviceName: "bk-login"
-    sampler: parentbased_always_on
+    sampler: always_on
     instrument:
       dbApi: false
 ```
