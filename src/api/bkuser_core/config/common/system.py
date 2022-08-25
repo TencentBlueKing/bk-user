@@ -46,11 +46,11 @@ SENTRY_DSN = env("SENTRY_DSN", default="")
 # tracing: otel 相关配置
 # if enable, default false
 ENABLE_OTEL_TRACE = env.bool("BKAPP_ENABLE_OTEL_TRACE", default=False)
-BKAPP_OTEL_INSTRUMENT_DB_API = env.bool("BKAPP_OTEL_INSTRUMENT_DB_API", default=True)
-BKAPP_OTEL_SERVICE_NAME = env("BKAPP_OTEL_SERVICE_NAME", default="bk-user")
-BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", default="parentbased_always_off")
-BKAPP_OTEL_BK_DATA_ID = env.int("BKAPP_OTEL_BK_DATA_ID", default=-1)
+BKAPP_OTEL_INSTRUMENT_DB_API = env.bool("BKAPP_OTEL_INSTRUMENT_DB_API", default=False)
+BKAPP_OTEL_SERVICE_NAME = env("BKAPP_OTEL_SERVICE_NAME", default="bk-user-api")
+BKAPP_OTEL_SAMPLER = env("BKAPP_OTEL_SAMPLER", default="always_on")
 BKAPP_OTEL_GRPC_HOST = env("BKAPP_OTEL_GRPC_HOST", default="")
+BKAPP_OTEL_DATA_TOKEN = env("BKAPP_OTEL_DATA_TOKEN", default="")
 
 # ==============================================================================
 # 全局应用配置
@@ -93,6 +93,9 @@ DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
 # sync, 用户管理本身做业务 HTTP API 数据源, 可以被另一个用户管理同步过去
 # 复用 API, 接口参数中存在 SYNC_API_PARAM 时, 以sync的接口协议返回
 SYNC_API_PARAM = "for_sync"
+
+# 通知发送时间间隔
+NOTICE_INTERVAL_SECONDS = env.int("NOTICE_INTERVAL_SECONDS", default=3)
 
 # ==============================================================================
 # 黑白名单/禁用等

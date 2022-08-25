@@ -47,7 +47,9 @@ class DepartmentViewSet(BkUserApiViewSet):
 
     @inject_serializer(query_in=RetrieveDepartmentSLZ, out=DepartmentSerializer, tag=["departments"])
     def retrieve(self, request, department_id, validated_data):
-        api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request, no_auth=True))
+        # TODO: 为什么这里no_auth=True
+        api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
+        # api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request, no_auth=True))
         return api_instance.v2_departments_read(department_id, include_disabled=True)
 
     @staticmethod

@@ -10,9 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from rest_framework import filters, viewsets
+from rest_framework import filters
 from rest_framework.generics import ListAPIView
 
+from bkuser_core.apis.v2.viewset import AdvancedModelViewSet
 from bkuser_core.apis.v3.exceptions import QueryTooLong
 from bkuser_core.apis.v3.filters import MultipleFieldFilter
 from bkuser_core.apis.v3.serializers import AdvancedPagination
@@ -26,7 +27,8 @@ from bkuser_global.drf_crown.crown import inject_serializer
 logger = logging.getLogger(__name__)
 
 
-class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
+# class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
+class ProfileViewSet(AdvancedModelViewSet, ListAPIView):
     """获取用户数据"""
 
     queryset = Profile.objects.all()
@@ -37,6 +39,9 @@ class ProfileViewSet(viewsets.ModelViewSet, ListAPIView):
 
     foreign_fields = ["departments", "leader"]
     in_fields = ["username__in", "staff_status__in", "status__in"]
+
+    # 使用 filter 进行过滤的操作
+    iam_filter_actions: tuple = ("list",)
 
     @inject_serializer(query_in=QueryProfileSerializer, out=PaginatedProfileSerializer)
     def list(self, request, validated_data: dict, *args, **kwargs):

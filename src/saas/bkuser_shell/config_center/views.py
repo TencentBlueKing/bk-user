@@ -46,7 +46,9 @@ class FieldsViewSet(BkUserApiViewSet):
     )
     def list(self, request, validated_data):
         """获取所有用户字段"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
+        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
+        # TODO: 为什么no_auth=True?
+        # api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
         return self.get_paging_results(api_instance.v2_dynamic_fields_list)
 
     @inject_serializer(
@@ -112,6 +114,9 @@ class FieldsViewSet(BkUserApiViewSet):
 class SettingsViewSet(BkUserApiViewSet):
     serializer_class = SettingSerializer
 
+    # 这里不能通用配置, 因为retrieve/destroy等操作后台检查不支持, 也不能使用force_action_id, 后台检查会查settings
+    # ACTION_ID = IAMAction.MANAGE_CATEGORY.value
+
     @inject_serializer(
         query_in=serializers.ListSettingsSerializer(),
         out=serializers.SettingSerializer(many=True),
@@ -160,6 +165,9 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
 
     serializer_class = SettingMetaSerializer
 
+    # 这里不能通用配置, 本质上是调用 v2_settings方法, 已经在后台通过category_id的permission做检查
+    # ACTION_ID = IAMAction.MANAGE_CATEGORY.value
+
     @inject_serializer(
         query_in=serializers.ListSettingsSerializer(),
         out=serializers.SettingSerializer(many=True),
@@ -185,7 +193,10 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
         """获取 namespace 下的所有示例配置"""
         category_type = validated_data["category_type"]
 
-        api_instance = bkuser_sdk.SettingMetasApi(self.get_api_client_by_request(request))
+        # NOTE: 后台没有任何权限管控(这个是全局的, 不关联任何目录/资源), 这里暂时使用 MANAGE_FIELD 权限替代, FIXME: 切分独立权限, 替换这里
+        api_instance = bkuser_sdk.SettingMetasApi(
+            self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_FIELD.value)
+        )
         setting_metas = self.get_paging_results(
             api_instance.v2_setting_metas_list, lookup_field="category_type", exact_lookups=[category_type]
         )

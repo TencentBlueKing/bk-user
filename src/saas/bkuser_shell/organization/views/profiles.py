@@ -8,9 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 import json
 import logging
 
+from django.utils.timezone import now
 from rest_framework.permissions import IsAuthenticated
 
 import bkuser_sdk
@@ -20,6 +22,11 @@ from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
+from bkuser_shell.organization.constants import (
+    ACCOUNT_EXPIRATION_DATE_KEY,
+    ACCOUNT_EXPIRATION_TYPE_PERMANENT,
+    ACCOUNT_NAMESPACE,
+)
 from bkuser_shell.organization.serializers import profiles as serializers
 from bkuser_shell.organization.utils import get_default_logo_url
 
@@ -62,6 +69,21 @@ class ProfilesViewSet(BkUserApiViewSet):
     def create(self, request, validated_data):
         api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request, no_auth=True))
         category = api_instance.v2_categories_read(validated_data["category_id"])
+
+        if not validated_data.get("account_expiration_date"):
+            # 目录设置: 用户项
+            api_instance = bkuser_sdk.SettingsApi(self.get_api_client_by_request(request, no_auth=True))
+            account_expiration_date = api_instance.v2_settings_list(
+                category_id=validated_data["category_id"],
+                namespace=ACCOUNT_NAMESPACE,
+                key=ACCOUNT_EXPIRATION_DATE_KEY,
+            )[0]
+            # 账户有效期，不传，默认设置为目录设置项
+            if account_expiration_date.value == ACCOUNT_EXPIRATION_TYPE_PERMANENT:
+                account_expiration_date = datetime.date(year=2100, month=1, day=1)
+            else:
+                account_expiration_date = now().date() + datetime.timedelta(days=account_expiration_date.value)
+            validated_data["account_expiration_date"] = account_expiration_date
 
         api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
         fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
@@ -139,7 +161,9 @@ class ProfilesViewSet(BkUserApiViewSet):
     @inject_serializer(tag=["profiles"])
     def restoration(self, request, profile_id):
         """恢复 profile"""
-        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, no_auth=True))
+        # TODO: 为什么no_auth=True?
+        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
+        # api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, no_auth=True))
         try:
             api_instance.v2_profiles_restoration(
                 lookup_value=profile_id, lookup_field="id", body={}, include_disabled=True

@@ -28,3 +28,10 @@ data:
   ENABLE_PASSWORD_RSA_ENCRYPTED: "{{ .Values.enablePasswordRSAEncrypted }}"
   PASSWORD_RSA_PUBLIC_KEY: "{{ .Values.passwordRSAPublicKeyBase64 }}"
   PASSWORD_RSA_PRIVATE_KEY: "{{ .Values.passwordRSAPrivateKeyBase64 }}"
+  # 蓝鲸调用链
+  BKAPP_ENABLE_OTEL_TRACE: "{{ .Values.global.trace.enabled }}"
+  BKAPP_OTEL_SERVICE_NAME:  "{{ .Values.trace.serviceName }}"
+  BKAPP_OTEL_SAMPLER: "{{ .Values.trace.sampler }}"
+  BKAPP_OTEL_GRPC_HOST: {{ include "bk-user.trace.grpcUrl" . }}
+  BKAPP_OTEL_DATA_TOKEN: "{{ .Values.global.trace.otlp.token }}"
+  BKAPP_OTEL_INSTRUMENT_DB_API: "{{ .Values.trace.instrument.dbApi }}"

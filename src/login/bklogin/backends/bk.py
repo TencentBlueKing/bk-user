@@ -15,7 +15,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
 from bklogin.backends.constants import BkUserCheckCodeEnum
-from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset
+from bklogin.common.exceptions import AuthenticationError, PasswordNeedReset, UserExpiredException
 from bklogin.common.log import logger
 from bklogin.common.usermgr import get_categories_str
 from bklogin.components import usermgr_api
@@ -84,6 +84,8 @@ class BkUserBackend(ModelBackend):
                 BkUserCheckCodeEnum.PASSWORD_EXPIRED.value,
             ]:
                 raise PasswordNeedReset(message=message, reset_password_url=extra_values.get("reset_password_url"))
+            elif code == BkUserCheckCode.USER_IS_EXPIRED:
+                raise UserExpiredException
             raise AuthenticationError(message=message, redirect_to=extra_values.get("redirect_to"))
 
         # set the username to real username

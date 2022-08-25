@@ -35,8 +35,16 @@ logger = logging.getLogger(__name__)
 
 
 def gen_password(length):
+    # 必须包含至少一个数字
     chars = string.ascii_letters + string.digits
-    return "".join([random.choice(chars) for _ in range(length)])
+
+    random_chars = [random.choice(chars) for _ in range(length)]
+    if any([c.isdigit() for c in random_chars]):
+        return "".join(random_chars)
+
+    random_chars[0] = random.choice(string.digits)
+    random.shuffle(random_chars)
+    return "".join(random_chars)
 
 
 USERNAME_DOMAIN_REGEX = re.compile(f"(?P<username>{USERNAME_REGEX})(@(?P<domain>{DOMAIN_PART_REGEX}))?$")
@@ -99,7 +107,7 @@ def make_password_by_config(category_id, return_raw: bool = False) -> Tuple[str,
         raw_password = config_loader["init_password"]
     else:
         # 当且仅当自动生成密码时发送邮件
-        raw_password = gen_password(8)
+        raw_password = gen_password(12)
         should_notify = True
 
     if return_raw:

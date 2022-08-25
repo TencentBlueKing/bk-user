@@ -19,6 +19,7 @@ class MonitoringConfig(AppConfig):
     name = "bkuser_core.monitoring"
 
     def ready(self):
+        setup_by_settings()
         init_sentry_sdk("bk-user-api", django_integrated=True, redis_integrated=True, celery_integrated=True)
 
 

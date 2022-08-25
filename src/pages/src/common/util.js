@@ -11,6 +11,7 @@
 */
 /* eslint-disable no-useless-escape */
 /* eslint-disable no-plusplus */
+import moment from 'moment';
 /**
  * 函数柯里化
  *
@@ -352,7 +353,21 @@ export function loadScript(url, callback) {
 }
 
 /**
- * 复制到剪切板
+ * 日期转换
+ */
+export function dateConvert(value) {
+  switch (value) {
+    case null:
+      return '--';
+    case '2100-01-01':
+      return window.mainComponent.$t('永久');
+    default:
+      return moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
+  }
+}
+
+/**
+* 复制到剪切板
  * @param {*} content : ;
  * @param {*} callback
  */

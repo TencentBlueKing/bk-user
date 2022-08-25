@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from rest_framework.serializers import (
     CharField,
+    DateField,
     DateTimeField,
     IntegerField,
     JSONField,
@@ -53,6 +54,7 @@ class ProfileSerializer(Serializer):
     update_time = DateTimeField(required=False)
     create_time = DateTimeField(required=False)
     last_login_time = DateTimeField(required=False)
+    account_expiration_date = CharField()
 
     def get_logo(self, data):
         if isinstance(data, dict):
@@ -127,6 +129,7 @@ class CreateProfileSerializer(Serializer):
     iso_code = CharField(required=False, default="CN")
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False, default=[])
+    account_expiration_date = CharField(required=False, allow_null=True, allow_blank=True)
 
 
 class UpdateProfileSerializer(Serializer):
@@ -146,6 +149,7 @@ class UpdateProfileSerializer(Serializer):
     iso_code = CharField(required=False)
     logo = CharField(required=False)
     departments = ListField(child=IntegerField(), required=False)
+    account_expiration_date = CharField(required=False)
 
 
 class ProfileExportSerializer(Serializer):
@@ -163,6 +167,9 @@ class ProfileExportSerializer(Serializer):
     wx_userid = CharField()
     iso_code = CharField()
     country_code = CharField()
+    last_login_time = CharField()
+    create_time = DateTimeField()
+    account_expiration_date = DateField()
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

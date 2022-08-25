@@ -65,6 +65,17 @@ global:
     enabled: false
     dataId: 1
 
+  ## --------------
+  ## 蓝鲸调用链
+  ## --------------
+  trace:
+    enabled: false
+    otlp:
+      host: 127.0.0.1
+      port: 4317
+      token: ""
+      type: grpc
+
 ## web deployment 副本数
 replicaCount: 1
 ## celery deployment 副本数
@@ -83,7 +94,7 @@ image:
   registry: hub.bktencent.com
   repository: blueking/bk-login
   pullPolicy: IfNotPresent
-  tag: "v2.3.5"
+  tag: "v2.3.6-beta.2"
 
 nameOverride: ""
 fullnameOverride: ""
@@ -109,6 +120,13 @@ bkUserUrl: http://bkuser.paas.example.com
 bkUserAddr: bkuser.paas.example.com
 ## 蓝鲸用户管理后台 API 地址
 bkUserApiUrl: http://bkuserapi-web
+
+## 蓝鲸调用链
+trace:
+  serviceName: "bk-login"
+  sampler: always_on
+  instrument:
+    dbApi: false
 
 ## ---------------
 ## 环境变量
