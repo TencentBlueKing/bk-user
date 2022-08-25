@@ -456,7 +456,6 @@ versions:
         - "国际化 #417"
         - "新增字段下拉显示问题 #414"
         - "密码提交参数修改 #370"
-        -
       - type: "OPTIMIZATION"
         content:
         - "审计增加口令修改记录 #289"
@@ -480,3 +479,13 @@ versions:
       - type: "NEW"
         content:
         - "支持监听ipv6 #570"
+
+- version: "2.3.6"
+  date: "2022-08-25"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "NEW"
+        content:
+        - "支持账号有效期"
+        - "支持OTEL"
