@@ -18,7 +18,7 @@ from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.trace import Span, Status, StatusCode
+from opentelemetry.trace import Span, Status, StatusCode, format_trace_id
 
 
 def requests_callback(span: Span, response):
@@ -79,6 +79,14 @@ def requests_callback(span: Span, response):
         span.set_attribute("request_id", request_id)
 
 
+def django_request_hook(span, request):
+    """
+    在request注入trace_id，方便获取
+    """
+    trace_id = span.get_span_context().trace_id
+    request.otel_trace_id = format_trace_id(trace_id)
+
+
 def django_response_hook(span, request, response):
     """
     处理蓝鲸标准协议 Django 响应
@@ -121,12 +129,16 @@ class BKAppInstrumentor(BaseInstrumentor):
 
     def _instrument(self, **kwargs):
         LoggingInstrumentor().instrument()
+        print("otel instructment: logging")
         RequestsInstrumentor().instrument(span_callback=requests_callback)
-        DjangoInstrumentor().instrument(response_hook=django_response_hook)
+        print("otel instructment: requests")
+        DjangoInstrumentor().instrument(request_hook=django_request_hook, response_hook=django_response_hook)
+        print("otel instructment: django")
         try:
             from opentelemetry.instrumentation.redis import RedisInstrumentor
 
             RedisInstrumentor().instrument()
+            print("otel instructment: redis")
         except Exception:  # pylint: disable=broad-except
             # ignore redis instrumentor if it's not installed
             pass
@@ -135,6 +147,7 @@ class BKAppInstrumentor(BaseInstrumentor):
             from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
             CeleryInstrumentor().instrument()
+            print("otel instructment: celery")
 
         if getattr(settings, "BKAPP_OTEL_INSTRUMENT_DB_API", False):
             import MySQLdb  # noqa
@@ -146,7 +159,9 @@ class BKAppInstrumentor(BaseInstrumentor):
                 "mysql",
                 {"database": "db", "port": "port", "host": "host", "user": "user"},
             )
+            print("otel instructment: database api")
 
     def _uninstrument(self, **kwargs):
         for instrumentor in self.instrumentors:
+            print("otel uninstrument", instrumentor)
             instrumentor.uninstrument()

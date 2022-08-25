@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.apps import AppConfig
 
+from bkuser_global.tracing.otel import setup_by_settings
 from bkuser_global.tracing.sentry import init_sentry_sdk
 
 
@@ -18,4 +19,5 @@ class MonitoringConfig(AppConfig):
     name = "bklogin.monitoring"
 
     def ready(self):
+        setup_by_settings()
         init_sentry_sdk("bk-login", django_integrated=True)
