@@ -16,7 +16,7 @@ from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider, ReadableSpan
+from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace.sampling import _KNOWN_SAMPLERS
 
@@ -58,7 +58,11 @@ def setup_trace_config():
         trace.set_tracer_provider(
             TracerProvider(resource=Resource.create({SERVICE_NAME: settings.BKAPP_OTEL_SERVICE_NAME}))
         )
-        jaeger_exporter = JaegerExporter(agent_host_name="localhost", agent_port=6831, udp_split_oversized_batches=True)
+        jaeger_exporter = JaegerExporter(
+            agent_host_name="localhost",
+            agent_port=6831,
+            udp_split_oversized_batches=True,
+        )
         trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(jaeger_exporter))
     else:
         trace.set_tracer_provider(
