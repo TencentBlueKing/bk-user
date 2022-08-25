@@ -92,7 +92,7 @@ image:
   registry: hub.bktencent.com
   repository: blueking/bk-user-saas
   pullPolicy: IfNotPresent
-  tag: "v2.3.6-beta.1"
+  tag: "v2.3.6-beta.2"
 
 command: []
 args: []
