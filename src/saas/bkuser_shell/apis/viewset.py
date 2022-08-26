@@ -15,13 +15,16 @@ from collections import OrderedDict
 from typing import Callable, Optional
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils.translation import get_language
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
 from bkuser_global.local import local
 from bkuser_global.utils import force_str_2_bool
+from bkuser_sdk.rest import ApiException
 from bkuser_shell.common.core_client import get_api_client
 from bkuser_shell.common.response import Response
 
@@ -163,6 +166,23 @@ class BkUserApiViewSet(GenericViewSet):
             content_type=urllib3_resp.headers.get("Content-Type"),
         )
         return resp
+
+    def do_proxy(self, request):
+        # FIXME: use the raw requests, make your own headers, remove all sdk/client
+        try:
+            return self.call_through_api(request)
+        except ApiException as e:
+            resp = Response(
+                data=e.body,
+                status=e.status,
+                headers=e.headers,
+            )
+            return resp
+        except Exception as e:
+            return HttpResponse(
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content=str(e),
+            )
 
 
 def make_default_headers(operator: str) -> dict:

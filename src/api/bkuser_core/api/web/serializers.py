@@ -8,13 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.viewset import BkUserApiViewSet
 
 
-class SyncTaskViewSet(BkUserApiViewSet):
-    def list(self, request, validated_data):
-        return self.do_proxy(request)
+import datetime
 
-    def show_logs(self, request, task_id):
-        # FIXME: do the url mapping here? or in do_proxy?
-        return self.do_proxy(request)
+from rest_framework import fields
+
+# 公共的slz, 可能可以挪到别的地方, 后续再看
+
+
+class DurationTotalSecondField(fields.Field):
+    def to_internal_value(self, value) -> datetime.timedelta:
+        if isinstance(value, float):
+            value = str(value)
+        return fields.parse_duration(value)
+
+    def to_representation(self, value: datetime.timedelta):
+        return value.total_seconds()

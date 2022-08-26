@@ -8,13 +8,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.viewset import BkUserApiViewSet
+from django.urls.conf import path
 
+from . import views
 
-class SyncTaskViewSet(BkUserApiViewSet):
-    def list(self, request, validated_data):
-        return self.do_proxy(request)
-
-    def show_logs(self, request, task_id):
-        # FIXME: do the url mapping here? or in do_proxy?
-        return self.do_proxy(request)
+urlpatterns = [
+    path(
+        "",
+        views.SyncTaskViewSet.as_view(),
+        name="sync_task.list",
+    ),
+    path(
+        "<task_id>/progresses/",
+        views.SyncTaskProgressesViewSet.as_view(),
+        name="sync_task.progresses",
+    ),
+]

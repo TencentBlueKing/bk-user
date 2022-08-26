@@ -8,13 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.viewset import BkUserApiViewSet
+
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 
-class SyncTaskViewSet(BkUserApiViewSet):
-    def list(self, request, validated_data):
-        return self.do_proxy(request)
+class CustomPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+    page_query_param = 'page'
 
-    def show_logs(self, request, task_id):
-        # FIXME: do the url mapping here? or in do_proxy?
-        return self.do_proxy(request)
+    def get_paginated_response(self, data):
+        return Response({'count': self.page.paginator.count, 'results': data})

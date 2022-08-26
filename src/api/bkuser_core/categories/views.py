@@ -14,7 +14,6 @@ from typing import List
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
-from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -36,8 +35,6 @@ from bkuser_core.categories.serializers import (
     CategoryTestConnectionSerializer,
     CategoryTestFetchDataSerializer,
     CreateCategorySerializer,
-    SyncTaskProcessSerializer,
-    SyncTaskSerializer,
 )
 from bkuser_core.categories.signals import post_category_create, post_category_delete
 from bkuser_core.categories.tasks import adapter_sync
@@ -350,31 +347,3 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
 
         return Response()
-
-
-class SyncTaskViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = SyncTask.objects.all()
-    serializer_class = SyncTaskSerializer
-    lookup_field = "id"
-    ordering = ["-create_time"]
-    filter_backends = [
-        AdvancedSearchFilter,
-        filters.OrderingFilter,
-    ]
-
-    iam_filter_actions = ("list",)
-
-    @action(methods=["GET"], detail=True)
-    @swagger_auto_schema(responses={200: SyncTaskProcessSerializer(many=True)})
-    def show_logs(self, request, lookup_value):
-        task: SyncTask = self.get_object()
-
-        # NOTE: 必须有manage_category权限才能查看/变更settings => SaaS已经传递了 ACTION_ID = IAMAction.VIEW_CATEGORY.value
-        # request.META[dj_settings.NEED_IAM_HEADER] = "True"
-        # request.META[dj_settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
-        self.check_object_permissions(request, task.category)
-
-        processes = task.progresses.order_by("-create_time")
-
-        slz = SyncTaskProcessSerializer(processes, many=True)
-        return Response(slz.data)

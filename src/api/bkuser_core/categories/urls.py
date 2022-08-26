@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls.conf import path, re_path
+from django.urls.conf import re_path
 
 from . import views
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
@@ -92,11 +92,5 @@ urlpatterns = [
             }
         ),
         name="categories.test_fetch_data",
-    ),
-    path("api/v2/sync_task/", views.SyncTaskViewSet.as_view({"get": "list"}), name="categories.sync_tasks"),
-    path(
-        "api/v2/sync_task/<lookup_value>/logs",
-        views.SyncTaskViewSet.as_view({"get": "show_logs"}),
-        name="categories.sync_tasks.logs",
     ),
 ]

@@ -16,11 +16,45 @@ from django.utils.translation import gettext as _
 from rest_framework.permissions import BasePermission
 
 from .base import IAMMiXin
+from .converters import PathIgnoreDjangoQSConverter
+from .exceptions import IAMPermissionDenied
 from .helper import IAMHelper
 from .utils import need_iam
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
+
+
+class Permission:
+    def __init__(self):
+        self.iam_enabled = settings.ENABLE_IAM
+        self.helper = IAMHelper()
+
+    def make_filter_of_category(self, username: str, action_id: str):
+        if not self.iam_enabled:
+            return None
+
+        iam_request = self.helper.make_request_without_resources(username=username, action_id=action_id)
+        fs = Permission().helper.iam.make_filter(
+            iam_request, converter_class=PathIgnoreDjangoQSConverter, key_mapping={"category.id": "category_id"}
+        )
+        if not fs:
+            raise IAMPermissionDenied(
+                detail=_("您没有权限进行该操作，请在权限中心申请。"),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+            )
+        return fs
+
+    def allow_category_action(self, username: str, action_id, category) -> bool:
+        if not self.iam_enabled:
+            return True
+
+        objs = [category]
+        return self.helper.objs_action_allow(
+            action_id=action_id,
+            username=username,
+            objs=objs,
+        )
 
 
 @dataclass
@@ -135,6 +169,16 @@ class IAMPermissionExtraInfo(IAMMiXin):
 
     auth_infos: List[AuthInfo]
     callback_url: str
+
+    @classmethod
+    def from_raw_params(cls, username: str, action_id: str, obj=None) -> "IAMPermissionExtraInfo":
+        helper = IAMHelper()
+        action = IAMAction(action_id)
+
+        return cls(
+            auth_infos=[cls.AuthInfo.from_action(action, obj)],
+            callback_url=helper.generate_callback_url(username=username, actions=[action], obj=obj),
+        )
 
     @classmethod
     def from_request(cls, request, obj=None) -> "IAMPermissionExtraInfo":
