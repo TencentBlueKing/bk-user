@@ -27,12 +27,6 @@ class LogRequestSerializer(serializers.Serializer):
     page_size = serializers.IntegerField(required=False, default=10, help_text=_("请求每页大小"))
 
 
-class GeneralLogListReqeustSerializer(LogRequestSerializer):
-    """General log list request"""
-
-    keyword = serializers.CharField(required=False, help_text=_("搜索关键字"))
-
-
 class LoginLogListReqeustSerializer(LogRequestSerializer):
     """Login log list request"""
 
@@ -71,11 +65,6 @@ class OperationLogListSerializer(serializers.Serializer):
             "operation": instance["operation"],
             "client_ip": extra_value.get("client_ip", PLACE_HOLDER),
         }
-
-
-class OperationLogRespSLZ(serializers.Serializer):
-    count = serializers.IntegerField()
-    results = OperationLogListSerializer(many=True)
 
 
 class LoginLogListSerializer(serializers.Serializer):

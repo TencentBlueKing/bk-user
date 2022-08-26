@@ -20,7 +20,6 @@ from bkuser_global.drf_crown import ResponseParams, inject_serializer
 from bkuser_global.utils import get_timezone_offset
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.audit import serializers
-from bkuser_shell.audit.constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.export import ProfileExcelExporter
@@ -56,32 +55,9 @@ class AuditLogViewSet(BkUserApiViewSet):
 
 
 class GeneralLogViewSet(AuditLogViewSet):
-    @inject_serializer(
-        query_in=serializers.GeneralLogListReqeustSerializer,
-        out=serializers.OperationLogRespSLZ,
-        tags=["audit"],
-    )
     def list(self, request, validated_data: dict):
-        categories = self._get_categories_map(request)
-        api_instance = bkuser_sdk.AuditApi(self.get_api_client_by_request(request))
-
-        params = self._get_request_params(validated_data)
-        keyword = validated_data.get("keyword")
-        if keyword:
-            for m in [OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP]:
-                keyword = m.get(keyword, keyword)
-
-            params.update(
-                {
-                    "wildcard_search": keyword.encode("unicode-escape"),
-                    "wildcard_search_fields": ["extra_value", "operator"],
-                }
-            )
-
-        return ResponseParams(
-            api_instance.v2_audit_general_log_list(**params),
-            {"context": {"categories": categories}},
-        )
+        # FIXME: to new url
+        self.do_proxy(request)
 
 
 class LoginLogViewSet(AuditLogViewSet):

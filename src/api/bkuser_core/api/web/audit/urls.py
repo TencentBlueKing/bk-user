@@ -8,19 +8,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+# from django.urls import path
+
+# from .views import GeneralLogViewSet, LoginLogViewSet
+
+# urlpatterns = [
+#     path("api/v2/audit/login_log/", LoginLogViewSet.as_view({"get": "list"}), name="login_log"),
+#     path("api/v2/audit/login_log/export/", LoginLogViewSet.as_view({"get": "export"}), name="export_login_log"),
+# ]
+
+
 from django.urls.conf import path
 
 from . import views
 
 urlpatterns = [
     path(
-        "",
-        views.SyncTaskListApi.as_view(),
-        name="sync_task.list",
-    ),
-    path(
-        "<task_id>/progresses/",
-        views.SyncTaskProgressListApi.as_view(),
-        name="sync_task.progresses",
+        "logs/types/general/",
+        views.GeneralLogListApi.as_view(),
+        name="audit.general_log.list",
     ),
 ]

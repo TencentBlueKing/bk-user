@@ -19,7 +19,7 @@ from bkuser_core.bkiam.permissions import Permission
 from bkuser_core.categories.models import SyncTask
 
 
-class SyncTaskViewSet(ListAPIView):
+class SyncTaskListApi(ListAPIView):
     # permission_classes = []
     pagination_class = CustomPagination
     serializer_class = SyncTaskSerializer
@@ -37,7 +37,7 @@ class SyncTaskViewSet(ListAPIView):
         return queryset
 
 
-class SyncTaskProgressesViewSet(ListAPIView):
+class SyncTaskProgressListApi(ListAPIView):
     # permission_classes = []
     pagination_class = CustomPagination
     serializer_class = SyncTaskProcessSerializer

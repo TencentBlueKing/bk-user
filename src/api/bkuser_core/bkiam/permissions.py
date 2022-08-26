@@ -56,6 +56,11 @@ class Permission:
             objs=objs,
         )
 
+    def allow_action_without_resource(self, username: str, action_id):
+        if not self.iam_enabled:
+            return True
+        return self.helper.action_allow(action_id=action_id, username=username)
+
 
 @dataclass
 class IAMPermission(IAMMiXin, BasePermission):
