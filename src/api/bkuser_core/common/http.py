@@ -80,10 +80,6 @@ def should_use_raw_response(req: "HttpRequest", resp: "Response") -> bool:
     """是否应该使用原生格式返回"""
     # 非 API 请求不包装返回值
 
-    # The new saas api, should use the raw response
-    if req.path.startswith("/api/v1/web/"):
-        return True
-
     if not req.path.startswith("/api/"):
         return True
 

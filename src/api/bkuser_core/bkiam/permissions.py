@@ -20,6 +20,7 @@ from .converters import PathIgnoreDjangoQSConverter
 from .exceptions import IAMPermissionDenied
 from .helper import IAMHelper
 from .utils import need_iam
+from bkuser_core.api.web.utils import get_username
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -65,9 +66,7 @@ class Permission:
 def new_action_without_resource_permission(action_id: IAMAction):
     class ActionWithoutResourcePermission(BasePermission):
         def has_permission(self, request, view):
-            # TODO: change to use self.request.header to get username
-            # username = "admin"
-            username = request.query_params.get('username') or "admin"
+            username = get_username(request)
             return Permission().allow_action_without_resource(username, action_id)
 
     return ActionWithoutResourcePermission

@@ -24,9 +24,9 @@ urlpatterns = [
     ),
     path(
         "api/v2/sync_task/<task_id>/logs",
-        views.SyncTaskViewSet.as_view(
+        views.SyncTaskLogViewSet.as_view(
             {
-                "get": "show_logs",
+                "get": "list",
             }
         ),
         name="sync_task.show_logs",

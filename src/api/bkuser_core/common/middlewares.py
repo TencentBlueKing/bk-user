@@ -37,6 +37,7 @@ class MethodOverrideMiddleware(MiddlewareMixin):
                 request_get_params._mutable = original_mutable
 
 
+# FIXME: remove this, all use ee_format for now!
 class DynamicResponseFormatMiddleware:
     """根据动态修改返回值格式
     - 原生格式

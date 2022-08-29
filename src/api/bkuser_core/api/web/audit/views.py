@@ -34,7 +34,7 @@ class GeneralLogListApi(ListAPIView):
 
     def get_serializer_context(self):
         # set into context, for slz to_representation
-        return self.get_serializer_context().update({'category_name_map': get_category_display_name_map()})
+        return {'category_name_map': get_category_display_name_map()}
 
     def get_queryset(self):
         queryset = GeneralLog.objects.all()
@@ -71,7 +71,7 @@ class LoginLogListApi(ListAPIView):
 
 
 # class LoginLogViewSet(AuditLogViewSet):
-#     @inject_serializer(query_in=serializers.LoginLogListReqeustSerializer, tags=["audit"])
+#     @inject_serializer(query_in=serializers.LogRequestSerializer, tags=["audit"])
 #     def export(self, request, validated_data: dict):
 #         """导出登录日志"""
 #         api_instance = bkuser_sdk.AuditApi(self.get_api_client_by_request(request))

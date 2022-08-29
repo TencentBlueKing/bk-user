@@ -13,6 +13,7 @@ from django.conf import settings
 from rest_framework.generics import ListAPIView
 
 from .serializers import SyncTaskProcessSerializer, SyncTaskSerializer
+from bkuser_core.api.web.utils import get_username
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.bkiam.constants import IAMAction
 from bkuser_core.bkiam.permissions import Permission
@@ -25,9 +26,7 @@ class SyncTaskListApi(ListAPIView):
     serializer_class = SyncTaskSerializer
 
     def get_queryset(self):
-        # TODO: change to use self.request.header to get username
-        # username = "admin"
-        username = self.request.query_params.get('username') or "admin"
+        username = get_username(self.request)
 
         queryset = SyncTask.objects.all().order_by("-create_time")
         if settings.ENABLE_IAM:
@@ -46,9 +45,7 @@ class SyncTaskProgressListApi(ListAPIView):
         task_id = self.kwargs.get("task_id")
         task = SyncTask.objects.get(id=task_id)
 
-        # TODO: change to use self.request.header to get username
-        # username = "admin"
-        username = self.request.query_params.get('username') or "admin"
+        username = get_username(self.request)
         Permission().allow_category_action(username, IAMAction.VIEW_CATEGORY, task.category)
 
         return task.progresses.order_by("-create_time")

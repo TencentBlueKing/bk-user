@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.urls import path
 
-from .views import GeneralLogViewSet, LoginLogViewSet
+from .views import GeneralLogViewSet, LoginLogExportViewSet, LoginLogViewSet
 
 urlpatterns = [
     ##############
@@ -18,5 +18,5 @@ urlpatterns = [
     ##############
     path("api/v2/audit/operation_logs/", GeneralLogViewSet.as_view({"get": "list"}), name="operation_logs"),
     path("api/v2/audit/login_log/", LoginLogViewSet.as_view({"get": "list"}), name="login_log"),
-    path("api/v2/audit/login_log/export/", LoginLogViewSet.as_view({"get": "export"}), name="export_login_log"),
+    path("api/v2/audit/login_log/export/", LoginLogExportViewSet.as_view({"get": "export"}), name="export_login_log"),
 ]

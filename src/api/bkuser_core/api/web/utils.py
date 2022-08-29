@@ -8,15 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.proxy import BkUserApiProxy
+from django.conf import settings
+
+from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.common.error_codes import error_codes
 
 
-class SyncTaskViewSet(BkUserApiProxy):
-    def list(self, request, *args, **kwargs):
-        return self.do_proxy(request)
+# FIXME: get it from request.user.username after merge saas into api
+def get_username(request) -> str:
+    username = request.META.get(settings.OPERATOR_HEADER, None)
+    if not username:
+        raise error_codes.USERNAME_MISSING
+    return username
 
 
-class SyncTaskLogViewSet(BkUserApiProxy):
-    def list(self, request, *args, **kwargs):
-        # FIXME: do the url mapping here? or in do_proxy?
-        return self.do_proxy(request)
+# FIXME: add memory cache here
+def get_category_display_name_map():
+    return dict(ProfileCategory.objects.values_list('id', 'display_name').all())
