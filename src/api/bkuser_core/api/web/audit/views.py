@@ -13,36 +13,30 @@ from django.db.models import Q
 from rest_framework.generics import ListAPIView
 
 from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
-from .serializers import GeneralLogListRequestSerializer, GeneralLogSerializer
+from .serializers import (
+    GeneralLogListRequestSerializer,
+    GeneralLogSerializer,
+    LoginLogListRequestSerializer,
+    LoginLogSerializer,
+)
 from bkuser_core.api.web.utils import get_category_display_name_map
-from bkuser_core.api.web.viewset import CustomPagination
-from bkuser_core.audit.models import GeneralLog
-from bkuser_core.bkiam.constants import IAMAction
-from bkuser_core.bkiam.permissions import Permission
-
-# from bkuser_core.categories.models import SyncTask
-# from bkuser_global.utils import get_timezone_offset
-
-
-# from rest_framework.response import Response
+from bkuser_core.api.web.viewset import CustomPagination, StartTimeEndTimeFilterBackend
+from bkuser_core.audit.models import GeneralLog, LogIn
+from bkuser_core.bkiam.permissions import ViewAuditPermission
 
 
 class GeneralLogListApi(ListAPIView):
-    # permission_classes = []
+    permission_classes = [ViewAuditPermission]
     pagination_class = CustomPagination
     serializer_class = GeneralLogSerializer
 
+    filter_backends = [StartTimeEndTimeFilterBackend]
+
     def get_serializer_context(self):
         # set into context, for slz to_representation
-        context = {'category_name_map': get_category_display_name_map()}
-        return context
+        return self.get_serializer_context().update({'category_name_map': get_category_display_name_map()})
 
     def get_queryset(self):
-        # TODO: change to use self.request.header to get username
-        # username = "admin"
-        username = self.request.query_params.get('username') or "admin"
-        Permission().allow_action_without_resource(username, IAMAction.VIEW_AUDIT)
-
         queryset = GeneralLog.objects.all()
         slz = GeneralLogListRequestSerializer(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
@@ -58,81 +52,25 @@ class GeneralLogListApi(ListAPIView):
             keyword = keyword.encode("unicode-escape")
             queryset = queryset.filter(Q(operator__icontains=keyword) | Q(extra_value__icontains=keyword))
 
-        # FIXME: gen start_time/end_time queryset Q
-        start_time = data.get("start_time")
-        if start_time:
-            # start_time = make_aware(start_time + get_timezone_offset())
-            queryset = queryset.filter(create_time__gte=start_time)
+        return queryset
 
-        end_time = data.get("end_time")
-        if end_time:
-            # end_time = make_aware(end_time + get_timezone_offset())
-            queryset = queryset.filter(create_time__lte=end_time)
+
+class LoginLogListApi(ListAPIView):
+    permission_classes = [ViewAuditPermission]
+    pagination_class = CustomPagination
+    serializer_class = LoginLogSerializer
+
+    filter_backends = [StartTimeEndTimeFilterBackend]
+
+    def get_queryset(self):
+        queryset = LogIn.objects.all()
+        slz = LoginLogListRequestSerializer(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
 
         return queryset
 
 
-# import logging
-# import math
-
-# from django.conf import settings
-# from django.utils.timezone import make_aware
-# from openpyxl import load_workbook
-
-# import bkuser_sdk
-# from bkuser_global.drf_crown import ResponseParams, inject_serializer
-# from bkuser_global.utils import get_timezone_offset
-# from bkuser_shell.apis.viewset import BkUserApiViewSet
-# from bkuser_shell.audit import serializers
-# from bkuser_shell.audit.constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
-# from bkuser_shell.bkiam.constants import IAMAction
-# from bkuser_shell.common.error_codes import error_codes
-# from bkuser_shell.common.export import ProfileExcelExporter
-
-# logger = logging.getLogger(__name__)
-
-
-# class AuditLogViewSet(BkUserApiViewSet):
-#     ACTION_ID = IAMAction.VIEW_AUDIT.value
-
-#     def _get_categories_map(self, request) -> dict:
-#         """Get categories id map"""
-#         api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request, no_auth=True))
-#         categories = self.get_paging_results(api_instance.v2_categories_list)
-
-#         return {x["id"]: x for x in categories}
-
-#     @staticmethod
-#     def _get_request_params(validated_data: dict) -> dict:
-#         """Get params from validated_data"""
-
-#         # 前端传的是零时区时间，需要统一成当前时区的时间
-#         target_start_time = make_aware(validated_data["start_time"] + get_timezone_offset())
-#         target_end_time = make_aware(validated_data["end_time"] + get_timezone_offset())
-
-#         params = {
-#             "since": target_start_time,
-#             "until": target_end_time,
-#             "page": validated_data["page"],
-#             "page_size": validated_data["page_size"],
-#         }
-#         return params
-
-
 # class LoginLogViewSet(AuditLogViewSet):
-#     @inject_serializer(
-#         query_in=serializers.LoginLogListReqeustSerializer,
-#         out=serializers.LoginLogRespSLZ,
-#         tags=["audit"],
-#     )
-#     def list(self, request, validated_data: dict):
-#         categories = self._get_categories_map(request)
-#         api_instance = bkuser_sdk.AuditApi(self.get_api_client_by_request(request))
-
-#         params = self._get_request_params(validated_data)
-#         return ResponseParams(api_instance.v2_audit_login_log_list(**params),
-# {"context": {"categories": categories}})
-
 #     @inject_serializer(query_in=serializers.LoginLogListReqeustSerializer, tags=["audit"])
 #     def export(self, request, validated_data: dict):
 #         """导出登录日志"""

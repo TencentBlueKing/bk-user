@@ -56,10 +56,25 @@ class Permission:
             objs=objs,
         )
 
-    def allow_action_without_resource(self, username: str, action_id):
+    def allow_action_without_resource(self, username: str, action_id: IAMAction):
         if not self.iam_enabled:
             return True
         return self.helper.action_allow(action_id=action_id, username=username)
+
+
+def new_action_without_resource_permission(action_id: IAMAction):
+    class ActionWithoutResourcePermission(BasePermission):
+        def has_permission(self, request, view):
+            # TODO: change to use self.request.header to get username
+            # username = "admin"
+            username = request.query_params.get('username') or "admin"
+            return Permission().allow_action_without_resource(username, action_id)
+
+    return ActionWithoutResourcePermission
+
+
+# 不关联资源实例的权限控制 Permission Classes
+ViewAuditPermission = new_action_without_resource_permission(IAMAction.VIEW_AUDIT)
 
 
 @dataclass

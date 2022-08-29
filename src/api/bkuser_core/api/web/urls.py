@@ -13,7 +13,7 @@ from django.conf.urls import include, url
 # prefix: /api/v1/web
 urlpatterns = [
     url(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
-    # url(r"^audits/", include("bkuser_core.api.web.audit.urls")),
+    url(r"^audits/", include("bkuser_core.api.web.audit.urls")),
     # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
     # url(r"^departments/", include("bkuser_core.api.web.department.urls")),
     # url(r"^profiles/", include("bkuser_core.api.web.profile.urls")),

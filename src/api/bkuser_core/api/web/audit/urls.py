@@ -28,4 +28,9 @@ urlpatterns = [
         views.GeneralLogListApi.as_view(),
         name="audit.general_log.list",
     ),
+    path(
+        "logs/types/login/",
+        views.LoginLogListApi.as_view(),
+        name="audit.login_log.list",
+    ),
 ]

@@ -12,66 +12,28 @@ import logging
 import math
 
 from django.conf import settings
-from django.utils.timezone import make_aware
 from openpyxl import load_workbook
 
 import bkuser_sdk
-from bkuser_global.drf_crown import ResponseParams, inject_serializer
-from bkuser_global.utils import get_timezone_offset
+from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.audit import serializers
-from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.export import ProfileExcelExporter
 
 logger = logging.getLogger(__name__)
 
 
-class AuditLogViewSet(BkUserApiViewSet):
-    ACTION_ID = IAMAction.VIEW_AUDIT.value
-
-    def _get_categories_map(self, request) -> dict:
-        """Get categories id map"""
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request, no_auth=True))
-        categories = self.get_paging_results(api_instance.v2_categories_list)
-
-        return {x["id"]: x for x in categories}
-
-    @staticmethod
-    def _get_request_params(validated_data: dict) -> dict:
-        """Get params from validated_data"""
-
-        # 前端传的是零时区时间，需要统一成当前时区的时间
-        target_start_time = make_aware(validated_data["start_time"] + get_timezone_offset())
-        target_end_time = make_aware(validated_data["end_time"] + get_timezone_offset())
-
-        params = {
-            "since": target_start_time,
-            "until": target_end_time,
-            "page": validated_data["page"],
-            "page_size": validated_data["page_size"],
-        }
-        return params
-
-
-class GeneralLogViewSet(AuditLogViewSet):
+class GeneralLogViewSet(BkUserApiViewSet):
     def list(self, request, validated_data: dict):
         # FIXME: to new url
         self.do_proxy(request)
 
 
-class LoginLogViewSet(AuditLogViewSet):
-    @inject_serializer(
-        query_in=serializers.LoginLogListReqeustSerializer,
-        out=serializers.LoginLogRespSLZ,
-        tags=["audit"],
-    )
+class LoginLogViewSet(BkUserApiViewSet):
     def list(self, request, validated_data: dict):
-        categories = self._get_categories_map(request)
-        api_instance = bkuser_sdk.AuditApi(self.get_api_client_by_request(request))
-
-        params = self._get_request_params(validated_data)
-        return ResponseParams(api_instance.v2_audit_login_log_list(**params), {"context": {"categories": categories}})
+        # FIXME: to new url
+        self.do_proxy(request)
 
     @inject_serializer(query_in=serializers.LoginLogListReqeustSerializer, tags=["audit"])
     def export(self, request, validated_data: dict):
