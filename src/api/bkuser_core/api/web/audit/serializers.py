@@ -75,29 +75,34 @@ class LoginLogListRequestSerializer(LogRequestSerializer):
 
 
 class LoginLogSerializer(serializers.Serializer):
-    datetime = serializers.CharField(source="create_time", help_text=_("登录时间"), required=False)
+    # Tip: 使用source, 则不会走drf的 DATETIME_FORMAT 格式化
+    # datetime = serializers.CharField(source="create_time", help_text=_("登录时间"), required=False)
     is_success = serializers.BooleanField(help_text=_("是否登录成功"), required=False)
     username = serializers.CharField(help_text=_("登录用户"), source="profile.username")
 
+    datetime = serializers.SerializerMethodField(help_text=_("登录时间"), required=False)
     category_display_name = serializers.SerializerMethodField(help_text=_("所属目录"), required=False)
     client_ip = serializers.SerializerMethodField(help_text=_("客户端 IP"), required=False)
     reason = serializers.SerializerMethodField(help_text=_("失败原因"), required=False)
 
-    def get_reason(self, obj: dict) -> Optional[str]:
-        """get reason display name"""
-        if obj["is_success"]:
-            return None
-        return LOGIN_FAILED_REASON_MAP.get(obj["reason"], _("未知失败原因"))
+    def get_datetime(self, obj):
+        return obj.create_time
 
-    def get_category_display_name(self, obj: dict) -> str:
+    def get_reason(self, obj) -> Optional[str]:
+        """get reason display name"""
+        if obj.is_success:
+            return None
+        return LOGIN_FAILED_REASON_MAP.get(obj.reason, _("未知失败原因"))
+
+    def get_category_display_name(self, obj) -> str:
         """get category display name from log extra value"""
-        category_id = int(obj["category_id"])
+        category_id = obj.profile.id
         category_name_map = self.context.get('category_name_map')
         category_display_name = category_name_map.get(category_id, PLACE_HOLDER)
         return category_display_name
 
-    def get_client_ip(self, obj: dict) -> str:
+    def get_client_ip(self, obj) -> str:
         """get client ip from extra_value"""
-        if obj["extra_value"]:
-            return obj["extra_value"].get("client_ip", PLACE_HOLDER)
+        if obj.extra_value:
+            return obj.extra_value.get("client_ip", PLACE_HOLDER)
         return PLACE_HOLDER

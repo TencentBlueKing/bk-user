@@ -34,7 +34,7 @@ class GeneralLogViewSet(BkUserApiProxy):
 class LoginLogViewSet(BkUserApiProxy):
     def list(self, request, *args, **kwargs):
         # FIXME: to new url
-        return self.do_proxy(request)
+        return self.do_proxy(request, rewrite_path="/api/v1/web/audits/logs/types/login/")
 
 
 class LoginLogExportViewSet(BkUserApiViewSet):

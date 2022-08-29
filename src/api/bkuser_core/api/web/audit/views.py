@@ -62,6 +62,10 @@ class LoginLogListApi(ListAPIView):
 
     filter_backends = [StartTimeEndTimeFilterBackend]
 
+    def get_serializer_context(self):
+        # set into context, for slz to_representation
+        return {'category_name_map': get_category_display_name_map()}
+
     def get_queryset(self):
         queryset = LogIn.objects.all()
         slz = LoginLogListRequestSerializer(data=self.request.query_params)

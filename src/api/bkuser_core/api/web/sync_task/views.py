@@ -38,8 +38,9 @@ class SyncTaskListApi(ListAPIView):
 
 class SyncTaskProgressListApi(ListAPIView):
     # permission_classes = []
-    pagination_class = CustomPagination
     serializer_class = SyncTaskProcessSerializer
+
+    lookup_field = "task_id"
 
     def get_queryset(self):
         task_id = self.kwargs.get("task_id")

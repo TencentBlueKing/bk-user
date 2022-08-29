@@ -66,7 +66,8 @@ class BkUserApiProxy(GenericViewSet):
                 content=str(e),
             )
 
-    def get_api_path(self, request) -> str:
+    @staticmethod
+    def get_api_path(request) -> str:
         """获取真实 API Path"""
         if settings.SITE_URL == "/":
             return request.path
