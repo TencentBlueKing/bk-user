@@ -74,13 +74,13 @@ def new_action_without_resource_permission(action_id: IAMAction):
 
 # 不关联资源实例的权限控制 Permission Classes
 ViewAuditPermission = new_action_without_resource_permission(IAMAction.VIEW_AUDIT)
+ManageFieldPermission = new_action_without_resource_permission(IAMAction.MANAGE_FIELD)
 
 # @classmethod
 # def get_global_actions(cls) -> tuple:
 #     """不需要和任何资源绑定，只需要判断某人是否有某个操作的权限"""
 #     return (
 #         cls.VIEW_FIELD,
-#         cls.MANAGE_FIELD,
 #         cls.CREATE_MAD_CATEGORY,
 #         cls.CREATE_LDAP_CATEGORY,
 #         cls.CREATE_LOCAL_CATEGORY,

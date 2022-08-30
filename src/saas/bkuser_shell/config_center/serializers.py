@@ -97,10 +97,6 @@ class FieldsUpdateSerializer(serializers.Serializer):
         return data
 
 
-class ListFieldsSerializer(serializers.Serializer):
-    only_visible = serializers.BooleanField(default=False)
-
-
 class UpdateFieldsVisibleSerializer(serializers.Serializer):
     updating_ids = serializers.ListField(child=serializers.IntegerField())
 

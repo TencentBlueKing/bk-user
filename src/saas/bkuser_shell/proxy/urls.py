@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 
 from django.urls.conf import path
 
-from .views import GeneralLogViewSet, LoginLogViewSet, SyncTaskLogViewSet, SyncTaskViewSet
+from .views import FieldsManageableViewSet, GeneralLogViewSet, LoginLogViewSet, SyncTaskLogViewSet, SyncTaskViewSet
 
 urlpatterns = [
     # sync task
@@ -24,4 +24,6 @@ urlpatterns = [
     # audit logs
     path("api/v2/audit/operation_logs/", GeneralLogViewSet.as_view({"get": "list"}), name="operation_logs"),
     path("api/v2/audit/login_log/", LoginLogViewSet.as_view({"get": "list"}), name="login_log"),
+    # fields
+    path("api/v2/fields/manageable/", FieldsManageableViewSet.as_view({"get": "get"}), name="fields.manageable"),
 ]

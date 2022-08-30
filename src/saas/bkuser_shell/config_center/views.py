@@ -20,11 +20,12 @@ from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
 from bkuser_shell.config_center.serializers import ProfileFieldsSerializer, SettingMetaSerializer, SettingSerializer
+from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
 
 
-class FieldsViewSet(BkUserApiViewSet):
+class FieldsViewSet(BkUserApiViewSet, BkUserApiProxy):
     serializer_class = ProfileFieldsSerializer
 
     permission_classes = [
@@ -33,23 +34,9 @@ class FieldsViewSet(BkUserApiViewSet):
 
     ACTION_ID = IAMAction.MANAGE_FIELD.value
 
-    def manageable(self, request):
-        """检测是否能够管理用户字段"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        _ = api_instance.v2_dynamic_fields_list()
-        return Response(data={})
-
-    @inject_serializer(
-        query_in=serializers.ListFieldsSerializer(),
-        out=serializers.ProfileFieldsSerializer(many=True),
-        tags=["config_center"],
-    )
-    def list(self, request, validated_data):
+    def list(self, request, *args, **kwargs):
         """获取所有用户字段"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        # TODO: 为什么no_auth=True?
-        # api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
-        return self.get_paging_results(api_instance.v2_dynamic_fields_list)
+        return self.do_proxy(request, rewrite_path="/api/v1/web/fields/")
 
     @inject_serializer(
         body_in=serializers.FieldsSaveSerializer(), out=serializers.ProfileFieldsSerializer(), tags=["config_center"]

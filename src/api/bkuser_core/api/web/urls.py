@@ -14,9 +14,9 @@ from django.conf.urls import include, url
 urlpatterns = [
     url(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
     url(r"^audits/", include("bkuser_core.api.web.audit.urls")),
+    url(r"^fields/", include("bkuser_core.api.web.field.urls")),
     # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
     # url(r"^departments/", include("bkuser_core.api.web.department.urls")),
     # url(r"^profiles/", include("bkuser_core.api.web.profile.urls")),
     # url(r"^categories/", include("bkuser_core.api.web.category.urls")),
-    # url(r"^fields/", include("bkuser_core.api.web.field.urls")),
 ]

@@ -35,3 +35,8 @@ class GeneralLogViewSet(BkUserApiProxy):
 class LoginLogViewSet(BkUserApiProxy):
     def list(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/audits/logs/types/login/")
+
+
+class FieldsManageableViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/fields/manageable/")

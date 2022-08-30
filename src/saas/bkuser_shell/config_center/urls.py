@@ -35,15 +35,6 @@ urlpatterns = [
         name="config_center.fields",
     ),
     url(
-        r"^api/v2/fields/manageable/$",
-        FieldsViewSet.as_view(
-            {
-                "get": "manageable",
-            }
-        ),
-        name="config_center.fields.manageable",
-    ),
-    url(
         r"^api/v2/fields/visible/$",
         FieldsViewSet.as_view(
             {
