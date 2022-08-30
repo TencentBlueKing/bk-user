@@ -104,31 +104,6 @@ urlpatterns = [
         ),
         name="profiles.modify_password",
     ),
-    ##################
-    # dynamic fields #
-    ##################
-    url(
-        r"^api/v2/dynamic_fields/$",
-        views.DynamicFieldsViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
-        name="dynamic_fields",
-    ),
-    url(
-        r"^api/v2/dynamic_fields/%s/$" % PVAR_PROFILE_ID,
-        views.DynamicFieldsViewSet.as_view(
-            {
-                "get": "retrieve",
-                "put": "update",
-                "patch": "partial_update",
-                "delete": "destroy",
-            }
-        ),
-        name="dynamic_fields.action",
-    ),
     ########
     # Edge #
     ########

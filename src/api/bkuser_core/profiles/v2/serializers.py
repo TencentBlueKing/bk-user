@@ -10,9 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Union
 
-from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
-from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
@@ -217,14 +215,6 @@ class DynamicFieldsSerializer(CustomFieldsModelSerializer):
         exclude = ("update_time", "create_time")
 
 
-class ProfileFieldsSerializer(DynamicFieldsSerializer):
-    value = serializers.CharField()
-
-    class Meta:
-        model = DynamicFieldInfo
-        exclude = ("update_time", "create_time")
-
-
 #########
 # Token #
 #########
@@ -271,17 +261,6 @@ class UpdateProfileSerializer(CustomFieldsModelSerializer):
     class Meta:
         model = Profile
         exclude = ["category_id", "username", "domain"]
-
-
-##########
-# Fields #
-##########
-class CreateFieldsSerializer(DynamicFieldsSerializer):
-    def validate(self, attrs):
-        if DynamicFieldInfo.objects.filter(name=attrs["name"]).exists():
-            raise ValidationError(_("英文标识为 {} 的自定义字段已存在").format(attrs["name"]))
-
-        return super().validate(attrs)
 
 
 #########

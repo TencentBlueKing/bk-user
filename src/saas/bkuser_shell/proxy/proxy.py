@@ -31,6 +31,7 @@ def make_proxy_headers(username: str) -> dict:
         "X-Bk-App-Secret": settings.APP_TOKEN,
         "Accept-Language": get_language(),
         "X-Request-ID": local.request_id,
+        "Content-Type": "application/json",
     }
 
 
@@ -56,7 +57,6 @@ class BkUserApiProxy(GenericViewSet):
         return ""
 
     def do_proxy(self, request, rewrite_path=None):
-        print("do_proxy")
         try:
             return self.do_call(request, rewrite_path)
         except Exception as e:
@@ -75,7 +75,6 @@ class BkUserApiProxy(GenericViewSet):
         return "/" + request.path.replace(settings.SITE_URL, "")
 
     def do_call(self, request, rewrite_path=None):
-        print("do_call")
         method = request.method
         path = self.get_api_path(request)
         if rewrite_path:
@@ -83,14 +82,14 @@ class BkUserApiProxy(GenericViewSet):
 
         url = settings.BK_USER_CORE_API_HOST + path
         params = request.GET.copy()
-        data = request.body
+        data = request.data
 
         headers = make_proxy_headers(request.user.username)
         ip = self.get_client_ip(request)
         if ip:
             headers.update({settings.CLIENT_IP_FROM_SAAS_HEADER: ip})
 
-        resp = requests.request(method, url, params=params, data=data, headers=headers)
+        resp = requests.request(method, url, params=params, json=data, headers=headers)
 
         return HttpResponse(
             resp.content,

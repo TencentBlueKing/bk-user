@@ -10,8 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from rest_framework.permissions import IsAuthenticated
-
 import bkuser_sdk
 from . import serializers
 from bkuser_global.drf_crown import inject_serializer
@@ -19,83 +17,9 @@ from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
-from bkuser_shell.config_center.serializers import ProfileFieldsSerializer, SettingMetaSerializer, SettingSerializer
-from bkuser_shell.proxy.proxy import BkUserApiProxy
+from bkuser_shell.config_center.serializers import SettingMetaSerializer, SettingSerializer
 
 logger = logging.getLogger(__name__)
-
-
-class FieldsViewSet(BkUserApiViewSet, BkUserApiProxy):
-    serializer_class = ProfileFieldsSerializer
-
-    permission_classes = [
-        IsAuthenticated,
-    ]
-
-    ACTION_ID = IAMAction.MANAGE_FIELD.value
-
-    def list(self, request, *args, **kwargs):
-        """获取所有用户字段"""
-        return self.do_proxy(request, rewrite_path="/api/v1/web/fields/")
-
-    @inject_serializer(
-        body_in=serializers.FieldsSaveSerializer(), out=serializers.ProfileFieldsSerializer(), tags=["config_center"]
-    )
-    def create(self, request, validated_data):
-        """创建用户字段"""
-        # 创建时默认设置为 0
-        validated_data["order"] = 0
-        field = bkuser_sdk.DynamicFields(**validated_data)
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        return api_instance.v2_dynamic_fields_create(body=field)
-
-    @inject_serializer(
-        body_in=serializers.FieldsUpdateSerializer, out=serializers.ProfileFieldsSerializer(), tags=["config_center"]
-    )
-    def update(self, request, field_id, validated_data):
-        """更新用户字段"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        return api_instance.v2_dynamic_fields_partial_update(
-            body=validated_data, lookup_value=field_id, lookup_field="id"
-        )
-
-    @inject_serializer(tags=["config_center"])
-    def delete(self, request, field_id):
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        api_instance.v2_dynamic_fields_delete(lookup_value=field_id, lookup_field="id")
-        return Response()
-
-    @inject_serializer(
-        body_in=serializers.FieldsUpdateSerializer, out=serializers.ProfileFieldsSerializer(), tags=["config_center"]
-    )
-    def update_order(self, request, field_id, new_order, validated_data):
-        """更新用户字段排序"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        body = {"order": new_order}
-        return api_instance.v2_dynamic_fields_partial_update(lookup_value=field_id, lookup_field="id", body=body)
-
-    @inject_serializer(body_in=serializers.UpdateFieldsVisibleSerializer, tags=["config_center"])
-    def update_visible(self, request, validated_data):
-        """更新用户字段可见性"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
-
-        # 获取所有的 ids
-        fields_full_ids = [x["id"] for x in fields]
-
-        # 需要支持批量更新 API
-        body = {"visible": True}
-        updating_ids = validated_data["updating_ids"]
-
-        for updating_id in updating_ids:
-            api_instance.v2_dynamic_fields_partial_update(lookup_value=updating_id, lookup_field="id", body=body)
-
-        # 未选中的字段则不展示
-        body = {"visible": False}
-        for updating_id in list(set(fields_full_ids) - set(updating_ids)):
-            api_instance.v2_dynamic_fields_partial_update(lookup_value=updating_id, lookup_field="id", body=body)
-
-        return Response(data={})
 
 
 class SettingsViewSet(BkUserApiViewSet):

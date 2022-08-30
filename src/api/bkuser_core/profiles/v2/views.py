@@ -17,7 +17,7 @@ from operator import or_
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import FieldError, MultipleObjectsReturned, ObjectDoesNotExist
-from django.db.models import F, Q
+from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -46,14 +46,13 @@ from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
-from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
+from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import (
     align_country_iso_code,
@@ -895,97 +894,6 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         return Response(
             data=local_serializers.LoginBatchResponseSerializer(profiles, many=True, context={"request": request}).data
         )
-
-
-class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = DynamicFieldInfo.objects.filter(enabled=True)
-    serializer_class = local_serializers.DynamicFieldsSerializer
-    lookup_field: str = "name"
-    cache_name = "profiles"
-
-    iam_filter_actions = ("list",)
-
-    def get_serializer(self, *args, **kwargs):
-        if self.action in ["create"]:
-            return local_serializers.CreateFieldsSerializer(*args, **kwargs)
-        else:
-            return self.serializer_class(*args, **kwargs)
-
-    @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(
-        request_body=local_serializers.CreateFieldsSerializer,
-        responses={"200": local_serializers.DynamicFieldsSerializer()},
-    )
-    def create(self, request, *args, **kwargs):
-        """创建自定义字段"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-
-        # 默认加到最后
-        order = validated_data.get("order", 0)
-        if not order:
-            validated_data["order"] = DynamicFieldInfo.objects.get_max_order() + 1
-
-        instance = serializer.save()
-        headers = self.get_success_headers(serializer.data)
-        post_field_create.send(
-            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
-        )
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    @audit_general_log(operate_type=OperationType.UPDATE.value)
-    @method_decorator(clear_cache_if_succeed)
-    def _update(self, request, partial):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-
-        # 内置字段 只能更新 order & visible
-        if not instance.configurable and set(validated_data.keys()) - {
-            "order",
-            "visible",
-        }:
-            raise error_codes.FIELD_IS_NOT_EDITABLE.f("该字段无法更新")
-
-        if "name" in validated_data:
-            raise error_codes.FIELD_IS_NOT_EDITABLE.f("字段 key 值无法更新")
-
-        updating_order = validated_data.get("order", False)
-        if updating_order:
-            """整理 order"""
-            DynamicFieldInfo.objects.update_order(instance, updating_order)
-
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-
-        instance.save()
-        return Response(self.serializer_class(instance).data)
-
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
-    def update(self, request, *args, **kwargs):
-        """更新自定义字段"""
-        return self._update(request, partial=False)
-
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
-    def partial_update(self, request, *args, **kwargs):
-        """部分更新自定义字段"""
-        return self._update(request, partial=True)
-
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
-    def destroy(self, request, *args, **kwargs):
-        """移除自定义字段"""
-        instance = self.get_object()
-        # 内置字段不允许删除
-        if instance.builtin:
-            raise error_codes.BUILTIN_FIELD_CANNOT_BE_DELETED
-        # 保证 order 密集
-        DynamicFieldInfo.objects.filter(order__gt=instance.order).update(order=F("order") - 1)
-
-        post_dynamic_field_delete.send(sender=self, instance=instance, operator=request.operator)
-        return super().destroy(request, *args, **kwargs)
 
 
 class LeaderEdgeViewSet(AdvancedModelViewSet, AdvancedListAPIView):

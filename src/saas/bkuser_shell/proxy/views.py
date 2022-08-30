@@ -40,3 +40,40 @@ class LoginLogViewSet(BkUserApiProxy):
 class FieldsManageableViewSet(BkUserApiProxy):
     def get(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/fields/manageable/")
+
+
+class FieldsVisibleViewSet(BkUserApiProxy):
+    def patch(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/fields/visible/")
+
+
+class FieldsOrderViewSet(BkUserApiProxy):
+    def patch(self, request, *args, **kwargs):
+        # FIXME: use a func to do re-map
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/fields/13/order/5/
+        # out: /api/v1/web/fields/13/order/5/
+        api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+
+class FieldsViewSet(BkUserApiProxy):
+    def list(self, request, *args, **kwargs):
+        """获取所有用户字段"""
+        return self.do_proxy(request, rewrite_path="/api/v1/web/fields/")
+
+    def create(self, request, *args, **kwargs):
+        """创建用户字段"""
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+    def update(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+    def delete(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
+        return self.do_proxy(request, rewrite_path=api_path)

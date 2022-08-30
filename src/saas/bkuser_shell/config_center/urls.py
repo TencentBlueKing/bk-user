@@ -10,9 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 from django.conf.urls import url
 
-from .views import FieldsViewSet, SettingsNamespaceViewSet, SettingsViewSet
+from .views import SettingsNamespaceViewSet, SettingsViewSet
 
-PVAR_FIELD_ID = r"(?P<field_id>[0-9]+)"
 PVAR_SETTING_ID = r"(?P<setting_id>[0-9]+)"
 NEW_PVAR_ORDER = r"(?P<new_order>[0-9]+)"
 PVAR_CATEGORY_ID = r"(?P<category_id>[0-9]+)"
@@ -21,48 +20,6 @@ PVAR_NAMESPACE_NAME = r"(?P<namespace_name>[a-z0-9-]+)"
 
 
 urlpatterns = [
-    ##########
-    # fields #
-    ##########
-    url(
-        r"^api/v2/fields/$",
-        FieldsViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
-        name="config_center.fields",
-    ),
-    url(
-        r"^api/v2/fields/visible/$",
-        FieldsViewSet.as_view(
-            {
-                "patch": "update_visible",
-            }
-        ),
-        name="config_center.fields.visible",
-    ),
-    url(
-        r"^api/v2/fields/%s/$" % PVAR_FIELD_ID,
-        FieldsViewSet.as_view(
-            {
-                "put": "update",
-                "delete": "delete",
-                "patch": "update",
-            }
-        ),
-        name="config_center.fields.actions",
-    ),
-    url(
-        r"^api/v2/fields/%s/order/%s/$" % (PVAR_FIELD_ID, NEW_PVAR_ORDER),
-        FieldsViewSet.as_view(
-            {
-                "patch": "update_order",
-            }
-        ),
-        name="config_center.fields.actions",
-    ),
     ############
     # settings #
     ############
