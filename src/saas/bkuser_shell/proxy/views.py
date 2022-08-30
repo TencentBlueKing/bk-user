@@ -8,7 +8,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.http import HttpResponse
+
 from .proxy import BkUserApiProxy
+
+
+class HealthzViewSet(BkUserApiProxy):
+    permission_classes: list = []
+
+    def list(self, request):
+        return self.do_proxy(request)
+
+    def pong(self, request):
+        return HttpResponse(content="pong")
 
 
 class SyncTaskViewSet(BkUserApiProxy):

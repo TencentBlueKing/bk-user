@@ -26,7 +26,6 @@ urlpatterns = [
     url(r"^", include("bkuser_shell.config_center.urls")),
     url(r"^", include("bkuser_shell.audit.urls")),
     url(r"^", include("bkuser_shell.version_log.urls")),
-    url(r"^", include("bkuser_shell.monitoring.urls")),
     url("", include("bkuser_shell.proxy.urls")),
     url(
         r"^favicon.ico$",

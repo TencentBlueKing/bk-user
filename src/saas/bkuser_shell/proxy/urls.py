@@ -17,12 +17,16 @@ from .views import (
     FieldsViewSet,
     FieldsVisibleViewSet,
     GeneralLogViewSet,
+    HealthzViewSet,
     LoginLogViewSet,
     SyncTaskLogViewSet,
     SyncTaskViewSet,
 )
 
 urlpatterns = [
+    # healthz
+    path("healthz/", HealthzViewSet.as_view({"get": "list"}), name="healthz"),
+    path("ping/", HealthzViewSet.as_view({"get": "pong"}), name="pong"),
     # sync task
     path(
         "api/v2/sync_task/",
