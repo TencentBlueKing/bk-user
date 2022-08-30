@@ -23,11 +23,11 @@ urlpatterns = [
     url(r"^", include("bkuser_shell.config_center.urls")),
     url(r"^", include("bkuser_shell.password.urls")),
     url(r"^", include("bkuser_shell.categories.urls")),
-    url("", include("bkuser_shell.sync_tasks.urls")),
     url(r"^", include("bkuser_shell.config_center.urls")),
     url(r"^", include("bkuser_shell.audit.urls")),
     url(r"^", include("bkuser_shell.version_log.urls")),
     url(r"^", include("bkuser_shell.monitoring.urls")),
+    url("", include("bkuser_shell.proxy.urls")),
     url(
         r"^favicon.ico$",
         RedirectView.as_view(url=staticfiles_storage.url("img/favicon.ico")),

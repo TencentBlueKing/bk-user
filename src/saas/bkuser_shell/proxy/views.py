@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser_shell.apis.proxy import BkUserApiProxy
+from .proxy import BkUserApiProxy
 
 
 class SyncTaskViewSet(BkUserApiProxy):
@@ -25,3 +25,13 @@ class SyncTaskLogViewSet(BkUserApiProxy):
         api_path = api_path.replace("/api/v2/sync_task/", "/api/v1/web/sync_tasks/")
         api_path = api_path.replace("/logs", "/progresses/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class GeneralLogViewSet(BkUserApiProxy):
+    def list(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/audits/logs/types/general/")
+
+
+class LoginLogViewSet(BkUserApiProxy):
+    def list(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/audits/logs/types/login/")

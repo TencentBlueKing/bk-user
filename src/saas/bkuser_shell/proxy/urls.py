@@ -8,27 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.urls.conf import path
 
-from . import views
+from .views import GeneralLogViewSet, LoginLogViewSet, SyncTaskLogViewSet, SyncTaskViewSet
 
 urlpatterns = [
+    # sync task
     path(
         "api/v2/sync_task/",
-        views.SyncTaskViewSet.as_view(
-            {
-                "get": "list",
-            }
-        ),
+        SyncTaskViewSet.as_view({"get": "list"}),
         name="sync_task.list",
     ),
-    path(
-        "api/v2/sync_task/<task_id>/logs",
-        views.SyncTaskLogViewSet.as_view(
-            {
-                "get": "list",
-            }
-        ),
-        name="sync_task.show_logs",
-    ),
+    path("api/v2/sync_task/<task_id>/logs", SyncTaskLogViewSet.as_view({"get": "list"}), name="sync_task.show_logs"),
+    # audit logs
+    path("api/v2/audit/operation_logs/", GeneralLogViewSet.as_view({"get": "list"}), name="operation_logs"),
+    path("api/v2/audit/login_log/", LoginLogViewSet.as_view({"get": "list"}), name="login_log"),
 ]

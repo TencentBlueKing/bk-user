@@ -16,7 +16,6 @@ from openpyxl import load_workbook
 
 import bkuser_sdk
 from bkuser_global.drf_crown import inject_serializer
-from bkuser_shell.apis.proxy import BkUserApiProxy
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.audit import serializers
 from bkuser_shell.common.error_codes import error_codes
@@ -25,23 +24,7 @@ from bkuser_shell.common.export import ProfileExcelExporter
 logger = logging.getLogger(__name__)
 
 
-class GeneralLogViewSet(BkUserApiProxy):
-    def list(self, request, *args, **kwargs):
-        # FIXME: to new url
-        return self.do_proxy(request, rewrite_path="/api/v1/web/audits/logs/types/general/")
-
-
-class LoginLogViewSet(BkUserApiProxy):
-    def list(self, request, *args, **kwargs):
-        # FIXME: to new url
-        return self.do_proxy(request, rewrite_path="/api/v1/web/audits/logs/types/login/")
-
-
 class LoginLogExportViewSet(BkUserApiViewSet):
-    def list(self, request, *args, **kwargs):
-        # FIXME: to new url
-        return self.do_proxy(request)
-
     @inject_serializer(query_in=serializers.LoginLogListReqeustSerializer, tags=["audit"])
     def export(self, request, validated_data: dict):
         """导出登录日志"""
