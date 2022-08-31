@@ -24,7 +24,6 @@ from bkuser_sdk.api.edges_api import EdgesApi
 from bkuser_sdk.api.healthz_api import HealthzApi
 from bkuser_sdk.api.pong_api import PongApi
 from bkuser_sdk.api.profiles_api import ProfilesApi
-from bkuser_sdk.api.setting_metas_api import SettingMetasApi
 from bkuser_sdk.api.settings_api import SettingsApi
 from bkuser_sdk.api.shortcuts_api import ShortcutsApi
 from bkuser_sdk.api.v1_api import V1Api
@@ -68,9 +67,6 @@ from bkuser_sdk.models.related_resource_slz import RelatedResourceSLZ
 from bkuser_sdk.models.reset_password_log import ResetPasswordLog
 from bkuser_sdk.models.setting import Setting
 from bkuser_sdk.models.setting_create import SettingCreate
-from bkuser_sdk.models.setting_meta import SettingMeta
 from bkuser_sdk.models.setting_update import SettingUpdate
 from bkuser_sdk.models.simple_department import SimpleDepartment
-from bkuser_sdk.models.sync_task import SyncTask
-from bkuser_sdk.models.sync_task_process import SyncTaskProcess
 from bkuser_sdk.models.update_profile import UpdateProfile
