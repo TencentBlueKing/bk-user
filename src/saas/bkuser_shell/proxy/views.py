@@ -118,3 +118,8 @@ class LoginInfoViewSet(BkUserApiProxy):
     def get(self, request, *args, **kwargs):
         username = request.user.username
         return self.do_proxy(request, rewrite_path=f"/api/v1/web/profiles/me/?username={username}")
+
+
+class CategoryMetasViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/categories/metas/")

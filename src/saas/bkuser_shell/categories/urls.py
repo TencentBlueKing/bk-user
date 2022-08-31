@@ -21,15 +21,6 @@ urlpatterns = [
     # categories #
     ##############
     url(
-        r"^api/v2/categories_metas/$",
-        views.CategoriesViewSet.as_view(
-            {
-                "get": "list_metas",
-            }
-        ),
-        name="categories.metas",
-    ),
-    url(
         r"^api/v2/categories/$",
         views.CategoriesViewSet.as_view(
             {

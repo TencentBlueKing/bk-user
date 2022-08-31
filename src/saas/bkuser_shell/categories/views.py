@@ -24,7 +24,6 @@ from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.categories.serializers import (
     CategoryExportSerializer,
-    CategoryMetaSLZ,
     CategorySyncSerializer,
     CategoryTestConnectionSerializer,
     CategoryTestFetchDataSerializer,
@@ -43,12 +42,6 @@ logger = logging.getLogger(__name__)
 class CategoriesViewSet(BkUserApiViewSet):
     serializer_class = DetailCategorySerializer
     ACTION_ID = IAMAction.MANAGE_CATEGORY.value
-
-    def list_metas(self, request):
-        """获取目录基本信息列表"""
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-        api_response = api_instance.v2_categories_list_metas()
-        return Response(data=CategoryMetaSLZ(api_response, many=True).data)
 
     def get(self, request, category_id):
         api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))

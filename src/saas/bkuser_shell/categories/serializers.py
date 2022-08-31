@@ -17,28 +17,11 @@ from rest_framework.serializers import (
     FileField,
     IntegerField,
     JSONField,
-    ListField,
     Serializer,
     SerializerMethodField,
 )
 
-from bkuser_shell.bkiam.serializers import AuthInfoSLZ
 from bkuser_shell.categories.constants import CategoryStatus
-
-
-class ExtraInfoSLZ(Serializer):
-    auth_infos = ListField(read_only=True, child=AuthInfoSLZ())
-    callback_url = CharField(read_only=True)
-
-
-class CategoryMetaSLZ(Serializer):
-    """用户目录基本信息"""
-
-    type = CharField(read_only=True)
-    description = CharField(read_only=True)
-    name = CharField(read_only=True)
-    authorized = BooleanField(read_only=True)
-    extra_info = ExtraInfoSLZ(read_only=True)
 
 
 class DetailCategorySerializer(Serializer):

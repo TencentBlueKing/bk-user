@@ -21,14 +21,12 @@ from bkuser_core.apis.v2.serializers import EmptySerializer
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet, AdvancedSearchFilter
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
-from bkuser_core.bkiam.permissions import IAMAction, IAMHelper, IAMPermissionExtraInfo, need_iam
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory, SyncTask
 from bkuser_core.categories.plugins.local.exceptions import DataFormatError
 from bkuser_core.categories.serializers import (
-    CategoryMetaSLZ,
     CategorySerializer,
     CategorySyncResponseSLZ,
     CategorySyncSerializer,
@@ -54,48 +52,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     ]
 
     iam_filter_actions = ("list",)
-
-    @swagger_auto_schema(
-        responses={"200": CategoryMetaSLZ(many=True)},
-        tags=["categories"],
-        operation_id="v2_categories_list_metas",
-    )
-    def list_metas(self, request):
-        """
-        列表展示所有目录类型基本信息
-        """
-        helper = IAMHelper()
-
-        def make_meta(type_: CategoryType):
-            return {
-                "type": type_,
-                "description": CategoryType.get_description(type_),
-                "name": CategoryType.get_choice_label(type_),
-            }
-
-        metas = []
-        for type_ in CategoryType.all():
-            # 这里目前只返回创建目录类型的权限操作，后期应该可扩展
-            try:
-                action_id = IAMAction.get_action_by_category_type(type_)
-            except KeyError:
-                continue
-
-            _meta = make_meta(type_)
-            # Q：为什么这里需要手动判断权限，而不是通用 permission_classes？
-            # A：因为这里的资源（目录类型）是没有对应实体，同时也没有在权限中心注册
-            if need_iam(request) and not helper.action_allow(request.operator, action_id):
-                _meta.update(
-                    {
-                        "authorized": False,
-                        "extra_info": IAMPermissionExtraInfo.from_actions(
-                            username=request.operator, action_ids=[action_id]
-                        ).to_dict(),
-                    }
-                )
-            metas.append(_meta)
-
-        return Response(CategoryMetaSLZ(metas, many=True).data)
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CreateCategorySerializer, responses={"200": CategorySerializer()})

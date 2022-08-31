@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 from django.urls.conf import path
 
 from .views import (
+    CategoryMetasViewSet,
     FieldsManageableViewSet,
     FieldsOrderViewSet,
     FieldsViewSet,
@@ -56,4 +57,6 @@ urlpatterns = [
     ),
     # profiles
     path("api/v2/me/", LoginInfoViewSet.as_view({"get": "get"}), name="profiles.login_info"),
+    # categories
+    path("api/v2/categories_metas/", CategoryMetasViewSet.as_view({"get": "get"}), name="categories.metas"),
 ]

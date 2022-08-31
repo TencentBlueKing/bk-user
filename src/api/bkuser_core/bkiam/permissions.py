@@ -60,7 +60,7 @@ class Permission:
     def allow_action_without_resource(self, username: str, action_id: IAMAction):
         if not self.iam_enabled:
             return True
-        return self.helper.action_allow(action_id=action_id, username=username)
+        return self.helper.action_allow(username=username, action_id=action_id)
 
 
 def new_action_without_resource_permission(action_id: IAMAction):

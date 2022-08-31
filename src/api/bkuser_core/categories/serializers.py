@@ -16,31 +16,14 @@ from rest_framework.serializers import (
     CharField,
     FileField,
     IntegerField,
-    ListField,
     Serializer,
     SerializerMethodField,
 )
 from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer
-from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.profiles.validators import validate_domain
-
-
-class ExtraInfoSLZ(Serializer):
-    auth_infos = ListField(read_only=True, child=AuthInfoSLZ())
-    callback_url = CharField(read_only=True)
-
-
-class CategoryMetaSLZ(Serializer):
-    """用户目录基本信息"""
-
-    type = CharField(read_only=True)
-    description = CharField(read_only=True)
-    name = CharField(read_only=True)
-    authorized = BooleanField(read_only=True, default=True)
-    extra_info = ExtraInfoSLZ(read_only=True, default={})
 
 
 class CategorySerializer(CustomFieldsModelSerializer):

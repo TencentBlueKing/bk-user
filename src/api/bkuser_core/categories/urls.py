@@ -18,15 +18,6 @@ PVAR_PROFILE_ID = r"(?P<%s>[a-z0-9-]+)" % LOOKUP_FIELD_NAME
 
 urlpatterns = [
     re_path(
-        r"^api/v2/categories_metas/$",
-        views.CategoryViewSet.as_view(
-            {
-                "get": "list_metas",
-            }
-        ),
-        name="categories.metas",
-    ),
-    re_path(
         r"^api/v2/categories/$",
         views.CategoryViewSet.as_view(
             {

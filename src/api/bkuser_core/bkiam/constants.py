@@ -97,6 +97,7 @@ class IAMAction(AutoLowerEnum):
 
     @classmethod
     def get_action_by_category_type(cls, category_type: str) -> "IAMAction":
+        # FIXME: move to other place?
         return {  # type: ignore
             CategoryType.LOCAL.value: cls.CREATE_LOCAL_CATEGORY,
             CategoryType.LDAP.value: cls.CREATE_LDAP_CATEGORY,

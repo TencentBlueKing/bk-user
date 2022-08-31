@@ -12,6 +12,7 @@ from django.conf.urls import include, url
 
 # prefix: /api/v1/web
 urlpatterns = [
+    url(r"^categories/", include("bkuser_core.api.web.category.urls")),
     url(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
     url(r"^audits/", include("bkuser_core.api.web.audit.urls")),
     url(r"^fields/", include("bkuser_core.api.web.field.urls")),
@@ -19,5 +20,4 @@ urlpatterns = [
     url(r"^site/", include("bkuser_core.api.web.site.urls")),
     # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
     # url(r"^departments/", include("bkuser_core.api.web.department.urls")),
-    # url(r"^categories/", include("bkuser_core.api.web.category.urls")),
 ]
