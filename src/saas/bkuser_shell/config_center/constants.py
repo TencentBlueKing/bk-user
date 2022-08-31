@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from bkuser_shell.common.constants import ChoicesEnum
 
 
+# FIXME: remove it
 class DynamicFieldTypeEnum(ChoicesEnum):
     STRING = "string"
     ONE_ENUM = "one_enum"

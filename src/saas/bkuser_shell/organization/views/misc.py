@@ -10,16 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from django.template.exceptions import TemplateDoesNotExist
-from django.template.loader import get_template
-from django.template.response import TemplateResponse
 from django.utils.translation import ugettext_lazy as _
 
 import bkuser_sdk
 from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
-from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.organization.constants import ProfileWildSearchFieldEnum
 from bkuser_shell.organization.serializers.departments import DepartmentSerializer
@@ -116,16 +112,3 @@ class SearchViewSet(BkUserApiViewSet):
             "items": DepartmentSerializer(hit_departments, many=True).data,
         }
         return Response(data=hit_type_map.values())
-
-
-class WebPageViewSet(BkUserApiViewSet):
-
-    serializer_class = None
-
-    permission_classes: list = []
-
-    def index(self, request):
-        try:
-            return TemplateResponse(request=request, template=get_template("index.html"))
-        except TemplateDoesNotExist:
-            raise error_codes.CANNOT_FIND_TEMPLATE

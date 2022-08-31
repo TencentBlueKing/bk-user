@@ -13,10 +13,6 @@ from enum import auto
 from bkuser_shell.common.constants import AutoLowerEnum
 
 
-class PrincipalTypeEnum(AutoLowerEnum):
-    USER = auto()
-
-
 class IAMAction(AutoLowerEnum):
 
     # 用户字段
@@ -50,10 +46,3 @@ class IAMAction(AutoLowerEnum):
             CategoryTypeEnum.LDAP.value: cls.CREATE_LDAP_CATEGORY,
             CategoryTypeEnum.MAD.value: cls.CREATE_MAD_CATEGORY,
         }[category_type]
-
-
-class ResourceTypeEnum(AutoLowerEnum):
-    FIELD = auto()
-    CATEGORY = auto()
-    DEPARTMENT = auto()
-    PROFILE = auto()

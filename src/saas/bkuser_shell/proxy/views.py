@@ -9,8 +9,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.http import HttpResponse
+from django.template.exceptions import TemplateDoesNotExist
+from django.template.loader import get_template
+from django.template.response import TemplateResponse
 
 from .proxy import BkUserApiProxy
+from bkuser_shell.common.error_codes import error_codes
 
 
 class HealthzViewSet(BkUserApiProxy):
@@ -29,6 +33,17 @@ class SiteFooterViewSet(BkUserApiProxy):
     def get(self, request):
         """获取动态的 header & footer 内容"""
         return self.do_proxy(request, rewrite_path="/api/v1/web/site/footer/")
+
+
+class WebPageViewSet(BkUserApiProxy):
+    serializer_class = None
+    permission_classes: list = []
+
+    def index(self, request):
+        try:
+            return TemplateResponse(request=request, template=get_template("index.html"))
+        except TemplateDoesNotExist:
+            raise error_codes.CANNOT_FIND_TEMPLATE
 
 
 class SyncTaskViewSet(BkUserApiProxy):

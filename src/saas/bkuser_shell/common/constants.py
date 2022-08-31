@@ -45,18 +45,3 @@ class AutoLowerEnum(ChoicesEnum):
 
     def _generate_next_value_(name, start, count, last_values):
         return name.lower()
-
-
-class AutoNameEnum(ChoicesEnum):
-    """懒人必备系列
-
-    能够自动将 Name 转换值
-    例如：
-
-    IN = auto()
-    OUT = auto()
-    则 枚举为 ['IN', 'OUT']
-    """
-
-    def _generate_next_value_(name, start, count, last_values):
-        return name

@@ -11,45 +11,18 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 import math
-from collections import OrderedDict
 from typing import Callable, Optional
 
 from django.conf import settings
 from django.utils.translation import get_language
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
 from bkuser_global.local import local
-from bkuser_global.utils import force_str_2_bool
 from bkuser_shell.common.core_client import get_api_client
 from bkuser_shell.common.response import Response
 
 logger = logging.getLogger(__name__)
-
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 50
-    page_size_query_param = "page_size"
-    max_page_size = 500
-
-    def paginate_queryset(self, queryset, request, view=None):
-        if force_str_2_bool(request.query_params.get("no_page", False)):
-            return None
-
-        return super(StandardResultsSetPagination, self).paginate_queryset(queryset, request, view)
-
-    def get_paginated_response(self, data):
-        return Response(
-            OrderedDict(
-                [
-                    ("count", self.page.paginator.count),
-                    ("next", self.get_next_link()),
-                    ("previous", self.get_previous_link()),
-                    ("results", data),
-                ]
-            )
-        )
 
 
 class BkUserApiViewSet(GenericViewSet):

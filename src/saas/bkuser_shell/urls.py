@@ -15,16 +15,18 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
 from django.views.i18n import JavaScriptCatalog
 
-from bkuser_shell.organization.views.misc import WebPageViewSet
+from bkuser_shell.proxy.views import WebPageViewSet
 
 urlpatterns = [
     url(r"^", include("bkuser_shell.account.urls")),
+    # TODO: refactor below
     url(r"^", include("bkuser_shell.organization.urls")),
     url(r"^", include("bkuser_shell.config_center.urls")),
     url(r"^", include("bkuser_shell.password.urls")),
     url(r"^", include("bkuser_shell.categories.urls")),
     url(r"^", include("bkuser_shell.config_center.urls")),
     url(r"^", include("bkuser_shell.audit.urls")),
+    # TODO: version should be change to a different impl
     url(r"^", include("bkuser_shell.version_log.urls")),
     url("", include("bkuser_shell.proxy.urls")),
     url(
