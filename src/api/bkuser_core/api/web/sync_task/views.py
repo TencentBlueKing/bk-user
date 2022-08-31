@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.conf import settings
-from rest_framework.generics import ListAPIView
+from rest_framework import generics
 
 from .serializers import SyncTaskProcessSerializer, SyncTaskSerializer
 from bkuser_core.api.web.utils import get_username
@@ -20,7 +20,7 @@ from bkuser_core.bkiam.permissions import Permission
 from bkuser_core.categories.models import SyncTask
 
 
-class SyncTaskListApi(ListAPIView):
+class SyncTaskListApi(generics.ListAPIView):
     # permission_classes = []
     pagination_class = CustomPagination
     serializer_class = SyncTaskSerializer
@@ -36,7 +36,7 @@ class SyncTaskListApi(ListAPIView):
         return queryset
 
 
-class SyncTaskProgressListApi(ListAPIView):
+class SyncTaskProgressListApi(generics.ListAPIView):
     # permission_classes = []
     serializer_class = SyncTaskProcessSerializer
 

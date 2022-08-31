@@ -10,8 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.db.models import F
-from rest_framework import mixins, status
-from rest_framework.generics import GenericAPIView, ListCreateAPIView, UpdateAPIView
+from rest_framework import generics, mixins, status
 from rest_framework.response import Response
 
 from .serializers import (
@@ -27,7 +26,7 @@ from bkuser_core.profiles.models import DynamicFieldInfo
 from bkuser_core.profiles.signals import post_field_create
 
 
-class FieldListCreateApi(ListCreateAPIView):
+class FieldListCreateApi(generics.ListCreateAPIView):
     # FIXME: view_field permission for list api
     permission_classes = [ManageFieldPermission]
     serializer_class = FieldSerializer
@@ -57,14 +56,14 @@ class FieldListCreateApi(ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class FieldManageableApi(GenericAPIView):
+class FieldManageableApi(generics.GenericAPIView):
     permission_classes = [ManageFieldPermission]
 
     def get(self, request):
         return Response({})
 
 
-class FieldVisiableUpdateApi(UpdateAPIView):
+class FieldVisiableUpdateApi(generics.UpdateAPIView):
     permission_classes = [ManageFieldPermission]
 
     def patch(self, request, *args, **kwargs):
@@ -82,7 +81,7 @@ class FieldVisiableUpdateApi(UpdateAPIView):
         return Response({})
 
 
-class FieldOrderUpdateApi(UpdateAPIView):
+class FieldOrderUpdateApi(generics.UpdateAPIView):
     permission_classes = [ManageFieldPermission]
 
     lookup_url_kwarg = "id"
@@ -99,7 +98,7 @@ class FieldOrderUpdateApi(UpdateAPIView):
         return Response(FieldSerializer(obj).data)
 
 
-class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, GenericAPIView):
+class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
     permission_classes = [ManageFieldPermission]
 
     lookup_url_kwarg = "id"

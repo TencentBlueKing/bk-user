@@ -9,43 +9,34 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from rest_framework.serializers import (
-    CharField,
-    ChoiceField,
-    DateTimeField,
-    IntegerField,
-    JSONField,
-    ListField,
-    ModelSerializer,
-    Serializer,
-)
+from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import DurationTotalSecondField
 from bkuser_core.categories.constants import SyncStep, SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.models import ProfileCategory
 
 
-class CategoryForSyncTaskSerializer(ModelSerializer):
+class CategoryForSyncTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileCategory
         fields = ("id", "display_name")
 
 
-class SyncTaskSerializer(Serializer):
-    id = CharField()
+class SyncTaskSerializer(serializers.Serializer):
+    id = serializers.CharField()
     category = CategoryForSyncTaskSerializer()
-    status = ChoiceField(choices=SyncTaskStatus.get_choices(), help_text="任务执行状态")
-    type = ChoiceField(choices=SyncTaskType.get_choices(), help_text="任务触发类型")
-    operator = CharField(help_text="操作人")
-    create_time = DateTimeField(help_text="开始时间")
+    status = serializers.ChoiceField(choices=SyncTaskStatus.get_choices(), help_text="任务执行状态")
+    type = serializers.ChoiceField(choices=SyncTaskType.get_choices(), help_text="任务触发类型")
+    operator = serializers.CharField(help_text="操作人")
+    create_time = serializers.DateTimeField(help_text="开始时间")
     required_time = DurationTotalSecondField(help_text="耗时")
-    retried_count = IntegerField(help_text="重试次数")
+    retried_count = serializers.IntegerField(help_text="重试次数")
 
 
-class SyncTaskProcessSerializer(Serializer):
-    step = ChoiceField(choices=SyncStep.get_choices(), help_text="同步步骤")
-    status = ChoiceField(choices=SyncTaskStatus.get_choices(), help_text="执行状态")
-    successful_count = IntegerField(help_text="同步成功数量")
-    failed_count = IntegerField(help_text="同步失败数量")
-    logs = CharField(help_text="纯文本日志")
-    failed_records = ListField(child=JSONField(), help_text="失败对象名称")
+class SyncTaskProcessSerializer(serializers.Serializer):
+    step = serializers.ChoiceField(choices=SyncStep.get_choices(), help_text="同步步骤")
+    status = serializers.ChoiceField(choices=SyncTaskStatus.get_choices(), help_text="执行状态")
+    successful_count = serializers.IntegerField(help_text="同步成功数量")
+    failed_count = serializers.IntegerField(help_text="同步失败数量")
+    logs = serializers.CharField(help_text="纯文本日志")
+    failed_records = serializers.ListField(child=serializers.JSONField(), help_text="失败对象名称")

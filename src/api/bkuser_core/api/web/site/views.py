@@ -10,11 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.conf import settings
-from rest_framework.generics import RetrieveAPIView
+from rest_framework import generics
 from rest_framework.response import Response
 
 
-class FooterRetrieveApi(RetrieveAPIView):
+class FooterRetrieveApi(generics.RetrieveAPIView):
     def get(self, request):
         """获取动态的 header & footer 内容"""
         return Response(data=settings.FOOTER_CONFIG)

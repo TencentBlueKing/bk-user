@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.db.models import Q
-from rest_framework.generics import ListAPIView
+from rest_framework import generics
 
 from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
 from .serializers import (
@@ -25,7 +25,7 @@ from bkuser_core.audit.models import GeneralLog, LogIn
 from bkuser_core.bkiam.permissions import ViewAuditPermission
 
 
-class GeneralLogListApi(ListAPIView):
+class GeneralLogListApi(generics.ListAPIView):
     permission_classes = [ViewAuditPermission]
     pagination_class = CustomPagination
     serializer_class = GeneralLogSerializer
@@ -55,7 +55,7 @@ class GeneralLogListApi(ListAPIView):
         return queryset
 
 
-class LoginLogListApi(ListAPIView):
+class LoginLogListApi(generics.ListAPIView):
     permission_classes = [ViewAuditPermission]
     pagination_class = CustomPagination
     serializer_class = LoginLogSerializer

@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 
-from rest_framework.generics import RetrieveAPIView
+from rest_framework import generics
 from rest_framework.response import Response
 
 from .serializers import LoginProfileRetrieveSerializer, LoginProfileSerializer
@@ -19,7 +19,7 @@ from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.utils import parse_username_domain
 
 
-class LoginProfileRetrieveApi(RetrieveAPIView):
+class LoginProfileRetrieveApi(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         slz = LoginProfileRetrieveSerializer(data=request.query_params)
         slz.is_valid(raise_exception=True)
