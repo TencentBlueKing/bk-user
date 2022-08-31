@@ -28,34 +28,8 @@ from bkuser_shell.organization.constants import (
     ACCOUNT_NAMESPACE,
 )
 from bkuser_shell.organization.serializers import profiles as serializers
-from bkuser_shell.organization.utils import get_default_logo_url
 
 logger = logging.getLogger(__name__)
-
-
-class LoginInfoViewSet(BkUserApiViewSet):
-
-    permission_classes = [
-        IsAuthenticated,
-    ]
-
-    @inject_serializer(out=serializers.LoginInfoSerializer, tags=["profiles"])
-    def me(self, request):
-        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
-        try:
-            profile = api_instance.v2_profiles_read(request.user.username)
-        except Exception:  # pylint: disable=broad-except
-            logger.exception(
-                "Exception when calling ProfilesApi->v2_profiles_read<%s> \n",
-                request.user.username,
-            )
-            # 兼容测试环境
-            profile = {
-                "username": request.user.username,
-                "logo": get_default_logo_url(request),
-            }
-
-        return profile
 
 
 class ProfilesViewSet(BkUserApiViewSet):

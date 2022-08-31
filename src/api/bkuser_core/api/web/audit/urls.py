@@ -8,15 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-# from django.urls import path
-
-# from .views import GeneralLogViewSet, LoginLogViewSet
-
-# urlpatterns = [
-#     path("api/v2/audit/login_log/", LoginLogViewSet.as_view({"get": "list"}), name="login_log"),
-#     path("api/v2/audit/login_log/export/", LoginLogViewSet.as_view({"get": "export"}), name="export_login_log"),
-# ]
-
 
 from django.urls.conf import path
 

@@ -60,16 +60,3 @@ FAKE_SEND_EMAIL = True
 # ==============================================================================
 # 进度条是否刷新缓冲区（历史打印是否保存）
 FLUSH_PROGRESS_BAR = True
-
-# ==============================================================================
-# profiling
-# ==============================================================================
-ENABLE_PROFILING = False
-
-if ENABLE_PROFILING:
-    INSTALLED_APPS += ["silk"]
-    SILKY_PYTHON_PROFILER = True
-    SILKY_PYTHON_PROFILER_BINARY = True
-
-    # silk middleware should be placed before any middleware using process_request
-    MIDDLEWARE.insert(0, "silk.middleware.SilkyMiddleware")

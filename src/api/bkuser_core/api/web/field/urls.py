@@ -8,16 +8,36 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import include, url
 
-# prefix: /api/v1/web
+
+from django.urls.conf import path
+
+from . import views
+
 urlpatterns = [
-    url(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
-    url(r"^audits/", include("bkuser_core.api.web.audit.urls")),
-    url(r"^fields/", include("bkuser_core.api.web.field.urls")),
-    url(r"^profiles/", include("bkuser_core.api.web.profile.urls")),
-    url(r"^site/", include("bkuser_core.api.web.site.urls")),
-    # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
-    # url(r"^departments/", include("bkuser_core.api.web.department.urls")),
-    # url(r"^categories/", include("bkuser_core.api.web.category.urls")),
+    path(
+        "",
+        views.FieldListCreateApi.as_view(),
+        name="field.list",
+    ),
+    path(
+        "manageable/",
+        views.FieldManageableApi.as_view(),
+        name="field.manageable",
+    ),
+    path(
+        "visible/",
+        views.FieldVisiableUpdateApi.as_view(),
+        name="fields.visible.update",
+    ),
+    path(
+        "<int:id>/",
+        views.FieldUpdateDestroyApi.as_view(),
+        name="field.ud",
+    ),
+    path(
+        "<int:id>/order/<int:order>/",
+        views.FieldOrderUpdateApi.as_view(),
+        name="fields.order.update",
+    ),
 ]

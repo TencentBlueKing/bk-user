@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     "bkuser_shell.categories",
     "bkuser_shell.apis",
     "bkuser_shell.version_log",
-    "bkuser_shell.monitoring",
+    "bkuser_shell.proxy",
 ]
 
 # ==============================================================================

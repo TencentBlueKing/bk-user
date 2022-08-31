@@ -15,7 +15,7 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
 from django.views.i18n import JavaScriptCatalog
 
-from bkuser_shell.organization.views.misc import HeaderFooterViewSet, WebPageViewSet
+from bkuser_shell.organization.views.misc import WebPageViewSet
 
 urlpatterns = [
     url(r"^", include("bkuser_shell.account.urls")),
@@ -36,20 +36,12 @@ urlpatterns = [
         JavaScriptCatalog.as_view(),
         name="javascript-catalog",
     ),
-    url(r"^api/footer/$", HeaderFooterViewSet.as_view({"get": "get"})),
+    url(r"^", include("django_prometheus.urls")),
 ]
 
 # 当且仅当前端独立部署时托管 STATIC_URL 路由
 if settings.IS_PAGES_INDEPENDENT_DEPLOYMENT:
     urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-urlpatterns += [
-    url(r"^", include("bkuser_shell.apis.urls")),
-    url(r"^", include("django_prometheus.urls")),
-]
-
-if "silk" in settings.INSTALLED_APPS:
-    urlpatterns += [url(r"^silk/", include("silk.urls", namespace="silk"))]
 
 # 其余path交由前端处理
 urlpatterns += [url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index")]

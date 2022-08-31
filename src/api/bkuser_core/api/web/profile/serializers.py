@@ -8,25 +8,30 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.conf import settings
+from rest_framework import serializers
 
-from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.common.error_codes import error_codes
-
-
-# FIXME: get it from request.user.username after merge saas into api
-def get_username(request) -> str:
-    username = request.META.get(settings.OPERATOR_HEADER, None)
-    if not username:
-        raise error_codes.USERNAME_MISSING
-    return username
+from bkuser_core.api.web.utils import get_default_category_id
 
 
-# FIXME: add memory cache here
-def get_category_display_name_map():
-    return dict(ProfileCategory.objects.values_list('id', 'display_name').all())
+class LoginProfileRetrieveSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
 
 
-# FIXME: add memory cache here
-def get_default_category_id():
-    return ProfileCategory.objects.get_default().id
+class LoginProfileSerializer(serializers.Serializer):
+    username = serializers.SerializerMethodField(required=False)
+    logo = serializers.SerializerMethodField(required=False)
+
+    def get_username(self, obj):
+        if get_default_category_id() == obj.category_id:
+            return obj.username
+
+        return f"{obj.username}@{obj.domain}"
+
+    def get_logo(self, data):
+        logo = data.logo
+        if not logo:
+            return settings.DEFAULT_LOGO_URL
+
+        return logo

@@ -13,9 +13,7 @@ from django.conf.urls import url
 from .views import SettingsNamespaceViewSet, SettingsViewSet
 
 PVAR_SETTING_ID = r"(?P<setting_id>[0-9]+)"
-NEW_PVAR_ORDER = r"(?P<new_order>[0-9]+)"
 PVAR_CATEGORY_ID = r"(?P<category_id>[0-9]+)"
-PVAR_MODULE_NAME = r"(?P<module_name>[a-z0-9-]+)"
 PVAR_NAMESPACE_NAME = r"(?P<namespace_name>[a-z0-9-]+)"
 
 

@@ -205,6 +205,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if not force_use_raw_username(request):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
             if "username" in fields:
+                # FIXME: bug here? query profiles from other category, not the default
                 default_domain = ProfileCategory.objects.get_default().domain
                 # 这里拼装的 username@domain, 没有走到serializer中的get_username
                 queryset = queryset.extra(

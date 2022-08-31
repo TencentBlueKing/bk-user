@@ -12,7 +12,7 @@ from django.conf.urls import url
 
 from .views.departments import DepartmentsApiViewSet, DepartmentViewSet
 from .views.misc import SearchViewSet
-from .views.profiles import LoginInfoViewSet, ProfilesApiViewSet, ProfilesViewSet
+from .views.profiles import ProfilesApiViewSet, ProfilesViewSet
 
 PVAR_DEPARTMENT_ID = r"(?P<department_id>[a-z0-9-]+)"
 PVAR_PROFILE_ID = r"(?P<profile_id>[a-z0-9-]+)"
@@ -49,11 +49,6 @@ urlpatterns = [
     ###################
     # Profile related #
     ###################
-    url(
-        r"^api/v2/me/$",
-        LoginInfoViewSet.as_view({"get": "me"}),
-        name="profiles.login_info",
-    ),
     url(
         r"^api/v2/profiles/$",
         ProfilesViewSet.as_view({"post": "create"}),

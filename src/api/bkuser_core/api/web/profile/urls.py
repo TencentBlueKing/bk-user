@@ -8,18 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
 
-from bkuser_global.tracing.otel import setup_by_settings
-from bkuser_global.tracing.sentry import init_sentry_sdk
+from django.urls.conf import path
 
+from . import views
 
-class MonitoringConfig(AppConfig):
-    name = "bkuser_shell.monitoring"
-
-    def ready(self):
-        setup_by_settings()
-        init_sentry_sdk(
-            "bk-user-saas",
-            django_integrated=True,
-        )
+urlpatterns = [
+    path(
+        "me/",
+        views.LoginProfileRetrieveApi.as_view(),
+        name="login.profile.get",
+    ),
+]

@@ -88,25 +88,6 @@ class ProfileResultSerializer(Serializer):
     data = ProfileSerializer(many=True, source="results")
 
 
-class LoginInfoSerializer(Serializer):
-    username = CharField()
-    logo = SerializerMethodField(required=False)
-
-    def get_logo(self, data):
-        if isinstance(data, dict):
-            logo = data.get("logo")
-        else:
-            logo = data.logo
-
-        if not self.context.get("request"):
-            return logo
-
-        if not logo:
-            return get_default_logo_url(self.context.get("request"))
-
-        return logo
-
-
 class ListProfilesSerializer(Serializer):
     keyword = CharField(required=False)
     page = IntegerField(required=False, default=1)

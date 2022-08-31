@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
@@ -130,12 +129,3 @@ class WebPageViewSet(BkUserApiViewSet):
             return TemplateResponse(request=request, template=get_template("index.html"))
         except TemplateDoesNotExist:
             raise error_codes.CANNOT_FIND_TEMPLATE
-
-
-class HeaderFooterViewSet(BkUserApiViewSet):
-
-    permission_classes: list = []
-
-    def get(self, request):
-        """获取动态的 header & footer 内容"""
-        return Response(data=settings.FOOTER_CONFIG)

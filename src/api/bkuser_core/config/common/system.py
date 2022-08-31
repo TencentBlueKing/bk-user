@@ -135,3 +135,30 @@ ENABLE_LDAP3_DEBUG = env.bool("ENABLE_LDAP3_DEBUG", default=False)
 # ==============================================================================
 TASK_MAX_RETRIES = env.int("TASK_MAX_RETRIES", default=3)
 RETRY_BACKOFF = env.int("RETRY_BACKOFF", default=30)
+
+
+# for SaaS
+DEFAULT_LOGO_URL = "img/logo_default.png"
+
+FOOTER_CONFIG = {
+    "footer": [
+        {
+            "text": "技术支持",
+            "text_en": "Support",
+            "link": "https://wpa1.qq.com/KziXGWJs?_type=wpa&qidian=true",
+            "is_blank": False,
+        },
+        {
+            "text": "社区论坛",
+            "text_en": "Forum",
+            "link": "https://bk.tencent.com/s-mart/community/",
+            "is_blank": True,
+        },
+        {
+            "text": "蓝鲸官网",
+            "text_en": "Official",
+            "link": "https://bk.tencent.com/",
+            "is_blank": True,
+        },
+    ]
+}

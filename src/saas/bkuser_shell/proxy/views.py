@@ -23,6 +23,14 @@ class HealthzViewSet(BkUserApiProxy):
         return HttpResponse(content="pong")
 
 
+class SiteFooterViewSet(BkUserApiProxy):
+    permission_classes: list = []
+
+    def get(self, request):
+        """获取动态的 header & footer 内容"""
+        return self.do_proxy(request, rewrite_path="/api/v1/web/site/footer/")
+
+
 class SyncTaskViewSet(BkUserApiProxy):
     def list(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/sync_tasks/")
@@ -89,3 +97,9 @@ class FieldsViewSet(BkUserApiProxy):
         api_path = BkUserApiProxy.get_api_path(request)
         api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class LoginInfoViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        username = request.user.username
+        return self.do_proxy(request, rewrite_path=f"/api/v1/web/profiles/me/?username={username}")

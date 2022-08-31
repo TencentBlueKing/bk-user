@@ -18,7 +18,9 @@ from .views import (
     FieldsVisibleViewSet,
     GeneralLogViewSet,
     HealthzViewSet,
+    LoginInfoViewSet,
     LoginLogViewSet,
+    SiteFooterViewSet,
     SyncTaskLogViewSet,
     SyncTaskViewSet,
 )
@@ -27,6 +29,7 @@ urlpatterns = [
     # healthz
     path("healthz/", HealthzViewSet.as_view({"get": "list"}), name="healthz"),
     path("ping/", HealthzViewSet.as_view({"get": "pong"}), name="pong"),
+    path("api/footer/", SiteFooterViewSet.as_view({"get": "get"})),
     # sync task
     path(
         "api/v2/sync_task/",
@@ -51,4 +54,6 @@ urlpatterns = [
         FieldsViewSet.as_view({"put": "update", "delete": "delete", "patch": "update"}),
         name="fields.list_create",
     ),
+    # profiles
+    path("api/v2/me/", LoginInfoViewSet.as_view({"get": "get"}), name="profiles.login_info"),
 ]
