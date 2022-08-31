@@ -123,3 +123,8 @@ class LoginInfoViewSet(BkUserApiProxy):
 class CategoryMetasViewSet(BkUserApiProxy):
     def get(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/categories/metas/")
+
+
+class SettingsMetasViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/settings/metas/")

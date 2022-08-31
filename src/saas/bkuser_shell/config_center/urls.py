@@ -49,13 +49,4 @@ urlpatterns = [
         SettingsNamespaceViewSet.as_view({"get": "list", "post": "create", "put": "update", "delete": "delete"}),
         name="config_center.settings.namespaces",
     ),
-    url(
-        r"^api/v2/settings/metas/$",
-        SettingsNamespaceViewSet.as_view(
-            {
-                "get": "list_defaults",
-            }
-        ),
-        name="config_center.settings.namespaces.metas",
-    ),
 ]

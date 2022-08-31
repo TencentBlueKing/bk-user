@@ -63,8 +63,3 @@ class SettingMetaSerializer(serializers.Serializer):
     namespace = serializers.CharField(required=False)
     region = serializers.CharField()
     enabled = serializers.BooleanField(required=False, default=True)
-
-
-class ListSettingMetasSerializer(serializers.Serializer):
-    category_type = serializers.CharField()
-    namespace = serializers.CharField(required=False)

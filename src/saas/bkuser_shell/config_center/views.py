@@ -15,7 +15,6 @@ from . import serializers
 from bkuser_global.drf_crown import inject_serializer
 from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
-from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
 from bkuser_shell.config_center.serializers import SettingMetaSerializer, SettingSerializer
 
@@ -94,32 +93,6 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
             settings = [x for x in settings if x["region"] == region]
 
         return settings
-
-    @inject_serializer(
-        query_in=serializers.ListSettingMetasSerializer(),
-        out=serializers.SettingMetaSerializer(many=True),
-        tags=["config_center"],
-    )
-    def list_defaults(self, request, validated_data):
-        """获取 namespace 下的所有示例配置"""
-        category_type = validated_data["category_type"]
-
-        # NOTE: 后台没有任何权限管控(这个是全局的, 不关联任何目录/资源), 这里暂时使用 MANAGE_FIELD 权限替代, FIXME: 切分独立权限, 替换这里
-        api_instance = bkuser_sdk.SettingMetasApi(
-            self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_FIELD.value)
-        )
-        setting_metas = self.get_paging_results(
-            api_instance.v2_setting_metas_list, lookup_field="category_type", exact_lookups=[category_type]
-        )
-
-        filter_keys = ["region", "namespace"]
-        for key in filter_keys:
-            if not validated_data.get(key, None):
-                continue
-
-            setting_metas = [x for x in setting_metas if x[key] == validated_data[key]]
-
-        return setting_metas
 
     @inject_serializer(
         body_in=serializers.UpdateNamespaceSettingSerializer(many=True),

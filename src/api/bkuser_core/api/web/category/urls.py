@@ -8,35 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import url
+
+from django.urls.conf import path
 
 from . import views
-from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
-
-PVAR_PROFILE_ID = r"(?P<%s>[a-z0-9-_]+)" % LOOKUP_FIELD_NAME
-
 
 urlpatterns = [
-    url(
-        r"^api/v2/settings/$",
-        views.SettingViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
-        name="settings",
-    ),
-    url(
-        r"^api/v2/settings/%s/$" % PVAR_PROFILE_ID,
-        views.SettingViewSet.as_view(
-            {
-                "get": "retrieve",
-                "put": "update",
-                "patch": "partial_update",
-                "delete": "destroy",
-            }
-        ),
-        name="settings.action",
+    path(
+        "metas/",
+        views.CategoryMetasListApi.as_view(),
+        name="category.metas",
     ),
 ]

@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from rest_framework import serializers
 
-from .models import Setting, SettingMeta
+from .models import Setting
 from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer
 
 
@@ -54,15 +54,3 @@ class SettingListSerializer(serializers.Serializer):
     region = serializers.CharField(required=False)
     category_id = serializers.IntegerField()
     domain = serializers.CharField(required=False)
-
-
-class SettingMetaSerializer(CustomFieldsModelSerializer):
-    """配置信息项"""
-
-    choices = serializers.JSONField()
-    example = serializers.JSONField()
-    default = serializers.JSONField()
-
-    class Meta:
-        model = SettingMeta
-        fields = "__all__"

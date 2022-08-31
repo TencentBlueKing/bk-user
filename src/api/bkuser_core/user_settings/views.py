@@ -16,7 +16,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 
-from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
+from bkuser_core.apis.v2.viewset import AdvancedModelViewSet
 from bkuser_core.bkiam.constants import IAMAction
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
@@ -175,13 +175,3 @@ class SettingViewSet(AdvancedModelViewSet):
         self.check_category_permission(request, instance.category)
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class SettingMetaViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    """配置信息"""
-
-    # FIXME: 没有任何权限管控
-
-    queryset = SettingMeta.objects.all()
-    serializer_class = serializers.SettingMetaSerializer
-    lookup_field = "id"

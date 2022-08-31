@@ -21,6 +21,7 @@ from .views import (
     HealthzViewSet,
     LoginInfoViewSet,
     LoginLogViewSet,
+    SettingsMetasViewSet,
     SiteFooterViewSet,
     SyncTaskLogViewSet,
     SyncTaskViewSet,
@@ -59,4 +60,6 @@ urlpatterns = [
     path("api/v2/me/", LoginInfoViewSet.as_view({"get": "get"}), name="profiles.login_info"),
     # categories
     path("api/v2/categories_metas/", CategoryMetasViewSet.as_view({"get": "get"}), name="categories.metas"),
+    # settings
+    path("api/v2/settings/metas/", SettingsMetasViewSet.as_view({"get": "get"}), name="settings.metas"),
 ]
