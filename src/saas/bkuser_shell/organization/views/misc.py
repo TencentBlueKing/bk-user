@@ -82,7 +82,7 @@ class SearchViewSet(BkUserApiViewSet):
         for profile in hit_profiles:
             profile = ProfileSerializer(profile, context={"fields": extra_fields, "request": request}).data
             for field in ProfileWildSearchFieldEnum.to_list():
-                if keyword not in profile.get(field, ""):
+                if not profile.get(field) or keyword not in profile.get(field, ""):
                     continue
 
                 if profile["category_id"] not in _cached_categories_map:
