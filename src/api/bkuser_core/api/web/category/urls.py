@@ -15,6 +15,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "<int:id>/settings/",
+        views.CategorySettingListApi.as_view(),
+        name="category.setting.list",
+    ),
+    path(
         "metas/",
         views.CategoryMetasListApi.as_view(),
         name="category.metas",

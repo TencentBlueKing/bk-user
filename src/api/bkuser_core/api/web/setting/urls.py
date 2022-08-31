@@ -17,6 +17,6 @@ urlpatterns = [
     path(
         "metas/",
         views.SettingMetasListApi.as_view(),
-        name="category.metas",
+        name="setting.metas",
     ),
 ]

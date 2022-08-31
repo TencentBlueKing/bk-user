@@ -12,10 +12,11 @@ specific language governing permissions and limitations under the License.
 from rest_framework import generics
 from rest_framework.response import Response
 
-from .serializers import CategoryMetaSerializer
-from bkuser_core.api.web.utils import get_username
-from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, Permission
+from .serializers import CategoryMetaSerializer, CategorySettingListSerializer, CategorySettingSerializer
+from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
+from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
 from bkuser_core.categories.constants import CategoryType
+from bkuser_core.user_settings.models import Setting
 
 
 class CategoryMetasListApi(generics.ListAPIView):
@@ -55,3 +56,20 @@ class CategoryMetasListApi(generics.ListAPIView):
             metas.append(_meta)
 
         return Response(CategoryMetaSerializer(metas, many=True).data)
+
+
+class CategorySettingListApi(generics.ListAPIView):
+    serializer_class = CategorySettingSerializer
+    permission_classes = [ManageCategoryPermission]
+
+    def get_queryset(self):
+        slz = CategorySettingListSerializer(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        category_id = self.kwargs["id"]
+        category = get_category(category_id)
+        namespace = data.get("namespace")
+        region = data.get("region")
+        metas = list_setting_metas(category.type, region, namespace)
+        return Setting.objects.filter(meta__in=metas, category_id=category_id)

@@ -17,31 +17,23 @@ from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.response import Response
 from bkuser_shell.config_center.serializers import SettingMetaSerializer, SettingSerializer
+from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
 
 
-class SettingsViewSet(BkUserApiViewSet):
+class SettingsViewSet(BkUserApiViewSet, BkUserApiProxy):
     serializer_class = SettingSerializer
 
     # 这里不能通用配置, 因为retrieve/destroy等操作后台检查不支持, 也不能使用force_action_id, 后台检查会查settings
     # ACTION_ID = IAMAction.MANAGE_CATEGORY.value
 
-    @inject_serializer(
-        query_in=serializers.ListSettingsSerializer(),
-        out=serializers.SettingSerializer(many=True),
-        tags=["config_center"],
-    )
-    def list(self, request, category_id, validated_data):
-        """获取所有配置"""
-        api_instance = bkuser_sdk.SettingsApi(self.get_api_client_by_request(request))
-        settings = api_instance.v2_settings_list(category_id=category_id, **validated_data)
-
-        region = validated_data.get("region", None)
-        if region:
-            settings = [x for x in settings if x["region"] == region]
-
-        return settings
+    def list(self, request, *args, **kwargs):
+        # in: api/v2/categories/%s/settings/
+        # out: api/v1/web/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        self.do_proxy(request, rewrite_path=api_path)
 
     @inject_serializer(
         body_in=serializers.CreateSettingsSerializer, out=serializers.SettingSerializer(), tags=["config_center"]
