@@ -30,7 +30,7 @@ class SettingsViewSet(BkUserApiViewSet, BkUserApiProxy):
 
     def list(self, request, *args, **kwargs):
         # in: api/v2/categories/%s/settings/
-        # out: api/v1/web/
+        # out: api/v1/web/categories/%s/settings/
         api_path = BkUserApiProxy.get_api_path(request)
         api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
         self.do_proxy(request, rewrite_path=api_path)

@@ -24,20 +24,12 @@ urlpatterns = [
         r"^api/v2/categories/$",
         views.CategoriesViewSet.as_view(
             {
+                # TODO: done
                 "get": "list",
                 "post": "create",
             }
         ),
         name="categories",
-    ),
-    url(
-        r"^api/v2/categories/default/$",
-        views.CategoriesViewSet.as_view(
-            {
-                "get": "get_default",
-            }
-        ),
-        name="categories.default",
     ),
     url(
         r"^api/v2/categories/%s/$" % PVAR_CATEGORIES_ID,
@@ -66,15 +58,6 @@ urlpatterns = [
             }
         ),
         name="categories.sync",
-    ),
-    url(
-        r"^api/v2/categories/%s/activate/$" % PVAR_CATEGORIES_ID,
-        views.CategoriesSyncViewSet.as_view(
-            {
-                "post": "activate",
-            }
-        ),
-        name="categories.activate",
     ),
     url(
         r"^api/v2/categories/%s/test_connection/$" % PVAR_CATEGORIES_ID,

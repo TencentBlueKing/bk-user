@@ -60,10 +60,6 @@ class UpdateCategorySerializer(Serializer):
     description = CharField(required=False)
 
 
-class ListCategorySerializer(Serializer):
-    only_enable = BooleanField(default=False)
-
-
 class CategorySyncSerializer(Serializer):
     file = FileField(required=False)
 

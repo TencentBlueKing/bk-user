@@ -29,17 +29,17 @@ from bkuser_shell.categories.serializers import (
     CategoryTestFetchDataSerializer,
     CreateCategorySerializer,
     DetailCategorySerializer,
-    ListCategorySerializer,
     UpdateCategorySerializer,
 )
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
+from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
 
 
-class CategoriesViewSet(BkUserApiViewSet):
+class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
     serializer_class = DetailCategorySerializer
     ACTION_ID = IAMAction.MANAGE_CATEGORY.value
 
@@ -49,34 +49,8 @@ class CategoriesViewSet(BkUserApiViewSet):
 
         return Response(data=DetailCategorySerializer(api_response).data)
 
-    @inject_serializer(out=DetailCategorySerializer, tags=["categories"])
-    def get_default(self, request):
-        api_instance = bkuser_sdk.CategoriesApi(
-            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_CATEGORY.value)
-        )
-        api_response = self.get_paging_results(
-            api_instance.v2_categories_list, lookup_field="default", exact_lookups=[True]
-        )
-
-        if not api_response:
-            raise error_codes.CANNOT_FIND_DEFAULT_CATEGORY
-
-        # 正常情况下 default 就只有一个
-        return api_response[0]
-
-    @inject_serializer(query_in=ListCategorySerializer, out=DetailCategorySerializer(many=True), tags=["categories"])
-    def list(self, request, validated_data):
-        lookup_params = {}
-        if validated_data["only_enable"]:
-            lookup_params = {
-                "lookup_field": "enabled",
-                "exact_lookups": [True],
-            }
-
-        api_instance = bkuser_sdk.CategoriesApi(
-            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_CATEGORY.value)
-        )
-        return self.get_paging_results(api_instance.v2_categories_list, **lookup_params)
+    def list(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/categories/")
 
     @inject_serializer(body_in=UpdateCategorySerializer, out=DetailCategorySerializer, tags=["categories"])
     def update(self, request, category_id, validated_data):

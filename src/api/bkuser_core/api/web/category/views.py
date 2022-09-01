@@ -9,13 +9,20 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from django.conf import settings
 from rest_framework import generics
 from rest_framework.response import Response
 
-from .serializers import CategoryMetaSerializer, CategorySettingListSerializer, CategorySettingSerializer
+from .serializers import (
+    CategoryDetailSerializer,
+    CategoryMetaSerializer,
+    CategorySettingListSerializer,
+    CategorySettingSerializer,
+)
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
 from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
 from bkuser_core.categories.constants import CategoryType
+from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.user_settings.models import Setting
 
 
@@ -73,3 +80,19 @@ class CategorySettingListApi(generics.ListAPIView):
         region = data.get("region")
         metas = list_setting_metas(category.type, region, namespace)
         return Setting.objects.filter(meta__in=metas, category_id=category_id)
+
+
+class CategoryListApi(generics.ListAPIView):
+    serializer_class = CategoryDetailSerializer
+
+    # TODO: 产品上应该返回全部列表, 展示这个人哪些有权限/哪些没权限
+    # 而不是, 只返回有权限的
+    def get_queryset(self):
+        username = get_username(self.request)
+
+        queryset = ProfileCategory.objects.filter(enabled=True)
+        if settings.ENABLE_IAM:
+            fs = Permission().make_filter_of_category(username, IAMAction.VIEW_CATEGORY)
+            queryset = queryset.filter(fs)
+
+        return queryset

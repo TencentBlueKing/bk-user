@@ -31,6 +31,7 @@ urlpatterns = [
         ),
         name="config_center.settings",
     ),
+    # TODO: not used?
     url(
         r"^api/v2/categories/%s/settings/%s/$" % (PVAR_CATEGORY_ID, PVAR_SETTING_ID),
         SettingsViewSet.as_view(

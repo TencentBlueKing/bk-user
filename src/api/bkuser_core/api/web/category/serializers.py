@@ -8,10 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import List
 
 from rest_framework import serializers
 
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
+from bkuser_core.categories.constants import CategoryStatus
+from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.user_settings.models import Setting
 
 
@@ -49,3 +52,23 @@ class CategorySettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Setting
         fields = ["key", "namespace", "region", "value", "enabled"]
+
+
+class CategoryDetailSerializer(serializers.ModelSerializer):
+    configured = serializers.SerializerMethodField()
+    unfilled_namespaces = serializers.SerializerMethodField(required=False)
+    activated = serializers.SerializerMethodField()
+
+    def get_configured(self, obj) -> bool:
+        return obj.configured
+
+    def get_unfilled_namespaces(self, obj) -> List[str]:
+        unfilled_nss = set(obj.get_unfilled_settings().values_list("namespace", flat=True))
+        return list(unfilled_nss)
+
+    def get_activated(self, obj) -> bool:
+        return obj.status == CategoryStatus.NORMAL.value
+
+    class Meta:
+        model = ProfileCategory
+        fields = "__all__"

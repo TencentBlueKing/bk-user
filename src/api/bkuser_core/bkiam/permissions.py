@@ -63,6 +63,9 @@ class Permission:
         return self.helper.action_allow(username=username, action_id=action_id)
 
 
+# TODO: use with_cache to speed up
+
+
 def new_action_without_resource_permission(action_id: IAMAction):
     class ActionWithoutResourcePermission(BasePermission):
         def has_permission(self, request, view):
