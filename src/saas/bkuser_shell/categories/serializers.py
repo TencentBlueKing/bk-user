@@ -54,10 +54,8 @@ class CreateCategorySerializer(Serializer):
     type = ChoiceField(default="local", choices=["mad", "ldap", "local"])
 
 
-class UpdateCategorySerializer(Serializer):
-    display_name = CharField(max_length=64, required=False)
-    activated = BooleanField(default=True, required=False)
-    description = CharField(required=False)
+class EmptySerializer(Serializer):
+    pass
 
 
 class CategorySyncSerializer(Serializer):

@@ -18,6 +18,7 @@ from .serializers import (
     CategoryMetaSerializer,
     CategorySettingListSerializer,
     CategorySettingSerializer,
+    CategoryUpdateSerializer,
 )
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
 from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
@@ -96,3 +97,16 @@ class CategoryListApi(generics.ListAPIView):
             queryset = queryset.filter(fs)
 
         return queryset
+
+
+class CategoryUpdateApi(generics.RetrieveUpdateAPIView):
+    queryset = ProfileCategory.objects.all()
+    lookup_url_kwarg = "id"
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = CategoryUpdateSerializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(CategoryDetailSerializer(instance).data)

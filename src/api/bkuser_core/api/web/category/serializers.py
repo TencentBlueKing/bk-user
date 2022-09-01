@@ -72,3 +72,31 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileCategory
         fields = "__all__"
+
+
+class CategoryUpdateSerializer(serializers.Serializer):
+    display_name = serializers.CharField(max_length=64, required=False)
+    activated = serializers.BooleanField(default=True, required=False)
+    description = serializers.CharField(required=False)
+
+    def update(self, instance, validated_data):
+        # NOTE: 这里做了activated的转换, 所以需要自定义update => 能否整合model serializer复用原先的方法, 只需要处理activated
+        has_changed = False
+        activated = validated_data.get("activated", None)
+        if activated is not None:
+            has_changed = True
+            instance.status = CategoryStatus.NORMAL.value if activated else CategoryStatus.INACTIVE.value
+
+        display_name = validated_data.get("display_name")
+        if display_name:
+            has_changed = True
+            instance.display_name = display_name
+
+        description = validated_data.get("description")
+        if description:
+            has_changed = True
+            instance.description = description
+
+        if has_changed:
+            instance.save()
+        return instance

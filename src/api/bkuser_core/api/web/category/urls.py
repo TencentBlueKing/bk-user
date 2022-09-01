@@ -20,6 +20,11 @@ urlpatterns = [
         name="category.list",
     ),
     path(
+        "<int:id>/",
+        views.CategoryUpdateApi.as_view(),
+        name="category.update",
+    ),
+    path(
         "<int:id>/settings/",
         views.CategorySettingListApi.as_view(),
         name="category.setting.list",
@@ -30,3 +35,6 @@ urlpatterns = [
         name="category.metas",
     ),
 ]
+
+# 目录修改order
+# /api/v2/categories/2/switch_order/1/

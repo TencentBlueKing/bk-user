@@ -29,7 +29,6 @@ from bkuser_shell.categories.serializers import (
     CategoryTestFetchDataSerializer,
     CreateCategorySerializer,
     DetailCategorySerializer,
-    UpdateCategorySerializer,
 )
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
@@ -52,21 +51,14 @@ class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
     def list(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/categories/")
 
-    @inject_serializer(body_in=UpdateCategorySerializer, out=DetailCategorySerializer, tags=["categories"])
-    def update(self, request, category_id, validated_data):
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-        category = api_instance.v2_categories_read(lookup_value=category_id)
+    def update(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/categories/5/
+        # out: /api/v1/web/categories/5/
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        return self.do_proxy(request, rewrite_path=api_path)
 
-        activated = validated_data.pop("activated")
-        category.status = CategoryStatus.NORMAL.value if activated else CategoryStatus.INACTIVE.value
-
-        # update category
-        for key, value in validated_data.items():
-            setattr(category, key, value)
-
-        return api_instance.v2_categories_partial_update(body=category, lookup_value=category_id)
-
-    @inject_serializer(body_in=UpdateCategorySerializer, tags=["categories"])
+    @inject_serializer(body_in=EmptySerializer, tags=["categories"])
     def switch_order(self, request, category_id, another_category_id):
         """更新组织顺序"""
         api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
