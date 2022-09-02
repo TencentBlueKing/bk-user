@@ -10,14 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from django.utils.translation import ugettext_lazy as _
 from rest_framework.permissions import IsAuthenticated
 
 import bkuser_sdk
 from bkuser_global.drf_crown import ResponseParams, inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
-from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
 from bkuser_shell.organization.serializers.departments import (
@@ -228,21 +226,12 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
 
         return Response(data={})
 
-    @inject_serializer(tags=["departments"])
-    def delete(self, request, department_id):
-        """移除组织"""
-        api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
-        department = api_instance.v2_departments_read(department_id)
-        # 当组织存在下级时无法删除
-        if department.children:
-            raise error_codes.CANNOT_DELETE_DEPARTMENT.f(_("当前部门存在下级组织无法删除"))
-
-        profiles = api_instance.v2_departments_profiles_read(department_id)
-        if profiles["results"]:
-            raise error_codes.CANNOT_DELETE_DEPARTMENT.f(_("当前部门下存在用户无法删除"))
-
-        api_instance.v2_departments_delete(department_id)
-        return Response(data={})
+    def delete(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/departments/1/
+        # out: /api/v1/web/departments/1/
+        api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
+        return self.do_proxy(request, rewrite_path=api_path)
 
     @inject_serializer(body_in=DepartmentAddProfilesSerializer, out=EmptySerializer, tags=["departments"])
     def add_profiles(self, request, department_id, validated_data):

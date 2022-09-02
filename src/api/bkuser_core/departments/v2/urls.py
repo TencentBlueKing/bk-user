@@ -21,7 +21,8 @@ urlpatterns = [
         views.DepartmentViewSet.as_view(
             {
                 "get": "list",
-                "post": "create",
+                # TODO: delete it? the web api refactored
+                # "post": "create",
             }
         ),
         name="departments",
@@ -32,7 +33,8 @@ urlpatterns = [
             {
                 "get": "retrieve",
                 "post": "update",
-                "delete": "destroy",
+                # TODO: delete it? the web api refactored
+                # "delete": "destroy",
                 "patch": "partial_update",
             }
         ),

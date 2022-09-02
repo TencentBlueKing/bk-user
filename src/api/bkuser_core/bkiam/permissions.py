@@ -20,7 +20,7 @@ from .converters import PathIgnoreDjangoQSConverter
 from .exceptions import IAMPermissionDenied
 from .helper import IAMHelper
 from .utils import need_iam
-from bkuser_core.api.web.utils import get_category, get_username
+from bkuser_core.api.web.utils import get_category, get_department, get_username
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -97,6 +97,17 @@ def new_category_permission(action_id: IAMAction):
     return CategoryIdInURLPermission
 
 
+def new_department_permission(action_id: IAMAction):
+    class DepartmentIdInURLPermission(BasePermission):
+        def has_permission(self, request, view):
+            department_id = view.kwargs["id"]
+            department = get_department(department_id)
+            username = get_username(request)
+            return Permission().allow_department_action(username, action_id, department)
+
+    return DepartmentIdInURLPermission
+
+
 # 不关联资源实例的权限控制 Permission Classes
 ViewAuditPermission = new_action_without_resource_permission(IAMAction.VIEW_AUDIT)
 ManageFieldPermission = new_action_without_resource_permission(IAMAction.MANAGE_FIELD)
@@ -104,6 +115,7 @@ ManageFieldPermission = new_action_without_resource_permission(IAMAction.MANAGE_
 # ViewFieldPermission = new_action_without_resource_permission(IAMAction.VIEW_FIELD)
 ManageCategoryPermission = new_category_permission(IAMAction.MANAGE_CATEGORY)
 ViewCategoryPermission = new_category_permission(IAMAction.VIEW_CATEGORY)
+ManageDepartmentPermission = new_department_permission(IAMAction.MANAGE_DEPARTMENT)
 
 
 # @classmethod

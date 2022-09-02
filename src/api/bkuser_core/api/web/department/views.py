@@ -9,12 +9,13 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import DepartmentCreatedReturnSerializer, DepartmentCreateSerializer
 from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_username
-from bkuser_core.bkiam.permissions import IAMAction, Permission
+from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentPermission, Permission
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
@@ -81,3 +82,23 @@ class DepartmentListCreateApi(generics.ListCreateAPIView):
             sender=self, instance=instance, operator=username, extra_values={"request": request}
         )
         return Response(DepartmentCreatedReturnSerializer(instance).data, status=status.HTTP_201_CREATED)
+
+
+class DepartmentUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
+    lookup_url_kwarg = "id"
+    queryset = Department.objects.all()
+
+    permission_classes = [ManageDepartmentPermission]
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # 当组织存在下级时无法删除
+        if instance.children.filter(enabled=True).exists():
+            # children.filter(enabled=True)
+            raise error_codes.CANNOT_DELETE_DEPARTMENT.f(_("当前部门存在下级组织无法删除"))
+
+        if instance.get_profiles().exists():
+            raise error_codes.CANNOT_DELETE_DEPARTMENT.f(_("当前部门下存在用户无法删除"))
+
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

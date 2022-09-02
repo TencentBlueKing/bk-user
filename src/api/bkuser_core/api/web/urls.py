@@ -23,5 +23,8 @@ urlpatterns = [
     # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
 ]
 
+# FIXME: 需要检查所有删除的地方, 是不是软删除?
+# 重要
+
 # 全局检索
 # /api/v2/search/detail/?keyword=aaaa&max_items=40&only_enabled=true

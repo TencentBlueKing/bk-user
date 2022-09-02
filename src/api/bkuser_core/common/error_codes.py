@@ -162,5 +162,6 @@ error_codes.add_codes(
         # 权限相关
         ErrorCode("ACTION_UNKNOWN", _("未知权限项")),
         ErrorCode("ACTION_ID_MISSING", _("权限项缺失")),
+        ErrorCode("CANNOT_DELETE_DEPARTMENT", _("不能删除部门")),
     ]
 )
