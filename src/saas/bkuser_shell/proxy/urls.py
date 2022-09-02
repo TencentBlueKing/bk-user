@@ -13,6 +13,7 @@ from django.urls.conf import path
 
 from .views import (
     CategoryMetasViewSet,
+    DepartmentSearchViewSet,
     FieldsManageableViewSet,
     FieldsOrderViewSet,
     FieldsViewSet,
@@ -62,4 +63,6 @@ urlpatterns = [
     path("api/v2/categories_metas/", CategoryMetasViewSet.as_view({"get": "get"}), name="categories.metas"),
     # settings
     path("api/v2/settings/metas/", SettingsMetasViewSet.as_view({"get": "get"}), name="settings.metas"),
+    # departments
+    path("api/v3/departments/", DepartmentSearchViewSet.as_view({"get": "get"}), name="departments.search"),
 ]

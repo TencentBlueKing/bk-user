@@ -24,6 +24,12 @@ urlpatterns = [
         views.DepartmentUpdateDeleteApi.as_view(),
         name="department.update_delete",
     ),
+    # NOTE: replace of /api/v3/departments/
+    path(
+        "search/",
+        views.DepartmentSearchApi.as_view(),
+        name="department.search",
+    ),
 ]
 
 # /api/v2/departments/1/profiles/?page_size=6&page=1&recursive=false&keyword=

@@ -12,7 +12,6 @@ from rest_framework.fields import BooleanField, CharField, DateTimeField, Intege
 from rest_framework.serializers import Serializer
 
 from bkuser_core.apis.v3.serializers import StringArrayField
-from bkuser_core.departments.v3.serializers import DepartmentSerializer
 from bkuser_core.profiles.v2.serializers import LeaderSerializer
 
 
@@ -65,6 +64,16 @@ class QueryProfileSerializer(ProfileSerializer):
             data["leader"] = data.pop("leaders")
 
         return data
+
+
+class DepartmentSerializer(Serializer):
+    id = IntegerField(required=False)
+    name = CharField(required=False)
+    full_name = CharField(required=False)
+    category_id = IntegerField(required=False)
+
+    class Meta:
+        ref_name = "v3_department"
 
 
 # ------------

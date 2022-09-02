@@ -13,8 +13,14 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import DepartmentCreatedReturnSerializer, DepartmentCreateSerializer
+from .serializers import (
+    DepartmentCreatedReturnSerializer,
+    DepartmentCreateSerializer,
+    DepartmentSearchResultSerializer,
+    DepartmentSearchSerializer,
+)
 from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_username
+from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentPermission, Permission
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
@@ -102,3 +108,23 @@ class DepartmentUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DepartmentSearchApi(generics.ListAPIView):
+
+    serializer_class = DepartmentSearchResultSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        serializer = DepartmentSearchSerializer(data=self.request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        category_id = data.get("category_id")
+
+        username = get_username(self.request)
+        category = get_category(category_id)
+        Permission().allow_category_action(username, IAMAction.VIEW_CATEGORY, category)
+
+        # NOTE: 这里相对原来/api/v3/departments/?category_id 的差异是 enabled=True
+        return Department.objects.filter(category_id=category_id, enabled=True)

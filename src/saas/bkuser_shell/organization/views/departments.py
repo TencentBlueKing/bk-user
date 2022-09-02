@@ -238,13 +238,3 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
         api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
         api_instance.v2_departments_profiles_create(body=validated_data, lookup_value=department_id)
         return Response(data={})
-
-
-class DepartmentsApiViewSet(BkUserApiViewSet):
-    """用户信息模块"""
-
-    permission_classes = [IsAuthenticated]
-    ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
-
-    def get(self, request, *args, **kwargs):
-        return self.call_through_api(request)

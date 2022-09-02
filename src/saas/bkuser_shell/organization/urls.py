@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.conf.urls import url
 
-from .views.departments import DepartmentsApiViewSet, DepartmentViewSet
+from .views.departments import DepartmentViewSet
 from .views.misc import SearchViewSet
 from .views.profiles import ProfilesApiViewSet, ProfilesViewSet
 
@@ -89,10 +89,5 @@ urlpatterns += [
         r"^api/v3/profiles",
         ProfilesApiViewSet.as_view({"get": "get"}),
         name="api.profiles",
-    ),
-    url(
-        r"^api/v3/departments",
-        DepartmentsApiViewSet.as_view({"get": "get"}),
-        name="api.departments",
     ),
 ]

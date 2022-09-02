@@ -36,3 +36,14 @@ class DepartmentCreateSerializer(serializers.Serializer):
     name = serializers.CharField()
     parent = serializers.IntegerField(required=False)
     category_id = serializers.IntegerField()
+
+
+class DepartmentSearchSerializer(serializers.Serializer):
+    category_id = serializers.IntegerField()
+
+
+class DepartmentSearchResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(required=False)
+    full_name = serializers.CharField(required=False)
+    category_id = serializers.IntegerField(required=False)
