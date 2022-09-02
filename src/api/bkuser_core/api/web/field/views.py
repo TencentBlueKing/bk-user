@@ -30,11 +30,11 @@ class FieldListCreateApi(generics.ListCreateAPIView):
     # FIXME: view_field permission for list api
     permission_classes = [ManageFieldPermission]
     serializer_class = FieldSerializer
+    queryset = DynamicFieldInfo.objects.filter(enabled=True)
 
-    def get_queryset(self):
-        queryset = DynamicFieldInfo.objects.filter(enabled=True)
-
-        return queryset
+    # def get_queryset(self):
+    #     queryset = DynamicFieldInfo.objects.filter(enabled=True)
+    #     return queryset
 
     def create(self, request, *args, **kwargs):
         """创建自定义字段"""

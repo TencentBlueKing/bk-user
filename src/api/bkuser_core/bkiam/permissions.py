@@ -57,6 +57,17 @@ class Permission:
             objs=objs,
         )
 
+    def allow_department_action(self, username: str, action_id, department) -> bool:
+        if not self.iam_enabled:
+            return True
+
+        objs = [department]
+        return self.helper.objs_action_allow(
+            action_id=action_id,
+            username=username,
+            objs=objs,
+        )
+
     def allow_action_without_resource(self, username: str, action_id: IAMAction):
         if not self.iam_enabled:
             return True

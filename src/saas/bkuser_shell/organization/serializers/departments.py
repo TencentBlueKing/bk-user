@@ -60,12 +60,6 @@ class RetrieveDepartmentSLZ(serializers.Serializer):
     with_ancestors = serializers.BooleanField(default=False, required=False)
 
 
-class CreateDepartmentSerializer(serializers.Serializer):
-    name = serializers.CharField()
-    parent = serializers.IntegerField(required=False)
-    category_id = serializers.IntegerField()
-
-
 class UpdateDepartmentSerializer(serializers.Serializer):
     name = serializers.CharField(required=False)
     order = serializers.IntegerField(required=False)

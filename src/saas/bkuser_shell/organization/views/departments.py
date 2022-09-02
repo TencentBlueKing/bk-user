@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 import bkuser_sdk
@@ -22,7 +21,6 @@ from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
 from bkuser_shell.organization.serializers.departments import (
-    CreateDepartmentSerializer,
     DepartmentAddProfilesSerializer,
     DepartmentListSerializer,
     DepartmentProfileSerializer,
@@ -33,11 +31,12 @@ from bkuser_shell.organization.serializers.departments import (
     UpdateDepartmentSerializer,
 )
 from bkuser_shell.organization.serializers.profiles import DepartmentGetProfileResultSerializer
+from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
 
 
-class DepartmentViewSet(BkUserApiViewSet):
+class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
 
     permission_classes = [
         IsAuthenticated,
@@ -201,24 +200,9 @@ class DepartmentViewSet(BkUserApiViewSet):
         departments = [x for x in hit_departments.get("results") if x["category_id"] == int(category_id)]
         return departments
 
-    @inject_serializer(
-        body_in=CreateDepartmentSerializer,
-        out=DepartmentSerializer,
-        config={"default_return_status": status.HTTP_201_CREATED},
-        tags=["departments"],
-    )
-    def create(self, request, validated_data):
+    def create(self, request, *args, **kwargs):
         """创建组织"""
-        department = bkuser_sdk.Department(**validated_data)
-        if not department.parent:
-            force_action_id = IAMAction.MANAGE_CATEGORY.value
-        else:
-            force_action_id = IAMAction.MANAGE_DEPARTMENT.value
-
-        client = self.get_api_client_by_request(request=request, force_action_id=force_action_id)
-        api_instance = bkuser_sdk.DepartmentsApi(client)
-        department = api_instance.v2_departments_create(body=department)
-        return department
+        return self.do_proxy(request, rewrite_path="/api/v1/web/departments/")
 
     @inject_serializer(body_in=UpdateDepartmentSerializer, out=DepartmentSerializer, tags=["departments"])
     def update(self, request, department_id, validated_data):

@@ -14,6 +14,7 @@ from django.conf import settings
 
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.departments.models import Department
 from bkuser_core.user_settings.models import SettingMeta
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,14 @@ def get_category_display_name_map():
 # FIXME: add memory cache here
 def get_default_category_id():
     return ProfileCategory.objects.get_default().id
+
+
+def get_department(department_id: int) -> Department:
+    try:
+        return Department.objects.get(id=department_id)
+    except Exception:
+        logger.exception("cannot find department: %s", department_id)
+        raise error_codes.CANNOT_FIND_DEPARTMENT
 
 
 def get_category(category_id: int) -> ProfileCategory:

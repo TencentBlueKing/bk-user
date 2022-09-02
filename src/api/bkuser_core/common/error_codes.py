@@ -151,6 +151,7 @@ error_codes.add_codes(
         ErrorCode("CANNOT_CREATE_SETTING", _("无法创建配置")),
         ErrorCode("CANNOT_UPDATE_SETTING", _("无法更新配置")),
         # 组织架构相关
+        ErrorCode("CANNOT_FIND_DEPARTMENT", _("找不到对应的部门")),
         ErrorCode("DEPARTMENT_NAME_CONFLICT", _("同一个部门下子部门命名冲突")),
         # 用户字段相关
         ErrorCode("FIELD_IS_NOT_EDITABLE", _("字段不能被编辑")),

@@ -19,6 +19,9 @@ urlpatterns = [
     url(r"^fields/", include("bkuser_core.api.web.field.urls")),
     url(r"^profiles/", include("bkuser_core.api.web.profile.urls")),
     url(r"^site/", include("bkuser_core.api.web.site.urls")),
+    url(r"^departments/", include("bkuser_core.api.web.department.urls")),
     # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
-    # url(r"^departments/", include("bkuser_core.api.web.department.urls")),
 ]
+
+# 全局检索
+# /api/v2/search/detail/?keyword=aaaa&max_items=40&only_enabled=true
