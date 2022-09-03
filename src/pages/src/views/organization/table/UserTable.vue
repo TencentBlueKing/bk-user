@@ -92,6 +92,7 @@
 </template>
 
 <script>
+import { dateConvert } from '@/common/util';
 export default {
   props: {
     fieldsList: {
@@ -127,6 +128,10 @@ export default {
       type: Object,
       default: {},
     },
+    timerMap: {
+      type: Array,
+      required: true,
+    },
   },
   data() {
     return {
@@ -141,12 +146,12 @@ export default {
       currentPage: null, // 当前加载了多少页
       pageLimit: 20, // 大于此条数前端分页
       lineHeight: 42, // 列表行高
-      labelName: ['id', 'isCheck', 'departments', 'originItem', 'create_time', 'update_time'],
+      labelName: ['id', 'isCheck', 'departments', 'originItem'],
     };
   },
   computed: {
     activeTableHeardList() {
-      const arr = ['id', 'isCheck', 'departments', 'create_time', 'update_time'];
+      const arr = ['id', 'isCheck', 'departments'];
       return this.userMessage.tableHeardList.filter(item => arr.indexOf(item.key) === -1);
     },
     enumInfo() {
@@ -262,7 +267,7 @@ export default {
               if (this.$i18n.locale === 'en') {
                 return value;
               }
-              return this.statusMap[options[i].id];
+              return this.statusMap[key][i];
             }
           }
         } else {
@@ -283,6 +288,9 @@ export default {
           return results.join(';');
         }
       } else {
+        if (this.timerMap.includes(key)) {
+          return dateConvert(value);
+        }
         return value;
       }
     },

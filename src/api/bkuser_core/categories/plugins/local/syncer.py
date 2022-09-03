@@ -10,9 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from collections import OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Type
 
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
@@ -34,6 +35,7 @@ from bkuser_core.common.progress import progress
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
+from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import make_password_by_config
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -93,6 +95,7 @@ class ExcelSyncer(Syncer):
     """Excel 数据同步类"""
 
     fetcher_cls: Type[ExcelFetcher] = ExcelFetcher
+    notify_profile_init_password_dict: Dict[Profile, str] = field(default_factory=dict)
 
     def __post_init__(self):
         super().__post_init__()
@@ -108,6 +111,8 @@ class ExcelSyncer(Syncer):
         with transaction.atomic():
             self._sync_users(self.fetcher.parser_set, user_rows)
             self._sync_leaders(self.fetcher.parser_set, user_rows)
+
+        self._notify_init_passwords()
 
     def _sync_departments(self, raw_department_groups):
         """由于部门之间存在比较多的父子关系，不适合使用批量插入，目前使用按照逻辑顺序插入"""
@@ -204,7 +209,7 @@ class ExcelSyncer(Syncer):
 
             except ObjectDoesNotExist:
                 profile_id = self.db_sync_manager.register_id(ProfileMeta)
-                password, _ = make_password_by_config(self.category_id)
+                raw_password, should_notify = make_password_by_config(self.category_id, return_raw=True)
                 initial_params = {
                     "id": profile_id,
                     "status": ProfileStatus.NORMAL.name,
@@ -214,13 +219,15 @@ class ExcelSyncer(Syncer):
                     "category_id": self.category_id,
                     "domain": self.category.domain,
                     "password_valid_days": self._default_password_valid_days,
-                    "password": password,
+                    "password": make_password(raw_password),
                 }
                 initial_params.update(profile_params)
 
                 adding_profile = Profile(**initial_params)
                 self.db_sync_manager.magic_add(adding_profile)
                 logger.debug("(%s/%s): adding profile %s", index, total, username)
+                if should_notify:
+                    self.notify_profile_init_password_dict[adding_profile] = raw_password
 
             # 2 获取关联的部门DB实例，创建关联对象
             progress(index, total, "adding profile & department relation")
@@ -274,6 +281,19 @@ class ExcelSyncer(Syncer):
 
         # 单独批量插入 leaders
         self.db_sync_manager[LeaderThroughModel].sync_to_db()
+
+    def _notify_init_passwords(self) -> None:
+        # 是否发送初始化密码邮件
+        if self.notify_profile_init_password_dict:
+            for instance, password in self.notify_profile_init_password_dict.items():
+                try:
+                    send_password_by_email.delay(instance.id, raw_password=password, init=True)
+                except Exception:  # pylint: disable=broad-except
+                    logger.exception(
+                        "failed to send init password via email. [profile.id=%s, profile.username=%s",
+                        instance.id,
+                        instance.username,
+                    )
 
 
 @dataclass

@@ -198,7 +198,9 @@ class ResourceType(AutoLowerEnum):
             },
             cls.CATEGORY: {"category.id": "id"},
             cls.FIELD: {"field.id": "name"},
-            cls.PROFILE: {},
+            cls.PROFILE: {
+                "department._bk_iam_path_": parse_department_path,
+            },
             cls.SYNCTASK: {"category.id": "category_id"},
         }
         return _map[resource_type]
@@ -211,6 +213,8 @@ class ResourceType(AutoLowerEnum):
             cls.CATEGORY: ("id", "display_name"),
             cls.FIELD: ("id", "display_name"),
             cls.PROFILE: ("id", "username"),
+            # FIXME: not sure
+            cls.SYNCTASK: ("id", "id"),
         }
         return _map[resource_type]
 

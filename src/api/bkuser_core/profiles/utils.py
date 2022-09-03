@@ -13,7 +13,7 @@ import random
 import re
 import string
 import urllib.parse
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -25,6 +25,7 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
 from bkuser_core.user_settings.constants import InitPasswordMethod
 from bkuser_core.user_settings.loader import ConfigProvider
+from bkuser_global.local import local
 from bkuser_global.utils import force_str_2_bool
 
 if TYPE_CHECKING:
@@ -34,8 +35,16 @@ logger = logging.getLogger(__name__)
 
 
 def gen_password(length):
+    # 必须包含至少一个数字
     chars = string.ascii_letters + string.digits
-    return "".join([random.choice(chars) for _ in range(length)])
+
+    random_chars = [random.choice(chars) for _ in range(length)]
+    if any([c.isdigit() for c in random_chars]):
+        return "".join(random_chars)
+
+    random_chars[0] = random.choice(string.digits)
+    random.shuffle(random_chars)
+    return "".join(random_chars)
 
 
 USERNAME_DOMAIN_REGEX = re.compile(f"(?P<username>{USERNAME_REGEX})(@(?P<domain>{DOMAIN_PART_REGEX}))?$")
@@ -98,7 +107,7 @@ def make_password_by_config(category_id, return_raw: bool = False) -> Tuple[str,
         raw_password = config_loader["init_password"]
     else:
         # 当且仅当自动生成密码时发送邮件
-        raw_password = gen_password(8)
+        raw_password = gen_password(12)
         should_notify = True
 
     if return_raw:
@@ -191,3 +200,58 @@ def check_former_passwords(
 def make_passwd_reset_url_by_token(token: str):
     """make reset"""
     return urllib.parse.urljoin(settings.SAAS_URL, f"set_password?token={token}")
+
+
+def _get_bk_app_code_from_request(request) -> str:
+    """if the requests are from apigateway"""
+    return getattr(request, "bk_app_code", "")
+
+
+def _get_bk_app_code_from_request_param(request) -> str:
+    """currently, some env can't get the bk_app_code from request, so we use the param to get it
+    FIXME: will remove later after the inner env esb change from token to jwt
+    """
+    if not request:
+        return ""
+    return request.GET.get("app_id", "")
+
+
+def _is_saas_request(request) -> bool:
+    """if the request is from saas"""
+    if not request:
+        return False
+
+    return local.request_username == "SAAS"
+
+
+def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
+    """remove sensitive fields for profile"""
+    if not settings.ENABLE_PROFILE_SENSITIVE_FILTER:
+        return data
+
+    # if no request or no data, return
+    if not (request and data):
+        return data
+
+    # if from saas, return
+    if _is_saas_request(request):
+        return data
+
+    # FIXME: currently get from request_param,
+    # will change to get from request after the inner env esb change from token to jwt
+    bk_app_code = _get_bk_app_code_from_request_param(request)
+
+    # remove sensitive fields, except the app_code in whitelist
+    for key in settings.PROFILE_SENSITIVE_FIELDS:
+        if key in data and bk_app_code not in settings.PROFILE_SENSITIVE_FIELDS_WHITELIST_APP_CODES:
+            data[key] = ""
+            # data.pop(key)
+
+    # remove sensitive extras fields, except the app_code in whitelist
+    if "extras" in data:
+        extras = data["extras"]
+        for key in settings.PROFILE_EXTRAS_SENSITIVE_FIELDS:
+            if key in extras and bk_app_code not in settings.PROFILE_EXTRAS_SENSITIVE_FIELDS_WHITELIST_APP_CODES:
+                extras.pop(key)
+
+    return data

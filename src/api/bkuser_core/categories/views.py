@@ -199,7 +199,9 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 **serializer.validated_data
             )
         except Exception as e:
-            logger.exception("failed to test initialize category<%s>", instance.id)
+            logger.exception(
+                "failed to test initialize category<%s-%s-%s>", instance.type, instance.display_name, instance.id
+            )
             raise error_codes.TEST_CONNECTION_FAILED.format(str(e), replace=True)
 
         return Response()
@@ -233,12 +235,17 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         try:
             syncer = syncer_cls(instance.id)
         except Exception as e:
-            logger.exception("failed to test initialize category<%s>", instance.id)
+            logger.exception(
+                "failed to test initialize category<%s-%s-%s>", instance.type, instance.display_name, instance.id
+            )
             raise error_codes.TEST_CONNECTION_FAILED.f(f"请确保连接设置正确 {str(e)}")
 
         try:
             syncer.fetcher.test_fetch_data(serializer.validated_data)
         except Exception as e:  # pylint: disable=broad-except
+            logger.exception(
+                "failed to fetch data from category<%s-%s-%s>", instance.type, instance.display_name, instance.id
+            )
             error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
             raise error_codes.TEST_FETCH_DATA_FAILED.f(error_detail)
 
@@ -260,6 +267,9 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
             ).id
         except ExistsSyncingTaskError as e:
+            logger.exception(
+                "failed to register sync task. [instance.id=%s], operator=%s", instance.id, request.operator
+            )
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
         try:
@@ -279,7 +289,7 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise
         except Exception as e:
             logger.exception(
-                "failed to sync data. " "[instance.id=%s, operator=%s, task_id=%s]",
+                "failed to sync data. [instance.id=%s, operator=%s, task_id=%s]",
                 instance.id,
                 request.operator,
                 task_id,
@@ -322,7 +332,7 @@ class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             adapter_sync(lookup_value, operator=request.operator, task_id=task_id, **params)
         except DataFormatError as e:
             logger.exception(
-                "failed to sync data, dataformat error. " "[instance_id=%s, operator=%s, task_id=%s, params=%s]",
+                "failed to sync data, dataformat error. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
                 lookup_value,
                 request.operator,
                 task_id,
@@ -358,6 +368,12 @@ class SyncTaskViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     @swagger_auto_schema(responses={200: SyncTaskProcessSerializer(many=True)})
     def show_logs(self, request, lookup_value):
         task: SyncTask = self.get_object()
+
+        # NOTE: 必须有manage_category权限才能查看/变更settings => SaaS已经传递了 ACTION_ID = IAMAction.VIEW_CATEGORY.value
+        # request.META[dj_settings.NEED_IAM_HEADER] = "True"
+        # request.META[dj_settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
+        self.check_object_permissions(request, task.category)
+
         processes = task.progresses.order_by("-create_time")
 
         slz = SyncTaskProcessSerializer(processes, many=True)

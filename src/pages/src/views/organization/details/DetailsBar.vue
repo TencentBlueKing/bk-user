@@ -29,6 +29,7 @@
       :current-category-type="currentCategoryType"
       :fields-list="fieldsList"
       :status-map="statusMap"
+      :timer-map="timerMap"
       @editProfile="editProfile"
       @deleteProfile="$emit('deleteProfile')"
       @restoreProfile="$emit('restoreProfile')"
@@ -187,6 +188,10 @@ export default {
       type: Object,
       default: {},
     },
+    timerMap: {
+      type: Array,
+      required: true,
+    },
   },
   data() {
     return {
@@ -228,11 +233,6 @@ export default {
       const list = JSON.parse(JSON.stringify(this.fieldsList));
       const fieldsList = [];
       list.forEach((item) => {
-        if (item.options && item.options.length) {
-          item.options.forEach((key) => {
-            key.value = this.statusMap[key.value];
-          });
-        }
         fieldsList.push(item);
       });
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
@@ -443,7 +443,9 @@ export default {
           password_valid_days: this.passwordValidDays,
         };
         this.profileInfoList.forEach((info) => {
-          params[info.key] = info.value;
+          if (info.key !== 'last_login_time' && info.key !== 'create_time') {
+            params[info.key] = info.value;
+          }
           if (info.key === 'telephone') {
             params.iso_code = info.iso_code;
           }

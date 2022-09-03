@@ -16,7 +16,7 @@ from operator import or_
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.exceptions import FieldError, MultipleObjectsReturned
+from django.core.exceptions import FieldError, MultipleObjectsReturned, ObjectDoesNotExist
 from django.db.models import F, Q
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
@@ -40,6 +40,9 @@ from bkuser_core.apis.v2.serializers import (
 from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import audit_general_log, create_general_log, create_profile_log
+from bkuser_core.bkiam.constants import IAMAction
+from bkuser_core.bkiam.exceptions import IAMPermissionDenied
+from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -59,6 +62,7 @@ from bkuser_core.profiles.utils import (
     make_passwd_reset_url_by_token,
     make_password_by_config,
     parse_username_domain,
+    remove_sensitive_fields_for_profile,
 )
 from bkuser_core.profiles.v2.filters import ProfileSearchFilter
 from bkuser_core.profiles.validators import validate_username
@@ -75,6 +79,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
     relation_fields = ["departments", "leader", "login_set"]
+
+    iam_filter_actions: tuple = ("list",)
 
     def get_object(self):
         _default_lookup_field = self.lookup_field
@@ -180,6 +186,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if fields:
             self._check_fields(fields)
         else:
+            # 这里没传fields默认使用slz.fields是有问题的, 但是先保持接口行为一致, 不动fields声明(新版接口解决)
             fields = serializer_class().fields
 
         self._ensure_enabled_field(request, fields=fields)
@@ -191,13 +198,16 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.QUERY_PARAMS_ERROR
 
         # 提前将关系表拿出来
-        queryset = queryset.prefetch_related(*self.relation_fields)
+        # BUG: 这里需要去掉 login_set(百万级的表), 大表会导致prefetch就失败
+        # queryset = queryset.prefetch_related(*self.relation_fields)
+        queryset = queryset.prefetch_related("departments", "leader")
 
         # 当用户请求数据时，判断其是否强制输出原始 username
         if not force_use_raw_username(request):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
             if "username" in fields:
                 default_domain = ProfileCategory.objects.get_default().domain
+                # 这里拼装的 username@domain, 没有走到serializer中的get_username
                 queryset = queryset.extra(
                     select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
                     select_params=(default_domain,),
@@ -206,14 +216,23 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         page = self.paginate_queryset(queryset)
         # page may be empty list
         if page is not None:
-            serializer = serializer_class(page, fields=fields, many=True)
+            # BUG: slz 中的 last_login_time 会导致放大查询, 需要剔除(即, 这个接口将不再支持last_login_time)
+            # another two property not in slz fields are: latest_check_time bad_check_cnt
+            if "last_login_time" in fields:
+                del fields["last_login_time"]
+
+            # BUG: 这里必须显式传递 context给到slz, 下层self.context.get("request") 用到, 判断拼接 username@domain
+            # 坑, 修改或重构需要注意; 不要通过这种方式来决定字段格式, 非常容易遗漏
+            serializer = serializer_class(page, fields=fields, many=True, context=self.get_serializer_context())
             return self.get_paginated_response(serializer.data)
 
         fields = [x for x in fields if x in self._get_model_field_names()]
         # 全量数据太大，使用 serializer 效率非常低
         # 由于存在多对多字段，所以返回列表会平铺展示，同一个 username 会多次展示
         # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#values
-        return Response(data=list(queryset.values(*fields)))
+        data = list(queryset.values(*fields))
+        data = [remove_sensitive_fields_for_profile(request, d) for d in data]
+        return Response(data=data)
 
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(
@@ -228,6 +247,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         from bkuser_core.departments.models import Department
 
+        # departments为空, 则绕过了第一次权限控制
         deps = Department.objects.filter(id__in=validated_data.get("departments", []))
         for dep in deps:
             self.check_object_permissions(request, obj=dep)
@@ -245,6 +265,11 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # `ConfigProvider._refresh_config` 过滤 enabled=True
         if not ProfileCategory.objects.get(pk=validated_data["category_id"]).enabled:
             raise error_codes.CATEGORY_NOT_ENABLED
+
+        # 必须要有这个category的管理权限, 才能添加用户到这个目录下
+        # 注意这里 saas 传的 action_id = manage_department, 必须先改成manage_category才能检查category权限
+        request.META[settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
+        self.check_object_permissions(request, obj=ProfileCategory.objects.get(pk=validated_data["category_id"]))
 
         try:
             existed = Profile.objects.get(
@@ -510,6 +535,8 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
     serializer_class = local_serializers.ProfileSerializer
     queryset = Profile.objects.filter(enabled=True)
 
+    permission_classes = [IAMPermission]
+
     def get_serializer_class(self):
         """Serializer 路由"""
         if self.action in ("multiple_update", "multiple_delete"):
@@ -524,12 +551,53 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
         """批量获取用户"""
         return super().multiple_retrieve(request)
 
+    def permission_denied(self, request, message=None, obj=None, **kwargs):
+        """针对 IAM 注入相关信息"""
+        raise IAMPermissionDenied(
+            detail=message,
+            extra_info=IAMPermissionExtraInfo.from_request(request, obj=obj).to_dict(),
+        )
+
+    def clean_iam_header(self, request):
+        if settings.ACTION_ID_HEADER in request.META:
+            request.META.pop(settings.ACTION_ID_HEADER)
+        if settings.NEED_IAM_HEADER in request.META:
+            request.META.pop(settings.NEED_IAM_HEADER)
+
+    def check_category_permission(self, request, category):
+        # NOTE: 必须有manage_category权限才能查看/变更settings
+        request.META[settings.NEED_IAM_HEADER] = "True"
+        request.META[settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
+        self.check_object_permissions(request, category)
+
+    def check_permission(self, request):
+        self.clean_iam_header(request)
+        serializer_class = self.get_serializer_class()
+        serializer = serializer_class(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        query_objs = serializer.validated_data
+
+        for obj in query_objs:
+            try:
+                instance = self.queryset.get(pk=obj["id"])
+            except ObjectDoesNotExist:
+                logger.warning(
+                    "obj <%s-%s> not found or already been deleted.",
+                    self.queryset.model,
+                    obj,
+                )
+                continue
+            else:
+                # NOTE: poor performance, but it's ok for now
+                self.check_category_permission(request, ProfileCategory.objects.get(pk=instance.category_id))
+
     @swagger_auto_schema(
         request_body=local_serializers.UpdateProfileSerializer(many=True),
         responses={"200": local_serializers.ProfileSerializer(many=True)},
     )
     def multiple_update(self, request):
         """批量更新用户"""
+        self.check_permission(request)
         return super().multiple_update(request)
 
     @swagger_auto_schema(
@@ -538,6 +606,7 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
     )
     def multiple_delete(self, request):
         """批量删除用户"""
+        self.check_permission(request)
         return super().multiple_delete(request)
 
 
@@ -682,6 +751,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             raise error_codes.PASSWORD_ERROR
 
         self._check_password_status(request, profile, config_loader, time_aware_now)
+        self._check_account_status(request, profile)
 
         create_profile_log(profile=profile, operation="LogIn", request=request, params={"is_success": True})
         return Response(data=local_serializers.ProfileSerializer(profile, context={"request": request}).data)
@@ -722,6 +792,20 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
 
             raise error_codes.PASSWORD_EXPIRED.format(data=self._generate_reset_passwd_url_with_token(profile))
+
+    def _check_account_status(self, request, profile: Profile):
+        """
+        校验登录账号状态
+        """
+        expired_at = profile.account_expiration_date - datetime.date.today()
+        if expired_at.days < 0:
+            create_profile_log(
+                profile=profile,
+                operation="LogIn",
+                request=request,
+                params={"is_success": False, "reason": LogInFailReason.EXPIRED_USER.value},
+            )
+            raise error_codes.USER_IS_EXPIRED
 
     @staticmethod
     def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
@@ -818,6 +902,11 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     serializer_class = local_serializers.DynamicFieldsSerializer
     lookup_field: str = "name"
     cache_name = "profiles"
+
+    # FIXME: 这里不能开启权限, SaaS 一大堆地方查, 并且dynamic_fields是底层的服务, 查看部门等都会调用, 加上权限由于用户未申请会直接报错
+    # NOTE: 当前正在重构的地方会去除这种权限控制方式
+    # 先注释, 非敏感数据
+    # iam_filter_actions = ("list",)
 
     def get_serializer(self, *args, **kwargs):
         if self.action in ["create"]:

@@ -43,6 +43,14 @@
                 <div class="from-detail">
                     <div class="form-login">
                         <form action="{{ app_path }}" method="post" id="login-form" onsubmit="return refresh_token()">{% csrf_token %}
+                            <div class="account-content">
+                                {% if user_expired %}
+                                <p class="error-text">{% trans '该账户已到期，如需续期，请联系' %}<span id="admin">{% trans '管理员' %}</span></p>
+                                <p class="tips">
+                                    <span>{% trans '提示信息' %}</span>
+                                </p>
+                                {% endif %}
+                            </div>
                             <div class="user group-control">
                                 <input id="user" type="text" name="username" placeholder="{% trans '请输入用户名' %}">
                             </div>
@@ -109,7 +117,7 @@
                         <span class="qr-box"><img class="qr" src="{{STATIC_URL}}img/logo_ce/qr.png" alt=""></span>
                     </a>
                 </p>
-                <p>Copyright © 2012-{{NOW.year}} Tencent BlueKing. All Rights Reserved. V7.0</p>
+                <p>Copyright © 2012-{{NOW.year}} Tencent BlueKing. All Rights Reserved.</p>
                 <p>{% trans '蓝鲸智云 版权所有' %}</p>
             </footer>
         </div>
