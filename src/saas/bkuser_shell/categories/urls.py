@@ -21,21 +21,12 @@ urlpatterns = [
     # categories #
     ##############
     url(
-        r"^api/v2/categories/$",
-        views.CategoriesViewSet.as_view(
-            {
-                # TODO: done
-                "get": "list",
-                "post": "create",
-            }
-        ),
-        name="categories",
-    ),
-    url(
         r"^api/v2/categories/%s/$" % PVAR_CATEGORIES_ID,
         views.CategoriesViewSet.as_view(
             {
+                # DONE
                 "patch": "update",
+                # TODO
                 "delete": "delete",
             }
         ),

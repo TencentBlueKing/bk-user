@@ -16,8 +16,8 @@ from . import views
 urlpatterns = [
     path(
         "",
-        views.CategoryListApi.as_view(),
-        name="category.list",
+        views.CategoryListCreateApi.as_view(),
+        name="category.list_create",
     ),
     path(
         "<int:id>/",

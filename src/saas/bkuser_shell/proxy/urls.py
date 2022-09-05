@@ -14,6 +14,7 @@ from django.urls.conf import path
 from .views import (
     CategoriesTestConnectionViewSet,
     CategoriesTestFetchDataViewSet,
+    CategoryListCreateViewSet,
     CategoryMetasViewSet,
     DepartmentSearchViewSet,
     FieldsManageableViewSet,
@@ -64,6 +65,9 @@ urlpatterns = [
     path("api/v2/me/", LoginInfoViewSet.as_view({"get": "get"}), name="profiles.login_info"),
     # categories
     path("api/v2/categories_metas/", CategoryMetasViewSet.as_view({"get": "get"}), name="categories.metas"),
+    path(
+        "api/v2/categories/", CategoryListCreateViewSet.as_view({"get": "list", "post": "create"}), name="categories"
+    ),
     path(
         "api/v2/categories/<int:id>/test_connection/",
         CategoriesTestConnectionViewSet.as_view({"post": "post"}),

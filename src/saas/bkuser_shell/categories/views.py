@@ -18,14 +18,13 @@ from openpyxl import load_workbook
 
 import bkuser_sdk
 from ..common.export import ProfileExcelExporter
-from .constants import CategoryStatus, CategoryTypeEnum
+from .constants import CategoryTypeEnum
 from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.categories.serializers import (
     CategoryExportSerializer,
     CategorySyncSerializer,
-    CreateCategorySerializer,
     DetailCategorySerializer,
 )
 from bkuser_shell.common.error_codes import error_codes
@@ -45,9 +44,6 @@ class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
         api_response = api_instance.v2_categories_read(lookup_field="id", lookup_value=category_id)
 
         return Response(data=DetailCategorySerializer(api_response).data)
-
-    def list(self, request, *args, **kwargs):
-        return self.do_proxy(request, rewrite_path="/api/v1/web/categories/")
 
     def update(self, request, *args, **kwargs):
         api_path = BkUserApiProxy.get_api_path(request)
@@ -78,21 +74,6 @@ class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
         api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
         api_instance.v2_categories_delete(lookup_value=category_id)
         return Response()
-
-    @inject_serializer(body_in=CreateCategorySerializer, out=DetailCategorySerializer, tags=["categories"])
-    def create(self, request, validated_data):
-        activated = validated_data.pop("activated")
-        validated_data["status"] = CategoryStatus.NORMAL.value if activated else CategoryStatus.INACTIVE.value
-
-        category = bkuser_sdk.Category(**validated_data)
-
-        api_instance = bkuser_sdk.CategoriesApi(
-            self.get_api_client_by_request(
-                request,
-                force_action_id=IAMAction.get_action_by_category_type(category.type).value,
-            )
-        )
-        return api_instance.v2_categories_create(body=category)
 
 
 class CategoriesSyncViewSet(BkUserApiViewSet):

@@ -158,3 +158,11 @@ class CategoriesTestFetchDataViewSet(BkUserApiProxy):
         api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
         api_path = api_path.replace("test_fetch_data/", "operations/test_fetch_data/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class CategoryListCreateViewSet(BkUserApiProxy):
+    def list(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/categories/")
+
+    def create(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/categories/")

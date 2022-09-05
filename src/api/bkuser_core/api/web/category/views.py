@@ -11,10 +11,12 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from django.conf import settings
-from rest_framework import generics
+from django.utils.translation import gettext as _
+from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import (
+    CategoryCreateSerializer,
     CategoryDetailSerializer,
     CategoryMetaSerializer,
     CategorySettingListSerializer,
@@ -24,10 +26,12 @@ from .serializers import (
     CategoryUpdateSerializer,
 )
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
+from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.signals import post_category_create
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.user_settings.models import Setting
 
@@ -90,7 +94,7 @@ class CategorySettingListApi(generics.ListAPIView):
         return Setting.objects.filter(meta__in=metas, category_id=category_id)
 
 
-class CategoryListApi(generics.ListAPIView):
+class CategoryListCreateApi(generics.ListCreateAPIView):
     serializer_class = CategoryDetailSerializer
 
     # TODO: 产品上应该返回全部列表, 展示这个人哪些有权限/哪些没权限
@@ -104,6 +108,35 @@ class CategoryListApi(generics.ListAPIView):
             queryset = queryset.filter(fs)
 
         return queryset
+
+    def post(self, request, *args, **kwargs):
+        """
+        创建用户目录
+        """
+        serializer = CategoryCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+
+        # check permission
+        username = get_username(request)
+        action_id = IAMAction.get_action_by_category_type(data["type"])
+        if not Permission().allow_action_without_resource(username, action_id):
+            raise IAMPermissionDenied(
+                detail=_("您没有权限进行该操作，请在权限中心申请。"),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+            )
+
+        instance = serializer.save()
+
+        # 默认添加到最后 TODO: 需要一个更优雅的实现
+        max_order = ProfileCategory.objects.get_max_order()
+        instance.order = max_order + 1
+        instance.save(update_fields=["order"])
+        post_category_create.send_robust(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
+        )
+        return Response(CategoryDetailSerializer(instance).data, status=status.HTTP_201_CREATED)
 
 
 class CategoryUpdateApi(generics.RetrieveUpdateAPIView):

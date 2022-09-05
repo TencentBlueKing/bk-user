@@ -10,11 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
+from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+from rest_framework.validators import ValidationError
 
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.profiles.validators import validate_domain
 from bkuser_core.user_settings.models import Setting
 
 
@@ -59,6 +62,8 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
     unfilled_namespaces = serializers.SerializerMethodField(required=False)
     activated = serializers.SerializerMethodField()
 
+    syncing = serializers.BooleanField(read_only=True, required=False, allow_null=True)
+
     def get_configured(self, obj) -> bool:
         return obj.configured
 
@@ -72,6 +77,36 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileCategory
         fields = "__all__"
+
+
+class CategoryCreateSerializer(serializers.Serializer):
+    """用户目录 Serializer"""
+
+    domain = serializers.CharField(max_length=64, label=_("登陆域"), validators=[validate_domain])
+    display_name = serializers.CharField(max_length=64, label=_("目录名"))
+    type = serializers.ChoiceField(default="local", choices=["mad", "ldap", "local"])
+
+    activated = serializers.BooleanField(default=True)
+
+    def validate(self, data):
+        if ProfileCategory.objects.filter(domain=data["domain"]).exists():
+            raise ValidationError(_("登陆域为 {} 的用户目录已存在").format(data["domain"]))
+
+        return super().validate(data)
+
+    def create(self, validated_data):
+        # NOTE: 这里很特殊, 前端是activated, 需要转status
+        # TODO: 应该全部统一成 status
+        status = CategoryStatus.INACTIVE.value
+        activated = validated_data.pop("activated")
+        if activated:
+            status = CategoryStatus.NORMAL.value
+
+        validated_data["status"] = status
+
+        print("the validated_data:", validated_data)
+        category = ProfileCategory.objects.create(**validated_data)
+        return category
 
 
 class CategoryUpdateSerializer(serializers.Serializer):

@@ -8,11 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.utils.translation import ugettext_lazy as _
 from rest_framework.serializers import (
     BooleanField,
     CharField,
-    ChoiceField,
     DateTimeField,
     FileField,
     IntegerField,
@@ -45,13 +43,6 @@ class DetailCategorySerializer(Serializer):
             return obj["status"] == CategoryStatus.NORMAL.value
         else:
             return getattr(obj, "status") == CategoryStatus.NORMAL.value
-
-
-class CreateCategorySerializer(Serializer):
-    domain = CharField(max_length=64, label=_("登陆域"))
-    display_name = CharField(max_length=64, label=_("目录名"))
-    activated = BooleanField(default=True)
-    type = ChoiceField(default="local", choices=["mad", "ldap", "local"])
 
 
 class EmptySerializer(Serializer):
