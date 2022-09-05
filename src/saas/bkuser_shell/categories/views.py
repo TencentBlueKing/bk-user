@@ -18,15 +18,13 @@ from openpyxl import load_workbook
 
 import bkuser_sdk
 from ..common.export import ProfileExcelExporter
-from .constants import TEST_CONNECTION_TYPES, CategoryStatus, CategoryTypeEnum
+from .constants import CategoryStatus, CategoryTypeEnum
 from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.categories.serializers import (
     CategoryExportSerializer,
     CategorySyncSerializer,
-    CategoryTestConnectionSerializer,
-    CategoryTestFetchDataSerializer,
     CreateCategorySerializer,
     DetailCategorySerializer,
 )
@@ -120,28 +118,6 @@ class CategoriesSyncViewSet(BkUserApiViewSet):
                 method = "v2_categories_import_data_file"
 
         getattr(api_instance, method)(lookup_value=category_id, **params)
-        return Response(data={})
-
-    @inject_serializer(body_in=CategoryTestConnectionSerializer, tags=["categories"])
-    def test_connection(self, request, category_id, validated_data):
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-        category = api_instance.v2_categories_read(lookup_field="id", lookup_value=category_id)
-
-        if category.type not in TEST_CONNECTION_TYPES:
-            raise error_codes.CATEGORY_CANNOT_TEST_CONNECTION
-
-        api_instance.v2_categories_test_connection(lookup_value=category_id, body=validated_data)
-        return Response(data={})
-
-    @inject_serializer(body_in=CategoryTestFetchDataSerializer, tags=["categories"])
-    def test_fetch_data(self, request, category_id, validated_data):
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-        category = api_instance.v2_categories_read(lookup_field="id", lookup_value=category_id)
-
-        if category.type not in TEST_CONNECTION_TYPES:
-            raise error_codes.CATEGORY_CANNOT_TEST_CONNECTION
-
-        api_instance.v2_categories_test_fetch_data(lookup_value=category_id, body=validated_data)
         return Response(data={})
 
 

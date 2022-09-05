@@ -30,6 +30,16 @@ urlpatterns = [
         name="category.setting.list",
     ),
     path(
+        "<int:id>/operations/test_fetch_data/",
+        views.CategoryOperationTestFetchDataApi.as_view(),
+        name="category.operation.test_fetch_data",
+    ),
+    path(
+        "<int:id>/operations/test_connection/",
+        views.CategoryOperationTestConnectionApi.as_view(),
+        name="category.operation.test_connection",
+    ),
+    path(
         "metas/",
         views.CategoryMetasListApi.as_view(),
         name="category.metas",

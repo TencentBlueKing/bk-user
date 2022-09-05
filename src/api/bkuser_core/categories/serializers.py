@@ -11,14 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import List
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework.serializers import (
-    BooleanField,
-    CharField,
-    FileField,
-    IntegerField,
-    Serializer,
-    SerializerMethodField,
-)
+from rest_framework.serializers import BooleanField, CharField, FileField, Serializer, SerializerMethodField
 from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer
@@ -64,19 +57,3 @@ class CategorySyncSerializer(Serializer):
 
 class CategorySyncResponseSLZ(Serializer):
     task_id = CharField(help_text="task_id for the sync job.")
-
-
-class CategoryTestConnectionSerializer(Serializer):
-    connection_url = CharField()
-    user = CharField(required=False)
-    password = CharField(required=False)
-    timeout_setting = IntegerField(required=False, default=120)
-    use_ssl = BooleanField(default=False, required=False)
-
-
-class CategoryTestFetchDataSerializer(Serializer):
-    basic_pull_node = CharField()
-    user_filter = CharField()
-    organization_class = CharField()
-    user_group_filter = CharField(required=False, allow_blank=True, allow_null=True)
-    user_member_of = CharField(required=False, allow_blank=True, allow_null=True)

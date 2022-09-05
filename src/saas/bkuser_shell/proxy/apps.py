@@ -8,33 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from enum import Enum
+from django.apps import AppConfig
 
-from django.utils.translation import ugettext_lazy as _
-
-
-class CategoryTypeEnum(Enum):
-    LOCAL = "local"
-    MAD = "mad"
-    LDAP = "ldap"
-    CUSTOM = "custom"
-    # 特殊的类型，仅在未解耦前桥接
-    PLUGGABLE = "pluggable"
-
-    _choices_labels = (
-        (LOCAL, _("本地目录")),
-        (MAD, _("Microsoft Active Directory")),
-        (LDAP, _("LDAP")),
-        (CUSTOM, _("自定义目录")),
-        (PLUGGABLE, "可插拔目录"),
-    )
+from bkuser_global.tracing.otel import setup_by_settings
+from bkuser_global.tracing.sentry import init_sentry_sdk
 
 
-class CategoryStatus(Enum):
-    NORMAL = "normal"
-    INACTIVE = "inactive"
+class MonitoringConfig(AppConfig):
+    name = "bkuser_shell.proxy"
 
-    _choices_labels = (
-        (NORMAL, _("正常")),
-        (INACTIVE, _("停用")),
-    )
+    def ready(self):
+        setup_by_settings()
+        init_sentry_sdk(
+            "bk-user-saas",
+            django_integrated=True,
+        )

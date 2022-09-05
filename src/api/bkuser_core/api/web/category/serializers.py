@@ -100,3 +100,19 @@ class CategoryUpdateSerializer(serializers.Serializer):
         if has_changed:
             instance.save()
         return instance
+
+
+class CategoryTestConnectionSerializer(serializers.Serializer):
+    connection_url = serializers.CharField()
+    user = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)
+    timeout_setting = serializers.IntegerField(required=False, default=120)
+    use_ssl = serializers.BooleanField(default=False, required=False)
+
+
+class CategoryTestFetchDataSerializer(serializers.Serializer):
+    basic_pull_node = serializers.CharField()
+    user_filter = serializers.CharField()
+    organization_class = serializers.CharField()
+    user_group_filter = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    user_member_of = serializers.CharField(required=False, allow_blank=True, allow_null=True)

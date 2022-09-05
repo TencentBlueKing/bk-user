@@ -66,22 +66,4 @@ urlpatterns = [
         ),
         name="categories.import",
     ),
-    re_path(
-        r"^api/v2/categories/%s/test_connection/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                "post": "test_connection",
-            }
-        ),
-        name="categories.test_connection",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/test_fetch_data/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                "post": "test_fetch_data",
-            }
-        ),
-        name="categories.test_fetch_data",
-    ),
 ]

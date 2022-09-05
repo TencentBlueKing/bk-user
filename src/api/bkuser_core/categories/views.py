@@ -23,15 +23,12 @@ from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
-from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory, SyncTask
 from bkuser_core.categories.plugins.local.exceptions import DataFormatError
 from bkuser_core.categories.serializers import (
     CategorySerializer,
     CategorySyncResponseSLZ,
     CategorySyncSerializer,
-    CategoryTestConnectionSerializer,
-    CategoryTestFetchDataSerializer,
     CreateCategorySerializer,
 )
 from bkuser_core.categories.signals import post_category_create, post_category_delete
@@ -120,89 +117,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
         return super().destroy(request, *args, **kwargs)
-
-    @swagger_auto_schema(
-        request_body=CategoryTestConnectionSerializer,
-        responses={"200": EmptySerializer()},
-    )
-    def test_connection(self, request, lookup_value):
-        """测试连接"""
-        serializer = CategoryTestConnectionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        instance = self.get_object()
-        self.check_object_permissions(request, instance)
-
-        if instance.type not in [CategoryType.MAD.value, CategoryType.LDAP.value]:
-            raise error_codes.TEST_CONNECTION_UNSUPPORTED
-
-        try:
-            syncer_cls = get_plugin_by_category(instance).syncer_cls
-        except Exception:
-            logger.exception(
-                "category<%s-%s-%s> load ldap client failed",
-                instance.type,
-                instance.display_name,
-                instance.id,
-            )
-            raise error_codes.LOAD_LDAP_CLIENT_FAILED
-
-        try:
-            syncer_cls(instance.id, with_initialize_client=False).fetcher.client.initialize(
-                **serializer.validated_data
-            )
-        except Exception as e:
-            logger.exception(
-                "failed to test initialize category<%s-%s-%s>", instance.type, instance.display_name, instance.id
-            )
-            raise error_codes.TEST_CONNECTION_FAILED.format(str(e), replace=True)
-
-        return Response()
-
-    @swagger_auto_schema(
-        request_body=CategoryTestFetchDataSerializer,
-        responses={"200": EmptySerializer()},
-    )
-    def test_fetch_data(self, request, lookup_value):
-        """测试获取数据"""
-        serializer = CategoryTestFetchDataSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        instance = self.get_object()
-        self.check_object_permissions(request, instance)
-
-        if instance.type not in [CategoryType.MAD.value, CategoryType.LDAP.value]:
-            raise error_codes.TEST_CONNECTION_UNSUPPORTED
-
-        try:
-            syncer_cls = get_plugin_by_category(instance).syncer_cls
-        except Exception:
-            logger.exception(
-                "category<%s-%s-%s> load data adapter failed",
-                instance.type,
-                instance.display_name,
-                instance.id,
-            )
-            raise error_codes.LOAD_DATA_ADAPTER_FAILED
-
-        try:
-            syncer = syncer_cls(instance.id)
-        except Exception as e:
-            logger.exception(
-                "failed to test initialize category<%s-%s-%s>", instance.type, instance.display_name, instance.id
-            )
-            raise error_codes.TEST_CONNECTION_FAILED.f(f"请确保连接设置正确 {str(e)}")
-
-        try:
-            syncer.fetcher.test_fetch_data(serializer.validated_data)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.exception(
-                "failed to fetch data from category<%s-%s-%s>", instance.type, instance.display_name, instance.id
-            )
-            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
-            raise error_codes.TEST_FETCH_DATA_FAILED.f(error_detail)
-
-        return Response()
 
     @audit_general_log(operate_type=OperationType.SYNC.value)
     @method_decorator(clear_cache_if_succeed)

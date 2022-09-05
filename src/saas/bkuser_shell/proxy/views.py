@@ -138,3 +138,23 @@ class DepartmentSearchViewSet(BkUserApiProxy):
 class ProfilesSearchViewSet(BkUserApiProxy):
     def get(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/profiles/search/")
+
+
+class CategoriesTestConnectionViewSet(BkUserApiProxy):
+    def post(self, request, *args, **kwargs):
+        # in:  /api/v2/categories/3/test_connection/
+        # out: /api/v1/web/categories/3/operations/test_connection/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        api_path = api_path.replace("test_connection/", "operations/test_connection/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+
+class CategoriesTestFetchDataViewSet(BkUserApiProxy):
+    def post(self, request, *args, **kwargs):
+        # in:  /api/v2/categories/3/test_fetch_data/
+        # out: /api/v1/web/categories/3/operations/test_connection/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        api_path = api_path.replace("test_fetch_data/", "operations/test_fetch_data/")
+        return self.do_proxy(request, rewrite_path=api_path)

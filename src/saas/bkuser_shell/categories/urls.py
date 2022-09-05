@@ -60,24 +60,6 @@ urlpatterns = [
         name="categories.sync",
     ),
     url(
-        r"^api/v2/categories/%s/test_connection/$" % PVAR_CATEGORIES_ID,
-        views.CategoriesSyncViewSet.as_view(
-            {
-                "post": "test_connection",
-            }
-        ),
-        name="categories.test_connection",
-    ),
-    url(
-        r"^api/v2/categories/%s/test_fetch_data/$" % PVAR_CATEGORIES_ID,
-        views.CategoriesSyncViewSet.as_view(
-            {
-                "post": "test_fetch_data",
-            }
-        ),
-        name="categories.test_fetch_data",
-    ),
-    url(
         r"^api/v2/categories/%s/export/$" % PVAR_CATEGORIES_ID,
         views.CategoriesExportViewSet.as_view(
             {

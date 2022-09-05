@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 
 from django.conf import settings
 from rest_framework import generics
@@ -18,13 +19,19 @@ from .serializers import (
     CategoryMetaSerializer,
     CategorySettingListSerializer,
     CategorySettingSerializer,
+    CategoryTestConnectionSerializer,
+    CategoryTestFetchDataSerializer,
     CategoryUpdateSerializer,
 )
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
 from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
 from bkuser_core.categories.constants import CategoryType
+from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.common.error_codes import error_codes
 from bkuser_core.user_settings.models import Setting
+
+logger = logging.getLogger(__name__)
 
 
 class CategoryMetasListApi(generics.ListAPIView):
@@ -100,6 +107,8 @@ class CategoryListApi(generics.ListAPIView):
 
 
 class CategoryUpdateApi(generics.RetrieveUpdateAPIView):
+    permission_classes = [ManageCategoryPermission]
+
     queryset = ProfileCategory.objects.all()
     lookup_url_kwarg = "id"
 
@@ -110,3 +119,89 @@ class CategoryUpdateApi(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
 
         return Response(CategoryDetailSerializer(instance).data)
+
+
+class CategoryOperationTestConnectionApi(generics.CreateAPIView):
+    permission_classes = [ManageCategoryPermission]
+
+    queryset = ProfileCategory.objects.all()
+    lookup_url_kwarg = "id"
+
+    def post(self, request, *args, **kwargs):
+        """测试连接"""
+        serializer = CategoryTestConnectionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = self.get_object()
+        if instance.type not in [CategoryType.MAD.value, CategoryType.LDAP.value]:
+            raise error_codes.TEST_CONNECTION_UNSUPPORTED
+
+        # NOTE: 过于复杂, 在重构同步模块时, 更新这里的代码
+        try:
+            syncer_cls = get_plugin_by_category(instance).syncer_cls
+        except Exception:
+            logger.exception(
+                "category<%s-%s-%s> load ldap client failed",
+                instance.type,
+                instance.display_name,
+                instance.id,
+            )
+            raise error_codes.LOAD_LDAP_CLIENT_FAILED
+
+        try:
+            syncer_cls(instance.id, with_initialize_client=False).fetcher.client.initialize(
+                **serializer.validated_data
+            )
+        except Exception as e:
+            logger.exception(
+                "failed to test initialize category<%s-%s-%s>", instance.type, instance.display_name, instance.id
+            )
+            raise error_codes.TEST_CONNECTION_FAILED.format(str(e), replace=True)
+
+        return Response()
+
+
+class CategoryOperationTestFetchDataApi(generics.CreateAPIView):
+    permission_classes = [ManageCategoryPermission]
+
+    queryset = ProfileCategory.objects.all()
+    lookup_url_kwarg = "id"
+
+    def post(self, request, *args, **kwargs):
+        """测试获取数据"""
+        serializer = CategoryTestFetchDataSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = self.get_object()
+        if instance.type not in [CategoryType.MAD.value, CategoryType.LDAP.value]:
+            raise error_codes.TEST_CONNECTION_UNSUPPORTED
+
+        try:
+            syncer_cls = get_plugin_by_category(instance).syncer_cls
+        except Exception:
+            logger.exception(
+                "category<%s-%s-%s> load data adapter failed",
+                instance.type,
+                instance.display_name,
+                instance.id,
+            )
+            raise error_codes.LOAD_DATA_ADAPTER_FAILED
+
+        try:
+            syncer = syncer_cls(instance.id)
+        except Exception as e:
+            logger.exception(
+                "failed to test initialize category<%s-%s-%s>", instance.type, instance.display_name, instance.id
+            )
+            raise error_codes.TEST_CONNECTION_FAILED.f(f"请确保连接设置正确 {str(e)}")
+
+        try:
+            syncer.fetcher.test_fetch_data(serializer.validated_data)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception(
+                "failed to fetch data from category<%s-%s-%s>", instance.type, instance.display_name, instance.id
+            )
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise error_codes.TEST_FETCH_DATA_FAILED.f(error_detail)
+
+        return Response()
