@@ -164,13 +164,3 @@ class ProfilesViewSet(BkUserApiViewSet):
         api_instance = bkuser_sdk.BatchApi(self.get_api_client_by_request(request))
         api_instance.v2_batch_profiles_delete(body=validated_data)
         return Response()
-
-
-class ProfilesApiViewSet(BkUserApiViewSet):
-    """用户信息模块"""
-
-    permission_classes = [IsAuthenticated]
-    ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
-
-    def get(self, request, *args, **kwargs):
-        return self.call_through_api(request)

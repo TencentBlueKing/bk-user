@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from rest_framework import fields
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -37,3 +38,19 @@ class StartTimeEndTimeFilterBackend(BaseFilterBackend):
             queryset = queryset.filter(create_time__lte=end_time)
 
         return queryset
+
+
+class StringArrayField(fields.CharField):
+    """
+    String representation of an array field.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.delimiter = kwargs.get("delimiter", ",")
+
+    def to_internal_value(self, data):
+        # convert string to list
+        data = super().to_internal_value(data)
+        return [x for x in data.split(self.delimiter) if x]

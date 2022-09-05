@@ -133,3 +133,8 @@ class SettingsMetasViewSet(BkUserApiProxy):
 class DepartmentSearchViewSet(BkUserApiProxy):
     def get(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/departments/search/")
+
+
+class ProfilesSearchViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/profiles/search/")
