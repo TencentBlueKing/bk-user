@@ -440,4 +440,7 @@ export default {
   提醒时间: 'Remind the time',
   密码快到期前提醒_如选择_7天__则在密码到期七天前提醒一次: 'If you select 7 days, the password will be notified 7 days before the expiration date',
   通知方式: 'Inform the way',
+  开启账号登录: 'Enabling Account Login',
+  密码错误输入次数超过该值时_账号自动锁定: 'If the number of incorrect password attempts exceeds the threshold, the account is automatically locked',
+  锁定时间: 'Locking time',
 };
