@@ -187,10 +187,10 @@
           :tree-data-list="item.children"
           :tree-index="treeIndex + 1"
           :tree-search-result="treeSearchResult"
+          :current-category-id="currentCategoryId"
           @handleClickToggle="handleClickToggle"
           @handleClickTreeNode="handleClickTreeNode"
           @handleClickOption="handleClickOption"
-          @addChildDepartment="addChildDepartment"
           @handleRename="handleRename"
           @switchNodeOrder="switchNodeOrder"
           @deleteDepartment="deleteDepartment" />
@@ -213,6 +213,25 @@
             @keydown="handleKeydown"
           ></bk-input>
         </div>
+
+        <!-- 添加子组织 -->
+        <div v-if="addChildernShow && addChildernId === item.id" class="new-department">
+          <div class="folder-icon">
+            <span class="icon icon-user-file-close-01"></span>
+          </div>
+          <bk-input
+            v-focus
+            v-model="addChildernName"
+            ref="addRootChildren"
+            type="text"
+            font-size="medium"
+            class="adding-input"
+            :placeholder="$t('按Enter键确认添加')"
+            @enter="confirmAddChildren(item)"
+            @blur="cancelAddChildren"
+            @keydown="handleChildrenKeydown"
+          ></bk-input>
+        </div>
       </li>
     </ul>
   </div>
@@ -221,6 +240,7 @@
 
 <script>
 import { clipboardCopy } from '@/common/util';
+import mixin from '../mixin';
 export default {
   name: 'OrganizationTree',
   directives: {
@@ -233,6 +253,7 @@ export default {
       },
     },
   },
+  mixins: [mixin],
   props: {
     treeDataList: {
       type: Array,
@@ -246,6 +267,9 @@ export default {
       type: Object,
       default: null,
     },
+    currentCategoryId: {
+      type: Number,
+    },
   },
   data() {
     return {
@@ -253,6 +277,10 @@ export default {
       addDepartmentShow: false,
       addDepartmentParentId: '',
       addDepartmentName: '',
+      // 添加下级组织
+      addChildernShow: false,
+      addChildernId: '',
+      addChildernName: '',
     };
   },
   computed: {
@@ -338,10 +366,51 @@ export default {
     // 添加子组织
     addChild(item) {
       item.showAddChildTips = false;
+      this.addChildernShow = true;
+      this.addChildernId = item.id;
       if (this.treeIndex === 9) {
         return;
       }
-      this.$emit('addChildDepartment', item);
+    },
+    cancelAddChildren() {
+      this.addChildernShow = false;
+      this.addChildernId = '';
+      this.addChildernName = '';
+    },
+    handleChildrenKeydown(value, event) {
+      if (event.code === 'Escape') {
+        this.cancelAddChildren();
+      }
+    },
+    async confirmAddChildren(item) {
+      const name = this.addChildernName.trim();
+      if (!name) {
+        this.cancelAddChildren();
+        return;
+      }
+      try {
+        this.$emit('showTreeLoading');
+        const params = {
+          name: this.addChildernName,
+          parent: item.id,
+          category_id: this.currentCategoryId,
+        };
+        const res = await this.$store.dispatch('organization/addDepartment', params);
+        if (res.result === true) {
+          this.messageSuccess(`${this.$t('成功添加下级组织')} ${params.name}`);
+          if (item.showChildren) {
+            this.isAddChild = true;
+          }
+          item.has_children = true;
+          this.updateChildren(item);
+          this.cancelAddChildren();
+        }
+      } catch (e) {
+        console.warn(e);
+        this.$refs.addRootChildren[0].$el.getElementsByTagName('input')[0].focus();
+      } finally {
+        this.$emit('closeTreeLoading');
+      }
     },
     checkAddTips(item) {
       if (this.treeIndex === 9) {
@@ -350,9 +419,6 @@ export default {
     },
     closeAddTips(item) {
       item.showAddChildTips = false;
-    },
-    addChildDepartment(item) {
-      this.$emit('addChildDepartment', item);
     },
 
     // 添加根组织

@@ -33,7 +33,7 @@
         @hasError="handleHasError" />
       <div class="check-container">
         <bk-checkbox v-model="basicInfo.activated" class="king-checkbox">
-          {{$t('启用目录')}}
+          {{$t('开启账号登录')}}
         </bk-checkbox>
         <i class="hint-message icon-user--l" v-bk-tooltips="$t('启用目录提示')"></i>
       </div>
