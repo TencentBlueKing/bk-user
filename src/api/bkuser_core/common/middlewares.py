@@ -54,6 +54,10 @@ class DynamicResponseFormatMiddleware:
         if getattr(response, "from_exception", None):
             return response
 
+        # for excel export
+        if response.headers.get("Content-Type", "") == "application/ms-excel":
+            return response
+
         if should_use_raw_response(request, response):
             return force_response_raw_format(response)
         else:

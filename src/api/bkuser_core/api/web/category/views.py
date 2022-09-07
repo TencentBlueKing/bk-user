@@ -12,6 +12,7 @@ import logging
 
 from django.conf import settings
 from django.utils.translation import gettext as _
+from openpyxl import load_workbook
 from rest_framework import generics, status
 from rest_framework.response import Response
 
@@ -25,6 +26,8 @@ from .serializers import (
     CategoryTestFetchDataSerializer,
     CategoryUpdateSerializer,
 )
+from bkuser_core.api.web.export import ProfileExcelExporter
+from bkuser_core.api.web.field.serializers import FieldSerializer
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
@@ -33,6 +36,7 @@ from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.signals import post_category_create, post_category_delete
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.profiles.models import DynamicFieldInfo
 from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
@@ -253,3 +257,17 @@ class CategoryOperationTestFetchDataApi(generics.CreateAPIView):
             raise error_codes.TEST_FETCH_DATA_FAILED.f(error_detail)
 
         return Response()
+
+
+class CategoryOperationExportTemplateApi(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        """生成excel导入模板样例文件"""
+        # api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
+        # fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
+        fields = DynamicFieldInfo.objects.filter(enabled=True).all()
+        data = FieldSerializer(fields, many=True).data
+        exporter = ProfileExcelExporter(
+            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org_tmpl", data
+        )
+
+        return exporter.to_response()

@@ -94,5 +94,6 @@ class BkUserApiProxy(GenericViewSet):
         return HttpResponse(
             resp.content,
             status=resp.status_code,
-            content_type="application/json",
+            headers=resp.headers,
+            # content_type=resp.headers.get("Content-Type", "application/json"),
         )

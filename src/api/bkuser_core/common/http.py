@@ -83,8 +83,8 @@ def should_use_raw_response(req: "HttpRequest", resp: "Response") -> bool:
     if not req.path.startswith("/api/"):
         return True
 
-    if req.path.startswith("/api/v3/"):
-        return True
+    # if req.path.startswith("/api/v3/"):
+    #     return True
 
     # 是否强制使用原生格式
     if exist_force_raw_header(req):

@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 from django.urls.conf import path
 
 from .views import (
+    CategoriesExportTemplateViewSet,
     CategoriesTestConnectionViewSet,
     CategoriesTestFetchDataViewSet,
     CategoryListCreateViewSet,
@@ -83,6 +84,11 @@ urlpatterns = [
         "api/v2/categories/<int:id>/test_fetch_data/",
         CategoriesTestFetchDataViewSet.as_view({"post": "post"}),
         name="categories.test_fetch_data",
+    ),
+    path(
+        "api/v2/categories/<int:id>/export_template/",
+        CategoriesExportTemplateViewSet.as_view({"get": "get"}),
+        name="categories.export_template",
     ),
     # settings
     path("api/v2/settings/metas/", SettingsMetasViewSet.as_view({"get": "get"}), name="settings.metas"),

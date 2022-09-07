@@ -47,13 +47,4 @@ urlpatterns = [
         ),
         name="categories.export",
     ),
-    url(
-        r"^api/v2/categories/%s/export_template/$" % PVAR_CATEGORIES_ID,
-        views.CategoriesExportViewSet.as_view(
-            {
-                "get": "export_template",
-            }
-        ),
-        name="categories.export_template",
-    ),
 ]

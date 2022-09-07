@@ -40,6 +40,11 @@ urlpatterns = [
         name="category.operation.test_connection",
     ),
     path(
+        "<int:id>/operations/export_template/",
+        views.CategoryOperationExportTemplateApi.as_view(),
+        name="category.operation.export_template",
+    ),
+    path(
         "metas/",
         views.CategoryMetasListApi.as_view(),
         name="category.metas",

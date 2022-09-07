@@ -115,14 +115,3 @@ class CategoriesExportViewSet(BkUserApiViewSet):
         exporter.update_profiles(all_profiles)
 
         return exporter.to_response()
-
-    @inject_serializer(out=EmptySerializer, tags=["categories"])
-    def export_template(self, request, category_id):
-        """生成excel导入模板样例文件"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
-        exporter = ProfileExcelExporter(
-            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org_tmpl", fields
-        )
-
-        return exporter.to_response()

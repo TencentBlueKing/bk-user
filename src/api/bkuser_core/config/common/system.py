@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from environ import ImproperlyConfigured
 
 from . import env
+from .django_basic import MEDIA_ROOT
 
 # ==============================================================================
 # 密码配置
@@ -117,6 +118,14 @@ PROFILE_EXTRAS_SENSITIVE_FIELDS_WHITELIST_APP_CODES = tuple(
     env.list("PROFILE_EXTRAS_SENSITIVE_FIELDS_WHITELIST_APP_CODES", default=[])
 )
 
+##########
+# Export #
+##########
+EXPORT_ORG_TEMPLATE = MEDIA_ROOT + "/excel/export_org_tmpl.xlsx"
+EXPORT_LOGIN_TEMPLATE = MEDIA_ROOT + "/excel/export_login_tmpl.xlsx"
+
+# according to https://docs.qq.com/sheet/DTktLdUtmRldob21P?tab=uty37p&c=C3A0A0
+EXPORT_EXCEL_FILENAME = "bk_user_export"
 
 # ==============================================================================
 # 开发调试
