@@ -84,7 +84,7 @@ class BkUserBackend(ModelBackend):
                 BkUserCheckCodeEnum.PASSWORD_EXPIRED.value,
             ]:
                 raise PasswordNeedReset(message=message, reset_password_url=extra_values.get("reset_password_url"))
-            elif code == BkUserCheckCode.USER_IS_EXPIRED:
+            elif code == BkUserCheckCodeEnum.USER_IS_EXPIRED.value:
                 raise UserExpiredException
             raise AuthenticationError(message=message, redirect_to=extra_values.get("redirect_to"))
 
