@@ -21,7 +21,7 @@ urlpatterns = [
     ),
     path(
         "<int:id>/",
-        views.CategoryUpdateApi.as_view(),
+        views.CategoryUpdateDeleteApi.as_view(),
         name="category.update",
     ),
     path(

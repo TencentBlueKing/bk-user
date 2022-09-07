@@ -166,3 +166,19 @@ class CategoryListCreateViewSet(BkUserApiProxy):
 
     def create(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/categories/")
+
+
+class CategoryUpdateDeleteViewSet(BkUserApiProxy):
+    def update(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/categories/5/
+        # out: /api/v1/web/categories/5/
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+    def delete(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/categories/5/
+        # out: /api/v1/web/categories/5/
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        return self.do_proxy(request, rewrite_path=api_path)

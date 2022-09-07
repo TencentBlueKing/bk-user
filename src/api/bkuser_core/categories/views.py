@@ -31,7 +31,7 @@ from bkuser_core.categories.serializers import (
     CategorySyncSerializer,
     CreateCategorySerializer,
 )
-from bkuser_core.categories.signals import post_category_create, post_category_delete
+from bkuser_core.categories.signals import post_category_create
 from bkuser_core.categories.tasks import adapter_sync
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import CoreAPIError, error_codes
@@ -106,17 +106,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
-
-    def destroy(self, request, *args, **kwargs):
-        """
-        删除用户目录
-        """
-        instance = self.get_object()
-        if instance.default:
-            raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
-
-        post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
-        return super().destroy(request, *args, **kwargs)
 
     @audit_general_log(operate_type=OperationType.SYNC.value)
     @method_decorator(clear_cache_if_succeed)

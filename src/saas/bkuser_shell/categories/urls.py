@@ -21,18 +21,6 @@ urlpatterns = [
     # categories #
     ##############
     url(
-        r"^api/v2/categories/%s/$" % PVAR_CATEGORIES_ID,
-        views.CategoriesViewSet.as_view(
-            {
-                # DONE
-                "patch": "update",
-                # TODO
-                "delete": "delete",
-            }
-        ),
-        name="categories.actions",
-    ),
-    url(
         r"^api/v2/categories/%s/switch_order/%s/$" % (PVAR_CATEGORIES_ID, PVAR_ANOTHER_CATEGORIES_ID),
         views.CategoriesViewSet.as_view(
             {

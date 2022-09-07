@@ -31,11 +31,15 @@ from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, Man
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.categories.signals import post_category_create
+from bkuser_core.categories.signals import post_category_create, post_category_delete
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
+
+
+# FIXME: 统一加
+# @audit_general_log(operate_type=OperationType.DELETE.value)
 
 
 class CategoryMetasListApi(generics.ListAPIView):
@@ -139,7 +143,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
         return Response(CategoryDetailSerializer(instance).data, status=status.HTTP_201_CREATED)
 
 
-class CategoryUpdateApi(generics.RetrieveUpdateAPIView):
+class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [ManageCategoryPermission]
 
     queryset = ProfileCategory.objects.all()
@@ -152,6 +156,17 @@ class CategoryUpdateApi(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
 
         return Response(CategoryDetailSerializer(instance).data)
+
+    def delete(self, request, *args, **kwargs):
+        """删除用户目录"""
+        instance = self.get_object()
+        if instance.default:
+            raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
+
+        # 依赖 model 的 delete 方法, 执行软删除
+        instance.delete()
+        post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
+        return Response(status=status.HTTP_200_OK)
 
 
 class CategoryOperationTestConnectionApi(generics.CreateAPIView):

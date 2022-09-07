@@ -45,13 +45,6 @@ class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
 
         return Response(data=DetailCategorySerializer(api_response).data)
 
-    def update(self, request, *args, **kwargs):
-        api_path = BkUserApiProxy.get_api_path(request)
-        # in: /api/v2/categories/5/
-        # out: /api/v1/web/categories/5/
-        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
-        return self.do_proxy(request, rewrite_path=api_path)
-
     @inject_serializer(body_in=EmptySerializer, tags=["categories"])
     def switch_order(self, request, category_id, another_category_id):
         """更新组织顺序"""
@@ -68,12 +61,6 @@ class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
             api_instance.v2_categories_partial_update(lookup_value=categories[index].id, body=body)
 
         return Response(data={})
-
-    @inject_serializer(tags=["categories"])
-    def delete(self, request, category_id):
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-        api_instance.v2_categories_delete(lookup_value=category_id)
-        return Response()
 
 
 class CategoriesSyncViewSet(BkUserApiViewSet):

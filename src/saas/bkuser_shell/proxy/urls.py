@@ -16,6 +16,7 @@ from .views import (
     CategoriesTestFetchDataViewSet,
     CategoryListCreateViewSet,
     CategoryMetasViewSet,
+    CategoryUpdateDeleteViewSet,
     DepartmentSearchViewSet,
     FieldsManageableViewSet,
     FieldsOrderViewSet,
@@ -67,6 +68,11 @@ urlpatterns = [
     path("api/v2/categories_metas/", CategoryMetasViewSet.as_view({"get": "get"}), name="categories.metas"),
     path(
         "api/v2/categories/", CategoryListCreateViewSet.as_view({"get": "list", "post": "create"}), name="categories"
+    ),
+    path(
+        "api/v2/categories/<int:id>/",
+        CategoryUpdateDeleteViewSet.as_view({"patch": "update", "delete": "delete"}),
+        name="categories.actions",
     ),
     path(
         "api/v2/categories/<int:id>/test_connection/",
