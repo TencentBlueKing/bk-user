@@ -23,7 +23,6 @@ urlpatterns = [
     url(r"^", include("bkuser_shell.organization.urls")),
     url(r"^", include("bkuser_shell.config_center.urls")),
     url(r"^", include("bkuser_shell.password.urls")),
-    url(r"^", include("bkuser_shell.categories.urls")),
     url(r"^", include("bkuser_shell.config_center.urls")),
     url(r"^", include("bkuser_shell.audit.urls")),
     # TODO: version should be change to a different impl

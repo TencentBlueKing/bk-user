@@ -13,6 +13,7 @@ from django.urls.conf import path
 
 from .views import (
     CategoriesExportTemplateViewSet,
+    CategoriesExportViewSet,
     CategoriesSwitchOrderViewSet,
     CategoriesSyncViewSet,
     CategoriesTestConnectionViewSet,
@@ -91,6 +92,11 @@ urlpatterns = [
         "api/v2/categories/<int:id>/export_template/",
         CategoriesExportTemplateViewSet.as_view({"get": "get"}),
         name="categories.export_template",
+    ),
+    path(
+        "api/v2/categories/<int:id>/export/",
+        CategoriesExportViewSet.as_view({"get": "get"}),
+        name="categories.export",
     ),
     path(
         "api/v2/categories/<int:id>/sync/",

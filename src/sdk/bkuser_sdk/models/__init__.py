@@ -16,12 +16,6 @@ from __future__ import absolute_import
 # import models into model package
 from bkuser_sdk.models.auth_info_slz import AuthInfoSLZ
 from bkuser_sdk.models.category import Category
-from bkuser_sdk.models.category_meta_slz import CategoryMetaSLZ
-from bkuser_sdk.models.category_sync import CategorySync
-from bkuser_sdk.models.category_sync_response_slz import CategorySyncResponseSLZ
-from bkuser_sdk.models.category_test_connection import CategoryTestConnection
-from bkuser_sdk.models.category_test_fetch_data import CategoryTestFetchData
-from bkuser_sdk.models.create_category import CreateCategory
 from bkuser_sdk.models.create_fields import CreateFields
 from bkuser_sdk.models.create_profile import CreateProfile
 from bkuser_sdk.models.department import Department

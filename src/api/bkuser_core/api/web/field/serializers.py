@@ -31,7 +31,8 @@ class FieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = DynamicFieldInfo
         exclude = (
-            "display_name",
+            # NOTE: category export profile need the display_name => CategoryOperationExportApi
+            # "display_name",
             "display_name_en",
             "display_name_zh_hans",
             "map_method",

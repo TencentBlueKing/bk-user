@@ -16,12 +16,16 @@ from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
 PVAR_PROFILE_ID = r"(?P<%s>[a-z0-9-]+)" % LOOKUP_FIELD_NAME
 
 
+# FIXME: 统计调用量后, 删除
+
 urlpatterns = [
     re_path(
         r"^api/v2/categories/$",
         views.CategoryViewSet.as_view(
             {
+                # TODO: saas not used
                 "get": "list",
+                # TODO: saas not used
                 "post": "create",
             }
         ),
@@ -32,7 +36,9 @@ urlpatterns = [
         views.CategoryViewSet.as_view(
             {
                 "get": "retrieve",
+                # TODO: saas not used
                 "put": "update",
+                # TODO: saas not used
                 "patch": "partial_update",
             }
         ),
@@ -42,6 +48,7 @@ urlpatterns = [
         r"^api/v2/categories/%s/restoration/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
+                # TODO: saas not used
                 "post": "restoration",
             }
         ),

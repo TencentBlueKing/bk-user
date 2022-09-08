@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     "bkuser_shell.account",
     "bkuser_shell.organization",
     "bkuser_shell.config_center",
-    "bkuser_shell.categories",
     "bkuser_shell.apis",
     "bkuser_shell.version_log",
     "bkuser_shell.proxy",

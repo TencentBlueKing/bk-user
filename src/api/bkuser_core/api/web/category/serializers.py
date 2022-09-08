@@ -14,9 +14,13 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
+from bkuser_core.api.web.viewset import StringArrayField
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.departments.models import Department
+from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.v2.serializers import get_extras
 from bkuser_core.profiles.validators import validate_domain
 from bkuser_core.user_settings.models import Setting
 
@@ -151,6 +155,39 @@ class CategoryTestFetchDataSerializer(serializers.Serializer):
     organization_class = serializers.CharField()
     user_group_filter = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     user_member_of = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class CategoryExportSerializer(serializers.Serializer):
+    department_ids = StringArrayField(required=False, help_text="部门id列表")
+
+
+class CategoryExportProfileDepartmentSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    def get_full_name(self, obj):
+        return obj.full_name
+
+    class Meta:
+        model = Department
+        fields = ("id", "name", "order", "full_name")
+
+
+# FIXME: input slz and output slz should be separated
+
+
+class CategoryExportProfileSerializer(serializers.ModelSerializer):
+    departments = CategoryExportProfileDepartmentSerializer(many=True, required=False)
+    last_login_time = serializers.DateTimeField(required=False, read_only=True)
+
+    extras = serializers.SerializerMethodField(required=False)
+
+    def get_extras(self, obj) -> dict:
+        """尝试从 context 中获取默认字段值"""
+        return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
+
+    class Meta:
+        model = Profile
+        exclude = ["password"]
 
 
 class CategoryFileImportSerializer(serializers.Serializer):

@@ -34,8 +34,8 @@ def get_options_values_by_key(options: list, keys: list):
     values = []
     for k in keys:
         for pair in options:
-            if pair[0] == k:
-                values.append(pair[1])
+            if pair["id"] == k:
+                values.append(pair["value"])
 
     return values
 
@@ -107,7 +107,8 @@ class ProfileExcelExporter:
 
             exported_profile = ProfileExportSerializer(p).data
             for f_index, f in enumerate(self.fields):
-                field_name = f["name"]
+                # field_name = f["name"]
+                field_name = f["key"]
 
                 try:
                     if f["builtin"]:

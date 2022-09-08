@@ -21,6 +21,8 @@ from rest_framework.response import Response
 from .serializers import (
     CategoryCreateSerializer,
     CategoryDetailSerializer,
+    CategoryExportProfileSerializer,
+    CategoryExportSerializer,
     CategoryFileImportSerializer,
     CategoryMetaSerializer,
     CategorySettingListSerializer,
@@ -43,7 +45,8 @@ from bkuser_core.categories.plugins.local.exceptions import DataFormatError
 from bkuser_core.categories.signals import post_category_create, post_category_delete
 from bkuser_core.categories.tasks import adapter_sync
 from bkuser_core.common.error_codes import CoreAPIError, error_codes
-from bkuser_core.profiles.models import DynamicFieldInfo
+from bkuser_core.departments.models import Department, DepartmentThroughModel
+from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
@@ -271,13 +274,50 @@ class CategoryOperationExportTemplateApi(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         """生成excel导入模板样例文件"""
-        # api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        # fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
         data = FieldSerializer(fields, many=True).data
         exporter = ProfileExcelExporter(
             load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org_tmpl", data
         )
+
+        return exporter.to_response()
+
+
+class CategoryOperationExportApi(generics.RetrieveAPIView):
+    permission_classes = [ManageCategoryPermission]
+
+    queryset = ProfileCategory.objects.all()
+    lookup_url_kwarg = "id"
+
+    def get(self, request, *args, **kwargs):
+        """导出组织架构"""
+        slz = CategoryExportSerializer(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+
+        data = slz.validated_data
+        department_ids = data["department_ids"]
+
+        category = self.get_object()
+        if not category.type == CategoryType.LOCAL.value:
+            raise error_codes.LOCAL_CATEGORY_NEEDS_EXCEL_FILE
+
+        ids = Department.tree_objects.get_queryset_descendants(
+            queryset=Department.objects.filter(id__in=department_ids), include_self=True
+        ).values_list("id", flat=True)
+
+        profile_ids = DepartmentThroughModel.objects.filter(department_id__in=ids).values_list("profile_id", flat=True)
+        profiles = Profile.objects.filter(id__in=profile_ids)
+
+        # FIXME: profile slz should contains?
+        all_profiles = CategoryExportProfileSerializer(profiles, many=True).data
+        # all_profiles = ProfileSerializer(profiles, many=True).data
+
+        fields = DynamicFieldInfo.objects.filter(enabled=True).all()
+        fields_data = FieldSerializer(fields, many=True).data
+        exporter = ProfileExcelExporter(
+            load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org", fields_data
+        )
+        exporter.update_profiles(all_profiles)
 
         return exporter.to_response()
 

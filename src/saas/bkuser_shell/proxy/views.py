@@ -170,6 +170,16 @@ class CategoriesExportTemplateViewSet(BkUserApiProxy):
         return self.do_proxy(request, rewrite_path=api_path)
 
 
+class CategoriesExportViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        # in:  /api/v2/categories/3/export/
+        # out: /api/v1/web/categories/3/operations/export/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        api_path = api_path.replace("export/", "operations/export/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+
 class CategoryListCreateViewSet(BkUserApiProxy):
     def list(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/categories/")
