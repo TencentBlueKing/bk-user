@@ -192,3 +192,13 @@ class CategoryUpdateDeleteViewSet(BkUserApiProxy):
         # out: /api/v1/web/categories/5/
         api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class CategoriesSyncViewSet(BkUserApiProxy):
+    def post(self, request, *args, **kwargs):
+        # in: /api/v2/categories/5/sync/
+        # out: /api/v1/web/categories/5/operations/sync_or_import/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        api_path = api_path.replace("sync/", "operations/sync_or_import/")
+        return self.do_proxy(request, rewrite_path=api_path)

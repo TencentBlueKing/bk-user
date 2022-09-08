@@ -9,19 +9,23 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import List
 
 from django.conf import settings
 from django.utils.translation import gettext as _
 from openpyxl import load_workbook
 from rest_framework import generics, status
+from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
 from .serializers import (
     CategoryCreateSerializer,
     CategoryDetailSerializer,
+    CategoryFileImportSerializer,
     CategoryMetaSerializer,
     CategorySettingListSerializer,
     CategorySettingSerializer,
+    CategorySyncResponseSerializer,
     CategoryTestConnectionSerializer,
     CategoryTestFetchDataSerializer,
     CategoryUpdateSerializer,
@@ -31,11 +35,14 @@ from bkuser_core.api.web.field.serializers import FieldSerializer
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
-from bkuser_core.categories.constants import CategoryType
+from bkuser_core.categories.constants import CategoryType, SyncTaskType
+from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
 from bkuser_core.categories.loader import get_plugin_by_category
-from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.models import ProfileCategory, SyncTask
+from bkuser_core.categories.plugins.local.exceptions import DataFormatError
 from bkuser_core.categories.signals import post_category_create, post_category_delete
-from bkuser_core.common.error_codes import error_codes
+from bkuser_core.categories.tasks import adapter_sync
+from bkuser_core.common.error_codes import CoreAPIError, error_codes
 from bkuser_core.profiles.models import DynamicFieldInfo
 from bkuser_core.user_settings.models import Setting
 
@@ -260,6 +267,8 @@ class CategoryOperationTestFetchDataApi(generics.CreateAPIView):
 
 
 class CategoryOperationExportTemplateApi(generics.RetrieveAPIView):
+    permission_classes = [ManageCategoryPermission]
+
     def get(self, request, *args, **kwargs):
         """生成excel导入模板样例文件"""
         # api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
@@ -271,3 +280,101 @@ class CategoryOperationExportTemplateApi(generics.RetrieveAPIView):
         )
 
         return exporter.to_response()
+
+
+class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
+    permission_classes = [ManageCategoryPermission]
+    queryset = ProfileCategory.objects.filter(enabled=True)
+    lookup_url_kwarg = "id"
+
+    parser_classes: List = [
+        FileUploadParser,
+    ]
+
+    # @audit_general_log(operate_type=OperationType.SYNC.value)
+    def post(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.type == CategoryType.LOCAL.value:
+            return self._local_category_do_import(request, instance)
+        else:
+            return self._not_local_category_do_sync(request, instance)
+
+    # @audit_general_log(operate_type=OperationType.IMPORT.value)
+    def _local_category_do_import(self, request, instance):
+        """向本地目录导入数据文件"""
+        serializer = CategoryFileImportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            task_id = SyncTask.objects.register_task(
+                category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
+            ).id
+        except ExistsSyncingTaskError as e:
+            # FIXME: 这里不应该返回这个错误码
+            raise error_codes.LOAD_DATA_FAILED.f(str(e))
+
+        instance_id = instance.id
+        params = {"raw_data_file": serializer.validated_data["file"]}
+        try:
+            # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
+            adapter_sync(instance_id, operator=request.operator, task_id=task_id, **params)
+        except DataFormatError as e:
+            logger.exception(
+                "failed to sync data, data format error. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
+                instance_id,
+                request.operator,
+                task_id,
+                params,
+            )
+            raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
+        except Exception as e:
+            logger.exception(
+                "failed to sync data. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
+                instance_id,
+                request.operator,
+                task_id,
+                params,
+            )
+            raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
+
+        # FIXME: 导入报错的时候, 错误信息要能展示在前端
+        # => 目前由于底层db_sync批量失败的时候, 尝试one-by-one, 失败了也没有抛异常出来
+        return Response(CategorySyncResponseSerializer({"task_id": task_id}).data)
+
+    def _not_local_category_do_sync(self, request, instance):
+        """同步目录"""
+        try:
+            task_id = SyncTask.objects.register_task(
+                category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
+            ).id
+        except ExistsSyncingTaskError as e:
+            logger.exception(
+                "failed to register sync task. [instance.id=%s], operator=%s", instance.id, request.operator
+            )
+            raise error_codes.LOAD_DATA_FAILED.f(str(e))
+
+        try:
+            adapter_sync.apply_async(
+                kwargs={"instance_id": instance.id, "operator": request.operator, "task_id": task_id}
+            )
+        except FetchDataFromRemoteFailed as e:
+            logger.exception(
+                "failed to sync data. fetch data from remote fail. [instance.id=%s, operator=%s, task_id=%s]",
+                instance.id,
+                request.operator,
+                task_id,
+            )
+            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
+            raise error_codes.SYNC_DATA_FAILED.f(error_detail)
+        except CoreAPIError:
+            raise
+        except Exception as e:
+            logger.exception(
+                "failed to sync data. [instance.id=%s, operator=%s, task_id=%s]",
+                instance.id,
+                request.operator,
+                task_id,
+            )
+            raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
+
+        return Response(CategorySyncResponseSerializer({"task_id": task_id}).data)

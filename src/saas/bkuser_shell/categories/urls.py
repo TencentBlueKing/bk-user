@@ -30,15 +30,6 @@ urlpatterns = [
         name="categories.switch_order",
     ),
     url(
-        r"^api/v2/categories/%s/sync/$" % PVAR_CATEGORIES_ID,
-        views.CategoriesSyncViewSet.as_view(
-            {
-                "post": "sync",
-            }
-        ),
-        name="categories.sync",
-    ),
-    url(
         r"^api/v2/categories/%s/export/$" % PVAR_CATEGORIES_ID,
         views.CategoriesExportViewSet.as_view(
             {

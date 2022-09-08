@@ -12,7 +12,6 @@ from rest_framework.serializers import (
     BooleanField,
     CharField,
     DateTimeField,
-    FileField,
     IntegerField,
     JSONField,
     Serializer,
@@ -47,10 +46,6 @@ class DetailCategorySerializer(Serializer):
 
 class EmptySerializer(Serializer):
     pass
-
-
-class CategorySyncSerializer(Serializer):
-    file = FileField(required=False)
 
 
 class CategoryExportSerializer(Serializer):

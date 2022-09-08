@@ -9,11 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-import os
 
 from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from openpyxl import load_workbook
 
 import bkuser_sdk
@@ -22,11 +19,7 @@ from .constants import CategoryTypeEnum
 from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
-from bkuser_shell.categories.serializers import (
-    CategoryExportSerializer,
-    CategorySyncSerializer,
-    DetailCategorySerializer,
-)
+from bkuser_shell.categories.serializers import CategoryExportSerializer, DetailCategorySerializer
 from bkuser_shell.common.error_codes import error_codes
 from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
@@ -60,32 +53,6 @@ class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
             body = {"order": x_category.order}
             api_instance.v2_categories_partial_update(lookup_value=categories[index].id, body=body)
 
-        return Response(data={})
-
-
-class CategoriesSyncViewSet(BkUserApiViewSet):
-    serializer_class = DetailCategorySerializer
-    ACTION_ID = IAMAction.MANAGE_CATEGORY.value
-
-    @inject_serializer(body_in=CategorySyncSerializer, tags=["categories"])
-    def sync(self, request, category_id, validated_data):
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-        category = api_instance.v2_categories_read(lookup_field="id", lookup_value=category_id)
-
-        method = "v2_categories_sync"
-        params = {"body": {}}
-        if category.type == CategoryTypeEnum.LOCAL.value:
-            if not validated_data.get("file"):
-                raise error_codes.LOCAL_CATEGORY_NEEDS_EXCEL_FILE
-
-            raw_data_file = validated_data.get("file")
-            if raw_data_file:
-                path = default_storage.save("tmp/raw_data_file", ContentFile(raw_data_file.read()))
-                tmp_file = os.path.join(settings.MEDIA_ROOT, path)
-                params = {"raw_data_file": tmp_file}
-                method = "v2_categories_import_data_file"
-
-        getattr(api_instance, method)(lookup_value=category_id, **params)
         return Response(data={})
 
 

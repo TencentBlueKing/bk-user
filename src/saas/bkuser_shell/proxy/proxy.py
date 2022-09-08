@@ -31,7 +31,6 @@ def make_proxy_headers(username: str) -> dict:
         "X-Bk-App-Secret": settings.APP_TOKEN,
         "Accept-Language": get_language(),
         "X-Request-ID": local.request_id,
-        "Content-Type": "application/json",
     }
 
 
@@ -83,17 +82,37 @@ class BkUserApiProxy(GenericViewSet):
         url = settings.BK_USER_CORE_API_HOST + path
         params = request.GET.copy()
         data = request.data
+        # NOTE: can't read this, because drf readed it
+        # data = request.body
 
+        # make headers
         headers = make_proxy_headers(request.user.username)
+        headers["Content-Type"] = request.headers.get("Content-Type", "application/json")
+
         ip = self.get_client_ip(request)
         if ip:
             headers.update({settings.CLIENT_IP_FROM_SAAS_HEADER: ip})
 
-        resp = requests.request(method, url, params=params, json=data, headers=headers)
+        # do call
+        if "application/json" in request.headers.get("Content-Type", "application/json"):
+            # for json
+            resp = requests.request(method, url, params=params, json=data, headers=headers)
+        else:
+            # for file upload and others
+            if "file_name" in data:
+                file_name = data.pop("file_name")
+                headers["Content-Disposition"] = f"attachment; filename={file_name[0]}"
 
+            files = None
+            file = data.get("file", None)
+            if file:
+                data.pop("file")
+                files = {"file": file}
+            resp = requests.request(method, url, params=params, data=data, headers=headers, files=files)
+
+        # DONT'T set the content_type here!
         return HttpResponse(
             resp.content,
             status=resp.status_code,
             headers=resp.headers,
-            # content_type=resp.headers.get("Content-Type", "application/json"),
         )

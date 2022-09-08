@@ -151,3 +151,11 @@ class CategoryTestFetchDataSerializer(serializers.Serializer):
     organization_class = serializers.CharField()
     user_group_filter = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     user_member_of = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class CategoryFileImportSerializer(serializers.Serializer):
+    file = serializers.FileField(required=False)
+
+
+class CategorySyncResponseSerializer(serializers.Serializer):
+    task_id = serializers.CharField(help_text="task_id for the sync job.")

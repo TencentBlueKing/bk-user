@@ -9,32 +9,20 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from typing import List
 
 from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
-from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from bkuser_core.apis.v2.serializers import EmptySerializer
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet, AdvancedSearchFilter
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
-from bkuser_core.categories.constants import CategoryType, SyncTaskType
-from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
-from bkuser_core.categories.models import ProfileCategory, SyncTask
-from bkuser_core.categories.plugins.local.exceptions import DataFormatError
-from bkuser_core.categories.serializers import (
-    CategorySerializer,
-    CategorySyncResponseSLZ,
-    CategorySyncSerializer,
-    CreateCategorySerializer,
-)
+from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.serializers import CategorySerializer, CreateCategorySerializer
 from bkuser_core.categories.signals import post_category_create
-from bkuser_core.categories.tasks import adapter_sync
 from bkuser_core.common.cache import clear_cache_if_succeed
-from bkuser_core.common.error_codes import CoreAPIError, error_codes
+from bkuser_core.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
 
@@ -106,103 +94,3 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
-
-    @audit_general_log(operate_type=OperationType.SYNC.value)
-    @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": CategorySyncResponseSLZ()})
-    def sync(self, request, lookup_value):
-        """同步目录"""
-        instance: ProfileCategory = self.get_object()
-        self.check_object_permissions(request, instance)
-
-        if instance.type == CategoryType.LOCAL.value:
-            raise error_codes.LOCAL_CATEGORY_CANNOT_SYNC
-
-        try:
-            task_id = SyncTask.objects.register_task(
-                category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
-            ).id
-        except ExistsSyncingTaskError as e:
-            logger.exception(
-                "failed to register sync task. [instance.id=%s], operator=%s", instance.id, request.operator
-            )
-            raise error_codes.LOAD_DATA_FAILED.f(str(e))
-
-        try:
-            adapter_sync.apply_async(
-                kwargs={"instance_id": instance.id, "operator": request.operator, "task_id": task_id}
-            )
-        except FetchDataFromRemoteFailed as e:
-            logger.exception(
-                "failed to sync data. fetch data from remote fail. [instance.id=%s, operator=%s, task_id=%s]",
-                instance.id,
-                request.operator,
-                task_id,
-            )
-            error_detail = f" ({type(e).__module__}.{type(e).__name__}: {str(e)})"
-            raise error_codes.SYNC_DATA_FAILED.f(error_detail)
-        except CoreAPIError:
-            raise
-        except Exception as e:
-            logger.exception(
-                "failed to sync data. [instance.id=%s, operator=%s, task_id=%s]",
-                instance.id,
-                request.operator,
-                task_id,
-            )
-            raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
-
-        return Response({"task_id": task_id})
-
-
-class CategoryFileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = ProfileCategory.objects.filter(enabled=True)
-    serializer_class = CategorySerializer
-    parser_classes: List = [MultiPartParser, FormParser]
-    lookup_field = "id"
-    ordering = ["-create_time"]
-
-    @audit_general_log(operate_type=OperationType.IMPORT.value)
-    @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(request_body=CategorySyncSerializer, responses={"200": EmptySerializer()})
-    def import_data_file(self, request, lookup_value):
-        """向本地目录导入数据文件"""
-        serializer = CategorySyncSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = self.get_object()
-        self.check_object_permissions(request, instance)
-
-        if instance.type != CategoryType.LOCAL.value:
-            raise error_codes.CATEGORY_CANNOT_IMPORT_BY_FILE
-
-        try:
-            task_id = SyncTask.objects.register_task(
-                category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
-            ).id
-        except ExistsSyncingTaskError as e:
-            raise error_codes.LOAD_DATA_FAILED.f(str(e))
-
-        params = {"raw_data_file": serializer.validated_data["raw_data_file"]}
-        try:
-            # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
-            adapter_sync(lookup_value, operator=request.operator, task_id=task_id, **params)
-        except DataFormatError as e:
-            logger.exception(
-                "failed to sync data, dataformat error. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
-                lookup_value,
-                request.operator,
-                task_id,
-                params,
-            )
-            raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
-        except Exception as e:
-            logger.exception(
-                "failed to sync data. [instance_id=%s, operator=%s, task_id=%s, params=%s]",
-                lookup_value,
-                request.operator,
-                task_id,
-                params,
-            )
-            raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
-
-        return Response()

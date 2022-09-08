@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import List
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework.serializers import BooleanField, CharField, FileField, Serializer, SerializerMethodField
+from rest_framework.serializers import BooleanField, CharField, SerializerMethodField
 from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer
@@ -49,11 +49,3 @@ class CreateCategorySerializer(CategorySerializer):
             raise ValidationError(_("登陆域为 {} 的用户目录已存在").format(data["domain"]))
 
         return super().validate(data)
-
-
-class CategorySyncSerializer(Serializer):
-    raw_data_file = FileField()
-
-
-class CategorySyncResponseSLZ(Serializer):
-    task_id = CharField(help_text="task_id for the sync job.")

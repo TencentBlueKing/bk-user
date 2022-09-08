@@ -45,6 +45,11 @@ urlpatterns = [
         name="category.operation.export_template",
     ),
     path(
+        "<int:id>/operations/sync_or_import/",
+        views.CategoryOperationSyncOrImportApi.as_view(),
+        name="category.operation.sync_or_import",
+    ),
+    path(
         "metas/",
         views.CategoryMetasListApi.as_view(),
         name="category.metas",

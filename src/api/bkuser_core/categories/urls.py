@@ -47,22 +47,4 @@ urlpatterns = [
         ),
         name="categories.restoration",
     ),
-    re_path(
-        r"^api/v2/categories/%s/sync/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                "post": "sync",
-            }
-        ),
-        name="categories.sync",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/import/$" % PVAR_PROFILE_ID,
-        views.CategoryFileViewSet.as_view(
-            {
-                "post": "import_data_file",
-            }
-        ),
-        name="categories.import",
-    ),
 ]
