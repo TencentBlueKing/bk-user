@@ -287,7 +287,10 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # a summary of creating profile
         create_summary = {"request": request}
         # 生成密码
-        raw_password, should_notify = make_password_by_config(serializer.validated_data["category_id"], return_raw=True)
+        raw_password, should_notify = make_password_by_config(
+            serializer.validated_data["category_id"],
+            return_raw=True,
+        )
         serializer.validated_data["password"] = make_password(raw_password)
         create_summary.update({"should_notify": should_notify, "raw_password": raw_password})
 
@@ -311,7 +314,12 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             raise error_codes.SAVE_USER_INFO_FAILED
 
         # 善后工作
-        post_profile_create.send(sender=self, instance=instance, operator=request.operator, extra_values=create_summary)
+        post_profile_create.send(
+            sender=self,
+            instance=instance,
+            operator=request.operator,
+            extra_values=create_summary,
+        )
         return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
 
     @method_decorator(clear_cache_if_succeed)
