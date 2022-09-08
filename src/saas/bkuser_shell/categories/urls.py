@@ -13,22 +13,12 @@ from django.conf.urls import url
 from . import views
 
 PVAR_CATEGORIES_ID = r"(?P<category_id>[0-9]+)"
-PVAR_ANOTHER_CATEGORIES_ID = r"(?P<another_category_id>[a-z0-9-]+)"
 
 
 urlpatterns = [
     ##############
     # categories #
     ##############
-    url(
-        r"^api/v2/categories/%s/switch_order/%s/$" % (PVAR_CATEGORIES_ID, PVAR_ANOTHER_CATEGORIES_ID),
-        views.CategoriesViewSet.as_view(
-            {
-                "patch": "switch_order",
-            }
-        ),
-        name="categories.switch_order",
-    ),
     url(
         r"^api/v2/categories/%s/export/$" % PVAR_CATEGORIES_ID,
         views.CategoriesExportViewSet.as_view(

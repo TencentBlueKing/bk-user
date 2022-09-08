@@ -28,13 +28,3 @@ class CategoryTypeEnum(Enum):
         (CUSTOM, _("自定义目录")),
         (PLUGGABLE, "可插拔目录"),
     )
-
-
-class CategoryStatus(Enum):
-    NORMAL = "normal"
-    INACTIVE = "inactive"
-
-    _choices_labels = (
-        (NORMAL, _("正常")),
-        (INACTIVE, _("停用")),
-    )

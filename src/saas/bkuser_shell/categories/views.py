@@ -19,41 +19,11 @@ from .constants import CategoryTypeEnum
 from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
-from bkuser_shell.categories.serializers import CategoryExportSerializer, DetailCategorySerializer
+from bkuser_shell.categories.serializers import CategoryExportSerializer
 from bkuser_shell.common.error_codes import error_codes
-from bkuser_shell.common.response import Response
 from bkuser_shell.common.serializers import EmptySerializer
-from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
-
-
-class CategoriesViewSet(BkUserApiViewSet, BkUserApiProxy):
-    serializer_class = DetailCategorySerializer
-    ACTION_ID = IAMAction.MANAGE_CATEGORY.value
-
-    def get(self, request, category_id):
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-        api_response = api_instance.v2_categories_read(lookup_field="id", lookup_value=category_id)
-
-        return Response(data=DetailCategorySerializer(api_response).data)
-
-    @inject_serializer(body_in=EmptySerializer, tags=["categories"])
-    def switch_order(self, request, category_id, another_category_id):
-        """更新组织顺序"""
-        api_instance = bkuser_sdk.CategoriesApi(self.get_api_client_by_request(request))
-
-        categories = []
-        for x_id in [category_id, another_category_id]:
-            categories.append(api_instance.v2_categories_read(x_id))
-
-        # 交换 order 字段
-        category_a, category_b = categories
-        for index, x_category in enumerate([category_b, category_a]):
-            body = {"order": x_category.order}
-            api_instance.v2_categories_partial_update(lookup_value=categories[index].id, body=body)
-
-        return Response(data={})
 
 
 class CategoriesExportViewSet(BkUserApiViewSet):

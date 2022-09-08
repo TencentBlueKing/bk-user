@@ -13,6 +13,7 @@ from django.urls.conf import path
 
 from .views import (
     CategoriesExportTemplateViewSet,
+    CategoriesSwitchOrderViewSet,
     CategoriesSyncViewSet,
     CategoriesTestConnectionViewSet,
     CategoriesTestFetchDataViewSet,
@@ -95,6 +96,11 @@ urlpatterns = [
         "api/v2/categories/<int:id>/sync/",
         CategoriesSyncViewSet.as_view({"post": "post"}),
         name="categories.sync",
+    ),
+    path(
+        "api/v2/categories/<int:id>/switch_order/<int:another_id>/",
+        CategoriesSwitchOrderViewSet.as_view({"patch": "patch"}),
+        name="categories.switch_order",
     ),
     # settings
     path("api/v2/settings/metas/", SettingsMetasViewSet.as_view({"get": "get"}), name="settings.metas"),

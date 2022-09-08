@@ -378,3 +378,21 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
             raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
 
         return Response(CategorySyncResponseSerializer({"task_id": task_id}).data)
+
+
+class CategoryOperationSwitchOrderApi(generics.UpdateAPIView):
+    permission_classes = [ManageCategoryPermission]
+    queryset = ProfileCategory.objects.filter(enabled=True)
+    lookup_url_kwarg = "id"
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        another_category = ProfileCategory.objects.get(id=kwargs["another_id"])
+
+        # switch
+        instance.order, another_category.order = another_category.order, instance.order
+        instance.save(update_fields=["order"])
+        another_category.save(update_fields=["order"])
+
+        return Response()

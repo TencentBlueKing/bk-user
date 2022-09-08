@@ -202,3 +202,13 @@ class CategoriesSyncViewSet(BkUserApiProxy):
         api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
         api_path = api_path.replace("sync/", "operations/sync_or_import/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class CategoriesSwitchOrderViewSet(BkUserApiProxy):
+    def patch(self, request, *args, **kwargs):
+        # in: /api/v2/categories/5/switch_order/13/
+        # out: /api/v1/web/categories/5/operations/switch_order/13/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        api_path = api_path.replace("switch_order/", "operations/switch_order/")
+        return self.do_proxy(request, rewrite_path=api_path)

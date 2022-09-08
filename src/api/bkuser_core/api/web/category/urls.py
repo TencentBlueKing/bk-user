@@ -50,6 +50,11 @@ urlpatterns = [
         name="category.operation.sync_or_import",
     ),
     path(
+        "<int:id>/operations/switch_order/<int:another_id>/",
+        views.CategoryOperationSwitchOrderApi.as_view(),
+        name="category.operation.switch_order",
+    ),
+    path(
         "metas/",
         views.CategoryMetasListApi.as_view(),
         name="category.metas",

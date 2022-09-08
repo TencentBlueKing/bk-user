@@ -8,44 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.serializers import (
-    BooleanField,
-    CharField,
-    DateTimeField,
-    IntegerField,
-    JSONField,
-    Serializer,
-    SerializerMethodField,
-)
-
-from bkuser_shell.categories.constants import CategoryStatus
-
-
-class DetailCategorySerializer(Serializer):
-    id = IntegerField(required=False)
-    domain = CharField()
-    display_name = CharField()
-    default = BooleanField()
-    enabled = BooleanField()
-    type = CharField()
-    description = CharField()
-    create_time = DateTimeField()
-    update_time = DateTimeField()
-    last_synced_time = DateTimeField()
-    unfilled_namespaces = JSONField()
-    configured = BooleanField(help_text="是否配置就绪")
-    syncing = BooleanField(help_text="是否正在同步")
-    activated = SerializerMethodField()
-
-    def get_activated(self, obj) -> bool:
-        if isinstance(obj, dict):
-            return obj["status"] == CategoryStatus.NORMAL.value
-        else:
-            return getattr(obj, "status") == CategoryStatus.NORMAL.value
-
-
-class EmptySerializer(Serializer):
-    pass
+from rest_framework.serializers import CharField, Serializer
 
 
 class CategoryExportSerializer(Serializer):
