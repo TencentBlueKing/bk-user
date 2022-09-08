@@ -354,7 +354,8 @@ export default {
         this.$emit('closeBarLoading');
       }
     },
-    closeResetDialog() {
+    closeResetDialog(e) {
+      if (e.target.innerText === '重置密码') return;
       this.isShowReset = false;
     },
     // 查看密码

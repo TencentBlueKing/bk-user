@@ -899,7 +899,10 @@ class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field: str = "name"
     cache_name = "profiles"
 
-    iam_filter_actions = ("list",)
+    # FIXME: 这里不能开启权限, SaaS 一大堆地方查, 并且dynamic_fields是底层的服务, 查看部门等都会调用, 加上权限由于用户未申请会直接报错
+    # NOTE: 当前正在重构的地方会去除这种权限控制方式
+    # 先注释, 非敏感数据
+    # iam_filter_actions = ("list",)
 
     def get_serializer(self, *args, **kwargs):
         if self.action in ["create"]:
