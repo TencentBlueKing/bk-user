@@ -25,7 +25,7 @@ from django.utils.translation import ugettext as _
 from bklogin.bkaccount.models import BkToken, LoginLog
 from bklogin.common.encrypt import salt
 from bklogin.common.log import logger
-from bklogin.common.utils.basic import escape_html_return_msg
+from bklogin.common.utils import escape_html_return_msg
 
 BK_COOKIE_AGE = settings.BK_COOKIE_AGE
 BK_INACTIVE_COOKIE_AGE = settings.BK_INACTIVE_COOKIE_AGE

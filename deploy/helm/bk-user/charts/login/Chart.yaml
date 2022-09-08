@@ -1,6 +1,0 @@
-apiVersion: v2
-name: login
-description: login module for blueking
-type: application
-version: 1.0.1
-appVersion: "v2.3.6-beta.3"
