@@ -173,9 +173,15 @@ class CategoryExportProfileDepartmentSerializer(serializers.ModelSerializer):
 
 
 # FIXME: input slz and output slz should be separated
+class CategoryExportProfileLeaderSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False, read_only=True)
+    username = serializers.CharField(read_only=True)
+    display_name = serializers.CharField(read_only=True)
 
 
 class CategoryExportProfileSerializer(serializers.ModelSerializer):
+    # 登录日志导出需要用到 bkuser_core.api.web.audit.serializers
+    leader = CategoryExportProfileLeaderSerializer(many=True)
     departments = CategoryExportProfileDepartmentSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
 

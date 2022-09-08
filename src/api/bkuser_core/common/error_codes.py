@@ -164,5 +164,6 @@ error_codes.add_codes(
         ErrorCode("ACTION_UNKNOWN", _("未知权限项")),
         ErrorCode("ACTION_ID_MISSING", _("权限项缺失")),
         ErrorCode("CANNOT_DELETE_DEPARTMENT", _("不能删除部门")),
+        ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
     ]
 )

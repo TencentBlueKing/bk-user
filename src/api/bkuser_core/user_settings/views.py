@@ -146,6 +146,7 @@ class SettingViewSet(AdvancedModelViewSet):
                 )
         return instance
 
+    # FIXME: remove this then remove bkuser_global.drf_crown
     @inject_serializer(body_in=SettingUpdateSerializer(), out=serializers.SettingSerializer)
     def update(self, request, validated_data, *args, **kwargs):
         return self._update(request, validated_data)

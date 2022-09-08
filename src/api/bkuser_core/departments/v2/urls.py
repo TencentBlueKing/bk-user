@@ -75,6 +75,7 @@ urlpatterns = [
     #########
     # Batch #
     #########
+    # TODO: saas has removed this api
     url(
         r"^api/v2/batch/departments/profiles/$",
         views.BatchDepartmentsViewSet.as_view(

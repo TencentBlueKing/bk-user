@@ -29,6 +29,7 @@ from .views import (
     GeneralLogViewSet,
     HealthzViewSet,
     LoginInfoViewSet,
+    LoginLogExportViewSet,
     LoginLogViewSet,
     ProfilesSearchViewSet,
     SettingsMetasViewSet,
@@ -52,6 +53,7 @@ urlpatterns = [
     # audit logs
     path("api/v2/audit/operation_logs/", GeneralLogViewSet.as_view({"get": "list"}), name="operation_logs"),
     path("api/v2/audit/login_log/", LoginLogViewSet.as_view({"get": "list"}), name="login_log"),
+    path("api/v2/audit/login_log/export/", LoginLogExportViewSet.as_view({"get": "list"}), name="login_log.export"),
     # fields
     path("api/v2/fields/manageable/", FieldsManageableViewSet.as_view({"get": "get"}), name="fields.manageable"),
     path("api/v2/fields/visible/", FieldsVisibleViewSet.as_view({"patch": "patch"}), name="fields.visible"),

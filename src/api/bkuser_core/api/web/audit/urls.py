@@ -24,4 +24,9 @@ urlpatterns = [
         views.LoginLogListApi.as_view(),
         name="audit.login_log.list",
     ),
+    path(
+        "logs/types/login/operations/export/",
+        views.LoginLogExportApi.as_view(),
+        name="audit.login_log.export",
+    ),
 ]

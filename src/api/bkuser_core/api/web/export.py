@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from typing import TYPE_CHECKING, List
 
 from django.http import HttpResponse
@@ -122,7 +123,10 @@ class ProfileExcelExporter:
                         continue
 
                     try:
-                        raw_value = extra_infos[str(p["id"])][field_name]
+                        extra = extra_infos.get(p["id"]) or extra_infos.get(str(p["id"])) or {}
+                        raw_value = extra[field_name]
+                        if isinstance(raw_value, datetime):
+                            raw_value = raw_value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                     except KeyError:
                         logger.exception("failed to get value from extra_infos field<%s>, key missing", f)
                         continue

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 # flake8: noqa
 # import apis into api package
-from bkuser_sdk.api.audit_api import AuditApi
 from bkuser_sdk.api.batch_api import BatchApi
 from bkuser_sdk.api.categories_api import CategoriesApi
 from bkuser_sdk.api.departments_api import DepartmentsApi
