@@ -29,9 +29,6 @@ from bkuser_sdk.models.extra_info_slz import ExtraInfoSLZ
 from bkuser_sdk.models.general_log import GeneralLog
 from bkuser_sdk.models.leader import Leader
 from bkuser_sdk.models.leader_edge import LeaderEdge
-from bkuser_sdk.models.login_batch_query import LoginBatchQuery
-from bkuser_sdk.models.login_log import LoginLog
-from bkuser_sdk.models.login_upsert import LoginUpsert
 from bkuser_sdk.models.profile import Profile
 from bkuser_sdk.models.profile_login import ProfileLogin
 from bkuser_sdk.models.profile_minimal import ProfileMinimal
