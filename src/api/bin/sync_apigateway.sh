@@ -38,7 +38,7 @@ if_error_then_exit $? "sync_resource_docs_by_archive fail"
 log_info "done sync_resource_docs_by_archive"
 
 log_info "do create_version_and_release_apigw..."
-python manage.py create_version_and_release_apigw -f /app/resources/apigateway/definition.yaml
+python manage.py create_version_and_release_apigw -f /app/resources/apigateway/definition.yaml --generate-sdks
 if_error_then_exit $? "create_version_and_release_apigw fail"
 log_info "done create_version_and_release_apigw"
 

@@ -11,15 +11,6 @@ specific language governing permissions and limitations under the License.
 """
 
 
-def enum(**enums):
-    return type("Enum", (), enums)
-
-
-DATETIME_FORMAT_STRING = "%Y-%m-%d %H:%M:%S"
-
-LICENSE_VAILD_CACHE_KEY = "BK_LICENSE_VALID"
-
-
 # 用户管理与登录自身提供的用户信息字段KeyMap
 USERMGR_BKLOGIN_FIELD_MAP = {
     "display_name": "chname",

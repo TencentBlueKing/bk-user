@@ -13,7 +13,6 @@ specific language governing permissions and limitations under the License.
 
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import ugettext as _
 
 
 class LoginLogManager(models.Manager):
@@ -31,6 +30,6 @@ class LoginLogManager(models.Manager):
                 login_time=timezone.now(),
                 app_id=app_id,
             ).save()
-            return (True, _("记录成功"))
+            return (True, "login record saved success")
         except Exception:
-            return (False, _("用户登录记录失败"))
+            return (False, "login record saved failed")
