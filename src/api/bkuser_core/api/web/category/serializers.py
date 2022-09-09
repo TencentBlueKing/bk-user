@@ -208,3 +208,11 @@ class CategoryNamespaceSettingUpdateSerializer(serializers.Serializer):
     key = serializers.CharField()
     value = serializers.JSONField()
     enabled = serializers.BooleanField(required=False, default=True)
+
+
+class CategorySettingCreateSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    value = serializers.JSONField()
+    # namespace = serializers.CharField(required=False)
+    # region = serializers.CharField()
+    # enabled = serializers.BooleanField(required=False, default=True)

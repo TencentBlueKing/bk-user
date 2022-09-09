@@ -26,6 +26,7 @@ from .serializers import (
     CategoryFileImportSerializer,
     CategoryMetaSerializer,
     CategoryNamespaceSettingUpdateSerializer,
+    CategorySettingCreateSerializer,
     CategorySettingListSerializer,
     CategorySettingSerializer,
     CategorySyncResponseSerializer,
@@ -113,7 +114,9 @@ class CategorySettingListApi(generics.ListAPIView):
         return Setting.objects.filter(meta__in=metas, category_id=category_id)
 
 
-class CategorySettingNamespaceListUpdateApi(generics.ListAPIView, generics.UpdateAPIView):
+class CategorySettingNamespaceListCreateUpdateApi(
+    generics.ListAPIView, generics.UpdateAPIView, generics.CreateAPIView
+):
     serializer_class = CategorySettingSerializer
     permission_classes = [ManageCategoryPermission]
 
@@ -124,6 +127,38 @@ class CategorySettingNamespaceListUpdateApi(generics.ListAPIView, generics.Updat
         metas = list_setting_metas(category.type, None, namespace)
 
         return Setting.objects.filter(meta__in=metas, category_id=category_id)
+
+    def post(self, request, *args, **kwargs):
+        # 批量创建或更新
+        serializer = CategorySettingCreateSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        ns_settings = {d["key"]: d for d in serializer.validated_data}
+
+        # got metas
+        category_id = self.kwargs["id"]
+        category = get_category(category_id)
+        namespace = self.kwargs["namespace"]
+        metas = list_setting_metas(category.type, None, namespace)
+        metas_dict = {m.key: m for m in metas}
+
+        for key, setting in ns_settings.items():
+            if key not in metas_dict:
+                raise error_codes.CANNOT_FIND_SETTING_META.format(
+                    f"can't find key={key} in namespace={namespace}", replace=True
+                )
+            meta = metas_dict[key]
+
+            try:
+                # 暂时忽略已创建报错
+                setting, _ = Setting.objects.update_or_create(meta=meta, value=setting["value"], category=category)
+            except Exception:
+                logger.exception(
+                    "cannot create setting. [meta=%s, value=%s, category=%s]", metas[0], setting["value"], category
+                )
+                raise error_codes.CANNOT_CREATE_SETTING
+
+        settings = Setting.objects.filter(meta__in=metas, category_id=category_id).all()
+        return Response(self.get_serializer_class()(settings, many=True).data)
 
     def put(self, request, *args, **kwargs):
         # 批量更新

@@ -230,7 +230,7 @@ class CategoriesSwitchOrderViewSet(BkUserApiProxy):
 
 
 class DepartmentRetrieveUpdateDeleteViewSet(BkUserApiProxy):
-    def do(self, request, *args, **kwargs):
+    def request(self, request, *args, **kwargs):
         api_path = BkUserApiProxy.get_api_path(request)
         # in: /api/v2/departments/1/
         # out: /api/v1/web/departments/1/
@@ -245,4 +245,13 @@ class DepartmentSwitchOrderViewSet(BkUserApiProxy):
         api_path = BkUserApiProxy.get_api_path(request)
         api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
         api_path = api_path.replace("switch_order/", "operations/switch_order/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+
+class CategorySettingsNamespaceViewSet(BkUserApiProxy):
+    def request(self, request, *args, **kwargs):
+        # in: api/v2/categories/%s/settings/namespaces/%s/
+        # out: api/v1/web/categories/%s/settings/namespaces/%s/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
         return self.do_proxy(request, rewrite_path=api_path)

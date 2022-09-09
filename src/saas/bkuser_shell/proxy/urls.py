@@ -20,6 +20,7 @@ from .views import (
     CategoriesTestFetchDataViewSet,
     CategoryListCreateViewSet,
     CategoryMetasViewSet,
+    CategorySettingsNamespaceViewSet,
     CategoryUpdateDeleteViewSet,
     DepartmentRetrieveUpdateDeleteViewSet,
     DepartmentSearchViewSet,
@@ -112,6 +113,11 @@ urlpatterns = [
         CategoriesSwitchOrderViewSet.as_view({"patch": "patch"}),
         name="categories.switch_order",
     ),
+    path(
+        "api/v2/categories/<int:id>/settings/namespaces/<str:namespace>/",
+        CategorySettingsNamespaceViewSet.as_view({"get": "request", "post": "request", "put": "request"}),
+        name="category.settings.namespaces",
+    ),
     # settings
     path("api/v2/settings/metas/", SettingsMetasViewSet.as_view({"get": "get"}), name="settings.metas"),
     # departments
@@ -119,7 +125,7 @@ urlpatterns = [
     path("api/v3/profiles/", ProfilesSearchViewSet.as_view({"get": "get"}), name="profiles.search"),
     path(
         "api/v2/departments/<int:id>/",
-        DepartmentRetrieveUpdateDeleteViewSet.as_view({"get": "do", "delete": "do", "patch": "do"}),
+        DepartmentRetrieveUpdateDeleteViewSet.as_view({"get": "request", "delete": "request", "patch": "request"}),
         name="department.actions",
     ),
     path(

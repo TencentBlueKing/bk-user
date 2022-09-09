@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.conf.urls import url
 
-from .views import SettingsNamespaceViewSet, SettingsViewSet
+from .views import SettingsViewSet
 
 PVAR_SETTING_ID = r"(?P<setting_id>[0-9]+)"
 PVAR_CATEGORY_ID = r"(?P<category_id>[0-9]+)"
@@ -41,13 +41,5 @@ urlpatterns = [
             }
         ),
         name="config_center.settings.actions",
-    ),
-    ####################################
-    # 针对 namespace 的批量 settings 操作 #
-    ####################################
-    url(
-        r"^api/v2/categories/%s/settings/namespaces/%s/$" % (PVAR_CATEGORY_ID, PVAR_NAMESPACE_NAME),
-        SettingsNamespaceViewSet.as_view({"get": "list", "post": "create", "put": "update"}),
-        name="config_center.settings.namespaces",
     ),
 ]

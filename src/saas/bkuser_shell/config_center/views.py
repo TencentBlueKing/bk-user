@@ -13,10 +13,9 @@ import logging
 import bkuser_sdk
 from . import serializers
 from bkuser_global.drf_crown import inject_serializer
-from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.response import Response
-from bkuser_shell.config_center.serializers import SettingMetaSerializer, SettingSerializer
+from bkuser_shell.config_center.serializers import SettingSerializer
 from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
@@ -60,55 +59,3 @@ class SettingsViewSet(BkUserApiViewSet, BkUserApiProxy):
         api_instance.v2_settings_delete(lookup_value=setting_id, lookup_field="id")
 
         return Response(data={})
-
-
-class SettingsNamespaceViewSet(BkUserApiViewSet, BkUserApiProxy):
-    """namespace 维度批量 settings 接口"""
-
-    serializer_class = SettingMetaSerializer
-
-    # 这里不能通用配置, 本质上是调用 v2_settings方法, 已经在后台通过category_id的permission做检查
-    # ACTION_ID = IAMAction.MANAGE_CATEGORY.value
-
-    def list(self, request, *args, **kwargs):
-        # in: api/v2/categories/%s/settings/namespaces/%s/
-        # out: api/v1/web/categories/%s/settings/namespaces/%s/
-        api_path = BkUserApiProxy.get_api_path(request)
-        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
-        return self.do_proxy(request, rewrite_path=api_path)
-
-    def update(self, request, *args, **kwargs):
-        # in: api/v2/categories/%s/settings/namespaces/%s/
-        # out: api/v1/web/categories/%s/settings/namespaces/%s/
-        api_path = BkUserApiProxy.get_api_path(request)
-        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
-        return self.do_proxy(request, rewrite_path=api_path)
-
-    @inject_serializer(
-        body_in=serializers.SettingSerializer(many=True),
-        out=serializers.SettingSerializer(many=True),
-        tags=["config_center"],
-    )
-    def create(self, request, category_id, namespace_name, validated_data):
-        """批量创建一个 namespace 下的配置"""
-        results = []
-        # TODO:  后续改为批量接口
-        api_instance = bkuser_sdk.SettingsApi(self.get_api_client_by_request(request))
-        for setting_info in validated_data:
-            # 兼容前端不传 ns 的情况
-            setting_info["category_id"] = category_id
-            if not setting_info.get("namespace", None):
-                setting_info["namespace"] = namespace_name
-
-            try:
-                api_response = api_instance.v2_settings_create(setting_info)
-            except ApiException:
-                logger.exception(
-                    "创建配置信息<%s-%s> 失败. [category_id=%s]", namespace_name, setting_info["key"], category_id
-                )
-                continue
-
-            if api_response:
-                results.append(api_response)
-
-        return results

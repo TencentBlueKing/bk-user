@@ -33,22 +33,3 @@ class SettingSerializer(serializers.Serializer):
 class UpdateSettingSerializer(serializers.Serializer):
     value = serializers.JSONField(required=False)
     enabled = serializers.BooleanField(required=False)
-
-
-#######################
-# Settings  Namespace #
-#######################
-
-
-class ListNamespaceSettingsSerializer(serializers.Serializer):
-    region = serializers.CharField(required=False, default="default")
-
-
-class SettingMetaSerializer(serializers.Serializer):
-    key = serializers.CharField()
-    example = serializers.JSONField()
-    choices = serializers.JSONField()
-    default = serializers.JSONField()
-    namespace = serializers.CharField(required=False)
-    region = serializers.CharField()
-    enabled = serializers.BooleanField(required=False, default=True)

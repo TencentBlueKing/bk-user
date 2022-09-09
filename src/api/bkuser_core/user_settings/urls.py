@@ -22,6 +22,7 @@ urlpatterns = [
         views.SettingViewSet.as_view(
             {
                 "get": "list",
+                # NOTE: saas remove this?
                 "post": "create",
             }
         ),
