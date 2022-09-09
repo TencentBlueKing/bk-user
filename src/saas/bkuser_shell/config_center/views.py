@@ -62,7 +62,7 @@ class SettingsViewSet(BkUserApiViewSet, BkUserApiProxy):
         return Response(data={})
 
 
-class SettingsNamespaceViewSet(BkUserApiViewSet):
+class SettingsNamespaceViewSet(BkUserApiViewSet, BkUserApiProxy):
     """namespace 维度批量 settings 接口"""
 
     serializer_class = SettingMetaSerializer
@@ -70,57 +70,19 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
     # 这里不能通用配置, 本质上是调用 v2_settings方法, 已经在后台通过category_id的permission做检查
     # ACTION_ID = IAMAction.MANAGE_CATEGORY.value
 
-    @inject_serializer(
-        query_in=serializers.ListSettingsSerializer(),
-        out=serializers.SettingSerializer(many=True),
-        tags=["config_center"],
-    )
-    def list(self, request, category_id, namespace_name, validated_data):
-        """获取 namespace 下的所有配置"""
-        api_instance = bkuser_sdk.SettingsApi(self.get_api_client_by_request(request))
-        settings = api_instance.v2_settings_list(category_id=category_id, namespace=namespace_name, **validated_data)
+    def list(self, request, *args, **kwargs):
+        # in: api/v2/categories/%s/settings/namespaces/%s/
+        # out: api/v1/web/categories/%s/settings/namespaces/%s/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        return self.do_proxy(request, rewrite_path=api_path)
 
-        region = validated_data.get("region", None)
-        if region:
-            settings = [x for x in settings if x["region"] == region]
-
-        return settings
-
-    @inject_serializer(
-        body_in=serializers.UpdateNamespaceSettingSerializer(many=True),
-        out=serializers.SettingSerializer(many=True),
-        tags=["config_center"],
-    )
-    def update(self, request, category_id, namespace_name, validated_data):
-        api_instance = bkuser_sdk.SettingsApi(self.get_api_client_by_request(request))
-        settings = api_instance.v2_settings_list(category_id=category_id, namespace=namespace_name)
-
-        setting_instances = {x.key: x for x in settings if x.namespace == namespace_name}
-
-        # TODO:  后续改为批量接口
-        result = []
-        for setting_info in validated_data:
-            body = {"value": setting_info["value"], "enabled": setting_info["enabled"]}
-            try:
-                setting_id = setting_instances[setting_info["key"]].id
-            except KeyError:
-                logger.exception(
-                    "找不到 Setting<%s>. [category_id=%s, namespace_name=%s]",
-                    setting_info["key"],
-                    category_id,
-                    namespace_name,
-                )
-                continue
-
-            try:
-                api_response = api_instance.v2_settings_partial_update(body=body, lookup_value=setting_id)
-            except ApiException:
-                logger.exception("在目录<%s>中更新 Setting<%s>-<%s> 失败", category_id, setting_info["key"], setting_id)
-                continue
-
-            result.append(api_response)
-
-        return result
+    def update(self, request, *args, **kwargs):
+        # in: api/v2/categories/%s/settings/namespaces/%s/
+        # out: api/v1/web/categories/%s/settings/namespaces/%s/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        return self.do_proxy(request, rewrite_path=api_path)
 
     @inject_serializer(
         body_in=serializers.SettingSerializer(many=True),
@@ -150,7 +112,3 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
                 results.append(api_response)
 
         return results
-
-    @inject_serializer(tags=["config_center"])
-    def delete(self, request, category_name, namespace_name):
-        raise NotImplementedError

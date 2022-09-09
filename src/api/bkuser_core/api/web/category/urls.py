@@ -30,6 +30,11 @@ urlpatterns = [
         name="category.setting.list",
     ),
     path(
+        "<int:id>/settings/namespaces/<str:namespace>/",
+        views.CategorySettingNamespaceListUpdateApi.as_view(),
+        name="category.setting.namespace.list_update",
+    ),
+    path(
         "<int:id>/operations/test_fetch_data/",
         views.CategoryOperationTestFetchDataApi.as_view(),
         name="category.operation.test_fetch_data",

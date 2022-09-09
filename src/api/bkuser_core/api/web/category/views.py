@@ -25,6 +25,7 @@ from .serializers import (
     CategoryExportSerializer,
     CategoryFileImportSerializer,
     CategoryMetaSerializer,
+    CategoryNamespaceSettingUpdateSerializer,
     CategorySettingListSerializer,
     CategorySettingSerializer,
     CategorySyncResponseSerializer,
@@ -110,6 +111,53 @@ class CategorySettingListApi(generics.ListAPIView):
         region = data.get("region")
         metas = list_setting_metas(category.type, region, namespace)
         return Setting.objects.filter(meta__in=metas, category_id=category_id)
+
+
+class CategorySettingNamespaceListUpdateApi(generics.ListAPIView, generics.UpdateAPIView):
+    serializer_class = CategorySettingSerializer
+    permission_classes = [ManageCategoryPermission]
+
+    def get_queryset(self):
+        category_id = self.kwargs["id"]
+        category = get_category(category_id)
+        namespace = self.kwargs["namespace"]
+        metas = list_setting_metas(category.type, None, namespace)
+
+        return Setting.objects.filter(meta__in=metas, category_id=category_id)
+
+    def put(self, request, *args, **kwargs):
+        # 批量更新
+        serializer = CategoryNamespaceSettingUpdateSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+
+        # [{key, value, enabled}]
+        ns_settings = {d["key"]: d for d in serializer.validated_data}
+
+        category_id = self.kwargs["id"]
+        category = get_category(category_id)
+        namespace = self.kwargs["namespace"]
+        metas = list_setting_metas(category.type, None, namespace)
+        db_settings = Setting.objects.filter(meta__in=metas, category_id=category_id).all()
+
+        for s in db_settings:
+            key = s.meta.key
+            if key in ns_settings:
+                in_value = ns_settings[key]
+                s.value = in_value["value"]
+                s.enabled = in_value["enabled"]
+                s.save()
+
+        # Setting.objects.filter(meta__in=metas, category_id=category_id).all()
+        return Response(self.get_serializer_class()(db_settings, many=True).data)
+
+        # FIXME: 原来是调用 N 次api, N 个信号, 现在一次就更新成功了
+        # # 仅当更新成功时才发送信号
+        # post_setting_update.send(
+        #     sender=self,
+        #     instance=self.get_object(),
+        #     operator=request.operator,
+        #     extra_values={"request": request},
+        # )
 
 
 class CategoryListCreateApi(generics.ListCreateAPIView):

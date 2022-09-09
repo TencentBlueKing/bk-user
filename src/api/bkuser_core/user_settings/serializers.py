@@ -43,11 +43,6 @@ class SettingCreateSerializer(serializers.Serializer):
     category_id = serializers.IntegerField()
 
 
-class SettingUpdateSerializer(serializers.Serializer):
-    value = serializers.JSONField()
-    enabled = serializers.BooleanField(default=True)
-
-
 class SettingListSerializer(serializers.Serializer):
     key = serializers.CharField(required=False)
     namespace = serializers.CharField(required=False)

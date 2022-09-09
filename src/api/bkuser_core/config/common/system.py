@@ -89,8 +89,6 @@ MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=2000)
 # 登录次数统计时间周期, 默认为一个月
 LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)
 
-DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
-
 # sync, 用户管理本身做业务 HTTP API 数据源, 可以被另一个用户管理同步过去
 # 复用 API, 接口参数中存在 SYNC_API_PARAM 时, 以sync的接口协议返回
 SYNC_API_PARAM = "for_sync"

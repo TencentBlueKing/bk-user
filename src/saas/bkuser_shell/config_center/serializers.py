@@ -15,11 +15,6 @@ from rest_framework import serializers
 ############
 
 
-class ListSettingsSerializer(serializers.Serializer):
-    namespace = serializers.CharField(required=False)
-    region = serializers.CharField(required=False)
-
-
 class CreateSettingsSerializer(serializers.Serializer):
     namespace = serializers.CharField()
     region = serializers.CharField(required=False, default="default")
@@ -47,12 +42,6 @@ class UpdateSettingSerializer(serializers.Serializer):
 
 class ListNamespaceSettingsSerializer(serializers.Serializer):
     region = serializers.CharField(required=False, default="default")
-
-
-class UpdateNamespaceSettingSerializer(serializers.Serializer):
-    key = serializers.CharField()
-    value = serializers.JSONField()
-    enabled = serializers.BooleanField(required=False, default=True)
 
 
 class SettingMetaSerializer(serializers.Serializer):

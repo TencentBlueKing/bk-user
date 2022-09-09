@@ -202,3 +202,9 @@ class CategoryFileImportSerializer(serializers.Serializer):
 
 class CategorySyncResponseSerializer(serializers.Serializer):
     task_id = serializers.CharField(help_text="task_id for the sync job.")
+
+
+class CategoryNamespaceSettingUpdateSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    value = serializers.JSONField()
+    enabled = serializers.BooleanField(required=False, default=True)

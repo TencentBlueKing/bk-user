@@ -21,12 +21,9 @@ from bkuser_core.bkiam.constants import IAMAction
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.common.models import is_obj_needed_update
 from bkuser_core.user_settings import serializers
 from bkuser_core.user_settings.models import Setting, SettingMeta
-from bkuser_core.user_settings.serializers import SettingUpdateSerializer
-from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
-from bkuser_global.drf_crown.crown import inject_serializer
+from bkuser_core.user_settings.signals import post_setting_create
 
 logger = logging.getLogger(__name__)
 
@@ -116,44 +113,6 @@ class SettingViewSet(AdvancedModelViewSet):
             sender=self, instance=setting, operator=request.operator, extra_values={"request": request}
         )
         return Response(serializers.SettingSerializer(setting).data, status=status.HTTP_201_CREATED)
-
-    def _update(self, request, validated_data):
-        self.clean_iam_header(request)
-        instance = self.get_object()
-
-        self.check_category_permission(request, instance.category)
-
-        try:
-            need_update = is_obj_needed_update(instance, validated_data)
-        except ValueError:
-            raise error_codes.CANNOT_UPDATE_SETTING
-
-        if need_update:
-            try:
-                for k, v in validated_data.items():
-                    setattr(instance, k, v)
-                instance.save()
-            except Exception:
-                logger.exception("failed to update setting")
-                raise error_codes.CANNOT_UPDATE_SETTING
-            else:
-                # 仅当更新成功时才发送信号
-                post_setting_update.send(
-                    sender=self,
-                    instance=self.get_object(),
-                    operator=request.operator,
-                    extra_values={"request": request},
-                )
-        return instance
-
-    # FIXME: remove this then remove bkuser_global.drf_crown
-    @inject_serializer(body_in=SettingUpdateSerializer(), out=serializers.SettingSerializer)
-    def update(self, request, validated_data, *args, **kwargs):
-        return self._update(request, validated_data)
-
-    @inject_serializer(body_in=SettingUpdateSerializer(), out=serializers.SettingSerializer)
-    def partial_update(self, request, validated_data, *args, **kwargs):
-        return self._update(request, validated_data)
 
     # NOTE: saas没有用到, 暂时不需要封装check permission
     # def retrieve(self, request, *args, **kwargs):

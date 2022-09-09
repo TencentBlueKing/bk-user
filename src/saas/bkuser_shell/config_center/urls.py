@@ -47,7 +47,7 @@ urlpatterns = [
     ####################################
     url(
         r"^api/v2/categories/%s/settings/namespaces/%s/$" % (PVAR_CATEGORY_ID, PVAR_NAMESPACE_NAME),
-        SettingsNamespaceViewSet.as_view({"get": "list", "post": "create", "put": "update", "delete": "delete"}),
+        SettingsNamespaceViewSet.as_view({"get": "list", "post": "create", "put": "update"}),
         name="config_center.settings.namespaces",
     ),
 ]
