@@ -17,6 +17,10 @@ ENV LC_ALL=C.UTF-8 \
 RUN pip install --upgrade pip setuptools
 RUN pip install poetry==1.1.13
 
+# for saml 2.0 custom login
+RUN apt-get install -y pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl
+RUN pip install python3-saml==1.14.0
+
 WORKDIR /app
 COPY src/login/pyproject.toml /app
 COPY src/login/poetry.lock /app

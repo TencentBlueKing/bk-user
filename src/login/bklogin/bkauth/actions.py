@@ -20,7 +20,6 @@ from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseRedirect
-from django.template.response import TemplateResponse
 
 from bklogin.bkauth.constants import REDIRECT_FIELD_NAME
 from bklogin.bkauth.utils import get_bk_token, is_safe_url, record_login_log, set_bk_token_invalid
@@ -126,13 +125,4 @@ def login_redirect_response(request, redirect_url, is_from_logout):
     # 来自注销，则需清除蓝鲸bk_token
     if is_from_logout:
         response = set_bk_token_invalid(request, response)
-    return response
-
-
-def login_license_fail_response(request, template_name="account/login.html"):
-    """
-    证书认证，登录失败页面
-    """
-    response = TemplateResponse(request, template_name, {"custom_login": True})
-    response = set_bk_token_invalid(request, response)
     return response

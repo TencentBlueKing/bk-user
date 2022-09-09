@@ -45,7 +45,7 @@ reference = "tencent-mirrors"
 
 [[package]]
 name = "apigw-manager"
-version = "1.0.10"
+version = "1.1.5"
 description = ""
 category = "main"
 optional = false
@@ -55,12 +55,13 @@ python-versions = ">=3.6.1,<4.0.0"
 bkapi-bk-apigateway = ">=1.0.6,<2.0.0"
 bkapi-client-core = ">=1.1.3"
 future = "0.18.2"
+packaging = ">=21.0"
 pyyaml = ">=5.4.1"
 urllib3 = ">=1.25.3"
 
 [package.extras]
-django = ["Django (>=1.11.1)", "packaging (>=21.0)", "pyjwt (>=1.6.4)"]
-demo = ["Django (>=1.11.1)", "PyMySQL (>=1.0.2,<2.0.0)", "django-environ (>=0.8.1)", "packaging (>=21.0)", "pyjwt (>=1.6.4)"]
+django = ["Django (>=1.11.1)", "pyjwt (>=1.6.4)"]
+demo = ["Django (>=1.11.1)", "PyMySQL (>=1.0.2,<2.0.0)", "django-environ (>=0.8.1)", "pyjwt (>=1.6.4)"]
 cryptography = ["cryptography (>=3.1.1)", "pyjwt (>=1.6.4)"]
 
 [package.source]
@@ -569,6 +570,11 @@ sqlparse = ">=0.2.2"
 [package.extras]
 argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent-mirrors"
 
 [[package]]
 name = "django-celery-beat"
@@ -2658,7 +2664,7 @@ reference = "tencent-mirrors"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "f78e118c728d0a320991984d2fcdfa966f7284af77f31868598ddce0987bd253"
+content-hash = "a5df43ed5650d6e3aa47d75a0ec94bea78d86ecf964646bb92734b3fa84308e9"
 
 [metadata.files]
 aenum = [
@@ -2675,7 +2681,7 @@ amqp = [
     {file = "amqp-2.6.1.tar.gz", hash = "sha256:70cdb10628468ff14e57ec2f751c7aa9e48e7e3651cfd62d431213c0c4e58f21"},
 ]
 apigw-manager = [
-    {file = "apigw_manager-1.0.10-py3-none-any.whl", hash = "md5:ec5bb61bfae9e55d5cf37a59022473dc"},
+    {file = "apigw_manager-1.1.5-py3-none-any.whl", hash = "md5:cc2df9c0dc88460737b338213b7cc511"},
 ]
 appnope = [
     {file = "appnope-0.1.3-py2.py3-none-any.whl", hash = "sha256:265a455292d0bd8a72453494fa24df5a11eb18373a60c7c0430889f22548605e"},
