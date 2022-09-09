@@ -30,6 +30,7 @@ def is_superuser(username):
         # 白名单直接返回
         return True
 
+    # TODO: change to get by requests
     api_instance = bkuser_sdk.ProfilesApi(get_api_client())
     profile = api_instance.v2_profiles_read(lookup_value=username)
 

@@ -37,7 +37,7 @@ class APIError(APIException):
             if replace:
                 self.code.message = message
             else:
-                self.code.message += u"%s%s" % (self.delimiter, message)
+                self.code.message += "%s%s" % (self.delimiter, message)
 
         # Render message string
         if kwargs:
@@ -85,6 +85,7 @@ class ErrorCodeCollection:
         return APIError(error_code)
 
 
+# FIXME: remove all this. should check what
 error_codes = ErrorCodeCollection()
 error_codes.add_codes(
     [

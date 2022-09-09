@@ -21,6 +21,7 @@ from .views import (
     CategoryListCreateViewSet,
     CategoryMetasViewSet,
     CategoryUpdateDeleteViewSet,
+    DepartmentRetrieveUpdateDeleteViewSet,
     DepartmentSearchViewSet,
     FieldsManageableViewSet,
     FieldsOrderViewSet,
@@ -115,4 +116,9 @@ urlpatterns = [
     # departments
     path("api/v3/departments/", DepartmentSearchViewSet.as_view({"get": "get"}), name="departments.search"),
     path("api/v3/profiles/", ProfilesSearchViewSet.as_view({"get": "get"}), name="profiles.search"),
+    path(
+        "api/v2/departments/<int:id>/",
+        DepartmentRetrieveUpdateDeleteViewSet.as_view({"get": "do", "delete": "do", "patch": "do"}),
+        name="department.actions",
+    ),
 ]

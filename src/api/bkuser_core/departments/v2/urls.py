@@ -22,7 +22,7 @@ urlpatterns = [
             {
                 "get": "list",
                 # TODO: delete it? the web api refactored
-                # "post": "create",
+                "post": "create",
             }
         ),
         name="departments",
@@ -31,10 +31,12 @@ urlpatterns = [
         r"^api/v2/departments/%s/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
+                # TODO: delete it? the web api refactored
                 "get": "retrieve",
                 "post": "update",
                 # TODO: delete it? the web api refactored
-                # "delete": "destroy",
+                "delete": "destroy",
+                # TODO: delete it? the web api refactored
                 "patch": "partial_update",
             }
         ),

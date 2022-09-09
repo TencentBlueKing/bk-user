@@ -15,7 +15,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters
+from rest_framework import filters, status
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
@@ -36,6 +36,7 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department, DepartmentThroughModel
+from bkuser_core.departments.signals import post_department_create
 from bkuser_core.departments.v2 import serializers as local_serializers
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import force_use_raw_username
@@ -185,55 +186,55 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response(data=ProfileMinimalSerializer(profiles, many=True).data)
 
-    # @method_decorator(clear_cache_if_succeed)
-    # def create(self, request, *args, **kwargs):
-    #     """创建部门"""
-    #     serializer = self.serializer_class(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     validated_data = serializer.validated_data
+    @method_decorator(clear_cache_if_succeed)
+    def create(self, request, *args, **kwargs):
+        """创建部门"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
 
-    #     if not validated_data.get("category_id", None):
-    #         serializer.validated_data["category_id"] = ProfileCategory.objects.get_default().id
-    #     else:
-    #         if not ProfileCategory.objects.check_writable(validated_data["category_id"]):
-    #             raise error_codes.CANNOT_MANUAL_WRITE_INTO
+        if not validated_data.get("category_id", None):
+            serializer.validated_data["category_id"] = ProfileCategory.objects.get_default().id
+        else:
+            if not ProfileCategory.objects.check_writable(validated_data["category_id"]):
+                raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
-    #     category = ProfileCategory.objects.get(id=validated_data["category_id"])
-    #     if not serializer.validated_data.get("parent"):
-    #         self.check_object_permissions(request, obj=category)
+        category = ProfileCategory.objects.get(id=validated_data["category_id"])
+        if not serializer.validated_data.get("parent"):
+            self.check_object_permissions(request, obj=category)
 
-    #         # 不传 parent 默认为根部门
-    #         serializer.validated_data["level"] = 0
-    #         max_order = list(
-    #             Department.objects.filter(
-    #                 enabled=True, category_id=validated_data["category_id"], level=0
-    #             ).values_list("order", flat=True)
-    #         )
-    #         max_order = max(max_order or [0])
-    #     else:
-    #         self.check_object_permissions(request, obj=serializer.validated_data.get("parent"))
-    #         max_order = serializer.validated_data["parent"].get_max_order_in_children()
+            # 不传 parent 默认为根部门
+            serializer.validated_data["level"] = 0
+            max_order = list(
+                Department.objects.filter(
+                    enabled=True, category_id=validated_data["category_id"], level=0
+                ).values_list("order", flat=True)
+            )
+            max_order = max(max_order or [0])
+        else:
+            self.check_object_permissions(request, obj=serializer.validated_data.get("parent"))
+            max_order = serializer.validated_data["parent"].get_max_order_in_children()
 
-    #     serializer.validated_data["order"] = max_order + 1
-    #     # 同一个组织下，不能有同名子部门
-    #     try:
-    #         instance = Department.objects.get(
-    #             parent_id=serializer.validated_data.get("parent"),
-    #             name=validated_data["name"],
-    #             category_id=validated_data["category_id"],
-    #         )
-    #         # 若是已删除的，将直接启用，未删除的抛出重复错误
-    #         if not instance.enabled:
-    #             instance.enable()
-    #         else:
-    #             raise error_codes.DEPARTMENT_NAME_CONFLICT
-    #     except Department.DoesNotExist:
-    #         instance = serializer.save()
+        serializer.validated_data["order"] = max_order + 1
+        # 同一个组织下，不能有同名子部门
+        try:
+            instance = Department.objects.get(
+                parent_id=serializer.validated_data.get("parent"),
+                name=validated_data["name"],
+                category_id=validated_data["category_id"],
+            )
+            # 若是已删除的，将直接启用，未删除的抛出重复错误
+            if not instance.enabled:
+                instance.enable()
+            else:
+                raise error_codes.DEPARTMENT_NAME_CONFLICT
+        except Department.DoesNotExist:
+            instance = serializer.save()
 
-    #     post_department_create.send(
-    #         sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
-    #     )
-    #     return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
+        post_department_create.send(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
+        )
+        return Response(self.serializer_class(instance).data, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
         request_body=local_serializers.DepartmentUpdateSerializer(),

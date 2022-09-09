@@ -71,12 +71,12 @@ def parse_username_domain(username_with_domain, known_domain: str = None) -> tup
             logger.exception("can not parse raw_username<%s>", username_with_domain)
             raise UsernameWithDomainFormatError(f"parse {username_with_domain} failed")
 
-        logger.debug(
-            "parse raw username<%s> to username<%s> & domain<%s>",
-            username_with_domain,
-            username,
-            known_domain,
-        )
+        # logger.debug(
+        #     "parse raw username<%s> to username<%s> & domain<%s>",
+        #     username_with_domain,
+        #     username,
+        #     known_domain,
+        # )
         return username, known_domain
 
     pattern = re.fullmatch(USERNAME_DOMAIN_REGEX, username_with_domain)
@@ -90,12 +90,12 @@ def parse_username_domain(username_with_domain, known_domain: str = None) -> tup
         logger.exception("parse username with domain fail. [raw_username=%s]", username_with_domain)
         raise UsernameWithDomainFormatError(f"parse {username_with_domain} failed")
 
-    logger.debug(
-        "parse raw username<%s> to username<%s> & domain<%s>",
-        username_with_domain,
-        username,
-        domain,
-    )
+    # logger.debug(
+    #     "parse raw username<%s> to username<%s> & domain<%s>",
+    #     username_with_domain,
+    #     username,
+    #     domain,
+    # )
     return username, domain
 
 

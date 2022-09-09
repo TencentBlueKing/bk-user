@@ -56,10 +56,6 @@ class ListDepartmentSerializer(serializers.Serializer):
     departments = DepartmentSerializer(many=True)
 
 
-class RetrieveDepartmentSLZ(serializers.Serializer):
-    with_ancestors = serializers.BooleanField(default=False, required=False)
-
-
 class UpdateDepartmentSerializer(serializers.Serializer):
     name = serializers.CharField(required=False)
     order = serializers.IntegerField(required=False)

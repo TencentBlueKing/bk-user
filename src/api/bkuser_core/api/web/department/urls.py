@@ -21,7 +21,7 @@ urlpatterns = [
     ),
     path(
         "<int:id>/",
-        views.DepartmentUpdateDeleteApi.as_view(),
+        views.DepartmentRetrieveUpdateDeleteApi.as_view(),
         name="department.update_delete",
     ),
     # NOTE: replace of /api/v3/departments/

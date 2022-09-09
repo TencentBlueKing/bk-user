@@ -18,6 +18,7 @@ from .serializers import (
     DepartmentCreateSerializer,
     DepartmentSearchResultSerializer,
     DepartmentSearchSerializer,
+    DepartmentsWithChildrenAndAncestorsSerializer,
 )
 from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_username
 from bkuser_core.api.web.viewset import CustomPagination
@@ -90,9 +91,11 @@ class DepartmentListCreateApi(generics.ListCreateAPIView):
         return Response(DepartmentCreatedReturnSerializer(instance).data, status=status.HTTP_201_CREATED)
 
 
-class DepartmentUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
+class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = "id"
     queryset = Department.objects.all()
+
+    serializer_class = DepartmentsWithChildrenAndAncestorsSerializer
 
     permission_classes = [ManageDepartmentPermission]
 

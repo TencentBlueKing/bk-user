@@ -36,7 +36,7 @@ class BkUserApiViewSet(GenericViewSet):
     def get_client_ip(request) -> Optional[str]:
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
-            logger.debug("HTTP_X_FORWARDED_FOR exist, fetching from it")
+            # logger.debug("HTTP_X_FORWARDED_FOR exist, fetching from it")
             ip = x_forwarded_for.split(",")[0]
         else:
             for h in ["REMOTE_ADDR", "X-Real-IP"]:

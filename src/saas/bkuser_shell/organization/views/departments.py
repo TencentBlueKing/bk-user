@@ -25,7 +25,6 @@ from bkuser_shell.organization.serializers.departments import (
     DepartmentSearchSerializer,
     DepartmentSerializer,
     ListDepartmentSerializer,
-    RetrieveDepartmentSLZ,
     UpdateDepartmentSerializer,
 )
 from bkuser_shell.organization.serializers.profiles import DepartmentGetProfileResultSerializer
@@ -41,13 +40,6 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
     ]
 
     ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
-
-    @inject_serializer(query_in=RetrieveDepartmentSLZ, out=DepartmentSerializer, tag=["departments"])
-    def retrieve(self, request, department_id, validated_data):
-        # TODO: 为什么这里no_auth=True
-        api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
-        # api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request, no_auth=True))
-        return api_instance.v2_departments_read(department_id, include_disabled=True)
 
     @staticmethod
     def _get_profiles_count(api_instance, department_id, recursive, page, page_size):
@@ -202,13 +194,6 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
         """创建组织"""
         return self.do_proxy(request, rewrite_path="/api/v1/web/departments/")
 
-    @inject_serializer(body_in=UpdateDepartmentSerializer, out=DepartmentSerializer, tags=["departments"])
-    def update(self, request, department_id, validated_data):
-        """更新组织名称"""
-        body = {"name": validated_data["name"]}
-        api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
-        return api_instance.v2_departments_partial_update(lookup_value=department_id, body=body)
-
     @inject_serializer(body_in=UpdateDepartmentSerializer, tags=["departments"])
     def switch_order(self, request, department_id, another_department_id, validated_data):
         """更新组织顺序"""
@@ -225,13 +210,6 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
             api_instance.v2_departments_partial_update(lookup_value=departments[index].id, body=body)
 
         return Response(data={})
-
-    def delete(self, request, *args, **kwargs):
-        api_path = BkUserApiProxy.get_api_path(request)
-        # in: /api/v2/departments/1/
-        # out: /api/v1/web/departments/1/
-        api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
-        return self.do_proxy(request, rewrite_path=api_path)
 
     @inject_serializer(body_in=DepartmentAddProfilesSerializer, out=EmptySerializer, tags=["departments"])
     def add_profiles(self, request, department_id, validated_data):
