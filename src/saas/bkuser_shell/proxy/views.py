@@ -236,3 +236,13 @@ class DepartmentRetrieveUpdateDeleteViewSet(BkUserApiProxy):
         # out: /api/v1/web/departments/1/
         api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class DepartmentSwitchOrderViewSet(BkUserApiProxy):
+    def patch(self, request, *args, **kwargs):
+        # in: /api/v2/departments/5/switch_order/13/
+        # out: /api/v1/web/departments/5/operations/switch_order/13/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
+        api_path = api_path.replace("switch_order/", "operations/switch_order/")
+        return self.do_proxy(request, rewrite_path=api_path)

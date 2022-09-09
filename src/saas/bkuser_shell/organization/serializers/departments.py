@@ -56,10 +56,5 @@ class ListDepartmentSerializer(serializers.Serializer):
     departments = DepartmentSerializer(many=True)
 
 
-class UpdateDepartmentSerializer(serializers.Serializer):
-    name = serializers.CharField(required=False)
-    order = serializers.IntegerField(required=False)
-
-
 class DepartmentAddProfilesSerializer(serializers.Serializer):
     profile_id_list = serializers.ListField(child=serializers.IntegerField())

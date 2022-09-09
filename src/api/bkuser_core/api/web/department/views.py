@@ -131,3 +131,21 @@ class DepartmentSearchApi(generics.ListAPIView):
 
         # NOTE: 这里相对原来/api/v3/departments/?category_id 的差异是 enabled=True
         return Department.objects.filter(category_id=category_id, enabled=True)
+
+
+class DepartmentOperationSwitchOrderApi(generics.UpdateAPIView):
+    permission_classes = [ManageDepartmentPermission]
+    queryset = Department.objects.filter(enabled=True)
+    lookup_url_kwarg = "id"
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        another_department = Department.objects.get(id=kwargs["another_id"])
+
+        # switch
+        instance.order, another_department.order = another_department.order, instance.order
+        instance.save(update_fields=["order"])
+        another_department.save(update_fields=["order"])
+
+        return Response()

@@ -53,8 +53,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_get_ancestor_with_http_info(lookup_value, **kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_get_ancestor_with_http_info(lookup_value, **kwargs)  # noqa: E501
@@ -82,45 +82,53 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = [
+            "lookup_value",
+            "ordering",
+            "page",
+            "page_size",
+            "fields",
+            "lookup_field",
+            "include_disabled",
+        ]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
                 raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_get_ancestor" % key
+                    "Got an unexpected keyword argument '%s'" " to method v2_departments_get_ancestor" % key
                 )
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
         # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_get_ancestor`")  # noqa: E501
+        if "lookup_value" not in params or params["lookup_value"] is None:
+            raise ValueError(
+                "Missing the required parameter `lookup_value` when calling `v2_departments_get_ancestor`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+        if "lookup_value" in params:
+            path_params["lookup_value"] = params["lookup_value"]  # noqa: E501
 
         query_params = []
-        if 'ordering' in params:
-            query_params.append(('ordering', params['ordering']))  # noqa: E501
-        if 'page' in params:
-            query_params.append(('page', params['page']))  # noqa: E501
-        if 'page_size' in params:
-            query_params.append(('page_size', params['page_size']))  # noqa: E501
-        if 'fields' in params:
-            query_params.append(('fields', params['fields']))  # noqa: E501
-        if 'lookup_field' in params:
-            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
-        if 'include_disabled' in params:
-            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
+        if "ordering" in params:
+            query_params.append(("ordering", params["ordering"]))  # noqa: E501
+        if "page" in params:
+            query_params.append(("page", params["page"]))  # noqa: E501
+        if "page_size" in params:
+            query_params.append(("page_size", params["page_size"]))  # noqa: E501
+        if "fields" in params:
+            query_params.append(("fields", params["fields"]))  # noqa: E501
+        if "lookup_field" in params:
+            query_params.append(("lookup_field", params["lookup_field"]))  # noqa: E501
+        if "include_disabled" in params:
+            query_params.append(("include_disabled", params["include_disabled"]))  # noqa: E501
 
         header_params = {}
 
@@ -129,27 +137,28 @@ class DepartmentsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/ancestors/', 'GET',
+            "/api/v2/departments/{lookup_value}/ancestors/",
+            "GET",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='object',  # noqa: E501
+            response_type="object",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )
 
     def v2_departments_get_children(self, lookup_value, **kwargs):  # noqa: E501
         """v2_departments_get_children  # noqa: E501
@@ -172,8 +181,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_get_children_with_http_info(lookup_value, **kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_get_children_with_http_info(lookup_value, **kwargs)  # noqa: E501
@@ -201,45 +210,53 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = [
+            "lookup_value",
+            "ordering",
+            "page",
+            "page_size",
+            "fields",
+            "lookup_field",
+            "include_disabled",
+        ]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
                 raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_get_children" % key
+                    "Got an unexpected keyword argument '%s'" " to method v2_departments_get_children" % key
                 )
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
         # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_get_children`")  # noqa: E501
+        if "lookup_value" not in params or params["lookup_value"] is None:
+            raise ValueError(
+                "Missing the required parameter `lookup_value` when calling `v2_departments_get_children`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+        if "lookup_value" in params:
+            path_params["lookup_value"] = params["lookup_value"]  # noqa: E501
 
         query_params = []
-        if 'ordering' in params:
-            query_params.append(('ordering', params['ordering']))  # noqa: E501
-        if 'page' in params:
-            query_params.append(('page', params['page']))  # noqa: E501
-        if 'page_size' in params:
-            query_params.append(('page_size', params['page_size']))  # noqa: E501
-        if 'fields' in params:
-            query_params.append(('fields', params['fields']))  # noqa: E501
-        if 'lookup_field' in params:
-            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
-        if 'include_disabled' in params:
-            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
+        if "ordering" in params:
+            query_params.append(("ordering", params["ordering"]))  # noqa: E501
+        if "page" in params:
+            query_params.append(("page", params["page"]))  # noqa: E501
+        if "page_size" in params:
+            query_params.append(("page_size", params["page_size"]))  # noqa: E501
+        if "fields" in params:
+            query_params.append(("fields", params["fields"]))  # noqa: E501
+        if "lookup_field" in params:
+            query_params.append(("lookup_field", params["lookup_field"]))  # noqa: E501
+        if "include_disabled" in params:
+            query_params.append(("include_disabled", params["include_disabled"]))  # noqa: E501
 
         header_params = {}
 
@@ -248,27 +265,28 @@ class DepartmentsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/children/', 'GET',
+            "/api/v2/departments/{lookup_value}/children/",
+            "GET",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='object',  # noqa: E501
+            response_type="object",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )
 
     def v2_departments_list(self, **kwargs):  # noqa: E501
         """v2_departments_list  # noqa: E501
@@ -298,8 +316,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_list_with_http_info(**kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_list_with_http_info(**kwargs)  # noqa: E501
@@ -334,59 +352,71 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['ordering', 'page', 'page_size', 'fields', 'lookup_field', 'exact_lookups', 'fuzzy_lookups', 'wildcard_search', 'wildcard_search_fields', 'best_match', 'time_field', 'since', 'until', 'include_disabled']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = [
+            "ordering",
+            "page",
+            "page_size",
+            "fields",
+            "lookup_field",
+            "exact_lookups",
+            "fuzzy_lookups",
+            "wildcard_search",
+            "wildcard_search_fields",
+            "best_match",
+            "time_field",
+            "since",
+            "until",
+            "include_disabled",
+        ]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
-                raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_list" % key
-                )
+                raise TypeError("Got an unexpected keyword argument '%s'" " to method v2_departments_list" % key)
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
 
         collection_formats = {}
 
         path_params = {}
 
         query_params = []
-        if 'ordering' in params:
-            query_params.append(('ordering', params['ordering']))  # noqa: E501
-        if 'page' in params:
-            query_params.append(('page', params['page']))  # noqa: E501
-        if 'page_size' in params:
-            query_params.append(('page_size', params['page_size']))  # noqa: E501
-        if 'fields' in params:
-            query_params.append(('fields', params['fields']))  # noqa: E501
-            collection_formats['fields'] = 'csv'  # noqa: E501
-        if 'lookup_field' in params:
-            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
-        if 'exact_lookups' in params:
-            query_params.append(('exact_lookups', params['exact_lookups']))  # noqa: E501
-            collection_formats['exact_lookups'] = 'csv'  # noqa: E501
-        if 'fuzzy_lookups' in params:
-            query_params.append(('fuzzy_lookups', params['fuzzy_lookups']))  # noqa: E501
-            collection_formats['fuzzy_lookups'] = 'csv'  # noqa: E501
-        if 'wildcard_search' in params:
-            query_params.append(('wildcard_search', params['wildcard_search']))  # noqa: E501
-        if 'wildcard_search_fields' in params:
-            query_params.append(('wildcard_search_fields', params['wildcard_search_fields']))  # noqa: E501
-            collection_formats['wildcard_search_fields'] = 'csv'  # noqa: E501
-        if 'best_match' in params:
-            query_params.append(('best_match', params['best_match']))  # noqa: E501
-        if 'time_field' in params:
-            query_params.append(('time_field', params['time_field']))  # noqa: E501
-        if 'since' in params:
-            query_params.append(('since', params['since']))  # noqa: E501
-        if 'until' in params:
-            query_params.append(('until', params['until']))  # noqa: E501
-        if 'include_disabled' in params:
-            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
+        if "ordering" in params:
+            query_params.append(("ordering", params["ordering"]))  # noqa: E501
+        if "page" in params:
+            query_params.append(("page", params["page"]))  # noqa: E501
+        if "page_size" in params:
+            query_params.append(("page_size", params["page_size"]))  # noqa: E501
+        if "fields" in params:
+            query_params.append(("fields", params["fields"]))  # noqa: E501
+            collection_formats["fields"] = "csv"  # noqa: E501
+        if "lookup_field" in params:
+            query_params.append(("lookup_field", params["lookup_field"]))  # noqa: E501
+        if "exact_lookups" in params:
+            query_params.append(("exact_lookups", params["exact_lookups"]))  # noqa: E501
+            collection_formats["exact_lookups"] = "csv"  # noqa: E501
+        if "fuzzy_lookups" in params:
+            query_params.append(("fuzzy_lookups", params["fuzzy_lookups"]))  # noqa: E501
+            collection_formats["fuzzy_lookups"] = "csv"  # noqa: E501
+        if "wildcard_search" in params:
+            query_params.append(("wildcard_search", params["wildcard_search"]))  # noqa: E501
+        if "wildcard_search_fields" in params:
+            query_params.append(("wildcard_search_fields", params["wildcard_search_fields"]))  # noqa: E501
+            collection_formats["wildcard_search_fields"] = "csv"  # noqa: E501
+        if "best_match" in params:
+            query_params.append(("best_match", params["best_match"]))  # noqa: E501
+        if "time_field" in params:
+            query_params.append(("time_field", params["time_field"]))  # noqa: E501
+        if "since" in params:
+            query_params.append(("since", params["since"]))  # noqa: E501
+        if "until" in params:
+            query_params.append(("until", params["until"]))  # noqa: E501
+        if "include_disabled" in params:
+            query_params.append(("include_disabled", params["include_disabled"]))  # noqa: E501
 
         header_params = {}
 
@@ -395,132 +425,28 @@ class DepartmentsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/', 'GET',
+            "/api/v2/departments/",
+            "GET",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='object',  # noqa: E501
+            response_type="object",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
-
-    def v2_departments_partial_update(self, body, lookup_value, **kwargs):  # noqa: E501
-        """v2_departments_partial_update  # noqa: E501
-
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-        >>> thread = api.v2_departments_partial_update(body, lookup_value, async_req=True)
-        >>> result = thread.get()
-
-        :param async_req bool
-        :param DepartmentUpdate body: (required)
-        :param str lookup_value: (required)
-        :return: Department
-                 If the method is called asynchronously,
-                 returns the request thread.
-        """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
-            return self.v2_departments_partial_update_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
-        else:
-            (data) = self.v2_departments_partial_update_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
-            return data
-
-    def v2_departments_partial_update_with_http_info(self, body, lookup_value, **kwargs):  # noqa: E501
-        """v2_departments_partial_update  # noqa: E501
-
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-        >>> thread = api.v2_departments_partial_update_with_http_info(body, lookup_value, async_req=True)
-        >>> result = thread.get()
-
-        :param async_req bool
-        :param DepartmentUpdate body: (required)
-        :param str lookup_value: (required)
-        :return: Department
-                 If the method is called asynchronously,
-                 returns the request thread.
-        """
-
-        all_params = ['body', 'lookup_value']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
-
-        params = locals()
-        for key, val in six.iteritems(params['kwargs']):
-            if key not in all_params:
-                raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_partial_update" % key
-                )
-            params[key] = val
-        del params['kwargs']
-        # verify the required parameter 'body' is set
-        if ('body' not in params or
-                params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `v2_departments_partial_update`")  # noqa: E501
-        # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_partial_update`")  # noqa: E501
-
-        collection_formats = {}
-
-        path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
-
-        query_params = []
-
-        header_params = {}
-
-        form_params = []
-        local_var_files = {}
-
-        body_params = None
-        if 'body' in params:
-            body_params = params['body']
-        # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json'])  # noqa: E501
-
-        # Authentication setting
-        auth_settings = []  # noqa: E501
-
-        return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/', 'PATCH',
-            path_params,
-            query_params,
-            header_params,
-            body=body_params,
-            post_params=form_params,
-            files=local_var_files,
-            response_type='Department',  # noqa: E501
-            auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )
 
     def v2_departments_profiles_create(self, body, lookup_value, **kwargs):  # noqa: E501
         """v2_departments_profiles_create  # noqa: E501
@@ -538,8 +464,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_profiles_create_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_profiles_create_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
@@ -562,35 +488,36 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['body', 'lookup_value']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = ["body", "lookup_value"]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
                 raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_profiles_create" % key
+                    "Got an unexpected keyword argument '%s'" " to method v2_departments_profiles_create" % key
                 )
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
         # verify the required parameter 'body' is set
-        if ('body' not in params or
-                params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `v2_departments_profiles_create`")  # noqa: E501
+        if "body" not in params or params["body"] is None:
+            raise ValueError(
+                "Missing the required parameter `body` when calling `v2_departments_profiles_create`"
+            )  # noqa: E501
         # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_profiles_create`")  # noqa: E501
+        if "lookup_value" not in params or params["lookup_value"] is None:
+            raise ValueError(
+                "Missing the required parameter `lookup_value` when calling `v2_departments_profiles_create`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+        if "lookup_value" in params:
+            path_params["lookup_value"] = params["lookup_value"]  # noqa: E501
 
         query_params = []
 
@@ -600,34 +527,36 @@ class DepartmentsApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'body' in params:
-            body_params = params['body']
+        if "body" in params:
+            body_params = params["body"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json'])  # noqa: E501
+        header_params["Content-Type"] = self.api_client.select_header_content_type(  # noqa: E501
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/profiles/', 'POST',
+            "/api/v2/departments/{lookup_value}/profiles/",
+            "POST",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='list[ProfileMinimal]',  # noqa: E501
+            response_type="list[ProfileMinimal]",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )
 
     def v2_departments_profiles_read(self, lookup_value, **kwargs):  # noqa: E501
         """v2_departments_profiles_read  # noqa: E501
@@ -653,8 +582,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_profiles_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_profiles_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
@@ -685,51 +614,62 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'ordering', 'page', 'page_size', 'fields', 'lookup_field', 'include_disabled', 'recursive', 'detail', 'wildcard_search']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = [
+            "lookup_value",
+            "ordering",
+            "page",
+            "page_size",
+            "fields",
+            "lookup_field",
+            "include_disabled",
+            "recursive",
+            "detail",
+            "wildcard_search",
+        ]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
                 raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_profiles_read" % key
+                    "Got an unexpected keyword argument '%s'" " to method v2_departments_profiles_read" % key
                 )
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
         # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_profiles_read`")  # noqa: E501
+        if "lookup_value" not in params or params["lookup_value"] is None:
+            raise ValueError(
+                "Missing the required parameter `lookup_value` when calling `v2_departments_profiles_read`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+        if "lookup_value" in params:
+            path_params["lookup_value"] = params["lookup_value"]  # noqa: E501
 
         query_params = []
-        if 'ordering' in params:
-            query_params.append(('ordering', params['ordering']))  # noqa: E501
-        if 'page' in params:
-            query_params.append(('page', params['page']))  # noqa: E501
-        if 'page_size' in params:
-            query_params.append(('page_size', params['page_size']))  # noqa: E501
-        if 'fields' in params:
-            query_params.append(('fields', params['fields']))  # noqa: E501
-        if 'lookup_field' in params:
-            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
-        if 'include_disabled' in params:
-            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
-        if 'recursive' in params:
-            query_params.append(('recursive', params['recursive']))  # noqa: E501
-        if 'detail' in params:
-            query_params.append(('detail', params['detail']))  # noqa: E501
-        if 'wildcard_search' in params:
-            query_params.append(('wildcard_search', params['wildcard_search']))  # noqa: E501
+        if "ordering" in params:
+            query_params.append(("ordering", params["ordering"]))  # noqa: E501
+        if "page" in params:
+            query_params.append(("page", params["page"]))  # noqa: E501
+        if "page_size" in params:
+            query_params.append(("page_size", params["page_size"]))  # noqa: E501
+        if "fields" in params:
+            query_params.append(("fields", params["fields"]))  # noqa: E501
+        if "lookup_field" in params:
+            query_params.append(("lookup_field", params["lookup_field"]))  # noqa: E501
+        if "include_disabled" in params:
+            query_params.append(("include_disabled", params["include_disabled"]))  # noqa: E501
+        if "recursive" in params:
+            query_params.append(("recursive", params["recursive"]))  # noqa: E501
+        if "detail" in params:
+            query_params.append(("detail", params["detail"]))  # noqa: E501
+        if "wildcard_search" in params:
+            query_params.append(("wildcard_search", params["wildcard_search"]))  # noqa: E501
 
         header_params = {}
 
@@ -738,27 +678,28 @@ class DepartmentsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/profiles/', 'GET',
+            "/api/v2/departments/{lookup_value}/profiles/",
+            "GET",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='object',  # noqa: E501
+            response_type="object",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )
 
     def v2_departments_read(self, lookup_value, **kwargs):  # noqa: E501
         """v2_departments_read  # noqa: E501
@@ -778,8 +719,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_read_with_http_info(lookup_value, **kwargs)  # noqa: E501
@@ -804,41 +745,39 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['lookup_value', 'fields', 'lookup_field', 'include_disabled', 'with_ancestors']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = ["lookup_value", "fields", "lookup_field", "include_disabled", "with_ancestors"]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
-                raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_read" % key
-                )
+                raise TypeError("Got an unexpected keyword argument '%s'" " to method v2_departments_read" % key)
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
         # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_read`")  # noqa: E501
+        if "lookup_value" not in params or params["lookup_value"] is None:
+            raise ValueError(
+                "Missing the required parameter `lookup_value` when calling `v2_departments_read`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+        if "lookup_value" in params:
+            path_params["lookup_value"] = params["lookup_value"]  # noqa: E501
 
         query_params = []
-        if 'fields' in params:
-            query_params.append(('fields', params['fields']))  # noqa: E501
-        if 'lookup_field' in params:
-            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
-        if 'include_disabled' in params:
-            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
-        if 'with_ancestors' in params:
-            query_params.append(('with_ancestors', params['with_ancestors']))  # noqa: E501
+        if "fields" in params:
+            query_params.append(("fields", params["fields"]))  # noqa: E501
+        if "lookup_field" in params:
+            query_params.append(("lookup_field", params["lookup_field"]))  # noqa: E501
+        if "include_disabled" in params:
+            query_params.append(("include_disabled", params["include_disabled"]))  # noqa: E501
+        if "with_ancestors" in params:
+            query_params.append(("with_ancestors", params["with_ancestors"]))  # noqa: E501
 
         header_params = {}
 
@@ -847,27 +786,28 @@ class DepartmentsApi(object):
 
         body_params = None
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/', 'GET',
+            "/api/v2/departments/{lookup_value}/",
+            "GET",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='DepartmentsWithAncestors',  # noqa: E501
+            response_type="DepartmentsWithAncestors",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )
 
     def v2_departments_restoration(self, body, lookup_value, **kwargs):  # noqa: E501
         """v2_departments_restoration  # noqa: E501
@@ -888,8 +828,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_restoration_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_restoration_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
@@ -915,43 +855,44 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['body', 'lookup_value', 'fields', 'lookup_field', 'include_disabled']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = ["body", "lookup_value", "fields", "lookup_field", "include_disabled"]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
                 raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_restoration" % key
+                    "Got an unexpected keyword argument '%s'" " to method v2_departments_restoration" % key
                 )
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
         # verify the required parameter 'body' is set
-        if ('body' not in params or
-                params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `v2_departments_restoration`")  # noqa: E501
+        if "body" not in params or params["body"] is None:
+            raise ValueError(
+                "Missing the required parameter `body` when calling `v2_departments_restoration`"
+            )  # noqa: E501
         # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_restoration`")  # noqa: E501
+        if "lookup_value" not in params or params["lookup_value"] is None:
+            raise ValueError(
+                "Missing the required parameter `lookup_value` when calling `v2_departments_restoration`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+        if "lookup_value" in params:
+            path_params["lookup_value"] = params["lookup_value"]  # noqa: E501
 
         query_params = []
-        if 'fields' in params:
-            query_params.append(('fields', params['fields']))  # noqa: E501
-        if 'lookup_field' in params:
-            query_params.append(('lookup_field', params['lookup_field']))  # noqa: E501
-        if 'include_disabled' in params:
-            query_params.append(('include_disabled', params['include_disabled']))  # noqa: E501
+        if "fields" in params:
+            query_params.append(("fields", params["fields"]))  # noqa: E501
+        if "lookup_field" in params:
+            query_params.append(("lookup_field", params["lookup_field"]))  # noqa: E501
+        if "include_disabled" in params:
+            query_params.append(("include_disabled", params["include_disabled"]))  # noqa: E501
 
         header_params = {}
 
@@ -959,34 +900,36 @@ class DepartmentsApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'body' in params:
-            body_params = params['body']
+        if "body" in params:
+            body_params = params["body"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json'])  # noqa: E501
+        header_params["Content-Type"] = self.api_client.select_header_content_type(  # noqa: E501
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/restoration/', 'POST',
+            "/api/v2/departments/{lookup_value}/restoration/",
+            "POST",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='Empty',  # noqa: E501
+            response_type="Empty",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )
 
     def v2_departments_update(self, body, lookup_value, **kwargs):  # noqa: E501
         """v2_departments_update  # noqa: E501
@@ -1004,8 +947,8 @@ class DepartmentsApi(object):
                  If the method is called asynchronously,
                  returns the request thread.
         """
-        kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
+        kwargs["_return_http_data_only"] = True
+        if kwargs.get("async_req"):
             return self.v2_departments_update_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
         else:
             (data) = self.v2_departments_update_with_http_info(body, lookup_value, **kwargs)  # noqa: E501
@@ -1028,35 +971,34 @@ class DepartmentsApi(object):
                  returns the request thread.
         """
 
-        all_params = ['body', 'lookup_value']  # noqa: E501
-        all_params.append('async_req')
-        all_params.append('_return_http_data_only')
-        all_params.append('_preload_content')
-        all_params.append('_request_timeout')
+        all_params = ["body", "lookup_value"]  # noqa: E501
+        all_params.append("async_req")
+        all_params.append("_return_http_data_only")
+        all_params.append("_preload_content")
+        all_params.append("_request_timeout")
 
         params = locals()
-        for key, val in six.iteritems(params['kwargs']):
+        for key, val in six.iteritems(params["kwargs"]):
             if key not in all_params:
-                raise TypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method v2_departments_update" % key
-                )
+                raise TypeError("Got an unexpected keyword argument '%s'" " to method v2_departments_update" % key)
             params[key] = val
-        del params['kwargs']
+        del params["kwargs"]
         # verify the required parameter 'body' is set
-        if ('body' not in params or
-                params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `v2_departments_update`")  # noqa: E501
+        if "body" not in params or params["body"] is None:
+            raise ValueError(
+                "Missing the required parameter `body` when calling `v2_departments_update`"
+            )  # noqa: E501
         # verify the required parameter 'lookup_value' is set
-        if ('lookup_value' not in params or
-                params['lookup_value'] is None):
-            raise ValueError("Missing the required parameter `lookup_value` when calling `v2_departments_update`")  # noqa: E501
+        if "lookup_value" not in params or params["lookup_value"] is None:
+            raise ValueError(
+                "Missing the required parameter `lookup_value` when calling `v2_departments_update`"
+            )  # noqa: E501
 
         collection_formats = {}
 
         path_params = {}
-        if 'lookup_value' in params:
-            path_params['lookup_value'] = params['lookup_value']  # noqa: E501
+        if "lookup_value" in params:
+            path_params["lookup_value"] = params["lookup_value"]  # noqa: E501
 
         query_params = []
 
@@ -1066,31 +1008,33 @@ class DepartmentsApi(object):
         local_var_files = {}
 
         body_params = None
-        if 'body' in params:
-            body_params = params['body']
+        if "body" in params:
+            body_params = params["body"]
         # HTTP header `Accept`
-        header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+        header_params["Accept"] = self.api_client.select_header_accept(["application/json"])  # noqa: E501
 
         # HTTP header `Content-Type`
-        header_params['Content-Type'] = self.api_client.select_header_content_type(  # noqa: E501
-            ['application/json'])  # noqa: E501
+        header_params["Content-Type"] = self.api_client.select_header_content_type(  # noqa: E501
+            ["application/json"]
+        )  # noqa: E501
 
         # Authentication setting
         auth_settings = []  # noqa: E501
 
         return self.api_client.call_api(
-            '/api/v2/departments/{lookup_value}/', 'POST',
+            "/api/v2/departments/{lookup_value}/",
+            "POST",
             path_params,
             query_params,
             header_params,
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='Department',  # noqa: E501
+            response_type="Department",  # noqa: E501
             auth_settings=auth_settings,
-            async_req=params.get('async_req'),
-            _return_http_data_only=params.get('_return_http_data_only'),
-            _preload_content=params.get('_preload_content', True),
-            _request_timeout=params.get('_request_timeout'),
-            collection_formats=collection_formats)
+            async_req=params.get("async_req"),
+            _return_http_data_only=params.get("_return_http_data_only"),
+            _preload_content=params.get("_preload_content", True),
+            _request_timeout=params.get("_request_timeout"),
+            collection_formats=collection_formats,
+        )

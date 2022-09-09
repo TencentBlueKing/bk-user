@@ -23,6 +23,7 @@ from .views import (
     CategoryUpdateDeleteViewSet,
     DepartmentRetrieveUpdateDeleteViewSet,
     DepartmentSearchViewSet,
+    DepartmentSwitchOrderViewSet,
     FieldsManageableViewSet,
     FieldsOrderViewSet,
     FieldsViewSet,
@@ -120,5 +121,10 @@ urlpatterns = [
         "api/v2/departments/<int:id>/",
         DepartmentRetrieveUpdateDeleteViewSet.as_view({"get": "do", "delete": "do", "patch": "do"}),
         name="department.actions",
+    ),
+    path(
+        "api/v2/departments/<int:id>/switch_order/<int:another_id>/",
+        DepartmentSwitchOrderViewSet.as_view({"patch": "patch"}),
+        name="department.switch_order",
     ),
 ]

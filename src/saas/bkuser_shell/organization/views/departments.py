@@ -25,7 +25,6 @@ from bkuser_shell.organization.serializers.departments import (
     DepartmentSearchSerializer,
     DepartmentSerializer,
     ListDepartmentSerializer,
-    UpdateDepartmentSerializer,
 )
 from bkuser_shell.organization.serializers.profiles import DepartmentGetProfileResultSerializer
 from bkuser_shell.proxy.proxy import BkUserApiProxy
@@ -193,23 +192,6 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
     def create(self, request, *args, **kwargs):
         """创建组织"""
         return self.do_proxy(request, rewrite_path="/api/v1/web/departments/")
-
-    @inject_serializer(body_in=UpdateDepartmentSerializer, tags=["departments"])
-    def switch_order(self, request, department_id, another_department_id, validated_data):
-        """更新组织顺序"""
-        api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
-
-        departments = []
-        for x_id in [department_id, another_department_id]:
-            departments.append(api_instance.v2_departments_read(x_id))
-
-        # 交换 order 字段
-        department_a, department_b = departments
-        for index, x_department in enumerate([department_b, department_a]):
-            body = {"order": x_department.order}
-            api_instance.v2_departments_partial_update(lookup_value=departments[index].id, body=body)
-
-        return Response(data={})
 
     @inject_serializer(body_in=DepartmentAddProfilesSerializer, out=EmptySerializer, tags=["departments"])
     def add_profiles(self, request, department_id, validated_data):

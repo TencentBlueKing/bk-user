@@ -49,11 +49,6 @@ urlpatterns = [
         DepartmentViewSet.as_view({"get": "search_in_category"}),
         name="departments.search_in_category",
     ),
-    url(
-        r"^api/v2/departments/%s/switch_order/%s/$" % (PVAR_DEPARTMENT_ID, PVAR_ANOTHER_DEPARTMENT_ID),
-        DepartmentViewSet.as_view({"patch": "switch_order"}),
-        name="department.switch_order",
-    ),
     ###################
     # Profile related #
     ###################

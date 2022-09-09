@@ -24,6 +24,11 @@ urlpatterns = [
         views.DepartmentRetrieveUpdateDeleteApi.as_view(),
         name="department.update_delete",
     ),
+    path(
+        "<int:id>/operations/switch_order/<int:another_id>/",
+        views.DepartmentOperationSwitchOrderApi.as_view(),
+        name="department.operation.switch_order",
+    ),
     # NOTE: replace of /api/v3/departments/
     path(
         "search/",
