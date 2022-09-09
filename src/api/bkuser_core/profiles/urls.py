@@ -11,5 +11,4 @@ specific language governing permissions and limitations under the License.
 
 from bkuser_core.profiles.v2.urls import urlpatterns as v2_urlpatterns
 
-# NOTE:  can't delete it now, the pages used /api/v3/profiles and /api/v3/departments for search
 urlpatterns = v2_urlpatterns
