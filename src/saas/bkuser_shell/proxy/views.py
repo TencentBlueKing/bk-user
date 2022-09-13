@@ -282,3 +282,13 @@ class ProfilesRetrieveUpdateViewSet(BkUserApiProxy):
         # out: /api/v1/web/profiles/1/
         api_path = api_path.replace("/api/v2/profiles/", "/api/v1/web/profiles/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class ProfilesRestorationViewSet(BkUserApiProxy):
+    def post(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/profiles/1/restoration/
+        # out: /api/v1/web/profiles/1/restoration/
+        api_path = api_path.replace("/api/v2/profiles/", "/api/v1/web/profiles/")
+        api_path = api_path.replace("restoration/", "operations/restoration/")
+        return self.do_proxy(request, rewrite_path=api_path)

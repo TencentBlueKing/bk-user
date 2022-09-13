@@ -199,3 +199,25 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     def partial_update(self, request, *args, **kwargs):
         """更新用户部分字段"""
         return self._update(request, partial=True)
+
+
+class ProfileOperationRestorationApi(generics.CreateAPIView):
+    permission_classes = [ManageDepartmentProfilePermission]
+    queryset = Profile.objects.all()
+    lookup_url_kwarg = "id"
+
+    def post(self, request, *args, **kwargs):
+        """软删除恢复"""
+        # FIXME: maybe should change to a custom mixin
+        instance = self.get_object()
+
+        # 相对原先的区别: 不需要检查是否已开启
+        # if instance.enabled:
+        #     raise error_codes.RESOURCE_ALREADY_ENABLED
+
+        try:
+            instance.enable()
+        except Exception:
+            logger.exception("failed to restoration instance: %s", instance)
+            raise error_codes.RESOURCE_RESTORATION_FAILED
+        return Response()

@@ -53,11 +53,6 @@ urlpatterns = [
         name="profiles",
     ),
     url(
-        r"^api/v2/profiles/%s/restoration/$" % PVAR_PROFILE_ID,
-        ProfilesViewSet.as_view({"post": "restoration"}),
-        name="profiles.restoration",
-    ),
-    url(
         r"^api/v2/batch/profiles/$",
         ProfilesViewSet.as_view({"patch": "multiple_update", "delete": "multiple_delete"}),
         name="profiles.batch.actions",

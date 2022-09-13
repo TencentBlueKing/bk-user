@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
-import json
 import logging
 
 from django.utils.timezone import now
@@ -17,7 +16,6 @@ from rest_framework.permissions import IsAuthenticated
 
 import bkuser_sdk
 from bkuser_global.drf_crown import inject_serializer
-from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.error_codes import error_codes
@@ -76,23 +74,6 @@ class ProfilesViewSet(BkUserApiViewSet, BkUserApiProxy):
         profile = bkuser_sdk.Profile(**validated_data)
         api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
         return api_instance.v2_profiles_create(body=profile)
-
-    @inject_serializer(tag=["profiles"])
-    def restoration(self, request, profile_id):
-        """恢复 profile"""
-        # TODO: 为什么no_auth=True?
-        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
-        # api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request, no_auth=True))
-        try:
-            api_instance.v2_profiles_restoration(
-                lookup_value=profile_id, lookup_field="id", body={}, include_disabled=True
-            )
-        except ApiException as e:
-            if json.loads(e.body)["code"] == "RESOURCE_ALREADY_ENABLED":
-                return Response({})
-            raise error_codes.CANNOT_RESTORATION_PROFILE
-
-        return Response({})
 
     @inject_serializer(
         body_in=serializers.UpdateProfileSerializer(many=True),

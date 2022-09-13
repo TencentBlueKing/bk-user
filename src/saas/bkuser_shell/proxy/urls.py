@@ -36,6 +36,7 @@ from .views import (
     LoginInfoViewSet,
     LoginLogExportViewSet,
     LoginLogViewSet,
+    ProfilesRestorationViewSet,
     ProfilesRetrieveUpdateViewSet,
     ProfilesSearchViewSet,
     SettingsMetasViewSet,
@@ -80,6 +81,11 @@ urlpatterns = [
         "api/v2/profiles/<int:id>/",
         ProfilesRetrieveUpdateViewSet.as_view({"get": "request", "patch": "request"}),
         name="profiles.get_update",
+    ),
+    path(
+        "api/v2/profiles/<int:id>/restoration/",
+        ProfilesRestorationViewSet.as_view({"post": "post"}),
+        name="profiles.restoration",
     ),
     # categories
     path("api/v2/categories_metas/", CategoryMetasViewSet.as_view({"get": "get"}), name="categories.metas"),

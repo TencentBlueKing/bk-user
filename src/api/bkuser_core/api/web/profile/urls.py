@@ -25,14 +25,15 @@ urlpatterns = [
         name="profile.search",
     ),
     path("<int:id>/", views.ProfileRetrieveUpdateDeleteApi.as_view(), name="profile.update"),
+    path(
+        "<int:id>/operations/restoration/",
+        views.ProfileOperationRestorationApi.as_view(),
+        name="profile.operation.restoration",
+    ),
 ]
 
 # 创建用户
 # POST /api/v2/profiles/
 
-
-# 账号恢复
-# POST /api/v2/profiles/1/restoration/
-
-# 删除 => 走的批量接口?
+# 删除 => 走的批量接口? => 需要切换成单个接口, 不要滥用批量
 # DELETE /api/v2/batch/profiles/  [{id: 1025}]
