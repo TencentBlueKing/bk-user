@@ -21,8 +21,6 @@ from bkuser_shell.common.serializers import EmptySerializer
 from bkuser_shell.organization.serializers.departments import (
     DepartmentAddProfilesSerializer,
     DepartmentListSerializer,
-    DepartmentSearchSerializer,
-    DepartmentSerializer,
     ListDepartmentSerializer,
 )
 from bkuser_shell.proxy.proxy import BkUserApiProxy
@@ -128,23 +126,6 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
 
         # 考虑到效率不使用 serializer
         return Response(data=managed_categories.values())
-
-    @inject_serializer(query_in=DepartmentSearchSerializer, out=DepartmentSerializer(many=True), tags=["departments"])
-    def search_in_category(self, request, category_id, validated_data):
-        """在 category 中查找组织"""
-        api_instance = bkuser_sdk.DepartmentsApi(
-            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_DEPARTMENT.value)
-        )
-        keyword = validated_data.get("keyword")
-        max_items = validated_data.get("max_items")
-        hit_departments = api_instance.v2_departments_list(
-            page=1,
-            page_size=max_items,
-            wildcard_search=keyword,
-            wildcard_search_fields=["name"],
-        )
-        departments = [x for x in hit_departments.get("results") if x["category_id"] == int(category_id)]
-        return departments
 
     def create(self, request, *args, **kwargs):
         """创建组织"""

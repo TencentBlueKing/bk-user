@@ -231,3 +231,11 @@ class CategoryProfileSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, read_only=True)
     username = serializers.CharField()
     display_name = serializers.CharField(read_only=True)
+
+
+class CategoryDepartmentListSerializer(serializers.Serializer):
+    keyword = serializers.CharField(allow_blank=False)
+    # 暂时不支持这个参数, 一律返回带ancestors
+    # with_ancestors = serializers.BooleanField(default=False)
+    page = serializers.IntegerField(required=False, default=1)
+    page_size = serializers.IntegerField(required=False, default=10)

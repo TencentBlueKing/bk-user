@@ -25,6 +25,11 @@ urlpatterns = [
         name="category.update",
     ),
     path(
+        "<int:id>/departments/",
+        views.CategoryDepartmentListApi.as_view(),
+        name="category.department.list",
+    ),
+    path(
         "<int:id>/profiles/",
         views.CategoryProfileListApi.as_view(),
         name="category.profile.list",

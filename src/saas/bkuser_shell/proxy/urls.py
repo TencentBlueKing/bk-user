@@ -18,6 +18,7 @@ from .views import (
     CategoriesSyncViewSet,
     CategoriesTestConnectionViewSet,
     CategoriesTestFetchDataViewSet,
+    CategoryDepartmentsViewSet,
     CategoryListCreateViewSet,
     CategoryMetasViewSet,
     CategoryProfilesViewSet,
@@ -131,6 +132,11 @@ urlpatterns = [
         "api/v2/categories/<int:id>/profiles/",
         CategoryProfilesViewSet.as_view({"get": "list"}),
         name="categories.profiles",
+    ),
+    path(
+        "api/v2/categories/<int:id>/departments/search/",
+        CategoryDepartmentsViewSet.as_view({"get": "list"}),
+        name="departments.search_in_category",
     ),
     # FIXME: 有没有被调用?
     path(

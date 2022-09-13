@@ -21,6 +21,7 @@ from rest_framework.response import Response
 
 from .serializers import (
     CategoryCreateSerializer,
+    CategoryDepartmentListSerializer,
     CategoryDetailSerializer,
     CategoryExportProfileSerializer,
     CategoryExportSerializer,
@@ -37,10 +38,11 @@ from .serializers import (
     CategoryTestFetchDataSerializer,
     CategoryUpdateSerializer,
 )
+from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsSerializer
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldSerializer
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
-from bkuser_core.api.web.viewset import CustomPaginationData
+from bkuser_core.api.web.viewset import CustomPagination, CustomPaginationData
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import (
     IAMAction,
@@ -555,4 +557,26 @@ class CategoryProfileListApi(generics.ListAPIView):
 
         # do prefetch
         queryset = queryset.prefetch_related("departments", "leader")
+        return queryset
+
+
+class CategoryDepartmentListApi(generics.ListAPIView):
+
+    permission_classes = [ManageCategoryPermission]
+    # NOTE: 这里跟原先的区别, 全部返回的 with_ancestors=true
+    serializer_class = DepartmentsWithChildrenAndAncestorsSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        category_id = self.kwargs["id"]
+        queryset = Department.objects.filter(category_id=category_id)
+
+        serializer = CategoryDepartmentListSerializer(data=self.request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        keyword = data.get("keyword")
+        if keyword:
+            queryset = queryset.filter(name__icontains=keyword)
+
         return queryset

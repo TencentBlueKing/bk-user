@@ -37,12 +37,6 @@ class DepartmentListSerializer(serializers.Serializer):
     only_enabled = serializers.BooleanField(default=True)
 
 
-class DepartmentSearchSerializer(serializers.Serializer):
-    keyword = serializers.CharField(allow_blank=False)
-    with_ancestors = serializers.BooleanField(default=False)
-    max_items = serializers.IntegerField(required=False, default=10)
-
-
 class ListDepartmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     profile_count = serializers.IntegerField()

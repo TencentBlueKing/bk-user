@@ -275,6 +275,17 @@ class CategoryProfilesViewSet(BkUserApiProxy):
         return self.do_proxy(request, rewrite_path=api_path)
 
 
+class CategoryDepartmentsViewSet(BkUserApiProxy):
+    def list(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/categories/13/departments/search/?keyword=a&max_items=40&with_ancestors=true
+        # out: /api/v1/web/categories/1/13/departments/?keyword=a&max_items=40&with_ancestors=true
+        # NOTE: 区别: 1. with_ancestors=true无效 2. max_items无效需要改成page_size(并且加上page)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        api_path = api_path.replace("departments/search/", "departments/")
+        return self.do_proxy(request, rewrite_path=api_path)
+
+
 class ProfilesRetrieveUpdateViewSet(BkUserApiProxy):
     def request(self, request, *args, **kwargs):
         api_path = BkUserApiProxy.get_api_path(request)
