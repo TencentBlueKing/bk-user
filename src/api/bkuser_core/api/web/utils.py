@@ -15,6 +15,7 @@ from django.conf import settings
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
+from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.models import SettingMeta
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def get_username(request) -> str:
 
 # FIXME: add memory cache here
 def get_category_display_name_map():
-    return dict(ProfileCategory.objects.values_list('id', 'display_name').all())
+    return dict(ProfileCategory.objects.values_list("id", "display_name").all())
 
 
 # FIXME: add memory cache here
@@ -52,6 +53,14 @@ def get_category(category_id: int) -> ProfileCategory:
     except Exception:
         logger.exception("cannot find category: %s", category_id)
         raise error_codes.CANNOT_FIND_CATEGORY
+
+
+def get_profile(profile_id: int) -> Profile:
+    try:
+        return Profile.objects.get(id=profile_id)
+    except Exception:
+        logger.exception("cannot find profile: %s", profile_id)
+        raise error_codes.CANNOT_FIND_PROFILE
 
 
 def list_setting_metas(category_type: str, region: str, namespace: str) -> list:

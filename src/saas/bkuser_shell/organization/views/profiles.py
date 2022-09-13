@@ -16,7 +16,7 @@ from django.utils.timezone import now
 from rest_framework.permissions import IsAuthenticated
 
 import bkuser_sdk
-from bkuser_global.drf_crown import ResponseParams, inject_serializer
+from bkuser_global.drf_crown import inject_serializer
 from bkuser_sdk.rest import ApiException
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
@@ -28,11 +28,12 @@ from bkuser_shell.organization.constants import (
     ACCOUNT_NAMESPACE,
 )
 from bkuser_shell.organization.serializers import profiles as serializers
+from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
 
 
-class ProfilesViewSet(BkUserApiViewSet):
+class ProfilesViewSet(BkUserApiViewSet, BkUserApiProxy):
 
     permission_classes = [IsAuthenticated]
     ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
@@ -75,41 +76,6 @@ class ProfilesViewSet(BkUserApiViewSet):
         profile = bkuser_sdk.Profile(**validated_data)
         api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
         return api_instance.v2_profiles_create(body=profile)
-
-    @inject_serializer(
-        body_in=serializers.UpdateProfileSerializer, out=serializers.ProfileSerializer, tags=["profiles"]
-    )
-    def update(self, request, profile_id, validated_data):
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
-        fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
-
-        # 防御编程，防止前端传入 username
-        if validated_data.get("username"):
-            validated_data.pop("username")
-
-        extra_fields = {key: value for key, value in request.data.items() if key not in validated_data}
-        if extra_fields:
-            validated_data["extras"] = {key: value for key, value in extra_fields.items()}
-
-        unknown_fields = set(extra_fields.keys()) - set([x["name"] for x in fields if not x["builtin"]])  # noqa
-        if unknown_fields:
-            raise error_codes.UNKNOWN_FIELD.f(",".join(list(unknown_fields)))
-
-        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
-        profile = api_instance.v2_profiles_partial_update(
-            lookup_value=profile_id, lookup_field="id", body=validated_data
-        )
-        return profile
-
-    @inject_serializer(out=serializers.ProfileSerializer, tags=["profiles"])
-    def retrieve(self, request, profile_id):
-        api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))
-        profile = api_instance.v2_profiles_read(profile_id, lookup_field="id")
-
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
-        fields = self.get_paging_results(api_instance.v2_dynamic_fields_list)
-        extra_fields = [x for x in fields if not x["builtin"]]
-        return ResponseParams(profile, {"context": {"fields": extra_fields, "request": request}})
 
     @inject_serializer(tag=["profiles"])
     def restoration(self, request, profile_id):

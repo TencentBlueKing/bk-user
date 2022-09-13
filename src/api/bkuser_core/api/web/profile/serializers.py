@@ -14,6 +14,7 @@ from rest_framework import serializers
 
 from bkuser_core.api.web.utils import get_default_category_id
 from bkuser_core.api.web.viewset import StringArrayField
+from bkuser_core.profiles.models import Profile
 
 
 class LoginProfileRetrieveSerializer(serializers.Serializer):
@@ -70,6 +71,7 @@ class ProfileSearchResultDepartmentSerializer(serializers.Serializer):
     category_id = serializers.IntegerField(required=False)
 
 
+# TODO: rename? many place use this
 class ProfileSearchResultSerializer(serializers.Serializer):
     # FIXME: 不需要返回所有字段吧
     id = serializers.CharField(required=False, help_text="用户ID")
@@ -96,3 +98,13 @@ class ProfileSearchResultSerializer(serializers.Serializer):
     update_time = serializers.DateTimeField(required=False, help_text="更新时间")
     departments = ProfileSearchResultDepartmentSerializer(many=True, required=False, help_text="部门列表")
     leaders = ProfileSearchResultLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    leader = serializers.ListField(child=serializers.IntegerField(), required=False)
+    departments = serializers.ListField(child=serializers.IntegerField(), required=False)
+
+    class Meta:
+        model = Profile
+        # NOTE: 相对原来的api区别, 不支持extras/create_time/update_time更新
+        exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]

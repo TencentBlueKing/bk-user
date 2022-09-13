@@ -24,16 +24,12 @@ urlpatterns = [
         views.ProfileSearchApi.as_view(),
         name="profile.search",
     ),
+    path("<int:id>/", views.ProfileRetrieveUpdateDeleteApi.as_view(), name="profile.update"),
 ]
 
 # 创建用户
 # POST /api/v2/profiles/
 
-# 修改密码
-# PATCH /api/v2/profiles/1026/   {password: "Bk@123com"}
-
-# 禁用/启用
-# PATCH /api/v2/profiles/1025/   {status: "DISABLED"}
 
 # 账号恢复
 # POST /api/v2/profiles/1/restoration/

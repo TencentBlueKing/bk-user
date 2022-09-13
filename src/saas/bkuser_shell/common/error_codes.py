@@ -141,5 +141,6 @@ error_codes.add_codes(
         ErrorCode("EMPTY_LOG_DETAILS_ERROR", _("版本日志详情空错误")),
         ErrorCode("VERSION_FORMAT_ERROR", _("版本日志格式错误")),
         ErrorCode("UNKNOWN_VERSION_NUMBER", _("版本号未知")),
+        ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
     ]
 )

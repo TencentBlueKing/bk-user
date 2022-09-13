@@ -20,7 +20,7 @@ from .converters import PathIgnoreDjangoQSConverter
 from .exceptions import IAMPermissionDenied
 from .helper import IAMHelper
 from .utils import need_iam
-from bkuser_core.api.web.utils import get_category, get_department, get_username
+from bkuser_core.api.web.utils import get_category, get_department, get_profile, get_username
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -68,6 +68,19 @@ class Permission:
             objs=objs,
         )
 
+    def allow_tree_departments_action(self, username: str, action_id, departments) -> bool:
+        # 叶节点到根节点的所有部门, 有一个有权限, 则有权限
+        if not self.iam_enabled:
+            return True
+
+        objs = departments
+        return self.helper.objs_action_allow(
+            username=username,
+            action_id=action_id,
+            objs=objs,
+            any_pass=True,
+        )
+
     def allow_action_without_resource(self, username: str, action_id: IAMAction):
         if not self.iam_enabled:
             return True
@@ -108,6 +121,24 @@ def new_department_permission(action_id: IAMAction):
     return DepartmentIdInURLPermission
 
 
+def new_department_permission_via_profile(action_id: IAMAction):
+    class ProfileIdInURLPermission(BasePermission):
+        def has_permission(self, request, view):
+            profile_id = view.kwargs["id"]
+
+            profile = get_profile(profile_id)
+            departments = Department.tree_objects.get_queryset_ancestors(
+                queryset=Department.objects.filter(id__in=profile.departments.values_list("id", flat=True)),
+                include_self=True,
+            )
+
+            # 只要有一级目录有权限, 就是有权限
+            username = get_username(request)
+            return Permission().allow_tree_departments_action(username, action_id, departments)
+
+    return ProfileIdInURLPermission
+
+
 # 不关联资源实例的权限控制 Permission Classes
 ViewAuditPermission = new_action_without_resource_permission(IAMAction.VIEW_AUDIT)
 ManageFieldPermission = new_action_without_resource_permission(IAMAction.MANAGE_FIELD)
@@ -118,6 +149,7 @@ ViewCategoryPermission = new_category_permission(IAMAction.VIEW_CATEGORY)
 ManageDepartmentPermission = new_department_permission(IAMAction.MANAGE_DEPARTMENT)
 ViewDepartmentPermission = new_department_permission(IAMAction.VIEW_DEPARTMENT)
 
+ManageDepartmentProfilePermission = new_department_permission_via_profile(IAMAction.MANAGE_DEPARTMENT)
 
 # @classmethod
 # def get_global_actions(cls) -> tuple:
