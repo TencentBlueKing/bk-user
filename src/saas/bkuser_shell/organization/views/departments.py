@@ -13,7 +13,7 @@ import logging
 from rest_framework.permissions import IsAuthenticated
 
 import bkuser_sdk
-from bkuser_global.drf_crown import ResponseParams, inject_serializer
+from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
@@ -21,12 +21,10 @@ from bkuser_shell.common.serializers import EmptySerializer
 from bkuser_shell.organization.serializers.departments import (
     DepartmentAddProfilesSerializer,
     DepartmentListSerializer,
-    DepartmentProfileSerializer,
     DepartmentSearchSerializer,
     DepartmentSerializer,
     ListDepartmentSerializer,
 )
-from bkuser_shell.organization.serializers.profiles import DepartmentGetProfileResultSerializer
 from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
@@ -40,54 +38,13 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
 
     ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
 
-    @staticmethod
-    def _get_profiles_count(api_instance, department_id, recursive, page, page_size):
-        # 获取当前部门的人员数量
-        profiles_response = api_instance.v2_departments_profiles_read(
-            department_id,
-            recursive=recursive,
-            detail=False,
-            page=page,
-            page_size=page_size,
-        )
-        return profiles_response.get("count")
+    def get_profiles(self, request, *args, **kwargs):
+        # in: api/v2/departments/%s/profiles/
+        # out: api/v1/web/departments/%s/profiles/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
 
-    @inject_serializer(
-        query_in=DepartmentProfileSerializer, out=DepartmentGetProfileResultSerializer, tags=["departments"]
-    )
-    def get_profiles(self, request, department_id, validated_data):
-        recursive = validated_data.get("recursive", True)
-        page = validated_data["page"]
-        page_size = validated_data["page_size"]
-
-        request_params = {
-            "lookup_value": department_id,
-            "recursive": recursive,
-            "detail": True,
-            "page": page,
-            "page_size": page_size,
-        }
-        if validated_data.get("keyword"):
-            request_params["wildcard_search"] = validated_data.get("keyword")
-
-        # 获取当前部门的人员数量
-        api_instance = bkuser_sdk.DepartmentsApi(
-            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_DEPARTMENT.value)
-        )
-        profiles_response = api_instance.v2_departments_profiles_read(**request_params)
-
-        # 获取自定义字段
-        fields_api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
-        fields = self.get_paging_results(fields_api_instance.v2_dynamic_fields_list)
-        extra_fields = [x for x in fields if not x["builtin"]]
-
-        data = {"count": profiles_response.get("count"), "data": profiles_response.get("results")}
-        if recursive:
-            data["current_count"] = self._get_profiles_count(api_instance, department_id, False, 1, 1)
-        else:
-            data["total_count"] = self._get_profiles_count(api_instance, department_id, True, 1, 1)
-
-        return ResponseParams(data, {"context": {"fields": extra_fields, "request": request}})
+        return self.do_proxy(request, rewrite_path=api_path)
 
     @inject_serializer(
         query_in=DepartmentListSerializer, out=ListDepartmentSerializer(many=True), tags=["departments"]

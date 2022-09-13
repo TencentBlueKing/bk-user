@@ -104,3 +104,51 @@ class DepartmentSearchResultSerializer(serializers.Serializer):
     name = serializers.CharField(required=False)
     full_name = serializers.CharField(required=False)
     category_id = serializers.IntegerField(required=False)
+
+
+class DepartmentProfileListSerializer(serializers.Serializer):
+    page = serializers.IntegerField(required=False, default=1)
+    page_size = serializers.IntegerField(required=False, default=10)
+    recursive = serializers.BooleanField(default=True)
+    keyword = serializers.CharField(required=False)
+
+
+class DepartmentProfileLeaderSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False, read_only=True)
+    username = serializers.CharField()
+    display_name = serializers.CharField(read_only=True)
+
+
+class DepartmentProfileDepartmentSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(required=False)
+    full_name = serializers.CharField(required=False)
+    category_id = serializers.IntegerField(required=False)
+
+
+class DepartmentProfileSerializer(serializers.Serializer):
+    # FIXME: 不需要返回所有字段吧
+    id = serializers.CharField(required=False, help_text="用户ID")
+    username = serializers.CharField(required=False, help_text="用户名")
+    qq = serializers.CharField(required=False, help_text="QQ")
+    email = serializers.CharField(required=False, help_text="邮箱")
+    telephone = serializers.CharField(required=False, help_text="电话")
+    wx_userid = serializers.CharField(required=False, help_text="微信用户id")
+    domain = serializers.CharField(required=False, help_text="域")
+    display_name = serializers.CharField(required=False, help_text="中文名")
+    status = serializers.CharField(required=False, help_text="账户状态")
+    staff_status = serializers.CharField(required=False, help_text="在职状态")
+    position = serializers.CharField(required=False, help_text="职位")
+    enabled = serializers.BooleanField(required=False, help_text="是否启用", default=True)
+    extras = serializers.JSONField(required=False, help_text="扩展字段")
+    password_valid_days = serializers.IntegerField(required=False, help_text="密码有效期")
+    country_code = serializers.CharField(required=False, help_text="国家码")
+    iso_code = serializers.CharField(required=False, help_text="国家码")
+    time_zone = serializers.CharField(required=False, help_text="时区")
+
+    last_login_time = serializers.DateTimeField(required=False, help_text="最后登录时间")
+
+    create_time = serializers.DateTimeField(required=False, help_text="创建时间")
+    update_time = serializers.DateTimeField(required=False, help_text="更新时间")
+    departments = DepartmentProfileDepartmentSerializer(many=True, required=False, help_text="部门列表")
+    leaders = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")

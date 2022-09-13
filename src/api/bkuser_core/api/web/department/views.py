@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -16,17 +17,21 @@ from rest_framework.response import Response
 from .serializers import (
     DepartmentCreatedReturnSerializer,
     DepartmentCreateSerializer,
+    DepartmentProfileListSerializer,
+    DepartmentProfileSerializer,
     DepartmentSearchResultSerializer,
     DepartmentSearchSerializer,
     DepartmentsWithChildrenAndAncestorsSerializer,
 )
 from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_username
 from bkuser_core.api.web.viewset import CustomPagination
-from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentPermission, Permission
+from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentPermission, Permission, ViewDepartmentPermission
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.departments.models import Department
+from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.departments.signals import post_department_create
+from bkuser_core.profiles.constants import ProfileStatus
+from bkuser_core.profiles.models import Profile
 
 
 class DepartmentListCreateApi(generics.ListCreateAPIView):
@@ -149,3 +154,69 @@ class DepartmentOperationSwitchOrderApi(generics.UpdateAPIView):
         another_department.save(update_fields=["order"])
 
         return Response()
+
+
+class DepartmentProfileListApi(generics.ListAPIView):
+    permission_classes = [ViewDepartmentPermission]
+    pagination_class = CustomPagination
+    serializer_class = DepartmentProfileSerializer
+
+    def get_recursive_queryset(self, department):
+        # 使用 DB 做 distinct 非常慢，所以先用 id 去重 TODO: 为什么差别这么大，有时间慢慢研究
+        department_ids = department.get_descendants(include_self=True).values_list("id", flat=True)
+        ids = DepartmentThroughModel.objects.filter(department_id__in=department_ids).values_list(
+            "profile_id", flat=True
+        )
+
+        # 当后端 DB 不支持 microseconds 时 create_time 会无法准确排序
+        return Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
+
+    def get_no_recursive_queryset(self, department):
+        return department.profiles.exclude(status=ProfileStatus.DELETED.value)
+
+    # def get_queryset(self):
+    def list(self, request, *args, **kwargs):
+        slz = DepartmentProfileListSerializer(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        department_id = self.kwargs["id"]
+        department = get_department(department_id)
+
+        # 原来的代码: 递归current_count, 不递归查total_count(I don't know why)
+        # https://github.com/TencentBlueking/bk-user/blob/99178a35b96511c0cd4dc7c1944bc80ce2d082dd/src/saas/bkuser_shell/organization/views/departments.py#L84-L88
+        # FIXME: 跟前端确认逻辑, 抹掉差异和自定义 => total_count/current_count有没有用, 没用去掉
+        current_count = total_count = 0
+
+        # NOTE: duplicated with departments.models.Department.get_profiles
+        recursive = data.get("recursive")
+        if not recursive:
+            queryset = self.get_no_recursive_queryset(department)
+            total_count = self.get_recursive_queryset(department).count()
+        else:
+            queryset = self.get_recursive_queryset(department)
+            current_count = self.get_no_recursive_queryset(department).count()
+
+        # filter by keyword
+        keyword = data.get("keyword")
+        if keyword:
+            queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
+
+        queryset = queryset.prefetch_related("departments", "leader")
+
+        # build response
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            count = self.paginator.page.paginator.count
+            return Response(
+                {
+                    "count": count,
+                    "data": serializer.data,
+                    "current_count": current_count,
+                    "total_count": total_count,
+                }
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

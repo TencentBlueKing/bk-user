@@ -116,6 +116,7 @@ ManageFieldPermission = new_action_without_resource_permission(IAMAction.MANAGE_
 ManageCategoryPermission = new_category_permission(IAMAction.MANAGE_CATEGORY)
 ViewCategoryPermission = new_category_permission(IAMAction.VIEW_CATEGORY)
 ManageDepartmentPermission = new_department_permission(IAMAction.MANAGE_DEPARTMENT)
+ViewDepartmentPermission = new_department_permission(IAMAction.VIEW_DEPARTMENT)
 
 
 # @classmethod

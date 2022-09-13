@@ -25,6 +25,11 @@ urlpatterns = [
         name="department.update_delete",
     ),
     path(
+        "<int:id>/profiles/",
+        views.DepartmentProfileListApi.as_view(),
+        name="department.profile.list",
+    ),
+    path(
         "<int:id>/operations/switch_order/<int:another_id>/",
         views.DepartmentOperationSwitchOrderApi.as_view(),
         name="department.operation.switch_order",

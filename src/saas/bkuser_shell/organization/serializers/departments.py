@@ -43,13 +43,6 @@ class DepartmentSearchSerializer(serializers.Serializer):
     max_items = serializers.IntegerField(required=False, default=10)
 
 
-class DepartmentProfileSerializer(serializers.Serializer):
-    page = serializers.IntegerField(required=False, default=1)
-    page_size = serializers.IntegerField(required=False, default=10)
-    recursive = serializers.BooleanField(default=True)
-    keyword = serializers.CharField(required=False)
-
-
 class ListDepartmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     profile_count = serializers.IntegerField()

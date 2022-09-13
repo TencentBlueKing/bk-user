@@ -147,10 +147,3 @@ class ProfileExportSerializer(Serializer):
         data["leader"] = ",".join(x["username"] for x in data["leader"])
         data["department_name"] = ",".join([x["full_name"] for x in data["department_name"]])
         return data
-
-
-class DepartmentGetProfileResultSerializer(Serializer):
-    count = IntegerField()
-    current_count = IntegerField(required=False)
-    total_count = IntegerField(required=False)
-    data = ProfileSerializer(many=True)

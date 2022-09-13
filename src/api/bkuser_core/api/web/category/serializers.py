@@ -218,6 +218,12 @@ class CategorySettingCreateSerializer(serializers.Serializer):
     # enabled = serializers.BooleanField(required=False, default=True)
 
 
+class CategoryProfileListSerializer(serializers.Serializer):
+    keyword = serializers.CharField(required=False)
+    page = serializers.IntegerField(required=False, default=1)
+    page_size = serializers.IntegerField(required=False, default=10)
+
+
 class CategoryProfileSerializer(serializers.Serializer):
     """用户序列化"""
 
