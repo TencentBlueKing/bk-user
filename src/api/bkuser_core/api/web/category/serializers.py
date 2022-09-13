@@ -161,7 +161,7 @@ class CategoryExportSerializer(serializers.Serializer):
     department_ids = StringArrayField(required=False, help_text="部门id列表")
 
 
-class CategoryExportProfileDepartmentSerializer(serializers.ModelSerializer):
+class SimpleDepartmentSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
 
     def get_full_name(self, obj):
@@ -182,7 +182,7 @@ class CategoryExportProfileLeaderSerializer(serializers.Serializer):
 class CategoryExportProfileSerializer(serializers.ModelSerializer):
     # 登录日志导出需要用到 bkuser_core.api.web.audit.serializers
     leader = CategoryExportProfileLeaderSerializer(many=True)
-    departments = CategoryExportProfileDepartmentSerializer(many=True, required=False)
+    departments = SimpleDepartmentSerializer(many=True, required=False)
     last_login_time = serializers.DateTimeField(required=False, read_only=True)
 
     extras = serializers.SerializerMethodField(required=False)
@@ -216,3 +216,12 @@ class CategorySettingCreateSerializer(serializers.Serializer):
     # namespace = serializers.CharField(required=False)
     # region = serializers.CharField()
     # enabled = serializers.BooleanField(required=False, default=True)
+
+
+class CategoryProfileSerializer(serializers.Serializer):
+    """用户序列化"""
+
+    # NOTE: 搜索接口, 不需要返回用户所有信息
+    id = serializers.IntegerField(required=False, read_only=True)
+    username = serializers.CharField()
+    display_name = serializers.CharField(read_only=True)

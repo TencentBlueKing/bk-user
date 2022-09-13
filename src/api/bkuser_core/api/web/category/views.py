@@ -12,6 +12,7 @@ import logging
 from typing import List
 
 from django.conf import settings
+from django.db.models import Q
 from django.utils.translation import gettext as _
 from openpyxl import load_workbook
 from rest_framework import generics, status
@@ -26,6 +27,8 @@ from .serializers import (
     CategoryFileImportSerializer,
     CategoryMetaSerializer,
     CategoryNamespaceSettingUpdateSerializer,
+    CategoryProfileListSerializer,
+    CategoryProfileSerializer,
     CategorySettingCreateSerializer,
     CategorySettingListSerializer,
     CategorySettingSerializer,
@@ -37,8 +40,15 @@ from .serializers import (
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldSerializer
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
+from bkuser_core.api.web.viewset import CustomPaginationData
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
-from bkuser_core.bkiam.permissions import IAMAction, IAMPermissionExtraInfo, ManageCategoryPermission, Permission
+from bkuser_core.bkiam.permissions import (
+    IAMAction,
+    IAMPermissionExtraInfo,
+    ManageCategoryPermission,
+    Permission,
+    ViewCategoryPermission,
+)
 from bkuser_core.categories.constants import CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
 from bkuser_core.categories.loader import get_plugin_by_category
@@ -519,3 +529,30 @@ class CategoryOperationSwitchOrderApi(generics.UpdateAPIView):
         another_category.save(update_fields=["order"])
 
         return Response()
+
+
+class CategoryProfileListApi(generics.ListAPIView):
+    permission_classes = [ViewCategoryPermission]
+    # FIXME: 所有接口都是count/results, 但是这个接口前端用的count/data
+    # TODO: 需要: 前端切换, 去掉这个类 CustomPaginationData
+    pagination_class = CustomPaginationData
+    serializer_class = CategoryProfileSerializer
+
+    def get_queryset(self):
+        slz = CategoryProfileListSerializer(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # filter by category_id
+        category_id = self.kwargs["id"]
+        queryset = Profile.objects.filter(category_id=category_id, enabled=True)
+
+        # filter by keyword
+        keyword = data.get("keyword")
+        if keyword:
+            # NOTE: 这里相对原来的差异, 抹掉了 id__icontains 的搜索
+            queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
+
+        # do prefetch
+        queryset = queryset.prefetch_related("departments", "leader")
+        return queryset

@@ -20,6 +20,7 @@ from .views import (
     CategoriesTestFetchDataViewSet,
     CategoryListCreateViewSet,
     CategoryMetasViewSet,
+    CategoryProfilesViewSet,
     CategorySettingsListViewSet,
     CategorySettingsNamespaceViewSet,
     CategoryUpdateDeleteViewSet,
@@ -113,6 +114,11 @@ urlpatterns = [
         "api/v2/categories/<int:id>/switch_order/<int:another_id>/",
         CategoriesSwitchOrderViewSet.as_view({"patch": "patch"}),
         name="categories.switch_order",
+    ),
+    path(
+        "api/v2/categories/<int:id>/profiles/",
+        CategoryProfilesViewSet.as_view({"get": "list"}),
+        name="categories.profiles",
     ),
     # FIXME: 有没有被调用?
     path(

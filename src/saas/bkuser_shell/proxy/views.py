@@ -263,4 +263,13 @@ class CategorySettingsListViewSet(BkUserApiProxy):
         # out: api/v1/web/categories/%s/settings/
         api_path = BkUserApiProxy.get_api_path(request)
         api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
-        self.do_proxy(request, rewrite_path=api_path)
+        return self.do_proxy(request, rewrite_path=api_path)
+
+
+class CategoryProfilesViewSet(BkUserApiProxy):
+    def list(self, request, *args, **kwargs):
+        # in: api/v2/categories/%s/profiles/
+        # out: api/v1/web/categories/%s/profiles/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
+        return self.do_proxy(request, rewrite_path=api_path)

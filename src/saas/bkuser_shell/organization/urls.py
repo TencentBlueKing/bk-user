@@ -20,19 +20,21 @@ PVAR_CATEGORY_ID = r"(?P<category_id>[\d]+)"
 
 PVAR_ANOTHER_DEPARTMENT_ID = r"(?P<another_department_id>[a-z0-9-]+)"
 
-
-# GET /api/v2/departments/?only_enabled=false/true
-# GET /api/v2/categories/1/profiles/?keyword=x&page=1&page_size=10
+# 2.
 # GET /api/v2/departments/1/profiles/?page_size=6&page=1&recursive=true&keyword=
-
-
-# /api/v2/search/detail/?keyword=xxxx&max_items=40&only_enabled=true
-# /api/v2/departments/1/profiles/?page_size=6&page=1&recursive=false&keyword=
-# DELETE /api/v2/batch/profiles/ [{"id":"1026"}]
-# PATCH /api/v2/batch/profiles/  [{"id":1027,"departments":[1,20207]}]
+# GET /api/v2/departments/1/profiles/?page_size=6&page=1&recursive=false&keyword=
+# 3.
 # POST /api/v2/profiles/1/restoration/
+# 4.
 # PATCH /api/v2/profiles/1027/
 # {"leader":[1],"departments":[1,20207],"password_valid_days":-1,"display_name":"吴昆亮","email":"kunliangwu@tencent.com","telephone":"18128867661","iso_code":"cn","staff_status":"IN","position":0,"wx_userid":"","qq":"","staffTypeName":0,"age":null,"account_expiration_date":"2100-01-01","testa":"1"}
+# 5.
+# DELETE /api/v2/batch/profiles/ [{"id":"1026"}]
+# PATCH /api/v2/batch/profiles/  [{"id":1027,"departments":[1,20207]}]
+
+
+# GET /api/v2/departments/?only_enabled=false/true
+# /api/v2/search/detail/?keyword=xxxx&max_items=40&only_enabled=true
 
 urlpatterns = [
     ######################
@@ -55,11 +57,6 @@ urlpatterns = [
     url(
         r"^api/v2/profiles/$",
         ProfilesViewSet.as_view({"post": "create"}),
-        name="profiles",
-    ),
-    url(
-        r"^api/v2/categories/%s/profiles/$" % PVAR_CATEGORY_ID,
-        ProfilesViewSet.as_view({"get": "list"}),
         name="profiles",
     ),
     url(

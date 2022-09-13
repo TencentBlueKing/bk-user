@@ -101,27 +101,6 @@ class ProfilesViewSet(BkUserApiViewSet):
         )
         return profile
 
-    @inject_serializer(
-        query_in=serializers.ListProfilesSerializer, out=serializers.ProfileResultSerializer, tags=["profiles"]
-    )
-    def list(self, request, category_id, validated_data):
-        params = {
-            "page": validated_data["page"],
-            "page_size": validated_data["page_size"],
-            "lookup_field": "category_id",
-            "exact_lookups": [category_id],
-        }
-
-        keyword = validated_data.get("keyword")
-        if keyword:
-            params.update({"wildcard_search": keyword, "wildcard_search_fields": ["username", "display_name", "id"]})
-
-        api_instance = bkuser_sdk.ProfilesApi(
-            self.get_api_client_by_request(request, force_action_id=IAMAction.VIEW_DEPARTMENT.value)
-        )
-        profiles = api_instance.v2_profiles_list(**params)
-        return profiles
-
     @inject_serializer(out=serializers.ProfileSerializer, tags=["profiles"])
     def retrieve(self, request, profile_id):
         api_instance = bkuser_sdk.ProfilesApi(self.get_api_client_by_request(request))

@@ -83,17 +83,6 @@ class ProfileSerializer(Serializer):
         return expand_extra_fields(self.context.get("fields"), data)
 
 
-class ProfileResultSerializer(Serializer):
-    count = IntegerField()
-    data = ProfileSerializer(many=True, source="results")
-
-
-class ListProfilesSerializer(Serializer):
-    keyword = CharField(required=False)
-    page = IntegerField(required=False, default=1)
-    page_size = IntegerField(required=False, default=10)
-
-
 class CreateProfileSerializer(Serializer):
     category_id = IntegerField()
     telephone = CharField()
