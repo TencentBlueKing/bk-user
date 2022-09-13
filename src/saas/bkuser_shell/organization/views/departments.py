@@ -17,12 +17,7 @@ from bkuser_global.drf_crown import inject_serializer
 from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.bkiam.constants import IAMAction
 from bkuser_shell.common.response import Response
-from bkuser_shell.common.serializers import EmptySerializer
-from bkuser_shell.organization.serializers.departments import (
-    DepartmentAddProfilesSerializer,
-    DepartmentListSerializer,
-    ListDepartmentSerializer,
-)
+from bkuser_shell.organization.serializers.departments import DepartmentListSerializer, ListDepartmentSerializer
 from bkuser_shell.proxy.proxy import BkUserApiProxy
 
 logger = logging.getLogger(__name__)
@@ -35,14 +30,6 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
     ]
 
     ACTION_ID = IAMAction.MANAGE_DEPARTMENT.value
-
-    def get_profiles(self, request, *args, **kwargs):
-        # in: api/v2/departments/%s/profiles/
-        # out: api/v1/web/departments/%s/profiles/
-        api_path = BkUserApiProxy.get_api_path(request)
-        api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
-
-        return self.do_proxy(request, rewrite_path=api_path)
 
     @inject_serializer(
         query_in=DepartmentListSerializer, out=ListDepartmentSerializer(many=True), tags=["departments"]
@@ -130,9 +117,3 @@ class DepartmentViewSet(BkUserApiViewSet, BkUserApiProxy):
     def create(self, request, *args, **kwargs):
         """创建组织"""
         return self.do_proxy(request, rewrite_path="/api/v1/web/departments/")
-
-    @inject_serializer(body_in=DepartmentAddProfilesSerializer, out=EmptySerializer, tags=["departments"])
-    def add_profiles(self, request, department_id, validated_data):
-        api_instance = bkuser_sdk.DepartmentsApi(self.get_api_client_by_request(request))
-        api_instance.v2_departments_profiles_create(body=validated_data, lookup_value=department_id)
-        return Response(data={})

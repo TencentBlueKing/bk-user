@@ -26,7 +26,7 @@ urlpatterns = [
     ),
     path(
         "<int:id>/profiles/",
-        views.DepartmentProfileListApi.as_view(),
+        views.DepartmentProfileListCreateApi.as_view(),
         name="department.profile.list",
     ),
     path(
@@ -41,5 +41,3 @@ urlpatterns = [
         name="department.search",
     ),
 ]
-
-# /api/v2/departments/1/profiles/?page_size=6&page=1&recursive=false&keyword=

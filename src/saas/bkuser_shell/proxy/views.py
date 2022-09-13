@@ -303,3 +303,13 @@ class ProfilesRestorationViewSet(BkUserApiProxy):
         api_path = api_path.replace("/api/v2/profiles/", "/api/v1/web/profiles/")
         api_path = api_path.replace("restoration/", "operations/restoration/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class DepartmentProfilesViewSet(BkUserApiProxy):
+    def request(self, request, *args, **kwargs):
+        # in: api/v2/departments/%s/profiles/
+        # out: api/v1/web/departments/%s/profiles/
+        api_path = BkUserApiProxy.get_api_path(request)
+        api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
+
+        return self.do_proxy(request, rewrite_path=api_path)

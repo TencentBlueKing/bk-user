@@ -41,7 +41,3 @@ class ListDepartmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     profile_count = serializers.IntegerField()
     departments = DepartmentSerializer(many=True)
-
-
-class DepartmentAddProfilesSerializer(serializers.Serializer):
-    profile_id_list = serializers.ListField(child=serializers.IntegerField())

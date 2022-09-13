@@ -34,11 +34,6 @@ urlpatterns = [
     ######################
     # Department related #
     ######################
-    url(
-        r"^api/v2/departments/%s/profiles/$" % PVAR_DEPARTMENT_ID,
-        DepartmentViewSet.as_view({"get": "get_profiles", "post": "add_profiles"}),
-        name="department.profiles",
-    ),
     url(r"^api/v2/departments/$", DepartmentViewSet.as_view({"get": "list", "post": "create"}), name="departments"),
     ###################
     # Profile related #

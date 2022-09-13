@@ -75,6 +75,7 @@ urlpatterns = [
             {
                 # NOTE: saas remove this
                 "get": "get_profiles",
+                # NOTE: saas remove this
                 "post": "add_profiles",
             }
         ),

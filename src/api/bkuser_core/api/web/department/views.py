@@ -18,6 +18,7 @@ from .serializers import (
     DepartmentCreatedReturnSerializer,
     DepartmentCreateSerializer,
     DepartmentProfileListSerializer,
+    DepartmentProfilesCreateSerializer,
     DepartmentProfileSerializer,
     DepartmentSearchResultSerializer,
     DepartmentSearchSerializer,
@@ -156,10 +157,13 @@ class DepartmentOperationSwitchOrderApi(generics.UpdateAPIView):
         return Response()
 
 
-class DepartmentProfileListApi(generics.ListAPIView):
+class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
     permission_classes = [ViewDepartmentPermission]
     pagination_class = CustomPagination
     serializer_class = DepartmentProfileSerializer
+
+    queryset = Department.objects.filter()
+    lookup_field = "id"
 
     def get_recursive_queryset(self, department):
         # 使用 DB 做 distinct 非常慢，所以先用 id 去重 TODO: 为什么差别这么大，有时间慢慢研究
@@ -182,6 +186,7 @@ class DepartmentProfileListApi(generics.ListAPIView):
 
         department_id = self.kwargs["id"]
         department = get_department(department_id)
+        # FIXME: change to self.get_object()
 
         # 原来的代码: 递归current_count, 不递归查total_count(I don't know why)
         # https://github.com/TencentBlueking/bk-user/blob/99178a35b96511c0cd4dc7c1944bc80ce2d082dd/src/saas/bkuser_shell/organization/views/departments.py#L84-L88
@@ -220,3 +225,17 @@ class DepartmentProfileListApi(generics.ListAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        slz = DepartmentProfilesCreateSerializer(data=self.request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        profile_ids = data.get("profile_id_list")
+
+        instance = self.get_object()
+        profiles = Profile.objects.filter(id__in=profile_ids)
+        for profile in profiles:
+            instance.add_profile(profile)
+
+        return Response(status=status.HTTP_201_CREATED)

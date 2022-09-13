@@ -113,6 +113,10 @@ class DepartmentProfileListSerializer(serializers.Serializer):
     keyword = serializers.CharField(required=False)
 
 
+class DepartmentProfilesCreateSerializer(serializers.Serializer):
+    profile_id_list = serializers.ListField(child=serializers.IntegerField())
+
+
 class DepartmentProfileLeaderSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, read_only=True)
     username = serializers.CharField()
