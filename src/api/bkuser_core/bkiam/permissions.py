@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from dataclasses import dataclass
 from typing import List
 
+import regex
 from django.conf import settings
 from django.utils.translation import gettext as _
 from rest_framework.permissions import BasePermission
@@ -26,6 +27,23 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
 
 
+# FIXME: copy from bkiam/constants.py => 找到单元测试
+def _parse_department_path(data):
+    """解析 department path"""
+    value = data["value"]
+    field_map = {"department": "parent_id", "category": "category_id"}
+    value_pattern = r"^\/((?P<resource_type>\w+),(?P<resource_id>\d+)\/)+"
+    r = regex.match(value_pattern, value).capturesdict()
+    r = list(zip(r["resource_type"], r["resource_id"]))
+
+    the_last_of_path = r[-1]
+    # 非叶子节点的策略，直接返回路径最后的 id 作为资源 id
+    if "node_type" in data and data["node_type"] == "non-leaf":
+        field_map["department"] = "id"
+
+    return field_map[the_last_of_path[0]], int(the_last_of_path[1])
+
+
 class Permission:
     def __init__(self):
         self.iam_enabled = settings.ENABLE_IAM
@@ -36,8 +54,42 @@ class Permission:
             return None
 
         iam_request = self.helper.make_request_without_resources(username=username, action_id=action_id)
+        # NOTE: 这里不是给category自己用的, 而是给外检关联表用的, 所以category.id -> category_id
         fs = Permission().helper.iam.make_filter(
             iam_request, converter_class=PathIgnoreDjangoQSConverter, key_mapping={"category.id": "category_id"}
+        )
+        if not fs:
+            raise IAMPermissionDenied(
+                detail=_("您没有权限进行该操作，请在权限中心申请。"),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+            )
+        return fs
+
+    def make_filter_of_department(self, username: str, action_id: str):
+        if not self.iam_enabled:
+            return None
+
+        iam_request = self.helper.make_request_without_resources(username=username, action_id=action_id)
+        # NOTE: 这里给多对多的profile-department用的, 所以解析出来是department.id
+        fs = Permission().helper.iam.make_filter(
+            iam_request,
+            converter_class=PathIgnoreDjangoQSConverter,
+            key_mapping={"department._bk_iam_path_": _parse_department_path},
+        )
+        if not fs:
+            raise IAMPermissionDenied(
+                detail=_("您没有权限进行该操作，请在权限中心申请。"),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+            )
+        return fs
+
+    def make_department_filter(self, username: str, action_id: str):
+        if not self.iam_enabled:
+            return None
+
+        iam_request = self.helper.make_request_without_resources(username=username, action_id=action_id)
+        fs = Permission().helper.iam.make_filter(
+            iam_request, converter_class=PathIgnoreDjangoQSConverter, key_mapping={"department.id": "id"}
         )
         if not fs:
             raise IAMPermissionDenied(
@@ -62,6 +114,7 @@ class Permission:
             return True
 
         objs = [department]
+        # FIXME: 去掉对helper的依赖, 直接依赖自己的封装, 便于删除原来的所有代码
         return self.helper.objs_action_allow(
             action_id=action_id,
             username=username,

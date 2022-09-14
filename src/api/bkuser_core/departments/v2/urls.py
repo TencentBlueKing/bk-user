@@ -20,6 +20,7 @@ urlpatterns = [
         r"^api/v2/departments/$",
         views.DepartmentViewSet.as_view(
             {
+                # TODO: delete it? the web api refactored
                 "get": "list",
                 # TODO: delete it? the web api refactored
                 "post": "create",

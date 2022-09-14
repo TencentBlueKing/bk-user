@@ -214,6 +214,7 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
         return self.make_lookups(query_data, queryset, search_field)
 
 
+# NOTE: abandoned, should not inherit from this class
 class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
     """ModelViewSet 功能增强集合类
     - fields 用户定义返回字段
@@ -309,6 +310,7 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
         return Response()
 
 
+# NOTE: abandoned, should not inherit from this class
 class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
     """列表查询功能增强类"""
 

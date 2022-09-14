@@ -22,6 +22,7 @@ urlpatterns = [
         views.ProfileViewSet.as_view(
             {
                 "get": "list",
+                # TODO: saas has removed this
                 "post": "create",
             }
         ),
@@ -31,8 +32,11 @@ urlpatterns = [
         r"^api/v2/profiles/%s/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas removed this
                 "get": "retrieve",
+                # NOTE: saas removed this
                 "put": "update",
+                # NOTE: saas removed this
                 "patch": "partial_update",
                 "delete": "destroy",
             }
@@ -43,6 +47,7 @@ urlpatterns = [
         r"^api/v2/profiles/%s/restoration/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas has removed this
                 "post": "restoration",
             }
         ),

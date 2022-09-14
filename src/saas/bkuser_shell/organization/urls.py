@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 from django.conf.urls import url
 
 from .views.departments import DepartmentViewSet
-from .views.misc import SearchViewSet
 from .views.profiles import ProfilesViewSet
 
 # 1.
@@ -20,9 +19,6 @@ from .views.profiles import ProfilesViewSet
 
 # 2.
 # GET /api/v2/departments/?only_enabled=false/true
-
-# 3.
-# GET /api/v2/search/detail/?keyword=xxxx&max_items=40&only_enabled=true
 
 urlpatterns = [
     ###################
@@ -33,16 +29,9 @@ urlpatterns = [
         ProfilesViewSet.as_view({"patch": "multiple_update", "delete": "multiple_delete"}),
         name="profiles.batch.actions",
     ),
-    ##########
-    # search #
-    ##########
-    url(
-        r"^api/v2/search/detail/$",
-        SearchViewSet.as_view({"get": "search"}),
-        name="profiles.login_info",
-    ),
     ######################
     # Department related #
     ######################
+    # 这个有性能问题, 顺带优化下
     url(r"^api/v2/departments/$", DepartmentViewSet.as_view({"get": "list", "post": "create"}), name="departments"),
 ]

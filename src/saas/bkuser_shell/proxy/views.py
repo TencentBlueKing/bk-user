@@ -326,3 +326,10 @@ class ProfileCreateViewSet(BkUserApiProxy):
         # out: /api/v1/web/profiles/
         api_path = api_path.replace("/api/v2/profiles/", "/api/v1/web/profiles/")
         return self.do_proxy(request, rewrite_path=api_path)
+
+
+class SearchViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        # in: /api/v2/search/detail/
+        # out: /api/v1/web/search/
+        return self.do_proxy(request, rewrite_path="/api/v1/web/search/")

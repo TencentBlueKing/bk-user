@@ -21,6 +21,8 @@ urlpatterns = [
     url(r"^site/", include("bkuser_core.api.web.site.urls")),
     url(r"^departments/", include("bkuser_core.api.web.department.urls")),
     # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
+    # 通用检索
+    url(r"^search/", include("bkuser_core.api.web.search.urls")),
 ]
 
 # FIXME: 需要检查所有删除的地方, 是不是软删除?

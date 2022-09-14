@@ -19,12 +19,12 @@ from bkuser_shell.proxy.views import WebPageViewSet
 
 urlpatterns = [
     url(r"^", include("bkuser_shell.account.urls")),
+    url("", include("bkuser_shell.proxy.urls")),
     # TODO: refactor below
     url(r"^", include("bkuser_shell.organization.urls")),
     url(r"^", include("bkuser_shell.password.urls")),
     # TODO: version should be change to a different impl
     url(r"^", include("bkuser_shell.version_log.urls")),
-    url("", include("bkuser_shell.proxy.urls")),
     url(
         r"^favicon.ico$",
         RedirectView.as_view(url=staticfiles_storage.url("img/favicon.ico")),

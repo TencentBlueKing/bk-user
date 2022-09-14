@@ -42,6 +42,7 @@ from .views import (
     ProfilesRestorationViewSet,
     ProfilesRetrieveUpdateViewSet,
     ProfilesSearchViewSet,
+    SearchViewSet,
     SettingsMetasViewSet,
     SiteFooterViewSet,
     SyncTaskLogViewSet,
@@ -175,5 +176,10 @@ urlpatterns = [
         "api/v2/departments/<int:id>/profiles/",
         DepartmentProfilesViewSet.as_view({"get": "request", "post": "request"}),
         name="department.profiles",
+    ),
+    path(
+        "api/v2/search/detail/",
+        SearchViewSet.as_view({"get": "get"}),
+        name="search",
     ),
 ]
