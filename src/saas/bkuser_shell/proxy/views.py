@@ -333,3 +333,11 @@ class SearchViewSet(BkUserApiProxy):
         # in: /api/v2/search/detail/
         # out: /api/v1/web/search/
         return self.do_proxy(request, rewrite_path="/api/v1/web/search/")
+
+
+class DepartmentViewSet(BkUserApiProxy):
+    def get(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/home/tree/")
+
+    def post(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/departments/")

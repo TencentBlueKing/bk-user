@@ -29,6 +29,7 @@ from .views import (
     DepartmentRetrieveUpdateDeleteViewSet,
     DepartmentSearchViewSet,
     DepartmentSwitchOrderViewSet,
+    DepartmentViewSet,
     FieldsManageableViewSet,
     FieldsOrderViewSet,
     FieldsViewSet,
@@ -181,5 +182,11 @@ urlpatterns = [
         "api/v2/search/detail/",
         SearchViewSet.as_view({"get": "get"}),
         name="search",
+    ),
+    # FIXME: 这个接口不应该是 departments, 应该是 首页拓扑, 需要单独做一个接口
+    path(
+        "api/v2/departments/",
+        DepartmentViewSet.as_view({"get": "get", "post": "post"}),
+        name="departments",
     ),
 ]

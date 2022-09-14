@@ -8,21 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import url
 
-from .views.profiles import ProfilesViewSet
+from django.urls.conf import path
 
-# 1.
-# DELETE /api/v2/batch/profiles/ [{"id":"1026"}]
-# PATCH /api/v2/batch/profiles/  [{"id":1027,"departments":[1,20207]}]
+from . import views
 
 urlpatterns = [
-    ###################
-    # Profile related #
-    ###################
-    url(
-        r"^api/v2/batch/profiles/$",
-        ProfilesViewSet.as_view({"patch": "multiple_update", "delete": "multiple_delete"}),
-        name="profiles.batch.actions",
+    path(
+        "",
+        views.SearchApi.as_view(),
+        name="search.list",
     ),
 ]
