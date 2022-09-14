@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 # FIXME: get it from request.user.username after merge saas into api
+# FIXME: change to get_operator, 避免同profile.username混淆
 def get_username(request) -> str:
     username = request.META.get(settings.OPERATOR_HEADER, None)
     if not username:

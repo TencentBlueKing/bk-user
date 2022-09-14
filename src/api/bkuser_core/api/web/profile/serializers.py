@@ -15,6 +15,7 @@ from rest_framework import serializers
 from bkuser_core.api.web.utils import get_default_category_id
 from bkuser_core.api.web.viewset import StringArrayField
 from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.validators import validate_username
 
 
 class LoginProfileRetrieveSerializer(serializers.Serializer):
@@ -108,3 +109,73 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         model = Profile
         # NOTE: 相对原来的api区别, 不支持extras/create_time/update_time更新
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
+
+
+# class ProfileCreateResponseSerializer(serializers.ModelSerializer):
+#     # FIXME: 创建成功后, 需要返回吗? 不返回会不会有问题?
+#     # extras = serializers.SerializerMethodField(required=False)
+
+#     # leader = LeaderSerializer(many=True, required=False)
+#     # departments = SimpleDepartmentSerializer(many=True, required=False)
+
+#     # def get_extras(self, obj) -> dict:
+#     #     """尝试从 context 中获取默认字段值"""
+#     #     return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
+
+#     class Meta:
+#         model = Profile
+#         exclude = ["password"]
+
+
+class ProfileCreateSerializer(serializers.ModelSerializer):
+    category_id = serializers.IntegerField(required=False)
+
+    # required
+    username = serializers.CharField(validators=[validate_username])
+    display_name = serializers.CharField()
+    email = serializers.CharField()
+    telephone = serializers.CharField()
+    status = serializers.CharField()
+    staff_status = serializers.CharField()
+
+    # not required
+    position = serializers.IntegerField(required=False)
+    wx_userid = serializers.CharField(required=False, allow_blank=True, allow_null=True, default="")
+    qq = serializers.CharField(required=False, allow_blank=True, allow_null=True, default="")
+    account_expiration_date = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    # not in the form, but in request body
+    iso_code = serializers.CharField(required=False, default="CN")
+
+    leader = serializers.ListField(required=False, child=serializers.IntegerField(), default=[])
+    # required
+    departments = serializers.ListField(child=serializers.IntegerField(), default=[])
+    password_valid_days = serializers.IntegerField()
+
+    # NOTE: 区别
+    # extras = serializers.JSONField(required=False)
+    # domain = serializers.CharField(validators=[validate_domain], required=False)
+    # logo = CharField(required=False)
+    # NOTE: 其他字段, 自行放入extras
+
+    class Meta:
+        model = Profile
+        fields = (
+            "category_id",
+            "username",
+            "display_name",
+            "email",
+            "telephone",
+            "status",
+            "staff_status",
+            "position",
+            "wx_userid",
+            "qq",
+            "account_expiration_date",
+            "iso_code",
+            "leader",
+            "departments",
+            "password_valid_days",
+        )
+        # exclude = ["password"]
+        validators: list = []

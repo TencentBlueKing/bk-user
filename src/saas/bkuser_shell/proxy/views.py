@@ -16,6 +16,10 @@ from django.template.response import TemplateResponse
 from .proxy import BkUserApiProxy
 from bkuser_shell.common.error_codes import error_codes
 
+# FIXME:
+# 1. 推动前端切换到新版api
+# 2. 全局使用同一个 ProxyViewSet.request
+
 
 class HealthzViewSet(BkUserApiProxy):
     permission_classes: list = []
@@ -312,4 +316,13 @@ class DepartmentProfilesViewSet(BkUserApiProxy):
         api_path = BkUserApiProxy.get_api_path(request)
         api_path = api_path.replace("/api/v2/departments/", "/api/v1/web/departments/")
 
+        return self.do_proxy(request, rewrite_path=api_path)
+
+
+class ProfileCreateViewSet(BkUserApiProxy):
+    def post(self, request, *args, **kwargs):
+        api_path = BkUserApiProxy.get_api_path(request)
+        # in: /api/v2/profiles/
+        # out: /api/v1/web/profiles/
+        api_path = api_path.replace("/api/v2/profiles/", "/api/v1/web/profiles/")
         return self.do_proxy(request, rewrite_path=api_path)

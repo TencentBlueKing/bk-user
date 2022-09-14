@@ -83,25 +83,6 @@ class ProfileSerializer(Serializer):
         return expand_extra_fields(self.context.get("fields"), data)
 
 
-class CreateProfileSerializer(Serializer):
-    category_id = IntegerField()
-    telephone = CharField()
-    wx_userid = CharField(required=False, allow_blank=True, allow_null=True, default="")
-    qq = CharField(required=False, allow_blank=True, allow_null=True, default="")
-    password_valid_days = IntegerField(required=False)
-    email = CharField()
-    username = CharField()
-    display_name = CharField()
-    leader = ListField(required=False, default=[])
-    staff_status = CharField(required=False)
-    status = CharField(required=False)
-    position = IntegerField(required=False)
-    iso_code = CharField(required=False, default="CN")
-    logo = CharField(required=False)
-    departments = ListField(child=IntegerField(), required=False, default=[])
-    account_expiration_date = CharField(required=False, allow_null=True, allow_blank=True)
-
-
 class UpdateProfileSerializer(Serializer):
     id = IntegerField(required=False)
     telephone = CharField(required=False)

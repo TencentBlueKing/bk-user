@@ -15,6 +15,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "",
+        views.ProfileCreateApi.as_view(),
+        name="profile.create",
+    ),
+    path(
         "me/",
         views.LoginProfileRetrieveApi.as_view(),
         name="login.profile.get",

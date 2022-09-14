@@ -14,35 +14,20 @@ from .views.departments import DepartmentViewSet
 from .views.misc import SearchViewSet
 from .views.profiles import ProfilesViewSet
 
-PVAR_DEPARTMENT_ID = r"(?P<department_id>[a-z0-9-]+)"
-PVAR_CATEGORY_ID = r"(?P<category_id>[\d]+)"
-
 # 1.
-# POST api/v2/departments/%s/profiles/
-
-# 2.
 # DELETE /api/v2/batch/profiles/ [{"id":"1026"}]
 # PATCH /api/v2/batch/profiles/  [{"id":1027,"departments":[1,20207]}]
 
-# 3.
+# 2.
 # GET /api/v2/departments/?only_enabled=false/true
 
-# 4.
+# 3.
 # GET /api/v2/search/detail/?keyword=xxxx&max_items=40&only_enabled=true
 
 urlpatterns = [
-    ######################
-    # Department related #
-    ######################
-    url(r"^api/v2/departments/$", DepartmentViewSet.as_view({"get": "list", "post": "create"}), name="departments"),
     ###################
     # Profile related #
     ###################
-    url(
-        r"^api/v2/profiles/$",
-        ProfilesViewSet.as_view({"post": "create"}),
-        name="profiles",
-    ),
     url(
         r"^api/v2/batch/profiles/$",
         ProfilesViewSet.as_view({"patch": "multiple_update", "delete": "multiple_delete"}),
@@ -56,4 +41,8 @@ urlpatterns = [
         SearchViewSet.as_view({"get": "search"}),
         name="profiles.login_info",
     ),
+    ######################
+    # Department related #
+    ######################
+    url(r"^api/v2/departments/$", DepartmentViewSet.as_view({"get": "list", "post": "create"}), name="departments"),
 ]
