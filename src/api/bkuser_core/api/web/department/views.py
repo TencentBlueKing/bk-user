@@ -223,6 +223,8 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
                 }
             )
 
+        # FIXME: /api/v2/departments/12345/profiles/?page_size=13&page=1&recursive=true&keyword=
+        # 没有返回合法的logo字段, "logo": "https://xxx.com/o/bk-user/static/img/logo_default.png"
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

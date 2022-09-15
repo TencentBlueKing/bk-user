@@ -16,6 +16,10 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.password import PasswordValidator
+from bkuser_core.profiles.utils import check_former_passwords
+from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
+from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import SettingMeta
 
 logger = logging.getLogger(__name__)
@@ -77,3 +81,20 @@ def list_setting_metas(category_type: str, region: str, namespace: str) -> list:
     if namespace:
         queryset = queryset.filter(namespace=namespace)
     return queryset.all()
+
+
+def validate_password(profile: Profile, pending_password: str) -> None:
+    config_loader = ConfigProvider(category_id=profile.category_id)
+    try:
+        max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
+        if check_former_passwords(profile, pending_password, int(max_password_history)):
+            raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
+    except SettingHasBeenDisabledError:
+        logger.info("category<%s> has disabled checking password", profile.category_id)
+
+    PasswordValidator(
+        min_length=int(config_loader["password_min_length"]),
+        max_length=settings.PASSWORD_MAX_LENGTH,
+        include_elements=config_loader["password_must_includes"],
+        exclude_elements_config=config_loader["exclude_elements_config"],
+    ).validate(pending_password)

@@ -39,6 +39,9 @@ from .views import (
     LoginInfoViewSet,
     LoginLogExportViewSet,
     LoginLogViewSet,
+    PasswordModifyViewSet,
+    PasswordResetByTokenViewSet,
+    PasswordResetSendMailViewSet,
     ProfileCreateViewSet,
     ProfilesBatchViewSet,
     ProfilesRestorationViewSet,
@@ -194,5 +197,20 @@ urlpatterns = [
         "api/v2/batch/profiles/",
         ProfilesBatchViewSet.as_view({"patch": "request", "delete": "request"}),
         name="profiles.batch.actions",
+    ),
+    path(
+        "api/v1/password/reset/",
+        PasswordResetSendMailViewSet.as_view({"post": "post"}),
+        name="password.reset.send_mail",
+    ),
+    path(
+        "api/v1/password/reset_by_token/",
+        PasswordResetByTokenViewSet.as_view({"post": "post"}),
+        name="password.reset.by_token",
+    ),
+    path(
+        "api/v1/password/modify/",
+        PasswordModifyViewSet.as_view({"post": "post"}),
+        name="password.modify",
     ),
 ]

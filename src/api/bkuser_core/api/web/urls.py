@@ -20,7 +20,7 @@ urlpatterns = [
     url(r"^profiles/", include("bkuser_core.api.web.profile.urls")),
     url(r"^site/", include("bkuser_core.api.web.site.urls")),
     url(r"^departments/", include("bkuser_core.api.web.department.urls")),
-    # url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
+    url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
     # 通用检索
     url(r"^search/", include("bkuser_core.api.web.search.urls")),
     url(r"^home/", include("bkuser_core.api.web.home.urls")),

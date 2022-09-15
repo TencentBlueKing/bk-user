@@ -8,12 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf import settings
+# from django.conf import settings
 from rest_framework import permissions
 
-import bkuser_sdk
-from .constants import RoleCodeEnum
-from bkuser_shell.common.core_client import get_api_client
+# import bkuser_sdk
+# from .constants import RoleCodeEnum
+# from bkuser_shell.common.core_client import get_api_client
 
 
 class IsSuperUser(permissions.BasePermission):
@@ -21,18 +21,18 @@ class IsSuperUser(permissions.BasePermission):
         return request.user.is_superuser
 
 
-def is_superuser(username):
+# def is_superuser(username):
 
-    if not username:
-        return False
+#     if not username:
+#         return False
 
-    if username in settings.INIT_SUPERUSER_NAMES:
-        # 白名单直接返回
-        return True
+#     if username in settings.INIT_SUPERUSER_NAMES:
+#         # 白名单直接返回
+#         return True
 
-    # TODO: change to get by requests
-    api_instance = bkuser_sdk.ProfilesApi(get_api_client())
-    profile = api_instance.v2_profiles_read(lookup_value=username)
+#     # TODO: change to get by requests
+#     api_instance = bkuser_sdk.ProfilesApi(get_api_client())
+#     profile = api_instance.v2_profiles_read(lookup_value=username)
 
-    # 由其他系统写入
-    return profile.role == RoleCodeEnum.SUPERUSER
+#     # 由其他系统写入
+#     return profile.role == RoleCodeEnum.SUPERUSER

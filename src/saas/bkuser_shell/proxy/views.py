@@ -346,3 +346,27 @@ class DepartmentViewSet(BkUserApiProxy):
 class ProfilesBatchViewSet(BkUserApiProxy):
     def request(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/profiles/batch/")
+
+
+class PasswordResetSendMailViewSet(BkUserApiProxy):
+    permission_classes: list = []
+
+    def post(self, request, *args, **kwargs):
+        """发送密码重置邮件"""
+        return self.do_proxy(request, rewrite_path="/api/v1/web/passwords/reset/send_email/")
+
+
+class PasswordResetByTokenViewSet(BkUserApiProxy):
+    permission_classes: list = []
+
+    def post(self, request, *args, **kwargs):
+        """通过 token 重置"""
+        # FIXME: 这个没有测试, 没有username
+        return self.do_proxy(request, rewrite_path="/api/v1/web/passwords/reset/by_token/")
+
+
+class PasswordModifyViewSet(BkUserApiProxy):
+    def post(self, request, *args, **kwargs):
+        """修改密码"""
+        # FIXME: 这个没有测试, 没有username
+        return self.do_proxy(request, rewrite_path="/api/v1/web/passwords/modify/")

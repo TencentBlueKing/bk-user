@@ -97,6 +97,7 @@ urlpatterns = [
         r"^api/v2/token/%s/$" % PVAR_TOKEN,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas removed this
                 "get": "retrieve_by_token",
             }
         ),
@@ -106,6 +107,7 @@ urlpatterns = [
         r"^api/v2/profiles/%s/modify_password/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas removed this
                 "post": "modify_password",
             }
         ),

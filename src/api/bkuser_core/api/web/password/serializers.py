@@ -8,28 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import base64
 
-from django.utils.encoding import force_bytes, force_str
-from rest_framework.serializers import CharField, Serializer
+from rest_framework import serializers
 
-
-class EmptySerializer(Serializer):
-    """空"""
+from bkuser_core.api.web.viewset import Base64OrPlainField
 
 
-def is_base64(value: str) -> bool:
-    """判断字符串是否为 base64 编码"""
-    try:
-        return base64.b64encode(base64.b64decode(value)) == force_bytes(value)
-    except Exception:  # pylint: disable=broad-except
-        return False
+class PasswordResetSendEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, max_length=254)
 
 
-class Base64OrPlainField(CharField):
-    """兼容 base64 和纯文本字段"""
+class PasswordResetByTokenSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True, max_length=254)
+    password = Base64OrPlainField(required=True, max_length=254)
 
-    def to_internal_value(self, data) -> str:
-        if is_base64(data):
-            return force_str(base64.b64decode(data))
-        return super().to_internal_value(data)
+
+class PasswordModifySerializer(serializers.Serializer):
+    old_password = Base64OrPlainField(required=True, max_length=254)
+    new_password = Base64OrPlainField(required=True, max_length=254)

@@ -29,7 +29,7 @@ from .serializers import (
     ProfileSearchSerializer,
     ProfileUpdateSerializer,
 )
-from bkuser_core.api.web.utils import get_category, get_username
+from bkuser_core.api.web.utils import get_category, get_username, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
@@ -39,17 +39,9 @@ from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
-from bkuser_core.profiles.utils import (
-    align_country_iso_code,
-    check_former_passwords,
-    make_password_by_config,
-    parse_username_domain,
-)
+from bkuser_core.profiles.utils import align_country_iso_code, make_password_by_config, parse_username_domain
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
-from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
-from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
 logger = logging.getLogger(__name__)
@@ -158,20 +150,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
             )
 
             pending_password = validated_data.get("password")
-            config_loader = ConfigProvider(category_id=instance.category_id)
-            try:
-                max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
-                if check_former_passwords(instance, pending_password, int(max_password_history)):
-                    raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
-            except SettingHasBeenDisabledError:
-                logger.info("category<%s> has disabled checking password", instance.category_id)
-
-            PasswordValidator(
-                min_length=int(config_loader["password_min_length"]),
-                max_length=settings.PASSWORD_MAX_LENGTH,
-                include_elements=config_loader["password_must_includes"],
-                exclude_elements_config=config_loader["exclude_elements_config"],
-            ).validate(pending_password)
+            validate_password(instance, pending_password)
 
             instance.password = make_password(pending_password)
             instance.password_update_time = now()

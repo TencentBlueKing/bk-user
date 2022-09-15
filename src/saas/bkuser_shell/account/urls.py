@@ -15,7 +15,7 @@ from . import views
 urlpatterns = [
     url(
         r"^accounts/login_success/",
-        views.LoginPageViewSet.as_view({"get": "login_success"}),
+        views.LoginPageViewSet.as_view(),
         name="login_success",
     ),
 ]

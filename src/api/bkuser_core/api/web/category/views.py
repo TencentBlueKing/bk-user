@@ -194,6 +194,23 @@ class CategorySettingNamespaceListCreateUpdateApi(
                 s.enabled = in_value["enabled"]
                 s.save()
 
+                del ns_settings[key]
+
+        metas_map = {m.key: m for m in metas}
+        # the left settings are new settings
+        for key, setting in ns_settings.items():
+            if key not in metas_map:
+                continue
+            meta = metas_map[key]
+            Setting.objects.update_or_create(
+                meta=meta,
+                category_id=category_id,
+                defaults={
+                    "value": setting["value"],
+                    "enabled": setting["enabled"],
+                },
+            )
+
         # Setting.objects.filter(meta__in=metas, category_id=category_id).all()
         return Response(self.get_serializer_class()(db_settings, many=True).data)
 

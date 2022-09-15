@@ -20,4 +20,5 @@ class BKResponse(response.Response):
         return super(BKResponse, self).rendered_content
 
 
+# FIXME: refactor version log then remove this
 Response = BKResponse

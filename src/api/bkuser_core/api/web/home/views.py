@@ -93,6 +93,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         # 此时拥有管理权限的目录已经被加入到了列表
         managed_categories_map = {x.id: all_categories_map[x.id] for x in managed_categories}
 
+        # FIXME: 这里有性能问题, 当部门数量到达两万的时候
         # 这里拉取所有拥有权限的、顶级的目录
         for department in self._list_department_tops(operator):
             # 如果存在当前可展示的全量 category 未包含的部门，舍弃
