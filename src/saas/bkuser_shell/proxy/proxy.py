@@ -39,12 +39,13 @@ class BkUserApiProxy(GenericViewSet):
     should be removed when we remove saas totally
     """
 
+    # 校验登录态
     permission_classes = [
         IsAuthenticated,
     ]
 
     @staticmethod
-    def get_client_ip(request) -> Optional[str]:
+    def _get_client_ip(request) -> Optional[str]:
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
             return x_forwarded_for.split(",")[0]
@@ -55,16 +56,6 @@ class BkUserApiProxy(GenericViewSet):
                 return ip
         return ""
 
-    def do_proxy(self, request, rewrite_path=None):
-        try:
-            return self.do_call(request, rewrite_path)
-        except Exception as e:
-            logger.exception("do proxy error")
-            return HttpResponse(
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content=str(e),
-            )
-
     @staticmethod
     def get_api_path(request) -> str:
         """获取真实 API Path"""
@@ -73,7 +64,17 @@ class BkUserApiProxy(GenericViewSet):
 
         return "/" + request.path.replace(settings.SITE_URL, "")
 
-    def do_call(self, request, rewrite_path=None):
+    def do_proxy(self, request, rewrite_path=None):
+        try:
+            return self._do_call(request, rewrite_path)
+        except Exception as e:
+            logger.exception("do proxy error")
+            return HttpResponse(
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content=str(e),
+            )
+
+    def _do_call(self, request, rewrite_path=None):
         method = request.method
         path = self.get_api_path(request)
         if rewrite_path:
@@ -89,7 +90,7 @@ class BkUserApiProxy(GenericViewSet):
         headers = make_proxy_headers(request.user.username)
         headers["Content-Type"] = request.headers.get("Content-Type", "application/json")
 
-        ip = self.get_client_ip(request)
+        ip = self._get_client_ip(request)
         if ip:
             headers.update({settings.CLIENT_IP_FROM_SAAS_HEADER: ip})
 

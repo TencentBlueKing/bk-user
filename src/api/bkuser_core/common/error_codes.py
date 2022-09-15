@@ -165,5 +165,8 @@ error_codes.add_codes(
         ErrorCode("ACTION_ID_MISSING", _("权限项缺失")),
         ErrorCode("CANNOT_DELETE_DEPARTMENT", _("不能删除部门")),
         ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
+        # 用户字段
+        ErrorCode("UNKNOWN_FIELD", _("未知自定义字段")),
+        ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
     ]
 )

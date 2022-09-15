@@ -10,13 +10,21 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from rest_framework import generics
+from rest_framework import generics, response
 
 from bkuser_shell.common.error_codes import error_codes
-from bkuser_shell.common.response import Response
 from bkuser_shell.version_log.utils import get_version_list
 
 logger = logging.getLogger(__name__)
+
+
+class BKResponse(response.Response):
+    @property
+    def rendered_content(self):
+        raw_data = self.data
+        self.data = {"result": True, "code": 0, "message": "success", "data": raw_data}
+
+        return super(BKResponse, self).rendered_content
 
 
 class VersionLogListViewSet(generics.ListAPIView):
@@ -25,7 +33,7 @@ class VersionLogListViewSet(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             version_list = get_version_list()
-            return Response(data=version_list.dict())
+            return BKResponse(data=version_list.dict())
         except ValueError:
             logger.exception("failed to parse release yaml")
             raise error_codes.VERSION_FORMAT_ERROR
@@ -34,19 +42,11 @@ class VersionLogListViewSet(generics.ListAPIView):
 class VersionLogRetrieveViewSet(generics.RetrieveAPIView):
     permission_classes: list = []
 
-    def list(self, request, *args, **kwargs):
-        try:
-            version_list = get_version_list()
-            return Response(data=version_list.dict())
-        except ValueError:
-            logger.exception("failed to parse release yaml")
-            raise error_codes.VERSION_FORMAT_ERROR
-
     def retrieve(self, request, *args, **kwargs):
         version_number = kwargs.get("version_number")
         try:
             version_list = get_version_list()
-            return Response(data=version_list.get_by_version(version_number).dict())
+            return BKResponse(data=version_list.get_by_version(version_number).dict())
         except ValueError:
             logger.exception("failed to parse release yaml")
             raise error_codes.VERSION_FORMAT_ERROR

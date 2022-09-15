@@ -64,53 +64,53 @@ class ServerBlueException(BlueException):
     STATUS_CODE = 500
 
 
-class ResourceNotFound(ClientBlueException):
+# class ResourceNotFound(ClientBlueException):
 
-    MESSAGE = _("找不到请求的资源")
-    ERROR_CODE = "40400"
-    STATUS_CODE = 404
-
-
-class ParamValidationError(ClientBlueException):
-
-    MESSAGE = _("参数验证失败")
-    ERROR_CODE = "40000"
-    STATUS_CODE = 400
+#     MESSAGE = _("找不到请求的资源")
+#     ERROR_CODE = "40400"
+#     STATUS_CODE = 404
 
 
-class ParamRequired(ClientBlueException):
+# class ParamValidationError(ClientBlueException):
 
-    MESSAGE = _("关键参数缺失")
-    ERROR_CODE = "40001"
-    STATUS_CODE = 400
-
-
-class AccessForbidden(ClientBlueException):
-
-    MESSAGE = _("登陆失败")
-    ERROR_CODE = "40301"
-    STATUS_CODE = 403
+#     MESSAGE = _("参数验证失败")
+#     ERROR_CODE = "40000"
+#     STATUS_CODE = 400
 
 
-class RequestForbidden(ClientBlueException):
+# class ParamRequired(ClientBlueException):
 
-    MESSAGE = _("请求拒绝")
-    ERROR_CODE = "40320"
-    STATUS_CODE = 403
-
-
-class ResourceLock(ClientBlueException):
-
-    MESSAGE = _("请求资源被锁定")
-    ERROR_CODE = "40330"
-    STATUS_CODE = 403
+#     MESSAGE = _("关键参数缺失")
+#     ERROR_CODE = "40001"
+#     STATUS_CODE = 400
 
 
-class MethodError(ClientBlueException):
+# class AccessForbidden(ClientBlueException):
 
-    MESSAGE = _("请求方法不支持")
-    ERROR_CODE = "40501"
-    STATUS_CODE = 405
+#     MESSAGE = _("登陆失败")
+#     ERROR_CODE = "40301"
+#     STATUS_CODE = 403
+
+
+# class RequestForbidden(ClientBlueException):
+
+#     MESSAGE = _("请求拒绝")
+#     ERROR_CODE = "40320"
+#     STATUS_CODE = 403
+
+
+# class ResourceLock(ClientBlueException):
+
+#     MESSAGE = _("请求资源被锁定")
+#     ERROR_CODE = "40330"
+#     STATUS_CODE = 403
+
+
+# class MethodError(ClientBlueException):
+
+#     MESSAGE = _("请求方法不支持")
+#     ERROR_CODE = "40501"
+#     STATUS_CODE = 405
 
 
 class BkJwtVerifyError(ClientBlueException):
@@ -120,10 +120,10 @@ class BkJwtVerifyError(ClientBlueException):
     STATUS_CODE = 401
 
 
-class DatabaseError(ServerBlueException):
+# class DatabaseError(ServerBlueException):
 
-    MESSAGE = _("数据库异常")
-    ERROR_CODE = "50110"
+#     MESSAGE = _("数据库异常")
+#     ERROR_CODE = "50110"
 
 
 class ApiNetworkError(ServerBlueException):
@@ -140,8 +140,8 @@ class ApiResultError(ServerBlueException):
     STATUS_CODE = 503
 
 
-class ApiNotAcceptable(ServerBlueException):
+# class ApiNotAcceptable(ServerBlueException):
 
-    MESSAGE = _("远程服务返回结果格式异常")
-    ERROR_CODE = "50303"
-    STATUS_CODE = 503
+#     MESSAGE = _("远程服务返回结果格式异常")
+#     ERROR_CODE = "50303"
+#     STATUS_CODE = 503
