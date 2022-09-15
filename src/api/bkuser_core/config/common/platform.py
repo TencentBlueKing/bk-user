@@ -82,10 +82,6 @@ def get_iam_config(app_id: str, app_token: str) -> dict:
 
 IAM_CONFIG = get_iam_config(APP_ID, APP_TOKEN)
 
-# 与 SaaS 约定的权限校验头，未传递时跳过权限校验
-NEED_IAM_HEADER = "HTTP_NEED_IAM"
-ACTION_ID_HEADER = "HTTP_ACTION_ID"
-
 # APIGateway相关配置
 ## Open API接入APIGW后，需要对APIGW请求来源认证，使用公钥解开jwt(base64 string)
 BK_APIGW_PUBLIC_KEY = env("BK_APIGW_PUBLIC_KEY", default="")

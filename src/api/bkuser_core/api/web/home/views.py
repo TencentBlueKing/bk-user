@@ -57,14 +57,22 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             return []
         else:
             # 1. 拿到权限中心里授过权的全列表
+            # FIXME: 如果只取一级部门, 这里可能会有问题, 申请的非一级部门看不到!
             queryset = Department.objects.filter(enabled=True).filter(dept_ft)
             if not queryset:
                 return []
 
             # 2. 如果父节点已经授过权，剔除子节点
-            # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间
+            # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间 => FIXME:这里很慢
             descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
             queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
+
+            # FIXME: 这里为空抛异常? 让用户申请权限? 还是什么都不做
+            # if not queryset:
+            #     raise IAMPermissionDenied(
+            #         detail=_("您没有该操作的权限，请在权限中心申请"),
+            #         extra_info=IAMPermissionExtraInfo.from_request(request).to_dict(),
+            #     )
 
             return queryset.all()
 
@@ -94,6 +102,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         managed_categories_map = {x.id: all_categories_map[x.id] for x in managed_categories}
 
         # FIXME: 这里有性能问题, 当部门数量到达两万的时候
+        # FIXME: 如果有所有部门的权限, 这里返回的是所有部门? 还是只返回一级部门? 一级部门很多的时候怎么处理?
         # 这里拉取所有拥有权限的、顶级的目录
         for department in self._list_department_tops(operator):
             # 如果存在当前可展示的全量 category 未包含的部门，舍弃

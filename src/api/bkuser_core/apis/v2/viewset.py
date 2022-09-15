@@ -29,9 +29,6 @@ from .constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from .serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, EmptySerializer, is_custom_fields_enabled
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log, create_general_log
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
-from bkuser_core.bkiam.filters import IAMFilter
-from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_global.utils import force_str_2_bool
@@ -220,32 +217,12 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
     - fields 用户定义返回字段
     """
 
-    permission_classes = [IAMPermission]
-    # 使用 filter 进行过滤的操作
-    iam_filter_actions: tuple = ()
-
     def filter_queryset(self, queryset) -> QuerySet:
         filter_backends = list(self.filter_backends)
         # 只针对 list 接口增加 filter，其他操作都通过 check_object 判断
-        if self.action in self.iam_filter_actions:
-            filter_backends.append(IAMFilter)
-
         for backend in filter_backends:
             queryset = backend().filter_queryset(self.request, queryset, self)
         return queryset
-
-    def check_object_permissions(self, request, obj):
-        """增加 obj 到 extra_info"""
-        for permission in self.get_permissions():
-            if not permission.has_object_permission(request, self, obj):
-                self.permission_denied(request, message=getattr(permission, "message", None), obj=obj)
-
-    def permission_denied(self, request, message=None, obj=None, **kwargs):
-        """针对 IAM 注入相关信息"""
-        raise IAMPermissionDenied(
-            detail=message,
-            extra_info=IAMPermissionExtraInfo.from_request(request, obj=obj).to_dict(),
-        )
 
     def get_object(self):
         # 暂存
@@ -317,7 +294,6 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
     filter_backends = [AdvancedSearchFilter, filters.OrderingFilter]
     pagination_class = StandardResultsSetPagination
     exclude_fields: List = []
-    permission_classes = [IAMPermission]
     include_disabled_field = "include_disabled"
     relation_fields: list = []
 
@@ -336,9 +312,6 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
 
         try:
             queryset = self.filter_queryset(self.get_queryset())
-        except IAMPermissionDenied:
-            # pass to exception handler
-            raise
         except Exception:
             logger.exception("query failed")
             raise error_codes.QUERY_PARAMS_ERROR

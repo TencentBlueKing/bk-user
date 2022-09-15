@@ -16,15 +16,12 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 from rest_framework.permissions import BasePermission
 
-from .base import IAMMiXin
 from .converters import PathIgnoreDjangoQSConverter
 from .exceptions import IAMPermissionDenied
 from .helper import IAMHelper
-from .utils import need_iam
 from bkuser_core.api.web.utils import get_category, get_department, get_profile, get_username
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.departments.models import Department
-from bkuser_core.profiles.models import Profile
 
 
 # FIXME: copy from bkiam/constants.py => 找到单元测试
@@ -217,66 +214,68 @@ ManageDepartmentProfilePermission = new_department_permission_via_profile(IAMAct
 #     )
 
 
+# FIXME: remove this later
+# @dataclass
+# class IAMPermission(IAMMiXin, BasePermission):
+#     """权限中心权限器，仅控制简单权限操作"""
+
+#     message = _("您没有权限进行该操作，请在权限中心申请。")
+
+#     def __post_init__(self):
+#         if settings.ENABLE_IAM:
+#             self.helper = IAMHelper()
+
+#     def has_permission(self, request, view) -> bool:
+#         """判断某一种操作是否有权限"""
+#         if not need_iam(request):
+#             return True
+
+#         # no need for auth
+#         request.authenticators = ()
+#         action_id = self._get_action_id(request)
+#         if not IAMAction.is_global_action(action_id):
+#             # 只有全局操作项才会直接检视操作，其他而是由 filter or check_obj_permission 控制
+#             return True
+
+#         return self.helper.action_allow(action_id=action_id, username=self._get_username(request))
+
+#     def has_object_permission(self, request, view, obj) -> bool:
+#         """判断某一种操作在某一个（些）实例上是否有权限"""
+#         if not need_iam(request):
+#             return True
+
+#         # no need for auth
+#         request.authenticators = ()
+#         action_id = self._get_action_id(request)
+#         if IAMAction.is_global_action(action_id):
+#             # 由 has_permission 控制
+#             return True
+
+#         # TODO: 针对 department 做了特殊处理，更通用的做法？
+#         any_pass = False
+#         objs = [obj]
+#         if isinstance(obj, Department):
+#             any_pass = True
+#             objs = obj.get_ancestors(include_self=True)
+
+#         if isinstance(obj, Profile):
+#             any_pass = True
+#             objs = Department.tree_objects.get_queryset_ancestors(
+#                 queryset=Department.objects.filter(id__in=obj.departments.values_list("id", flat=True)),
+#                 include_self=True,
+#             )
+
+#         return self.helper.objs_action_allow(
+#             action_id=action_id,
+#             username=self._get_username(request),
+#             objs=objs,
+#             any_pass=any_pass,
+#         )
+
+
 @dataclass
-class IAMPermission(IAMMiXin, BasePermission):
-    """权限中心权限器，仅控制简单权限操作"""
-
-    message = _("您没有权限进行该操作，请在权限中心申请。")
-
-    def __post_init__(self):
-        if settings.ENABLE_IAM:
-            self.helper = IAMHelper()
-
-    def has_permission(self, request, view) -> bool:
-        """判断某一种操作是否有权限"""
-        if not need_iam(request):
-            return True
-
-        # no need for auth
-        request.authenticators = ()
-        action_id = self._get_action_id(request)
-        if not IAMAction.is_global_action(action_id):
-            # 只有全局操作项才会直接检视操作，其他而是由 filter or check_obj_permission 控制
-            return True
-
-        return self.helper.action_allow(action_id=action_id, username=self._get_username(request))
-
-    def has_object_permission(self, request, view, obj) -> bool:
-        """判断某一种操作在某一个（些）实例上是否有权限"""
-        if not need_iam(request):
-            return True
-
-        # no need for auth
-        request.authenticators = ()
-        action_id = self._get_action_id(request)
-        if IAMAction.is_global_action(action_id):
-            # 由 has_permission 控制
-            return True
-
-        # TODO: 针对 department 做了特殊处理，更通用的做法？
-        any_pass = False
-        objs = [obj]
-        if isinstance(obj, Department):
-            any_pass = True
-            objs = obj.get_ancestors(include_self=True)
-
-        if isinstance(obj, Profile):
-            any_pass = True
-            objs = Department.tree_objects.get_queryset_ancestors(
-                queryset=Department.objects.filter(id__in=obj.departments.values_list("id", flat=True)),
-                include_self=True,
-            )
-
-        return self.helper.objs_action_allow(
-            action_id=action_id,
-            username=self._get_username(request),
-            objs=objs,
-            any_pass=any_pass,
-        )
-
-
-@dataclass
-class IAMPermissionExtraInfo(IAMMiXin):
+class IAMPermissionExtraInfo:
+    # class IAMPermissionExtraInfo(IAMMiXin):
     @dataclass
     class AuthInfo:
         @dataclass
@@ -340,15 +339,16 @@ class IAMPermissionExtraInfo(IAMMiXin):
             callback_url=helper.generate_callback_url(username=username, actions=[action], obj=obj),
         )
 
-    @classmethod
-    def from_request(cls, request, obj=None) -> "IAMPermissionExtraInfo":
-        helper = IAMHelper()
-        action = cls._get_action_id(request)
+    # @classmethod
+    # def from_request(cls, request, obj=None) -> "IAMPermissionExtraInfo":
+    #     helper = IAMHelper()
+    #     action = cls._get_action_id(request)
 
-        return cls(
-            auth_infos=[cls.AuthInfo.from_action(action, obj)],
-            callback_url=helper.generate_callback_url(username=request.operator, actions=[IAMAction(action)], obj=obj),
-        )
+    #     return cls(
+    #         auth_infos=[cls.AuthInfo.from_action(action, obj)],
+    #         callback_url=helper.generate_callback_url(username=request.operator,
+    #  actions=[IAMAction(action)], obj=obj),
+    #     )
 
     @classmethod
     def from_actions(cls, username: str, action_ids: List[IAMAction]) -> "IAMPermissionExtraInfo":

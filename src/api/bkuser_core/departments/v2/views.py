@@ -12,7 +12,6 @@ from typing import Type
 
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
@@ -29,9 +28,6 @@ from bkuser_core.apis.v2.viewset import (
 )
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
-from bkuser_core.bkiam.permissions import IAMPermissionExtraInfo
-from bkuser_core.bkiam.utils import need_iam
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
@@ -272,28 +268,28 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     def list_tops(self, request, *args, **kwargs):
         """获取最顶层的组织列表[权限中心亲和]"""
 
-        if not need_iam(request):
-            queryset = self.get_queryset().filter(level=0)
-        else:
-            # 1. 拿到权限中心里授过权的全列表
-            queryset = self.filter_queryset(self.get_queryset())
+        # if not need_iam(request):
+        #     queryset = self.get_queryset().filter(level=0)
+        # else:
+        #     # 1. 拿到权限中心里授过权的全列表
+        #     queryset = self.filter_queryset(self.get_queryset())
 
-            if not queryset:
-                return Response(data=self.get_serializer(queryset, many=True).data)
+        #     if not queryset:
+        #         return Response(data=self.get_serializer(queryset, many=True).data)
 
-            # 2. 如果父节点已经授过权，剔除子节点
-            # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间
-            descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
-            queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
+        #     # 2. 如果父节点已经授过权，剔除子节点
+        #     # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间
+        #     descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
+        #     queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
 
-        # 为了支持 include_disabled 参数，我们默认在 queryset 中去掉了该参数，这里补上
-        queryset = queryset.filter(enabled=True)
-        if not queryset:
-            raise IAMPermissionDenied(
-                detail=_("您没有该操作的权限，请在权限中心申请"),
-                extra_info=IAMPermissionExtraInfo.from_request(request).to_dict(),
-            )
-
+        # # 为了支持 include_disabled 参数，我们默认在 queryset 中去掉了该参数，这里补上
+        # queryset = queryset.filter(enabled=True)
+        # if not queryset:
+        #     # raise IAMPermissionDenied(
+        #     #     detail=_("您没有该操作的权限，请在权限中心申请"),
+        #     #     extra_info=IAMPermissionExtraInfo.from_request(request).to_dict(),
+        #     # )
+        queryset = self.get_queryset().filter(level=0, enabled=True)
         return Response(data=self.get_serializer(queryset, many=True).data)
 
 

@@ -161,8 +161,8 @@ error_codes.add_codes(
         ErrorCode("PROFILE_TOKEN_EXPIRED", _("用户Token已过期，请重新申请")),
         ErrorCode("CANNOT_GET_TOKEN_HOLDER", _("无法获取有效的用户 Token")),
         # 权限相关
-        ErrorCode("ACTION_UNKNOWN", _("未知权限项")),
-        ErrorCode("ACTION_ID_MISSING", _("权限项缺失")),
+        # ErrorCode("ACTION_UNKNOWN", _("未知权限项")),
+        # ErrorCode("ACTION_ID_MISSING", _("权限项缺失")),
         ErrorCode("CANNOT_DELETE_DEPARTMENT", _("不能删除部门")),
         ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
         # 用户字段
