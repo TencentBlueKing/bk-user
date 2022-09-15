@@ -40,6 +40,7 @@ from .views import (
     LoginLogExportViewSet,
     LoginLogViewSet,
     ProfileCreateViewSet,
+    ProfilesBatchViewSet,
     ProfilesRestorationViewSet,
     ProfilesRetrieveUpdateViewSet,
     ProfilesSearchViewSet,
@@ -188,5 +189,10 @@ urlpatterns = [
         "api/v2/departments/",
         DepartmentViewSet.as_view({"get": "get", "post": "post"}),
         name="departments",
+    ),
+    path(
+        "api/v2/batch/profiles/",
+        ProfilesBatchViewSet.as_view({"patch": "request", "delete": "request"}),
+        name="profiles.batch.actions",
     ),
 ]

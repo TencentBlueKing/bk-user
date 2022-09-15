@@ -47,8 +47,10 @@ def _parse_department_path(data):
 class Permission:
     def __init__(self):
         self.iam_enabled = settings.ENABLE_IAM
+        # FIXME: 使用新的helper, 隔离老的
         self.helper = IAMHelper()
 
+    # FIXME: 重构, 写注释, 写测试
     def make_filter_of_category(self, username: str, action_id: str):
         if not self.iam_enabled:
             return None

@@ -64,6 +64,9 @@ def get_profile(profile_id: int) -> Profile:
         raise error_codes.CANNOT_FIND_PROFILE
 
 
+# FIXME: 所有方法加 typehint
+
+
 def list_setting_metas(category_type: str, region: str, namespace: str) -> list:
     """
     List setting metas.

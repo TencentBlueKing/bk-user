@@ -85,7 +85,9 @@ urlpatterns = [
         views.BatchProfileViewSet.as_view(
             {
                 "get": "multiple_retrieve",
+                # TODO: saas has revmoved this
                 "patch": "multiple_update",
+                # TODO: saas has revmoved this
                 "delete": "multiple_delete",
             }
         ),

@@ -13,6 +13,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, status
@@ -21,6 +22,8 @@ from rest_framework.response import Response
 from .serializers import (
     LoginProfileRetrieveSerializer,
     LoginProfileSerializer,
+    ProfileBatchDeleteSerializer,
+    ProfileBatchUpdateSerializer,
     ProfileCreateSerializer,
     ProfileSearchResultSerializer,
     ProfileSearchSerializer,
@@ -125,10 +128,6 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         if not ProfileCategory.objects.check_writable(instance.category_id):
             raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
-        # 普通字段
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-
         # FIXME: 可以简化, 不要搞那么复杂
         # 提前将多对多字段拿出
         # Django 2.2 以后不能直接设置
@@ -140,6 +139,11 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
                 m2m_fields[k] = validated_data.pop(k)
             except KeyError:
                 pass
+
+        # NOTE: do not change the order here
+        # 普通字段
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
         # 多对多字段
         for key, value in m2m_fields.items():
             getattr(instance, key).set(value)
@@ -354,3 +358,80 @@ class ProfileCreateApi(generics.CreateAPIView):
             extra_values=create_summary,
         )
         return Response(status=status.HTTP_201_CREATED)
+
+
+class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
+    def delete(self, request, *args, **kwargs):
+        """批量删除"""
+        serializer = ProfileBatchDeleteSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+
+        operator = get_username(request)
+        data = serializer.validated_data
+        for obj in data:
+            try:
+                instance = Profile.objects.get(pk=obj["id"])
+                create_general_log(
+                    operator=operator,
+                    operate_type=OperationType.DELETE.value,
+                    operator_obj=instance,
+                    request=request,
+                )
+            except ObjectDoesNotExist:
+                logger.warning(
+                    "obj <%s-%s> not found or already been deleted.",
+                    self.queryset.model,
+                    obj,
+                )
+                continue
+            else:
+                # check permission
+                category = ProfileCategory.objects.get(pk=instance.category_id)
+                Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
+
+                # do
+                instance.delete()
+
+        # FIXME: to 204?
+        return Response(status=status.HTTP_200_OK)
+
+    def patch(self, request, *args, **kwargs):
+        """批量更新，必须传递 id 作为查找字段"""
+        serializer = ProfileBatchUpdateSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+
+        operator = get_username(request)
+        data = serializer.validated_data
+
+        updating_instances = []
+        for obj in data:
+            try:
+                instance = Profile.objects.get(pk=obj["id"])
+            except ObjectDoesNotExist:
+                logger.warning(
+                    "obj <%s-%s> not found or already been deleted.",
+                    self.queryset.model,
+                    obj,
+                )
+                continue
+            else:
+                # check permission
+                category = ProfileCategory.objects.get(pk=instance.category_id)
+                Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
+
+                create_general_log(
+                    operator=operator,
+                    operate_type=OperationType.UPDATE.value,
+                    operator_obj=instance,
+                    request=request,
+                )
+
+                # TODO: 限制非本地目录进行修改
+
+                single_serializer = ProfileBatchUpdateSerializer(instance=instance, data=obj)
+                single_serializer.is_valid(raise_exception=True)
+                single_serializer.save()
+                updating_instances.append(instance)
+
+        return Response(status=status.HTTP_200_OK)
+        # return Response(ProfileBatchUpdateSerializer(updating_instances, many=True).data)

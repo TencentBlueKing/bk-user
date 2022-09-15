@@ -15,7 +15,6 @@
 from __future__ import absolute_import
 
 # import apis into sdk package
-from bkuser_sdk.api.batch_api import BatchApi
 from bkuser_sdk.api.profiles_api import ProfilesApi
 
 # import ApiClient

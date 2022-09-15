@@ -341,3 +341,8 @@ class DepartmentViewSet(BkUserApiProxy):
 
     def post(self, request, *args, **kwargs):
         return self.do_proxy(request, rewrite_path="/api/v1/web/departments/")
+
+
+class ProfilesBatchViewSet(BkUserApiProxy):
+    def request(self, request, *args, **kwargs):
+        return self.do_proxy(request, rewrite_path="/api/v1/web/profiles/batch/")

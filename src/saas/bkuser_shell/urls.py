@@ -21,7 +21,6 @@ urlpatterns = [
     url(r"^", include("bkuser_shell.account.urls")),
     url("", include("bkuser_shell.proxy.urls")),
     # TODO: refactor below
-    url(r"^", include("bkuser_shell.organization.urls")),
     url(r"^", include("bkuser_shell.password.urls")),
     # TODO: version should be change to a different impl
     url(r"^", include("bkuser_shell.version_log.urls")),

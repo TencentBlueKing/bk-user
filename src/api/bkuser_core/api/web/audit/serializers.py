@@ -19,6 +19,16 @@ from .constants import LOGIN_FAILED_REASON_MAP, OPERATION_ABOUT_PASSWORD, OPERAT
 PLACE_HOLDER = "--"
 
 
+# FIXME:
+# 1. SLZ input/output怎么区分? OutputSLZ / InputSLZ?
+# 2. POST CREATED 都返回 201 / UPDATE都返回 200;? 什么时候返回204? (前端需要支持 200/201/204)
+# 3. 权限中心, 查看类权限使用 is_allowed_with_cache
+# 4. 增加cache,`@functools.lru_cache(user_function`? or django memory cache?
+# 5. exception处理, 抹掉`raw`, 只有ee response
+# 6. searchFilter优化
+# 7. 是否引入  manager?
+
+
 class LogRequestSerializer(serializers.Serializer):
     start_time = serializers.DateTimeField(input_formats=["iso-8601"], help_text=_("查询起始时间"))
     end_time = serializers.DateTimeField(input_formats=["iso-8601"], help_text=_("查询结束时间"))
@@ -46,14 +56,14 @@ class GeneralLogSerializer(serializers.Serializer):
         instance["target_obj"] = f"{extra_value['display_name']}<{extra_value['key']}>"
         instance["operation"] = (
             f"{OPERATION_NAME_MAP[extra_value['operation']]}"
-            if extra_value['operation'] in OPERATION_ABOUT_PASSWORD
+            if extra_value["operation"] in OPERATION_ABOUT_PASSWORD
             else (
                 f"{OPERATION_NAME_MAP[extra_value['operation']]}"
                 f"{OPERATION_OBJ_NAME_MAP[extra_value.get('obj_type')]}"
             )
         )
 
-        category_name_map = self.context.get('category_name_map')
+        category_name_map = self.context.get("category_name_map")
 
         category_id = extra_value.get("category_id")
         category_display_name = category_name_map.get(category_id, PLACE_HOLDER)
@@ -97,7 +107,7 @@ class LoginLogSerializer(serializers.Serializer):
     def get_category_display_name(self, obj) -> str:
         """get category display name from log extra value"""
         category_id = obj.profile.id
-        category_name_map = self.context.get('category_name_map')
+        category_name_map = self.context.get("category_name_map")
         category_display_name = category_name_map.get(category_id, PLACE_HOLDER)
         return category_display_name
 

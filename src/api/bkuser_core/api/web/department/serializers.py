@@ -155,4 +155,7 @@ class DepartmentProfileSerializer(serializers.Serializer):
     create_time = serializers.DateTimeField(required=False, help_text="创建时间")
     update_time = serializers.DateTimeField(required=False, help_text="更新时间")
     departments = DepartmentProfileDepartmentSerializer(many=True, required=False, help_text="部门列表")
-    leaders = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
+
+    # FIXME: 老的代码用的leader, 需要切换成leaders
+    # leaders = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
+    leader = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表")

@@ -35,10 +35,16 @@ urlpatterns = [
         views.ProfileOperationRestorationApi.as_view(),
         name="profile.operation.restoration",
     ),
+    path(
+        "batch/",
+        views.ProfileBatchApi.as_view(),
+        name="profile.batch",
+    ),
 ]
+
+# FIXME: 让前端把删除接口切换成删除单个用户, 而不是批量(低优先级)
+# 删除 => 走的批量接口? => 需要切换成单个接口, 不要滥用批量
+# DELETE /api/v2/batch/profiles/  [{id: 1025}]
 
 # 创建用户
 # POST /api/v2/profiles/
-
-# 删除 => 走的批量接口? => 需要切换成单个接口, 不要滥用批量
-# DELETE /api/v2/batch/profiles/  [{id: 1025}]

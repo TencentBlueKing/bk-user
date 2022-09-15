@@ -179,3 +179,19 @@ class ProfileCreateSerializer(serializers.ModelSerializer):
         )
         # exclude = ["password"]
         validators: list = []
+
+
+class ProfileBatchDeleteSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+
+
+class ProfileBatchUpdateSerializer(serializers.ModelSerializer):
+    # 批量更新时使用
+    id = serializers.IntegerField(required=False)
+    departments = serializers.ListField(required=False)
+    # extras = serializers.JSONField(required=False)
+
+    class Meta:
+        model = Profile
+        # NOTE: 差异点, 禁止更新password
+        exclude = ["category_id", "username", "domain", "password"]
