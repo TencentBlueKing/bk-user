@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from collections import defaultdict
 
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -27,6 +26,9 @@ from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
+
+# from collections import defaultdict
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,16 +84,26 @@ class SearchApi(generics.ListAPIView):
             )
 
             # FIXME: refactor it, now it works
-            profile_result = defaultdict(list)
+            # profile_result = defaultdict(list)
+            # FIXME: 先兼容目前前端需要的空数据结构
+            profile_result = {
+                "username": [],
+                "display_name": [],
+                "email": [],
+                "telephone": [],
+                "qq": [],
+                "extras": [],
+            }
+
             for profile in profiles:
-                if keyword in profile.username:
-                    profile_result["username"].append(profile)
-                    continue
-                if keyword in profile.display_name:
-                    profile_result["display_name"].append(profile)
-                    continue
                 if keyword in profile.email:
                     profile_result["email"].append(profile)
+                    continue
+                # if keyword in profile.username:
+                #     profile_result["username"].append(profile)
+                #     continue
+                if keyword in profile.display_name:
+                    profile_result["display_name"].append(profile)
                     continue
                 if keyword in profile.telephone:
                     profile_result["telephone"].append(profile)
@@ -103,6 +115,14 @@ class SearchApi(generics.ListAPIView):
                     profile_result["extras"].append(profile)
                     continue
 
+                # 暂时兜底, 放email
+                profile_result["extras"].append(profile)
+
+            # FIXME: BUG: 目前username命中前端会报错, 所以暂时去掉username, 等待bug修复
+
+            # FIXME: 目前必须保持顺序, 否则前端会报错, 需要推动前端修复
+            # for key in ["email", "qq", "display_name", "telephone", "extras", "username"]:
+            #     items = profile_result[key]
             for key, items in profile_result.items():
                 result.append(
                     {

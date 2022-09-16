@@ -187,7 +187,7 @@ urlpatterns = [
         SearchViewSet.as_view({"get": "get"}),
         name="search",
     ),
-    # FIXME: 这个接口不应该是 departments, 应该是 首页拓扑, 需要单独做一个接口
+    # NOTE: 这个接口不应该是 departments, proxy to: /api/v1/web/home/tree/
     path(
         "api/v2/departments/",
         DepartmentViewSet.as_view({"get": "get", "post": "post"}),

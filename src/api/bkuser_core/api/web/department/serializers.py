@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict, List
 
+from django.conf import settings
 from rest_framework import serializers
 
 from bkuser_core.departments.models import Department
@@ -159,3 +160,13 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     # FIXME: 老的代码用的leader, 需要切换成leaders
     # leaders = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
     leader = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表")
+
+    logo = serializers.SerializerMethodField(required=False)
+
+    def get_logo(self, data):
+        logo = data.logo
+        if not logo:
+            # logo转成 "data:image/png;base64,xxxxx"
+            return settings.DEFAULT_LOGO_DATA
+
+        return logo

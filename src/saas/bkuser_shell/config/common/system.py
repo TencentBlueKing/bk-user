@@ -30,9 +30,6 @@ TOKEN_COOKIE_NAME = env("TOKEN_COOKIE_NAME", default="bk_token")
 LOGIN_VERIFY_URI = env("LOGIN_VERIFY_URI", default="/accounts/is_login/")
 LOGIN_USER_INFO_URI = env("LOGIN_USER_INFO_URI", default="/accounts/get_user/")
 
-# put on s3 maybe better
-DEFAULT_LOGO_URL = "img/logo_default.png"
-
 ##############
 # VersionLog #
 ##############
@@ -44,6 +41,13 @@ VERSION_FILE = "RELEASE.yaml"
 ###################
 BK_DOC_URL = "https://bk.tencent.com/docs/markdown/用户管理/产品白皮书/产品简介/README.md"
 
+
+# ==============================================================================
+# Proxy http connections
+# ==============================================================================
+
+REQUESTS_POOL_CONNECTIONS = 20
+REQUESTS_POOL_MAXSIZE = 20
 
 # ==============================================================================
 # Sentry

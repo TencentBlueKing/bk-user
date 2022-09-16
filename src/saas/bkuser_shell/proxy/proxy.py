@@ -34,6 +34,14 @@ def make_proxy_headers(username: str) -> dict:
     }
 
 
+session = requests.Session()
+adapter = requests.adapters.HTTPAdapter(
+    pool_connections=settings.REQUESTS_POOL_CONNECTIONS, pool_maxsize=settings.REQUESTS_POOL_MAXSIZE
+)
+session.mount("https://", adapter)
+session.mount("http://", adapter)
+
+
 class BkUserApiProxy(GenericViewSet):
     """do the proxy from saas to api
     should be removed when we remove saas totally
@@ -97,7 +105,7 @@ class BkUserApiProxy(GenericViewSet):
         # do call
         if "application/json" in request.headers.get("Content-Type", "application/json"):
             # for json
-            resp = requests.request(method, url, params=params, json=data, headers=headers)
+            resp = session.request(method, url, params=params, json=data, headers=headers)
         else:
             # for file upload and others
             if "file_name" in data:
@@ -109,7 +117,7 @@ class BkUserApiProxy(GenericViewSet):
             if file:
                 data.pop("file")
                 files = {"file": file}
-            resp = requests.request(method, url, params=params, data=data, headers=headers, files=files)
+            resp = session.request(method, url, params=params, data=data, headers=headers, files=files)
 
         # DONT'T set the content_type here!
         return HttpResponse(

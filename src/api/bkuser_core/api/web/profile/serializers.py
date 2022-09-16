@@ -35,7 +35,8 @@ class LoginProfileOutputSLZ(serializers.Serializer):
     def get_logo(self, data):
         logo = data.logo
         if not logo:
-            return settings.DEFAULT_LOGO_URL
+            # logo转成 "data:image/png;base64,xxxxx"
+            return settings.DEFAULT_LOGO_DATA
 
         return logo
 
@@ -112,7 +113,7 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
 
 
 # class ProfileCreateResponseSerializer(serializers.ModelSerializer):
-#     # FIXME: 创建成功后, 需要返回吗? 不返回会不会有问题?
+#     # TODO: 创建成功后, 需要返回吗? 不返回会不会有问题?
 #     # extras = serializers.SerializerMethodField(required=False)
 
 #     # leader = LeaderSerializer(many=True, required=False)
