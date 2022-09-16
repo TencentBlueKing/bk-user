@@ -29,7 +29,7 @@ from .serializers import (
     ProfileSearchOutputSLZ,
     ProfileUpdateInputSLZ,
 )
-from bkuser_core.api.web.utils import get_category, get_username, validate_password
+from bkuser_core.api.web.utils import get_category, get_operator, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
@@ -75,9 +75,9 @@ class ProfileSearchApi(generics.ListAPIView):
 
         category_id = data.get("category_id")
 
-        username = get_username(self.request)
+        operator = get_operator(self.request)
         category = get_category(category_id)
-        Permission().allow_category_action(username, IAMAction.VIEW_CATEGORY, category)
+        Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, category)
 
         queryset = Profile.objects.filter(category_id=category_id, enabled=True)
 
@@ -222,7 +222,7 @@ class ProfileCreateApi(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         """创建用户"""
         # FIXME: 重构, 简化(目前直接拷贝的原来代码)
-        operator = get_username(self.request)
+        operator = get_operator(self.request)
 
         # do validate
         slz = ProfileCreateInputSLZ(data=request.data)
@@ -345,7 +345,7 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
         serializer = ProfileBatchDeleteInputSLZ(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        operator = get_username(request)
+        operator = get_operator(request)
         data = serializer.validated_data
         for obj in data:
             try:
@@ -379,7 +379,7 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
         serializer = ProfileBatchUpdateInputSLZ(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        operator = get_username(request)
+        operator = get_operator(request)
         data = serializer.validated_data
 
         updating_instances = []

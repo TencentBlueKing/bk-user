@@ -41,7 +41,7 @@ from .serializers import (
 from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsOutputSLZ
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldOutputSLZ
-from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
+from bkuser_core.api.web.utils import get_category, get_operator, list_setting_metas
 from bkuser_core.api.web.viewset import CustomPagination, CustomPaginationData
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import (
@@ -94,13 +94,13 @@ class CategoryMetasListApi(generics.ListAPIView):
             _meta = self.make_meta(type_)
             # Q：为什么这里需要手动判断权限，而不是通用 permission_classes？
             # A：因为这里的资源（目录类型）是没有对应实体，同时也没有在权限中心注册
-            username = get_username(request)
-            if not Permission().allow_action_without_resource(username, action_id):
+            operator = get_operator(request)
+            if not Permission().allow_action_without_resource(operator, action_id):
                 _meta.update(
                     {
                         "authorized": False,
                         "extra_info": IAMPermissionExtraInfo.from_actions(
-                            username=username, action_ids=[action_id]
+                            username=operator, action_ids=[action_id]
                         ).to_dict(),
                     }
                 )
@@ -230,11 +230,11 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
     # TODO: 产品上应该返回全部列表, 展示这个人哪些有权限/哪些没权限
     # 而不是, 只返回有权限的
     def get_queryset(self):
-        username = get_username(self.request)
+        operator = get_operator(self.request)
 
         queryset = ProfileCategory.objects.filter(enabled=True)
         if settings.ENABLE_IAM:
-            fs = Permission().make_filter_of_category(username, IAMAction.VIEW_CATEGORY)
+            fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
             queryset = queryset.filter(fs)
 
         return queryset
@@ -249,12 +249,12 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
         data = serializer.validated_data
 
         # check permission
-        username = get_username(request)
+        operator = get_operator(request)
         action_id = IAMAction.get_action_by_category_type(data["type"])
-        if not Permission().allow_action_without_resource(username, action_id):
+        if not Permission().allow_action_without_resource(operator, action_id):
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
             )
 
         instance = serializer.save()

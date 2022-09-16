@@ -16,7 +16,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import CategoryOutputSLZ, DepartmentListResultCategoryOutputSLZ
-from bkuser_core.api.web.utils import get_username, is_filter_means_any
+from bkuser_core.api.web.utils import get_operator, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
 from bkuser_core.categories.models import ProfileCategory
@@ -96,7 +96,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         # NOTE: 差异点: 不支持only_enabled
         # only_enabled = data.get("only_enabled", True)
 
-        operator = get_username(self.request)
+        operator = get_operator(self.request)
         # categories
         managed_categories, all_categories = self._get_categories(operator)
 

@@ -22,7 +22,7 @@ from .serializers import (
     SearchResultOutputSLZ,
     SearchResultProfileOutputSLZ,
 )
-from bkuser_core.api.web.utils import get_username
+from bkuser_core.api.web.utils import get_operator
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
 from bkuser_core.departments.models import Department
@@ -45,7 +45,7 @@ class SearchApi(generics.ListAPIView):
         }.get(field, field)
 
     def get(self, request, *args, **kwargs):
-        operator = get_username(self.request)
+        operator = get_operator(self.request)
 
         serializer = SearchInputSLZ(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)

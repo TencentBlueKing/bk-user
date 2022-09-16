@@ -24,7 +24,7 @@ from .serializers import (
     DepartmentSearchOutputSLZ,
     DepartmentsWithChildrenAndAncestorsOutputSLZ,
 )
-from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_username
+from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_operator
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentPermission, Permission, ViewDepartmentPermission
 from bkuser_core.categories.models import ProfileCategory
@@ -50,7 +50,7 @@ class DepartmentListCreateApi(generics.ListCreateAPIView):
                 raise error_codes.CANNOT_MANUAL_WRITE_INTO
 
         # category = ProfileCategory.objects.get(id=category_id)
-        username = get_username(request)
+        operator = get_operator(request)
         category = get_category(category_id)
 
         dept = {
@@ -61,11 +61,11 @@ class DepartmentListCreateApi(generics.ListCreateAPIView):
         parent_id = data.get("parent")
         if parent_id:
             department = get_department(parent_id)
-            Permission().allow_category_action(username, IAMAction.MANAGE_DEPARTMENT, department)
+            Permission().allow_category_action(operator, IAMAction.MANAGE_DEPARTMENT, department)
 
             dept.update({"parent": department, "order": department.get_max_order_in_children() + 1})
         else:
-            Permission().allow_category_action(username, IAMAction.MANAGE_CATEGORY, category)
+            Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
             # 不传 parent 默认为根部门
             data["level"] = 0
             max_order = list(
@@ -92,7 +92,7 @@ class DepartmentListCreateApi(generics.ListCreateAPIView):
             instance = Department.objects.create(**dept)
 
         post_department_create.send(
-            sender=self, instance=instance, operator=username, extra_values={"request": request}
+            sender=self, instance=instance, operator=operator, extra_values={"request": request}
         )
         return Response(DepartmentCreatedOutputSLZ(instance).data, status=status.HTTP_201_CREATED)
 
@@ -131,9 +131,9 @@ class DepartmentSearchApi(generics.ListAPIView):
 
         category_id = data.get("category_id")
 
-        username = get_username(self.request)
+        operator = get_operator(self.request)
         category = get_category(category_id)
-        Permission().allow_category_action(username, IAMAction.VIEW_CATEGORY, category)
+        Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, category)
 
         # NOTE: 这里相对原来/api/v3/departments/?category_id 的差异是 enabled=True
         return Department.objects.filter(category_id=category_id, enabled=True)

@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import Dict
 
 from django.conf import settings
 
@@ -26,21 +27,25 @@ logger = logging.getLogger(__name__)
 
 
 # FIXME: get it from request.user.username after merge saas into api
-# FIXME: change to get_operator, 避免同profile.username混淆
-def get_username(request) -> str:
-    username = request.META.get(settings.OPERATOR_HEADER, None)
-    if not username:
+def get_operator(request) -> str:
+    """
+    NOTE: the `operator` should be the username with domain
+    - default category: operator = username
+    - not default category:  operator = username@domain
+    """
+    operator = request.META.get(settings.OPERATOR_HEADER, None)
+    if not operator:
         raise error_codes.USERNAME_MISSING
-    return username
+    return operator
 
 
 # FIXME: add memory cache here
-def get_category_display_name_map():
+def get_category_display_name_map() -> Dict[int, str]:
     return dict(ProfileCategory.objects.values_list("id", "display_name").all())
 
 
 # FIXME: add memory cache here
-def get_default_category_id():
+def get_default_category_id() -> int:
     return ProfileCategory.objects.get_default().id
 
 
@@ -66,9 +71,6 @@ def get_profile(profile_id: int) -> Profile:
     except Exception:
         logger.exception("cannot find profile: %s", profile_id)
         raise error_codes.CANNOT_FIND_PROFILE
-
-
-# FIXME: 所有方法加 typehint
 
 
 def list_setting_metas(category_type: str, region: str, namespace: str) -> list:

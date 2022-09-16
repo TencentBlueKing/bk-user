@@ -20,7 +20,6 @@ PLACE_HOLDER = "--"
 
 
 # FIXME:
-# 1. SLZ input/output怎么区分? OutputSLZ / InputSLZ?
 # 2. POST CREATED 都返回 201 / UPDATE都返回 200;? 什么时候返回204? (前端需要支持 200/201/204)
 # 3. 权限中心, 查看类权限使用 is_allowed_with_cache
 # 4. 增加cache,`@functools.lru_cache(user_function`? or django memory cache?

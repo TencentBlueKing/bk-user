@@ -19,7 +19,7 @@ from rest_framework.permissions import BasePermission
 from .converters import PathIgnoreDjangoQSConverter
 from .exceptions import IAMPermissionDenied
 from .helper import IAMHelper
-from bkuser_core.api.web.utils import get_category, get_department, get_profile, get_username
+from bkuser_core.api.web.utils import get_category, get_department, get_operator, get_profile
 from bkuser_core.bkiam.constants import IAMAction, ResourceType
 from bkuser_core.departments.models import Department
 
@@ -42,17 +42,23 @@ def _parse_department_path(data):
 
 
 class Permission:
+    """
+    NOTE: the `operator` should be the username with domain
+    - default category: operator = username
+    - not default category:  operator = username@domain
+    """
+
     def __init__(self):
         self.iam_enabled = settings.ENABLE_IAM
         # FIXME: 使用新的helper, 隔离老的
         self.helper = IAMHelper()
 
     # FIXME: 重构, 写注释, 写测试
-    def make_filter_of_category(self, username: str, action_id: str):
+    def make_filter_of_category(self, operator: str, action_id: str):
         if not self.iam_enabled:
             return None
 
-        iam_request = self.helper.make_request_without_resources(username=username, action_id=action_id)
+        iam_request = self.helper.make_request_without_resources(username=operator, action_id=action_id)
         # NOTE: 这里不是给category自己用的, 而是给外检关联表用的, 所以category.id -> category_id
         fs = Permission().helper.iam.make_filter(
             iam_request, converter_class=PathIgnoreDjangoQSConverter, key_mapping={"category.id": "category_id"}
@@ -60,15 +66,15 @@ class Permission:
         if not fs:
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
             )
         return fs
 
-    def make_filter_of_department(self, username: str, action_id: str):
+    def make_filter_of_department(self, operator: str, action_id: str):
         if not self.iam_enabled:
             return None
 
-        iam_request = self.helper.make_request_without_resources(username=username, action_id=action_id)
+        iam_request = self.helper.make_request_without_resources(username=operator, action_id=action_id)
         # NOTE: 这里给多对多的profile-department用的, 所以解析出来是department.id
         fs = Permission().helper.iam.make_filter(
             iam_request,
@@ -78,37 +84,37 @@ class Permission:
         if not fs:
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
             )
         return fs
 
-    def make_department_filter(self, username: str, action_id: str):
+    def make_department_filter(self, operator: str, action_id: str):
         if not self.iam_enabled:
             return None
 
-        iam_request = self.helper.make_request_without_resources(username=username, action_id=action_id)
+        iam_request = self.helper.make_request_without_resources(username=operator, action_id=action_id)
         fs = Permission().helper.iam.make_filter(
             iam_request, converter_class=PathIgnoreDjangoQSConverter, key_mapping={"department.id": "id"}
         )
         if not fs:
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(username, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
             )
         return fs
 
-    def allow_category_action(self, username: str, action_id, category) -> bool:
+    def allow_category_action(self, operator: str, action_id, category) -> bool:
         if not self.iam_enabled:
             return True
 
         objs = [category]
         return self.helper.objs_action_allow(
             action_id=action_id,
-            username=username,
+            username=operator,
             objs=objs,
         )
 
-    def allow_department_action(self, username: str, action_id, department) -> bool:
+    def allow_department_action(self, operator: str, action_id, department) -> bool:
         if not self.iam_enabled:
             return True
 
@@ -116,27 +122,27 @@ class Permission:
         # FIXME: 去掉对helper的依赖, 直接依赖自己的封装, 便于删除原来的所有代码
         return self.helper.objs_action_allow(
             action_id=action_id,
-            username=username,
+            username=operator,
             objs=objs,
         )
 
-    def allow_tree_departments_action(self, username: str, action_id, departments) -> bool:
+    def allow_tree_departments_action(self, operator: str, action_id, departments) -> bool:
         # 叶节点到根节点的所有部门, 有一个有权限, 则有权限
         if not self.iam_enabled:
             return True
 
         objs = departments
         return self.helper.objs_action_allow(
-            username=username,
+            username=operator,
             action_id=action_id,
             objs=objs,
             any_pass=True,
         )
 
-    def allow_action_without_resource(self, username: str, action_id: IAMAction):
+    def allow_action_without_resource(self, operator: str, action_id: IAMAction):
         if not self.iam_enabled:
             return True
-        return self.helper.action_allow(username=username, action_id=action_id)
+        return self.helper.action_allow(username=operator, action_id=action_id)
 
 
 # TODO: use with_cache to speed up
@@ -145,8 +151,8 @@ class Permission:
 def new_action_without_resource_permission(action_id: IAMAction):
     class ActionWithoutResourcePermission(BasePermission):
         def has_permission(self, request, view):
-            username = get_username(request)
-            return Permission().allow_action_without_resource(username, action_id)
+            operator = get_operator(request)
+            return Permission().allow_action_without_resource(operator, action_id)
 
     return ActionWithoutResourcePermission
 
@@ -156,8 +162,8 @@ def new_category_permission(action_id: IAMAction):
         def has_permission(self, request, view):
             category_id = view.kwargs["id"]
             category = get_category(category_id)
-            username = get_username(request)
-            return Permission().allow_category_action(username, action_id, category)
+            operator = get_operator(request)
+            return Permission().allow_category_action(operator, action_id, category)
 
     return CategoryIdInURLPermission
 
@@ -167,8 +173,8 @@ def new_department_permission(action_id: IAMAction):
         def has_permission(self, request, view):
             department_id = view.kwargs["id"]
             department = get_department(department_id)
-            username = get_username(request)
-            return Permission().allow_department_action(username, action_id, department)
+            operator = get_operator(request)
+            return Permission().allow_department_action(operator, action_id, department)
 
     return DepartmentIdInURLPermission
 
@@ -185,8 +191,8 @@ def new_department_permission_via_profile(action_id: IAMAction):
             )
 
             # 只要有一级目录有权限, 就是有权限
-            username = get_username(request)
-            return Permission().allow_tree_departments_action(username, action_id, departments)
+            operator = get_operator(request)
+            return Permission().allow_tree_departments_action(operator, action_id, departments)
 
     return ProfileIdInURLPermission
 
@@ -202,17 +208,6 @@ ManageDepartmentPermission = new_department_permission(IAMAction.MANAGE_DEPARTME
 ViewDepartmentPermission = new_department_permission(IAMAction.VIEW_DEPARTMENT)
 
 ManageDepartmentProfilePermission = new_department_permission_via_profile(IAMAction.MANAGE_DEPARTMENT)
-
-# @classmethod
-# def get_global_actions(cls) -> tuple:
-#     """不需要和任何资源绑定，只需要判断某人是否有某个操作的权限"""
-#     return (
-#         cls.CREATE_MAD_CATEGORY,
-#         cls.CREATE_LDAP_CATEGORY,
-#         cls.CREATE_LOCAL_CATEGORY,
-#         cls.CREATE_CUSTOM_CATEGORY,
-#     )
-
 
 # FIXME: remove this later
 # @dataclass

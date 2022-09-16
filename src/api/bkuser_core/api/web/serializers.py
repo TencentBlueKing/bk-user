@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import base64
 import datetime
+from typing import List
 
 from django.utils.encoding import force_bytes, force_str
 from rest_framework import fields, serializers
@@ -37,7 +38,7 @@ class StringArrayField(fields.CharField):
 
         self.delimiter = kwargs.get("delimiter", ",")
 
-    def to_internal_value(self, data):
+    def to_internal_value(self, data) -> List[str]:
         # convert string to list
         data = super().to_internal_value(data)
         return [x for x in data.split(self.delimiter) if x]

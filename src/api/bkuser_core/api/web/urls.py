@@ -23,11 +23,6 @@ urlpatterns = [
     url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
     # 通用检索
     url(r"^search/", include("bkuser_core.api.web.search.urls")),
+    # 首页
     url(r"^home/", include("bkuser_core.api.web.home.urls")),
 ]
-
-# FIXME: 需要检查所有删除的地方, 是不是软删除?
-# 重要
-
-# 全局检索
-# /api/v2/search/detail/?keyword=aaaa&max_items=40&only_enabled=true

@@ -17,7 +17,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import PasswordModifyInputSLZ, PasswordResetByTokenInputSLZ, PasswordResetSendEmailInputSLZ
-from bkuser_core.api.web.utils import get_username, validate_password
+from bkuser_core.api.web.utils import get_operator, validate_password
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.exceptions import ProfileEmailEmpty
@@ -97,7 +97,7 @@ class PasswordModifyApi(generics.CreateAPIView):
         new_password = data["new_password"]
 
         # SaaS 修改密码页面需要登录态, 登录用户即operator
-        username = get_username(request)
+        username = get_operator(request)
 
         # 注意, 这里的username是带域的
         username, domain = parse_username_domain(username)
