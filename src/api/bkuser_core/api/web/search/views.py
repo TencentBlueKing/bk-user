@@ -47,9 +47,9 @@ class SearchApi(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         operator = get_operator(self.request)
 
-        serializer = SearchInputSLZ(data=self.request.query_params)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        slz = SearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
         max_items = data.get("max_items", 20)
         # NOTE: 防御

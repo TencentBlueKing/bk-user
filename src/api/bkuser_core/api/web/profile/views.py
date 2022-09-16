@@ -69,9 +69,9 @@ class ProfileSearchApi(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        serializer = ProfileSearchInputSLZ(data=self.request.query_params)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        slz = ProfileSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
         category_id = data.get("category_id")
 
@@ -110,11 +110,11 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
     def _update(self, request, partial):
         instance = self.get_object()
-        serializer = ProfileUpdateInputSLZ(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
+        slz = ProfileUpdateInputSLZ(instance, data=request.data, partial=partial)
+        slz.is_valid(raise_exception=True)
         operate_type = OperationType.UPDATE.value
 
-        validated_data = serializer.validated_data
+        validated_data = slz.validated_data
 
         # 只允许本地目录修改
         if not ProfileCategory.objects.check_writable(instance.category_id):
@@ -342,11 +342,11 @@ class ProfileCreateApi(generics.CreateAPIView):
 class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """批量删除"""
-        serializer = ProfileBatchDeleteInputSLZ(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
+        slz = ProfileBatchDeleteInputSLZ(data=request.data, many=True)
+        slz.is_valid(raise_exception=True)
 
         operator = get_operator(request)
-        data = serializer.validated_data
+        data = slz.validated_data
         for obj in data:
             try:
                 instance = Profile.objects.get(pk=obj["id"])
@@ -376,11 +376,11 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
 
     def patch(self, request, *args, **kwargs):
         """批量更新，必须传递 id 作为查找字段"""
-        serializer = ProfileBatchUpdateInputSLZ(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
+        slz = ProfileBatchUpdateInputSLZ(data=request.data, many=True)
+        slz.is_valid(raise_exception=True)
 
         operator = get_operator(request)
-        data = serializer.validated_data
+        data = slz.validated_data
 
         updating_instances = []
         for obj in data:

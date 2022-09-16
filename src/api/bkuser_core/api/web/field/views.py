@@ -38,22 +38,22 @@ class FieldListCreateApi(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         """创建自定义字段"""
-        serializer = DynamicFieldCreateInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
+        slz = DynamicFieldCreateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        validated_data = slz.validated_data
 
         # 默认加到最后
         order = validated_data.get("order", 0)
         if not order:
             validated_data["order"] = DynamicFieldInfo.objects.get_max_order() + 1
 
-        instance = serializer.save()
-        headers = self.get_success_headers(serializer.data)
+        instance = slz.save()
+        headers = self.get_success_headers(slz.data)
         post_field_create.send(
             sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
         )
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(slz.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class FieldManageableApi(generics.GenericAPIView):
@@ -116,9 +116,9 @@ class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, g
 
     def _update(self, request, partial):
         instance = self.get_object()
-        serializer = self.serializer_class(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
+        slz = self.serializer_class(instance, data=request.data, partial=partial)
+        slz.is_valid(raise_exception=True)
+        validated_data = slz.validated_data
 
         # 内置字段 只能更新 order & visible
         if not instance.configurable and set(validated_data.keys()) - {

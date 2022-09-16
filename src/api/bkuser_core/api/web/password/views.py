@@ -31,10 +31,10 @@ logger = logging.getLogger(__name__)
 
 class PasswordResetSendEmailApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
-        serializer = PasswordResetSendEmailInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        slz = PasswordResetSendEmailInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
-        data = serializer.validated_data
+        data = slz.validated_data
         email = data["email"]
 
         # 1. get profile by email
@@ -62,10 +62,10 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
 
 class PasswordResetByTokenApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
-        serializer = PasswordResetByTokenInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        slz = PasswordResetByTokenInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
-        data = serializer.validated_data
+        data = slz.validated_data
         token = data["token"]
         pending_password = data["password"]
 
@@ -90,9 +90,9 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
 
 class PasswordModifyApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
-        serializer = PasswordModifyInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        slz = PasswordModifyInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
         old_password = data["old_password"]
         new_password = data["new_password"]
 

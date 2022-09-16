@@ -37,9 +37,9 @@ from bkuser_core.profiles.models import Profile
 
 class DepartmentListCreateApi(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
-        serializer = DepartmentCreateInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        slz = DepartmentCreateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
         # FIXME: category_id is required, can remove this check?
         category_id = data.get("category_id")
@@ -125,9 +125,9 @@ class DepartmentSearchApi(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        serializer = DepartmentSearchInputSLZ(data=self.request.query_params)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        slz = DepartmentSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
         category_id = data.get("category_id")
 

@@ -142,9 +142,9 @@ class CategorySettingNamespaceListCreateUpdateApi(
 
     def post(self, request, *args, **kwargs):
         # 批量创建或更新
-        serializer = CategorySettingCreateInputSLZ(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-        ns_settings = {d["key"]: d for d in serializer.validated_data}
+        slz = CategorySettingCreateInputSLZ(data=request.data, many=True)
+        slz.is_valid(raise_exception=True)
+        ns_settings = {d["key"]: d for d in slz.validated_data}
 
         # got metas
         category_id = self.kwargs["id"]
@@ -174,11 +174,11 @@ class CategorySettingNamespaceListCreateUpdateApi(
 
     def put(self, request, *args, **kwargs):
         # 批量更新
-        serializer = CategoryNamespaceSettingUpdateInputSLZ(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
+        slz = CategoryNamespaceSettingUpdateInputSLZ(data=request.data, many=True)
+        slz.is_valid(raise_exception=True)
 
         # [{key, value, enabled}]
-        ns_settings = {d["key"]: d for d in serializer.validated_data}
+        ns_settings = {d["key"]: d for d in slz.validated_data}
 
         category_id = self.kwargs["id"]
         category = get_category(category_id)
@@ -243,10 +243,10 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
         """
         创建用户目录
         """
-        serializer = CategoryCreateInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        slz = CategoryCreateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
-        data = serializer.validated_data
+        data = slz.validated_data
 
         # check permission
         operator = get_operator(request)
@@ -257,7 +257,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
                 extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
             )
 
-        instance = serializer.save()
+        instance = slz.save()
 
         # 默认添加到最后 TODO: 需要一个更优雅的实现
         max_order = ProfileCategory.objects.get_max_order()
@@ -277,9 +277,9 @@ class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = CategoryUpdateInputSLZ(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        slz = CategoryUpdateInputSLZ(instance, data=request.data, partial=True)
+        slz.is_valid(raise_exception=True)
+        self.perform_update(slz)
 
         return Response(CategoryDetailOutputSLZ(instance).data)
 
@@ -303,8 +303,8 @@ class CategoryOperationTestConnectionApi(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """测试连接"""
-        serializer = CategoryTestConnectionInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        slz = CategoryTestConnectionInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
         instance = self.get_object()
         if instance.type not in [CategoryType.MAD.value, CategoryType.LDAP.value]:
@@ -323,9 +323,7 @@ class CategoryOperationTestConnectionApi(generics.CreateAPIView):
             raise error_codes.LOAD_LDAP_CLIENT_FAILED
 
         try:
-            syncer_cls(instance.id, with_initialize_client=False).fetcher.client.initialize(
-                **serializer.validated_data
-            )
+            syncer_cls(instance.id, with_initialize_client=False).fetcher.client.initialize(**slz.validated_data)
         except Exception as e:
             logger.exception(
                 "failed to test initialize category<%s-%s-%s>", instance.type, instance.display_name, instance.id
@@ -343,8 +341,8 @@ class CategoryOperationTestFetchDataApi(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """测试获取数据"""
-        serializer = CategoryTestFetchDataInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        slz = CategoryTestFetchDataInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
         instance = self.get_object()
         if instance.type not in [CategoryType.MAD.value, CategoryType.LDAP.value]:
@@ -370,7 +368,7 @@ class CategoryOperationTestFetchDataApi(generics.CreateAPIView):
             raise error_codes.TEST_CONNECTION_FAILED.f(f"请确保连接设置正确 {str(e)}")
 
         try:
-            syncer.fetcher.test_fetch_data(serializer.validated_data)
+            syncer.fetcher.test_fetch_data(slz.validated_data)
         except Exception as e:  # pylint: disable=broad-except
             logger.exception(
                 "failed to fetch data from category<%s-%s-%s>", instance.type, instance.display_name, instance.id
@@ -454,8 +452,8 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
     # @audit_general_log(operate_type=OperationType.IMPORT.value)
     def _local_category_do_import(self, request, instance):
         """向本地目录导入数据文件"""
-        serializer = CategoryFileImportInputSLZ(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        slz = CategoryFileImportInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
         try:
             task_id = SyncTask.objects.register_task(
@@ -466,7 +464,7 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
             raise error_codes.LOAD_DATA_FAILED.f(str(e))
 
         instance_id = instance.id
-        params = {"raw_data_file": serializer.validated_data["file"]}
+        params = {"raw_data_file": slz.validated_data["file"]}
         try:
             # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
             adapter_sync(instance_id, operator=request.operator, task_id=task_id, **params)
@@ -588,9 +586,9 @@ class CategoryDepartmentListApi(generics.ListAPIView):
         category_id = self.kwargs["id"]
         queryset = Department.objects.filter(category_id=category_id)
 
-        serializer = CategoryDepartmentListInputSLZ(data=self.request.query_params)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        slz = CategoryDepartmentListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
         keyword = data.get("keyword")
         if keyword:

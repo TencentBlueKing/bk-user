@@ -172,7 +172,6 @@ class SimpleDepartmentSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "order", "full_name")
 
 
-# FIXME: input slz and output slz should be separated
 class CategoryExportProfileLeaderSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, read_only=True)
     username = serializers.CharField(read_only=True)
