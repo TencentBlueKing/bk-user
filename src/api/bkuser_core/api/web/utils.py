@@ -98,3 +98,7 @@ def validate_password(profile: Profile, pending_password: str) -> None:
         include_elements=config_loader["password_must_includes"],
         exclude_elements_config=config_loader["exclude_elements_config"],
     ).validate(pending_password)
+
+
+def is_filter_means_any(ft) -> bool:
+    return ft.deconstruct() == ("django.db.models.Q", (("pk__in", []),), {"_negated": True})

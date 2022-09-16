@@ -36,13 +36,13 @@ class LogRequestSerializer(serializers.Serializer):
     page_size = serializers.IntegerField(required=False, default=10, help_text=_("请求每页大小"))
 
 
-class GeneralLogListRequestSerializer(LogRequestSerializer):
+class GeneralLogListInputSLZ(LogRequestSerializer):
     """General log list request"""
 
     keyword = serializers.CharField(required=False, help_text=_("搜索关键字"))
 
 
-class GeneralLogSerializer(serializers.Serializer):
+class GeneralLogOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text=_("ID"))
     extra_value = serializers.JSONField(help_text=_("额外信息"))
     operator = serializers.CharField(help_text=_("操作者"))

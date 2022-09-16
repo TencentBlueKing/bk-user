@@ -16,12 +16,7 @@ from openpyxl import load_workbook
 from rest_framework import generics
 
 from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
-from .serializers import (
-    GeneralLogListRequestSerializer,
-    GeneralLogSerializer,
-    LoginLogListRequestSerializer,
-    LoginLogSerializer,
-)
+from .serializers import GeneralLogListInputSLZ, GeneralLogOutputSLZ, LoginLogListRequestSerializer, LoginLogSerializer
 from bkuser_core.api.web.category.serializers import CategoryExportProfileSerializer
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldSerializer
@@ -38,7 +33,7 @@ logger = logging.getLogger(__name__)
 class GeneralLogListApi(generics.ListAPIView):
     permission_classes = [ViewAuditPermission]
     pagination_class = CustomPagination
-    serializer_class = GeneralLogSerializer
+    serializer_class = GeneralLogOutputSLZ
 
     filter_backends = [StartTimeEndTimeFilterBackend]
 
@@ -48,7 +43,7 @@ class GeneralLogListApi(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = GeneralLog.objects.all()
-        slz = GeneralLogListRequestSerializer(data=self.request.query_params)
+        slz = GeneralLogListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 

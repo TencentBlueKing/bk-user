@@ -16,7 +16,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import CategorySerializer, DepartmentListResultCategorySerializer
-from bkuser_core.api.web.utils import get_username
+from bkuser_core.api.web.utils import get_username, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
 from bkuser_core.categories.models import ProfileCategory
@@ -56,16 +56,25 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             logger.warning("user %s has no permission to search department", operator)
             return []
         else:
+            # 如果是any, 表示有所有一级department的权限, 直接返回
+            if is_filter_means_any(dept_ft):
+                return Department.objects.filter(level=0, enabled=True).all()
+
             # 1. 拿到权限中心里授过权的全列表
-            # FIXME: 如果只取一级部门, 这里可能会有问题, 申请的非一级部门看不到!
             queryset = Department.objects.filter(enabled=True).filter(dept_ft)
+            # 没有任何权限, 返回空
             if not queryset:
                 return []
 
-            # 2. 如果父节点已经授过权，剔除子节点
-            # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间 => FIXME:这里很慢
+            # ref: https://github.com/TencentBlueKing/bk-user/issues/641#issuecomment-1248845995
+            # TODO: 这两个方案都会全表扫描
+            # 2. 如果父节点已经授过权，剔除子节点(这里是原先的查询, 暂时保持不变)
             descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
             queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
+            # replace => TODO: 确定怎么处理比较好
+            # queryset = Department.tree_objects.get_queryset_ancestors(queryset=queryset, include_self=True).filter(
+            #     level=0
+            # )
 
             # FIXME: 这里为空抛异常? 让用户申请权限? 还是什么都不做
             # if not queryset:
@@ -74,6 +83,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             #         extra_info=IAMPermissionExtraInfo.from_request(request).to_dict(),
             #     )
 
+            # FIXME: 这里为什么没有限制level=0?
             return queryset.all()
 
     def get(self, request, *args, **kwargs):
