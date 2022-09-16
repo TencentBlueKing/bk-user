@@ -46,7 +46,8 @@ class SyncTaskProgressListApi(generics.ListAPIView):
         task_id = self.kwargs.get("task_id")
         task = SyncTask.objects.get(id=task_id)
 
-        operator = get_operator(self.request)
-        Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, task.category)
+        if settings.ENABLE_IAM:
+            operator = get_operator(self.request)
+            Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, task.category)
 
         return task.progresses.order_by("-create_time")

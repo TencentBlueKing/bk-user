@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from django.conf import settings
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, status
@@ -61,11 +62,14 @@ class DepartmentListCreateApi(generics.ListCreateAPIView):
         parent_id = data.get("parent")
         if parent_id:
             department = get_department(parent_id)
-            Permission().allow_category_action(operator, IAMAction.MANAGE_DEPARTMENT, department)
+            if settings.ENABLE_IAM:
+                Permission().allow_category_action(operator, IAMAction.MANAGE_DEPARTMENT, department)
 
             dept.update({"parent": department, "order": department.get_max_order_in_children() + 1})
         else:
-            Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
+            if settings.ENABLE_IAM:
+                Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
+
             # 不传 parent 默认为根部门
             data["level"] = 0
             max_order = list(
@@ -131,9 +135,10 @@ class DepartmentSearchApi(generics.ListAPIView):
 
         category_id = data.get("category_id")
 
-        operator = get_operator(self.request)
-        category = get_category(category_id)
-        Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, category)
+        if settings.ENABLE_IAM:
+            operator = get_operator(self.request)
+            category = get_category(category_id)
+            Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, category)
 
         # NOTE: 这里相对原来/api/v3/departments/?category_id 的差异是 enabled=True
         return Department.objects.filter(category_id=category_id, enabled=True)

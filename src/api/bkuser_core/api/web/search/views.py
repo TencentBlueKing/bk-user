@@ -111,7 +111,6 @@ class SearchApi(generics.ListAPIView):
                         "items": SearchResultProfileOutputSLZ(items, many=True).data,
                     }
                 )
-        # FIXME: make a permission IAMFilter?
         try:
             dept_ft = Permission().make_department_filter(operator, IAMAction.MANAGE_DEPARTMENT)
             logger.info("global search `%s`, make a filter for department: %s", keyword, dept_ft)

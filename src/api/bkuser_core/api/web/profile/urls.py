@@ -29,7 +29,11 @@ urlpatterns = [
         views.ProfileSearchApi.as_view(),
         name="profile.search",
     ),
-    path("<int:id>/", views.ProfileRetrieveUpdateDeleteApi.as_view(), name="profile.update"),
+    path(
+        "<int:id>/",
+        views.ProfileRetrieveUpdateDeleteApi.as_view(),
+        name="profile.update",
+    ),
     path(
         "<int:id>/operations/restoration/",
         views.ProfileOperationRestorationApi.as_view(),
@@ -43,8 +47,3 @@ urlpatterns = [
 ]
 
 # FIXME: 让前端把删除接口切换成删除单个用户, 而不是批量(低优先级)
-# 删除 => 走的批量接口? => 需要切换成单个接口, 不要滥用批量
-# DELETE /api/v2/batch/profiles/  [{id: 1025}]
-
-# 创建用户
-# POST /api/v2/profiles/

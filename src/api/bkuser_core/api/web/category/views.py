@@ -83,6 +83,7 @@ class CategoryMetasListApi(generics.ListAPIView):
         """
         列表展示所有目录类型基本信息
         """
+        # FIXME: 这里 settings.ENABLE_IAM 为 False 时，怎么处理?
         metas = []
         for type_ in CategoryType.all():
             # 这里目前只返回创建目录类型的权限操作，后期应该可扩展
@@ -248,14 +249,15 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
 
         data = slz.validated_data
 
-        # check permission
-        operator = get_operator(request)
-        action_id = IAMAction.get_action_by_category_type(data["type"])
-        if not Permission().allow_action_without_resource(operator, action_id):
-            raise IAMPermissionDenied(
-                detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
-            )
+        if settings.ENABLE_IAM:
+            # check permission
+            operator = get_operator(request)
+            action_id = IAMAction.get_action_by_category_type(data["type"])
+            if not Permission().allow_action_without_resource(operator, action_id):
+                raise IAMPermissionDenied(
+                    detail=_("您没有权限进行该操作，请在权限中心申请。"),
+                    extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
+                )
 
         instance = slz.save()
 

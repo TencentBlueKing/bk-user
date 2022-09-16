@@ -75,9 +75,10 @@ class ProfileSearchApi(generics.ListAPIView):
 
         category_id = data.get("category_id")
 
-        operator = get_operator(self.request)
-        category = get_category(category_id)
-        Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, category)
+        if settings.ENABLE_IAM:
+            operator = get_operator(self.request)
+            category = get_category(category_id)
+            Permission().allow_category_action(operator, IAMAction.VIEW_CATEGORY, category)
 
         queryset = Profile.objects.filter(category_id=category_id, enabled=True)
 
@@ -364,9 +365,10 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
                 )
                 continue
             else:
-                # check permission
-                category = ProfileCategory.objects.get(pk=instance.category_id)
-                Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
+                if settings.ENABLE_IAM:
+                    # check permission
+                    category = ProfileCategory.objects.get(pk=instance.category_id)
+                    Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
 
                 # do
                 instance.delete()
@@ -394,9 +396,10 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
                 )
                 continue
             else:
-                # check permission
-                category = ProfileCategory.objects.get(pk=instance.category_id)
-                Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
+                if settings.ENABLE_IAM:
+                    # check permission
+                    category = ProfileCategory.objects.get(pk=instance.category_id)
+                    Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
 
                 create_general_log(
                     operator=operator,
