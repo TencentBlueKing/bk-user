@@ -413,4 +413,3 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
                 updating_instances.append(instance)
 
         return Response(status=status.HTTP_200_OK)
-        # return Response(ProfileBatchUpdateSerializer(updating_instances, many=True).data)

@@ -38,9 +38,9 @@ from .serializers import (
     CategoryTestFetchDataInputSLZ,
     CategoryUpdateInputSLZ,
 )
-from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsSerializer
+from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsOutputSLZ
 from bkuser_core.api.web.export import ProfileExcelExporter
-from bkuser_core.api.web.field.serializers import FieldSerializer
+from bkuser_core.api.web.field.serializers import FieldOutputSLZ
 from bkuser_core.api.web.utils import get_category, get_username, list_setting_metas
 from bkuser_core.api.web.viewset import CustomPagination, CustomPaginationData
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
@@ -387,7 +387,7 @@ class CategoryOperationExportTemplateApi(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         """生成excel导入模板样例文件"""
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
-        data = FieldSerializer(fields, many=True).data
+        data = FieldOutputSLZ(fields, many=True).data
         exporter = ProfileExcelExporter(
             load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org_tmpl", data
         )
@@ -425,7 +425,7 @@ class CategoryOperationExportApi(generics.RetrieveAPIView):
         # all_profiles = ProfileSerializer(profiles, many=True).data
 
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
-        fields_data = FieldSerializer(fields, many=True).data
+        fields_data = FieldOutputSLZ(fields, many=True).data
         exporter = ProfileExcelExporter(
             load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org", fields_data
         )
@@ -581,7 +581,7 @@ class CategoryDepartmentListApi(generics.ListAPIView):
 
     permission_classes = [ManageCategoryPermission]
     # NOTE: 这里跟原先的区别, 全部返回的 with_ancestors=true
-    serializer_class = DepartmentsWithChildrenAndAncestorsSerializer
+    serializer_class = DepartmentsWithChildrenAndAncestorsOutputSLZ
     pagination_class = CustomPagination
 
     def get_queryset(self):

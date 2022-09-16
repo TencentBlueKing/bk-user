@@ -17,9 +17,9 @@ from rest_framework import generics
 
 from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
 from .serializers import GeneralLogListInputSLZ, GeneralLogOutputSLZ, LoginLogListInputSLZ, LoginLogOutputSLZ
-from bkuser_core.api.web.category.serializers import CategoryExportProfileSerializer
+from bkuser_core.api.web.category.serializers import CategoryExportProfileOutputSLZ
 from bkuser_core.api.web.export import ProfileExcelExporter
-from bkuser_core.api.web.field.serializers import FieldSerializer
+from bkuser_core.api.web.field.serializers import FieldOutputSLZ
 from bkuser_core.api.web.utils import get_category_display_name_map
 from bkuser_core.api.web.viewset import CustomPagination, StartTimeEndTimeFilterBackend
 from bkuser_core.audit.models import GeneralLog, LogIn
@@ -109,7 +109,7 @@ class LoginLogExportApi(generics.ListAPIView):
         queryset.select_related("profile")
 
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
-        fields_data = FieldSerializer(fields, many=True).data
+        fields_data = FieldOutputSLZ(fields, many=True).data
         fields_data.append(
             {
                 "id": len(fields_data) + 1,
@@ -143,7 +143,7 @@ class LoginLogExportApi(generics.ListAPIView):
         login_logs = queryset.all()
 
         profiles = [x.profile for x in login_logs]
-        all_profiles = CategoryExportProfileSerializer(profiles, many=True).data
+        all_profiles = CategoryExportProfileOutputSLZ(profiles, many=True).data
 
         # FIXME: bug here, 这里的key是profile.id, 会导致每个用户只有一条登录审计记录 => 这是有问题的
         extra_info = {x.profile.id: LoginLogOutputSLZ(x, context=context).data for x in login_logs}
