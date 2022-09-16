@@ -8,10 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import base64
 
-from django.utils.encoding import force_bytes, force_str
-from rest_framework import fields, serializers
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -50,36 +47,3 @@ class StartTimeEndTimeFilterBackend(BaseFilterBackend):
             queryset = queryset.filter(create_time__lte=end_time)
 
         return queryset
-
-
-def is_base64(value: str) -> bool:
-    """判断字符串是否为 base64 编码"""
-    try:
-        return base64.b64encode(base64.b64decode(value)) == force_bytes(value)
-    except Exception:  # pylint: disable=broad-except
-        return False
-
-
-class Base64OrPlainField(serializers.CharField):
-    """兼容 base64 和纯文本字段"""
-
-    def to_internal_value(self, data) -> str:
-        if is_base64(data):
-            return force_str(base64.b64decode(data))
-        return super().to_internal_value(data)
-
-
-class StringArrayField(fields.CharField):
-    """
-    String representation of an array field.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self.delimiter = kwargs.get("delimiter", ",")
-
-    def to_internal_value(self, data):
-        # convert string to list
-        data = super().to_internal_value(data)
-        return [x for x in data.split(self.delimiter) if x]

@@ -22,7 +22,7 @@ class CategoryForSyncTaskSerializer(serializers.ModelSerializer):
         fields = ("id", "display_name")
 
 
-class SyncTaskSerializer(serializers.Serializer):
+class SyncTaskOutputSLZ(serializers.Serializer):
     id = serializers.CharField()
     category = CategoryForSyncTaskSerializer()
     status = serializers.ChoiceField(choices=SyncTaskStatus.get_choices(), help_text="任务执行状态")
@@ -33,7 +33,7 @@ class SyncTaskSerializer(serializers.Serializer):
     retried_count = serializers.IntegerField(help_text="重试次数")
 
 
-class SyncTaskProcessSerializer(serializers.Serializer):
+class SyncTaskProcessOutputSLZ(serializers.Serializer):
     step = serializers.ChoiceField(choices=SyncStep.get_choices(), help_text="同步步骤")
     status = serializers.ChoiceField(choices=SyncTaskStatus.get_choices(), help_text="执行状态")
     successful_count = serializers.IntegerField(help_text="同步成功数量")

@@ -20,23 +20,23 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
 from .serializers import (
-    CategoryCreateSerializer,
-    CategoryDepartmentListSerializer,
-    CategoryDetailSerializer,
-    CategoryExportProfileSerializer,
-    CategoryExportSerializer,
-    CategoryFileImportSerializer,
-    CategoryMetaSerializer,
-    CategoryNamespaceSettingUpdateSerializer,
-    CategoryProfileListSerializer,
-    CategoryProfileSerializer,
-    CategorySettingCreateSerializer,
-    CategorySettingListSerializer,
-    CategorySettingSerializer,
-    CategorySyncResponseSerializer,
-    CategoryTestConnectionSerializer,
-    CategoryTestFetchDataSerializer,
-    CategoryUpdateSerializer,
+    CategoryCreateInputSLZ,
+    CategoryDepartmentListInputSLZ,
+    CategoryDetailOutputSLZ,
+    CategoryExportInputSLZ,
+    CategoryExportProfileOutputSLZ,
+    CategoryFileImportInputSLZ,
+    CategoryMetaOutputSLZ,
+    CategoryNamespaceSettingUpdateInputSLZ,
+    CategoryProfileListInputSLZ,
+    CategoryProfileOutputSLZ,
+    CategorySettingCreateInputSLZ,
+    CategorySettingListInputSLZ,
+    CategorySettingOutputSLZ,
+    CategorySyncResponseOutputSLZ,
+    CategoryTestConnectionInputSLZ,
+    CategoryTestFetchDataInputSLZ,
+    CategoryUpdateInputSLZ,
 )
 from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsSerializer
 from bkuser_core.api.web.export import ProfileExcelExporter
@@ -106,15 +106,15 @@ class CategoryMetasListApi(generics.ListAPIView):
                 )
             metas.append(_meta)
 
-        return Response(CategoryMetaSerializer(metas, many=True).data)
+        return Response(CategoryMetaOutputSLZ(metas, many=True).data)
 
 
 class CategorySettingListApi(generics.ListAPIView):
-    serializer_class = CategorySettingSerializer
+    serializer_class = CategorySettingOutputSLZ
     permission_classes = [ManageCategoryPermission]
 
     def get_queryset(self):
-        slz = CategorySettingListSerializer(data=self.request.query_params)
+        slz = CategorySettingListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -129,7 +129,7 @@ class CategorySettingListApi(generics.ListAPIView):
 class CategorySettingNamespaceListCreateUpdateApi(
     generics.ListAPIView, generics.UpdateAPIView, generics.CreateAPIView
 ):
-    serializer_class = CategorySettingSerializer
+    serializer_class = CategorySettingOutputSLZ
     permission_classes = [ManageCategoryPermission]
 
     def get_queryset(self):
@@ -142,7 +142,7 @@ class CategorySettingNamespaceListCreateUpdateApi(
 
     def post(self, request, *args, **kwargs):
         # 批量创建或更新
-        serializer = CategorySettingCreateSerializer(data=request.data, many=True)
+        serializer = CategorySettingCreateInputSLZ(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         ns_settings = {d["key"]: d for d in serializer.validated_data}
 
@@ -174,7 +174,7 @@ class CategorySettingNamespaceListCreateUpdateApi(
 
     def put(self, request, *args, **kwargs):
         # 批量更新
-        serializer = CategoryNamespaceSettingUpdateSerializer(data=request.data, many=True)
+        serializer = CategoryNamespaceSettingUpdateInputSLZ(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
         # [{key, value, enabled}]
@@ -225,7 +225,7 @@ class CategorySettingNamespaceListCreateUpdateApi(
 
 
 class CategoryListCreateApi(generics.ListCreateAPIView):
-    serializer_class = CategoryDetailSerializer
+    serializer_class = CategoryDetailOutputSLZ
 
     # TODO: 产品上应该返回全部列表, 展示这个人哪些有权限/哪些没权限
     # 而不是, 只返回有权限的
@@ -243,7 +243,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
         """
         创建用户目录
         """
-        serializer = CategoryCreateSerializer(data=request.data)
+        serializer = CategoryCreateInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
@@ -266,7 +266,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
         post_category_create.send_robust(
             sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
         )
-        return Response(CategoryDetailSerializer(instance).data, status=status.HTTP_201_CREATED)
+        return Response(CategoryDetailOutputSLZ(instance).data, status=status.HTTP_201_CREATED)
 
 
 class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
@@ -277,11 +277,11 @@ class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = CategoryUpdateSerializer(instance, data=request.data, partial=True)
+        serializer = CategoryUpdateInputSLZ(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        return Response(CategoryDetailSerializer(instance).data)
+        return Response(CategoryDetailOutputSLZ(instance).data)
 
     def delete(self, request, *args, **kwargs):
         """删除用户目录"""
@@ -303,7 +303,7 @@ class CategoryOperationTestConnectionApi(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """测试连接"""
-        serializer = CategoryTestConnectionSerializer(data=request.data)
+        serializer = CategoryTestConnectionInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         instance = self.get_object()
@@ -343,7 +343,7 @@ class CategoryOperationTestFetchDataApi(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         """测试获取数据"""
-        serializer = CategoryTestFetchDataSerializer(data=request.data)
+        serializer = CategoryTestFetchDataInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         instance = self.get_object()
@@ -403,7 +403,7 @@ class CategoryOperationExportApi(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         """导出组织架构"""
-        slz = CategoryExportSerializer(data=self.request.query_params)
+        slz = CategoryExportInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
@@ -421,7 +421,7 @@ class CategoryOperationExportApi(generics.RetrieveAPIView):
         profiles = Profile.objects.filter(id__in=profile_ids)
 
         # FIXME: profile slz should contains?
-        all_profiles = CategoryExportProfileSerializer(profiles, many=True).data
+        all_profiles = CategoryExportProfileOutputSLZ(profiles, many=True).data
         # all_profiles = ProfileSerializer(profiles, many=True).data
 
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
@@ -454,7 +454,7 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
     # @audit_general_log(operate_type=OperationType.IMPORT.value)
     def _local_category_do_import(self, request, instance):
         """向本地目录导入数据文件"""
-        serializer = CategoryFileImportSerializer(data=request.data)
+        serializer = CategoryFileImportInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
@@ -491,7 +491,7 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
 
         # FIXME: 导入报错的时候, 错误信息要能展示在前端
         # => 目前由于底层db_sync批量失败的时候, 尝试one-by-one, 失败了也没有抛异常出来
-        return Response(CategorySyncResponseSerializer({"task_id": task_id}).data)
+        return Response(CategorySyncResponseOutputSLZ({"task_id": task_id}).data)
 
     def _not_local_category_do_sync(self, request, instance):
         """同步目录"""
@@ -529,7 +529,7 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
             )
             raise error_codes.SYNC_DATA_FAILED.f(f"{e}")
 
-        return Response(CategorySyncResponseSerializer({"task_id": task_id}).data)
+        return Response(CategorySyncResponseOutputSLZ({"task_id": task_id}).data)
 
 
 class CategoryOperationSwitchOrderApi(generics.UpdateAPIView):
@@ -555,10 +555,10 @@ class CategoryProfileListApi(generics.ListAPIView):
     # FIXME: 所有接口都是count/results, 但是这个接口前端用的count/data
     # TODO: 需要: 前端切换, 去掉这个类 CustomPaginationData
     pagination_class = CustomPaginationData
-    serializer_class = CategoryProfileSerializer
+    serializer_class = CategoryProfileOutputSLZ
 
     def get_queryset(self):
-        slz = CategoryProfileListSerializer(data=self.request.query_params)
+        slz = CategoryProfileListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -588,7 +588,7 @@ class CategoryDepartmentListApi(generics.ListAPIView):
         category_id = self.kwargs["id"]
         queryset = Department.objects.filter(category_id=category_id)
 
-        serializer = CategoryDepartmentListSerializer(data=self.request.query_params)
+        serializer = CategoryDepartmentListInputSLZ(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 

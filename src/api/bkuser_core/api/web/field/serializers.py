@@ -18,7 +18,7 @@ from bkuser_core.profiles.models import DynamicFieldInfo
 # NOTE: 这里比较分裂的是, 前端输入的数据需要转换, 才能create/update, 并且吐出去之前要转成前端的格式
 
 
-class FieldSerializer(serializers.ModelSerializer):
+class FieldOutputSLZ(serializers.ModelSerializer):
     key = serializers.CharField(source="name")
     name = serializers.CharField(source="display_name")
     options = serializers.SerializerMethodField(required=False)
@@ -41,11 +41,11 @@ class FieldSerializer(serializers.ModelSerializer):
         )
 
 
-class DynamicFieldUpdateVisibleSerializer(serializers.Serializer):
+class DynamicFieldUpdateVisibleInputSLZ(serializers.Serializer):
     updating_ids = serializers.ListField(child=serializers.IntegerField())
 
 
-class DynamicFieldCreateSerializer(serializers.ModelSerializer):
+class DynamicFieldCreateInputSLZ(serializers.ModelSerializer):
     class Meta:
         model = DynamicFieldInfo
         fields = ["name", "display_name", "builtin", "require", "unique", "options", "type", "default"]
@@ -68,7 +68,7 @@ class DynamicFieldCreateSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
 
-class DynamicFieldUpdateSerializer(serializers.Serializer):
+class DynamicFieldUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(required=False)
     require = serializers.BooleanField(required=False, default=False)
     unique = serializers.BooleanField(required=False, default=False)

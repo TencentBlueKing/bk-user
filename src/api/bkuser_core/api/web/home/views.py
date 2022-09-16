@@ -15,7 +15,7 @@ from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import CategorySerializer, DepartmentListResultCategorySerializer
+from .serializers import CategoryOutputSLZ, DepartmentListResultCategoryOutputSLZ
 from bkuser_core.api.web.utils import get_username, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
@@ -102,7 +102,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
 
         # TODO: 简化这种的序列化流程
         # 这里展示两类目录：1. 用户拥有该目录下某个组织的权限 2. 用户拥有这个目录的管理权限
-        all_categories_map = {x.id: CategorySerializer(x).data for x in all_categories}
+        all_categories_map = {x.id: CategoryOutputSLZ(x).data for x in all_categories}
 
         for category_id, c in all_categories_map.items():
             c["profile_count"] = self._get_category_profile_count(category_id)
@@ -131,6 +131,6 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             managed_categories_map[dep_cate_id]["departments"].append(department)
 
         return Response(
-            data=DepartmentListResultCategorySerializer(managed_categories_map.values(), many=True).data,
+            data=DepartmentListResultCategoryOutputSLZ(managed_categories_map.values(), many=True).data,
             status=status.HTTP_200_OK,
         )

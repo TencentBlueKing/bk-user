@@ -11,18 +11,18 @@ specific language governing permissions and limitations under the License.
 
 from rest_framework import serializers
 
-from bkuser_core.api.web.viewset import Base64OrPlainField
+from bkuser_core.api.web.serializers import Base64OrPlainField
 
 
-class PasswordResetSendEmailSerializer(serializers.Serializer):
+class PasswordResetSendEmailInputSLZ(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=254)
 
 
-class PasswordResetByTokenSerializer(serializers.Serializer):
+class PasswordResetByTokenInputSLZ(serializers.Serializer):
     token = serializers.CharField(required=True, max_length=254)
     password = Base64OrPlainField(required=True, max_length=254)
 
 
-class PasswordModifySerializer(serializers.Serializer):
+class PasswordModifyInputSLZ(serializers.Serializer):
     old_password = Base64OrPlainField(required=True, max_length=254)
     new_password = Base64OrPlainField(required=True, max_length=254)

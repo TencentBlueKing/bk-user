@@ -16,7 +16,7 @@ from openpyxl import load_workbook
 from rest_framework import generics
 
 from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
-from .serializers import GeneralLogListInputSLZ, GeneralLogOutputSLZ, LoginLogListRequestSerializer, LoginLogSerializer
+from .serializers import GeneralLogListInputSLZ, GeneralLogOutputSLZ, LoginLogListInputSLZ, LoginLogOutputSLZ
 from bkuser_core.api.web.category.serializers import CategoryExportProfileSerializer
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldSerializer
@@ -63,7 +63,7 @@ class GeneralLogListApi(generics.ListAPIView):
 class LoginLogListApi(generics.ListAPIView):
     permission_classes = [ViewAuditPermission]
     pagination_class = CustomPagination
-    serializer_class = LoginLogSerializer
+    serializer_class = LoginLogOutputSLZ
 
     filter_backends = [StartTimeEndTimeFilterBackend]
 
@@ -73,7 +73,7 @@ class LoginLogListApi(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = LogIn.objects.all()
-        slz = LoginLogListRequestSerializer(data=self.request.query_params)
+        slz = LoginLogListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
 
         return queryset
@@ -88,7 +88,7 @@ class LoginLogExportApi(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = LogIn.objects.all()
-        slz = LoginLogListRequestSerializer(data=self.request.query_params)
+        slz = LoginLogListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
 
         return queryset
@@ -146,7 +146,7 @@ class LoginLogExportApi(generics.ListAPIView):
         all_profiles = CategoryExportProfileSerializer(profiles, many=True).data
 
         # FIXME: bug here, 这里的key是profile.id, 会导致每个用户只有一条登录审计记录 => 这是有问题的
-        extra_info = {x.profile.id: LoginLogSerializer(x, context=context).data for x in login_logs}
+        extra_info = {x.profile.id: LoginLogOutputSLZ(x, context=context).data for x in login_logs}
         exporter.update_profiles(all_profiles, extra_info)
 
         return exporter.to_response()

@@ -28,26 +28,26 @@ from bkuser_core.categories.models import ProfileCategory
 #     has_children = serializers.BooleanField(required=False)
 
 
-class DepartmentListResultDepartmentSerializer(serializers.Serializer):
-    id = serializers.IntegerField(required=False)
-    name = serializers.CharField(required=False)
-    order = serializers.IntegerField(required=False)
-    enabled = serializers.BooleanField(required=False)
-    full_name = serializers.CharField()
-    # children = DepartmentListResultSubDepartmentSerializer(many=True, required=False)
-    # ancestors = DepartmentListResultSubDepartmentSerializer(many=True, required=False)
-    has_children = serializers.BooleanField(required=False)
-    category_id = serializers.IntegerField()
-    category_name = serializers.CharField(required=False)
+# class DepartmentListResultDepartmentSerializer(serializers.Serializer):
+#     id = serializers.IntegerField(required=False)
+#     name = serializers.CharField(required=False)
+#     order = serializers.IntegerField(required=False)
+#     enabled = serializers.BooleanField(required=False)
+#     full_name = serializers.CharField()
+#     # children = DepartmentListResultSubDepartmentSerializer(many=True, required=False)
+#     # ancestors = DepartmentListResultSubDepartmentSerializer(many=True, required=False)
+#     has_children = serializers.BooleanField(required=False)
+#     category_id = serializers.IntegerField()
+#     category_name = serializers.CharField(required=False)
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class CategoryOutputSLZ(serializers.ModelSerializer):
     class Meta:
         model = ProfileCategory
         fields = "__all__"
 
 
-class DepartmentListResultCategorySerializer(serializers.Serializer):
+class DepartmentListResultCategoryOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField()
     display_name = serializers.CharField()
     order = serializers.IntegerField

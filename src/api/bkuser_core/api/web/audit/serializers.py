@@ -29,14 +29,14 @@ PLACE_HOLDER = "--"
 # 7. 是否引入  manager?
 
 
-class LogRequestSerializer(serializers.Serializer):
+class LogListInputSLZ(serializers.Serializer):
     start_time = serializers.DateTimeField(input_formats=["iso-8601"], help_text=_("查询起始时间"))
     end_time = serializers.DateTimeField(input_formats=["iso-8601"], help_text=_("查询结束时间"))
     page = serializers.IntegerField(required=False, default=1, help_text=_("请求页码"))
     page_size = serializers.IntegerField(required=False, default=10, help_text=_("请求每页大小"))
 
 
-class GeneralLogListInputSLZ(LogRequestSerializer):
+class GeneralLogListInputSLZ(LogListInputSLZ):
     """General log list request"""
 
     keyword = serializers.CharField(required=False, help_text=_("搜索关键字"))
@@ -78,13 +78,13 @@ class GeneralLogOutputSLZ(serializers.Serializer):
         }
 
 
-class LoginLogListRequestSerializer(LogRequestSerializer):
+class LoginLogListInputSLZ(LogListInputSLZ):
     """Login log list request"""
 
     pass
 
 
-class LoginLogSerializer(serializers.Serializer):
+class LoginLogOutputSLZ(serializers.Serializer):
     # Tip: 使用source, 则不会走drf的 DATETIME_FORMAT 格式化
     # datetime = serializers.CharField(source="create_time", help_text=_("登录时间"), required=False)
     is_success = serializers.BooleanField(help_text=_("是否登录成功"), required=False)

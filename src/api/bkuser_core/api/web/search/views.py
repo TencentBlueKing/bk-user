@@ -17,10 +17,10 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from .serializers import (
-    SearchResultDepartmentSerializer,
-    SearchResultProfileSerializer,
-    SearchResultSerializer,
-    SearchSerializer,
+    SearchInputSLZ,
+    SearchResultDepartmentOutputSLZ,
+    SearchResultOutputSLZ,
+    SearchResultProfileOutputSLZ,
 )
 from bkuser_core.api.web.utils import get_username
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class SearchApi(generics.ListAPIView):
-    serializer_class = SearchResultSerializer
+    serializer_class = SearchResultOutputSLZ
 
     def get_profile_field_name(self, field) -> str:
         return {
@@ -47,7 +47,7 @@ class SearchApi(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         operator = get_username(self.request)
 
-        serializer = SearchSerializer(data=self.request.query_params)
+        serializer = SearchInputSLZ(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -108,7 +108,7 @@ class SearchApi(generics.ListAPIView):
                     {
                         "type": key,
                         "display_name": self.get_profile_field_name(key),
-                        "items": SearchResultProfileSerializer(items, many=True).data,
+                        "items": SearchResultProfileOutputSLZ(items, many=True).data,
                     }
                 )
         # FIXME: make a permission IAMFilter?
@@ -130,7 +130,7 @@ class SearchApi(generics.ListAPIView):
                     {
                         "type": "department",
                         "display_name": _("组织"),
-                        "items": SearchResultDepartmentSerializer(departments, many=True).data,
+                        "items": SearchResultDepartmentOutputSLZ(departments, many=True).data,
                     }
                 )
-        return Response(SearchResultSerializer(result, many=True).data)
+        return Response(SearchResultOutputSLZ(result, many=True).data)

@@ -16,7 +16,7 @@ from django.utils.timezone import now
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import PasswordModifySerializer, PasswordResetByTokenSerializer, PasswordResetSendEmailSerializer
+from .serializers import PasswordModifyInputSLZ, PasswordResetByTokenInputSLZ, PasswordResetSendEmailInputSLZ
 from bkuser_core.api.web.utils import get_username, validate_password
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class PasswordResetSendEmailApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
-        serializer = PasswordResetSendEmailSerializer(data=request.data)
+        serializer = PasswordResetSendEmailInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
@@ -62,7 +62,7 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
 
 class PasswordResetByTokenApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
-        serializer = PasswordResetByTokenSerializer(data=request.data)
+        serializer = PasswordResetByTokenInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data
@@ -90,7 +90,7 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
 
 class PasswordModifyApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
-        serializer = PasswordModifySerializer(data=request.data)
+        serializer = PasswordModifyInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         old_password = data["old_password"]

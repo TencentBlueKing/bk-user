@@ -68,7 +68,7 @@ class DepartmentWithChildrenSLZ(DepartmentSerializer):
         return list(items.values())
 
 
-class DepartmentsWithChildrenAndAncestorsSerializer(DepartmentWithChildrenSLZ):
+class DepartmentsWithChildrenAndAncestorsOutputSLZ(DepartmentWithChildrenSLZ):
     ancestors = serializers.SerializerMethodField()
 
     def get_ancestors(self, instance) -> List:
@@ -76,44 +76,44 @@ class DepartmentsWithChildrenAndAncestorsSerializer(DepartmentWithChildrenSLZ):
         return RapidDepartmentSerializer(family, many=True).data
 
 
-class DepartmentCreatedReturnSerializer(DepartmentSerializer):
+class DepartmentCreatedOutputSLZ(DepartmentSerializer):
     class Meta:
         # ref_name = "v2_department"
         model = Department
         fields = ("id", "name", "order", "enabled", "full_name", "has_children", "category_id")
 
 
-class DepartmentCreateSerializer(serializers.Serializer):
+class DepartmentCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField()
     parent = serializers.IntegerField(required=False)
     category_id = serializers.IntegerField()
 
 
-class DepartmentUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Department
-        fields = ("name",)
+# class DepartmentUpdateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Department
+#         fields = ("name",)
 
 
-class DepartmentSearchSerializer(serializers.Serializer):
+class DepartmentSearchInputSLZ(serializers.Serializer):
     category_id = serializers.IntegerField()
 
 
-class DepartmentSearchResultSerializer(serializers.Serializer):
+class DepartmentSearchOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     name = serializers.CharField(required=False)
     full_name = serializers.CharField(required=False)
     category_id = serializers.IntegerField(required=False)
 
 
-class DepartmentProfileListSerializer(serializers.Serializer):
+class DepartmentProfileListInputSLZ(serializers.Serializer):
     page = serializers.IntegerField(required=False, default=1)
     page_size = serializers.IntegerField(required=False, default=10)
     recursive = serializers.BooleanField(default=True)
     keyword = serializers.CharField(required=False)
 
 
-class DepartmentProfilesCreateSerializer(serializers.Serializer):
+class DepartmentProfilesCreateInputSLZ(serializers.Serializer):
     profile_id_list = serializers.ListField(child=serializers.IntegerField())
 
 
@@ -130,7 +130,7 @@ class DepartmentProfileDepartmentSerializer(serializers.Serializer):
     category_id = serializers.IntegerField(required=False)
 
 
-class DepartmentProfileSerializer(serializers.Serializer):
+class DepartmentProfileOutputSLZ(serializers.Serializer):
     # FIXME: 不需要返回所有字段吧
     id = serializers.CharField(required=False, help_text="用户ID")
     username = serializers.CharField(required=False, help_text="用户名")

@@ -12,17 +12,17 @@ specific language governing permissions and limitations under the License.
 from django.conf import settings
 from rest_framework import serializers
 
+from bkuser_core.api.web.serializers import StringArrayField
 from bkuser_core.api.web.utils import get_default_category_id
-from bkuser_core.api.web.viewset import StringArrayField
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
 
 
-class LoginProfileRetrieveSerializer(serializers.Serializer):
+class LoginProfileRetrieveInputSLZ(serializers.Serializer):
     username = serializers.CharField(required=True)
 
 
-class LoginProfileSerializer(serializers.Serializer):
+class LoginProfileOutputSLZ(serializers.Serializer):
     username = serializers.SerializerMethodField(required=False)
     logo = serializers.SerializerMethodField(required=False)
 
@@ -40,7 +40,7 @@ class LoginProfileSerializer(serializers.Serializer):
         return logo
 
 
-class ProfileSearchSerializer(serializers.Serializer):
+class ProfileSearchInputSLZ(serializers.Serializer):
     # NOTE: 支持了departments, 但是去掉了leaders
     category_id = serializers.IntegerField()
 
@@ -73,7 +73,7 @@ class ProfileSearchResultDepartmentSerializer(serializers.Serializer):
 
 
 # TODO: rename? many place use this
-class ProfileSearchResultSerializer(serializers.Serializer):
+class ProfileSearchOutputSLZ(serializers.Serializer):
     # FIXME: 不需要返回所有字段吧
     id = serializers.CharField(required=False, help_text="用户ID")
     username = serializers.CharField(required=False, help_text="用户名")
@@ -101,7 +101,7 @@ class ProfileSearchResultSerializer(serializers.Serializer):
     leaders = ProfileSearchResultLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
 
 
-class ProfileUpdateSerializer(serializers.ModelSerializer):
+class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     leader = serializers.ListField(child=serializers.IntegerField(), required=False)
     departments = serializers.ListField(child=serializers.IntegerField(), required=False)
 
@@ -127,7 +127,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 #         exclude = ["password"]
 
 
-class ProfileCreateSerializer(serializers.ModelSerializer):
+class ProfileCreateInputSLZ(serializers.ModelSerializer):
     category_id = serializers.IntegerField(required=False)
 
     # required
@@ -181,11 +181,11 @@ class ProfileCreateSerializer(serializers.ModelSerializer):
         validators: list = []
 
 
-class ProfileBatchDeleteSerializer(serializers.Serializer):
+class ProfileBatchDeleteInputSLZ(serializers.Serializer):
     id = serializers.IntegerField()
 
 
-class ProfileBatchUpdateSerializer(serializers.ModelSerializer):
+class ProfileBatchUpdateInputSLZ(serializers.ModelSerializer):
     # 批量更新时使用
     id = serializers.IntegerField(required=False)
     departments = serializers.ListField(required=False)

@@ -15,14 +15,14 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import (
-    DepartmentCreatedReturnSerializer,
-    DepartmentCreateSerializer,
-    DepartmentProfileListSerializer,
-    DepartmentProfilesCreateSerializer,
-    DepartmentProfileSerializer,
-    DepartmentSearchResultSerializer,
-    DepartmentSearchSerializer,
-    DepartmentsWithChildrenAndAncestorsSerializer,
+    DepartmentCreatedOutputSLZ,
+    DepartmentCreateInputSLZ,
+    DepartmentProfileListInputSLZ,
+    DepartmentProfileOutputSLZ,
+    DepartmentProfilesCreateInputSLZ,
+    DepartmentSearchInputSLZ,
+    DepartmentSearchOutputSLZ,
+    DepartmentsWithChildrenAndAncestorsOutputSLZ,
 )
 from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_username
 from bkuser_core.api.web.viewset import CustomPagination
@@ -37,7 +37,7 @@ from bkuser_core.profiles.models import Profile
 
 class DepartmentListCreateApi(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
-        serializer = DepartmentCreateSerializer(data=request.data)
+        serializer = DepartmentCreateInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -94,14 +94,14 @@ class DepartmentListCreateApi(generics.ListCreateAPIView):
         post_department_create.send(
             sender=self, instance=instance, operator=username, extra_values={"request": request}
         )
-        return Response(DepartmentCreatedReturnSerializer(instance).data, status=status.HTTP_201_CREATED)
+        return Response(DepartmentCreatedOutputSLZ(instance).data, status=status.HTTP_201_CREATED)
 
 
 class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = "id"
     queryset = Department.objects.all()
 
-    serializer_class = DepartmentsWithChildrenAndAncestorsSerializer
+    serializer_class = DepartmentsWithChildrenAndAncestorsOutputSLZ
 
     permission_classes = [ManageDepartmentPermission]
 
@@ -121,11 +121,11 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
 class DepartmentSearchApi(generics.ListAPIView):
 
-    serializer_class = DepartmentSearchResultSerializer
+    serializer_class = DepartmentSearchOutputSLZ
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        serializer = DepartmentSearchSerializer(data=self.request.query_params)
+        serializer = DepartmentSearchInputSLZ(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -160,7 +160,7 @@ class DepartmentOperationSwitchOrderApi(generics.UpdateAPIView):
 class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
     permission_classes = [ViewDepartmentPermission]
     pagination_class = CustomPagination
-    serializer_class = DepartmentProfileSerializer
+    serializer_class = DepartmentProfileOutputSLZ
 
     queryset = Department.objects.filter()
     lookup_field = "id"
@@ -180,7 +180,7 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
 
     # def get_queryset(self):
     def list(self, request, *args, **kwargs):
-        slz = DepartmentProfileListSerializer(data=self.request.query_params)
+        slz = DepartmentProfileListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -229,7 +229,7 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        slz = DepartmentProfilesCreateSerializer(data=self.request.data)
+        slz = DepartmentProfilesCreateInputSLZ(data=self.request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 

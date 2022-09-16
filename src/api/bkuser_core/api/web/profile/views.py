@@ -20,14 +20,14 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import (
-    LoginProfileRetrieveSerializer,
-    LoginProfileSerializer,
-    ProfileBatchDeleteSerializer,
-    ProfileBatchUpdateSerializer,
-    ProfileCreateSerializer,
-    ProfileSearchResultSerializer,
-    ProfileSearchSerializer,
-    ProfileUpdateSerializer,
+    LoginProfileOutputSLZ,
+    LoginProfileRetrieveInputSLZ,
+    ProfileBatchDeleteInputSLZ,
+    ProfileBatchUpdateInputSLZ,
+    ProfileCreateInputSLZ,
+    ProfileSearchInputSLZ,
+    ProfileSearchOutputSLZ,
+    ProfileUpdateInputSLZ,
 )
 from bkuser_core.api.web.utils import get_category, get_username, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 class LoginProfileRetrieveApi(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
-        slz = LoginProfileRetrieveSerializer(data=request.query_params)
+        slz = LoginProfileRetrieveInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
@@ -61,15 +61,15 @@ class LoginProfileRetrieveApi(generics.RetrieveAPIView):
 
         profile = Profile.objects.get(username=username, domain=domain)
 
-        return Response(LoginProfileSerializer(profile).data)
+        return Response(LoginProfileOutputSLZ(profile).data)
 
 
 class ProfileSearchApi(generics.ListAPIView):
-    serializer_class = ProfileSearchResultSerializer
+    serializer_class = ProfileSearchOutputSLZ
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        serializer = ProfileSearchSerializer(data=self.request.query_params)
+        serializer = ProfileSearchInputSLZ(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -106,11 +106,11 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [ManageDepartmentProfilePermission]
     queryset = Profile.objects.all()
     lookup_url_kwarg = "id"
-    serializer_class = ProfileSearchResultSerializer
+    serializer_class = ProfileSearchOutputSLZ
 
     def _update(self, request, partial):
         instance = self.get_object()
-        serializer = ProfileUpdateSerializer(instance, data=request.data, partial=partial)
+        serializer = ProfileUpdateInputSLZ(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         operate_type = OperationType.UPDATE.value
 
@@ -225,7 +225,7 @@ class ProfileCreateApi(generics.CreateAPIView):
         operator = get_username(self.request)
 
         # do validate
-        slz = ProfileCreateSerializer(data=request.data)
+        slz = ProfileCreateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         validated_data = slz.validated_data
 
@@ -342,7 +342,7 @@ class ProfileCreateApi(generics.CreateAPIView):
 class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """批量删除"""
-        serializer = ProfileBatchDeleteSerializer(data=request.data, many=True)
+        serializer = ProfileBatchDeleteInputSLZ(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
         operator = get_username(request)
@@ -376,7 +376,7 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
 
     def patch(self, request, *args, **kwargs):
         """批量更新，必须传递 id 作为查找字段"""
-        serializer = ProfileBatchUpdateSerializer(data=request.data, many=True)
+        serializer = ProfileBatchUpdateInputSLZ(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
         operator = get_username(request)
@@ -407,7 +407,7 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
 
                 # TODO: 限制非本地目录进行修改
 
-                single_serializer = ProfileBatchUpdateSerializer(instance=instance, data=obj)
+                single_serializer = ProfileBatchUpdateInputSLZ(instance=instance, data=obj)
                 single_serializer.is_valid(raise_exception=True)
                 single_serializer.save()
                 updating_instances.append(instance)

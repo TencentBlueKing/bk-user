@@ -12,12 +12,12 @@ specific language governing permissions and limitations under the License.
 from rest_framework import serializers
 
 
-class SettingMetasListSerializer(serializers.Serializer):
+class SettingMetasListInputSLZ(serializers.Serializer):
     category_type = serializers.CharField()
     namespace = serializers.CharField(required=False)
 
 
-class SettingMetaSerializer(serializers.Serializer):
+class SettingMetaOutputSLZ(serializers.Serializer):
     key = serializers.CharField()
     example = serializers.JSONField()
     choices = serializers.JSONField()

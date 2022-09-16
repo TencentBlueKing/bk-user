@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
-from bkuser_core.api.web.viewset import StringArrayField
+from bkuser_core.api.web.serializers import StringArrayField
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
@@ -30,7 +30,7 @@ class ExtraInfoSerializer(serializers.Serializer):
     callback_url = serializers.CharField(read_only=True)
 
 
-class CategoryMetaSerializer(serializers.Serializer):
+class CategoryMetaOutputSLZ(serializers.Serializer):
     """用户目录基本信息"""
 
     type = serializers.CharField(read_only=True)
@@ -40,12 +40,12 @@ class CategoryMetaSerializer(serializers.Serializer):
     extra_info = ExtraInfoSerializer(read_only=True, default={})
 
 
-class CategorySettingListSerializer(serializers.Serializer):
+class CategorySettingListInputSLZ(serializers.Serializer):
     namespace = serializers.CharField(required=False)
     region = serializers.CharField(required=False)
 
 
-class CategorySettingSerializer(serializers.ModelSerializer):
+class CategorySettingOutputSLZ(serializers.ModelSerializer):
     """配置项"""
 
     # NOTE: 这里只包含这几个字段的原因是, 目前只有category settings拿, 没有其他地方用到
@@ -61,7 +61,7 @@ class CategorySettingSerializer(serializers.ModelSerializer):
         fields = ["key", "namespace", "region", "value", "enabled"]
 
 
-class CategoryDetailSerializer(serializers.ModelSerializer):
+class CategoryDetailOutputSLZ(serializers.ModelSerializer):
     configured = serializers.SerializerMethodField()
     unfilled_namespaces = serializers.SerializerMethodField(required=False)
     activated = serializers.SerializerMethodField()
@@ -83,7 +83,7 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CategoryCreateSerializer(serializers.Serializer):
+class CategoryCreateInputSLZ(serializers.Serializer):
     """用户目录 Serializer"""
 
     domain = serializers.CharField(max_length=64, label=_("登陆域"), validators=[validate_domain])
@@ -113,7 +113,7 @@ class CategoryCreateSerializer(serializers.Serializer):
         return category
 
 
-class CategoryUpdateSerializer(serializers.Serializer):
+class CategoryUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(max_length=64, required=False)
     activated = serializers.BooleanField(default=True, required=False)
     description = serializers.CharField(required=False)
@@ -141,7 +141,7 @@ class CategoryUpdateSerializer(serializers.Serializer):
         return instance
 
 
-class CategoryTestConnectionSerializer(serializers.Serializer):
+class CategoryTestConnectionInputSLZ(serializers.Serializer):
     connection_url = serializers.CharField()
     user = serializers.CharField(required=False)
     password = serializers.CharField(required=False)
@@ -149,7 +149,7 @@ class CategoryTestConnectionSerializer(serializers.Serializer):
     use_ssl = serializers.BooleanField(default=False, required=False)
 
 
-class CategoryTestFetchDataSerializer(serializers.Serializer):
+class CategoryTestFetchDataInputSLZ(serializers.Serializer):
     basic_pull_node = serializers.CharField()
     user_filter = serializers.CharField()
     organization_class = serializers.CharField()
@@ -157,7 +157,7 @@ class CategoryTestFetchDataSerializer(serializers.Serializer):
     user_member_of = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
-class CategoryExportSerializer(serializers.Serializer):
+class CategoryExportInputSLZ(serializers.Serializer):
     department_ids = StringArrayField(required=False, help_text="部门id列表")
 
 
@@ -179,7 +179,7 @@ class CategoryExportProfileLeaderSerializer(serializers.Serializer):
     display_name = serializers.CharField(read_only=True)
 
 
-class CategoryExportProfileSerializer(serializers.ModelSerializer):
+class CategoryExportProfileOutputSLZ(serializers.ModelSerializer):
     # 登录日志导出需要用到 bkuser_core.api.web.audit.serializers
     leader = CategoryExportProfileLeaderSerializer(many=True)
     departments = SimpleDepartmentSerializer(many=True, required=False)
@@ -196,21 +196,21 @@ class CategoryExportProfileSerializer(serializers.ModelSerializer):
         exclude = ["password"]
 
 
-class CategoryFileImportSerializer(serializers.Serializer):
+class CategoryFileImportInputSLZ(serializers.Serializer):
     file = serializers.FileField(required=False)
 
 
-class CategorySyncResponseSerializer(serializers.Serializer):
+class CategorySyncResponseOutputSLZ(serializers.Serializer):
     task_id = serializers.CharField(help_text="task_id for the sync job.")
 
 
-class CategoryNamespaceSettingUpdateSerializer(serializers.Serializer):
+class CategoryNamespaceSettingUpdateInputSLZ(serializers.Serializer):
     key = serializers.CharField()
     value = serializers.JSONField()
     enabled = serializers.BooleanField(required=False, default=True)
 
 
-class CategorySettingCreateSerializer(serializers.Serializer):
+class CategorySettingCreateInputSLZ(serializers.Serializer):
     key = serializers.CharField()
     value = serializers.JSONField()
     # namespace = serializers.CharField(required=False)
@@ -218,13 +218,13 @@ class CategorySettingCreateSerializer(serializers.Serializer):
     # enabled = serializers.BooleanField(required=False, default=True)
 
 
-class CategoryProfileListSerializer(serializers.Serializer):
+class CategoryProfileListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(required=False)
     page = serializers.IntegerField(required=False, default=1)
     page_size = serializers.IntegerField(required=False, default=10)
 
 
-class CategoryProfileSerializer(serializers.Serializer):
+class CategoryProfileOutputSLZ(serializers.Serializer):
     """用户序列化"""
 
     # NOTE: 搜索接口, 不需要返回用户所有信息
@@ -233,7 +233,7 @@ class CategoryProfileSerializer(serializers.Serializer):
     display_name = serializers.CharField(read_only=True)
 
 
-class CategoryDepartmentListSerializer(serializers.Serializer):
+class CategoryDepartmentListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(allow_blank=False)
     # 暂时不支持这个参数, 一律返回带ancestors
     # with_ancestors = serializers.BooleanField(default=False)

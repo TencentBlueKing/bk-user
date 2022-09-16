@@ -14,10 +14,10 @@ from rest_framework import generics, mixins, status
 from rest_framework.response import Response
 
 from .serializers import (
-    DynamicFieldCreateSerializer,
-    DynamicFieldUpdateSerializer,
-    DynamicFieldUpdateVisibleSerializer,
-    FieldSerializer,
+    DynamicFieldCreateInputSLZ,
+    DynamicFieldUpdateInputSLZ,
+    DynamicFieldUpdateVisibleInputSLZ,
+    FieldOutputSLZ,
 )
 from bkuser_core.bkiam.permissions import ManageFieldPermission
 from bkuser_core.categories.signals import post_dynamic_field_delete
@@ -29,7 +29,7 @@ from bkuser_core.profiles.signals import post_field_create
 class FieldListCreateApi(generics.ListCreateAPIView):
     # FIXME: view_field permission for list api
     permission_classes = [ManageFieldPermission]
-    serializer_class = FieldSerializer
+    serializer_class = FieldOutputSLZ
     queryset = DynamicFieldInfo.objects.filter(enabled=True)
 
     # def get_queryset(self):
@@ -38,7 +38,7 @@ class FieldListCreateApi(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         """创建自定义字段"""
-        serializer = DynamicFieldCreateSerializer(data=request.data)
+        serializer = DynamicFieldCreateInputSLZ(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
@@ -67,7 +67,7 @@ class FieldVisiableUpdateApi(generics.UpdateAPIView):
     permission_classes = [ManageFieldPermission]
 
     def patch(self, request, *args, **kwargs):
-        slz = DynamicFieldUpdateVisibleSerializer(data=request.data)
+        slz = DynamicFieldUpdateVisibleInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
@@ -95,7 +95,7 @@ class FieldOrderUpdateApi(generics.UpdateAPIView):
         # FIXME: here update_fields not working now
         obj.save(update_fields=["order"])
 
-        return Response(FieldSerializer(obj).data)
+        return Response(FieldOutputSLZ(obj).data)
 
 
 class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
@@ -104,7 +104,7 @@ class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, g
     lookup_url_kwarg = "id"
 
     queryset = DynamicFieldInfo.objects.filter(enabled=True)
-    serializer_class = DynamicFieldUpdateSerializer
+    serializer_class = DynamicFieldUpdateInputSLZ
 
     def update(self, request, *args, **kwargs):
         """更新自定义字段"""
@@ -139,7 +139,7 @@ class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, g
             setattr(instance, key, value)
 
         instance.save()
-        return Response(FieldSerializer(instance).data)
+        return Response(FieldOutputSLZ(instance).data)
 
     def destroy(self, request, *args, **kwargs):
         """移除自定义字段"""

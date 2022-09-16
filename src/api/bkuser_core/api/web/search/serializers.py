@@ -14,7 +14,7 @@ from rest_framework import serializers
 from bkuser_core.api.web.utils import get_category_display_name_map
 
 
-class SearchSerializer(serializers.Serializer):
+class SearchInputSLZ(serializers.Serializer):
     keyword = serializers.CharField()
     max_items = serializers.IntegerField(required=False)
 
@@ -36,7 +36,7 @@ class SearchSerializer(serializers.Serializer):
 #     category_id = serializers.IntegerField(required=False)
 
 
-class SearchResultProfileSerializer(serializers.Serializer):
+class SearchResultProfileOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     username = serializers.CharField(required=True)
     display_name = serializers.CharField(required=True)
@@ -51,7 +51,7 @@ class SearchResultProfileSerializer(serializers.Serializer):
         return get_category_display_name_map().get(obj.category_id, obj.category_id)
 
 
-class SearchResultDepartmentSerializer(serializers.Serializer):
+class SearchResultDepartmentOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     name = serializers.CharField(required=False)
     full_name = serializers.CharField()
@@ -63,7 +63,7 @@ class SearchResultDepartmentSerializer(serializers.Serializer):
         return get_category_display_name_map().get(obj.category_id, obj.category_id)
 
 
-class SearchResultSerializer(serializers.Serializer):
+class SearchResultOutputSLZ(serializers.Serializer):
     type = serializers.CharField()
     display_name = serializers.CharField()
     items = serializers.ListField(help_text="Profile 或 Department 对象列表，请直接参考模型定义")
