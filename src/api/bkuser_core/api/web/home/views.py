@@ -67,14 +67,26 @@ class HomeTreeListApi(generics.ListCreateAPIView):
                 return []
 
             # ref: https://github.com/TencentBlueKing/bk-user/issues/641#issuecomment-1248845995
-            # TODO: 这两个方案都会全表扫描
-            # 2. 如果父节点已经授过权，剔除子节点(这里是原先的查询, 暂时保持不变)
-            descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
-            queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
-            # replace => TODO: 确定怎么处理比较好
+            # 原始方案: 如果父节点已经授过权，剔除子节点(这里是原先的查询, 暂时保持不变) => 全表扫描
+            # descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
+            # queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
+            # logger.info("1 result: %s", list(queryset.all()))
+
+            # replace 方案 1 => 获取祖先+level=0, 全表扫描
             # queryset = Department.tree_objects.get_queryset_ancestors(queryset=queryset, include_self=True).filter(
             #     level=0
             # )
+            # logger.info("2 result: %s", list(queryset.all()))
+
+            # replace 方案 2 => 直接拿获取到的部门的 instance.get_root() => 使用tree_id+parent_id判定 => 加索引
+            # FIXME: 需要加索引 alter table departments_department add index idx_tree_id_parent_id(`tree_id`, `parent_id`);
+            # - 获取有权限部门所在的tree_id, 并去重
+            has_permission_depts = list(set(queryset.values_list("tree_id", flat=True)))
+            # SQL: WHERE (`parent_id` IS NULL AND `tree_id` IN (1, 2, 4, 5, 6, 7))
+            queryset = Department.tree_objects._mptt_filter(
+                tree_id__in=has_permission_depts, parent=None, enabled=True
+            )
+            # logger.info("3 result: %s", list(queryset.all()))
 
             # FIXME: 这里为空抛异常? 让用户申请权限? 还是什么都不做
             # if not queryset:
