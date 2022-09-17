@@ -46,6 +46,9 @@ class HomeTreeListApi(generics.ListCreateAPIView):
 
     def _list_department_tops(self, operator):
         """获取最顶层的组织列表[权限中心亲和]"""
+        # TODO: but the has_children need a model instance instead of a dict
+        # fields = ("id", "name", "order", "enabled", "extras", "category_id")
+
         if not settings.ENABLE_IAM:
             return Department.objects.filter(level=0, enabled=True).all()
 
@@ -83,9 +86,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             # - 获取有权限部门所在的tree_id, 并去重
             has_permission_depts = list(set(queryset.values_list("tree_id", flat=True)))
             # SQL: WHERE (`parent_id` IS NULL AND `tree_id` IN (1, 2, 4, 5, 6, 7))
-            queryset = Department.tree_objects._mptt_filter(
-                tree_id__in=has_permission_depts, parent=None, enabled=True
-            )
+            queryset = Department.tree_objects._mptt_filter(tree_id__in=has_permission_depts, parent=None, enabled=True)
             # logger.info("3 result: %s", list(queryset.all()))
 
             # FIXME: 这里为空抛异常? 让用户申请权限? 还是什么都不做

@@ -106,9 +106,9 @@ urlpatterns = [
     #############
     # shortcuts #
     #############
-    url(
-        r"^api/v2/shortcuts/departments/tops/$",
-        views.DepartmentViewSet.as_view({"get": "list_tops"}),
-        name="shortcuts.departments.list.tops",
-    ),
+    # url(
+    #     r"^api/v2/shortcuts/departments/tops/$",
+    #     views.DepartmentViewSet.as_view({"get": "list_tops"}),
+    #     name="shortcuts.departments.list.tops",
+    # ),
 ]

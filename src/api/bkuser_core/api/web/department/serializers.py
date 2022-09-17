@@ -38,6 +38,9 @@ class DepartmentSerializer(serializers.ModelSerializer):
         """仅返回启用的子部门"""
         # Q: 为什么不用 obj.children.filter(enabled=True).exists()?
         # A: 因为 get_descendants 是访问 tree_id 这类的 int 字段，而 children 访问的是 parent 外键字段，前者明显更快
+
+        # FIXME: 这里是给saas用的, 所以可以容忍 这里的放大查询?
+        # 或者, 忽略enabled, 避免放大查询 https://github.com/TencentBlueKing/bk-user/issues/641#issuecomment-1249506866
         return obj.get_descendants(include_self=False).filter(enabled=True).exists()
 
     class Meta:

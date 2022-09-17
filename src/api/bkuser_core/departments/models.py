@@ -89,6 +89,7 @@ class Department(TimestampMPTTModel):
         if self.level == 0:
             return self.name
 
+        # FIXME: serializer中配置了full_name, 导致放大查询, 需要使用cache优化这里的逻辑(redis)|需要有失效机制
         return "/".join(self.get_ancestors(include_self=True).values_list("name", flat=True))
 
     def add_profile(self, profile_instance) -> bool:
