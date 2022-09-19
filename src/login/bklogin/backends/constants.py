@@ -10,13 +10,23 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from django.db import migrations
+from enum import Enum
 
 
-class Migration(migrations.Migration):
+class BkUserCheckCodeEnum(Enum):
+    """Bk user check code, defined by api module"""
 
-    dependencies = [
-        ("bkaccount", "0007_userinfo"),
-    ]
-
-    operations = []
+    # TODO: move into global code
+    USER_DOES_NOT_EXIST = 3210010
+    TOO_MANY_TRY = 3210011
+    USERNAME_FORMAT_ERROR = 3210012
+    PASSWORD_ERROR = 3210013
+    USER_EXIST_MANY = 3210014
+    USER_IS_LOCKED = 3210015
+    USER_IS_DISABLED = 3210016
+    DOMAIN_UNKNOWN = 3210017
+    PASSWORD_EXPIRED = 3210018
+    CATEGORY_NOT_ENABLED = 3210019
+    ERROR_FORMAT = 3210020
+    SHOULD_CHANGE_INITIAL_PASSWORD = 3210021
+    USER_IS_EXPIRED = 3210024

@@ -106,6 +106,9 @@
         <div class="title-container">
           <h4 class="title">{{$t('密码试错次数')}}</h4>
           <span class="star">*</span>
+          <div class="tips">
+            <span class="icon-user--l" v-bk-tooltips="$t('密码错误输入次数超过该值时_账号自动锁定')"></span>
+          </div>
         </div>
         <div class="bk-button-group">
           <bk-button
@@ -121,11 +124,8 @@
       <!-- 密码解锁时间 -->
       <div class="info-container">
         <div class="title-container">
-          <h4 class="title">{{$t('自动解锁时间')}}</h4>
+          <h4 class="title">{{$t('锁定时间')}}</h4>
           <span class="star">*</span>
-          <div class="tips">
-            <span class="icon-user--l" v-bk-tooltips="$t('自动解锁时间提示')"></span>
-          </div>
         </div>
         <bk-input
           v-model.number="defaultPassword.auto_unlock_seconds"

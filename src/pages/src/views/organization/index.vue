@@ -29,10 +29,10 @@
             v-show="!isShowingSearchTree"
             :tree-data-list="treeDataList"
             :tree-search-result="treeSearchResult"
+            :current-category-id="currentCategoryId"
             @handleClickToggle="handleClickToggle"
             @handleClickTreeNode="handleClickTreeNode"
             @handleClickOption="handleClickOption"
-            @addChildDepartment="addChildDepartment"
             @handleRename="handleRename"
             @switchNodeOrder="switchNodeOrder"
             @deleteDepartment="deleteDepartment"
@@ -42,6 +42,7 @@
             v-if="isShowingSearchTree"
             :tree-data-list="searchTreeList"
             :tree-search-result="treeSearchResult"
+            :current-category-id="currentCategoryId"
             @handleClickOption="handleClickOption"
             @handleRename="handleRename"
             @deleteDepartment="deleteDepartment" />
@@ -339,6 +340,7 @@ import PullUser from './table/PullUser';
 import DetailsBar from './details/DetailsBar';
 
 import SetDepartment from '@/components/organization/SetDepartment';
+import mixin from './mixin';
 
 export default {
   name: 'OrganizationIndex',
@@ -351,6 +353,7 @@ export default {
     TreeSearch,
     PullUser,
   },
+  mixins: [mixin],
   data() {
     return {
       initLoading: true,
@@ -460,6 +463,7 @@ export default {
       },
       statusMap: {},
       timerMap: ['account_expiration_date', 'last_login_time', 'create_time'],
+      checkSearchKey: '',
     };
   },
   computed: {
@@ -509,6 +513,11 @@ export default {
       this.searchFilterList = this.heardList;
       if (val.length) {
         val.filter((item) => {
+          if (item.id === 'username' || item.id === 'display_name') {
+            this.checkSearchKey = item.values[0].name;
+          } else {
+            this.checkSearchKey = '';
+          }
           this.searchFilterList = this.searchFilterList.filter((k) => {
             if (!item.id.includes(k.id)) {
               return k;
@@ -567,33 +576,6 @@ export default {
             });
           });
         }
-      }
-    },
-    // 递归处理后台返回的数据
-    filterTreeData(tree, directParent, isLocalDepartment = null) {
-      // 通过判断存在 type 确定用户目录，手动添加 has_children
-      if (tree.type) {
-        this.$set(tree, 'has_children', !!tree.departments.length);
-      }
-      if (!Object.prototype.hasOwnProperty.call(tree, 'children')) {
-        this.$set(tree, 'children', []);
-      }
-      // 组织节点添加一个类型标记
-      if (isLocalDepartment !== null) {
-        tree.isLocalDepartment = isLocalDepartment;
-      }
-      tree.directParent = directParent;
-      this.$set(tree, 'showOption', false);
-      // 激活背景蓝色
-      this.$set(tree, 'showBackground', false);
-      // 展示子级组织
-      this.$set(tree, 'showChildren', false);
-      this.$set(tree, 'showLoading', false);
-
-      if (tree.children && tree.children.length) {
-        tree.children.forEach((item) => {
-          this.filterTreeData(item, tree, isLocalDepartment);
-        });
       }
     },
 
@@ -667,7 +649,7 @@ export default {
           id: id || this.currentParam.item.id,
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
-          keyword: this.tableSearchKey,
+          keyword: this.checkSearchKey,
           recursive: true,
         };
         if (this.isSearchCurrentDepartment) {
@@ -918,11 +900,6 @@ export default {
       this.handleTabData.title = this.$t('重命名');
       this.handleTabData.isShow = true;
     },
-    addChildDepartment(item) {
-      this.currentParam = { item };
-      this.handleTabData.title = this.$t('添加下级组织');
-      this.handleTabData.isShow = true;
-    },
     setFieldList() {
       this.handleTabData.title = this.$t('设置列表字段');
       this.handleTabData.isShow = true;
@@ -939,9 +916,6 @@ export default {
         // 重命名
         this.treeLoading = true;
         this.renameData.type === 'catalog' ? this.confirmRenameCatalog() : this.confirmRenameDepartment();
-      } else if (this.handleTabData.title === this.$t('添加下级组织')) {
-        // 添加下级组织
-        this.confirmAddChildDepartment(this.currentParam.item);
       }
       this.handleTabData.isShow = false;
     },
@@ -1002,30 +976,6 @@ export default {
       } catch (e) {
         console.warn(e);
         this.basicLoading = false;
-      }
-    },
-    // 添加下级组织
-    async confirmAddChildDepartment(item) {
-      try {
-        this.treeLoading = true;
-        const params = {
-          name: this.$refs.dialogContentRef.childDepartment,
-          parent: item.id,
-          category_id: this.currentCategoryId,
-        };
-        const res = await this.$store.dispatch('organization/addDepartment', params);
-        if (res.result === true) {
-          this.messageSuccess(`${this.$t('成功添加下级组织')} ${params.name}`);
-          if (item.showChildren) {
-            this.isAddChild = true;
-          }
-          item.has_children = true;
-          this.updateData(item);
-        }
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        this.treeLoading = false;
       }
     },
 
@@ -1371,32 +1321,6 @@ export default {
       } finally {
         item.showLoading = false;
       }
-    },
-    // 展开子级并添加上背景 改变右侧的title
-    updateData(item) {
-      this.$store.dispatch('organization/getDataById', {
-        id: item.id,
-      }).then((res) => {
-        if (!res.result) {
-          return;
-        }
-        if (this.isAddChild) {
-          item.showChildren = true;
-        } else {
-          item.showChildren = !item.showChildren;
-        }
-        this.isAddChild = false;
-        if (item.children === null) {
-          this.$set(item, 'children', []);
-        }
-        item.children = res.data.children;
-        item.children.forEach((element) => {
-          this.filterTreeData(element, item, item.isLocalDepartment);
-        });
-      })
-        .catch((e) => {
-          console.warn(e);
-        });
     },
     // 隐藏所有节点的功能菜单
     closeMenu(tree) {

@@ -97,7 +97,6 @@ SYNC_API_PARAM = "for_sync"
 # 通知发送时间间隔
 NOTICE_INTERVAL_SECONDS = env.int("NOTICE_INTERVAL_SECONDS", default=3)
 
-
 # ==============================================================================
 # 黑白名单/禁用等
 # ==============================================================================
@@ -116,7 +115,6 @@ PROFILE_EXTRAS_SENSITIVE_FIELDS = tuple(env.list("PROFILE_EXTRAS_SENSITIVE_FIELD
 PROFILE_EXTRAS_SENSITIVE_FIELDS_WHITELIST_APP_CODES = tuple(
     env.list("PROFILE_EXTRAS_SENSITIVE_FIELDS_WHITELIST_APP_CODES", default=[])
 )
-
 
 # ==============================================================================
 # 开发调试

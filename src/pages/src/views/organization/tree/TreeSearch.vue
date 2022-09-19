@@ -31,7 +31,7 @@
         @keydown.down="selectDown"
         @keydown.enter="selectEnter" />
       <i class="icon icon-user-search"></i>
-      <i v-show="searchKey" class="bk-icon icon-close-circle-shape" @click="closeSearch"></i>
+      <i v-show="searchKey && !hasSelected" class="bk-icon icon-close-circle-shape" @click="closeSearch"></i>
       <div class="search-result" v-if="hasSelected">
         <div class="result-content">
           <div class="result-text">
@@ -238,8 +238,8 @@ export default {
           if (group.items.length > 0) {
             resultLength += group.items.length;
             group.items.forEach((item) => {
-              item.groupType = group.type;
-              item.groupName = group.display_name;
+              item.groupType = 'username';
+              item.groupName = this.$t('用户名');
               if (item.groupType === 'department') {
                 departmentArray.push(item);
               } else {
@@ -461,14 +461,13 @@ export default {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
+    max-width: 100%;
     height: 100%;
     z-index: 20;
 
     .result-content {
       position: relative;
       display: flex;
-      justify-content: space-between;
       align-items: center;
       margin: 4px;
       width: calc(100% - 8px);

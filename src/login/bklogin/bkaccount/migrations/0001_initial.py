@@ -10,11 +10,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from __future__ import unicode_literals
-
-from django.db import models, migrations
-import django.utils.timezone
-from django.conf import settings
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -67,15 +63,16 @@ class Migration(migrations.Migration):
                     "login_host",
                     models.CharField(max_length=100, null=True, verbose_name="\u767b\u5f55HOST", blank=True),
                 ),
-                ("app_id", models.CharField(max_length=30, null=True, verbose_name=b"APP_ID", blank=True)),
-                (
-                    "user",
-                    models.ForeignKey(
-                        verbose_name="\u7528\u6237",
-                        to=settings.AUTH_USER_MODEL,
-                        on_delete=django.db.models.deletion.CASCADE,
-                    ),
-                ),
+                ("app_id", models.CharField(max_length=30, null=True, verbose_name="APP_ID", blank=True)),
+                ("user", models.CharField(max_length=128, null=True, blank=True)),
+                # (
+                #     "user",
+                #     models.ForeignKey(
+                #         verbose_name="\u7528\u6237",
+                #         to=settings.AUTH_USER_MODEL,
+                #         on_delete=django.db.models.deletion.CASCADE,
+                #     ),
+                # ),
             ],
             options={
                 "db_table": "login_bklog",

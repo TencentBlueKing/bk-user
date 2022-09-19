@@ -72,7 +72,7 @@ export default {
 <style lang="scss" scoped>
 .input-text {
   position: relative;
-
+  background-color: #fff;
   .input-error {
     border: 1px solid #ea3636;
   }

@@ -1,3 +1,10 @@
+/**
+* Tencent is pleased to support the open source community by making 蓝鲸智云PaaS平台社区版 (BlueKing PaaS Community Edition) available.
+* Copyright (C) 2017-2018 THL A29 Limited, a Tencent company. All rights reserved.
+* Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+* http://opensource.org/licenses/MIT
+* Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+*/
 html {
 	-ms-text-size-adjust:100%;
 	-webkit-text-size-adjust:100%;
@@ -465,6 +472,39 @@ button,input,select,textarea {
 }
 .size1of8 {
 	width:12.5%
+}
+.icon_radio {
+	background:url("../img/base/base_spring.png") 0 0 no-repeat;
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	display:inline-block;
+	margin-top:-0.2em;
+	*margin-top:0
+}
+.icon_radio.selected,.selected .icon_radio {
+	background:url("../img/base/base_spring.png") 0 -26px no-repeat
+}
+.icon_radio.selected.disabled,.selected.disabled .icon_radio {
+	background:url("../img/base/base_spring.png") 0 -52px no-repeat
+}
+.icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -78px no-repeat;
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	display:inline-block;
+	margin-top:-0.2em;
+	*margin-top:0
+}
+.icon_checkbox.selected,.selected .icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -104px no-repeat
+}
+.icon_checkbox.disabled,.disabled .icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -130px no-repeat
+}
+.icon_checkbox.selected.disabled,.selected.disabled .icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -156px no-repeat
 }
 .frm_tab {
 	overflow:hidden;
@@ -940,6 +980,38 @@ button,input,select,textarea {
 	margin-top:-2px;
 	*margin-top:0
 }
+.icon_radio {
+	background:url("../img/base/base_spring.png") 0 -182px no-repeat;
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	display:inline-block
+}
+.icon_radio.selected,.selected .icon_radio {
+	background:url("../img/base/base_spring.png") 0 -208px no-repeat
+}
+.icon_radio.disabled,.disabled .icon_radio {
+	background:url("../img/base/base_spring.png") 0 -234px no-repeat
+}
+.icon_radio.selected.disabled,.selected.disabled .icon_radio {
+	background:url("../img/base/base_spring.png") 0 -260px no-repeat
+}
+.icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -286px no-repeat;
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	display:inline-block
+}
+.icon_checkbox.selected,.selected .icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -312px no-repeat
+}
+.icon_checkbox.disabled,.disabled .icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -338px no-repeat
+}
+.icon_checkbox.selected.disabled,.selected.disabled .icon_checkbox {
+	background:url("../img/base/base_spring.png") 0 -364px no-repeat
+}
 .tab_navs {
 	*zoom:1;
 	text-align:center;
@@ -1391,6 +1463,20 @@ button,input,select,textarea {
 	position:absolute;
 	top:12px
 }
+.highlight_box.icon_wrap .icon.lock {
+	background:url("../img/base/base_spring.png") 0 -390px no-repeat;
+	width:48px;
+	height:48px;
+	vertical-align:middle;
+	display:inline-block
+}
+.highlight_box.icon_wrap .icon.unlock {
+	background:url("../img/base/base_spring.png") 0 -448px no-repeat;
+	width:48px;
+	height:48px;
+	vertical-align:middle;
+	display:inline-block
+}
 .highlight_box.icon_wrap .title,.highlight_box.icon_wrap .desc {
 	padding-left:60px
 }
@@ -1828,6 +1914,17 @@ button.btn {
 	padding-left:42px;
 	padding-right:30px
 }
+.btn_loading i {
+	position:absolute;
+	top:50%;
+	left:16px;
+	margin-top:-8px;
+	background:transparent url(../img/base/icon16_loading_light1e5b3a.gif) no-repeat 0 0;
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	display:inline-block
+}
 .btn {
 	min-width:60px
 }
@@ -1845,6 +1942,12 @@ button.btn {
 	margin-top:-2px;
 	*margin-top:2px
 }
+.btn.btn_add .add_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -506px no-repeat
+}
+.btn.btn_disabled .add_white {
+	background:url("../img/base/base_spring.png") 0 -530px no-repeat
+}
 .btn.btn_small {
 	min-width:0
 }
@@ -1854,11 +1957,44 @@ button.btn {
 	vertical-align:middle;
 	display:inline-block
 }
+.icon_msg.success {
+	background:url("../img/base/base_spring.png") 0 -554px no-repeat
+}
+.icon_msg.warn {
+	background:url("../img/base/base_spring.png") 0 -620px no-repeat
+}
+.icon_msg.error {
+	background:url("../img/base/base_spring.png") 0 -686px no-repeat
+}
+.icon_msg.mail {
+	background:url("../img/base/base_spring.png") 0 -752px no-repeat
+}
+.icon_msg.waiting {
+	background:url("../img/base/base_spring.png") 0 -818px no-repeat
+}
+.icon_msg.info {
+	background:url("../img/base/base_spring.png") 0 -884px no-repeat
+}
 .icon_msg_mini {
 	width:16px;
 	height:16px;
 	vertical-align:middle;
 	display:inline-block
+}
+.icon_msg_mini.success {
+	background:url("../img/base/base_spring.png") 0 -950px no-repeat
+}
+.icon_msg_mini.warn {
+	background:url("../img/base/base_spring.png") 0 -976px no-repeat
+}
+.icon_msg_mini.info {
+	background:url("../img/base/base_spring.png") 0 -1002px no-repeat
+}
+.icon_msg_mini.waiting {
+	background:url("../img/base/base_spring.png") 0 -1028px no-repeat
+}
+.icon_msg_mini.ask {
+	background:url("../img/base/base_spring.png") 0 -1054px no-repeat
 }
 .icon_msg_small {
 	width:32px;
@@ -1866,11 +2002,44 @@ button.btn {
 	vertical-align:middle;
 	display:inline-block
 }
+.icon_msg_small.success {
+	background:url("../img/base/base_spring.png") 0 -1080px no-repeat
+}
+.icon_msg_small.warn {
+	background:url("../img/base/base_spring.png") 0 -1122px no-repeat
+}
+.icon_msg_small.info {
+	background:url("../img/base/base_spring.png") 0 -1164px no-repeat
+}
+.icon_msg_small.waiting {
+	background:url("../img/base/base_spring.png") 0 -1206px no-repeat
+}
+.icon_msg_small.ask {
+	background:url("../img/base/base_spring.png") 0 -1248px no-repeat
+}
 .icon37_msg {
 	width:37px;
 	height:37px;
 	vertical-align:middle;
 	display:inline-block
+}
+.icon37_msg.success {
+	background:url("../img/base/base_spring.png") 0 -1290px no-repeat
+}
+.icon37_msg.warn {
+	background:url("../img/base/base_spring.png") 0 -1337px no-repeat
+}
+.icon37_msg.info {
+	background:url("../img/base/base_spring.png") 0 -1384px no-repeat
+}
+.icon37_msg.error {
+	background:url("../img/base/base_spring.png") 0 -1431px no-repeat
+}
+.icon37_msg.mail {
+	background:url("../img/base/base_spring.png") 0 -1478px no-repeat
+}
+.icon37_msg.waiting {
+	background:url("../img/base/base_spring.png") 0 -1525px no-repeat
 }
 .icon20_msg {
 	width:20px;
@@ -1878,11 +2047,41 @@ button.btn {
 	vertical-align:middle;
 	display:inline-block
 }
+.icon20_msg.success {
+	background:url("../img/base/base_spring.png") 0 -1572px no-repeat
+}
+.icon20_msg.warn {
+	background:url("../img/base/base_spring.png") 0 -1602px no-repeat
+}
+.icon20_msg.error {
+	background:url("../img/base/base_spring.png") 0 -1632px no-repeat
+}
+.icon20_msg.info {
+	background:url("../img/base/base_spring.png") 0 -1662px no-repeat
+}
 .icon18_msg {
 	width:18px;
 	height:18px;
 	vertical-align:middle;
 	display:inline-block
+}
+.icon18_msg.ask {
+	background:url("../img/base/base_spring.png") 0 -1692px no-repeat
+}
+.icon18_msg.success {
+	background:url("../img/base/base_spring.png") 0 -1720px no-repeat
+}
+.icon18_msg.warn {
+	background:url("../img/base/base_spring.png") 0 -1748px no-repeat
+}
+.icon18_msg.error {
+	background:url("../img/base/base_spring.png") 0 -1776px no-repeat
+}
+.icon18_msg.info {
+	background:url("../img/base/base_spring.png") 0 -1804px no-repeat
+}
+.icon18_msg.waiting {
+	background:url("../img/base/base_spring.png") 0 -1832px no-repeat
 }
 .page_msg .inner {
 	position:relative;
@@ -1973,11 +2172,44 @@ button.btn {
 	vertical-align:middle;
 	display:inline-block
 }
+.icon_msg.success {
+	background:url("../img/base/base_spring.png") 0 -1860px no-repeat
+}
+.icon_msg.warn {
+	background:url("../img/base/base_spring.png") 0 -1916px no-repeat
+}
+.icon_msg.error {
+	background:url("../img/base/base_spring.png") 0 -1972px no-repeat
+}
+.icon_msg.waiting {
+	background:url("../img/base/base_spring.png") 0 -2028px no-repeat
+}
+.icon_msg.info {
+	background:url("../img/base/base_spring.png") 0 -2084px no-repeat
+}
+.icon_msg.mail {
+	background:url("../img/base/base_spring.png") 0 -2140px no-repeat
+}
 .icon_msg_primary {
 	width:46px;
 	height:46px;
 	vertical-align:middle;
 	display:inline-block
+}
+.icon_msg_primary.success {
+	background:url("../img/base/base_spring.png") 0 -2196px no-repeat
+}
+.icon_msg_primary.warn {
+	background:url("../img/base/base_spring.png") 0 -2252px no-repeat
+}
+.icon_msg_primary.waiting {
+	background:url("../img/base/base_spring.png") 0 -2308px no-repeat
+}
+.icon_msg_primary.info {
+	background:url("../img/base/base_spring.png") 0 -2364px no-repeat
+}
+.icon_msg_primary.mail {
+	background:url("../img/base/base_spring.png") 0 -2420px no-repeat
 }
 .page_msg.mini p {
 	color:#222
@@ -1995,6 +2227,16 @@ button.btn {
 }
 .page_msg .msg_content {
 	padding-top:0
+}
+.popover_close {
+	display:none;
+	position:absolute;
+	right:10px;
+	top:22px;
+	background:url("../img/base/base_spring.png") 0 -2476px no-repeat
+}
+.popover_close:hover {
+	background:url("../img/base/base_spring.png") 0 -2502px no-repeat
 }
 .popover {
 	width:257px;
@@ -2147,6 +2389,18 @@ button.btn {
 .copylink {
 	display:inline-block
 }
+.icon_goback {
+	background:url("../img/base/base_spring.png") 0 -2528px no-repeat;
+	width:26px;
+	height:26px;
+	vertical-align:middle;
+	display:inline-block;
+	line-height:100px;
+	overflow:hidden
+}
+.icon_goback:hover {
+	background:url("../img/base/base_spring.png") 0 -2564px no-repeat
+}
 .page_nav {
 	margin:20px 30px
 }
@@ -2173,6 +2427,17 @@ button.btn {
 	margin-left:auto;
 	margin-right:auto;
 	text-align:right
+}
+.gototop_tips {
+	background:url("../img/base/base_spring.png") 0 -2600px no-repeat;
+	width:47px;
+	height:47px;
+	vertical-align:middle;
+	display:inline-block;
+	cursor:pointer;
+	line-height:200px;
+	overflow:hidden;
+	margin-right:-80px
 }
 .page_tips {
 	position:fixed;
@@ -2332,6 +2597,12 @@ button.btn {
 	word-break: normal;
 	word-wrap: normal;
 }
+.pop_closed {
+	background:url("../img/base/base_spring.png") 0 -2657px no-repeat
+}
+.pop_closed:hover {
+	background:url("../img/base/base_spring.png") 0 -2683px no-repeat
+}
 .dialog_wrp {
 	position:fixed;
 	top:50%;
@@ -2470,6 +2741,12 @@ button.btn {
 	position:absolute;
 	bottom:-40px;
 	left:20px
+}
+.pop_closed {
+	background:url("../img/base/base_spring.png") 0 -2709px no-repeat
+}
+.pop_closed:hover {
+	background:url("../img/base/base_spring.png") 0 -2735px no-repeat
 }
 .ml1e {
 	margin-left:1em
@@ -2652,6 +2929,9 @@ button.btn {
 	line-height:300px;
 	overflow:hidden
 }
+.icon20_common.add_gray {
+	background:url("../img/base/base_spring.png") 0 -2761px no-repeat
+}
 .icon36_common {
 	width:36px;
 	height:36px;
@@ -2659,6 +2939,9 @@ button.btn {
 	display:inline-block;
 	line-height:300px;
 	overflow:hidden
+}
+.icon36_common.add_gray {
+	background:url("../img/base/base_spring.png") 0 -2791px no-repeat
 }
 .create_access {
 	display:block;
@@ -2710,11 +2993,153 @@ button.btn {
 .create_access_primary:hover {
 	border-color:#b3b3b3
 }
+.create_access_primary:hover .icon20_common {
+	background:url("../img/base/base_spring.png") 0 -2837px no-repeat
+}
+.create_access_primary:hover .icon36_common {
+	background:url("../img/base/base_spring.png") 0 -2867px no-repeat
+}
+.create_access_primary:hover .icon42_common {
+	background:url("../img/base/base_spring.png") 0 -2913px no-repeat
+}
 .icon_menu {
 	width:23px;
 	height:23px;
 	vertical-align:middle;
 	display:inline-block
+}
+.icon_menu.manage {
+	background:transparent url(../img/base/icon_menu_manage.png?__sprite) no-repeat 0 0
+}
+.icon_menu.function {
+	background:transparent url(../img/base/icon_menu_function.png?__sprite) no-repeat 0 0
+}
+.icon_menu.statistics {
+	background:transparent url(../img/base/icon_menu_statistics.png?__sprite) no-repeat 0 0
+}
+.icon_menu.service {
+	background:url("../img/base/base_spring.png") 0 -2965px no-repeat
+}
+.icon_menu.setting {
+	background:transparent url(../img/base/icon_menu_setting.png?__sprite) no-repeat 0 0
+}
+.icon_menu.appcenter {
+	background:transparent url(../img/base/icon_menu_appcenter.png?__sprite) no-repeat 0 0
+}
+.icon_menu.guide {
+	background:transparent url(../img/base/icon_menu_guide.png?__sprite) no-repeat 0 0
+}
+.icon_menu.store {
+	background:transparent url(../img/base/icon_menu_store.png?__sprite) no-repeat 0 0
+}
+.icon_menu.adclient {
+	background:transparent url(../img/base/icon_menu_adclient.png?__sprite) no-repeat 0 0
+}
+.icon_menu.adhost {
+	background:transparent url(../img/base/icon_menu_adhost.png?__sprite) no-repeat 0 0
+}
+.icon_menu.advert {
+	background:transparent url(../img/base/icon_menu_advert.png?__sprite) no-repeat 0 0
+}
+.icon_menu.task {
+	background:transparent url(../img/base/icon_menu_task.png?__sprite) no-repeat 0 0
+}
+.icon_menu.tool {
+	background:transparent url(../img/base/icon_menu_tool.png?__sprite) no-repeat 0 0
+}
+.icon_menu.log {
+	background:transparent url(../img/base/icon_menu_log.png?__sprite) no-repeat 0 0
+}
+.icon_menu.access {
+	background:transparent url(../img/base/icon_menu_access.png?__sprite) no-repeat 0 0
+}
+.icon_menu.monitor {
+	background:transparent url(../img/base/icon_menu_monitor.png?__sprite) no-repeat 0 0
+}
+.icon_menu.user {
+	background:transparent url(../img/base/icon_menu_user.png?__sprite) no-repeat 0 0
+}
+.icon_menu.db {
+	background:transparent url(../img/base/icon_menu_db.png?__sprite) no-repeat 0 0
+}
+
+.icon_menu.sample {
+	background:transparent url(../img/base/icon_menu_sample.png?__sprite) no-repeat 0 0
+}
+.icon_menu.service {
+	background:transparent url(../img/base/icon_menu_service.png?__sprite) no-repeat 0 0
+}
+
+.selected .icon_menu.manage {
+	background:transparent url(../img/base/icon_menu_manage_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.function {
+	background:transparent url(../img/base/icon_menu_function_selected.png?__sprite) no-repeat 0 0
+}
+
+.selected .icon_menu.sample {
+	background:transparent url(../img/base/icon_menu_sample_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.service {
+	background:transparent url(../img/base/icon_menu_service_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.statistics {
+	background:transparent url(../img/base/icon_menu_statistics_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.service {
+	background:transparent url(../img/base/icon_menu_service_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.setting {
+	background:transparent url(../img/base/icon_menu_setting_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.appcenter {
+	background:transparent url(../img/base/icon_menu_appcenter_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.guide {
+	background:transparent url(../img/base/icon_menu_guide_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.store {
+	background:transparent url(../img/base/icon_menu_store_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.adhost {
+	background:transparent url(../img/base/icon_menu_adhost_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.advert {
+	background:transparent url(../img/base/icon_menu_advert_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.task {
+	background:transparent url(../img/base/icon_menu_task_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.tool {
+	background:transparent url(../img/base/icon_menu_tool_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.log {
+	background:transparent url(../img/base/icon_menu_log_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.access {
+	background:transparent url(../img/base/icon_menu_access_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.monitor {
+	background:transparent url(../img/base/icon_menu_monitor_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.user {
+	background:transparent url(../img/base/icon_menu_user_selected.png?__sprite) no-repeat 0 0
+}
+.selected .icon_menu.db {
+	background:transparent url(../img/base/icon_menu_db_selected.png?__sprite) no-repeat 0 0
+}
+.icon_menu_switch {
+	background:url("../img/base/base_spring.png") 0 -2993px no-repeat;
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	display:inline-block
+}
+.closed .icon_menu_switch {
+	background:url("../img/base/base_spring.png") 0 -3019px no-repeat
+}
+.closed.selected .icon_menu_switch {
+	background:url("../img/base/base_spring.png") 0 -3045px no-repeat
 }
 .menu_box {
 	margin-bottom:150px
@@ -2820,6 +3245,21 @@ button.btn {
 }
 .menu_plugins {
 	padding:10px 0
+}
+.menu_plugins .btn_plugins_add {
+	display:block;
+	line-height:34px;
+	color:#8d8d8d;
+	padding-left:41px;
+	width:121px;
+	margin:0 auto;
+	background:url("../img/base/base_spring.png") 0 -3071px no-repeat;
+	cursor:pointer
+}
+.menu_plugins .btn_plugins_add:hover {
+	text-decoration:none;
+	color:#222;
+	background:url("../img/base/base_spring.png") 0 -3115px no-repeat
 }
 .menu_plugins .btn_plugins_add i {
 	margin-right:5px
@@ -2962,6 +3402,27 @@ dd .inner_menu_link {
 	height:32px;
 	border:1px solid #e7e7eb
 }
+.icon_common.new {
+	margin-left:3px;
+	background:url("../img/base/base_spring.png") 0 -3159px no-repeat;
+	width:18px;
+	height:12px;
+	vertical-align:middle;
+	display:inline-block;
+	line-height:100px;
+	overflow:hidden
+}
+.icon_common.beta {
+	margin-top:-5px;
+	margin-left:3px;
+	background:url("../img/base/base_spring.png") 0 -3178px no-repeat;
+	width:25px;
+	height:12px;
+	vertical-align:middle;
+	display:inline-block;
+	line-height:100px;
+	overflow:hidden
+}
 .icon_dot {
 	display:inline-block;
 	font-weight:400;
@@ -3032,15 +3493,45 @@ dd .inner_menu_link {
 .icon12_del:hover {
 	color:#545454
 }
+.icon_card_selected {
+	background:url("../img/base/base_spring.png") 0 -3201px no-repeat;
+	width:46px;
+	height:46px;
+	vertical-align:middle;
+	display:inline-block
+}
 .icon_verify {
 	width:82px;
 	height:30px;
 	vertical-align:middle;
 	display:inline-block
 }
+.icon_verify.waiting {
+	background:url("../img/base/base_spring.png") 0 -3257px no-repeat
+}
+.icon_verify.fail {
+	background:url("../img/base/base_spring.png") 0 -3297px no-repeat
+}
+.icon_verify_checked {
+	background:url("../img/base/base_spring.png") 0 -3337px no-repeat;
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	display:inline-block
+}
 .icon_wxverify_status {
 	display:inline-block;
 	vertical-align:middle
+}
+.icon_wxverify_status.name_waiting {
+	width:86px;
+	height:24px;
+	background:url("../img/base/base_spring.png") 0 -3363px no-repeat
+}
+.icon_wxverify_status.file_success {
+	width:96px;
+	height:24px;
+	background:url("../img/base/base_spring.png") 0 -3397px no-repeat
 }
 .icon_loading_small {
 	width:30px;
@@ -3064,6 +3555,12 @@ dd .inner_menu_link {
 	line-height:100px;
 	overflow:hidden
 }
+.icon32_loading.dark {
+	background:transparent url(../img/base/icon32_loading_dark1e5b3a.gif) no-repeat 0 0
+}
+.icon32_loading.light {
+	background:transparent url(../img/base/icon32_loading_light1e5b3a.gif) no-repeat 0 0
+}
 .icon13_common {
 	width:13px;
 	height:13px;
@@ -3071,6 +3568,9 @@ dd .inner_menu_link {
 	display:inline-block;
 	line-height:100px;
 	overflow:hidden
+}
+.icon13_common.arrow_right_gray {
+	background:transparent url(../img/base/icon13_arrow_right_gray1e5b3a.png) no-repeat 0 0
 }
 .icon14_common {
 	width:14px;
@@ -3080,6 +3580,64 @@ dd .inner_menu_link {
 	line-height:100px;
 	overflow:hidden
 }
+.icon14_common.rank_gray {
+	cursor:pointer;
+	background:url("../img/base/base_spring.png") 0 -3431px no-repeat
+}
+.icon14_common.rank_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -3455px no-repeat
+}
+.single_up .icon14_common.rank_gray,.icon14_common.rank_gray.single_up {
+	background:url("../img/base/base_spring.png") 0 -3479px no-repeat
+}
+.single_up .icon14_common.rank_gray:hover,.icon14_common.rank_gray.single_up:hover {
+	background:url("../img/base/base_spring.png") 0 -3503px no-repeat
+}
+.single_down .icon14_common.rank_gray,.icon14_common.rank_gray.single_down {
+	background:url("../img/base/base_spring.png") 0 -3527px no-repeat
+}
+.single_down .icon14_common.rank_gray:hover,.icon14_common.rank_gray.single_down:hover {
+	background:url("../img/base/base_spring.png") 0 -3551px no-repeat
+}
+.icon14_common.add_white {
+	background:url("../img/base/base_spring.png") 0 -3575px no-repeat
+}
+.icon14_common.add_gray {
+	background:url("../img/base/base_spring.png") 0 -3599px no-repeat
+}
+.icon14_common.add_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -3623px no-repeat
+}
+.icon14_common.edit_gray {
+	background:url("../img/base/base_spring.png") 0 -3647px no-repeat
+}
+.icon14_common.edit_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -3671px no-repeat
+}
+.icon14_common.del_gray {
+	background:url("../img/base/base_spring.png") 0 -3695px no-repeat
+}
+.icon14_common.del_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -3719px no-repeat
+}
+.icon14_common.sort_gray {
+	background:url("../img/base/base_spring.png") 0 -3743px no-repeat
+}
+.icon14_common.sort_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -3767px no-repeat
+}
+.icon14_common.add_blue {
+	background:url("../img/base/base_spring.png") 0 -3791px no-repeat
+}
+.icon14_common.switch_gray {
+	background:url("../img/base/base_spring.png") 0 -3815px no-repeat
+}
+.icon14_common.switch_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -3839px no-repeat
+}
+a:hover .icon14_common.switch_gray {
+	background:url("../img/base/base_spring.png") 0 -3863px no-repeat
+}
 .icon_mini_tips {
 	width:16px;
 	height:16px;
@@ -3087,6 +3645,9 @@ dd .inner_menu_link {
 	display:inline-block;
 	line-height:100px;
 	overflow:hidden
+}
+.icon_mini_tips.document_link {
+	background:url("../img/base/base_spring.png") 0 -3887px no-repeat
 }
 .icon16_common {
 	width:16px;
@@ -3096,6 +3657,84 @@ dd .inner_menu_link {
 	line-height:100px;
 	overflow:hidden
 }
+.icon16_common.close {
+	background:url("../img/base/base_spring.png") 0 -3913px no-repeat
+}
+.icon16_common.close:hover {
+	background:url("../img/base/base_spring.png") 0 -3939px no-repeat
+}
+.icon16_common.close_flat {
+	background:url("../img/base/base_spring.png") 0 -3965px no-repeat
+}
+.icon16_common.close_flat:hover {
+	background:url("../img/base/base_spring.png") 0 -3991px no-repeat
+}
+.icon16_common.edit_gray {
+	background:url("../img/base/base_spring.png") 0 -4017px no-repeat
+}
+.icon16_common.del_gray {
+	background:url("../img/base/base_spring.png") 0 -4043px no-repeat
+}
+.icon16_common.enter_gray {
+	background:url("../img/base/base_spring.png") 0 -4069px no-repeat
+}
+.icon16_common.enter_gray.frm_input_append {
+	margin-top:-8px
+}
+.icon16_common.star_gray {
+	background:url("../img/base/base_spring.png") 0 -4095px no-repeat
+}
+.icon16_common.star_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -4120px no-repeat
+}
+.icon16_common.star_blue {
+	background:url("../img/base/base_spring.png") 0 -4146px no-repeat
+}
+.icon16_common.star_orange {
+	background:url("../img/base/base_spring.png") 0 -4172px no-repeat
+}
+.icon16_common.star_orange:hover {
+	background:url("../img/base/base_spring.png") 0 -4200px no-repeat
+}
+.icon16_common.woman_orange {
+	background:url("../img/base/base_spring.png") 0 -4226px no-repeat
+}
+.icon16_common.man_blue {
+	background:url("../img/base/base_spring.png") 0 -4252px no-repeat
+}
+.icon16_common.reply_blue {
+	background:url("../img/base/base_spring.png") 0 -4278px no-repeat
+}
+.icon16_common.reply_blue:hover {
+	background:url("../img/base/base_spring.png") 0 -4304px no-repeat
+}
+.icon16_common.del_gray {
+	background:url("../img/base/base_spring.png") 0 -4330px no-repeat
+}
+.icon16_common.del_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -4356px no-repeat
+}
+.icon16_common.search_gray {
+	background:url("../img/base/base_spring.png") 0 -4382px no-repeat
+}
+.icon16_common.sort_gray {
+	background:url("../img/base/base_spring.png") 0 -4408px no-repeat
+}
+.icon16_common.sort_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -4434px no-repeat
+}
+.icon16_common.add_gray {
+	background:url("../img/base/base_spring.png") 0 -4460px no-repeat
+}
+.icon16_common.add_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -4486px no-repeat
+}
+.icon16_common.save_gray {
+	background:url("../img/base/base_spring.png") 0 -4512px no-repeat
+}
+.icon16_common.save_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -4538px no-repeat
+}
 .icon18_common {
 	width:18px;
 	height:18px;
@@ -3103,6 +3742,126 @@ dd .inner_menu_link {
 	display:inline-block;
 	line-height:100px;
 	overflow:hidden
+}
+.icon18_common.woman_orange {
+	background:url("../img/base/base_spring.png") 0 -4564px no-repeat
+}
+.icon18_common.man_blue {
+	background:url("../img/base/base_spring.png") 0 -4592px no-repeat
+}
+.icon18_common.error {
+	background:url("../img/base/base_spring.png") 0 -4620px no-repeat
+}
+.icon18_common.add_blue {
+	background:url("../img/base/base_spring.png") 0 -4648px no-repeat
+}
+.selected .icon18_common.add_blue {
+	background:url("../img/base/base_spring.png") 0 -4676px no-repeat
+}
+.icon18_common.add_white {
+	background:url("../img/base/base_spring.png") 0 -4704px no-repeat
+}
+.icon18_common.del_blue {
+	background:url("../img/base/base_spring.png") 0 -4732px no-repeat
+}
+.icon18_common.del_blue:hover {
+	background:url("../img/base/base_spring.png") 0 -4760px no-repeat
+}
+.icon18_common.del_gray {
+	background:url("../img/base/base_spring.png") 0 -4788px no-repeat
+}
+a:hover .icon18_common.del_gray,.icon18_common.del_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -4816px no-repeat
+}
+.icon18_common.link_gray {
+	background:url("../img/base/base_spring.png") 0 -4844px no-repeat
+}
+.icon18_common.link_gray:hover,.hover .icon18_common.link_gray,a:hover .icon18_common.link_gray {
+	background:url("../img/base/base_spring.png") 0 -4872px no-repeat
+}
+.icon18_common.download_blue {
+	background:url("../img/base/base_spring.png") 0 -4900px no-repeat
+}
+.icon18_common.download_blue:hover {
+	background:url("../img/base/base_spring.png") 0 -4928px no-repeat
+}
+.icon18_common.upload_gray {
+	background:url("../img/base/base_spring.png") 0 -4956px no-repeat
+}
+.icon18_common.upload_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -4984px no-repeat
+}
+.icon18_common.download_simple_gray {
+	background:url("../img/base/base_spring.png") 0 -5012px no-repeat
+}
+.icon18_common.download_simple_gray:hover,a:hover .icon18_common.download_simple_gray {
+	background:url("../img/base/base_spring.png") 0 -5040px no-repeat
+}
+.icon18_common.download_gray {
+	background:url("../img/base/base_spring.png") 0 -5068px no-repeat
+}
+.icon18_common.download_gray:hover,a:hover .icon18_common.download_gray {
+	background:url("../img/base/base_spring.png") 0 -5096px no-repeat
+}
+.icon18_common.move_gray {
+	background:url("../img/base/base_spring.png") 0 -5124px no-repeat
+}
+.icon18_common.move_gray:hover,a:hover .icon18_common.move_gray {
+	background:url("../img/base/base_spring.png") 0 -5152px no-repeat
+}
+.icon18_common.reply_gray {
+	background:url("../img/base/base_spring.png") 0 -5180px no-repeat
+}
+.icon18_common.reply_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -5208px no-repeat
+}
+.icon18_common.star_gray {
+	background:url("../img/base/base_spring.png") 0 -5236px no-repeat
+}
+.icon18_common.star_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -5264px no-repeat
+}
+.icon18_common.save_gray {
+	background:url("../img/base/base_spring.png") 0 -5292px no-repeat
+}
+.icon18_common.save_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -5320px no-repeat
+}
+.icon18_common.edit_blue {
+	background:url("../img/base/base_spring.png") 0 -5348px no-repeat
+}
+.icon18_common.edit_blue:hover {
+	background:url("../img/base/base_spring.png") 0 -5376px no-repeat
+}
+.selected .icon18_common.edit_blue {
+	background:url("../img/base/base_spring.png") 0 -5404px no-repeat
+}
+.icon18_common.zoomout_gray {
+	background:url("../img/base/base_spring.png") 0 -5432px no-repeat
+}
+.icon18_common.zoomout_gray:hover,a:hover .icon18_common.zoomout_gray {
+	background:url("../img/base/base_spring.png") 0 -5460px no-repeat
+}
+.icon18_common.edit_gray {
+	background:url("../img/base/base_spring.png") 0 -5488px no-repeat
+}
+.icon18_common.edit_gray:hover,a:hover .icon18_common.edit_gray {
+	background:url("../img/base/base_spring.png") 0 -5516px no-repeat
+}
+.icon18_common.star_orange {
+	background:url("../img/base/base_spring.png") 0 -5544px no-repeat
+}
+.icon18_common.save_blue {
+	background:url("../img/base/base_spring.png") 0 -5572px no-repeat
+}
+.icon18_common.save_blue:hover {
+	background:url("../img/base/base_spring.png") 0 -5600px no-repeat
+}
+.icon18_common.qrcode_gray {
+	background:url("../img/base/base_spring.png") 0 -5628px no-repeat
+}
+.icon18_common.qrcode_gray:hover,a:hover .icon18_common.qrcode_gray {
+	background:url("../img/base/base_spring.png") 0 -5656px no-repeat
 }
 .icon20_common {
 	width:20px;
@@ -3112,6 +3871,15 @@ dd .inner_menu_link {
 	line-height:100px;
 	overflow:hidden
 }
+.icon20_common.reply_gray {
+	background:url("../img/base/base_spring.png") 0 -5684px no-repeat
+}
+.icon20_common.reply_gray:hover {
+	background:url("../img/base/base_spring.png") 0 -5714px no-repeat
+}
+.icon20_common.speaker {
+	background:url("../img/base/base_spring.png") 0 -5744px no-repeat
+}
 .icon21_common {
 	width:21px;
 	height:21px;
@@ -3119,6 +3887,15 @@ dd .inner_menu_link {
 	display:inline-block;
 	line-height:100px;
 	overflow:hidden
+}
+.icon21_common.error {
+	background:url("../img/base/base_spring.png") 0 -5770px no-repeat
+}
+.icon21_common.success {
+	background:url("../img/base/base_spring.png") 0 -5801px no-repeat
+}
+.icon21_common.waiting {
+	background:url("../img/base/base_spring.png") 0 -5832px no-repeat
 }
 .icon22_common {
 	width:22px;
@@ -3128,6 +3905,18 @@ dd .inner_menu_link {
 	line-height:100px;
 	overflow:hidden
 }
+.icon22_common.checked {
+	background:url("../img/base/base_spring.png") 0 -5863px no-repeat
+}
+.icon22_common.error {
+	background:url("../img/base/base_spring.png") 0 -5895px no-repeat
+}
+.icon22_common.success {
+	background:url("../img/base/base_spring.png") 0 -5927px no-repeat
+}
+.icon22_common.fail {
+	background:url("../img/base/base_spring.png") 0 -5959px no-repeat
+}
 .icon24_common {
 	width:24px;
 	height:24px;
@@ -3136,6 +3925,9 @@ dd .inner_menu_link {
 	line-height:100px;
 	overflow:hidden
 }
+.icon24_common.add_gray {
+	background:url("../img/base/base_spring.png") 0 -5991px no-repeat
+}
 .icon28_common {
 	width:28px;
 	height:28px;
@@ -3143,6 +3935,9 @@ dd .inner_menu_link {
 	display:inline-block;
 	line-height:100px;
 	overflow:hidden
+}
+.icon28_common.upload_blue {
+	background:url("../img/base/base_spring.png") 0 -6025px no-repeat
 }
 body {
 	min-width:1200px;
@@ -3323,6 +4118,10 @@ table[data-sortable].sortable-theme-bootstrap.sortable-theme-bootstrap-striped t
 span.error{display:inline; margin-top:5px; color:#b94a48;}
 /*表单帮组信息*/
 .form-group .help-block {border-bottom: none;color: #AAA6A6;font-size: 14px;}
+
+/*加载中*/
+.loading{position:absolute; top:50%; left:50%; margin-top:-190px; margin-left:-254px; background:url(../img/loading.gif) no-repeat;}
+.icon-loading{display:inline-block; vertical-align:middle; width:16px; height:16px; background:url(../img/btn_loading.gif) no-repeat;}
 
 /* app 创建流程图 css*/
 .create_flow  .btn-default{background:#fff !important; color:#333 !important; border:1px solid #ccc !important;}
@@ -3773,6 +4572,14 @@ border-left-color:#4393d8;
  .c_l {clear:left}
  .c_b {clear:both}
 
+.icon-loading {
+display: inline-block;
+vertical-align: middle;
+width: 16px;
+height: 16px;
+background: url(../bootstrap3.1.1/img/btn_loading.gif) no-repeat;
+}
+
 a:hover{text-decoration: none;}
 
 
@@ -3807,6 +4614,9 @@ a:hover .uparrow {
 }*/
 
 /*提示信息图标*/
+.intro dt .ico_intro {
+	background: url("../img/base/page_service_package_intro_z21b651.png") 0 0 no-repeat;
+}
 .intro dt .ico {
 	width: 16px;
 	height: 16px;
@@ -3869,6 +4679,21 @@ color: #8d8d8d;
 	bottom: 110px;
 }
 
+/*new_fun_icon*/
+.new_fun_icon{
+	display: inline-block;
+	width: 17px;
+	height: 9px;
+	background: url(../img/new.png) no-repeat;
+	margin-left: 6px;
+}
+.new_fun_dot{
+	display: inline-block;
+	width: 11px;
+	height: 11px;
+	background: url(../img/icon_dots.png) no-repeat;
+	margin-left: 6px;
+}
 /* base app css*/
 .app_name{width: 135px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;padding-left:10px;line-height: 27px;}
 .back:hover{color:#85C3FF!important }
@@ -3944,6 +4769,11 @@ color: #8d8d8d;
 .label{border-radius: 0px;}
 
 /*图标 icon*/
+[class^="icon-"],
+[class*=" icon-"] {
+	font-weight: bold;
+}
+
 [class^="icon-"]:last-child,
 [class*=" icon-"]:last-child {
   *margin-left: 0;
@@ -4085,7 +4915,6 @@ color: #8d8d8d;
 .dev_user_table button{border: none; margin-right:5px; border-radius: 0; padding: 5px 10px; display: none;}
 .dev_user_table input[disabled]{background: none; border: 1px solid #fff;  color: #333 !important;  box-shadow: none; cursor: default;}
 .dev_user_table select[disabled]{background: none; border: 1px solid #fff;  color: #333 !important;  box-shadow: none; cursor: default;}
-.dev_user_table input.pr_checkbox{height: auto;}
 .dev_user_table .user_edit_status button{display: inline-block;}
 .dev_user_table .user_edit_status .dev_user_opera{display: none;}
 .dev_user_table .user_edit_status td{background: #fafafa;}

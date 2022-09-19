@@ -9,18 +9,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bklogin.common.constants import enum
+from enum import Enum
 
-LanguageEnum = enum(ZH_CN="zh-cn", EN="en")
 
-DJANGO_LANG_TO_BK_LANG = {"zh-hans": LanguageEnum.ZH_CN, "en": LanguageEnum.EN}
+class LanguageEnum(Enum):
+    ZH_CN = "zh-cn"
+    EN = "en"
+
+
+DJANGO_LANG_TO_BK_LANG = {"zh-hans": LanguageEnum.ZH_CN.value, "en": LanguageEnum.EN.value}
 
 BK_LANG_TO_DJANGO_LANG = {v: k for k, v in DJANGO_LANG_TO_BK_LANG.items()}
-
-# note: Add synchronization when add login api
-LOGIN_API_URL_SUFFIX_LIST = [
-    "is_login",
-    "get_user",
-    "get_all_user",
-    "get_batch_user",
-]
