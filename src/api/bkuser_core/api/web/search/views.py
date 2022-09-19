@@ -70,18 +70,18 @@ class SearchApi(generics.ListAPIView):
         except IAMPermissionDenied:
             logger.warning("user %s has no permission to search department", operator)
         else:
-            profiles = (
-                Profile.objects.filter(
-                    Q(username__icontains=keyword)
-                    | Q(display_name__icontains=keyword)
-                    | Q(email__icontains=keyword)
-                    | Q(telephone__icontains=keyword)
-                    | Q(qq__icontains=keyword)
-                    | Q(extras__icontains=keyword)
-                )
-                .filter(dept_ft_for_profile)
-                .all()[:max_items]
+            profile_qs = Profile.objects.filter(
+                Q(username__icontains=keyword)
+                | Q(display_name__icontains=keyword)
+                | Q(email__icontains=keyword)
+                | Q(telephone__icontains=keyword)
+                | Q(qq__icontains=keyword)
+                | Q(extras__icontains=keyword)
             )
+            if dept_ft_for_profile:
+                profile_qs = profile_qs.filter(dept_ft_for_profile)
+
+            profiles = profile_qs.all()[:max_items]
 
             # FIXME: refactor it, now it works
             # profile_result = defaultdict(list)
@@ -137,13 +137,13 @@ class SearchApi(generics.ListAPIView):
         except IAMPermissionDenied:
             logger.warning("user %s has no permission to search department", operator)
         else:
-            departments = (
-                Department.objects.filter(
-                    name__icontains=keyword,
-                )
-                .filter(dept_ft)
-                .all()[:max_items]
+            department_qs = Department.objects.filter(
+                name__icontains=keyword,
             )
+            if dept_ft:
+                department_qs = department_qs.filter(dept_ft)
+
+            departments = department_qs.all()[:max_items]
             if departments:
                 result.append(
                     {

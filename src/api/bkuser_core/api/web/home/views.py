@@ -82,11 +82,12 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             # logger.info("2 result: %s", list(queryset.all()))
 
             # replace 方案 2 => 直接拿获取到的部门的 instance.get_root() => 使用tree_id+parent_id判定 => 加索引
-            # FIXME: 需要加索引 alter table departments_department add index idx_tree_id_parent_id(`tree_id`, `parent_id`);
             # - 获取有权限部门所在的tree_id, 并去重
             has_permission_depts = list(set(queryset.values_list("tree_id", flat=True)))
             # SQL: WHERE (`parent_id` IS NULL AND `tree_id` IN (1, 2, 4, 5, 6, 7))
-            queryset = Department.tree_objects._mptt_filter(tree_id__in=has_permission_depts, parent=None, enabled=True)
+            queryset = Department.tree_objects._mptt_filter(
+                tree_id__in=has_permission_depts, parent=None, enabled=True
+            )
             # logger.info("3 result: %s", list(queryset.all()))
 
             # FIXME: 这里为空抛异常? 让用户申请权限? 还是什么都不做

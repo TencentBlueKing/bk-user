@@ -25,26 +25,20 @@ class RapidDepartmentSerializer(serializers.Serializer):
 
 class DepartmentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True)
-    has_children = serializers.SerializerMethodField()
-    full_name = serializers.SerializerMethodField()
     order = serializers.IntegerField(required=False)
     extras = serializers.JSONField(required=False)
     enabled = serializers.BooleanField(default=True, required=False)
+
+    full_name = serializers.SerializerMethodField()
+    has_children = serializers.SerializerMethodField()
 
     def get_full_name(self, obj):
         return obj.full_name
 
     def get_has_children(self, obj) -> bool:
-        """仅返回启用的子部门"""
-        # Q: 为什么不用 obj.children.filter(enabled=True).exists()?
-        # A: 因为 get_descendants 是访问 tree_id 这类的 int 字段，而 children 访问的是 parent 外键字段，前者明显更快
-
-        # FIXME: 这里是给saas用的, 所以可以容忍 这里的放大查询?
-        # 或者, 忽略enabled, 避免放大查询 https://github.com/TencentBlueKing/bk-user/issues/641#issuecomment-1249506866
-        return obj.get_descendants(include_self=False).filter(enabled=True).exists()
+        return obj.has_children
 
     class Meta:
-        # ref_name = "v2_department"
         model = Department
         exclude = ("profiles", "update_time", "create_time", "lft", "rght", "tree_id", "level", "parent", "code")
 
