@@ -64,8 +64,10 @@ class Department(TimestampMPTTModel):
     def __str__(self):
         return f"{self.id}-{self.name}"
 
+    # FIXME: should be moved into the manager.py? Departments.objects.get_profiles()
     def get_profiles(self, recursive: bool = False, wildcard_search: str = None) -> models.QuerySet:
         if not recursive:
+            # FIXME: 为什么滤掉了 status.DELETE? 而不是通过 enabled=False过滤?
             target = self.profiles.exclude(status=ProfileStatus.DELETED.value)
         else:
             # 使用 DB 做 distinct 非常慢，所以先用 id 去重 TODO: 为什么差别这么大，有时间慢慢研究

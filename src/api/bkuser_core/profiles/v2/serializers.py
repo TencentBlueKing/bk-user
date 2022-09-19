@@ -103,9 +103,13 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     display_name = serializers.CharField(read_only=True)
     password_valid_days = serializers.IntegerField(required=False)
 
+    # FIXME: 这个slz的full_name也会导致放大查询
     departments = SimpleDepartmentSerializer(many=True, required=False)
     leader = LeaderSerializer(many=True, required=False)
-    last_login_time = serializers.DateTimeField(required=False, read_only=True)
+
+    # FIXME: 这个字段会导致放大查询
+    # last_login_time = serializers.DateTimeField(required=False, read_only=True)
+    last_login_time = serializers.SerializerMethodField(required=False, read_only=True)
     account_expiration_date = serializers.CharField(required=False)
 
     create_time = serializers.DateTimeField(required=False, read_only=True)
@@ -129,6 +133,11 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     staff_status = serializers.CharField(read_only=True)
     status = serializers.CharField(read_only=True)
     logo = serializers.CharField(read_only=True, allow_blank=True)
+
+    # NOTE: 禁用掉profiles接口获取last_login_time
+    # 影响接口: /api/v2/profiles/ 和 /api/v2/departments/x/profiles/
+    def get_last_login_time(self, obj: "Profile"):
+        return None
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""

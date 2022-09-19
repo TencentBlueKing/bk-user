@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import Type
 
 from django.conf import settings
@@ -37,6 +38,8 @@ from bkuser_core.departments.v2 import serializers as local_serializers
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import force_use_raw_username
 from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
@@ -135,9 +138,12 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         serializer.is_valid(raise_exception=True)
         instance = self.get_object()
 
+        # 这个参数esb文档中有, 有用户调用
         recursive = serializer.validated_data["recursive"]
+        # FIXME: 这个在 esb 文档中没有提到, 需要确认是否可以下线
         wildcard_search = serializer.validated_data.get("wildcard_search")
 
+        # 这个参数esb文档中有, 有用户调用
         profiles = instance.get_profiles(recursive=recursive, wildcard_search=wildcard_search)
         # 当用户请求数据时，判断其是否强制输出原始 username
         if not force_use_raw_username(request):
@@ -149,9 +155,15 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             )
 
         page = self.paginate_queryset(profiles)
+        # NOTE: RapidProfileSerializer 中的 last_login_time/extras会导致放大查询 => * 2
         _serializer = RapidProfileSerializer
         if page is not None:
-            return self.get_paginated_response(_serializer(page, many=True).data)
+            # BUG: 这里自己初始化slz, 需要显式传递 context
+            # BUG: 这里如果用 self.get_serializer_context(), 会产生get_extras_default_values的放大查询(每个对象都会触发一次)
+            # 可以开sql日志后, 切换下面两行代码看产生的sql (似乎触发了lazy)
+            # context = self.get_serializer_context()
+            context = {"extra_defaults": DynamicFieldInfo.objects.get_extras_default_values()}
+            return self.get_paginated_response(_serializer(page, many=True, context=context).data)
 
         # NOTE: no_page=True, will hit this branch. should not use no_page=True in the future
         serializer_fields = list(_serializer().get_fields().keys())
