@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from django.urls.conf import path
+from django.urls.conf import path, re_path
 
 from .views import (
     CategoriesExportTemplateViewSet,
@@ -25,6 +25,8 @@ from .views import (
     CategorySettingsListViewSet,
     CategorySettingsNamespaceViewSet,
     CategoryUpdateDeleteViewSet,
+    CommonProxyNoAuthViewSet,
+    CommonProxyViewSet,
     DepartmentProfilesViewSet,
     DepartmentRetrieveUpdateDeleteViewSet,
     DepartmentSearchViewSet,
@@ -55,6 +57,29 @@ from .views import (
 )
 
 urlpatterns = [
+    # common
+    path(
+        "api/v1/web/site/footer/",
+        CommonProxyNoAuthViewSet.as_view({"get": "request"}),
+        name="common.no_auth.proxy.1",
+    ),
+    path(
+        "api/v1/web/passwords/reset/send_email/",
+        CommonProxyNoAuthViewSet.as_view({"post": "request"}),
+        name="common.no_auth.proxy.2",
+    ),
+    path(
+        "api/v1/web/passwords/reset/by_token/",
+        CommonProxyNoAuthViewSet.as_view({"post": "request"}),
+        name="common.no_auth.proxy.3",
+    ),
+    re_path(
+        "^api/v1/web/.+$",
+        CommonProxyViewSet.as_view(
+            {"get": "request", "post": "request", "delete": "request", "put": "request", "patch": "request"}
+        ),
+        name="common.proxy",
+    ),
     # healthz
     path("healthz/", HealthzViewSet.as_view({"get": "list"}), name="healthz"),
     path("ping/", HealthzViewSet.as_view({"get": "pong"}), name="pong"),
@@ -85,6 +110,7 @@ urlpatterns = [
         name="fields.list_create",
     ),
     # profiles
+    # NOTE: 这个暂时前端不切换地址, 因为涉及登录态转换成后端请求参数
     path("api/v2/me/", LoginInfoViewSet.as_view({"get": "get"}), name="profiles.login_info"),
     path("api/v2/profiles/", ProfileCreateViewSet.as_view({"post": "post"}), name="profiles.create"),
     path(
