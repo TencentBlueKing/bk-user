@@ -8,18 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import Type
 
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, status
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
-from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, EmptySerializer
+from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier
 from bkuser_core.apis.v2.viewset import (
     AdvancedBatchOperateViewSet,
     AdvancedListAPIView,
@@ -29,9 +29,7 @@ from bkuser_core.apis.v2.viewset import (
 )
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
-from bkuser_core.bkiam.permissions import IAMPermissionExtraInfo
-from bkuser_core.bkiam.utils import need_iam
+from bkuser_core.categories.cache import get_default_category_domain_from_local_cache
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
@@ -41,6 +39,8 @@ from bkuser_core.departments.v2 import serializers as local_serializers
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import force_use_raw_username
 from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
@@ -139,23 +139,30 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         serializer.is_valid(raise_exception=True)
         instance = self.get_object()
 
+        # 这个参数esb文档中有, 有用户调用
         recursive = serializer.validated_data["recursive"]
+        # FIXME: 这个在 esb 文档中没有提到, 需要确认是否可以下线
         wildcard_search = serializer.validated_data.get("wildcard_search")
 
+        # 这个参数esb文档中有, 有用户调用
         profiles = instance.get_profiles(recursive=recursive, wildcard_search=wildcard_search)
         # 当用户请求数据时，判断其是否强制输出原始 username
         if not force_use_raw_username(request):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
-            default_domain = ProfileCategory.objects.get_default().domain
+            # default_domain = ProfileCategory.objects.get_default().domain
+            default_domain = get_default_category_domain_from_local_cache()
             profiles = profiles.extra(
                 select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
                 select_params=(default_domain,),
             )
 
         page = self.paginate_queryset(profiles)
+        # NOTE: RapidProfileSerializer 中的 last_login_time/extras会导致放大查询 => * 2
         _serializer = RapidProfileSerializer
         if page is not None:
-            return self.get_paginated_response(_serializer(page, many=True).data)
+            # BUG: 这里自己初始化slz, 需要显式传递 context, 否则 extra_defaults在每个对象序列化时会产生放大查询
+            context = self.get_serializer_context()
+            return self.get_paginated_response(_serializer(page, many=True, context=context).data)
 
         # NOTE: no_page=True, will hit this branch. should not use no_page=True in the future
         serializer_fields = list(_serializer().get_fields().keys())
@@ -267,34 +274,32 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return super().update(request, *args, **kwargs)
 
-    @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    @swagger_auto_schema(query_serializer=EmptySerializer())
-    def list_tops(self, request, *args, **kwargs):
-        """获取最顶层的组织列表[权限中心亲和]"""
+    # @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
+    # @swagger_auto_schema(query_serializer=EmptySerializer())
+    # def list_tops(self, request, *args, **kwargs):
+    #     """获取最顶层的组织列表[权限中心亲和]"""
+    #     if not need_iam(request):
+    #         queryset = self.get_queryset().filter(level=0)
+    #     else:
+    #         # 1. 拿到权限中心里授过权的全列表
+    #         queryset = self.filter_queryset(self.get_queryset())
 
-        if not need_iam(request):
-            queryset = self.get_queryset().filter(level=0)
-        else:
-            # 1. 拿到权限中心里授过权的全列表
-            queryset = self.filter_queryset(self.get_queryset())
+    #         if not queryset:
+    #             return Response(data=self.get_serializer(queryset, many=True).data)
 
-            if not queryset:
-                return Response(data=self.get_serializer(queryset, many=True).data)
+    #         # 2. 如果父节点已经授过权，剔除子节点
+    #         # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间
+    #         descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
+    #         queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
 
-            # 2. 如果父节点已经授过权，剔除子节点
-            # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间
-            descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
-            queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
-
-        # 为了支持 include_disabled 参数，我们默认在 queryset 中去掉了该参数，这里补上
-        queryset = queryset.filter(enabled=True)
-        if not queryset:
-            raise IAMPermissionDenied(
-                detail=_("您没有该操作的权限，请在权限中心申请"),
-                extra_info=IAMPermissionExtraInfo.from_request(request).to_dict(),
-            )
-
-        return Response(data=self.get_serializer(queryset, many=True).data)
+    #     # 为了支持 include_disabled 参数，我们默认在 queryset 中去掉了该参数，这里补上
+    #     queryset = queryset.filter(enabled=True)
+    #     if not queryset:
+    #         # raise IAMPermissionDenied(
+    #         #     detail=_("您没有该操作的权限，请在权限中心申请"),
+    #         #     extra_info=IAMPermissionExtraInfo.from_request(request).to_dict(),
+    #         # )
+    #     return Response(data=self.get_serializer(queryset, many=True).data)
 
 
 class BatchDepartmentsViewSet(AdvancedBatchOperateViewSet):

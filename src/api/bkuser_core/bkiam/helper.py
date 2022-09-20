@@ -62,11 +62,11 @@ class IAMHelper:
             None,
         )
 
-    def make_resource_attributes(self, obj) -> dict:
+    def _make_resource_attributes(self, obj) -> dict:
         """构造资源属性"""
         return ResourceType.get_attributes_mapping(obj)
 
-    def make_resources_list(self, objs: List[Any]) -> List[List[Resource]]:
+    def _make_resources_list(self, objs: List[Any]) -> List[List[Resource]]:
         # 探测 obj 类型，包装成 Resource
         # objs 应该都是同一种类型
         resources: list = []
@@ -81,7 +81,7 @@ class IAMHelper:
                         self.system_id,
                         resource_type,
                         str(obj.pk),
-                        self.make_resource_attributes(obj),
+                        self._make_resource_attributes(obj),
                     )
                 ]
             )
@@ -103,7 +103,7 @@ class IAMHelper:
             return False
 
         ret = self.iam.batch_is_allowed(
-            resources_list=self.make_resources_list(objs),
+            resources_list=self._make_resources_list(objs),
             request=self.make_request_without_resources(username=username, action_id=action_id),
         )
 

@@ -56,11 +56,18 @@ class Department(TimestampMPTTModel):
         verbose_name = "组织表"
         verbose_name_plural = "组织表"
 
+        index_together = [
+            ["tree_id", "lft", "rght"],
+            ["parent_id", "tree_id", "lft"],
+        ]
+
     def __str__(self):
         return f"{self.id}-{self.name}"
 
+    # FIXME: should be moved into the manager.py? Departments.objects.get_profiles()
     def get_profiles(self, recursive: bool = False, wildcard_search: str = None) -> models.QuerySet:
         if not recursive:
+            # FIXME: 为什么滤掉了 status.DELETE? 而不是通过 enabled=False过滤?
             target = self.profiles.exclude(status=ProfileStatus.DELETED.value)
         else:
             # 使用 DB 做 distinct 非常慢，所以先用 id 去重 TODO: 为什么差别这么大，有时间慢慢研究
@@ -89,7 +96,32 @@ class Department(TimestampMPTTModel):
         if self.level == 0:
             return self.name
 
+        # FIXME: serializer中配置了full_name, 导致放大查询, 需要使用cache优化这里的逻辑(redis)|需要有失效机制
+        # SQL:
+        # SELECT `name` FROM `departments_department`
+        # WHERE (`lft` <= 2 AND `rght` >= 13 AND `tree_id` = 5) ORDER BY `lft` ASC;
         return "/".join(self.get_ancestors(include_self=True).values_list("name", flat=True))
+
+    @property
+    def has_children(self):
+        """仅返回启用的子部门"""
+        # 原始方案
+        # SQL:
+        # SELECT (1) AS `a` FROM departments_department
+        # WHERE (`lft` >= 2 AND `lft` <= 3 AND `tree_id` = 4 AND `enabled`) LIMIT 1;
+        # 走tree_id索引, 然后 where lft/rght/enabled
+        # return obj.get_descendants(include_self=False).filter(enabled=True).exists()
+
+        # FIXME: serializer中配置了full_name, 导致放大查询, 需要使用cache优化这里的逻辑(redis)|需要有失效机制
+
+        # 替代方案 1:
+        # SQL:
+        # SELECT (1) AS `a` FROM `departments_department` WHERE (`parent_id` = 1 AND `enabled`) LIMIT 1;
+        # 走parent_id索引, 然后enabled=1 limit 1
+        return self.children.filter(enabled=True).exists()
+        # 替代方案2:    TODO: 决策, 需要评估影响
+        # 不会带来数据库放大查询, 但是过滤不了 enabled=True
+        # return obj.get_descendant_count() > 0
 
     def add_profile(self, profile_instance) -> bool:
         """为该部门增加人员

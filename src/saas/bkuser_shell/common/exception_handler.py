@@ -8,19 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import json
+# import json
 import logging
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import status
+
+# from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 from sentry_sdk import capture_exception
 
 from .error_codes import APIError
-from bkuser_sdk.rest import ApiException
+
+# from bkuser_sdk.rest import ApiException
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +43,15 @@ def ee_exception_response(exc, context):
     if isinstance(exc, APIError):
         # 主动抛出的已知异常
         data.update({"code": exc.code_num, "message": exc.message})
-    elif isinstance(exc, ApiException):
-        # 后端返回的 API 异常
-        parser = ApiExceptionParser(exc)
-        if parser.get_code() == "PERMISSION_DENIED":
-            data.update({"code": -1, "message": _("您没有权限访问该资源"), "detail": parser.get_message()})
-            return Response(data=data, status=status.HTTP_403_FORBIDDEN)
-        else:
-            data.update({"code": -1, "message": parser.get_message()})
+    # FIXME: 无权限报错怎么提示的?
+    # elif isinstance(exc, ApiException):
+    #     # 后端返回的 API 异常
+    #     parser = ApiExceptionParser(exc)
+    #     if parser.get_code() == "PERMISSION_DENIED":
+    #         data.update({"code": -1, "message": _("您没有权限访问该资源"), "detail": parser.get_message()})
+    #         return Response(data=data, status=status.HTTP_403_FORBIDDEN)
+    #     else:
+    #         data.update({"code": -1, "message": parser.get_message()})
 
     elif isinstance(exc, Http404):
         data.update({"code": -1, "message": _("您要找的资源无法被找到")})
@@ -81,27 +84,27 @@ def parse_validation_error(exc):
     return "\n".join(error_messages)
 
 
-class ApiExceptionParser:
-    def __init__(self, exc):
-        self.exc = exc
+# class ApiExceptionParser:
+#     def __init__(self, exc):
+#         self.exc = exc
 
-        if getattr(self.exc, "body", False):
-            try:
-                self.body = json.loads(self.exc.body)
-            except Exception:  # pylint: disable=broad-except
-                self.body = None
-        else:
-            self.body = None
+#         if getattr(self.exc, "body", False):
+#             try:
+#                 self.body = json.loads(self.exc.body)
+#             except Exception:  # pylint: disable=broad-except
+#                 self.body = None
+#         else:
+#             self.body = None
 
-    def get_code(self) -> int:
-        if not self.body:
-            return -1
+#     def get_code(self) -> int:
+#         if not self.body:
+#             return -1
 
-        return self.body.get("code", -1)
+#         return self.body.get("code", -1)
 
-    def get_message(self) -> str:
-        # TODO: should expose the api error detail! currently, always be this message, not helpfully at all
-        if not self.body:
-            return _("API 服务返回异常，请检查 API 服务日志")
+#     def get_message(self) -> str:
+#         # TODO: should expose the api error detail! currently, always be this message, not helpfully at all
+#         if not self.body:
+#             return _("API 服务返回异常，请检查 API 服务日志")
 
-        return self.body.get("detail") or _("API 服务返回异常，请检查 API 服务日志")
+#         return self.body.get("detail") or _("API 服务返回异常，请检查 API 服务日志")

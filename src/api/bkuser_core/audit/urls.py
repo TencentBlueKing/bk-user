@@ -16,31 +16,13 @@ from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
 PVAR_PROFILE_ID = r"(?P<%s>[a-z0-9-]+)" % LOOKUP_FIELD_NAME
 
 urlpatterns = [
-    url(
-        r"^api/v2/audit/general_log/$",
-        views.GeneralLogViewSet.as_view({"get": "list"}),
-        name="general_log",
-    ),
-    url(
-        r"^api/v2/audit/general_log/%s/$" % PVAR_PROFILE_ID,
-        views.GeneralLogViewSet.as_view({"get": "retrieve"}),
-        name="general_log.action",
-    ),
-    url(
-        r"^api/v2/audit/login_log/$",
-        views.LoginLogViewSet.as_view({"get": "list"}),
-        name="login_log",
-    ),
-    url(
-        r"^api/v2/audit/login_log/%s/$" % PVAR_PROFILE_ID,
-        views.LoginLogViewSet.as_view({"get": "retrieve"}),
-        name="login_log.action",
-    ),
+    # TODO: saas has remove this
     url(
         r"^api/v2/audit/reset_password_log/$",
         views.ResetPasswordLogViewSet.as_view({"get": "list"}),
         name="reset_password_log",
     ),
+    # TODO: saas has remove this
     url(
         r"^api/v2/audit/reset_password_log/%s/$" % PVAR_PROFILE_ID,
         views.ResetPasswordLogViewSet.as_view({"get": "retrieve"}),

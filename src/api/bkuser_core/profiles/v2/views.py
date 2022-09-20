@@ -16,8 +16,8 @@ from operator import or_
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.exceptions import FieldError, MultipleObjectsReturned, ObjectDoesNotExist
-from django.db.models import F, Q
+from django.core.exceptions import FieldError, MultipleObjectsReturned
+from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -40,20 +40,17 @@ from bkuser_core.apis.v2.serializers import (
 from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import audit_general_log, create_general_log, create_profile_log
-from bkuser_core.bkiam.constants import IAMAction
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
-from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
+from bkuser_core.categories.cache import get_default_category_domain_from_local_cache
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
-from bkuser_core.profiles.signals import post_field_create, post_profile_create, post_profile_update
+from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import (
     align_country_iso_code,
@@ -104,7 +101,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         username, domain = parse_username_domain(username_with_domain=self.kwargs[lookup_url_kwarg])
         if not domain:
-            domain = ProfileCategory.objects.get(default=True).domain
+            domain = get_default_category_domain_from_local_cache()
+            # domain = ProfileCategory.objects.get(default=True).domain
 
         queryset = self.filter_queryset(self.get_queryset())
         filter_kwargs = {"username": username, "domain": domain}
@@ -206,7 +204,9 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if not force_use_raw_username(request):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
             if "username" in fields:
-                default_domain = ProfileCategory.objects.get_default().domain
+                # FIXME: bug here? query profiles from other category, not the default
+                # default_domain = ProfileCategory.objects.get_default().domain
+                default_domain = get_default_category_domain_from_local_cache()
                 # 这里拼装的 username@domain, 没有走到serializer中的get_username
                 queryset = queryset.extra(
                     select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
@@ -245,12 +245,12 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        from bkuser_core.departments.models import Department
+        # from bkuser_core.departments.models import Department
 
         # departments为空, 则绕过了第一次权限控制
-        deps = Department.objects.filter(id__in=validated_data.get("departments", []))
-        for dep in deps:
-            self.check_object_permissions(request, obj=dep)
+        # deps = Department.objects.filter(id__in=validated_data.get("departments", []))
+        # for dep in deps:
+        #     self.check_object_permissions(request, obj=dep)
 
         if not validated_data.get("category_id", None):
             default_category = ProfileCategory.objects.get_default()
@@ -268,8 +268,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         # 必须要有这个category的管理权限, 才能添加用户到这个目录下
         # 注意这里 saas 传的 action_id = manage_department, 必须先改成manage_category才能检查category权限
-        request.META[settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
-        self.check_object_permissions(request, obj=ProfileCategory.objects.get(pk=validated_data["category_id"]))
+        # request.META[settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
+        # self.check_object_permissions(request, obj=ProfileCategory.objects.get(pk=validated_data["category_id"]))
 
         try:
             existed = Profile.objects.get(
@@ -539,8 +539,6 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
     serializer_class = local_serializers.ProfileSerializer
     queryset = Profile.objects.filter(enabled=True)
 
-    permission_classes = [IAMPermission]
-
     def get_serializer_class(self):
         """Serializer 路由"""
         if self.action in ("multiple_update", "multiple_delete"):
@@ -555,53 +553,12 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
         """批量获取用户"""
         return super().multiple_retrieve(request)
 
-    def permission_denied(self, request, message=None, obj=None, **kwargs):
-        """针对 IAM 注入相关信息"""
-        raise IAMPermissionDenied(
-            detail=message,
-            extra_info=IAMPermissionExtraInfo.from_request(request, obj=obj).to_dict(),
-        )
-
-    def clean_iam_header(self, request):
-        if settings.ACTION_ID_HEADER in request.META:
-            request.META.pop(settings.ACTION_ID_HEADER)
-        if settings.NEED_IAM_HEADER in request.META:
-            request.META.pop(settings.NEED_IAM_HEADER)
-
-    def check_category_permission(self, request, category):
-        # NOTE: 必须有manage_category权限才能查看/变更settings
-        request.META[settings.NEED_IAM_HEADER] = "True"
-        request.META[settings.ACTION_ID_HEADER] = IAMAction.MANAGE_CATEGORY.value
-        self.check_object_permissions(request, category)
-
-    def check_permission(self, request):
-        self.clean_iam_header(request)
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-        query_objs = serializer.validated_data
-
-        for obj in query_objs:
-            try:
-                instance = self.queryset.get(pk=obj["id"])
-            except ObjectDoesNotExist:
-                logger.warning(
-                    "obj <%s-%s> not found or already been deleted.",
-                    self.queryset.model,
-                    obj,
-                )
-                continue
-            else:
-                # NOTE: poor performance, but it's ok for now
-                self.check_category_permission(request, ProfileCategory.objects.get(pk=instance.category_id))
-
     @swagger_auto_schema(
         request_body=local_serializers.UpdateProfileSerializer(many=True),
         responses={"200": local_serializers.ProfileSerializer(many=True)},
     )
     def multiple_update(self, request):
         """批量更新用户"""
-        self.check_permission(request)
         return super().multiple_update(request)
 
     @swagger_auto_schema(
@@ -610,7 +567,6 @@ class BatchProfileViewSet(AdvancedBatchOperateViewSet):
     )
     def multiple_delete(self, request):
         """批量删除用户"""
-        self.check_permission(request)
         return super().multiple_delete(request)
 
 
@@ -885,7 +841,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
             domain_username_map[domain].append(username)
 
-        logger.debug("going to query username list: %s", username_list)
+        # logger.debug("going to query username list: %s", username_list)
         if not domain_username_map:
             profiles = Profile.objects.filter(enabled=True)
         else:
@@ -899,100 +855,6 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         return Response(
             data=local_serializers.LoginBatchResponseSerializer(profiles, many=True, context={"request": request}).data
         )
-
-
-class DynamicFieldsViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = DynamicFieldInfo.objects.filter(enabled=True)
-    serializer_class = local_serializers.DynamicFieldsSerializer
-    lookup_field: str = "name"
-    cache_name = "profiles"
-
-    # FIXME: 这里不能开启权限, SaaS 一大堆地方查, 并且dynamic_fields是底层的服务, 查看部门等都会调用, 加上权限由于用户未申请会直接报错
-    # NOTE: 当前正在重构的地方会去除这种权限控制方式
-    # 先注释, 非敏感数据
-    # iam_filter_actions = ("list",)
-
-    def get_serializer(self, *args, **kwargs):
-        if self.action in ["create"]:
-            return local_serializers.CreateFieldsSerializer(*args, **kwargs)
-        else:
-            return self.serializer_class(*args, **kwargs)
-
-    @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(
-        request_body=local_serializers.CreateFieldsSerializer,
-        responses={"200": local_serializers.DynamicFieldsSerializer()},
-    )
-    def create(self, request, *args, **kwargs):
-        """创建自定义字段"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-
-        # 默认加到最后
-        order = validated_data.get("order", 0)
-        if not order:
-            validated_data["order"] = DynamicFieldInfo.objects.get_max_order() + 1
-
-        instance = serializer.save()
-        headers = self.get_success_headers(serializer.data)
-        post_field_create.send(
-            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
-        )
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    @audit_general_log(operate_type=OperationType.UPDATE.value)
-    @method_decorator(clear_cache_if_succeed)
-    def _update(self, request, partial):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-
-        # 内置字段 只能更新 order & visible
-        if not instance.configurable and set(validated_data.keys()) - {
-            "order",
-            "visible",
-        }:
-            raise error_codes.FIELD_IS_NOT_EDITABLE.f("该字段无法更新")
-
-        if "name" in validated_data:
-            raise error_codes.FIELD_IS_NOT_EDITABLE.f("字段 key 值无法更新")
-
-        updating_order = validated_data.get("order", False)
-        if updating_order:
-            """整理 order"""
-            DynamicFieldInfo.objects.update_order(instance, updating_order)
-
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-
-        instance.save()
-        return Response(self.serializer_class(instance).data)
-
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
-    def update(self, request, *args, **kwargs):
-        """更新自定义字段"""
-        return self._update(request, partial=False)
-
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
-    def partial_update(self, request, *args, **kwargs):
-        """部分更新自定义字段"""
-        return self._update(request, partial=True)
-
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
-    def destroy(self, request, *args, **kwargs):
-        """移除自定义字段"""
-        instance = self.get_object()
-        # 内置字段不允许删除
-        if instance.builtin:
-            raise error_codes.BUILTIN_FIELD_CANNOT_BE_DELETED
-        # 保证 order 密集
-        DynamicFieldInfo.objects.filter(order__gt=instance.order).update(order=F("order") - 1)
-
-        post_dynamic_field_delete.send(sender=self, instance=instance, operator=request.operator)
-        return super().destroy(request, *args, **kwargs)
 
 
 class LeaderEdgeViewSet(AdvancedModelViewSet, AdvancedListAPIView):

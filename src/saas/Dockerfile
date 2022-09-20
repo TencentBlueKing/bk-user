@@ -40,7 +40,6 @@ COPY src/saas/manage.py /app
 COPY src/saas/RELEASE.yaml /app
 
 COPY src/bkuser_global /app/bkuser_global
-COPY src/sdk/bkuser_sdk /app/bkuser_sdk
 COPY --from=StaticBuilding /dist/ /app/static
 
 COPY src/saas/bin/start.sh /app

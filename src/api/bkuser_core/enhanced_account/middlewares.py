@@ -119,7 +119,7 @@ class OperatorMiddleware(MiddlewareMixin):
         setattr(request, "operator", operator)
 
         base_info.operator = operator
-        logger.debug(base_info)
+        # logger.debug(base_info)
         return
 
 

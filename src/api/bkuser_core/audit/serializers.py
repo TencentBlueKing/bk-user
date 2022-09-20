@@ -14,26 +14,6 @@ from rest_framework import serializers
 from bkuser_core.apis.v2.serializers import CustomFieldsMixin
 
 
-class GeneralLogSerializer(CustomFieldsMixin, serializers.Serializer):
-    id = serializers.IntegerField(help_text=_("ID"))
-    extra_value = serializers.JSONField(help_text=_("额外信息"))
-    operator = serializers.CharField(help_text=_("操作者"))
-    create_time = serializers.DateTimeField(help_text=_("创建时间"))
-    status = serializers.CharField(help_text=_("状态"))
-
-
-class LoginLogSerializer(CustomFieldsMixin, serializers.Serializer):
-    id = serializers.IntegerField(help_text=_("ID"))
-    extra_value = serializers.JSONField(help_text=_("额外信息"))
-    operator = serializers.CharField(help_text=_("操作者"))
-    is_success = serializers.BooleanField(help_text=_("是否成功"))
-    reason = serializers.CharField(help_text=_("失败原因"))
-    create_time = serializers.DateTimeField(help_text=_("创建时间"))
-    username = serializers.CharField(help_text=_("登录用户"), source="profile.username")
-    profile_id = serializers.CharField(help_text=_("登录用户ID"), source="profile.id")
-    category_id = serializers.CharField(help_text=_("登录用户"), source="profile.category_id")
-
-
 class ResetPasswordLogSerializer(CustomFieldsMixin, serializers.Serializer):
     id = serializers.IntegerField(help_text=_("ID"))
     extra_value = serializers.JSONField(help_text=_("额外信息"))

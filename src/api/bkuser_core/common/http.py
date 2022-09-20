@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from django.http import HttpRequest
     from rest_framework.response import Response
 
+# FIXME: 重构这里, 避免复杂的处理逻辑
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +80,9 @@ def exist_force_raw_header(request: "HttpRequest") -> bool:
 def should_use_raw_response(req: "HttpRequest", resp: "Response") -> bool:
     """是否应该使用原生格式返回"""
     # 非 API 请求不包装返回值
-    if not req.path.startswith("/api/"):
-        return True
+    # NOTE: 目前有环境调用/api/v2/profiles/用到通过header强制使用raw response, 所以暂时不能去掉
 
-    if req.path.startswith("/api/v3/"):
+    if not req.path.startswith("/api/"):
         return True
 
     # 是否强制使用原生格式

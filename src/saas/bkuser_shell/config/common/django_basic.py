@@ -59,16 +59,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # OTHER 3rd Party App
     "rest_framework",
-    "drf_yasg",
     "django_prometheus",
     # SaaS related
     "bkuser_shell.account",
-    "bkuser_shell.organization",
-    "bkuser_shell.config_center",
-    "bkuser_shell.categories",
-    "bkuser_shell.apis",
     "bkuser_shell.version_log",
-    "bkuser_shell.monitoring",
+    "bkuser_shell.proxy",
 ]
 
 # ==============================================================================
@@ -157,12 +152,8 @@ BK_COOKIE_NAME = "bk_token"
 INIT_SUPERUSER_NAMES = ["admin"]
 
 # ==============================================================================
-# DRF & Swagger 配置
+# DRF 配置
 # ==============================================================================
-SWAGGER_SETTINGS = {
-    "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser_shell.common.swagger.ExtendedSwaggerAutoSchema",
-}
-
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "bkuser_shell.common.exception_handler.ee_exception_response",
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%fZ",

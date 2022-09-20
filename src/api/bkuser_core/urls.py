@@ -34,5 +34,9 @@ for app in settings.INSTALLED_APPS:
 
 urlpatterns += [url(r"^", include("django_prometheus.urls"))]
 
+# new web apis
+urlpatterns += [url(r"^api/v1/web/", include("bkuser_core.api.web.urls"))]
+
+
 if "silk" in settings.INSTALLED_APPS:
     urlpatterns += [url(r"^silk/", include("silk.urls", namespace="silk"))]

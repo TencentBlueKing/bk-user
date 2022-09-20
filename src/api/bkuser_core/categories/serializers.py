@@ -11,40 +11,12 @@ specific language governing permissions and limitations under the License.
 from typing import List
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework.serializers import (
-    BooleanField,
-    CharField,
-    ChoiceField,
-    DateTimeField,
-    FileField,
-    IntegerField,
-    JSONField,
-    ListField,
-    Serializer,
-    SerializerMethodField,
-)
+from rest_framework.serializers import BooleanField, CharField, SerializerMethodField
 from rest_framework.validators import ValidationError
 
-from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer, DurationTotalSecondField
-from bkuser_core.bkiam.serializers import AuthInfoSLZ
-from bkuser_core.categories import constants
+from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.profiles.validators import validate_domain
-
-
-class ExtraInfoSLZ(Serializer):
-    auth_infos = ListField(read_only=True, child=AuthInfoSLZ())
-    callback_url = CharField(read_only=True)
-
-
-class CategoryMetaSLZ(Serializer):
-    """用户目录基本信息"""
-
-    type = CharField(read_only=True)
-    description = CharField(read_only=True)
-    name = CharField(read_only=True)
-    authorized = BooleanField(read_only=True, default=True)
-    extra_info = ExtraInfoSLZ(read_only=True, default={})
 
 
 class CategorySerializer(CustomFieldsModelSerializer):
@@ -77,47 +49,3 @@ class CreateCategorySerializer(CategorySerializer):
             raise ValidationError(_("登陆域为 {} 的用户目录已存在").format(data["domain"]))
 
         return super().validate(data)
-
-
-class CategorySyncSerializer(Serializer):
-    raw_data_file = FileField()
-
-
-class CategorySyncResponseSLZ(Serializer):
-    task_id = CharField(help_text="task_id for the sync job.")
-
-
-class CategoryTestConnectionSerializer(Serializer):
-    connection_url = CharField()
-    user = CharField(required=False)
-    password = CharField(required=False)
-    timeout_setting = IntegerField(required=False, default=120)
-    use_ssl = BooleanField(default=False, required=False)
-
-
-class CategoryTestFetchDataSerializer(Serializer):
-    basic_pull_node = CharField()
-    user_filter = CharField()
-    organization_class = CharField()
-    user_group_filter = CharField(required=False, allow_blank=True, allow_null=True)
-    user_member_of = CharField(required=False, allow_blank=True, allow_null=True)
-
-
-class SyncTaskSerializer(Serializer):
-    id = CharField()
-    category = CategorySerializer()
-    status = ChoiceField(choices=constants.SyncTaskStatus.get_choices(), help_text="任务执行状态")
-    type = ChoiceField(choices=constants.SyncTaskType.get_choices(), help_text="任务触发类型")
-    operator = CharField(help_text="操作人")
-    create_time = DateTimeField(help_text="开始时间")
-    required_time = DurationTotalSecondField(help_text="耗时")
-    retried_count = IntegerField(help_text="重试次数")
-
-
-class SyncTaskProcessSerializer(Serializer):
-    step = ChoiceField(choices=constants.SyncStep.get_choices(), help_text="同步步骤")
-    status = ChoiceField(choices=constants.SyncTaskStatus.get_choices(), help_text="执行状态")
-    successful_count = IntegerField(help_text="同步成功数量")
-    failed_count = IntegerField(help_text="同步失败数量")
-    logs = CharField(help_text="纯文本日志")
-    failed_records = ListField(child=JSONField(), help_text="失败对象名称")

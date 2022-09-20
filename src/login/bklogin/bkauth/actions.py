@@ -85,7 +85,7 @@ def login_success_response(request, user_or_form, redirect_to, app_id):
     except Exception:  # pylint: disable=broad-except
         # will raise django.db.utils.DatabaseError: Save with update_fields did not affect any rows.
         # while auth_login at the final step user_logged_in.send, but it DO NOT MATTERS!
-        logger.debug("auth_login fail", exec_info=True)
+        logger.debug("auth_login fail", exc_info=True)
 
     # 记录登录日志
     record_login_log(request, username, app_id)

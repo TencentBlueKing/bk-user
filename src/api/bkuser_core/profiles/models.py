@@ -193,9 +193,10 @@ class Profile(TimestampedModel):
     @property
     def last_login_time(self) -> Optional[datetime.datetime]:
         """获取用户最近一次登录时间"""
-        latest_logins = self.login_set.filter(is_success=True)
-        if latest_logins:
-            return latest_logins.latest().create_time
+        latest_login = self.login_set.filter(is_success=True).latest()
+
+        if latest_login:
+            return latest_login.create_time
 
         return None
 

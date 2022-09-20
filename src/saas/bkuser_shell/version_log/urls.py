@@ -20,16 +20,12 @@ urlpatterns = [
     ##############
     url(
         r"^api/v2/version_logs_list/$",
-        views.VersionLogViewSet.as_view(
-            {"get": "list"},
-        ),
+        views.VersionLogListViewSet.as_view(),
         name="version_log_list",
     ),
     url(
         r"^api/v2/version_logs_list/%s/$" % VERSION_NUMBER,
-        views.VersionLogViewSet.as_view(
-            {"get": "retrieve"},
-        ),
+        views.VersionLogRetrieveViewSet.as_view(),
         name="version_log_detail",
     ),
 ]

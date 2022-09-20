@@ -9,20 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from . import serializers as local_serializers
-from .models import GeneralLog, LogIn, ResetPassword
+from .models import ResetPassword
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
-
-
-class GeneralLogViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = GeneralLog.objects.all()
-    serializer_class = local_serializers.GeneralLogSerializer
-    lookup_field = "id"
-
-
-class LoginLogViewSet(AdvancedModelViewSet, AdvancedListAPIView):
-    queryset = LogIn.objects.all()
-    serializer_class = local_serializers.LoginLogSerializer
-    lookup_field = "id"
 
 
 class ResetPasswordLogViewSet(AdvancedModelViewSet, AdvancedListAPIView):

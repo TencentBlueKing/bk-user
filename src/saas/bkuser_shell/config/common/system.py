@@ -30,18 +30,6 @@ TOKEN_COOKIE_NAME = env("TOKEN_COOKIE_NAME", default="bk_token")
 LOGIN_VERIFY_URI = env("LOGIN_VERIFY_URI", default="/accounts/is_login/")
 LOGIN_USER_INFO_URI = env("LOGIN_USER_INFO_URI", default="/accounts/get_user/")
 
-# put on s3 maybe better
-DEFAULT_LOGO_URL = "img/logo_default.png"
-
-##########
-# Export #
-##########
-EXPORT_ORG_TEMPLATE = MEDIA_ROOT + "/excel/export_org_tmpl.xlsx"
-EXPORT_LOGIN_TEMPLATE = MEDIA_ROOT + "/excel/export_login_tmpl.xlsx"
-
-# according to https://docs.qq.com/sheet/DTktLdUtmRldob21P?tab=uty37p&c=C3A0A0
-EXPORT_EXCEL_FILENAME = "bk_user_export"
-
 ##############
 # VersionLog #
 ##############
@@ -53,34 +41,13 @@ VERSION_FILE = "RELEASE.yaml"
 ###################
 BK_DOC_URL = "https://bk.tencent.com/docs/markdown/用户管理/产品白皮书/产品简介/README.md"
 
-FOOTER_CONFIG = {
-    "footer": [
-        {
-            "text": "技术支持",
-            "text_en": "Support",
-            "link": "https://wpa1.qq.com/KziXGWJs?_type=wpa&qidian=true",
-            "is_blank": False,
-        },
-        {
-            "text": "社区论坛",
-            "text_en": "Forum",
-            "link": "https://bk.tencent.com/s-mart/community/",
-            "is_blank": True,
-        },
-        {
-            "text": "蓝鲸官网",
-            "text_en": "Official",
-            "link": "https://bk.tencent.com/",
-            "is_blank": True,
-        },
-    ]
-}
 
-#############
-# DRF-Crown #
-#############
-DRF_CROWN_RESP_CLS = "bkuser_shell.common.response.Response"
-DRF_CROWN_DEFAULT_CONFIG = {"remain_request": True}
+# ==============================================================================
+# Proxy http connections
+# ==============================================================================
+
+REQUESTS_POOL_CONNECTIONS = 20
+REQUESTS_POOL_MAXSIZE = 20
 
 # ==============================================================================
 # Sentry

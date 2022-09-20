@@ -22,6 +22,7 @@ urlpatterns = [
         views.ProfileViewSet.as_view(
             {
                 "get": "list",
+                # TODO: saas has removed this
                 "post": "create",
             }
         ),
@@ -31,8 +32,11 @@ urlpatterns = [
         r"^api/v2/profiles/%s/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas removed this
                 "get": "retrieve",
+                # NOTE: saas removed this
                 "put": "update",
+                # NOTE: saas removed this
                 "patch": "partial_update",
                 "delete": "destroy",
             }
@@ -43,6 +47,7 @@ urlpatterns = [
         r"^api/v2/profiles/%s/restoration/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas has removed this
                 "post": "restoration",
             }
         ),
@@ -80,7 +85,9 @@ urlpatterns = [
         views.BatchProfileViewSet.as_view(
             {
                 "get": "multiple_retrieve",
+                # TODO: saas has revmoved this
                 "patch": "multiple_update",
+                # TODO: saas has revmoved this
                 "delete": "multiple_delete",
             }
         ),
@@ -90,6 +97,7 @@ urlpatterns = [
         r"^api/v2/token/%s/$" % PVAR_TOKEN,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas removed this
                 "get": "retrieve_by_token",
             }
         ),
@@ -99,35 +107,11 @@ urlpatterns = [
         r"^api/v2/profiles/%s/modify_password/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: saas removed this
                 "post": "modify_password",
             }
         ),
         name="profiles.modify_password",
-    ),
-    ##################
-    # dynamic fields #
-    ##################
-    url(
-        r"^api/v2/dynamic_fields/$",
-        views.DynamicFieldsViewSet.as_view(
-            {
-                "get": "list",
-                "post": "create",
-            }
-        ),
-        name="dynamic_fields",
-    ),
-    url(
-        r"^api/v2/dynamic_fields/%s/$" % PVAR_PROFILE_ID,
-        views.DynamicFieldsViewSet.as_view(
-            {
-                "get": "retrieve",
-                "put": "update",
-                "patch": "partial_update",
-                "delete": "destroy",
-            }
-        ),
-        name="dynamic_fields.action",
     ),
     ########
     # Edge #

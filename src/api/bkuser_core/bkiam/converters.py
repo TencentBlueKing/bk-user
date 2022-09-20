@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import operator
 from functools import reduce
 
+from django.db.models import Q
 from iam import OP
 from iam.contrib.converter.queryset import DjangoQuerySetConverter
 
@@ -75,6 +76,17 @@ class PathIgnoreDjangoQSConverter(DjangoQuerySetConverter):
             operator.or_,
             [self.convert(c) for c in mark_non_leaf_policies(content) if self.convert(c)],
         )
+
+    def _any(self, left, right):
+        # https://stackoverflow.com/questions/33517468/always-true-q-object
+        # ~Q(pk__in=[]) => not in? should check the sql/performance
+
+        # NOTE: We think the pk is not null in mysql schema here
+        # => will genreate `pk not null`` in sql, will cause performance issue
+        # return ~Q(pk=None)
+
+        # => will generate where condition in sql
+        return ~Q(pk__in=[])
 
     def convert(self, data):
         op = data["op"]
