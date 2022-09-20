@@ -40,6 +40,7 @@ from bkuser_core.apis.v2.serializers import (
 from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import audit_general_log, create_general_log, create_profile_log
+from bkuser_core.categories.cache import get_default_category_domain_from_local_cache
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -100,7 +101,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         username, domain = parse_username_domain(username_with_domain=self.kwargs[lookup_url_kwarg])
         if not domain:
-            domain = ProfileCategory.objects.get(default=True).domain
+            domain = get_default_category_domain_from_local_cache()
+            # domain = ProfileCategory.objects.get(default=True).domain
 
         queryset = self.filter_queryset(self.get_queryset())
         filter_kwargs = {"username": username, "domain": domain}
@@ -203,7 +205,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
             if "username" in fields:
                 # FIXME: bug here? query profiles from other category, not the default
-                default_domain = ProfileCategory.objects.get_default().domain
+                # default_domain = ProfileCategory.objects.get_default().domain
+                default_domain = get_default_category_domain_from_local_cache()
                 # 这里拼装的 username@domain, 没有走到serializer中的get_username
                 queryset = queryset.extra(
                     select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},

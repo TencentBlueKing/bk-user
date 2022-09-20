@@ -21,7 +21,7 @@ from phonenumbers.phonenumberutil import UNKNOWN_REGION, country_code_for_region
 
 from ..audit.models import ResetPassword
 from .exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
-from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.cache import get_default_category_id_from_local_cache
 from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
 from bkuser_core.user_settings.constants import InitPasswordMethod
 from bkuser_core.user_settings.loader import ConfigProvider
@@ -175,11 +175,12 @@ def force_use_raw_username(request):
 
 def get_username(force_use_raw: bool, category_id: int, username: str, domain: str):
     """获取用户名(通过请求头返回 username 形式)"""
-
     if force_use_raw:
         return username
 
-    if ProfileCategory.objects.get_default().id == category_id:
+    # NOTE: 存在放大查询, 每一个username处理都会带来一次查询
+    # if ProfileCategory.objects.get_default().id == category_id:
+    if get_default_category_id_from_local_cache() == category_id:
         return username
     else:
         return f"{username}@{domain}"

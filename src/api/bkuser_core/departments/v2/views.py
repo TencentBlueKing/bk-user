@@ -29,6 +29,7 @@ from bkuser_core.apis.v2.viewset import (
 )
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
+from bkuser_core.categories.cache import get_default_category_domain_from_local_cache
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
@@ -148,7 +149,8 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # 当用户请求数据时，判断其是否强制输出原始 username
         if not force_use_raw_username(request):
             # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
-            default_domain = ProfileCategory.objects.get_default().domain
+            # default_domain = ProfileCategory.objects.get_default().domain
+            default_domain = get_default_category_domain_from_local_cache()
             profiles = profiles.extra(
                 select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
                 select_params=(default_domain,),
@@ -158,11 +160,8 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # NOTE: RapidProfileSerializer 中的 last_login_time/extras会导致放大查询 => * 2
         _serializer = RapidProfileSerializer
         if page is not None:
-            # BUG: 这里自己初始化slz, 需要显式传递 context
-            # BUG: 这里如果用 self.get_serializer_context(), 会产生get_extras_default_values的放大查询(每个对象都会触发一次)
-            # 可以开sql日志后, 切换下面两行代码看产生的sql (似乎触发了lazy)
-            # context = self.get_serializer_context()
-            context = {"extra_defaults": DynamicFieldInfo.objects.get_extras_default_values()}
+            # BUG: 这里自己初始化slz, 需要显式传递 context, 否则 extra_defaults在每个对象序列化时会产生放大查询
+            context = self.get_serializer_context()
             return self.get_paginated_response(_serializer(page, many=True, context=context).data)
 
         # NOTE: no_page=True, will hit this branch. should not use no_page=True in the future

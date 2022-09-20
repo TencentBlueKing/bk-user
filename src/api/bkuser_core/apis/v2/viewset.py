@@ -152,6 +152,7 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
 
     def make_lookups(self, query_data: dict, queryset: QuerySet, search_field: str) -> QuerySet:
         """拼装搜索查询语句，当不存在搜索时返回空列表"""
+        # FIXME: fuzzy_lookups=2022-09-19+14%3A43&lookup_field=create_time => 全表扫描(create_time无索引+like %keyword%)
         exact_lookups, fuzzy_lookups = query_data.get("exact_lookups"), query_data.get("fuzzy_lookups")
         target_lookups = []
         if exact_lookups:

@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import Union
 
 from rest_framework import serializers
@@ -24,6 +25,8 @@ from bkuser_core.profiles.utils import (
 )
 from bkuser_core.profiles.validators import validate_domain, validate_username
 
+logger = logging.getLogger(__name__)
+
 # ===============================================================================
 # Response
 # ===============================================================================
@@ -35,7 +38,6 @@ from bkuser_core.profiles.validators import validate_domain, validate_username
 
 
 def get_extras(extras_from_db: Union[dict, list], defaults: dict) -> dict:
-
     if not defaults:
         defaults = DynamicFieldInfo.objects.get_extras_default_values()
 
@@ -134,6 +136,8 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     status = serializers.CharField(read_only=True)
     logo = serializers.CharField(read_only=True, allow_blank=True)
 
+    # NOTE: 这里没有 get_username 的原因是, views中的逻辑处理了
+
     # NOTE: 禁用掉profiles接口获取last_login_time
     # 影响接口: /api/v2/profiles/ 和 /api/v2/departments/x/profiles/
     def get_last_login_time(self, obj: "Profile"):
@@ -141,7 +145,8 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
-        return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
+        extra_defaults = self.context.get("extra_defaults", {}).copy()
+        return get_extras(obj.extras, extra_defaults)
 
     def to_representation(self, obj):
         data = super().to_representation(obj)
