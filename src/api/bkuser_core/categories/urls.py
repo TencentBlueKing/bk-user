@@ -23,7 +23,6 @@ urlpatterns = [
         r"^api/v2/categories/$",
         views.CategoryViewSet.as_view(
             {
-                # TODO: saas not used, but login or esb use?
                 "get": "list",
                 # TODO: saas not used
                 "post": "create",

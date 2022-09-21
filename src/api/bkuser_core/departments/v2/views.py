@@ -275,33 +275,6 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return super().update(request, *args, **kwargs)
 
-    # @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    # @swagger_auto_schema(query_serializer=EmptySerializer())
-    # def list_tops(self, request, *args, **kwargs):
-    #     """获取最顶层的组织列表[权限中心亲和]"""
-    #     if not need_iam(request):
-    #         queryset = self.get_queryset().filter(level=0)
-    #     else:
-    #         # 1. 拿到权限中心里授过权的全列表
-    #         queryset = self.filter_queryset(self.get_queryset())
-
-    #         if not queryset:
-    #             return Response(data=self.get_serializer(queryset, many=True).data)
-
-    #         # 2. 如果父节点已经授过权，剔除子节点
-    #         # TODO: 相较于手动遍历快了很多，但还是不够快，有优化空间
-    #         descendants = Department.tree_objects.get_queryset_descendants(queryset=queryset, include_self=False)
-    #         queryset = queryset.exclude(id__in=descendants.values_list("id", flat=True))
-
-    #     # 为了支持 include_disabled 参数，我们默认在 queryset 中去掉了该参数，这里补上
-    #     queryset = queryset.filter(enabled=True)
-    #     if not queryset:
-    #         # raise IAMPermissionDenied(
-    #         #     detail=_("您没有该操作的权限，请在权限中心申请"),
-    #         #     extra_info=IAMPermissionExtraInfo.from_request(request).to_dict(),
-    #         # )
-    #     return Response(data=self.get_serializer(queryset, many=True).data)
-
 
 class BatchDepartmentsViewSet(AdvancedBatchOperateViewSet):
     serializer_class = local_serializers.DepartmentWithChildrenSLZ

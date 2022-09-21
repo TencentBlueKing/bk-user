@@ -116,8 +116,8 @@ def direct_get_categories():
     data = {
         "no_page": True,
         "fields": "domain,id,default",
-        "lookup_field": "enabled",
-        "exact_lookups": True,
+        # "lookup_field": "enabled",
+        # "exact_lookups": True,
     }
 
     ok, _, message, _data = _call_usermgr_api(http_get, url, data)

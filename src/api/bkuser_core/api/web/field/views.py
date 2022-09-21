@@ -91,9 +91,7 @@ class FieldOrderUpdateApi(generics.UpdateAPIView):
         order = kwargs["order"]
 
         obj = self.get_object()
-        obj.order = order
-        # FIXME: here update_fields not working now
-        obj.save(update_fields=["order"])
+        DynamicFieldInfo.objects.update_order(obj, order)
 
         return Response(FieldOutputSLZ(obj).data)
 

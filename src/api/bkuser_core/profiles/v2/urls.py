@@ -22,7 +22,6 @@ urlpatterns = [
         views.ProfileViewSet.as_view(
             {
                 "get": "list",
-                # TODO: saas has removed this
                 "post": "create",
             }
         ),

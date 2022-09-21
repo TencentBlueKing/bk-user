@@ -101,12 +101,4 @@ urlpatterns = [
         views.DepartmentProfileEdgeViewSet.as_view({"get": "list"}),
         name="edge.department_profile",
     ),
-    #############
-    # shortcuts #
-    #############
-    # url(
-    #     r"^api/v2/shortcuts/departments/tops/$",
-    #     views.DepartmentViewSet.as_view({"get": "list_tops"}),
-    #     name="shortcuts.departments.list.tops",
-    # ),
 ]

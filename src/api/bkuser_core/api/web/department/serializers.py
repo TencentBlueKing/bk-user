@@ -50,20 +50,24 @@ class DepartmentWithChildrenSLZ(DepartmentSerializer):
         """不使用 serializer 而是手动取数据，避免重复查询 DB"""
         full_name_prefix = obj.full_name
 
+        data = []
         items = {}
         all_children = obj.children.filter(enabled=True)
         for x in all_children:
             # children 可能存在重复
             if x.pk in items:
                 continue
+            items[x.pk] = True
 
             full_name = f"{full_name_prefix}/{x.name}"
             # 由于当前删除是假删除，真实架构树并未移除 has_children = not x.is_leaf_node()
             has_children = x.get_children().filter(enabled=True).exists()
-            y = {"id": x.pk, "name": x.name, "full_name": full_name, "has_children": has_children}
-            items.update({x.pk: y})
+            y = {"id": x.pk, "name": x.name, "full_name": full_name, "has_children": has_children, "order": x.order}
+            data.append(y)
 
-        return list(items.values())
+        # sort by order asc
+        data.sort(key=lambda x: x["order"])
+        return data
 
 
 class DepartmentsWithChildrenAndAncestorsOutputSLZ(DepartmentWithChildrenSLZ):
