@@ -46,9 +46,10 @@ from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
-from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
+from bkuser_core.profiles.models import LeaderThroughModel, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
@@ -120,7 +121,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     def get_serializer_context(self):
         origin = super().get_serializer_context()
-        origin.update({"extra_defaults": DynamicFieldInfo.objects.get_extras_default_values()})
+        origin.update({"extra_defaults": get_extras_default_from_local_cache()})
         return origin
 
     def get_renderers(self):

@@ -15,6 +15,7 @@ from rest_framework import serializers
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
+from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import (
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 def get_extras(extras_from_db: Union[dict, list], defaults: dict) -> dict:
     if not defaults:
-        defaults = DynamicFieldInfo.objects.get_extras_default_values()
+        defaults = get_extras_default_from_local_cache()
 
     formatted_extras = extras_from_db
 

@@ -36,7 +36,8 @@ from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.departments.signals import post_department_create
 from bkuser_core.departments.v2 import serializers as local_serializers
-from bkuser_core.profiles.models import DynamicFieldInfo, Profile
+from bkuser_core.profiles.cache import get_extras_default_from_local_cache
+from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.utils import force_use_raw_username
 from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
 
@@ -85,7 +86,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     def get_serializer_context(self):
         origin = super().get_serializer_context()
-        origin.update({"extra_defaults": DynamicFieldInfo.objects.get_extras_default_values()})
+        origin.update({"extra_defaults": get_extras_default_from_local_cache()})
         return origin
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))

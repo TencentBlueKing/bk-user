@@ -20,7 +20,6 @@ urlpatterns = [
         r"^api/v2/departments/$",
         views.DepartmentViewSet.as_view(
             {
-                # TODO: delete it? the web api refactored
                 "get": "list",
                 # TODO: delete it? the web api refactored
                 "post": "create",
@@ -74,7 +73,6 @@ urlpatterns = [
         r"^api/v2/departments/%s/profiles/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
-                # NOTE: saas remove this
                 "get": "get_profiles",
                 # NOTE: saas remove this
                 "post": "add_profiles",
