@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.db.models import F
-from rest_framework import generics, mixins, status
+from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .serializers import (
@@ -98,7 +98,7 @@ class FieldOrderUpdateApi(generics.UpdateAPIView):
         return Response(FieldOutputSLZ(obj).data)
 
 
-class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+class FieldUpdateDestroyApi(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [ManageFieldPermission]
 
     lookup_url_kwarg = "id"
@@ -106,11 +106,11 @@ class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, g
     queryset = DynamicFieldInfo.objects.filter(enabled=True)
     serializer_class = DynamicFieldUpdateInputSLZ
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         """更新自定义字段"""
         return self._update(request, partial=False)
 
-    def partial_update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """部分更新自定义字段"""
         return self._update(request, partial=True)
 
@@ -141,7 +141,7 @@ class FieldUpdateDestroyApi(mixins.UpdateModelMixin, mixins.DestroyModelMixin, g
         instance.save()
         return Response(FieldOutputSLZ(instance).data)
 
-    def destroy(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         """移除自定义字段"""
         instance = self.get_object()
         # 内置字段不允许删除

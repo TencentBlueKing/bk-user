@@ -116,7 +116,7 @@ class FieldsViewSet(BkUserApiProxy):
         api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
         return self.do_proxy(request, rewrite_path=api_path)
 
-    def update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         api_path = BkUserApiProxy.get_api_path(request)
         api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
         return self.do_proxy(request, rewrite_path=api_path)
