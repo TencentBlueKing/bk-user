@@ -77,7 +77,8 @@ class Department(TimestampMPTTModel):
             )
 
             # 当后端 DB 不支持 microseconds 时 create_time 会无法准确排序
-            target = Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
+            # target = Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
+            target = Profile.objects.filter(id__in=ids).filter(enabled=True).order_by("-id")
 
         if wildcard_search:
             target = target.filter(Q(username__icontains=wildcard_search) | Q(display_name__icontains=wildcard_search))

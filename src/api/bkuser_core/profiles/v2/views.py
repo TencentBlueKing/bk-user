@@ -184,6 +184,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if fields:
             self._check_fields(fields)
         else:
+            # FIXME: 这里应该用 model 的字段, 并且应该最小集合, 目前全获取, 导致放大(last_login_time/departments等)
             # 这里没传fields默认使用slz.fields是有问题的, 但是先保持接口行为一致, 不动fields声明(新版接口解决)
             fields = serializer_class().fields
 
