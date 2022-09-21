@@ -89,6 +89,7 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
 
 
 class PasswordModifyApi(generics.CreateAPIView):
+    # @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
     def post(self, request, *args, **kwargs):
         slz = PasswordModifyInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)

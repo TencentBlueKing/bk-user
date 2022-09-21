@@ -21,7 +21,6 @@ from rest_framework.serializers import Serializer
 
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier
 from bkuser_core.apis.v2.viewset import (
-    AdvancedBatchOperateViewSet,
     AdvancedListAPIView,
     AdvancedListSerializer,
     AdvancedModelViewSet,
@@ -38,8 +37,7 @@ from bkuser_core.departments.signals import post_department_create
 from bkuser_core.departments.v2 import serializers as local_serializers
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.models import Profile
-from bkuser_core.profiles.utils import force_use_raw_username
-from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, ProfileSerializer, RapidProfileSerializer
+from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, RapidProfileSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +50,6 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         AdvancedSearchFilter,
         filters.OrderingFilter,
     ]
-    iam_filter_actions = ("list", "list_tops")
 
     def _param_in_request(self, param_name: str, serializer_class: Type[Serializer], in_query: bool = True) -> bool:
         if in_query:
@@ -148,14 +145,15 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # 这个参数esb文档中有, 有用户调用
         profiles = instance.get_profiles(recursive=recursive, wildcard_search=wildcard_search)
         # 当用户请求数据时，判断其是否强制输出原始 username
-        if not force_use_raw_username(request):
-            # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
-            # default_domain = ProfileCategory.objects.get_default().domain
-            default_domain = get_default_category_domain_from_local_cache()
-            profiles = profiles.extra(
-                select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
-                select_params=(default_domain,),
-            )
+        # if not force_use_raw_username(request): # always be true
+
+        # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
+        # default_domain = ProfileCategory.objects.get_default().domain
+        default_domain = get_default_category_domain_from_local_cache()
+        profiles = profiles.extra(
+            select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
+            select_params=(default_domain,),
+        )
 
         page = self.paginate_queryset(profiles)
         # NOTE: RapidProfileSerializer 中的 last_login_time/extras会导致放大查询 => * 2
@@ -274,31 +272,6 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
                 raise error_codes.DEPARTMENT_NAME_CONFLICT
 
         return super().update(request, *args, **kwargs)
-
-
-class BatchDepartmentsViewSet(AdvancedBatchOperateViewSet):
-    serializer_class = local_serializers.DepartmentWithChildrenSLZ
-    queryset = Department.objects.filter(enabled=True)
-
-    @swagger_auto_schema(
-        query_serializer=local_serializers.BatchDepartmentsRetrieveSerializer(),
-        responses={"200": ProfileSerializer(many=True)},
-    )
-    def multiple_retrieve_profiles(self, request):
-        """批量获取组织的用户"""
-        serializer = local_serializers.BatchDepartmentsRetrieveSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-
-        ids = self._get_list_query_param(field_name="department_ids")
-        recursive = serializer.validated_data["recursive"]
-
-        ids = Department.tree_objects.get_queryset_descendants(
-            queryset=Department.objects.filter(id__in=ids), include_self=recursive
-        ).values_list("id", flat=True)
-
-        profile_ids = DepartmentThroughModel.objects.filter(department_id__in=ids).values_list("profile_id", flat=True)
-        profiles = Profile.objects.filter(id__in=profile_ids)
-        return Response(data=ProfileSerializer(profiles, many=True).data)
 
 
 class DepartmentProfileEdgeViewSet(AdvancedModelViewSet, AdvancedListAPIView):

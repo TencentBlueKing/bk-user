@@ -36,8 +36,6 @@ class CategoryViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         filters.OrderingFilter,
     ]
 
-    iam_filter_actions = ("list",)
-
     @method_decorator(clear_cache_if_succeed)
     @swagger_auto_schema(request_body=CreateCategorySerializer, responses={"200": CategorySerializer()})
     def create(self, request, *args, **kwargs):

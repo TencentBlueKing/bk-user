@@ -43,14 +43,4 @@ urlpatterns = [
         ),
         name="categories.action",
     ),
-    re_path(
-        r"^api/v2/categories/%s/restoration/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                # TODO: saas not used
-                "post": "restoration",
-            }
-        ),
-        name="categories.restoration",
-    ),
 ]

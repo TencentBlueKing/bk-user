@@ -15,7 +15,7 @@ from operator import or_
 from typing import Any, Dict, List, Optional
 
 from django.conf import settings
-from django.core.exceptions import FieldError, ObjectDoesNotExist
+from django.core.exceptions import FieldError
 from django.db.models import ManyToOneRel, Q, QuerySet
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -28,7 +28,7 @@ from rest_framework.response import Response
 from .constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
 from .serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, EmptySerializer, is_custom_fields_enabled
 from bkuser_core.audit.constants import OperationType
-from bkuser_core.audit.utils import audit_general_log, create_general_log
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_global.utils import force_str_2_bool
@@ -335,83 +335,3 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
         # 使用了 serializer 可能会有性能问题
         serializer = serializer_class(queryset, **kwargs)
         return Response(serializer.data)
-
-
-class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
-    """批量操作接口"""
-
-    CATEGORY_SENSITIVE = True
-
-    @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    def multiple_retrieve(self, request):
-        """批量获取"""
-        ids = self._get_list_query_param(field_name="query_ids") or []
-        instances = self.queryset.filter(pk__in=ids)
-        return Response(self.serializer_class(instances, many=True).data)
-
-    @method_decorator(clear_cache_if_succeed)
-    def multiple_update(self, request):
-        """批量更新，必须传递 id 作为查找字段"""
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-
-        query_objs = serializer.validated_data
-        updating_instances = []
-        for obj in query_objs:
-            try:
-                instance = self.queryset.get(pk=obj["id"])
-            except ObjectDoesNotExist:
-                logger.warning(
-                    "obj <%s-%s> not found or already been deleted.",
-                    self.queryset.model,
-                    obj,
-                )
-                continue
-            else:
-                create_general_log(
-                    operator=request.operator,
-                    operate_type=OperationType.UPDATE.value,
-                    operator_obj=instance,
-                    request=request,
-                )
-
-            if self.CATEGORY_SENSITIVE:
-                # TODO: 限制非本地目录进行修改
-                pass
-
-            single_serializer = serializer_class(instance=instance, data=obj)
-            single_serializer.is_valid(raise_exception=True)
-            single_serializer.save()
-            updating_instances.append(instance)
-
-        return Response(self.serializer_class(updating_instances, many=True).data)
-
-    @method_decorator(clear_cache_if_succeed)
-    def multiple_delete(self, request):
-        """批量删除"""
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-
-        query_objs = serializer.validated_data
-        for obj in query_objs:
-            try:
-                instance = self.queryset.get(pk=obj["id"])
-                create_general_log(
-                    operator=request.operator,
-                    operate_type=OperationType.DELETE.value,
-                    operator_obj=instance,
-                    request=request,
-                )
-
-                instance.delete()
-            except ObjectDoesNotExist:
-                logger.warning(
-                    "obj <%s-%s> not found or already been deleted.",
-                    self.queryset.model,
-                    obj,
-                )
-                continue
-
-        return Response()

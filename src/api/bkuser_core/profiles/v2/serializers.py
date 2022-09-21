@@ -18,12 +18,7 @@ from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, 
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
-from bkuser_core.profiles.utils import (
-    force_use_raw_username,
-    get_username,
-    parse_username_domain,
-    remove_sensitive_fields_for_profile,
-)
+from bkuser_core.profiles.utils import get_username, parse_username_domain, remove_sensitive_fields_for_profile
 from bkuser_core.profiles.validators import validate_domain, validate_username
 
 logger = logging.getLogger(__name__)
@@ -62,7 +57,6 @@ class LeaderSerializer(CustomFieldsMixin, serializers.Serializer):
 
     def get_username(self, data):
         return get_username(
-            force_use_raw_username(self.context.get("request")),
             data.category_id,
             data.username,
             data.domain,
@@ -85,7 +79,6 @@ class ProfileSerializer(CustomFieldsModelSerializer):
 
     def get_username(self, data):
         return get_username(
-            force_use_raw_username(self.context.get("request")),
             data.category_id,
             data.username,
             data.domain,
@@ -182,7 +175,6 @@ class ProfileMinimalSerializer(CustomFieldsModelSerializer):
 
     def get_username(self, data):
         return get_username(
-            force_use_raw_username(self.context.get("request")),
             data.category_id,
             data.username,
             data.domain,
@@ -210,7 +202,6 @@ class LoginBatchResponseSerializer(serializers.Serializer):
 
     def get_username(self, data):
         return get_username(
-            force_use_raw_username(self.context.get("request")),
             data.category_id,
             data.username,
             data.domain,
@@ -228,13 +219,6 @@ class DynamicFieldsSerializer(CustomFieldsModelSerializer):
     class Meta:
         model = DynamicFieldInfo
         exclude = ("update_time", "create_time")
-
-
-#########
-# Token #
-#########
-class ProfileTokenSerializer(serializers.Serializer):
-    token = serializers.CharField()
 
 
 ########
@@ -307,11 +291,3 @@ class LoginUpsertSerializer(serializers.Serializer):
 class LoginBatchQuerySerializer(serializers.Serializer):
     username_list = serializers.ListField(child=serializers.CharField(), required=False)
     is_complete = serializers.BooleanField(required=False)
-
-
-############
-# Password #
-############
-class ProfileModifyPasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True, max_length=254)
-    new_password = serializers.CharField(required=True, max_length=254)

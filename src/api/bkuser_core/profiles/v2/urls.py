@@ -43,16 +43,6 @@ urlpatterns = [
         name="profiles.action",
     ),
     url(
-        r"^api/v2/profiles/%s/restoration/$" % PVAR_PROFILE_ID,
-        views.ProfileViewSet.as_view(
-            {
-                # NOTE: saas has removed this
-                "post": "restoration",
-            }
-        ),
-        name="profiles.restoration",
-    ),
-    url(
         r"^api/v2/profiles/%s/departments/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
@@ -69,48 +59,6 @@ urlpatterns = [
             }
         ),
         name="profiles.leaders",
-    ),
-    url(
-        r"^api/v2/profiles/%s/token/$" % PVAR_PROFILE_ID,
-        views.ProfileViewSet.as_view(
-            {
-                "post": "generate_token",
-            }
-        ),
-        name="profiles.generate_token",
-    ),
-    url(
-        r"^api/v2/batch/profiles/$",
-        views.BatchProfileViewSet.as_view(
-            {
-                "get": "multiple_retrieve",
-                # TODO: saas has revmoved this
-                "patch": "multiple_update",
-                # TODO: saas has revmoved this
-                "delete": "multiple_delete",
-            }
-        ),
-        name="profiles.batch",
-    ),
-    url(
-        r"^api/v2/token/%s/$" % PVAR_TOKEN,
-        views.ProfileViewSet.as_view(
-            {
-                # NOTE: saas removed this
-                "get": "retrieve_by_token",
-            }
-        ),
-        name="profiles.retrieve_by_token",
-    ),
-    url(
-        r"^api/v2/profiles/%s/modify_password/$" % PVAR_PROFILE_ID,
-        views.ProfileViewSet.as_view(
-            {
-                # NOTE: saas removed this
-                "post": "modify_password",
-            }
-        ),
-        name="profiles.modify_password",
     ),
     ########
     # Edge #

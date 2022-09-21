@@ -21,7 +21,6 @@ urlpatterns = [
         views.DepartmentViewSet.as_view(
             {
                 "get": "list",
-                # TODO: delete it? the web api refactored
                 "post": "create",
             }
         ),
@@ -33,6 +32,7 @@ urlpatterns = [
             {
                 # TODO: delete it? the web api refactored
                 "get": "retrieve",
+                # TODO: delete it? the web api refactored
                 "post": "update",
                 # TODO: delete it? the web api refactored
                 "delete": "destroy",
@@ -41,15 +41,6 @@ urlpatterns = [
             }
         ),
         name="departments.action",
-    ),
-    url(
-        r"^api/v2/departments/%s/restoration/$" % PVAR_DEPARTMENT_ID,
-        views.DepartmentViewSet.as_view(
-            {
-                "post": "restoration",
-            }
-        ),
-        name="departments.restoration",
     ),
     url(
         r"^api/v2/departments/%s/ancestors/$" % PVAR_DEPARTMENT_ID,
@@ -79,19 +70,6 @@ urlpatterns = [
             }
         ),
         name="departments.profiles",
-    ),
-    #########
-    # Batch #
-    #########
-    # TODO: saas has removed this api
-    url(
-        r"^api/v2/batch/departments/profiles/$",
-        views.BatchDepartmentsViewSet.as_view(
-            {
-                "get": "multiple_retrieve_profiles",
-            }
-        ),
-        name="department.batch",
     ),
     ########
     # Edge #

@@ -8,26 +8,45 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
+
+from django.conf import settings
+from django.db import models
+
+logger = logging.getLogger(__name__)
 
 
-class BaseDataSource:
-    """数据源类型，主要定义其数据格式等内容"""
+class ProfileCategoryManager(models.Manager):
+    def switch_default(self, name):
+        """切换默认用户目录"""
+        category = self.get(default=True)
 
-    type: str
+        if category.name == name:
+            return
 
+        category.default = False
+        category.save(update_fields=["default"])
 
-class BaseDataImporter:
-    type: str
-    config: dict
+        new_default_category = self.get(name=name)
+        new_default_category.default = True
+        new_default_category.save(update_fields=["default"])
 
+    def get_default(self):
+        return self.get(default=True)
 
-class HttpAPIDataImporter(BaseDataImporter):
-    """HTTP API 同步数据导入"""
+    def check_writable(self, category_id) -> bool:
+        try:
+            return self.get(pk=category_id).type in settings.CAN_MANUAL_WRITE_LISTS
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("cannot get category<%s>", category_id)
+            return False
 
-    type = "http_api"
+    def get_max_order(self) -> int:
+        orders = self.all().values_list("order", flat=True)
+        # 若没有子组织，则返回 1
+        if not orders:
+            orders = [
+                1,
+            ]
 
-
-class MemDataImporter(BaseDataImporter):
-    """内存对象数据导入"""
-
-    type = "mem"
+        return max(orders)

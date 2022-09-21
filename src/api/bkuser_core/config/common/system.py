@@ -61,8 +61,6 @@ BKAPP_OTEL_DATA_TOKEN = env("BKAPP_OTEL_DATA_TOKEN", default="")
 #### 1. SaaS调用api
 #### 2. for_sync场景从一个用户管理同步数据到另一个用户管理中使用
 FORCE_RAW_RESPONSE_HEADER = "HTTP_FORCE_RAW_RESPONSE"
-# 强制返回原始用户名（不带登陆域）请求头
-FORCE_RAW_USERNAME_HEADER = "HTTP_RAW_USERNAME"
 OPERATOR_HEADER = "HTTP_X_BKUSER_OPERATOR"
 
 # 最大的自定义字段数量（暂未启用）

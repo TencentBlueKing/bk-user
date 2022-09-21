@@ -19,7 +19,13 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.notifier import send_mail, send_sms
 from bkuser_core.profiles.constants import NOTICE_METHOD_EMAIL, NOTICE_METHOD_SMS, TypeOfExpiration
 from bkuser_core.profiles.models import Profile
+from bkuser_core.user_settings.constants import (
+    ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY,
+    PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY,
+    SettingsEnableNamespaces,
+)
 from bkuser_core.user_settings.loader import ConfigProvider
+from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +57,9 @@ def get_logined_profiles():
     """
     获取在平台登录过的所有用户
     """
-    subquery = LogIn.objects.filter(profile=OuterRef('pk')).values_list('id')
+    subquery = LogIn.objects.filter(profile=OuterRef("pk")).values_list("id")
     logined_profile_ids = (
-        Profile.objects.annotate(temp=Exists(subquery)).filter(temp=True).values_list('id', flat=True)
+        Profile.objects.annotate(temp=Exists(subquery)).filter(temp=True).values_list("id", flat=True)
     )
     logined_profiles = Profile.objects.filter(id__in=logined_profile_ids)
 
@@ -150,3 +156,82 @@ def get_notice_config_for_expiration(expiration_type, profile, config_loader):
     logger.debug("--------- notice_config(%s) of profile(%s) ----------", notice_config, profile)
 
     return notice_config
+
+
+def get_profiles_for_account_expiration():
+    """
+    获取 需要进行账号过期相关通知的用户
+    """
+    expiring_profile_list = []
+    expired_profile_list = []
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
+
+    for category_id in category_ids:
+        notice_interval = (
+            Setting.objects.filter(
+                category_id=category_id,
+                meta__key=ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY,
+                meta__namespace=SettingsEnableNamespaces.ACCOUNT.value,
+            )
+            .first()
+            .value
+        )
+
+        expiration_dates = get_expiration_dates(notice_interval)
+        logined_profiles = get_logined_profiles()
+
+        expiring_profiles = logined_profiles.filter(
+            account_expiration_date__in=expiration_dates, category_id=category_id
+        ).values("id", "username", "category_id", "email", "telephone", "account_expiration_date")
+        expiring_profile_list.extend(expiring_profiles)
+
+        expired_profiles = logined_profiles.filter(
+            account_expiration_date__lt=datetime.date.today(), category_id=category_id
+        ).values("id", "username", "category_id", "email", "telephone", "account_expiration_date")
+        expired_profile_list.extend(expired_profiles)
+
+    return expiring_profile_list, expired_profile_list
+
+
+def get_profiles_for_password_expiration():
+    """
+    获取 需要进行密码过期相关通知的用户
+    """
+    expiring_profile_list = []
+    expired_profile_list = []
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
+    logined_profiles = get_logined_profiles()
+
+    for category_id in category_ids:
+        notice_interval = (
+            Setting.objects.filter(
+                category_id=category_id,
+                meta__key=PASSWORD_EXPIRATION_NOTICE_INTERVAL_META_KEY,
+                meta__namespace=SettingsEnableNamespaces.PASSWORD.value,
+            )
+            .first()
+            .value
+        )
+
+        expiration_dates = get_expiration_dates(notice_interval)
+        profiles = logined_profiles.filter(category_id=category_id, password_valid_days__gt=0).values(
+            "id",
+            "username",
+            "category_id",
+            "email",
+            "telephone",
+            "password_valid_days",
+            "password_update_time",
+            "create_time",
+        )
+        for profile in profiles:
+            valid_period = datetime.timedelta(days=profile["password_valid_days"])
+            expired_at = (profile["password_update_time"] or profile["create_time"]) + valid_period
+
+            if expired_at.date() in expiration_dates:
+                expiring_profile_list.append(profile)
+
+            if expired_at.date() < datetime.date.today():
+                expired_profile_list.append(profile)
+
+    return expiring_profile_list, expired_profile_list

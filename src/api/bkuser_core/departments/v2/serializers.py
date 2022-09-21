@@ -163,8 +163,3 @@ class DepartmentListSerializer(AdvancedListSerializer):
 
 class DepartmentRetrieveSerializer(AdvancedRetrieveSerialzier):
     with_ancestors = serializers.BooleanField(default=False)
-
-
-class BatchDepartmentsRetrieveSerializer(serializers.Serializer):
-    department_ids = serializers.CharField(help_text="department id 列表，以 , 分隔")
-    recursive = serializers.BooleanField(default=False)

@@ -8,24 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import url
+from typing import List
 
-from . import views
-from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
-
-PVAR_PROFILE_ID = r"(?P<%s>[a-z0-9-]+)" % LOOKUP_FIELD_NAME
-
-urlpatterns = [
-    # TODO: saas has remove this
-    url(
-        r"^api/v2/audit/reset_password_log/$",
-        views.ResetPasswordLogViewSet.as_view({"get": "list"}),
-        name="reset_password_log",
-    ),
-    # TODO: saas has remove this
-    url(
-        r"^api/v2/audit/reset_password_log/%s/$" % PVAR_PROFILE_ID,
-        views.ResetPasswordLogViewSet.as_view({"get": "retrieve"}),
-        name="reset_password_log.action",
-    ),
-]
+urlpatterns: List = []
