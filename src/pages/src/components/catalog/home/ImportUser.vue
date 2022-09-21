@@ -102,7 +102,7 @@ export default {
         // tips: 后端提供的 SITE_URL 需以 / 开头
         url = window.location.origin + url;
       }
-      newA.href = `${url}/api/v2/categories/1/export_template/`;
+      newA.href = `${url}/api/v1/web/categories/1/operations/export_template/`;
       newA.download = 'example.xlsx';
       newA.click();
     },

@@ -39,7 +39,9 @@
         <!-- 输入框 -->
         <div class="input-text">
           <InputPhone v-if="item.key === 'telephone'" :item="item" :edit-status="editStatus" />
-          <InputDate v-else-if="item.key.includes(dateKey)" :item="item" :edit-status="editStatus" />
+          <InputDate
+            v-else-if="item.key.includes(dateKey) || item.type === 'timer'"
+            :item="item" :edit-status="editStatus" />
           <InputString
             v-else-if="item.type === 'string' || item.type === 'number'"
             :item="item"
