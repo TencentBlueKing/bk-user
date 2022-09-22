@@ -26,7 +26,6 @@ from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
 from bkuser_core.user_settings.constants import InitPasswordMethod
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_global.local import local
-from bkuser_global.utils import force_str_2_bool
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
@@ -162,21 +161,22 @@ def align_country_iso_code(country_code: str, iso_code: str) -> Tuple[str, str]:
     return str(country_code), iso_code.upper()
 
 
-def force_use_raw_username(request):
-    """判断是否强制使用原生 username"""
-    if not request:
-        return True
+# def force_use_raw_username(request):
+#     """判断是否强制使用原生 username"""
+#     if not request:
+#         return True
 
-    if settings.FORCE_RAW_USERNAME_HEADER in request.META:
-        return force_str_2_bool(request.META[settings.FORCE_RAW_USERNAME_HEADER])
+#     if settings.FORCE_RAW_USERNAME_HEADER in request.META:
+#         return force_str_2_bool(request.META[settings.FORCE_RAW_USERNAME_HEADER])
 
-    return False
+#     return False
 
 
-def get_username(force_use_raw: bool, category_id: int, username: str, domain: str):
+# def get_username(force_use_raw: bool, category_id: int, username: str, domain: str):
+def get_username(category_id: int, username: str, domain: str):
     """获取用户名(通过请求头返回 username 形式)"""
-    if force_use_raw:
-        return username
+    # if force_use_raw:
+    #     return username
 
     # NOTE: 存在放大查询, 每一个username处理都会带来一次查询
     # if ProfileCategory.objects.get_default().id == category_id:

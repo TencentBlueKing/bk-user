@@ -8,10 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework.serializers import BooleanField, CharField, SerializerMethodField
+from rest_framework.serializers import CharField
 from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer
@@ -22,16 +21,17 @@ from bkuser_core.profiles.validators import validate_domain
 class CategorySerializer(CustomFieldsModelSerializer):
     """用户目录 Serializer"""
 
-    configured = SerializerMethodField()
-    syncing = BooleanField(read_only=True, required=False, allow_null=True)
-    unfilled_namespaces = SerializerMethodField(required=False)
+    # NOTE: saas API 独立了, 对外 API 不需要这三个字段
+    # configured = SerializerMethodField()
+    # syncing = BooleanField(read_only=True, required=False, allow_null=True)
+    # unfilled_namespaces = SerializerMethodField(required=False)
 
-    def get_configured(self, obj) -> bool:
-        return obj.configured
+    # def get_configured(self, obj) -> bool:
+    #     return obj.configured
 
-    def get_unfilled_namespaces(self, obj) -> List[str]:
-        unfilled_nss = set(obj.get_unfilled_settings().values_list("namespace", flat=True))
-        return list(unfilled_nss)
+    # def get_unfilled_namespaces(self, obj) -> List[str]:
+    #     unfilled_nss = set(obj.get_unfilled_settings().values_list("namespace", flat=True))
+    #     return list(unfilled_nss)
 
     class Meta:
         model = ProfileCategory

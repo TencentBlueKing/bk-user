@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
+
 from django.http import HttpResponse
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
@@ -15,6 +17,8 @@ from django.template.response import TemplateResponse
 
 from .proxy import BkUserApiProxy
 from bkuser_shell.common.error_codes import error_codes
+
+logger = logging.getLogger(__name__)
 
 # FIXME:
 # 1. 推动前端切换到新版api
@@ -112,7 +116,7 @@ class FieldsViewSet(BkUserApiProxy):
         api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
         return self.do_proxy(request, rewrite_path=api_path)
 
-    def update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         api_path = BkUserApiProxy.get_api_path(request)
         api_path = api_path.replace("/api/v2/fields/", "/api/v1/web/fields/")
         return self.do_proxy(request, rewrite_path=api_path)
@@ -283,7 +287,7 @@ class CategoryDepartmentsViewSet(BkUserApiProxy):
     def list(self, request, *args, **kwargs):
         api_path = BkUserApiProxy.get_api_path(request)
         # in: /api/v2/categories/13/departments/search/?keyword=a&max_items=40&with_ancestors=true
-        # out: /api/v1/web/categories/1/13/departments/?keyword=a&max_items=40&with_ancestors=true
+        # out: /api/v1/web/categories/13/departments/?keyword=a&max_items=40&with_ancestors=true
         # NOTE: 区别: 1. with_ancestors=true无效 2. max_items无效需要改成page_size(并且加上page)
         api_path = api_path.replace("/api/v2/categories/", "/api/v1/web/categories/")
         api_path = api_path.replace("departments/search/", "departments/")
@@ -370,3 +374,17 @@ class PasswordModifyViewSet(BkUserApiProxy):
         """修改密码"""
         # FIXME: 这个没有测试, 没有username
         return self.do_proxy(request, rewrite_path="/api/v1/web/passwords/modify/")
+
+
+class CommonProxyViewSet(BkUserApiProxy):
+    def request(self, request, *args, **kwargs):
+        logger.info("the common proxy")
+        return self.do_proxy(request)
+
+
+class CommonProxyNoAuthViewSet(BkUserApiProxy):
+    permission_classes: list = []
+
+    def request(self, request, *args, **kwargs):
+        logger.info("the common no auth proxy")
+        return self.do_proxy(request)

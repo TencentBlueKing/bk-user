@@ -28,6 +28,8 @@ class ProfileSearchFilter(AdvancedSearchFilter):
         if not search_field == "username":
             return super().make_lookups(query_data, queryset, search_field)
 
+        # FIXME: 逐步去除参数/弱化, 直到删除这里的逻辑
+
         exact_lookups, fuzzy_lookups = query_data.get("exact_lookups"), query_data.get("fuzzy_lookups")
         # default_domain = ProfileCategory.objects.get_default().domain
         default_domain = get_default_category_domain_from_local_cache()
@@ -36,6 +38,7 @@ class ProfileSearchFilter(AdvancedSearchFilter):
         queryset = queryset.filter(self.make_time_filter(query_data))
 
         if exact_lookups:
+            # 意图: 如果记录的domain == default.local则直接username=%s, 否则是 username@domain=%s
             lookup_sql = " OR ".join([f"({condition_str}=%s )"] * len(exact_lookups))
             lookups = exact_lookups
         elif fuzzy_lookups:

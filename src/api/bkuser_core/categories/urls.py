@@ -23,7 +23,6 @@ urlpatterns = [
         r"^api/v2/categories/$",
         views.CategoryViewSet.as_view(
             {
-                # TODO: saas not used, but login or esb use?
                 "get": "list",
                 # TODO: saas not used
                 "post": "create",
@@ -43,15 +42,5 @@ urlpatterns = [
             }
         ),
         name="categories.action",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/restoration/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                # TODO: saas not used
-                "post": "restoration",
-            }
-        ),
-        name="categories.restoration",
     ),
 ]

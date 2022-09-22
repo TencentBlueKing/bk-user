@@ -163,6 +163,7 @@ class ExcelSyncer(Syncer):
                 logger.debug("empty line, skipping")
                 continue
 
+            # FIXME: 这里单条异常没有任何消息暴露到外部, 需要提供一个 summary 机制提示给到外部, 成功多少条/失败多少条, 失败都是哪些
             # 拼接 profile 参数，生成 Profile 对象
             try:
                 profile_params = parser_set.parse_row(user_raw_info, skip_keys=["department_name", "leader"])

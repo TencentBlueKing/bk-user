@@ -14,23 +14,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Callable, ContextManager, Iterator, Optional
 
-from bkuser_core.categories.models import ProfileCategory
-
 logger = logging.getLogger(__name__)
-
-
-def change_category_type(category_id: int, target_type: str):
-    """将其他类型的目录转换"""
-    ins = ProfileCategory.objects.get(pk=category_id)
-
-    logger.info(
-        "going to change type of Category<%s> from %s to %s",
-        ins.display_name,
-        ins.type,
-        target_type,
-    )
-    ins.type = target_type
-    ins.save()
 
 
 @dataclass

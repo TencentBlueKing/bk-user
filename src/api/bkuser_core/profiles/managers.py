@@ -72,6 +72,10 @@ class DynamicFieldInfoManager(models.Manager):
             influenced_item.order = models.F("order") + 1 if ascending else models.F("order") - 1
             influenced_item.save(update_fields=["order"])
 
+        # save the target
+        instance.order = new_order
+        instance.save(update_fields=["order"])
+
         return
 
     def get_extras_default_values(self) -> dict:

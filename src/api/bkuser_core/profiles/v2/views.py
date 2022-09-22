@@ -31,31 +31,25 @@ from rest_framework_jsonp.renderers import JSONPRenderer
 from ...departments.v2 import serializers as department_serializer
 from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
-from bkuser_core.apis.v2.serializers import (
-    AdvancedListSerializer,
-    AdvancedRetrieveSerialzier,
-    BatchRetrieveSerializer,
-    EmptySerializer,
-)
-from bkuser_core.apis.v2.viewset import AdvancedBatchOperateViewSet, AdvancedListAPIView, AdvancedModelViewSet
+from bkuser_core.apis.v2.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier
+from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
-from bkuser_core.audit.utils import audit_general_log, create_general_log, create_profile_log
+from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.cache import get_default_category_domain_from_local_cache
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.constants import ProfileStatus
-from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch, ProfileEmailEmpty
-from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile, ProfileTokenHolder
+from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
+from bkuser_core.profiles.models import LeaderThroughModel, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
-from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import (
     align_country_iso_code,
     check_former_passwords,
-    force_use_raw_username,
     make_passwd_reset_url_by_token,
     make_password_by_config,
     parse_username_domain,
@@ -76,8 +70,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
     lookup_field = "username"
     filter_backends = [ProfileSearchFilter, filters.OrderingFilter]
     relation_fields = ["departments", "leader", "login_set"]
-
-    iam_filter_actions: tuple = ("list",)
 
     def get_object(self):
         _default_lookup_field = self.lookup_field
@@ -120,7 +112,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     def get_serializer_context(self):
         origin = super().get_serializer_context()
-        origin.update({"extra_defaults": DynamicFieldInfo.objects.get_extras_default_values()})
+        origin.update({"extra_defaults": get_extras_default_from_local_cache()})
         return origin
 
     def get_renderers(self):
@@ -184,6 +176,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if fields:
             self._check_fields(fields)
         else:
+            # FIXME: 这里应该用 model 的字段, 并且应该最小集合, 目前全获取, 导致放大(last_login_time/departments等)
             # 这里没传fields默认使用slz.fields是有问题的, 但是先保持接口行为一致, 不动fields声明(新版接口解决)
             fields = serializer_class().fields
 
@@ -201,17 +194,17 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         queryset = queryset.prefetch_related("departments", "leader")
 
         # 当用户请求数据时，判断其是否强制输出原始 username
-        if not force_use_raw_username(request):
-            # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
-            if "username" in fields:
-                # FIXME: bug here? query profiles from other category, not the default
-                # default_domain = ProfileCategory.objects.get_default().domain
-                default_domain = get_default_category_domain_from_local_cache()
-                # 这里拼装的 username@domain, 没有走到serializer中的get_username
-                queryset = queryset.extra(
-                    select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
-                    select_params=(default_domain,),
-                )
+        # if not force_use_raw_username(request): # always be true
+        # 直接在 DB 中拼接 username & domain，比在 serializer 中快很多
+        if "username" in fields:
+            # FIXME: bug here? query profiles from other category, not the default
+            # default_domain = ProfileCategory.objects.get_default().domain
+            default_domain = get_default_category_domain_from_local_cache()
+            # 这里拼装的 username@domain, 没有走到serializer中的get_username
+            queryset = queryset.extra(
+                select={"username": "if(`domain`= %s, username, CONCAT(username, '@', domain))"},
+                select_params=(default_domain,),
+            )
 
         page = self.paginate_queryset(queryset)
         # page may be empty list
@@ -436,138 +429,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         目前采用软删除
         """
         return super().destroy(request, *args, **kwargs)
-
-    @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
-    @swagger_auto_schema(
-        query_serializer=AdvancedRetrieveSerialzier(),
-        request_body=local_serializers.ProfileModifyPasswordSerializer,
-        responses={"200": EmptySerializer()},
-    )
-    def modify_password(self, request, *args, **kwargs):
-        """修改用户密码
-        不同于直接更新 password 字段，修改密码 API 面向普通用户，需要校验原密码
-        """
-        instance = self.get_object()
-        serializer = local_serializers.ProfileModifyPasswordSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        old_password = serializer.validated_data["old_password"]
-        new_password = serializer.validated_data["new_password"]
-
-        config_loader = ConfigProvider(category_id=instance.category_id)
-        try:
-            max_password_history = config_loader.get("max_password_history", settings.DEFAULT_MAX_PASSWORD_HISTORY)
-            if check_former_passwords(instance, new_password, int(max_password_history)):
-                raise error_codes.PASSWORD_DUPLICATED.f(max_password_history=max_password_history)
-        except SettingHasBeenDisabledError:
-            logger.info("category<%s> has disabled checking password", instance.category_id)
-
-        if not instance.check_password(old_password):
-            raise error_codes.PASSWORD_ERROR
-
-        PasswordValidator(
-            min_length=int(config_loader["password_min_length"]),
-            max_length=settings.PASSWORD_MAX_LENGTH,
-            include_elements=config_loader["password_must_includes"],
-            exclude_elements_config=config_loader["exclude_elements_config"],
-        ).validate(new_password)
-
-        instance.password = make_password(new_password)
-        instance.password_update_time = now()
-        instance.save(update_fields=["password", "password_update_time", "update_time"])
-
-        modify_summary = {
-            "request": request,
-            "should_notify": True,
-            "raw_password": new_password,
-        }
-        post_profile_update.send(
-            sender=self,
-            instance=instance,
-            operator=request.operator,
-            extra_values=modify_summary,
-        )
-        return Response(data=local_serializers.ProfileMinimalSerializer(instance).data)
-
-    @swagger_auto_schema(
-        query_serializer=AdvancedRetrieveSerialzier(),
-        request_body=EmptySerializer,
-        responses={"200": local_serializers.ProfileTokenSerializer()},
-    )
-    def generate_token(self, request, *args, **kwargs):
-        """生成用户 Token
-        生成代表用户的 Token
-        """
-        instance = self.get_object()
-        token_holder = ProfileTokenHolder.objects.create(profile=instance)
-
-        try:
-            send_password_by_email.delay(profile_id=instance.id, token=token_holder.token, init=False)
-        except ProfileEmailEmpty:
-            raise error_codes.EMAIL_NOT_PROVIDED
-        except Exception:  # pylint: disable=broad-except
-            logger.exception(
-                "failed to send password via email. [profile.id=%s, profile.username=%s]",
-                instance.id,
-                instance.username,
-            )
-
-        return Response(data=local_serializers.ProfileTokenSerializer(token_holder).data)
-
-    @swagger_auto_schema(
-        manual_parameters=[],
-        responses={"200": local_serializers.ProfileSerializer()},
-        tags=["profiles"],
-    )
-    def retrieve_by_token(self, request, token, *args, **kwargs):
-        """通过 Token 获取用户
-        通过有效的 token 获取用户信息
-        """
-        try:
-            token_holder = ProfileTokenHolder.objects.get(token=token, enabled=True)
-        except ProfileTokenHolder.DoesNotExist:
-            logger.info("token<%s> not exist in db", token)
-            raise error_codes.CANNOT_GET_TOKEN_HOLDER
-
-        if token_holder.expired:
-            raise error_codes.PROFILE_TOKEN_EXPIRED
-
-        return Response(data=local_serializers.ProfileSerializer(token_holder.profile).data)
-
-
-class BatchProfileViewSet(AdvancedBatchOperateViewSet):
-    serializer_class = local_serializers.ProfileSerializer
-    queryset = Profile.objects.filter(enabled=True)
-
-    def get_serializer_class(self):
-        """Serializer 路由"""
-        if self.action in ("multiple_update", "multiple_delete"):
-            return local_serializers.UpdateProfileSerializer
-        else:
-            return self.serializer_class
-
-    @swagger_auto_schema(
-        query_serializer=BatchRetrieveSerializer(), responses={"200": local_serializers.ProfileSerializer(many=True)}
-    )
-    def multiple_retrieve(self, request):
-        """批量获取用户"""
-        return super().multiple_retrieve(request)
-
-    @swagger_auto_schema(
-        request_body=local_serializers.UpdateProfileSerializer(many=True),
-        responses={"200": local_serializers.ProfileSerializer(many=True)},
-    )
-    def multiple_update(self, request):
-        """批量更新用户"""
-        return super().multiple_update(request)
-
-    @swagger_auto_schema(
-        request_body=local_serializers.UpdateProfileSerializer(many=True),
-        responses={"200": EmptySerializer()},
-    )
-    def multiple_delete(self, request):
-        """批量删除用户"""
-        return super().multiple_delete(request)
 
 
 class ProfileLoginViewSet(viewsets.ViewSet):

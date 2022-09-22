@@ -42,7 +42,7 @@ from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAn
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldOutputSLZ
 from bkuser_core.api.web.utils import get_category, get_operator, list_setting_metas
-from bkuser_core.api.web.viewset import CustomPagination, CustomPaginationData
+from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import (
     IAMAction,
@@ -552,9 +552,7 @@ class CategoryOperationSwitchOrderApi(generics.UpdateAPIView):
 
 class CategoryProfileListApi(generics.ListAPIView):
     permission_classes = [ViewCategoryPermission]
-    # FIXME: 所有接口都是count/results, 但是这个接口前端用的count/data
-    # TODO: 需要: 前端切换, 去掉这个类 CustomPaginationData
-    pagination_class = CustomPaginationData
+    pagination_class = CustomPagination
     serializer_class = CategoryProfileOutputSLZ
 
     def get_queryset(self):

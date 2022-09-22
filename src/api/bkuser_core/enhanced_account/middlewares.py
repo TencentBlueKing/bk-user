@@ -22,10 +22,6 @@ from rest_framework.authentication import SessionAuthentication
 logger = logging.getLogger(__name__)
 
 
-APP_INFO_HEADER = "HTTP_X_APP_AUTH_INFO"
-OPERATOR_HEADER = "HTTP_X_BKUSER_OPERATOR"
-
-
 class AppLimiterMiddleware(MiddlewareMixin):
     """限制只有某些应用能够访问"""
 
@@ -109,7 +105,7 @@ class RequestBaseInfo:
 class OperatorMiddleware(MiddlewareMixin):
     def get_operator_from_req(self, request: HttpRequest):
         # TODO: get operator from esb
-        return request.META.get(OPERATOR_HEADER, "nobody")
+        return request.META.get(settings.OPERATOR_HEADER, "nobody")
 
     def process_request(self, request: HttpRequest):
         base_info = RequestBaseInfo.from_request(request)

@@ -20,8 +20,8 @@ from django_celery_beat.models import PeriodicTask
 
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.categories.constants import TIMEOUT_THRESHOLD, CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
-from bkuser_core.categories.db_managers import ProfileCategoryManager
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError
+from bkuser_core.categories.managers import ProfileCategoryManager
 from bkuser_core.common.models import TimestampedModel
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.constants import ProfileStatus

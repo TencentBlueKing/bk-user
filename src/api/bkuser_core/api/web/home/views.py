@@ -144,6 +144,10 @@ class HomeTreeListApi(generics.ListCreateAPIView):
                 managed_categories_map[dep_cate_id] = all_categories_map[dep_cate_id]
             managed_categories_map[dep_cate_id]["departments"].append(department)
 
+        # sort by order
+        for category in managed_categories_map.values():
+            category["departments"].sort(key=lambda x: x.order)
+
         return Response(
             data=DepartmentListResultCategoryOutputSLZ(managed_categories_map.values(), many=True).data,
             status=status.HTTP_200_OK,
