@@ -153,6 +153,7 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     enabled = serializers.BooleanField(required=False, help_text="是否启用", default=True)
     # extras = serializers.JSONField(required=False, help_text="扩展字段")
     password_valid_days = serializers.IntegerField(required=False, help_text="密码有效期")
+    account_expiration_date = serializers.CharField(required=False)
     country_code = serializers.CharField(required=False, help_text="国家码")
     iso_code = serializers.CharField(required=False, help_text="国家码")
     time_zone = serializers.CharField(required=False, help_text="时区")
