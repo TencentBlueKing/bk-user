@@ -592,6 +592,9 @@ class CategoryDepartmentListApi(generics.ListAPIView):
 
         keyword = data.get("keyword")
         if keyword:
-            queryset = queryset.filter(name__icontains=keyword)
+            if keyword.isdigit():
+                queryset = queryset.filter(Q(name__icontains=keyword) | Q(id=keyword))
+            else:
+                queryset = queryset.filter(name__icontains=keyword)
 
         return queryset
