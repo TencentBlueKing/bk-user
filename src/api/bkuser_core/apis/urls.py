@@ -36,8 +36,8 @@ schema_view = get_schema_view(
         url(r"^", include("bkuser_core.departments.urls")),
         url(r"^", include("bkuser_core.profiles.urls")),
         url(r"^", include("bkuser_core.categories.urls")),
-        url(r"^", include("bkuser_core.user_settings.urls")),
-        url(r"^", include("bkuser_core.audit.urls")),
+        # url(r"^", include("bkuser_core.user_settings.urls")),
+        # url(r"^", include("bkuser_core.audit.urls")),
     ],
 )
 

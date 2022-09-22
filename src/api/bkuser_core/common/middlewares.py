@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
+from rest_framework import status
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
@@ -44,7 +45,6 @@ class MethodOverrideMiddleware(MiddlewareMixin):
                 request_get_params._mutable = original_mutable
 
 
-# FIXME: remove this, all use ee_format for now!
 class DynamicResponseFormatMiddleware:
     """根据动态修改返回值格式
     - 原生格式
@@ -55,7 +55,6 @@ class DynamicResponseFormatMiddleware:
         """是否应该使用原生格式返回"""
         # 非 API 请求不包装返回值
         # NOTE: 目前有环境调用/api/v2/profiles/用到通过header强制使用raw response, 所以暂时不能去掉
-
         if not req.path.startswith("/api/"):
             return True
 
@@ -69,6 +68,7 @@ class DynamicResponseFormatMiddleware:
         """强制刷返回值"""
         # 来自缓存的 response 没有对应属性
         # 由于 response 已经被渲染，并不需要 callback
+        # FIXME: 这里204的处理有问题, 强制渲染会导致204卡主(一直不结束)
         force_data = {"result": True, "code": 0, "message": "success", "data": getattr(resp, "data", None)}
 
         if not getattr(resp, "_post_render_callbacks", None):
@@ -89,6 +89,10 @@ class DynamicResponseFormatMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
+
+        # 204 无内容不需要包装
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+            return response
 
         # exception handler 将添加标记, 避免重复处理
         if getattr(response, "from_exception", None):
