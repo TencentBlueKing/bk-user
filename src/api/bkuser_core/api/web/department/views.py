@@ -120,7 +120,7 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
             raise error_codes.CANNOT_DELETE_DEPARTMENT.f(_("当前部门下存在用户无法删除"))
 
         instance.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_200_OK)
 
 
 class DepartmentSearchApi(generics.ListAPIView):

@@ -117,6 +117,16 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
         validated_data = slz.validated_data
 
+        # 前端是把extras字段打平提交的
+        fields = DynamicFieldInfo.objects.filter(enabled=True).all()
+        extra_fields = {key: value for key, value in request.data.items() if key not in validated_data}
+        logger.info("%s %s", extra_fields.keys(), [x.name for x in fields if not x.builtin])
+        unknown_fields = set(extra_fields.keys()) - set([x.name for x in fields if not x.builtin])  # noqa
+        if unknown_fields:
+            raise error_codes.UNKNOWN_FIELD.f(", ".join(list(unknown_fields)))
+
+        slz.validated_data["extras"] = {key: value for key, value in extra_fields.items()}
+
         # 只允许本地目录修改
         if not ProfileCategory.objects.check_writable(instance.category_id):
             raise error_codes.CANNOT_MANUAL_WRITE_INTO
