@@ -40,11 +40,6 @@ class CategoryMetaOutputSLZ(serializers.Serializer):
     extra_info = ExtraInfoSerializer(read_only=True, default={})
 
 
-class CategorySettingListInputSLZ(serializers.Serializer):
-    namespace = serializers.CharField(required=False)
-    region = serializers.CharField(required=False)
-
-
 class CategorySettingOutputSLZ(serializers.ModelSerializer):
     """配置项"""
 

@@ -22,7 +22,6 @@ from .views import (
     CategoryListCreateViewSet,
     CategoryMetasViewSet,
     CategoryProfilesViewSet,
-    CategorySettingsListViewSet,
     CategorySettingsNamespaceViewSet,
     CategoryUpdateDeleteViewSet,
     CommonProxyNoAuthViewSet,
@@ -55,6 +54,7 @@ from .views import (
     SyncTaskLogViewSet,
     SyncTaskViewSet,
 )
+from bkuser_shell.version_log.views import VersionLogListViewSet
 
 urlpatterns = [
     # common
@@ -74,6 +74,11 @@ urlpatterns = [
         name="common.no_auth.proxy.3",
     ),
     # NOTE: 前端暂时切换成这个
+    path(
+        "api/v1/web/version_logs/",
+        VersionLogListViewSet.as_view(),
+        name="version_log_list",
+    ),
     path("api/v1/web/profiles/me/", LoginInfoViewSet.as_view({"get": "get"}), name="profiles.login_info.v1"),
     re_path(
         "^api/v1/web/.+$",
@@ -174,16 +179,6 @@ urlpatterns = [
         "api/v2/categories/<int:id>/departments/search/",
         CategoryDepartmentsViewSet.as_view({"get": "list"}),
         name="departments.search_in_category",
-    ),
-    # FIXME: 有没有被调用?
-    path(
-        "api/v2/categories/<int:id>/settings/",
-        CategorySettingsListViewSet.as_view(
-            {
-                "get": "list",
-            }
-        ),
-        name="category.settings.list",
     ),
     path(
         "api/v2/categories/<int:id>/settings/namespaces/<str:namespace>/",

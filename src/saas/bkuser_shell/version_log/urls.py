@@ -23,9 +23,4 @@ urlpatterns = [
         views.VersionLogListViewSet.as_view(),
         name="version_log_list",
     ),
-    url(
-        r"^api/v2/version_logs_list/%s/$" % VERSION_NUMBER,
-        views.VersionLogRetrieveViewSet.as_view(),
-        name="version_log_detail",
-    ),
 ]

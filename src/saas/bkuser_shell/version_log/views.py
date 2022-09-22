@@ -37,16 +37,3 @@ class VersionLogListViewSet(generics.ListAPIView):
         except ValueError:
             logger.exception("failed to parse release yaml")
             raise error_codes.VERSION_FORMAT_ERROR
-
-
-class VersionLogRetrieveViewSet(generics.RetrieveAPIView):
-    permission_classes: list = []
-
-    def retrieve(self, request, *args, **kwargs):
-        version_number = kwargs.get("version_number")
-        try:
-            version_list = get_version_list()
-            return BKResponse(data=version_list.get_by_version(version_number).dict())
-        except ValueError:
-            logger.exception("failed to parse release yaml")
-            raise error_codes.VERSION_FORMAT_ERROR

@@ -31,7 +31,6 @@ from .serializers import (
     CategoryProfileListInputSLZ,
     CategoryProfileOutputSLZ,
     CategorySettingCreateInputSLZ,
-    CategorySettingListInputSLZ,
     CategorySettingOutputSLZ,
     CategorySyncResponseOutputSLZ,
     CategoryTestConnectionInputSLZ,
@@ -108,23 +107,6 @@ class CategoryMetasListApi(generics.ListAPIView):
             metas.append(_meta)
 
         return Response(CategoryMetaOutputSLZ(metas, many=True).data)
-
-
-class CategorySettingListApi(generics.ListAPIView):
-    serializer_class = CategorySettingOutputSLZ
-    permission_classes = [ManageCategoryPermission]
-
-    def get_queryset(self):
-        slz = CategorySettingListInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        category_id = self.kwargs["id"]
-        category = get_category(category_id)
-        namespace = data.get("namespace")
-        region = data.get("region")
-        metas = list_setting_metas(category.type, region, namespace)
-        return Setting.objects.filter(meta__in=metas, category_id=category_id)
 
 
 class CategorySettingNamespaceListCreateUpdateApi(
