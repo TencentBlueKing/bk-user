@@ -489,3 +489,39 @@ versions:
         content:
         - "支持账号有效期"
         - "支持OTEL"
+- version: "2.3.7"
+  date: "2022-09-07"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "FIX"
+        content:
+        - "登录镜像Dockerfile增加saml依赖安装命令"
+- version: "2.4.0"
+  date: "2022-09-19"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "FIX"
+        content:
+        - "DDE注入漏洞解决，设置导入导出模板单元格为文本模式"
+        - "前端: 复制组织 ID"
+        - "前端: 邮箱校验规则优化"
+  - project: "Login"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "登录代码重构"
+      - type: "NEW"
+        content:
+        - "登录时，支持密码明文进行加密处理"
+- version: "2.4.1"
+  date: "2022-09-22"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "FIX"
+        content:
+        - "新增用户: 日期字段无法编辑"
+        - "登录审计: 导出报错"
+        - "版本日志: 更新"
