@@ -24,7 +24,7 @@ export default {
       page = '',
       pageSize = '',
     } = {}, _config = {}) {
-      return http.get(`api/v2/audit/login_log/?start_time=${startTime}&end_time=${endTime}&page=${page}&page_size=${pageSize}`);
+      return http.get(`api/v1/web/audits/logs/types/login/?start_time=${startTime}&end_time=${endTime}&page=${page}&page_size=${pageSize}`);
     },
     // 审计分页查询
     getList(_context, {
@@ -35,13 +35,13 @@ export default {
       pageSize = '',
     } = {}, _config = {}) {
       // return http.get(`api/v2/audit/operation_logs/?start_time=${startTime}&end_time=${endTime}&keyword=${keyword}`)
-      return http.get(`api/v2/audit/operation_logs/?start_time=${startTime}&end_time=${endTime}&page=${page}&page_size=${pageSize}${keyword && (`&keyword=${keyword}`)}`);
+      return http.get(`api/v1/web/audits/logs/types/general/?start_time=${startTime}&end_time=${endTime}&page=${page}&page_size=${pageSize}${keyword && (`&keyword=${keyword}`)}`);
       // &keyword=${keyword}&page=${page}&page_size=${page_size}
     },
     // 审计导出
     getAuditderive(context, params, config = {}) {
       const { url, startTime, endTime } = params;
-      return http.get(`${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`);
+      return http.get(`${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}`);
     },
   },
 };

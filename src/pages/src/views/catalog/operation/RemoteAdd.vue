@@ -141,7 +141,7 @@ export default {
             this.current += 1;
           } else {
             // 目录已经创建，修改基本信息
-            const res = await this.$store.dispatch('catalog/ajaxPutCatalog', {
+            const res = await this.$store.dispatch('catalog/ajaxPatchCatalog', {
               id: this.catalogId,
               data: this.basicInfo,
             });

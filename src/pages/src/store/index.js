@@ -65,13 +65,13 @@ const store = new Vuex.Store({
   actions: {
     // 获取登录用户基本信息：头像、用户名
     getUserInfo(context, params) {
-      return http.get('api/v2/me/');
+      return http.get('api/v1/web/profiles/me/');
     },
     getVersionLog(context, params) {
-      return http.get('api/v2/version_logs_list/');
+      return http.get('api/v1/web/version_logs/');
     },
     getFooter() {
-      return http.get('api/footer/');
+      return http.get('api/v1/web/site/footer/');
     },
   },
 });
