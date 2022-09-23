@@ -175,6 +175,9 @@ export default {
         }
         return itemInfo.category_name;
       }
+      if (groupType === 'extras') {
+        return `${groupName}：${itemInfo.hit_extra_display_name}`;
+      }
       return `${groupName}：${itemInfo[groupType]}`;
     },
     getStatus(status) {
