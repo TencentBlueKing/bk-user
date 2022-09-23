@@ -131,7 +131,8 @@ class DepartmentProfileDepartmentSerializer(serializers.Serializer):
 
 
 class DepartmentProfileOutputSLZ(serializers.Serializer):
-    # FIXME: 不需要返回所有字段吧
+    # Q: 不需要返回所有字段吧
+    # A: 需要, 目前前端的交互式, 列表点击直接拿数据渲染表单, 变更提交, 没有再次获取
     id = serializers.CharField(required=False, help_text="用户ID")
     username = serializers.CharField(required=False, help_text="用户名")
     qq = serializers.CharField(required=False, help_text="QQ")
@@ -157,7 +158,7 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     update_time = serializers.DateTimeField(required=False, help_text="更新时间")
     departments = DepartmentProfileDepartmentSerializer(many=True, required=False, help_text="部门列表")
 
-    # FIXME: 老的代码用的leader, 需要切换成leaders
+    # NOTE: 老的代码用的leader, 理论上应该换成leaders
     # leaders = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
     leader = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表")
 

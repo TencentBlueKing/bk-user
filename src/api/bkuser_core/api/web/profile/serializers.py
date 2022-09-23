@@ -73,9 +73,9 @@ class ProfileSearchResultDepartmentSerializer(serializers.Serializer):
     category_id = serializers.IntegerField(required=False)
 
 
-# TODO: rename? many place use this
 class ProfileSearchOutputSLZ(serializers.Serializer):
-    # FIXME: 不需要返回所有字段吧
+    # Q: 不需要返回所有字段吧
+    # A: 需要, 搜索结果点击后直接渲染表单进行展示/更新
     id = serializers.CharField(required=False, help_text="用户ID")
     username = serializers.CharField(required=False, help_text="用户名")
     qq = serializers.CharField(required=False, help_text="QQ")

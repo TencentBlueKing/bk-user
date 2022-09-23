@@ -40,7 +40,6 @@ class HomeTreeListApi(generics.ListCreateAPIView):
 
         return managed_categories, all_categories
 
-    # FIXME: add a cache here? move to utils.py
     def _get_category_profile_count(self, category_id):
         return Profile.objects.filter(enabled=True, category_id=category_id).count()
 
@@ -121,7 +120,6 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         # 此时拥有管理权限的目录已经被加入到了列表
         managed_categories_map = {x.id: all_categories_map[x.id] for x in managed_categories}
 
-        # FIXME: 这里有性能问题, 当部门数量到达两万的时候
         # FIXME: 如果有所有部门的权限, 这里返回的是所有部门? 还是只返回一级部门? 一级部门很多的时候怎么处理?
         # 这里拉取所有拥有权限的、顶级的目录
         for department in self._list_department_tops(operator):

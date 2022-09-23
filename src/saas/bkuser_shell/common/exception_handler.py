@@ -8,21 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-# import json
 import logging
 
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
-
-# from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 from sentry_sdk import capture_exception
 
 from .error_codes import APIError
-
-# from bkuser_sdk.rest import ApiException
 
 logger = logging.getLogger(__name__)
 

@@ -40,13 +40,17 @@ def get_operator(request) -> str:
     return operator
 
 
-# FIXME: add memory cache here
 def get_category_display_name_map() -> Dict[int, str]:
+    """
+    NOTE: saas 使用, 不加缓存
+    """
     return dict(ProfileCategory.objects.values_list("id", "display_name").all())
 
 
-# FIXME: add memory cache here
 def get_default_category_id() -> int:
+    """
+    NOTE: saas 使用, 不加缓存
+    """
     return ProfileCategory.objects.get_default().id
 
 

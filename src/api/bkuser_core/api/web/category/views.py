@@ -443,8 +443,7 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
                 category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
             ).id
         except ExistsSyncingTaskError as e:
-            # FIXME: 这里不应该返回这个错误码
-            raise error_codes.LOAD_DATA_FAILED.f(str(e))
+            raise error_codes.CREATE_SYNC_TASK_FAILED.f(str(e))
 
         instance_id = instance.id
         params = {"raw_data_file": slz.validated_data["file"]}

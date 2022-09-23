@@ -351,6 +351,7 @@ class ProfileCreateApi(generics.CreateAPIView):
 
 
 class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
+    # FIXME: 让前端把删除接口切换成删除单个用户, 而不是批量(低优先级)
     def delete(self, request, *args, **kwargs):
         """批量删除"""
         slz = ProfileBatchDeleteInputSLZ(data=request.data, many=True)
@@ -383,7 +384,6 @@ class ProfileBatchApi(generics.RetrieveUpdateDestroyAPIView):
                 # do
                 instance.delete()
 
-        # FIXME: to 204?
         return Response(status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):

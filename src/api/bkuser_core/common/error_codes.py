@@ -138,6 +138,7 @@ error_codes.add_codes(
         ErrorCode("LOAD_LDAP_CLIENT_FAILED", _("加载 LDAP Client 失败")),
         ErrorCode("LOAD_LOGIN_HANDLER_FAILED", _("登陆校验失败")),
         ErrorCode("SYNC_DATA_FAILED", _("同步数据失败")),
+        ErrorCode("CREATE_SYNC_TASK_FAILED", _("创建同步任务失败")),
         ErrorCode("LOAD_DATA_ADAPTER_FAILED", _("加载数据同步模块失败")),
         ErrorCode("SAVE_DATA_FAILED", _("存储同步数据失败")),
         ErrorCode("TEST_CONNECTION_UNSUPPORTED", _("用户目录不支持测试连接")),

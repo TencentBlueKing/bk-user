@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import regex
 from django.conf import settings
@@ -276,7 +276,7 @@ class RelatedResource:
     type_name: str
 
     @classmethod
-    def from_obj(cls, obj) -> "RelatedResource":
+    def from_obj(cls, obj) -> Optional["RelatedResource"]:
         if not obj:
             return None
 
