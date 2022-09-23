@@ -25,7 +25,7 @@ from bkuser_core.api.web.utils import get_operator
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
 from bkuser_core.departments.models import Department
-from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 
 # from collections import defaultdict
 
@@ -83,9 +83,7 @@ class SearchApi(generics.ListAPIView):
 
             profiles = profile_qs.all()[:max_items]
 
-            # FIXME: refactor it, now it works
-            # profile_result = defaultdict(list)
-            # FIXME: 先兼容目前前端需要的空数据结构
+            # NOTE: 先兼容目前前端需要的空数据结构
             profile_result = {
                 "username": [],
                 "display_name": [],
@@ -95,13 +93,16 @@ class SearchApi(generics.ListAPIView):
                 "extras": [],
             }
 
+            extra_fields = DynamicFieldInfo.objects.filter(enabled=True, builtin=False).values("name", "display_name")
+            extra_field_display_name_map = {f["name"]: f["display_name"] for f in extra_fields}
+
             for profile in profiles:
                 if keyword in profile.email:
                     profile_result["email"].append(profile)
                     continue
-                # if keyword in profile.username:
-                #     profile_result["username"].append(profile)
-                #     continue
+                if keyword in profile.username:
+                    profile_result["username"].append(profile)
+                    continue
                 if keyword in profile.display_name:
                     profile_result["display_name"].append(profile)
                     continue
@@ -111,18 +112,16 @@ class SearchApi(generics.ListAPIView):
                 if keyword in profile.qq:
                     profile_result["qq"].append(profile)
                     continue
-                if keyword in profile.extras:
-                    profile_result["extras"].append(profile)
-                    continue
 
-                # 暂时兜底, 放email
-                profile_result["extras"].append(profile)
+                for k, v in profile.extras.items():
+                    if v and keyword in v:
+                        # 这里如果没有拿到, 意味着extras对应字段已经被删除/禁用但是用户数据里面还有, 所以过滤掉这种结果
+                        hit_extra_display_name = extra_field_display_name_map.get(k)
+                        if hit_extra_display_name:
+                            # 这个字段用于前端搜索结果展示: 命中的哪个字段
+                            profile.hit_extra_display_name = hit_extra_display_name
+                            profile_result["extras"].append(profile)
 
-            # FIXME: BUG: 目前username命中前端会报错, 所以暂时去掉username, 等待bug修复
-
-            # FIXME: 目前必须保持顺序, 否则前端会报错, 需要推动前端修复
-            # for key in ["email", "qq", "display_name", "telephone", "extras", "username"]:
-            #     items = profile_result[key]
             for key, items in profile_result.items():
                 result.append(
                     {

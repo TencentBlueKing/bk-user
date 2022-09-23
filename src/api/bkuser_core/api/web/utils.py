@@ -16,6 +16,7 @@ from django.conf import settings
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
+from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.utils import check_former_passwords
@@ -104,3 +105,24 @@ def validate_password(profile: Profile, pending_password: str) -> None:
 
 def is_filter_means_any(ft) -> bool:
     return ft.deconstruct() == ("django.db.models.Q", (("pk__in", []),), {"_negated": True})
+
+
+def expand_extra_fields(profile):
+    """将 profile extra value 展开，作为 profile 字段展示"""
+    available_values = profile.pop("extras")
+
+    extras_default = get_extras_default_from_local_cache()
+    # TODO: 建模, 建模, 建模
+    for key, default in extras_default.items():
+        # 没有设置额外字段，则使用字段默认值
+        profile[key] = default
+        if not available_values:
+            continue
+
+        # 兼容旧的数据格式
+        if isinstance(available_values, list):
+            available_values = {x["key"]: x["value"] for x in available_values}
+
+        profile[key] = available_values.get(key)
+
+    return profile

@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING, Dict, List
 from django.conf import settings
 from rest_framework import serializers
 
+from bkuser_core.api.web.utils import expand_extra_fields
 from bkuser_core.departments.models import Department
-from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.v2.serializers import get_extras
 
 if TYPE_CHECKING:
@@ -173,8 +173,8 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
-        extra_defaults = self.context.get("extra_defaults", {}).copy()
-        return get_extras(obj.extras, extra_defaults)
+        # extra_defaults = self.context.get("extra_defaults", {}).copy()
+        return get_extras(obj.extras, None)
 
     def get_logo(self, data):
         logo = data.logo
@@ -187,25 +187,5 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     # NOTE: 部门下的用户列表需要把字段extras打平到profile的字段(用于页面展示+修改表单直接编辑/提交)
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        return expand_extra_fields(self.context.get("fields"), data)
-
-
-def expand_extra_fields(extra_fields, profile):
-    """将 profile extra value 展开，作为 profile 字段展示"""
-    available_values = profile.pop("extras")
-
-    extras_default = get_extras_default_from_local_cache()
-    # TODO: 建模, 建模, 建模
-    for key, default in extras_default.items():
-        # 没有设置额外字段，则使用字段默认值
-        profile[key] = default
-        if not available_values:
-            continue
-
-        # 兼容旧的数据格式
-        if isinstance(available_values, list):
-            available_values = {x["key"]: x["value"] for x in available_values}
-
-        profile[key] = available_values.get(key)
-
-    return profile
+        # return expand_extra_fields(self.context.get("fields"), data)
+        return expand_extra_fields(data)

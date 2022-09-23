@@ -90,6 +90,7 @@ urlpatterns = [
     # healthz
     path("healthz/", HealthzViewSet.as_view({"get": "list"}), name="healthz"),
     path("ping/", HealthzViewSet.as_view({"get": "pong"}), name="pong"),
+    # ============== to do remove
     path("api/footer/", SiteFooterViewSet.as_view({"get": "get"})),
     # NOTE: 这个暂时前端不切换地址, 因为涉及登录态转换成后端请求参数
     path("api/v2/me/", LoginInfoViewSet.as_view({"get": "get"}), name="profiles.login_info"),
