@@ -45,9 +45,6 @@ IS_PAGES_INDEPENDENT_DEPLOYMENT = env.bool("IS_PAGES_INDEPENDENT_DEPLOYMENT", de
 BK_USER_CORE_API_HOST = env("BKAPP_BK_USER_CORE_API_HOST", default="http://usermgr.service.consul:8009")
 
 
-# 默认开启 IAM，但是可以通过部署的环境变量关闭
-ENABLE_IAM = env.bool("ENABLE_IAM", default=True)
-
 # 特殊标记从 SaaS 请求到 Api 的 IP
 CLIENT_IP_FROM_SAAS_HEADER = "Client-IP-From-SaaS"
 

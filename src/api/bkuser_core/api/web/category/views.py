@@ -238,7 +238,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
             if not Permission().allow_action_without_resource(operator, action_id):
                 raise IAMPermissionDenied(
                     detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                    extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
+                    extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
                 )
 
         instance = slz.save()
@@ -404,7 +404,6 @@ class CategoryOperationExportApi(generics.RetrieveAPIView):
 
         # FIXME: profile slz should contains?
         all_profiles = CategoryExportProfileOutputSLZ(profiles, many=True).data
-        # all_profiles = ProfileSerializer(profiles, many=True).data
 
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
         fields_data = FieldOutputSLZ(fields, many=True).data

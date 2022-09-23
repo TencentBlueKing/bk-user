@@ -66,7 +66,7 @@ class Permission:
         if not fs:
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
             )
         return fs
 
@@ -84,7 +84,7 @@ class Permission:
         if not fs:
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
             )
         return fs
 
@@ -99,7 +99,7 @@ class Permission:
         if not fs:
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
             )
         return fs
 
@@ -269,88 +269,80 @@ ManageDepartmentProfilePermission = new_department_permission_via_profile(IAMAct
 
 
 @dataclass
+class RelatedResource:
+    id: str
+    name: str
+    type: str
+    type_name: str
+
+    @classmethod
+    def from_obj(cls, obj) -> "RelatedResource":
+        if not obj:
+            return None
+
+        name_field_name = ResourceType.get_constants_by_model(obj, "get_id_name_pair")[1]
+        return cls(
+            id=str(obj.pk),
+            name=getattr(obj, name_field_name, "-"),
+            type=ResourceType.get_by_model(obj).value,
+            type_name=ResourceType.get_type_name(ResourceType.get_by_model(obj)),
+        )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "type": self.type,
+            "type_name": self.type_name,
+        }
+
+
+@dataclass
+class AuthInfo:
+
+    id: IAMAction
+    display_name: str
+    related_resources: List[RelatedResource]
+
+    @classmethod
+    def from_action(cls, action: IAMAction, obj=None) -> "AuthInfo":
+        related_resource = RelatedResource.from_obj(obj)
+        return cls(
+            id=action.value,
+            display_name=IAMAction.get_choice_label(action),
+            related_resources=[related_resource] if related_resource else [],
+        )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "display_name": self.display_name,
+            "related_resources": [x.to_dict() for x in self.related_resources],
+        }
+
+
+@dataclass
 class IAMPermissionExtraInfo:
-    # class IAMPermissionExtraInfo(IAMMiXin):
-    @dataclass
-    class AuthInfo:
-        @dataclass
-        class RelatedResource:
-            id: str
-            name: str
-            type: str
-            type_name: str
-
-            @classmethod
-            def from_obj(cls, obj):
-                if not obj:
-                    return None
-
-                name_field_name = ResourceType.get_constants_by_model(obj, "get_id_name_pair")[1]
-                return cls(
-                    id=str(obj.pk),
-                    name=getattr(obj, name_field_name, "-"),
-                    type=ResourceType.get_by_model(obj).value,
-                    type_name=ResourceType.get_type_name(ResourceType.get_by_model(obj)),
-                )
-
-            def to_dict(self):
-                return {
-                    "id": self.id,
-                    "name": self.name,
-                    "type": self.type,
-                    "type_name": self.type_name,
-                }
-
-        id: IAMAction
-        display_name: str
-        related_resources: List[RelatedResource]
-
-        @classmethod
-        def from_action(cls, action: IAMAction, obj=None):
-            related_resource = cls.RelatedResource.from_obj(obj)
-            return cls(
-                id=action.value,
-                display_name=IAMAction.get_choice_label(action),
-                related_resources=[related_resource] if related_resource else [],
-            )
-
-        def to_dict(self):
-            return {
-                "id": self.id,
-                "display_name": self.display_name,
-                "related_resources": [x.to_dict() for x in self.related_resources],
-            }
 
     auth_infos: List[AuthInfo]
     callback_url: str
 
     @classmethod
-    def from_raw_params(cls, username: str, action_id: str, obj=None) -> "IAMPermissionExtraInfo":
+    def from_action(cls, username: str, action_id: str, obj=None) -> "IAMPermissionExtraInfo":
         helper = IAMHelper()
         action = IAMAction(action_id)
 
         return cls(
-            auth_infos=[cls.AuthInfo.from_action(action, obj)],
+            auth_infos=[AuthInfo.from_action(action, obj)],
             callback_url=helper.generate_callback_url(username=username, actions=[action], obj=obj),
         )
-
-    # @classmethod
-    # def from_request(cls, request, obj=None) -> "IAMPermissionExtraInfo":
-    #     helper = IAMHelper()
-    #     action = cls._get_action_id(request)
-
-    #     return cls(
-    #         auth_infos=[cls.AuthInfo.from_action(action, obj)],
-    #         callback_url=helper.generate_callback_url(username=request.operator,
-    #  actions=[IAMAction(action)], obj=obj),
-    #     )
 
     @classmethod
     def from_actions(cls, username: str, action_ids: List[IAMAction]) -> "IAMPermissionExtraInfo":
         helper = IAMHelper()
 
         return cls(
-            auth_infos=[cls.AuthInfo.from_action(x) for x in action_ids],
+            auth_infos=[AuthInfo.from_action(x) for x in action_ids],
             callback_url=helper.generate_callback_url(username=username, actions=action_ids),
         )
 

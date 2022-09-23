@@ -14,8 +14,11 @@ from typing import TYPE_CHECKING, Dict
 from django.conf import settings
 from rest_framework import serializers
 
-from bkuser_core.api.web.utils import expand_extra_fields, get_category_display_name_map
-from bkuser_core.profiles.v2.serializers import get_extras
+from bkuser_core.api.web.utils import (
+    expand_extra_fields,
+    get_category_display_name_map,
+    get_extras_with_default_values,
+)
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
@@ -93,8 +96,7 @@ class SearchResultProfileOutputSLZ(serializers.Serializer):
 
     def get_extras(self, obj: "Profile") -> Dict:
         """尝试从 context 中获取默认字段值"""
-        # extra_defaults = self.context.get("extra_defaults", {}).copy()
-        return get_extras(obj.extras, None)
+        return get_extras_with_default_values(obj.extras)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -14,15 +14,15 @@ from .django_basic import MEDIA_ROOT
 # paths for exempting of login
 LOGIN_EXEMPT_WHITE_LIST = (
     r"/favicon.ico$",
-    r"/reset_password$",
-    r"/set_password$",
-    r"/api/v1/password/reset/$",
-    r"/api/v1/password/reset_by_token/$",
-    r"api/footer/$",
-    r"/metrics$",
-    r"/api/v2/version_logs_list/$",
-    r"/healthz/$",
+    r"/api/v1/web/site/footer/$",
     r"/ping/$",
+    r"/healthz/$",
+    r"/metrics$",
+    r"/api/v1/web/passwords/reset/send_email/$",
+    r"/api/v1/web/passwords/reset/by_token/$",
+    r"/api/v1/web/version_logs/$",
+    # r"/reset_password$",
+    # r"/set_password$",
 )
 
 # name for bk_token in cookie

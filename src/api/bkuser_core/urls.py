@@ -34,7 +34,7 @@ for app in settings.INSTALLED_APPS:
 
 urlpatterns += [url(r"^", include("django_prometheus.urls"))]
 
-# new web apis
+# new sass web apis
 urlpatterns += [url(r"^api/v1/web/", include("bkuser_core.api.web.urls"))]
 
 

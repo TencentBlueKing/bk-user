@@ -112,22 +112,6 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
 
 
-# class ProfileCreateResponseSerializer(serializers.ModelSerializer):
-#     # TODO: 创建成功后, 需要返回吗? 不返回会不会有问题?
-#     # extras = serializers.SerializerMethodField(required=False)
-
-#     # leader = LeaderSerializer(many=True, required=False)
-#     # departments = SimpleDepartmentSerializer(many=True, required=False)
-
-#     # def get_extras(self, obj) -> dict:
-#     #     """尝试从 context 中获取默认字段值"""
-#     #     return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
-
-#     class Meta:
-#         model = Profile
-#         exclude = ["password"]
-
-
 class ProfileCreateInputSLZ(serializers.ModelSerializer):
     category_id = serializers.IntegerField(required=False)
 

@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework.serializers import CharField
+from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from bkuser_core.apis.v2.serializers import CustomFieldsModelSerializer
@@ -41,8 +41,8 @@ class CategorySerializer(CustomFieldsModelSerializer):
 class CreateCategorySerializer(CategorySerializer):
     """用户目录 Serializer"""
 
-    display_name = CharField()
-    domain = CharField(validators=[validate_domain])
+    display_name = serializers.CharField()
+    domain = serializers.CharField(validators=[validate_domain])
 
     def validate(self, data):
         if ProfileCategory.objects.filter(domain=data["domain"]).exists():

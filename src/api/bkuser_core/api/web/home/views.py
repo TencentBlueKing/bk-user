@@ -101,10 +101,6 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             return queryset.all()
 
     def get(self, request, *args, **kwargs):
-        # serializer = DepartmentListSerializer(data=request.query_params)
-        # serializer.is_valid(raise_exception=True)
-        # data = serializer.validated_data
-
         # NOTE: 差异点, 也不支持level
         # level = data.get("level")
         # NOTE: 差异点: 不支持only_enabled

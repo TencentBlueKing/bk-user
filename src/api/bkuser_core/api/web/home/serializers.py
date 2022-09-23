@@ -14,32 +14,6 @@ from rest_framework import serializers
 from bkuser_core.api.web.department.serializers import DepartmentSerializer
 from bkuser_core.categories.models import ProfileCategory
 
-# class DepartmentListSerializer(serializers.Serializer):
-#     level = serializers.IntegerField(default=0)
-#     only_enabled = serializers.BooleanField(default=True)
-
-
-# NOTE: 应该是不必要的字段, 忽略?
-# class DepartmentListResultSubDepartmentSerializer(serializers.Serializer):
-#     id = serializers.IntegerField(required=False)
-#     name = serializers.CharField(required=False)
-#     order = serializers.IntegerField(required=False)
-#     full_name = serializers.CharField(required=False)
-#     has_children = serializers.BooleanField(required=False)
-
-
-# class DepartmentListResultDepartmentSerializer(serializers.Serializer):
-#     id = serializers.IntegerField(required=False)
-#     name = serializers.CharField(required=False)
-#     order = serializers.IntegerField(required=False)
-#     enabled = serializers.BooleanField(required=False)
-#     full_name = serializers.CharField()
-#     # children = DepartmentListResultSubDepartmentSerializer(many=True, required=False)
-#     # ancestors = DepartmentListResultSubDepartmentSerializer(many=True, required=False)
-#     has_children = serializers.BooleanField(required=False)
-#     category_id = serializers.IntegerField()
-#     category_name = serializers.CharField(required=False)
-
 
 class CategoryOutputSLZ(serializers.ModelSerializer):
     class Meta:

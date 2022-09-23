@@ -13,7 +13,7 @@ from typing import Union
 
 from rest_framework import serializers
 
-from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier, CustomFieldsMixin, CustomFieldsModelSerializer
+from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerializer, CustomFieldsMixin, CustomFieldsModelSerializer
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
@@ -33,12 +33,16 @@ logger = logging.getLogger(__name__)
 ###########
 
 
-def get_extras(extras_from_db: Union[dict, list], defaults: dict) -> dict:
-    if not defaults:
-        defaults = get_extras_default_from_local_cache()
+def get_extras(extras_from_db: Union[dict, list]) -> dict:
+    extras = {}
 
+    # 1. fill the defaults
+    # NOTE: 这里供open api使用, 所以用cache以提升性能
+    defaults = get_extras_default_from_local_cache()
+    extras.update(defaults)
+
+    # 2. fill the values from db
     formatted_extras = extras_from_db
-
     # 兼容 1.0 存在的旧数据格式(rubbish)
     # [{"is_deleted":false,"name":"\u804c\u7ea7","is_need":false,"is_import_need":true,"value":"",
     # "is_display":true,"is_editable":true,"is_inner":false,"key":"rank","id":9,"is_only":false,
@@ -46,8 +50,8 @@ def get_extras(extras_from_db: Union[dict, list], defaults: dict) -> dict:
     if isinstance(extras_from_db, list):
         formatted_extras = {x["key"]: x["value"] for x in extras_from_db}
 
-    defaults.update(formatted_extras)
-    return defaults
+    extras.update(formatted_extras)
+    return extras
 
 
 class LeaderSerializer(CustomFieldsMixin, serializers.Serializer):
@@ -75,7 +79,7 @@ class ProfileSerializer(CustomFieldsModelSerializer):
 
     def get_extras(self, obj) -> dict:
         """尝试从 context 中获取默认字段值"""
-        return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
+        return get_extras(obj.extras)
 
     def get_username(self, data):
         return get_username(
@@ -103,21 +107,14 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     departments = SimpleDepartmentSerializer(many=True, required=False)
     leader = LeaderSerializer(many=True, required=False)
 
-    # FIXME: 这个字段会导致放大查询
-    # last_login_time = serializers.DateTimeField(required=False, read_only=True)
-    last_login_time = serializers.SerializerMethodField(required=False, read_only=True)
     account_expiration_date = serializers.CharField(required=False)
-
     create_time = serializers.DateTimeField(required=False, read_only=True)
     update_time = serializers.DateTimeField(required=False, read_only=True)
-
     extras = serializers.SerializerMethodField(required=False, read_only=True)
-
     qq = serializers.CharField(read_only=True, allow_blank=True)
     email = serializers.CharField(read_only=True, allow_blank=True)
     telephone = serializers.CharField(read_only=True, allow_blank=True)
     wx_userid = serializers.CharField(read_only=True, allow_blank=True)
-
     domain = serializers.CharField(read_only=True, allow_blank=True)
     category_id = serializers.IntegerField(read_only=True)
     enabled = serializers.BooleanField(read_only=True)
@@ -130,6 +127,10 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     status = serializers.CharField(read_only=True)
     logo = serializers.CharField(read_only=True, allow_blank=True)
 
+    # FIXME: 这个字段会导致放大查询
+    # last_login_time = serializers.DateTimeField(required=False, read_only=True)
+    last_login_time = serializers.SerializerMethodField(required=False, read_only=True)
+
     # NOTE: 这里没有 get_username 的原因是, views中的逻辑处理了
 
     # NOTE: 禁用掉profiles接口获取last_login_time
@@ -139,8 +140,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
-        extra_defaults = self.context.get("extra_defaults", {}).copy()
-        return get_extras(obj.extras, extra_defaults)
+        return get_extras(obj.extras)
 
     def to_representation(self, obj):
         data = super().to_representation(obj)
@@ -165,7 +165,7 @@ class ForSyncRapidProfileSerializer(RapidProfileSerializer):
         return parse_username_domain(obj.username)[0]
 
 
-class ProfileDepartmentSerializer(AdvancedRetrieveSerialzier):
+class ProfileDepartmentSerializer(AdvancedRetrieveSerializer):
     with_family = serializers.BooleanField(default=False, help_text="是否返回所有祖先（兼容）")
     with_ancestors = serializers.BooleanField(default=False, help_text="是否返回所有祖先")
 

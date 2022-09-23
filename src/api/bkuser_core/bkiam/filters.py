@@ -24,7 +24,7 @@ specific language governing permissions and limitations under the License.
 # from .utils import need_iam
 
 # @dataclass
-# class IAMFilter(IAMMiXin, filters.BaseFilterBackend):
+# class IAMFilter(filters.BaseFilterBackend):
 #     """权限中心过滤器"""
 
 #     def __post_init__(self):

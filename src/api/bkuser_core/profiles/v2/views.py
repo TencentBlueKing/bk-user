@@ -28,10 +28,9 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework_jsonp.renderers import JSONPRenderer
 
-from ...departments.v2 import serializers as department_serializer
 from . import serializers as local_serializers
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
-from bkuser_core.apis.v2.serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier
+from bkuser_core.apis.v2.serializers import AdvancedListSerializer, AdvancedRetrieveSerializer
 from bkuser_core.apis.v2.viewset import AdvancedListAPIView, AdvancedModelViewSet
 from bkuser_core.audit.constants import LogInFailReason, OperationType
 from bkuser_core.audit.utils import create_general_log, create_profile_log
@@ -41,7 +40,7 @@ from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.profiles.cache import get_extras_default_from_local_cache
+from bkuser_core.departments.v2 import serializers as department_serializer
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
 from bkuser_core.profiles.models import LeaderThroughModel, Profile, ProfileTokenHolder
@@ -112,7 +111,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
     def get_serializer_context(self):
         origin = super().get_serializer_context()
-        origin.update({"extra_defaults": get_extras_default_from_local_cache()})
         return origin
 
     def get_renderers(self):
@@ -146,7 +144,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         return Response(data=serializer(departments, many=True).data)
 
     @swagger_auto_schema(
-        query_serializer=AdvancedRetrieveSerialzier(),
+        query_serializer=AdvancedRetrieveSerializer(),
         responses={"200": department_serializer.SimpleDepartmentSerializer(many=True)},
     )
     def get_leaders(self, request, lookup_value):
@@ -156,6 +154,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response(data=self.serializer_class(leaders, many=True).data)
 
+    # FIXME: page缓存, 默认一小时
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     @swagger_auto_schema(query_serializer=AdvancedListSerializer())
     def list(self, request, *args, **kwargs):
@@ -406,7 +405,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         return Response(self.serializer_class(instance).data)
 
     @swagger_auto_schema(
-        query_serializer=AdvancedRetrieveSerialzier(),
+        query_serializer=AdvancedRetrieveSerializer(),
         request_body=local_serializers.UpdateProfileSerializer,
         responses={"200": local_serializers.ProfileSerializer()},
     )
@@ -415,7 +414,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         return self._update(request, partial=False)
 
     @swagger_auto_schema(
-        query_serializer=AdvancedRetrieveSerialzier(),
+        query_serializer=AdvancedRetrieveSerializer(),
         request_body=local_serializers.UpdateProfileSerializer,
         responses={"200": local_serializers.ProfileSerializer()},
     )
@@ -423,7 +422,7 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """更新用户部分字段"""
         return self._update(request, partial=True)
 
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def destroy(self, request, *args, **kwargs):
         """删除用户
         目前采用软删除

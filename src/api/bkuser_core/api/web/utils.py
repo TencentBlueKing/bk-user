@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from typing import Dict
+from typing import Dict, Union
 
 from django.conf import settings
 
@@ -17,7 +17,7 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
-from bkuser_core.profiles.models import Profile
+from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.password import PasswordValidator
 from bkuser_core.profiles.utils import check_former_passwords
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
@@ -126,3 +126,25 @@ def expand_extra_fields(profile):
         profile[key] = available_values.get(key)
 
     return profile
+
+
+def get_extras_with_default_values(extras_from_db: Union[dict, list]) -> dict:
+    extras = {}
+
+    # 1. fill the defaults
+    # NOTE: 这里供saas使用, 所以不能用cache, 避免变更extra字段后, saas无法感知
+    # defaults = get_extras_default_from_local_cache()
+    defaults = DynamicFieldInfo.objects.get_extras_default_values()
+    extras.update(defaults)
+
+    # 2. fill the values from db
+    formatted_extras = extras_from_db
+    # 兼容 1.0 存在的旧数据格式(rubbish)
+    # [{"is_deleted":false,"name":"\u804c\u7ea7","is_need":false,"is_import_need":true,"value":"",
+    # "is_display":true,"is_editable":true,"is_inner":false,"key":"rank","id":9,"is_only":false,
+    # "type":"string","order":9}]
+    if isinstance(extras_from_db, list):
+        formatted_extras = {x["key"]: x["value"] for x in extras_from_db}
+
+    extras.update(formatted_extras)
+    return extras

@@ -207,28 +207,3 @@ class BaseIAMViewSet(viewsets.ModelViewSet):
                 ).data,
             }
         )
-
-
-# class IAMMiXin:
-#     @staticmethod
-#     def _get_username(request: Request) -> str:
-#         operator_username = request.META.get(settings.OPERATOR_HEADER, None)
-#         if not operator_username:
-#             raise error_codes.USERNAME_MISSING
-
-#         return operator_username
-
-#     @staticmethod
-#     def _get_action_id(request: Request) -> IAMAction:
-#         """从 SaaS 请求中获取 action_id"""
-
-#         # Q: 为什么不从具体请求的接口来判断？
-#         # A: 因为具体的 action_id 是针对 SaaS 的操作定义的，和 API 层的接口不能完全一一对应。
-#         action_id = request.META.get(settings.ACTION_ID_HEADER, None)
-#         if not action_id:
-#             raise error_codes.ACTION_ID_MISSING
-
-#         if not IAMAction.has_value(action_id):
-#             raise error_codes.ACTION_UNKNOWN.f(action_id)
-
-#         return IAMAction(action_id)

@@ -26,7 +26,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
-from .serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, EmptySerializer, is_custom_fields_enabled
+from .serializers import AdvancedListSerializer, AdvancedRetrieveSerializer, EmptySerializer, is_custom_fields_enabled
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.common.cache import clear_cache_if_succeed
@@ -249,7 +249,7 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             return super().get_object()
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def retrieve(self, request, *args, **kwargs):
         """获取详细信息"""
         fields = self._get_fields()
@@ -263,21 +263,21 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
 
     @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def update(self, request, *args, **kwargs):
         """更新对象"""
         return super().update(request, *args, **kwargs)
 
     @audit_general_log(operate_type=OperationType.DELETE.value)
     @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def destroy(self, request, *args, **kwargs):
         """删除对象"""
         return super().destroy(request, *args, **kwargs)
 
     @audit_general_log(operate_type=OperationType.RESTORATION.value)
     @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier(), request_body=EmptySerializer)
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer(), request_body=EmptySerializer)
     def restoration(self, request, lookup_value):
         """软删除对象恢复"""
         # TODO: auto support include_disabled=True

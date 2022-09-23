@@ -19,7 +19,7 @@ from rest_framework import filters, status
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
-from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerialzier
+from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerializer
 from bkuser_core.apis.v2.viewset import (
     AdvancedListAPIView,
     AdvancedListSerializer,
@@ -35,7 +35,6 @@ from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.departments.signals import post_department_create
 from bkuser_core.departments.v2 import serializers as local_serializers
-from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.v2.serializers import ProfileMinimalSerializer, RapidProfileSerializer
 
@@ -81,11 +80,6 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return self.serializer_class
 
-    def get_serializer_context(self):
-        origin = super().get_serializer_context()
-        origin.update({"extra_defaults": get_extras_default_from_local_cache()})
-        return origin
-
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     @swagger_auto_schema(query_serializer=AdvancedListSerializer())
     def list(self, request, *args, **kwargs):
@@ -104,7 +98,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         return super().retrieve(request, *args, **kwargs)
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def get_ancestor(self, request, *args, **kwargs):
         """获取父级部门"""
         instance = self.get_object()
@@ -117,7 +111,7 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         return Response(data=local_serializers.DepartmentSimpleSerializer(department_objs, many=True).data)
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def get_children(self, request, *args, **kwargs):
         """获取子部门列表"""
         instance = self.get_object()
@@ -159,7 +153,6 @@ class DepartmentViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         # NOTE: RapidProfileSerializer 中的 last_login_time/extras会导致放大查询 => * 2
         _serializer = RapidProfileSerializer
         if page is not None:
-            # BUG: 这里自己初始化slz, 需要显式传递 context, 否则 extra_defaults在每个对象序列化时会产生放大查询
             context = self.get_serializer_context()
             return self.get_paginated_response(_serializer(page, many=True, context=context).data)
 

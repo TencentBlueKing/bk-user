@@ -13,9 +13,8 @@ from typing import TYPE_CHECKING, Dict, List
 from django.conf import settings
 from rest_framework import serializers
 
-from bkuser_core.api.web.utils import expand_extra_fields
+from bkuser_core.api.web.utils import expand_extra_fields, get_extras_with_default_values
 from bkuser_core.departments.models import Department
-from bkuser_core.profiles.v2.serializers import get_extras
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
@@ -96,12 +95,6 @@ class DepartmentCreateInputSLZ(serializers.Serializer):
     category_id = serializers.IntegerField()
 
 
-# class DepartmentUpdateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Department
-#         fields = ("name",)
-
-
 class DepartmentSearchInputSLZ(serializers.Serializer):
     category_id = serializers.IntegerField()
 
@@ -173,8 +166,7 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
-        # extra_defaults = self.context.get("extra_defaults", {}).copy()
-        return get_extras(obj.extras, None)
+        return get_extras_with_default_values(obj.extras)
 
     def get_logo(self, data):
         logo = data.logo
@@ -187,5 +179,4 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     # NOTE: 部门下的用户列表需要把字段extras打平到profile的字段(用于页面展示+修改表单直接编辑/提交)
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # return expand_extra_fields(self.context.get("fields"), data)
         return expand_extra_fields(data)
