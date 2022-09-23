@@ -16,7 +16,6 @@ from rest_framework import serializers
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerializer, CustomFieldsMixin, CustomFieldsModelSerializer
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
-from bkuser_core.profiles.constants import TIME_ZONE_CHOICES, LanguageEnum, RoleCodeEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import get_username, parse_username_domain, remove_sensitive_fields_for_profile
 from bkuser_core.profiles.validators import validate_domain, validate_username
@@ -185,29 +184,6 @@ class ProfileMinimalSerializer(CustomFieldsModelSerializer):
         fields = ["username", "id"]
 
 
-#########
-# Login #
-#########
-class LoginBatchResponseSerializer(serializers.Serializer):
-    username = serializers.SerializerMethodField()
-    chname = serializers.CharField(source="display_name")
-    display_name = serializers.CharField()
-    qq = serializers.CharField()
-    phone = serializers.CharField(source="telephone")
-    wx_userid = serializers.CharField()
-    language = serializers.CharField()
-    time_zone = serializers.CharField()
-    email = serializers.CharField()
-    role = serializers.IntegerField()
-
-    def get_username(self, data):
-        return get_username(
-            data.category_id,
-            data.username,
-            data.domain,
-        )
-
-
 ##########
 # Fields #
 ##########
@@ -260,34 +236,3 @@ class UpdateProfileSerializer(CustomFieldsModelSerializer):
     class Meta:
         model = Profile
         exclude = ["category_id", "username", "domain"]
-
-
-#########
-# Login #
-#########
-class ProfileLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(help_text="用户名")
-    password = serializers.CharField(help_text="用户密码")
-    domain = serializers.CharField(required=False, help_text="用户所属目录 domain，当登录用户不属于默认目录时必填")
-
-
-class LoginUpsertSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True, min_length=1, max_length=255)
-    display_name = serializers.CharField(required=False, min_length=1, max_length=255, allow_blank=True)
-    domain = serializers.CharField(required=False, validators=[validate_domain])
-
-    qq = serializers.CharField(required=False, min_length=5, max_length=64, allow_blank=True)
-    telephone = serializers.CharField(required=False, min_length=11, max_length=11)
-    email = serializers.EmailField(required=False)
-    role = serializers.ChoiceField(required=False, choices=RoleCodeEnum.get_choices())
-    position = serializers.CharField(required=False)
-    language = serializers.ChoiceField(required=False, choices=LanguageEnum.get_choices())
-    time_zone = serializers.ChoiceField(required=False, choices=TIME_ZONE_CHOICES)
-    status = serializers.CharField(required=False)
-    staff_status = serializers.CharField(required=False)
-    wx_userid = serializers.CharField(required=False, allow_blank=True)
-
-
-class LoginBatchQuerySerializer(serializers.Serializer):
-    username_list = serializers.ListField(child=serializers.CharField(), required=False)
-    is_complete = serializers.BooleanField(required=False)
