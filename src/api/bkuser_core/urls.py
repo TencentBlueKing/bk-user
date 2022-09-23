@@ -32,10 +32,15 @@ for app in settings.INSTALLED_APPS:
         logger.exception("failed to load urls from installed app: %s", app)
         continue
 
-urlpatterns += [url(r"^", include("django_prometheus.urls"))]
 
-# new web apis
-urlpatterns += [url(r"^api/v1/web/", include("bkuser_core.api.web.urls"))]
+urlpatterns += [
+    # prometheus
+    url(r"^", include("django_prometheus.urls")),
+    # new sass web apis
+    url(r"^api/v1/web/", include("bkuser_core.api.web.urls")),
+    # for login
+    url(r"^api/v1/login/", include("bkuser_core.api.login.urls")),
+]
 
 
 if "silk" in settings.INSTALLED_APPS:

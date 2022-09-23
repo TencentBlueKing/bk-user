@@ -13,9 +13,8 @@ from typing import TYPE_CHECKING, Dict, List
 from django.conf import settings
 from rest_framework import serializers
 
+from bkuser_core.api.web.utils import expand_extra_fields, get_extras_with_default_values
 from bkuser_core.departments.models import Department
-from bkuser_core.profiles.cache import get_extras_default_from_local_cache
-from bkuser_core.profiles.v2.serializers import get_extras
 
 if TYPE_CHECKING:
     from bkuser_core.profiles.models import Profile
@@ -96,12 +95,6 @@ class DepartmentCreateInputSLZ(serializers.Serializer):
     category_id = serializers.IntegerField()
 
 
-# class DepartmentUpdateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Department
-#         fields = ("name",)
-
-
 class DepartmentSearchInputSLZ(serializers.Serializer):
     category_id = serializers.IntegerField()
 
@@ -138,7 +131,8 @@ class DepartmentProfileDepartmentSerializer(serializers.Serializer):
 
 
 class DepartmentProfileOutputSLZ(serializers.Serializer):
-    # FIXME: 不需要返回所有字段吧
+    # Q: 不需要返回所有字段吧
+    # A: 需要, 目前前端的交互式, 列表点击直接拿数据渲染表单, 变更提交, 没有再次获取
     id = serializers.CharField(required=False, help_text="用户ID")
     username = serializers.CharField(required=False, help_text="用户名")
     qq = serializers.CharField(required=False, help_text="QQ")
@@ -153,6 +147,7 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     enabled = serializers.BooleanField(required=False, help_text="是否启用", default=True)
     # extras = serializers.JSONField(required=False, help_text="扩展字段")
     password_valid_days = serializers.IntegerField(required=False, help_text="密码有效期")
+    account_expiration_date = serializers.CharField(required=False)
     country_code = serializers.CharField(required=False, help_text="国家码")
     iso_code = serializers.CharField(required=False, help_text="国家码")
     time_zone = serializers.CharField(required=False, help_text="时区")
@@ -163,7 +158,7 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     update_time = serializers.DateTimeField(required=False, help_text="更新时间")
     departments = DepartmentProfileDepartmentSerializer(many=True, required=False, help_text="部门列表")
 
-    # FIXME: 老的代码用的leader, 需要切换成leaders
+    # NOTE: 老的代码用的leader, 理论上应该换成leaders
     # leaders = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
     leader = DepartmentProfileLeaderSerializer(many=True, required=False, help_text="上级列表")
 
@@ -172,8 +167,7 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
 
     def get_extras(self, obj: "Profile") -> dict:
         """尝试从 context 中获取默认字段值"""
-        extra_defaults = self.context.get("extra_defaults", {}).copy()
-        return get_extras(obj.extras, extra_defaults)
+        return get_extras_with_default_values(obj.extras)
 
     def get_logo(self, data):
         logo = data.logo
@@ -186,25 +180,4 @@ class DepartmentProfileOutputSLZ(serializers.Serializer):
     # NOTE: 部门下的用户列表需要把字段extras打平到profile的字段(用于页面展示+修改表单直接编辑/提交)
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        return expand_extra_fields(self.context.get("fields"), data)
-
-
-def expand_extra_fields(extra_fields, profile):
-    """将 profile extra value 展开，作为 profile 字段展示"""
-    available_values = profile.pop("extras")
-
-    extras_default = get_extras_default_from_local_cache()
-    # TODO: 建模, 建模, 建模
-    for key, default in extras_default.items():
-        # 没有设置额外字段，则使用字段默认值
-        profile[key] = default
-        if not available_values:
-            continue
-
-        # 兼容旧的数据格式
-        if isinstance(available_values, list):
-            available_values = {x["key"]: x["value"] for x in available_values}
-
-        profile[key] = available_values.get(key)
-
-    return profile
+        return expand_extra_fields(data)

@@ -73,9 +73,9 @@ class ProfileSearchResultDepartmentSerializer(serializers.Serializer):
     category_id = serializers.IntegerField(required=False)
 
 
-# TODO: rename? many place use this
 class ProfileSearchOutputSLZ(serializers.Serializer):
-    # FIXME: 不需要返回所有字段吧
+    # Q: 不需要返回所有字段吧
+    # A: 需要, 搜索结果点击后直接渲染表单进行展示/更新
     id = serializers.CharField(required=False, help_text="用户ID")
     username = serializers.CharField(required=False, help_text="用户名")
     qq = serializers.CharField(required=False, help_text="QQ")
@@ -110,22 +110,6 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
         model = Profile
         # NOTE: 相对原来的api区别, 不支持extras/create_time/update_time更新
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
-
-
-# class ProfileCreateResponseSerializer(serializers.ModelSerializer):
-#     # TODO: 创建成功后, 需要返回吗? 不返回会不会有问题?
-#     # extras = serializers.SerializerMethodField(required=False)
-
-#     # leader = LeaderSerializer(many=True, required=False)
-#     # departments = SimpleDepartmentSerializer(many=True, required=False)
-
-#     # def get_extras(self, obj) -> dict:
-#     #     """尝试从 context 中获取默认字段值"""
-#     #     return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
-
-#     class Meta:
-#         model = Profile
-#         exclude = ["password"]
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):

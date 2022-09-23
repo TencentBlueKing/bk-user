@@ -32,10 +32,6 @@ class FieldListCreateApi(generics.ListCreateAPIView):
     serializer_class = FieldOutputSLZ
     queryset = DynamicFieldInfo.objects.filter(enabled=True)
 
-    # def get_queryset(self):
-    #     queryset = DynamicFieldInfo.objects.filter(enabled=True)
-    #     return queryset
-
     def create(self, request, *args, **kwargs):
         """创建自定义字段"""
         slz = DynamicFieldCreateInputSLZ(data=request.data)
@@ -151,7 +147,6 @@ class FieldUpdateDestroyApi(generics.RetrieveUpdateDestroyAPIView):
 
         post_dynamic_field_delete.send(sender=self, instance=instance, operator=request.operator)
 
-        # FIXME: 本来应该是204的, 但是前端目前根据是否200判定的 => 前端支持200/201/204判定状态
-        # return super().destroy(request, *args, **kwargs)
         super().destroy(request, *args, **kwargs)
+        # NOTE: 本来应该是204的, 但是前端目前根据是否200+bk_response判定的; 204无内容
         return Response(status=status.HTTP_200_OK)

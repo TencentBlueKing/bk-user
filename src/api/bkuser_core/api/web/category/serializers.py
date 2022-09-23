@@ -15,12 +15,12 @@ from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from bkuser_core.api.web.serializers import StringArrayField
+from bkuser_core.api.web.utils import get_extras_with_default_values
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
-from bkuser_core.profiles.v2.serializers import get_extras
 from bkuser_core.profiles.validators import validate_domain
 from bkuser_core.user_settings.models import Setting
 
@@ -38,11 +38,6 @@ class CategoryMetaOutputSLZ(serializers.Serializer):
     name = serializers.CharField(read_only=True)
     authorized = serializers.BooleanField(read_only=True, default=True)
     extra_info = ExtraInfoSerializer(read_only=True, default={})
-
-
-class CategorySettingListInputSLZ(serializers.Serializer):
-    namespace = serializers.CharField(required=False)
-    region = serializers.CharField(required=False)
 
 
 class CategorySettingOutputSLZ(serializers.ModelSerializer):
@@ -188,7 +183,7 @@ class CategoryExportProfileOutputSLZ(serializers.ModelSerializer):
 
     def get_extras(self, obj) -> dict:
         """尝试从 context 中获取默认字段值"""
-        return get_extras(obj.extras, self.context.get("extra_defaults", {}).copy())
+        return get_extras_with_default_values(obj.extras)
 
     class Meta:
         model = Profile

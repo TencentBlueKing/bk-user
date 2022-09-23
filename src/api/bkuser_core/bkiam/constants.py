@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 from enum import auto
 from typing import Any, Callable, Dict, List
 
-import regex
 from django.utils.translation import ugettext_lazy as _
 
 from bkuser_core.categories.constants import CategoryType
@@ -175,36 +174,36 @@ class ResourceType(AutoLowerEnum):
         except KeyError:
             return {}
 
-    @classmethod
-    def get_key_mapping(cls, resource_type: "ResourceType") -> dict:
-        def parse_department_path(data):
-            """解析 department path"""
-            value = data["value"]
-            field_map = {"department": "parent_id", "category": "category_id"}
-            value_pattern = r"^\/((?P<resource_type>\w+),(?P<resource_id>\d+)\/)+"
-            r = regex.match(value_pattern, value).capturesdict()
-            r = list(zip(r["resource_type"], r["resource_id"]))
+    # @classmethod
+    # def get_key_mapping(cls, resource_type: "ResourceType") -> dict:
+    #     def parse_department_path(data):
+    #         """解析 department path"""
+    #         value = data["value"]
+    #         field_map = {"department": "parent_id", "category": "category_id"}
+    #         value_pattern = r"^\/((?P<resource_type>\w+),(?P<resource_id>\d+)\/)+"
+    #         r = regex.match(value_pattern, value).capturesdict()
+    #         r = list(zip(r["resource_type"], r["resource_id"]))
 
-            the_last_of_path = r[-1]
-            # 非叶子节点的策略，直接返回路径最后的 id 作为资源 id
-            if "node_type" in data and data["node_type"] == "non-leaf":
-                field_map["department"] = "id"
+    #         the_last_of_path = r[-1]
+    #         # 非叶子节点的策略，直接返回路径最后的 id 作为资源 id
+    #         if "node_type" in data and data["node_type"] == "non-leaf":
+    #             field_map["department"] = "id"
 
-            return field_map[the_last_of_path[0]], int(the_last_of_path[1])
+    #         return field_map[the_last_of_path[0]], int(the_last_of_path[1])
 
-        _map: Dict[Any, dict] = {
-            cls.DEPARTMENT: {
-                "department.id": "id",
-                "department._bk_iam_path_": parse_department_path,
-            },
-            cls.CATEGORY: {"category.id": "id"},
-            cls.FIELD: {"field.id": "name"},
-            cls.PROFILE: {
-                "department._bk_iam_path_": parse_department_path,
-            },
-            cls.SYNCTASK: {"category.id": "category_id"},
-        }
-        return _map[resource_type]
+    #     _map: Dict[Any, dict] = {
+    #         cls.DEPARTMENT: {
+    #             "department.id": "id",
+    #             "department._bk_iam_path_": parse_department_path,
+    #         },
+    #         cls.CATEGORY: {"category.id": "id"},
+    #         cls.FIELD: {"field.id": "name"},
+    #         cls.PROFILE: {
+    #             "department._bk_iam_path_": parse_department_path,
+    #         },
+    #         cls.SYNCTASK: {"category.id": "category_id"},
+    #     }
+    #     return _map[resource_type]
 
     @classmethod
     def get_id_name_pair(cls, resource_type: "ResourceType") -> tuple:

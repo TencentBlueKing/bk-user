@@ -45,5 +45,3 @@ urlpatterns = [
         name="profile.batch",
     ),
 ]
-
-# FIXME: 让前端把删除接口切换成删除单个用户, 而不是批量(低优先级)

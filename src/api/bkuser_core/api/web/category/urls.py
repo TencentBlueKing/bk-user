@@ -35,11 +35,6 @@ urlpatterns = [
         name="category.profile.list",
     ),
     path(
-        "<int:id>/settings/",
-        views.CategorySettingListApi.as_view(),
-        name="category.setting.list",
-    ),
-    path(
         "<int:id>/settings/namespaces/<str:namespace>/",
         views.CategorySettingNamespaceListCreateUpdateApi.as_view(),
         name="category.setting.namespace.list_update",

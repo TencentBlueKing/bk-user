@@ -19,15 +19,6 @@ from .constants import LOGIN_FAILED_REASON_MAP, OPERATION_ABOUT_PASSWORD, OPERAT
 PLACE_HOLDER = "--"
 
 
-# FIXME:
-# 2. POST CREATED 都返回 201 / UPDATE都返回 200;? 什么时候返回204? (前端需要支持 200/201/204)
-# 3. 权限中心, 查看类权限使用 is_allowed_with_cache
-# 4. 增加cache,`@functools.lru_cache(user_function`? or django memory cache?
-# 5. exception处理, 抹掉`raw`, 只有ee response
-# 6. searchFilter优化
-# 7. 是否引入  manager?
-
-
 class LogListInputSLZ(serializers.Serializer):
     start_time = serializers.DateTimeField(input_formats=["iso-8601"], help_text=_("查询起始时间"))
     end_time = serializers.DateTimeField(input_formats=["iso-8601"], help_text=_("查询结束时间"))

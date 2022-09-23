@@ -161,17 +161,6 @@ def align_country_iso_code(country_code: str, iso_code: str) -> Tuple[str, str]:
     return str(country_code), iso_code.upper()
 
 
-# def force_use_raw_username(request):
-#     """判断是否强制使用原生 username"""
-#     if not request:
-#         return True
-
-#     if settings.FORCE_RAW_USERNAME_HEADER in request.META:
-#         return force_str_2_bool(request.META[settings.FORCE_RAW_USERNAME_HEADER])
-
-#     return False
-
-
 # def get_username(force_use_raw: bool, category_id: int, username: str, domain: str):
 def get_username(category_id: int, username: str, domain: str):
     """获取用户名(通过请求头返回 username 形式)"""

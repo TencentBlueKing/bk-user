@@ -8,26 +8,25 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.urls.conf import path
 
-from rest_framework import serializers
+from . import views
 
-from bkuser_core.api.web.department.serializers import DepartmentSerializer
-from bkuser_core.categories.models import ProfileCategory
-
-
-class CategoryOutputSLZ(serializers.ModelSerializer):
-    class Meta:
-        model = ProfileCategory
-        fields = "__all__"
-
-
-class DepartmentListResultCategoryOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField()
-    display_name = serializers.CharField()
-    order = serializers.IntegerField
-    default = serializers.BooleanField()
-
-    type = serializers.CharField()
-
-    profile_count = serializers.IntegerField()
-    departments = DepartmentSerializer(many=True)
+# prefix: /api/v1/login/
+urlpatterns = [
+    path(
+        "check/",
+        views.ProfileLoginViewSet.as_view({"post": "login"}),
+        name="login.check",
+    ),
+    path(
+        "profile/",
+        views.ProfileLoginViewSet.as_view({"post": "upsert"}),
+        name="login.upsert",
+    ),
+    path(
+        "profile/query/",
+        views.ProfileLoginViewSet.as_view({"post": "batch_query"}),
+        name="login.batch_query",
+    ),
+]

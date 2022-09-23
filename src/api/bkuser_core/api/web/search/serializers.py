@@ -9,10 +9,19 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from typing import TYPE_CHECKING, Dict
+
 from django.conf import settings
 from rest_framework import serializers
 
-from bkuser_core.api.web.utils import get_category_display_name_map
+from bkuser_core.api.web.utils import (
+    expand_extra_fields,
+    get_category_display_name_map,
+    get_extras_with_default_values,
+)
+
+if TYPE_CHECKING:
+    from bkuser_core.profiles.models import Profile
 
 
 class SearchInputSLZ(serializers.Serializer):
@@ -52,8 +61,8 @@ class SearchResultProfileOutputSLZ(serializers.Serializer):
     staff_status = serializers.CharField(required=False, help_text="在职状态")
     position = serializers.CharField(required=False, help_text="职位")
     enabled = serializers.BooleanField(required=False, help_text="是否启用", default=True)
-    extras = serializers.JSONField(required=False, help_text="扩展字段")
     password_valid_days = serializers.IntegerField(required=False, help_text="密码有效期")
+    account_expiration_date = serializers.CharField(required=False)
     country_code = serializers.CharField(required=False, help_text="国家码")
     iso_code = serializers.CharField(required=False, help_text="国家码")
     time_zone = serializers.CharField(required=False, help_text="时区")
@@ -61,11 +70,19 @@ class SearchResultProfileOutputSLZ(serializers.Serializer):
     create_time = serializers.DateTimeField(required=False, help_text="创建时间")
     update_time = serializers.DateTimeField(required=False, help_text="更新时间")
 
+    # extras = serializers.JSONField(required=False, help_text="扩展字段")
     departments = SearchResultProfileDepartmentSerializer(many=True, required=False, help_text="部门列表")
     leader = SearchResultProfileLeaderSerializer(many=True, required=False, help_text="上级列表")
 
     logo = serializers.SerializerMethodField(required=False)
+    extras = serializers.SerializerMethodField(required=False, read_only=True)
     category_name = serializers.SerializerMethodField(required=False)
+
+    # 如果匹配到extras, 则设置这个值用于前端展示
+    hit_extra_display_name = serializers.CharField(required=False)
+
+    # NOTE: 这个同 department.profiles 的slz高度一致
+    # 目的: 搜索结果或列表结果拿到所有用户数据, 直接展示表单用于编辑 => 所以需要用户全部数据
 
     def get_logo(self, data):
         logo = data.logo
@@ -76,6 +93,14 @@ class SearchResultProfileOutputSLZ(serializers.Serializer):
 
     def get_category_name(self, obj):
         return get_category_display_name_map().get(obj.category_id, obj.category_id)
+
+    def get_extras(self, obj: "Profile") -> Dict:
+        """尝试从 context 中获取默认字段值"""
+        return get_extras_with_default_values(obj.extras)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return expand_extra_fields(data)
 
 
 class SearchResultDepartmentOutputSLZ(serializers.Serializer):

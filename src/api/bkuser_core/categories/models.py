@@ -9,19 +9,16 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
-from typing import Dict, List, Optional
-from uuid import UUID, uuid4
+from typing import List
+from uuid import uuid4
 
 from django.db import models
 from django.utils import timezone
-from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 
 from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.categories.constants import TIMEOUT_THRESHOLD, CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
-from bkuser_core.categories.exceptions import ExistsSyncingTaskError
-from bkuser_core.categories.managers import ProfileCategoryManager
+from bkuser_core.categories.constants import CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
+from bkuser_core.categories.managers import ProfileCategoryManager, SyncProgressManager, SyncTaskManager
 from bkuser_core.common.models import TimestampedModel
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.constants import ProfileStatus
@@ -135,34 +132,6 @@ class ProfileCategory(TimestampedModel):
         return AuditObjMetaInfo(key=self.domain, display_name=self.display_name, category_id=self.id)
 
 
-class SyncTaskManager(models.Manager):
-    def register_task(
-        self, category: ProfileCategory, operator: str, type_: SyncTaskType = SyncTaskType.MANUAL
-    ) -> "SyncTask":
-        qs = self.filter(category=category, status=SyncTaskStatus.RUNNING.value).order_by("-create_time")
-        running = qs.first()
-        if not running:
-            instance = self.create(
-                category=category, status=SyncTaskStatus.RUNNING.value, type=type_.value, operator=operator
-            )
-            return instance
-
-        # 防御逻辑, 避免 celery 异常后, 一直无法重试.
-        delta = now() - running.create_time
-        if delta > TIMEOUT_THRESHOLD:
-            qs.update(status=SyncTaskStatus.FAILED.value)
-            return self.register_task(category=category, operator=operator, type_=type_)
-        raise ExistsSyncingTaskError(
-            _("当前目录处于同步状态, 请在 {timeout}s 后重试.").format(timeout=(TIMEOUT_THRESHOLD - delta).total_seconds())
-        )
-
-    def get_crontab_retrying_task(self, category: ProfileCategory) -> Optional["SyncTask"]:
-        qs = self.filter(
-            category=category, status=SyncTaskStatus.RETRYING.value, type=SyncTaskType.AUTO.value
-        ).order_by("-create_time")
-        return qs.first()
-
-
 class SyncTask(TimestampedModel):
     id = models.UUIDField("UUID", default=uuid4, primary_key=True, editable=False, auto_created=True, unique=True)
     category = models.ForeignKey(ProfileCategory, verbose_name="用户目录", on_delete=models.CASCADE, db_index=True)
@@ -186,21 +155,6 @@ class SyncTask(TimestampedModel):
         # 由于建表顺序的原因, SyncProgress 的 task_id 未设置成外键....
         # 所以这里用一个 property 实现逻辑上的外键关联.
         return SyncProgress.objects.filter(task_id=self.id)
-
-
-class SyncProgressManager(models.Manager):
-    def init_progresses(self, category: ProfileCategory, task_id: UUID) -> Dict[SyncStep, "SyncProgress"]:
-        progresses: Dict[SyncStep, "SyncProgress"] = {}
-        for step in [
-            SyncStep.DEPARTMENTS,
-            SyncStep.USERS,
-            SyncStep.DEPT_USER_RELATIONSHIP,
-            SyncStep.USERS_RELATIONSHIP,
-        ]:
-            progresses[step], created = self.get_or_create(category=category, step=step.value, task_id=task_id)
-            if created:
-                SyncProgressLog.objects.create(progress=progresses[step])
-        return progresses
 
 
 class SyncProgress(TimestampedModel):

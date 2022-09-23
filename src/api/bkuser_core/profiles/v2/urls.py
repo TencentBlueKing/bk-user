@@ -69,21 +69,3 @@ urlpatterns = [
         name="edge.leader",
     ),
 ]
-
-urlpatterns += [
-    url(
-        r"^api/v1/login/check/$",
-        views.ProfileLoginViewSet.as_view({"post": "login"}),
-        name="login.check",
-    ),
-    url(
-        r"^api/v1/login/profile/$",
-        views.ProfileLoginViewSet.as_view({"post": "upsert"}),
-        name="login.upsert",
-    ),
-    url(
-        r"^api/v1/login/profile/query/$",
-        views.ProfileLoginViewSet.as_view({"post": "batch_query"}),
-        name="login.batch_query",
-    ),
-]

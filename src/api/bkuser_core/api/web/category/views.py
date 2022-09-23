@@ -31,7 +31,6 @@ from .serializers import (
     CategoryProfileListInputSLZ,
     CategoryProfileOutputSLZ,
     CategorySettingCreateInputSLZ,
-    CategorySettingListInputSLZ,
     CategorySettingOutputSLZ,
     CategorySyncResponseOutputSLZ,
     CategoryTestConnectionInputSLZ,
@@ -108,23 +107,6 @@ class CategoryMetasListApi(generics.ListAPIView):
             metas.append(_meta)
 
         return Response(CategoryMetaOutputSLZ(metas, many=True).data)
-
-
-class CategorySettingListApi(generics.ListAPIView):
-    serializer_class = CategorySettingOutputSLZ
-    permission_classes = [ManageCategoryPermission]
-
-    def get_queryset(self):
-        slz = CategorySettingListInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        category_id = self.kwargs["id"]
-        category = get_category(category_id)
-        namespace = data.get("namespace")
-        region = data.get("region")
-        metas = list_setting_metas(category.type, region, namespace)
-        return Setting.objects.filter(meta__in=metas, category_id=category_id)
 
 
 class CategorySettingNamespaceListCreateUpdateApi(
@@ -256,7 +238,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
             if not Permission().allow_action_without_resource(operator, action_id):
                 raise IAMPermissionDenied(
                     detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                    extra_info=IAMPermissionExtraInfo.from_raw_params(operator, action_id).to_dict(),
+                    extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
                 )
 
         instance = slz.save()
@@ -422,7 +404,6 @@ class CategoryOperationExportApi(generics.RetrieveAPIView):
 
         # FIXME: profile slz should contains?
         all_profiles = CategoryExportProfileOutputSLZ(profiles, many=True).data
-        # all_profiles = ProfileSerializer(profiles, many=True).data
 
         fields = DynamicFieldInfo.objects.filter(enabled=True).all()
         fields_data = FieldOutputSLZ(fields, many=True).data
@@ -462,8 +443,7 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
                 category=instance, operator=request.operator, type_=SyncTaskType.MANUAL
             ).id
         except ExistsSyncingTaskError as e:
-            # FIXME: 这里不应该返回这个错误码
-            raise error_codes.LOAD_DATA_FAILED.f(str(e))
+            raise error_codes.CREATE_SYNC_TASK_FAILED.f(str(e))
 
         instance_id = instance.id
         params = {"raw_data_file": slz.validated_data["file"]}
@@ -592,6 +572,9 @@ class CategoryDepartmentListApi(generics.ListAPIView):
 
         keyword = data.get("keyword")
         if keyword:
-            queryset = queryset.filter(name__icontains=keyword)
+            if keyword.isdigit():
+                queryset = queryset.filter(Q(name__icontains=keyword) | Q(id=keyword))
+            else:
+                queryset = queryset.filter(name__icontains=keyword)
 
         return queryset

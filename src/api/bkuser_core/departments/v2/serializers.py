@@ -15,7 +15,7 @@ from rest_framework import serializers
 
 from bkuser_core.apis.v2.serializers import (
     AdvancedListSerializer,
-    AdvancedRetrieveSerialzier,
+    AdvancedRetrieveSerializer,
     CustomFieldsMixin,
     CustomFieldsModelSerializer,
 )
@@ -151,7 +151,7 @@ class DepartmentAddProfilesSerializer(serializers.Serializer):
     profile_id_list = serializers.ListField(child=serializers.IntegerField())
 
 
-class DepartmentGetProfilesSerializer(AdvancedRetrieveSerialzier):
+class DepartmentGetProfilesSerializer(AdvancedRetrieveSerializer):
     recursive = serializers.BooleanField(required=False, default=False, help_text=_("是否递归"))
     detail = serializers.BooleanField(required=False, default=False, help_text=_("是否返回全部字段"))
     wildcard_search = serializers.CharField(required=False, help_text=_("模糊查找用户的 username & display_name 字段"))
@@ -161,5 +161,5 @@ class DepartmentListSerializer(AdvancedListSerializer):
     with_ancestors = serializers.BooleanField(default=False)
 
 
-class DepartmentRetrieveSerializer(AdvancedRetrieveSerialzier):
+class DepartmentRetrieveSerializer(AdvancedRetrieveSerializer):
     with_ancestors = serializers.BooleanField(default=False)
