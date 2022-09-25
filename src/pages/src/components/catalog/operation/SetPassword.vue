@@ -155,7 +155,7 @@
               <div class="group-text">{{$t('天')}}</div>
             </template>
           </bk-input>
-          <span>{{$t('未登录自动冻结')}}</span>
+          <span>{{$t('未登录自动冻结_冻结后用户无法登录_')}}</span>
         </div>
         <p class="error-text" v-if="freezeDaysError">{{$t('请填写正确的登录天数')}}</p>
       </div>
