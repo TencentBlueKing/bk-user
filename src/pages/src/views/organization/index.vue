@@ -85,7 +85,7 @@
                 </bk-button>
                 <!-- 从其他组织拉取 -->
                 <bk-button style="min-width: 120px;" @click="pullUserFn">
-                  {{$t('从其他组织拉取')}}
+                  {{$t('拉取已有用户')}}
                 </bk-button>
               </div>
             </template>
@@ -109,7 +109,7 @@
                   </bk-button>
                   <ul class="bk-dropdown-list" slot="dropdown-content">
                     <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户')}}</a></li>
-                    <li><a href="javascript:;" @click="pullUserFn">{{$t('从其他组织拉取')}}</a></li>
+                    <li><a href="javascript:;" @click="pullUserFn">{{$t('拉取已有用户')}}</a></li>
                   </ul>
                 </bk-dropdown-menu>
                 <!-- 更多操作 -->
@@ -311,7 +311,7 @@
         header-position="left"
         v-model="batchUserInfo.isShow"
         :auto-close="false"
-        :title="$t('从其他组织拉取')"
+        :title="$t('拉取已有用户')"
         :ok-text="$t('提交')"
         @confirm="submitBatch"
         @cancel="BatchCancelFn">
