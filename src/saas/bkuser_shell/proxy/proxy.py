@@ -119,9 +119,15 @@ class BkUserApiProxy(GenericViewSet):
                 files = {"file": file}
             resp = session.request(method, url, params=params, data=data, headers=headers, files=files)
 
+        content = resp.content
+        status_code = resp.status_code
+        # 无权限, 改状态码为403
+        if b"auth_infos" in content and b"callback_url" in content:
+            status_code = status.HTTP_403_FORBIDDEN
+
         # DONT'T set the content_type here!
         return HttpResponse(
-            resp.content,
-            status=resp.status_code,
+            content,
+            status=status_code,
             headers=resp.headers,
         )

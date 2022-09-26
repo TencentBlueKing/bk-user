@@ -13,6 +13,7 @@ import traceback
 
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
+from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
@@ -79,7 +80,11 @@ def get_ee_exception_response(exc, context, detail):
     elif isinstance(exc, PermissionDenied):
         data["message"] = "403, permission denied"
     elif isinstance(exc, IAMPermissionDenied):
-        data["message"] = exc.extra_info
+        data["message"] = _("您没有权限访问该资源")
+        data["detail"] = exc.extra_info
+        # saas给前端的判定数据结构: {"code": -1, "message": _("您没有权限访问该资源"), "detail": }
+        # data = {"code": "PERMISSION_DENIED", "detail": exc.extra_info}
+        # return Response(data, status=exc.status_code, headers={})
     elif isinstance(exc, ValidationError):
         data["message"] = f"validation error: {exc}"
     elif isinstance(exc, AuthenticationFailed):

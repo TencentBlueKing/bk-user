@@ -81,18 +81,18 @@ class IAMAction(AutoLowerEnum):
             cls.VIEW_DEPARTMENT: "组织和成员查看",
         }[action_id]
 
-    # @classmethod
-    # def get_global_actions(cls) -> tuple:
-    #     """不需要和任何资源绑定，只需要判断某人是否有某个操作的权限"""
-    #     return (
-    #         cls.VIEW_AUDIT,
-    #         cls.VIEW_FIELD,
-    #         cls.MANAGE_FIELD,
-    #         cls.CREATE_MAD_CATEGORY,
-    #         cls.CREATE_LDAP_CATEGORY,
-    #         cls.CREATE_LOCAL_CATEGORY,
-    #         cls.CREATE_CUSTOM_CATEGORY,
-    #     )
+    @classmethod
+    def get_global_actions(cls) -> tuple:
+        """不需要和任何资源绑定，只需要判断某人是否有某个操作的权限"""
+        return (
+            cls.VIEW_AUDIT,
+            cls.VIEW_FIELD,
+            cls.MANAGE_FIELD,
+            cls.CREATE_MAD_CATEGORY,
+            cls.CREATE_LDAP_CATEGORY,
+            cls.CREATE_LOCAL_CATEGORY,
+            cls.CREATE_CUSTOM_CATEGORY,
+        )
 
     @classmethod
     def get_action_by_category_type(cls, category_type: str) -> "IAMAction":
