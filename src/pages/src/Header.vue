@@ -202,7 +202,9 @@ export default {
     handleLogOut() {
       this.$bkInfo({
         title: this.$t('确认退出登录_'),
-        confirmFn: () => {},
+        confirmFn: () => {
+          window.location.href = window.login_url;
+        },
       });
     },
   },
