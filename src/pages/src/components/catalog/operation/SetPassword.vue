@@ -220,7 +220,11 @@
           <notifyEditorTemplate
             :checkbox-info="checkboxInfo"
             :data-list="passportInfo"
-            :is-template="isEmailTemplate">
+            :is-template="isEmailTemplate"
+            :expiring-email-key="'init_mail_config'"
+            :expired-email-key="'reset_mail_config'"
+            :expiring-sms-key="''"
+            :expired-sms-key="''">
             <template slot="label">
               <div
                 :class="['password-header', defaultPassword.init_password_method !== 'random_via_mail' ? 'hide' : '']">

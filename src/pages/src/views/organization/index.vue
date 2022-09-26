@@ -464,6 +464,7 @@ export default {
       statusMap: {},
       timerMap: ['account_expiration_date', 'last_login_time', 'create_time'],
       checkSearchKey: '',
+      departmentsId: null,
     };
   },
   computed: {
@@ -515,8 +516,6 @@ export default {
         val.filter((item) => {
           if (item.id === 'username' || item.id === 'display_name') {
             this.checkSearchKey = item.values[0].name;
-          } else {
-            this.checkSearchKey = '';
           }
           this.searchFilterList = this.searchFilterList.filter((k) => {
             if (!item.id.includes(k.id)) {
@@ -524,6 +523,8 @@ export default {
             }
           });
         });
+      } else {
+        this.checkSearchKey = '';
       }
     },
   },
@@ -748,14 +749,10 @@ export default {
         }
       });
     },
-    handleClear() {
-      if (this.tableSearchedKey !== []) {
-        this.handleTableSearch();
-      }
-    },
     // 搜索table
     handleTableSearch(list) {
-      const valueList = [`category_id=${this.currentCategoryId}`];
+      if (!list.length) return this.getTableData();
+      const valueList = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
       let key = '';
       list.forEach((item) => {
         const value = [];
@@ -802,7 +799,7 @@ export default {
     // 获取上级列表
     async getLeadersList() {
       try {
-        const params = `category_id=${this.currentCategoryId}`;
+        const params = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
         const list = [];
         const res = await this.$store.dispatch('organization/getMultiConditionQuery', params);
         res.data.results.forEach((item) => {
@@ -990,6 +987,8 @@ export default {
     },
     updateTableData(item) {
       this.tableData = item;
+      if (!item.length) return;
+      this.departmentsId = item[0].departments[0].id;
     },
     // 侧边栏 点击保存 更新列表 userMessage.userInforList
     async updateUserInfor() {
