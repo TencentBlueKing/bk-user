@@ -46,9 +46,10 @@ class FieldsViewSet(BkUserApiViewSet):
     )
     def list(self, request, validated_data):
         """获取所有用户字段"""
-        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
+        # api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request))
         # TODO: 为什么no_auth=True?
-        # api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
+        # Why: 否则会先弹窗 `用户字段管理`, 而不是真正的无权限
+        api_instance = bkuser_sdk.DynamicFieldsApi(self.get_api_client_by_request(request, no_auth=True))
         return self.get_paging_results(api_instance.v2_dynamic_fields_list)
 
     @inject_serializer(
@@ -194,9 +195,11 @@ class SettingsNamespaceViewSet(BkUserApiViewSet):
         category_type = validated_data["category_type"]
 
         # NOTE: 后台没有任何权限管控(这个是全局的, 不关联任何目录/资源), 这里暂时使用 MANAGE_FIELD 权限替代, FIXME: 切分独立权限, 替换这里
-        api_instance = bkuser_sdk.SettingMetasApi(
-            self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_FIELD.value)
-        )
+        # api_instance = bkuser_sdk.SettingMetasApi(
+        #     self.get_api_client_by_request(request, force_action_id=IAMAction.MANAGE_FIELD.value)
+        # )
+        # NOTE: 这里不能校验权限, 否则会先弹窗 `用户字段管理`, 而不是真正的无权限
+        api_instance = bkuser_sdk.SettingMetasApi(self.get_api_client_by_request(request, no_auth=True))
         setting_metas = self.get_paging_results(
             api_instance.v2_setting_metas_list, lookup_field="category_type", exact_lookups=[category_type]
         )
