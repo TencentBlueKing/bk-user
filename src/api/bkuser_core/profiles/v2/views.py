@@ -200,8 +200,8 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         if page is not None:
             # BUG: slz 中的 last_login_time 会导致放大查询, 需要剔除(即, 这个接口将不再支持last_login_time)
             # another two property not in slz fields are: latest_check_time bad_check_cnt
-            if "last_login_time" in fields:
-                del fields["last_login_time"]
+            # if "last_login_time" in fields:
+            #     del fields["last_login_time"]
 
             # BUG: 这里必须显式传递 context给到slz, 下层self.context.get("request") 用到, 判断拼接 username@domain
             # 坑, 修改或重构需要注意; 不要通过这种方式来决定字段格式, 非常容易遗漏
