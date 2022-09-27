@@ -34,7 +34,7 @@
         </a>
         <a
           href="javascript:void(0);"
-          :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('组织') }}</a>
+          :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('用户目录') }}</a>
         <a
           href="javascript:void(0);"
           :class="$route.name === 'audit' && 'router-link-active'" @click="goTo('audit')">{{ $t('审计') }}</a>
@@ -62,7 +62,18 @@
           </li>
         </ul>
       </bk-dropdown-menu>
-      <span class="name">{{ userInfo.username }}</span>
+      <bk-dropdown-menu
+        ref="dropdown"
+        @show="showUserInfo"
+        @hide="hideUserInfo"><bk-icon type="down-shape" />
+        <div class="question-icon-trigger active-username" :class="isDropdownShow && 'active'" slot="dropdown-trigger">
+          <span class="name">{{ userInfo.username }}</span>
+          <i :class="['bk-icon icon-down-shape', { 'icon-up-shape': isDropdownShow }]" />
+        </div>
+        <ul class="bk-dropdown-list" slot="dropdown-content">
+          <li><a href="javascript:;" @click="handleLogOut">{{ $t('退出登录') }}</a></li>
+        </ul>
+      </bk-dropdown-menu>
     </div>
     <!-- 版本日志 -->
     <bk-version-detail
@@ -100,6 +111,7 @@ export default {
         logo: '',
         username: '',
       },
+      isDropdownShow: false,
     };
   },
   created() {
@@ -180,6 +192,20 @@ export default {
       this.selectedVersion = val.title;
       this.selectedVersionChangeLogs = val.changeLogs;
       return Promise.resolve();
+    },
+    showUserInfo() {
+      this.isDropdownShow = true;
+    },
+    hideUserInfo() {
+      this.isDropdownShow = false;
+    },
+    handleLogOut() {
+      this.$bkInfo({
+        title: this.$t('确认退出登录_'),
+        confirmFn: () => {
+          window.location.href = window.login_url;
+        },
+      });
     },
   },
 };
@@ -300,6 +326,19 @@ export default {
             color: #3a84ff;
             transition: all .2s;
           }
+        }
+      }
+    }
+
+    .active-username {
+      .name {
+        margin-right: 5px;
+      }
+      &:hover,
+      &.active {
+        .name, .bk-icon {
+          color: #3a84ff;
+          cursor: pointer;
         }
       }
     }

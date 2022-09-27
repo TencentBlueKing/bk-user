@@ -30,7 +30,6 @@
           :class="['select-text', { 'input-error': verifyInfor.name, 'disable-input': fieldsInfor.builtin }]"
           :disabled="fieldsInfor.builtin"
           v-model="fieldsInfor.name"
-          v-focus
           @blur="verifyInput('name')"
           @focus="hiddenVerify(arguments, 'name')" />
         <i class="icon icon-user-exclamation-circle-shape" v-show="verifyInfor.name"></i>
