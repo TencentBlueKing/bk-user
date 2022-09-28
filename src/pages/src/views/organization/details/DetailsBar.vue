@@ -314,8 +314,8 @@ export default {
         fieldInfo.isError = false;
         return true;
       });
-      this.leaderIdList = this.currentProfile.leader.map(item => item.id)
-        || this.currentProfile.leaders.map(item => item.id);
+      const { leader, leaders } = this.currentProfile;
+      this.leaderIdList = (leader || leaders).map(item => item.id);
       this.initialDepartments = this.currentProfile.departments;
       this.getSelectedDepartments = this.initialDepartments;
       this.passwordValidDays = this.currentProfile.password_valid_days;
