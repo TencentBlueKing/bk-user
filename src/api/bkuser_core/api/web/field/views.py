@@ -27,10 +27,19 @@ from bkuser_core.profiles.signals import post_field_create
 
 
 class FieldListCreateApi(generics.ListCreateAPIView):
-    # FIXME: view_field permission for list api
-    permission_classes = [ManageFieldPermission]
+    # FIXME: 目前无法加权限, 加上会导致前端先弹窗这个, 在弹窗真正需要申请的权限(因为页面同时加载了多个api), 非敏感信息
+    # permission_classes = [ManageFieldPermission]
     serializer_class = FieldOutputSLZ
     queryset = DynamicFieldInfo.objects.filter(enabled=True)
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        # FIXME: 目前无法加权限, 加上会导致前端先弹窗这个, 在弹窗真正需要申请的权限(因为页面同时加载了多个api), 非敏感信息
+        if self.request.method == "GET":
+            return []
+        return [ManageFieldPermission()]
 
     def create(self, request, *args, **kwargs):
         """创建自定义字段"""

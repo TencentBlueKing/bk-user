@@ -29,11 +29,16 @@ logger = logging.getLogger(__name__)
 class HomeTreeListApi(generics.ListCreateAPIView):
     def _get_categories(self, operator):
         # 拥有管理权限的目录
-        queryset = ProfileCategory.objects.filter(enabled=True)
-        if settings.ENABLE_IAM:
-            fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
-            queryset = queryset.filter(fs)
-        managed_categories = queryset.all()
+        try:
+            queryset = ProfileCategory.objects.filter(enabled=True)
+            if settings.ENABLE_IAM:
+                fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
+                queryset = queryset.filter(fs)
+            managed_categories = queryset.all()
+        except IAMPermissionDenied:
+            managed_categories = []
+        except Exception as e:
+            raise e
 
         # 拉取所有目录，存在仅对某些部门拥有权限，但是并未拥有目录权限的情况
         all_categories = ProfileCategory.objects.filter(enabled=True).all()
@@ -54,9 +59,9 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         try:
             dept_ft = Permission().make_department_filter(operator, IAMAction.MANAGE_DEPARTMENT)
             logger.debug("list_department_tops, make a filter for department: %s", dept_ft)
-        except IAMPermissionDenied:
+        except IAMPermissionDenied as e:
             logger.warning("user %s has no permission to search department", operator)
-            return []
+            raise e
         else:
             # 如果是any, 表示有所有一级department的权限, 直接返回
             if is_filter_means_any(dept_ft):

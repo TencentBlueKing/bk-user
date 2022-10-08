@@ -12,13 +12,15 @@ specific language governing permissions and limitations under the License.
 from rest_framework import generics
 
 from .serializers import SettingMetaOutputSLZ, SettingMetasListInputSLZ
-from bkuser_core.bkiam.permissions import ManageFieldPermission
 from bkuser_core.user_settings.models import SettingMeta
+
+# from bkuser_core.bkiam.permissions import ManageFieldPermission
 
 
 class SettingMetasListApi(generics.ListAPIView):
     # NOTE: 后台没有任何权限管控(这个是全局的, 不关联任何目录/资源), 这里暂时使用 MANAGE_FIELD 权限替代, FIXME: 切分独立权限, 替换这里
-    permission_classes = [ManageFieldPermission]
+    # FIXME: 目前无法加权限, 加上会导致前端先弹窗这个, 在弹窗真正需要申请的权限(因为页面同时加载了多个api), 非敏感信息
+    # permission_classes = [ManageFieldPermission]
     serializer_class = SettingMetaOutputSLZ
 
     def get_queryset(self):
