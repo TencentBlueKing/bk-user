@@ -12,7 +12,8 @@ import logging
 
 from django.conf import settings
 from django.conf.urls import include, url
-from django.utils.module_loading import import_module
+
+# from django.utils.module_loading import import_module
 
 logger = logging.getLogger(__name__)
 
@@ -20,20 +21,29 @@ logger = logging.getLogger(__name__)
 urlpatterns = []
 # 尝试从 INSTALLED_APPS 中动态加载 urls 模块，
 # 插件开发时去掉各模块 urls 不影响项目运行
-for app in settings.INSTALLED_APPS:
-    if not app.startswith("bkuser_core."):
-        continue
+# for app in settings.INSTALLED_APPS:
+#     if not app.startswith("bkuser_core."):
+#         continue
 
-    try:
-        urls_module = f"{app}.urls"
-        import_module(urls_module)
-        urlpatterns.append(url(r"^", include(urls_module)))
-    except ImportError:
-        logger.exception("failed to load urls from installed app: %s", app)
-        continue
+#     try:
+#         urls_module = f"{app}.urls"
+#         import_module(urls_module)
+#         urlpatterns.append(url(r"^", include(urls_module)))
+#         print(f"Load urls from {urls_module}")
+#     except ImportError:
+#         logger.exception("failed to load urls from installed app: %s", app)
+#         continue
 
-
+# NOTE: no urls, only models
+# bkuser_core.user_settings.urls
+# bkuser_core.audit.urls
 urlpatterns += [
+    url(r"^", include("bkuser_core.apis.urls")),
+    url(r"^", include("bkuser_core.monitoring.urls")),
+    url(r"^", include("bkuser_core.profiles.urls")),
+    url(r"^", include("bkuser_core.departments.urls")),
+    url(r"^", include("bkuser_core.categories.urls")),
+    url(r"^", include("bkuser_core.bkiam.urls")),
     # prometheus
     url(r"^", include("django_prometheus.urls")),
     # new sass web apis
