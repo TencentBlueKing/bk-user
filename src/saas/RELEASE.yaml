@@ -525,3 +525,12 @@ versions:
         - "新增用户: 日期字段无法编辑"
         - "登录审计: 导出报错"
         - "版本日志: 更新"
+- version: "2.5.0"
+  date: "2022-10-08"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "全新架构，重构 SaaS 层所有功能接口"
+        - "接口性能优化: 优化数据库索引/增加缓存/减少接口 SQL 查询量"
