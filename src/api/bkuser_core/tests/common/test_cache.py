@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import pytest
 from django.conf import settings
 
-from bkuser_core.common.http import _force_response_data
+# from bkuser_core.common.http import _force_response_data
 from bkuser_core.profiles.v2.views import ProfileViewSet
 from bkuser_core.tests.apis.utils import get_api_factory
 
@@ -20,14 +20,14 @@ pytestmark = pytest.mark.django_db
 
 class TestCache:
     def test_exclude_header_cache(self):
-        cached_factory = get_api_factory({"HTTP_FORCE_RAW_RESPONSE": True})
-        cached_request = cached_factory.get("/api/v2/profiles/")
-        cached_view = ProfileViewSet.as_view({"get": "list", "post": "create"})
+        # cached_factory = get_api_factory({"HTTP_FORCE_RAW_RESPONSE": True})
+        # cached_request = cached_factory.get("/api/v2/profiles/")
+        # cached_view = ProfileViewSet.as_view({"get": "list", "post": "create"})
 
         # 生成缓存
-        cached_response = cached_view(request=cached_request)
-        cached_response = _force_response_data(cached_response, {"test": "test"})
-        assert cached_response.data == {"test": "test"}
+        # cached_response = cached_view(request=cached_request)
+        # cached_response = _force_response_data(cached_response, {"test": "test"})
+        # assert cached_response.data == {"test": "test"}
 
         no_cache_factory = get_api_factory({settings.FORCE_JSONP_HEADER: True})
         no_cache_request = no_cache_factory.get("/api/v2/profiles/")
