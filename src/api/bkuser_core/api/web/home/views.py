@@ -45,7 +45,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
 
         return managed_categories, all_categories
 
-    def _get_category_profile_count(self, category_id):
+    def _get_category_profile_count(self, category_id) -> int:
         return Profile.objects.filter(enabled=True, category_id=category_id).count()
 
     def _list_department_tops(self, operator):
