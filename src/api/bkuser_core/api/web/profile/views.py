@@ -32,7 +32,7 @@ from .serializers import (
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
-from bkuser_core.audit.utils import create_general_log
+from bkuser_core.audit.utils import audit_general_log, create_general_log
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentProfilePermission, Permission
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
@@ -206,12 +206,17 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         """更新用户部分字段"""
         return self._update(request, partial=True)
 
+    @audit_general_log(operate_type=OperationType.DELETE.value)
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
 
 class ProfileOperationRestorationApi(generics.CreateAPIView):
     permission_classes = [ManageDepartmentProfilePermission]
     queryset = Profile.objects.all()
     lookup_url_kwarg = "id"
 
+    @audit_general_log(operate_type=OperationType.RESTORATION.value)
     def post(self, request, *args, **kwargs):
         """软删除恢复"""
         # FIXME: maybe should change to a custom mixin

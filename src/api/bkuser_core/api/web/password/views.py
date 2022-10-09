@@ -18,6 +18,8 @@ from rest_framework.response import Response
 
 from .serializers import PasswordModifyInputSLZ, PasswordResetByTokenInputSLZ, PasswordResetSendEmailInputSLZ
 from bkuser_core.api.web.utils import get_operator, validate_password
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log, create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.exceptions import ProfileEmailEmpty
@@ -78,18 +80,25 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
         if token_holder.expired:
             raise error_codes.PROFILE_TOKEN_EXPIRED
 
-        # FIXME: 记录审计日志 OperationType.FORGET_PASSWORD.value
         profile = token_holder.profile
         validate_password(profile, pending_password)
         profile.password = make_password(pending_password)
         profile.password_update_time = now()
         profile.save()
 
+        # 记录审计日志
+        create_general_log(
+            operator=request.operator,
+            operate_type=OperationType.FORGET_PASSWORD.value,
+            operator_obj=profile,
+            request=request,
+        )
+
         return Response(status=status.HTTP_200_OK)
 
 
 class PasswordModifyApi(generics.CreateAPIView):
-    # @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
+    @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
     def post(self, request, *args, **kwargs):
         slz = PasswordModifyInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)

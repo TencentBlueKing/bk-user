@@ -19,6 +19,8 @@ from .serializers import (
     DynamicFieldUpdateVisibleInputSLZ,
     FieldOutputSLZ,
 )
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.permissions import ManageFieldPermission
 from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.error_codes import error_codes
@@ -71,6 +73,7 @@ class FieldManageableApi(generics.GenericAPIView):
 class FieldVisiableUpdateApi(generics.UpdateAPIView):
     permission_classes = [ManageFieldPermission]
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     def patch(self, request, *args, **kwargs):
         slz = DynamicFieldUpdateVisibleInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
@@ -92,6 +95,7 @@ class FieldOrderUpdateApi(generics.UpdateAPIView):
     lookup_url_kwarg = "id"
     queryset = DynamicFieldInfo.objects.all()
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     def patch(self, request, *args, **kwargs):
         order = kwargs["order"]
 
@@ -109,10 +113,12 @@ class FieldUpdateDestroyApi(generics.RetrieveUpdateDestroyAPIView):
     queryset = DynamicFieldInfo.objects.filter(enabled=True)
     serializer_class = DynamicFieldUpdateInputSLZ
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     def put(self, request, *args, **kwargs):
         """更新自定义字段"""
         return self._update(request, partial=False)
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     def patch(self, request, *args, **kwargs):
         """部分更新自定义字段"""
         return self._update(request, partial=True)
