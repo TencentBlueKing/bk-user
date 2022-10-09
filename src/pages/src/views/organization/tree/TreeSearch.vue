@@ -238,8 +238,8 @@ export default {
           if (group.items.length > 0) {
             resultLength += group.items.length;
             group.items.forEach((item) => {
-              item.groupType = 'username';
-              item.groupName = this.$t('用户名');
+              item.groupType = group.type;
+              item.groupName = group.display_name;
               if (item.groupType === 'department') {
                 departmentArray.push(item);
               } else {
