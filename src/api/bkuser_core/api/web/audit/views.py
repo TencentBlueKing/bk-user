@@ -51,10 +51,12 @@ class GeneralLogListApi(generics.ListAPIView):
         keyword = data.get("keyword")
         if keyword:
             # FIXME: 这里有问题,  操作人员/操作对象/操作类型 => 查询不准
+            # 注意, GeneralLogOutputSLZ 展示在表格里的字段格式是: 更新-[用户] to 更新 to `update`
+            # 用户可能复制后粘贴搜索: 更新-[用户] to 更新 to `update`
+            keyword = keyword.split("-")[0]
             for m in [OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP]:
                 keyword = m.get(keyword, keyword)
 
-            keyword = keyword.encode("unicode-escape")
             queryset = queryset.filter(Q(operator__icontains=keyword) | Q(extra_value__icontains=keyword))
 
         return queryset
