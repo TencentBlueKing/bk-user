@@ -185,3 +185,78 @@ class ProfileExcelExporter:
         response["Content-Disposition"] = f"attachment;filename={self.exported_file_name}.xlsx"
         self.workbook.save(response)
         return response
+
+
+class LoginLogExcelExporter:
+    """登录审计日志导出"""
+
+    workbook: "Workbook"
+    exported_file_name: str
+    fields: list = [
+        {
+            "title": "登录用户",
+            "name": "username",
+        },
+        {
+            "title": "用户全名",
+            "name": "display_name",
+        },
+        {
+            "title": "登录时间",
+            "name": "datetime",
+        },
+        {
+            "title": "登录来源IP",
+            "name": "ip",
+        },
+        {
+            "title": "登录状态",
+            "name": "status",
+        },
+        {
+            "title": "登录失败原因",
+            "name": "reason",
+        },
+    ]
+    title_row_index: int = 1
+
+    def __init__(self, webhook: "Workbook", exported_file_name: str):
+        self.workbook = webhook
+        self.exported_file_name = exported_file_name
+
+        self.first_sheet = self.workbook.worksheets[0]
+        # 样式加载
+        self.first_sheet.alignment = Alignment(wrapText=True)
+        # 初始化全表的单元格数据格式
+        # 将单元格设置为纯文本模式，预防DDE
+        for columns in self.first_sheet.columns:
+            for cell in columns:
+                cell.number_format = FORMAT_TEXT
+
+    def to_response(self) -> HttpResponse:
+        response = HttpResponse(content_type="application/ms-excel")
+        response["Content-Disposition"] = f"attachment;filename={self.exported_file_name}.xlsx"
+        self.workbook.save(response)
+        return response
+
+    def add_records(self, records):
+        self._update_sheet_titles()
+        for p_index, p in enumerate(records):
+            for f_index, field in enumerate(self.fields):
+                field_name = field["name"]
+                value = p[field_name]
+                self.first_sheet.cell(row=p_index + self.title_row_index + 1, column=f_index + 1, value=value)
+
+    def _update_sheet_titles(self):
+        """更新表格标题"""
+        black_ft = Font(color=colors.BLACK)
+
+        for index, field in enumerate(self.fields):
+            # column = index + 1 + len(self.fields)
+            column = index + 1
+            _cell = self.first_sheet.cell(
+                row=self.title_row_index,
+                column=column,
+                value=field["title"],
+            )
+            _cell.font = black_ft
