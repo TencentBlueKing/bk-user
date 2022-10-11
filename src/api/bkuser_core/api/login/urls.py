@@ -14,6 +14,7 @@ from . import views
 
 # prefix: /api/v1/login/
 urlpatterns = [
+    # NOTE: custom login used, so we can't remove it even the bkuser/login upgrade to use v2
     path(
         "check/",
         views.ProfileLoginViewSet.as_view({"post": "login"}),

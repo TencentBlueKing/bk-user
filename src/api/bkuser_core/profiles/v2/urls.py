@@ -21,7 +21,9 @@ urlpatterns = [
         r"^api/v2/profiles/$",
         views.ProfileViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "list",
+                # NOTE: login used
                 "post": "create",
             }
         ),
@@ -31,12 +33,13 @@ urlpatterns = [
         r"^api/v2/profiles/%s/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
-                # NOTE: saas removed this
+                # NOTE: login used
                 "get": "retrieve",
-                # NOTE: saas removed this
+                # NOTE: login used
                 "put": "update",
-                # NOTE: saas removed this
+                # TODO: saas removed this
                 "patch": "partial_update",
+                # TODO: saas removed this
                 "delete": "destroy",
             }
         ),
@@ -46,6 +49,7 @@ urlpatterns = [
         r"^api/v2/profiles/%s/departments/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "get_departments",
             }
         ),
@@ -55,6 +59,7 @@ urlpatterns = [
         r"^api/v2/profiles/%s/leaders/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
+                # TODO: saas removed this
                 "get": "get_leaders",
             }
         ),
@@ -65,6 +70,7 @@ urlpatterns = [
     ########
     url(
         r"^api/v2/edges/leader/$",
+        # NOTE: login used
         views.LeaderEdgeViewSet.as_view({"get": "list"}),
         name="edge.leader",
     ),
