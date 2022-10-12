@@ -58,10 +58,20 @@ class ExcelFetcher(Fetcher):
         self.title_keys = self._get_title_fields(raw_name=True)
         self.title_fields = self._get_title_fields(raw_name=False)
 
-        departments = DepartmentColumnParser(self.category_id).parse(
-            self.excel_helper.get_column_values(self.get_column_index("department_name"))
-        )
-        user_rows = self.excel_helper.get_values()
+        line_start = 2
+        user_rows = self.excel_helper.get_values(line_start=line_start)
+
+        department_rows = self.excel_helper.get_column_values(self.get_column_index("department_name"))
+        departments = DepartmentColumnParser(self.category_id).parse(department_rows)
+
+        # 组织必填怎么判断?
+        # validate the department should not be empty
+        real_user_rows = [u for u in user_rows if not ExcelSyncer._judge_data_all_none(u)]
+        real_user_count = len(real_user_rows)
+        real_department_rows = department_rows[:real_user_count]
+        for index, department in enumerate(real_department_rows):
+            if department is None:
+                raise DataFormatError(f"第 {index + line_start} 行组织不能为空")
 
         return user_rows, departments
 
@@ -179,11 +189,11 @@ class ExcelSyncer(Syncer):
                 logger.debug("empty line, skipping")
                 continue
 
-            # FIXME: 这里单条异常没有任何消息暴露到外部, 需要提供一个 summary 机制提示给到外部, 成功多少条/失败多少条, 失败都是哪些
             # 拼接 profile 参数，生成 Profile 对象
             try:
                 profile_params = parser_set.parse_row(user_raw_info, skip_keys=["department_name", "leader"])
                 logger.debug("profile_params: %s", profile_params)
+                # NOTE: 解析后, 非必填的字段 status=NORMAL, staff_status=IN, position=0
             except ParseFailedException as e:
                 # 同步上级解析字段 <username> 失败: u123456 不符合格式要求. [user_raw_info=()]
                 logger.exception(f"同步用户解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")

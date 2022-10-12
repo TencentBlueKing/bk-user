@@ -78,6 +78,8 @@ class DepartmentSyncHelper:
         else:
             parent_dept = None
 
+        # FIXME: https://github.com/TencentBlueKing/bk-user/issues/714
+        # BUG: here, the code is full_name, not the real code
         defaults = {
             "code": dept_info.key_field,
             "category_id": self.category.pk,
@@ -95,8 +97,11 @@ class DepartmentSyncHelper:
         return dept
 
     def _insert_dept(self, dept_info: LdapDepartment, defaults: Dict) -> Department:
+        # BUG: here, use dept_info.key_field to get dept -> it's full_name, not the code
+        # the defaults["code"] is the not the `code`, it's the full_name
         dept: Department = self.db_sync_manager.magic_get(dept_info.key_field, LdapDepartmentMeta)
         if dept:
+            # Question: here update the code to real code, without magic_add, will not saved into db?
             if dept_info.code and dept.code != dept_info.code:
                 dept.code = dept_info.code
             return dept
@@ -108,6 +113,7 @@ class DepartmentSyncHelper:
             self.db_sync_manager.magic_add(dept, SyncOperation.UPDATE.value)
         else:
             defaults["pk"] = self.db_sync_manager.register_id(LdapDepartmentMeta)
+            # BUG: here, defaults["code"] is the full_name, not the code, saved into db
             dept = Department(**defaults)
             self.db_sync_manager.magic_add(dept, SyncOperation.ADD.value)
 
