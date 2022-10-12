@@ -125,7 +125,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         if unknown_fields:
             raise error_codes.UNKNOWN_FIELD.f(", ".join(list(unknown_fields)))
 
-        slz.validated_data["extras"] = {key: value for key, value in extra_fields.items()}
+        extras = {key: value for key, value in extra_fields.items()}
 
         # 只允许本地目录修改
         if not ProfileCategory.objects.check_writable(instance.category_id):
@@ -150,6 +150,10 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         # 多对多字段
         for key, value in m2m_fields.items():
             getattr(instance, key).set(value)
+
+        # extras 字段
+        if extras:
+            instance.extras.update(extras)
 
         update_summary = {"request": request}
         # 密码修改加密

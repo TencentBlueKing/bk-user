@@ -156,6 +156,9 @@ class ProfileExcelExporter:
 
         field_col_map = {}
 
+        # NOTE: 这里required_field_names 跟excel表格中对不上了, 两边的意义不一样(模型定义是required, 但在excel导入是非必填的)
+        # 所以, 我们这里使用枚举的方式, 保证导入/导出的标红title一致
+
         red_ft = Font(color=colors.COLOR_INDEX[2])
         black_ft = Font(color=colors.BLACK)
         for index, field_name in enumerate(required_field_names):
@@ -165,7 +168,11 @@ class ProfileExcelExporter:
                 column=column,
                 value=field_name,
             )
-            _cell.font = red_ft
+            if field_name in ("全名", "用户名", "邮箱", "手机号", "组织"):
+                _cell.font = red_ft
+            else:
+                _cell.font = black_ft
+
             field_col_map[field_name] = index + 1
 
         for index, field_name in enumerate(not_required_field_names):
