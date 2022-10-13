@@ -525,6 +525,22 @@ versions:
         - "新增用户: 日期字段无法编辑"
         - "登录审计: 导出报错"
         - "版本日志: 更新"
+- version: "2.4.2"
+  date: "2022-09-26"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "FIX"
+        content:
+        - "前端: 体验问题优化"
+- version: "2.4.3"
+  date: "2022-10-09"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "FIX"
+        content:
+        - "修复: 用户管理搜索后点击弹出空白抽屉"
 - version: "2.5.0"
   date: "2022-10-08"
   changeLogs:

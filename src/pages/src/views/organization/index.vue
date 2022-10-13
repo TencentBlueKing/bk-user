@@ -700,6 +700,9 @@ export default {
       const userInforList = [];
       const filterTitle = this.userMessage.tableHeardList.map(item => item.key);
       list.forEach((item) => {
+        if (item.leaders) {
+          this.$set(item, 'leader', item.leaders);
+        }
         if (!item.department_name) {
           // 兼容旧代码，因为后端不再返回 display_name
           item.department_name = item.departments.map(department => department.full_name);
