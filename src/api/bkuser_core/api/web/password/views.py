@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from .serializers import PasswordModifyInputSLZ, PasswordResetByTokenInputSLZ, PasswordResetSendEmailInputSLZ
 from bkuser_core.api.web.utils import get_operator, validate_password
 from bkuser_core.audit.constants import OperationType
-from bkuser_core.audit.utils import audit_general_log, create_general_log
+from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.exceptions import ProfileEmailEmpty
@@ -98,7 +98,6 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
 
 
 class PasswordModifyApi(generics.CreateAPIView):
-    @audit_general_log(operate_type=OperationType.MODIFY_PASSWORD.value)
     def post(self, request, *args, **kwargs):
         slz = PasswordModifyInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)

@@ -68,10 +68,6 @@ from bkuser_core.user_settings.signals import post_setting_create, post_setting_
 logger = logging.getLogger(__name__)
 
 
-# FIXME: 统一加
-# @audit_general_log(operate_type=OperationType.DELETE.value)
-
-
 class CategoryMetasListApi(generics.ListAPIView):
     @classmethod
     def make_meta(cls, type_: CategoryType):

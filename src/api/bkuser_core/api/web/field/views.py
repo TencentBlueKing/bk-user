@@ -73,7 +73,8 @@ class FieldManageableApi(generics.GenericAPIView):
 class FieldVisiableUpdateApi(generics.UpdateAPIView):
     permission_classes = [ManageFieldPermission]
 
-    @audit_general_log(operate_type=OperationType.UPDATE.value)
+    # NOTE: 无法通过这个记录审计日志, 会导致drf报错, 这个装饰器封装只支持 /url/{id}/ 这种形式
+    # @audit_general_log(operate_type=OperationType.UPDATE.value)
     def patch(self, request, *args, **kwargs):
         slz = DynamicFieldUpdateVisibleInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
