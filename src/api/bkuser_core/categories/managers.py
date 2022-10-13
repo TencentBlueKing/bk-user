@@ -79,9 +79,10 @@ class SyncTaskManager(models.Manager):
         if delta > TIMEOUT_THRESHOLD:
             qs.update(status=SyncTaskStatus.FAILED.value)
             return self.register_task(category=category, operator=operator, type_=type_)
-        raise ExistsSyncingTaskError(
-            _("当前目录处于同步状态, 请在 {timeout}s 后重试.").format(timeout=(TIMEOUT_THRESHOLD - delta).total_seconds())
-        )
+
+        # TODO: x seconds to x hours y miniutes z seconds
+        timeout = int((TIMEOUT_THRESHOLD - delta).total_seconds())
+        raise ExistsSyncingTaskError(_("当前目录处于同步状态, 请在 {timeout}s 后重试.").format(timeout=timeout))
 
     def get_crontab_retrying_task(self, category: "ProfileCategory") -> Optional["SyncTask"]:
         qs = self.filter(

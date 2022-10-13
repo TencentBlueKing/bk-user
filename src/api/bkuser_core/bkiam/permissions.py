@@ -54,7 +54,7 @@ class Permission:
         self.helper = IAMHelper()
 
     # FIXME: 重构, 写注释, 写测试
-    def make_filter_of_category(self, operator: str, action_id: str):
+    def make_filter_of_category(self, operator: str, action_id: IAMAction):
         if not self.iam_enabled:
             return None
 
@@ -70,7 +70,7 @@ class Permission:
             )
         return fs
 
-    def make_filter_of_department(self, operator: str, action_id: str):
+    def make_filter_of_department(self, operator: str, action_id: IAMAction):
         if not self.iam_enabled:
             return None
 
@@ -88,7 +88,7 @@ class Permission:
             )
         return fs
 
-    def make_department_filter(self, operator: str, action_id: str):
+    def make_department_filter(self, operator: str, action_id: IAMAction):
         if not self.iam_enabled:
             return None
 
@@ -103,7 +103,7 @@ class Permission:
             )
         return fs
 
-    def allow_category_action(self, operator: str, action_id, category) -> bool:
+    def allow_category_action(self, operator: str, action_id: IAMAction, category) -> bool:
         if not self.iam_enabled:
             return True
 
@@ -114,7 +114,7 @@ class Permission:
             objs=objs,
         )
 
-    def allow_department_action(self, operator: str, action_id, department) -> bool:
+    def allow_department_action(self, operator: str, action_id: IAMAction, department) -> bool:
         if not self.iam_enabled:
             return True
 
@@ -126,7 +126,7 @@ class Permission:
             objs=objs,
         )
 
-    def allow_tree_departments_action(self, operator: str, action_id, departments) -> bool:
+    def allow_tree_departments_action(self, operator: str, action_id: IAMAction, departments) -> bool:
         # 叶节点到根节点的所有部门, 有一个有权限, 则有权限
         if not self.iam_enabled:
             return True

@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from datetime import datetime
 
 from django.conf import settings
 from django.db.models import Q
@@ -17,15 +18,12 @@ from rest_framework import generics
 
 from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
 from .serializers import GeneralLogListInputSLZ, GeneralLogOutputSLZ, LoginLogListInputSLZ, LoginLogOutputSLZ
-from bkuser_core.api.web.category.serializers import CategoryExportProfileOutputSLZ
-from bkuser_core.api.web.export import ProfileExcelExporter
-from bkuser_core.api.web.field.serializers import FieldOutputSLZ
+from bkuser_core.api.web.export import LoginLogExcelExporter
 from bkuser_core.api.web.utils import get_category_display_name_map
 from bkuser_core.api.web.viewset import CustomPagination, StartTimeEndTimeFilterBackend
 from bkuser_core.audit.models import GeneralLog, LogIn
 from bkuser_core.bkiam.permissions import ViewAuditPermission
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.profiles.models import DynamicFieldInfo
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +49,12 @@ class GeneralLogListApi(generics.ListAPIView):
         keyword = data.get("keyword")
         if keyword:
             # FIXME: 这里有问题,  操作人员/操作对象/操作类型 => 查询不准
+            # 注意, GeneralLogOutputSLZ 展示在表格里的字段格式是: 更新-[用户] to 更新 to `update`
+            # 用户可能复制后粘贴搜索: 更新-[用户] to 更新 to `update`
+            keyword = keyword.split("-")[0]
             for m in [OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP]:
                 keyword = m.get(keyword, keyword)
 
-            keyword = keyword.encode("unicode-escape")
             queryset = queryset.filter(Q(operator__icontains=keyword) | Q(extra_value__icontains=keyword))
 
         return queryset
@@ -107,46 +107,30 @@ class LoginLogExportApi(generics.ListAPIView):
 
         # 提前获取用户
         queryset.select_related("profile")
-
-        fields = DynamicFieldInfo.objects.filter(enabled=True).all()
-        fields_data = FieldOutputSLZ(fields, many=True).data
-        fields_data.append(
-            {
-                "id": len(fields_data) + 1,
-                "key": "datetime",
-                "name": "登录时间",
-                "options": [],
-                "display_name": "登录时间",
-                "type": "timer",
-                "require": True,
-                "unique": True,
-                "editable": True,
-                "configurable": True,
-                "builtin": False,
-                "order": 0,
-                "default": "",
-                "enabled": True,
-                "visible": True,
-            },
-        )
-        # TODO: 应该改造, 使用原生的登录审计: 用户-登录时间-来源 IP-登录状态-失败原因等等
-        # 可能再补充一些额外信息, 但是不应该导出profiles的信息
-
-        exporter = ProfileExcelExporter(
+        exporter = LoginLogExcelExporter(
             load_workbook(settings.EXPORT_LOGIN_TEMPLATE),
             settings.EXPORT_EXCEL_FILENAME + "_login_audit",
-            fields_data,
-            1,
         )
 
         context = {"category_name_map": get_category_display_name_map()}
         login_logs = queryset.all()
+        records = []
+        for login_log in login_logs:
+            record = LoginLogOutputSLZ(login_log, context=context).data
+            dt = record["datetime"]
+            if isinstance(dt, datetime):
+                dt = dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        profiles = [x.profile for x in login_logs]
-        all_profiles = CategoryExportProfileOutputSLZ(profiles, many=True).data
+            records.append(
+                {
+                    "username": login_log.profile.username,
+                    "display_name": login_log.profile.display_name,
+                    "ip": record["client_ip"],
+                    "status": "成功" if record["is_success"] else "失败",
+                    "datetime": dt,
+                    "reason": record["reason"] or "-",
+                }
+            )
 
-        # FIXME: bug here, 这里的key是profile.id, 会导致每个用户只有一条登录审计记录 => 这是有问题的
-        extra_info = {x.profile.id: LoginLogOutputSLZ(x, context=context).data for x in login_logs}
-        exporter.update_profiles(all_profiles, extra_info)
-
+        exporter.add_records(records)
         return exporter.to_response()

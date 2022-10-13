@@ -110,8 +110,8 @@ class SearchResultDepartmentOutputSLZ(serializers.Serializer):
 
     category_id = serializers.IntegerField()
     category_name = serializers.SerializerMethodField(required=False)
+    enabled = serializers.BooleanField(required=False)
 
-    # enabled = serializers.BooleanField(required=False)
     # order = serializers.IntegerField(required=False)
     # has_children = serializers.SerializerMethodField(required=False)
 

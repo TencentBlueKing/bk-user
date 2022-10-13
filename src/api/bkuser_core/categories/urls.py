@@ -23,6 +23,7 @@ urlpatterns = [
         r"^api/v2/categories/$",
         views.CategoryViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "list",
                 # TODO: saas not used
                 "post": "create",
@@ -34,6 +35,7 @@ urlpatterns = [
         r"^api/v2/categories/%s/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
+                # TODO: saas not used
                 "get": "retrieve",
                 # TODO: saas not used
                 "put": "update",

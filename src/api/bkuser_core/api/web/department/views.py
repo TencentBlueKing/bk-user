@@ -27,6 +27,8 @@ from .serializers import (
 )
 from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_operator
 from bkuser_core.api.web.viewset import CustomPagination
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentPermission, Permission, ViewDepartmentPermission
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
@@ -108,6 +110,8 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
     permission_classes = [ManageDepartmentPermission]
 
+    # NOTE: no audit log here
+
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         # 当组织存在下级时无法删除
@@ -147,6 +151,8 @@ class DepartmentOperationSwitchOrderApi(generics.UpdateAPIView):
     permission_classes = [ManageDepartmentPermission]
     queryset = Department.objects.filter(enabled=True)
     lookup_url_kwarg = "id"
+
+    # NOTE: no audit log here
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -231,6 +237,8 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    # NOTE: here for department add profiles, it's a update for department
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     def create(self, request, *args, **kwargs):
         slz = DepartmentProfilesCreateInputSLZ(data=self.request.data)
         slz.is_valid(raise_exception=True)

@@ -156,6 +156,9 @@ class ProfileExcelExporter:
 
         field_col_map = {}
 
+        # NOTE: 这里required_field_names 跟excel表格中对不上了, 两边的意义不一样(模型定义是required, 但在excel导入是非必填的)
+        # 所以, 我们这里使用枚举的方式, 保证导入/导出的标红title一致
+
         red_ft = Font(color=colors.COLOR_INDEX[2])
         black_ft = Font(color=colors.BLACK)
         for index, field_name in enumerate(required_field_names):
@@ -165,7 +168,11 @@ class ProfileExcelExporter:
                 column=column,
                 value=field_name,
             )
-            _cell.font = red_ft
+            if field_name in ("全名", "用户名", "邮箱", "手机号", "组织"):
+                _cell.font = red_ft
+            else:
+                _cell.font = black_ft
+
             field_col_map[field_name] = index + 1
 
         for index, field_name in enumerate(not_required_field_names):
@@ -185,3 +192,78 @@ class ProfileExcelExporter:
         response["Content-Disposition"] = f"attachment;filename={self.exported_file_name}.xlsx"
         self.workbook.save(response)
         return response
+
+
+class LoginLogExcelExporter:
+    """登录审计日志导出"""
+
+    workbook: "Workbook"
+    exported_file_name: str
+    fields: list = [
+        {
+            "title": "登录用户",
+            "name": "username",
+        },
+        {
+            "title": "用户全名",
+            "name": "display_name",
+        },
+        {
+            "title": "登录时间",
+            "name": "datetime",
+        },
+        {
+            "title": "登录来源IP",
+            "name": "ip",
+        },
+        {
+            "title": "登录状态",
+            "name": "status",
+        },
+        {
+            "title": "登录失败原因",
+            "name": "reason",
+        },
+    ]
+    title_row_index: int = 1
+
+    def __init__(self, webhook: "Workbook", exported_file_name: str):
+        self.workbook = webhook
+        self.exported_file_name = exported_file_name
+
+        self.first_sheet = self.workbook.worksheets[0]
+        # 样式加载
+        self.first_sheet.alignment = Alignment(wrapText=True)
+        # 初始化全表的单元格数据格式
+        # 将单元格设置为纯文本模式，预防DDE
+        for columns in self.first_sheet.columns:
+            for cell in columns:
+                cell.number_format = FORMAT_TEXT
+
+    def to_response(self) -> HttpResponse:
+        response = HttpResponse(content_type="application/ms-excel")
+        response["Content-Disposition"] = f"attachment;filename={self.exported_file_name}.xlsx"
+        self.workbook.save(response)
+        return response
+
+    def add_records(self, records):
+        self._update_sheet_titles()
+        for p_index, p in enumerate(records):
+            for f_index, field in enumerate(self.fields):
+                field_name = field["name"]
+                value = p[field_name]
+                self.first_sheet.cell(row=p_index + self.title_row_index + 1, column=f_index + 1, value=value)
+
+    def _update_sheet_titles(self):
+        """更新表格标题"""
+        black_ft = Font(color=colors.BLACK)
+
+        for index, field in enumerate(self.fields):
+            # column = index + 1 + len(self.fields)
+            column = index + 1
+            _cell = self.first_sheet.cell(
+                row=self.title_row_index,
+                column=column,
+                value=field["title"],
+            )
+            _cell.font = black_ft

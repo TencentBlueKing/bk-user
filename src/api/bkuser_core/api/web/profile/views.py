@@ -32,7 +32,7 @@ from .serializers import (
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
-from bkuser_core.audit.utils import create_general_log
+from bkuser_core.audit.utils import audit_general_log, create_general_log
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentProfilePermission, Permission
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
@@ -125,7 +125,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         if unknown_fields:
             raise error_codes.UNKNOWN_FIELD.f(", ".join(list(unknown_fields)))
 
-        slz.validated_data["extras"] = {key: value for key, value in extra_fields.items()}
+        extras = {key: value for key, value in extra_fields.items()}
 
         # 只允许本地目录修改
         if not ProfileCategory.objects.check_writable(instance.category_id):
@@ -150,6 +150,10 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         # 多对多字段
         for key, value in m2m_fields.items():
             getattr(instance, key).set(value)
+
+        # extras 字段
+        if extras:
+            instance.extras.update(extras)
 
         update_summary = {"request": request}
         # 密码修改加密
@@ -206,12 +210,17 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         """更新用户部分字段"""
         return self._update(request, partial=True)
 
+    @audit_general_log(operate_type=OperationType.DELETE.value)
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
 
 class ProfileOperationRestorationApi(generics.CreateAPIView):
     permission_classes = [ManageDepartmentProfilePermission]
     queryset = Profile.objects.all()
     lookup_url_kwarg = "id"
 
+    @audit_general_log(operate_type=OperationType.RESTORATION.value)
     def post(self, request, *args, **kwargs):
         """软删除恢复"""
         # FIXME: maybe should change to a custom mixin

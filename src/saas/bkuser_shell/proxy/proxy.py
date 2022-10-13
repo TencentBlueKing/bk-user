@@ -110,7 +110,9 @@ class BkUserApiProxy(GenericViewSet):
             # for file upload and others
             if "file_name" in data:
                 file_name = data.pop("file_name")
-                headers["Content-Disposition"] = f"attachment; filename={file_name[0]}"
+                # 应对excel 文件名是中文的情况
+                file_name = file_name[0].encode()
+                headers["Content-Disposition"] = f"attachment; filename={file_name}"
 
             files = None
             file = data.get("file", None)

@@ -20,7 +20,9 @@ urlpatterns = [
         r"^api/v2/departments/$",
         views.DepartmentViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "list",
+                # NOTE: login used
                 "post": "create",
             }
         ),
@@ -30,13 +32,13 @@ urlpatterns = [
         r"^api/v2/departments/%s/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
-                # TODO: delete it? the web api refactored
+                # NOTE: login used
                 "get": "retrieve",
-                # TODO: delete it? the web api refactored
+                # NOTE: login used
                 "post": "update",
-                # TODO: delete it? the web api refactored
+                # TODO: saas removed this
                 "delete": "destroy",
-                # TODO: delete it? the web api refactored
+                # TODO: saas removed this
                 "patch": "partial_update",
             }
         ),
@@ -46,6 +48,7 @@ urlpatterns = [
         r"^api/v2/departments/%s/ancestors/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
+                # TODO: saas removed this
                 "get": "get_ancestor",
             }
         ),
@@ -55,6 +58,7 @@ urlpatterns = [
         r"^api/v2/departments/%s/children/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
+                # TODO: saas removed this
                 "get": "get_children",
             }
         ),
@@ -64,8 +68,9 @@ urlpatterns = [
         r"^api/v2/departments/%s/profiles/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "get_profiles",
-                # NOTE: saas remove this
+                # NOTE: login used
                 "post": "add_profiles",
             }
         ),
@@ -76,6 +81,7 @@ urlpatterns = [
     ########
     url(
         r"^api/v2/edges/department_profile/$",
+        # NOTE: login used
         views.DepartmentProfileEdgeViewSet.as_view({"get": "list"}),
         name="edge.department_profile",
     ),

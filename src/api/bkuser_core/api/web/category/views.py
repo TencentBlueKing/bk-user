@@ -42,6 +42,8 @@ from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldOutputSLZ
 from bkuser_core.api.web.utils import get_category, get_operator, list_setting_metas
 from bkuser_core.api.web.viewset import CustomPagination
+from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import (
     IAMAction,
@@ -61,12 +63,9 @@ from bkuser_core.common.error_codes import CoreAPIError, error_codes
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.user_settings.models import Setting
+from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
 
 logger = logging.getLogger(__name__)
-
-
-# FIXME: 统一加
-# @audit_general_log(operate_type=OperationType.DELETE.value)
 
 
 class CategoryMetasListApi(generics.ListAPIView):
@@ -145,12 +144,30 @@ class CategorySettingNamespaceListCreateUpdateApi(
 
             try:
                 # 暂时忽略已创建报错
-                setting, _ = Setting.objects.update_or_create(meta=meta, value=setting["value"], category=category)
+                setting, created = Setting.objects.update_or_create(
+                    meta=meta, value=setting["value"], category=category
+                )
             except Exception:
                 logger.exception(
                     "cannot create setting. [meta=%s, value=%s, category=%s]", metas[0], setting["value"], category
                 )
                 raise error_codes.CANNOT_CREATE_SETTING
+            else:
+                if created:
+                    post_setting_create.send(
+                        sender=self,
+                        instance=setting,
+                        operator=request.operator,
+                        extra_values={"request": request},
+                    )
+                else:
+                    # 仅当更新成功时才发送信号
+                    post_setting_update.send(
+                        sender=self,
+                        instance=setting,
+                        operator=request.operator,
+                        extra_values={"request": request},
+                    )
 
         settings = Setting.objects.filter(meta__in=metas, category_id=category_id).all()
         return Response(self.get_serializer_class()(settings, many=True).data)
@@ -185,7 +202,7 @@ class CategorySettingNamespaceListCreateUpdateApi(
             if key not in metas_map:
                 continue
             meta = metas_map[key]
-            Setting.objects.update_or_create(
+            s, created = Setting.objects.update_or_create(
                 meta=meta,
                 category_id=category_id,
                 defaults={
@@ -194,17 +211,24 @@ class CategorySettingNamespaceListCreateUpdateApi(
                 },
             )
 
+            if created:
+                post_setting_create.send(
+                    sender=self,
+                    instance=s,
+                    operator=request.operator,
+                    extra_values={"request": request},
+                )
+            else:
+                # 仅当更新成功时才发送信号
+                post_setting_update.send(
+                    sender=self,
+                    instance=s,
+                    operator=request.operator,
+                    extra_values={"request": request},
+                )
+
         # Setting.objects.filter(meta__in=metas, category_id=category_id).all()
         return Response(self.get_serializer_class()(db_settings, many=True).data)
-
-        # FIXME: 原来是调用 N 次api, N 个信号, 现在一次就更新成功了
-        # # 仅当更新成功时才发送信号
-        # post_setting_update.send(
-        #     sender=self,
-        #     instance=self.get_object(),
-        #     operator=request.operator,
-        #     extra_values={"request": request},
-        # )
 
 
 class CategoryListCreateApi(generics.ListCreateAPIView):
@@ -259,6 +283,7 @@ class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProfileCategory.objects.all()
     lookup_url_kwarg = "id"
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
         slz = CategoryUpdateInputSLZ(instance, data=request.data, partial=True)
@@ -424,7 +449,8 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
         FileUploadParser,
     ]
 
-    # @audit_general_log(operate_type=OperationType.SYNC.value)
+    # @audit_general_log(operate_type=OperationType.IMPORT.value)
+    @audit_general_log(operate_type=OperationType.SYNC.value)
     def post(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.type == CategoryType.LOCAL.value:
@@ -432,7 +458,6 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
         else:
             return self._not_local_category_do_sync(request, instance)
 
-    # @audit_general_log(operate_type=OperationType.IMPORT.value)
     def _local_category_do_import(self, request, instance):
         """向本地目录导入数据文件"""
         slz = CategoryFileImportInputSLZ(data=request.data)
@@ -517,6 +542,7 @@ class CategoryOperationSwitchOrderApi(generics.UpdateAPIView):
     queryset = ProfileCategory.objects.filter(enabled=True)
     lookup_url_kwarg = "id"
 
+    @audit_general_log(operate_type=OperationType.UPDATE.value)
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
 

@@ -49,7 +49,7 @@ class GeneralLogOutputSLZ(serializers.Serializer):
             if extra_value["operation"] in OPERATION_ABOUT_PASSWORD
             else (
                 f"{OPERATION_NAME_MAP[extra_value['operation']]}"
-                f"{OPERATION_OBJ_NAME_MAP[extra_value.get('obj_type')]}"
+                f"-[{OPERATION_OBJ_NAME_MAP[extra_value.get('obj_type')]}]"
             )
         )
 
