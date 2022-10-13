@@ -18,6 +18,12 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.common.bulk_update.manager import BulkUpdateManager
+from bkuser_core.departments.cache import (
+    get_department_full_name_from_local_cache,
+    get_department_has_children_from_local_cache,
+    set_department_full_name_to_local_cache,
+    set_department_has_children_to_local_cache,
+)
 from bkuser_core.departments.managers import DepartmentManager
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
@@ -97,12 +103,22 @@ class Department(TimestampMPTTModel):
         if self.level == 0:
             return self.name
 
-        # FIXME: serializer中配置了full_name, 导致放大查询, 需要使用cache优化这里的逻辑(redis)|需要有失效机制
+        # NOTE: serializer中配置了full_name, 导致放大查询, 需要使用cache优化这里的逻辑
+        # => 场景: 查用户列表分页, page_size=100时同一个部门的用户只会触发一次查询
+        # 这里是用 local mem cache for 5s, 每个worker内存短时cache, 如果部门full_name有变更, 最多5s生效
+        ok, full_name = get_department_full_name_from_local_cache(self.id)
+        if ok:
+            return full_name
+
         # SQL:
         # SELECT `name` FROM `departments_department`
         # WHERE (`lft` <= 2 AND `rght` >= 13 AND `tree_id` = 5) ORDER BY `lft` ASC;
         # 新版: 加了索引 tree_id + lft + rght
-        return "/".join(self.get_ancestors(include_self=True).values_list("name", flat=True))
+        full_name = "/".join(self.get_ancestors(include_self=True).values_list("name", flat=True))
+
+        set_department_full_name_to_local_cache(self.id, full_name)
+
+        return full_name
 
     @property
     def has_children(self):
@@ -120,10 +136,19 @@ class Department(TimestampMPTTModel):
         if self.get_descendant_count() == 0:
             return False
 
+        # 这里是用 local mem cache for 5s, 每个worker内存短时cache, 如果部门full_name有变更, 最多5s生效
+        ok, has_children = get_department_has_children_from_local_cache(self.id)
+        if ok:
+            return has_children
+
         # SQL:
         # SELECT (1) AS `a` FROM `departments_department` WHERE (`parent_id` = 1 AND `enabled`) LIMIT 1;
         # 走 parent_id 索引, 然后enabled=1 limit 1
-        return self.children.filter(enabled=True).exists()
+        has_children = self.children.filter(enabled=True).exists()
+
+        set_department_has_children_to_local_cache(self.id, has_children)
+
+        return has_children
 
     def add_profile(self, profile_instance) -> bool:
         """为该部门增加人员
