@@ -185,7 +185,7 @@ export default {
       // return http.get(`?mock-file=catalog&invoke=ajaxGetDefaultFields`, config)
     },
     ajaxTestField(_context, params, config = {}) {
-      const url = `api/v1/web/categories/${params.id}/operations/test_connection/`;
+      const url = `api/v1/web/categories/${params.id}/operations/test_fetch_data/`;
       const obj = {};
       const arr = Object.values(params.data);
       arr.forEach((item) => {
