@@ -50,11 +50,12 @@ class HomeTreeListApi(generics.ListCreateAPIView):
 
     def _list_department_tops(self, operator):
         """获取最顶层的组织列表[权限中心亲和]"""
-        # TODO: but the has_children need a model instance instead of a dict
-        # fields = ("id", "name", "order", "enabled", "extras", "category_id")
+        # NOTE: 不能用values/values_list, 后面mptt has_children需要一个完整的model
+        # 这些字段不查询, speed up 200ms for 6000 departments
+        defer_fields = ["create_time", "update_time", "code", "extras"]
 
         if not settings.ENABLE_IAM:
-            return Department.objects.filter(level=0, enabled=True).all()
+            return Department.objects.filter(level=0, enabled=True).all().defer(*defer_fields)
 
         try:
             dept_ft = Permission().make_department_filter(operator, IAMAction.MANAGE_DEPARTMENT)
@@ -65,7 +66,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         else:
             # 如果是any, 表示有所有一级department的权限, 直接返回
             if is_filter_means_any(dept_ft):
-                return Department.objects.filter(level=0, enabled=True).all()
+                return Department.objects.filter(level=0, enabled=True).all().defer(*defer_fields)
 
             # 1. 拿到权限中心里授过权的全列表
             queryset = Department.objects.filter(enabled=True).filter(dept_ft)
@@ -102,7 +103,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             #     )
 
             # FIXME: 这里为什么没有限制level=0?
-            return queryset.all()
+            return queryset.all().defer(*defer_fields)
 
     def get(self, request, *args, **kwargs):
         # NOTE: 差异点, 也不支持level
@@ -129,24 +130,28 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         # 这里拉取所有拥有权限的、顶级的目录
         for department in self._list_department_tops(operator):
             # 如果存在当前可展示的全量 category 未包含的部门，舍弃
-            dep_cate_id = department.category_id
-            if dep_cate_id not in all_categories_map:
+            dept_cate_id = department.category_id
+            if dept_cate_id not in all_categories_map:
                 logger.warning(
                     "department<%s>'s category<%s> could not be found",
                     department.id,
-                    dep_cate_id,
+                    dept_cate_id,
                 )
                 continue
 
             # 如果存在没有管理权限的目录，但是其中的组织有权限，在这里会被加进去
-            if dep_cate_id not in managed_categories_map:
-                managed_categories_map[dep_cate_id] = all_categories_map[dep_cate_id]
-            managed_categories_map[dep_cate_id]["departments"].append(department)
+            if dept_cate_id not in managed_categories_map:
+                managed_categories_map[dept_cate_id] = all_categories_map[dept_cate_id]
+
+            managed_categories_map[dept_cate_id]["departments"].append(department)
 
         # sort by order
         for category in managed_categories_map.values():
             category["departments"].sort(key=lambda x: x.order)
+            # NOTE: 使用提前slz到dict并没有提升性能
+            # category["departments"]=DepartmentListResultDepartmentOutputSLZ(category["departments"], many=True).data
 
+        # output slz使用read_only = true, speed up 100ms for 6000 departments
         return Response(
             data=DepartmentListResultCategoryOutputSLZ(managed_categories_map.values(), many=True).data,
             status=status.HTTP_200_OK,
