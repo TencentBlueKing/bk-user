@@ -10,12 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 
 import logging
+from typing import Any, Dict
 
 from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import CategoryOutputSLZ, DepartmentListResultCategoryOutputSLZ
+from .serializers import CategoryOutputSLZ
 from bkuser_core.api.web.utils import get_operator, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
@@ -52,7 +53,8 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         """获取最顶层的组织列表[权限中心亲和]"""
         # NOTE: 不能用values/values_list, 后面mptt has_children需要一个完整的model
         # 这些字段不查询, speed up 200ms for 6000 departments
-        defer_fields = ["create_time", "update_time", "code", "extras"]
+        defer_fields = ["create_time", "update_time", "code", "extras", "enabled"]
+        # TODO: enabled should be ignored too?
 
         if not settings.ENABLE_IAM:
             return Department.objects.filter(level=0, enabled=True).all().defer(*defer_fields)
@@ -105,6 +107,28 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             # FIXME: 这里为什么没有限制level=0?
             return queryset.all().defer(*defer_fields)
 
+    def _serialize_department(self, dept: Department) -> Dict[str, Any]:
+        # better performance
+        return {
+            "id": dept.id,
+            "name": dept.name,
+            "order": dept.order,
+            "has_children": dept.has_children,
+            # "category_id": dept.category_id,
+        }
+
+    def _serialize_category(self, category) -> Dict[str, Any]:
+        # better performance
+        return {
+            "id": category["id"],
+            "display_name": category["display_name"],
+            "order": category["order"],
+            "default": category["default"],
+            "type": category["type"],
+            "profile_count": category["profile_count"],
+            "departments": category["departments"],
+        }
+
     def get(self, request, *args, **kwargs):
         # NOTE: 差异点, 也不支持level
         # level = data.get("level")
@@ -143,16 +167,16 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             if dept_cate_id not in managed_categories_map:
                 managed_categories_map[dept_cate_id] = all_categories_map[dept_cate_id]
 
-            managed_categories_map[dept_cate_id]["departments"].append(department)
+            managed_categories_map[dept_cate_id]["departments"].append(self._serialize_department(department))
 
-        # sort by order
+        data = []
+        # sort by order, then do serialize and append
         for category in managed_categories_map.values():
-            category["departments"].sort(key=lambda x: x.order)
-            # NOTE: 使用提前slz到dict并没有提升性能
-            # category["departments"]=DepartmentListResultDepartmentOutputSLZ(category["departments"], many=True).data
+            category["departments"].sort(key=lambda x: x["order"])
 
-        # output slz使用read_only = true, speed up 100ms for 6000 departments
+            data.append(self._serialize_category(category))
+
         return Response(
-            data=DepartmentListResultCategoryOutputSLZ(managed_categories_map.values(), many=True).data,
+            data=data,
             status=status.HTTP_200_OK,
         )
