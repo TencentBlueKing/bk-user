@@ -13,7 +13,7 @@ from django.core.cache import caches
 
 from .models import DynamicFieldInfo
 
-LOCAL_CACHE_KEY_DEFAULT_EXTRAS_VALUES = "bk_user:profile:extras:default"
+LOCAL_CACHE_KEY_DEFAULT_EXTRAS_VALUES = "profile:extras:default"
 
 
 def get_extras_default_from_local_cache() -> Dict:

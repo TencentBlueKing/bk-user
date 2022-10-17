@@ -117,7 +117,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             # "category_id": dept.category_id,
         }
 
-    def _serialize_category(self, category) -> Dict[str, Any]:
+    def _serialize_category(self, category: Dict[str, Any]) -> Dict[str, Any]:
         # better performance
         return {
             "id": category["id"],

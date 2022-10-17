@@ -11,8 +11,8 @@ from typing import Tuple
 
 from django.core.cache import caches
 
-LOCAL_CACHE_KEY_DEPARTMENT_FULL_NAME_PREFIX = "bk_user:dept:full_name"
-LOCAL_CACHE_KEY_DEPARTMENT_HAS_CHILDREN_PREFIX = "bk_user:dept:has_children"
+LOCAL_CACHE_KEY_DEPARTMENT_FULL_NAME_PREFIX = "dept:full_name"
+LOCAL_CACHE_KEY_DEPARTMENT_HAS_CHILDREN_PREFIX = "dept:has_children"
 
 
 def get_department_full_name_from_local_cache(department_id: int) -> Tuple[bool, str]:
