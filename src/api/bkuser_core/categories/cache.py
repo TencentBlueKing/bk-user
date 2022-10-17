@@ -12,8 +12,8 @@ from django.core.cache import caches
 
 from .models import ProfileCategory
 
-LOCAL_CACHE_KEY_DEFAULT_CATEGORY_ID = "bk_user:cate:id"
-LOCAL_CACHE_KEY_DEFAULT_CATEGORY_DOMAIN = "bk_user:cate:domain"
+LOCAL_CACHE_KEY_DEFAULT_CATEGORY_ID = "cate:id"
+LOCAL_CACHE_KEY_DEFAULT_CATEGORY_DOMAIN = "cate:domain"
 
 
 def get_default_category_id_from_local_cache() -> int:

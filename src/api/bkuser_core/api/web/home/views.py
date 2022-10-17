@@ -10,12 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 
 import logging
+from typing import Any, Dict
 
 from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import CategoryOutputSLZ, DepartmentListResultCategoryOutputSLZ
+from .serializers import CategoryOutputSLZ
 from bkuser_core.api.web.utils import get_operator, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
@@ -50,11 +51,13 @@ class HomeTreeListApi(generics.ListCreateAPIView):
 
     def _list_department_tops(self, operator):
         """获取最顶层的组织列表[权限中心亲和]"""
-        # TODO: but the has_children need a model instance instead of a dict
-        # fields = ("id", "name", "order", "enabled", "extras", "category_id")
+        # NOTE: 不能用values/values_list, 后面mptt has_children需要一个完整的model
+        # 这些字段不查询, speed up 200ms for 6000 departments
+        defer_fields = ["create_time", "update_time", "code", "extras", "enabled"]
+        # TODO: enabled should be ignored too?
 
         if not settings.ENABLE_IAM:
-            return Department.objects.filter(level=0, enabled=True).all()
+            return Department.objects.filter(level=0, enabled=True).all().defer(*defer_fields)
 
         try:
             dept_ft = Permission().make_department_filter(operator, IAMAction.MANAGE_DEPARTMENT)
@@ -65,7 +68,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         else:
             # 如果是any, 表示有所有一级department的权限, 直接返回
             if is_filter_means_any(dept_ft):
-                return Department.objects.filter(level=0, enabled=True).all()
+                return Department.objects.filter(level=0, enabled=True).all().defer(*defer_fields)
 
             # 1. 拿到权限中心里授过权的全列表
             queryset = Department.objects.filter(enabled=True).filter(dept_ft)
@@ -102,7 +105,29 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             #     )
 
             # FIXME: 这里为什么没有限制level=0?
-            return queryset.all()
+            return queryset.all().defer(*defer_fields)
+
+    def _serialize_department(self, dept: Department) -> Dict[str, Any]:
+        # better performance
+        return {
+            "id": dept.id,
+            "name": dept.name,
+            "order": dept.order,
+            "has_children": dept.has_children,
+            # "category_id": dept.category_id,
+        }
+
+    def _serialize_category(self, category: Dict[str, Any]) -> Dict[str, Any]:
+        # better performance
+        return {
+            "id": category["id"],
+            "display_name": category["display_name"],
+            "order": category["order"],
+            "default": category["default"],
+            "type": category["type"],
+            "profile_count": category["profile_count"],
+            "departments": category["departments"],
+        }
 
     def get(self, request, *args, **kwargs):
         # NOTE: 差异点, 也不支持level
@@ -129,25 +154,29 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         # 这里拉取所有拥有权限的、顶级的目录
         for department in self._list_department_tops(operator):
             # 如果存在当前可展示的全量 category 未包含的部门，舍弃
-            dep_cate_id = department.category_id
-            if dep_cate_id not in all_categories_map:
+            dept_cate_id = department.category_id
+            if dept_cate_id not in all_categories_map:
                 logger.warning(
                     "department<%s>'s category<%s> could not be found",
                     department.id,
-                    dep_cate_id,
+                    dept_cate_id,
                 )
                 continue
 
             # 如果存在没有管理权限的目录，但是其中的组织有权限，在这里会被加进去
-            if dep_cate_id not in managed_categories_map:
-                managed_categories_map[dep_cate_id] = all_categories_map[dep_cate_id]
-            managed_categories_map[dep_cate_id]["departments"].append(department)
+            if dept_cate_id not in managed_categories_map:
+                managed_categories_map[dept_cate_id] = all_categories_map[dept_cate_id]
 
-        # sort by order
+            managed_categories_map[dept_cate_id]["departments"].append(self._serialize_department(department))
+
+        data = []
+        # sort by order, then do serialize and append
         for category in managed_categories_map.values():
-            category["departments"].sort(key=lambda x: x.order)
+            category["departments"].sort(key=lambda x: x["order"])
+
+            data.append(self._serialize_category(category))
 
         return Response(
-            data=DepartmentListResultCategoryOutputSLZ(managed_categories_map.values(), many=True).data,
+            data=data,
             status=status.HTTP_200_OK,
         )
