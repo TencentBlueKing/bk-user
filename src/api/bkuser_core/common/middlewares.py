@@ -64,8 +64,23 @@ class DynamicResponseFormatMiddleware:
 
         return False
 
+    def _is_response_ee_format(self, resp: "Response") -> bool:
+        """返回值是否符合企业版格式"""
+        if getattr(resp, "data", None) is None:
+            return False
+
+        required_keys = ["result", "message", "code", "data"]
+        for key in required_keys:
+            if key not in resp.data:
+                return False
+
+        return True
+
     def _force_ee_response(self, resp: "Response") -> "Response":
         """强制刷返回值"""
+        if self._is_response_ee_format(resp):
+            return resp
+
         # 来自缓存的 response 没有对应属性
         # 由于 response 已经被渲染，并不需要 callback
         # FIXME: 这里204的处理有问题, 强制渲染会导致204卡主(一直不结束)
