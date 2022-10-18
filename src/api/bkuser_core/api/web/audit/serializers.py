@@ -106,3 +106,33 @@ class LoginLogOutputSLZ(serializers.Serializer):
         if obj.extra_value:
             return obj.extra_value.get("client_ip", PLACE_HOLDER)
         return PLACE_HOLDER
+
+
+class LoginLogExportOutputSLZ(serializers.Serializer):
+
+    username = serializers.CharField(help_text=_("登录用户"), source="profile.username")
+    display_name = serializers.CharField(help_text=_("登录用户名"), source="profile.display_name")
+    ip = serializers.SerializerMethodField(help_text=_("客户端 IP"), required=False)
+    status = serializers.SerializerMethodField(help_text=_("登录状态"), required=False)
+    datetime = serializers.SerializerMethodField(help_text=_("登录时间"), required=False)
+    reason = serializers.SerializerMethodField(help_text=_("失败原因"), required=False)
+
+    def get_ip(self, obj) -> str:
+        """get client ip from extra_value"""
+        if obj.extra_value:
+            return obj.extra_value.get("client_ip", PLACE_HOLDER)
+        return PLACE_HOLDER
+
+    def get_status(self, obj) -> str:
+        if obj.is_success:
+            return "成功"
+        return "失败"
+
+    def get_reason(self, obj) -> Optional[str]:
+        """get reason display name"""
+        if obj.is_success:
+            return None
+        return LOGIN_FAILED_REASON_MAP.get(obj.reason, _("未知失败原因"))
+
+    def get_datetime(self, obj):
+        return obj.create_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")

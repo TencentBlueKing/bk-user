@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from datetime import datetime
 
 from django.conf import settings
 from django.db.models import Q
@@ -17,7 +16,13 @@ from openpyxl import load_workbook
 from rest_framework import generics
 
 from .constants import OPERATION_OBJ_VALUE_MAP, OPERATION_VALUE_MAP
-from .serializers import GeneralLogListInputSLZ, GeneralLogOutputSLZ, LoginLogListInputSLZ, LoginLogOutputSLZ
+from .serializers import (
+    GeneralLogListInputSLZ,
+    GeneralLogOutputSLZ,
+    LoginLogExportOutputSLZ,
+    LoginLogListInputSLZ,
+    LoginLogOutputSLZ,
+)
 from bkuser_core.api.web.export import LoginLogExcelExporter
 from bkuser_core.api.web.utils import get_category_display_name_map
 from bkuser_core.api.web.viewset import CustomPagination, StartTimeEndTimeFilterBackend
@@ -112,25 +117,11 @@ class LoginLogExportApi(generics.ListAPIView):
             settings.EXPORT_EXCEL_FILENAME + "_login_audit",
         )
 
-        context = {"category_name_map": get_category_display_name_map()}
         login_logs = queryset.all()
         records = []
         for login_log in login_logs:
-            record = LoginLogOutputSLZ(login_log, context=context).data
-            dt = record["datetime"]
-            if isinstance(dt, datetime):
-                dt = dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-
-            records.append(
-                {
-                    "username": login_log.profile.username,
-                    "display_name": login_log.profile.display_name,
-                    "ip": record["client_ip"],
-                    "status": "成功" if record["is_success"] else "失败",
-                    "datetime": dt,
-                    "reason": record["reason"] or "-",
-                }
-            )
+            record = LoginLogExportOutputSLZ(login_log, context=self.get_serializer_context()).data
+            records.append(record)
 
         exporter.add_records(records)
         return exporter.to_response()

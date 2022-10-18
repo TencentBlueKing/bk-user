@@ -33,14 +33,8 @@ class DepartmentSerializer(serializers.ModelSerializer):
     extras = serializers.JSONField(required=False)
     enabled = serializers.BooleanField(default=True, required=False)
 
-    full_name = serializers.SerializerMethodField()
-    has_children = serializers.SerializerMethodField()
-
-    def get_full_name(self, obj):
-        return obj.full_name
-
-    def get_has_children(self, obj) -> bool:
-        return obj.has_children
+    full_name = serializers.CharField()
+    has_children = serializers.BooleanField()
 
     class Meta:
         model = Department
@@ -55,13 +49,13 @@ class DepartmentWithChildrenSLZ(DepartmentSerializer):
         full_name_prefix = obj.full_name
 
         data = []
-        items = {}
+        items = set()
         all_children = obj.children.filter(enabled=True)
         for x in all_children:
             # children 可能存在重复
             if x.pk in items:
                 continue
-            items[x.pk] = True
+            items.add(x.pk)
 
             full_name = f"{full_name_prefix}/{x.name}"
             # 由于当前删除是假删除，真实架构树并未移除 has_children = not x.is_leaf_node()
@@ -96,7 +90,7 @@ class DepartmentCreateInputSLZ(serializers.Serializer):
 
 
 class DepartmentSearchInputSLZ(serializers.Serializer):
-    category_id = serializers.IntegerField()
+    category_id = serializers.IntegerField(required=True)
 
 
 class DepartmentSearchOutputSLZ(serializers.Serializer):
