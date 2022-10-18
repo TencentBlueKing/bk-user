@@ -170,6 +170,7 @@ class CategorySettingNamespaceListCreateUpdateApi(
                     )
 
         settings = Setting.objects.filter(meta__in=metas, category_id=category_id).all()
+        # TODO: 创建接口, 应该不需要返回. 确认前端是否有用到数据
         return Response(self.get_serializer_class()(settings, many=True).data)
 
     def put(self, request, *args, **kwargs):
@@ -455,8 +456,8 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
         instance = self.get_object()
         if instance.type == CategoryType.LOCAL.value:
             return self._local_category_do_import(request, instance)
-        else:
-            return self._not_local_category_do_sync(request, instance)
+
+        return self._not_local_category_do_sync(request, instance)
 
     def _local_category_do_import(self, request, instance):
         """向本地目录导入数据文件"""

@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from collections.abc import Iterable
 
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -114,7 +115,11 @@ class SearchApi(generics.ListAPIView):
                     continue
 
                 for k, v in profile.extras.items():
-                    if v and keyword in v:
+                    if not v:
+                        continue
+                    if not isinstance(v, Iterable):
+                        continue
+                    if keyword in v:
                         # 这里如果没有拿到, 意味着extras对应字段已经被删除/禁用但是用户数据里面还有, 所以过滤掉这种结果
                         hit_extra_display_name = extra_field_display_name_map.get(k)
                         if hit_extra_display_name:

@@ -51,14 +51,12 @@ class DynamicFieldCreateInputSLZ(serializers.ModelSerializer):
         fields = ["name", "display_name", "builtin", "require", "unique", "options", "type", "default"]
 
     def to_internal_value(self, data):
-        print("calling the to_internal_value", data)
         # 将前端存储转为后端格式
         if data.get("options"):
             data["options"] = [[x.get("id"), x.get("value")] for x in data["options"]]
 
         data["display_name"] = data.pop("name")
         data["name"] = data.pop("key")
-        print("calling the to_internal_value done, the data", data)
         return data
 
     def validate(self, attrs):
@@ -77,6 +75,7 @@ class DynamicFieldUpdateInputSLZ(serializers.Serializer):
     default = serializers.JSONField(required=False)
 
     def to_internal_value(self, data):
+        data = super().to_internal_value(data)
         if data.get("options"):
             data["options"] = [[x.get("id"), x.get("value")] for x in data["options"]]
 

@@ -17,7 +17,7 @@ from rest_framework.validators import ValidationError
 from bkuser_core.api.web.serializers import StringArrayField
 from bkuser_core.api.web.utils import get_extras_with_default_values
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
-from bkuser_core.categories.constants import CategoryStatus
+from bkuser_core.categories.constants import CategoryStatus, CreateAbleCategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -67,6 +67,7 @@ class CategoryDetailOutputSLZ(serializers.ModelSerializer):
         return obj.configured
 
     def get_unfilled_namespaces(self, obj) -> List[str]:
+        # NOTE: 每个category产生一次查询
         unfilled_nss = set(obj.get_unfilled_settings().values_list("namespace", flat=True))
         return list(unfilled_nss)
 
@@ -83,7 +84,7 @@ class CategoryCreateInputSLZ(serializers.Serializer):
 
     domain = serializers.CharField(max_length=64, label=_("登陆域"), validators=[validate_domain])
     display_name = serializers.CharField(max_length=64, label=_("目录名"))
-    type = serializers.ChoiceField(default="local", choices=["mad", "ldap", "local"])
+    type = serializers.ChoiceField(default="local", choices=CreateAbleCategoryType.get_choices())
 
     activated = serializers.BooleanField(default=True)
 
@@ -91,11 +92,12 @@ class CategoryCreateInputSLZ(serializers.Serializer):
         if ProfileCategory.objects.filter(domain=data["domain"]).exists():
             raise ValidationError(_("登陆域为 {} 的用户目录已存在").format(data["domain"]))
 
-        return super().validate(data)
+        return data
 
     def create(self, validated_data):
         # NOTE: 这里很特殊, 前端是activated, 需要转status
         # TODO: 应该全部统一成 status
+        # TODO: validated_data里的activated变成status 这段逻辑使用 to_internal_value会更合适
         status = CategoryStatus.INACTIVE.value
         activated = validated_data.pop("activated")
         if activated:
@@ -103,7 +105,6 @@ class CategoryCreateInputSLZ(serializers.Serializer):
 
         validated_data["status"] = status
 
-        print("the validated_data:", validated_data)
         category = ProfileCategory.objects.create(**validated_data)
         return category
 
@@ -115,24 +116,24 @@ class CategoryUpdateInputSLZ(serializers.Serializer):
 
     def update(self, instance, validated_data):
         # NOTE: 这里做了activated的转换, 所以需要自定义update => 能否整合model serializer复用原先的方法, 只需要处理activated
-        has_changed = False
+        should_updated_fields = []
         activated = validated_data.get("activated", None)
         if activated is not None:
-            has_changed = True
             instance.status = CategoryStatus.NORMAL.value if activated else CategoryStatus.INACTIVE.value
+            should_updated_fields.append("status")
 
         display_name = validated_data.get("display_name")
         if display_name:
-            has_changed = True
             instance.display_name = display_name
+            should_updated_fields.append("display_name")
 
         description = validated_data.get("description")
         if description:
-            has_changed = True
             instance.description = description
+            should_updated_fields.append("description")
 
-        if has_changed:
-            instance.save()
+        if should_updated_fields:
+            instance.save(update_fields=should_updated_fields)
         return instance
 
 
@@ -157,10 +158,7 @@ class CategoryExportInputSLZ(serializers.Serializer):
 
 
 class SimpleDepartmentSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-
-    def get_full_name(self, obj):
-        return obj.full_name
+    full_name = serializers.CharField()
 
     class Meta:
         model = Department

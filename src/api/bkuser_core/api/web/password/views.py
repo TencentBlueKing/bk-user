@@ -47,6 +47,7 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
             logger.exception("failed to get profile by email<%s>", email)
             return Response(data={})
 
+        # FIXME:需要check是否有频率限制，否则会对用户有骚扰 send_password_by_email
         token_holder = ProfileTokenHolder.objects.create(profile=profile)
         try:
             send_password_by_email.delay(profile_id=profile.id, token=token_holder.token, init=False)
@@ -85,6 +86,10 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
         profile.password = make_password(pending_password)
         profile.password_update_time = now()
         profile.save()
+
+        # disabled the token_holder
+        token_holder.enabled = False
+        token_holder.save()
 
         # 记录审计日志
         create_general_log(
