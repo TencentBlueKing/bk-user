@@ -385,7 +385,7 @@ export default {
         await this.getDepartments();
         this.messageSuccess(this.$t('同步成功'));
       } catch (e) {
-        console.warn(e);
+        this.messageError(e);
       } finally {
         this.closeLoading(importId);
       }

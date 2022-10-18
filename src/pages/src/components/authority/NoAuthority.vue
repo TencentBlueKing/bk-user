@@ -92,11 +92,11 @@ export default {
 
       // 以下接口由具体业务侧处理，不统一处理
       const startsExceptList = [
-        'get_api/v2/departments/?only_enabled=', // 组织列表
+        'get_api/v1/web/home/tree/?only_enabled=', // 组织列表
       ];
       const equalExceptList = [
-        'get_api/v2/categories/', // 目录列表
-        'get_api/v2/fields/manageable/', // 字段管理权限查看
+        'get_api/v1/web/categories/', // 目录列表
+        'get_api/v1/web/fields/manageable/', // 字段管理权限查看
       ];
       // eslint-disable-next-line max-len
       if (startsExceptList.some(exceptId => id.startsWith(exceptId)) || equalExceptList.some(exceptId => id === exceptId)) {
@@ -107,7 +107,7 @@ export default {
       // 以下接口页面无权限；其他接口展示申请权限对话框
       const startsPageList = [
         'has_not_path_auth', // 自定义页面无权限
-        'get_api/v2/audit/operation_logs/?start_time=', // 审计列表
+        'get_api/v1/web/audits/logs/types/general/?start_time=', // 审计列表
       ];
       if (startsPageList.some(pageId => id.startsWith(pageId))) {
         this.showPageAuth = true;

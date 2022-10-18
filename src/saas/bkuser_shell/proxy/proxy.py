@@ -70,7 +70,7 @@ class BkUserApiProxy(GenericViewSet):
         if settings.SITE_URL == "/":
             return request.path
 
-        return "/" + request.path.replace(settings.SITE_URL, "")
+        return "/" + request.path.replace(settings.SITE_URL, "").lstrip("/")
 
     def do_proxy(self, request, rewrite_path=None):
         try:
@@ -123,13 +123,30 @@ class BkUserApiProxy(GenericViewSet):
 
         content = resp.content
         status_code = resp.status_code
+
         # 无权限, 改状态码为403
         if b"auth_infos" in content and b"callback_url" in content:
             status_code = status.HTTP_403_FORBIDDEN
+
+        resp_headers = resp.headers
+        if "Content-Encoding" in resp_headers:
+            resp_headers.pop("Content-Encoding")
+
+        logger.debug(
+            "proxy request[method=%s,url=%s,params=%s,data=%s,headers=%s] response[status=%s,headers=%s,content=%s]",
+            method,
+            url,
+            params,
+            data,
+            headers,
+            status_code,
+            content,
+            resp_headers,
+        )
 
         # DONT'T set the content_type here!
         return HttpResponse(
             content,
             status=status_code,
-            headers=resp.headers,
+            headers=resp_headers,
         )
