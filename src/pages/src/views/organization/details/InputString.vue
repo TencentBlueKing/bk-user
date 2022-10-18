@@ -23,13 +23,6 @@
   <div class="input-text">
     <!-- eslint-disable vue/no-mutating-props -->
     <input
-      v-if="item.key === 'last_login_time' || item.key === 'create_time'"
-      :type="inputType"
-      :disabled="!item.editable"
-      :class="['select-text', { 'input-error': item.isError }]"
-      v-model="mapTimeEnum" />
-    <input
-      v-else
       :type="inputType"
       :disabled="editStatus && !item.editable"
       :placeholder="inputType === 'number' ? $t('请输入数字') : item.holder"
@@ -47,7 +40,6 @@
 </template>
 
 <script>
-import moment from 'moment';
 export default {
   props: {
     item: {
@@ -62,9 +54,6 @@ export default {
   computed: {
     inputType() {
       return this.item.type === 'string' ? 'text' : 'number';
-    },
-    mapTimeEnum() {
-      return this.item.value ? moment.utc(this.item.value).format('YYYY-MM-DD HH:mm:ss') : '';
     },
   },
   methods: {

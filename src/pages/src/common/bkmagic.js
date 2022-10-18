@@ -22,6 +22,7 @@ export const messageError = (message, delay = 3000) => {
     message,
     delay,
     theme: 'error',
+    ellipsisCopy: true,
   });
 };
 export const messageSuccess = (message, delay = 3000) => {
