@@ -90,6 +90,7 @@ INSTALLED_APPS = [
 TIME_ZONE = "Asia/Shanghai"
 USE_TZ = True
 
+
 # 国际化
 LANGUAGE_CODE = "zh-hans"
 USE_I18N = True
@@ -112,6 +113,8 @@ MODELTRANSLATION_LANGUAGES = ("en", "zh-hans")
 # ==============================================================================
 STATIC_ROOT = os.path.join(PROJECT_ROOT, "staticfiles")
 STATIC_URL = "/static/"
+
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, "media")
 
 # ==============================================================================
 # session and cache

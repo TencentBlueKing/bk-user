@@ -14,6 +14,3 @@ from django.apps import AppConfig
 
 class SettingConfig(AppConfig):
     name = "bkuser_core.user_settings"
-
-    def ready(self):
-        from . import handlers  # noqa

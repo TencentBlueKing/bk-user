@@ -18,29 +18,29 @@ export default {
   mutations: {},
   actions: {
     getAuthInfo(context, params, config = {}) {
-      return http.get('api/v2/fields/manageable/');
+      return http.get('api/v1/web/fields/manageable/');
     },
     postFields(context, params, config = {}) {
-      return http.post('api/v2/fields/', params.data);
+      return http.post('api/v1/web/fields/', params.data);
     },
     deleteFields(context, params, config = {}) {
-      return http.delete(`api/v2/fields/${params.id}/`);
+      return http.delete(`api/v1/web/fields/${params.id}/`);
     },
     patchFields(context, params, config = {}) {
-      return http.patch(`api/v2/fields/${params.id}/`, params.data);
+      return http.patch(`api/v1/web/fields/${params.id}/`, params.data);
     },
     // 获取字段，表头、设置列表字段也会用到
     getFields(context, params, config = {}) {
-      return http.get('api/v2/fields/');
+      return http.get('api/v1/web/fields/');
     },
     // 字段设置列表拖拽重新排序
     dragFields(context, params, config = {}) {
       const { id, index } = params;
-      return http.patch(`api/v2/fields/${id}/order/${index}/`);
+      return http.patch(`api/v1/web/fields/${id}/order/${index}/`);
     },
     // 设置哪些字段可在首页表格展示
     updateFieldsVisible(context, params, config = {}) {
-      return http.patch('api/v2/fields/visible/', {
+      return http.patch('api/v1/web/fields/visible/', {
         updating_ids: params.idList,
       });
     },

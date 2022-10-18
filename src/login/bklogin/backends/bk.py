@@ -48,6 +48,9 @@ class BkUserBackend(ModelBackend):
         domain_list = get_categories_str().split(";")
 
         s_username, s_domain = _split_username(username)
+        logger.debug(
+            "the domain_list is %s, and the parsed domain in the list: %s", domain_list, s_domain in domain_list
+        )
         if s_domain in domain_list:
             username, domain = s_username, s_domain
         else:

@@ -344,7 +344,7 @@ export default {
         this.showLeaderLoading = true;
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
         this.paginationConfig.count = res.data.count;
-        this.copyList.push(...res.data.data);
+        this.copyList.push(...res.data.results);
         if (this.detailsBarInfo.type === 'add') {
           // 新增 profile
           this.rtxList = this.copyList;

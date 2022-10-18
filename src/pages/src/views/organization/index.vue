@@ -925,7 +925,7 @@ export default {
     // 目录重命名
     async confirmRenameCatalog() {
       try {
-        const res = await this.$store.dispatch('catalog/ajaxPutCatalog', {
+        const res = await this.$store.dispatch('catalog/ajaxPatchCatalog', {
           id: this.renameData.item.id,
           data: {
             display_name: this.$refs.dialogContentRef.departmentName,

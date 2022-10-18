@@ -10,6 +10,5 @@ specific language governing permissions and limitations under the License.
 """
 
 from bkuser_core.departments.v2.urls import urlpatterns as v2_urlpatterns
-from bkuser_core.departments.v3.urls import urlpatterns as v3_urlpatterns
 
-urlpatterns = v2_urlpatterns + v3_urlpatterns
+urlpatterns = v2_urlpatterns

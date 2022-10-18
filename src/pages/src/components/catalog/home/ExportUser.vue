@@ -326,7 +326,7 @@ export default {
           withAncestors: true,
           searchLength: this.searchLength,
         });
-        const originList = res.data;
+        const originList = res.data.results;
         if (!originList.length) {
           this.messageWarn(this.$t('没有找到相关的结果'));
           return;
@@ -463,7 +463,7 @@ export default {
         // tips: 后端提供的 SITE_URL 需以 / 开头
         url = window.location.origin + url;
       }
-      url = `${url}/api/v2/categories/${this.id}/export/?department_ids=${this.selectedDepartments.map(item => item.id).join(',')}`;
+      url = `${url}/api/v1/web/categories/${this.id}/operations/export/?department_ids=${this.selectedDepartments.map(item => item.id).join(',')}`;
       window.open(url);
     },
     // 取消

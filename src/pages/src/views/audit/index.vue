@@ -257,7 +257,7 @@ export default {
       if (this.panelActive === 'login' && this.auditList.length === 0) {
         this.handleWarning({ theme: 'error' });
       } else {
-        url = `${url}/api/v2/audit/login_log/export/?start_time=${startTime}&end_time=${endTime}`;
+        url = `${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}`;
         window.open(url);
       }
     },

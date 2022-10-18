@@ -9,8 +9,29 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import re
+from enum import Enum
 
-from bkuser_shell.common.constants import ChoicesEnum
+
+class ChoicesEnum(Enum):
+    @classmethod
+    def get_choices(cls):
+        return cls._choices_labels.value
+
+    @classmethod
+    def get_choice_label(cls, value):
+        if isinstance(value, Enum):
+            value = value.value
+        return dict(cls.get_choices()).get(value, value)
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+    @classmethod
+    def all(cls) -> list:
+        # 过滤 _choice_label
+        return [x for x in cls._value2member_map_.keys() if not isinstance(x, tuple)]  # type: ignore
+
 
 VERSION_PATTERN = re.compile(r"^[vV](\d+\.){1,3}(\d+)$")
 

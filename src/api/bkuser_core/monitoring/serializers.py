@@ -16,7 +16,7 @@ class IssueSerializer(serializers.Serializer):
     description = serializers.CharField(read_only=True)
 
 
-class DianosisSerializer(serializers.Serializer):
+class DiagnosisSerializer(serializers.Serializer):
     system_name = serializers.CharField(read_only=True)
     alive = serializers.BooleanField(read_only=True)
     issues = IssueSerializer(many=True)

@@ -25,6 +25,7 @@ RUN poetry config virtualenvs.create false && poetry install --no-dev
 COPY src/api/wsgi.py /app
 COPY src/api/bkuser_core /app/bkuser_core
 COPY src/api/locale /app/locale
+COPY src/api/media /app/media
 COPY src/api/manage.py /app
 COPY src/bkuser_global /app/bkuser_global
 COPY src/api/bin/start.sh /app

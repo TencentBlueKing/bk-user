@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls.conf import path, re_path
+from django.urls.conf import re_path
 
 from . import views
 from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
@@ -16,21 +16,16 @@ from bkuser_core.apis.v2.constants import LOOKUP_FIELD_NAME
 PVAR_PROFILE_ID = r"(?P<%s>[a-z0-9-]+)" % LOOKUP_FIELD_NAME
 
 
+# FIXME: 统计调用量后, 删除
+
 urlpatterns = [
-    re_path(
-        r"^api/v2/categories_metas/$",
-        views.CategoryViewSet.as_view(
-            {
-                "get": "list_metas",
-            }
-        ),
-        name="categories.metas",
-    ),
     re_path(
         r"^api/v2/categories/$",
         views.CategoryViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "list",
+                # TODO: saas not used
                 "post": "create",
             }
         ),
@@ -40,63 +35,14 @@ urlpatterns = [
         r"^api/v2/categories/%s/$" % PVAR_PROFILE_ID,
         views.CategoryViewSet.as_view(
             {
+                # TODO: saas not used
                 "get": "retrieve",
+                # TODO: saas not used
                 "put": "update",
+                # TODO: saas not used
                 "patch": "partial_update",
-                "delete": "destroy",
             }
         ),
         name="categories.action",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/restoration/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                "post": "restoration",
-            }
-        ),
-        name="categories.restoration",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/sync/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                "post": "sync",
-            }
-        ),
-        name="categories.sync",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/import/$" % PVAR_PROFILE_ID,
-        views.CategoryFileViewSet.as_view(
-            {
-                "post": "import_data_file",
-            }
-        ),
-        name="categories.import",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/test_connection/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                "post": "test_connection",
-            }
-        ),
-        name="categories.test_connection",
-    ),
-    re_path(
-        r"^api/v2/categories/%s/test_fetch_data/$" % PVAR_PROFILE_ID,
-        views.CategoryViewSet.as_view(
-            {
-                "post": "test_fetch_data",
-            }
-        ),
-        name="categories.test_fetch_data",
-    ),
-    path("api/v2/sync_task/", views.SyncTaskViewSet.as_view({"get": "list"}), name="categories.sync_tasks"),
-    path(
-        "api/v2/sync_task/<lookup_value>/logs",
-        views.SyncTaskViewSet.as_view({"get": "show_logs"}),
-        name="categories.sync_tasks.logs",
     ),
 ]

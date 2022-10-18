@@ -43,22 +43,7 @@ IS_PAGES_INDEPENDENT_DEPLOYMENT = env.bool("IS_PAGES_INDEPENDENT_DEPLOYMENT", de
 # Core API #
 ############
 BK_USER_CORE_API_HOST = env("BKAPP_BK_USER_CORE_API_HOST", default="http://usermgr.service.consul:8009")
-# API_AUTH_TOKEN_PAIR = (
-#     "Authorization",
-#     f"iBearer {env('API_AUTO_TOKEN', default='HVp5CNn4th87w5MLT8x1FJw6Rcc5cF3SRT7NlcFILgij')}",
-# )
 
-API_OPERATOR_HEADER_NAME = "X-BkUser-Operator"
-API_APP_CODE_HEADER_NAME = "X-Bk-App-Code"
-API_APP_SECRET_HEADER_NAME = "X-Bk-App-Secret"
-API_FORCE_RAW_RESP_HEADER_NAME = "Force-Raw-Response"
-API_FORCE_NO_CACHE_HEADER_NAME = "Force-No-Cache"
-API_FORCE_RAW_USERNAME_HEADER_NAME = "Raw-Username"
-API_NEED_IAM_HEADER_NAME = "Need-Iam"
-API_IAM_ACTION_ID_HEADER_NAME = "Action-Id"
-
-# 默认开启 IAM，但是可以通过部署的环境变量关闭
-ENABLE_IAM = env.bool("ENABLE_IAM", default=True)
 
 # 特殊标记从 SaaS 请求到 Api 的 IP
 CLIENT_IP_FROM_SAAS_HEADER = "Client-IP-From-SaaS"

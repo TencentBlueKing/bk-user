@@ -301,7 +301,7 @@ export default {
           keyword,
           searchLength: this.searchLength,
         });
-        const originList = res.data;
+        const originList = res.data.results;
         if (!originList.length) {
           this.messageWarn(this.$t('没有找到相关的结果'));
           this.searchList = [];

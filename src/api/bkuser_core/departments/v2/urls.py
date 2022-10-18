@@ -20,7 +20,9 @@ urlpatterns = [
         r"^api/v2/departments/$",
         views.DepartmentViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "list",
+                # NOTE: login used
                 "post": "create",
             }
         ),
@@ -30,27 +32,23 @@ urlpatterns = [
         r"^api/v2/departments/%s/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
+                # NOTE: login used
                 "get": "retrieve",
+                # NOTE: login used
                 "post": "update",
+                # TODO: saas removed this
                 "delete": "destroy",
+                # TODO: saas removed this
                 "patch": "partial_update",
             }
         ),
         name="departments.action",
     ),
     url(
-        r"^api/v2/departments/%s/restoration/$" % PVAR_DEPARTMENT_ID,
-        views.DepartmentViewSet.as_view(
-            {
-                "post": "restoration",
-            }
-        ),
-        name="departments.restoration",
-    ),
-    url(
         r"^api/v2/departments/%s/ancestors/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
+                # TODO: saas removed this
                 "get": "get_ancestor",
             }
         ),
@@ -60,6 +58,7 @@ urlpatterns = [
         r"^api/v2/departments/%s/children/$" % PVAR_DEPARTMENT_ID,
         views.DepartmentViewSet.as_view(
             {
+                # TODO: saas removed this
                 "get": "get_children",
             }
         ),
@@ -67,35 +66,23 @@ urlpatterns = [
     ),
     url(
         r"^api/v2/departments/%s/profiles/$" % PVAR_DEPARTMENT_ID,
-        views.DepartmentViewSet.as_view({"get": "get_profiles", "post": "add_profiles"}),
-        name="departments.profiles",
-    ),
-    #########
-    # Batch #
-    #########
-    url(
-        r"^api/v2/batch/departments/profiles/$",
-        views.BatchDepartmentsViewSet.as_view(
+        views.DepartmentViewSet.as_view(
             {
-                "get": "multiple_retrieve_profiles",
+                # NOTE: login used
+                "get": "get_profiles",
+                # NOTE: login used
+                "post": "add_profiles",
             }
         ),
-        name="department.batch",
+        name="departments.profiles",
     ),
     ########
     # Edge #
     ########
     url(
         r"^api/v2/edges/department_profile/$",
+        # NOTE: login used
         views.DepartmentProfileEdgeViewSet.as_view({"get": "list"}),
         name="edge.department_profile",
-    ),
-    #############
-    # shortcuts #
-    #############
-    url(
-        r"^api/v2/shortcuts/departments/tops/$",
-        views.DepartmentViewSet.as_view({"get": "list_tops"}),
-        name="shortcuts.departments.list.tops",
     ),
 ]

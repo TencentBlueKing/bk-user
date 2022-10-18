@@ -18,6 +18,10 @@ from django.core.cache.backends.dummy import DummyCache
 logger = logging.getLogger(__name__)
 
 
+# =========================================
+# legacy codes, will be removed after refactor
+# =========================================
+
 CACHE_KEYWORD = "views.decorators.cache*"
 
 

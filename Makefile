@@ -12,19 +12,17 @@ generate-release-md:
 	mv src/saas/changelogs docs/
 	mv src/saas/release.md docs/
 
+test:
+	cd src/api && source ./test_env.sh && poetry run pytest bkuser_core/tests --disable-pytest-warnings
+
 link:
 	rm src/api/bkuser_global || true
 	rm src/saas/bkuser_global || true
 	rm src/login/bkuser_global || true
-	rm src/saas/bkuser_sdk || true
 
 	ln -s ${PWD}/src/bkuser_global src/api || true
 	ln -s ${PWD}/src/bkuser_global src/saas || true
 	ln -s ${PWD}/src/bkuser_global src/login || true
-	ln -s ${PWD}/src/sdk/bkuser_sdk src/saas || true
-
-generate-sdk:
-	cd src/ && swagger-codegen generate -i http://localhost:8004/redoc/\?format\=openapi -l python -o sdk/ -c config.json
 
 build-api:
 	docker build -f src/api/Dockerfile . -t ${image_repo}/bk-user-api:${version}

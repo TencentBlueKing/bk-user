@@ -18,10 +18,14 @@ from celery.task import periodic_task
 from django.conf import settings
 from django.utils.timezone import now
 
-from .account_expiration_notifier import get_profiles_for_account_expiration
 from .constants import TypeOfExpiration
-from .notifier import ExpirationNotifier, get_config_from_all_local_categories, get_notice_config_for_expiration
-from .password_expiration_notifier import get_profiles_for_password_expiration
+from .notifier import (
+    ExpirationNotifier,
+    get_config_from_all_local_categories,
+    get_notice_config_for_expiration,
+    get_profiles_for_account_expiration,
+    get_profiles_for_password_expiration,
+)
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.celery import app
@@ -80,7 +84,7 @@ def send_password_by_email(profile_id: int, raw_password: str = None, init: bool
     )
 
 
-@periodic_task(run_every=crontab(minute='0', hour='2'))
+@periodic_task(run_every=crontab(minute="0", hour="2"))
 def notice_for_account_expiration():
     """
     用户账号过期通知
@@ -139,7 +143,7 @@ def notice_for_account_expiration():
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
 
-@periodic_task(run_every=crontab(minute='0', hour='3'))
+@periodic_task(run_every=crontab(minute="0", hour="3"))
 def notice_for_password_expiration():
     """
     用户密码过期通知
@@ -196,7 +200,7 @@ def notice_for_password_expiration():
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
 
-@periodic_task(run_every=crontab(minute='0', hour='4'))
+@periodic_task(run_every=crontab(minute="0", hour="4"))
 def change_profile_status_for_account_expiration():
     """
     对账号过期的用户进行状态变更
@@ -210,7 +214,7 @@ def change_profile_status_for_account_expiration():
     expired_profiles.update(status=ProfileStatus.EXPIRED.value)
 
 
-@periodic_task(run_every=crontab(minute='0', hour='5'))
+@periodic_task(run_every=crontab(minute="0", hour="5"))
 def change_profile_status_for_account_locking():
     """
     对长时间未登录的用户进行状态冻结

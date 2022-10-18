@@ -18,6 +18,12 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.common.bulk_update.manager import BulkUpdateManager
+from bkuser_core.departments.cache import (
+    get_department_full_name_from_local_cache,
+    get_department_has_children_from_local_cache,
+    set_department_full_name_to_local_cache,
+    set_department_has_children_to_local_cache,
+)
 from bkuser_core.departments.managers import DepartmentManager
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
@@ -56,11 +62,18 @@ class Department(TimestampMPTTModel):
         verbose_name = "组织表"
         verbose_name_plural = "组织表"
 
+        index_together = [
+            ["tree_id", "lft", "rght"],
+            ["parent_id", "tree_id", "lft"],
+        ]
+
     def __str__(self):
         return f"{self.id}-{self.name}"
 
+    # FIXME: should be moved into the manager.py? Departments.objects.get_profiles()
     def get_profiles(self, recursive: bool = False, wildcard_search: str = None) -> models.QuerySet:
         if not recursive:
+            # FIXME: 为什么滤掉了 status.DELETE? 而不是通过 enabled=False过滤?
             target = self.profiles.exclude(status=ProfileStatus.DELETED.value)
         else:
             # 使用 DB 做 distinct 非常慢，所以先用 id 去重 TODO: 为什么差别这么大，有时间慢慢研究
@@ -70,7 +83,8 @@ class Department(TimestampMPTTModel):
             )
 
             # 当后端 DB 不支持 microseconds 时 create_time 会无法准确排序
-            target = Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
+            # target = Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
+            target = Profile.objects.filter(id__in=ids).filter(enabled=True).order_by("-id")
 
         if wildcard_search:
             target = target.filter(Q(username__icontains=wildcard_search) | Q(display_name__icontains=wildcard_search))
@@ -89,7 +103,52 @@ class Department(TimestampMPTTModel):
         if self.level == 0:
             return self.name
 
-        return "/".join(self.get_ancestors(include_self=True).values_list("name", flat=True))
+        # NOTE: serializer中配置了full_name, 导致放大查询, 需要使用cache优化这里的逻辑
+        # => 场景: 查用户列表分页, page_size=100时同一个部门的用户只会触发一次查询
+        # 这里是用 local mem cache for 5s, 每个worker内存短时cache, 如果部门full_name有变更, 最多5s生效
+        ok, full_name = get_department_full_name_from_local_cache(self.id)
+        if ok:
+            return full_name
+
+        # SQL:
+        # SELECT `name` FROM `departments_department`
+        # WHERE (`lft` <= 2 AND `rght` >= 13 AND `tree_id` = 5) ORDER BY `lft` ASC;
+        # 新版: 加了索引 tree_id + lft + rght
+        full_name = "/".join(self.get_ancestors(include_self=True).values_list("name", flat=True))
+
+        set_department_full_name_to_local_cache(self.id, full_name)
+
+        return full_name
+
+    @property
+    def has_children(self):
+        """仅返回启用的子部门"""
+        # 原始方案
+        # SQL:
+        # SELECT (1) AS `a` FROM departments_department
+        # WHERE (`lft` >= 2 AND `lft` <= 3 AND `tree_id` = 4 AND `enabled`) LIMIT 1;
+        # 走tree_id索引, 然后 where lft/rght/enabled
+        # return obj.get_descendants(include_self=False).filter(enabled=True).exists()
+
+        # 折中方案: 1 先判断是否有子节点, 没有直接返回False, 有子节点再fallback到数据库查询(enabled=True)
+
+        # 不会带来数据库查询, 但是过滤不了 enabled=True; 约省去50%的数据库查询
+        if self.get_descendant_count() == 0:
+            return False
+
+        # 这里是用 local mem cache for 5s, 每个worker内存短时cache, 如果部门full_name有变更, 最多5s生效
+        ok, has_children = get_department_has_children_from_local_cache(self.id)
+        if ok:
+            return has_children
+
+        # SQL:
+        # SELECT (1) AS `a` FROM `departments_department` WHERE (`parent_id` = 1 AND `enabled`) LIMIT 1;
+        # 走 parent_id 索引, 然后enabled=1 limit 1
+        has_children = self.children.filter(enabled=True).exists()
+
+        set_department_has_children_to_local_cache(self.id, has_children)
+
+        return has_children
 
     def add_profile(self, profile_instance) -> bool:
         """为该部门增加人员

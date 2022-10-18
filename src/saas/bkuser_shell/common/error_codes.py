@@ -37,7 +37,7 @@ class APIError(APIException):
             if replace:
                 self.code.message = message
             else:
-                self.code.message += u"%s%s" % (self.delimiter, message)
+                self.code.message += "%s%s" % (self.delimiter, message)
 
         # Render message string
         if kwargs:
@@ -85,60 +85,62 @@ class ErrorCodeCollection:
         return APIError(error_code)
 
 
+# FIXME: remove all this. should check what
 error_codes = ErrorCodeCollection()
 error_codes.add_codes(
     [
         # 用户字段
-        ErrorCode("CANNOT_CREATE_DYNAMIC_FIELD", _("无法创建用户字段")),
-        ErrorCode("CANNOT_UPDATE_DYNAMIC_FIELD", _("无法更新用户字段")),
-        ErrorCode("CANNOT_GET_DYNAMIC_FIELD", _("无法获取用户字段")),
-        ErrorCode("CANNOT_DELETE_DYNAMIC_FIELD", _("无法删除用户字段")),
-        ErrorCode("UNKNOWN_FIELD", _("未知自定义字段")),
+        # ErrorCode("CANNOT_CREATE_DYNAMIC_FIELD", _("无法创建用户字段")),
+        # ErrorCode("CANNOT_UPDATE_DYNAMIC_FIELD", _("无法更新用户字段")),
+        # ErrorCode("CANNOT_GET_DYNAMIC_FIELD", _("无法获取用户字段")),
+        # ErrorCode("CANNOT_DELETE_DYNAMIC_FIELD", _("无法删除用户字段")),
+        # ErrorCode("UNKNOWN_FIELD", _("未知自定义字段")),
         # 用户目录
-        ErrorCode("CANNOT_FIND_DEFAULT_CATEGORY", _("无法找到默认目录")),
-        ErrorCode("CATEGORY_CREATE_FAILED", _("用户目录创建失败")),
-        ErrorCode("CATEGORY_UPDATE_FAILED", _("用户目录更新失败")),
-        ErrorCode("CATEGORY_DELETE_FAILED", _("用户目录删除失败")),
-        ErrorCode("CANNOT_FIND_CATEGORY", _("无法找到目录")),
-        ErrorCode("CATEGORY_EXPORT_FAILED", _("用户目录导出失败")),
-        ErrorCode("SYNC_CATEGORY_FAILED", _("用户目录同步失败")),
-        ErrorCode("TEST_CATEGORY_FAILED", _("用户目录测试连接失败")),
-        ErrorCode("CATEGORY_CANNOT_TEST_CONNECTION", _("该类型用户目录不能测试连接")),
-        ErrorCode("LOCAL_CATEGORY_NEEDS_EXCEL_FILE", _("本地目录需要Excel文件同步数据")),
-        ErrorCode("ONLY_LOCAL_CATEGORY_CAN_EXPORT", _("只有本地目录支持导出数据")),
-        ErrorCode("ONLY_SUPERUSER_CAN_EXPORT", _("只有超级用户可以导出数据")),
+        # ErrorCode("CANNOT_FIND_DEFAULT_CATEGORY", _("无法找到默认目录")),
+        # ErrorCode("CATEGORY_CREATE_FAILED", _("用户目录创建失败")),
+        # ErrorCode("CATEGORY_UPDATE_FAILED", _("用户目录更新失败")),
+        # ErrorCode("CATEGORY_DELETE_FAILED", _("用户目录删除失败")),
+        # ErrorCode("CANNOT_FIND_CATEGORY", _("无法找到目录")),
+        # ErrorCode("CATEGORY_EXPORT_FAILED", _("用户目录导出失败")),
+        # ErrorCode("SYNC_CATEGORY_FAILED", _("用户目录同步失败")),
+        # ErrorCode("TEST_CATEGORY_FAILED", _("用户目录测试连接失败")),
+        # ErrorCode("CATEGORY_CANNOT_TEST_CONNECTION", _("该类型用户目录不能测试连接")),
+        # ErrorCode("LOCAL_CATEGORY_NEEDS_EXCEL_FILE", _("本地目录需要Excel文件同步数据")),
+        # ErrorCode("ONLY_LOCAL_CATEGORY_CAN_EXPORT", _("只有本地目录支持导出数据")),
+        # ErrorCode("ONLY_SUPERUSER_CAN_EXPORT", _("只有超级用户可以导出数据")),
         # 配置
-        ErrorCode("CANNOT_CREATE_SETTINGS", _("无法创建配置")),
-        ErrorCode("CANNOT_GET_SETTINGS", _("无法获取配置")),
-        ErrorCode("CANNOT_UPDATE_SETTINGS", _("无法更新配置")),
-        ErrorCode("CANNOT_DELETE_SETTINGS", _("无法更新配置")),
+        # ErrorCode("CANNOT_CREATE_SETTINGS", _("无法创建配置")),
+        # ErrorCode("CANNOT_GET_SETTINGS", _("无法获取配置")),
+        # ErrorCode("CANNOT_UPDATE_SETTINGS", _("无法更新配置")),
+        # ErrorCode("CANNOT_DELETE_SETTINGS", _("无法更新配置")),
         # 组织架构
-        ErrorCode("CANNOT_DELETE_DEPARTMENT", _("无法删除组织")),
-        ErrorCode("CANNOT_FETCH_PROFILES_FROM_DEPARTMENT", _("无法获取组织下用户")),
-        ErrorCode("CANNOT_GET_DEPARTMENT", _("无法获取组织")),
-        ErrorCode("CANNOT_UPDATE_DEPARTMENT", _("无法更新组织")),
-        ErrorCode("CANNOT_CREATE_DEPARTMENT", _("无法创建组织")),
-        ErrorCode("CANNOT_UPDATE_PROFILE", _("无法更新用户")),
-        ErrorCode("CANNOT_GET_PROFILE", _("无法获取用户")),
-        ErrorCode("CANNOT_CREATE_PROFILE", _("无法创建用户")),
-        ErrorCode("CANNOT_RESTORATION_PROFILE", _("无法恢复用户")),
+        # ErrorCode("CANNOT_DELETE_DEPARTMENT", _("无法删除组织")),
+        # ErrorCode("CANNOT_FETCH_PROFILES_FROM_DEPARTMENT", _("无法获取组织下用户")),
+        # ErrorCode("CANNOT_GET_DEPARTMENT", _("无法获取组织")),
+        # ErrorCode("CANNOT_UPDATE_DEPARTMENT", _("无法更新组织")),
+        # ErrorCode("CANNOT_CREATE_DEPARTMENT", _("无法创建组织")),
+        # ErrorCode("CANNOT_UPDATE_PROFILE", _("无法更新用户")),
+        # ErrorCode("CANNOT_GET_PROFILE", _("无法获取用户")),
+        # ErrorCode("CANNOT_CREATE_PROFILE", _("无法创建用户")),
+        # ErrorCode("CANNOT_RESTORATION_PROFILE", _("无法恢复用户")),
         # 审计
-        ErrorCode("CANNOT_GET_AUDIT_LOG", _("无法获取审计日志")),
-        ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
+        # ErrorCode("CANNOT_GET_AUDIT_LOG", _("无法获取审计日志")),
+        # ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
         # 密码重置
-        ErrorCode("CANNOT_GENERATE_TOKEN", _("无法生成重置链接")),
-        ErrorCode("CANNOT_GET_PROFILE_BY_TOKEN", _("链接已失效，请重新申请")),
-        ErrorCode("USER_MISS_AUTH", _("用户身份未通过校验")),
-        ErrorCode("CANNOT_MODIFY_PASSWORD", _("无法修改密码")),
+        # ErrorCode("CANNOT_GENERATE_TOKEN", _("无法生成重置链接")),
+        # ErrorCode("CANNOT_GET_PROFILE_BY_TOKEN", _("链接已失效，请重新申请")),
+        # ErrorCode("USER_MISS_AUTH", _("用户身份未通过校验")),
+        # ErrorCode("CANNOT_MODIFY_PASSWORD", _("无法修改密码")),
         # 通用
         ErrorCode("CANNOT_FIND_TEMPLATE", _("无法找到页面模版")),
         # 权限中心
-        ErrorCode("NO_PERMISSION_MANAGE_CATEGORY", _("没有权限管理用户目录，请在权限中心申请"), status_code=403),
+        # ErrorCode("NO_PERMISSION_MANAGE_CATEGORY", _("没有权限管理用户目录，请在权限中心申请"), status_code=403),
         # 版本日志
-        ErrorCode("FAILED_TO_LOAD_RELEASE_INFO", _("版本日志列表字段校验错误")),
-        ErrorCode("VERSION_DETAIL_TYPE_ERROR", _("版本日志详情类型错误")),
-        ErrorCode("EMPTY_LOG_DETAILS_ERROR", _("版本日志详情空错误")),
+        # ErrorCode("FAILED_TO_LOAD_RELEASE_INFO", _("版本日志列表字段校验错误")),
+        # ErrorCode("VERSION_DETAIL_TYPE_ERROR", _("版本日志详情类型错误")),
+        # ErrorCode("EMPTY_LOG_DETAILS_ERROR", _("版本日志详情空错误")),
         ErrorCode("VERSION_FORMAT_ERROR", _("版本日志格式错误")),
-        ErrorCode("UNKNOWN_VERSION_NUMBER", _("版本号未知")),
+        # ErrorCode("UNKNOWN_VERSION_NUMBER", _("版本号未知")),
+        # ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
     ]
 )

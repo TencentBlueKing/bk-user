@@ -26,7 +26,7 @@ ROLE_TYPE_ADMIN = "1"
 
 class TokenBackend(ModelBackend):
     def authenticate(self, request=None, bk_token=None, **kwargs):
-        logger.debug("Going to authenticate by TokenBackend")
+        # logger.debug("Going to authenticate by TokenBackend")
         # 判断是否传入验证所需的bk_token,没传入则返回None
         if not bk_token:
             return None

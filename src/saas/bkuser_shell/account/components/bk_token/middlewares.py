@@ -40,7 +40,7 @@ class LoginRequiredMiddleware(MiddlewareMixin):
 
         for white_url in settings.LOGIN_EXEMPT_WHITE_LIST:
             if re.search(white_url, request.path):
-                logger.debug("%s path in white_url<%s>, exempting login", request.path, white_url)
+                # logger.debug("%s path in white_url<%s>, exempting login", request.path, white_url)
                 return None
 
         form = AuthenticationForm(request.COOKIES)

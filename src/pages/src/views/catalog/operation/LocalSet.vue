@@ -149,7 +149,7 @@ export default {
     async handleSaveBasic() {
       try {
         this.isLoading = true;
-        await this.$store.dispatch('catalog/ajaxPutCatalog', {
+        await this.$store.dispatch('catalog/ajaxPatchCatalog', {
           id: this.catalogInfo.id,
           data: this.basicInfo,
         });

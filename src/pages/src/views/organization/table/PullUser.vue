@@ -129,7 +129,7 @@ export default {
         this.showLeaderLoading = true;
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
         this.paginationConfig.count = res.data.count;
-        this.copyList.push(...res.data.data);
+        this.copyList.push(...res.data.results);
         this.userList = this.copyList.filter(item => item.username);
       } catch (e) {
         console.warn(e);
