@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from collections.abc import Iterable
+from typing import Dict, List
 
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -47,24 +48,8 @@ class SearchApi(generics.ListAPIView):
             "username": _("用户名"),
         }.get(field, field)
 
-    def get(self, request, *args, **kwargs):
-        operator = get_operator(self.request)
-
-        slz = SearchInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        max_items = data.get("max_items", 20)
-        # NOTE: 防御
-        if max_items >= 100:
-            max_items = 100
-        keyword = data["keyword"]
-        if not keyword:
-            return Response(data=[])
-
-        result = []
-
-        # NOTE: include disabled!
+    def _search_profiles(self, operator: str, keyword: str, max_items: int) -> List[Dict]:
+        results = []
         try:
             dept_ft_for_profile = Permission().make_filter_of_department(operator, IAMAction.MANAGE_DEPARTMENT)
             logger.info("global search `%s`, make a filter for profile: %s", keyword, dept_ft_for_profile)
@@ -85,7 +70,7 @@ class SearchApi(generics.ListAPIView):
             profiles = profile_qs.all()[:max_items]
 
             # NOTE: 先兼容目前前端需要的空数据结构
-            profile_result = {
+            profile_result: Dict[str, List] = {
                 "username": [],
                 "display_name": [],
                 "email": [],
@@ -128,13 +113,18 @@ class SearchApi(generics.ListAPIView):
                             profile_result["extras"].append(profile)
 
             for key, items in profile_result.items():
-                result.append(
+                results.append(
                     {
                         "type": key,
                         "display_name": self.get_profile_field_name(key),
                         "items": SearchResultProfileOutputSLZ(items, many=True).data,
                     }
                 )
+
+        return results
+
+    def _search_departments(self, operator: str, keyword: str, max_items: int) -> List[Dict]:
+        results = []
         try:
             dept_ft = Permission().make_department_filter(operator, IAMAction.MANAGE_DEPARTMENT)
             logger.info("global search `%s`, make a filter for department: %s", keyword, dept_ft)
@@ -149,11 +139,35 @@ class SearchApi(generics.ListAPIView):
 
             departments = department_qs.all()[:max_items]
             if departments:
-                result.append(
+                results.append(
                     {
                         "type": "department",
                         "display_name": _("组织"),
                         "items": SearchResultDepartmentOutputSLZ(departments, many=True).data,
                     }
                 )
+
+        return results
+
+    def get(self, request, *args, **kwargs):
+        operator = get_operator(self.request)
+
+        slz = SearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        max_items = data.get("max_items", 20)
+        # NOTE: 防御
+        if max_items >= 100:
+            max_items = 100
+        keyword = data["keyword"]
+        if not keyword:
+            return Response(data=[])
+
+        result = []
+
+        # NOTE: include disabled!
+        result.extend(self._search_profiles(operator, keyword, max_items))
+        result.extend(self._search_departments(operator, keyword, max_items))
+
         return Response(SearchResultOutputSLZ(result, many=True).data)
