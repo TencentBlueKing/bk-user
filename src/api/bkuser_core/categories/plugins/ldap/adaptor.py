@@ -130,6 +130,8 @@ def department_adapter(code: str, dept_meta: Dict, is_group: bool, restrict_type
 
     parent_dept: Optional[LdapDepartment] = None
     for dept_name in reversed(dn_values):
+        # 总公司 -> 部门1 -> 部门2
+        # 都不带code, 没有拿dn+category生成唯一code
         parent_dept = LdapDepartment(
             name=dept_name,
             parent=parent_dept,
@@ -137,6 +139,7 @@ def department_adapter(code: str, dept_meta: Dict, is_group: bool, restrict_type
         )
 
     assert parent_dept is not None, "未从 dn 中提取到任何部门信息"
+    # 部门2 的code
     parent_dept.code = code
     return parent_dept
 

@@ -15,6 +15,7 @@ from django.core.management.base import BaseCommand
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.constants import PLUGIN_NAME_SETTING_KEY
+from bkuser_core.profiles.validators import validate_domain
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,17 @@ class Command(BaseCommand):
         domain = options["domain"]
         name = options["name"]
         plugin = options["plugin"]
+
+        if not domain:
+            self.stdout.write("domain is required")
+            return
+
+        if domain.startswith("@"):
+            self.stdout.write("domain should not start with '@'")
+            return
+
+        self.stdout.write("validating domain...")
+        validate_domain(domain)
 
         logger.info("creating SettingMeta %s", PLUGIN_NAME_SETTING_KEY)
         meta, _ = SettingMeta.objects.get_or_create(

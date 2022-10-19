@@ -186,6 +186,14 @@ class LDAPSyncer(Syncer):
         with transaction.atomic():
             self._sync_department()
 
+        # FIX BUG: you can`t execute queries until the end of the 'atomic' block
+        # move rebuild to single atomic
+        with transaction.atomic():
+            # 由于使用 bulk_update 无法第一时间更新树信息，所以在保存完之后强制确保树信息全部正确
+            logger.info("make sure tree sane...")
+            # 由于插入时并没有更新 tree_id，所以这里需要全量更新
+            Department.tree_objects.rebuild()
+
         with transaction.atomic():
             self._sync_profile()
 
@@ -204,11 +212,6 @@ class LDAPSyncer(Syncer):
             # 禁用所有 Department, 在同步时会重新激活仍然有效的 Department
             self.disable_departments_before_sync()
             self.db_sync_manager.sync_type(target_type=Department)
-
-            # 由于使用 bulk_update 无法第一时间更新树信息，所以在保存完之后强制确保树信息全部正确
-            logger.info("make sure tree sane...")
-            # 由于插入时并没有更新 tree_id，所以这里需要全量更新
-            Department.tree_objects.rebuild()
 
     def _sync_profile(self):
         ProfileSyncHelper(
