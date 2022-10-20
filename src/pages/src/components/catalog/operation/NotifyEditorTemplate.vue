@@ -76,7 +76,7 @@
       </div>
       <div
         class="template-config-container"
-        v-show="checkboxInfo[1].status && isTemplate"
+        v-show="checkboxInfo[1] && checkboxInfo[1].status && isTemplate"
         data-test-id="list_emailInfo">
         <ul class="template-config clearfix">
           <li class="email-block">
