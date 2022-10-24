@@ -97,6 +97,7 @@ export default {
       const equalExceptList = [
         'get_api/v1/web/categories/', // 目录列表
         'get_api/v1/web/fields/manageable/', // 字段管理权限查看
+        'get_api/v1/web/categories/metas/', // 目录类型数据
       ];
       // eslint-disable-next-line max-len
       if (startsExceptList.some(exceptId => id.startsWith(exceptId)) || equalExceptList.some(exceptId => id === exceptId)) {
