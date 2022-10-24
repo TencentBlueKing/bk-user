@@ -144,7 +144,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         return Response(data=self.serializer_class(leaders, many=True).data)
 
-    # FIXME: page缓存, 默认一小时
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
     @swagger_auto_schema(query_serializer=AdvancedListSerializer())
     def list(self, request, *args, **kwargs):

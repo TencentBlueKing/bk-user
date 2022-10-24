@@ -81,7 +81,6 @@ class CategoryMetasListApi(generics.ListAPIView):
         """
         列表展示所有目录类型基本信息
         """
-        # FIXME: 这里 settings.ENABLE_IAM 为 False 时，怎么处理?
         metas = []
         for type_ in CategoryType.all():
             # 这里目前只返回创建目录类型的权限操作，后期应该可扩展
@@ -495,8 +494,6 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
             )
             raise error_codes.SYNC_DATA_FAILED.format(str(e), replace=True)
 
-        # FIXME: 导入报错的时候, 错误信息要能展示在前端
-        # => 目前由于底层db_sync批量失败的时候, 尝试one-by-one, 失败了也没有抛异常出来
         return Response(CategorySyncResponseOutputSLZ({"task_id": task_id}).data)
 
     def _not_local_category_do_sync(self, request, instance):
