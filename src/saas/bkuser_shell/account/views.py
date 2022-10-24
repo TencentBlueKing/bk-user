@@ -11,18 +11,16 @@ specific language governing permissions and limitations under the License.
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
+from rest_framework import generics
 
-from bkuser_global.drf_crown import inject_serializer
-from bkuser_shell.apis.viewset import BkUserApiViewSet
 from bkuser_shell.common.error_codes import error_codes
 
 
-class LoginPageViewSet(BkUserApiViewSet):
+class LoginPageViewSet(generics.RetrieveAPIView):
 
     permission_classes: list = []
 
-    @inject_serializer(tags=["account"])
-    def login_success(self, request):
+    def get(self, request, *args, **kwargs):
         try:
             return TemplateResponse(request=request, template=get_template("login_success.html"))
         except TemplateDoesNotExist:

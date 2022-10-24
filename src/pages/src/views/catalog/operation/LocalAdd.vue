@@ -116,7 +116,7 @@ export default {
           this.getAccountInfo();
         } else {
           // 配置基本信息
-          await this.$store.dispatch('catalog/ajaxPutCatalog', {
+          await this.$store.dispatch('catalog/ajaxPatchCatalog', {
             id: this.catalogId,
             data: this.basicInfo,
           });

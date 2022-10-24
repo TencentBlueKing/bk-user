@@ -41,12 +41,12 @@ def only_plain_xframe_options_exempt(view_func):
         resp = view_func(*args, **kwargs)
 
         if not isinstance(resp, HttpResponseRedirect):
-            origin_url = resp._request.META.get("HTTP_REFERER")
-            login_host = resp._request.get_host()
+            if hasattr(resp, "_request"):
+                origin_url = resp._request.META.get("HTTP_REFERER")
+                login_host = resp._request.get_host()
 
-            if resp._request.path_info == "/plain/" and is_safe_url(url=origin_url, host=login_host):
-                resp.xframe_options_exempt = True
-
+                if resp._request.path_info == "/plain/" and is_safe_url(url=origin_url, host=login_host):
+                    resp.xframe_options_exempt = True
         return resp
 
     return wraps(view_func)(wrapped_view)

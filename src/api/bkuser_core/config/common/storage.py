@@ -45,9 +45,10 @@ CACHES = {
     "default": {
         "BACKEND": "bkuser_core.common.cache.DummyRedisCache",
     },
-    'locmem': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'memory_cache_0',
+    "locmem": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "memory_cache_0",
+        "KEY_PREFIX": "bk_user",
     },
 }
 # 全局缓存过期时间，默认为一小时

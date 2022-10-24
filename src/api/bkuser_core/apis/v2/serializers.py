@@ -8,10 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import datetime
 
 from django.utils.translation import ugettext as _
-from rest_framework import fields, serializers
+from rest_framework import serializers
 
 from bkuser_core.apis.serializers import StringArrayField
 
@@ -103,7 +102,7 @@ class AdvancedListSerializer(serializers.Serializer):
     include_disabled = serializers.BooleanField(required=False, default=False, help_text=_("是否包含已软删除的数据"))
 
 
-class AdvancedRetrieveSerialzier(serializers.Serializer):
+class AdvancedRetrieveSerializer(serializers.Serializer):
     fields = serializers.CharField(required=False, help_text=_("指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id"))
     lookup_field = serializers.CharField(required=False, help_text=_("指定查询字段，内容为 lookup_value 所属字段, 例如: username"))
     include_disabled = serializers.BooleanField(required=False, default=False, help_text=_("是否包含已软删除的数据"))
@@ -111,20 +110,3 @@ class AdvancedRetrieveSerialzier(serializers.Serializer):
 
 class EmptySerializer(serializers.Serializer):
     """空"""
-
-
-class DurationTotalSecondField(fields.Field):
-    def to_internal_value(self, value) -> datetime.timedelta:
-        if isinstance(value, float):
-            value = str(value)
-        return fields.parse_duration(value)
-
-    def to_representation(self, value: datetime.timedelta):
-        return value.total_seconds()
-
-
-#########
-# Batch #
-#########
-class BatchRetrieveSerializer(serializers.Serializer):
-    query_ids = serializers.CharField(help_text="查询 id 列表，以 , 分隔")

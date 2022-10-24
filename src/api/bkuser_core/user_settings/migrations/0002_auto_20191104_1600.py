@@ -76,8 +76,8 @@ def forwards_func(apps, schema_editor):
     mad_connection_settings = [
         dict(
             key="connection_url",
-            example="ldap://localhost:389",
-            default="ldap://localhost:389",
+            example="ldap://127.0.0.1:389",
+            default="ldap://127.0.0.1:389",
         ),
         dict(key="ssl_encryption", choices=["无", "SSL"], default="无"),
         dict(key="timeout_setting", example=120, default=120),

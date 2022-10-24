@@ -14,7 +14,7 @@ from rest_framework.permissions import AllowAny
 
 from .base import ProbeSet
 from .probes import get_default_probes
-from .serializers import DianosisSerializer
+from .serializers import DiagnosisSerializer
 
 
 class HealthViewSet(viewsets.ViewSet):
@@ -34,7 +34,7 @@ class HealthViewSet(viewsets.ViewSet):
                 content=str(diagnosis_list.get_death_report()),
             )
 
-        return JsonResponse(data={"results": DianosisSerializer(diagnosis_list.diagnoses, many=True).data})
+        return JsonResponse(data={"results": DiagnosisSerializer(diagnosis_list.diagnoses, many=True).data})
 
     def pong(self, request):
         return HttpResponse(content="pong")

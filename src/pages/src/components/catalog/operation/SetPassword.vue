@@ -218,19 +218,20 @@
             </bk-radio>
           </div>
           <notifyEditorTemplate
-            :checkbox-info="checkboxInfo"
+            :checkbox-info="checkSendMethod"
             :data-list="passportInfo"
             :is-template="isEmailTemplate"
             :expiring-email-key="'init_mail_config'"
             :expired-email-key="'reset_mail_config'"
             :expiring-sms-key="''"
-            :expired-sms-key="''">
+            :expired-sms-key="''"
+            @handleEditorText="handleEditorText">
             <template slot="label">
               <div
                 :class="['password-header', defaultPassword.init_password_method !== 'random_via_mail' ? 'hide' : '']">
                 <bk-checkbox-group v-model="randomPasswordList">
                   <div
-                    v-for="(item, index) in checkboxInfo" :key="index"
+                    v-for="(item, index) in checkSendMethod" :key="index"
                     :class="['password-tab', item.status ? 'active-tab' : '']"
                     style="margin-left: 5px;">
                     <bk-checkbox
@@ -438,6 +439,9 @@ export default {
       checkboxInfo: [
         { value: 'send_email', label: this.$t('邮箱'), status: true },
         { value: 'send_sms', label: this.$t('短信'), status: false },
+      ],
+      checkSendMethod: [
+        { value: 'send_email', label: this.$t('邮箱'), status: true },
       ],
     };
   },
@@ -763,8 +767,15 @@ export default {
           }
         }
       }
-      .tab-box {
+      ::v-deep .tab-box {
         border: none;
+        .w-e-text-container .w-e-scroll div {
+          padding: 5px 10px;
+          p {
+            margin: 0;
+            line-height: 19px;
+          }
+        }
       }
     }
 

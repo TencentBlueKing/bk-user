@@ -220,6 +220,8 @@ export default {
       copyList: [],
       timer: null,
       showselectData: false,
+      // 不展示的字段
+      hiddenFields: ['department_name', 'leader', 'last_login_time', 'create_time'],
     };
   },
   computed: {
@@ -236,7 +238,7 @@ export default {
         fieldsList.push(item);
       });
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
-        if (fieldInfo.key === 'department_name' || fieldInfo.key === 'leader') {
+        if (this.hiddenFields.includes(fieldInfo.key)) {
           return false;
         }
         fieldInfo.holder = this.$t('请输入');
@@ -302,7 +304,7 @@ export default {
     editProfile() {
       const fieldsList = JSON.parse(JSON.stringify(this.fieldsList));
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
-        if (fieldInfo.key === 'department_name' || fieldInfo.key === 'leader') {
+        if (this.hiddenFields.includes(fieldInfo.key)) {
           return false;
         } if (fieldInfo.key === 'telephone') {
           fieldInfo.iso_code = this.currentProfile.iso_code || 'cn';
@@ -344,7 +346,7 @@ export default {
         this.showLeaderLoading = true;
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
         this.paginationConfig.count = res.data.count;
-        this.copyList.push(...res.data.data);
+        this.copyList.push(...res.data.results);
         if (this.detailsBarInfo.type === 'add') {
           // 新增 profile
           this.rtxList = this.copyList;

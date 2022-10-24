@@ -73,12 +73,16 @@ class DepartmentSyncHelper:
         如果父节点存在, 则递归处理父节点, 并绑定部门上下级关系, 再将部门对象(Department)插入缓存层
         如果父节点不存在, 则直接将部门对象(Department)插入缓存层
         """
+        # NOTE: 注意, dept_info.parent 不带code字段, syncer->adaptor拼接的时候没放(除非能拿到每个节点的dn)
         if dept_info.parent:
             parent_dept = self._handle_department(dept_info.parent)
         else:
             parent_dept = None
 
+        # FIXME: https://github.com/TencentBlueKing/bk-user/issues/714
+        # BUG: here, the code is full_name, not the real code
         defaults = {
+            # 当 self._handle_department(dept_info.parent) 逻辑执行到这里的时候, 没有code, 所以用的full_name
             "code": dept_info.key_field,
             "category_id": self.category.pk,
             "name": dept_info.name,
@@ -95,12 +99,17 @@ class DepartmentSyncHelper:
         return dept
 
     def _insert_dept(self, dept_info: LdapDepartment, defaults: Dict) -> Department:
+        # BUG: here, use dept_info.key_field to get dept -> it's full_name, not the code
+        # the defaults["code"] is the not the `code`, it's the full_name
         dept: Department = self.db_sync_manager.magic_get(dept_info.key_field, LdapDepartmentMeta)
         if dept:
+            # Question: here update the code to real code, without magic_add, will not saved into db?
             if dept_info.code and dept.code != dept_info.code:
                 dept.code = dept_info.code
             return dept
 
+        # NOTE: 如果full_name在 db 里面已经有了, 这里是判断不出来的, 因为self.db_departments是当前category的集合, 不是全局的
+        # 但是code字段是 db unique字段
         if dept_info.key_field in self.db_departments:
             dept = self.db_departments[dept_info.key_field]
             for key, value in defaults.items():
@@ -108,6 +117,9 @@ class DepartmentSyncHelper:
             self.db_sync_manager.magic_add(dept, SyncOperation.UPDATE.value)
         else:
             defaults["pk"] = self.db_sync_manager.register_id(LdapDepartmentMeta)
+            # BUG: here, defaults["code"] is the full_name, not the code, saved into db
+            # Question: key_field能否加上 category_id, 保证唯一性?
+            # Question: 如何鉴权存量数据?
             dept = Department(**defaults)
             self.db_sync_manager.magic_add(dept, SyncOperation.ADD.value)
 

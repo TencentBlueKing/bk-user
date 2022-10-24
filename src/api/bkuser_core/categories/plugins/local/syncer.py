@@ -58,10 +58,20 @@ class ExcelFetcher(Fetcher):
         self.title_keys = self._get_title_fields(raw_name=True)
         self.title_fields = self._get_title_fields(raw_name=False)
 
-        departments = DepartmentColumnParser(self.category_id).parse(
-            self.excel_helper.get_column_values(self.get_column_index("department_name"))
-        )
-        user_rows = self.excel_helper.get_values()
+        line_start = 2
+        user_rows = self.excel_helper.get_values(line_start=line_start)
+
+        department_rows = self.excel_helper.get_column_values(self.get_column_index("department_name"))
+        departments = DepartmentColumnParser(self.category_id).parse(department_rows)
+
+        # 组织必填怎么判断?
+        # validate the department should not be empty
+        real_user_rows = [u for u in user_rows if not ExcelSyncer._judge_data_all_none(u)]
+        real_user_count = len(real_user_rows)
+        real_department_rows = department_rows[:real_user_count]
+        for index, department in enumerate(real_department_rows):
+            if department is None:
+                raise DataFormatError(f"第 {index + line_start} 行组织不能为空")
 
         return user_rows, departments
 
@@ -88,6 +98,18 @@ class ExcelFetcher(Fetcher):
             return self.title_keys.index(column_key)
         except ValueError:
             raise ColumnNotFound(f"查找的列 {column_key} 不存在")
+
+
+def _failed_records_error_message(failed_records: List[Dict]) -> str:
+    """生成错误信息"""
+    return "; ".join(
+        [
+            _("第{index}行，字段{field}，原因：{reason}，数据：{data}").format(
+                index=record["index"] + 1, field=record["field"], reason=record["reason"], data=record["data"]
+            )
+            for record in failed_records
+        ]
+    )
 
 
 @dataclass
@@ -157,6 +179,10 @@ class ExcelSyncer(Syncer):
         """在内存中操作&判断数据，bulk 插入"""
         logger.info("=========== trying to load profiles into memory ===========")
 
+        # to record failed records
+        failed_records = []
+        success_count = 0
+
         total = len(users)
         for index, user_raw_info in enumerate(users):
             if self._judge_data_all_none(user_raw_info):
@@ -167,12 +193,32 @@ class ExcelSyncer(Syncer):
             try:
                 profile_params = parser_set.parse_row(user_raw_info, skip_keys=["department_name", "leader"])
                 logger.debug("profile_params: %s", profile_params)
+                # NOTE: 解析后, 非必填的字段 status=NORMAL, staff_status=IN, position=0
             except ParseFailedException as e:
+                # 同步上级解析字段 <username> 失败: u123456 不符合格式要求. [user_raw_info=()]
                 logger.exception(f"同步用户解析字段 <{e.field_name}> 失败: {e.reason}. [user_raw_info={user_raw_info}]")
+                failed_records.append(
+                    {
+                        "index": index,
+                        "field": e.field_name,
+                        "reason": e.reason,
+                        "data": user_raw_info,
+                    }
+                )
                 continue
             except Exception:  # pylint: disable=broad-except
                 logger.exception("同步用户解析字段异常. [user_raw_info=%s]", user_raw_info)
+                failed_records.append(
+                    {
+                        "index": index,
+                        "field": "unknown",
+                        "reason": "parse failed",
+                        "data": user_raw_info,
+                    }
+                )
                 continue
+
+            success_count += 1
 
             username = profile_params["username"]
             # 如果已经是删除状态，暂不处理
@@ -245,6 +291,13 @@ class ExcelSyncer(Syncer):
         # 需要在处理 leader 之前全部插入 DB
         self.db_sync_manager[Profile].sync_to_db()
         self.db_sync_manager[DepartmentThroughModel].sync_to_db()
+
+        failed_count = len(failed_records)
+        if failed_count > 0:
+            message = _("导入执行完成: 成功 {} 条记录, 失败 {} 条记录, 失败详情 {}").format(
+                success_count, failed_count, _failed_records_error_message(failed_records)
+            )
+            raise Exception(message)
 
     def _sync_leaders(self, parser_set: "ParserSet", users: list):
         # 由于 leader 需要等待 profiles 全部插入后才能引用

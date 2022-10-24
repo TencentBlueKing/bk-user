@@ -64,6 +64,20 @@ class CategoryType(AutoLowerEnum):
         return _map[value]
 
 
+class CreateAbleCategoryType(AutoLowerEnum):
+    """当前只允许这三类目录创建"""
+
+    LOCAL = auto()
+    MAD = auto()
+    LDAP = auto()
+
+    _choices_labels = (
+        (LOCAL, _("本地目录")),
+        (MAD, _("Microsoft Active Directory")),
+        (LDAP, _("OpenLDAP")),
+    )
+
+
 class SyncStep(AutoLowerEnum):
     USERS = auto()
     DEPARTMENTS = auto()

@@ -90,6 +90,10 @@ class LogIn(ProfileRelatedLog):
         ordering = ["-create_time"]
         get_latest_by = "create_time"
 
+        index_together = [
+            ["profile", "create_time"],
+        ]
+
 
 class ResetPassword(ProfileRelatedLog):
     """重置密码记录"""

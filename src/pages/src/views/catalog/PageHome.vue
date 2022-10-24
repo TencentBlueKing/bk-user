@@ -385,7 +385,7 @@ export default {
         await this.getDepartments();
         this.messageSuccess(this.$t('同步成功'));
       } catch (e) {
-        console.warn(e);
+        this.messageError(e);
       } finally {
         this.closeLoading(importId);
       }
@@ -467,7 +467,7 @@ export default {
       display: flex;
       flex-flow: column;
       align-items: center;
-      height: calc(100vh - 194px);
+      height: calc(100vh - 224px);
       font-size: 20px;
       font-weight: 500;
       color: #313238;
@@ -497,7 +497,7 @@ export default {
     }
 
     > .tbody-container {
-      max-height: calc(100vh - 194px);
+      max-height: calc(100vh - 224px);
 
       @include scroller($backgroundColor: #e6e9ea, $width: 4px);
 
@@ -510,7 +510,7 @@ export default {
         justify-content: center;
         align-items: center;
         width: 100%;
-        height: calc(100vh - 194px);
+        height: calc(100vh - 224px);
       }
 
       > table > tbody > tr {

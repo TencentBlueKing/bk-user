@@ -3,6 +3,7 @@ import os
 
 import ldap3
 
+from bkuser_core.config.common import PROJECT_ROOT
 from bkuser_core.config.common.django_basic import *  # noqa
 from bkuser_core.config.common.logging import *  # noqa
 from bkuser_core.config.common.platform import *  # noqa
@@ -71,6 +72,20 @@ def get_loggers(package_name: str, log_level: str) -> dict:
 
 # patch the unittest logging loggers
 LOGGING["loggers"] = get_loggers("bkuser_core", LOG_LEVEL)
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(PROJECT_ROOT, "db.sqlite3"),
+        # "NAME": env(f"{db_prefix}_NAME"),
+        # "USER": env(f"{db_prefix}_USER"),
+        # "PASSWORD": env(f"{db_prefix}_PASSWORD"),
+        # "HOST": env(f"{db_prefix}_HOST"),
+        # "PORT": env(f"{db_prefix}_PORT"),
+        # "OPTIONS": {"charset": "utf8mb4"},
+        "TEST": {"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_general_ci"},
+    }
+}
 
 # ==============================================================================
 # Test Ldap

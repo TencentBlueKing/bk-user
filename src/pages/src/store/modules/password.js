@@ -23,15 +23,15 @@ export default {
     },
     // 设置新密码
     setByToken(context, params, config = {}) {
-      return http.post('api/v1/password/reset_by_token/', params);
+      return http.post('api/v1/web/passwords/reset/by_token/', params);
     },
     // 修改密码
     modify(context, params, config = {}) {
-      return http.post('api/v1/password/modify/', params);
+      return http.post('api/v1/web/passwords/modify/', params);
     },
     // 邮箱重置密码
     reset(context, params, config = {}) {
-      return http.post('api/v1/password/reset/', params);
+      return http.post('api/v1/web/passwords/reset/send_email/', params);
     },
   },
 };

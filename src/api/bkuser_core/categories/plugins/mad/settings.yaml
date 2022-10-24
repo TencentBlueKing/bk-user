@@ -117,6 +117,6 @@ ssl_encryption:
   required: true
   namespace: connection
 connection_url:
-  example: ldap://localhost:389
+  example: ldap://127.0.0.1:389
   required: true
   namespace: connection

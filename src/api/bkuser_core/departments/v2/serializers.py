@@ -15,7 +15,7 @@ from rest_framework import serializers
 
 from bkuser_core.apis.v2.serializers import (
     AdvancedListSerializer,
-    AdvancedRetrieveSerialzier,
+    AdvancedRetrieveSerializer,
     CustomFieldsMixin,
     CustomFieldsModelSerializer,
 )
@@ -60,20 +60,18 @@ class ForSyncDepartmentSerializer(CustomFieldsModelSerializer):
 
 class DepartmentSerializer(CustomFieldsModelSerializer):
     name = serializers.CharField(required=True)
-    has_children = serializers.SerializerMethodField()
-    full_name = serializers.SerializerMethodField()
     order = serializers.IntegerField(required=False)
     extras = serializers.JSONField(required=False)
     enabled = serializers.BooleanField(default=True, required=False)
+
+    full_name = serializers.SerializerMethodField()
+    has_children = serializers.SerializerMethodField()
 
     def get_full_name(self, obj):
         return obj.full_name
 
     def get_has_children(self, obj) -> bool:
-        """仅返回启用的子部门"""
-        # Q: 为什么不用 obj.children.filter(enabled=True).exists()?
-        # A: 因为 get_descendants 是访问 tree_id 这类的 int 字段，而 children 访问的是 parent 外键字段，前者明显更快
-        return obj.get_descendants(include_self=False).filter(enabled=True).exists()
+        return obj.has_children
 
     class Meta:
         ref_name = "v2_department"
@@ -153,7 +151,7 @@ class DepartmentAddProfilesSerializer(serializers.Serializer):
     profile_id_list = serializers.ListField(child=serializers.IntegerField())
 
 
-class DepartmentGetProfilesSerializer(AdvancedRetrieveSerialzier):
+class DepartmentGetProfilesSerializer(AdvancedRetrieveSerializer):
     recursive = serializers.BooleanField(required=False, default=False, help_text=_("是否递归"))
     detail = serializers.BooleanField(required=False, default=False, help_text=_("是否返回全部字段"))
     wildcard_search = serializers.CharField(required=False, help_text=_("模糊查找用户的 username & display_name 字段"))
@@ -163,10 +161,5 @@ class DepartmentListSerializer(AdvancedListSerializer):
     with_ancestors = serializers.BooleanField(default=False)
 
 
-class DepartmentRetrieveSerializer(AdvancedRetrieveSerialzier):
+class DepartmentRetrieveSerializer(AdvancedRetrieveSerializer):
     with_ancestors = serializers.BooleanField(default=False)
-
-
-class BatchDepartmentsRetrieveSerializer(serializers.Serializer):
-    department_ids = serializers.CharField(help_text="department id 列表，以 , 分隔")
-    recursive = serializers.BooleanField(default=False)

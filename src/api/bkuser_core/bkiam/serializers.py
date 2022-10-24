@@ -8,56 +8,48 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from rest_framework import serializers
 from rest_framework.fields import empty
-from rest_framework.serializers import (
-    CharField,
-    ChoiceField,
-    IntegerField,
-    JSONField,
-    ListField,
-    Serializer,
-    SerializerMethodField,
-)
 
 from .constants import IAMCallbackMethods
 
 
 # -------------- Common --------------
-class IAMPageSerializer(Serializer):
-    offset = IntegerField(required=False)
-    limit = IntegerField(required=False)
+class IAMPageSerializer(serializers.Serializer):
+    offset = serializers.IntegerField(required=False)
+    limit = serializers.IntegerField(required=False)
 
 
-class IAMPageResponseSerializer(Serializer):
+class IAMPageResponseSerializer(serializers.Serializer):
     page = IAMPageSerializer(required=False)
 
 
-class IAMMethodSerializer(Serializer):
+class IAMMethodSerializer(serializers.Serializer):
     """IAM Method Serializer"""
 
-    type = CharField()
-    method = ChoiceField(choices=IAMCallbackMethods.get_choices())
-    filter = JSONField(required=False)
+    type = serializers.CharField()
+    method = serializers.ChoiceField(choices=IAMCallbackMethods.get_choices())
+    filter = serializers.JSONField(required=False)
     page = IAMPageSerializer(required=False)
 
 
-class RelatedResourceSLZ(Serializer):
-    id = CharField(read_only=True)
-    name = CharField(read_only=True)
-    type = CharField(read_only=True)
-    type_name = CharField(read_only=True)
+class RelatedResourceSLZ(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    type = serializers.CharField(read_only=True)
+    type_name = serializers.CharField(read_only=True)
 
 
-class AuthInfoSLZ(Serializer):
-    id = CharField(read_only=True)
-    display_name = CharField(read_only=True)
-    related_resources = ListField(read_only=True, child=RelatedResourceSLZ())
+class AuthInfoSLZ(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    display_name = serializers.CharField(read_only=True)
+    related_resources = serializers.ListField(read_only=True, child=RelatedResourceSLZ())
 
 
 ############
 # Response #
 ############
-class IAMInstanceRespSLZ(Serializer):
+class IAMInstanceRespSLZ(serializers.Serializer):
     """IAM Common Response"""
 
     def __init__(self, instance=None, data=empty, id_display_name_pair=("id", "display_name"), **kwargs):
@@ -65,8 +57,8 @@ class IAMInstanceRespSLZ(Serializer):
 
         self.id_display_name_pair = id_display_name_pair
 
-    id = SerializerMethodField(read_only=True)
-    display_name = SerializerMethodField(read_only=True)
+    id = serializers.SerializerMethodField(read_only=True)
+    display_name = serializers.SerializerMethodField(read_only=True)
 
     def get_id(self, obj) -> str:
         return str(getattr(obj, self.id_display_name_pair[0]))
@@ -76,7 +68,7 @@ class IAMInstanceRespSLZ(Serializer):
 
 
 class DepartmentInstanceRespSLZ(IAMInstanceRespSLZ):
-    child_type = SerializerMethodField(read_only=True)
+    child_type = serializers.SerializerMethodField(read_only=True)
 
     def get_child_type(self, obj) -> str:
         if obj.children.filter(enabled=True).exists():
@@ -86,10 +78,10 @@ class DepartmentInstanceRespSLZ(IAMInstanceRespSLZ):
 
 
 # -------------- List Attr Value --------------
-class IAMListAttrValueFilterSLZ(Serializer):
-    attr = CharField()
-    keyword = CharField(required=False)
-    ids = ListField(required=False, child=CharField())
+class IAMListAttrValueFilterSLZ(serializers.Serializer):
+    attr = serializers.CharField()
+    keyword = serializers.CharField(required=False)
+    ids = serializers.ListField(required=False, child=serializers.CharField())
 
 
 class IAMListAttrValueSLZ(IAMMethodSerializer):
@@ -97,19 +89,19 @@ class IAMListAttrValueSLZ(IAMMethodSerializer):
 
 
 # -------------- List Instances --------------
-class IAMInstancesParentSLZ(Serializer):
-    type = CharField()
-    id = CharField()
+class IAMInstancesParentSLZ(serializers.Serializer):
+    type = serializers.CharField()
+    id = serializers.CharField()
 
 
-class IAMInstanceParentSLZ(Serializer):
-    id = CharField()
-    type = CharField()
+class IAMInstanceParentSLZ(serializers.Serializer):
+    id = serializers.CharField()
+    type = serializers.CharField()
 
 
-class IAMInstancesFilterSLZ(Serializer):
+class IAMInstancesFilterSLZ(serializers.Serializer):
     parent = IAMInstanceParentSLZ(required=False)
-    keyword = CharField(required=False)
+    keyword = serializers.CharField(required=False)
 
 
 class IAMListInstancesSLZ(IAMMethodSerializer):
@@ -117,9 +109,9 @@ class IAMListInstancesSLZ(IAMMethodSerializer):
 
 
 # -------------- Fetch Instance Info --------------
-class IAMFetchInstanceInfoFilterSLZ(Serializer):
-    attrs = ListField(required=False)
-    ids = ListField(child=CharField())
+class IAMFetchInstanceInfoFilterSLZ(serializers.Serializer):
+    attrs = serializers.ListField(required=False)
+    ids = serializers.ListField(child=serializers.CharField())
 
 
 class IAMFetchInstanceInfoSLZ(IAMMethodSerializer):
@@ -128,7 +120,7 @@ class IAMFetchInstanceInfoSLZ(IAMMethodSerializer):
 
 # -------------- List Instance By Policy --------------
 class IAMInstancePolicyFilterSLZ(IAMMethodSerializer):
-    expression = JSONField(required=False)
+    expression = serializers.JSONField(required=False)
 
 
 class IAMInstancePolicySLZ(IAMMethodSerializer):

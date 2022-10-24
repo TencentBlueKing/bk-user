@@ -8,28 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf.urls import url
 
-from bkuser_shell.version_log import views
+from typing import List
 
-VERSION_NUMBER = r"(?P<version_number>(\d+\.){1,3}(\d+))"
-
-urlpatterns = [
-    ##############
-    # version_log #
-    ##############
-    url(
-        r"^api/v2/version_logs_list/$",
-        views.VersionLogViewSet.as_view(
-            {"get": "list"},
-        ),
-        name="version_log_list",
-    ),
-    url(
-        r"^api/v2/version_logs_list/%s/$" % VERSION_NUMBER,
-        views.VersionLogViewSet.as_view(
-            {"get": "retrieve"},
-        ),
-        name="version_log_detail",
-    ),
-]
+urlpatterns: List = []

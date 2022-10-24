@@ -36,7 +36,7 @@ class LdapUserProfile:
 @dataclass
 class LdapDepartment:
     name: str
-    parent: Optional['LdapDepartment'] = None
+    parent: Optional["LdapDepartment"] = None
     code: Optional[str] = None
     is_group: bool = False
 

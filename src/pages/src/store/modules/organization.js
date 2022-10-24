@@ -30,101 +30,101 @@ export default {
   actions: {
     // 获取目录 + 组织树
     getOrganizationTree(context, { onlyEnabled = true } = {}, config = {}) {
-      return http.get(`api/v2/departments/?only_enabled=${onlyEnabled}`);
+      return http.get(`api/v1/web/home/tree/?only_enabled=${onlyEnabled}`);
     },
     // 根据ID获取组织列表（展开对应的子级）
     getDataById(context, params, config = {}) {
       // return (params.searchType && params.searchId)
       //     ? http.get(`api/v1/departments/${params.id}/?type=${params.searchType}&id=${params.searchId}`)
       //     : http.get(`api/v1/departments/${params.id}/`)
-      return http.get(`api/v2/departments/${params.id}/`);
+      return http.get(`api/v1/web/departments/${params.id}/`);
     },
     // 根据组织 id 搜索组织列表
     searchDataByCategory(context, params, config = {}) {
       const { id, keyword, withAncestors, searchLength } = params;
       if (withAncestors) {
-        return http.get(`api/v2/categories/${id}/departments/search/?keyword=${keyword}&max_items=${searchLength}&with_ancestors=true`);
+        return http.get(`api/v1/web/categories/${id}/departments/?keyword=${keyword}&page_size=${searchLength}&with_ancestors=true`);
       }
-      return http.get(`api/v2/categories/${id}/departments/search/?keyword=${keyword}&max_items=${searchLength}`);
+      return http.get(`api/v1/web/categories/${id}/departments/?keyword=${keyword}&page_size=${searchLength}`);
     },
     // 新增组织
     addDepartment(context, params, config = {}) {
-      return http.post('api/v2/departments/', params);
+      return http.post('api/v1/web/departments/', params);
     },
     // 删除组织
     deleteDepartment(context, params, config = {}) {
-      return http.delete(`api/v2/departments/${params.id}/`);
+      return http.delete(`api/v1/web/departments/${params.id}/`);
     },
     // 编辑组织名称
     modifyDepartmentName(context, params, config = {}) {
       const { id, name } = params;
-      return http.patch(`api/v2/departments/${id}/`, { name });
+      return http.patch(`api/v1/web/departments/${id}/`, { name });
     },
     // 目录或组织上移、下移
     switchNodeOrder(context, params, config = {}) {
-      return http.patch(`api/v2/${params.nodeType}/${params.id}/switch_order/${params.upId}/`);
+      return http.patch(`api/v1/web/${params.nodeType}/${params.id}/operations/switch_order/${params.upId}/`);
     },
     // 批量新增用户到部门
     postUserToDepartments(context, params, config = {}) {
       const { id, idList } = params;
-      return http.post(`api/v2/departments/${id}/profiles/`, { profile_id_list: idList });
+      return http.post(`api/v1/web/departments/${id}/profiles/`, { profile_id_list: idList });
     },
 
     // 组织树搜索
     getSearchResult(context, params, config = {}) {
-      return http.get(`api/v2/search/detail/?keyword=${params.searchKey}&max_items=${params.searchLength}&only_enabled=true`);
+      return http.get(`api/v1/web/search/?keyword=${params.searchKey}&page_size=${params.searchLength}`);
     },
 
     // 用户列表，分页查询接口
     getProfiles(context, params, config = {}) {
       const { id, pageSize, page, keyword, recursive } = params;
       return keyword
-        ? http.get(`api/v2/departments/${id}/profiles/?page_size=${pageSize}&page=${page}&recursive=${recursive}&keyword=${keyword}`)
-        : http.get(`api/v2/departments/${id}/profiles/?page_size=${pageSize}&page=${page}&recursive=${recursive}`);
+        ? http.get(`api/v1/web/departments/${id}/profiles/?page_size=${pageSize}&page=${page}&recursive=${recursive}&keyword=${keyword}`)
+        : http.get(`api/v1/web/departments/${id}/profiles/?page_size=${pageSize}&page=${page}&recursive=${recursive}`);
     },
     // 新增用户
     postProfile(context, params, config = {}) {
-      return http.post('api/v2/profiles/', params);
+      return http.post('api/v1/web/profiles/', params);
     },
     // 批量删除 彻底删除
     deleteProfiles(context, params, config = {}) {
       config.data = params;
-      return http.delete('api/v2/batch/profiles/', config);
+      return http.delete('api/v1/web/profiles/batch/', config);
     },
     // 修改用户状态
     patchProfile(context, params, config = {}) {
       const { id, data } = params;
-      return http.patch(`api/v2/profiles/${id}/`, data);
+      return http.patch(`api/v1/web/profiles/${id}/`, data);
     },
     // 设置所在组织
     batchAddDepart(context, params, config = {}) {
-      return http.patch('api/v2/batch/profiles/', params);
+      return http.patch('api/v1/web/profiles/batch/', params);
     },
     // 从其他组织拉取，这里的 id 是目录 id
     getAllUser(context, params, config = {}) {
-      return http.get(`api/v2/categories/${params.id}/profiles/?no_page=true`);
+      return http.get(`api/v1/web/categories/${params.id}/profiles/?no_page=true`);
     },
     // 直接上级数据
     getSupOrganization(context, params, config = {}) {
       const { id, pageSize, page, keyword } = params;
-      return http.get(`api/v2/categories/${id}/profiles/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
+      return http.get(`api/v1/web/categories/${id}/profiles/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
     },
     // 根据id查看用户
     getProfileById(context, params, config = {}) {
-      return http.get(`api/v2/profiles/${params.id}/`);
+      return http.get(`api/v1/web/profiles/${params.id}/`);
     },
     // 恢复删除用户
     postProfilesRestoration(context, params, config = {}) {
       const { id } = params;
-      return http.post(`/api/v2/profiles/${id}/restoration/`);
+      return http.post(`/api/v1/web/profiles/${id}/operations/restoration/`);
     },
     // 多条件查询
     getMultiConditionQuery(context, params, config = {}) {
-      return http.get(`api/v3/profiles/?${params}`);
+      return http.get(`api/v1/web/profiles/search/?${params}`);
     },
     // 获取部门列表
     getDepartmentsList(context, params, config = {}) {
-      return http.get(`api/v3/departments/?${params}`);
+      return http.get(`api/v1/web/departments/search/?${params}`);
     },
   },
 };

@@ -15,7 +15,7 @@ from operator import or_
 from typing import Any, Dict, List, Optional
 
 from django.conf import settings
-from django.core.exceptions import FieldError, ObjectDoesNotExist
+from django.core.exceptions import FieldError
 from django.db.models import ManyToOneRel, Q, QuerySet
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -26,12 +26,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .constants import LOOKUP_FIELD_NAME, LOOKUP_PARAM
-from .serializers import AdvancedListSerializer, AdvancedRetrieveSerialzier, EmptySerializer, is_custom_fields_enabled
+from .serializers import AdvancedListSerializer, AdvancedRetrieveSerializer, EmptySerializer, is_custom_fields_enabled
 from bkuser_core.audit.constants import OperationType
-from bkuser_core.audit.utils import audit_general_log, create_general_log
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
-from bkuser_core.bkiam.filters import IAMFilter
-from bkuser_core.bkiam.permissions import IAMPermission, IAMPermissionExtraInfo
+from bkuser_core.audit.utils import audit_general_log
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
 from bkuser_global.utils import force_str_2_bool
@@ -160,7 +157,12 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
         if exact_lookups:
             target_lookups = [Q(**{search_field: x}) for x in exact_lookups]
         elif fuzzy_lookups:
-            target_lookups = [Q(**{"{}__icontains".format(search_field): x}) for x in fuzzy_lookups]
+            # NOTE: fuzzy_lookups=2022-09-19+14%3A43&lookup_field=create_time
+            # => 全表扫描(create_time无索引+like %keyword%) => 暂时改成前缀匹配
+            if search_field == "create_time":
+                target_lookups = [Q(**{"{}__startswith".format(search_field): x}) for x in fuzzy_lookups]
+            else:
+                target_lookups = [Q(**{"{}__icontains".format(search_field): x}) for x in fuzzy_lookups]
 
         target_lookups.append(self.make_time_filter(query_data))
         if not target_lookups:
@@ -214,37 +216,18 @@ class AdvancedSearchFilter(filters.SearchFilter, DynamicFieldsMixin):
         return self.make_lookups(query_data, queryset, search_field)
 
 
+# NOTE: abandoned, should not inherit from this class
 class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
     """ModelViewSet 功能增强集合类
     - fields 用户定义返回字段
     """
 
-    permission_classes = [IAMPermission]
-    # 使用 filter 进行过滤的操作
-    iam_filter_actions: tuple = ()
-
     def filter_queryset(self, queryset) -> QuerySet:
         filter_backends = list(self.filter_backends)
         # 只针对 list 接口增加 filter，其他操作都通过 check_object 判断
-        if self.action in self.iam_filter_actions:
-            filter_backends.append(IAMFilter)
-
         for backend in filter_backends:
             queryset = backend().filter_queryset(self.request, queryset, self)
         return queryset
-
-    def check_object_permissions(self, request, obj):
-        """增加 obj 到 extra_info"""
-        for permission in self.get_permissions():
-            if not permission.has_object_permission(request, self, obj):
-                self.permission_denied(request, message=getattr(permission, "message", None), obj=obj)
-
-    def permission_denied(self, request, message=None, obj=None, **kwargs):
-        """针对 IAM 注入相关信息"""
-        raise IAMPermissionDenied(
-            detail=message,
-            extra_info=IAMPermissionExtraInfo.from_request(request, obj=obj).to_dict(),
-        )
 
     def get_object(self):
         # 暂存
@@ -266,7 +249,7 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
             return super().get_object()
 
     @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def retrieve(self, request, *args, **kwargs):
         """获取详细信息"""
         fields = self._get_fields()
@@ -280,21 +263,21 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
 
     @audit_general_log(operate_type=OperationType.UPDATE.value)
     @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def update(self, request, *args, **kwargs):
         """更新对象"""
         return super().update(request, *args, **kwargs)
 
     @audit_general_log(operate_type=OperationType.DELETE.value)
     @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier())
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def destroy(self, request, *args, **kwargs):
         """删除对象"""
         return super().destroy(request, *args, **kwargs)
 
     @audit_general_log(operate_type=OperationType.RESTORATION.value)
     @method_decorator(clear_cache_if_succeed)
-    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerialzier(), request_body=EmptySerializer)
+    @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer(), request_body=EmptySerializer)
     def restoration(self, request, lookup_value):
         """软删除对象恢复"""
         # TODO: auto support include_disabled=True
@@ -309,13 +292,13 @@ class AdvancedModelViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
         return Response()
 
 
+# NOTE: abandoned, should not inherit from this class
 class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
     """列表查询功能增强类"""
 
     filter_backends = [AdvancedSearchFilter, filters.OrderingFilter]
     pagination_class = StandardResultsSetPagination
     exclude_fields: List = []
-    permission_classes = [IAMPermission]
     include_disabled_field = "include_disabled"
     relation_fields: list = []
 
@@ -334,9 +317,6 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
 
         try:
             queryset = self.filter_queryset(self.get_queryset())
-        except IAMPermissionDenied:
-            # pass to exception handler
-            raise
         except Exception:
             logger.exception("query failed")
             raise error_codes.QUERY_PARAMS_ERROR
@@ -355,83 +335,3 @@ class AdvancedListAPIView(ListAPIView, DynamicFieldsMixin):
         # 使用了 serializer 可能会有性能问题
         serializer = serializer_class(queryset, **kwargs)
         return Response(serializer.data)
-
-
-class AdvancedBatchOperateViewSet(viewsets.ModelViewSet, DynamicFieldsMixin):
-    """批量操作接口"""
-
-    CATEGORY_SENSITIVE = True
-
-    @method_decorator(cache_page(settings.GLOBAL_CACHES_TIMEOUT))
-    def multiple_retrieve(self, request):
-        """批量获取"""
-        ids = self._get_list_query_param(field_name="query_ids") or []
-        instances = self.queryset.filter(pk__in=ids)
-        return Response(self.serializer_class(instances, many=True).data)
-
-    @method_decorator(clear_cache_if_succeed)
-    def multiple_update(self, request):
-        """批量更新，必须传递 id 作为查找字段"""
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-
-        query_objs = serializer.validated_data
-        updating_instances = []
-        for obj in query_objs:
-            try:
-                instance = self.queryset.get(pk=obj["id"])
-            except ObjectDoesNotExist:
-                logger.warning(
-                    "obj <%s-%s> not found or already been deleted.",
-                    self.queryset.model,
-                    obj,
-                )
-                continue
-            else:
-                create_general_log(
-                    operator=request.operator,
-                    operate_type=OperationType.UPDATE.value,
-                    operator_obj=instance,
-                    request=request,
-                )
-
-            if self.CATEGORY_SENSITIVE:
-                # TODO: 限制非本地目录进行修改
-                pass
-
-            single_serializer = serializer_class(instance=instance, data=obj)
-            single_serializer.is_valid(raise_exception=True)
-            single_serializer.save()
-            updating_instances.append(instance)
-
-        return Response(self.serializer_class(updating_instances, many=True).data)
-
-    @method_decorator(clear_cache_if_succeed)
-    def multiple_delete(self, request):
-        """批量删除"""
-        serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-
-        query_objs = serializer.validated_data
-        for obj in query_objs:
-            try:
-                instance = self.queryset.get(pk=obj["id"])
-                create_general_log(
-                    operator=request.operator,
-                    operate_type=OperationType.DELETE.value,
-                    operator_obj=instance,
-                    request=request,
-                )
-
-                instance.delete()
-            except ObjectDoesNotExist:
-                logger.warning(
-                    "obj <%s-%s> not found or already been deleted.",
-                    self.queryset.model,
-                    obj,
-                )
-                continue
-
-        return Response()

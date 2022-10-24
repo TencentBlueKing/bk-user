@@ -40,7 +40,7 @@ class Profile(TimestampedModel):
     """用户表"""
 
     # ----------------------- 登录名相关 -----------------------
-    username = models.CharField(verbose_name=_("用户名"), max_length=255, db_index=True)
+    username = models.CharField(verbose_name=_("用户名"), max_length=255)
     qq = models.CharField(verbose_name=_("QQ"), max_length=64, default="", blank=True)
     email = models.EmailField(verbose_name=_("邮箱"), null=True, blank=True, default="", max_length=255)
     telephone = models.CharField(verbose_name=_("手机号码"), null=True, blank=True, default="", max_length=255)
@@ -135,6 +135,9 @@ class Profile(TimestampedModel):
     enabled = models.BooleanField(verbose_name=_("是否启用"), default=True)
     # ----------------------- 其他 -----------------------
 
+    # 覆盖基类字段, 加db_index=True
+    create_time = models.DateTimeField(auto_now_add=True, db_index=True)
+
     # ----------------------- 废弃兼容字段 -----------------------
     type = models.CharField(verbose_name=_("用户类型"), null=True, blank=True, default="", max_length=255)
     role = models.IntegerField(
@@ -193,9 +196,10 @@ class Profile(TimestampedModel):
     @property
     def last_login_time(self) -> Optional[datetime.datetime]:
         """获取用户最近一次登录时间"""
-        latest_logins = self.login_set.filter(is_success=True)
-        if latest_logins:
-            return latest_logins.latest().create_time
+        latest_login = self.login_set.filter(is_success=True).latest()
+
+        if latest_login:
+            return latest_login.create_time
 
         return None
 
