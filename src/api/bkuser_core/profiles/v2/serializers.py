@@ -126,7 +126,7 @@ class RapidProfileSerializer(CustomFieldsMixin, serializers.Serializer):
     status = serializers.CharField(read_only=True)
     logo = serializers.CharField(read_only=True, allow_blank=True)
 
-    # FIXME: 这个字段会导致放大查询
+    # 这个字段会导致放大查询, 对外接口不再返回这个字段
     # last_login_time = serializers.DateTimeField(required=False, read_only=True)
     last_login_time = serializers.SerializerMethodField(required=False, read_only=True)
 

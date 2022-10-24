@@ -3,6 +3,7 @@ import os
 
 import ldap3
 
+from bkuser_core.config.common import PROJECT_ROOT
 from bkuser_core.config.common.django_basic import *  # noqa
 from bkuser_core.config.common.logging import *  # noqa
 from bkuser_core.config.common.platform import *  # noqa
@@ -75,6 +76,7 @@ LOGGING["loggers"] = get_loggers("bkuser_core", LOG_LEVEL)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(PROJECT_ROOT, "db.sqlite3"),
         # "NAME": env(f"{db_prefix}_NAME"),
         # "USER": env(f"{db_prefix}_USER"),
         # "PASSWORD": env(f"{db_prefix}_PASSWORD"),

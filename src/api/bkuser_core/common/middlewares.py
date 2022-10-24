@@ -83,7 +83,6 @@ class DynamicResponseFormatMiddleware:
 
         # 来自缓存的 response 没有对应属性
         # 由于 response 已经被渲染，并不需要 callback
-        # FIXME: 这里204的处理有问题, 强制渲染会导致204卡主(一直不结束)
         force_data = {"result": True, "code": 0, "message": "success", "data": getattr(resp, "data", None)}
 
         if not getattr(resp, "_post_render_callbacks", None):
@@ -105,7 +104,7 @@ class DynamicResponseFormatMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
 
-        # 204 无内容不需要包装
+        # 204 无内容不需要包装, 强制渲染会导致204卡主(一直不结束)
         if response.status_code == status.HTTP_204_NO_CONTENT:
             return response
 
