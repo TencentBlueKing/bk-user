@@ -13,7 +13,6 @@ from typing import List
 
 from django.conf import settings
 from django.db.models import Q
-from django.utils.translation import gettext as _
 from openpyxl import load_workbook
 from rest_framework import generics, status
 from rest_framework.parsers import FileUploadParser
@@ -44,7 +43,6 @@ from bkuser_core.api.web.utils import get_category, get_operator, list_setting_m
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log
-from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import (
     IAMAction,
     IAMPermissionExtraInfo,
@@ -93,7 +91,7 @@ class CategoryMetasListApi(generics.ListAPIView):
             # Q：为什么这里需要手动判断权限，而不是通用 permission_classes？
             # A：因为这里的资源（目录类型）是没有对应实体，同时也没有在权限中心注册
             operator = get_operator(request)
-            if not Permission().allow_action_without_resource(operator, action_id):
+            if not Permission().allow_action_without_resource(operator, action_id, raise_exception=False):
                 _meta.update(
                     {
                         "authorized": False,
@@ -259,11 +257,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
             # check permission
             operator = get_operator(request)
             action_id = IAMAction.get_action_by_category_type(data["type"])
-            if not Permission().allow_action_without_resource(operator, action_id):
-                raise IAMPermissionDenied(
-                    detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                    extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
-                )
+            Permission().allow_action_without_resource(operator, action_id)
 
         instance = slz.save()
 
