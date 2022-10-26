@@ -94,7 +94,12 @@ class Permission:
 
         iam_request = self.helper.make_request_without_resources(username=operator, action_id=action_id)
         fs = Permission().helper.iam.make_filter(
-            iam_request, converter_class=PathIgnoreDjangoQSConverter, key_mapping={"department.id": "id"}
+            iam_request,
+            converter_class=PathIgnoreDjangoQSConverter,
+            key_mapping={
+                "department.id": "id",
+                "department._bk_iam_path_": _parse_department_path,
+            },
         )
         if not fs:
             raise IAMPermissionDenied(
