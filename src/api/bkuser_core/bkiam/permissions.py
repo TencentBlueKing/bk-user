@@ -106,7 +106,7 @@ class Permission:
     def allow_category_action(
         self, operator: str, action_id: IAMAction, category, raise_exception: bool = True
     ) -> bool:
-        """如果没有权限, 所有allow_* 必须 raise IAMPermissionDenied"""
+        """如果没有权限并且raise_exception=True, 所有allow_* 必须 raise IAMPermissionDenied"""
         if not self.iam_enabled:
             return True
 
@@ -126,7 +126,7 @@ class Permission:
     def allow_department_action(
         self, operator: str, action_id: IAMAction, department, raise_exception: bool = True
     ) -> bool:
-        """如果没有权限, 所有allow_* 必须 raise IAMPermissionDenied"""
+        """如果没有权限并且raise_exception=True, 所有allow_* 必须 raise IAMPermissionDenied"""
         if not self.iam_enabled:
             return True
 
@@ -147,7 +147,7 @@ class Permission:
     def allow_tree_departments_action(
         self, operator: str, action_id: IAMAction, departments, raise_exception: bool = True
     ) -> bool:
-        """如果没有权限, 所有allow_* 必须 raise IAMPermissionDenied"""
+        """如果没有权限并且raise_exception=True, 所有allow_* 必须 raise IAMPermissionDenied"""
         # 叶节点到根节点的所有部门, 有一个有权限, 则有权限
         if not self.iam_enabled:
             return True
@@ -167,6 +167,7 @@ class Permission:
         return allowed
 
     def allow_action_without_resource(self, operator: str, action_id: IAMAction, raise_exception: bool = True):
+        """如果没有权限并且raise_exception=True, 所有allow_* 必须 raise IAMPermissionDenied"""
         if not self.iam_enabled:
             return True
         allowed = self.helper.action_allow(username=operator, action_id=action_id)
@@ -186,13 +187,6 @@ def new_action_without_resource_permission(action_id: IAMAction):
         def has_permission(self, request, view):
             operator = get_operator(request)
             return Permission().allow_action_without_resource(operator, action_id)
-            # allowed = Permission().allow_action_without_resource(operator, action_id)
-            # if not allowed:
-            #     raise IAMPermissionDenied(
-            #         detail=_("您没有权限进行该操作，请在权限中心申请。"),
-            #         extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
-            #     )
-            # return allowed
 
     return ActionWithoutResourcePermission
 
@@ -204,13 +198,6 @@ def new_category_permission(action_id: IAMAction):
             category = get_category(category_id)
             operator = get_operator(request)
             return Permission().allow_category_action(operator, action_id, category)
-            # allowed = Permission().allow_category_action(operator, action_id, category)
-            # if not allowed:
-            #     raise IAMPermissionDenied(
-            #         detail=_("您没有权限进行该操作，请在权限中心申请。"),
-            #         extra_info=IAMPermissionExtraInfo.from_action(operator, action_id, category).to_dict(),
-            #     )
-            # return allowed
 
     return CategoryIdInURLPermission
 
@@ -222,13 +209,6 @@ def new_department_permission(action_id: IAMAction):
             department = get_department(department_id)
             operator = get_operator(request)
             return Permission().allow_department_action(operator, action_id, department)
-            # allowed = Permission().allow_department_action(operator, action_id, department)
-            # if not allowed:
-            #     raise IAMPermissionDenied(
-            #         detail=_("您没有权限进行该操作，请在权限中心申请。"),
-            #         extra_info=IAMPermissionExtraInfo.from_action(operator, action_id, department).to_dict(),
-            #     )
-            # return allowed
 
     return DepartmentIdInURLPermission
 
@@ -250,27 +230,11 @@ def new_department_permission_via_profile(action_id: IAMAction):
                     include_self=True,
                 )
                 return Permission().allow_tree_departments_action(operator, action_id, departments)
-                # allowed = Permission().allow_tree_departments_action(operator, action_id, departments)
-                # if not allowed:
-                #     raise IAMPermissionDenied(
-                #         detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                #         extra_info=IAMPermissionExtraInfo.from_action(operator, action_id, departments[0]).to_dict(),
-                #     )
-                # return allowed
             else:
                 # 此时fallback到检查 用户有没有目录权限
                 category = get_category(profile.category_id)
                 operator = get_operator(request)
                 return Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
-                # allowed = Permission().allow_category_action(operator, IAMAction.MANAGE_CATEGORY, category)
-                # if not allowed:
-                #     raise IAMPermissionDenied(
-                #         detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                #         extra_info=IAMPermissionExtraInfo.from_action(
-                #             operator, IAMAction.MANAGE_CATEGORY, category
-                #         ).to_dict(),
-                #     )
-                # return allowed
 
     return ProfileIdInURLPermission
 
