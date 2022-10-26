@@ -163,6 +163,11 @@
                      rsa_encrypt_password();
                 });
             }
+            var token_set_password_url = "{{ token_set_password_url }}";
+            var error_message = "{{ error_message }}";
+            if (token_set_password_url !== "") {
+                window.location.href = token_set_password_url + '&data=' + JSON.stringify(error_message);
+            }
         })
     </script>
 </html>
