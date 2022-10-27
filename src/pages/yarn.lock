@@ -2674,11 +2674,13 @@ bindings@^1.5.0:
   dependencies:
     file-uri-to-path "1.0.0"
 
-bk-magic-vue@2.2.16:
-  version "2.2.16"
-  resolved "https://mirrors.tencent.com/npm/bk-magic-vue/-/bk-magic-vue-2.2.16.tgz#7dea845db219caf7c5da200a4e26f9deb3d03aba"
-  integrity sha512-i3eiETh0J7pFnX3gGs1q2nq9o8zhr+JoCZ8Y17W0qG1CLDSLICMZfVJl5R2PrwqobRgLD5tPAAs3sFBP7UwWNw==
+bk-magic-vue@2.4.12:
+  version "2.4.12"
+  resolved "https://mirrors.tencent.com/npm/bk-magic-vue/-/bk-magic-vue-2.4.12.tgz#17f1f86837cbd249a3f68be08474004f3f72a626"
+  integrity sha512-2DF0R3S3zB6FHDHkmBnNV1qHOMKFFpDcxmSDyNDeftNFz4IgLaFYNAqIyelGRxaDsIKIVLYYmeWTpzC23qz+Ow==
   dependencies:
+    highlight.js "^10.7.2"
+    spark-md5 "^3.0.2"
     tinycolor2 "^1.4.1"
 
 bluebird@^3.1.1, bluebird@^3.5.1, bluebird@^3.5.3, bluebird@^3.5.5:
@@ -6222,6 +6224,11 @@ highlight.js@9.15.6:
   version "9.15.6"
   resolved "https://mirrors.tencent.com/npm/highlight.js/-/highlight.js-9.15.6.tgz#72d4d8d779ec066af9a17cb14360c3def0aa57c4"
   integrity sha512-zozTAWM1D6sozHo8kqhfYgsac+B+q0PmsjXeyDrYIHHcBN0zTVT66+s2GW1GZv7DbyaROdLXKdabwS/WqPyIdQ==
+
+highlight.js@^10.7.2:
+  version "10.7.3"
+  resolved "https://mirrors.tencent.com/npm/highlight.js/-/highlight.js-10.7.3.tgz#697272e3991356e40c3cac566a74eef681756531"
+  integrity sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==
 
 highlight.js@^9.4.0:
   version "9.18.5"
@@ -11789,6 +11796,11 @@ source-map@^0.6.0, source-map@^0.6.1, source-map@~0.6.0, source-map@~0.6.1:
   version "0.6.1"
   resolved "https://mirrors.tencent.com/npm/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
+
+spark-md5@^3.0.2:
+  version "3.0.2"
+  resolved "https://mirrors.tencent.com/npm/spark-md5/-/spark-md5-3.0.2.tgz#7952c4a30784347abcee73268e473b9c0167e3fc"
+  integrity sha512-wcFzz9cDfbuqe0FZzfi2or1sgyIrsDwmPwfZC4hiNidPdPINjeUwNfv5kldczoEAcjl9Y1L3SM7Uz2PUEQzxQw==
 
 spdx-correct@^3.0.0:
   version "3.1.1"

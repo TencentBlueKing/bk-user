@@ -53,8 +53,9 @@ class SearchApi(generics.ListAPIView):
         try:
             dept_ft_for_profile = Permission().make_filter_of_department(operator, IAMAction.MANAGE_DEPARTMENT)
             logger.info("global search `%s`, make a filter for profile: %s", keyword, dept_ft_for_profile)
-        except IAMPermissionDenied:
-            logger.warning("user %s has no permission to search department", operator)
+        except IAMPermissionDenied as e:
+            logger.warning("user %s has no permission to search profiles in department", operator)
+            raise e
         else:
             profile_qs = Profile.objects.filter(
                 Q(username__icontains=keyword)
@@ -128,8 +129,9 @@ class SearchApi(generics.ListAPIView):
         try:
             dept_ft = Permission().make_department_filter(operator, IAMAction.MANAGE_DEPARTMENT)
             logger.info("global search `%s`, make a filter for department: %s", keyword, dept_ft)
-        except IAMPermissionDenied:
+        except IAMPermissionDenied as e:
             logger.warning("user %s has no permission to search department", operator)
+            raise e
         else:
             department_qs = Department.objects.filter(
                 name__icontains=keyword,
