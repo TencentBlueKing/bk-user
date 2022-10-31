@@ -445,4 +445,5 @@ export default {
   锁定时间: 'Locking time',
   退出登录: 'Log out',
   确认退出登录_: '确认退出登录？',
+  _需要设置新密码: ', You need to set a new password',
 };
