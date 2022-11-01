@@ -97,8 +97,8 @@ store.dispatch = function (_type, _payload, config = {}) {
     return;
   }
 
-  store._actionSubscribers.forEach((sub) => {
-    return sub(action, store.state);
+  store._actionSubscribers.forEach(() => {
+    return action, store.state;
   });
 
   return entry.length > 1
