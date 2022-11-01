@@ -8,11 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import hashlib
 import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Type
 
 from django.db.models import Model
+from django.utils.encoding import force_bytes
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
@@ -101,13 +103,29 @@ class DepartmentSyncHelper:
     def _insert_dept(self, dept_info: LdapDepartment, defaults: Dict) -> Department:
         # BUG: here, use dept_info.key_field to get dept -> it's full_name, not the code
         # the defaults["code"] is the not the `code`, it's the full_name
+
+        # code_hash = sha256(目录:full_name
+        # 1. 解决多个目录存在相同full_name的情况
+        # 2. 解决full_name超长截断冲突问题
+        code_hash = hashlib.sha256(force_bytes(f"{self.category.pk}:{dept_info.key_field}")).hexdigest()
+
+        # 判定 code_hash 是否存在, 是的话直接返回
+        dept2: Department = self.db_sync_manager.magic_get(code_hash, LdapDepartmentMeta)
+        if dept2:
+            return dept2
+
+        # 如果发现老的, 直接更新其 code=code_hash
         dept: Department = self.db_sync_manager.magic_get(dept_info.key_field, LdapDepartmentMeta)
         if dept:
             # Question: here update the code to real code, without magic_add, will not saved into db?
-            if dept_info.code and dept.code != dept_info.code:
-                dept.code = dept_info.code
+            # if dept_info.code and dept.code != dept_info.code:
+            #     dept.code = dept_info.code
+            if dept_info.code and dept_info.code != code_hash:
+                dept.code = code_hash
             return dept
 
+        # 无论是新的老的, 都更新 code_hash
+        defaults["code"] = code_hash
         # NOTE: 如果full_name在 db 里面已经有了, 这里是判断不出来的, 因为self.db_departments是当前category的集合, 不是全局的
         # 但是code字段是 db unique字段
         if dept_info.key_field in self.db_departments:
