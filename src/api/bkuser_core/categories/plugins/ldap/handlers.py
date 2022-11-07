@@ -33,6 +33,8 @@ logger = logging.getLogger(__name__)
 
 PULL_INTERVAL_SETTING_KEY = "pull_cycle"
 
+DEFAULT_MIN_SYNC_PERIOD = 60
+
 
 def update_or_create_sync_tasks(instance: "Setting", operator: str):
     """尝试创建或更新同步数据任务"""
@@ -42,7 +44,7 @@ def update_or_create_sync_tasks(instance: "Setting", operator: str):
     cycle_value = int(instance.value)
     config_provider = ConfigProvider(instance.category_id)
 
-    min_sync_period = config_provider.get("min_sync_period")
+    min_sync_period = config_provider.get("min_sync_period", DEFAULT_MIN_SYNC_PERIOD)
     if cycle_value <= 0:
         # 特殊约定，当设置 <= 0 时，删除周期任务
         delete_periodic_sync_task(category_id=instance.category_id)
