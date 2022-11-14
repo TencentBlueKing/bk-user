@@ -6,7 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("profiles", "0026_auto_20220920_2251"),
+        # BUG: if uncomment this line, all migration will fail
+        # while all migrations of the audit will not be migrated => all failed
+        # ("profiles", "0026_auto_20220920_2251"),
         ("audit", "0005_auto_20220526_1048"),
     ]
 

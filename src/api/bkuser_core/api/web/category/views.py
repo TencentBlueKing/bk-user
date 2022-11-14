@@ -142,11 +142,11 @@ class CategorySettingNamespaceListCreateUpdateApi(
             try:
                 # 暂时忽略已创建报错
                 setting, created = Setting.objects.update_or_create(
-                    meta=meta, value=setting["value"], category=category
+                    meta=meta, category=category, defaults={"value": setting["value"]}
                 )
             except Exception:
                 logger.exception(
-                    "cannot create setting. [meta=%s, value=%s, category=%s]", metas[0], setting["value"], category
+                    "cannot create setting. [meta=%s, value=%s, category=%s]", meta, setting["value"], category
                 )
                 raise error_codes.CANNOT_CREATE_SETTING
             else:
