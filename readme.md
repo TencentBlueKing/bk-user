@@ -2,8 +2,8 @@
 ![](docs/images/logo.png)
 
 ---
-[![license](https://img.shields.io/badge/license-mit-green.svg?style=flat)](https://github.com/TencentBlueKing/bk-user/blob/master/LICENSE) 
-[![Release Version](https://img.shields.io/badge/bk--user-2.3.4-green)](https://github.com/TencentBlueKing/bk-user/releases) 
+[![license](https://img.shields.io/badge/license-mit-green.svg?style=flat)](https://github.com/TencentBlueKing/bk-user/blob/master/LICENSE)
+[![Release Version](https://img.shields.io/badge/bk--user-2.3.4-green)](https://github.com/TencentBlueKing/bk-user/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](https://github.com/TencentBlueKing/bk-user/pulls)
 
 简体中文 | [English](readme_en.md)
@@ -23,14 +23,14 @@
 
 详细介绍请参考[功能说明](https://bk.tencent.com/docs/document/6.0/146/6638)
 
-## 快速开始 
+## 快速开始
 
 - [Helm 快速部署指引](/deploy/helm/bk-user/README.md)
 - [本地开发部署指引](/docs/develop_guide.md)
 
 ## 路线图
 
-- [版本日志](docs/release.md)
+- [版本日志](https://github.com/TencentBlueKing/bk-user/releases)
 
 ## 支持
 
@@ -44,7 +44,7 @@
 - [BK-PaaS](https://github.com/Tencent/bk-PaaS)：蓝鲸PaaS平台是一个开放式的开发平台，让开发者可以方便快捷地创建、开发、部署和管理SaaS应用。
 - [BK-SOPS](https://github.com/Tencent/bk-sops)：标准运维（SOPS）是通过可视化的图形界面进行任务流程编排和执行的系统，是蓝鲸体系中一款轻量级的调度编排类SaaS产品。
 
-## 贡献 
+## 贡献
 对于项目感兴趣，想一起贡献并完善项目请参阅 [Contributing Guide](docs/contributing.md)。
 
 [腾讯开源激励计划](https://opensource.tencent.com/contribution) 鼓励开发者的参与和贡献，期待你的加入。
