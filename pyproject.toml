@@ -30,6 +30,7 @@ types-pymysql = "^1.0.0"
 types-redis = "^3.5.4"
 types-toml = "^0.1.3"
 types-cachetools = "^4.2.4"
+flake8 = "^4.0.0"
 
 [tool.black]
 line-length = 119
