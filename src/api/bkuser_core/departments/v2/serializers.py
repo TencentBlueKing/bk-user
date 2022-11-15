@@ -47,7 +47,7 @@ class SimpleDepartmentSerializer(CustomFieldsModelSerializer):
 class ForSyncDepartmentSerializer(CustomFieldsModelSerializer):
     """this serializer is for sync data from one bk-user to another
     the api protocol:
-    https://github.com/TencentBlueKing/bk-user/blob/development/src/api/bkuser_core/categories/plugins/custom/README.md
+    https://github.com/TencentBlueKing/bk-user/blob/develop/src/api/bkuser_core/categories/plugins/custom/README.md
     """
 
     class Meta:

@@ -1,5 +1,5 @@
-version ?= "development"
-login_version ?= "development"
+version ?= "develop"
+login_version ?= "develop"
 values ?=
 image_repo ?= "mirrors.tencent.com/build/blueking"
 chart_repo ?=
