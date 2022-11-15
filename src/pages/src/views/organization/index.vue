@@ -858,12 +858,12 @@ export default {
         this.handleTabData.totalNumber = null;
         this.handleTabData.currentNumber = null;
         // 搜索的结果就是展示的组织
-        this.setTreeDataFromSearchResult(searchResult, searchResult.id);
+        this.setTreeDataFromSearchResult(searchResult, searchResult.category_id);
         // 获取该组织下的人员
         this.getTableData();
       } else {
         // 搜索结果为人员，只展示所在的第一个组织
-        this.setTreeDataFromSearchResult(searchResult.departments[0], searchResult.id);
+        this.setTreeDataFromSearchResult(searchResult.departments[0], searchResult.category_id);
         // 直接将搜索的单个人员信息展示在表格中
         this.filterUserData([searchResult]);
         this.$nextTick(() => {
@@ -1486,8 +1486,8 @@ export default {
       this.batchUserInfo.tags = [];
     },
     findCategoryId(item) {
-      if (item.id) {
-        return item.id;
+      if (item.category_id) {
+        return item.category_id;
       }
       return this.findCategoryId(item.directParent);
     },
