@@ -28,7 +28,8 @@ pytestmark = pytest.mark.django_db
 class TestListCreateApis:
     @pytest.fixture(scope="class")
     def factory(self):
-        return get_api_factory({"HTTP_RAW_USERNAME": False})
+        # return get_api_factory({"HTTP_RAW_USERNAME": False})
+        return get_api_factory()
 
     @pytest.fixture(scope="class")
     def check_view(self):
@@ -47,11 +48,11 @@ class TestListCreateApis:
         return [
             "username",
             "email",
-            "telephone",
-            "wx_userid",
+            # "telephone",
+            # "wx_userid",
             "domain",
             "status",
-            "staff_status",
+            # "staff_status",
         ]
 
     def _assert_required_keys_exist(self, response_data: dict):

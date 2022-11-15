@@ -25,6 +25,16 @@ from bkuser_core.user_settings.models import Setting, SettingMeta
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def reset_cache():
+    yield
+
+    # 必须清缓存, locmem放置了一些数据会导致测试互相影响
+    from django.core.cache import caches
+
+    caches["locmem"].clear()
+
+
 @pytest.fixture
 def factory():
     return get_api_factory()
