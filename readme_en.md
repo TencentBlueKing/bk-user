@@ -2,9 +2,9 @@
 ![](docs/images/logo.png)
 
 ---
-[![license](https://img.shields.io/badge/license-mit-green.svg?style=flat)](https://github.com/TencentBlueKing/bk-user/blob/master/LICENSE) 
-[![Release Version](https://img.shields.io/badge/bk--user-2.3.3-green)](https://github.com/TencentBlueKing/bk-user/releases) 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](https://github.com/TencentBlueKing/bk-user/pulls) 
+[![license](https://img.shields.io/badge/license-mit-green.svg?style=flat)](https://github.com/TencentBlueKing/bk-user/blob/master/LICENSE)
+[![Release Version](https://img.shields.io/badge/bk--user-2.3.3-green)](https://github.com/TencentBlueKing/bk-user/releases)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](https://github.com/TencentBlueKing/bk-user/pulls)
 
 [简体中文](readme.md) | English
 
@@ -19,7 +19,7 @@
 
 - Support multi-level organizational structure management
 - Support for synchronizing data in a variety of ways, including: OpenLDAP、Microsoft Active Directory(MAD)、Excel
-- Supports multiple security measures such as user password cycle management, password strength verification, user login trial and error restrictions, and email sending random passwords 
+- Supports multiple security measures such as user password cycle management, password strength verification, user login trial and error restrictions, and email sending random passwords
 
 For details, please refer to [features](https://bk.tencent.com/docs/document/6.0/146/6638)
 
@@ -31,9 +31,9 @@ For details, please refer to [features](https://bk.tencent.com/docs/document/6.0
 
 ## Roadmap
 
-- [Changelog](docs/release.md)
+- [Changelog](https://github.com/TencentBlueKing/bk-user/releases)
 
-## Supporting 
+## Supporting
 
 - [White Paper](https://bkdocs-1252002024.file.myqcloud.com/ZH/6.0/%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86/%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86.pdf)
 - [BlueKing Official Forum](https://bk.tencent.com/s-mart/community)

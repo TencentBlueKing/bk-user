@@ -73,11 +73,11 @@ git commit -m 'fix: Excel 文件上传字段解析出错 #29'
 
 相关的review流程请参照：[Bk-User code review 相关流程](specification/review.md)
 
-### master 和 development
+### master 和 develop
 
 我们会使用 `master` 分支来发布 release，所以它的代码会和最新的 release 保持完全一致，可以认为 `master` 代码是当前最稳定的版本。
 
-为了避免在 `master` 分支引入不稳定因素，所有未经过产品功能测试的内容，均只能向 `development` 分支发起合并。
+为了避免在 `master` 分支引入不稳定因素，所有未经过产品功能测试的内容，均只能向 `develop` 分支发起合并。
 
 ## Issues
 
