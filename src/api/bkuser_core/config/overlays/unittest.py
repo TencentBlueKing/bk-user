@@ -77,13 +77,14 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": os.path.join(PROJECT_ROOT, "db.sqlite3"),
+        "TEST": {"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_general_ci"},
+        # for unittest load monitoring test_healthz check mysql by default
         # "NAME": env(f"{db_prefix}_NAME"),
         # "USER": env(f"{db_prefix}_USER"),
         # "PASSWORD": env(f"{db_prefix}_PASSWORD"),
         # "HOST": env(f"{db_prefix}_HOST"),
         # "PORT": env(f"{db_prefix}_PORT"),
         # "OPTIONS": {"charset": "utf8mb4"},
-        "TEST": {"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_general_ci"},
     }
 }
 
