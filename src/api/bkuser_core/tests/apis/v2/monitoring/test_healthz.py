@@ -19,10 +19,9 @@ class TestHealthz:
         response = view(request=request)
         assert response.content
 
-    # FIXME: this will check mysql by default, but in unittest we use sqlite3
-    # def test_healthz(self, factory):
-    #     """证明接口存在"""
-    #     view = HealthViewSet.as_view({"get": "healthz"})
-    #     request = factory.get("/healthz")
-    #     response = view(request=request)
-    #     assert response.content
+    def test_healthz(self, factory):
+        """证明接口存在"""
+        view = HealthViewSet.as_view({"get": "healthz"})
+        request = factory.get("/healthz")
+        response = view(request=request)
+        assert response.content
