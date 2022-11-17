@@ -88,7 +88,7 @@ def get_ee_exception_response(exc, context, detail):
     elif isinstance(exc, ValidationError):
         data["message"] = f"validation error: {exc}"
     elif isinstance(exc, AuthenticationFailed):
-        data["message"] = "403, authentication failed"
+        data["message"] = f"403, authentication failed: {exc}"
     else:
         # log
         logger.exception("unknown exception while handling the request, detail=%s", detail)
