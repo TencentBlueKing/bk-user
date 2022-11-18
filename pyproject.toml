@@ -14,8 +14,8 @@ black = "^22.3.0"
 # isort
 isort = "^5.9.2"
 # flake8
-pyproject-flake8 = "^0.0.1-alpha.2"
-flake8-comprehensions = "^3.5.0"
+pyproject-flake8 = "0.0.1-alpha.2"
+flake8-comprehensions = "3.5.0"
 # pytest
 pytest = "^6.2.4"
 pytest-django = "^3.9.0"

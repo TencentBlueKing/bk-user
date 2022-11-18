@@ -8,15 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from unittest import mock
+# from unittest import mock
 
 import pytest
 
-from bkuser_core.bkiam.constants import IAMAction
-from bkuser_core.bkiam.permissions import IAMPermissionExtraInfo
-from bkuser_core.departments.models import Department
 from bkuser_core.departments.v2.views import DepartmentViewSet
-from bkuser_core.tests.apis.utils import get_api_factory, make_request_operator_aware
+from bkuser_core.tests.apis.utils import get_api_factory
 
 pytestmark = pytest.mark.django_db
 
@@ -30,50 +27,50 @@ class TestIAMPermissionExtraInfo:
     def view(self):
         return DepartmentViewSet.as_view({"get": "list", "post": "create"})
 
-    def test_from_request(self, factory, view):
-        """测试从 request 生成 info 对象"""
-        request = factory.get("/api/v2/departments/")
-        make_request_operator_aware(request, operator="tester")
-        info = IAMPermissionExtraInfo.from_request(request)
+    # def test_from_request(self, factory, view):
+    #     """测试从 request 生成 info 对象"""
+    #     request = factory.get("/api/v2/departments/")
+    #     make_request_operator_aware(request, operator="tester")
+    #     info = IAMPermissionExtraInfo.from_request(request)
 
-        assert info.auth_infos
-        assert info.auth_infos[0].id == "manage_department"
-        assert info.auth_infos[0].display_name == IAMAction.get_choice_label(IAMAction.MANAGE_DEPARTMENT)
+    #     assert info.auth_infos
+    #     assert info.auth_infos[0].id == "manage_department"
+    #     assert info.auth_infos[0].display_name == IAMAction.get_choice_label(IAMAction.MANAGE_DEPARTMENT)
 
-    def test_from_request_obj(self, factory, view):
-        """测试从 request 和 鉴权对象 生成 info 对象"""
-        request = factory.patch("/api/v2/departments/1/")
-        make_request_operator_aware(request, operator="tester")
-        info = IAMPermissionExtraInfo.from_request(request, obj=Department.objects.get(id=1))
+    # def test_from_request_obj(self, factory, view):
+    #     """测试从 request 和 鉴权对象 生成 info 对象"""
+    #     request = factory.patch("/api/v2/departments/1/")
+    #     make_request_operator_aware(request, operator="tester")
+    #     info = IAMPermissionExtraInfo.from_request(request, obj=Department.objects.get(id=1))
 
-        assert info.auth_infos
-        assert info.auth_infos[0].id == "manage_department"
-        assert info.auth_infos[0].display_name == IAMAction.get_choice_label(IAMAction.MANAGE_DEPARTMENT)
-        assert info.auth_infos[0].related_resources[0].name == "总公司"
-        assert info.auth_infos[0].related_resources[0].id == "1"
-        assert info.auth_infos[0].related_resources[0].type == "department"
+    #     assert info.auth_infos
+    #     assert info.auth_infos[0].id == "manage_department"
+    #     assert info.auth_infos[0].display_name == IAMAction.get_choice_label(IAMAction.MANAGE_DEPARTMENT)
+    #     assert info.auth_infos[0].related_resources[0].name == "总公司"
+    #     assert info.auth_infos[0].related_resources[0].id == "1"
+    #     assert info.auth_infos[0].related_resources[0].type == "department"
 
-    def test_to_dict(self, factory, view):
-        """测试从对象生成 dict"""
-        request = factory.get("/api/v2/departments/")
-        make_request_operator_aware(request, operator="tester")
+    # def test_to_dict(self, factory, view):
+    #     """测试从对象生成 dict"""
+    #     request = factory.get("/api/v2/departments/")
+    #     make_request_operator_aware(request, operator="tester")
 
-        def return_fake_callback_url(*arg, **kwargs):
-            return "http://test.com"
+    #     def return_fake_callback_url(*arg, **kwargs):
+    #         return "http://test.com"
 
-        with mock.patch("bkuser_core.bkiam.helper.IAMHelper.generate_callback_url") as mocked_func:
-            mocked_func.side_effect = return_fake_callback_url
-            info = IAMPermissionExtraInfo.from_request(request)
+    #     with mock.patch("bkuser_core.bkiam.helper.IAMHelper.generate_callback_url") as mocked_func:
+    #         mocked_func.side_effect = return_fake_callback_url
+    #         info = IAMPermissionExtraInfo.from_request(request)
 
-            raw_info = info.to_dict()
+    #         raw_info = info.to_dict()
 
-            assert raw_info == {
-                "auth_infos": [
-                    {
-                        "display_name": IAMAction.get_choice_label(IAMAction.MANAGE_DEPARTMENT),
-                        "id": "manage_department",
-                        "related_resources": [],
-                    }
-                ],
-                "callback_url": return_fake_callback_url(),
-            }
+    #         assert raw_info == {
+    #             "auth_infos": [
+    #                 {
+    #                     "display_name": IAMAction.get_choice_label(IAMAction.MANAGE_DEPARTMENT),
+    #                     "id": "manage_department",
+    #                     "related_resources": [],
+    #                 }
+    #             ],
+    #             "callback_url": return_fake_callback_url(),
+    #         }

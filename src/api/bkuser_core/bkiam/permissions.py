@@ -41,6 +41,17 @@ def _parse_department_path(data):
     return field_map[the_last_of_path[0]], int(the_last_of_path[1])
 
 
+# NOTE: not used, only in unittest
+CATEGORY_KEY_MAPPING = {"category.id": "id"}
+
+PROFILE_KEY_MAPPING = {"department._bk_iam_path_": _parse_department_path}
+
+DEPARTMENT_KEY_MAPPING = {
+    "department.id": "id",
+    "department._bk_iam_path_": _parse_department_path,
+}
+
+
 class Permission:
     """
     NOTE: the `operator` should be the username with domain
@@ -61,7 +72,9 @@ class Permission:
         iam_request = self.helper.make_request_without_resources(username=operator, action_id=action_id)
         # NOTE: 这里不是给category自己用的, 而是给外检关联表用的, 所以category.id -> category_id
         fs = Permission().helper.iam.make_filter(
-            iam_request, converter_class=PathIgnoreDjangoQSConverter, key_mapping={"category.id": "category_id"}
+            iam_request,
+            converter_class=PathIgnoreDjangoQSConverter,
+            key_mapping={"category.id": "category_id"},
         )
         if not fs:
             raise IAMPermissionDenied(
@@ -79,7 +92,7 @@ class Permission:
         fs = Permission().helper.iam.make_filter(
             iam_request,
             converter_class=PathIgnoreDjangoQSConverter,
-            key_mapping={"department._bk_iam_path_": _parse_department_path},
+            key_mapping=PROFILE_KEY_MAPPING,
         )
         if not fs:
             raise IAMPermissionDenied(
@@ -96,10 +109,7 @@ class Permission:
         fs = Permission().helper.iam.make_filter(
             iam_request,
             converter_class=PathIgnoreDjangoQSConverter,
-            key_mapping={
-                "department.id": "id",
-                "department._bk_iam_path_": _parse_department_path,
-            },
+            key_mapping=DEPARTMENT_KEY_MAPPING,
         )
         if not fs:
             raise IAMPermissionDenied(

@@ -10,8 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 
-from bkuser_core.bkiam.constants import ResourceType
 from bkuser_core.bkiam.converters import PathIgnoreDjangoQSConverter
+from bkuser_core.bkiam.permissions import CATEGORY_KEY_MAPPING, DEPARTMENT_KEY_MAPPING
 
 
 class TestPathIgnoreDjangoQSConverter:
@@ -82,7 +82,8 @@ class TestPathIgnoreDjangoQSConverter:
     )
     def test_converter(self, policies, expected):
         """测试 filter 转换"""
-        fs = PathIgnoreDjangoQSConverter(ResourceType.get_key_mapping(ResourceType.DEPARTMENT)).convert(policies)
+        # fs = PathIgnoreDjangoQSConverter(ResourceType.get_key_mapping(ResourceType.DEPARTMENT)).convert(policies)
+        fs = PathIgnoreDjangoQSConverter(DEPARTMENT_KEY_MAPPING).convert(policies)
         assert str(fs) == expected
 
     @pytest.mark.parametrize(
@@ -96,5 +97,7 @@ class TestPathIgnoreDjangoQSConverter:
     )
     def test_converter_other(self, policies, expected):
         """测试 filter 转换"""
-        fs = PathIgnoreDjangoQSConverter(ResourceType.get_key_mapping(ResourceType.CATEGORY)).convert(policies)
+
+        # fs = PathIgnoreDjangoQSConverter(ResourceType.get_key_mapping(ResourceType.CATEGORY)).convert(policies)
+        fs = PathIgnoreDjangoQSConverter(CATEGORY_KEY_MAPPING).convert(policies)
         assert str(fs) == expected

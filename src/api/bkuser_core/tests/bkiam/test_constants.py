@@ -18,28 +18,28 @@ pytestmark = pytest.mark.django_db
 
 
 class TestResourceTypeEnum:
-    @pytest.mark.parametrize(
-        "is_leaf, path, f, v",
-        [
-            (True, "/category,5/department,3440/department,3443/", "parent_id", 3443),
-            (False, "/category,5/department,3440/department,3443/", "id", 3443),
-            (True, "/category,5/", "category_id", 5),
-            (False, "/category,5/", "category_id", 5),
-            (True, "/department,3440/department,3443/", "parent_id", 3443),
-            (False, "/department,3440/department,3443/", "id", 3443),
-        ],
-    )
-    def test_get_key_mapping(self, is_leaf, path, f, v):
-        key_mapping = ResourceType.get_key_mapping(ResourceType.DEPARTMENT)
-        path_method = key_mapping["department._bk_iam_path_"]
+    # @pytest.mark.parametrize(
+    #     "is_leaf, path, f, v",
+    #     [
+    #         (True, "/category,5/department,3440/department,3443/", "parent_id", 3443),
+    #         (False, "/category,5/department,3440/department,3443/", "id", 3443),
+    #         (True, "/category,5/", "category_id", 5),
+    #         (False, "/category,5/", "category_id", 5),
+    #         (True, "/department,3440/department,3443/", "parent_id", 3443),
+    #         (False, "/department,3440/department,3443/", "id", 3443),
+    #     ],
+    # )
+    # def test_get_key_mapping(self, is_leaf, path, f, v):
+    #     key_mapping = ResourceType.get_key_mapping(ResourceType.DEPARTMENT)
+    #     path_method = key_mapping["department._bk_iam_path_"]
 
-        data = {"value": path}
-        if not is_leaf:
-            data["node_type"] = "non-leaf"
+    #     data = {"value": path}
+    #     if not is_leaf:
+    #         data["node_type"] = "non-leaf"
 
-        f, v = path_method(data)
-        assert f == f
-        assert v == v
+    #     f, v = path_method(data)
+    #     assert f == f
+    #     assert v == v
 
     @pytest.mark.parametrize(
         "dep_chain, expected",
