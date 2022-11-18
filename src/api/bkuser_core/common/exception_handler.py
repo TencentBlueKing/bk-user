@@ -62,11 +62,11 @@ def custom_exception_handler(exc, context):
             # do nothing if get extra details fail
             pass
 
+    # NOTE: raw response还有在用, 并且单测基于raw response判断的status_code和异常报错(所以不能去掉)
     if bool(context["request"].META.get(settings.FORCE_RAW_RESPONSE_HEADER)):
         return get_raw_exception_response(exc, context, detail)
     else:
         return get_ee_exception_response(exc, context, detail)
-    # return get_ee_exception_response(exc, context, detail)
 
 
 def get_ee_exception_response(exc, context, detail):
