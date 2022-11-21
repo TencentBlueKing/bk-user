@@ -1,0 +1,7 @@
+- name: api
+  module: usermgr
+  project_dir: usermgr/api
+  alias: usermgrapi
+  language: python/3.6
+  version: ${VERSION}
+  version_type: ee/ce
