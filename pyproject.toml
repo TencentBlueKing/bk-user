@@ -39,6 +39,7 @@ exclude = '''
   | .+/migrations
   | .+/sdk
   | .+/node_modules
+  | .+/build
 )/
 '''
 
@@ -59,7 +60,7 @@ format = "pylint"
 show_source = "true"
 statistics = "true"
 count = "true"
-exclude = "*migrations*,*.pyc,.git,__pycache__,*/node_modules/*,*/templates_module*,*/bin/*,*/config/*,*sdk*"
+exclude = "*migrations*,*.pyc,.git,__pycache__,*/node_modules/*,*/templates_module*,*/bin/*,*/config/*,*sdk*,*build*"
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -70,6 +71,7 @@ pretty=true
 exclude = '''(?x)(
     instrumentor\.py$
     | otel\.py$
+    | src/build/.*\.py$
 )'''
 
 [[tool.mypy.overrides]]
@@ -78,5 +80,6 @@ module = [
     "*.config.*",
     "bkuser_sdk.*",
     "*.bkuser_sdk.*",
+    "*.build.*",
 ]
 ignore_errors = true
