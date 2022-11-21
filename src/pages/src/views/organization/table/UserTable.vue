@@ -74,7 +74,7 @@
               </div>
               <!-- 其他字段 -->
               <div class="list-wrapper" v-else>
-                <span v-bk-overflow-tips>{{getValueByType(key, item[key]) || '--'}}</span>
+                <span v-bk-overflow-tips>{{$xss(getValueByType(key, item[key])) || '--'}}</span>
               </div>
             </td>
           </tr>

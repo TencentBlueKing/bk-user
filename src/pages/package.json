@@ -69,7 +69,8 @@
         "vue-i18n": "8.9.0",
         "vue-image-crop-upload": "2.5.0",
         "vue-router": "3.0.6",
-        "vuex": "3.1.1"
+        "vuex": "3.1.1",
+        "xss": "1.0.13"
     },
     "devDependencies": {
         "@babel/core": "7.11.0",
