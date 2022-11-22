@@ -292,7 +292,12 @@ class ProfileCreateApi(generics.CreateAPIView):
             meta = SettingMeta.objects.filter(
                 key="expired_after_days", namespace=SettingsEnableNamespaces.ACCOUNT.value
             ).first()
-            expired_after_days = Setting.objects.filter(category_id=category_id, meta=meta).first().value
+
+            # NOTE: maybe None here if the meta is not set
+            expired_after_days = -1
+            expired_after_days_setting = Setting.objects.filter(category_id=category_id, meta=meta).first()
+            if expired_after_days_setting:
+                expired_after_days = expired_after_days_setting.value
 
             # 账户有效期，不传，默认设置为目录设置项
             if expired_after_days == -1:
