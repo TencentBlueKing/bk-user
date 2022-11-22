@@ -10,10 +10,13 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+import faulthandler
 import os
 
 from dj_static import Cling
 from django.core.wsgi import get_wsgi_application
+
+faulthandler.enable()
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bklogin.config.prod")
 
