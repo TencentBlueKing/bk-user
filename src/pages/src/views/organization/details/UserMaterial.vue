@@ -88,7 +88,7 @@
               <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
             </div>
             <div class="desc" v-else>
-              <p class="text">{{$xss(fieldInfo.value) || '--'}}</p>
+              <p class="text">{{fieldInfo.value || '--'}}</p>
             </div>
           </div>
         </li>
