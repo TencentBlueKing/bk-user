@@ -110,7 +110,7 @@
                     @click="handleSelect(item)">
                     <div class="match-item-left">
                       <p class="item-title">
-                        {{ item.username + '(' + $xss(item.display_name) + ') ' }}
+                        {{ item.username + '(' + item.display_name + ') ' }}
                         <span class="category-label">{{item.category_name}}</span>
                       </p>
                       <p class="item-detail">{{ getUserDetail(item) }}</p>
