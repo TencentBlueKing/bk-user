@@ -125,13 +125,13 @@ class ExcelSyncer(Syncer):
         self._default_password_valid_days = int(ConfigProvider(self.category_id).get("password_valid_days"))
         self.fetcher: ExcelFetcher = self.get_fetcher()
 
-    def sync(self, raw_data_file):
+    def sync(self, raw_data_file, is_update):
         user_rows, departments = self.fetcher.fetch(raw_data_file)
         with transaction.atomic():
             self._sync_departments(departments)
 
         with transaction.atomic():
-            self._sync_users(self.fetcher.parser_set, user_rows)
+            self._sync_users(self.fetcher.parser_set, user_rows, is_update)
             self._sync_leaders(self.fetcher.parser_set, user_rows)
 
         self._notify_init_passwords()
@@ -175,7 +175,7 @@ class ExcelSyncer(Syncer):
         """某些状况下会读取 Excel 整个空行"""
         return all(x is None for x in raw_data)
 
-    def _sync_users(self, parser_set: "ParserSet", users: list):
+    def _sync_users(self, parser_set: "ParserSet", users: list, is_update: bool = False):
         """在内存中操作&判断数据，bulk 插入"""
         logger.info("=========== trying to load profiles into memory ===========")
 
@@ -282,6 +282,12 @@ class ExcelSyncer(Syncer):
             cell_parser = DepartmentCellParser(self.category_id)
             for department in cell_parser.parse_to_db_obj(department_groups):
                 relation_params = {"department_id": department.pk, "profile_id": profile_id}
+
+                if is_update:
+                    old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
+                    #  将旧的用户-部门关系删除
+                    old_department_profile_relations.delete()
+
                 try:
                     DepartmentThroughModel.objects.get(**relation_params)
                 except DepartmentThroughModel.DoesNotExist:

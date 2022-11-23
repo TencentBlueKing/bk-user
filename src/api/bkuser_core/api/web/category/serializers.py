@@ -192,6 +192,10 @@ class CategoryFileImportInputSLZ(serializers.Serializer):
     file = serializers.FileField(required=False)
 
 
+class CategoryFileImportQuerySLZ(serializers.Serializer):
+    is_update = serializers.BooleanField(required=False, default=False)
+
+
 class CategorySyncResponseOutputSLZ(serializers.Serializer):
     task_id = serializers.CharField(help_text="task_id for the sync job.")
 
