@@ -125,13 +125,13 @@ class ExcelSyncer(Syncer):
         self._default_password_valid_days = int(ConfigProvider(self.category_id).get("password_valid_days"))
         self.fetcher: ExcelFetcher = self.get_fetcher()
 
-    def sync(self, raw_data_file, is_update):
+    def sync(self, raw_data_file, is_overwrite):
         user_rows, departments = self.fetcher.fetch(raw_data_file)
         with transaction.atomic():
             self._sync_departments(departments)
 
         with transaction.atomic():
-            self._sync_users(self.fetcher.parser_set, user_rows, is_update)
+            self._sync_users(self.fetcher.parser_set, user_rows, is_overwrite)
             self._sync_leaders(self.fetcher.parser_set, user_rows)
 
         self._notify_init_passwords()
@@ -175,7 +175,7 @@ class ExcelSyncer(Syncer):
         """某些状况下会读取 Excel 整个空行"""
         return all(x is None for x in raw_data)
 
-    def _sync_users(self, parser_set: "ParserSet", users: list, is_update: bool = False):
+    def _sync_users(self, parser_set: "ParserSet", users: list, is_overwrite: bool = False):
         """在内存中操作&判断数据，bulk 插入"""
         logger.info("=========== trying to load profiles into memory ===========")
 
@@ -235,8 +235,9 @@ class ExcelSyncer(Syncer):
             progress(index, total, f"loading {username}")
             try:
                 updating_profile = Profile.objects.get(username=username, category_id=self.category_id)
-
-                # 如果已经存在，则更新该 profile
+                # 已存在的用户：如果未勾选 <进行覆盖更新>（即is_overwrite为false）=》则忽略，反之则更新该 profile，包括清理其旧部门信息
+                if not is_overwrite:
+                    continue
                 for name, value in profile_params.items():
                     if name == "extras":
                         extras = updating_profile.extras or {}
@@ -250,6 +251,10 @@ class ExcelSyncer(Syncer):
 
                     setattr(updating_profile, name, value)
                 profile_id = updating_profile.id
+                # 清理已存在用户 旧的部门-用户关系
+                old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
+                old_department_profile_relations.delete()
+
                 self.db_sync_manager.magic_add(updating_profile, SyncOperation.UPDATE.value)
                 logger.debug("(%s/%s) username<%s> already exist, trying to update it", username, index + 1, total)
 
@@ -282,12 +287,6 @@ class ExcelSyncer(Syncer):
             cell_parser = DepartmentCellParser(self.category_id)
             for department in cell_parser.parse_to_db_obj(department_groups):
                 relation_params = {"department_id": department.pk, "profile_id": profile_id}
-
-                if is_update:
-                    old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
-                    #  将旧的用户-部门关系删除
-                    old_department_profile_relations.delete()
-
                 try:
                     DepartmentThroughModel.objects.get(**relation_params)
                 except DepartmentThroughModel.DoesNotExist:

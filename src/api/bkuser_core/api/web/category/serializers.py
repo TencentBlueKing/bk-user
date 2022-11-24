@@ -193,7 +193,7 @@ class CategoryFileImportInputSLZ(serializers.Serializer):
 
 
 class CategoryFileImportQuerySLZ(serializers.Serializer):
-    is_update = serializers.BooleanField(required=False, default=False)
+    is_overwrite = serializers.BooleanField(required=False, default=False)
 
 
 class CategorySyncResponseOutputSLZ(serializers.Serializer):

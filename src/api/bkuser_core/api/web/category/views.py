@@ -469,7 +469,10 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
             raise error_codes.CREATE_SYNC_TASK_FAILED.f(str(e))
 
         instance_id = instance.id
-        params = {"raw_data_file": slz.validated_data["file"], "is_update": query_slz.validated_data["is_update"]}
+        params = {
+            "raw_data_file": slz.validated_data["file"],
+            "is_overwrite": query_slz.validated_data["is_overwrite"],
+        }
         try:
             # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
             adapter_sync(instance_id, operator=request.operator, task_id=task_id, **params)
