@@ -8,9 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
+import logging
 import os
 
 from . import PROJECT_ROOT, env
+
+logger = logging.getLogger(__name__)
+
 
 # only for django itself(internal hashes), not a specific identity
 SECRET_KEY = "Zfljnbga5QYVqNpOXLwhfGQLplZHHj3FuQWdAcaqTiDrDUfsTS"
@@ -162,3 +167,23 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {},
     "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser_core.apis.swagger.AutoModelTagSchema",
 }
+
+
+# ==============================================================================
+# RSA
+# ==============================================================================
+
+ENABLE_PASSWORD_RSA_ENCRYPTED = env.bool("ENABLE_PASSWORD_RSA_ENCRYPTED", False)
+PASSWORD_RSA_PRIVATE_KEY = env.str("BK_PASSWORD_RSA_PRIVATE_KEY", "")
+
+if ENABLE_PASSWORD_RSA_ENCRYPTED:
+    message = "enable password rsa encrypted"
+    logger.debug(message)
+
+    try:
+        PASSWORD_RSA_PRIVATE_KEY = base64.b64decode(PASSWORD_RSA_PRIVATE_KEY).decode()
+    except Exception as e:
+        rsa_key_info = f"PASSWORD_RSA_PRIVATE_KEY={PASSWORD_RSA_PRIVATE_KEY}"
+        message = f"password rsa encrypted is enabled, but b64decode fail, {rsa_key_info}"
+        logger.error(message)
+        raise e

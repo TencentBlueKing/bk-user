@@ -12,10 +12,11 @@ specific language governing permissions and limitations under the License.
 from django.conf import settings
 from rest_framework import serializers
 
-from bkuser_core.api.web.serializers import StringArrayField
+from bkuser_core.api.web.serializers import Base64OrPlainField, StringArrayField
 from bkuser_core.api.web.utils import get_default_category_id
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
+from bkuser_global.crypt import rsa_decrypt_password
 
 
 class LoginProfileRetrieveInputSLZ(serializers.Serializer):
@@ -105,11 +106,19 @@ class ProfileSearchOutputSLZ(serializers.Serializer):
 class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     leader = serializers.ListField(child=serializers.IntegerField(), required=False)
     departments = serializers.ListField(child=serializers.IntegerField(), required=False)
+    password = Base64OrPlainField(required=False, max_length=254)
 
     class Meta:
         model = Profile
         # NOTE: 相对原来的api区别, 不支持extras/create_time/update_time更新
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
+
+    def validate_password(self, password):
+        if settings.ENABLE_PASSWORD_RSA_ENCRYPTED:
+            # rsa 解密
+            password = rsa_decrypt_password(password, settings.PASSWORD_RSA_PRIVATE_KEY)
+
+        return password
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):
