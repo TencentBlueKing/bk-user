@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
 import datetime
 
 from django.conf import settings
@@ -17,6 +18,9 @@ from bkuser_shell.account.conf import ConfFixture
 
 
 def shell(request):
+    password_rsa_public_key = base64.b64encode(settings.PASSWORD_RSA_PUBLIC_KEY.encode()).decode()
+    enable_password_rsa_encrypted = str(settings.ENABLE_PASSWORD_RSA_ENCRYPTED).lower()
+
     context = {
         "gettext": _,
         "_": _,
@@ -41,6 +45,9 @@ def shell(request):
         # 静态文件加载目录
         "BK_STATIC_URL": settings.BUILD_STATIC,
         "USERNAME": request.user.username,
+        # password encrypted
+        "PASSWORD_RSA_PUBLIC_KEY": password_rsa_public_key,
+        "ENABLE_PASSWORD_RSA_ENCRYPTED": enable_password_rsa_encrypted,
     }
 
     return context
