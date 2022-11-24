@@ -132,7 +132,8 @@ class LoginLogExportOutputSLZ(serializers.Serializer):
         """get reason display name"""
         if obj.is_success:
             return None
-        return LOGIN_FAILED_REASON_MAP.get(obj.reason, _("未知失败原因"))
+        # bugfix: ugettext_lazy
+        return str(LOGIN_FAILED_REASON_MAP.get(obj.reason, _("未知失败原因")))
 
     def get_datetime(self, obj):
         return obj.create_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
