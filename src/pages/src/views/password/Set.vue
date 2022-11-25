@@ -31,25 +31,26 @@
             <h4 class="common-title">{{$t('设置新密码')}}</h4>
             <p
               v-if="setPasswordText"
-              :class="['text', isError && 'show-error-info']">
-              {{setPasswordText}}{{$t('_需要设置新密码')}}
-            </p>
-            <p class="error-text" v-if="isError">
+              :class="['text', isError && 'show-error-info']">{{setPasswordText}}{{$t('_需要设置新密码')}}</p>
+            <p
+              v-else
+              :class="['text', isError && 'show-error-info']">{{$t('请输入新密码进行密码重设')}}</p>
+            <p class="error-text" v-if="isError || isCorrectPw">
               <i class="icon icon-user-exclamation-circle-shape"></i>
               <span class="text">{{errorText}}</span>
             </p>
             <input
               type="password"
-              :class="['select-text', { 'input-error': isError }]"
+              :class="['select-text', { 'input-error': isError || isCorrectPw }]"
               :placeholder="$t('请输入新密码')"
               v-model="password"
-              @focus="isError = false" />
+              @focus="handleFocus" />
             <input
               type="password"
-              :class="['select-text', { 'input-error': isError }]"
+              :class="['select-text', { 'input-error': isError || isCorrectPw }]"
               :placeholder="$t('请再次确认新密码')"
               v-model="confirmPassword"
-              @focus="isError = false" />
+              @focus="handleFocus" />
             <bk-button
               theme="primary" class="submit"
               :disabled="!password || !confirmPassword" @click="handlePush">{{$t('提交')}}</bk-button>
@@ -88,17 +89,27 @@ export default {
       password: '',
       confirmPassword: '',
       isError: false,
-      errorText: this.$t('两次输入的密码不一致，请重新输入'),
+      errorText: '',
       successDialog: {
         isShow: false,
         title: this.$t('密码修改成功'),
       },
       setPasswordText: (this.$route.query.data || '').substring(1, (this.$route.query.data || '').length - 1),
+      // 是否rsa加密
+      isRsaEncrypted: false,
+      // 公钥
+      publicKey: '',
+      passwordRules: {
+        passwordMinLength: 0,
+        passwordMustIncludes: [],
+      },
+      isCorrectPw: false,
     };
   },
-  // mounted () {
-  //     this.initToken()
-  // },
+  mounted() {
+    this.initRsa();
+    // this.initToken()
+  },
   methods: {
     // async initToken () {
     //     try {
@@ -116,16 +127,51 @@ export default {
     //         })
     //     }
     // },
+    async initRsa() {
+      try {
+        const res = await this.$store.dispatch('password/getRsa', this.$route.query.token);
+        if (res.data) {
+          res.data.forEach((item) => {
+            switch (item.key) {
+              case 'enable_password_rsa_encrypted':
+                return this.isRsaEncrypted = true;
+              case 'password_rsa_public_key':
+                return this.publicKey = Base64.decode(item.value);
+              case 'password_min_length':
+                return this.passwordRules.passwordMinLength = item.value;
+              case 'password_must_includes':
+                return this.passwordRules.passwordMustIncludes = item.value;
+            }
+          });
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    },
     async handlePush() {
       try {
         // 确认密码是否一致
         if (this.password !== this.confirmPassword) {
           this.isError = true;
+          this.errorText = this.$t('两次输入的密码不一致，请重新输入');
           return;
+        }
+        // 校验密码规则
+        this.isCorrectPw = !this.$validatePassportByRules(this.password, this.passwordRules);
+        if (this.isCorrectPw) {
+          this.errorText = this.$getMessageByRules(this, this.passwordRules);
+          return;
+        }
+        if (this.isRsaEncrypted) {
+          this.password = Base64.encode(this.Rsa.rsaPublicData(this.password.trim(), this.publicKey));
+          this.confirmPassword = Base64.encode(this.Rsa.rsaPublicData(this.confirmPassword.trim(), this.publicKey));
+        } else {
+          this.password = Base64.encode(this.password.trim());
+          this.confirmPassword = Base64.encode(this.confirmPassword.trim());
         }
         const sureParam = {
           token: this.$route.query.token,
-          password: Base64.encode(this.password.trim()),
+          password: this.password,
         };
         await this.$store.dispatch('password/setByToken', sureParam);
         this.successDialog.isShow = true;
@@ -136,6 +182,10 @@ export default {
     },
     register() {
       window.location.href = window.login_url;
+    },
+    handleFocus() {
+      this.isError = false;
+      this.isCorrectPw = false;
     },
   },
 };

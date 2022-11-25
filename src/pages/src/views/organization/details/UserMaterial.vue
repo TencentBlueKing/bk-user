@@ -143,6 +143,7 @@
 
 <script>
 import { dateConvert } from '@/common/util';
+const Base64 = require('js-base64').Base64;
 export default {
   directives: {
     focus: {
@@ -200,6 +201,10 @@ export default {
         newPassword: 'password',
       },
       passwordRules: null,
+      // 公钥
+      publicKey: '',
+      // 是否rsa加密
+      isRsaEncrypted: false,
     };
   },
   computed: {
@@ -304,7 +309,7 @@ export default {
       this.phoneNumber = this.currentProfile.telephone;
     },
     // 重置密码
-    showResetDialog() {
+    async showResetDialog() {
       if (this.isForbid) {
         return;
       }
@@ -312,6 +317,19 @@ export default {
       // 清空上次输入
       this.oldPassword = '';
       this.newPassword = '';
+      const res = await this.$store.dispatch('catalog/ajaxGetPassport', {
+        id: this.currentCategoryId,
+      });
+      if (res.data) {
+        res.data.forEach((item) => {
+          if (item.key === 'enable_password_rsa_encrypted') {
+            this.isRsaEncrypted = true;
+          }
+          if (item.key === 'password_rsa_public_key') {
+            this.publicKey = Base64.decode(item.value);
+          }
+        });
+      }
     },
     // 验证密码的格式
     async confirmReset() {
@@ -381,10 +399,19 @@ export default {
         if (this.isAdmin) {
           passwordData.old_password = this.oldPassword.trim();
         };
-        await this.$store.dispatch('organization/patchProfile', {
-          id: this.currentProfile.id,
-          data: passwordData,
-        });
+        if (this.isRsaEncrypted) {
+          await this.$store.dispatch('organization/patchProfile', {
+            id: this.currentProfile.id,
+            data: {
+              password: this.Rsa.rsaPublicData(passwordData, this.publicKey),
+            },
+          });
+        } else {
+          await this.$store.dispatch('organization/patchProfile', {
+            id: this.currentProfile.id,
+            data: passwordData,
+          });
+        }
         this.$bkMessage({
           message: this.$t('重置密码成功'),
           theme: 'success',

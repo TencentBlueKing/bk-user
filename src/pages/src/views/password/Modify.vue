@@ -27,7 +27,7 @@
       </div>
       <div class="modify-content" data-test-id="passwordInfo">
         <h4 class="common-title">{{$t('更改密码')}}</h4>
-        <p class="error-text" v-if="isConfirmError">
+        <p class="error-text" v-if="isConfirmError || isCorrectPw">
           <i class="icon icon-user-exclamation-circle-shape"></i>
           <span class="text">{{errorText}}</span>
         </p>
@@ -42,18 +42,18 @@
           <li class="input-list">
             <input
               type="password"
-              :class="['select-text', { 'input-error': isConfirmError }]"
+              :class="['select-text', { 'input-error': isConfirmError || isCorrectPw }]"
               :placeholder="$t('新密码')"
               v-model="newPassword"
-              @focus="isConfirmError = false" />
+              @focus="handleFocus" />
           </li>
           <li class="input-list">
             <input
               type="password"
-              :class="['select-text', { 'input-error': isConfirmError }]"
+              :class="['select-text', { 'input-error': isConfirmError || isCorrectPw }]"
               :placeholder="$t('确认新密码')"
               v-model="confirmPassword"
-              @focus="isConfirmError = false" />
+              @focus="handleFocus" />
           </li>
         </ul>
         <bk-button
@@ -85,7 +85,7 @@ export default {
   data() {
     return {
       isConfirmError: false,
-      errorText: this.$t('两次输入的密码不一致，请重新输入'),
+      errorText: '',
       oldPassword: '',
       newPassword: '',
       confirmPassword: '',
@@ -93,18 +93,68 @@ export default {
         isShow: false,
         title: this.$t('密码修改成功'),
       },
+      // 公钥
+      publicKey: '',
+      // 是否rsa加密
+      isRsaEncrypted: false,
+      passwordRules: {
+        passwordMinLength: 0,
+        passwordMustIncludes: [],
+      },
+      isCorrectPw: false,
     };
   },
+  mounted() {
+    this.initRsa();
+  },
   methods: {
+    async initRsa() {
+      try {
+        const res = await this.$store.dispatch('password/getRsa', this.$route.query.token);
+        if (res.data) {
+          res.data.forEach((item) => {
+            switch (item.key) {
+              case 'enable_password_rsa_encrypted':
+                return this.isRsaEncrypted = true;
+              case 'password_rsa_public_key':
+                return this.publicKey = Base64.decode(item.value);
+              case 'password_min_length':
+                return this.passwordRules.passwordMinLength = item.value;
+              case 'password_must_includes':
+                return this.passwordRules.passwordMustIncludes = item.value;
+            }
+          });
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    },
     async handlePush() {
       try {
+        // 确认密码是否一致
         if (this.newPassword !== this.confirmPassword) {
           this.isConfirmError = true;
+          this.errorText = this.$t('两次输入的密码不一致，请重新输入');
           return;
         }
+        // 校验密码规则
+        this.isCorrectPw = !this.$validatePassportByRules(this.newPassword, this.passwordRules);
+        if (this.isCorrectPw) {
+          this.errorText = this.$getMessageByRules(this, this.passwordRules);
+          return;
+        }
+        if (this.isRsaEncrypted) {
+          this.oldPassword = Base64.encode(this.Rsa.rsaPublicData(this.oldPassword.trim(), this.publicKey));
+          this.newPassword = Base64.encode(this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey));
+          this.confirmPassword = Base64.encode(this.Rsa.rsaPublicData(this.confirmPassword.trim(), this.publicKey));
+        } else {
+          this.oldPassword = Base64.encode(this.oldPassword.trim());
+          this.newPassword = Base64.encode(this.newPassword.trim());
+          this.confirmPassword = Base64.encode(this.confirmPassword.trim());
+        }
         const modifyParams = {
-          old_password: Base64.encode(this.oldPassword),
-          new_password: Base64.encode(this.confirmPassword.trim()),
+          old_password: this.oldPassword,
+          new_password: this.confirmPassword,
         };
         await this.$store.dispatch('password/modify', modifyParams);
         this.successDialog.isShow = true;
@@ -114,6 +164,10 @@ export default {
     },
     register() {
       window.location.href = window.login_url;
+    },
+    handleFocus() {
+      this.isError = false;
+      this.isCorrectPw = false;
     },
   },
 };
