@@ -41,5 +41,9 @@ export default {
     sendCode(context, params, config = {}) {
       return http.post('api/v1/web/passwords/reset/verification_code/verify/', params);
     },
+    // 获取rsa公钥
+    getRsa(context, params, config = {}) {
+      return http.get(`api/v1/web/passwords/settings/by_token/?token=${params}`);
+    },
   },
 };
