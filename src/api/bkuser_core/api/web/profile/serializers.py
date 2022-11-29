@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
 
 from django.conf import settings
 from rest_framework import serializers
@@ -16,6 +17,8 @@ from bkuser_core.api.web.serializers import StringArrayField
 from bkuser_core.api.web.utils import get_default_category_id
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
+from bkuser_core.user_settings.loader import ConfigProvider
+from bkuser_global.crypt import rsa_decrypt_password
 
 
 class LoginProfileRetrieveInputSLZ(serializers.Serializer):
@@ -105,11 +108,24 @@ class ProfileSearchOutputSLZ(serializers.Serializer):
 class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     leader = serializers.ListField(child=serializers.IntegerField(), required=False)
     departments = serializers.ListField(child=serializers.IntegerField(), required=False)
+    password = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = Profile
         # NOTE: 相对原来的api区别, 不支持extras/create_time/update_time更新
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
+
+    def validate_password(self, password):
+        config_loader = ConfigProvider(category_id=self.instance.category_id)
+        try:
+            enable_rsa_encrypted = config_loader["enable_rsa_encrypted"]
+            if not enable_rsa_encrypted:
+                return password
+            rsa_private_key = base64.b64decode(config_loader["rsa_private_key"]).decode()
+            return rsa_decrypt_password(password, rsa_private_key)
+        except KeyError:
+            # 未配置过rsa
+            return password
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):

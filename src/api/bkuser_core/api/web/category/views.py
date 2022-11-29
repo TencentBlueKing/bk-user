@@ -116,8 +116,9 @@ class CategorySettingNamespaceListCreateUpdateApi(
         category = get_category(category_id)
         namespace = self.kwargs["namespace"]
         metas = list_setting_metas(category.type, None, namespace)
-
-        return Setting.objects.filter(meta__in=metas, category_id=category_id)
+        category_settings = Setting.objects.filter(meta__in=metas, category_id=category_id)
+        # 不管是否设置了rsa，排除rsa秘钥
+        return category_settings.exclude(meta__key="rsa_private_key")
 
     def post(self, request, *args, **kwargs):
         # 批量创建或更新

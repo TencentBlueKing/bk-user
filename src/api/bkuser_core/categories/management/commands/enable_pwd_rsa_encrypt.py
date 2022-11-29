@@ -1,0 +1,127 @@
+# -*- coding: utf-8 -*-
+"""
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/MIT
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+"""
+import base64
+import logging
+import traceback
+
+import Crypto.PublicKey.RSA as crypto_rsa
+from Crypto import Random
+from Crypto.Cipher import PKCS1_v1_5 as pkcs1_v15
+from django.core.management.base import BaseCommand
+from django.db import transaction
+
+from bkuser_core.categories.constants import CategoryType
+from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.user_settings.constants import SettingsEnableNamespaces
+from bkuser_core.user_settings.models import Setting, SettingMeta
+
+logger = logging.getLogger(__name__)
+
+
+class Command(BaseCommand):
+    help = "enable category rsa"
+
+    def add_arguments(self, parser):
+        parser.add_argument("--category_id", type=str, help="目录ID", required=False)
+        parser.add_argument("--key_length", type=int, default=1024, help="随机密钥对的长度")
+        parser.add_argument("--private_key_file", type=str, help="rsa私钥pem文件目录")
+        parser.add_argument("--public_key_file", type=str, help="rsa公钥pem文件目录")
+
+    def validate_rsa_secret(self, private_key: bytes, public_key: bytes) -> bool:
+        testing_msg = "Hello World !!!"
+        private_key = crypto_rsa.importKey(private_key)
+        public_key = crypto_rsa.importKey(public_key)
+
+        # 先公钥加密
+        cipher_pub_obj = pkcs1_v15.new(public_key)
+        encrypt_msg = cipher_pub_obj.encrypt(testing_msg.encode())
+
+        # 解密
+        cipher_pri_obj = pkcs1_v15.new(private_key)
+        decrypt_msg = cipher_pri_obj.decrypt(encrypt_msg, Random.new().read)
+        result_msg = decrypt_msg.decode()
+        if result_msg != testing_msg:
+            return False
+        return True
+
+    def create_rsa_secret(self, options: dict) -> tuple:
+        private_key_file = options.get("private_key_file")
+        public_key_file = options.get("public_key_file")
+
+        if private_key_file and public_key_file:
+            # read the private_key and public key from the file
+            with open(private_key_file, "rb") as private_file:
+                private_key = private_file.read()
+
+            with open(public_key_file, "rb") as public_file:
+                public_key = public_file.read()
+
+            if not self.validate_rsa_secret(private_key, private_key):
+                self.stdout.write("These pem files do not matching")
+                raise Exception
+
+        else:
+            self.stdout.write("Private key and public key are creating randomly")
+            key_length = options.get("key_length")
+            # 随机生成rsa 秘钥对
+            generator = crypto_rsa.generate(key_length)
+            public_key = generator.publickey().exportKey()
+            private_key = generator.exportKey("PEM")
+
+        public_key = base64.b64encode(public_key).decode()
+        private_key = base64.b64encode(private_key).decode()
+
+        return public_key, private_key
+
+    def handle(self, *args, **options):
+        category_id = options.get("category_id")
+        self.stdout.write(f"enable category rsa: category_id={str(category_id)}")
+
+        try:
+            public_key, private_key = self.create_rsa_secret(options)
+            category = ProfileCategory.objects.get(id=category_id)
+            if category.type != CategoryType.LOCAL.value:
+                self.stdout.write("Rsa setting only support the local category, please check your input")
+                return
+
+            rsa_settings_filters = {
+                "enable_rsa_encrypted": True,
+                "rsa_private_key": private_key,
+                "rsa_public_key": public_key,
+            }
+
+            # 获取meta数据
+            common_filter = {
+                "namespace": SettingsEnableNamespaces.PASSWORD.value,
+                "category_type": CategoryType.LOCAL.value,
+            }
+
+            meta_combo = {}
+            for key, value in rsa_settings_filters.items():
+                meta = SettingMeta.objects.get(key=key, **common_filter)
+                meta_combo[meta] = value
+
+            # 新增或更新该目录的user_setting设置：rsa配置
+            with transaction.atomic():
+                for meta, value in meta_combo.items():
+                    instance, _ = Setting.objects.get_or_create(meta=meta, category_id=category.id)
+                    instance.value = value
+                    instance.save()
+                self.stdout.write(f"Category {category_id} Enable rsa successfully")
+
+        except ProfileCategory.DoesNotExist:
+            self.stdout.write(f"Category is not exist( category_id={category_id} ), please check your input.")
+            return
+
+        except Exception as e:
+            self.stdout.write(traceback.format_exc())
+            self.stdout.write(f"Enable rsa failed:  {e}")
+            return
