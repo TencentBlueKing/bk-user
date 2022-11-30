@@ -21,7 +21,7 @@ def forwards_func(apps, schema_editor):
 
     local_password_rsa_settings = [
         dict(
-            key="enable_rsa_encrypted",
+            key="enable_pwd_rsa_encrypted",
             default=False
         ),
         dict(

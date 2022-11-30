@@ -117,15 +117,12 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
 
     def validate_password(self, password):
         config_loader = ConfigProvider(category_id=self.instance.category_id)
-        try:
-            enable_rsa_encrypted = config_loader["enable_rsa_encrypted"]
-            if not enable_rsa_encrypted:
-                return password
-            rsa_private_key = base64.b64decode(config_loader["rsa_private_key"]).decode()
-            return rsa_decrypt_password(password, rsa_private_key)
-        except KeyError:
-            # 未配置过rsa
+        enable_pwd_rsa_encrypted = config_loader.get("enable_pwd_rsa_encrypted")
+        # 未开启，或者未配置rsa
+        if not enable_pwd_rsa_encrypted:
             return password
+        pwd_rsa_private_key = base64.b64decode(config_loader["rsa_private_key"]).decode()
+        return rsa_decrypt_password(password, pwd_rsa_private_key)
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):

@@ -30,10 +30,11 @@ class Command(BaseCommand):
     help = "enable category rsa"
 
     def add_arguments(self, parser):
-        parser.add_argument("--category_id", type=str, help="目录ID", required=False)
+        parser.add_argument("--category_id", type=str, help="目录ID", required=True)
+        parser.add_argument("--random_flag", type=bool, defalut=True, help="是否随机生成")
         parser.add_argument("--key_length", type=int, default=1024, help="随机密钥对的长度")
-        parser.add_argument("--private_key_file", type=str, help="rsa私钥pem文件目录")
-        parser.add_argument("--public_key_file", type=str, help="rsa公钥pem文件目录")
+        parser.add_argument("--private_key_file", type=str, default="", help="rsa私钥pem文件目录")
+        parser.add_argument("--public_key_file", type=str, default="", help="rsa公钥pem文件目录")
 
     def validate_rsa_secret(self, private_key: bytes, public_key: bytes) -> bool:
         testing_msg = "Hello World !!!"
@@ -52,12 +53,12 @@ class Command(BaseCommand):
             return False
         return True
 
-    def create_rsa_secret(self, options: dict) -> tuple:
-        private_key_file = options.get("private_key_file")
-        public_key_file = options.get("public_key_file")
-
-        if private_key_file and public_key_file:
+    def create_rsa_secret(self, options: dict):
+        random_flag = options.get("random_flag")
+        if not random_flag:
             # read the private_key and public key from the file
+            private_key_file = options.get("private_key_file")
+            public_key_file = options.get("public_key_file")
             with open(private_key_file, "rb") as private_file:
                 private_key = private_file.read()
 
@@ -67,7 +68,6 @@ class Command(BaseCommand):
             if not self.validate_rsa_secret(private_key, private_key):
                 self.stdout.write("These pem files do not matching")
                 raise Exception
-
         else:
             self.stdout.write("Private key and public key are creating randomly")
             key_length = options.get("key_length")
@@ -76,6 +76,7 @@ class Command(BaseCommand):
             public_key = generator.publickey().exportKey()
             private_key = generator.exportKey("PEM")
 
+        # base64加密入库
         public_key = base64.b64encode(public_key).decode()
         private_key = base64.b64encode(private_key).decode()
 
@@ -93,29 +94,26 @@ class Command(BaseCommand):
                 return
 
             rsa_settings_filters = {
-                "enable_rsa_encrypted": True,
+                "enable_pwd_rsa_encrypted": True,
                 "rsa_private_key": private_key,
                 "rsa_public_key": public_key,
             }
 
-            # 获取meta数据
-            common_filter = {
-                "namespace": SettingsEnableNamespaces.PASSWORD.value,
-                "category_type": CategoryType.LOCAL.value,
-            }
-
             meta_combo = {}
             for key, value in rsa_settings_filters.items():
-                meta = SettingMeta.objects.get(key=key, **common_filter)
+                meta = SettingMeta.objects.get(key=key)
                 meta_combo[meta] = value
 
             # 新增或更新该目录的user_setting设置：rsa配置
             with transaction.atomic():
+                rsa_settings = []
                 for meta, value in meta_combo.items():
                     instance, _ = Setting.objects.get_or_create(meta=meta, category_id=category.id)
                     instance.value = value
-                    instance.save()
-                self.stdout.write(f"Category {category_id} Enable rsa successfully")
+                    rsa_settings.append(instance)
+                Setting.objects.bulk_update(rsa_settings, ["value"])
+
+            self.stdout.write(f"Category {category_id} Enable rsa successfully")
 
         except ProfileCategory.DoesNotExist:
             self.stdout.write(f"Category is not exist( category_id={category_id} ), please check your input.")
