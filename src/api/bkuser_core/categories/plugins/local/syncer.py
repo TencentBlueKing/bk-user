@@ -235,7 +235,7 @@ class ExcelSyncer(Syncer):
             progress(index, total, f"loading {username}")
             try:
                 updating_profile = Profile.objects.get(username=username, category_id=self.category_id)
-                # 已存在的用户：如果未勾选 <进行覆盖更新>（即is_overwrite为false）=》则忽略，反之则更新该 profile，包括清理其旧部门信息
+                # 已存在的用户：如果未勾选 <进行覆盖更新>（即is_overwrite为false）=》则忽略，反之则更新该 profile
                 if not is_overwrite:
                     continue
                 for name, value in profile_params.items():
@@ -251,9 +251,6 @@ class ExcelSyncer(Syncer):
 
                     setattr(updating_profile, name, value)
                 profile_id = updating_profile.id
-                # 清理已存在用户 旧的部门-用户关系
-                old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
-                old_department_profile_relations.delete()
 
                 self.db_sync_manager.magic_add(updating_profile, SyncOperation.UPDATE.value)
                 logger.debug("(%s/%s) username<%s> already exist, trying to update it", username, index + 1, total)
@@ -283,13 +280,22 @@ class ExcelSyncer(Syncer):
             # 2 获取关联的部门DB实例，创建关联对象
             progress(index, total, "adding profile & department relation")
             department_groups = parser_set.get_cell_data("department_name", user_raw_info)
-
             cell_parser = DepartmentCellParser(self.category_id)
+            # 获取已存在用户 旧的部门-用户关系
+            old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
+
             for department in cell_parser.parse_to_db_obj(department_groups):
                 relation_params = {"department_id": department.pk, "profile_id": profile_id}
                 try:
-                    DepartmentThroughModel.objects.get(**relation_params)
+                    new_department_profile_relation = DepartmentThroughModel.objects.get(**relation_params)
+                    # 勾选 <进行覆盖更新>（即is_overwrite为true）、已存用户且用户-部门关系存在 => 将多余的用户-部门关系进行清理即可：
+                    old_department_profile_relations.exclude(id=new_department_profile_relation.id).delete()
+
                 except DepartmentThroughModel.DoesNotExist:
+                    # 勾选 <进行覆盖更新>（即is_overwrite为true）、已存用户且用户-部门关系不存在 => 现存的用户-部门关系需要全部清理：
+                    if is_overwrite and old_department_profile_relations:
+                        old_department_profile_relations.delete()
+                    # 用户不存在的情况，不管是否勾选 <进行覆盖更新>，都不需要进行用户-部门关系清理，只需新建用户-部门关联即可：
                     department_attachment = DepartmentThroughModel(**relation_params)
                     self.db_sync_manager.magic_add(department_attachment)
 
