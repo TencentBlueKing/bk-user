@@ -237,6 +237,10 @@ class ExcelSyncer(Syncer):
                 updating_profile = Profile.objects.get(username=username, category_id=self.category_id)
                 # 已存在的用户：如果未勾选 <进行覆盖更新>（即is_overwrite为false）=》则忽略，反之则更新该 profile
                 if not is_overwrite:
+                    logger.debug(
+                        "username %s exist, and is_overwrite is false, so will not do update for this user, skip",
+                        username,
+                    )
                     continue
                 for name, value in profile_params.items():
                     if name == "extras":
