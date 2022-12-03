@@ -9,29 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from django.urls.conf import path
+EXCLUDE_SETTINGS_KEYS = ["rsa_private_key"]
 
-from . import views
-
-urlpatterns = [
-    path(
-        "reset/send_email/",
-        views.PasswordResetSendEmailApi.as_view(),
-        name="password.reset.sent_email",
-    ),
-    path(
-        "reset/by_token/",
-        views.PasswordResetByTokenApi.as_view(),
-        name="password.reset.by_token",
-    ),
-    path(
-        "modify/",
-        views.PasswordModifyApi.as_view(),
-        name="password.modify",
-    ),
-    path(
-        "settings/by_token/",
-        views.PasswordSettingsByTokenApi.as_view(),
-        name="password.get_settings.by_token",
-    ),
-]
+PASSWORD_NAMESPACE = "password"

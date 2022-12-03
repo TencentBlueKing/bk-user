@@ -26,3 +26,7 @@ class PasswordResetByTokenInputSLZ(serializers.Serializer):
 class PasswordModifyInputSLZ(serializers.Serializer):
     old_password = Base64OrPlainField(required=True, max_length=254)
     new_password = Base64OrPlainField(required=True, max_length=254)
+
+
+class PasswordSettingByTokenInputSLZ(serializers.Serializer):
+    token = serializers.CharField(required=True, max_length=254)

@@ -8,17 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import base64
 
 from django.conf import settings
 from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import StringArrayField
-from bkuser_core.api.web.utils import get_default_category_id
+from bkuser_core.api.web.utils import decrypt_rsa_password, get_default_category_id
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
-from bkuser_core.user_settings.loader import ConfigProvider
-from bkuser_global.crypt import rsa_decrypt_password
 
 
 class LoginProfileRetrieveInputSLZ(serializers.Serializer):
@@ -116,13 +113,7 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
 
     def validate_password(self, password):
-        config_loader = ConfigProvider(category_id=self.instance.category_id)
-        enable_pwd_rsa_encrypted = config_loader.get("enable_pwd_rsa_encrypted")
-        # 未开启，或者未配置rsa
-        if not enable_pwd_rsa_encrypted:
-            return password
-        pwd_rsa_private_key = base64.b64decode(config_loader["rsa_private_key"]).decode()
-        return rsa_decrypt_password(password, pwd_rsa_private_key)
+        return decrypt_rsa_password(self.instance.category_id, password)
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):

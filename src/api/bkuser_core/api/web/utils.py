@@ -8,11 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
 import logging
 from typing import Dict, Union
 
 from django.conf import settings
 
+from bkuser_core.api.web.constants import EXCLUDE_SETTINGS_KEYS
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
@@ -23,6 +25,7 @@ from bkuser_core.profiles.utils import check_former_passwords
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import SettingMeta
+from bkuser_global.crypt import rsa_decrypt_password
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +85,7 @@ def list_setting_metas(category_type: str, region: str, namespace: str) -> list:
     """
     List setting metas.
     """
-    queryset = SettingMeta.objects.filter(category_type=category_type)
+    queryset = SettingMeta.objects.filter(category_type=category_type).exclude(key__in=EXCLUDE_SETTINGS_KEYS)
     if region:
         queryset = queryset.filter(region=region)
     if namespace:
@@ -152,3 +155,13 @@ def get_extras_with_default_values(extras_from_db: Union[dict, list]) -> dict:
 
     extras.update(formatted_extras)
     return extras
+
+
+def decrypt_rsa_password(category_id: int, encrypt_password: str) -> str:
+    config_loader = ConfigProvider(category_id=category_id)
+    enable_pwd_rsa_encrypted = config_loader.get("enable_pwd_rsa_encrypted")
+    # 未开启，或者未配置rsa
+    if not enable_pwd_rsa_encrypted:
+        return encrypt_password
+    pwd_rsa_private_key = base64.b64decode(config_loader["rsa_private_key"]).decode()
+    return rsa_decrypt_password(encrypt_password, pwd_rsa_private_key)

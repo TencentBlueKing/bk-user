@@ -12,15 +12,15 @@ import base64
 import logging
 import traceback
 
-import Crypto.PublicKey.RSA as crypto_rsa
-from Crypto import Random
-from Crypto.Cipher import PKCS1_v1_5 as pkcs1_v15
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import rsa as crypto_rsa
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
-from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
 logger = logging.getLogger(__name__)
@@ -31,24 +31,28 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--category_id", type=str, help="目录ID", required=True)
-        parser.add_argument("--random_flag", type=bool, defalut=True, help="是否随机生成")
+        parser.add_argument("--random_flag", type=bool, default=True, help="是否随机生成")
         parser.add_argument("--key_length", type=int, default=1024, help="随机密钥对的长度")
         parser.add_argument("--private_key_file", type=str, default="", help="rsa私钥pem文件目录")
         parser.add_argument("--public_key_file", type=str, default="", help="rsa公钥pem文件目录")
 
-    def validate_rsa_secret(self, private_key: bytes, public_key: bytes) -> bool:
+    def validate_rsa_secret(self, private_key_content: bytes, public_key_content: bytes) -> bool:
         testing_msg = "Hello World !!!"
-        private_key = crypto_rsa.importKey(private_key)
-        public_key = crypto_rsa.importKey(public_key)
+
+        private_key = serialization.load_pem_private_key(private_key_content, password=None, backend=default_backend())
+        public_key = serialization.load_pem_public_key(public_key_content, backend=default_backend())
+
+        common_condition = padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None
+        )
 
         # 先公钥加密
-        cipher_pub_obj = pkcs1_v15.new(public_key)
-        encrypt_msg = cipher_pub_obj.encrypt(testing_msg.encode())
+        encrypt_msg = public_key.encrypt(testing_msg.encode(), common_condition)
 
         # 解密
-        cipher_pri_obj = pkcs1_v15.new(private_key)
-        decrypt_msg = cipher_pri_obj.decrypt(encrypt_msg, Random.new().read)
+        decrypt_msg = private_key.decrypt(encrypt_msg, common_condition)
         result_msg = decrypt_msg.decode()
+
         if result_msg != testing_msg:
             return False
         return True
@@ -72,9 +76,20 @@ class Command(BaseCommand):
             self.stdout.write("Private key and public key are creating randomly")
             key_length = options.get("key_length")
             # 随机生成rsa 秘钥对
-            generator = crypto_rsa.generate(key_length)
-            public_key = generator.publickey().exportKey()
-            private_key = generator.exportKey("PEM")
+            private_key_origin = crypto_rsa.generate_private_key(
+                public_exponent=65537, key_size=key_length, backend=default_backend()
+            )
+            public_key_origin = private_key_origin.public_key()
+
+            private_key = private_key_origin.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+
+            public_key = public_key_origin.public_bytes(
+                encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
 
         # base64加密入库
         public_key = base64.b64encode(public_key).decode()
