@@ -177,6 +177,8 @@ class ExcelSyncer(Syncer):
 
     def _sync_users(self, parser_set: "ParserSet", users: list, is_overwrite: bool = False):
         """在内存中操作&判断数据，bulk 插入"""
+        # pylint: disable=W,R,C
+        # TODO:复杂度异常处理
         logger.info("=========== trying to load profiles into memory ===========")
 
         # to record failed records
