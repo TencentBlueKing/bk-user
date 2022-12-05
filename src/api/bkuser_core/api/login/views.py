@@ -102,9 +102,8 @@ class ProfileLoginViewSet(viewsets.ViewSet):
 
         time_aware_now = now()
         config_loader = ConfigProvider(category_id=category.id)
-        # Admin 用户只需直接判断 密码是否正确 (只有本地目录有密码配置)
-        if not profile.is_superuser and category.type in [CategoryType.LOCAL.value]:
-
+        # 由于安全检测等原因，取消原先对admin用户的检查豁免
+        if category.type in [CategoryType.LOCAL.value]:
             # 判断账户状态
             if profile.status in [
                 ProfileStatus.DISABLED.value,

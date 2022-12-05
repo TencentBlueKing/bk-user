@@ -17,7 +17,7 @@ from django.utils.timezone import now
 
 from bkuser_core.api.login.views import ProfileLoginViewSet
 from bkuser_core.categories.constants import CategoryStatus
-from bkuser_core.profiles.constants import ProfileStatus, RoleCodeEnum
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.tests.apis.utils import get_api_factory
 from bkuser_core.tests.utils import make_simple_category, make_simple_profile
 from bkuser_core.user_settings.models import Setting
@@ -225,19 +225,6 @@ class TestListCreateApis:
         )
         response = check_view(request=request)
         assert response.data["code"] == "PASSWORD_ERROR"
-
-        # 超级用户不判断用户状态
-        p.role = RoleCodeEnum.SUPERUSER.value
-        p.save()
-        request = factory.post(
-            "/api/v1/login/check/",
-            data={"username": "logintest", "password": "testpwd", "domain": "testdomain"},
-        )
-        response = check_view(request=request)
-        assert response.data
-        self._assert_required_keys_exist(response.data)
-        p.role = RoleCodeEnum.STAFF.value
-        p.save()
 
         # 用户密码过期
         p.password_update_time = now() - datetime.timedelta(days=3 * 365)
