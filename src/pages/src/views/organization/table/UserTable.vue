@@ -263,7 +263,7 @@ export default {
             return '';
           }
           for (let i = 0; i < options.length; i++) {
-            if (options[i].id === value) {
+            if (options[i].id === value || options[i].id === Number(value)) {
               if (this.$i18n.locale === 'en') {
                 return value;
               }
