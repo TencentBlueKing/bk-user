@@ -175,10 +175,36 @@ class ExcelSyncer(Syncer):
         """某些状况下会读取 Excel 整个空行"""
         return all(x is None for x in raw_data)
 
+    def _department_profile_relation_handle(
+        self, is_overwrite, department_groups, profile_id, should_deleted_department_profile_relation_ids
+    ):
+        cell_parser = DepartmentCellParser(self.category_id)
+        # 已存在的用户-部门关系
+        old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
+        # Note: 有新关系可能存在重复数据，所以这里使用不变的old_department_set用于后续判断是否存在的依据，
+        # 而不使用后面会变更的old_department_relations数据
+        old_department_set = set(r.department_id for r in old_department_profile_relations)
+        old_department_relations = {r.department_id: r.id for r in old_department_profile_relations}
+
+        for department in cell_parser.parse_to_db_obj(department_groups):
+            # 用户-部门关系已存在
+            if department.pk in old_department_set:
+                # Note: 可能本次更新里存在重复数据，dict无法重复移除
+                if department.pk in old_department_relations:
+                    del old_department_relations[department.pk]
+                continue
+
+            # 不存在则添加
+            department_attachment = DepartmentThroughModel(department_id=department.pk, profile_id=profile_id)
+            self.db_sync_manager.magic_add(department_attachment)
+
+        # 已存在的数据从old_department_relations移除后，最后剩下的数据，表示多余的，即本次更新里不存在的用户部门关系
+        # 如果是覆盖，则记录需要删除多余数据
+        if is_overwrite and len(old_department_relations) > 0:
+            should_deleted_department_profile_relation_ids.extend(old_department_relations.values())
+
     def _sync_users(self, parser_set: "ParserSet", users: list, is_overwrite: bool = False):
         """在内存中操作&判断数据，bulk 插入"""
-        # pylint: disable=W,R,C
-        # TODO:复杂度异常处理
         logger.info("=========== trying to load profiles into memory ===========")
 
         # to record failed records
@@ -287,30 +313,9 @@ class ExcelSyncer(Syncer):
             # 2 获取关联的部门DB实例，创建关联对象
             progress(index, total, "adding profile & department relation")
             department_groups = parser_set.get_cell_data("department_name", user_raw_info)
-            cell_parser = DepartmentCellParser(self.category_id)
-            # 已存在的用户-部门关系
-            old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
-            # Note: 有新关系可能存在重复数据，所以这里使用不变的old_department_set用于后续判断是否存在的依据，
-            # 而不使用后面会变更的old_department_relations数据
-            old_department_set = set([r.department_id for r in old_department_profile_relations])
-            old_department_relations = {r.department_id: r.id for r in old_department_profile_relations}
-
-            for department in cell_parser.parse_to_db_obj(department_groups):
-                # 用户-部门关系已存在
-                if department.pk in old_department_set:
-                    # Note: 可能本次更新里存在重复数据，dict无法重复移除
-                    if department.pk in old_department_relations:
-                        del old_department_relations[department.pk]
-                    continue
-
-                # 不存在则添加
-                department_attachment = DepartmentThroughModel(department_id=department.pk, profile_id=profile_id)
-                self.db_sync_manager.magic_add(department_attachment)
-
-            # 已存在的数据从old_department_relations移除后，最后剩下的数据，表示多余的，即本次更新里不存在的用户部门关系
-            # 如果是覆盖，则记录需要删除多余数据
-            if is_overwrite and len(old_department_relations) > 0:
-                should_deleted_department_profile_relation_ids.extend(old_department_relations.values())
+            self._department_profile_relation_handle(
+                is_overwrite, department_groups, profile_id, should_deleted_department_profile_relation_ids
+            )
 
         if len(should_deleted_department_profile_relation_ids) > 0:
             DepartmentThroughModel.objects.filter(id__in=should_deleted_department_profile_relation_ids).delete()
