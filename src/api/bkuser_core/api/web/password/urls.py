@@ -31,7 +31,7 @@ urlpatterns = [
     ),
     path(
         "settings/by_token/",
-        views.PasswordSettingsByTokenApi.as_view(),
+        views.PasswordListSettingsByTokenApi.as_view(),
         name="password.get_settings.by_token",
     ),
 ]

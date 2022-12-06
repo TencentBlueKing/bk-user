@@ -13,7 +13,7 @@ from django.conf import settings
 from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import StringArrayField
-from bkuser_core.api.web.utils import decrypt_rsa_password, get_default_category_id
+from bkuser_core.api.web.utils import get_default_category_id, get_raw_password
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
 
@@ -113,7 +113,7 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
 
     def validate_password(self, password):
-        return decrypt_rsa_password(self.instance.category_id, password)
+        return get_raw_password(self.instance.category_id, password)
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):

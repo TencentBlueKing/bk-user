@@ -21,17 +21,17 @@ def forwards_func(apps, schema_editor):
 
     local_password_rsa_settings = [
         dict(
-            key="enable_pwd_rsa_encrypted",
+            key="enable_password_rsa_encrypted",
             default=False,
             example=False
         ),
         dict(
-            key="rsa_private_key",
+            key="password_rsa_private_key",
             default="",
             example="LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpkZnNkZmRzZgotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo="
         ),
         dict(
-            key="rsa_public_key",
+            key="password_rsa_public_key",
             default="",
             example="LS0tLS1CRUdJTiBSU0EgUFVCTElDS0VZLS0tLS0KZXJ0ZXJ0cmV0Ci0tLS0tRU5EIFJTQSBQVUJMSUNLRVktLS0tLQo="
         )

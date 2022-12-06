@@ -83,12 +83,12 @@ class Command(BaseCommand):
 
             private_key = private_key_origin.private_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption(),
             )
 
             public_key = public_key_origin.public_bytes(
-                encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.PKCS1
             )
 
         # base64加密入库
@@ -109,9 +109,9 @@ class Command(BaseCommand):
                 return
 
             rsa_settings_filters = {
-                "enable_pwd_rsa_encrypted": True,
-                "rsa_private_key": private_key,
-                "rsa_public_key": public_key,
+                "enable_password_rsa_encrypted": True,
+                "password_rsa_private_key": private_key,
+                "password_rsa_public_key": public_key,
             }
 
             meta_combo = {}

@@ -17,17 +17,16 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser_core.api.web.category.serializers import CategorySettingOutputSLZ
-from bkuser_core.api.web.constants import PASSWORD_NAMESPACE
 from bkuser_core.api.web.password.serializers import (
+    PasswordListSettingsByTokenInputSLZ,
     PasswordModifyInputSLZ,
     PasswordResetByTokenInputSLZ,
     PasswordResetSendEmailInputSLZ,
-    PasswordSettingByTokenInputSLZ,
 )
 from bkuser_core.api.web.utils import (
-    decrypt_rsa_password,
     get_category,
     get_operator,
+    get_token_handler,
     list_setting_metas,
     validate_password,
 )
@@ -40,6 +39,7 @@ from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import parse_username_domain
+from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
@@ -86,20 +86,11 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
         token = data["token"]
         pending_password = data["password"]
 
-        try:
-            token_holder = ProfileTokenHolder.objects.get(token=token, enabled=True)
-        except ProfileTokenHolder.DoesNotExist:
-            logger.info("token<%s> not exist in db", token)
-            raise error_codes.CANNOT_GET_TOKEN_HOLDER
-
-        if token_holder.expired:
-            raise error_codes.PROFILE_TOKEN_EXPIRED
-
+        token_holder = get_token_handler(token)
         profile = token_holder.profile
 
-        decrypt_password = decrypt_rsa_password(profile.category_id, pending_password)
-        validate_password(profile, decrypt_password)
-        profile.password = make_password(decrypt_password)
+        validate_password(profile, pending_password)
+        profile.password = make_password(pending_password)
         profile.password_update_time = now()
         profile.save()
 
@@ -161,29 +152,22 @@ class PasswordModifyApi(generics.CreateAPIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class PasswordSettingsByTokenApi(generics.ListAPIView):
+class PasswordListSettingsByTokenApi(generics.ListAPIView):
     serializer_class = CategorySettingOutputSLZ
 
     def get(self, request, *args, **kwargs):
-        slz = PasswordSettingByTokenInputSLZ(data=request.query_params)
+        slz = PasswordListSettingsByTokenInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
         token = data["token"]
 
-        try:
-            token_holder = ProfileTokenHolder.objects.get(token=token, enabled=True)
-        except ProfileTokenHolder.DoesNotExist:
-            logger.info("token<%s> not exist in db", token)
-            raise error_codes.CANNOT_GET_TOKEN_HOLDER
-
-        if token_holder.expired:
-            raise error_codes.PROFILE_TOKEN_EXPIRED
-
+        token_holder = get_token_handler(token)
         profile = token_holder.profile
 
         category = get_category(profile.category_id)
-        metas = list_setting_metas(category.type, None, PASSWORD_NAMESPACE)
+        namespace = SettingsEnableNamespaces.PASSWORD.value
+        metas = list_setting_metas(category.type, None, namespace)
         settings = Setting.objects.filter(meta__in=metas, category_id=profile.category_id)
 
         return Response(self.serializer_class(settings, many=True).data)

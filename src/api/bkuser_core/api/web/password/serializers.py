@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import Base64OrPlainField
+from bkuser_core.api.web.utils import get_raw_password, get_token_handler
 
 
 class PasswordResetSendEmailInputSLZ(serializers.Serializer):
@@ -22,11 +23,24 @@ class PasswordResetByTokenInputSLZ(serializers.Serializer):
     token = serializers.CharField(required=True, max_length=254)
     password = Base64OrPlainField(required=True, max_length=254)
 
+    def validate(self, attrs):
+        new_attrs = attrs
+        token = new_attrs["token"]
+        password = new_attrs["password"]
+
+        token_holder = get_token_handler(token)
+        profile = token_holder.profile
+
+        raw_password = get_raw_password(profile.category_id, password)
+        new_attrs["password"] = raw_password
+
+        return new_attrs
+
 
 class PasswordModifyInputSLZ(serializers.Serializer):
     old_password = Base64OrPlainField(required=True, max_length=254)
     new_password = Base64OrPlainField(required=True, max_length=254)
 
 
-class PasswordSettingByTokenInputSLZ(serializers.Serializer):
+class PasswordListSettingsByTokenInputSLZ(serializers.Serializer):
     token = serializers.CharField(required=True, max_length=254)
