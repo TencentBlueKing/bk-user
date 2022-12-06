@@ -25,6 +25,7 @@ from .serializers import (
     CategoryExportInputSLZ,
     CategoryExportProfileOutputSLZ,
     CategoryFileImportInputSLZ,
+    CategoryFileImportQuerySLZ,
     CategoryMetaOutputSLZ,
     CategoryNamespaceSettingUpdateInputSLZ,
     CategoryProfileListInputSLZ,
@@ -454,6 +455,9 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
 
     def _local_category_do_import(self, request, instance):
         """向本地目录导入数据文件"""
+        query_slz = CategoryFileImportQuerySLZ(data=request.query_params)
+        query_slz.is_valid(raise_exception=True)
+
         slz = CategoryFileImportInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
@@ -465,7 +469,10 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
             raise error_codes.CREATE_SYNC_TASK_FAILED.f(str(e))
 
         instance_id = instance.id
-        params = {"raw_data_file": slz.validated_data["file"]}
+        params = {
+            "raw_data_file": slz.validated_data["file"],
+            "is_overwrite": query_slz.validated_data["is_overwrite"],
+        }
         try:
             # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
             adapter_sync(instance_id, operator=request.operator, task_id=task_id, **params)
