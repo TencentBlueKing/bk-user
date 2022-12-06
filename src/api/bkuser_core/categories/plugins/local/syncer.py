@@ -183,7 +183,7 @@ class ExcelSyncer(Syncer):
         old_department_profile_relations = DepartmentThroughModel.objects.filter(profile_id=profile_id)
         # Note: 有新关系可能存在重复数据，所以这里使用不变的old_department_set用于后续判断是否存在的依据，
         # 而不使用后面会变更的old_department_relations数据
-        old_department_set = set([r.department_id for r in old_department_profile_relations])
+        old_department_set = {r.department_id for r in old_department_profile_relations}
         old_department_relations = {r.department_id: r.id for r in old_department_profile_relations}
 
         for department in cell_parser.parse_to_db_obj(department_groups):
