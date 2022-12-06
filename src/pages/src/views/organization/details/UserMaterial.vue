@@ -223,7 +223,7 @@ export default {
       this.activeFieldsList.forEach((item) => {
         if (item.options.length > 0) {
           item.options.map((key) => {
-            if (key.id === this.currentProfile[item.key]) {
+            if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
               item.value = key.value;
             }
           });

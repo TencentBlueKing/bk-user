@@ -557,6 +557,7 @@ export default {
           this.filterTreeData(catalog, this.treeDataList);
           catalog.children = catalog.departments;
           catalog.children.forEach((department) => {
+            this.$set(department, 'category_id', catalog.id);
             this.filterTreeData(department, catalog, catalog.type === 'local');
           });
         });
