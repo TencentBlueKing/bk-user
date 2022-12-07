@@ -24,17 +24,11 @@ class PasswordResetByTokenInputSLZ(serializers.Serializer):
     password = Base64OrPlainField(required=True, max_length=254)
 
     def validate(self, attrs):
-        new_attrs = attrs
-        token = new_attrs["token"]
-        password = new_attrs["password"]
-
-        token_holder = get_token_handler(token)
+        token_holder = get_token_handler(token=attrs["token"])
         profile = token_holder.profile
-
-        raw_password = get_raw_password(profile.category_id, password)
-        new_attrs["password"] = raw_password
-
-        return new_attrs
+        # 对于密码输入可能是明文也可能是密文，根据配置自动判断解析出明文（密文只是与前端加密传递，与后续逻辑无关）
+        attrs["password"] = get_raw_password(profile.category_id, attrs["password"])
+        return attrs
 
 
 class PasswordModifyInputSLZ(serializers.Serializer):

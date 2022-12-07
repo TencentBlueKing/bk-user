@@ -14,7 +14,6 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
-from bkuser_core.api.web.constants import PASSWORD_RSA_SETTING_KEYS_MAP
 from bkuser_core.api.web.serializers import StringArrayField
 from bkuser_core.api.web.utils import get_extras_with_default_values
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
@@ -23,7 +22,6 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_domain
-from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting
 
 
@@ -56,14 +54,6 @@ class CategorySettingOutputSLZ(serializers.ModelSerializer):
     class Meta:
         model = Setting
         fields = ["key", "namespace", "region", "value", "enabled"]
-
-    def to_representation(self, instance):
-        return_data = super(CategorySettingOutputSLZ, self).to_representation(instance)
-        if instance.namespace == SettingsEnableNamespaces.PASSWORD.value:
-            meta_key = return_data["key"]
-            if meta_key in PASSWORD_RSA_SETTING_KEYS_MAP.keys():
-                return_data["key"] = PASSWORD_RSA_SETTING_KEYS_MAP[meta_key]
-        return return_data
 
 
 class CategoryDetailOutputSLZ(serializers.ModelSerializer):
