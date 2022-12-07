@@ -117,7 +117,6 @@ class CategorySettingNamespaceListCreateUpdateApi(
         category = get_category(category_id)
         namespace = self.kwargs["namespace"]
         metas = list_setting_metas(category.type, None, namespace)
-
         return Setting.objects.filter(meta__in=metas, category_id=category_id)
 
     def post(self, request, *args, **kwargs):
