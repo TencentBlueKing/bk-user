@@ -176,7 +176,11 @@ class ExcelSyncer(Syncer):
         return all(x is None for x in raw_data)
 
     def _department_profile_relation_handle(
-        self, is_overwrite, department_groups, profile_id, should_deleted_department_profile_relation_ids
+        self,
+        is_overwrite: bool,
+        department_groups: str,
+        profile_id: int,
+        should_deleted_department_profile_relation_ids: list,
     ):
         cell_parser = DepartmentCellParser(self.category_id)
         # 已存在的用户-部门关系
