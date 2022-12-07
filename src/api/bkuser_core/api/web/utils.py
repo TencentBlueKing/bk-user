@@ -157,14 +157,14 @@ def get_extras_with_default_values(extras_from_db: Union[dict, list]) -> dict:
     return extras
 
 
-def get_raw_password(category_id: int, encrypt_password: str) -> str:
+def get_raw_password(category_id: int, encrypted_password: str) -> str:
     config_loader = ConfigProvider(category_id=category_id)
     enable_rsa_encrypted = config_loader.get("enable_password_rsa_encrypted")
     # 未开启，或者未配置rsa
     if not enable_rsa_encrypted:
-        return encrypt_password
+        return encrypted_password
     rsa_private_key = base64.b64decode(config_loader["password_rsa_private_key"]).decode()
-    return rsa_decrypt_password(encrypt_password, rsa_private_key)
+    return rsa_decrypt_password(encrypted_password, rsa_private_key)
 
 
 def get_token_handler(token: str) -> ProfileTokenHolder:
