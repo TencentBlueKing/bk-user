@@ -216,7 +216,7 @@ class ExcelSyncer(Syncer):
         success_count = 0
 
         total = len(users)
-        should_deleted_department_profile_relation_ids = []
+        should_deleted_department_profile_relation_ids: list = []
         for index, user_raw_info in enumerate(users):
             if self._judge_data_all_none(user_raw_info):
                 logger.debug("empty line, skipping")
