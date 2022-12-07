@@ -59,10 +59,12 @@ class Command(BaseCommand):
 
     def create_rsa_secret(self, options: dict):
         random_flag = options.get("random_flag")
+        private_key: bytes
+        public_key: bytes
         if not random_flag:
             # read the private_key and public key from the file
-            private_key_file = options.get("private_key_file")
-            public_key_file = options.get("public_key_file")
+            private_key_file: str = options.get("private_key_file", "")
+            public_key_file: str = options.get("public_key_file", "")
             with open(private_key_file, "rb") as private_file:
                 private_key = private_file.read()
 
@@ -92,10 +94,10 @@ class Command(BaseCommand):
             )
 
         # base64加密入库
-        public_key = base64.b64encode(public_key).decode()
-        private_key = base64.b64encode(private_key).decode()
+        public_key_base64: str = base64.b64encode(public_key).decode()
+        private_key_base64: str = base64.b64encode(private_key).decode()
 
-        return public_key, private_key
+        return public_key_base64, private_key_base64
 
     def handle(self, *args, **options):
         category_id = options.get("category_id")
