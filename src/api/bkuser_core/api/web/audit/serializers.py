@@ -15,6 +15,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from .constants import LOGIN_FAILED_REASON_MAP, OPERATION_ABOUT_PASSWORD, OPERATION_NAME_MAP, OPERATION_OBJ_NAME_MAP
+from bkuser_core.profiles.models import Profile
 
 PLACE_HOLDER = "--"
 
@@ -35,6 +36,7 @@ class GeneralLogListInputSLZ(LogListInputSLZ):
 class GeneralLogOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text=_("ID"))
     extra_value = serializers.JSONField(help_text=_("额外信息"))
+    display_name = serializers.CharField(help_text=_("用户全名"), read_only=True)
     operator = serializers.CharField(help_text=_("操作者"))
     create_time = serializers.DateTimeField(help_text=_("创建时间"))
     status = serializers.CharField(help_text=_("状态"))
@@ -57,12 +59,14 @@ class GeneralLogOutputSLZ(serializers.Serializer):
 
         category_id = extra_value.get("category_id")
         category_display_name = category_name_map.get(category_id, PLACE_HOLDER)
+        display_name = Profile.objects.get(username=obj.operator).display_name
 
         return {
             "datetime": datetime.datetime.strptime(instance["create_time"], "%Y-%m-%dT%H:%M:%S.%fZ"),
             "operator": instance["operator"],
             "target_obj": instance["target_obj"],
             "category_display_name": category_display_name,
+            "display_name": display_name,
             "operation": instance["operation"],
             "client_ip": extra_value.get("client_ip", PLACE_HOLDER),
         }
@@ -79,7 +83,7 @@ class LoginLogOutputSLZ(serializers.Serializer):
     # datetime = serializers.CharField(source="create_time", help_text=_("登录时间"), required=False)
     is_success = serializers.BooleanField(help_text=_("是否登录成功"), required=False)
     username = serializers.CharField(help_text=_("登录用户"), source="profile.username")
-
+    display_name = serializers.CharField(help_text=_("用户全名"), source="profile.display_name")
     datetime = serializers.SerializerMethodField(help_text=_("登录时间"), required=False)
     category_display_name = serializers.SerializerMethodField(help_text=_("所属目录"), required=False)
     client_ip = serializers.SerializerMethodField(help_text=_("客户端 IP"), required=False)
