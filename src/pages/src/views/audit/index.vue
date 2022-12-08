@@ -39,7 +39,7 @@
         v-if="panelActive === 'operate'"
         class="king-input-search"
         style="width: 400px;"
-        :placeholder="$t('搜索操作人员、操作对象、操作类型')"
+        :placeholder="$t('搜索操作用户、操作对象、操作类型')"
         :clearable="true"
         :left-icon="'bk-icon icon-search'"
         @clear="handleClear"
@@ -71,6 +71,7 @@
                 <tr v-for="(item, index) in auditList" :key="index">
                   <template v-if="isOperate">
                     <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.operator}}</div></td>
+                    <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.display_name || '--'}}</div></td>
                     <td><div class="text-overflow-hidden">{{item.datetime | convertIsoTime}}</div></td>
                     <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.client_ip}}</div></td>
                     <td><div class="text-overflow-hidden">{{item.operation}}</div></td>
@@ -79,6 +80,7 @@
                   </template>
                   <template v-else>
                     <td><div class="text-overflow-hidden">{{item.username}}</div></td>
+                    <td><div class="text-overflow-hidden">{{item.display_name || '--'}}</div></td>
                     <td><div class="text-overflow-hidden">{{item.datetime | convertIsoTime}}</div></td>
                     <td><div class="text-overflow-hidden">{{item.client_ip}}</div></td>
                     <td><div class="text-overflow-hidden" v-bk-tooltips="errorTips(item)">
@@ -191,7 +193,8 @@ export default {
       ],
       panelActive: 'operate',
       auditHead: [
-        { key: 'operater', name: this.$t('操作人员') },
+        { key: 'operater', name: this.$t('操作用户') },
+        { key: 'operater', name: this.$t('用户全名') },
         { key: 'time', name: this.$t('时间') },
         { key: 'IP', name: this.$t('来源 IP') },
         { key: 'type', name: this.$t('操作类型') },
@@ -201,6 +204,7 @@ export default {
       /** 登录审计表头 */
       loginHead: [
         { key: 'user', name: this.$t('登录用户') },
+        { key: 'user', name: this.$t('用户全名') },
         { key: 'time', name: this.$t('登录时间') },
         { key: 'IP', name: this.$t('登录来源IP') },
         { key: 'status', name: this.$t('登录状态') },

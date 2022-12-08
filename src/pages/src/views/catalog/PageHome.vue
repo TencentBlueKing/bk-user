@@ -368,8 +368,9 @@ export default {
         return;
       }
       const formData = new FormData();
-      formData.append('file', this.$refs.importUserRef.uploadInfo.fileInfo);
-      formData.append('file_name', this.$refs.importUserRef.uploadInfo.name);
+      const uploadInfo = this.$refs.importUserRef.uploadInfo;
+      formData.append('file', uploadInfo.fileInfo);
+      formData.append('file_name', uploadInfo.name);
       formData.append('department_id', this.$refs.importUserRef.id);
 
       // 如果同时有两个目录正在导入，this.importId 会变化，影响 splice loading，所以必须加个变量
@@ -380,6 +381,7 @@ export default {
       try {
         await this.$store.dispatch('catalog/ajaxImportUser', {
           id: this.importId,
+          isOverwrite: uploadInfo.isOverwrite,
           data: formData,
         });
         await this.getDepartments();
