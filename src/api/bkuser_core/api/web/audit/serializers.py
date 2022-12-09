@@ -59,7 +59,8 @@ class GeneralLogOutputSLZ(serializers.Serializer):
 
         category_id = extra_value.get("category_id")
         category_display_name = category_name_map.get(category_id, PLACE_HOLDER)
-        display_name = Profile.objects.get(username=obj.operator).display_name
+        operator_profile = Profile.objects.filter(username=obj.operator).first()
+        display_name = operator_profile.display_name if operator_profile else ""
 
         return {
             "datetime": datetime.datetime.strptime(instance["create_time"], "%Y-%m-%dT%H:%M:%S.%fZ"),
