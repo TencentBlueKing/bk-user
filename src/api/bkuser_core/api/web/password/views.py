@@ -22,7 +22,10 @@ from bkuser_core.api.web.password.serializers import (
     PasswordModifyInputSLZ,
     PasswordResetByTokenInputSLZ,
     PasswordResetSendEmailInputSLZ,
+    PasswordResetSendSMSInputSLZ,
+    PasswordVerifyVerificationCodeInputSLZ,
 )
+from bkuser_core.api.web.password.verification_code_handler import ResetPasswordVerificationCodeHandler
 from bkuser_core.api.web.utils import (
     get_category,
     get_operator,
@@ -171,3 +174,50 @@ class PasswordListSettingsByTokenApi(generics.ListAPIView):
         settings = Setting.objects.filter(meta__in=metas, category_id=profile.category_id)
 
         return Response(self.serializer_class(settings, many=True).data)
+
+
+class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        slz = PasswordResetSendSMSInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        data = slz.validated_data
+
+        username = data.get("username")
+        telephone = data["telephone"]
+
+        try:
+            if username:
+                username, domain = parse_username_domain(username)
+                if not domain:
+                    domain = ProfileCategory.objects.get(default=True).domain
+
+                profile = Profile.objects.get(username=username, domain=domain, telephone=telephone)
+            else:
+                profile = Profile.objects.get(telephone=telephone)
+
+        except Profile.DoesNotExist:
+            logger.exception("failed to get profile by telephone<%s>", telephone)
+            raise error_codes.TELEPHONE_NOT_PROVIDED
+
+        except Profile.MultipleObjectsReturned:
+            logger.exception("failed to get profile by telephone<%s>", telephone)
+            raise error_codes.TELEPHONE_MULTI_BOUND
+
+        # 生成verification_code_token
+        verification_code_token = ResetPasswordVerificationCodeHandler(profile).generate_reset_password_token()
+        return Response(verification_code_token)
+
+
+class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        slz = PasswordVerifyVerificationCodeInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        data = slz.validated_data
+
+        verification_code_handler = ResetPasswordVerificationCodeHandler()
+
+        verification_code_handler.verify_verification_code(data["verification_code_token"], data["verification_code"])
+        profile_token = verification_code_handler.generate_profile_token()
+        return Response(profile_token.token)

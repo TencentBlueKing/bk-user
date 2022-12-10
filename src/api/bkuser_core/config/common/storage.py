@@ -50,6 +50,14 @@ CACHES = {
         "LOCATION": "memory_cache_0",
         "KEY_PREFIX": "bk_user",
     },
+    "verification_code": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "TIMEOUT": 30 * 60,
+        "KEY_PREFIX": f"{REDIS_KEY_PREFIX}verification_code",
+        "VERSION": 1,
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWORD},
+    },
 }
 # 全局缓存过期时间，默认为一小时
 GLOBAL_CACHES_TIMEOUT = env.int("GLOBAL_CACHES_TIMEOUT", default=60 * 60)

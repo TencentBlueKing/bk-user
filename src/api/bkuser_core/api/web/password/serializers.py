@@ -19,6 +19,16 @@ class PasswordResetSendEmailInputSLZ(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=254)
 
 
+class PasswordResetSendSMSInputSLZ(serializers.Serializer):
+    username = serializers.CharField(required=False)
+    telephone = serializers.CharField(required=True, max_length=64)
+
+
+class PasswordVerifyVerificationCodeInputSLZ(serializers.Serializer):
+    verification_code_token = serializers.CharField(required=True, max_length=254)
+    verification_code = serializers.CharField(required=True)
+
+
 class PasswordResetByTokenInputSLZ(serializers.Serializer):
     token = serializers.CharField(required=True, max_length=254)
     password = Base64OrPlainField(required=True, max_length=254)
