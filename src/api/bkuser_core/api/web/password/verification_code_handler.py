@@ -32,10 +32,8 @@ class VerificationCodeBaseHandler:
     def __init__(self, profile):
 
         self.profile = profile
-        if profile:
+        if self.profile:
             self.config_loader = ConfigProvider(category_id=profile.category_id)
-        else:
-            self.profile = Profile()
         self.cache = caches["verification_code"]
 
     def _generate_token(self) -> str:
@@ -56,7 +54,6 @@ class VerificationCodeBaseHandler:
         if prefix:
             key = f"{prefix}_{key}"
         data = self.cache.get(key=key)
-
         return data
 
     def _delete(self, key: str, prefix: str = None):
@@ -159,7 +156,7 @@ class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
 
         return token
 
-    def verify_verification_code(self, input_token: str, input_verification_code: int):
+    def verify_verification_code(self, input_token: str, input_verification_code: str):
         verification_code_data = self.get_reset_password_data(token=input_token)
 
         # token 校验

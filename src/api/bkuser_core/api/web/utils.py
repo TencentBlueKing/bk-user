@@ -21,7 +21,7 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
-from bkuser_core.profiles.utils import check_former_passwords
+from bkuser_core.profiles.utils import check_former_passwords, parse_username_domain
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import SettingMeta
@@ -178,3 +178,15 @@ def get_token_handler(token: str) -> ProfileTokenHolder:
         raise error_codes.PROFILE_TOKEN_EXPIRED
 
     return token_holder
+
+
+def get_profile_by_username(username):
+    username, domain = parse_username_domain(username)
+    if not domain:
+        domain = ProfileCategory.objects.get(default=True).domain
+    profile = Profile.objects.get(username=username, domain=domain)
+    return profile
+
+
+def get_profile_by_telephone(telephone):
+    return Profile.objects.get(telephone=telephone)

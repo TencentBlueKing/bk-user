@@ -29,6 +29,8 @@ from bkuser_core.api.web.password.verification_code_handler import ResetPassword
 from bkuser_core.api.web.utils import (
     get_category,
     get_operator,
+    get_profile_by_telephone,
+    get_profile_by_username,
     get_token_handler,
     list_setting_metas,
     validate_password,
@@ -188,20 +190,16 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
 
         try:
             if username:
-                username, domain = parse_username_domain(username)
-                if not domain:
-                    domain = ProfileCategory.objects.get(default=True).domain
-
-                profile = Profile.objects.get(username=username, domain=domain, telephone=telephone)
+                profile = get_profile_by_username(username)
             else:
-                profile = Profile.objects.get(telephone=telephone)
+                profile = get_profile_by_telephone(telephone)
 
         except Profile.DoesNotExist:
-            logger.exception("failed to get profile by telephone<%s>", telephone)
+            logger.exception("failed to get profile by telephone<%s> or username<%s>", telephone, username)
             raise error_codes.TELEPHONE_NOT_PROVIDED
 
         except Profile.MultipleObjectsReturned:
-            logger.exception("failed to get profile by telephone<%s>", telephone)
+            logger.exception("failed to lock profile by telephone<%s> or username<%s>", telephone, username)
             raise error_codes.TELEPHONE_MULTI_BOUND
 
         # 生成verification_code_token
@@ -216,7 +214,7 @@ class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
 
         data = slz.validated_data
 
-        verification_code_handler = ResetPasswordVerificationCodeHandler()
+        verification_code_handler = ResetPasswordVerificationCodeHandler(profile=None)
 
         verification_code_handler.verify_verification_code(data["verification_code_token"], data["verification_code"])
         profile_token = verification_code_handler.generate_profile_token()
