@@ -31,7 +31,7 @@ from .serializers import (
 )
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
-from bkuser_core.audit.constants import OperationType
+from bkuser_core.audit.constants import OperationStatus, OperationType, ResetPasswordFailReason
 from bkuser_core.audit.utils import audit_general_log, create_general_log
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentProfilePermission, Permission
 from bkuser_core.categories.models import ProfileCategory
@@ -40,7 +40,12 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
-from bkuser_core.profiles.utils import align_country_iso_code, make_password_by_config, parse_username_domain
+from bkuser_core.profiles.utils import (
+    align_country_iso_code,
+    check_old_password,
+    make_password_by_config,
+    parse_username_domain,
+)
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
@@ -114,7 +119,6 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         slz = ProfileUpdateInputSLZ(instance, data=request.data, partial=partial)
         slz.is_valid(raise_exception=True)
         operate_type = OperationType.UPDATE.value
-
         validated_data = slz.validated_data
 
         # 前端是把extras字段打平提交的
@@ -158,6 +162,31 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         update_summary = {"request": request}
         # 密码修改加密
         if validated_data.get("password"):
+            # 如果重置的是admin账号的密码，需要对原始密码进行校验
+            if instance.username == "admin":
+                old_password_check_result = check_old_password(
+                    instance=instance, old_password=validated_data["old_password"]
+                )
+
+                if not old_password_check_result:
+                    failed_reason = ResetPasswordFailReason.BAD_OLD_PASSWORD
+                    update_summary.update({"failed_reason": failed_reason.value})
+                    post_profile_update.send(
+                        sender=self,
+                        instance=instance,
+                        operator=request.operator,
+                        extra_values=update_summary,
+                    )
+                    create_general_log(
+                        operator=request.operator,
+                        operate_type=OperationType.ADMIN_RESET_PASSWORD.value,
+                        operator_obj=instance,
+                        request=request,
+                        status=OperationStatus.FAILED.value,
+                        extra_info={"failed_info": failed_reason.get_choices()},
+                    )
+                    raise error_codes.OLD_PASSWORD_ERROR
+
             operate_type = (
                 OperationType.FORGET_PASSWORD.value
                 if request.headers.get("User-From-Token")

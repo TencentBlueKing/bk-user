@@ -42,6 +42,17 @@ def create_reset_password_log(sender, instance: "Profile", operator: str, extra_
         except Exception:  # pylint: disable=broad-except
             logger.exception("failed to create reset password log")
 
+    if "failed_reason" in extra_values:
+        try:
+            create_profile_log(
+                instance,
+                "ResetPassword",
+                {"is_success": False, "reason": extra_values["failed_reason"]},
+                extra_values["request"],
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("failed to create reset password log")
+
 
 @receiver([post_profile_create, post_department_create, post_category_create, post_field_create, post_setting_create])
 def create_audit_log(sender, instance: "Profile", operator: str, extra_values: dict, **kwargs):

@@ -13,22 +13,21 @@ import random
 import re
 import string
 import urllib.parse
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import Dict, Tuple
 
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
 from phonenumbers.phonenumberutil import UNKNOWN_REGION, country_code_for_region, region_code_for_country_code
 
 from ..audit.models import ResetPassword
 from .exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
 from bkuser_core.categories.cache import get_default_category_id_from_local_cache
+from bkuser_core.profiles.constants import ProfileStatus
+from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
 from bkuser_core.user_settings.constants import InitPasswordMethod
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_global.local import local
-
-if TYPE_CHECKING:
-    from bkuser_core.profiles.models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -245,3 +244,15 @@ def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
                 extras.pop(key)
 
     return data
+
+
+def check_old_password(instance: "Profile", old_password: str) -> bool:
+    """原密码校验, 校验失败次数超过配置次数会对用户进行锁定"""
+    raw_profile = Profile.objects.get(id=instance.id)
+
+    if not check_password(old_password, raw_profile.password):
+        if instance.bad_old_pwd_check_cnt >= settings.ALLOW_OLD_PASSWORD_ERROR_TIME:
+            raw_profile.status = ProfileStatus.LOCKED.value
+            raw_profile.save()
+        return False
+    return True

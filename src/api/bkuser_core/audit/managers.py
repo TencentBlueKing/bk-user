@@ -16,11 +16,32 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.timezone import now
 
-from .constants import LogInFailReason
+from .constants import LogInFailReason, ResetPasswordFailReason
 
 
 class ResetPasswordManager(models.Manager):
     """重置密码DB管理器"""
+
+    def latest_check_old_password_failed_count(self):
+        """获取上一次成功重置密码前最近重置密码失败的次数"""
+        farthest_count_time = now() - datetime.timedelta(seconds=settings.RESET_PASSWORD_RECORD_COUNT_SECONDS)
+        try:
+            latest_success_time = (
+                self.filter(is_success=True, create_time__gte=farthest_count_time).latest().create_time
+            )
+        except ObjectDoesNotExist:
+            # 当没有任何成功记录时，直接统计时间区域内的错误次数
+            return self.filter(
+                is_success=False,
+                reason=ResetPasswordFailReason.BAD_OLD_PASSWORD.value,
+                create_time__gte=farthest_count_time,
+            ).count()
+        else:
+            return self.filter(
+                is_success=False,
+                reason=ResetPasswordFailReason.BAD_OLD_PASSWORD.value,
+                create_time__gte=latest_success_time,
+            ).count()
 
 
 class LogInManager(models.Manager):
