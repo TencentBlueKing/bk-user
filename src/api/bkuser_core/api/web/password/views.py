@@ -204,7 +204,14 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
 
         # 生成verification_code_token
         verification_code_token = ResetPasswordVerificationCodeHandler(profile).generate_reset_password_token()
-        return Response(verification_code_token)
+        origin_telephone = profile.telephone
+
+        response_data = {
+            "verification_code_token": verification_code_token,
+            # 加匿返回手机号
+            "telephone": origin_telephone.replace(origin_telephone[3:7], '****'),
+        }
+        return Response(response_data)
 
 
 class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
