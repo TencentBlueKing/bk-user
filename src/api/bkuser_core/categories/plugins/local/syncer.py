@@ -32,6 +32,7 @@ from .parsers import (
 from bkuser_core.categories.plugins.base import Fetcher, ProfileMeta, Syncer
 from bkuser_core.common.db_sync import SyncOperation
 from bkuser_core.common.progress import progress
+from bkuser_core.common.utils import escape_name
 from bkuser_core.departments.models import Department, DepartmentThroughModel
 from bkuser_core.profiles.constants import DynamicFieldTypeEnum, ProfileStatus, StaffStatus
 from bkuser_core.profiles.models import DynamicFieldInfo, LeaderThroughModel, Profile
@@ -454,7 +455,8 @@ class ParserSet:
     def get_cell_data(self, column_key: str, row_data_list: list) -> str:
         """获取某一个单元格数据"""
         index = list(self.fields.keys()).index(column_key)
-        return row_data_list[index]
+        # xss转义
+        return escape_name(row_data_list[index])
 
 
 @dataclass
