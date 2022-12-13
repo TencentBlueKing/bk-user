@@ -51,6 +51,7 @@ MIDDLEWARE = [
     "bkuser_global.middlewares.TimezoneMiddleware",
     "bkuser_core.common.middlewares.MethodOverrideMiddleware",
     "bkuser_core.common.middlewares.DynamicResponseFormatMiddleware",
+    "bkuser_core.common.middlewares.CheckXssMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
