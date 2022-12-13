@@ -274,11 +274,11 @@ def check_old_password(instance: "Profile", old_password: str, request: "Request
             operator_obj=instance,
             request=request,
             status=OperationStatus.FAILED.value,
-            extra_info={"failed_info": failed_reason.get_choices()},
+            extra_info={"failed_info": ResetPasswordFailReason.get_choice_label(failed_reason.value)},
         )
 
-        if instance.bad_old_password_check_cnt >= settings.ALLOW_OLD_PASSWORD_ERROR_TIME:
-            # 校验失败次数超过配置次数会对用户进行锁定
+        if instance.bad_old_password_check_cnt >= settings.ALLOW_OLD_PASSWORD_ERROR_TIME and settings.ENABLE_LOCK:
+            # 校验失败次数超过配置次数并且配置锁定则对用户进行锁定
             raw_profile.status = ProfileStatus.LOCKED.value
             raw_profile.save()
             create_general_log(
