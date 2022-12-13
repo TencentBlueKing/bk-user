@@ -13,15 +13,18 @@ import random
 import re
 import string
 import urllib.parse
-from typing import Dict, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from phonenumbers.phonenumberutil import UNKNOWN_REGION, country_code_for_region, region_code_for_country_code
 
+from ..audit.constants import OperationStatus, OperationType, ResetPasswordFailReason
 from ..audit.models import ResetPassword
 from .exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
+from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.cache import get_default_category_id_from_local_cache
+from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
@@ -30,6 +33,9 @@ from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_global.local import local
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from rest_framework.request import Request
 
 
 def gen_password(length):
@@ -246,13 +252,42 @@ def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
     return data
 
 
-def check_old_password(instance: "Profile", old_password: str) -> bool:
-    """原密码校验, 校验失败次数超过配置次数会对用户进行锁定"""
+def check_old_password(instance: "Profile", old_password: str, request: "Request") -> bool:
+    """原密码校验"""
     raw_profile = Profile.objects.get(id=instance.id)
 
     if not check_password(old_password, raw_profile.password):
-        if instance.bad_old_pwd_check_cnt >= settings.ALLOW_OLD_PASSWORD_ERROR_TIME:
+        failed_reason = ResetPasswordFailReason.BAD_OLD_PASSWORD
+        try:
+            create_profile_log(
+                instance,
+                "ResetPassword",
+                {"is_success": False, "reason": failed_reason.value},
+                request,
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("failed to create reset password log")
+
+        create_general_log(
+            operator=request.operator,
+            operate_type=OperationType.ADMIN_RESET_PASSWORD.value,
+            operator_obj=instance,
+            request=request,
+            status=OperationStatus.FAILED.value,
+            extra_info={"failed_info": failed_reason.get_choices()},
+        )
+
+        if instance.bad_old_password_check_cnt >= settings.ALLOW_OLD_PASSWORD_ERROR_TIME:
+            # 校验失败次数超过配置次数会对用户进行锁定
             raw_profile.status = ProfileStatus.LOCKED.value
             raw_profile.save()
-        return False
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationType.UPDATE.value,
+                operator_obj=instance,
+                request=request,
+            )
+
+        raise error_codes.OLD_PASSWORD_ERROR
+
     return True

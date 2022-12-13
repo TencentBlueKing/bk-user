@@ -26,11 +26,10 @@ class ResetPasswordManager(models.Manager):
         """获取上一次成功重置密码前最近重置密码失败的次数"""
         farthest_count_time = now() - datetime.timedelta(seconds=settings.RESET_PASSWORD_RECORD_COUNT_SECONDS)
         try:
-            latest_success_time = (
-                self.filter(is_success=True, create_time__gte=farthest_count_time).latest().create_time
-            )
+            latest_success_time = self.filter(is_success=True).latest().create_time
         except ObjectDoesNotExist:
-            # 当没有任何成功记录时，直接统计时间区域内的错误次数
+            # 当没有任何成功记录时，直接统计时间区域内的错误次数，防止存在大量失败记录时进行统计导致可能的慢查询，
+            # 这里配置统计时间farthest_count_time
             return self.filter(
                 is_success=False,
                 reason=ResetPasswordFailReason.BAD_OLD_PASSWORD.value,

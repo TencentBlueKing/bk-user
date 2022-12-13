@@ -181,7 +181,7 @@ class Profile(TimestampedModel):
         return self.login_set.latest_failed_count()
 
     @property
-    def bad_old_pwd_check_cnt(self):
+    def bad_old_password_check_cnt(self):
         return self.resetpassword_set.latest_check_old_password_failed_count()
 
     @property

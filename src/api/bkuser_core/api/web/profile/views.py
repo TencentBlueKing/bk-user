@@ -31,7 +31,7 @@ from .serializers import (
 )
 from bkuser_core.api.web.utils import get_category, get_operator, validate_password
 from bkuser_core.api.web.viewset import CustomPagination
-from bkuser_core.audit.constants import OperationStatus, OperationType, ResetPasswordFailReason
+from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import audit_general_log, create_general_log
 from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentProfilePermission, Permission
 from bkuser_core.categories.models import ProfileCategory
@@ -164,28 +164,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         if validated_data.get("password"):
             # 如果重置的是admin账号的密码，需要对原始密码进行校验
             if instance.username == "admin":
-                old_password_check_result = check_old_password(
-                    instance=instance, old_password=validated_data["old_password"]
-                )
-
-                if not old_password_check_result:
-                    failed_reason = ResetPasswordFailReason.BAD_OLD_PASSWORD
-                    update_summary.update({"failed_reason": failed_reason.value})
-                    post_profile_update.send(
-                        sender=self,
-                        instance=instance,
-                        operator=request.operator,
-                        extra_values=update_summary,
-                    )
-                    create_general_log(
-                        operator=request.operator,
-                        operate_type=OperationType.ADMIN_RESET_PASSWORD.value,
-                        operator_obj=instance,
-                        request=request,
-                        status=OperationStatus.FAILED.value,
-                        extra_info={"failed_info": failed_reason.get_choices()},
-                    )
-                    raise error_codes.OLD_PASSWORD_ERROR
+                check_old_password(instance=instance, old_password=validated_data["old_password"], request=request)
 
             operate_type = (
                 OperationType.FORGET_PASSWORD.value
