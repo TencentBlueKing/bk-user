@@ -18,9 +18,9 @@ from .django_basic import MEDIA_ROOT
 # ==============================================================================
 
 # 允许原始密码校验错误次数
-ALLOW_OLD_PASSWORD_ERROR_TIME = 3
+RESET_PASSWORD_OLD_PASSWORD_ERROR_MAX_COUNT = 3
 # 重置密码时对原始密码校验超限是否锁定
-ENABLE_LOCK = env.bool("ENABLE_LOCK", default=False)
+ENABLE_RESET_PASSWORD_ERROR_PROFILE_LOCK = env.bool("ENABLE_RESET_PASSWORD_ERROR_PROFILE_LOCK", default=False)
 
 # 最大密码长度（明文）
 PASSWORD_MAX_LENGTH = 32
