@@ -17,6 +17,11 @@ from .django_basic import MEDIA_ROOT
 # 密码配置
 # ==============================================================================
 
+# 允许原始密码校验错误次数
+RESET_PASSWORD_OLD_PASSWORD_ERROR_MAX_COUNT = 3
+# 重置密码时对原始密码校验超限是否锁定
+ENABLE_RESET_PASSWORD_ERROR_PROFILE_LOCK = env.bool("ENABLE_RESET_PASSWORD_ERROR_PROFILE_LOCK", default=False)
+
 # 最大密码长度（明文）
 PASSWORD_MAX_LENGTH = 32
 # 重复密码最大历史数量
@@ -86,6 +91,9 @@ MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", default=2000)
 
 # 登录次数统计时间周期, 默认为一个月
 LOGIN_RECORD_COUNT_SECONDS = env.int("LOGIN_RECORD_COUNT_SECONDS", default=60 * 60 * 24 * 30)
+
+# 重置密码次数统计时间周期, 默认为十分钟
+RESET_PASSWORD_RECORD_COUNT_SECONDS = env.int("RESET_PASSWORD_RECORD_COUNT_SECONDS", default=60 * 10)
 
 # sync, 用户管理本身做业务 HTTP API 数据源, 可以被另一个用户管理同步过去
 # 复用 API, 接口参数中存在 SYNC_API_PARAM 时, 以sync的接口协议返回
