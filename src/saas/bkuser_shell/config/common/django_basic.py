@@ -44,6 +44,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "bkuser_shell.account.middlewares.LoginRequiredMiddleware",
+    "bkuser_shell.common.middlewares.CheckXssMiddleware",
     # 时区切换中间件
     "bkuser_global.middlewares.TimezoneMiddleware",
     # 静态资源服务
