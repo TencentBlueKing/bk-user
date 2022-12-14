@@ -51,20 +51,35 @@
         </bk-button>
         <div class="reset-dialog" v-if="isShowReset" v-click-outside="closeResetDialog">
           <i class="arrow"></i>
+          <template v-if="isAdmin">
+            <h4 class="title">{{$t('原密码')}}</h4>
+            <p class="pw-input-text">
+              <input
+                autocomplete="old-password"
+                :type="passwordInputType['oldPassword']"
+                :placeholder="$t('请输入原密码')"
+                :class="['editor-password',{ 'input-error': isCorrectOldPw }]"
+                :maxlength="32"
+                v-model="oldPassword"
+                v-focus
+                @focus="isCorrectOldPw = false" />
+              <i :class="['bk-icon', oldPasswordIconClass]" @click="changePasswordInputType('oldPassword')"></i>
+            </p>
+          </template>
           <h4 class="title">{{$t('重置密码')}}</h4>
           <p class="pw-input-text">
             <input type="text" class="hidden-password-input">
             <input type="password" class="hidden-password-input">
             <input
               autocomplete="new-password"
-              :type="passwordInputType"
+              :type="passwordInputType['newPassword']"
               :placeholder="$t('请输入新密码')"
               :class="['editor-password',{ 'input-error': isCorrectPw }]"
               :maxlength="32"
               v-model="newPassword"
               v-focus
               @focus="isCorrectPw = false" />
-            <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType"></i>
+            <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType('newPassword')"></i>
           </p>
           <div class="reset-btn">
             <bk-button theme="primary" class="editor-btn" @click="confirmReset">{{$t('确认')}}</bk-button>
@@ -174,11 +189,16 @@ export default {
       localAvatar: '',
       isForbid: false,
       phoneNumber: this.$t('点击查看'),
+      isCorrectOldPw: false,
       isCorrectPw: false,
       // 是否显示重置密码的弹窗
       isShowReset: false,
+      oldPassword: '',
       newPassword: '',
-      passwordInputType: 'password',
+      passwordInputType: {
+        oldPassword: 'password',
+        newPassword: 'password',
+      },
       passwordRules: null,
     };
   },
@@ -188,8 +208,11 @@ export default {
         return fieldInfo.key !== 'department_name' && fieldInfo.key !== 'leader';
       });
     },
+    oldPasswordIconClass() {
+      return this.passwordInputType.oldPassword === 'password' ? 'icon-hide' : 'icon-eye';
+    },
     passwordIconClass() {
-      return this.passwordInputType === 'password' ? 'icon-hide' : 'icon-eye';
+      return this.passwordInputType.newPassword === 'password' ? 'icon-hide' : 'icon-eye';
     },
     passwordValidDays() {
       return this.$store.state.passwordValidDaysList.find(item => (
@@ -286,6 +309,9 @@ export default {
         return;
       }
       this.isShowReset = true;
+      // 清空上次输入
+      this.oldPassword = '';
+      this.newPassword = '';
     },
     // 验证密码的格式
     async confirmReset() {
@@ -321,6 +347,18 @@ export default {
       }
       if (this.passwordRules) {
         // 如果上面拿到了规则就进行前端校验
+        // 原密码校验, 任何人在重置admin密码时，需要先输入原密码
+        if (this.isAdmin) {
+          this.isCorrectOldPw = !this.$validatePassportByRules(this.oldPassword, this.passwordRules);
+          if (this.isCorrectOldPw) {
+            this.$bkMessage({
+              message: this.$getMessageByRules(this, this.passwordRules),
+              theme: 'error',
+            });
+            return;
+          }
+        }
+        // 新密码校验
         this.isCorrectPw = !this.$validatePassportByRules(this.newPassword, this.passwordRules);
         if (this.isCorrectPw) {
           this.$bkMessage({
@@ -336,11 +374,16 @@ export default {
       this.clickSecond = true;
       try {
         this.$emit('showBarLoading');
+        const passwordData = {
+          password: this.newPassword.trim(),
+        };
+        // 任何人在重置admin密码时，需要先输入原密码
+        if (this.isAdmin) {
+          passwordData.old_password = this.oldPassword.trim();
+        };
         await this.$store.dispatch('organization/patchProfile', {
           id: this.currentProfile.id,
-          data: {
-            password: this.newPassword.trim(),
-          },
+          data: passwordData,
         });
         this.$bkMessage({
           message: this.$t('重置密码成功'),
@@ -357,10 +400,13 @@ export default {
     closeResetDialog(e) {
       if (e.target.innerText === '重置密码') return;
       this.isShowReset = false;
+      // 清空
+      this.oldPassword = '';
+      this.newPassword = '';
     },
     // 查看密码
-    changePasswordInputType() {
-      this.passwordInputType = this.passwordInputType === 'password' ? 'text' : 'password';
+    changePasswordInputType(type = 'newPassword') {
+      this.passwordInputType[type] = this.passwordInputType[type] === 'password' ? 'text' : 'password';
     },
     handleLoadAvatarError() {
       this.localAvatar = this.$store.state.localAvatar;
