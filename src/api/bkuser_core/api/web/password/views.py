@@ -225,4 +225,4 @@ class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
 
         verification_code_handler.verify_verification_code(data["verification_code_token"], data["verification_code"])
         profile_token = verification_code_handler.generate_profile_token()
-        return Response(profile_token.token)
+        return Response({"token": profile_token.token})
