@@ -164,6 +164,7 @@ export default {
   修复: '【FIX】',
   优化: '【OPTIMIZATION】',
   // 密码
+  原密码: 'Old Password',
   重置密码: 'Reset Password',
   密码长度为: 'Password length is',
   '-32个字符，必须包含': '-32 characters, it must be included',
@@ -187,6 +188,7 @@ export default {
   '两次输入的密码不一致，请重新输入': 'The passwords entered twice do not match. Please re-enter them',
   设置新密码: 'Set new password',
   请输入新密码进行密码重设: 'Please enter a new password for password reset',
+  请输入原密码: 'Please enter old password',
   请输入新密码: 'Please enter a new password',
   请再次确认新密码: 'Please confirm the new password again',
   密码修改成功: 'Password changed successfully',
