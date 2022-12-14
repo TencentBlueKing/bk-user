@@ -45,6 +45,7 @@ from bkuser_core.profiles.utils import (
     check_old_password,
     make_password_by_config,
     parse_username_domain,
+    should_check_old_password,
 )
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
@@ -163,7 +164,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         # 密码修改加密
         if validated_data.get("password"):
             # 如果重置的是admin账号的密码，需要对原始密码进行校验
-            if instance.username == "admin":
+            if should_check_old_password(username=instance.username):
                 check_old_password(instance=instance, old_password=validated_data["old_password"], request=request)
 
             operate_type = (

@@ -23,24 +23,20 @@ class ResetPasswordManager(models.Manager):
     """重置密码DB管理器"""
 
     def latest_check_old_password_failed_count(self):
-        """获取上一次成功重置密码前最近重置密码失败的次数"""
-        farthest_count_time = now() - datetime.timedelta(seconds=settings.RESET_PASSWORD_RECORD_COUNT_SECONDS)
+        """最近一段时间重置密码失败的次数，其中最近一段时间指从上一次成功重置密码后到现在"""
+        # 查找最近一次成功的时间
         try:
-            latest_success_time = self.filter(is_success=True).latest().create_time
+            latest_time = self.filter(is_success=True).latest().create_time
         except ObjectDoesNotExist:
-            # 当没有任何成功记录时，直接统计时间区域内的错误次数，防止存在大量失败记录时进行统计导致可能的慢查询，
-            # 这里配置统计时间farthest_count_time
-            return self.filter(
-                is_success=False,
-                reason=ResetPasswordFailReason.BAD_OLD_PASSWORD.value,
-                create_time__gte=farthest_count_time,
-            ).count()
-        else:
-            return self.filter(
-                is_success=False,
-                reason=ResetPasswordFailReason.BAD_OLD_PASSWORD.value,
-                create_time__gte=latest_success_time,
-            ).count()
+            # 当没有任何成功记录时，防止存在大量失败记录时进行统计导致可能的慢查询，只计算默认配置的统计时间
+            # 这里取配置里默认设置的统计时间
+            latest_time = now() - datetime.timedelta(seconds=settings.RESET_PASSWORD_RECORD_COUNT_SECONDS)
+
+        return self.filter(
+            is_success=False,
+            reason=ResetPasswordFailReason.BAD_OLD_PASSWORD.value,
+            create_time__gte=latest_time,
+        ).count()
 
 
 class LogInManager(models.Manager):

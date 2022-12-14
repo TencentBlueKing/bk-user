@@ -252,7 +252,7 @@ def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
     return data
 
 
-def check_old_password(instance: "Profile", old_password: str, request: "Request") -> bool:
+def check_old_password(instance: "Profile", old_password: str, request: "Request"):
     """原密码校验"""
     raw_profile = Profile.objects.get(id=instance.id)
 
@@ -293,4 +293,10 @@ def check_old_password(instance: "Profile", old_password: str, request: "Request
 
         raise error_codes.OLD_PASSWORD_ERROR
 
+
+def should_check_old_password(username: str) -> bool:
+    """重置密码时，校验是否为需要检查旧密码的用户"""
+    formatted_username = username.replace(" ", "").lower()
+    if not formatted_username == "admin":
+        return False
     return True
