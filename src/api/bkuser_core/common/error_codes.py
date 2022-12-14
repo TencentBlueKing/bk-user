@@ -131,6 +131,7 @@ error_codes.add_codes(
         ErrorCode("VERIFICATION_CODE_INVALID", _("验证码失效，请重新发送")),
         ErrorCode("VERIFICATION_CODE_FAILED", _("你所输入验证码错误，请重新输入")),
         ErrorCode("VERIFICATION_CODE_FAILED_MAX_COUNT", _("你所输入验证码错误，验证次数已达上限，请验证码过期后重试")),
+        ErrorCode("OLD_PASSWORD_ERROR", _("原密码校验失败")),
         # 上传文件相关
         ErrorCode("FILE_IMPORT_TOO_LARGE", _("上传文件过大")),
         ErrorCode("FILE_IMPORT_FORMAT_ERROR", _("上传文件格式错误")),

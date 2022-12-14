@@ -35,6 +35,12 @@ class LogInFailReason(AutoLowerEnum):
     )
 
 
+class ResetPasswordFailReason(AutoLowerEnum):
+    BAD_OLD_PASSWORD = auto()
+
+    _choices_labels = ((BAD_OLD_PASSWORD, "原密码校验错误"),)
+
+
 class OperationType(AutoLowerEnum):
     CREATE = auto()
     UPDATE = auto()

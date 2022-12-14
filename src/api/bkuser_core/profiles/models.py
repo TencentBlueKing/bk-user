@@ -181,6 +181,10 @@ class Profile(TimestampedModel):
         return self.login_set.latest_failed_count()
 
     @property
+    def bad_old_password_check_cnt(self):
+        return self.resetpassword_set.latest_check_old_password_failed_count()
+
+    @property
     def latest_check_time(self):
         return self.login_set.filter(is_success=False, reason=LogInFailReason.BAD_PASSWORD.value).latest().create_time
 

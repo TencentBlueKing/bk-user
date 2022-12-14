@@ -59,7 +59,7 @@ export default {
   methods: {
     // 失焦验证
     verifyInput(item) {
-      item.value = item.value.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      item.value = this.$xssVerification(item.value);
       if (!item.require) {
         return;
       }
