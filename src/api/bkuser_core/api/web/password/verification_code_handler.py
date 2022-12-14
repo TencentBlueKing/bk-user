@@ -37,7 +37,7 @@ class VerificationCodeBaseHandler:
         self.cache = caches["verification_code"]
 
     def _generate_token(self) -> str:
-        hashed_value = f"{self.profile.username}|{self.profile.telephone}"
+        hashed_value = f"{self.profile.username}@{self.profile.domain}|{self.profile.telephone}"
         md = hashlib.md5()
         md.update(hashed_value.encode("utf-8"))
         return md.hexdigest()
@@ -124,6 +124,7 @@ class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
 
         expire_seconds = self.config_loader.get("verification_code_expire_seconds")
         verification_code_length = self.config_loader.get("verification_code_length")
+        # 生成验证码
         verification_code = self._generate_ramdom_verification_code(verification_code_length)
         expired_at = now() + datetime.timedelta(seconds=expire_seconds)
         verification_code_data = {
