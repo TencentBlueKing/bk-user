@@ -180,15 +180,15 @@ def get_token_handler(token: str) -> ProfileTokenHolder:
     return token_holder
 
 
-def escape_display_name(display_name):
+def escape_value(input_value: str) -> str:
     """Replace special characters "&", "<" and ">" to HTML-safe sequences.
     If the optional flag quote is true, the quotation mark character (")
     is also translated.
     rewrite the cgi method
     """
-    escaped_display_name = display_name.replace("&", "")  # Must be done first!
-    escaped_display_name = escaped_display_name.replace("<", "")
-    escaped_display_name = escaped_display_name.replace(">", "")
-    escaped_display_name = escaped_display_name.replace('"', "")
-    escaped_display_name = escaped_display_name.replace("'", "")
-    return escaped_display_name
+    escaped_value = input_value.replace("&", "")  # Must be done first!
+    escaped_value = escaped_value.replace("<", "")
+    escaped_value = escaped_value.replace(">", "")
+    escaped_value = escaped_value.replace('"', "")
+    escaped_value = escaped_value.replace("'", "")
+    return escaped_value
