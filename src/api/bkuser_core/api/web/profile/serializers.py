@@ -13,7 +13,7 @@ from django.conf import settings
 from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import StringArrayField
-from bkuser_core.api.web.utils import get_default_category_id, get_raw_password
+from bkuser_core.api.web.utils import escape_display_name, get_default_category_id, get_raw_password
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
 
@@ -106,6 +106,7 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     leader = serializers.ListField(child=serializers.IntegerField(), required=False)
     departments = serializers.ListField(child=serializers.IntegerField(), required=False)
     password = serializers.CharField(required=False, write_only=True)
+    display_name = serializers.CharField(required=False)
 
     class Meta:
         model = Profile
@@ -114,6 +115,9 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
 
     def validate_password(self, password):
         return get_raw_password(self.instance.category_id, password)
+
+    def validate_display_name(self, display_name):
+        return escape_display_name(display_name)
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):
@@ -168,6 +172,9 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
         )
         # exclude = ["password"]
         validators: list = []
+
+    def validate_display_name(self, display_name):
+        return escape_display_name(display_name)
 
 
 class ProfileBatchDeleteInputSLZ(serializers.Serializer):

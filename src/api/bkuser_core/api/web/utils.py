@@ -178,3 +178,17 @@ def get_token_handler(token: str) -> ProfileTokenHolder:
         raise error_codes.PROFILE_TOKEN_EXPIRED
 
     return token_holder
+
+
+def escape_display_name(display_name):
+    """Replace special characters "&", "<" and ">" to HTML-safe sequences.
+    If the optional flag quote is true, the quotation mark character (")
+    is also translated.
+    rewrite the cgi method
+    """
+    escaped_display_name = display_name.replace("&", "")  # Must be done first!
+    escaped_display_name = escaped_display_name.replace("<", "")
+    escaped_display_name = escaped_display_name.replace(">", "")
+    escaped_display_name = escaped_display_name.replace('"', "")
+    escaped_display_name = escaped_display_name.replace("'", "")
+    return escaped_display_name
