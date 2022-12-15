@@ -29,8 +29,7 @@ from bkuser_core.api.web.password.verification_code_handler import ResetPassword
 from bkuser_core.api.web.utils import (
     get_category,
     get_operator,
-    get_profile_by_telephone,
-    get_profile_by_username,
+    get_profile_by_username_or_telephone,
     get_token_handler,
     list_setting_metas,
     validate_password,
@@ -39,7 +38,7 @@ from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.profiles.exceptions import ProfileEmailEmpty, UsernameWithDomainFormatError
+from bkuser_core.profiles.exceptions import ProfileEmailEmpty
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
@@ -189,11 +188,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         # 根据交互设计，和登录一样：只能猜测这里传输的username,还是telephone
         # 存在着username=telephone的情况
         try:
-            profile = get_profile_by_username(telephone_or_username)
-
-        except UsernameWithDomainFormatError:
-            # 无法解析说明可能是telephone
-            profile = get_profile_by_telephone(telephone_or_username)
+            profile = get_profile_by_username_or_telephone(telephone_or_username)
 
         except Profile.DoesNotExist:
             logger.exception("failed to get profile by telephone<%s> or username<%s>", telephone_or_username)
@@ -204,7 +199,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
             raise error_codes.TELEPHONE_BINDED_TO_MULTI_PROFILE
 
         # 生成verification_code_token
-        verification_code_token = ResetPasswordVerificationCodeHandler(profile).generate_reset_password_token()
+        verification_code_token = ResetPasswordVerificationCodeHandler(profile.id).generate_reset_password_token()
         origin_telephone = profile.telephone
 
         # 用户未绑定手机号，即使用户名就是手机号码

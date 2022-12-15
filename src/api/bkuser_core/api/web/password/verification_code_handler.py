@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class ResetPasswordVerificationCodeHandler:
     def __init__(self, profile_id: int = None):
         if profile_id:
-            self.profile = Profile.objects.get(profile_id)
+            self.profile = Profile.objects.get(id=profile_id)
             self.config_loader = ConfigProvider(category_id=self.profile.category_id)
 
         self.cache = caches["verification_code"]
