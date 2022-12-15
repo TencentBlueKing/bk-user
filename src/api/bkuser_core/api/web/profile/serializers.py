@@ -13,7 +13,7 @@ from django.conf import settings
 from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import StringArrayField
-from bkuser_core.api.web.utils import get_default_category_id, get_raw_password
+from bkuser_core.api.web.utils import escape_value, get_default_category_id, get_raw_password
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
 
@@ -106,6 +106,7 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     leader = serializers.ListField(child=serializers.IntegerField(), required=False)
     departments = serializers.ListField(child=serializers.IntegerField(), required=False)
     password = serializers.CharField(required=False, write_only=True)
+    display_name = serializers.CharField(required=False)
     old_password = serializers.CharField(required=False, write_only=True)  # 只有admin用户重置密码时才需要传递该字段
 
     class Meta:
@@ -115,6 +116,9 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
 
     def validate_password(self, password):
         return get_raw_password(self.instance.category_id, password)
+
+    def validate_display_name(self, display_name):
+        return escape_value(display_name)
 
     def validate_old_password(self, old_password):
         return get_raw_password(self.instance.category_id, old_password)
@@ -172,6 +176,9 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
         )
         # exclude = ["password"]
         validators: list = []
+
+    def validate_display_name(self, display_name):
+        return escape_value(display_name)
 
 
 class ProfileBatchDeleteInputSLZ(serializers.Serializer):
