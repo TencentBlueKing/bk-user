@@ -19,7 +19,6 @@ from typing import Any
 from django.core.cache import caches
 from django.utils.timezone import now
 
-from bkuser_core.api.web.constants import ONE_MINUTE_OF_SECONDS
 from bkuser_core.api.web.password.tasks import send_reset_password_verification_code_sms
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
@@ -28,21 +27,15 @@ from bkuser_core.user_settings.loader import ConfigProvider
 logger = logging.getLogger(__name__)
 
 
-class VerificationCodeBaseHandler:
-    def __init__(self, profile):
+class ResetPasswordVerificationCodeHandler:
+    def __init__(self, profile_id: int = None):
+        if profile_id:
+            self.profile = Profile.objects.get(profile_id)
+            self.config_loader = ConfigProvider(category_id=self.profile.category_id)
 
-        self.profile = profile
-        if self.profile:
-            self.config_loader = ConfigProvider(category_id=profile.category_id)
         self.cache = caches["verification_code"]
 
-    def _generate_token(self) -> str:
-        hashed_value = f"{self.profile.username}@{self.profile.domain}|{self.profile.telephone}"
-        md = hashlib.md5()
-        md.update(hashed_value.encode("utf-8"))
-        return md.hexdigest()
-
-    def _set_data(self, key: str, data: Any, timeout: int = None, prefix: str = None):
+    def _set_into_cache(self, key: str, data: Any, timeout: int = None, prefix: str = None):
         if prefix:
             key = f"{prefix}_{key}"
         if timeout:
@@ -50,43 +43,32 @@ class VerificationCodeBaseHandler:
         else:
             self.cache.set(key=key, value=data)
 
-    def _get_data(self, key: str, prefix: str = None):
+    def _get_from_cache(self, key: str, prefix: str = None):
         if prefix:
             key = f"{prefix}_{key}"
         data = self.cache.get(key=key)
         return data
 
-    def _delete(self, key: str, prefix: str = None):
+    def _delete_from_cache(self, key: str, prefix: str = None):
         if prefix:
             key = f"{prefix}_{key}"
         self.cache.delete(key=key)
 
-    def _generate_ramdom_verification_code(self, code_length: int) -> str:
-        return "".join(random.sample(string.digits, code_length))
-
-
-class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
-    def get_reset_password_data(self, token: str) -> dict:
-        data = self._get_data(token, prefix="reset_password")
+    def _get_reset_password_data(self, token: str) -> dict:
+        data = self._get_from_cache(token, prefix="reset_password")
         return json.loads(data) if data else {}
 
-    def set_reset_password_data(self, token, data, expire_seconds):
-        return self._set_data(token, data, expire_seconds, prefix="reset_password")
+    def _set_reset_password_data(self, token, verification_code_data=None, expire_seconds=None):
+        return self._set_into_cache(token, verification_code_data, expire_seconds, prefix="reset_password")
 
-    def delete_reset_password_data(self, token):
-        return self._delete(token, prefix="reset_password")
+    def _delete_reset_password_data(self, token):
+        return self._delete_from_cache(token, prefix="reset_password")
 
-    def is_profile_had_generated_verification_code(self, token: str) -> bool:
-        # 校验是否重复发送
-        if self.get_reset_password_data(token):
-            return True
-        return False
-
-    def get_reset_password_send_count(self, telephone: str) -> int:
-        data = self._get_data(key=telephone, prefix="reset_password_send_count_")
+    def _get_reset_password_send_count(self, telephone: str) -> int:
+        data = self._get_from_cache(key=telephone, prefix="reset_password_send_count_")
         return int(data) if data else 0
 
-    def set_reset_password_send_count(self, telephone: str, count: int):
+    def _set_reset_password_send_count(self, telephone: str, count: int):
         # 当天23：59：59失效
         current_datetime = now()
         today_last_time = datetime.datetime(
@@ -99,33 +81,35 @@ class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
         )
         #  再次发送的情况下 ++ 1 会重置时间; 计算当前时间距离凌晨时间
         expired_second = today_last_time.timestamp() - current_datetime.timestamp()
-        return self._set_data(telephone, count, timeout=expired_second, prefix="reset_password_send_count_")
+        return self._set_into_cache(telephone, count, timeout=expired_second, prefix="reset_password_send_count_")
 
-    def validate_before_generate(self, token: str):
+    def _validate_before_generate(self, token: str):
 
         # 校验是否重复发送
-        if self.is_profile_had_generated_verification_code(token):
+        if self._get_reset_password_data(token):
             effective_minutes = self.config_loader.get("verification_code_expire_seconds")
-            raise error_codes.VERIFICATION_CODE_HAD_SEND.f(
-                effective_minutes=effective_minutes // ONE_MINUTE_OF_SECONDS
-            )
+            raise error_codes.VERIFICATION_CODE_REPEATABLE_SENDING.f(effective_minutes=effective_minutes // 60)
 
         # 是否在发送的当日次数中
         limit_count = self.config_loader.get("reset_sms_send_max_limit")
-        reset_password_send_count = self.get_reset_password_send_count(self.profile.telephone)
+        reset_password_send_count = self._get_reset_password_send_count(self.profile.telephone)
         if reset_password_send_count > limit_count:
             raise error_codes.VERIFICATION_CODE_SEND_LIMIT
 
     def generate_reset_password_token(self) -> str:
         # token 生成
-        token = self._generate_token()
-        # 是否已经发送，是否超过当日发送次数
-        self.validate_before_generate(token)
+        hashed_value = f"{self.profile.username}@{self.profile.domain}|{self.profile.telephone}"
+        md = hashlib.md5()
+        md.update(hashed_value.encode("utf-8"))
+        token = md.hexdigest()
 
+        # 是否已经发送，是否超过当日发送次数
+        self._validate_before_generate(token)
         expire_seconds = self.config_loader.get("verification_code_expire_seconds")
         verification_code_length = self.config_loader.get("verification_code_length")
+
         # 生成验证码
-        verification_code = self._generate_ramdom_verification_code(verification_code_length)
+        verification_code = "".join(random.sample(string.digits, verification_code_length))
         expired_at = now() + datetime.timedelta(seconds=expire_seconds)
         verification_code_data = {
             "profile_id": self.profile.id,
@@ -135,13 +119,13 @@ class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
             "expired_at_timestamp": expired_at.timestamp(),
         }
 
-        logger.info("Set the captcha_data in redis. token: {}".format(token))
+        logger.info("Set the verification_code_data in redis. token: {}".format(token))
         # redis 缓冲验证码
-        self.set_reset_password_data(token, json.dumps(verification_code_data), expire_seconds)
+        self._set_reset_password_data(token, json.dumps(verification_code_data), expire_seconds)
 
         # 增加当日发送次数
-        send_count = self.get_reset_password_send_count(self.profile.telephone) + 1
-        self.set_reset_password_send_count(self.profile.telephone, send_count)
+        send_count = self._get_reset_password_send_count(self.profile.telephone) + 1
+        self._set_reset_password_send_count(self.profile.telephone, send_count)
 
         reset_password_sms_config = self.config_loader.get("reset_password_sms_config")
 
@@ -158,19 +142,20 @@ class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
         return token
 
     def verify_verification_code(self, input_token: str, input_verification_code: str):
-        verification_code_data = self.get_reset_password_data(token=input_token)
+        verification_code_data = self._get_reset_password_data(token=input_token)
 
         # token 校验
         if not verification_code_data:
             logger.info(
-                "verify captcha, verification_code_data is invalid. Posted token is %s, captcha=%s",
+                "verify verification_code, verification_code_data is invalid. "
+                "Posted token is %s, verification_code=%s",
                 input_token,
                 input_verification_code,
             )
             raise error_codes.VERIFICATION_CODE_INVALID
 
         logger.info(
-            "verify captcha, verification_code_data is %s. Posted token is %s, captcha=%s",
+            "verify verification_code, verification_code_data is %s. Posted token is %s, verification_code=%s",
             verification_code_data,
             input_token,
             input_verification_code,
@@ -186,8 +171,10 @@ class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
             # 输入错误，刚好临近过期
             if expired_second < 0:
                 raise error_codes.VERIFICATION_CODE_INVALID
-            self.set_reset_password_data(
-                input_token, json.dumps(verification_code_data), expire_seconds=expired_second
+            self._set_reset_password_data(
+                token=input_token,
+                verification_code_data=json.dumps(verification_code_data),
+                expire_seconds=expired_second,
             )
             error_count_limit = self.config_loader.get("failed_verification_max_limit")
             # 验证码试错次数
@@ -195,8 +182,9 @@ class ResetPasswordVerificationCodeHandler(VerificationCodeBaseHandler):
                 raise error_codes.VERIFICATION_CODE_FAILED_MAX_COUNT
             # 验证码错误
             raise error_codes.VERIFICATION_CODE_FAILED
+
         # 验证通过删除缓存
-        self.delete_reset_password_data(input_token)
+        self._delete_reset_password_data(input_token)
 
     def generate_profile_token(self) -> ProfileTokenHolder:
         token_holder = ProfileTokenHolder.objects.create(profile=self.profile)

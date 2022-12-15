@@ -20,7 +20,6 @@ class PasswordResetSendEmailInputSLZ(serializers.Serializer):
 
 
 class PasswordResetSendSMSInputSLZ(serializers.Serializer):
-    username = serializers.CharField(required=False)
     telephone = serializers.CharField(required=True, max_length=64)
 
 

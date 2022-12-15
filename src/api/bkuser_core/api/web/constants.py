@@ -10,5 +10,3 @@ specific language governing permissions and limitations under the License.
 """
 
 EXCLUDE_SETTINGS_META_KEYS = ["password_rsa_private_key"]
-
-ONE_MINUTE_OF_SECONDS = 60

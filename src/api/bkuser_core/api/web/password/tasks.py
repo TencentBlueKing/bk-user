@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 def send_reset_password_verification_code_sms(profile_id: str, send_config: dict):
     try:
         logger.info(
-            "--------- going to send captcha of Profile(%s) via telephone(%s) ----------",
+            "going to send verification_code of Profile(%s) via telephone(%s)",
             profile_id,
             send_config["receivers"],
         )
         send_sms(**send_config)
     except Exception as e:
         logger.info(
-            "--------- Failed to send captcha of Profile(%s) via telephone(%s): %s ----------",
+            "Failed to send verification_code of Profile(%s) via telephone(%s): %s",
             profile_id,
             send_config["receivers"],
             e,

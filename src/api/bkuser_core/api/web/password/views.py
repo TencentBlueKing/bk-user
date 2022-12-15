@@ -39,7 +39,7 @@ from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.profiles.exceptions import ProfileEmailEmpty
+from bkuser_core.profiles.exceptions import ProfileEmailEmpty, UsernameWithDomainFormatError
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
@@ -174,7 +174,6 @@ class PasswordListSettingsByTokenApi(generics.ListAPIView):
         namespace = SettingsEnableNamespaces.PASSWORD.value
         metas = list_setting_metas(category.type, None, namespace)
         settings = Setting.objects.filter(meta__in=metas, category_id=profile.category_id)
-
         return Response(self.serializer_class(settings, many=True).data)
 
 
@@ -185,26 +184,32 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
 
         data = slz.validated_data
 
-        username = data.get("username")
-        telephone = data["telephone"]
+        telephone_or_username = data["telephone"]
 
+        # 根据交互设计，和登录一样：只能猜测这里传输的username,还是telephone
+        # 存在着username=telephone的情况
         try:
-            if username:
-                profile = get_profile_by_username(username)
-            else:
-                profile = get_profile_by_telephone(telephone)
+            profile = get_profile_by_username(telephone_or_username)
+
+        except UsernameWithDomainFormatError:
+            # 无法解析说明可能是telephone
+            profile = get_profile_by_telephone(telephone_or_username)
 
         except Profile.DoesNotExist:
-            logger.exception("failed to get profile by telephone<%s> or username<%s>", telephone, username)
-            raise error_codes.TELEPHONE_NOT_PROVIDED
+            logger.exception("failed to get profile by telephone<%s> or username<%s>", telephone_or_username)
+            raise error_codes.USER_DOES_NOT_EXIST
 
         except Profile.MultipleObjectsReturned:
-            logger.exception("failed to lock profile by telephone<%s> or username<%s>", telephone, username)
-            raise error_codes.TELEPHONE_MULTI_BOUND
+            logger.exception("failed to find profile by telephone<%s> or username<%s>", telephone_or_username)
+            raise error_codes.TELEPHONE_BINDED_TO_MULTI_PROFILE
 
         # 生成verification_code_token
         verification_code_token = ResetPasswordVerificationCodeHandler(profile).generate_reset_password_token()
         origin_telephone = profile.telephone
+
+        # 用户未绑定手机号，即使用户名就是手机号码
+        if not origin_telephone:
+            raise error_codes.TELEPHONE_NOT_PROVIDED
 
         response_data = {
             "verification_code_token": verification_code_token,
@@ -221,8 +226,9 @@ class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
 
         data = slz.validated_data
 
-        verification_code_handler = ResetPasswordVerificationCodeHandler(profile=None)
+        verification_code_handler = ResetPasswordVerificationCodeHandler()
 
         verification_code_handler.verify_verification_code(data["verification_code_token"], data["verification_code"])
         profile_token = verification_code_handler.generate_profile_token()
+        # 前端拿到token，作为query_params，拼接重置页面路由
         return Response({"token": profile_token.token})

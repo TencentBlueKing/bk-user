@@ -20,12 +20,12 @@ urlpatterns = [
         name="password.reset.sent_email",
     ),
     path(
-        "reset/sent_verification_code_sms/",
+        "reset/verification_code/send_sms/",
         views.PasswordResetSendVerificationCodeApi.as_view(),
         name="password.reset.sent_verification_code_sms",
     ),
     path(
-        "reset/verify_verification_code/",
+        "reset/verification_code/verify/",
         views.PasswordVerifyVerificationCodeApi.as_view(),
         name="password.reset.verify_verification_code",
     ),

@@ -183,7 +183,7 @@ def get_token_handler(token: str) -> ProfileTokenHolder:
 def get_profile_by_username(username):
     username, domain = parse_username_domain(username)
     if not domain:
-        domain = ProfileCategory.objects.get(default=True).domain
+        domain = ProfileCategory.objects.get_default().domain
     profile = Profile.objects.get(username=username, domain=domain)
     return profile
 
