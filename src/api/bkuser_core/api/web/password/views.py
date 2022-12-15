@@ -29,7 +29,7 @@ from bkuser_core.api.web.password.verification_code_handler import ResetPassword
 from bkuser_core.api.web.utils import (
     get_category,
     get_operator,
-    get_profile_by_username_or_telephone,
+    get_profile_by_telephone,
     get_token_handler,
     list_setting_metas,
     validate_password,
@@ -183,33 +183,35 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
 
         data = slz.validated_data
 
-        telephone_or_username = data["telephone"]
+        input_telephone = data["telephone"]
 
         # 根据交互设计，和登录一样：只能猜测这里传输的username,还是telephone
         # 存在着username=telephone的情况
         try:
-            profile = get_profile_by_username_or_telephone(telephone_or_username)
+            profile = get_profile_by_telephone(input_telephone)
 
         except Profile.DoesNotExist:
-            logger.exception("failed to get profile by telephone<%s> or username<%s>", telephone_or_username)
+            logger.exception(
+                "failed to get profile by telephone<%s> or username<%s>", input_telephone, input_telephone
+            )
             raise error_codes.USER_DOES_NOT_EXIST
 
         except Profile.MultipleObjectsReturned:
-            logger.exception("failed to find profile by telephone<%s> or username<%s>", telephone_or_username)
-            raise error_codes.TELEPHONE_BINDED_TO_MULTI_PROFILE
+            logger.exception("this telephone had bound to multi profiles", input_telephone, input_telephone)
+            raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
 
         # 生成verification_code_token
         verification_code_token = ResetPasswordVerificationCodeHandler(profile.id).generate_reset_password_token()
-        origin_telephone = profile.telephone
+        raw_telephone = profile.telephone
 
         # 用户未绑定手机号，即使用户名就是手机号码
-        if not origin_telephone:
+        if not raw_telephone:
             raise error_codes.TELEPHONE_NOT_PROVIDED
 
         response_data = {
             "verification_code_token": verification_code_token,
-            # 加匿返回手机号
-            "telephone": origin_telephone.replace(origin_telephone[3:7], '****'),
+            # 加密返回手机号
+            "telephone": raw_telephone.replace(raw_telephone[3:7], '****'),
         }
         return Response(response_data)
 

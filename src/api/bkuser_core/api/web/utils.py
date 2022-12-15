@@ -180,14 +180,14 @@ def get_token_handler(token: str) -> ProfileTokenHolder:
     return token_holder
 
 
-def get_profile_by_username_or_telephone(username_or_telephone):
-    username, domain = parse_username_domain(username_or_telephone)
+def get_profile_by_telephone(telephone):
+    username, domain = parse_username_domain(telephone)
     if not domain:
         domain = ProfileCategory.objects.get_default().domain
     try:
         profile = Profile.objects.get(username=username, domain=domain)
     except Profile.DoesNotExist:
-        profile = Profile.objects.get(telephone=username_or_telephone)
+        profile = Profile.objects.get(telephone=telephone)
     return profile
 
 
