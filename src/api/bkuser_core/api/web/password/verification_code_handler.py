@@ -69,14 +69,14 @@ class ResetPasswordVerificationCodeHandler:
         expired_second = today_last_time.timestamp() - current_datetime.timestamp()
         return self._set_into_cache(telephone, count, timeout=expired_second, prefix="reset_password_send_count_")
 
-    def _validate_token(self, token: str):
+    def _check_repeatable_sending(self, token: str):
         # 校验是否重复发送
         verification_code_data = self._get_from_cache(token, prefix="reset_password")
         if verification_code_data:
             effective_minutes = self.config_loader.get("verification_code_expire_seconds")
             raise error_codes.VERIFICATION_CODE_REPEATABLE_SENDING.f(effective_minutes=effective_minutes // 60)
 
-    def _validate_send_count(self):
+    def _check_send_count_exceeded_limit(self):
         # 是否在发送的当日次数中
         limit_send_count = self.config_loader.get("reset_sms_send_max_limit")
         send_count_in_cache = self._get_from_cache(key=self.profile.telephone, prefix="reset_password_send_count_")
@@ -92,8 +92,8 @@ class ResetPasswordVerificationCodeHandler:
         token = md.hexdigest()
 
         # 是否已经发送，是否超过当日发送次数
-        self._validate_token(token)
-        self._validate_send_count()
+        self._check_repeatable_sending(token)
+        self._check_send_count_exceeded_limit()
 
         expire_seconds = self.config_loader.get("verification_code_expire_seconds")
         verification_code_length = self.config_loader.get("verification_code_length")
