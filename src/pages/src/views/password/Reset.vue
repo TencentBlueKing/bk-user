@@ -28,10 +28,10 @@
       <div class="login-methond" v-if="!hasReset">
         <bk-radio-group class="fr" v-model="checkMethod">
           <bk-radio-button value="sms">
-            短信
+            {{$t('短信')}}
           </bk-radio-button>
           <bk-radio-button value="email">
-            邮箱
+            {{$t('邮箱')}}
           </bk-radio-button>
         </bk-radio-group>
       </div>
