@@ -107,6 +107,7 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     departments = serializers.ListField(child=serializers.IntegerField(), required=False)
     password = serializers.CharField(required=False, write_only=True)
     display_name = serializers.CharField(required=False)
+    old_password = serializers.CharField(required=False, write_only=True)  # 只有admin用户重置密码时才需要传递该字段
 
     class Meta:
         model = Profile
@@ -118,6 +119,9 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
 
     def validate_display_name(self, display_name):
         return escape_display_name(display_name)
+
+    def validate_old_password(self, old_password):
+        return get_raw_password(self.instance.category_id, old_password)
 
 
 class ProfileCreateInputSLZ(serializers.ModelSerializer):
