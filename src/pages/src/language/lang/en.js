@@ -260,8 +260,6 @@ export default {
   最近三个月: 'Last 3 months',
   时间: 'Time',
   操作人员: 'The operator',
-  操作用户: 'The operator',
-  用户全名: 'Full name',
   操作对象: 'Action object',
   操作类型: 'Operation type',
   用户目录管理无权限访问: '【Categories Management】No access authority',
@@ -448,5 +446,4 @@ export default {
   退出登录: 'Log out',
   确认退出登录_: '确认退出登录？',
   _需要设置新密码: ', You need to set a new password',
-  导入覆盖提升: 'After checking, it is allowed to edit the personal information of existing users, and the existing user information will face the risk of being modified, so be cautious.',
 };
