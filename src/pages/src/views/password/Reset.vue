@@ -25,37 +25,70 @@
       <div class="login-heard">
         <img src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
       </div>
-      <div class="login-methond" v-if="!hasReset">
-        <bk-radio-group class="fr" v-model="checkMethod">
-          <bk-radio-button value="sms">
-            {{$t('短信')}}
-          </bk-radio-button>
-          <bk-radio-button value="email">
-            {{$t('邮箱')}}
-          </bk-radio-button>
-        </bk-radio-group>
+      <div class="login-content">
+        <div class="reset-pw">
+          <div class="reset-content" v-if="hasReset === false">
+            <h4 class="common-title">{{$t('重置密码')}}</h4>
+            <p :class="['text', { 'show-error-info': isError }]">{{$t('请输入账户绑定的邮箱，我们将为您发送密码重置邮件')}}</p>
+            <p class="error-text" v-if="isError">
+              <i class="icon icon-user-exclamation-circle-shape"></i>
+              <span class="text">{{$t('邮箱格式错误，请重新输入')}}</span>
+            </p>
+            <input
+              type="text"
+              :class="['select-text', { 'input-error': isError }]"
+              :placeholder="$t('请输入邮箱')"
+              v-model="resetEmail"
+              @focus="hiddenError" />
+            <bk-button
+              theme="primary" class="submit"
+              :disabled="!resetEmail" @click="submitEmailPw">{{$t('发送密码重置邮件')}}</bk-button>
+          </div>
+        </div>
+        <div class="reset-content" v-if="hasReset === true">
+          <h4 class="common-title">{{$t('已发送密码重置邮件')}}</h4>
+          <p class="text" style="margin: 0 0 18px 0">{{$t('已发送至您的邮箱')}}：{{resetEmail}}<br />{{$t('请查看邮件并根据提示进行操作')}}</p>
+          <bk-button theme="primary" class="submit" @click="goEmail">{{$t('前往邮箱')}}</bk-button>
+        </div>
       </div>
-      <reset-email v-if="checkMethod === 'email'" @has-reset="hasReset = true"></reset-email>
-      <reset-sms v-if="checkMethod === 'sms'"></reset-sms>
     </div>
   </div>
 </template>
 
 <script>
-import ResetEmail from './Email.vue';
-import ResetSms from './Sms.vue';
-
 export default {
   name: 'ResetPassword',
-  components: {
-    'reset-email': ResetEmail,
-    'reset-sms': ResetSms,
-  },
   data() {
     return {
-      checkMethod: 'sms',
+      isError: false,
+      resetEmail: '',
       hasReset: false,
     };
+  },
+  methods: {
+    hiddenError() {
+      this.isError = false;
+    },
+    async submitEmailPw() {
+      try {
+        // eslint-disable-next-line no-useless-escape
+        const reEmail = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+        if (!reEmail.test(this.resetEmail)) {
+          this.isError = true;
+          return;
+        }
+        // 调用接口
+        const emailParams = { email: this.resetEmail };
+        await this.$store.dispatch('password/reset', emailParams);
+        this.hasReset = true;
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    goEmail() {
+      const emailUrl = this.resetEmail.split('@')[1];
+      window.open(`https://mail.${emailUrl}`);
+    },
   },
 };
 </script>
@@ -105,9 +138,75 @@ export default {
   }
 }
 
-.login-methond {
-  position: absolute;
-  right: 24px;
-  top: 120px;
+.login-content {
+  padding: 0 24px;
+  font-size: 14px;
 }
+
+.common-title {
+  margin: 20px 0 6px 0;
+  font-size: 20px;
+  font-weight: 400;
+  color: rgba(49, 50, 56, 1);
+  line-height: 28px;
+}
+
+.select-text {
+  padding-left: 12px;
+
+  &::input-placeholder {
+    color: rgba(195, 205, 215, 1);
+  }
+}
+
+.submit {
+  width: 100%;
+}
+// 重置密码
+.reset-content {
+  .text {
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(99, 101, 110, 1);
+    line-height: 20px;
+    margin: 10px 0 20px;
+
+    &.show-error-info {
+      margin-bottom: 10px;
+    }
+  }
+
+  .select-text {
+    margin-bottom: 20px;
+  }
+}
+// 错误提示
+.error-text {
+  margin-bottom: 10px;
+  color: #ea3636;
+  font-size: 14px;
+
+  .text {
+    color: #ea3636;
+  }
+
+  .icon {
+    color: #ea3636;
+  }
+}
+
+/*.logo-title {
+      width: 100%;
+      height: 110px;
+      border-bottom: 1px solid #F0F1F5;
+      border-radius: 2px 2px 0 0;
+      background: #fff;
+      text-align: center;
+      line-height: 110px;
+      img {
+          height: 35px;
+          vertical-align: top;
+          margin-top: 37px;
+      }
+  }*/
 </style>

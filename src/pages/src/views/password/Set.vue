@@ -29,11 +29,7 @@
         <div class="reset-pw">
           <div class="reset-content" v-if="hasSet === false">
             <h4 class="common-title">{{$t('设置新密码')}}</h4>
-            <p
-              v-if="setPasswordText"
-              :class="['text', isError && 'show-error-info']">
-              {{setPasswordText}}{{$t('_需要设置新密码')}}
-            </p>
+            <p :class="['text', isError && 'show-error-info']">{{setPasswordText}}{{$t('_需要设置新密码')}}</p>
             <p class="error-text" v-if="isError">
               <i class="icon icon-user-exclamation-circle-shape"></i>
               <span class="text">{{errorText}}</span>
@@ -93,7 +89,7 @@ export default {
         isShow: false,
         title: this.$t('密码修改成功'),
       },
-      setPasswordText: (this.$route.query.data || '').substring(1, (this.$route.query.data || '').length - 1),
+      setPasswordText: this.$route.query.data.substring(1, this.$route.query.data.length - 1),
     };
   },
   // mounted () {
