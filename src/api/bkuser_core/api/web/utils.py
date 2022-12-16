@@ -21,7 +21,7 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile, ProfileTokenHolder
 from bkuser_core.profiles.password import PasswordValidator
-from bkuser_core.profiles.utils import check_former_passwords, parse_username_domain
+from bkuser_core.profiles.utils import check_former_passwords
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.models import SettingMeta
@@ -180,15 +180,15 @@ def get_token_handler(token: str) -> ProfileTokenHolder:
     return token_holder
 
 
-def get_profile_by_telephone(telephone):
-    username, domain = parse_username_domain(telephone)
-    if not domain:
-        domain = ProfileCategory.objects.get_default().domain
-    try:
-        profile = Profile.objects.get(username=username, domain=domain)
-    except Profile.DoesNotExist:
-        profile = Profile.objects.get(telephone=telephone)
-    return profile
+def get_profile_by_username(username: str, domain: str):
+    profile = Profile.objects.filter(username=username, domain=domain)
+    if not profile.exists():
+        return None
+    return profile.first()
+
+
+def get_profile_by_telephone(telephone: str):
+    return Profile.objects.get(telephone=telephone)
 
 
 def escape_value(input_value: str) -> str:

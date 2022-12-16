@@ -30,6 +30,7 @@ from bkuser_core.api.web.utils import (
     get_category,
     get_operator,
     get_profile_by_telephone,
+    get_profile_by_username,
     get_token_handler,
     list_setting_metas,
     validate_password,
@@ -188,7 +189,16 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
         # 根据交互设计，和登录一样：只能猜测这里传输的username,还是telephone
         # 存在着username=telephone的情况
         try:
-            profile = get_profile_by_telephone(input_telephone)
+            # 优先过滤username
+            username, domain = parse_username_domain(input_telephone)
+            if not domain:
+                domain = ProfileCategory.objects.get_default().domain
+            # filter过滤，判断是否存在，存在则仅有一个
+            profile = get_profile_by_username(username, domain)
+
+            # 不存在则才是telephone
+            if not profile:
+                profile = get_profile_by_telephone(input_telephone)
 
         except Profile.DoesNotExist:
             logger.exception(
@@ -201,7 +211,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
             raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
 
         # 生成verification_code_token
-        verification_code_token = ResetPasswordVerificationCodeHandler(profile.id).generate_reset_password_token()
+        verification_code_token = ResetPasswordVerificationCodeHandler().generate_reset_password_token(profile.id)
         raw_telephone = profile.telephone
 
         # 用户未绑定手机号，即使用户名就是手机号码
@@ -225,7 +235,9 @@ class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
 
         verification_code_handler = ResetPasswordVerificationCodeHandler()
 
-        verification_code_handler.verify_verification_code(data["verification_code_token"], data["verification_code"])
-        profile_token = verification_code_handler.generate_profile_token()
+        profile_id = verification_code_handler.verify_verification_code(
+            data["verification_code_token"], data["verification_code"]
+        )
+        profile_token = verification_code_handler.generate_profile_token(profile_id)
         # 前端拿到token，作为query_params，拼接重置页面路由
         return Response({"token": profile_token.token})

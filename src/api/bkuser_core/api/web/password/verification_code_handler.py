@@ -28,20 +28,15 @@ logger = logging.getLogger(__name__)
 
 
 class ResetPasswordVerificationCodeHandler:
-    def __init__(self, profile_id: int = None):
-        if profile_id:
-            self.profile = Profile.objects.get(id=profile_id)
-            self.config_loader = ConfigProvider(category_id=self.profile.category_id)
-
+    def __init__(self):
+        self.profile = None
+        self.config_loader = None
         self.cache = caches["verification_code"]
 
-    def _set_into_cache(self, key: str, data: Any, timeout: int = None, prefix: str = None):
+    def _set_into_cache(self, key: str, data: Any, timeout: int, prefix: str = None):
         if prefix:
             key = f"{prefix}_{key}"
-        if timeout:
-            self.cache.set(key=key, timeout=timeout, value=data)
-        else:
-            self.cache.set(key=key, value=data)
+        self.cache.set(key=key, timeout=timeout, value=data)
 
     def _get_from_cache(self, key: str, prefix: str = None):
         if prefix:
@@ -67,24 +62,27 @@ class ResetPasswordVerificationCodeHandler:
         )
         #  再次发送的情况下 ++ 1 会重置时间; 计算当前时间距离凌晨时间
         expired_second = today_last_time.timestamp() - current_datetime.timestamp()
-        return self._set_into_cache(telephone, count, timeout=expired_second, prefix="reset_password_send_count_")
+        return self._set_into_cache(telephone, count, timeout=expired_second, prefix="reset_password_send_count")
 
-    def _check_repeatable_sending(self, token: str):
+    def _check_repeat_send_require(self, token: str):
         # 校验是否重复发送
         verification_code_data = self._get_from_cache(token, prefix="reset_password")
         if verification_code_data:
             effective_minutes = self.config_loader.get("verification_code_expire_seconds")
-            raise error_codes.VERIFICATION_CODE_REPEATABLE_SENDING.f(effective_minutes=effective_minutes // 60)
+            raise error_codes.VERIFICATION_CODE_REPEAT_SENDING_REQUIRE.f(effective_minutes=effective_minutes // 60)
 
     def _check_send_count_exceeded_limit(self):
         # 是否在发送的当日次数中
         limit_send_count = self.config_loader.get("reset_sms_send_max_limit")
-        send_count_in_cache = self._get_from_cache(key=self.profile.telephone, prefix="reset_password_send_count_")
+        send_count_in_cache = self._get_from_cache(key=self.profile.telephone, prefix="reset_password_send_count")
         send_count = send_count_in_cache if send_count_in_cache else 0
         if send_count > limit_send_count:
-            raise error_codes.VERIFICATION_CODE_SEND_LIMIT
+            raise error_codes.VERIFICATION_CODE_SEND_REACH_LIMIT
 
-    def generate_reset_password_token(self) -> str:
+    def generate_reset_password_token(self, profile_id) -> str:
+        self.profile = Profile.objects.get(id=profile_id)
+        self.config_loader = ConfigProvider(category_id=self.profile.category_id)
+
         # token 生成
         hashed_value = f"{self.profile.username}@{self.profile.domain}|{self.profile.telephone}"
         md = hashlib.md5()
@@ -92,7 +90,7 @@ class ResetPasswordVerificationCodeHandler:
         token = md.hexdigest()
 
         # 是否已经发送，是否超过当日发送次数
-        self._check_repeatable_sending(token)
+        self._check_repeat_send_require(token)
         self._check_send_count_exceeded_limit()
 
         expire_seconds = self.config_loader.get("verification_code_expire_seconds")
@@ -109,12 +107,12 @@ class ResetPasswordVerificationCodeHandler:
             "expired_at_timestamp": expired_at.timestamp(),
         }
 
-        logger.info("Set the verification_code_data in redis. token: {}".format(token))
-        # redis 缓冲验证码
+        logger.info("Set the verification_code_data in redis. token is %s", token)
+        # redis 缓存验证码
         self._set_into_cache(token, json.dumps(verification_code_data), expire_seconds, prefix="reset_password")
 
         # 增加当日发送次数
-        send_count_in_cache = self._get_from_cache(key=self.profile.telephone, prefix="reset_password_send_count_")
+        send_count_in_cache = self._get_from_cache(key=self.profile.telephone, prefix="reset_password_send_count")
         send_count = send_count_in_cache + 1 if send_count_in_cache else 1
         self._set_reset_password_send_count(self.profile.telephone, send_count)
 
@@ -132,29 +130,26 @@ class ResetPasswordVerificationCodeHandler:
 
         return token
 
-    def verify_verification_code(self, verification_code_token: str, verification_code: str):
+    def verify_verification_code(self, verification_code_token: str, verification_code: str) -> int:
         verification_code_data_bytes = self._get_from_cache(verification_code_token, prefix="reset_password")
 
         # token 校验
         if not verification_code_data_bytes:
             logger.info(
-                "verify verification_code, verification_code_data is invalid. "
-                "Posted token is %s, verification_code=%s",
+                "verify verification_code, verification_code_data is invalid. " "Posted token is %s",
                 verification_code_token,
-                verification_code,
             )
             raise error_codes.VERIFICATION_CODE_INVALID
 
         verification_code_data = json.loads(verification_code_data_bytes)
         logger.info(
-            "verify verification_code, verification_code_data is %s. Posted token is %s, verification_code=%s",
-            verification_code_data,
+            "verify verification_code. Posted token is %s, verification_code=%s",
             verification_code_token,
             verification_code,
         )
 
-        self.profile = Profile.objects.get(id=verification_code_data["profile_id"])
-        self.config_loader = ConfigProvider(category_id=self.profile.category_id)
+        profile = Profile.objects.get(id=verification_code_data["profile_id"])
+        config_loader = ConfigProvider(profile.category_id)
 
         # 验证码校验
         if verification_code_data["verification_code"] != verification_code:
@@ -167,18 +162,20 @@ class ResetPasswordVerificationCodeHandler:
             self._set_into_cache(
                 verification_code_token, json.dumps(verification_code_data), expired_second, prefix="reset_password"
             )
-            error_count_limit = self.config_loader.get("failed_verification_max_limit")
+            error_count_limit = config_loader.get("failed_verification_max_limit")
 
             # 验证码试错次数
             if verification_code_data["error_count"] > error_count_limit:
-                raise error_codes.VERIFICATION_CODE_FAILED_MAX_COUNT
+                raise error_codes.VERIFICATION_CODE_WRONG_REACH_LIMIT
 
             # 验证码错误
-            raise error_codes.VERIFICATION_CODE_FAILED
+            raise error_codes.VERIFICATION_CODE_WRONG
 
         # 验证通过删除缓存
         self._delete_from_cache(verification_code_token, prefix="reset_password")
+        return profile.id
 
-    def generate_profile_token(self) -> ProfileTokenHolder:
-        token_holder = ProfileTokenHolder.objects.create(profile=self.profile)
+    def generate_profile_token(self, profile_id) -> ProfileTokenHolder:
+        profile = Profile.objects.get(id=profile_id)
+        token_holder = ProfileTokenHolder.objects.create(profile=profile)
         return token_holder
