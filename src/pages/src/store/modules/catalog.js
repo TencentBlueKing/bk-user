@@ -78,7 +78,7 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     ajaxImportUser(_context, params, _config = {}) {
-      return http.post(`api/v1/web/categories/${params.id}/operations/sync_or_import/?is_overwrite=${params.isOverwrite}`, params.data);
+      return http.post(`api/v1/web/categories/${params.id}/operations/sync_or_import/`, params.data);
       // const mockUrl = `?mock-file=catalog`
       // return http.get(mockUrl, config)
     },
