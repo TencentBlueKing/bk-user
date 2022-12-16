@@ -59,6 +59,7 @@ class ResetPasswordVerificationCodeHandler:
             hour=23,
             minute=59,
             second=59,
+            tzinfo=current_datetime.tzinfo,
         )
         #  再次发送的情况下 ++ 1 会重置时间; 计算当前时间距离凌晨时间
         expired_second = today_last_time.timestamp() - current_datetime.timestamp()
