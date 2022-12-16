@@ -27,7 +27,7 @@ def send_reset_password_verification_code_sms(profile_id: str, send_config: dict
         )
         send_sms(**send_config)
     except Exception:
-        logger.error(
+        logger.exception(
             "Failed to send verification_code of Profile(%s) via telephone(%s): %s",
             profile_id,
             send_config["receivers"],
