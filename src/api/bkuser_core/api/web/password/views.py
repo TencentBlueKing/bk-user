@@ -23,7 +23,9 @@ from bkuser_core.api.web.password.serializers import (
     PasswordResetByTokenInputSLZ,
     PasswordResetSendEmailInputSLZ,
     PasswordResetSendSMSInputSLZ,
+    PasswordResetSendSMSOutputSLZ,
     PasswordVerifyVerificationCodeInputSLZ,
+    PasswordVerifyVerificationCodeOutputSLZ,
 )
 from bkuser_core.api.web.password.verification_code_handler import ResetPasswordVerificationCodeHandler
 from bkuser_core.api.web.utils import (
@@ -223,7 +225,8 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
             # 加密返回手机号
             "telephone": raw_telephone.replace(raw_telephone[3:7], '****'),
         }
-        return Response(response_data)
+
+        return Response(PasswordResetSendSMSOutputSLZ(response_data).data)
 
 
 class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
@@ -240,4 +243,5 @@ class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
         )
         profile_token = verification_code_handler.generate_profile_token(profile_id)
         # 前端拿到token，作为query_params，拼接重置页面路由
-        return Response({"token": profile_token.token})
+        response_data = {"token": profile_token.token}
+        return Response(PasswordVerifyVerificationCodeOutputSLZ(response_data).data)

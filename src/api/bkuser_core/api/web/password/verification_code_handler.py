@@ -108,7 +108,12 @@ class ResetPasswordVerificationCodeHandler:
             "expired_at_timestamp": expired_at.timestamp(),
         }
 
-        logger.info("Set the verification_code_data in redis. token is %s", token)
+        logger.info(
+            "Set the verification_code_data in redis. profile<%s-%s>  token: %s",
+            self.profile.id,
+            f"{self.profile.username}@{self.profile.domain}",
+            token,
+        )
         # redis 缓存验证码
         self._set_into_cache(token, json.dumps(verification_code_data), expire_seconds, prefix="reset_password")
 
@@ -137,7 +142,7 @@ class ResetPasswordVerificationCodeHandler:
         # token 校验
         if not verification_code_data_bytes:
             logger.info(
-                "verify verification_code, verification_code_data is invalid. " "Posted token is %s",
+                "verify verification_code, verification_code_data is invalid. Posted token is %s",
                 verification_code_token,
             )
             raise error_codes.VERIFICATION_CODE_INVALID
