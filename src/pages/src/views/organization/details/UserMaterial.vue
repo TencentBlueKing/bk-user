@@ -392,26 +392,29 @@ export default {
       this.clickSecond = true;
       try {
         this.$emit('showBarLoading');
-        const passwordData = {
-          password: this.newPassword.trim(),
-        };
+        let data = {};
         // 任何人在重置admin密码时，需要先输入原密码
         if (this.isAdmin) {
-          passwordData.old_password = this.oldPassword.trim();
-        };
-        if (this.isRsaEncrypted) {
-          await this.$store.dispatch('organization/patchProfile', {
-            id: this.currentProfile.id,
-            data: {
-              password: this.Rsa.rsaPublicData(passwordData, this.publicKey),
-            },
-          });
+          // passwordData.old_password = this.oldPassword.trim();
+          if (this.isRsaEncrypted) {
+            data = {
+              password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey),
+              old_password: this.Rsa.rsaPublicData(this.oldPassword.trim(), this.publicKey),
+            };
+          } else {
+            data = {
+              password: this.newPassword.trim(),
+              old_password: this.oldPassword.trim(),
+            };
+          }
         } else {
-          await this.$store.dispatch('organization/patchProfile', {
-            id: this.currentProfile.id,
-            data: passwordData,
-          });
+          if (this.isRsaEncrypted) {
+            data = { password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey) };
+          } else {
+            data = { password: this.newPassword.trim() };
+          }
         }
+        this.patchProfile(this.currentProfile.id, data);
         this.$bkMessage({
           message: this.$t('重置密码成功'),
           theme: 'success',
@@ -423,6 +426,12 @@ export default {
         this.clickSecond = false;
         this.$emit('closeBarLoading');
       }
+    },
+    async patchProfile(id, data) {
+      await this.$store.dispatch('organization/patchProfile', {
+        id,
+        data,
+      });
     },
     closeResetDialog(e) {
       if (e.target.innerText === '重置密码') return;
