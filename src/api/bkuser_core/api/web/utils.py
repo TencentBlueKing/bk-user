@@ -180,6 +180,17 @@ def get_token_handler(token: str) -> ProfileTokenHolder:
     return token_holder
 
 
+def get_profile_by_username(username: str, domain: str):
+    profile = Profile.objects.filter(username=username, domain=domain)
+    if not profile.exists():
+        return None
+    return profile.first()
+
+
+def get_profile_by_telephone(telephone: str):
+    return Profile.objects.get(telephone=telephone)
+
+
 def escape_value(input_value: str) -> str:
     """Replace special characters "&", "<" and ">" to HTML-safe sequences.
     If the optional flag quote is true, the quotation mark character (")

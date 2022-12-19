@@ -124,6 +124,13 @@ error_codes.add_codes(
         ErrorCode("USER_ALREADY_EXISTED", _("该目录下此用户名已存在"), status_code=HTTP_409_CONFLICT),
         ErrorCode("SAVE_USER_INFO_FAILED", _("保存用户信息失败")),
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
+        ErrorCode("TELEPHONE_NOT_PROVIDED", _("该用户没有绑定手机号，发送短信失败")),
+        ErrorCode("TELEPHONE_BOUND_TO_MULTI_PROFILE", _("该手机号被多个用户绑定，请输入具体的用户名或联系管理员处理")),
+        ErrorCode("VERIFICATION_CODE_REPEAT_SENDING_REQUIRE", _("验证码已发送，有效时间为{effective_minutes}分钟，请勿重复发送")),
+        ErrorCode("VERIFICATION_CODE_SEND_REACH_LIMIT", _("该手机号已超过当日重置密码短信发送限制次数")),
+        ErrorCode("VERIFICATION_CODE_INVALID", _("验证码失效，请重新发送")),
+        ErrorCode("VERIFICATION_CODE_WRONG", _("你所输入验证码错误，请重新输入")),
+        ErrorCode("VERIFICATION_CODE_WRONG_REACH_LIMIT", _("你所输入验证码错误，验证次数已达上限，请验证码过期后重试")),
         ErrorCode("OLD_PASSWORD_ERROR", _("原密码校验失败")),
         # 上传文件相关
         ErrorCode("FILE_IMPORT_TOO_LARGE", _("上传文件过大")),
