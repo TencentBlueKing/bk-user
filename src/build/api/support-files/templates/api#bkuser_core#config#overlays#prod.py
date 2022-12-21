@@ -62,6 +62,16 @@ ESB_TOKEN = "__BK_PAAS_APP_SECRET__"
 CERTIFICATE_DIR = "__BK_CERT_PATH__"
 CERTIFICATE_SERVER_DOMAIN = "__BK_LICENSE_PRIVATE_ADDR__"
 
+# redis, NOTE: NOT SUPPORT REDIS SENTINEL NOW
+REDIS_MODE = "__BK_USERMGR_REDIS_MODE__"
+REDIS_HOST = "__BK_USERMGR_REDIS_HOST__"
+REDIS_PORT = "__BK_USERMGR_REDIS_PORT__"
+REDIS_PASSWORD = "__BK_USERMGR_REDIS_PASSWORD__"
+REDIS_DB = 0
+REDIS_KEY_PREFIX = "bk-user-"
+
+REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
 CACHES = {
     "default": {
         "BACKEND": "bkuser_core.common.cache.DummyRedisCache",
@@ -69,6 +79,17 @@ CACHES = {
     'locmem': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'memory_cache_0',
+    },
+    "verification_code": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "TIMEOUT": 30 * 60,
+        "KEY_PREFIX": f"{REDIS_KEY_PREFIX}verification_code",
+        "VERSION": 1,
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "PASSWORD": REDIS_PASSWORD},
+        "SOCKET_CONNECT_TIMEOUT": 5,  # socket 建立连接超时设置，单位秒
+        "SOCKET_TIMEOUT": 5,  # 连接建立后的读写操作超时设置，单位秒
+        "IGNORE_EXCEPTIONS": True,  # redis 只作为缓存使用, 触发异常不能影响正常逻辑，可能只是稍微慢点而已
     },
 }
 # 全局缓存过期时间，默认为一小时
