@@ -21,6 +21,9 @@ LOGIN_EXEMPT_WHITE_LIST = (
     r"/api/v1/web/passwords/reset/send_email/$",
     r"/api/v1/web/passwords/reset/by_token/$",
     r"/api/v1/web/version_logs/$",
+    r"/api/v1/web/passwords/settings/by_token/$",
+    r"/api/v1/web/passwords/reset/verification_code/send_sms/$",
+    r"/api/v1/web/passwords/reset/verification_code/verify/$",
     # r"/reset_password$",
     # r"/set_password$",
 )
