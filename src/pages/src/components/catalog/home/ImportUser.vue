@@ -51,7 +51,7 @@
     <p class="tip-wrapper">
       <bk-checkbox
         v-model="uploadInfo.isOverwrite">
-        允许对同名用户覆盖更新
+        {{ $t(允许对同名用户覆盖更新) }}
       </bk-checkbox>
       <i class="tip-icon icon-user--l" v-bk-tooltips="{ width: 310, content: $t('导入覆盖提升') }"></i>
     </p>
