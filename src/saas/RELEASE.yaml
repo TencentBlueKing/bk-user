@@ -550,3 +550,32 @@ versions:
         content:
         - "全新架构，重构 SaaS 层所有功能接口"
         - "接口性能优化: 优化数据库索引/增加缓存/减少接口 SQL 查询量"
+- version: "2.5.1"
+  date: "2022-11-15"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "OPTIMIZATION"
+        content:
+        - "remove docs/changelogs"
+      - type: "FIX"
+        content:
+        - "修复: 新增用户或查看某个用户详情触发报错"
+- version: "2.5.2"
+  date: "2022-12-30"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "NEW"
+        content:
+        - "安全: 密码试错次数超过设置，自动锁定账户对admin生效"
+        - "安全: 用户修改密码以及重置密码时密码需加密传输"
+        - "安全: admin账户重置密码需要先输入原密码进行校验"
+        - "重置密码支持短信"
+      - type: "FIX"
+        content:
+        - "修复: xss问题"
+        - "修复: expired_after_days配置导致的异常"
+        - "修复: 审计-登陆日志导出ugettext_lazy 导出失败"
+        - "修复: 职位展示问题"
+        - "修复: 通过excel导入用户组织支持全量更新"
