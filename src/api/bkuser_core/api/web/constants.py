@@ -10,3 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 
 EXCLUDE_SETTINGS_META_KEYS = ["password_rsa_private_key"]
+
+EXCLUDE_SETTINGS_META_IN_META_LISTVIEW = [
+    "enable_password_rsa_encrypted",
+    "password_rsa_public_key",
+    "password_rsa_private_key",
+]
