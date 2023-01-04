@@ -325,6 +325,8 @@ export default {
         .bk-form-control {
           display: flex;
           width: 85%;
+          line-height: 50px;
+          font-size: 14px;
           .password-tab {
             padding-left: 20px;
             .checkbox-item {
