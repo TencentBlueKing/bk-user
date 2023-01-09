@@ -228,13 +228,13 @@
     <!-- 新增用户 侧边栏 -->
     <bk-sideslider
       class="king-sideslider"
-      :width="520"
+      :width="630"
       :show-mask="false"
       :is-show.sync="detailsBarInfo.isShow"
       :quick-close="detailsBarInfo.quickClose"
       :title="detailsBarInfo.title"
       :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
-      <div slot="content" class="member-content" v-if="detailsBarInfo.isShow">
+      <div slot="content" v-if="detailsBarInfo.isShow">
         <DetailsBar
           :details-bar-info="detailsBarInfo"
           :current-profile="currentProfile"
@@ -972,7 +972,7 @@ export default {
     viewDetails(item) {
       this.currentProfile = item;
       this.detailsBarInfo.type = 'view';
-      this.detailsBarInfo.title = this.currentProfile.display_name;
+      this.detailsBarInfo.title = this.$t('用户详情');
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
       this.detailsBarInfo.quickClose = true;
@@ -1063,6 +1063,7 @@ export default {
     // 编辑成员信息
     editProfile() {
       this.detailsBarInfo.type = 'edit';
+      this.detailsBarInfo.title = this.$t('编辑用户');
       this.detailsBarInfo.quickClose = false;
     },
     handleCancelEdit() {
@@ -1070,6 +1071,7 @@ export default {
         this.detailsBarInfo.isShow = false;
       } else {
         this.detailsBarInfo.type = 'view';
+        this.detailsBarInfo.title = this.$t('用户详情');
         this.detailsBarInfo.quickClose = true;
       }
     },

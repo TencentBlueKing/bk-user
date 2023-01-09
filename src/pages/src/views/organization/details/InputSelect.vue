@@ -17,8 +17,7 @@
       :clearable="!item.require"
       :multiple="item.type === 'multi_enum'"
       :disabled="editStatus && !item.editable"
-      :ext-cls="item.isError ? 'input-error' : ''"
-      @change="verifyInput(item)">
+      :ext-cls="item.isError ? 'input-error' : ''">
       <bk-option
         v-for="(option, index) in item.options"
         :key="index"
@@ -43,15 +42,6 @@ export default {
     statusMap: {
       type: Object,
       default: {},
-    },
-  },
-  methods: {
-    verifyInput(item) {
-      if (item.type === 'one_enum') {
-        item.isError = !!(item.require && (!item.value && item.value !== 0));
-      } else {
-        item.isError = !!(item.require && !item.value.length);
-      }
     },
   },
 };

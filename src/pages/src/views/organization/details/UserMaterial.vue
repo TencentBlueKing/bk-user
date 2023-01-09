@@ -77,51 +77,64 @@
       </div>
     </div>
     <div class="user-detail" data-test-id="activeFieldsData">
-      <div class="user-avatar-wrapper">
+      <div class="user-avatar-wrapper" :style="showUserInfo ? 'display: block' : 'display: none'">
         <img :src="localAvatar || currentProfile.logo" width="68" height="68" @error="handleLoadAvatarError" />
         <p v-if="isForbid" class="forbid-text">{{currentProfile.status === 'DISABLED' ? $t('已禁用') : $t('已锁定')}}</p>
       </div>
       <ul v-if="fieldsList.length">
         <li class="infor-content-list">
-          <h4 class="title">{{$t('用户信息')}}</h4>
-          <div class="specific-text" v-for="(fieldInfo, index) in activeFieldsList" :key="index">
+          <h4 class="title" @click="isUserInfo">
+            <i :class="['bk-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
+            {{$t('用户信息')}}
+          </h4>
+          <div
+            :class="showUserInfo ? 'specific-text' : 'isHide'"
+            v-for="(fieldInfo, index) in activeFieldsList" :key="index">
             <span class="name" v-bk-overflow-tips>{{fieldInfo.name}}</span>
             <span class="gap">：</span>
             <div class="desc" v-if="fieldInfo.key === 'telephone'" @click="viewTelephone">
               <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
             </div>
             <div class="desc" v-else>
-              <p class="text">{{$xssVerification(fieldInfo.value || '') || '--'}}</p>
+              <p v-if="fieldInfo.key === 'account_expiration_date'" class="text">
+                {{getExpireDays(fieldInfo.value)}}
+              </p>
+              <p v-else class="text">{{$xssVerification(fieldInfo.value || '') || '--'}}</p>
             </div>
           </div>
         </li>
         <li class="infor-content-list">
-          <h4 class="title">{{$t('用户设置')}}</h4>
-          <div class="specific-text">
-            <span class="name">{{$t('所在组织')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <template v-for="(item, index) in currentProfile.department_name">
-                <span :key="index" class="text" v-bk-overflow-tips>{{item}}</span>
-              </template>
-            </p>
-          </div>
-          <div class="specific-text">
-            <span class="name">{{$t('直接上级')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <span class="text tag-text" v-if="currentProfile.leader && currentProfile.leader.length">
-                {{switchTag(currentProfile.leader)}}
-              </span>
-              <span class="text" v-else>--</span>
-            </p>
-          </div>
-          <div class="specific-text">
-            <span class="name">{{$t('密码有效期')}}</span>
-            <span class="gap">：</span>
-            <p class="desc">
-              <span class="text">{{passwordValidDays}}</span>
-            </p>
+          <h4 class="title" @click="isUserSetting">
+            <i :class="['bk-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
+            {{$t('用户设置')}}
+          </h4>
+          <div :style="showUserSetting ? 'display: block' : 'display: none'">
+            <div class="specific-text">
+              <span class="name">{{$t('所在组织')}}</span>
+              <span class="gap">：</span>
+              <p class="desc">
+                <template v-for="(item, index) in currentProfile.department_name">
+                  <span :key="index" class="text" v-bk-overflow-tips>{{item}}</span>
+                </template>
+              </p>
+            </div>
+            <div class="specific-text">
+              <span class="name">{{$t('直接上级')}}</span>
+              <span class="gap">：</span>
+              <p class="desc">
+                <span class="text tag-text" v-if="currentProfile.leader && currentProfile.leader.length">
+                  {{switchTag(currentProfile.leader)}}
+                </span>
+                <span class="text" v-else>--</span>
+              </p>
+            </div>
+            <div class="specific-text">
+              <span class="name">{{$t('密码有效期')}}</span>
+              <span class="gap">：</span>
+              <p class="desc">
+                <span class="text">{{passwordValidDays}}</span>
+              </p>
+            </div>
           </div>
         </li>
       </ul>
@@ -130,7 +143,7 @@
 </template>
 
 <script>
-import { dateConvert } from '@/common/util';
+import { dateConvert, expireDate } from '@/common/util';
 const Base64 = require('js-base64').Base64;
 export default {
   directives: {
@@ -193,6 +206,8 @@ export default {
       publicKey: '',
       // 是否rsa加密
       isRsaEncrypted: false,
+      showUserInfo: true,
+      showUserSetting: true,
     };
   },
   computed: {
@@ -434,6 +449,15 @@ export default {
     handleLoadAvatarError() {
       this.localAvatar = this.$store.state.localAvatar;
     },
+    isUserInfo() {
+      this.showUserInfo = !this.showUserInfo;
+    },
+    isUserSetting() {
+      this.showUserSetting = !this.showUserSetting;
+    },
+    getExpireDays(val) {
+      return expireDate(val);
+    },
   },
 };
 </script>
@@ -443,7 +467,7 @@ export default {
 
 .look-user-info-wrapper {
   height: 100%;
-  padding: 30px 0;
+  padding: 24px 40px;
 
   &.forbid-operate {
     .bk-button {
@@ -485,7 +509,6 @@ export default {
 .action-btn-wrapper {
   font-size: 0;
   position: relative;
-  margin: 0 30px;
 
   .editor-btn {
     /*width: 76px !important;*/
@@ -585,7 +608,6 @@ export default {
 .user-detail {
   position: relative;
   height: calc(100% - 36px);
-  padding: 0 30px;
   overflow: hidden;
   overflow-y: auto;
 
@@ -622,13 +644,19 @@ export default {
   }
 
   .title {
-    padding: 17px 0 8px 0;
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin: 20px 0;
+    font-size: 12px;
     font-weight: bold;
-    color: rgba(51, 60, 72, 1);
-    line-height: 19px;
-    border-bottom: 1px solid #dde4eb;
+    color: #313238;
+    line-height: 30px;
+    background-color: #F0F1F5;
+    i {
+      margin-left: 5px;
+      color: #979BA5;
+    }
+    &:hover {
+      cursor: pointer;
+    }
   }
 
   .specific-text {
@@ -675,6 +703,9 @@ export default {
         }
       }
     }
+  }
+  .isHide {
+    display: none;
   }
 }
 </style>

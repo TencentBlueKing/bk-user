@@ -19,11 +19,11 @@
       :placeholder="$t('请输入手机号')"
       @blur="verifyInput(item)"
       @focus="hiddenVerify(item)" />
-    <i class="icon icon-user-exclamation-circle-shape" v-if="item.isError"></i>
-    <p class="hint" v-show="item.isError">
-      <i class="arrow"></i>
-      <i class="icon-user-exclamation-circle-shape"></i>
-      <span class="text">{{$t('请填写正确')}}{{item.name}}</span>
+    <p class="error-text" v-show="item.isError && item.value">
+      {{$t('请填写正确的')}}{{item.name}}
+    </p>
+    <p class="error-text" v-show="item.isError && !item.value">
+      {{$t('必填项')}}
     </p>
   </div>
 </template>
@@ -99,6 +99,9 @@ export default {
     },
     // 失焦验证
     verifyInput(item) {
+      if (item === '') {
+        return this.$emit('phone', true);
+      }
       const validation = item.iso_code === 'cn'
         ? /^1[3-9]\d{9}$/.test(item.value)
         : this.iti.isValidNumber();
@@ -153,64 +156,14 @@ input::-webkit-input-placeholder {
   }
 }
 
-.icon-user-exclamation-circle-shape {
-  position: absolute;
-  right: 10px;
-  top: 8px;
-  font-size: 16px;
+.error-text {
+  font-size: 12px;
   color: #ea3636;
+  line-height: 18px;
+  margin: 2px 0 0;
 }
 
-.hint {
-  padding: 10px;
-  position: absolute;
-  top: -42px;
-  right: 0;
-  color: #fff;
-  font-size: 0;
-  border-radius: 4px;
-  background: #000;
-
-  &.hint-top {
-    top: -56px;
-  }
-
-  &.chang-en {
-    width: 108%;
-    right: -8px;
-
-    .arrow {
-      right: 20px;
-    }
-  }
-
-  .arrow {
-    position: absolute;
-    bottom: -2px;
-    right: 14px;
-    width: 6px;
-    height: 6px;
-    border-top: 1px solid #000;
-    border-left: 1px solid #000;
-    transform: rotate(45deg);
-    z-index: 10;
-    background: #000;
-  }
-
-  .text,
-  .icon-user-exclamation-circle-shape {
-    display: inline-block;
-    vertical-align: middle;
-    font-size: 12px;
-  }
-
-  .icon-user-exclamation-circle-shape {
-    font-size: 16px;
-    margin-right: 10px;
-    position: relative;
-    right: 0;
-    top: 0;
-    color: #fff;
-  }
+.input-error {
+  color: #ff5656;
 }
 </style>
