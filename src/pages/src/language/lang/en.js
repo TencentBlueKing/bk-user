@@ -458,4 +458,6 @@ export default {
   _需要设置新密码: ', You need to set a new password',
   导入覆盖提升: 'After checking, it is allowed to edit the personal information of existing users, and the existing user information will face the risk of being modified, so be cautious.',
   允许对同名用户覆盖更新: 'Allow override updates for users with the same name',
+  已过期: 'expired',
+  未知: 'unknown',
 };

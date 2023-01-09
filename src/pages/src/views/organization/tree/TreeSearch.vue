@@ -176,6 +176,10 @@ export default {
           return this.$t('已禁用');
         case 'DELETED':
           return this.$t('已删除');
+        case 'EXPIRED':
+          return this.$t('已过期');
+        default:
+          return this.$t('未知');
       }
     },
     dealDepartmentPath(path) {
@@ -565,6 +569,7 @@ export default {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          max-width: 245px;
 
           .category-label {
             font-weight: normal;
