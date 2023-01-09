@@ -24,8 +24,8 @@ LOGIN_EXEMPT_WHITE_LIST = (
     r"/api/v1/web/passwords/settings/by_token/$",
     r"/api/v1/web/passwords/reset/verification_code/send_sms/$",
     r"/api/v1/web/passwords/reset/verification_code/verify/$",
-    # r"/reset_password$",
-    # r"/set_password$",
+    r"/reset_password$",
+    r"/set_password$",
 )
 
 # name for bk_token in cookie
