@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import datetime
 from typing import Optional
 
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
@@ -91,7 +92,9 @@ class LoginLogOutputSLZ(serializers.Serializer):
     reason = serializers.SerializerMethodField(help_text=_("失败原因"), required=False)
 
     def get_datetime(self, obj):
-        return obj.create_time
+        # 转换成本地时间
+        local_time = timezone.localtime(obj.create_time)
+        return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_reason(self, obj) -> Optional[str]:
         """get reason display name"""
