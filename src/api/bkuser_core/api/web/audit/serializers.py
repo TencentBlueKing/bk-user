@@ -93,7 +93,7 @@ class LoginLogOutputSLZ(serializers.Serializer):
 
     def get_datetime(self, obj):
         # 转换成本地时间
-        local_time = timezone.localtime(obj.created_time)
+        local_time = timezone.localtime(obj.create_time)
         return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_reason(self, obj) -> Optional[str]:
