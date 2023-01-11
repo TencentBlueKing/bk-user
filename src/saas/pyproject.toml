@@ -58,9 +58,5 @@ mypy = "^v0.910"
 types-requests = "^2.25.0"
 types-dataclasses = "^0.1.5"
 
-[[tool.poetry.source]]
-name = "tencent-mirrors"
-url = "https://mirrors.tencent.com/pypi/simple/"
-
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "bkuser_shell.config.overlays.dev"
