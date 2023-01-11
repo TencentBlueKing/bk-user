@@ -60,7 +60,7 @@
                   <template v-if="isOperate">
                     <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.operator}}</div></td>
                     <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.display_name || '--'}}</div></td>
-                    <td><div class="text-overflow-hidden">{{item.datetime | convertIsoTime}}</div></td>
+                    <td><div class="text-overflow-hidden">{{item.datetime}}</div></td>
                     <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.client_ip}}</div></td>
                     <td><div class="text-overflow-hidden">{{item.operation}}</div></td>
                     <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.category_display_name}}</div></td>
@@ -69,7 +69,7 @@
                   <template v-else>
                     <td><div class="text-overflow-hidden">{{item.username}}</div></td>
                     <td><div class="text-overflow-hidden">{{item.display_name || '--'}}</div></td>
-                    <td><div class="text-overflow-hidden">{{item.datetime | convertIsoTime}}</div></td>
+                    <td><div class="text-overflow-hidden">{{item.datetime}}</div></td>
                     <td><div class="text-overflow-hidden">{{item.client_ip}}</div></td>
                     <td><div class="text-overflow-hidden" v-bk-tooltips="errorTips(item)">
                       <i :class="['status', { 'status-fail': !item.is_success }]" />
@@ -109,14 +109,6 @@
 <script>
 export default {
   name: 'AuditIndex',
-  filters: {
-    convertIsoTime(iso) {
-      const arr = iso.split('T');
-      const year = arr[0];
-      const time = arr[1].split('.')[0];
-      return `${year} ${time}`;
-    },
-  },
   data() {
     return {
       basicLoading: true,
