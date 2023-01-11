@@ -378,48 +378,47 @@ export default {
         return;
       }
       this.clickSecond = true;
-      try {
-        this.$emit('showBarLoading');
-        let data = {};
-        // 任何人在重置admin密码时，需要先输入原密码
-        if (this.isAdmin) {
-          // passwordData.old_password = this.oldPassword.trim();
-          if (this.isRsaEncrypted) {
-            data = {
-              password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey),
-              old_password: this.Rsa.rsaPublicData(this.oldPassword.trim(), this.publicKey),
-            };
-          } else {
-            data = {
-              password: this.newPassword.trim(),
-              old_password: this.oldPassword.trim(),
-            };
-          }
+      this.$emit('showBarLoading');
+      let data = {};
+      // 任何人在重置admin密码时，需要先输入原密码
+      if (this.isAdmin) {
+        if (this.isRsaEncrypted) {
+          data = {
+            password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey),
+            old_password: this.Rsa.rsaPublicData(this.oldPassword.trim(), this.publicKey),
+          };
         } else {
-          if (this.isRsaEncrypted) {
-            data = { password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey) };
-          } else {
-            data = { password: this.newPassword.trim() };
-          }
+          data = {
+            password: this.newPassword.trim(),
+            old_password: this.oldPassword.trim(),
+          };
         }
-        this.patchProfile(this.currentProfile.id, data);
+      } else {
+        if (this.isRsaEncrypted) {
+          data = { password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey) };
+        } else {
+          data = { password: this.newPassword.trim() };
+        }
+      }
+      this.patchProfile(this.currentProfile.id, data);
+      this.isShowReset = false;
+    },
+    async patchProfile(id, data) {
+      try {
+        await this.$store.dispatch('organization/patchProfile', {
+          id,
+          data,
+        });
         this.$bkMessage({
           message: this.$t('重置密码成功'),
           theme: 'success',
         });
-        this.isShowReset = false;
       } catch (e) {
         console.warn(e);
       } finally {
         this.clickSecond = false;
         this.$emit('closeBarLoading');
       }
-    },
-    async patchProfile(id, data) {
-      await this.$store.dispatch('organization/patchProfile', {
-        id,
-        data,
-      });
     },
     closeResetDialog(e) {
       if (e.target.innerText === '重置密码') return;
