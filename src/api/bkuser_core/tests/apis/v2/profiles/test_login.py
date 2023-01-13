@@ -19,7 +19,7 @@ from bkuser_core.api.login.views import ProfileLoginViewSet
 from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.profiles.constants import ProfileStatus, RoleCodeEnum
 from bkuser_core.tests.apis.utils import get_api_factory
-from bkuser_core.tests.utils import make_simple_category, make_simple_profile
+from bkuser_core.tests.utils import get_one_object, make_simple_category, make_simple_profile
 from bkuser_core.user_settings.models import Setting
 
 pytestmark = pytest.mark.django_db
@@ -226,7 +226,7 @@ class TestListCreateApis:
         response = check_view(request=request)
         assert response.data["code"] == "PASSWORD_ERROR"
 
-        # 超级用户不判断用户状态
+        # 超级用户不对用户状态判断做豁免
         p.role = RoleCodeEnum.SUPERUSER.value
         p.save()
         request = factory.post(
@@ -234,8 +234,7 @@ class TestListCreateApis:
             data={"username": "logintest", "password": "testpwd", "domain": "testdomain"},
         )
         response = check_view(request=request)
-        assert response.data
-        self._assert_required_keys_exist(response.data)
+        assert response.data["code"] == "PASSWORD_ERROR"
         p.role = RoleCodeEnum.STAFF.value
         p.save()
 
@@ -296,6 +295,24 @@ class TestListCreateApis:
         request = factory.post("/api/v1/login/check/", data={"username": "logintest", "password": "testpwd"})
         response = check_view(request=request)
 
+        self._assert_required_keys_exist(response.data)
+
+        # admin用户不做豁免：
+        admin = get_one_object("profile", username="admin")
+        admin.set_password("adminpwd")
+
+        request = factory.post("/api/v1/login/check/", data={"username": "admin", "password": "wrongpwd"})
+        response = check_view(request=request)
+        assert response.data["code"] == "PASSWORD_ERROR"
+
+        request = factory.post("/api/v1/login/check/", data={"username": "admin", "password": "wrongpwd"})
+        response = check_view(request=request)
+        assert response.data["code"] == "PASSWORD_ERROR"
+
+        # 确保解锁了
+        time.sleep(2)
+        request = factory.post("/api/v1/login/check/", data={"username": "admin", "password": "adminpwd"})
+        response = check_view(request=request)
         self._assert_required_keys_exist(response.data)
 
     def test_batch_query(self):

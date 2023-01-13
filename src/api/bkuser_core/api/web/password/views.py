@@ -16,8 +16,27 @@ from django.utils.timezone import now
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import PasswordModifyInputSLZ, PasswordResetByTokenInputSLZ, PasswordResetSendEmailInputSLZ
-from bkuser_core.api.web.utils import get_operator, validate_password
+from bkuser_core.api.web.category.serializers import CategorySettingOutputSLZ
+from bkuser_core.api.web.password.serializers import (
+    PasswordListSettingsByTokenInputSLZ,
+    PasswordModifyInputSLZ,
+    PasswordResetByTokenInputSLZ,
+    PasswordResetSendEmailInputSLZ,
+    PasswordResetSendSMSInputSLZ,
+    PasswordResetSendSMSOutputSLZ,
+    PasswordVerifyVerificationCodeInputSLZ,
+    PasswordVerifyVerificationCodeOutputSLZ,
+)
+from bkuser_core.api.web.password.verification_code_handler import ResetPasswordVerificationCodeHandler
+from bkuser_core.api.web.utils import (
+    get_category,
+    get_operator,
+    get_profile_by_telephone,
+    get_profile_by_username,
+    get_token_handler,
+    list_setting_metas,
+    validate_password,
+)
 from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
@@ -27,6 +46,8 @@ from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
 from bkuser_core.profiles.tasks import send_password_by_email
 from bkuser_core.profiles.utils import parse_username_domain
+from bkuser_core.user_settings.constants import SettingsEnableNamespaces
+from bkuser_core.user_settings.models import Setting
 
 logger = logging.getLogger(__name__)
 
@@ -72,16 +93,9 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
         token = data["token"]
         pending_password = data["password"]
 
-        try:
-            token_holder = ProfileTokenHolder.objects.get(token=token, enabled=True)
-        except ProfileTokenHolder.DoesNotExist:
-            logger.info("token<%s> not exist in db", token)
-            raise error_codes.CANNOT_GET_TOKEN_HOLDER
-
-        if token_holder.expired:
-            raise error_codes.PROFILE_TOKEN_EXPIRED
-
+        token_holder = get_token_handler(token)
         profile = token_holder.profile
+
         validate_password(profile, pending_password)
         profile.password = make_password(pending_password)
         profile.password_update_time = now()
@@ -143,3 +157,91 @@ class PasswordModifyApi(generics.CreateAPIView):
             extra_values=modify_summary,
         )
         return Response(status=status.HTTP_200_OK)
+
+
+class PasswordListSettingsByTokenApi(generics.ListAPIView):
+    serializer_class = CategorySettingOutputSLZ
+
+    def get(self, request, *args, **kwargs):
+        slz = PasswordListSettingsByTokenInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+
+        data = slz.validated_data
+        token = data["token"]
+
+        token_holder = get_token_handler(token)
+        profile = token_holder.profile
+
+        category = get_category(profile.category_id)
+        namespace = SettingsEnableNamespaces.PASSWORD.value
+        metas = list_setting_metas(category.type, None, namespace)
+        settings = Setting.objects.filter(meta__in=metas, category_id=profile.category_id)
+        return Response(self.serializer_class(settings, many=True).data)
+
+
+class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        slz = PasswordResetSendSMSInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        data = slz.validated_data
+
+        input_telephone = data["telephone"]
+
+        # 根据交互设计，和登录一样：只能猜测这里传输的username,还是telephone
+        # 存在着username=telephone的情况
+        try:
+            # 优先过滤username
+            username, domain = parse_username_domain(input_telephone)
+            if not domain:
+                domain = ProfileCategory.objects.get_default().domain
+            # filter过滤，判断是否存在，存在则仅有一个
+            profile = get_profile_by_username(username, domain)
+
+            # 不存在则才是telephone
+            if not profile:
+                profile = get_profile_by_telephone(input_telephone)
+
+        except Profile.DoesNotExist:
+            logger.exception(
+                "failed to get profile by telephone<%s> or username<%s>", input_telephone, input_telephone
+            )
+            raise error_codes.USER_DOES_NOT_EXIST
+
+        except Profile.MultipleObjectsReturned:
+            logger.exception("this telephone had bound to multi profiles", input_telephone, input_telephone)
+            raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
+
+        # 生成verification_code_token
+        verification_code_token = ResetPasswordVerificationCodeHandler().generate_reset_password_token(profile.id)
+        raw_telephone = profile.telephone
+
+        # 用户未绑定手机号，即使用户名就是手机号码
+        if not raw_telephone:
+            raise error_codes.TELEPHONE_NOT_PROVIDED
+
+        response_data = {
+            "verification_code_token": verification_code_token,
+            # 加密返回手机号
+            "telephone": raw_telephone.replace(raw_telephone[3:7], '****'),
+        }
+
+        return Response(PasswordResetSendSMSOutputSLZ(response_data).data)
+
+
+class PasswordVerifyVerificationCodeApi(generics.CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        slz = PasswordVerifyVerificationCodeInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        data = slz.validated_data
+
+        verification_code_handler = ResetPasswordVerificationCodeHandler()
+
+        profile_id = verification_code_handler.verify_verification_code(
+            data["verification_code_token"], data["verification_code"]
+        )
+        profile_token = verification_code_handler.generate_profile_token(profile_id)
+        # 前端拿到token，作为query_params，拼接重置页面路由
+        response_data = {"token": profile_token.token}
+        return Response(PasswordVerifyVerificationCodeOutputSLZ(response_data).data)

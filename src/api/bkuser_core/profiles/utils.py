@@ -16,21 +16,26 @@ import urllib.parse
 from typing import TYPE_CHECKING, Dict, Tuple
 
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
 from phonenumbers.phonenumberutil import UNKNOWN_REGION, country_code_for_region, region_code_for_country_code
 
+from ..audit.constants import OperationStatus, OperationType, ResetPasswordFailReason
 from ..audit.models import ResetPassword
 from .exceptions import CountryISOCodeNotMatch, UsernameWithDomainFormatError
+from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.cache import get_default_category_id_from_local_cache
+from bkuser_core.common.error_codes import error_codes
+from bkuser_core.profiles.constants import ProfileStatus
+from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import DOMAIN_PART_REGEX, USERNAME_REGEX
 from bkuser_core.user_settings.constants import InitPasswordMethod
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_global.local import local
 
-if TYPE_CHECKING:
-    from bkuser_core.profiles.models import Profile
-
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from rest_framework.request import Request
 
 
 def gen_password(length):
@@ -245,3 +250,53 @@ def remove_sensitive_fields_for_profile(request, data: Dict) -> Dict:
                 extras.pop(key)
 
     return data
+
+
+def check_old_password(instance: "Profile", old_password: str, request: "Request"):
+    """原密码校验"""
+    raw_profile = Profile.objects.get(id=instance.id)
+
+    if not check_password(old_password, raw_profile.password):
+        failed_reason = ResetPasswordFailReason.BAD_OLD_PASSWORD
+        try:
+            create_profile_log(
+                instance,
+                "ResetPassword",
+                {"is_success": False, "reason": failed_reason.value},
+                request,
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("failed to create reset password log")
+
+        create_general_log(
+            operator=request.operator,
+            operate_type=OperationType.ADMIN_RESET_PASSWORD.value,
+            operator_obj=instance,
+            request=request,
+            status=OperationStatus.FAILED.value,
+            extra_info={"failed_info": ResetPasswordFailReason.get_choice_label(failed_reason.value)},
+        )
+
+        if (
+            instance.bad_old_password_check_cnt >= settings.RESET_PASSWORD_OLD_PASSWORD_ERROR_MAX_COUNT
+            and settings.ENABLE_RESET_PASSWORD_ERROR_PROFILE_LOCK
+        ):
+            # 校验失败次数超过配置次数并且配置锁定则对用户进行锁定
+            raw_profile.status = ProfileStatus.LOCKED.value
+            raw_profile.save()
+            create_general_log(
+                operator=request.operator,
+                operate_type=OperationType.UPDATE.value,
+                operator_obj=instance,
+                request=request,
+            )
+
+        raise error_codes.OLD_PASSWORD_ERROR
+
+
+def should_check_old_password(username: str) -> bool:
+    """重置密码时，校验是否为需要检查旧密码的用户"""
+    formatted_username = username.replace(" ", "").lower()
+    if not formatted_username == "admin":
+        return False
+    return True

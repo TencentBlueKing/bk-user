@@ -15,7 +15,7 @@ from typing import Optional
 from django.db import models
 from jsonfield import JSONField
 
-from bkuser_core.audit.constants import LogInFailReason, OperationStatus
+from bkuser_core.audit.constants import LogInFailReason, OperationStatus, ResetPasswordFailReason
 from bkuser_core.audit.managers import LogInManager, ResetPasswordManager
 from bkuser_core.common.fields import EncryptField
 from bkuser_core.common.models import TimestampedModel
@@ -102,6 +102,13 @@ class ResetPassword(ProfileRelatedLog):
     token = models.UUIDField(db_index=True, default=uuid.uuid4, editable=False, null=True)
     is_success = models.BooleanField("是否重置成功", default=False)
     password = EncryptField(default="")
+    reason = models.CharField(
+        "重置密码失败原因",
+        max_length=32,
+        choices=ResetPasswordFailReason.get_choices(),
+        null=True,
+        blank=True,
+    )
 
     objects = ResetPasswordManager()
 
@@ -110,3 +117,4 @@ class ResetPassword(ProfileRelatedLog):
 
     class Meta:
         ordering = ["-create_time"]
+        get_latest_by = "create_time"

@@ -25,6 +25,8 @@ import methods from '@/plugins/methods';
 import bus from '@/common/bus';
 import cursor from '@/directives/cursor';
 import { Base64 } from 'js-base64';
+import xss from 'xss';
+import Rsa from '@/common/rsa';
 
 Vue.component(VueCropper);
 Vue.use(vClickOutside);
@@ -34,6 +36,17 @@ Vue.directive('cursor', cursor);
 Vue.config.devtools = true;
 Vue.prototype.$bus = new Vue();
 Vue.use(Base64);
+Vue.prototype.Rsa = Rsa;
+Vue.prototype.$xss = (html) => {
+  const attrs = ['class', 'title', 'target', 'style', 'src', 'onerror'];
+  return xss(html || '', {
+    onTagAttr: (tag, name, value) => {
+      if (attrs.includes(name)) {
+        return `${name}=${value}`;
+      }
+    },
+  });
+};
 
 injectCSRFTokenToHeaders();
 window.bus = bus;

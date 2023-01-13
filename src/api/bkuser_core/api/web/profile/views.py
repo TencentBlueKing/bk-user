@@ -40,7 +40,13 @@ from bkuser_core.departments.models import Department
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
-from bkuser_core.profiles.utils import align_country_iso_code, make_password_by_config, parse_username_domain
+from bkuser_core.profiles.utils import (
+    align_country_iso_code,
+    check_old_password,
+    make_password_by_config,
+    parse_username_domain,
+    should_check_old_password,
+)
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
@@ -114,7 +120,6 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         slz = ProfileUpdateInputSLZ(instance, data=request.data, partial=partial)
         slz.is_valid(raise_exception=True)
         operate_type = OperationType.UPDATE.value
-
         validated_data = slz.validated_data
 
         # 前端是把extras字段打平提交的
@@ -158,6 +163,10 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         update_summary = {"request": request}
         # 密码修改加密
         if validated_data.get("password"):
+            # 如果重置的是admin账号的密码，需要对原始密码进行校验
+            if should_check_old_password(username=instance.username):
+                check_old_password(instance=instance, old_password=validated_data["old_password"], request=request)
+
             operate_type = (
                 OperationType.FORGET_PASSWORD.value
                 if request.headers.get("User-From-Token")
@@ -292,7 +301,12 @@ class ProfileCreateApi(generics.CreateAPIView):
             meta = SettingMeta.objects.filter(
                 key="expired_after_days", namespace=SettingsEnableNamespaces.ACCOUNT.value
             ).first()
-            expired_after_days = Setting.objects.filter(category_id=category_id, meta=meta).first().value
+
+            # NOTE: maybe None here if the meta is not set
+            expired_after_days = -1
+            expired_after_days_setting = Setting.objects.filter(category_id=category_id, meta=meta).first()
+            if expired_after_days_setting:
+                expired_after_days = expired_after_days_setting.value
 
             # 账户有效期，不传，默认设置为目录设置项
             if expired_after_days == -1:

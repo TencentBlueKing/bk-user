@@ -1,23 +1,11 @@
 <!--
-  - Tencent is pleased to support the open source community by making Bk-User 蓝鲸用户管理 available.
-  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
-  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
-  -
-  - License for Bk-User 蓝鲸用户管理:
-  - -------------------------------------------------------------------
-  -
-  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
-  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-  - The above copyright notice and this permission notice shall be included in all copies or substantial
-  - portions of the Software.
-  -
-  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  - TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+  - Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+  - Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at http://opensource.org/licenses/MIT
+  - Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  - an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  - specific language governing permissions and limitations under the License.
   -->
 <template>
   <div class="change-password-wrapper">
@@ -27,7 +15,7 @@
       </div>
       <div class="modify-content" data-test-id="passwordInfo">
         <h4 class="common-title">{{$t('更改密码')}}</h4>
-        <p class="error-text" v-if="isConfirmError">
+        <p class="error-text" v-if="isConfirmError || isCorrectPw">
           <i class="icon icon-user-exclamation-circle-shape"></i>
           <span class="text">{{errorText}}</span>
         </p>
@@ -42,18 +30,18 @@
           <li class="input-list">
             <input
               type="password"
-              :class="['select-text', { 'input-error': isConfirmError }]"
+              :class="['select-text', { 'input-error': isConfirmError || isCorrectPw }]"
               :placeholder="$t('新密码')"
               v-model="newPassword"
-              @focus="isConfirmError = false" />
+              @focus="handleFocus" />
           </li>
           <li class="input-list">
             <input
               type="password"
-              :class="['select-text', { 'input-error': isConfirmError }]"
+              :class="['select-text', { 'input-error': isConfirmError || isCorrectPw }]"
               :placeholder="$t('确认新密码')"
               v-model="confirmPassword"
-              @focus="isConfirmError = false" />
+              @focus="handleFocus" />
           </li>
         </ul>
         <bk-button
@@ -85,7 +73,7 @@ export default {
   data() {
     return {
       isConfirmError: false,
-      errorText: this.$t('两次输入的密码不一致，请重新输入'),
+      errorText: '',
       oldPassword: '',
       newPassword: '',
       confirmPassword: '',
@@ -93,18 +81,68 @@ export default {
         isShow: false,
         title: this.$t('密码修改成功'),
       },
+      // 公钥
+      publicKey: '',
+      // 是否rsa加密
+      isRsaEncrypted: false,
+      passwordRules: {
+        passwordMinLength: 0,
+        passwordMustIncludes: [],
+      },
+      isCorrectPw: false,
     };
   },
+  mounted() {
+    this.initRsa();
+  },
   methods: {
+    async initRsa() {
+      try {
+        const res = await this.$store.dispatch('password/getRsa', this.$route.query.token);
+        if (res.data) {
+          res.data.forEach((item) => {
+            switch (item.key) {
+              case 'enable_password_rsa_encrypted':
+                return this.isRsaEncrypted = true;
+              case 'password_rsa_public_key':
+                return this.publicKey = Base64.decode(item.value);
+              case 'password_min_length':
+                return this.passwordRules.passwordMinLength = item.value;
+              case 'password_must_includes':
+                return this.passwordRules.passwordMustIncludes = item.value;
+            }
+          });
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    },
     async handlePush() {
       try {
+        // 确认密码是否一致
         if (this.newPassword !== this.confirmPassword) {
           this.isConfirmError = true;
+          this.errorText = this.$t('两次输入的密码不一致，请重新输入');
           return;
         }
+        // 校验密码规则
+        this.isCorrectPw = !this.$validatePassportByRules(this.newPassword, this.passwordRules);
+        if (this.isCorrectPw) {
+          this.errorText = this.$getMessageByRules(this, this.passwordRules);
+          return;
+        }
+        if (this.isRsaEncrypted) {
+          this.oldPassword = Base64.encode(this.Rsa.rsaPublicData(this.oldPassword.trim(), this.publicKey));
+          this.newPassword = Base64.encode(this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey));
+          this.confirmPassword = Base64.encode(this.Rsa.rsaPublicData(this.confirmPassword.trim(), this.publicKey));
+        } else {
+          this.oldPassword = Base64.encode(this.oldPassword.trim());
+          this.newPassword = Base64.encode(this.newPassword.trim());
+          this.confirmPassword = Base64.encode(this.confirmPassword.trim());
+        }
         const modifyParams = {
-          old_password: Base64.encode(this.oldPassword),
-          new_password: Base64.encode(this.confirmPassword.trim()),
+          old_password: this.oldPassword,
+          new_password: this.confirmPassword,
         };
         await this.$store.dispatch('password/modify', modifyParams);
         this.successDialog.isShow = true;
@@ -114,6 +152,10 @@ export default {
     },
     register() {
       window.location.href = window.login_url;
+    },
+    handleFocus() {
+      this.isError = false;
+      this.isCorrectPw = false;
     },
   },
 };

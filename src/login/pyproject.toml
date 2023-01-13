@@ -53,9 +53,3 @@ pytest-cov = "^2.8.1"
 # mypy
 mypy = "^v0.910"
 
-
-
-[[tool.poetry.source]]
-name = "tencent-mirrors"
-url = "https://mirrors.tencent.com/pypi/simple/"
-

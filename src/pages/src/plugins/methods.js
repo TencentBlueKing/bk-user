@@ -261,6 +261,11 @@ const methods = {
       }
       return length;
     };
+
+    // 转换字符串尖括号
+    Vue.prototype.$xssVerification = function (data) {
+      return data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
   },
 };
 

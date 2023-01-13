@@ -57,6 +57,7 @@
         "express-art-template": "1.0.1",
         "intl-tel-input": "16.0.0",
         "js-base64": "^3.7.2",
+        "jsencrypt": "3.3.1",
         "jsonp": "0.2.1",
         "query-string": "6.5.0",
         "sortablejs": "1.10.1",
@@ -69,7 +70,8 @@
         "vue-i18n": "8.9.0",
         "vue-image-crop-upload": "2.5.0",
         "vue-router": "3.0.6",
-        "vuex": "3.1.1"
+        "vuex": "3.1.1",
+        "xss": "1.0.13"
     },
     "devDependencies": {
         "@babel/core": "7.11.0",
