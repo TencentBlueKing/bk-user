@@ -26,12 +26,12 @@ def forwards_func(apps, schema_editor):
             key="reset_password_sms_config",
             example={
                 "sender": "蓝鲸智云",
-                "content": "蓝鲸验证码：{verification_code}您正在重置密码，如非本人操作，请忽略该短信",
+                "content": "【腾讯蓝鲸】验证码：{verification_code}您正在重置密码，如非本人操作，请忽略该短信",
                 "content_html": "<p>蓝鲸验证码：{verification_code}，您正在重置密码，如非本人操作，请忽略该短信</p>"
             },
             default={
                 "sender": "蓝鲸智云",
-                "content": "蓝鲸验证码：{verification_code}，您正在重置密码，如非本人操作，请忽略该短信",
+                "content": "【腾讯蓝鲸】验证码：{verification_code}，您正在重置密码，如非本人操作，请忽略该短信",
                 "content_html": "<p>蓝鲸验证码：{verification_code}，您正在重置密码，如非本人操作，请忽略该短信</p>"
             },
         ),
