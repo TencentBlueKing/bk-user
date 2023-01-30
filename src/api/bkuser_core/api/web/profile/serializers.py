@@ -8,12 +8,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Dict
 
 from django.conf import settings
 from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import StringArrayField
-from bkuser_core.api.web.utils import escape_value, get_default_category_id, get_raw_password
+from bkuser_core.api.web.utils import (
+    escape_value,
+    expand_extra_fields,
+    get_default_category_id,
+    get_extras_with_default_values,
+    get_raw_password,
+)
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_username
 
@@ -78,18 +85,19 @@ class ProfileSearchOutputSLZ(serializers.Serializer):
     # A: 需要, 搜索结果点击后直接渲染表单进行展示/更新
     id = serializers.CharField(required=False, help_text="用户ID")
     username = serializers.CharField(required=False, help_text="用户名")
+    display_name = serializers.CharField(required=False, help_text="中文名")
+
     qq = serializers.CharField(required=False, help_text="QQ")
     email = serializers.CharField(required=False, help_text="邮箱")
     telephone = serializers.CharField(required=False, help_text="电话")
     wx_userid = serializers.CharField(required=False, help_text="微信用户id")
     domain = serializers.CharField(required=False, help_text="域")
-    display_name = serializers.CharField(required=False, help_text="中文名")
     status = serializers.CharField(required=False, help_text="账户状态")
     staff_status = serializers.CharField(required=False, help_text="在职状态")
     position = serializers.CharField(required=False, help_text="职位")
     enabled = serializers.BooleanField(required=False, help_text="是否启用", default=True)
-    extras = serializers.JSONField(required=False, help_text="扩展字段")
     password_valid_days = serializers.IntegerField(required=False, help_text="密码有效期")
+    account_expiration_date = serializers.CharField(required=False)
     country_code = serializers.CharField(required=False, help_text="国家码")
     iso_code = serializers.CharField(required=False, help_text="国家码")
     time_zone = serializers.CharField(required=False, help_text="时区")
@@ -100,6 +108,17 @@ class ProfileSearchOutputSLZ(serializers.Serializer):
     update_time = serializers.DateTimeField(required=False, help_text="更新时间")
     departments = ProfileSearchResultDepartmentSerializer(many=True, required=False, help_text="部门列表")
     leaders = ProfileSearchResultLeaderSerializer(many=True, required=False, help_text="上级列表", source="leader")
+
+    # extras = serializers.JSONField(required=False, help_text="扩展字段")
+    extras = serializers.SerializerMethodField(required=False, read_only=True)
+
+    def get_extras(self, obj: "Profile") -> Dict:
+        """尝试从 context 中获取默认字段值"""
+        return get_extras_with_default_values(obj.extras)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return expand_extra_fields(data)
 
 
 class ProfileUpdateInputSLZ(serializers.ModelSerializer):
