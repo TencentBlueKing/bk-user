@@ -32,7 +32,7 @@ jobs:
         mysql user: ${{ env.DB_USER }}
         mysql password: ${{ env.DB_PASSWORD }}
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Set up Poetry
