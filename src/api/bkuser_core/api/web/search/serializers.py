@@ -66,6 +66,7 @@ class SearchResultProfileOutputSLZ(serializers.Serializer):
     country_code = serializers.CharField(required=False, help_text="国家码")
     iso_code = serializers.CharField(required=False, help_text="国家码")
     time_zone = serializers.CharField(required=False, help_text="时区")
+
     last_login_time = serializers.DateTimeField(required=False, help_text="最后登录时间")
     create_time = serializers.DateTimeField(required=False, help_text="创建时间")
     update_time = serializers.DateTimeField(required=False, help_text="更新时间")

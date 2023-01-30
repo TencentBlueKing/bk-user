@@ -12,10 +12,10 @@ specific language governing permissions and limitations under the License.
 from rest_framework import generics
 
 from .serializers import SettingMetaOutputSLZ, SettingMetasListInputSLZ
-
-# from bkuser_core.bkiam.permissions import ManageFieldPermission
 from bkuser_core.api.web.constants import EXCLUDE_SETTINGS_META_IN_META_LISTVIEW
 from bkuser_core.user_settings.models import SettingMeta
+
+# from bkuser_core.bkiam.permissions import ManageFieldPermission
 
 
 class SettingMetasListApi(generics.ListAPIView):
