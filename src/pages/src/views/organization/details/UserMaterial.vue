@@ -311,7 +311,7 @@ export default {
       if (res.data) {
         res.data.forEach((item) => {
           if (item.key === 'enable_password_rsa_encrypted') {
-            this.isRsaEncrypted = true;
+            this.isRsaEncrypted = item.value;
           }
           if (item.key === 'password_rsa_public_key') {
             this.publicKey = Base64.decode(item.value);
