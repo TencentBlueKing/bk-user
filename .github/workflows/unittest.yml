@@ -23,7 +23,7 @@ jobs:
       DB_PORT: 3306
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: samin/mysql-action@v1.3
       with:
         mysql version: '5.7'
