@@ -2,10 +2,10 @@
 name = "蓝鲸用户管理"
 version = "2.3.3"
 description = "project description file for ci"
-authors = ["IMBlues <bluesedenyu@gmail.com>"]
+authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
 
 [tool.poetry.dependencies]
-python = "3.6.14"
+python = "^3.8"
 apigw-manager = "^1.0.3"
 
 [tool.poetry.dev-dependencies]

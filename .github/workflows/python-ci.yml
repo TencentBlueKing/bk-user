@@ -2,9 +2,9 @@ name: Python CI Check
 
 on:
   push:
-    branches: [ master, develop, pre_* ]
+    branches: [ master, develop, pre_*, ft_* ]
   pull_request:
-    branches: [ master, develop, pre_* ]
+    branches: [ master, develop, pre_*, ft_* ]
 
 jobs:
   build:
@@ -14,21 +14,23 @@ jobs:
       matrix:
         python-version: [3.6.14]
         poetry-version: [1.1.7]
-        os: [ubuntu-18.04]
+        os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - name: Install poetry
+      run: pipx install poetry==${{ matrix.poetry-version }}
+    - name: Export requirements.txt
+      run: poetry export -f requirements.txt --dev --without-hashes -o requirements.txt --no-ansi
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Set up Poetry
-      uses: abatilo/actions-poetry@v2.1.0
-      with:
-        poetry-version: ${{ matrix.poetry-version }}
+        cache: 'pip'
+        cache-dependency-path: 'requirements.txt'
     - name: Install dependencies
-      run: poetry config virtualenvs.create false && poetry install
+      run: pip install -r requirements.txt -i https://pypi.org/simple/
     - name: Lint with flake8
       run: pflake8 src/ --config=pyproject.toml
     - name: Lint with mypy

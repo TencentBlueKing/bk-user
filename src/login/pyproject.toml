@@ -2,7 +2,7 @@
 name = "bk-login"
 version = "2.3.3"
 description = "bk-login"
-authors = ["IMBlues <bluesedenyu@gmail.com>"]
+authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
 
 [tool.poetry.dependencies]
 python = "3.6.14"
