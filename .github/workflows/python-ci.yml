@@ -28,7 +28,7 @@ jobs:
         cache: 'poetry'
         cache-dependency-path: 'pyproject.toml'
     - name: Install dependencies
-      run: poetry install --with dev
+      run: poetry install -vv
     - name: Lint with flake8
       run: pflake8 src/ --config=pyproject.toml
     - name: Lint with mypy
