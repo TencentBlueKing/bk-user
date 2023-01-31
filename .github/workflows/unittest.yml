@@ -34,7 +34,7 @@ jobs:
     - name: Install poetry
       run: pipx install poetry==${{ matrix.poetry-version }}
     - name: Export requirements.txt
-      run:
+      run: |
         cd src/api/
         bash bin/export_requirements_txt.sh
     - name: Set up Python
@@ -42,6 +42,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
+        cache-dependency-path: 'src/api/requirements.txt'
     - name: Install dependencies
       run: |
         cd src/api/
