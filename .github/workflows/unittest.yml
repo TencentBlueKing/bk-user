@@ -31,18 +31,21 @@ jobs:
         mysql root password: ${{ env.DB_PASSWORD }}
         mysql user: ${{ env.DB_USER }}
         mysql password: ${{ env.DB_PASSWORD }}
+    - name: Install poetry
+      run: pipx install poetry==${{ matrix.poetry-version }}
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v3
-      with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ matrix.os }}-poetry-${{ hashFiles('src/api/poetry.lock') }}
-    - name: Set up Poetry
-      uses: abatilo/actions-poetry@v2
-      with:
-        poetry-version: ${{ matrix.poetry-version }}
+        cache: 'poetry'
+    # - uses: actions/cache@v3
+    #   with:
+    #     path: ~/.cache/pypoetry/virtualenvs
+    #     key: ${{ matrix.os }}-poetry-${{ hashFiles('src/api/poetry.lock') }}
+    # - name: Set up Poetry
+    #   uses: abatilo/actions-poetry@v2
+    #   with:
+    #     poetry-version: ${{ matrix.poetry-version }}
     - name: Install dependencies
       run: |
         cd src/api/
