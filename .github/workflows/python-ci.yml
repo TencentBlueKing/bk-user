@@ -26,7 +26,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'poetry'
-        cache-dependency-path: 'poetry.lock'
+        cache-dependency-path: 'pyproject.toml'
     - name: Install dependencies
       run: poetry install
     - name: Lint with flake8
