@@ -19,20 +19,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install poetry
+      run: pipx install poetry==${{ matrix.poetry-version }}
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v3
-      with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ matrix.os }}-poetry-${{ hashFiles('poetry.lock') }}
-    - name: Set up Poetry
-      uses: abatilo/actions-poetry@v2
-      with:
-        poetry-version: ${{ matrix.poetry-version }}
+        cache: 'poetry'
+        cache-dependency-path: 'poetry.lock'
     - name: Install dependencies
-      run: poetry config virtualenvs.create false && poetry install
+      run: poetry install
     - name: Lint with flake8
       run: pflake8 src/ --config=pyproject.toml
     - name: Lint with mypy
