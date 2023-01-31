@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 from rest_framework import generics
 
 from .serializers import SettingMetaOutputSLZ, SettingMetasListInputSLZ
+from bkuser_core.api.web.constants import EXCLUDE_SETTINGS_META_IN_META_LISTVIEW
 from bkuser_core.user_settings.models import SettingMeta
 
 # from bkuser_core.bkiam.permissions import ManageFieldPermission
@@ -31,7 +32,9 @@ class SettingMetasListApi(generics.ListAPIView):
         category_type = data["category_type"]
         namespace = data["namespace"]
 
-        queryset = SettingMeta.objects.filter(category_type=category_type)
+        queryset = SettingMeta.objects.filter(category_type=category_type).exclude(
+            key__in=EXCLUDE_SETTINGS_META_IN_META_LISTVIEW
+        )
         if namespace:
             queryset = queryset.filter(namespace=namespace)
         return queryset

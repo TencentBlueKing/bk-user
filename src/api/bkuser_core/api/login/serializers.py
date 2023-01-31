@@ -85,6 +85,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             "status",
             "time_zone",
             "language",
+            "domain",
+            "category_id",
             # NOTE: 这里缩减登陆成功之后的展示字段
             # "position",
             # "logo_url", => to logo?

@@ -2,9 +2,9 @@ name: Unittest
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master, develop, pre_*, ft_* ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ master, develop, pre_*, ft_*  ]
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
       matrix:
         python-version: [3.6.14]
         poetry-version: [1.1.7]
-        os: [ubuntu-18.04]
+        os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
 
     env:
@@ -23,7 +23,7 @@ jobs:
       DB_PORT: 3306
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: samin/mysql-action@v1.3
       with:
         mysql version: '5.7'
@@ -31,18 +31,22 @@ jobs:
         mysql root password: ${{ env.DB_PASSWORD }}
         mysql user: ${{ env.DB_USER }}
         mysql password: ${{ env.DB_PASSWORD }}
+    - name: Install poetry
+      run: pipx install poetry==${{ matrix.poetry-version }}
+    - name: Export requirements.txt
+      run: |
+        cd src/api/
+        bash bin/export_requirements_txt.sh
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Set up Poetry
-      uses: abatilo/actions-poetry@v2.1.0
-      with:
-        poetry-version: ${{ matrix.poetry-version }}
+        cache: 'pip'
+        cache-dependency-path: 'src/api/requirements.txt'
     - name: Install dependencies
       run: |
         cd src/api/
-        poetry config virtualenvs.create false && bash bin/install_ci_dependencies.sh
+        pip install -r requirements.txt -i https://pypi.org/simple/
     - name: Run api unittest
       env:
         DJANGO_SETTINGS_MODULE: "bkuser_core.config.overlays.unittest"

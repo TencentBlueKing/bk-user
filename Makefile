@@ -13,7 +13,7 @@ generate-release-md:
 	mv src/saas/release.md docs/
 
 test:
-	cd src/api && source ./test_env.sh && poetry run pytest bkuser_core/tests --disable-pytest-warnings
+	cd src/api && export DJANGO_SETTINGS_MODULE="bkuser_core.config.overlays.unittest" && poetry run pytest bkuser_core/tests --disable-pytest-warnings
 
 link:
 	rm src/api/bkuser_global || true

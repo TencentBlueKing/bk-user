@@ -20,6 +20,16 @@ urlpatterns = [
         name="password.reset.sent_email",
     ),
     path(
+        "reset/verification_code/send_sms/",
+        views.PasswordResetSendVerificationCodeApi.as_view(),
+        name="password.reset.sent_verification_code_sms",
+    ),
+    path(
+        "reset/verification_code/verify/",
+        views.PasswordVerifyVerificationCodeApi.as_view(),
+        name="password.reset.verify_verification_code",
+    ),
+    path(
         "reset/by_token/",
         views.PasswordResetByTokenApi.as_view(),
         name="password.reset.by_token",
@@ -28,5 +38,10 @@ urlpatterns = [
         "modify/",
         views.PasswordModifyApi.as_view(),
         name="password.modify",
+    ),
+    path(
+        "settings/by_token/",
+        views.PasswordListSettingsByTokenApi.as_view(),
+        name="password.get_settings.by_token",
     ),
 ]

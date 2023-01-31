@@ -33,5 +33,17 @@ export default {
     reset(context, params, config = {}) {
       return http.post('api/v1/web/passwords/reset/send_email/', params);
     },
+    // 获取短信验证码
+    sendSms(context, params, config = {}) {
+      return http.post('api/v1/web/passwords/reset/verification_code/send_sms/', params);
+    },
+    // 发送验证码
+    sendCode(context, params, config = {}) {
+      return http.post('api/v1/web/passwords/reset/verification_code/verify/', params);
+    },
+    // 获取rsa公钥
+    getRsa(context, params, config = {}) {
+      return http.get(`api/v1/web/passwords/settings/by_token/?token=${params}`);
+    },
   },
 };

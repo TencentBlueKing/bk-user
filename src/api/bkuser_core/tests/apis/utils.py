@@ -18,10 +18,11 @@ def get_api_factory(force_params: dict = None):
     force_params = force_params or {}
     normal_params = {
         "HTTP_FORCE_RAW_RESPONSE": True,
-        "HTTP_RAW_USERNAME": True,
         "Content-Type": "application/json",
-        "HTTP_AUTHORIZATION": f"iBearer {list(settings.INTERNAL_AUTH_TOKENS.keys())[0]}",
         "HTTP_X_BKUSER_OPERATOR": "tester",
+        # "HTTP_RAW_USERNAME": True,
+        # should be removed after enhanced_account removed the token auth
+        "HTTP_AUTHORIZATION": f"iBearer {list(settings.INTERNAL_AUTH_TOKENS.keys())[0]}",
     }
     normal_params.update(force_params)
 

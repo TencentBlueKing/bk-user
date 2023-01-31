@@ -12,17 +12,47 @@ specific language governing permissions and limitations under the License.
 from rest_framework import serializers
 
 from bkuser_core.api.web.serializers import Base64OrPlainField
+from bkuser_core.api.web.utils import get_raw_password, get_token_handler
 
 
 class PasswordResetSendEmailInputSLZ(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=254)
 
 
+class PasswordResetSendSMSInputSLZ(serializers.Serializer):
+    telephone = serializers.CharField(required=True, max_length=32)
+
+
+class PasswordResetSendSMSOutputSLZ(serializers.Serializer):
+    verification_code_token = serializers.CharField(required=True, max_length=254)
+    telephone = serializers.CharField(required=True, max_length=16)
+
+
+class PasswordVerifyVerificationCodeInputSLZ(serializers.Serializer):
+    verification_code_token = serializers.CharField(required=True, max_length=254)
+    verification_code = serializers.CharField(required=True)
+
+
+class PasswordVerifyVerificationCodeOutputSLZ(serializers.Serializer):
+    token = serializers.CharField(required=True, max_length=254)
+
+
 class PasswordResetByTokenInputSLZ(serializers.Serializer):
     token = serializers.CharField(required=True, max_length=254)
     password = Base64OrPlainField(required=True, max_length=254)
+
+    def validate(self, attrs):
+        token_holder = get_token_handler(token=attrs["token"])
+        profile = token_holder.profile
+        # 对于密码输入可能是明文也可能是密文，根据配置自动判断解析出明文（密文只是与前端加密传递，与后续逻辑无关）
+        attrs["password"] = get_raw_password(profile.category_id, attrs["password"])
+        return attrs
 
 
 class PasswordModifyInputSLZ(serializers.Serializer):
     old_password = Base64OrPlainField(required=True, max_length=254)
     new_password = Base64OrPlainField(required=True, max_length=254)
+
+
+class PasswordListSettingsByTokenInputSLZ(serializers.Serializer):
+    token = serializers.CharField(required=True, max_length=254)

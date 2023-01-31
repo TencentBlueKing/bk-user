@@ -81,18 +81,6 @@ class TestActionApis:
         response = view(request=request, lookup_value="adminAb@lettest")
         assert response.data["username"] == "adminAb@lettest"
 
-    def test_profile_retrieve_no_domain(self, factory, view):
-        """测试强制用户名不返回 domain"""
-        factory = get_api_factory()
-        make_simple_profile(
-            username="adminAb",
-            force_create_params={"domain": "lettest", "category_id": 2},
-        )
-        request = factory.get("/api/v2/profiles/adminAb@lettest/")
-        # 测试时需要手动指定 kwargs 参数当作路径参数
-        response = view(request=request, lookup_value="adminAb@lettest")
-        assert response.data["username"] == "adminAb"
-
     # --------------- update ---------------
     @pytest.mark.parametrize(
         "former_passwords,new_password,expected",

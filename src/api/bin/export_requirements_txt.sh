@@ -6,5 +6,3 @@ sed -i '/^--extra-index-url*/d' requirements.txt
 sed -i '/gevent/d' requirements.txt
 sed -i '/greenlet/d' requirements.txt
 sed -i '/gunicorn/d' requirements.txt
-
-pip install -r requirements.txt -i https://pypi.org/simple/

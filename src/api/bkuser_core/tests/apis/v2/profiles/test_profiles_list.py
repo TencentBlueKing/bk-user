@@ -277,7 +277,7 @@ class TestListCreateApis:
     @pytest.mark.parametrize(
         "query_string,target_code,results_count,target_username",
         [
-            ("?wildcard_search=lette&wildcard_search_fields=domain", 200, 1, "adminAb"),
+            ("?wildcard_search=lette&wildcard_search_fields=domain", 200, 1, "adminAb@lettest"),
             ("?exact_lookups=admin", 200, 1, "admin"),
         ],
     )
@@ -300,9 +300,9 @@ class TestListCreateApis:
         "query_string,results_count,target_username",
         [
             ("?ordering=create_time", 2, "admin"),
-            ("?ordering=-create_time", 2, "adminAb"),
+            ("?ordering=-create_time", 2, "adminAb@lettest"),
             ("?ordering=id", 2, "admin"),
-            ("?ordering=-id", 2, "adminAb"),
+            ("?ordering=-id", 2, "adminAb@lettest"),
         ],
     )
     def test_profile_list_ordering(self, factory, view, query_string, results_count, target_username):

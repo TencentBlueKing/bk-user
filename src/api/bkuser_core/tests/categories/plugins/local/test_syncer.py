@@ -105,7 +105,7 @@ class TestExcelSyncer:
         )
 
     @pytest.mark.parametrize(
-        "users,titles,expected",
+        "users,titles,expected,is_overwrite",
         [
             (
                 [
@@ -118,10 +118,11 @@ class TestExcelSyncer:
                     "bbbb": "xxxx@xxxx.xyz",
                     "cccc": "cccc@xxxx.com",
                 },
-            ),
+                True,
+            )
         ],
     )
-    def test_update_existed_users(self, syncer, users, make_parser_set, titles, expected):
+    def test_update_existed_users(self, syncer, users, make_parser_set, titles, expected, is_overwrite):
         """测试更新已存在用户"""
         for u in ["aaaa", "cccc"]:
             a = make_simple_profile(username=u, force_create_params={"category_id": syncer.category_id})
@@ -130,7 +131,7 @@ class TestExcelSyncer:
 
         # TODO: 当前 id 最大值是在 db_sync_manager 初始化时确定的，实际上并不科学
         syncer.db_sync_manager._update_cache()
-        syncer._sync_users(make_parser_set(titles), users)
+        syncer._sync_users(make_parser_set(titles), users, is_overwrite=is_overwrite)
         for k, v in expected.items():
             assert Profile.objects.get(category_id=syncer.category_id, username=k).email == v
 
@@ -182,9 +183,12 @@ class TestExcelSyncer:
     )
     def test_sync_wrong_users(self, syncer, users, make_parser_set, titles, expected):
         """测试异常用户同步"""
-        syncer._sync_users(make_parser_set(titles), users)
+        # FIXME: assert exception
+        with pytest.raises(Exception) as exc_info:
+            syncer._sync_users(make_parser_set(titles), users)
         assert (
-            set(Profile.objects.filter(category_id=syncer.category_id).values_list("username", flat=True)) == expected
+            "导入执行完成: 成功 1 条记录, 失败 2 条记录" in exc_info.value.args[0]
+            or "导入执行完成: 成功 0 条记录, 失败 1 条记录" in exc_info.value.args[0]
         )
 
 

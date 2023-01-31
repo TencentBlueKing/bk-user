@@ -1,23 +1,11 @@
 <!--
-  - Tencent is pleased to support the open source community by making Bk-User 蓝鲸用户管理 available.
-  - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
-  - BK-LOG 蓝鲸日志平台 is licensed under the MIT License.
-  -
-  - License for Bk-User 蓝鲸用户管理:
-  - -------------------------------------------------------------------
-  -
-  - Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-  - documentation files (the "Software"), to deal in the Software without restriction, including without limitation
-  - the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-  - and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-  - The above copyright notice and this permission notice shall be included in all copies or substantial
-  - portions of the Software.
-  -
-  - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-  - LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  - NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-  - WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  - SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+  - TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+  - Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+  - Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at http://opensource.org/licenses/MIT
+  - Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+  - an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+  - specific language governing permissions and limitations under the License.
   -->
 <template>
   <div :class="['look-user-info-wrapper',{ 'forbid-operate': isForbid }]">
@@ -51,20 +39,35 @@
         </bk-button>
         <div class="reset-dialog" v-if="isShowReset" v-click-outside="closeResetDialog">
           <i class="arrow"></i>
+          <template v-if="isAdmin">
+            <h4 class="title">{{$t('原密码')}}</h4>
+            <p class="pw-input-text">
+              <input
+                autocomplete="old-password"
+                :type="passwordInputType['oldPassword']"
+                :placeholder="$t('请输入原密码')"
+                :class="['editor-password',{ 'input-error': isCorrectOldPw }]"
+                :maxlength="32"
+                v-model="oldPassword"
+                v-focus
+                @focus="isCorrectOldPw = false" />
+              <i :class="['bk-icon', oldPasswordIconClass]" @click="changePasswordInputType('oldPassword')"></i>
+            </p>
+          </template>
           <h4 class="title">{{$t('重置密码')}}</h4>
           <p class="pw-input-text">
             <input type="text" class="hidden-password-input">
             <input type="password" class="hidden-password-input">
             <input
               autocomplete="new-password"
-              :type="passwordInputType"
+              :type="passwordInputType['newPassword']"
               :placeholder="$t('请输入新密码')"
               :class="['editor-password',{ 'input-error': isCorrectPw }]"
               :maxlength="32"
               v-model="newPassword"
               v-focus
               @focus="isCorrectPw = false" />
-            <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType"></i>
+            <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType('newPassword')"></i>
           </p>
           <div class="reset-btn">
             <bk-button theme="primary" class="editor-btn" @click="confirmReset">{{$t('确认')}}</bk-button>
@@ -88,7 +91,7 @@
               <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
             </div>
             <div class="desc" v-else>
-              <p class="text">{{fieldInfo.value || '--'}}</p>
+              <p class="text">{{$xssVerification(fieldInfo.value || '') || '--'}}</p>
             </div>
           </div>
         </li>
@@ -128,6 +131,7 @@
 
 <script>
 import { dateConvert } from '@/common/util';
+const Base64 = require('js-base64').Base64;
 export default {
   directives: {
     focus: {
@@ -174,12 +178,21 @@ export default {
       localAvatar: '',
       isForbid: false,
       phoneNumber: this.$t('点击查看'),
+      isCorrectOldPw: false,
       isCorrectPw: false,
       // 是否显示重置密码的弹窗
       isShowReset: false,
+      oldPassword: '',
       newPassword: '',
-      passwordInputType: 'password',
+      passwordInputType: {
+        oldPassword: 'password',
+        newPassword: 'password',
+      },
       passwordRules: null,
+      // 公钥
+      publicKey: '',
+      // 是否rsa加密
+      isRsaEncrypted: false,
     };
   },
   computed: {
@@ -188,8 +201,11 @@ export default {
         return fieldInfo.key !== 'department_name' && fieldInfo.key !== 'leader';
       });
     },
+    oldPasswordIconClass() {
+      return this.passwordInputType.oldPassword === 'password' ? 'icon-hide' : 'icon-eye';
+    },
     passwordIconClass() {
-      return this.passwordInputType === 'password' ? 'icon-hide' : 'icon-eye';
+      return this.passwordInputType.newPassword === 'password' ? 'icon-hide' : 'icon-eye';
     },
     passwordValidDays() {
       return this.$store.state.passwordValidDaysList.find(item => (
@@ -221,9 +237,9 @@ export default {
     // 获取用户信息
     getUserInfo() {
       this.activeFieldsList.forEach((item) => {
-        if (item.options.length > 0) {
+        if ((item.options || []).length > 0) {
           item.options.map((key) => {
-            if (key.id === this.currentProfile[item.key]) {
+            if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
               item.value = key.value;
             }
           });
@@ -281,11 +297,27 @@ export default {
       this.phoneNumber = this.currentProfile.telephone;
     },
     // 重置密码
-    showResetDialog() {
+    async showResetDialog() {
       if (this.isForbid) {
         return;
       }
       this.isShowReset = true;
+      // 清空上次输入
+      this.oldPassword = '';
+      this.newPassword = '';
+      const res = await this.$store.dispatch('catalog/ajaxGetPassport', {
+        id: this.currentCategoryId,
+      });
+      if (res.data) {
+        res.data.forEach((item) => {
+          if (item.key === 'enable_password_rsa_encrypted') {
+            this.isRsaEncrypted = item.value;
+          }
+          if (item.key === 'password_rsa_public_key') {
+            this.publicKey = Base64.decode(item.value);
+          }
+        });
+      }
     },
     // 验证密码的格式
     async confirmReset() {
@@ -321,6 +353,18 @@ export default {
       }
       if (this.passwordRules) {
         // 如果上面拿到了规则就进行前端校验
+        // 原密码校验, 任何人在重置admin密码时，需要先输入原密码
+        if (this.isAdmin) {
+          this.isCorrectOldPw = !this.$validatePassportByRules(this.oldPassword, this.passwordRules);
+          if (this.isCorrectOldPw) {
+            this.$bkMessage({
+              message: this.$getMessageByRules(this, this.passwordRules),
+              theme: 'error',
+            });
+            return;
+          }
+        }
+        // 新密码校验
         this.isCorrectPw = !this.$validatePassportByRules(this.newPassword, this.passwordRules);
         if (this.isCorrectPw) {
           this.$bkMessage({
@@ -334,19 +378,41 @@ export default {
         return;
       }
       this.clickSecond = true;
-      try {
-        this.$emit('showBarLoading');
-        await this.$store.dispatch('organization/patchProfile', {
-          id: this.currentProfile.id,
-          data: {
+      this.$emit('showBarLoading');
+      let data = {};
+      // 任何人在重置admin密码时，需要先输入原密码
+      if (this.isAdmin) {
+        if (this.isRsaEncrypted) {
+          data = {
+            password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey),
+            old_password: this.Rsa.rsaPublicData(this.oldPassword.trim(), this.publicKey),
+          };
+        } else {
+          data = {
             password: this.newPassword.trim(),
-          },
+            old_password: this.oldPassword.trim(),
+          };
+        }
+      } else {
+        if (this.isRsaEncrypted) {
+          data = { password: this.Rsa.rsaPublicData(this.newPassword.trim(), this.publicKey) };
+        } else {
+          data = { password: this.newPassword.trim() };
+        }
+      }
+      this.patchProfile(this.currentProfile.id, data);
+      this.isShowReset = false;
+    },
+    async patchProfile(id, data) {
+      try {
+        await this.$store.dispatch('organization/patchProfile', {
+          id,
+          data,
         });
         this.$bkMessage({
           message: this.$t('重置密码成功'),
           theme: 'success',
         });
-        this.isShowReset = false;
       } catch (e) {
         console.warn(e);
       } finally {
@@ -357,10 +423,13 @@ export default {
     closeResetDialog(e) {
       if (e.target.innerText === '重置密码') return;
       this.isShowReset = false;
+      // 清空
+      this.oldPassword = '';
+      this.newPassword = '';
     },
     // 查看密码
-    changePasswordInputType() {
-      this.passwordInputType = this.passwordInputType === 'password' ? 'text' : 'password';
+    changePasswordInputType(type = 'newPassword') {
+      this.passwordInputType[type] = this.passwordInputType[type] === 'password' ? 'text' : 'password';
     },
     handleLoadAvatarError() {
       this.localAvatar = this.$store.state.localAvatar;

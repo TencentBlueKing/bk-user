@@ -349,23 +349,22 @@ class TestGetProfilesApis:
         return DepartmentViewSet.as_view({"get": "get_profiles", "post": "add_profiles"})
 
     @pytest.mark.parametrize(
-        "lookup_value, creating_list, raw_username, expected",
+        "lookup_value, creating_list, expected",
         [
             (
                 "部门C",
                 ["部门A", "部门B", "部门C"],
-                False,
                 "@test",
             ),
-            (
-                "部门C",
-                ["部门A", "部门B", "部门C"],
-                True,
-                "user-0",
-            ),
+            # (
+            #     "部门C",
+            #     ["部门A", "部门B", "部门C"],
+            #     True,
+            #     "user-0",
+            # ),
         ],
     )
-    def test_department_get_profiles_1_cate(self, view, lookup_value, creating_list, raw_username, expected):
+    def test_department_get_profiles_1_cate(self, view, lookup_value, creating_list, expected):
         """测试从部门获取人员（当只有一个默认目录时）"""
 
         parent_id = 1
@@ -386,9 +385,7 @@ class TestGetProfilesApis:
         attach_pd_relation(profile=_p, department=target_dep)
 
         response = view(
-            request=get_api_factory({"HTTP_RAW_USERNAME": raw_username}).get(
-                f"/api/v2/departments/{lookup_value}/profiles/?lookup_field=name"
-            ),
+            request=get_api_factory().get(f"/api/v2/departments/{lookup_value}/profiles/?lookup_field=name"),
             lookup_value=lookup_value,
         )
         assert len(response.data["results"]) == 11

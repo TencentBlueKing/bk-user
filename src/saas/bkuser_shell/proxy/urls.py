@@ -31,6 +31,21 @@ urlpatterns = [
         CommonProxyNoAuthViewSet.as_view({"post": "request"}),
         name="common.no_auth.proxy.3",
     ),
+    path(
+        "api/v1/web/passwords/settings/by_token/",
+        CommonProxyNoAuthViewSet.as_view({"get": "request"}),
+        name="common.no_auth.proxy.4",
+    ),
+    path(
+        "api/v1/web/passwords/reset/verification_code/send_sms/",
+        CommonProxyNoAuthViewSet.as_view({"post": "request"}),
+        name="common.no_auth.proxy.5",
+    ),
+    path(
+        "api/v1/web/passwords/reset/verification_code/verify/",
+        CommonProxyNoAuthViewSet.as_view({"post": "request"}),
+        name="common.no_auth.proxy.6",
+    ),
     # NOTE: 前端暂时切换成这个
     path(
         "api/v1/web/version_logs/",
