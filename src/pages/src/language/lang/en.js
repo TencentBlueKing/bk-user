@@ -496,6 +496,7 @@ export default {
   停用: 'Stop',
   搜索结果为空: 'The search result is empty',
   '可以尝试 调整关键词 或 ': 'Try adjusting keywords or',
+  清空筛选条件: 'Clear filter',
   默认目录不能被停用: 'The default directory cannot be disabled',
   '请先停用，方可删除目录': 'Disable the directory before deleting it',
   '确认要删除当前目录？': 'Are you sure you want to delete the current directory?',
