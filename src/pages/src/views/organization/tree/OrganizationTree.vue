@@ -12,7 +12,6 @@
     <bk-tree
       ext-cls="top-tree"
       :style="topTreeStyle"
-      enable-title-tip
       draggable
       drag-sort
       :data="availableDirectory"
@@ -28,7 +27,6 @@
       </p>
       <bk-tree
         :ext-cls="['bottom-tree-content', { 'show-content': isDirectory }]"
-        enable-title-tip
         draggable
         drag-sort
         :data="unavailableDirectory"
@@ -153,9 +151,7 @@ export default {
       this.$emit('handleClickToggle', item);
     },
     tpl(node) {
-      return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}
-        onMouseenter={() => this.$emit('handleMouseenter', event)}
-        onMouseleave={() => this.$emit('handleMouseleave', event)}>
+      return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}>
         {node.display_name ? <i class={['icon user-icon icon-root-node-i', { 'active-icon': node.showBackground }]} />
           : <i class={['icon icon-user-file-close-01', { 'active-icon': node.showBackground }]} />}
         <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
@@ -221,7 +217,7 @@ export default {
             </div>
             <div class="specific-menu">
               <a href="javascript:;"
-                class={['delete', { 'delete-disable': node.default || (node.activated && node.configured) || node.has_children }]}
+                class={['delete', { 'delete-disable': this.deleteDisabled(node) }]}
                 onClick={this.deleteDepartment.bind(this, node)}
                 onMouseenter={this.checkDeleteTips.bind(this, node)}
                 onMouseleave={this.closeDeleteTips.bind(this, node)}>
@@ -274,8 +270,11 @@ export default {
       item.showSwitchTips = false;
     },
     checkDeleteTips(item) {
-      if (item.default || item.activated || item.has_children) {
+      if (item.default || (item.activated && item.configured) || item.has_children) {
         this.$set(item, 'showDeleteTips', true);
+      }
+      if (item.activated === false && item.has_children) {
+        this.$set(item, 'showDeleteTips', false);
       }
     },
     closeDeleteTips(item) {
@@ -283,6 +282,16 @@ export default {
     },
     handleDragNode(node) {
       this.$emit('switchNodeOrder', node);
+    },
+    deleteDisabled(item) {
+      let status = false;
+      if (item.default || (item.activated && item.configured) || item.has_children) {
+        status = true;
+      }
+      if (item.activated === false && item.has_children) {
+        status = false;
+      }
+      return status;
     },
   },
 };
@@ -301,9 +310,6 @@ export default {
   .icon-user-file-close-01 {
     color: #a3c5fd;
   }
-  .icon-more {
-    display: none;
-  }
   .show-tag {
     padding: 0;
     width: 40px;
@@ -311,8 +317,10 @@ export default {
     vertical-align: bottom;
   }
   .top-tree {
+    padding: 0 16px;
     height: var(--top-tree-height);
     @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+    overflow-x: hidden;
   }
   .bottom-tree {
     font-size: 14px;
@@ -322,7 +330,7 @@ export default {
     bottom: 1px;
     background: #F5F7FA;
     .bottom-tree-header {
-      padding: 0 16px;
+      padding: 0 12px;
       height: 40px;;
       line-height: 40px;
       border-top: 1px solid #DCDEE5;
@@ -342,76 +350,170 @@ export default {
     .bottom-tree-content {
       display: none;
     }
-    .show-content {
+    ::v-deep .show-content {
       display: block;
+      padding: 0 16px 40px;
       max-height: 400px;
       overflow-y: auto;
       @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-    }
-  }
-}
-::v-deep .bk-tree .tree-drag-node {
-  padding: 0 16px;
-  .tree-expanded-icon {
-    vertical-align: sub;
-  }
-  .tree-node {
-    width: calc(100% - 14px);
-    padding-left: 3px;
-    .node-title {
-      width: calc(100% - 40px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
-  }
-}
-.tree-drag-node {
-  padding: 0 16px;
-  .directory-warpper {
-    line-height: 32px;
-    height: 32px;
-  }
-  .show-background {
-    line-height: 32px;
-    height: 32px;
-    .active-icon {
-      color: #4b8fff;
-    }
-    .show-more {
-      color: #4b8fff;
-      display: block;
-      position: absolute;
-      font-size: 20px;
-      left: -20px;
-      top: 10px;
-      cursor: pointer;
-    }
-  }
-  &:hover {
-    cursor: pointer;
-    & > .tree-node > .directory-warpper {
-      .icon-more {
-        display: inline-block;
-        position: absolute;
-        left: -20px;
-        top: 10px;
-        font-size: 20px;
-        color: #737987;
-        text-align: center;
-        cursor: pointer;
+      overflow-x: hidden;
+      .tree-drag-node {
+        .tree-node {
+          position: relative;
+          width: calc(100% - 50px);
+          padding-left: 3px;
+          .node-title {
+            width: calc(100% - 40px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+          }
+          .show-background {
+            .option {
+              display: flex;
+              .icon-more {
+                visibility: visible;
+              }
+              .bk-tag span {
+                display: block;
+                width: 40px;
+              }
+            }
+          }
+          .directory-warpper {
+            .option {
+              display: flex;
+              .icon-more {
+                visibility: hidden;
+              }
+              .bk-tag span {
+                display: block;
+                width: 40px;
+              }
+            }
+          }
+        }
+        &:hover {
+          & > .tree-node > .directory-warpper {
+            .icon-more {
+              visibility: visible;
+            }
+          }
+        }
+      }
+      .leaf .tree-node {
+        width: 100%;
       }
     }
   }
 }
+::v-deep .bk-tree {
+  li {
+    position: static;
+  }
+  .tree-drag-node {
+    position: relative;
+    .directory-warpper {
+      position: relative;
+      line-height: 32px;
+      height: 32px;
+      .option {
+        align-items: center;
+        position: absolute;
+        top: 5px;
+        right: 0;
+        height: 20px;
+        width: 20px;
+        display: none;
+      }
+    }
+    .show-background {
+      position: relative;
+      line-height: 32px;
+      height: 32px;
+      .active-icon {
+        color: #4b8fff;
+      }
+      .option {
+        align-items: center;
+        position: absolute;
+        top: 5px;
+        right: 0;
+        height: 20px;
+        width: 20px;
+      }
+      .show-more {
+        color: #4b8fff;
+        display: block;
+        font-size: 20px;
+        cursor: pointer;
+      }
+    }
+    &::before {
+      content: "";
+      display: block;
+      width: 1000px;
+      height: 37px;
+      position: absolute;
+      right: -30px;
+      z-index: 0;
+    }
+    &:hover::before {
+      background: #f0f1f5;
+    }
+    .tree-expanded-icon {
+      vertical-align: sub;
+    }
+    .tree-node {
+      position: relative;
+      width: calc(100% - 14px);
+      padding-left: 3px;
+      .node-title {
+        width: calc(100% - 40px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+    }
+    &:hover {
+      & > .tree-node > .directory-warpper {
+        .option {
+          display: block;
+          align-items: center;
+          position: absolute;
+          top: 5px;
+          right: 0;
+          height: 20px;
+          width: 20px;
+          color: #737987;
+        }
+        .icon-more {
+          color: #737987;
+          display: block;
+          font-size: 20px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  .leaf .tree-node {
+    width: 100%;
+  }
+  .node-li {
+    .tree-expanded-icon {
+      z-index: 1;
+    }
+    &::before {
+      background: #E2EDFF;
+    }
+    &:hover::before {
+      background: #E2EDFF;
+    }
+  }
+}
 .option {
-  align-items: center;
-  position: absolute;
-  top: 0;
-  right: 10px;
-  height: 36px;
-
   .dropdown-list {
     display: none;
   }
@@ -419,7 +521,7 @@ export default {
   > .show-dropdown-list {
     display: block;
     position: fixed;
-    width: 174px;
+    width: 180px;
     background: #fff;
     border-radius: 2px;
     border: 1px solid #dcdee5;

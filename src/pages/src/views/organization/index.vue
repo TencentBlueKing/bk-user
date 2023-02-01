@@ -26,8 +26,6 @@
               @deleteDepartment="deleteDepartment"
               @switchNodeOrder="switchNodeOrder"
               @handleConfigDirectory="handleClickConfig"
-              @handleMouseenter="handleMouseenter"
-              @handleMouseleave="handleMouseleave"
               @addOrganization="addOrganization" />
           </div>
         </div>
@@ -480,6 +478,8 @@ export default {
       addOrganizationName: '',
       currentParentNode: null,
       currentNode: null,
+      // 回收保留天数
+      retentionDays: null,
     };
   },
   computed: {
@@ -509,6 +509,7 @@ export default {
   },
   watch: {
     'currentParam.item'(val, oldVal) {
+      this.departmentsId = val.id;
       // 搜索结果为 profile 时切换节点不刷新表格数据
       if (this.treeSearchResult && this.treeSearchResult.groupType !== 'department') {
         return;
@@ -559,12 +560,12 @@ export default {
         this.checkSearchKey = '';
       }
     },
-    // 当前节点背景颜色
+    // 当前节点添加className
     currentNode(val, oldVal) {
       if (val !== oldVal) {
-        val.style.background = '#e1ecff';
+        val.classList.add('node-li');
         if (oldVal) {
-          oldVal.style.background = 'none';
+          oldVal.classList.remove('node-li');
         }
       }
     },
@@ -578,7 +579,7 @@ export default {
   },
   async mounted() {
     try {
-      await Promise.all([this.initData(), this.getTableTitle()]);
+      await Promise.all([this.initData(), this.getTableTitle(), this.initRecoverySetting()]);
       this.getNodeColor();
     } catch (e) {
       console.warn(e);
@@ -664,6 +665,14 @@ export default {
         tableHeardList.forEach((item) => {
           this.userMessage.tableHeardList.push(item);
         });
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    async initRecoverySetting() {
+      try {
+        const res = await this.$store.dispatch('setting/getGlobalSettings');
+        this.retentionDays = res.data[0].value;
       } catch (e) {
         console.warn(e);
       }
@@ -1069,11 +1078,6 @@ export default {
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
     },
-    updateTableData(item) {
-      this.tableData = item;
-      if (!item.length) return;
-      this.departmentsId = item[0].departments[0].id;
-    },
     // 侧边栏 点击保存 更新列表 userMessage.userInforList
     async updateUserInfor() {
       if (this.treeSearchResult && this.treeSearchResult.groupType !== 'department') {
@@ -1249,8 +1253,47 @@ export default {
         return;
       }
       this.$refs.dropdownMore.hide();
+      const h = this.$createElement;
+      let instance1 = null;
+      let instance2 = null;
       this.$bkInfo({
-        title: this.$t('删除后会保留用户的数据，以便需要时审查'),
+        title: this.$t('确认要删除当前用户？'),
+        subHeader: h(
+          'div',
+          {
+            style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
+          }, [
+            h('p', [this.$t('删除后，该用户将为你保存'),
+              h('span', {
+                style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                on: {
+                  mouseleave: () => {
+                    instance1 && instance1.hide(100);
+                  },
+                  mouseenter: (e) => {
+                    instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
+                    instance1.show(1000);
+                  },
+                },
+              }, this.retentionDays), this.$t('天。'),
+            ]),
+            h('p', [this.$t('你可以在'),
+              h('i', {
+                class: 'bk-sq-icon icon-huishouxiang',
+                style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                on: {
+                  mouseleave: () => {
+                    instance2 && instance2.hide(100);
+                  },
+                  mouseenter: (e) => {
+                    instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
+                    instance2.show(1000);
+                  },
+                },
+              }), this.$t('回收站中查看已删除的用户数据，并进行还原、彻底删除的操作。'),
+            ]),
+          ],
+        ),
         extCls: 'king-info long-title',
         confirmFn: async () => {
           if (this.clickSecond) {
@@ -1284,8 +1327,47 @@ export default {
     },
     // 删除某一条用户信息，更新用户信息列表
     deleteProfile(id) {
+      const h = this.$createElement;
+      let instance1 = null;
+      let instance2 = null;
       this.$bkInfo({
-        title: this.$t('删除后会保留用户的数据，以便需要时审查'),
+        title: this.$t('确认要删除当前用户？'),
+        subHeader: h(
+          'div',
+          {
+            style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
+          }, [
+            h('p', [this.$t('删除后，该用户将为你保存'),
+              h('span', {
+                style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                on: {
+                  mouseleave: () => {
+                    instance1 && instance1.hide(100);
+                  },
+                  mouseenter: (e) => {
+                    instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
+                    instance1.show(1000);
+                  },
+                },
+              }, this.retentionDays), this.$t('天。'),
+            ]),
+            h('p', [this.$t('你可以在'),
+              h('i', {
+                class: 'bk-sq-icon icon-huishouxiang',
+                style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                on: {
+                  mouseleave: () => {
+                    instance2 && instance2.hide(100);
+                  },
+                  mouseenter: (e) => {
+                    instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
+                    instance2.show(1000);
+                  },
+                },
+              }), this.$t('回收站中查看已删除的用户数据，并进行还原、彻底删除的操作。'),
+            ]),
+          ],
+        ),
         extCls: 'king-info long-title',
         confirmFn: () => {
           if (this.clickSecond) {
@@ -1393,7 +1475,7 @@ export default {
     // 点击某个树节点
     handleClickTreeNode(item, event) {
       if (event) {
-        this.currentNode = event.target.offsetParent.firstChild;
+        this.currentNode = event.target.offsetParent.parentNode.parentNode;
       }
       if (item.parent === null) {
         this.initRtxList(item.id);
@@ -1449,8 +1531,8 @@ export default {
     // 显示对应的子菜单
     handleClickOption(item, event) {
       event.stopPropagation();
-      this.currentParentNode = event.target.offsetParent.offsetParent;
-      this.currentNode = event.target.offsetParent.offsetParent.firstChild;
+      this.currentParentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
+      this.currentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
       if (!this.treeSearchResult) {
         // 展示当前节点
         this.currentParam.item = item;
@@ -1511,6 +1593,9 @@ export default {
       try {
         this.treeLoading = true;
         const { dragNode, targetNode } = param;
+        if (dragNode.category_id !== targetNode.category_id || dragNode.parent.id !== targetNode.parent.id) {
+          return;
+        }
         await this.$store.dispatch('organization/switchNodeOrder', {
           id: dragNode.id,
           upId: targetNode.id,
@@ -1525,6 +1610,8 @@ export default {
     // 删除组织节点
     deleteDepartment(deleteItem) {
       const h = this.$createElement;
+      let instance1 = null;
+      let instance2 = null;
       deleteItem.display_name
         ? this.$bkInfo({
           title: this.$t('确认要删除当前目录？'),
@@ -1536,12 +1623,30 @@ export default {
               h('p', [this.$t('删除后，该目录下的数据将为你保存'),
                 h('span', {
                   style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                }, deleteItem.id), this.$t('天。'),
+                  on: {
+                    mouseleave: () => {
+                      instance1 && instance1.hide(100);
+                    },
+                    mouseenter: (e) => {
+                      instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
+                      instance1.show(1000);
+                    },
+                  },
+                }, this.retentionDays), this.$t('天。'),
               ]),
               h('p', [this.$t('你可以在'),
                 h('i', {
-                  class: 'icon user-icon icon-root-node-i',
+                  class: 'bk-sq-icon icon-huishouxiang',
                   style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                  on: {
+                    mouseleave: () => {
+                      instance2 && instance2.hide(100);
+                    },
+                    mouseenter: (e) => {
+                      instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
+                      instance2.show(1000);
+                    },
+                  },
                 }), this.$t('回收站中查看已删除的目录数据，并进行还原、彻底删除的操作。'),
               ]),
             ],
@@ -1560,10 +1665,28 @@ export default {
               h('p', [this.$t('该用户将为你保存'),
                 h('span', {
                   style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                }, deleteItem.id), this.$t('天，你可以在'),
+                  on: {
+                    mouseleave: () => {
+                      instance1 && instance1.hide(100);
+                    },
+                    mouseenter: (e) => {
+                      instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
+                      instance1.show(1000);
+                    },
+                  },
+                }, this.retentionDays), this.$t('天，你可以在'),
                 h('i', {
-                  class: 'icon user-icon icon-root-node-i',
+                  class: 'bk-sq-icon icon-huishouxiang',
                   style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                  on: {
+                    mouseleave: () => {
+                      instance2 && instance2.hide(100);
+                    },
+                    mouseenter: (e) => {
+                      instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
+                      instance2.show(1000);
+                    },
+                  },
                 }), this.$t('回收站中查看已删除的组织数据，并进行还原、彻底删除的操作。'),
               ]),
             ],
@@ -1713,7 +1836,7 @@ export default {
         console.warn(e);
       }
     },
-    changePage(param) {
+    changePage(param, update) {
       if (typeof param === 'object') { // 点击目录名跳转到设置页面
         this.catalogInfo = { ...param };
         switch (param.type) {
@@ -1729,6 +1852,10 @@ export default {
         }
       } else {
         this.showingPage = param;
+        if (update) {
+          this.initData();
+          this.getNodeColor();
+        }
       }
     },
     handleCancel() {
@@ -1759,12 +1886,12 @@ export default {
       const inputNode = document.getElementsByClassName('new-department')[0];
       inputNode.style.display = 'flex';
       if (node.type === 'local') {
-        const ulNode = this.currentParentNode.lastChild;
+        const ulNode = this.currentParentNode.parentNode.lastChild;
         ulNode.appendChild(inputNode);
         ulNode.lastChild.getElementsByClassName('bk-form-input')[0].focus();
       }
       if (node.isLocalDepartment) {
-        const liNode = this.currentParentNode;
+        const liNode = this.currentParentNode.parentNode;
         liNode.after(inputNode);
         liNode.nextElementSibling.getElementsByClassName('bk-form-input')[0].focus();
       }

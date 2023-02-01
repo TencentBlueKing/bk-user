@@ -28,7 +28,12 @@
           @click="syncCatalog(node)">{{ $t('同步') }}</a>
         <!-- 导入导出 -->
         <template v-if="node.type === 'local'">
-          <a href="javascript:;" @click="exportUser(node)">{{ $t('导出') }}</a>
+          <a
+            href="javascript:;"
+            :class="['right', { 'delete-disable': !node.has_children }]"
+            v-bk-tooltips.left="$t('空目录无需导出')"
+            :disabled="node.has_children"
+            @click="exportUser(node)">{{ $t('导出') }}</a>
           <a href="javascript:;" @click="importUser(node)">{{ $t('导入') }}</a>
         </template>
         <!-- 启停 -->
@@ -43,10 +48,10 @@
         <a
           href="javascript:;"
           :class="['right delete', {
-            'delete-disable': node.default || (node.activated && node.configured) || node.has_children
+            'delete-disable': deleteDisabled(node)
           }]"
-          :v-bk-tooltips="deleteConfig"
-          :disabled="!node.default || (!node.activated && !node.configured) || !node.has_children"
+          v-bk-tooltips.left="deleteTips"
+          :disabled="!deleteDisabled(node)"
           @click="deleteDepartment(node)">{{ $t('删除') }}</a>
       </div>
     </div>
@@ -88,28 +93,34 @@ export default {
   data() {
     return {
       isOperationConfig: false,
-      deleteConfig: {
-        placement: 'left',
-        content: '',
-      },
     };
   },
-  watch: {
-    node(val, oldVal) {
-      if (val !== oldVal) {
-        if (val.default) {
-          this.deleteConfig.content = this.$t('默认目录不能被删除');
-        } else if (val.activated && val.configured) {
-          this.deleteConfig.content = this.$t('请先停用，方可删除目录');
-        } else if (val.has_children) {
-          this.deleteConfig.content = this.$t('非空组织不能删除');
-        }
+  computed: {
+    deleteTips() {
+      let text = '';
+      if (this.node.default) {
+        text = this.$t('默认目录不能被删除');
+      } else if (this.node.activated && this.node.configured) {
+        text = this.$t('请先停用，方可删除目录');
+      } else if (this.node.has_children) {
+        text = this.$t('非空组织不能删除');
       }
+      return text;
     },
   },
   methods: {
     handleClickOutSide() {
       this.isOperationConfig = false;
+    },
+    deleteDisabled(item) {
+      let status = false;
+      if (item.default || (item.activated && item.configured) || item.has_children) {
+        status = true;
+      }
+      if (item.activated === false && item.has_children) {
+        status = false;
+      }
+      return status;
     },
   },
 };
