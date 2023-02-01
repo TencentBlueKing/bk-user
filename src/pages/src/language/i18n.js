@@ -11,14 +11,14 @@
 */
 import Vue from 'vue';
 import VueI18n from 'vue-i18n';
-import cookie from 'cookie';
+import Cookies from 'js-cookie';
 import { locale, lang } from 'bk-magic-vue';
 import zh from './lang/zh';
 import en from './lang/en';
 
 Vue.use(VueI18n);
 
-const localLanguage = cookie.parse(document.cookie).blueking_language || 'zh-cn';
+const localLanguage = Cookies.get('blueking_language') || 'zh-cn';
 // 等组件语言升级后删掉这代码
 if (localLanguage === 'en') {
   locale.use(lang.enUS);

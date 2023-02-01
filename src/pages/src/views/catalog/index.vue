@@ -115,10 +115,10 @@ export default {
           this.$store.dispatch('catalog/ajaxGetDefaultFields', { type: 'ldap' }),
         ]);
         const defaults = {
-          password: this.convertDefault(password.data),
-          connection: this.convertDefault(connection.data),
-          fieldsMad: this.convertDefault(fieldsMad.data),
-          fieldsLdap: this.convertDefault(fieldsLdap.data),
+          password: this.$convertDefault(password.data),
+          connection: this.$convertDefault(connection.data),
+          fieldsMad: this.$convertDefault(fieldsMad.data),
+          fieldsLdap: this.$convertDefault(fieldsLdap.data),
         };
         // console.log('defaults', defaults);
         // try {
@@ -134,31 +134,6 @@ export default {
         this.$store.commit('catalog/updateDefaults', defaults);
       } catch (e) {
         console.warn(e);
-      }
-    },
-    convertDefault(arr) {
-      try {
-        const objectData = {};
-        arr.forEach((regionObject) => {
-          const { region, key, choices } = regionObject;
-          if (!objectData[region]) {
-            // 创建 region
-            objectData[region] = {};
-          }
-          // 字段默认值
-          objectData[region][key] = regionObject.default;
-
-          const choicesArray = ['ssl_encryption', 'basic_pull_node', 'group_pull_node', 'bk_fields', 'mad_fields'];
-          if (choicesArray.includes(key)) {
-            this.$store.commit('catalog/updateChoices', {
-              ...this.$store.state.catalog.choices,
-              [key]: choices,
-            });
-          }
-        });
-        return objectData;
-      } catch (e) {
-        console.warn('参数错误', e);
       }
     },
   },
