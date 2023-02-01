@@ -53,6 +53,7 @@ export default {
   .setting-wrapper {
     height: 100%;
     border: 1px solid #dcdee5;
+    padding: 40px;
   }
 
   .setting-left {
@@ -61,7 +62,7 @@ export default {
     width: 220px;
     height: 100%;
     background: #fafbfd;
-    border-right: 1px solid #dcdee5;
+    border: 1px solid #dcdee5;
 
     .nav-item {
       padding: 11px 0 11px 30px;
@@ -83,5 +84,7 @@ export default {
     width: calc(100% - 220px);
     min-width: 958px;
     height: 100%;
+    border: 1px solid #dcdee5;
+    border-left: none;
   }
 </style>

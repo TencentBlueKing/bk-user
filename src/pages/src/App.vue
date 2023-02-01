@@ -16,13 +16,13 @@
       <NoAuthority v-if="noAuthData" :no-auth-data="noAuthData" @reloadRouter="routerKey += 1" />
     </main>
     <Login v-if="loginData" :login-data="loginData" />
-    <FooterBox />
+    <!-- <FooterBox /> -->
   </div>
 </template>
 
 <script>
 import HeaderBox from './Header';
-import FooterBox from './Footer';
+// import FooterBox from './Footer';
 import Login from '@/components/login';
 import NoAuthority from '@/components/authority/NoAuthority';
 import KingLoading from '@/components/KingLoading';
@@ -34,7 +34,7 @@ export default {
     Login,
     NoAuthority,
     KingLoading,
-    FooterBox,
+    // FooterBox,
   },
   data() {
     return {
@@ -116,8 +116,8 @@ body,
 .main-content {
   position: relative;
   min-height: 500px;
-  height: calc(100% - 130px);
-  width: calc(100% - 188px);
+  height: calc(100% - 60px);
+  // width: calc(100% - 188px);
   min-width: 1180px;
   margin: 0 auto;
 }

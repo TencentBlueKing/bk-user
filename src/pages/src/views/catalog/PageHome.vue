@@ -396,6 +396,7 @@ export default {
 .index-page {
   height: 100%;
   color: $fontGray;
+  margin: 40px;
 
   > .button-container {
     display: flex;

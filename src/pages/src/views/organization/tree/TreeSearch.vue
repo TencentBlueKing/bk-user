@@ -10,15 +10,18 @@
 <template>
   <div class="search-content-wrapper">
     <div class="search-box">
-      <input
-        type="text"
-        :placeholder="$t('搜索')"
-        v-model="searchKey"
-        @input="debounceSearch"
-        @keydown.up="selectUp"
-        @keydown.down="selectDown"
-        @keydown.enter="selectEnter" />
-      <i class="icon icon-user-search"></i>
+      <div class="search-box-wrapper">
+        <input
+          type="text"
+          :placeholder="$t('搜索')"
+          v-model="searchKey"
+          @input="debounceSearch"
+          @keydown.up="selectUp"
+          @keydown.down="selectDown"
+          @keydown.enter="selectEnter" />
+        <bk-icon type="plus" @click="() => $emit('addDirectory')" />
+      </div>
+      <i v-show="!searchKey && !hasSelected" class="icon icon-user-search"></i>
       <i v-show="searchKey && !hasSelected" class="bk-icon icon-close-circle-shape" @click="closeSearch"></i>
       <div class="search-result" v-if="hasSelected">
         <div class="result-content">
@@ -405,8 +408,8 @@ export default {
 
 .search-content-wrapper {
   position: relative;
-  width: calc(100% - 40px);
-  margin: 20px;
+  width: calc(100% - 32px);
+  margin: 16px;
   font-size: 12px;
 }
 
@@ -414,35 +417,56 @@ export default {
   position: relative;
   background: #fff;
 
-  input {
-    padding-left: 35px;
-    padding-right: 28px;
-    display: block;
-    width: 100%;
-    height: 32px;
-    line-height: 32px;
-    color: #656770;
-    border-radius: 2px;
-    border: 1px solid #c4c6cc;
-    transition: border linear .2s;
+  .search-box-wrapper {
+    display: flex;
+    align-items: center;
+    background: #F5F7FA;
 
-    &:focus {
-      border-color: #3c96ff;
+    input {
+      padding-left: 10px;
+      margin-right: 8px;
+      display: block;
+      width: 100%;
+      height: 32px;
+      line-height: 32px;
+      color: #656770;
+      border-radius: 2px;
+      border: 1px solid #c4c6cc;
+      transition: border linear .2s;
+
+      &:focus {
+        border-color: #3c96ff;
+      }
+    }
+    .icon-plus {
+      width: 40px;
+      height: 32px;
+      line-height: 32px;
+      text-align: center;
+      background: #E1ECFF;
+      color: #3A84FF;
+      border-radius: 2px;
+      font-size: 22px !important;
+      &:hover {
+        cursor: pointer;
+        background: #3A84FF;
+        color: #fff;
+      }
     }
   }
 
   .icon-user-search {
     position: absolute;
-    left: 10px;
-    top: 8px;
-    font-size: 16px;
+    right: 50px;
+    top: 10px;
+    font-size: 12px;
     color: #a0a4ad;
   }
 
   .icon-close-circle-shape {
     position: absolute;
-    right: 8px;
-    top: 9px;
+    right: 50px;
+    top: 10px;
     cursor: pointer;
     font-size: 14px;
     color: #c4c6cc;
