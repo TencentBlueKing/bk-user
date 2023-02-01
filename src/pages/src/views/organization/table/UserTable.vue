@@ -8,74 +8,62 @@
   - specific language governing permissions and limitations under the License.
   -->
 <template>
-  <div class="table-list-wrapper">
-    <div class="thead-container table-container" data-test-id="list_activeTableHeardData">
-      <table>
-        <thead>
-          <tr v-if="userMessage.tableHeardList.length">
-            <th v-if="currentCategoryType === 'local' && noSearchOrSearchDepartment" class="checkbox-table-item">
-              <label class="king-checkbox king-checkbox-small" @click.stop="selectAll">
-                <input type="checkbox" name="checkbox1" :checked="isAllChecked">
-              </label>
-            </th>
-            <th v-for="(heardItem, heardIndex) in activeTableHeardList" :key="heardIndex">
-              <span>{{heardItem.name}}</span>
-            </th>
-          </tr>
-        </thead>
-      </table>
-    </div>
-    <div
-      class="tbody-container table-container" ref="scrollWrapper"
-      @scroll.passive="handleTableScroll" data-test-id="list_organizationData">
-      <table v-if="!isEmptySearch">
-        <tbody v-if="userMessage.userInforList.length">
-          <tr v-for="(item, index) in dataList" :key="item.id + Date.now()" @click.stop="viewDetails(item)">
-            <td v-if="currentCategoryType === 'local' && noSearchOrSearchDepartment" class="checkbox-table-item">
-              <label class="king-checkbox king-checkbox-small" @click.stop="selectItemInfor(item)">
-                <input type="checkbox" name="checkbox1" :checked="item.isCheck">
-              </label>
-            </td>
-            <td
-              :class="{ 'hidden': labelName.indexOf(key) !== -1 }"
-              v-for="(key, keyIndex) in Object.keys(item)"
-              :key="keyIndex">
-              <!-- 组织 -->
-              <div v-if="key === 'department_name'" class="king-tooltips">
-                <span
-                  class="staff-text" v-bk-tooltips="{
-                    allowHtml: true,
-                    content: '#' + key + keyIndex + index,
-                    distance: 12,
-                    theme: 'light',
-                    placement: 'bottom-start'
-                  }">{{departmentShift(item[key])}}</span>
-                <div :id="key + keyIndex + index">
-                  <div v-for="(deItem, deIndex) in item[key]" :key="deIndex">
-                    {{deItem}}
-                  </div>
-                </div>
-              </div>
-              <!-- 上级 -->
-              <div class="list-wrapper" v-else-if="key === 'leader'">
-                <span v-bk-overflow-tips>{{getLeaderString(item[key]) || '--'}}</span>
-              </div>
-              <!-- 其他字段 -->
-              <div class="list-wrapper" v-else>
-                <span v-bk-overflow-tips>{{getValueByType(key, item[key]) || '--'}}</span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="empty-search-container" v-else>
-        <div class="empty-search">
-          <img src="../../../images/svg/info.svg" alt="info">
-          <p>{{$t('未找到相符的组织成员')}}</p>
-        </div>
-      </div>
-    </div>
+  <div class="user-table-wrapper">
+    <bk-table
+      ref="filterTable"
+      ext-cls="user-table"
+      :data="userMessage.userInforList"
+      :pagination="pagination"
+      @page-change="handlePageChange"
+      @page-limit-change="handlePageLimitChange"
+      @selection-change="handleSelectionChange"
+      @row-click="handleRowClick">
+      <template slot="empty">
+        <bk-exception type="empty" scene="part">
+          <p class="empty-title">{{ $t('暂无数据') }}</p>
+        </bk-exception>
+      </template>
+      <bk-table-column type="selection" width="60"></bk-table-column>
+      <template v-for="field in setting.selectedFields">
+        <bk-table-column
+          :label="field.name"
+          :prop="field.key"
+          :key="field.id"
+          show-overflow-tooltip>
+          <template slot-scope="props">
+            <p>{{ getTableValue(props.row, field.key) || '--' }}</p>
+          </template>
+        </bk-table-column>
+      </template>
+      <bk-table-column :label="$t('操作')">
+        <template slot-scope="props">
+          <bk-button class="mr10" theme="primary" text>
+            {{ $t('编辑') }}
+          </bk-button>
+          <bk-popover
+            class="dot-menu" placement="bottom-start" theme="dot-menu light"
+            trigger="mouseenter" :arrow="false" offset="15" :distance="0">
+            <i class="icon bk-icon icon-more"></i>
+            <ul class="dot-menu-list" slot="content">
+              <li class="dot-menu-item" @click="changeStatus(props.row)">
+                {{ props.row.status === 'DISABLED' ? $t('启用') : $t('禁用') }}
+              </li>
+              <li class="dot-menu-item" @click="$emit('deleteProfile', props.row.id)">{{ $t('删除') }}</li>
+            </ul>
+          </bk-popover>
+        </template>
+      </bk-table-column>
+      <bk-table-column type="setting" :tippy-options="{ zIndex: 3000 }">
+        <bk-table-setting-content
+          :fields="setting.fields"
+          :selected="setting.selectedFields"
+          :max="setting.max"
+          :size="setting.size"
+          :limit="10"
+          @setting-change="handleSettingChange">
+        </bk-table-setting-content>
+      </bk-table-column>
+    </bk-table>
   </div>
 </template>
 
@@ -91,26 +79,10 @@ export default {
       type: Object,
       default: {},
     },
-    isEmptySearch: {
-      type: Boolean,
-      default: false,
-    },
     // 控制设置所在组织、批量删除的显示
     isClick: {
       type: Boolean,
       default: false,
-    },
-    loading: {
-      type: Boolean,
-      default: true,
-    },
-    currentCategoryType: {
-      type: String,
-      default: '',
-    },
-    noSearchOrSearchDepartment: {
-      type: Boolean,
-      default: true,
     },
     statusMap: {
       type: Object,
@@ -120,349 +92,178 @@ export default {
       type: Array,
       required: true,
     },
+    pagination: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
-      isAllChecked: false,
-      dataList: [], // 展示的列表数据
-      dataListPaged: [], // 将列表数据按 pageSize 分页
-      throttle: false, // 滚动节流 是否进入cd
-      isPageOver: false, // 前端分页加载是否结束
-      count: null, // 数据总条数
-      pageSize: null, // 每页展示多少数据
-      totalPage: null, // 计算出总共多少页
-      currentPage: null, // 当前加载了多少页
-      pageLimit: 20, // 大于此条数前端分页
-      lineHeight: 42, // 列表行高
-      labelName: ['id', 'isCheck', 'departments', 'originItem'],
+      // 固定展示字段
+      fixedField: ['username', 'display_name', 'department_name', 'email'],
+      setting: {
+        max: 3,
+        fields: [],
+        selectedFields: [],
+        size: 'small',
+      },
+      // 枚举字段
+      enumField: [],
     };
   },
-  computed: {
-    activeTableHeardList() {
-      const arr = ['id', 'isCheck', 'departments'];
-      return this.userMessage.tableHeardList.filter(item => arr.indexOf(item.key) === -1);
-    },
-    enumInfo() {
-      const enumInfo = {};
-      const fieldsList = JSON.parse(JSON.stringify(this.fieldsList));
-      fieldsList.forEach((fieldInfo) => {
-        if (fieldInfo.type === 'one_enum') {
-          enumInfo[fieldInfo.key] = {
-            type: 'one_enum',
-            options: fieldInfo.options,
-          };
-        } else if (fieldInfo.type === 'multi_enum') {
-          enumInfo[fieldInfo.key] = {
-            type: 'multi_enum',
-            options: fieldInfo.options,
-          };
-        }
-      });
-      return enumInfo;
-    },
-  },
   watch: {
-    'userMessage.userInforList'(value) {
-      this.handleOriginList(value);
-    },
-    activeTableHeardList: {
+    fieldsList: {
       immediate: true,
+      handler(val) {
+        const list = [];
+        this.enumField = [];
+        val.forEach((item) => {
+          this.$set(item, 'label', item.name);
+          if (this.fixedField.includes(item.key)) {
+            this.$set(item, 'disabled', true);
+          }
+          if (item.options.length > 0) {
+            this.enumField.push(item.key);
+          }
+          if (item.visible) {
+            list.push(item);
+          }
+        });
+        this.setting.selectedFields = list;
+        this.setting.fields = this.fieldsList;
+      },
+    },
+    'setting.selectedFields': {
+      immediate: true,
+      deep: true,
       handler(value) {
         this.$emit('updateHeardList', value);
       },
     },
   },
-  mounted() {
-    if (this.userMessage.userInforList && this.userMessage.userInforList.length) {
-      this.handleOriginList(this.userMessage.userInforList);
-    }
-  },
   methods: {
-    handleOriginList(value) {
-      this.$emit('updateTableData', value);
-      if (this.isAllChecked) {
-        this.isAllChecked = false;
-      }
-      this.$refs.scrollWrapper.scrollTo({ top: 0 });
-
-      if (value.length > this.pageLimit) {
-        this.dataList = [];
-        this.initPageConf(value);
-        this.loadPage();
+    handleSettingChange({ fields, size }) {
+      this.setting.size = size;
+      this.setting.selectedFields = fields;
+      const idList = fields.map(item => item.id);
+      this.$emit('handleSetFieldList', idList);
+    },
+    handleClickEdit(row) {
+      this.$emit('viewDetails', row);
+    },
+    handlePageLimitChange(limit) {
+      this.$emit('handlePageLimitChange', limit);
+    },
+    handlePageChange(page) {
+      this.$emit('handlePageChange', page);
+    },
+    handleSelectionChange(selection) {
+      selection.length ? this.$emit('update:isClick', true) : this.$emit('update:isClick', false);
+      this.$emit('isClickList', selection);
+    },
+    getTableValue(row, key) {
+      let val = '';
+      if (this.statusMap[key]) {
+        val = this.$t(this.statusMap[key][row[key]]);
+      } else if (key === 'department_name') {
+        val = row[key].join(';');
+      } else if (key === 'leader') {
+        val = row[key].length ? row[key].map(item => item.username).join(';') : '--';
+      } else if (this.timerMap.includes(key)) {
+        val = dateConvert(row[key]);
       } else {
-        this.dataList = value;
-        this.isPageOver = true;
+        val = row[key];
       }
+      return val;
     },
-    initPageConf(list) {
-      this.currentPage = 0;
-      this.isPageOver = false;
-
-      this.count = list.length;
-      this.pageSize = Math.ceil(this.$refs.scrollWrapper.offsetHeight / this.lineHeight);
-      this.totalPage = Math.ceil(this.count / this.pageSize) || 1;
-
-      this.dataListShadow = [...list];
-      this.dataListPaged = [];
-      for (let i = 0; i < this.count; i += this.pageSize) {
-        this.dataListPaged.push(this.dataListShadow.slice(i, i + this.pageSize));
-      }
-    },
-    loadPage() {
-      this.currentPage += 1;
-      this.isPageOver = this.currentPage === this.totalPage;
-      this.dataList.splice(this.dataList.length, 0, ...this.dataListPaged[this.currentPage - 1]);
-    },
-    handleTableScroll(e) {
-      if (this.isPageOver || this.throttle) {
-        return;
-      }
-
-      this.throttle = true;
-      setTimeout(() => {
-        this.throttle = false;
-        if (e.target.scrollHeight - e.target.offsetHeight - e.target.scrollTop < 10) {
-          this.loadPage();
+    async changeStatus(row) {
+      try {
+        const isForbid = (row.status === 'DISABLED' || row.status === 'LOCKED');
+        const status = isForbid ? 'NORMAL' : 'DISABLED';
+        const res = await this.$store.dispatch('organization/patchProfile', {
+          id: row.id,
+          data: { status },
+        });
+        if (res.result === true) {
+          row.status = status;
+          const message = !isForbid ? this.$t('禁用') : this.$t('启用');
+          this.messageSuccess(message + this.$t('成功'));
         }
-      }, 200);
-    },
-    departmentShift(departList) {
-      let result = '';
-      departList.forEach((item) => {
-        const itemArr = item.split('/');
-        result += `${itemArr[itemArr.length - 1]}/`;
-      });
-      return result.slice(0, result.length - 1).split('/')
-        .join(';');
-    },
-    getLeaderString(leader) {
-      return leader && leader.map((item) => {
-        return item.username;
-      }).join(';');
-    },
-    getValueByType(key, value) {
-      if (this.enumInfo[key]) {
-        // 枚举值
-        const options = this.enumInfo[key].options;
-        if (this.enumInfo[key].type === 'one_enum') {
-          // 单选 value 期望是数值或字符串
-          if (typeof value !== 'number' && typeof value !== 'string') {
-            console.warn(`${key} ${this.$t('字段的值应该是数值或字符串')}（options.id）`);
-            return '';
-          }
-          for (let i = 0; i < options.length; i++) {
-            if (options[i].id === value || options[i].id === Number(value)) {
-              if (this.$i18n.locale === 'en') {
-                return value;
-              }
-              return this.statusMap[key][value];
-            }
-          }
-        } else {
-          // 多选 value 期望是数组
-          if (!Array.isArray(value)) {
-            console.warn(`${key} ${this.$t('字段的值应该是数组')}`);
-            return '';
-          }
-          const results = [];
-          value.forEach((item) => {
-            for (let i = 0; i < options.length; i++) {
-              if (options[i].id === item) {
-                results.push(options[i].value);
-                break;
-              }
-            }
-          });
-          return results.join(';');
-        }
-      } else {
-        if (this.timerMap.includes(key)) {
-          return dateConvert(value);
-        }
-        return value;
+      } catch (e) {
+        console.warn(e);
       }
     },
-    // 单选、多选
-    selectItemInfor(item) {
-      item.isCheck = !item.isCheck;
-      this.isAllChecked = !this.userMessage.userInforList.some((element) => {
-        return !element.isCheck;
-      });
-      const isClick = this.userMessage.userInforList.some((element) => {
-        return element.isCheck;
-      });
-      this.$emit('update:isClick', isClick);
-    },
-    // 点击查看当前用户的信息： 1.调用接口，拿到当前用户的信息 成功后抛给父组件
-    viewDetails(item) {
-      this.$emit('viewDetails', item.originItem);
-    },
-    // 全选
-    selectAll() {
-      this.isAllChecked = !this.isAllChecked;
-      this.userMessage.userInforList.forEach((item) => {
-        item.isCheck = this.isAllChecked;
-      });
-      this.$emit('update:isClick', this.isAllChecked);
+    handleRowClick(row) {
+      this.$emit('viewDetails', row);
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-@import '../../../scss/mixins/scroller';
-
-.table-list-wrapper {
-  margin-bottom: 20px;
-  height: calc(100% - 66px);
-  border: 1px solid #dcdee5;
-
-  > .table-container {
-    // table 公用样式
-    > table {
-      width: 100%;
-      table-layout: fixed;
-      border: none;
-      border-collapse: collapse;
-      font-size: 12px;
-
-      tr {
-        height: 42px;
-        border-bottom: 1px solid #dcdee5;
-      }
-
-      .king-checkbox {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 20px;
-        margin-right: 0;
-        padding: 0;
-
-        input {
-          margin: 0;
-        }
-      }
+.icon-more {
+    display: inline-block;
+    font-size: 18px;
+    border-radius: 50%;
+    padding: 3px;
+    color: #3A84FF;
+    &:hover {
+        cursor: pointer;
+        background-color: rgba(235,237,240);
     }
-  }
-
-  > .thead-container {
-    height: 42px;
-
-    > table {
-      background: #fafbfd;
-
-      th {
-        padding: 0 10px;
-        text-align: left;
-        border: none;
-        cursor: text;
-        color: #666;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        // checkbox
-        &.checkbox-table-item {
-          width: 60px;
-          text-align: center;
-        }
-
-        &.hidden {
-          display: none;
-        }
-
-        > span {
-          font-size: 12px;
-          height: 20px;
-          line-height: 20px;
-        }
-      }
-    }
-  }
-
-  > .tbody-container {
-    height: calc(100% - 42px);
-    overflow: hidden auto;
-
-    @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-
-    > table > tbody > tr {
-      cursor: pointer;
-      transition: all .3s ease;
-
-      &:hover {
-        background: #e1ecff;
-      }
-
-      > td {
-        padding: 0 10px;
-        border: none;
-        // checkbox
-        &.checkbox-table-item {
-          width: 60px;
-          text-align: center;
-        }
-
-        &.hidden {
-          display: none;
-        }
-
-        > .list-wrapper {
-          width: 100%;
-
-          span {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-        }
-
-        > div {
-          height: 20px;
-          line-height: 20px;
-        }
-
-        .king-tooltips {
-          .staff-text {
-            width: 100%;
-            outline: none;
-            display: inline-block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-        }
-      }
-    }
-  }
+}
+.dot-menu {
+    display: inline-block;
+    vertical-align: middle;
 }
 
-.empty-search-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-top: 1px solid #dcdee5;
-
-  .empty-search {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-flow: column;
-    height: 80%;
-
-    img {
-      width: 42px;
-      margin-bottom: 10px;
+.tippy-tooltip.dot-menu-theme {
+    padding: 0;
+}
+.dot-menu-trigger {
+    display: block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 0;
+    color: #979BA5;
+    cursor: pointer;
+}
+.dot-menu-trigger:hover {
+    color: #3A84FF;
+    background-color: #EBECF0;
+}
+.dot-menu-trigger:before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background-color: currentColor;
+    box-shadow: 0 -4px 0 currentColor, 0 4px 0 currentColor;
+}
+.dot-menu-list {
+    margin: 0;
+    padding: 5px 0;
+    min-width: 50px;
+    list-style: none;
+}
+.dot-menu-list .dot-menu-item {
+    padding: 0 10px;
+    font-size: 12px;
+    line-height: 26px;
+    cursor: pointer;
+    &:hover {
+        background-color: #eaf3ff;
+        color: #3a84ff;
     }
-
-    p {
-      height: 19px;
-      font-size: 14px;
-      font-weight: bold;
-      color: #63656e;
-      line-height: 19px;
-    }
-  }
+}
+.empty-title {
+  color: #63656e;
+}
+::v-deep .user-table tr {
+  cursor: pointer;
 }
 </style>

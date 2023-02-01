@@ -91,7 +91,7 @@
               <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
             </div>
             <div class="desc" v-else>
-              <p class="text">{{$xssVerification(fieldInfo.value || '') || '--'}}</p>
+              <p class="text">{{$t($xssVerification(fieldInfo.value || '')) || '--'}}</p>
             </div>
           </div>
         </li>
@@ -280,7 +280,6 @@ export default {
           this.currentProfile.status = status;
           const message = this.isForbid ? this.$t('禁用') : this.$t('启用');
           this.messageSuccess(message + this.$t('成功'));
-          this.$emit('getTableData');
         }
       } catch (e) {
         console.warn(e);
