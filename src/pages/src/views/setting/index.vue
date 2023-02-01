@@ -15,27 +15,34 @@
         :class="['nav-item', { 'active': index === curIndex }]"
         v-for="(item, index) in settingList" :key="index"
         @click="changTab(index)">
-        {{item}}
+        <i :class="item.icon"></i>
+        {{item.name}}
       </a>
     </div>
     <div class="setting-right">
       <FieldsSetting v-if="curIndex === 0" />
+      <RecoveryStrategy v-if="curIndex === 1" />
     </div>
   </div>
 </template>
 
 <script>
 import FieldsSetting from './FieldsSetting';
+import RecoveryStrategy from './RecoveryStrategy';
 
 export default {
   name: 'SettingIndex',
   components: {
     FieldsSetting,
+    RecoveryStrategy,
   },
   data() {
     return {
       isNav: false,
-      settingList: [this.$t('用户字段设置')],
+      settingList: [
+        { icon: 'bk-sq-icon icon-ziduan', name: this.$t('用户字段设置') },
+        { icon: 'bk-sq-icon icon-huishouxiang', name: this.$t('回收策略') },
+      ],
       curIndex: 0,
     };
   },
@@ -52,16 +59,14 @@ export default {
 
   .setting-wrapper {
     height: 100%;
-    border: 1px solid #dcdee5;
-    padding: 40px;
   }
 
   .setting-left {
-    padding-top: 14px;
+    padding-top: 10px;
     float: left;
     width: 220px;
     height: 100%;
-    background: #fafbfd;
+    background: #fff;
     border: 1px solid #dcdee5;
 
     .nav-item {
@@ -76,6 +81,10 @@ export default {
         color: rgba(58, 132, 255, 1);
         background: #e1ecff;
       }
+    }
+    i {
+      vertical-align: middle;
+      margin-right: 15px;
     }
   }
 

@@ -44,5 +44,47 @@ export default {
         updating_ids: params.idList,
       });
     },
+    // 回收策略配置
+    getGlobalSettings(context, params, config = {}) {
+      return http.get('api/v1/web/global_settings/namespaces/recycling_strategy/');
+    },
+    // 回收策略配置修改
+    putGlobalSettings(context, params, config = {}) {
+      const url = 'api/v1/web/global_settings/namespaces/recycling_strategy/';
+      return http.put(url, params, config);
+    },
+    // 回收站目录列表
+    getCategoryList(context, params, config = {}) {
+      const { pageSize, page, keyword } = params;
+      return keyword
+        ? http.get(`api/v1/web/recycle_bin/categories/?page_size=${pageSize}&page=${page}&keyword=${params.keyword}`)
+        : http.get(`api/v1/web/recycle_bin/categories/?page_size=${pageSize}&page=${page}`);
+    },
+    // 回收站组织列表
+    getDepartmentList(context, params, config = {}) {
+      const { pageSize, page, keyword } = params;
+      return keyword
+        ? http.get(`api/v1/web/recycle_bin/departments/?page_size=${pageSize}&page=${page}&keyword=${params.keyword}`)
+        : http.get(`api/v1/web/recycle_bin/departments/?page_size=${pageSize}&page=${page}`);
+    },
+    // 回收站人员列表
+    getProfileList(context, params, config = {}) {
+      const { pageSize, page, keyword } = params;
+      return keyword
+        ? http.get(`api/v1/web/recycle_bin/profiles/?page_size=${pageSize}&page=${page}&keyword=${params.keyword}`)
+        : http.get(`api/v1/web/recycle_bin/profiles/?page_size=${pageSize}&page=${page}`);
+    },
+    // 目录还原预检查接口
+    categoriesCheck(context, params, config = {}) {
+      return http.post('api/v1/web/recycle_bin/categories/check/', params.data);
+    },
+    // 目录还原接口
+    categoriesRevert(context, params, config = {}) {
+      return http.post('api/v1/web/recycle_bin/categories/revert/', params.data);
+    },
+    // 目录硬删除接口
+    categoriesHardDelete(context, params, config = {}) {
+      return http.delete(`api/v1/web/recycle_bin/categories/hard_delete/${params.category_ids}`);
+    },
   },
 };

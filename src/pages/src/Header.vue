@@ -32,6 +32,12 @@
       </p>
     </div>
     <div class="header-right" data-test-id="list_menuInfo">
+      <a
+        href="javascript:void(0);"
+        :class="['recycling-station', { 'recycle': $route.name === 'recycle' }]"
+        @click="goTo('recycle')">
+        <i class="bk-sq-icon icon-huishouxiang"></i>
+      </a>
       <bk-dropdown-menu
         ref="dropdownSwitch"
         align="center"
@@ -385,6 +391,24 @@ export default {
       &:hover {
         background-color: #E1ECFF;
       }
+    }
+    .recycling-station {
+      width: 32px;
+      height: 32px;
+      line-height: 30px;
+      border-radius: 50%;
+      text-align: center;
+      margin: 0 6px;
+      color: #979ba5;
+      &:hover {
+        cursor: pointer;
+        color: #3a84ff;
+        background: #26304a;
+      }
+    }
+    .recycle {
+      background: #2F3746;
+      color: #FFFFFF;
     }
   }
 }

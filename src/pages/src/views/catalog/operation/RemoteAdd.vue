@@ -164,7 +164,7 @@ export default {
         });
         this.$bus.$emit('updateCatalogList');
         this.messageSuccess(this.$t('保存成功'));
-        this.$emit('changePage', 'showPageHome');
+        this.$emit('changePage', 'showPageHome', 'update');
       } catch (e) {
         console.warn(e);
       } finally {
