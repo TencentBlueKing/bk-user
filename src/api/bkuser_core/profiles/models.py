@@ -207,6 +207,12 @@ class Profile(TimestampedModel):
 
         return None
 
+    @property
+    def is_normal(self) -> bool:
+        if self.enabled and self.status == ProfileStatus.NORMAL.value:
+            return True
+        return False
+
     def enable(self):
         self.enabled = True
         self.status = ProfileStatus.NORMAL.value

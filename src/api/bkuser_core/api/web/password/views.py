@@ -68,6 +68,16 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
             logger.exception("failed to get profile by email<%s>", email)
             return Response(data={})
 
+        # 用户状态校验
+        if not profile.is_normal:
+            logger.exception(
+                "profile <username: %s-%s-%s> is abnormal so that failed to send email",
+                profile.username,
+                profile.status,
+                profile.enabled,
+            )
+            return Response(data={})
+
         # FIXME:需要check是否有频率限制，否则会对用户有骚扰 send_password_by_email
         token_holder = ProfileTokenHolder.objects.create(profile=profile)
         try:
@@ -201,6 +211,16 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
             # 不存在则才是telephone
             if not profile:
                 profile = get_profile_by_telephone(input_telephone)
+
+            # 用户状态校验
+            if not profile.is_normal:
+                logger.exception(
+                    "profile <username: %s-%s-%s> is abnormal so that failed to send sms ",
+                    profile.username,
+                    profile.status,
+                    profile.enabled,
+                )
+                return Response(data={})
 
         except Profile.DoesNotExist:
             logger.exception(
