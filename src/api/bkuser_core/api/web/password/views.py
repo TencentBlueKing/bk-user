@@ -70,11 +70,11 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
 
         # 用户状态校验
         if not profile.is_normal:
-            logger.exception(
-                "profile <username: %s-%s-%s> is abnormal so that failed to send email",
-                profile.username,
-                profile.status,
+            logger.error(
+                "profile <username: %s> is abnormal(enabled=%s, status=%s), fail to send email",
+                f"{profile.username}@{profile.domain}",
                 profile.enabled,
+                profile.status,
             )
             return Response(data={})
 
@@ -209,16 +209,17 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
             profile = get_profile_by_username(username, domain)
 
             # 不存在则才是telephone
+            # FIXME: get_profile_by_telephone 和 get_profile_by_username 理论上行为应该一致, 目前不一致, 需要重构
             if not profile:
                 profile = get_profile_by_telephone(input_telephone)
 
             # 用户状态校验
             if not profile.is_normal:
-                logger.exception(
-                    "profile <username: %s-%s-%s> is abnormal so that failed to send sms ",
-                    profile.username,
-                    profile.status,
+                logger.error(
+                    "profile <username: %s> is abnormal(enabled=%s, status=%s), fail to send sms",
+                    f"{profile.username}@{profile.domain}",
                     profile.enabled,
+                    profile.status,
                 )
                 return Response(data={})
 
