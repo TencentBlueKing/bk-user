@@ -70,11 +70,12 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
 
         # 用户状态校验
         if not profile.is_normal:
+            error_msg = (
+                "failed to send password via sms."
+                "profile is abnormal [profile.id=%s, profile.username=%s, profile.enabled=%s, profile.status=%s]"
+            )
             logger.error(
-                "profile <username: %s> is abnormal(enabled=%s, status=%s), fail to send email",
-                f"{profile.username}@{profile.domain}",
-                profile.enabled,
-                profile.status,
+                error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
             )
             return Response(data={})
 
@@ -215,11 +216,13 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
 
             # 用户状态校验
             if not profile.is_normal:
+                error_msg = (
+                    "failed to send password via sms. "
+                    "profile is abnormal [profile.id=%s, profile.username=%s, profile.enabled=%s, profile.status=%s]"
+                )
+
                 logger.error(
-                    "profile <username: %s> is abnormal(enabled=%s, status=%s), fail to send sms",
-                    f"{profile.username}@{profile.domain}",
-                    profile.enabled,
-                    profile.status,
+                    error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
                 )
                 return Response(data={})
 
