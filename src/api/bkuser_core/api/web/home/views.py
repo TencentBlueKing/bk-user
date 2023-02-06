@@ -20,6 +20,7 @@ from .serializers import CategoryOutputSLZ
 from bkuser_core.api.web.utils import get_operator, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
+from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -116,6 +117,8 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             "order": dept.order,
             "has_children": dept.has_children,
             # "category_id": dept.category_id,
+            # TODO: move to cache if needed
+            "profile_count": dept.get_profile_count(recursive=True),
         }
 
     def _serialize_category(self, category: Dict[str, Any]) -> Dict[str, Any]:
