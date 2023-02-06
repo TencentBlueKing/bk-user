@@ -71,9 +71,16 @@ class DepartmentWithChildrenSLZ(DepartmentSerializer):
 class DepartmentsWithChildrenAndAncestorsOutputSLZ(DepartmentWithChildrenSLZ):
     ancestors = serializers.SerializerMethodField()
 
+    # 用户点击某一个部门, 调用接口拉取数据并展开, 此时这个接口只返回当前部门的 `profile_count`
+    # `children`和`ancestors`里面没有`profile_count`
+    profile_count = serializers.SerializerMethodField()
+
     def get_ancestors(self, instance) -> List:
         family = instance.get_ancestors()
         return RapidDepartmentSerializer(family, many=True).data
+
+    def get_profile_count(self, instance) -> int:
+        return instance.get_profile_count(recursive=True)
 
 
 class DepartmentCreatedOutputSLZ(DepartmentSerializer):
