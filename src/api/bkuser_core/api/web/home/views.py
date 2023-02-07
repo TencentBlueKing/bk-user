@@ -20,7 +20,6 @@ from .serializers import CategoryOutputSLZ
 from bkuser_core.api.web.utils import get_operator, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
-from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -30,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class HomeTreeListApi(generics.ListCreateAPIView):
     def _get_categories(self, operator):
+        # TODO: 组织架构+目录 合并后, 需要展示未启用的目录
         # 拥有管理权限的目录
         try:
             queryset = ProfileCategory.objects.filter(enabled=True)
@@ -131,8 +131,13 @@ class HomeTreeListApi(generics.ListCreateAPIView):
             "profile_count": category["profile_count"],
             "departments": category["departments"],
             "domain": category["domain"],
-            "activated": category["status"] == CategoryStatus.NORMAL.value,
+            "create_time": category["create_time"],
             "update_time": category["update_time"],
+            "configured": category["configured"],
+            # "unfilled_namespaces": category["unfilled_namespaces"],
+            "activated": category["activated"],
+            "syncing": category["syncing"],
+            # NOT IN: enabled/description/last_synced_time
         }
 
     def get(self, request, *args, **kwargs):
@@ -169,9 +174,14 @@ class HomeTreeListApi(generics.ListCreateAPIView):
                 )
                 continue
 
+            print(all_categories_map)
             # 如果存在没有管理权限的目录，但是其中的组织有权限，在这里会被加进去
             if dept_cate_id not in managed_categories_map:
-                managed_categories_map[dept_cate_id] = all_categories_map[dept_cate_id]
+                # 如果目录的状态正常, 则加入到列表中(防止没管理权限的目录被展示到`不可用的目录`, 用户进行操作)
+                # 即, 停用和未配置完成 + 没有管理权限的目录不会被展示
+                cat = all_categories_map[dept_cate_id]
+                if cat["activated"] and cat["configured"]:
+                    managed_categories_map[dept_cate_id] = cat
 
             managed_categories_map[dept_cate_id]["departments"].append(self._serialize_department(department))
 
