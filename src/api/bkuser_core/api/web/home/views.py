@@ -20,7 +20,6 @@ from .serializers import CategoryOutputSLZ
 from bkuser_core.api.web.utils import get_operator, is_filter_means_any
 from bkuser_core.bkiam.exceptions import IAMPermissionDenied
 from bkuser_core.bkiam.permissions import IAMAction, Permission
-from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -175,6 +174,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
                 )
                 continue
 
+            print(all_categories_map)
             # 如果存在没有管理权限的目录，但是其中的组织有权限，在这里会被加进去
             if dept_cate_id not in managed_categories_map:
                 # 如果目录的状态正常, 则加入到列表中(防止没管理权限的目录被展示到`不可用的目录`, 用户进行操作)
