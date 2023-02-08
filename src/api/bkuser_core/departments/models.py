@@ -70,6 +70,19 @@ class Department(TimestampMPTTModel):
     def __str__(self):
         return f"{self.id}-{self.name}"
 
+    def get_profile_count(self, recursive: bool = False) -> int:
+        # TODO: add a cache if needed
+        if not recursive:
+            return self.profiles.exclude(status=ProfileStatus.DELETED.value).count()
+
+        department_ids = self.get_descendants(include_self=True).values_list("id", flat=True)
+        ids = DepartmentThroughModel.objects.filter(department_id__in=department_ids).values_list(
+            "profile_id", flat=True
+        )
+        if len(ids) == 0:
+            return 0
+        return Profile.objects.filter(id__in=ids, enabled=True).count()
+
     # FIXME: should be moved into the manager.py? Departments.objects.get_profiles()
     def get_profiles(self, recursive: bool = False, wildcard_search: str = None) -> models.QuerySet:
         if not recursive:
@@ -84,7 +97,7 @@ class Department(TimestampMPTTModel):
 
             # 当后端 DB 不支持 microseconds 时 create_time 会无法准确排序
             # target = Profile.objects.filter(id__in=ids).exclude(enabled=False).order_by("-id")
-            target = Profile.objects.filter(id__in=ids).filter(enabled=True).order_by("-id")
+            target = Profile.objects.filter(id__in=ids, enabled=True).order_by("-id")
 
         if wildcard_search:
             target = target.filter(Q(username__icontains=wildcard_search) | Q(display_name__icontains=wildcard_search))
