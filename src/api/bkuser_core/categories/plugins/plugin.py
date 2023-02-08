@@ -70,7 +70,7 @@ class DataSourcePlugin:
         if self.settings_path is not None:
             self.load_settings_from_yaml()
 
-    def init_settings(self, setting_meta_key: str, meta_info: dict):
+    def init_settings(self, setting_meta_key: str, meta_info: dict, category_configured_dict: Dict[int, bool]):
         namespace = meta_info.pop("namespace", "general")
 
         try:
@@ -99,6 +99,14 @@ class DataSourcePlugin:
             # 理论上目录不能够被直接恢复, 所以已经被删除的目录不会被更新
             # 仅做新增，避免覆盖已有配置
             for category in ProfileCategory.objects.filter(type=self.category_type, enabled=True):
+                # if we don't know the category is configured or not, skip it for now
+                if category.id not in category_configured_dict:
+                    continue
+
+                # if the category is not configured, skip it
+                if not category_configured_dict[category.id]:
+                    continue
+
                 try:
                     ins, created = Setting.objects.get_or_create(
                         meta=meta, category_id=category.id, defaults={"value": meta.default}
@@ -114,11 +122,16 @@ class DataSourcePlugin:
                     )
                     continue
 
+    # FIXME: 这类初始化是否不应该放在 registry? (每次程序加载都会执行registry)
     def load_settings_from_yaml(self):
         """从 yaml 中加载 SettingMeta 配置"""
+        category_configured_dict = {}
+        for category in ProfileCategory.objects.filter(type=self.category_type, enabled=True):
+            category_configured_dict[category.id] = category.configured
+
         with self.settings_path.open(mode="r") as f:
             for key, meta_info in yaml.safe_load(f).items():
-                self.init_settings(key, meta_info)
+                self.init_settings(key, meta_info, category_configured_dict)
 
     def get_hook(self, type_: HookType) -> Optional[PluginHook]:
         hook_cls = self.hooks.get(type_)
