@@ -72,6 +72,7 @@ class CategoryDetailOutputSLZ(serializers.ModelSerializer):
         return list(unfilled_nss)
 
     def get_activated(self, obj) -> bool:
+        # TODO: make this a model property?
         return obj.status == CategoryStatus.NORMAL.value
 
     class Meta:
