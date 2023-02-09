@@ -576,9 +576,6 @@ class CategoryProfileListApi(generics.ListAPIView):
 
         # TODO: 支持 recursive=false 查询未关联部门的用户列表?
 
-        # TODO: 增加fields, 控制字段返回 => 搜索接口只需要几个字段
-        # id/username/display_name
-
         # do prefetch
         queryset = queryset.prefetch_related("departments", "leader")
         return queryset
