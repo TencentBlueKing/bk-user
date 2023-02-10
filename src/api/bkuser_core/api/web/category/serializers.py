@@ -220,14 +220,7 @@ class CategoryProfileListInputSLZ(serializers.Serializer):
     page = serializers.IntegerField(required=False, default=1)
     page_size = serializers.IntegerField(required=False, default=10)
 
-
-class CategoryProfileOutputSLZ(serializers.Serializer):
-    """用户序列化"""
-
-    # NOTE: 搜索接口, 不需要返回用户所有信息
-    id = serializers.IntegerField(required=False, read_only=True)
-    username = serializers.CharField()
-    display_name = serializers.CharField(read_only=True)
+    has_no_department = serializers.BooleanField(required=False, default=False)
 
 
 class CategoryDepartmentListInputSLZ(serializers.Serializer):

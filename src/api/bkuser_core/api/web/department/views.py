@@ -19,12 +19,12 @@ from .serializers import (
     DepartmentCreatedOutputSLZ,
     DepartmentCreateInputSLZ,
     DepartmentProfileListInputSLZ,
-    DepartmentProfileOutputSLZ,
     DepartmentProfilesCreateInputSLZ,
     DepartmentSearchInputSLZ,
     DepartmentSearchOutputSLZ,
     DepartmentsWithChildrenAndAncestorsOutputSLZ,
 )
+from bkuser_core.api.web.serializers import ProfileDetailOutputSLZ
 from bkuser_core.api.web.utils import get_category, get_default_category_id, get_department, get_operator
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
@@ -170,7 +170,7 @@ class DepartmentOperationSwitchOrderApi(generics.UpdateAPIView):
 class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
     permission_classes = [ViewDepartmentPermission]
     pagination_class = CustomPagination
-    serializer_class = DepartmentProfileOutputSLZ
+    serializer_class = ProfileDetailOutputSLZ
 
     queryset = Department.objects.filter()
     lookup_field = "id"
@@ -194,23 +194,14 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        department_id = self.kwargs["id"]
-        department = get_department(department_id)
-        # FIXME: change to self.get_object()
-
-        # 原来的代码: 递归current_count, 不递归查total_count(I don't know why)
-        # https://github.com/TencentBlueking/bk-user/blob/99178a35b96511c0cd4dc7c1944bc80ce2d082dd/src/saas/bkuser_shell/organization/views/departments.py#L84-L88
-        # FIXME: 跟前端确认逻辑, 抹掉差异和自定义 => total_count/current_count有没有用, 没用去掉
-        current_count = total_count = 0
+        department = self.get_object()
 
         # NOTE: duplicated with departments.models.Department.get_profiles
         recursive = data.get("recursive")
         if not recursive:
             queryset = self.get_no_recursive_queryset(department)
-            total_count = self.get_recursive_queryset(department).count()
         else:
             queryset = self.get_recursive_queryset(department)
-            current_count = self.get_no_recursive_queryset(department).count()
 
         # filter by keyword
         keyword = data.get("keyword")
@@ -223,17 +214,8 @@ class DepartmentProfileListCreateApi(generics.ListCreateAPIView):
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            count = self.paginator.page.paginator.count
-            return Response(
-                {
-                    "count": count,
-                    "data": serializer.data,
-                    "current_count": current_count,
-                    "total_count": total_count,
-                }
-            )
+            return self.get_paginated_response(serializer.data)
 
-        # 没有返回合法的logo字段, "logo": "https://xxx.com/o/bk-user/static/img/logo_default.png"
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
