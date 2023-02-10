@@ -29,7 +29,6 @@ from .serializers import (
     CategoryMetaOutputSLZ,
     CategoryNamespaceSettingUpdateInputSLZ,
     CategoryProfileListInputSLZ,
-    CategoryProfileOutputSLZ,
     CategorySettingCreateInputSLZ,
     CategorySettingOutputSLZ,
     CategorySyncResponseOutputSLZ,
@@ -40,6 +39,7 @@ from .serializers import (
 from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsOutputSLZ
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldOutputSLZ
+from bkuser_core.api.web.serializers import ProfileDetailOutputSLZ
 from bkuser_core.api.web.utils import get_category, get_operator, list_setting_metas
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
@@ -560,7 +560,7 @@ class CategoryOperationSwitchOrderApi(generics.UpdateAPIView):
 class CategoryProfileListApi(generics.ListAPIView):
     permission_classes = [ViewCategoryPermission]
     pagination_class = CustomPagination
-    serializer_class = CategoryProfileOutputSLZ
+    serializer_class = ProfileDetailOutputSLZ
 
     def get_queryset(self):
         slz = CategoryProfileListInputSLZ(data=self.request.query_params)
@@ -576,6 +576,18 @@ class CategoryProfileListApi(generics.ListAPIView):
         if keyword:
             # NOTE: 这里相对原来的差异, 抹掉了 id__icontains 的搜索
             queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
+
+        # 首页展示不关联部门的用户列表
+        has_no_department = data.get("has_no_department", False)
+        if has_no_department:
+            queryset = queryset.filter(departments__isnull=True)
+            # SQL:
+            # SELECT COUNT(*) AS `__count` FROM `profiles_profile`
+            # LEFT OUTER JOIN `departments_department_profiles`
+            # ON (`profiles_profile`.`id` = `departments_department_profiles`.`profile_id`)
+            # WHERE (`profiles_profile`.`category_id` = 1
+            #        AND `profiles_profile`.`enabled`
+            #        AND `departments_department_profiles`.`department_id` IS NULL);
 
         # do prefetch
         queryset = queryset.prefetch_related("departments", "leader")

@@ -114,13 +114,21 @@ def is_filter_means_any(ft) -> bool:
     return ft.deconstruct() == ("django.db.models.Q", (("pk__in", []),), {"_negated": True})
 
 
-def expand_extra_fields(profile):
-    """将 profile extra value 展开，作为 profile 字段展示"""
-    available_values = profile.pop("extras")
+def expand_extra_fields(profile: Dict, fields: Dict = None):
+    """将 profile extra value 展开，作为 profile 字段展示
+    注意当前端传入 ?fields=id,username 时，只会返回这两个字段(在调用点需要处理并传递fields)
+    """
+    available_values = {}
+    if "extras" in profile:
+        available_values = profile.pop("extras")
 
     extras_default = get_extras_default_from_local_cache()
     # TODO: 建模, 建模, 建模
     for key, default in extras_default.items():
+        # if ?fields=id,username to control the response fields
+        if fields and key not in fields:
+            continue
+
         # 没有设置额外字段，则使用字段默认值
         profile[key] = default
         if not available_values:
