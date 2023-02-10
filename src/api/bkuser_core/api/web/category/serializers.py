@@ -220,6 +220,8 @@ class CategoryProfileListInputSLZ(serializers.Serializer):
     page = serializers.IntegerField(required=False, default=1)
     page_size = serializers.IntegerField(required=False, default=10)
 
+    has_no_department = serializers.BooleanField(required=False, default=False)
+
 
 class CategoryDepartmentListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(allow_blank=False)
