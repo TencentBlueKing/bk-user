@@ -114,7 +114,7 @@ def is_filter_means_any(ft) -> bool:
     return ft.deconstruct() == ("django.db.models.Q", (("pk__in", []),), {"_negated": True})
 
 
-def expand_extra_fields(profile, fields=None):
+def expand_extra_fields(profile: Dict, fields: Dict = None):
     """将 profile extra value 展开，作为 profile 字段展示
     注意当前端传入 ?fields=id,username 时，只会返回这两个字段(在调用点需要处理并传递fields)
     """
