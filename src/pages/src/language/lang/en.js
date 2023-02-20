@@ -472,4 +472,10 @@ export default {
   请选择在职状态: 'Please select active status',
   用户详情: 'User details',
   编辑用户: 'Edit user',
+  暂无数据: 'No data yet',
+  搜索结果为空: 'The search result is empty',
+  可以尝试_调整关键词_或: 'Try adjusting keywords or',
+  清空筛选条件: 'Clear filter',
+  数据获取异常: 'Data acquisition exception',
+  刷新: 'refresh',
 };
