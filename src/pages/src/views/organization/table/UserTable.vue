@@ -28,8 +28,8 @@
     <div
       class="tbody-container table-container" ref="scrollWrapper"
       @scroll.passive="handleTableScroll" data-test-id="list_organizationData">
-      <table v-if="!isEmptySearch">
-        <tbody v-if="userMessage.userInforList.length">
+      <table v-if="userMessage.userInforList.length">
+        <tbody>
           <tr v-for="(item, index) in dataList" :key="item.id + Date.now()" @click.stop="viewDetails(item)">
             <td v-if="currentCategoryType === 'local' && noSearchOrSearchDepartment" class="checkbox-table-item">
               <label class="king-checkbox king-checkbox-small" @click.stop="selectItemInfor(item)">
@@ -68,20 +68,22 @@
           </tr>
         </tbody>
       </table>
-
-      <div class="empty-search-container" v-else>
-        <div class="empty-search">
-          <img src="../../../images/svg/info.svg" alt="info">
-          <p>{{$t('未找到相符的组织成员')}}</p>
-        </div>
-      </div>
+      <EmptyComponent
+        v-else
+        :is-data-empty="isTableDataEmpty"
+        :is-search-empty="isEmptySearch"
+        :is-data-error="isTableDataError"
+        @handleEmpty="$emit('handleClickEmpty')"
+        @handleUpdate="$emit('handleRefresh')" />
     </div>
   </div>
 </template>
 
 <script>
 import { dateConvert } from '@/common/util';
+import EmptyComponent from '@/components/empty';
 export default {
+  components: { EmptyComponent },
   props: {
     fieldsList: {
       type: Array,
@@ -119,6 +121,14 @@ export default {
     timerMap: {
       type: Array,
       required: true,
+    },
+    isTableDataError: {
+      type: Boolean,
+      default: false,
+    },
+    isTableDataEmpty: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -434,34 +444,6 @@ export default {
           }
         }
       }
-    }
-  }
-}
-
-.empty-search-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-top: 1px solid #dcdee5;
-
-  .empty-search {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-flow: column;
-    height: 80%;
-
-    img {
-      width: 42px;
-      margin-bottom: 10px;
-    }
-
-    p {
-      height: 19px;
-      font-size: 14px;
-      font-weight: bold;
-      color: #63656e;
-      line-height: 19px;
     }
   }
 }

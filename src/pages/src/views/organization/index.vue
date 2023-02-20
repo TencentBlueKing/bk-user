@@ -193,6 +193,8 @@
               v-bkloading="{ isLoading: basicLoading, zIndex: 0 }"
               :user-message="userMessage"
               :is-empty-search="isEmptySearch"
+              :is-table-data-error="isTableDataError"
+              :is-table-data-empty="isTableDataEmpty"
               :is-click.sync="isClick"
               :loading="basicLoading"
               :fields-list="fieldsList"
@@ -204,7 +206,9 @@
               @showTableLoading="showTableLoading"
               @closeTableLoading="closeTableLoading"
               @updateTableData="updateTableData"
-              @updateHeardList="updateHeardList" />
+              @updateHeardList="updateHeardList"
+              @handleRefresh="getTableData"
+              @handleClickEmpty="handleClickEmpty" />
             <div class="table-pagination" v-if="noSearchOrSearchDepartment && paginationConfig.count > 0">
               <div class="table-pagination-left">{{$t('共计')}}
                 {{Math.ceil(paginationConfig.count / paginationConfig.limit)}} {{$t('页')}}，
@@ -394,6 +398,8 @@ export default {
       isEmptySearch: false,
       // 表格请求出错
       isTableDataError: false,
+      // 表格请求结果为空
+      isTableDataEmpty: false,
       // 是否勾选了表格数据
       isClick: false,
       isShowSetDepartments: false,
@@ -662,11 +668,12 @@ export default {
         }
 
         this.isEmptyDepartment = false;
+        this.isTableDataEmpty = false;
         this.isEmptySearch = false;
         if (this.handleTabData.totalNumber === 0) {
           this.isEmptyDepartment = true;
         } else if (this.paginationConfig.count === 0) {
-          this.isEmptySearch = true;
+          this.isTableDataEmpty = true;
         }
 
         this.isTableDataError = false;
@@ -741,6 +748,12 @@ export default {
         }
       });
     },
+    // 清空筛选条件
+    handleClickEmpty() {
+      this.tableSearchKey = [];
+      this.checkSearchKey = '';
+      this.getTableData();
+    },
     // 搜索table
     handleTableSearch(list) {
       if (!list.length) return this.getTableData();
@@ -759,6 +772,7 @@ export default {
       const params = valueList.join('&');
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
         if (res.result) {
+          this.isEmptySearch = res.data.count === 0;
           this.filterUserData(res.data.results);
         }
       })

@@ -42,73 +42,55 @@
         :key="index">
       </bk-tab-panel>
       <div class="derive" v-if="panelActive === 'login'" @click="Auditderive">{{$t('审计导出')}}</div>
-      <div class="audit-content-wrapper">
-        <div class="thead-container table-container" data-test-id="list_headTitleData">
-          <table>
-            <thead>
-              <tr>
-                <th v-for="item in headTitle" :key="item.key">{{item.name}}</th>
-              </tr>
-            </thead>
-          </table>
-        </div>
-        <div class="tbody-container table-container" v-bkloading="{ isLoading: basicLoading }">
-          <div class="scroll-container" ref="auditScroller" data-test-id="list_auditData">
-            <table>
-              <tbody v-if="auditList.length">
-                <tr v-for="(item, index) in auditList" :key="index">
-                  <template v-if="isOperate">
-                    <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.operator}}</div></td>
-                    <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.display_name || '--'}}</div></td>
-                    <td><div class="text-overflow-hidden">{{item.datetime}}</div></td>
-                    <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.client_ip}}</div></td>
-                    <td><div class="text-overflow-hidden">{{item.operation}}</div></td>
-                    <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.category_display_name}}</div></td>
-                    <td><div class="text-overflow-hidden" v-bk-overflow-tips>{{item.target_obj}}</div></td>
-                  </template>
-                  <template v-else>
-                    <td><div class="text-overflow-hidden">{{item.username}}</div></td>
-                    <td><div class="text-overflow-hidden">{{item.display_name || '--'}}</div></td>
-                    <td><div class="text-overflow-hidden">{{item.datetime}}</div></td>
-                    <td><div class="text-overflow-hidden">{{item.client_ip}}</div></td>
-                    <td><div class="text-overflow-hidden" v-bk-tooltips="errorTips(item)">
-                      <i :class="['status', { 'status-fail': !item.is_success }]" />
-                      <label>{{item.is_success ? $t('成功') : $t('失败')}}</label>
-                    </div></td>
-                  </template>
-                </tr>
-              </tbody>
-            </table>
-            <div class="no-data-wrapper" v-if="!basicLoading && !auditList.length">
-              <p class="no-data-text">{{$t('暂无数据')}}</p>
-            </div>
-          </div>
-        </div>
-        <div class="table-pagination" v-if="auditList.length && paginationConfig.count > 0">
-          <div class="table-pagination-left">{{$t('共计')}}
-            {{Math.ceil(paginationConfig.count / paginationConfig.limit)}} {{$t('页')}}，
-          </div>
-          <div class="table-pagination-right">
-            <bk-pagination
-              size="small"
-              align="right"
-              :current.sync="paginationConfig.current"
-              :count="paginationConfig.count"
-              :limit="paginationConfig.limit"
-              :limit-list="limitList"
-              @change="changeCurrentPage"
-              @limit-change="changeLimitPage"></bk-pagination>
-          </div>
-        </div>
-      </div>
+      <bk-table
+        v-bkloading="{ isLoading: basicLoading }"
+        :data="auditList"
+        :pagination="paginationConfig"
+        @page-change="changeCurrentPage"
+        @page-limit-change="changeLimitPage">
+        <template slot="empty">
+          <EmptyComponent
+            :is-data-empty="isDataEmpty"
+            :is-search-empty="isSearchEmpty"
+            :is-data-error="isDataError"
+            @handleEmpty="handleEmpty"
+            @handleUpdate="getSearchInfo"></EmptyComponent>
+        </template>
+        <template v-for="(field, index) in headTitle">
+          <bk-table-column
+            :key="index"
+            v-if="field.key === 'is_success'"
+            :label="field.name"
+            :prop="field.key"
+            show-overflow-tooltip>
+            <template slot-scope="props">
+              <span v-bk-tooltips="errorTips(props.row)">
+                <i :class="['status', { 'status-fail': !props.row.is_success }]" />
+                <label>{{props.row.is_success ? $t('成功') : $t('失败')}}</label>
+              </span>
+            </template>
+          </bk-table-column>
+          <bk-table-column
+            v-else
+            :label="field.name"
+            :prop="field.key"
+            :key="field.key"
+            show-overflow-tooltip>
+            <template slot-scope="props">
+              <p>{{ props.row[field.key] || '--' }}</p>
+            </template>
+          </bk-table-column>
+        </template>
+      </bk-table>
     </bk-tab>
-    <div v-show="basicLoading" class="loading-cover" @click.stop></div>
   </div>
 </template>
 
 <script>
+import EmptyComponent from '@/components/empty';
 export default {
   name: 'AuditIndex',
+  components: { EmptyComponent },
   data() {
     return {
       basicLoading: true,
@@ -118,7 +100,6 @@ export default {
         count: 1,
         limit: 10,
       },
-      limitList: [10, 20, 50, 100],
       searchCondition: {
         dateRange: [
           new Date(Date.now() - 86400000),
@@ -173,22 +154,28 @@ export default {
       ],
       panelActive: 'operate',
       auditHead: [
-        { key: 'operater', name: this.$t('操作用户') },
-        { key: 'operater', name: this.$t('用户全名') },
-        { key: 'time', name: this.$t('时间') },
-        { key: 'IP', name: this.$t('来源 IP') },
-        { key: 'type', name: this.$t('操作类型') },
-        { key: 'contents', name: this.$t('用户目录') },
-        { key: 'object', name: this.$t('操作对象') },
+        { key: 'operator', name: this.$t('操作用户') },
+        { key: 'display_name', name: this.$t('用户全名') },
+        { key: 'datetime', name: this.$t('时间') },
+        { key: 'client_ip', name: this.$t('来源 IP') },
+        { key: 'operation', name: this.$t('操作类型') },
+        { key: 'category_display_name', name: this.$t('用户目录') },
+        { key: 'target_obj', name: this.$t('操作对象') },
       ],
       /** 登录审计表头 */
       loginHead: [
-        { key: 'user', name: this.$t('登录用户') },
-        { key: 'user', name: this.$t('用户全名') },
-        { key: 'time', name: this.$t('登录时间') },
-        { key: 'IP', name: this.$t('登录来源IP') },
-        { key: 'status', name: this.$t('登录状态') },
+        { key: 'username', name: this.$t('登录用户') },
+        { key: 'display_name', name: this.$t('用户全名') },
+        { key: 'datetime', name: this.$t('登录时间') },
+        { key: 'client_ip', name: this.$t('登录来源IP') },
+        { key: 'is_success', name: this.$t('登录状态') },
       ],
+      // 暂无数据
+      isDataEmpty: false,
+      // 搜索结果为空
+      isSearchEmpty: false,
+      // 数据异常
+      isDataError: false,
     };
   },
   computed: {
@@ -210,14 +197,6 @@ export default {
     },
   },
   mounted() {
-    const limit = Math.floor((this.$el.offsetHeight - 158) / 42);
-    this.paginationConfig.limit = limit;
-    const limitList = [10, 20, 50, 100];
-    if (!limitList.includes(limit)) {
-      limitList.push(limit);
-      limitList.sort((a, b) => a - b);
-    }
-    this.limitList = limitList;
     this.initUserList(this.panelActive);
   },
   methods: {
@@ -253,6 +232,9 @@ export default {
     async initUserList(panelActive) {
       try {
         this.basicLoading = true;
+        this.isDataEmpty = false;
+        this.isSearchEmpty = false;
+        this.isDataError = false;
         const currentStatus = panelActive === 'operate';
         const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
         const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
@@ -268,9 +250,12 @@ export default {
         this.auditList = res.data.results;
         // 计算页码数
         this.paginationConfig.count = res.data.count;
-        this.$refs.auditScroller.scrollTo({ top: 0 });
+        if (res.data.count === 0) {
+          this.searchCondition.keyword === '' ? this.isDataEmpty = true : this.isSearchEmpty = true;
+        }
       } catch (e) {
         console.warn(e);
+        this.isDataError = true;
       } finally {
         this.basicLoading = false;
         this.searchedKey = this.searchCondition.keyword;
@@ -279,6 +264,7 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     changeCurrentPage(current) {
+      this.paginationConfig.current = current;
       this.initUserList(this.panelActive);
     },
     changeLimitPage(limit) {
@@ -294,6 +280,10 @@ export default {
       if (this.searchedKey !== '') {
         this.getSearchInfo();
       }
+    },
+    handleEmpty() {
+      this.searchCondition.keyword = '';
+      this.getSearchInfo();
     },
     /** 登录审计记录失败原因tips */
     errorTips(item) {
@@ -338,121 +328,26 @@ export default {
     z-index: 999;
   }
   // 表格
-  .audit-content-wrapper {
-    margin: 0 0 30px 0;
-    height: calc(100vh - 320px);
-    border: 1px solid #e6e6e6;
-
-    .table-container {
-      // table 公用样式
-      table {
-        color: #888;
-        width: 100%;
-        table-layout: fixed;
-        border: none;
-        border-collapse: collapse;
-        font-size: 12px;
-
-        tr {
-          height: 42px;
-          border-bottom: 1px solid #dcdee5;
-        }
-
-        td {
-          font-size: 12px;
-        }
-      }
-
-      .status {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        border: 1px solid #3fc06d;
-        background: #e5f6ea;
-        border-radius: 100%;
-        margin-right: 5px;
-      }
-
-      .status-fail {
-        background: #fdd;
-        border: 1px solid #ea3636;
-      }
-    }
-
-    .thead-container {
-      height: 42px;
-
-      > table {
-        background: #fafbfd;
-
-        th {
-          padding: 0 20px;
-          text-align: left;
-          border: none;
-          color: #666;
-
-          &.hidden {
-            display: none;
-          }
-        }
-      }
-    }
-
-    .tbody-container {
-      height: calc(100vh - 362px);
-
-      > .scroll-container {
-        height: 100%;
-        overflow: auto;
-
-        @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-
-        > table > tbody > tr {
-          transition: all .3s ease;
-
-          &:hover {
-            background: #e1ecff;
-          }
-
-          > td {
-            padding: 0 20px;
-            border: none;
-
-            &.hidden {
-              display: none;
-            }
-          }
-        }
-
-        .no-data-wrapper {
-          height: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-
-          > .no-data-text {
-            font-size: 14px;
-            color: rgba(99, 101, 110, 1);
-            text-align: center;
-          }
-        }
-      }
-    }
+  ::v-deep .bk-table-body-wrapper {
+    color: #888;
+    max-height: calc(100vh - 400px);
+    overflow-y: auto;
+    @include scroller($backgroundColor: #e6e9ea, $width: 4px);
   }
-  // 分页
-  .table-pagination {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
 
-    > .table-pagination-left {
-      line-height: 32px;
-      font-size: 12px;
-    }
+  .status {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border: 1px solid #3fc06d;
+    background: #e5f6ea;
+    border-radius: 100%;
+    margin-right: 5px;
+  }
 
-    > .table-pagination-right {
-      flex-grow: 1;
-    }
+  .status-fail {
+    background: #fdd;
+    border: 1px solid #ea3636;
   }
 
   ::v-deep .audit-panel-class {
