@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import jsonfield
 from django.db import models
 
-from .constants import SettingsEnableNamespaces
+from .constants import GlobalSettingsEnableNamespaces, SettingsEnableNamespaces
 from .managers import SettingManager, SettingMetaManager
 from bkuser_core.audit.models import AuditObjMetaInfo
 from bkuser_core.categories.constants import CategoryType
@@ -82,4 +82,30 @@ class SettingMeta(TimestampedModel):
         verbose_name = "配置元信息表"
         verbose_name_plural = "配置元信息表"
         unique_together = ("key", "namespace", "category_type")
+        ordering = ["-create_time"]
+
+
+class GlobalSettings(TimestampedModel):
+    key = models.CharField("配置键", max_length=64)
+    value = jsonfield.JSONField("配置内容", default={})
+    enabled = models.BooleanField(default=True)
+    default = jsonfield.JSONField("默认值", default=None)
+    choices = jsonfield.JSONField("可选值", default=[])
+    namespace = models.CharField(
+        "命名空间",
+        max_length=32,
+        db_index=True,
+        choices=GlobalSettingsEnableNamespaces.get_choices(),
+        default=GlobalSettingsEnableNamespaces.GENERAL.value,
+    )
+    # 对配置项的更细分
+    region = models.CharField("领域", max_length=32, default="default")
+
+    def __str__(self):
+        return f"{self.namespace}-{self.key}"
+
+    class Meta:
+        verbose_name = "配置元信息表"
+        verbose_name_plural = "配置元信息表"
+        unique_together = ("key", "namespace")
         ordering = ["-create_time"]
