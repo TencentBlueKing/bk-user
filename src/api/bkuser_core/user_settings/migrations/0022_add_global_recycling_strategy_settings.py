@@ -12,15 +12,17 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
+from bkuser_core.user_settings.constants import GlobalSettingsEnableNamespaces
+
 
 def forwards_func(apps, schema_editor):
-    """更新默认目录 密码-rsa加密模板配置"""
+    """更新全局配置项 回收站保存时长"""
     GlobalSettings = apps.get_model("user_settings", "GlobalSettings")
     recycling_strategy_config = dict(
         key="retention_days",
         value=30,
         default=30,
-        namespace="recycling_strategy",
+        namespace=GlobalSettingsEnableNamespaces.RECYCLING_STRATEGY.value,
         enabled=True,
         choices=[7, 30, 90, 180, 365],
         region="default",

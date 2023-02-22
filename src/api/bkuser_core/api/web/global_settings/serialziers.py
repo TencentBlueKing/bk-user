@@ -18,12 +18,11 @@ class GlobalSettingOutputSLZ(serializers.Serializer):
     value = serializers.JSONField(required=False)
     namespace = serializers.CharField(required=False)
     region = serializers.CharField(required=False)
-    choices = serializers.JSONField(required=False)
     default = serializers.JSONField(required=False)
 
     class Meta:
         model = GlobalSettings
-        fields = ["id", "key", "namespace", "region", "value", "enabled", "choices", "default"]
+        fields = ["key", "namespace", "region", "value", "default"]
 
 
 class GlobalSettingUpdateInputSLZ(serializers.Serializer):

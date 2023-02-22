@@ -32,7 +32,8 @@ class GlobalSettingsListUpdateApi(generics.ListAPIView, generics.UpdateAPIView):
         for item in db_settings:
             key = item.key
             # 根据当前配置的key， 从ns_settings获取对应key-value
-            setattr(item, "value", ns_settings[key])
-            item.save()
+            if key in ns_settings:
+                item.value = ns_settings[key]
+                item.save()
 
         return Response(self.get_serializer_class()(db_settings, many=True).data)

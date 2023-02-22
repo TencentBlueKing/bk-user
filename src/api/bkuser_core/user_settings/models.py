@@ -86,6 +86,7 @@ class SettingMeta(TimestampedModel):
 
 
 class GlobalSettings(TimestampedModel):
+
     key = models.CharField("配置键", max_length=64)
     value = jsonfield.JSONField("配置内容", default={})
     enabled = models.BooleanField(default=True)
