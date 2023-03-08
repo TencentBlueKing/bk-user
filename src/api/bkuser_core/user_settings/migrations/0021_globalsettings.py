@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ('enabled', models.BooleanField(default=True)),
                 ('default', jsonfield.fields.JSONField(default=None, verbose_name='默认值')),
                 ('choices', jsonfield.fields.JSONField(default=[], verbose_name='可选值')),
-                ('namespace', models.CharField(choices=[('general', '通用'), ('recycling_strategy', '回收策略')], db_index=True, default='general', max_length=32, verbose_name='命名空间')),
+                ('namespace', models.CharField(choices=[('general', '通用')], db_index=True, default='general', max_length=32, verbose_name='命名空间')),
                 ('region', models.CharField(default='default', max_length=32, verbose_name='领域')),
             ],
             options={

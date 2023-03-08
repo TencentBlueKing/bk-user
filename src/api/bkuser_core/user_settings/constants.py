@@ -31,12 +31,8 @@ class SettingsEnableNamespaces(AutoLowerEnum):
 
 class GlobalSettingsEnableNamespaces(AutoLowerEnum):
     GENERAL = auto()
-    RECYCLING_STRATEGY = auto()
 
-    _choices_labels = (
-        (GENERAL, "通用"),
-        (RECYCLING_STRATEGY, "回收策略"),
-    )
+    _choices_labels = ((GENERAL, "通用"),)
 
 
 class InitPasswordMethod(AutoLowerEnum):

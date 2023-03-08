@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser_core.api.web.global_settings.serialziers import GlobalSettingOutputSLZ, GlobalSettingUpdateInputSLZ
@@ -36,4 +36,4 @@ class GlobalSettingsListUpdateApi(generics.ListAPIView, generics.UpdateAPIView):
                 item.value = ns_settings[key]
                 item.save()
 
-        return Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
