@@ -14,6 +14,7 @@ from django.conf.urls import include, url
 urlpatterns = [
     url(r"^categories/", include("bkuser_core.api.web.category.urls")),
     url(r"^settings/", include("bkuser_core.api.web.setting.urls")),
+    url(r"^global_settings/", include("bkuser_core.api.web.global_settings.urls")),
     url(r"^sync_tasks/", include("bkuser_core.api.web.sync_task.urls")),
     url(r"^audits/", include("bkuser_core.api.web.audit.urls")),
     url(r"^fields/", include("bkuser_core.api.web.field.urls")),
