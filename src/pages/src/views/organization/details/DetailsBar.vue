@@ -68,7 +68,8 @@
                   :list="rtxList"
                   ext-popover-cls="scrollview"
                   @toggle="handleBranchToggle"
-                  :scroll-height="188">
+                  :scroll-height="188"
+                  @change="changSelect">
                   <bk-option
                     v-for="option in rtxList"
                     :key="option.id"
@@ -82,7 +83,8 @@
                   multiple
                   display-tag
                   v-model="userSettingData.leader"
-                  @toggle="handleBranchToggle">
+                  @toggle="handleBranchToggle"
+                  @change="changSelect">
                   <bk-option
                     v-for="option in currentProfile.leader"
                     :key="option.id"
@@ -110,7 +112,7 @@
                 :required="true"
                 :property="'password_valid_days'"
                 :error-display-type="'normal'">
-                <bk-select v-model="userSettingData.password_valid_days" :clearable="false">
+                <bk-select v-model="userSettingData.password_valid_days" :clearable="false" @change="changSelect">
                   <bk-option
                     v-for="option in passwordValidDaysList"
                     :key="option.days"
@@ -461,6 +463,7 @@ export default {
       this.initialDepartments = this.getSelectedDepartments;
       this.userSettingData.department_name = this.formatDepartments(this.initialDepartments);
       this.isShowSetDepartments = false;
+      window.changeInput = true;
     },
     handleCancelSet() {
       this.isShowSetDepartments = false;
@@ -549,6 +552,9 @@ export default {
     },
     isUserSetting() {
       this.showUserSetting = !this.showUserSetting;
+    },
+    changSelect() {
+      window.changeInput = true;
     },
   },
 };

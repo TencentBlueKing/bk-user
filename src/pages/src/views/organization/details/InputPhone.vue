@@ -18,7 +18,8 @@
       v-model="item.value"
       :placeholder="$t('请输入手机号')"
       @blur="verifyInput(item)"
-      @focus="hiddenVerify(item)" />
+      @focus="hiddenVerify(item)"
+      @input="handleInput" />
     <p class="error-text" v-show="item.isError && item.value">
       {{$t('请填写正确的')}}{{item.name}}
     </p>
@@ -110,6 +111,9 @@ export default {
     // 获焦去掉标红
     hiddenVerify(item) {
       item.isError = false;
+    },
+    handleInput() {
+      window.changeInput = true;
     },
   },
 };

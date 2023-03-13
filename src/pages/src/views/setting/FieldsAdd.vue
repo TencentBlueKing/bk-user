@@ -19,7 +19,8 @@
           :disabled="fieldsInfor.builtin"
           v-model="fieldsInfor.name"
           @blur="verifyInput('name')"
-          @focus="hiddenVerify(arguments, 'name')" />
+          @focus="hiddenVerify(arguments, 'name')"
+          @input="handleInput" />
         <i class="icon icon-user-exclamation-circle-shape" v-show="verifyInfor.name"></i>
         <p class="hint" v-if="verifyInfor.name">
           <i class="arrow"></i>
@@ -39,7 +40,8 @@
           :disabled="!!currentEditorData.key"
           v-model="fieldsInfor.key"
           @blur="verifyInput('englishMark')"
-          @focus="hiddenVerify(arguments, 'englishMark')" />
+          @focus="hiddenVerify(arguments, 'englishMark')"
+          @input="handleInput" />
         <i class="icon icon-user-exclamation-circle-shape" v-show="verifyInfor.englishMark"></i>
         <p class="hint" v-show="verifyInfor.englishMark">
           <i class="arrow"></i>
@@ -90,7 +92,8 @@
                 <label v-if="fieldsInfor.type === 'one_enum'" class="king-radio">
                   <input
                     name="eg" type="radio" :value="index"
-                    v-model="fieldsInfor.default" :class="{ 'is-checked': fieldsInfor.default === index }">
+                    v-model="fieldsInfor.default" :class="{ 'is-checked': fieldsInfor.default === index }"
+                    @input="handleInput">
                 </label>
                 <label v-else class="king-checkbox king-checkbox-small">
                   <input name="egCheckbox" type="checkbox" :value="index" v-model="fieldsInfor.default">
@@ -105,7 +108,8 @@
                 v-model="item.value"
                 @keyup.enter="addEg"
                 @blur="verifyEgValue(item)"
-                @focus="hiddenEgError(item)" />
+                @focus="hiddenEgError(item)"
+                @input="handleInput" />
               <p class="hint" v-show="item.isErrorValue">
                 {{$t('该字段是必填项')}}
               </p>
@@ -128,17 +132,28 @@
           type="checkbox" name="selectType"
           checked="checked"
           :disabled="currentEditorData.builtin"
-          v-model="fieldsInfor.require">
+          v-model="fieldsInfor.require"
+          @input="handleInput" />
         <span class="checkbox-text" v-bk-tooltips.top="$t('该字段在用户信息里必须填写')">{{$t('必填')}}</span>
       </label>
       <label class="king-checkbox king-checkbox-small">
         <!-- 编辑字段不可设置：唯一 -->
-        <input type="checkbox" name="selectType" :disabled="setType === 'edit'" v-model="fieldsInfor.unique" />
+        <input
+          type="checkbox"
+          name="selectType"
+          :disabled="setType === 'edit'"
+          v-model="fieldsInfor.unique"
+          @input="handleInput" />
         <span class="checkbox-text" v-bk-tooltips.top="$t('该字段在不同用户信息里不能相同')">{{$t('唯一')}}</span>
       </label>
       <label class="king-checkbox king-checkbox-small">
         <!-- 内置字段不能设置：可编辑 -->
-        <input type="checkbox" name="selectType" v-model="fieldsInfor.editable" :disabled="currentEditorData.builtin" />
+        <input
+          type="checkbox"
+          name="selectType"
+          v-model="fieldsInfor.editable"
+          :disabled="currentEditorData.builtin"
+          @input="handleInput" />
         <span class="checkbox-text" v-bk-tooltips.top="$t('该字段在用户信息里可编辑')">{{$t('可编辑')}}</span>
       </label>
     </div>
@@ -255,10 +270,14 @@ export default {
           this.defaultSelected = this.fieldsInfor.type;
         }
       }
+      this.$nextTick(() => {
+        window.changeInput = false;
+      });
     },
     // 下拉框 选择对应的类型，布尔值 字符串 枚举 数值
     // eslint-disable-next-line no-unused-vars
     selectedType(newType, oldType) {
+      window.changeInput = true;
       if (newType === 'enum') {
         this.isShowEg = true;
         // 如果选择了枚举值 type 设置为单选
@@ -269,6 +288,9 @@ export default {
         this.fieldsInfor.type = newType;
         this.isShowEg = false;
       }
+    },
+    handleInput() {
+      window.changeInput = true;
     },
     // 失焦验证
     verifyInput(type) {
@@ -304,6 +326,7 @@ export default {
     },
     // 删除枚举
     deleteEg(index) {
+      window.changeInput = true;
       if (this.fieldsInfor.options.length <= 1) {
         return;
       }
@@ -311,6 +334,7 @@ export default {
     },
     // 添加枚举类型
     addEg() {
+      window.changeInput = true;
       if (this.fieldsInfor.options.length > 100) {
         return;
       }
