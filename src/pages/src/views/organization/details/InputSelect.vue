@@ -17,7 +17,8 @@
       :clearable="!item.require"
       :multiple="item.type === 'multi_enum'"
       :disabled="editStatus && !item.editable"
-      :ext-cls="item.isError ? 'input-error' : ''">
+      :ext-cls="item.isError ? 'input-error' : ''"
+      @change="changSelect">
       <bk-option
         v-for="(option, index) in item.options"
         :key="index"
@@ -42,6 +43,11 @@ export default {
     statusMap: {
       type: Object,
       default: {},
+    },
+  },
+  methods: {
+    changSelect() {
+      window.changeInput = true;
     },
   },
 };

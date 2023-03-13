@@ -478,4 +478,7 @@ export default {
   清空筛选条件: 'Clear filter',
   数据获取异常: 'Data acquisition exception',
   刷新: 'refresh',
+  '确认离开当前页？': 'Do you want to leave the current page?',
+  离开将会导致未保存信息丢失: 'Leaving will result in the loss of unsaved information',
+  离开: 'leave',
 };

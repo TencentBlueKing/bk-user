@@ -57,6 +57,7 @@ export default {
       this.item.value = date;
       // eslint-disable-next-line vue/no-mutating-props
       this.item.isError = false;
+      window.changeInput = true;
     },
   },
 };
