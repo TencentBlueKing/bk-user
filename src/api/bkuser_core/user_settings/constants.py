@@ -29,6 +29,12 @@ class SettingsEnableNamespaces(AutoLowerEnum):
     )
 
 
+class GlobalSettingsEnableNamespaces(AutoLowerEnum):
+    GENERAL = auto()
+
+    _choices_labels = ((GENERAL, "通用"),)
+
+
 class InitPasswordMethod(AutoLowerEnum):
     FIXED_PRESET = auto()
     RANDOM_VIA_MAIL = auto()
