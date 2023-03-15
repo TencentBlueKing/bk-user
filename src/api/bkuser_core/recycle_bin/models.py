@@ -39,34 +39,36 @@ class RecycleBin(TimestampedModel):
         过期剩余天数
         """
         config_loader = GlobalConfigProvider(namespace=GlobalSettingsEnableNamespaces.RECYCLING_STRATEGY.value)
-        retention_days = config_loader.get("retention_days")
+        retention_days = config_loader["retention_days"]
         expire_at = self.create_time + datetime.timedelta(days=int(retention_days))
-        _expires = expire_at - timezone.now()
-        return _expires.days
+        return (expire_at - timezone.now()).days
 
     @property
     def profile_count(self):
         # 目录/部门下人数
-        if self.object_type == RecycleBinObjectType.CATEGORY.value:
-            return Profile.objects.filter(category_id=self.object_id).count()
-        if self.object_type == RecycleBinObjectType.DEPARTMENT.value:
-            return DepartmentThroughModel.objects.filter(department_id=self.object_id).count()
+        object_type_map = {
+            RecycleBinObjectType.CATEGORY.value: Profile.objects.filter(category_id=self.object_id),
+            RecycleBinObjectType.DEPARTMENT.value: DepartmentThroughModel.objects.filter(department_id=self.object_id),
+        }
+        if self.object_type in object_type_map.keys():
+            return object_type_map[self.object_type].count()
 
     @property
     def department_count(self):
         # 目录下部门数量
-        if self.object_type in [RecycleBinObjectType.DEPARTMENT.value, RecycleBinObjectType.PROFILE.value]:
-            return
-        return Department.objects.filter(category_id=self.object_id).count()
+        if self.object_type not in [RecycleBinObjectType.DEPARTMENT.value, RecycleBinObjectType.PROFILE.value]:
+            return Department.objects.filter(category_id=self.object_id).count()
 
-    def get_map_object(self):
-        # 根据映射关系获取对象
-        object_map = {
+    def get_relate_object(self):
+        """
+        根据映射关系获取对象
+        """
+        object_type_map = {
             RecycleBinObjectType.CATEGORY.value: get_category,
             RecycleBinObjectType.DEPARTMENT.value: get_department,
             RecycleBinObjectType.PROFILE.value: get_profile,
         }
-        return object_map[self.object_type](self.object_id)
+        return object_type_map[self.object_type](self.object_id)
 
     def __str__(self):
         return f"{self.object_type}-{self.object_id}-{self.status}"

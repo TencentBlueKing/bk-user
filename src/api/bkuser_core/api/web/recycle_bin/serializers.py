@@ -16,11 +16,11 @@ from bkuser_core.recycle_bin.models import RecycleBin
 
 
 class RecycleBinSearchInputSlZ(serializers.Serializer):
-    keyword = serializers.CharField(required=False)
+    keyword = serializers.CharField(required=False, help_text="搜索关键词")
 
 
 class RecycleBinBaseSerializer(serializers.ModelSerializer):
-    expires = serializers.IntegerField()
+    expires = serializers.IntegerField(help_text="过期剩余天数")
 
     class Meta:
         model = RecycleBin
@@ -28,12 +28,12 @@ class RecycleBinBaseSerializer(serializers.ModelSerializer):
 
 
 class RecycleBinCategoryOutputSlZ(RecycleBinBaseSerializer):
-    category = serializers.SerializerMethodField()
-    profile_count = serializers.IntegerField()
-    department_count = serializers.IntegerField()
+    category = serializers.SerializerMethodField(help_text="目录基础信息")
+    profile_count = serializers.IntegerField(help_text="目录下人员数量")
+    department_count = serializers.IntegerField(help_text="目录下部门数量")
 
     def get_category(self, instance):
-        category = instance.get_map_object()
+        category = instance.get_relate_object()
         return {
             "id": category.id,
             "display_name": category.display_name,
@@ -43,12 +43,12 @@ class RecycleBinCategoryOutputSlZ(RecycleBinBaseSerializer):
 
 
 class RecycleBinDepartmentOutputSlZ(RecycleBinBaseSerializer):
-    category_display_name = serializers.SerializerMethodField()
-    profile_count = serializers.IntegerField()
-    department = serializers.SerializerMethodField()
+    category_display_name = serializers.SerializerMethodField(help_text="所属目录名称")
+    department = serializers.SerializerMethodField(help_text="部门基础信息")
+    profile_count = serializers.IntegerField(help_text="部门下人员数量")
 
     def get_department(self, instance):
-        department = instance.get_map_object()
+        department = instance.get_relate_object()
         return {
             "id": department.id,
             "name": department.name,
@@ -57,16 +57,16 @@ class RecycleBinDepartmentOutputSlZ(RecycleBinBaseSerializer):
         }
 
     def get_category_display_name(self, instance):
-        department = instance.get_map_object()
+        department = instance.get_relate_object()
         return get_category_display_name_map()[department.category_id]
 
 
 class RecycleBinProfileOutputSlZ(RecycleBinBaseSerializer):
-    category_display_name = serializers.SerializerMethodField()
-    profile = serializers.SerializerMethodField()
+    category_display_name = serializers.SerializerMethodField(help_text="所属目录信息")
+    profile = serializers.SerializerMethodField(help_text="人员基础信息")
 
     def get_profile(self, instance):
-        profile = instance.get_map_object()
+        profile = instance.get_relate_object()
         return {
             "id": profile.id,
             "username": f"{profile.username}@{profile.domain}",
@@ -75,5 +75,5 @@ class RecycleBinProfileOutputSlZ(RecycleBinBaseSerializer):
         }
 
     def get_category_display_name(self, instance):
-        profile = instance.get_map_object()
+        profile = instance.get_relate_object()
         return get_category_display_name_map()[profile.category_id]

@@ -18,16 +18,16 @@ urlpatterns = [
     path(
         "category/",
         views.RecycleBinCategoryListApi.as_view(),
-        name="recycle_bin.list_category",
+        name="recycle_bin.category.list",
     ),
     path(
         "department/",
         views.RecycleBinDepartmentListApi.as_view(),
-        name="recycle_bin.list_department",
+        name="recycle_bin.department.list",
     ),
     path(
         "profile/",
         views.RecycleBinProfileListApi.as_view(),
-        name="recycle_bin.list_profile",
+        name="recycle_bin.profile.list",
     ),
 ]

@@ -36,39 +36,50 @@ class RecycleBinBaseListApi(generics.ListAPIView):
     queryset = RecycleBin.objects.filter(status=RecycleBinObjectStatus.SOFT_DELETED.value)
     pagination_class = CustomPagination
 
-    def _search_queryset(self, request):
-        self.queryset = self.queryset.filter(object_type=self.object_type)
-        input_slz = RecycleBinSearchInputSlZ(data=request.query_params)
+    def get_queryset(self):
+        queryset = self.queryset.filter(object_type=self.object_type)
+        input_slz = RecycleBinSearchInputSlZ(data=self.request.query_params)
         input_slz.is_valid(raise_exception=True)
-        validated_data = input_slz.validated_data
-        if validated_data:
-            keyword = validated_data["keyword"]
+        data = input_slz.validated_data
+
+        keyword = data.get("keyword")
+        if keyword:
             # Q 连接对应search_filed 和 keyword
             condition_combos = [Q(**{"{}__icontains".format(filed): keyword}) for filed in self.search_fields]
             query = functools.reduce(or_, condition_combos)
             object_ids = RECYCLE_BIN_OBJECT_MAP[self.object_type].objects.filter(query).values_list("id", flat=True)
-            self.queryset = self.queryset.filter(object_id__in=object_ids)
+            queryset = queryset.filter(object_id__in=object_ids)
+        return queryset
 
     def list(self, request, *args, **kwargs):
-        input_slz = RecycleBinSearchInputSlZ(data=request.query_params)
-        input_slz.is_valid(raise_exception=True)
-        self._search_queryset(request)
         return super(RecycleBinBaseListApi, self).list(request, *args, **kwargs)
 
 
 class RecycleBinCategoryListApi(RecycleBinBaseListApi):
+    """
+    回收站：目录展示
+    """
+
     object_type = RecycleBinObjectType.CATEGORY.value
     serializer_class = RecycleBinCategoryOutputSlZ
     search_fields = ["domain", "display_name"]
 
 
 class RecycleBinDepartmentListApi(RecycleBinBaseListApi):
+    """
+    回收站：组织展示
+    """
+
     object_type = RecycleBinObjectType.DEPARTMENT.value
     serializer_class = RecycleBinDepartmentOutputSlZ
     search_fields = ["name"]
 
 
 class RecycleBinProfileListApi(RecycleBinBaseListApi):
+    """
+    回收站：人员展示
+    """
+
     object_type = RecycleBinObjectType.PROFILE.value
     serializer_class = RecycleBinProfileOutputSlZ
     search_fields = ["username", "display_name"]
