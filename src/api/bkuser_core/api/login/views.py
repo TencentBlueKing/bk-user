@@ -38,7 +38,7 @@ from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.profiles.constants import ProfileStatus
+from bkuser_core.profiles.constants import ProfileStatus, StaffStatus
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.utils import align_country_iso_code, make_passwd_reset_url_by_token, parse_username_domain
 from bkuser_core.profiles.validators import validate_username
@@ -134,6 +134,17 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 raise error_codes.PASSWORD_ERROR
                 # NOTE: 安全原因, 不能返回账户状态
                 # raise error_codes.USER_IS_LOCKED
+            elif profile.staff_status == StaffStatus.OUT.value:
+                create_profile_log(
+                    profile=profile,
+                    operation="Login",
+                    request=request,
+                    params={"is_success": False, "reason": LogInFailReason.RESIGNED_USER.value},
+                )
+                logger.info("login check, profile<%s> of %s is resigned", profile.username, message_detail)
+                raise error_codes.PASSWORD_ERROR
+                # NOTE: 安全原因, 不能返回账户状态
+                # raise error_codes.USER_IS_RESIGNED
 
             # 获取密码配置
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
