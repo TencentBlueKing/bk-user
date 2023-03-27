@@ -118,6 +118,7 @@ error_codes.add_codes(
         ErrorCode("USER_IS_DELETED", _("账号已被删除，请联系管理员"), 3210022),
         ErrorCode("CATEGORY_PLUGIN_LOAD_FAIL", _("目录登录插件加载失败"), 3210023),
         ErrorCode("USER_IS_EXPIRED", _("该用户账号已过期"), 3210024),
+        ErrorCode("USER_IS_RESIGNED", _("该用户账号已离职"), 3210025),
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
