@@ -16,17 +16,17 @@ from . import views
 
 urlpatterns = [
     path(
-        "category/",
+        "categories/",
         views.RecycleBinCategoryListApi.as_view(),
         name="recycle_bin.category.list",
     ),
     path(
-        "department/",
+        "departments/",
         views.RecycleBinDepartmentListApi.as_view(),
         name="recycle_bin.department.list",
     ),
     path(
-        "profile/",
+        "profiles/",
         views.RecycleBinProfileListApi.as_view(),
         name="recycle_bin.profile.list",
     ),

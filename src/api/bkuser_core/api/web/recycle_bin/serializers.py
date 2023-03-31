@@ -11,7 +11,8 @@ specific language governing permissions and limitations under the License.
 
 from rest_framework import serializers
 
-from bkuser_core.api.web.utils import get_category_display_name_map
+from bkuser_core.departments.models import Department
+from bkuser_core.profiles.models import Profile
 from bkuser_core.recycle_bin.models import RecycleBin
 
 
@@ -19,21 +20,14 @@ class RecycleBinSearchInputSlZ(serializers.Serializer):
     keyword = serializers.CharField(required=False, help_text="搜索关键词")
 
 
-class RecycleBinBaseSerializer(serializers.ModelSerializer):
+class RecycleBinCategoryOutputSlZ(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField(help_text="目录基础信息")
+    profile_count = serializers.SerializerMethodField(help_text="目录下人员数量")
+    department_count = serializers.SerializerMethodField(help_text="目录下部门数量")
     expires = serializers.IntegerField(help_text="过期剩余天数")
 
-    class Meta:
-        model = RecycleBin
-        exclude = ["create_time", "update_time", "object_type", "object_id", "status"]
-
-
-class RecycleBinCategoryOutputSlZ(RecycleBinBaseSerializer):
-    category = serializers.SerializerMethodField(help_text="目录基础信息")
-    profile_count = serializers.IntegerField(help_text="目录下人员数量")
-    department_count = serializers.IntegerField(help_text="目录下部门数量")
-
     def get_category(self, instance):
-        category = instance.get_relate_object()
+        category = self.context["category_map"][instance.object_id]
         return {
             "id": category.id,
             "display_name": category.display_name,
@@ -41,39 +35,63 @@ class RecycleBinCategoryOutputSlZ(RecycleBinBaseSerializer):
             "type": category.type,
         }
 
+    def get_profile_count(self, instance):
+        return Profile.objects.filter(category_id=instance.object_id).count()
 
-class RecycleBinDepartmentOutputSlZ(RecycleBinBaseSerializer):
+    def get_department_count(self, instance):
+        return Department.objects.filter(category_id=instance.object_id).count()
+
+    class Meta:
+        model = RecycleBin
+        fields = ["id", "expires", "category", "profile_count", "department_count", "operator"]
+
+
+class RecycleBinDepartmentOutputSlZ(serializers.ModelSerializer):
     category_display_name = serializers.SerializerMethodField(help_text="所属目录名称")
     department = serializers.SerializerMethodField(help_text="部门基础信息")
-    profile_count = serializers.IntegerField(help_text="部门下人员数量")
+    profile_count = serializers.SerializerMethodField(help_text="部门下人员数量")
+    expires = serializers.IntegerField(help_text="过期剩余天数")
 
     def get_department(self, instance):
-        department = instance.get_relate_object()
+        department = self.context["department_map"][instance.object_id]
         return {
             "id": department.id,
             "name": department.name,
-            "ancestor": department.parent.name if department.parent else "",
-            "children": department.children.all().count(),
+            "parent_name": department.parent.name if department.parent else "",
+            "children_count": department.children.all().count(),
         }
 
     def get_category_display_name(self, instance):
-        department = instance.get_relate_object()
-        return get_category_display_name_map()[department.category_id]
+        department = self.context["department_map"][instance.object_id]
+        return self.context["category_display_name_map"][department.category_id]
+
+    def get_profile_count(self, instance):
+        return self.context["department_map"][instance.object_id].profiles.count()
+
+    class Meta:
+        model = RecycleBin
+        fields = ["id", "expires", "category_display_name", "department", "profile_count", "operator"]
 
 
-class RecycleBinProfileOutputSlZ(RecycleBinBaseSerializer):
+class RecycleBinProfileOutputSlZ(serializers.ModelSerializer):
     category_display_name = serializers.SerializerMethodField(help_text="所属目录信息")
     profile = serializers.SerializerMethodField(help_text="人员基础信息")
+    expires = serializers.IntegerField(help_text="过期剩余天数")
 
     def get_profile(self, instance):
-        profile = instance.get_relate_object()
+        profile = self.context["profile_map"][instance.object_id]
         return {
             "id": profile.id,
-            "username": f"{profile.username}@{profile.domain}",
+            "username": profile.username,
+            "domain": profile.domain,
             "display_name": profile.display_name,
             "department": profile.departments.values("id", "name"),
         }
 
     def get_category_display_name(self, instance):
-        profile = instance.get_relate_object()
-        return get_category_display_name_map()[profile.category_id]
+        profile = self.context["profile_map"][instance.object_id]
+        return self.context["category_display_name_map"][profile.category_id]
+
+    class Meta:
+        model = RecycleBin
+        fields = ["id", "expires", "category_display_name", "profile", "operator"]

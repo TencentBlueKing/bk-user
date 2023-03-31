@@ -19,11 +19,3 @@ class RecycleBinObjectType(AutoNameEnum):
     PROFILE = auto()
 
     _choices_labels = ((CATEGORY, "用户目录"), (DEPARTMENT, "部门组织"), (PROFILE, "人员"))
-
-
-class RecycleBinObjectStatus(AutoNameEnum):
-    SOFT_DELETED = auto()
-    HARD_DELETED = auto()
-    REVERTING = auto()
-
-    _choices_labels = ((SOFT_DELETED, "软删除"), (HARD_DELETED, "硬删除"), (REVERTING, "还原"))

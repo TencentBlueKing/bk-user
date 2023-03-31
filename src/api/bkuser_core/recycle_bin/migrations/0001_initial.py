@@ -28,7 +28,6 @@ class Migration(migrations.Migration):
                 ('object_type', models.CharField(choices=[('CATEGORY', '用户目录'), ('DEPARTMENT', '部门组织'), ('PROFILE', '人员')], default='', max_length=64, verbose_name='对象类型')),
                 ('object_id', models.IntegerField(verbose_name='对象id')),
                 ('operator', models.CharField(default='', max_length=255, verbose_name='操作人')),
-                ('status', models.CharField(choices=[('SOFT_DELETED', '软删除'), ('HARD_DELETED', '硬删除'), ('REVERTING', '还原')], default='SOFT_DELETED', max_length=64, verbose_name='数据状态')),
             ],
             options={
                 'verbose_name': '回收站信息',
