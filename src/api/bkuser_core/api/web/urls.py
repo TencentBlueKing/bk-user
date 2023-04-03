@@ -22,6 +22,7 @@ urlpatterns = [
     url(r"^site/", include("bkuser_core.api.web.site.urls")),
     url(r"^departments/", include("bkuser_core.api.web.department.urls")),
     url(r"^passwords/", include("bkuser_core.api.web.password.urls")),
+    url(r"^recycle_bin/", include("bkuser_core.api.web.recycle_bin.urls")),
     # 通用检索
     url(r"^search/", include("bkuser_core.api.web.search.urls")),
     # 首页

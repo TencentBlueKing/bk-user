@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from dataclasses import dataclass, field
 
-from .models import Setting
+from .models import GlobalSettings, Setting
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 
 
@@ -45,3 +45,25 @@ class ConfigProvider:
 
         self._refresh_config()
         return
+
+
+@dataclass
+class GlobalConfigProvider:
+    namespace: str
+    _config: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self._refresh_config()
+
+    def _refresh_config(self):
+        global_settings = GlobalSettings.objects.filter(namespace=self.namespace)
+        self._raw = {setting.key: setting for setting in global_settings}
+        self._config = {x.key: x.value for x in global_settings}
+
+    def get(self, key):
+        if key in self._raw and not self._raw.get(key).enabled:
+            raise SettingHasBeenDisabledError(key)
+        return self._config.get(key)
+
+    def __getitem__(self, key):
+        return self._config[key]
