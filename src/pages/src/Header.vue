@@ -119,7 +119,7 @@
 <script>
 import Cookies from 'js-cookie';
 import I18n from '@/language/i18n';
-import '../../login/static/assets/blueking-icon/style.css';
+import '../static/blueking-icon/style.css';
 export default {
   name: 'HeaderBox',
   data() {
