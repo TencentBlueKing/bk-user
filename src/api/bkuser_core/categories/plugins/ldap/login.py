@@ -35,13 +35,18 @@ class LoginHandler:
         client = LDAPClient(config_loader)
         field_fetcher = ProfileFieldMapper(config_loader)
 
+        user_class = config_loader["user_class"]
+        username_field = config_loader["username"]
         logger.debug(
-            "going to search users, object_class: %s, attributes: %s",
-            config_loader["user_class"],
+            "going to search users, filter_condition( object_class = %s, username_field = %s, attributes: %s )",
+            user_class,
+            username_field,
             field_fetcher.get_user_attributes(),
         )
+        force_filter_str = f"(&(objectClass={user_class})({username_field}={profile.username}))"
+
         users = client.search(
-            object_class=config_loader["user_class"],
+            force_filter_str=force_filter_str,
             attributes=field_fetcher.get_user_attributes(),
         )
         logger.debug("search results users: %s", users)
