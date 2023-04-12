@@ -111,6 +111,9 @@ export default {
       return expireDays(date, this.$store.state.passwordValidDaysList);
     },
   },
+  mounted() {
+    window.changeInput = false;
+  },
 };
 </script>
 

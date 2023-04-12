@@ -103,11 +103,12 @@
       class="king-sideslider"
       :transfer="true"
       :show-mask="false"
-      :quick-close="false"
+      :quick-close="true"
       :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
       :is-show.sync="fieldData.isShow"
       :title="fieldData.title"
-      :width="fieldData.width">
+      :width="fieldData.width"
+      :before-close="beforeClose">
       <div slot="content" class="member-content" v-if="fieldData.isShow">
         <FieldsAdd
           :set-type="setType"
@@ -304,6 +305,21 @@ export default {
     showBar() {
       this.isHideBar = false;
       this.basicLoading = false;
+    },
+    beforeClose() {
+      if (window.changeInput) {
+        this.$bkInfo({
+          title: this.$t('确认离开当前页？'),
+          subTitle: this.$t('离开将会导致未保存信息丢失'),
+          okText: this.$t('离开'),
+          confirmFn: () => {
+            this.fieldData.isShow = false;
+            window.changeInput = false;
+          },
+        });
+      } else {
+        this.fieldData.isShow = false;
+      }
     },
   },
 };

@@ -579,3 +579,23 @@ versions:
         - "修复: 审计-登陆日志导出ugettext_lazy 导出失败"
         - "修复: 职位展示问题"
         - "修复: 通过excel导入用户组织支持全量更新"
+- version: "2.5.3"
+  date: "2023-04-07"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "NEW"
+        content:
+        - "/api/v1/login 增加iso_code支持国际化手机号"
+        - "apigw隐藏v1/v2 API，更新ping/healthz文档"
+      - type: "OPTIMIZATION"
+        content:
+        - "前端优化: 账号有效期优化&用户信息组件优化"
+        - "前端优化: 蓝鲸产品规范: 表格&搜索状态"
+        - "前端优化: 蓝鲸产品规范--抽屉交互"
+        - "优化用户量大的mad/ldap下用户登录，耗时长"
+      - type: "FIX"
+        content:
+        - "修复: 由于bk_token未unquote导致登出失败问题"
+        - "修复: 忘记密码功能，仍可对异常状态用户发送信息"
+        - "修复: 生产环境下未屏蔽swagger路由的问题"

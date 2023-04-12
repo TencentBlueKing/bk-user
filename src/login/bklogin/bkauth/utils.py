@@ -142,6 +142,7 @@ def set_bk_token_invalid(request, response=None):
     """
     bk_token = request.COOKIES.get(settings.BK_COOKIE_NAME, None)
     if bk_token:
+        bk_token = urllib.parse.unquote(bk_token)
         BkToken.objects.filter(token=bk_token).update(is_logout=True)
     if response is not None:
         # delete cookie

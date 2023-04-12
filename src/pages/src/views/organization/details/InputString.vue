@@ -18,7 +18,8 @@
       :show-word-limit="true"
       :class="{ 'input-error': item.isError }"
       v-model="item.value"
-      @blur="verifyInput(item)">
+      @blur="verifyInput(item)"
+      @input="handleInput">
     </bk-input>
     <bk-input
       v-else
@@ -26,7 +27,8 @@
       :disabled="editStatus && !item.editable"
       :placeholder="inputType === 'number' ? $t('请输入数字') : item.holder"
       :class="{ 'input-error': item.isError }"
-      v-model="item.value" />
+      v-model="item.value"
+      @input="handleInput" />
   </div>
 </template>
 
@@ -53,6 +55,9 @@ export default {
   methods: {
     verifyInput(item) {
       item.value = this.$xssVerification(item.value);
+    },
+    handleInput() {
+      window.changeInput = true;
     },
   },
 };

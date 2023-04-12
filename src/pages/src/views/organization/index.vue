@@ -235,9 +235,10 @@
       :width="630"
       :show-mask="false"
       :is-show.sync="detailsBarInfo.isShow"
-      :quick-close="detailsBarInfo.quickClose"
+      :quick-close="true"
       :title="detailsBarInfo.title"
-      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
+      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
+      :before-close="beforeClose">
       <div slot="content" v-if="detailsBarInfo.isShow">
         <DetailsBar
           :details-bar-info="detailsBarInfo"
@@ -373,7 +374,6 @@ export default {
         type: '',
         basicLoading: false,
         title: '',
-        quickClose: true,
       },
       // 点击保存时打开 loading，临时在样式上隐藏侧边栏
       isHideBar: false,
@@ -989,7 +989,6 @@ export default {
       this.detailsBarInfo.title = this.$t('用户详情');
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
-      this.detailsBarInfo.quickClose = true;
     },
     updateTableData(item) {
       this.tableData = item;
@@ -1078,7 +1077,6 @@ export default {
     editProfile() {
       this.detailsBarInfo.type = 'edit';
       this.detailsBarInfo.title = this.$t('编辑用户');
-      this.detailsBarInfo.quickClose = false;
     },
     handleCancelEdit() {
       if (this.detailsBarInfo.type === 'add') {
@@ -1086,7 +1084,6 @@ export default {
       } else {
         this.detailsBarInfo.type = 'view';
         this.detailsBarInfo.title = this.$t('用户详情');
-        this.detailsBarInfo.quickClose = true;
       }
     },
     // 新增用户 调用接口，拿到数据传给子组件
@@ -1095,7 +1092,6 @@ export default {
       this.detailsBarInfo.title = this.$t('新增用户');
       this.detailsBarInfo.type = 'add';
       this.detailsBarInfo.isShow = true;
-      this.detailsBarInfo.quickClose = false;
       // 设置所在的组织
       const department = this.treeSearchResult ? this.treeSearchResult : this.currentParam.item;
       this.detailsBarInfo.departments = [{
@@ -1284,6 +1280,25 @@ export default {
         .finally(() => {
           this.clickSecond = false;
         });
+    },
+    beforeClose() {
+      if (this.detailsBarInfo.type === 'view') {
+        this.detailsBarInfo.isShow = false;
+      } else {
+        if (window.changeInput) {
+          this.$bkInfo({
+            title: this.$t('确认离开当前页？'),
+            subTitle: this.$t('离开将会导致未保存信息丢失'),
+            okText: this.$t('离开'),
+            confirmFn: () => {
+              this.detailsBarInfo.isShow = false;
+              window.changeInput = false;
+            },
+          });
+        } else {
+          this.detailsBarInfo.isShow = false;
+        }
+      }
     },
     // 点击某个树节点
     handleClickTreeNode(item, isSearchProfile = false) {
