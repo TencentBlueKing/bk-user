@@ -178,6 +178,8 @@ class UsernameCellParser(CellParser):
         # Excel 解析如果用户名全数字, 会被读取成数字, 导致这里报错, 暂时在这里强转; 先解决问题
         # FIXME: 统一重构excel导入, 每列确定的类型, 在上游读取就屏蔽确认
         # https://github.com/TencentBlueKing/bk-user/issues/673
+        if not raw_content:
+            raise ParseFailedException(field_name=self.name, reason=_("{} 是必须的").format(self.name))
         raw_content = str(raw_content)
 
         try:
