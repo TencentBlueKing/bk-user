@@ -36,7 +36,7 @@ def backwards_func(apps, schema_editor):
         key="retention_days",
         namespace=GlobalSettingsEnableNamespaces.RECYCLING_STRATEGY.value,
     )
-    GlobalSettings.objects.filter(recycling_strategy_config).delete()
+    GlobalSettings.objects.filter(**recycling_strategy_config).delete()
 
 
 class Migration(migrations.Migration):
@@ -44,4 +44,4 @@ class Migration(migrations.Migration):
         ("user_settings", "0021_globalsettings"),
     ]
 
-    operations = [migrations.RunPython(forwards_func)]
+    operations = [migrations.RunPython(forwards_func, backwards_func)]

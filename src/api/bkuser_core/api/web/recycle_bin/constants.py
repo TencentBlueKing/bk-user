@@ -8,11 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import django
+from enum import auto
 
-post_category_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_revert = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_hard_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+from bkuser_core.common.enum import AutoNameEnum
 
-post_dynamic_field_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+
+class CategoryCheckMessageEnum(AutoNameEnum):
+    REPEATED_CONNECTION_URL = auto()
+    REPEATED_DISPLAY_NAME = auto()
+
+    _choices_labels = ((REPEATED_CONNECTION_URL, "相同ldap连接域"), (REPEATED_DISPLAY_NAME, "相同目录吗"))

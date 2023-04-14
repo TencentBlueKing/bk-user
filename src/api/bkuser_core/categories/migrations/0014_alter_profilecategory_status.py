@@ -8,11 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import django
 
-post_category_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_revert = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_hard_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+from django.db import migrations, models
 
-post_dynamic_field_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('categories', '0013_alter_profilecategory_type'),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name='profilecategory',
+            name='status',
+            field=models.CharField(choices=[('normal', '正常'), ('inactive', '停用'), ('deleted', '删除')], default='normal', max_length=32, verbose_name='目录状态'),
+        ),
+    ]

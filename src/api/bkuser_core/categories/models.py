@@ -14,10 +14,9 @@ from uuid import uuid4
 
 from django.db import models
 from django.utils import timezone
-from django_celery_beat.models import PeriodicTask
 
 from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.categories.constants import CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
+from bkuser_core.categories.constants import CategoryStatus, CategoryType, SyncStep, SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.managers import ProfileCategoryManager, SyncProgressManager, SyncTaskManager
 from bkuser_core.common.models import TimestampedModel
 from bkuser_core.departments.models import Department
@@ -57,6 +56,10 @@ class ProfileCategory(TimestampedModel):
     def inactive(self) -> bool:
         return self.status == CategoryStatus.INACTIVE.value
 
+    @property
+    def is_deleted(self) -> bool:
+        return self.status == CategoryStatus.DELETED.value
+
     def enable(self):
         Profile.objects.enable_or_disable(
             True, category_id=self.id, enable_param={"enabled": True, "status": ProfileStatus.NORMAL.value}
@@ -72,23 +75,19 @@ class ProfileCategory(TimestampedModel):
         if self.default:
             raise ValueError("default category can not be deleted.")
 
-        # 手动禁用相关资源，同时保留关联关系
-        Profile.objects.enable_or_disable(
-            False,
-            category_id=self.id,
-            disable_param={"enabled": False, "status": ProfileStatus.DELETED.value},
-        )
-        Department.objects.enable_or_disable(False, category_id=self.id)
-        Setting.objects.enable_or_disable(False, category_id=self.id)
-
-        # 删除周期任务
-        try:
-            PeriodicTask.objects.get(name=str(self.id)).delete()
-        except PeriodicTask.DoesNotExist:
-            pass
-
         self.enabled = False
-        self.status = CategoryStatus.INACTIVE.value
+        self.status = CategoryStatus.DELETED.value
+        self.save(update_fields=["enabled", "status", "update_time"])
+
+        # 变更同步任务使能状态
+        if self.type in [CategoryType.LDAP.value, CategoryType.MAD.value]:
+            from bkuser_core.categories.plugins.utils import sync_task_enabled_or_disabled
+
+            sync_task_enabled_or_disabled(self.id, False)
+
+    def revert(self):
+        self.enabled = True
+        self.status = CategoryStatus.NORMAL.value
         self.save(update_fields=["enabled", "status", "update_time"])
 
     @property

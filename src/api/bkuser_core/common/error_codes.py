@@ -140,6 +140,7 @@ error_codes.add_codes(
         ErrorCode("CANNOT_UPDATE_DOMAIN", _("用户目录不能更新域字段")),
         ErrorCode("CANNOT_DISABLE_DOMAIN", _("默认用户目录不能被禁用")),
         ErrorCode("CANNOT_DELETE_DEFAULT_CATEGORY", _("不能删除默认用户目录")),
+        ErrorCode("CANNOT_DELETE_ACTIVE_CATEGORY", _("不能删除未停用用户目录")),
         ErrorCode("LOCAL_CATEGORY_CANNOT_SYNC", _("本地目录需要上传文件进行同步")),
         ErrorCode("CATEGORY_CANNOT_IMPORT_BY_FILE", _("该目录不能够通过文件同步数据")),
         ErrorCode("LOAD_DATA_FAILED", _("同步数据失败")),

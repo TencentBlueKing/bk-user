@@ -21,10 +21,12 @@ TIMEOUT_THRESHOLD = timedelta(hours=1)
 class CategoryStatus(AutoLowerEnum):
     NORMAL = auto()
     INACTIVE = auto()
+    DELETED = auto()
 
     _choices_labels = (
         (NORMAL, _("正常")),
         (INACTIVE, _("停用")),
+        (DELETED, _("删除")),
     )
 
 

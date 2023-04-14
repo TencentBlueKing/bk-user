@@ -51,7 +51,7 @@ from bkuser_core.bkiam.permissions import (
     Permission,
     ViewCategoryPermission,
 )
-from bkuser_core.categories.constants import CategoryType, SyncTaskType
+from bkuser_core.categories.constants import CategoryStatus, CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory, SyncTask
@@ -289,12 +289,20 @@ class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """删除用户目录"""
         instance = self.get_object()
+
         if instance.default:
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
 
+        if instance.status != CategoryStatus.INACTIVE.value:
+            raise error_codes.CANNOT_DELETE_ACTIVE_CATEGORY
+
         # 依赖 model 的 delete 方法, 执行软删除
         instance.delete()
-        post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
+
+        # 善后：回收站映射，软删除审计日志
+        post_category_delete.send_robust(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
+        )
         return Response(status=status.HTTP_200_OK)
 
 
