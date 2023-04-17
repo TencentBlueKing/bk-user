@@ -481,4 +481,7 @@ export default {
   '确认离开当前页？': 'Do you want to leave the current page?',
   离开将会导致未保存信息丢失: 'Leaving will result in the loss of unsaved information',
   离开: 'leave',
+  '字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头': 'By letters, numbers, (_), (.) , (-), starting with a letter or digit',
+  所在公司: 'Company',
+  '搜索操作用户、操作对象、操作类型': 'Search for the operation user, operation object, and operation type',
 };
