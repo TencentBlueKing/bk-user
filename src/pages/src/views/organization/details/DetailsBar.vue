@@ -553,7 +553,8 @@ export default {
     isUserSetting() {
       this.showUserSetting = !this.showUserSetting;
     },
-    changSelect() {
+    changSelect(val, oldVal) {
+      if (oldVal === null) return;
       window.changeInput = true;
     },
   },
