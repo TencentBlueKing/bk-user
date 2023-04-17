@@ -255,7 +255,7 @@ export default {
         if ((item.options || []).length > 0) {
           item.options.map((key) => {
             if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
-              item.value = key.value;
+              item.value = this.$t(key.value);
             }
           });
         } else if (this.timerMap.includes(item.key)) {
@@ -436,7 +436,7 @@ export default {
       }
     },
     closeResetDialog(e) {
-      if (e.target.innerText === '重置密码') return;
+      if (e.target.innerText === this.$t('重置密码')) return;
       this.isShowReset = false;
       // 清空
       this.oldPassword = '';

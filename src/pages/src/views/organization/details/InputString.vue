@@ -19,7 +19,7 @@
       :class="{ 'input-error': item.isError }"
       v-model="item.value"
       @blur="verifyInput(item)"
-      @input="handleInput">
+      @focus="handleFocus">
     </bk-input>
     <bk-input
       v-else
@@ -28,7 +28,7 @@
       :placeholder="inputType === 'number' ? $t('请输入数字') : item.holder"
       :class="{ 'input-error': item.isError }"
       v-model="item.value"
-      @input="handleInput" />
+      @focus="handleFocus" />
   </div>
 </template>
 
@@ -49,14 +49,14 @@ export default {
       return this.item.type === 'string' ? 'text' : 'number';
     },
     placeholderText() {
-      return this.item.key === 'username' ? this.$t('字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头') : this.$t('全名可随时修改');
+      return this.item.key === 'username' ? this.$t('字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头') : this.$t('请输入');
     },
   },
   methods: {
     verifyInput(item) {
       item.value = this.$xssVerification(item.value);
     },
-    handleInput() {
+    handleFocus() {
       window.changeInput = true;
     },
   },

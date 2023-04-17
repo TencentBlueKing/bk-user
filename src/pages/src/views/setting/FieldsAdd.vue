@@ -19,8 +19,7 @@
           :disabled="fieldsInfor.builtin"
           v-model="fieldsInfor.name"
           @blur="verifyInput('name')"
-          @focus="hiddenVerify(arguments, 'name')"
-          @input="handleInput" />
+          @focus="hiddenVerify(arguments, 'name')" />
         <i class="icon icon-user-exclamation-circle-shape" v-show="verifyInfor.name"></i>
         <p class="hint" v-if="verifyInfor.name">
           <i class="arrow"></i>
@@ -40,8 +39,7 @@
           :disabled="!!currentEditorData.key"
           v-model="fieldsInfor.key"
           @blur="verifyInput('englishMark')"
-          @focus="hiddenVerify(arguments, 'englishMark')"
-          @input="handleInput" />
+          @focus="hiddenVerify(arguments, 'englishMark')" />
         <i class="icon icon-user-exclamation-circle-shape" v-show="verifyInfor.englishMark"></i>
         <p class="hint" v-show="verifyInfor.englishMark">
           <i class="arrow"></i>
@@ -108,8 +106,7 @@
                 v-model="item.value"
                 @keyup.enter="addEg"
                 @blur="verifyEgValue(item)"
-                @focus="hiddenEgError(item)"
-                @input="handleInput" />
+                @focus="hiddenEgError(item)" />
               <p class="hint" v-show="item.isErrorValue">
                 {{$t('该字段是必填项')}}
               </p>
@@ -266,6 +263,7 @@ export default {
         this.fieldsInfor = JSON.parse(JSON.stringify(this.currentEditorData));
         if (this.fieldsInfor.type === 'one_enum' || this.fieldsInfor.type === 'multi_enum') {
           this.defaultSelected = 'enum';
+          this.fieldsInfor.default = Number(this.fieldsInfor.default);
         } else {
           this.defaultSelected = this.fieldsInfor.type;
         }
@@ -313,6 +311,7 @@ export default {
         const type = arguments[i];
         this.verifyInfor[type] = false;
       }
+      window.changeInput = true;
     },
     // 失焦校验枚举
     verifyEgValue(item) {
@@ -323,6 +322,7 @@ export default {
     // 获焦隐藏枚举的错误提示
     hiddenEgError(item) {
       item.isErrorValue = false;
+      window.changeInput = true;
     },
     // 删除枚举
     deleteEg(index) {
