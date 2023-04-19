@@ -94,7 +94,7 @@
               <bk-input class="user-value" v-model="basicFields.username" />
             </div>
             <div class="user-item">
-              <bk-input class="user-key" :value="$t('中文名')" :readonly="true" />
+              <bk-input class="user-key" :value="$t('全名')" :readonly="true" />
               <bk-input class="user-value" v-model="basicFields.display_name" />
             </div>
             <div class="user-item">

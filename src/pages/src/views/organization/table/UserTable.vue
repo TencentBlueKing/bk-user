@@ -18,7 +18,7 @@
                 <input type="checkbox" name="checkbox1" :checked="isAllChecked">
               </label>
             </th>
-            <th v-for="(heardItem, heardIndex) in activeTableHeardList" :key="heardIndex">
+            <th v-for="(heardItem, heardIndex) in activeTableHeardList" :key="heardIndex" v-bk-overflow-tips>
               <span>{{heardItem.name}}</span>
             </th>
           </tr>
@@ -262,10 +262,7 @@ export default {
           }
           for (let i = 0; i < options.length; i++) {
             if (options[i].id === value || options[i].id === Number(value)) {
-              if (this.$i18n.locale === 'en') {
-                return value;
-              }
-              return this.statusMap[key][value];
+              return this.$t(this.statusMap[key][value]);
             }
           }
         } else {
@@ -313,7 +310,7 @@ export default {
       this.userMessage.userInforList.forEach((item) => {
         item.isCheck = this.isAllChecked;
       });
-      this.$emit('update:isClick', this.isAllChecked);
+      this.userMessage.userInforList.length ? this.$emit('update:isClick', this.isAllChecked) : this.$emit('update:isClick', false);
     },
   },
 };
