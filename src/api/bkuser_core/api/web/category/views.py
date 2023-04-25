@@ -187,20 +187,21 @@ class CategorySettingNamespaceListCreateUpdateApi(
         # 更新已存在
         for s in db_settings:
             key = s.meta.key
-            if key in ns_settings:
-                in_value = ns_settings[key]
-                if s.value != in_value["value"]:
-                    s.value = in_value["value"]
-                    s.enabled = in_value["enabled"]
-                    s.save()
-                    post_setting_update.send(
-                        sender=self,
-                        instance=s,
-                        operator=request.operator,
-                        extra_values={"request": request},
-                    )
-
-                del ns_settings[key]
+            if key not in ns_settings:
+                continue
+            in_value = ns_settings[key]
+            # 值变换才更新
+            if s.value != in_value["value"] or s.enabled != in_value["enabled"]:
+                s.value = in_value["value"]
+                s.enabled = in_value["enabled"]
+                s.save()
+                post_setting_update.send(
+                    sender=self,
+                    instance=s,
+                    operator=request.operator,
+                    extra_values={"request": request},
+                )
+            del ns_settings[key]
 
         metas_map = {m.key: m for m in metas}
         # the left ns_settings are new settings
