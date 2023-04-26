@@ -25,7 +25,7 @@ from .serializers import (
 )
 from bkuser_core.api.web.export import LoginLogExcelExporter
 from bkuser_core.api.web.utils import get_category_display_name_map
-from bkuser_core.api.web.viewset import CustomPagination, StartTimeEndTimeFilterBackend
+from bkuser_core.api.web.viewset import CustomPagination, LoginLogFilter, StartTimeEndTimeFilterBackend
 from bkuser_core.audit.models import GeneralLog, LogIn
 from bkuser_core.bkiam.permissions import ViewAuditPermission
 from bkuser_core.common.error_codes import error_codes
@@ -69,8 +69,7 @@ class LoginLogListApi(generics.ListAPIView):
     permission_classes = [ViewAuditPermission]
     pagination_class = CustomPagination
     serializer_class = LoginLogOutputSLZ
-
-    filter_backends = [StartTimeEndTimeFilterBackend]
+    filter_backends = [StartTimeEndTimeFilterBackend, LoginLogFilter]
 
     def get_serializer_context(self):
         # set into context, for slz to_representation

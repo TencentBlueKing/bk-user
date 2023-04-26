@@ -37,3 +37,15 @@ class StartTimeEndTimeFilterBackend(BaseFilterBackend):
             queryset = queryset.filter(create_time__lte=end_time)
 
         return queryset
+
+
+class LoginLogFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        is_success = request.query_params.get("is_success")
+        if is_success:
+            queryset = queryset.filter(is_success=is_success)
+        username = request.query_params.get("username")
+        if username:
+            queryset = queryset.filter(profile__username=username)
+
+        return queryset
