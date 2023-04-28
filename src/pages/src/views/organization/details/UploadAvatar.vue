@@ -158,10 +158,6 @@ export default {
   top: 17px;
   right: 0;
 
-  &.chang-en {
-    right: -20px;
-  }
-
   .head {
     display: block;
     margin-bottom: 7px;

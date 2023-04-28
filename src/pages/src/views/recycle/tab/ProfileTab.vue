@@ -1,23 +1,6 @@
 <template>
   <div class="recycle-tab-wrapper">
     <div class="recycle-content-header">
-      <div class="header-left">
-        <bk-popover :disabled="false" :content="$t('暂不支持该操作')">
-          <bk-button
-            theme="primary"
-            class="mr8"
-            :disabled="true"
-            @click="handleBatchReduction">
-            {{ $t('还原') }}
-          </bk-button>
-          <bk-button
-            theme="default"
-            :disabled="true"
-            @click="handleBatchDelete">
-            {{ $t('永久删除') }}
-          </bk-button>
-        </bk-popover>
-      </div>
       <bk-input
         ext-cls="header-right"
         clearable
@@ -34,8 +17,6 @@
         ext-cls="user-table"
         :data="profileList"
         :pagination="pagination"
-        @select="handleSelect"
-        @selection-change="handleSelectionChange"
         @page-change="handlePageChange"
         @page-limit-change="handlePageLimitChange"
       >
@@ -44,7 +25,6 @@
             <p class="empty-title">{{ $t('暂无数据') }}</p>
           </bk-exception>
         </template>
-        <bk-table-column type="selection" width="60"></bk-table-column>
         <template v-for="field in setting.selectedFields">
           <bk-table-column
             v-if="field.id !== 'expires'"
@@ -68,25 +48,6 @@
             </template>
           </bk-table-column>
         </template>
-        <bk-table-column :label="$t('操作')">
-          <bk-popover slot-scope="props" :disabled="false" :content="$t('暂不支持该操作')">
-            <bk-button
-              class="mr10"
-              theme="primary"
-              text
-              :disabled="true"
-              @click="handleReduction(props.row)">
-              {{ $t('还原') }}
-            </bk-button>
-            <bk-button
-              theme="primary"
-              text
-              :disabled="true"
-              @click="handleDelete">
-              {{ $t('永久删除') }}
-            </bk-button>
-          </bk-popover>
-        </bk-table-column>
         <bk-table-column type="setting" :tippy-options="{ zIndex: 3000 }">
           <bk-table-setting-content
             :fields="setting.fields"
@@ -99,72 +60,16 @@
         </bk-table-column>
       </bk-table>
     </div>
-    <!-- 永久删除 -->
-    <bk-dialog
-      ext-cls="delete-dialog-wrapper"
-      v-model="deleteDialog.isShow"
-      :title="deleteDialog.title"
-      :header-position="deleteDialog.headerPosition"
-      :width="deleteDialog.width"
-      :loading="deleteDialog.loading">
-      <div class="delete-content">
-        <p>{{ $t('该操作会彻底清理当前用户数据，永久无法恢复，请谨慎操作。') }}</p>
-        <p>{{ $t('如需继续操作，请输入【确认删除】进行二次验证：') }}</p>
-        <bk-input :placeholder="$t('请输入【确认删除】进行确认')" style="margin-top: 8px;" v-model="deleteText" />
-      </div>
-      <div slot="footer">
-        <bk-button theme="primary" :disabled="deleteText !== '确认删除'" @click="confirmDelete">{{ $t('确认') }}</bk-button>
-        <bk-button theme="default" @click="deleteDialog.isShow = false">{{ $t('取消') }}</bk-button>
-      </div>
-    </bk-dialog>
-    <!-- 还原预览 -->
-    <bk-sideslider
-      ext-cls="reduction-wrapper"
-      :width="960"
-      :is-show.sync="reductionSetting.isShow">
-      <div slot="header">{{ reductionSetting.title }}</div>
-      <div slot="content">
-        <!-- 批量预览 -->
-        <ProfileBatchReduction
-          v-if="isProfileBatchReduction"
-          :data-list="batchSelectedList"
-          @updateSelectList="updateSelectList"
-          @errorNumber="handleErrorNumber " />
-        <div style="margin-top: 32px;">
-          <bk-popover :disabled="!isError" :content="$t('请先处理错误项')">
-            <bk-button :disabled="isError" theme="primary">{{ $t('执行还原') }}</bk-button>
-          </bk-popover>
-          <bk-button theme="default" @click="reductionSetting.isShow = false">{{ $t('取消') }}</bk-button>
-        </div>
-      </div>
-    </bk-sideslider>
   </div>
 </template>
 
 <script>
-import ProfileBatchReduction from './ProfileBatchReduction.vue';
 import mixin from './mixin';
 export default {
   name: 'ProfileTab',
-  components: {
-    ProfileBatchReduction,
-  },
   mixins: [mixin],
   data() {
     return {
-      deleteDialog: {
-        isShow: false,
-        loading: false,
-        width: 480,
-        headerPosition: 'left',
-        title: this.$t('确认要永久删除当前用户？'),
-      },
-      reductionSetting: {
-        isShow: false,
-        title: this.$t('用户还原预览'),
-      },
-      isProfileBatchReduction: false,
-      isProfileReduction: false,
       profileMap: [{
         id: 'username',
         label: this.$t('用户名'),
@@ -216,19 +121,6 @@ export default {
           });
         }
       },
-    },
-  },
-  methods: {
-    // 批量还原
-    handleBatchReduction() {
-      this.isProfileBatchReduction = true;
-      this.reductionSetting.isShow = true;
-    },
-    // 还原
-    handleReduction(row) {
-      this.selectedList = [row];
-      this.isProfileReduction = true;
-      this.reductionSetting.isShow = true;
     },
   },
 };

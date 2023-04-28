@@ -467,6 +467,9 @@ export default {
         if (item.key === 'telephone') {
           phoneValue = this.$refs.userInfoData.$refs.phone[0].verifyInput(item.value);
         }
+        if (item.key === 'position' && item.value === '') {
+          item.value = null;
+        }
       });
       this.$refs.userInfoData.$refs.validateForm.validate().then(() => {
         // 编辑

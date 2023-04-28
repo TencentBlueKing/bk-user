@@ -1,21 +1,6 @@
 <template>
   <div class="recycle-tab-wrapper">
     <div class="recycle-content-header">
-      <div class="header-left">
-        <bk-button
-          theme="primary"
-          class="mr8"
-          :disabled="isDisabled"
-          @click="handleBatchReduction">
-          {{ $t('还原') }}
-        </bk-button>
-        <bk-button
-          theme="default"
-          :disabled="isDisabled"
-          @click="handleBatchDelete">
-          {{ $t('永久删除') }}
-        </bk-button>
-      </div>
       <bk-input
         ext-cls="header-right"
         clearable
@@ -32,8 +17,6 @@
         ext-cls="user-table"
         :data="categoryList"
         :pagination="pagination"
-        @select="handleSelect"
-        @selection-change="handleSelectionChange"
         @page-change="handlePageChange"
         @page-limit-change="handlePageLimitChange"
       >
@@ -42,7 +25,6 @@
             <p class="empty-title">{{ $t('暂无数据') }}</p>
           </bk-exception>
         </template>
-        <bk-table-column type="selection" width="60"></bk-table-column>
         <template v-for="field in setting.selectedFields">
           <bk-table-column
             v-if="field.id !== 'expires'"
@@ -109,48 +91,41 @@
         <bk-input :placeholder="$t('请输入【确认删除】进行确认')" style="margin-top: 8px;" v-model="deleteText" />
       </div>
       <div slot="footer">
-        <bk-button theme="primary" :disabled="deleteText !== '确认删除'" @click="confirmDelete">{{ $t('确认') }}</bk-button>
+        <bk-button theme="primary" :disabled="deleteText !== $t('确认删除')" @click="confirmDelete">
+          {{ $t('确认') }}
+        </bk-button>
         <bk-button theme="default" @click="deleteDialog.isShow = false">{{ $t('取消') }}</bk-button>
       </div>
     </bk-dialog>
-    <!-- 还原预览 -->
-    <bk-sideslider
-      ext-cls="reduction-wrapper"
-      :width="960"
-      :is-show.sync="reductionSetting.isShow">
-      <div slot="header">{{ reductionSetting.title }}</div>
-      <div slot="content">
-        <!-- 批量预览 -->
-        <CategoryBatchReduction
-          v-if="isCategoryBatchReduction"
-          :data-list="activeList"
-          @updateSelectList="updateSelectList"
-          @errorNumber="handleErrorNumber " />
-        <CategoryReduction
-          v-if="isCategoryReduction"
-          :selected-list="selectedList"
-          @remove="remove" />
-        <div style="margin-top: 32px;">
-          <bk-popover :disabled="!isError" :content="$t('请先处理错误项')">
-            <bk-button :disabled="isError" theme="primary">{{ $t('执行还原') }}</bk-button>
-          </bk-popover>
-          <bk-button theme="default" @click="reductionSetting.isShow = false">{{ $t('取消') }}</bk-button>
-        </div>
+    <!-- 还原 -->
+    <bk-dialog
+      class="reduction-dialog-wrapper"
+      v-model="reductionDialog.isShow"
+      :title="reductionDialog.title"
+      :header-position="reductionDialog.headerPosition"
+      :width="reductionDialog.width">
+      <div v-if="clashText.length > 0">
+        <p v-for="(item, index) in clashText" :key="index">
+          <i class="danger" />
+          <span>{{ $t('错误：') + item }}</span>
+        </p>
       </div>
-    </bk-sideslider>
+      <div v-else>
+        <i class="success" />
+        <span>{{ $t('可还原') }}</span>
+      </div>
+      <div slot="footer">
+        <bk-button theme="primary" :disabled="clashText.length > 0" @click="confirmReduction">{{ $t('确认') }}</bk-button>
+        <bk-button theme="default" @click="reductionDialog.isShow = false">{{ $t('取消') }}</bk-button>
+      </div>
+    </bk-dialog>
   </div>
 </template>
 
 <script>
-import CategoryBatchReduction from './CategoryBatchReduction.vue';
-import CategoryReduction from './CategoryReduction.vue';
 import mixin from './mixin';
 export default {
   name: 'CategoryTab',
-  components: {
-    CategoryBatchReduction,
-    CategoryReduction,
-  },
   mixins: [mixin],
   data() {
     return {
@@ -161,12 +136,12 @@ export default {
         headerPosition: 'left',
         title: this.$t('确认要永久删除当前目录？'),
       },
-      reductionSetting: {
+      reductionDialog: {
         isShow: false,
-        title: this.$t('目录还原预览'),
+        width: 480,
+        headerPosition: 'left',
+        title: this.$t('确认要还原当前目录？'),
       },
-      isCategoryBatchReduction: false,
-      isCategoryReduction: false,
       categoryMap: [{
         id: 'display_name',
         label: this.$t('目录名'),
@@ -192,22 +167,8 @@ export default {
         disabled: true,
       }],
       categoryList: [],
-      activeList: [{
-        category_id: 14,
-        category_display_name: 'testmad',
-        check_status: true,
-        error_message: '',
-      }, {
-        category_id: 15,
-        category_display_name: 'testldap',
-        check_status: false,
-        error_message: '存在相同 ldap 连接域',
-      }, {
-        category_id: 16,
-        category_display_name: 'testldap',
-        check_status: false,
-        error_message: '存在同名目录',
-      }],
+      clashText: [],
+      categoryId: null,
     };
   },
   watch: {
@@ -241,29 +202,53 @@ export default {
     },
   },
   methods: {
-    // 批量还原
-    handleBatchReduction() {
-      // const ids = this.batchSelectedList.map(item => item.id);
-      // console.log('ids', ids);
-      // const data = {
-      //   deleted_category_ids: this.batchSelectedList.map(item => item.id),
-      // };
-      // this.$store.dispatch('setting/categoriesCheck', { data }).then((res) => {
-      //   console.log('res', res);
-      // });
-      this.isCategoryBatchReduction = true;
-      this.isCategoryReduction = false;
-      this.reductionSetting.isShow = true;
-    },
     // 还原
-    handleReduction(row) {
-      this.selectedList = [row];
-      this.isCategoryBatchReduction = false;
-      this.isCategoryReduction = true;
-      this.reductionSetting.isShow = true;
+    async handleReduction(row) {
+      try {
+        this.categoryId = row.id;
+        this.reductionDialog.isShow = true;
+        const res = await this.$store.dispatch('setting/categoriesCheck', {
+          category_id: this.categoryId,
+        });
+        this.clashText = res.data;
+      } catch (e) {
+        console.warn(e);
+      }
     },
-    remove() {
-      this.selectedList = [];
+    confirmReduction() {
+      this.$store.dispatch('setting/categoriesRevert', {
+        category_id: this.categoryId,
+      }).then((res) => {
+        if (res.result) {
+          this.reductionDialog.isShow = false;
+          this.messageSuccess(this.$t('目录还原成功'));
+          this.$emit('updateList');
+        }
+      })
+        .catch((e) => {
+          console.warn(e);
+          this.reductionDialog.isShow = false;
+        });
+    },
+    // 永久删除
+    handleDelete(row) {
+      this.categoryId = row.id;
+      this.deleteDialog.isShow = true;
+    },
+    confirmDelete() {
+      this.$store.dispatch('setting/categoriesHardDelete', {
+        category_id: this.categoryId,
+      }).then((res) => {
+        if (res.result) {
+          this.deleteDialog.isShow = false;
+          this.messageSuccess(this.$t('目录删除成功'));
+          this.$emit('updateList');
+        }
+      })
+        .catch((e) => {
+          console.warn(e);
+          this.deleteDialog.isShow = false;
+        });
     },
   },
 };
@@ -271,4 +256,21 @@ export default {
 
 <style lang="scss" scoped>
 @import './tab.scss';
+.reduction-dialog-wrapper {
+  i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+  .success {
+    background: #E5F6EA;
+    border: 1px solid #3FC06D;
+  }
+  .danger {
+    background: #FFE6E6;
+    border: 1px solid #EA3636;
+  }
+}
 </style>

@@ -84,6 +84,10 @@ export default {
       type: Object,
       default: {},
     },
+    isEmptySearch: {
+      type: Boolean,
+      default: false,
+    },
     // 控制设置所在组织、批量删除的显示
     isClick: {
       type: Boolean,

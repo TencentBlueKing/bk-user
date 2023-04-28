@@ -29,9 +29,9 @@
         style="width: 400px;"
         :placeholder="$t('搜索操作用户、操作对象、操作类型')"
         :clearable="true"
-        :right-icon="'bk-icon icon-search'"
+        :left-icon="'bk-icon icon-search'"
         @clear="handleClear"
-        @right-icon-click="getSearchInfo"
+        @left-icon-click="getSearchInfo"
         @enter="getSearchInfo">
       </bk-input>
       <bk-search-select
@@ -373,8 +373,8 @@ export default {
     font-size: 14px;
     cursor: pointer;
     color: #3a84ff;
-    right: 0px;
-    top: 65px;
+    right: 40px;
+    top: 110px;
     z-index: 999;
   }
   // 表格

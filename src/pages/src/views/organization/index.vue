@@ -140,7 +140,7 @@
                     @change="changeSearchLevel">
                   </bk-checkbox>
                   <span class="text text-overflow-hidden" v-bk-overflow-tips @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + `(${handleTabData.totalNumber})`}}
+                    {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
                   </span>
                 </p>
               </div>
@@ -176,7 +176,7 @@
                     class="king-checkbox" :checked="isSearchCurrentDepartment"
                     @change="changeSearchLevel"></bk-checkbox>
                   <span class="text" @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + `(${handleTabData.totalNumber})`}}
+                    {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
                   </span>
                 </p>
               </div>
@@ -189,6 +189,9 @@
             <UserTable
               v-bkloading="{ isLoading: basicLoading, zIndex: 0 }"
               :user-message="userMessage"
+              :is-empty-search="isEmptySearch"
+              :is-table-data-error="isTableDataError"
+              :is-table-data-empty="isTableDataEmpty"
               :fields-list="fieldsList"
               :pagination="paginationConfig"
               :timer-map="timerMap"
@@ -406,6 +409,8 @@ export default {
         tableHeardList: [],
         userInforList: [],
       },
+      // 搜索结果为空
+      isEmptySearch: false,
       // 表格请求出错
       isTableDataError: false,
       // 表格请求结果为空
@@ -685,19 +690,32 @@ export default {
           id,
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
-          keyword: '',
+          keyword: this.checkSearchKey,
+          hasNotDepartment: true,
+        };
+        const currentParams = {
+          id,
+          pageSize: this.paginationConfig.limit,
+          page: this.paginationConfig.current,
+          keyword: this.checkSearchKey,
+          hasNotDepartment: false,
         };
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
-        this.paginationConfig.count = res.data.count;
-        this.filterUserData(res.data.results);
-        if (!this.tableSearchKey.length) {
-          if (this.isSearchCurrentDepartment) {
-            // 当前组织下成员
-            this.handleTabData.totalNumber = res.data.count;
-          } else {
-            // 默认查询
-            this.handleTabData.totalNumber = res.data.count;
-          }
+        const current = await this.$store.dispatch('organization/getSupOrganization', currentParams);
+        this.handleTabData.totalNumber = res.data.count;
+        this.handleTabData.currentNumber = current.data.count;
+        this.isTableDataEmpty = false;
+        this.isEmptySearch = false;
+        this.isTableDataError = false;
+        if (!!this.tableSearchKey.length) return;
+        if (this.isSearchCurrentDepartment) {
+          // 当前组织下成员
+          this.paginationConfig.count = current.data.count;
+          this.filterUserData(current.data.results);
+        } else {
+          // 默认查询
+          this.paginationConfig.count = res.data.count;
+          this.filterUserData(res.data.results);
         }
 
         this.isEmptyDepartment = false;
@@ -746,21 +764,31 @@ export default {
           keyword: this.checkSearchKey,
           recursive: true,
         };
-        if (this.isSearchCurrentDepartment) {
-          params.recursive = false;
-        }
+        const currentParams = {
+          id: id || this.currentParam.item.id,
+          pageSize: this.paginationConfig.limit,
+          page: this.paginationConfig.current,
+          keyword: this.checkSearchKey,
+          recursive: false,
+        };
         const res = await this.$store.dispatch('organization/getProfiles', params);
-        this.$set(this.currentParam.item, 'profile_count', res.data.count);
-        this.filterUserData(res.data.results);
-        this.paginationConfig.count = res.data.count;
-        if (!this.tableSearchKey.length) {
-          if (this.isSearchCurrentDepartment) {
-            // 当前组织下成员
-            this.handleTabData.totalNumber = res.data.count;
-          } else {
-            // 默认查询
-            this.handleTabData.totalNumber = res.data.count;
-          }
+        const current = await this.$store.dispatch('organization/getProfiles', currentParams);
+        this.handleTabData.totalNumber = res.data.count;
+        this.handleTabData.currentNumber = current.data.count;
+        this.isTableDataEmpty = false;
+        this.isEmptySearch = false;
+        this.isTableDataError = false;
+        if (!!this.tableSearchKey.length) return;
+        if (this.isSearchCurrentDepartment) {
+          // 当前组织下成员
+          this.$set(this.currentParam.item, 'profile_count', current.data.count);
+          this.filterUserData(current.data.results);
+          this.paginationConfig.count = current.data.count;
+        } else {
+          // 默认查询
+          this.$set(this.currentParam.item, 'profile_count', res.data.count);
+          this.filterUserData(res.data.results);
+          this.paginationConfig.count = res.data.count;
         }
 
         this.isEmptyDepartment = false;
