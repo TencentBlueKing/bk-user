@@ -22,22 +22,23 @@
     <div class="recycle-content">
       <bk-tab
         ext-cls="recycle-content-tab"
-        :active.sync="active">
+        :active.sync="active"
+        @tab-change="tabChange">
         <bk-tab-panel
           v-for="panel in panels"
           v-bind="panel"
-          :key="panel.type">
+          :key="panel.name">
           <template slot="label">
             <span class="panel-name">{{panel.label}}</span>
             <i class="panel-count">{{panel.count}}</i>
           </template>
           <ProfileTab
-            v-if="panel.type === 'profile'"
+            v-if="panel.name === 'profile'"
             :data-list="profileData.results"
             :count="profileData.count"
             @searchList="searchProfile" />
           <DepartmentTab
-            v-else-if="panel.type === 'department'"
+            v-else-if="panel.name === 'department'"
             :data-list="departmentData.results"
             :count="departmentData.count"
             @searchList="searchDepartment" />
@@ -45,7 +46,8 @@
             v-else
             :data-list="categoryData.results"
             :count="categoryData.count"
-            @searchList="searchCategory" />
+            @searchList="searchCategory"
+            @updateList="initCategoryList" />
         </bk-tab-panel>
       </bk-tab>
     </div>
@@ -75,6 +77,10 @@ export default {
       departmentData: {},
       profileData: {},
       isLoading: false,
+      params: {
+        pageSize: 10,
+        page: 1,
+      },
     };
   },
   async mounted() {
@@ -88,20 +94,17 @@ export default {
         await this.initCategoryList(),
       ]);
       this.panels = [{
-        type: 'profile',
+        name: 'profile',
         label: this.$t('最近删除用户'),
         count: this.profileData.count,
-        name: this.$t('用户'),
       }, {
-        type: 'department',
+        name: 'department',
         label: this.$t('最近删除组织'),
         count: this.departmentData.count,
-        name: this.$t('组织'),
       }, {
-        type: 'category',
+        name: 'category',
         label: this.$t('最近删除目录'),
         count: this.categoryData.count,
-        name: this.$t('目录'),
       }];
       this.isLoading = false;
     } catch (e) {
@@ -119,15 +122,10 @@ export default {
       }
     },
     // 最近删除用户列表
-    async initProfileList(keyword, limit, current) {
+    async initProfileList() {
       try {
         this.isLoading = true;
-        const params = {
-          pageSize: limit ? limit : 10,
-          page: current ? current : 1,
-          keyword,
-        };
-        const res = await this.$store.dispatch('setting/getProfileList', params);
+        const res = await this.$store.dispatch('setting/getProfileList', this.params);
         this.profileData = res.data;
         this.isLoading = false;
       } catch (e) {
@@ -136,15 +134,10 @@ export default {
       }
     },
     // 最近删除组织列表
-    async initDepartmentList(keyword, limit, current) {
+    async initDepartmentList() {
       try {
         this.isLoading = true;
-        const params = {
-          pageSize: limit ? limit : 10,
-          page: current ? current : 1,
-          keyword,
-        };
-        const res = await this.$store.dispatch('setting/getDepartmentList', params);
+        const res = await this.$store.dispatch('setting/getDepartmentList', this.params);
         this.departmentData = res.data;
         this.isLoading = false;
       } catch (e) {
@@ -153,15 +146,10 @@ export default {
       }
     },
     // 最近删除目录列表
-    async initCategoryList(keyword, limit, current) {
+    async initCategoryList() {
       try {
         this.isLoading = true;
-        const params = {
-          pageSize: limit ? limit : 10,
-          page: current ? current : 1,
-          keyword,
-        };
-        const res = await this.$store.dispatch('setting/getCategoryList', params);
+        const res = await this.$store.dispatch('setting/getCategoryList', this.params);
         this.categoryData = res.data;
         this.isLoading = false;
       } catch (e) {
@@ -169,14 +157,34 @@ export default {
         this.isLoading = false;
       }
     },
+    updatedParams(keyword, limit, current) {
+      this.params = {
+        pageSize: limit ? limit : 10,
+        page: current ? current : 1,
+        keyword,
+      };
+    },
     searchProfile(key, limit, current) {
-      this.initProfileList(key, limit, current);
+      this.updatedParams(key, limit, current);
+      this.initProfileList();
     },
     searchDepartment(key, limit, current) {
-      this.initDepartmentList(key, limit, current);
+      this.updatedParams(key, limit, current);
+      this.initDepartmentList();
     },
     searchCategory(key, limit, current) {
-      this.initCategoryList(key, limit, current);
+      this.updatedParams(key, limit, current);
+      this.initCategoryList();
+    },
+    tabChange(name) {
+      switch (name) {
+        case 'profile':
+          return this.initProfileList();
+        case 'department':
+          return this.initDepartmentList();
+        case 'category':
+          return this.initCategoryList();
+      };
     },
   },
 };
@@ -267,7 +275,7 @@ export default {
       }
       .recycle-content-header {
         display: flex;
-        justify-content: space-between;
+        justify-content: right;
         .header-right {
           width: 400px;
         }

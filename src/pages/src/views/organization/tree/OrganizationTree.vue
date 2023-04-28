@@ -161,7 +161,7 @@ export default {
           <i ref="more" class={['icon bk-icon icon-more', { 'show-more': node.showBackground }]}
           onClick={() => this.$emit('handleClickOption', node, event)}></i>
           {(node.configured && !node.activated && node.type)
-            ? <bk-tag class={'show-tag'} type="filled">{this.$t('停用')}</bk-tag>
+            ? <bk-tag class={'show-tag'} type="filled">{this.$t('停用1')}</bk-tag>
             : ''}
           {(!node.configured && node.type)
             ? <bk-tag class={'show-tag'} theme="warning" type="filled">{this.$t('未完成')}</bk-tag>
@@ -312,7 +312,7 @@ export default {
   }
   .show-tag {
     padding: 0;
-    width: 40px;
+    width: 55px;
     text-align: center;
     vertical-align: bottom;
   }
@@ -360,7 +360,7 @@ export default {
       .tree-drag-node {
         .tree-node {
           position: relative;
-          width: calc(100% - 50px);
+          width: calc(100% - 65px);
           padding-left: 3px;
           .node-title {
             width: calc(100% - 40px);
@@ -377,7 +377,7 @@ export default {
               }
               .bk-tag span {
                 display: block;
-                width: 40px;
+                width: 55px;
               }
             }
           }
@@ -389,7 +389,7 @@ export default {
               }
               .bk-tag span {
                 display: block;
-                width: 40px;
+                width: 55px;
               }
             }
           }

@@ -76,15 +76,15 @@ export default {
     },
     // 目录还原预检查接口
     categoriesCheck(context, params, config = {}) {
-      return http.post('api/v1/web/recycle_bin/categories/check/', params.data);
+      return http.get(`api/v1/web/recycle_bin/categories/${params.category_id}/conflicts`);
     },
     // 目录还原接口
     categoriesRevert(context, params, config = {}) {
-      return http.post('api/v1/web/recycle_bin/categories/revert/', params.data);
+      return http.put(`api/v1/web/recycle_bin/categories/${params.category_id}/`);
     },
     // 目录硬删除接口
     categoriesHardDelete(context, params, config = {}) {
-      return http.delete(`api/v1/web/recycle_bin/categories/hard_delete/${params.category_ids}`);
+      return http.delete(`api/v1/web/recycle_bin/categories/${params.category_id}`);
     },
   },
 };

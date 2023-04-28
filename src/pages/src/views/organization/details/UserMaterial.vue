@@ -256,7 +256,9 @@ export default {
       this.activeFieldsList.forEach((item) => {
         if ((item.options || []).length > 0 && item.type === 'one_enum') {
           item.options.map((key) => {
-            if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
+            if (this.currentProfile[item.key] === null) {
+              item.value = '';
+            } else if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
               item.value = this.$t(key.value);
             }
           });
