@@ -588,6 +588,7 @@ versions:
         content:
         - "/api/v1/login 增加iso_code支持国际化手机号"
         - "apigw隐藏v1/v2 API，更新ping/healthz文档"
+        - "支持通过环境变量配置BK_STATIC_URL，便于支持BKCDN"
       - type: "OPTIMIZATION"
         content:
         - "前端优化: 账号有效期优化&用户信息组件优化"
