@@ -9,11 +9,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from distutils.util import strtobool
 
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 
 
 class CustomPagination(PageNumberPagination):
@@ -44,16 +45,11 @@ class StartTimeEndTimeFilterBackend(BaseFilterBackend):
 class LoginLogFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         is_success = request.query_params.get("is_success")
-        logging.debug("login_in filter: is_success:<{}>".format(is_success))
+        logger.debug("login_in filter: is_success:<{}>".format(is_success))
         if is_success:
-            try:
-                is_success = strtobool(is_success)
-            except ValueError as e:
-                logging.error(e)
-            else:
-                queryset = queryset.filter(is_success=is_success)
+            queryset = queryset.filter(is_success=is_success)
         username = request.query_params.get("username")
-        logging.debug("login_in filter: username:<{}>".format(username))
+        logger.debug("login_in filter: username:<{}>".format(username))
         if username:
             queryset = queryset.filter(profile__username=username)
 
