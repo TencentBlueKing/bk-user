@@ -21,6 +21,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install poetry
       run: pipx install poetry==${{ matrix.poetry-version }}
+    - name: Install requests of fixed version
+      run: pipx install requests==2.29.0
     - name: Export requirements.txt
       run: poetry export -f requirements.txt --dev --without-hashes -o requirements.txt --no-ansi
     - name: Set up Python
