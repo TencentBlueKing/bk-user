@@ -8,13 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import logging
-
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-
-logger = logging.getLogger(__name__)
 
 
 class CustomPagination(PageNumberPagination):
@@ -38,19 +34,5 @@ class StartTimeEndTimeFilterBackend(BaseFilterBackend):
         end_time = request.query_params.get("end_time")
         if end_time:
             queryset = queryset.filter(create_time__lte=end_time)
-
-        return queryset
-
-
-class LoginLogFilter(BaseFilterBackend):
-    def filter_queryset(self, request, queryset, view):
-        is_success = request.query_params.get("is_success")
-        logger.debug("login_in filter: is_success:<{}>".format(is_success))
-        if is_success:
-            queryset = queryset.filter(is_success=is_success)
-        username = request.query_params.get("username")
-        logger.debug("login_in filter: username:<{}>".format(username))
-        if username:
-            queryset = queryset.filter(profile__username=username)
 
         return queryset

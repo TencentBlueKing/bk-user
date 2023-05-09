@@ -16,6 +16,7 @@ ENV LC_ALL=C.UTF-8 \
 
 RUN pip install --upgrade pip setuptools
 RUN pip install poetry==1.1.13
+RUN poetry config repositories.pypi https://mirrors.tencent.com/pypi/simple/
 
 WORKDIR /app
 COPY src/api/pyproject.toml /app

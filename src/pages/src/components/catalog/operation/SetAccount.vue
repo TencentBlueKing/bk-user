@@ -50,7 +50,9 @@
         @handleEditorText="handleEditorText">
         <template slot="label">
           <div class="password-header">
-            <bk-checkbox-group v-model="defaultAccount.account_expiration_notice_methods">
+            <bk-checkbox-group
+              :class="$i18n.locale === 'en' ? 'checkbox-en' : 'checkbox-zh'"
+              v-model="defaultAccount.account_expiration_notice_methods">
               <div
                 v-for="(item, index) in checkboxInfo" :key="index"
                 :class="['password-tab', item.status ? 'active-tab' : '']"
@@ -324,7 +326,6 @@ export default {
         line-height: 50px;
         .bk-form-control {
           display: flex;
-          width: 85%;
           line-height: 50px;
           font-size: 14px;
           .password-tab {
@@ -335,6 +336,12 @@ export default {
               padding: 0 20px 0 5px;
             }
           }
+        }
+        .checkbox-zh {
+          width: 85% !important;
+        }
+        .checkbox-en {
+          width: 75% !important;
         }
         .edit-info {
           color: #3A84FF;

@@ -188,6 +188,10 @@ export default {
       color: #ea3636;
     }
   }
+
+  ::v-deep .form-error-tip {
+    width: 475px;
+  }
 }
 .tips-style {
   color: #ea3636;
