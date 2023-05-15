@@ -14,8 +14,6 @@
       multiple
       display-tag
       v-model="tags"
-      :remote-method="selectData"
-      @toggle="handleBranchToggle"
       ext-popover-cls="scrollview"
       :scroll-height="188">
       <bk-option
@@ -50,7 +48,6 @@ export default {
         count: 1,
         limit: 10,
       },
-      timer: null,
       copyList: [],
     };
   },
@@ -66,46 +63,6 @@ export default {
     this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
   methods: {
-    selectData(val) {
-      this.searchValue = val;
-      this.paginationConfig.current = 1;
-      this.copyList = [];
-      clearTimeout(this.timer);
-      this.timer = setTimeout(async () => {
-        await this.initRtxList(val, this.paginationConfig.current);
-      }, 500);
-    },
-    // 点击select
-    async handleBranchToggle(value) {
-      if (value) {
-        this.$nextTick(() => {
-          this.paginationConfig.current = 1;
-          this.copyList = [];
-          this.initRtxList(this.searchValue, this.paginationConfig.current);
-          const selectorList = document.querySelector('.scrollview').querySelector('.bk-options');
-          if (selectorList) {
-            selectorList.scrollTop = 0;
-            selectorList.addEventListener('scroll', this.scrollHandler);
-          }
-        });
-      }
-    },
-    // 滚动回调
-    scrollHandler() {
-      const scrollContainer = document.querySelector('.scrollview').querySelector('.bk-options');
-      if (scrollContainer.scrollTop === 0) {
-        return;
-      }
-      if (scrollContainer.scrollTop + scrollContainer.offsetHeight >= scrollContainer.scrollHeight) {
-        this.paginationConfig.current = this.paginationConfig.current + 1;
-        if (this.paginationConfig.current
-        <= Math.floor((this.paginationConfig.count / this.paginationConfig.limit) + 1)) {
-          setTimeout(async () => {
-            await this.initRtxList(this.searchValue, this.paginationConfig.current);
-          }, 200);
-        }
-      }
-    },
     async initRtxList(searchValue, curPage) {
       try {
         const params = {

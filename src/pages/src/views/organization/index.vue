@@ -69,7 +69,7 @@
               <p class="tips">{{$t('如需添加组织成员，可通过以下两种方式进行')}}</p>
               <div class="button-container">
                 <bk-button theme="primary" style="min-width: 120px;margin-right: 10px;" @click="addUserFn">
-                  {{$t('新增用户')}}
+                  {{$t('新增用户1')}}
                 </bk-button>
                 <!-- 从其他组织拉取 -->
                 <bk-button style="min-width: 120px;" @click="pullUserFn">
@@ -96,7 +96,7 @@
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowAdd }]"></i>
                   </bk-button>
                   <ul class="bk-dropdown-list" slot="dropdown-content">
-                    <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户')}}</a></li>
+                    <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户1')}}</a></li>
                     <li><a href="javascript:;" @click="pullUserFn">{{$t('拉取已有用户')}}</a></li>
                   </ul>
                 </bk-dropdown-menu>
@@ -756,6 +756,7 @@ export default {
     },
     // 搜索table
     handleTableSearch(list) {
+      this.isTableDataEmpty = false;
       if (!list.length) return this.getTableData();
       const valueList = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
       let key = '';
@@ -778,6 +779,7 @@ export default {
       })
         .catch((e) => {
           console.warn(e);
+          this.isTableDataError = true;
         });
     },
     // 搜索文件配置列表

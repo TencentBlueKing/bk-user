@@ -48,7 +48,7 @@
             <span :title="row.name">{{row.category.display_name}}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('状态')">
+        <bk-table-column :label="$t('状态')" :width="200" show-overflow-tooltip>
           <template slot-scope="{ row }">
             <div class="td-container" v-if="row.status === 'successful'">
               <span class="success"></span>
@@ -57,7 +57,7 @@
             <div class="td-container" v-else-if="row.status === 'failed'">
               <span class="fail"></span>
               <span v-bk-tooltips="$t('同步操作失败，请在用户管理后台 API 日志中查询详情')">{{$t('失败')}}</span>
-              <span v-if="row.retried_count !== 0">(已重试{{row.retried_count}}次)</span>
+              <span v-if="row.retried_count !== 0">({{$t('已重试') + row.retried_count + $t('次')}})</span>
             </div>
             <div class="td-container" v-else-if="row.status === 'running'">
               <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
@@ -65,7 +65,7 @@
             </div>
             <div class="td-container" v-else-if="row.status === 'retrying'">
               <img src="../../images/svg/loading.svg" width="20" alt="loading" class="syncing-img">
-              <span v-if="row.retried_count !== 0">第{{row.retried_count}}次</span>
+              <span v-if="row.retried_count !== 0">{{$t('第') + row.retried_count + $t('次')}}</span>
               <span class="syncing">{{$t('失败重试中')}}</span>
             </div>
           </template>

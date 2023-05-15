@@ -64,7 +64,6 @@
                   multiple
                   display-tag
                   v-model="userSettingData.leader"
-                  :remote-method="selectData"
                   :list="rtxList"
                   ext-popover-cls="scrollview"
                   @toggle="handleBranchToggle"
@@ -329,16 +328,6 @@ export default {
     this.initRtxList(this.searchValue, this.paginationConfig.current);
   },
   methods: {
-    // 上级组织搜索
-    selectData(val) {
-      this.searchValue = val;
-      this.paginationConfig.current = 1;
-      this.copyList = [];
-      clearTimeout(this.timer);
-      this.timer = setTimeout(async () => {
-        await this.initRtxList(val, this.paginationConfig.current);
-      }, 500);
-    },
     // 点击select
     async handleBranchToggle(value) {
       this.showselectData = value;
