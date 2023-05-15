@@ -488,4 +488,5 @@ export default {
   '同步操作失败，请在用户管理后台 API 日志中查询详情': 'If synchronization fails, query details in the "User Management" API logs',
   确认删除1: 'OK, Delete it.',
   确认停用1: 'OK, Deactivate it.',
+  '搜索操作用户、操作对象、操作类型': 'Search for the operation user, operation object, and operation type',
 };

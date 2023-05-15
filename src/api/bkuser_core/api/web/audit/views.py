@@ -69,7 +69,6 @@ class LoginLogListApi(generics.ListAPIView):
     permission_classes = [ViewAuditPermission]
     pagination_class = CustomPagination
     serializer_class = LoginLogOutputSLZ
-
     filter_backends = [StartTimeEndTimeFilterBackend]
 
     def get_serializer_context(self):
@@ -80,6 +79,18 @@ class LoginLogListApi(generics.ListAPIView):
         queryset = LogIn.objects.all()
         slz = LoginLogListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # TODO: use drf Filter
+        # NOTE:查询参数存在is_success就需要进行筛选：is_success为false时需返回登录失败的审计记录，因此这里不用if直接判断，选择用in
+        if "is_success" in data:
+            logger.debug("login_in filter: is_success:<{}>".format(data["is_success"]))
+            queryset = queryset.filter(is_success=data["is_success"])
+
+        username = data.get("username")
+        if username:
+            logger.debug("login_in filter: username:<{}>".format(username))
+            queryset = queryset.filter(profile__username=username)
 
         return queryset
 
