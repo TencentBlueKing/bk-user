@@ -32,7 +32,8 @@
           v-else-if="item.key.includes(dateKey)"
           v-model="item.value"
           :clearable="!item.require"
-          :disabled="editStatus && !item.editable">
+          :disabled="editStatus && !item.editable"
+          @change="changSelect">
           <bk-option
             v-for="option in accountValidDaysList"
             :key="option.date"
@@ -113,6 +114,11 @@ export default {
   },
   mounted() {
     window.changeInput = false;
+  },
+  methods: {
+    changSelect() {
+      window.changeInput = true;
+    },
   },
 };
 </script>

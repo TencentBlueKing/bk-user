@@ -39,8 +39,9 @@
               </div>
             </template>
             <div v-else class="no-search-result">
-              <p>{{$t('搜索结果为空！')}}</p>
-              <p>{{$t('建议检查关键字是否准确')}}</p>
+              <EmptyComponent
+                :is-search-empty="!searchList.length"
+                @handleEmpty="clearSearchKey" />
             </div>
           </div>
           <!-- 组织树 -->
@@ -72,10 +73,12 @@
 
 <script>
 import ExportTree from '@/components/organization/ExportTree';
+import EmptyComponent from '@/components/empty';
 
 export default {
   components: {
     ExportTree,
+    EmptyComponent,
   },
   props: {
     currentCategoryId: {
@@ -391,23 +394,8 @@ export default {
   }
 
   > .no-search-result {
-    display: flex;
-    flex-flow: column;
-    justify-content: center;
-    align-items: center;
     height: 200px;
     padding-right: 24px;
-
-    p {
-      text-align: center;
-      font-size: 12px;
-      line-height: 18px;
-      color: #63656e;
-
-      &:last-child {
-        color: #c4c6cc;
-      }
-    }
   }
 }
 

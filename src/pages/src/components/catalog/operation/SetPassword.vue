@@ -136,7 +136,7 @@
           <bk-input
             v-model.number="defaultPassword.freeze_after_days.value"
             type="number"
-            style="width: 120px;margin: 0 8px;"
+            style="width: 130px;margin: 0 8px;"
             :class="{ 'king-input': true, error: freezeDaysError }"
             @input="validateFreezeDays">
             <template slot="append">
