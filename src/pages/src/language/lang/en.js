@@ -276,6 +276,7 @@ export default {
   操作类型: 'Operation type',
   用户目录管理无权限访问: '【Categories Management】No access authority',
   '搜索操作用户、操作对象、操作类型': 'Search by Operation User / Operation Object / Operation Type',
+  '搜索登录用户、登录状态': 'Search by Login User / Login Status',
   // user
   添加根组织: 'Add organization',
   暂无组织成员: 'No organization members',
