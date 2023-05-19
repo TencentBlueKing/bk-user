@@ -162,8 +162,8 @@ export default {
   问题反馈: 'Feedback',
   版本更新明细: 'Version update details',
   新增: '(Feature)',
-  修复: '(Bugfix)',
-  优化: '(Upgrade)',
+  修复: '(Fixed)',
+  优化: '(Improved)',
   // 密码
   原密码: 'Old Password',
   重置密码: 'Reset Password',
@@ -489,4 +489,7 @@ export default {
   确认删除1: 'OK, Delete it.',
   确认停用1: 'OK, Deactivate it.',
   '搜索操作用户、操作对象、操作类型': 'Search for the operation user, operation object, and operation type',
+  蓝鲸智云: 'BLUEKING',
+  发送成功: 'Sent successfully',
+  已向: 'To',
 };
