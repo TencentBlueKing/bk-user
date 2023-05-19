@@ -11,15 +11,16 @@
   <div class="reset-wrapper">
     <div class="reset-box-content" :class="{ 'before-reset': hasReset === false, 'has-reset': hasReset === true }">
       <div class="login-heard">
-        <img src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
+        <img v-if="$i18n.locale === 'zh-cn'" src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
+        <img v-else src="../../images/logo_en.png" :alt="$t('蓝鲸智云')" width="160">
       </div>
       <div class="login-methond" v-if="!hasReset">
         <bk-radio-group class="fr" v-model="checkMethod">
           <bk-radio-button value="sms">
-            短信
+            {{ $t('短信') }}
           </bk-radio-button>
           <bk-radio-button value="email">
-            邮箱
+            {{ $t('邮箱') }}
           </bk-radio-button>
         </bk-radio-group>
       </div>

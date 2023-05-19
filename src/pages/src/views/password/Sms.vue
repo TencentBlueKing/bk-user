@@ -33,7 +33,7 @@
           </bk-button>
         </template>
         <template v-if="step === 'sendCode'">
-          <p :class="['text', { 'show-error-info': isError }]">{{$t('已向')}}{{simplePhone}}发送验证码</p>
+          <p :class="['text', { 'show-error-info': isError }]">{{$t('已向')}}{{simplePhone}}{{ $t('发送验证码') }}</p>
           <p class="error-text" v-if="isError">
             <i class="icon icon-user-exclamation-circle-shape"></i>
             <span class="text">{{errorMessage}}</span>
@@ -112,7 +112,7 @@ export default {
           }, 1000);
           this.$bkMessage({
             theme: 'success',
-            message: '发送成功',
+            message: this.$t('发送成功'),
           });
         } else {
           this.showErrorMessage(message);
