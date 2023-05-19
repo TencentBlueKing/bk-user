@@ -137,7 +137,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             elif profile.staff_status == StaffStatus.OUT.value:
                 create_profile_log(
                     profile=profile,
-                    operation="Login",
+                    operation="LogIn",
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.RESIGNED_USER.value},
                 )
