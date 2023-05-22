@@ -415,7 +415,8 @@ export function expireDays(val, list) {
   list.forEach((item) => {
     const { days, text } = item;
     if (item.days !== -1) {
-      const date = (val === '2100-01-01' || val === null) ? expireTime(new Date().getTime(), item.days) : expireTime(new Date(val).getTime(), item.days);
+      const currentDate = expireTime(new Date().getTime(), 0);
+      const date = (val === '2100-01-01' || val === null || val <= currentDate) ? expireTime(new Date().getTime(), item.days) : expireTime(new Date(val).getTime(), item.days);
       expireDateList.push({ days, text, date, time: `${window.mainComponent.$t('过期时间_')}${date}` });
     } else {
       expireDateList.push({ days, text, date: '2100-01-01' });

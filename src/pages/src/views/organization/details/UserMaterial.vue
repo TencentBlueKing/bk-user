@@ -252,10 +252,18 @@ export default {
     // 获取用户信息
     getUserInfo() {
       this.activeFieldsList.forEach((item) => {
-        if ((item.options || []).length > 0) {
+        if ((item.options || []).length > 0 && item.type === 'one_enum') {
           item.options.map((key) => {
             if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
               item.value = this.$t(key.value);
+            }
+          });
+        } else if ((item.options || []).length > 0 && item.type === 'multi_enum') {
+          const valList = [];
+          item.options.map((key) => {
+            if (this.currentProfile[item.key].includes(key.id)) {
+              valList.push(this.$t(key.value));
+              item.value = valList.join(',');
             }
           });
         } else if (this.timerMap.includes(item.key)) {
