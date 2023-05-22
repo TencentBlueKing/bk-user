@@ -90,7 +90,7 @@ class LoginLogListApi(generics.ListAPIView):
         username = data.get("username")
         if username:
             logger.debug("login_in filter: username:<{}>".format(username))
-            queryset = queryset.filter(profile__username=username)
+            queryset = queryset.filter(profile__username__icontains=username)
 
         return queryset
 
