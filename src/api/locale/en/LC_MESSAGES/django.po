@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-20 10:33+0800\n"
+"POT-Creation-Date: 2023-05-23 11:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,10 +22,8 @@ msgid "用户字段"
 msgstr "User Field"
 
 #: bkuser_core/api/web/audit/constants.py:16 bkuser_core/bkiam/constants.py:137
-#, fuzzy
-#| msgid "用户名"
 msgid "用户"
-msgstr "Username"
+msgstr "User"
 
 #: bkuser_core/api/web/audit/constants.py:17
 #: bkuser_core/api/web/search/views.py:147 bkuser_core/bkiam/constants.py:136
@@ -34,14 +32,10 @@ msgid "组织"
 msgstr "Departments"
 
 #: bkuser_core/api/web/audit/constants.py:18 bkuser_core/bkiam/constants.py:135
-#, fuzzy
-#| msgid "用户目录ID"
 msgid "用户目录"
 msgstr "Category ID"
 
 #: bkuser_core/api/web/audit/constants.py:19
-#, fuzzy
-#| msgid "用户目录ID"
 msgid "用户目录配置"
 msgstr "Category ID"
 
@@ -98,8 +92,6 @@ msgid "密码过期"
 msgstr "Password expired"
 
 #: bkuser_core/api/web/audit/constants.py:55
-#, fuzzy
-#| msgid "密码输入错误次数过多，已被锁定"
 msgid "密码错误次数过多"
 msgstr "Account locked for too many times entering password incorrectly"
 
@@ -149,6 +141,7 @@ msgstr "Additional Information"
 
 #: bkuser_core/api/web/audit/serializers.py:40
 #: bkuser_core/api/web/audit/serializers.py:89
+#: bkuser_core/api/web/export.py:215
 msgid "用户全名"
 msgstr "User Full Name"
 
@@ -161,13 +154,12 @@ msgid "创建时间"
 msgstr "Creation time"
 
 #: bkuser_core/api/web/audit/serializers.py:43
-#, fuzzy
-#| msgid "账户状态"
 msgid "状态"
 msgstr "status"
 
 #: bkuser_core/api/web/audit/serializers.py:80
 #: bkuser_core/api/web/audit/serializers.py:125
+#: bkuser_core/api/web/export.py:227
 msgid "登录状态"
 msgstr "Login Status"
 
@@ -182,11 +174,13 @@ msgstr "is login success"
 
 #: bkuser_core/api/web/audit/serializers.py:88
 #: bkuser_core/api/web/audit/serializers.py:122
+#: bkuser_core/api/web/export.py:211
 msgid "登录用户"
 msgstr "Login User"
 
 #: bkuser_core/api/web/audit/serializers.py:90
 #: bkuser_core/api/web/audit/serializers.py:126
+#: bkuser_core/api/web/export.py:219
 msgid "登录时间"
 msgstr "Login Time"
 
@@ -209,9 +203,17 @@ msgstr "Reason for failure"
 msgid "未知失败原因"
 msgstr "Unknown reason for failure"
 
+#: bkuser_core/api/web/audit/serializers.py:137
+#: bkuser_core/categories/constants.py:108
+msgid "成功"
+msgstr "Success"
+
+#: bkuser_core/api/web/audit/serializers.py:138
+#: bkuser_core/categories/constants.py:108
+msgid "失败"
+msgstr "Failure"
+
 #: bkuser_core/api/web/category/serializers.py:85
-#, fuzzy
-#| msgid "未知登陆域"
 msgid "登陆域"
 msgstr "Unknown domain"
 
@@ -226,11 +228,20 @@ msgstr "Category with Domain as {} already exists"
 
 #: bkuser_core/api/web/department/views.py:120
 msgid "当前部门存在下级组织无法删除"
-msgstr "The current department has subordinate organizations and cannot be deleted"
+msgstr ""
+"The current department has subordinate organizations and cannot be deleted"
 
 #: bkuser_core/api/web/department/views.py:123
 msgid "当前部门下存在用户无法删除"
 msgstr "There are users in the current department that cannot be deleted"
+
+#: bkuser_core/api/web/export.py:223
+msgid "登录来源IP"
+msgstr "Login Source IP"
+
+#: bkuser_core/api/web/export.py:231
+msgid "登录失败原因"
+msgstr "Reason for failure"
 
 #: bkuser_core/api/web/field/serializers.py:64
 msgid "英文标识为 {} 的自定义字段已存在"
@@ -239,7 +250,9 @@ msgstr "Dynamic field with english id `{}` already exists"
 #: bkuser_core/api/web/profile/views.py:341
 #: bkuser_core/profiles/v2/views.py:263
 msgid "该用户处于被删除状态，请联系管理员恢复"
-msgstr "This user is in a deleted state, please contact the administrator to restore it"
+msgstr ""
+"This user is in a deleted state, please contact the administrator to restore "
+"it"
 
 #: bkuser_core/api/web/search/views.py:43
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:48
@@ -346,12 +359,88 @@ msgstr "Invalid username/password."
 msgid "无法从权限中心获取到鉴权 token, 原因: %s"
 msgstr "Failed to obtain authentication token from iam, reason: %s"
 
+#: bkuser_core/bkiam/constants.py:32
+msgid "查询某个资源类型可用于配置权限的属性列表"
+msgstr ""
+"Query the list of properties that can be used to configure permissions for a "
+"certain resource type."
+
+#: bkuser_core/bkiam/constants.py:33
+msgid "获取一个资源类型某个属性的值列表"
+msgstr "Get a list of values for a certain property of a resource type."
+
+#: bkuser_core/bkiam/constants.py:34
+msgid "根据过滤条件查询实例"
+msgstr "Querying Instances Based on Filtering Conditions"
+
+#: bkuser_core/bkiam/constants.py:35
+msgid "批量获取资源实例详情"
+msgstr "Batch get resource instance details."
+
+#: bkuser_core/bkiam/constants.py:36
+msgid "根据策略表达式查询资源实例"
+msgstr "Query resource instances based on strategy expressions"
+
+#: bkuser_core/bkiam/constants.py:37
+msgid "搜索资源实例"
+msgstr "Search Resource Example"
+
+#: bkuser_core/bkiam/constants.py:70
+msgid "用户字段管理"
+msgstr "User Field"
+
+#: bkuser_core/bkiam/constants.py:71
+msgid "查看字段"
+msgstr "View Fields"
+
+#: bkuser_core/bkiam/constants.py:72
+msgid "审计信息查看"
+msgstr "Audit Information Viewing"
+
+#: bkuser_core/bkiam/constants.py:73
+msgid "本地用户目录新建"
+msgstr "Category ID"
+
+#: bkuser_core/bkiam/constants.py:74
+msgid "LDAP目录新建"
+msgstr "LDAP Category Creation"
+
+#: bkuser_core/bkiam/constants.py:75
+msgid "MAD目录新建"
+msgstr "MAD Category Creation"
+
+#: bkuser_core/bkiam/constants.py:76
+msgid "自定义目录新建"
+msgstr "Custom Category Creation"
+
+#: bkuser_core/bkiam/constants.py:77
+msgid "目录管理"
+msgstr "Category Management"
+
+#: bkuser_core/bkiam/constants.py:78
+msgid "查看目录"
+msgstr "View Category"
+
+#: bkuser_core/bkiam/constants.py:79
+msgid "根组织新建"
+msgstr "Newly Built Root Tissue"
+
+#: bkuser_core/bkiam/constants.py:80
+msgid "组织和成员管理"
+msgstr "Organization and Member Management"
+
+#: bkuser_core/bkiam/constants.py:81
+msgid "组织和成员查看"
+msgstr "Organization and Member Viewing"
+
 #: bkuser_core/bkiam/permissions.py:81 bkuser_core/bkiam/permissions.py:99
 #: bkuser_core/bkiam/permissions.py:116 bkuser_core/bkiam/permissions.py:136
 #: bkuser_core/bkiam/permissions.py:157 bkuser_core/bkiam/permissions.py:179
 #: bkuser_core/bkiam/permissions.py:191
 msgid "您没有权限进行该操作，请在权限中心申请。"
-msgstr "You do not have permission to perform this operation. Please apply for it in the iam."
+msgstr ""
+"You do not have permission to perform this operation. Please apply for it in "
+"the iam."
 
 #: bkuser_core/categories/constants.py:26
 msgid "正常"
@@ -379,25 +468,34 @@ msgstr "OpenLDAP"
 #: bkuser_core/categories/constants.py:55
 #: bkuser_core/categories/constants.py:59
 msgid "本地支持用户的新增、删除、编辑、查询，以及用户的登录认证。"
-msgstr "Local support for user addition, deletion, editing, querying, as well as user login authentication."
+msgstr ""
+"Local support for user addition, deletion, editing, querying, as well as "
+"user login authentication."
 
 #: bkuser_core/categories/constants.py:56
 #: bkuser_core/categories/constants.py:60
 msgid ""
 "支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成"
 "用户登录验证。"
-msgstr "Supports integration with Microsoft Active Directory, allowing for synchronization of user information locally or direct authentication through an API."
+msgstr ""
+"Supports integration with Microsoft Active Directory, allowing for "
+"synchronization of user information locally or direct authentication through "
+"an API."
 
 #: bkuser_core/categories/constants.py:57
 #: bkuser_core/categories/constants.py:61
 msgid ""
 "支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
-msgstr "Supports integration with OpenLDAP to synchronize user information locally or directly authenticate users through an API."
+msgstr ""
+"Supports integration with OpenLDAP to synchronize user information locally "
+"or directly authenticate users through an API."
 
 #: bkuser_core/categories/constants.py:58
 #: bkuser_core/categories/constants.py:62
 msgid "支持对接任意符合自定义数据拉取协议的用户系统。"
-msgstr "Supports integration with user systems that comply with custom data retrieval protocols."
+msgstr ""
+"Supports integration with user systems that comply with custom data "
+"retrieval protocols."
 
 #: bkuser_core/categories/constants.py:88
 msgid "用户数据更新"
@@ -424,14 +522,6 @@ msgid "定时同步"
 msgstr "Timed synchronization"
 
 #: bkuser_core/categories/constants.py:108
-msgid "成功"
-msgstr "Success"
-
-#: bkuser_core/categories/constants.py:108
-msgid "失败"
-msgstr "Failure"
-
-#: bkuser_core/categories/constants.py:108
 msgid "同步中"
 msgstr "In progress of sync"
 
@@ -442,7 +532,8 @@ msgstr "Retrying due to failure"
 #: bkuser_core/categories/managers.py:85
 #, python-brace-format
 msgid "当前目录处于同步状态, 请在 {timeout}s 后重试."
-msgstr "The current directory is in sync. Please retry after {timeout} seconds."
+msgstr ""
+"The current directory is in sync. Please retry after {timeout} seconds."
 
 #: bkuser_core/categories/plugins/constants.py:22
 #, python-brace-format
@@ -467,13 +558,17 @@ msgstr "Failed to synchronize organization [{department}]."
 #: bkuser_core/categories/plugins/constants.py:26
 #, python-brace-format
 msgid "同步组织【{department}】与用户【{username}】的关联关系成功"
-msgstr "The synchronization of the association between organization [{department}] and user [{username}] was successful."
+msgstr ""
+"The synchronization of the association between organization [{department}] "
+"and user [{username}] was successful."
 
 #: bkuser_core/categories/plugins/constants.py:27
 #, python-brace-format
 msgid ""
 "同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"
-msgstr "Failed to synchronize the association between organization [{department}] and user [{username}], reason for failure: {error}."
+msgstr ""
+"Failed to synchronize the association between organization [{department}] "
+"and user [{username}], reason for failure: {error}."
 
 #: bkuser_core/categories/plugins/constants.py:28
 #, python-brace-format
@@ -483,7 +578,9 @@ msgstr "Synchronized user [{username}]'s leader successfully"
 #: bkuser_core/categories/plugins/constants.py:29
 #, python-brace-format
 msgid "同步用户【{username}】上级失败, 失败原因: {error}"
-msgstr "Failed to synchronize the leader of user [{username}], reason for failure: {error}"
+msgstr ""
+"Failed to synchronize the leader of user [{username}], reason for failure: "
+"{error}"
 
 #: bkuser_core/categories/plugins/custom/helpers.py:99
 #, python-brace-format
@@ -509,8 +606,6 @@ msgid "上级【{username}】不存在"
 msgstr "The leader [{username}] does not exist."
 
 #: bkuser_core/categories/plugins/ldap/client.py:92
-#, fuzzy
-#| msgid "测试连接失败"
 msgid "LDAP服务器连接失败"
 msgstr "Test connection failed"
 
@@ -520,7 +615,8 @@ msgstr "Unable to retrieve user group, please check configuration"
 
 #: bkuser_core/categories/plugins/ldap/syncer.py:99
 msgid "无法获取组织部门，请检查配置"
-msgstr "Unable to retrieve organizational department, please check configuration"
+msgstr ""
+"Unable to retrieve organizational department, please check configuration"
 
 #: bkuser_core/categories/plugins/ldap/syncer.py:115
 msgid "无法获取用户数据, 请检查配置"
@@ -545,24 +641,28 @@ msgstr "{} is required"
 msgid "{} 不符合格式要求"
 msgstr "{} does not meet the format requirements"
 
-#: bkuser_core/categories/plugins/local/syncer.py:107
+#: bkuser_core/categories/plugins/local/syncer.py:108
 #, python-brace-format
 msgid "第{index}行，字段{field}，原因：{reason}，数据：{data}"
 msgstr "Line {index}, Field {field}: Reason - {reason}. Data: {data}"
 
-#: bkuser_core/categories/plugins/local/syncer.py:333
+#: bkuser_core/categories/plugins/local/syncer.py:341
 msgid "导入执行完成: 成功 {} 条记录, 失败 {} 条记录, 失败详情 {}"
-msgstr "Import execution completed: {} records succeeded, {} records failed, details of failures {}"
+msgstr ""
+"Import execution completed: {} records succeeded, {} records failed, details "
+"of failures {}"
 
-#: bkuser_core/categories/plugins/local/syncer.py:400
+#: bkuser_core/categories/plugins/local/syncer.py:409
 msgid "找不到 {} 对应的字段信息, 请检查用户字段设置"
-msgstr "Cannot find field information corresponding to {}, please check user field settings."
+msgstr ""
+"Cannot find field information corresponding to {}, please check user field "
+"settings."
 
-#: bkuser_core/categories/plugins/local/syncer.py:485
+#: bkuser_core/categories/plugins/local/syncer.py:494
 msgid "{} 字段是必填内容"
 msgstr "The {} field is required."
 
-#: bkuser_core/categories/plugins/local/syncer.py:510
+#: bkuser_core/categories/plugins/local/syncer.py:519
 msgid "当前值 {} 找不到预设选项"
 msgstr "The current value {} cannot be found in the preset options."
 
@@ -623,8 +723,6 @@ msgid "未知登陆域"
 msgstr "Unknown domain"
 
 #: bkuser_core/common/error_codes.py:114
-#, fuzzy
-#| msgid "该账户密码已到期，请修改密码后登录"
 msgid "该账户密码已到期"
 msgstr "Password is expired, please change it before login"
 
@@ -641,8 +739,6 @@ msgid "平台分配的初始密码未修改"
 msgstr "The initial password assigned by the platform has not been changed."
 
 #: bkuser_core/common/error_codes.py:118
-#, fuzzy
-#| msgid "账号已被管理员禁用，请联系管理员"
 msgid "账号已被删除，请联系管理员"
 msgstr "Account disabled by admin, please contract admin"
 
@@ -661,15 +757,15 @@ msgstr "This user account has left the company."
 #: bkuser_core/common/error_codes.py:123 bkuser_core/common/error_codes.py:127
 #, python-brace-format
 msgid "新密码不能与最近{max_password_history}次密码相同"
-msgstr "The new password cannot be the same as any of the previous {max_password_history} passwords."
+msgstr ""
+"The new password cannot be the same as any of the previous "
+"{max_password_history} passwords."
 
 #: bkuser_core/common/error_codes.py:124
 msgid "该用户没有提供邮箱，发送邮件失败"
 msgstr "Failed to send email for lacking email address"
 
 #: bkuser_core/common/error_codes.py:125
-#, fuzzy
-#| msgid "该目录下用户名已存在"
 msgid "该目录下此用户名已存在"
 msgstr "Username already exist in this category"
 
@@ -678,23 +774,26 @@ msgid "保存用户信息失败"
 msgstr "Failed to save user information"
 
 #: bkuser_core/common/error_codes.py:128
-#, fuzzy
-#| msgid "该用户没有提供邮箱，发送邮件失败"
 msgid "该用户没有绑定手机号，发送短信失败"
 msgstr "Failed to send email for lacking email address"
 
 #: bkuser_core/common/error_codes.py:129
 msgid "该手机号被多个用户绑定，请输入具体的用户名或联系管理员处理"
-msgstr "This phone number has been bound by multiple users. Please enter the specific username or contact the administrator for assistance."
+msgstr ""
+"This phone number has been bound by multiple users. Please enter the "
+"specific username or contact the administrator for assistance."
 
 #: bkuser_core/common/error_codes.py:130
 #, python-brace-format
 msgid "验证码已发送，有效时间为{effective_minutes}分钟，请勿重复发送"
-msgstr "The verification code has been sent and is valid for {effective_minutes} minutes. Please do not resend it."
+msgstr ""
+"The verification code has been sent and is valid for {effective_minutes} "
+"minutes. Please do not resend it."
 
 #: bkuser_core/common/error_codes.py:131
 msgid "该手机号已超过当日重置密码短信发送限制次数"
-msgstr "The phone number has exceeded the limit of password reset SMS sent for today."
+msgstr ""
+"The phone number has exceeded the limit of password reset SMS sent for today."
 
 #: bkuser_core/common/error_codes.py:132
 msgid "验证码失效，请重新发送"
@@ -706,11 +805,12 @@ msgstr "The verification code you entered is incorrect, please try again."
 
 #: bkuser_core/common/error_codes.py:134
 msgid "你所输入验证码错误，验证次数已达上限，请验证码过期后重试"
-msgstr "The verification code you entered is incorrect. The number of verification attempts has reached the limit. Please try again after the verification code expires."
+msgstr ""
+"The verification code you entered is incorrect. The number of verification "
+"attempts has reached the limit. Please try again after the verification code "
+"expires."
 
 #: bkuser_core/common/error_codes.py:135
-#, fuzzy
-#| msgid "登陆校验失败"
 msgid "原密码校验失败"
 msgstr "Login check failed"
 
@@ -795,8 +895,6 @@ msgid "找不到指定名称的插件"
 msgstr "Cannot find the specified plugin name"
 
 #: bkuser_core/common/error_codes.py:159
-#, fuzzy
-#| msgid "本地目录需要上传文件进行同步"
 msgid "本地目录需要Excel文件同步数据"
 msgstr "Local category only support uploading file to sync data"
 
@@ -813,8 +911,6 @@ msgid "无法更新配置"
 msgstr "Unable to update configuration"
 
 #: bkuser_core/common/error_codes.py:165
-#, fuzzy
-#| msgid "找不到对应的用户目录"
 msgid "找不到对应的部门"
 msgstr "Category could not be found"
 
@@ -847,8 +943,6 @@ msgid "审计日志为空，无法导出"
 msgstr "The audit log is empty and cannot be exported."
 
 #: bkuser_core/common/error_codes.py:179
-#, fuzzy
-#| msgid "自定义字段"
 msgid "未知自定义字段"
 msgstr "dynamic field"
 
@@ -1018,8 +1112,6 @@ msgstr ""
 "numbers, dot (.), minus sign (-) characters, start with a letter or number"
 
 #: bkuser_core/profiles/validators.py:71
-#, fuzzy
-#| msgid "自定义字段 {} 需要保证唯一，而该目录< {} >中已经存在值为 {} 的记录"
 msgid "自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录"
 msgstr ""
 "Dynamic field {} should be unique，and there is another record in category<{}"

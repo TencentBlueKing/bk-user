@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List
 
 from django.http import HttpResponse
+from django.utils.translation import ugettext_lazy as _
 from openpyxl.styles import Alignment, Font, colors
 from openpyxl.styles.numbers import FORMAT_TEXT
 from rest_framework import serializers
@@ -102,7 +103,7 @@ class ProfileExcelExporter:
                 cell.number_format = FORMAT_TEXT
 
     def update_profiles(self, profiles: List[dict], extra_infos: dict = None):
-        field_col_map = self._update_sheet_titles()
+        field_col_map = self.update_sheet_titles()
 
         for p_index, p in enumerate(profiles):
 
@@ -149,10 +150,14 @@ class ProfileExcelExporter:
                     row=p_index + self.title_row_index + 1, column=field_col_map[f["display_name"]], value=value
                 )
 
-    def _update_sheet_titles(self):
+    def update_sheet_titles(self, exclude_keys: List[str] = []):
         """更新表格标题"""
-        required_field_names = [x["display_name"] for x in self.fields if x["builtin"]]
-        not_required_field_names = [x["display_name"] for x in self.fields if not x["builtin"]]
+        required_fields = [x for x in self.fields if x["builtin"] and x["name"] not in exclude_keys]
+        not_required_field_names = [
+            x["display_name"]
+            for x in self.fields
+            if not x["builtin"] and x["name"] not in exclude_keys
+        ]
 
         field_col_map = {}
 
@@ -161,14 +166,16 @@ class ProfileExcelExporter:
 
         red_ft = Font(color=colors.COLOR_INDEX[2])
         black_ft = Font(color=colors.BLACK)
-        for index, field_name in enumerate(required_field_names):
+        for index, field in enumerate(required_fields):
+            field_name = field["display_name"]
+            field_key = field["key"]
             column = index + 1
             _cell = self.first_sheet.cell(
                 row=self.title_row_index,
                 column=column,
                 value=field_name,
             )
-            if field_name in ("全名", "用户名", "邮箱", "手机号", "组织"):
+            if field_key in ("display_name", "username", "email", "telephone", "department_name"):
                 _cell.font = red_ft
             else:
                 _cell.font = black_ft
@@ -176,7 +183,7 @@ class ProfileExcelExporter:
             field_col_map[field_name] = index + 1
 
         for index, field_name in enumerate(not_required_field_names):
-            column = index + 1 + len(required_field_names)
+            column = index + 1 + len(required_fields)
             _cell = self.first_sheet.cell(
                 row=self.title_row_index,
                 column=column,
@@ -201,27 +208,27 @@ class LoginLogExcelExporter:
     exported_file_name: str
     fields: list = [
         {
-            "title": "登录用户",
+            "title": _("登录用户"),
             "name": "username",
         },
         {
-            "title": "用户全名",
+            "title": _("用户全名"),
             "name": "display_name",
         },
         {
-            "title": "登录时间",
+            "title": _("登录时间"),
             "name": "datetime",
         },
         {
-            "title": "登录来源IP",
+            "title": _("登录来源IP"),
             "name": "ip",
         },
         {
-            "title": "登录状态",
+            "title": _("登录状态"),
             "name": "status",
         },
         {
-            "title": "登录失败原因",
+            "title": _("登录失败原因"),
             "name": "reason",
         },
     ]
@@ -264,6 +271,6 @@ class LoginLogExcelExporter:
             _cell = self.first_sheet.cell(
                 row=self.title_row_index,
                 column=column,
-                value=field["title"],
+                value=str(field["title"]),
             )
             _cell.font = black_ft

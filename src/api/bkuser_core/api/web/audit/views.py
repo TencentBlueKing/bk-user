@@ -82,8 +82,9 @@ class LoginLogListApi(generics.ListAPIView):
         data = slz.validated_data
 
         # TODO: use drf Filter
-        # NOTE:查询参数存在is_success就需要进行筛选：is_success为false时需返回登录失败的审计记录，因此这里不用if直接判断，选择用in
-        if "is_success" in data:
+        # Note: 有2种场景，(1)is_success参数存在则按照is_success的值进行查询（2）is_success参数不存在，则查询所有
+        #  这里对于布尔类型的is_success，Drf SLZ在无参数时，默认为False，所以只能使用原始的query_params进行 in 判断
+        if "is_success" in self.request.query_params:
             logger.debug("login_in filter: is_success:<{}>".format(data["is_success"]))
             queryset = queryset.filter(is_success=data["is_success"])
 

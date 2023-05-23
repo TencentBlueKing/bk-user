@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-20 10:34+0800\n"
+"POT-Creation-Date: 2023-05-23 11:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -142,6 +142,7 @@ msgstr "额外信息"
 
 #: bkuser_core/api/web/audit/serializers.py:40
 #: bkuser_core/api/web/audit/serializers.py:89
+#: bkuser_core/api/web/export.py:215
 msgid "用户全名"
 msgstr "用户全名"
 
@@ -159,6 +160,7 @@ msgstr "状态"
 
 #: bkuser_core/api/web/audit/serializers.py:80
 #: bkuser_core/api/web/audit/serializers.py:125
+#: bkuser_core/api/web/export.py:227
 msgid "登录状态"
 msgstr "登录状态"
 
@@ -173,11 +175,13 @@ msgstr "是否登录成功"
 
 #: bkuser_core/api/web/audit/serializers.py:88
 #: bkuser_core/api/web/audit/serializers.py:122
+#: bkuser_core/api/web/export.py:211
 msgid "登录用户"
 msgstr "登录用户"
 
 #: bkuser_core/api/web/audit/serializers.py:90
 #: bkuser_core/api/web/audit/serializers.py:126
+#: bkuser_core/api/web/export.py:219
 msgid "登录时间"
 msgstr "登录时间"
 
@@ -200,6 +204,16 @@ msgstr "失败原因"
 msgid "未知失败原因"
 msgstr "未知失败原因"
 
+#: bkuser_core/api/web/audit/serializers.py:137
+#: bkuser_core/categories/constants.py:108
+msgid "成功"
+msgstr "成功"
+
+#: bkuser_core/api/web/audit/serializers.py:138
+#: bkuser_core/categories/constants.py:108
+msgid "失败"
+msgstr "失败"
+
 #: bkuser_core/api/web/category/serializers.py:85
 msgid "登陆域"
 msgstr "登陆域"
@@ -220,6 +234,16 @@ msgstr "当前部门存在下级组织无法删除"
 #: bkuser_core/api/web/department/views.py:123
 msgid "当前部门下存在用户无法删除"
 msgstr "当前部门下存在用户无法删除"
+
+#: bkuser_core/api/web/export.py:223
+msgid "登录来源IP"
+msgstr ""
+
+#: bkuser_core/api/web/export.py:231
+#, fuzzy
+#| msgid "失败原因"
+msgid "登录失败原因"
+msgstr "失败原因"
 
 #: bkuser_core/api/web/field/serializers.py:64
 msgid "英文标识为 {} 的自定义字段已存在"
@@ -274,12 +298,14 @@ msgstr "查询字段，针对 exact_lookups,fuzzy_lookups 生效"
 #: bkuser_core/apis/v2/serializers.py:77
 msgid ""
 "精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
-msgstr "精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
+msgstr ""
+"精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
 
 #: bkuser_core/apis/v2/serializers.py:81
 msgid ""
 "模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
-msgstr "模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
+msgstr ""
+"模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
 
 #: bkuser_core/apis/v2/serializers.py:83
 msgid "在多个字段模糊搜索的内容"
@@ -327,6 +353,82 @@ msgstr "Invalid username/password."
 msgid "无法从权限中心获取到鉴权 token, 原因: %s"
 msgstr "无法从权限中心获取到鉴权 token, 原因: %s"
 
+#: bkuser_core/bkiam/constants.py:32
+msgid "查询某个资源类型可用于配置权限的属性列表"
+msgstr "查询某个资源类型可用于配置权限的属性列表"
+
+#: bkuser_core/bkiam/constants.py:33
+msgid "获取一个资源类型某个属性的值列表"
+msgstr "获取一个资源类型某个属性的值列表"
+
+#: bkuser_core/bkiam/constants.py:34
+msgid "根据过滤条件查询实例"
+msgstr "根据过滤条件查询实例"
+
+#: bkuser_core/bkiam/constants.py:35
+msgid "批量获取资源实例详情"
+msgstr "批量获取资源实例详情"
+
+#: bkuser_core/bkiam/constants.py:36
+msgid "根据策略表达式查询资源实例"
+msgstr "根据策略表达式查询资源实例"
+
+#: bkuser_core/bkiam/constants.py:37
+msgid "搜索资源实例"
+msgstr "搜索资源实例"
+
+#: bkuser_core/bkiam/constants.py:70
+#, fuzzy
+#| msgid "用户字段"
+msgid "用户字段管理"
+msgstr "用户字段"
+
+#: bkuser_core/bkiam/constants.py:71
+msgid "查看字段"
+msgstr "查看字段"
+
+#: bkuser_core/bkiam/constants.py:72
+msgid "审计信息查看"
+msgstr "审计信息查看"
+
+#: bkuser_core/bkiam/constants.py:73
+#, fuzzy
+#| msgid "用户目录"
+msgid "本地用户目录新建"
+msgstr "用户目录"
+
+#: bkuser_core/bkiam/constants.py:74
+msgid "LDAP目录新建"
+msgstr "LDAP目录新建"
+
+#: bkuser_core/bkiam/constants.py:75
+msgid "MAD目录新建"
+msgstr "MAD目录新建"
+
+#: bkuser_core/bkiam/constants.py:76
+msgid "自定义目录新建"
+msgstr "自定义目录新建"
+
+#: bkuser_core/bkiam/constants.py:77
+msgid "目录管理"
+msgstr "目录管理"
+
+#: bkuser_core/bkiam/constants.py:78
+msgid "查看目录"
+msgstr "查看目录"
+
+#: bkuser_core/bkiam/constants.py:79
+msgid "根组织新建"
+msgstr "根组织新建"
+
+#: bkuser_core/bkiam/constants.py:80
+msgid "组织和成员管理"
+msgstr "组织和成员管理"
+
+#: bkuser_core/bkiam/constants.py:81
+msgid "组织和成员查看"
+msgstr "组织和成员查看"
+
 #: bkuser_core/bkiam/permissions.py:81 bkuser_core/bkiam/permissions.py:99
 #: bkuser_core/bkiam/permissions.py:116 bkuser_core/bkiam/permissions.py:136
 #: bkuser_core/bkiam/permissions.py:157 bkuser_core/bkiam/permissions.py:179
@@ -367,13 +469,16 @@ msgstr "本地支持用户的新增、删除、编辑、查询，以及用户的
 msgid ""
 "支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成"
 "用户登录验证。"
-msgstr "支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
+msgstr ""
+"支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成"
+"用户登录验证。"
 
 #: bkuser_core/categories/constants.py:57
 #: bkuser_core/categories/constants.py:61
 msgid ""
 "支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
-msgstr "支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
+msgstr ""
+"支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
 
 #: bkuser_core/categories/constants.py:58
 #: bkuser_core/categories/constants.py:62
@@ -403,14 +508,6 @@ msgstr "手动导入"
 #: bkuser_core/categories/constants.py:99
 msgid "定时同步"
 msgstr "定时同步"
-
-#: bkuser_core/categories/constants.py:108
-msgid "成功"
-msgstr "成功"
-
-#: bkuser_core/categories/constants.py:108
-msgid "失败"
-msgstr "失败"
 
 #: bkuser_core/categories/constants.py:108
 msgid "同步中"
@@ -454,7 +551,8 @@ msgstr "同步组织【{department}】与用户【{username}】的关联关系�
 #, python-brace-format
 msgid ""
 "同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"
-msgstr "同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"
+msgstr ""
+"同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"
 
 #: bkuser_core/categories/plugins/constants.py:28
 #, python-brace-format
@@ -524,24 +622,24 @@ msgstr "{} 是必须的"
 msgid "{} 不符合格式要求"
 msgstr "{} 不符合格式要求"
 
-#: bkuser_core/categories/plugins/local/syncer.py:107
+#: bkuser_core/categories/plugins/local/syncer.py:108
 #, python-brace-format
 msgid "第{index}行，字段{field}，原因：{reason}，数据：{data}"
 msgstr "第{index}行，字段{field}，原因：{reason}，数据：{data}"
 
-#: bkuser_core/categories/plugins/local/syncer.py:333
+#: bkuser_core/categories/plugins/local/syncer.py:341
 msgid "导入执行完成: 成功 {} 条记录, 失败 {} 条记录, 失败详情 {}"
 msgstr "导入执行完成: 成功 {} 条记录, 失败 {} 条记录, 失败详情 {}"
 
-#: bkuser_core/categories/plugins/local/syncer.py:400
+#: bkuser_core/categories/plugins/local/syncer.py:409
 msgid "找不到 {} 对应的字段信息, 请检查用户字段设置"
 msgstr "找不到 {} 对应的字段信息, 请检查用户字段设置"
 
-#: bkuser_core/categories/plugins/local/syncer.py:485
+#: bkuser_core/categories/plugins/local/syncer.py:494
 msgid "{} 字段是必填内容"
 msgstr "{} 字段是必填内容"
 
-#: bkuser_core/categories/plugins/local/syncer.py:510
+#: bkuser_core/categories/plugins/local/syncer.py:519
 msgid "当前值 {} 找不到预设选项"
 msgstr "当前值 {} 找不到预设选项"
 
@@ -967,13 +1065,17 @@ msgstr "密码长度应该在 {} 到 {} 之间"
 msgid ""
 "{} 不符合 username 命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字"
 "符组成，以字母或数字开头"
-msgstr "{} 不符合 username 命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头"
+msgstr ""
+"{} 不符合 username 命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字"
+"符组成，以字母或数字开头"
 
 #: bkuser_core/profiles/validators.py:35
 msgid ""
 "{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母"
 "或数字开头"
-msgstr "{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母或数字开头"
+msgstr ""
+"{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母"
+"或数字开头"
 
 #: bkuser_core/profiles/validators.py:71
 msgid "自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录"
