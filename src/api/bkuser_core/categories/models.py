@@ -16,7 +16,7 @@ from django.db import models
 from django.utils import timezone
 
 from bkuser_core.audit.models import AuditObjMetaInfo
-from bkuser_core.categories.constants import CategoryStatus, CategoryType, SyncStep, SyncTaskStatus, SyncTaskType
+from bkuser_core.categories.constants import CategoryStatus, SyncStep, SyncTaskStatus, SyncTaskType
 from bkuser_core.categories.managers import ProfileCategoryManager, SyncProgressManager, SyncTaskManager
 from bkuser_core.common.models import TimestampedModel
 from bkuser_core.departments.models import Department
@@ -79,11 +79,8 @@ class ProfileCategory(TimestampedModel):
         self.status = CategoryStatus.DELETED.value
         self.save(update_fields=["enabled", "status", "update_time"])
 
-        # 变更同步任务使能状态
-        if self.type in [CategoryType.LDAP.value, CategoryType.MAD.value]:
-            from bkuser_core.categories.plugins.utils import sync_task_enabled_or_disabled
-
-            sync_task_enabled_or_disabled(self.id, False)
+    def hard_delete(self):
+        return super(ProfileCategory, self).delete()
 
     def revert(self):
         self.enabled = True

@@ -12,7 +12,5 @@ import django
 
 post_category_create = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
 post_category_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_revert = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
-post_category_hard_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])
 
 post_dynamic_field_delete = django.dispatch.Signal(providing_args=["instance", "operator", "extra_values"])

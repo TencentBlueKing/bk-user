@@ -292,7 +292,7 @@ class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
         if instance.default:
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
-
+        # 不可删除非停用目录
         if instance.status != CategoryStatus.INACTIVE.value:
             raise error_codes.CANNOT_DELETE_ACTIVE_CATEGORY
 

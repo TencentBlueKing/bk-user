@@ -21,7 +21,7 @@ class TestCategory:
     def test_delete(self, test_ldap_category, test_profile, test_department, test_setting):
         test_ldap_category.delete()
 
-        assert not test_ldap_category.enabled
+        assert test_ldap_category.enabled is False
         assert test_ldap_category.is_deleted
 
         assert (

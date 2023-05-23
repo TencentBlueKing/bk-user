@@ -17,17 +17,9 @@ from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.plugins.utils import (
     delete_dynamic_filed,
     delete_periodic_sync_task,
-    sync_task_enabled_or_disabled,
     update_periodic_sync_task,
 )
-from bkuser_core.categories.signals import (
-    post_category_delete,
-    post_category_hard_delete,
-    post_category_revert,
-    post_dynamic_field_delete,
-)
-from bkuser_core.recycle_bin.constants import RecycleBinObjectType
-from bkuser_core.recycle_bin.models import RecycleBin
+from bkuser_core.categories.signals import post_category_delete, post_dynamic_field_delete
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_core.user_settings.signals import post_setting_create, post_setting_update
 
@@ -78,7 +70,7 @@ def update_or_create_sync_tasks(instance: "Setting", operator: str):
         )
 
 
-@receiver(post_category_hard_delete)
+@receiver(post_category_delete)
 def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
     if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
         logger.warning(
@@ -88,34 +80,6 @@ def delete_sync_tasks(sender, instance: "ProfileCategory", **kwargs):
 
     logger.info("going to delete periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
     delete_periodic_sync_task(instance.id)
-
-
-@receiver(post_category_delete)
-def create_recycle_bin_category_relationship(sender, instance: "ProfileCategory", operator: str, **kwargs):
-    relationship_kv: dict = {
-        "object_id": instance.id,
-        "object_type": RecycleBinObjectType.CATEGORY.value,
-        "operator": operator,
-    }
-    logger.info(
-        "creating recycle bin relationship for Category<%s>, the category type is %s", instance.id, instance.type
-    )
-    return RecycleBin.objects.create(**relationship_kv)
-
-
-@receiver(post_category_revert)
-def revert_category_sync_task(sender, instance: "ProfileCategory", **kwargs):
-    # 目录从软删除状态还原时候，恢复同步任务
-    if instance.type not in [CategoryType.LDAP.value, CategoryType.MAD.value]:
-        logger.warning(
-            "category<%s> is %s category, not a ldap or mad category, skip revert sync tasks",
-            instance.id,
-            instance.type,
-        )
-        return
-
-    logger.info("going to revert periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
-    sync_task_enabled_or_disabled(instance.id, True)
 
 
 @receiver(post_setting_update)

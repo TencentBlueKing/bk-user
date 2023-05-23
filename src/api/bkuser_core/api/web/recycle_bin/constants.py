@@ -14,7 +14,10 @@ from bkuser_core.common.enum import AutoNameEnum
 
 
 class CategoryCheckMessageEnum(AutoNameEnum):
-    REPEATED_CONNECTION_URL = auto()
-    REPEATED_DISPLAY_NAME = auto()
+    DUPLICATE_DISPLAY_NAME = auto()
+    DUPLICATE_DOMAIN = auto()
 
-    _choices_labels = ((REPEATED_CONNECTION_URL, "相同ldap连接域"), (REPEATED_DISPLAY_NAME, "相同目录吗"))
+    _choices_labels = (
+        (DUPLICATE_DISPLAY_NAME, "目录名称重复"),
+        (DUPLICATE_DOMAIN, "目录登录域重复"),
+    )

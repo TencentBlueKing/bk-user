@@ -63,26 +63,17 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
         PeriodicTask.objects.create(**create_params)
 
 
-def sync_task_enabled_or_disabled(category_id: int, is_enabled: bool):
-    # 通过 category_id 来做任务名
-    guess_names = [f"plugin-sync-data-{category_id}", str(category_id)]
-    tasks = PeriodicTask.objects.filter(name__in=guess_names)
-    if not tasks:
-        logger.warning("PeriodicTask %s is not found, skip it. [guess_names=%s]", str(category_id), guess_names)
-        return
-
-    # 直接走批量更新，celery 定时任务重新无法注册，需要定时save
-    for item in tasks:
-        item.enabled = is_enabled
-        item.save()
-
-
-def delete_periodic_sync_task(category_id: int):
+def delete_periodic_sync_task(category_id: int, from_hard_delete_signal: bool = False):
     """删除同步周期任务"""
+    if not from_hard_delete_signal:
+        # 目录软删除不触发
+        logger.info("Category<%s> is deleted softly. PeriodTask will not be deleted", category_id)
+        return
     guess_names = [f"plugin-sync-data-{category_id}", str(category_id)]
 
     # 通过 category_id 来做任务名
     try:
+        logger.info("PeriodicTask %s deleted. [guess_names=%s]", str(category_id), guess_names)
         PeriodicTask.objects.filter(name__in=guess_names).delete()
     except PeriodicTask.DoesNotExist:
         logger.warning("PeriodicTask %s has been deleted, skip it. [guess_names=%s]", str(category_id), guess_names)

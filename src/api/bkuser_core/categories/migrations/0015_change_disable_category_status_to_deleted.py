@@ -26,14 +26,15 @@ def forwards_func(apps, schema_editor):
     # 适配新的category.delete(), 并添加相应回收站记录
     recycle_bin_relationships: list = []
     for item in del_categories:
+        # 原本的delete是将目录状态变为enabled=0，status=inactived
+        # 新的delete 目录状态变为enabled=0，status=deleted
         item.delete()
 
-        item_recycle_bin_relationship: dict = {
-            "object_id": item.id,
-            "object_type": RecycleBinObjectType.CATEGORY.value,
-            "operator": "admin"
-        }
-        recycle_bin_record = RecycleBin(**item_recycle_bin_relationship)
+        recycle_bin_record = RecycleBin(
+            object_id=item.id,
+            object_type=RecycleBinObjectType.CATEGORY.value,
+            operator="admin"
+        )
         recycle_bin_relationships.append(recycle_bin_record)
     RecycleBin.objects.bulk_create(recycle_bin_relationships)
 
