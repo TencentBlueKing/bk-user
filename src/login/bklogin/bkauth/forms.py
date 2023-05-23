@@ -32,7 +32,6 @@ class BkAuthenticationForm(AuthenticationForm):
             self.user_cache = authenticate(
                 username=username,
                 password=password,
-                language=getattr(self.request, "LANGUAGE_CODE", ""),
             )
             if self.user_cache is None:
                 raise forms.ValidationError(

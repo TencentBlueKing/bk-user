@@ -13,6 +13,7 @@ from typing import List
 
 from django.conf import settings
 from django.db.models import Q
+from django.utils import translation
 from openpyxl import load_workbook
 from rest_framework import generics, status
 from rest_framework.parsers import FileUploadParser
@@ -395,6 +396,7 @@ class CategoryOperationExportTemplateApi(generics.RetrieveAPIView):
         exporter = ProfileExcelExporter(
             load_workbook(settings.EXPORT_ORG_TEMPLATE), settings.EXPORT_EXCEL_FILENAME + "_org_tmpl", data
         )
+        exporter.update_sheet_titles(exclude_keys=["last_login_time", "create_time"])
 
         return exporter.to_response()
 
@@ -474,6 +476,7 @@ class CategoryOperationSyncOrImportApi(generics.CreateAPIView):
         params = {
             "raw_data_file": slz.validated_data["file"],
             "is_overwrite": query_slz.validated_data["is_overwrite"],
+            "language": translation.get_language(),
         }
         try:
             # TODO: FileField 可能不能反序列化, 所以可能不能传到 celery 执行
