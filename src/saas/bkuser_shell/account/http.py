@@ -49,9 +49,9 @@ def send(url, method, params, timeout=None, **kwargs):
             session.headers.update({"Content-Type": "application/json; chartset=utf-8"})
             response = session.request(method="POST", url=url, data=json.dumps(params), timeout=timeout, **kwargs)
         else:
-            raise Exception(_(u"异常请求方式，%s") % method)
+            raise Exception(_("异常请求方式，%s") % method)
     except requests.exceptions.Timeout:
-        err_msg = _("请求超时，url=%s，method=%s，params=%s，timeout=%s") % (
+        err_msg = "Request Timeout，url=%s，method=%s，params=%s，timeout=%s" % (
             url,
             method,
             params,
@@ -62,7 +62,7 @@ def send(url, method, params, timeout=None, **kwargs):
     logger.debug("请求记录, url=%s, method=%s, params=%s, response=%s" % (url, method, params, response))
 
     if response.status_code != requests.codes.ok:
-        err_msg = _("返回异常状态码，status_code=%s，url=%s，method=%s，" u"params=%s") % (
+        err_msg = "Response status code not 200，status_code=%s，url=%s，method=%s，params=%s" % (
             response.status_code,
             url,
             method,
@@ -73,7 +73,7 @@ def send(url, method, params, timeout=None, **kwargs):
     try:
         return response.json()
     except Exception:
-        err_msg = _("返回内容不符合 JSON 格式，url=%s，method=%s，params=%s，error=%s，" u"response=%s") % (
+        err_msg = "Response body not json format，url=%s，method=%s，params=%s，error=%s，response=%s" % (
             url,
             method,
             json.dumps(params),

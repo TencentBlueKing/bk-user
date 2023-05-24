@@ -193,7 +193,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
         # 过期状态，续期后需要调整为正常状态
         # Note: 前提是基于EXPIRED状态一定是从NORMAL状态变更来的
-        if instance.status == ProfileStatus.EXPIRED.value and instance.account_expiration_date > now():
+        if instance.status == ProfileStatus.EXPIRED.value and instance.account_expiration_date > now().date():
             instance.status = ProfileStatus.NORMAL.value
 
         try:
