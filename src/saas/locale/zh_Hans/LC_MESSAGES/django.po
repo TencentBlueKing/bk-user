@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: bkuser_shell/account/apps.py:18
 msgid "account"
@@ -23,28 +24,28 @@ msgstr "account"
 
 #: bkuser_shell/account/constants.py:23
 msgid "普通用户"
-msgstr "Regular User"
+msgstr "普通用户"
 
 #: bkuser_shell/account/constants.py:24
 msgid "超级管理员"
-msgstr "Super Administrator"
+msgstr "超级管理员"
 
 #: bkuser_shell/account/constants.py:25
 msgid "开发者"
-msgstr "Developer"
+msgstr "开发者"
 
 #: bkuser_shell/account/constants.py:26
 msgid "职能化用户"
-msgstr "Functional users"
+msgstr "职能化用户"
 
 #: bkuser_shell/account/constants.py:27
 msgid "审计员"
-msgstr "Auditor"
+msgstr "审计员"
 
 #: bkuser_shell/account/http.py:52
 #, python-format
 msgid "异常请求方式，%s"
-msgstr "Abnormal request method, %s"
+msgstr "异常请求方式，%s"
 
 #: bkuser_shell/account/models.py:64
 msgid "date joined"
@@ -60,52 +61,52 @@ msgstr "users"
 
 #: bkuser_shell/common/context_processors.py:27
 msgid "用户管理 | 腾讯蓝鲸智云"
-msgstr "User Management | BlueKing"
+msgstr "用户管理 | 腾讯蓝鲸智云"
 
 #: bkuser_shell/common/error_codes.py:135
 msgid "无法找到页面模版"
-msgstr "Unable to find page template"
+msgstr "无法找到页面模版"
 
 #: bkuser_shell/common/error_codes.py:142
 msgid "版本日志格式错误"
-msgstr "Version log format error"
+msgstr "版本日志格式错误"
 
 #: bkuser_shell/common/exception_handler.py:52
 msgid "您要找的资源无法被找到"
-msgstr "The resource you are looking for cannot be found."
+msgstr "您要找的资源无法被找到"
 
 #: bkuser_shell/common/exception_handler.py:54
 msgid "您没有执行该操作的权限"
-msgstr "You do not have permission to perform this operation."
+msgstr "您没有执行该操作的权限"
 
 #: bkuser_shell/common/exception_handler.py:66
 msgid "SaaS 后端服务异常，请检查日志以获得更多的信息"
-msgstr "SaaS backend service is abnormal, please check the logs for more information."
+msgstr "SaaS 后端服务异常，请检查日志以获得更多的信息"
 
 #: bkuser_shell/common/exception_handler.py:76
 msgid "参数 {} 校验错误: {}"
-msgstr "Parameter {} validation error: {}"
+msgstr "参数 {} 校验错误: {}"
 
 #: bkuser_shell/common/exceptions.py:23
 msgid "APP异常"
-msgstr "App Error"
+msgstr "APP异常"
 
 #: bkuser_shell/common/exceptions.py:55
 msgid "客户端请求异常"
-msgstr "Client request exception"
+msgstr "客户端请求异常"
 
 #: bkuser_shell/common/exceptions.py:62
 msgid "服务端服务异常"
-msgstr "Server service exception."
+msgstr "服务端服务异常"
 
 #: bkuser_shell/common/exceptions.py:118
 msgid "登陆请求经JWT检测失败"
-msgstr "JWT verification failed for login request"
+msgstr "登陆请求经JWT检测失败"
 
 #: bkuser_shell/common/exceptions.py:131
 msgid "网络异常导致远程服务失效"
-msgstr "Remote service failure due to network abnormality"
+msgstr "网络异常导致远程服务失效"
 
 #: bkuser_shell/common/exceptions.py:138
 msgid "远程服务请求结果异常"
-msgstr "Remote service request result exception"
+msgstr "远程服务请求结果异常"
