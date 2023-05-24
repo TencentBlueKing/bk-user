@@ -670,9 +670,7 @@ export default {
         this.isEmptyDepartment = false;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
-        if (this.handleTabData.totalNumber === 0) {
-          this.isEmptyDepartment = true;
-        } else if (this.paginationConfig.count === 0) {
+        if (this.paginationConfig.count === 0) {
           this.isTableDataEmpty = true;
         }
 

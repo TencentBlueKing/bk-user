@@ -94,7 +94,7 @@ export default {
   data() {
     return {
       basicLoading: true,
-      errorMessage: this.$t('审计日志为空，无法导出'),
+      errorMessage: this.$t('审计日志为空, 无法导出'),
       paginationConfig: {
         current: 1,
         count: 1,
