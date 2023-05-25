@@ -11,7 +11,8 @@
   <div class="reset-wrapper">
     <div class="reset-box-content" :class="{ 'before-set': hasSet === false, 'has-set': hasSet === true }">
       <div class="login-heard">
-        <img src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
+        <img v-if="$i18n.locale === 'zh-cn'" src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
+        <img v-else src="../../images/logo_en.png" :alt="$t('蓝鲸智云')" width="160">
       </div>
       <div class="login-content">
         <div class="reset-pw">

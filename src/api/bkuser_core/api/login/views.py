@@ -38,9 +38,9 @@ from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.cache import clear_cache_if_succeed
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.profiles.constants import ProfileStatus
+from bkuser_core.profiles.constants import ProfileStatus, StaffStatus
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
-from bkuser_core.profiles.utils import make_passwd_reset_url_by_token, parse_username_domain
+from bkuser_core.profiles.utils import align_country_iso_code, make_passwd_reset_url_by_token, parse_username_domain
 from bkuser_core.profiles.validators import validate_username
 from bkuser_core.user_settings.loader import ConfigProvider
 
@@ -134,6 +134,17 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 raise error_codes.PASSWORD_ERROR
                 # NOTE: 安全原因, 不能返回账户状态
                 # raise error_codes.USER_IS_LOCKED
+            elif profile.staff_status == StaffStatus.OUT.value:
+                create_profile_log(
+                    profile=profile,
+                    operation="LogIn",
+                    request=request,
+                    params={"is_success": False, "reason": LogInFailReason.RESIGNED_USER.value},
+                )
+                logger.info("login check, profile<%s> of %s is resigned", profile.username, message_detail)
+                raise error_codes.PASSWORD_ERROR
+                # NOTE: 安全原因, 不能返回账户状态
+                # raise error_codes.USER_IS_RESIGNED
 
             # 获取密码配置
             auto_unlock_seconds = int(config_loader["auto_unlock_seconds"])
@@ -272,6 +283,10 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         username = serializer.validated_data.pop("username")
         domain = serializer.validated_data.pop("domain", None)
 
+        iso_code = None
+        if "iso_code" in validated_data:
+            iso_code = validated_data.pop("iso_code")
+
         try:
             category = ProfileCategory.objects.get(domain=domain)
             # 当 domain 存在时，校验 username
@@ -295,6 +310,24 @@ class ProfileLoginViewSet(viewsets.ViewSet):
         )
         if created:
             logger.info("user<%s/%s> created by login", category.id, username)
+
+        if iso_code:
+            try:
+                # NOTE: 这里直接用iso_code设置country_code, 无视原来的country_code
+                # 原因: 目前产品只暴露iso_code, country_code是内部的
+                profile.country_code, profile.iso_code = align_country_iso_code(
+                    country_code="",
+                    iso_code=iso_code,
+                )
+            except ValueError:
+                profile.country_code = settings.DEFAULT_COUNTRY_CODE
+                profile.iso_code = settings.DEFAULT_IOS_CODE
+
+            try:
+                profile.save()
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("failed to update iso_code for profile %s", username)
+                # do nothing
 
         return Response(data=ProfileSerializer(profile, context={"request": request}).data)
 

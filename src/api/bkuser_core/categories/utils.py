@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TimeContext:
     start_time: float = field(default_factory=time.time)
-    start_clock: float = field(default_factory=time.clock)
+    start_clock: float = field(default_factory=time.clock)  # type: ignore[attr-defined]
     end_time: Optional[float] = None
     end_clock: Optional[float] = None
 

@@ -77,7 +77,8 @@ class GeneralLogOutputSLZ(serializers.Serializer):
 class LoginLogListInputSLZ(LogListInputSLZ):
     """Login log list request"""
 
-    pass
+    is_success = serializers.BooleanField(required=False, help_text=_("登录状态"))
+    username = serializers.CharField(required=False, help_text=_("登录用户名"))
 
 
 class LoginLogOutputSLZ(serializers.Serializer):
@@ -132,9 +133,10 @@ class LoginLogExportOutputSLZ(serializers.Serializer):
         return PLACE_HOLDER
 
     def get_status(self, obj) -> str:
+        # bugfix: ugettext_lazy for excel export
         if obj.is_success:
-            return "成功"
-        return "失败"
+            return str(_("成功"))
+        return str(_("失败"))
 
     def get_reason(self, obj) -> Optional[str]:
         """get reason display name"""

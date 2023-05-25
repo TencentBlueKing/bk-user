@@ -155,6 +155,7 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
     staff_status = serializers.CharField()
 
     # not required
+    logo = serializers.CharField(required=False)
     position = serializers.IntegerField(required=False)
     wx_userid = serializers.CharField(required=False, allow_blank=True, allow_null=True, default="")
     qq = serializers.CharField(required=False, allow_blank=True, allow_null=True, default="")
@@ -171,7 +172,6 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
     # NOTE: 区别
     # extras = serializers.JSONField(required=False)
     # domain = serializers.CharField(validators=[validate_domain], required=False)
-    # logo = CharField(required=False)
     # NOTE: 其他字段, 自行放入extras
 
     class Meta:
@@ -184,6 +184,7 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
             "telephone",
             "status",
             "staff_status",
+            "logo",
             "position",
             "wx_userid",
             "qq",

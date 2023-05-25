@@ -69,6 +69,7 @@ import {
   bkVirtualScroll,
   bkOverflowTips,
   bkVersionDetail,
+  bkLink,
 } from 'bk-magic-vue';
 
 // bkDiff 组件体积较大且不是很常用，因此注释掉。如果需要，打开注释即可
@@ -137,6 +138,7 @@ bkOverflowTips.setDefaultProps({
   delay: [400, 0],
 });
 Vue.use(bkOverflowTips);
+Vue.use(bkLink);
 
 // Vue prototype mount
 Vue.prototype.$bkInfo = bkInfoBox;

@@ -47,6 +47,7 @@ from bkuser_core.profiles.utils import (
     parse_username_domain,
     should_check_old_password,
 )
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
@@ -189,6 +190,11 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         except ValueError:
             instance.country_code = settings.DEFAULT_COUNTRY_CODE
             instance.iso_code = settings.DEFAULT_IOS_CODE
+
+        # 过期状态，续期后需要调整为正常状态
+        # Note: 前提是基于EXPIRED状态一定是从NORMAL状态变更来的
+        if instance.status == ProfileStatus.EXPIRED.value and instance.account_expiration_date > now().date():
+            instance.status = ProfileStatus.NORMAL.value
 
         try:
             instance.save()

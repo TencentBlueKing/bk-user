@@ -22,7 +22,7 @@ DEBUG = True
 # ===============================================================================
 SITE_URL = env("SITE_URL", default="/t/%s/" % APP_ID)
 SITE_PREFIX = BK_PAAS_URL + SITE_URL
-BUILD_STATIC = "%sstatic" % SITE_URL
+BUILD_STATIC = env("BK_STATIC_URL", default="%sstatic" % SITE_URL)
 
 # ===============================================================================
 # 日志设置

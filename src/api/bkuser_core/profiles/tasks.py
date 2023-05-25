@@ -209,6 +209,9 @@ def change_profile_status_for_account_expiration():
     expired_profiles = Profile.objects.filter(
         category_id__in=category_ids,
         account_expiration_date__lt=datetime.date.today(),
+        # Note: "禁用"状态比"已过期"状态优先级高，所以这里只会处理正常状态的时候过期场景
+        # TODO: DISABLED/DELETED/LOCKED 这些非正常状态，需要在转为正常状态的时先判断是否过期，如果过期则调整为已过期状态
+        #  现阶段非正常态变更为正常态时，暂时不处理，只通过该周期任务延期一天处理（PS: 现在状态变更位置过于离散，待实现统一方法对状态变更后的计算下个状态后考虑）
         status__in=[ProfileStatus.NORMAL.value, ProfileStatus.DISABLED.value],
     )
     expired_profiles.update(status=ProfileStatus.EXPIRED.value)

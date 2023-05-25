@@ -29,12 +29,12 @@ class IAMCallbackMethods(AutoLowerEnum):
     SEARCH_INSTANCE = auto()
 
     _choices_labels = (
-        (LIST_ATTR, "查询某个资源类型可用于配置权限的属性列表"),
-        (LIST_ATTR_VALUE, "获取一个资源类型某个属性的值列表"),
-        (LIST_INSTANCE, "根据过滤条件查询实例"),
-        (FETCH_INSTANCE_INFO, "批量获取资源实例详情"),
-        (LIST_INSTANCE_BY_POLICY, "根据策略表达式查询资源实例"),
-        (SEARCH_INSTANCE, "搜索资源实例"),
+        (LIST_ATTR, _("查询某个资源类型可用于配置权限的属性列表")),
+        (LIST_ATTR_VALUE, _("获取一个资源类型某个属性的值列表")),
+        (LIST_INSTANCE, _("根据过滤条件查询实例")),
+        (FETCH_INSTANCE_INFO, _("批量获取资源实例详情")),
+        (LIST_INSTANCE_BY_POLICY, _("根据策略表达式查询资源实例")),
+        (SEARCH_INSTANCE, _("搜索资源实例")),
     )
 
 
@@ -67,18 +67,18 @@ class IAMAction(AutoLowerEnum):
     @classmethod
     def get_choice_label(cls, action_id: "IAMAction") -> str:
         return {
-            cls.MANAGE_FIELD: "用户字段管理",
-            cls.VIEW_FIELD: "查看字段",
-            cls.VIEW_AUDIT: "审计信息查看",
-            cls.CREATE_LOCAL_CATEGORY: "本地用户目录新建",
-            cls.CREATE_LDAP_CATEGORY: "LDAP目录新建",
-            cls.CREATE_MAD_CATEGORY: "MAD目录新建",
-            cls.CREATE_CUSTOM_CATEGORY: "自定义目录新建",
-            cls.MANAGE_CATEGORY: "目录管理",
-            cls.VIEW_CATEGORY: "查看目录",
-            cls.CREATE_ROOT_DEPARTMENT: "根组织新建",
-            cls.MANAGE_DEPARTMENT: "组织和成员管理",
-            cls.VIEW_DEPARTMENT: "组织和成员查看",
+            cls.MANAGE_FIELD: _("用户字段管理"),
+            cls.VIEW_FIELD: _("查看字段"),
+            cls.VIEW_AUDIT: _("审计信息查看"),
+            cls.CREATE_LOCAL_CATEGORY: _("本地用户目录新建"),
+            cls.CREATE_LDAP_CATEGORY: _("LDAP目录新建"),
+            cls.CREATE_MAD_CATEGORY: _("MAD目录新建"),
+            cls.CREATE_CUSTOM_CATEGORY: _("自定义目录新建"),
+            cls.MANAGE_CATEGORY: _("目录管理"),
+            cls.VIEW_CATEGORY: _("查看目录"),
+            cls.CREATE_ROOT_DEPARTMENT: _("根组织新建"),
+            cls.MANAGE_DEPARTMENT: _("组织和成员管理"),
+            cls.VIEW_DEPARTMENT: _("组织和成员查看"),
         }[action_id]
 
     @classmethod

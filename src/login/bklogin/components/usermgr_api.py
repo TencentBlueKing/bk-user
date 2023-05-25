@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 
 
 from django.conf import settings
+from django.utils import translation
 
 from bklogin.common.log import logger
 from bklogin.components.esb import _call_esb_api
@@ -25,7 +26,12 @@ usermgr api
 BK_USERMGR_HOST = settings.BK_USERMGR_API_URL
 
 
-def _call_usermgr_api(http_func, url, data, headers=None):
+def _call_usermgr_api(http_func, url, data):
+    headers = {
+        "Blueking-Language": translation.get_language(),
+        "Content-Type": "application/json",
+    }
+
     try:
         ok, resp_data = http_func(url, data, headers=headers)
         if not ok:
@@ -39,9 +45,10 @@ def _call_usermgr_api(http_func, url, data, headers=None):
     # TODO: still use the result to verify?
     if not resp_data.get("result"):
         logger.info(
-            "_call_usermgr_api fail: method=%s, url=%s, data=%s, response=%s",
+            "_call_usermgr_api fail: method=%s, url=%s, header=%s, data=%s, response=%s",
             http_func.__name__,
             url,
+            headers,
             _remove_sensitive_info(data),
             resp_data,
         )
@@ -50,7 +57,7 @@ def _call_usermgr_api(http_func, url, data, headers=None):
     return True, 0, "ok", resp_data.get("data")
 
 
-def direct_authenticate(username, password, language="", domain=""):
+def direct_authenticate(username, password, domain=""):
     """
     认证用户名和密码
     username: 用户名、电话号码、邮箱三选一，如果存在重名，会验证失败
@@ -69,10 +76,6 @@ def direct_authenticate(username, password, language="", domain=""):
         http_post,
         url,
         data,
-        headers={
-            "Blueking-Language": language,
-            "Content-Type": "application/json",
-        },
     )
     return ok, code, message, _data or {}
 
@@ -136,7 +139,7 @@ def direct_get_profile_by_code(code, fields="username"):
     return ok, message, _data
 
 
-def esb_authenticate(username, password, language="", domain=""):
+def esb_authenticate(username, password, domain=""):
     """
     认证用户名和密码
     username: 用户名、电话号码、邮箱三选一，如果存在重名，会验证失败

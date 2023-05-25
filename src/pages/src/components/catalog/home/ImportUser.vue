@@ -13,8 +13,8 @@
       <template v-if="!uploadInfo.name">
         <div class="bk-upload-content">
           <img src="../../../images/svg/upload.svg">
-          <span>拖拽到此处上传或</span>
-          <span class="bk-click-upload">点击上传</span>
+          <span>{{ $t('将文件拖到此处或') }}</span>
+          <span class="bk-click-upload">{{ $t('点击上传') }}</span>
         </div>
       </template>
       <template v-else>
