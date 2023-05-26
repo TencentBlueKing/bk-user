@@ -22,6 +22,7 @@ from .constants import LogInFailReason, ResetPasswordFailReason
 class ResetPasswordManager(models.Manager):
     """重置密码DB管理器"""
 
+    # pylint: disable=function-name-too-long
     def latest_check_old_password_failed_count(self):
         """最近一段时间重置密码失败的次数，其中最近一段时间指从上一次成功重置密码后到现在"""
         # 查找最近一次成功的时间

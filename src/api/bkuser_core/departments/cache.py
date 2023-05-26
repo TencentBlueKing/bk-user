@@ -15,6 +15,7 @@ LOCAL_CACHE_KEY_DEPARTMENT_FULL_NAME_PREFIX = "dept:full_name"
 LOCAL_CACHE_KEY_DEPARTMENT_HAS_CHILDREN_PREFIX = "dept:has_children"
 
 
+# pylint: disable=function-name-too-long
 def get_department_full_name_from_local_cache(department_id: int) -> Tuple[bool, str]:
     if not department_id:
         return False, ""
@@ -28,6 +29,7 @@ def get_department_full_name_from_local_cache(department_id: int) -> Tuple[bool,
     return False, ""
 
 
+# pylint: disable=function-name-too-long
 def set_department_full_name_to_local_cache(department_id: int, full_name: str, timeout: int = 5) -> None:
     if not department_id:
         return
@@ -37,6 +39,7 @@ def set_department_full_name_to_local_cache(department_id: int, full_name: str, 
     cache.set(key, full_name, timeout)
 
 
+# pylint: disable=function-name-too-long
 def get_department_has_children_from_local_cache(department_id: int) -> Tuple[bool, bool]:
     if not department_id:
         return False, False
@@ -52,6 +55,7 @@ def get_department_has_children_from_local_cache(department_id: int) -> Tuple[bo
     return False, False
 
 
+# pylint: disable=function-name-too-long
 def set_department_has_children_to_local_cache(department_id: int, has_children: bool, timeout: int = 5) -> None:
     if not department_id:
         return

@@ -59,6 +59,7 @@ def get_client_by_raw_username(user, **kwargs):
     return ComponentClient(conf.APP_ID, conf.APP_TOKEN, common_args=common_args)
 
 
+# pylint: disable=function-name-too-long
 def get_client_with_app_code_app_secret_by_user(app_code, app_secret, user, **kwargs):
     """根据app_code/app_secret/user实例返回一个client, 解决跨环境调用时需要多套app_code/app_secret调用esb接口的问题
 
