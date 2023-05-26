@@ -197,6 +197,7 @@ class Permission:
 # TODO: use with_cache to speed up
 
 
+# pylint: disable=function-name-too-long
 def new_action_without_resource_permission(action_id: IAMAction):
     class ActionWithoutResourcePermission(BasePermission):
         def has_permission(self, request, view):
@@ -228,6 +229,7 @@ def new_department_permission(action_id: IAMAction):
     return DepartmentIdInURLPermission
 
 
+# pylint: disable=function-name-too-long
 def new_department_permission_via_profile(action_id: IAMAction):
     class ProfileIdInURLPermission(BasePermission):
         def has_permission(self, request, view):

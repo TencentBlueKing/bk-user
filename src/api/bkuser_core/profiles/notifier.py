@@ -78,6 +78,7 @@ def get_expiration_dates(notice_interval):
     return expiration_dates
 
 
+# pylint: disable=function-name-too-long
 def get_config_from_all_local_categories():
     """一次性拉取所有目录的ConfigProvider"""
     category_config_map = {}
@@ -193,6 +194,7 @@ def get_profiles_for_account_expiration():
     return expiring_profile_list, expired_profile_list
 
 
+# pylint: disable=function-name-too-long
 def get_profiles_for_password_expiration():
     """
     获取 需要进行密码过期相关通知的用户
