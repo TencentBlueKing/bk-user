@@ -200,8 +200,7 @@ def notice_for_password_expiration():
             time.sleep(settings.NOTICE_INTERVAL_SECONDS)
 
 
-@periodic_task(run_every=crontab(minute="0", hour="4"))
-# pylint: disable=function-name-too-long
+@periodic_task(run_every=crontab(minute="0", hour="4"))  # pylint: disable=function-name-too-long
 def change_profile_status_for_account_expiration():
     """
     对账号过期的用户进行状态变更
@@ -218,8 +217,7 @@ def change_profile_status_for_account_expiration():
     expired_profiles.update(status=ProfileStatus.EXPIRED.value)
 
 
-@periodic_task(run_every=crontab(minute="0", hour="5"))
-# pylint: disable=function-name-too-long
+@periodic_task(run_every=crontab(minute="0", hour="5"))  # pylint: disable=function-name-too-long
 def change_profile_status_for_account_locking():
     """
     对长时间未登录的用户进行状态冻结
