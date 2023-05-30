@@ -255,8 +255,8 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
             raise error_codes.USER_IS_EXPIRED
 
-    @staticmethod
     # pylint: disable=function-name-too-long
+    @staticmethod
     def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
         data = {}
         try:
