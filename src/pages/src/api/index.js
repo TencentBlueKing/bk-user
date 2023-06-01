@@ -16,8 +16,8 @@ import CachedPromise from './cached-promise';
 import RequestQueue from './request-queue';
 import { messageError } from '@/common/bkmagic';
 import store from '@/store';
-import UrlParse from 'url-parse';
-import { parse } from 'query-string';
+// import UrlParse from 'url-parse';
+// import { parse } from 'query-string';
 // axios 实例
 const axiosInstance = axios.create({
   withCredentials: true,
@@ -30,20 +30,20 @@ const axiosInstance = axios.create({
 /**
  * request interceptor
  */
-axiosInstance.interceptors.request.use((config) => {
-  const urlObj = new UrlParse(config.url); // { query: '?q=1' }
-  const query = parse(urlObj.query); // { q: '1' }
-  if (query['mock-file']) {
-    if (!urlObj.pathname) {
-      config.url = `http://localhost:8089/mock/${urlObj.query}`;
-    } else if (urlObj.pathname === '/') {
-      config.url = `http://localhost:8089/mock/${urlObj.query}`;
-    } else {
-      config.url = `http://localhost:8089${urlObj.pathname}${urlObj.query}`;
-    }
-  }
-  return config;
-}, error => Promise.reject(error));
+// axiosInstance.interceptors.request.use((config) => {
+//   const urlObj = new UrlParse(config.url); // { query: '?q=1' }
+//   const query = parse(urlObj.query); // { q: '1' }
+//   if (query['mock-file']) {
+//     if (!urlObj.pathname) {
+//       config.url = `http://localhost:8089/mock/${urlObj.query}`;
+//     } else if (urlObj.pathname === '/') {
+//       config.url = `http://localhost:8089/mock/${urlObj.query}`;
+//     } else {
+//       config.url = `http://localhost:8089${urlObj.pathname}${urlObj.query}`;
+//     }
+//   }
+//   return config;
+// }, error => Promise.reject(error));
 
 /**
  * response interceptor
