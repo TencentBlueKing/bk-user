@@ -17,7 +17,7 @@
         data-test-id="list_emailInfo">
         <ul class="template-config clearfix">
           <li class="email-block">
-            <h3 class="email-block-name">{{$t('即将到期提醒')}}</h3>
+            <h3 class="email-block-name">{{createAccountEmail ? createAccountEmail : $t('即将到期提醒')}}</h3>
             <div class="email-info clearfix">
               <p class="title">{{$t('标题')}}<span class="star">*</span></p>
               <bk-input
@@ -39,7 +39,7 @@
             </div>
           </li>
           <li class="email-block">
-            <h3 class="email-block-name">{{$t('已过期提醒')}}</h3>
+            <h3 class="email-block-name">{{resetPasswordEmail ? resetPasswordEmail : $t('已过期提醒')}}</h3>
             <div class="email-info clearfix">
               <p class="title">{{$t('标题')}}<span class="star">*</span></p>
               <bk-input
@@ -123,6 +123,14 @@ export default {
       default: () => '',
     },
     expiredSmsKey: {
+      type: String,
+      default: () => '',
+    },
+    createAccountEmail: {
+      type: String,
+      default: () => '',
+    },
+    resetPasswordEmail: {
       type: String,
       default: () => '',
     },

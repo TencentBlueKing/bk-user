@@ -211,8 +211,8 @@
             :is-template="isEmailTemplate"
             :expiring-email-key="'init_mail_config'"
             :expired-email-key="'reset_mail_config'"
-            :expiring-sms-key="''"
-            :expired-sms-key="''"
+            :create-account-email="$t('创建账户邮件')"
+            :reset-password-email="$t('重设密码后的邮件')"
             @handleEditorText="handleEditorText">
             <template slot="label">
               <div

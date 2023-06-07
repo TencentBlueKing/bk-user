@@ -260,8 +260,8 @@ export default {
   标题: 'Title',
   发件人: 'Sender',
   正文: 'Body',
-  创建账户邮件: 'Create account email',
-  重设密码后的邮件: 'Reset the password after the message',
+  创建账户邮件: 'Create Account Email',
+  重设密码后的邮件: 'Reset Password Email',
   '最多不得超过12个字符（6个汉字）': 'No more than 12 characters (6 Chinese characters)',
   // audit 审计
   昨天: 'Yestoday',
