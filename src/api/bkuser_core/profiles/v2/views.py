@@ -411,6 +411,30 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         """更新用户部分字段"""
         return self._update(request, partial=True)
 
+    @swagger_auto_schema(
+        query_serializer=AdvancedRetrieveSerializer(),
+        request_body=local_serializers.UpdateProfileLanguageSerializer,
+        responses={"200": Response()},
+    )
+    def update_language(self, request, *args, **kwargs):
+        """更新用户语言"""
+        instance = self.get_object()
+        serializer = local_serializers.UpdateProfileLanguageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        # 更新
+        instance.language = validated_data["language"]
+        instance.save(update_fields=["update_time", "language"])
+
+        create_general_log(
+            operator=request.operator,
+            operate_type=OperationType.UPDATE.value,
+            operator_obj=instance,
+            request=request,
+        )
+        return Response()
+
     @swagger_auto_schema(query_serializer=AdvancedRetrieveSerializer())
     def destroy(self, request, *args, **kwargs):
         """删除用户

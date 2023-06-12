@@ -46,6 +46,16 @@ urlpatterns = [
         name="profiles.action",
     ),
     url(
+        r"^api/v2/profiles/%s/languages/$" % PVAR_PROFILE_ID,
+        views.ProfileViewSet.as_view(
+            {
+                # Note: This API allows all SaaS platforms to modify the language of their users
+                "put": "update_language",
+            }
+        ),
+        name="profiles.language",
+    ),
+    url(
         r"^api/v2/profiles/%s/departments/$" % PVAR_PROFILE_ID,
         views.ProfileViewSet.as_view(
             {
