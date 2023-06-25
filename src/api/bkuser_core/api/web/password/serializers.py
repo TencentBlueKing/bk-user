@@ -53,6 +53,14 @@ class PasswordModifyInputSLZ(serializers.Serializer):
     old_password = Base64OrPlainField(required=True, max_length=254)
     new_password = Base64OrPlainField(required=True, max_length=254)
 
+    def validate(self, attrs):
+        # 根据context，获取操作用户的目录id
+        category_id = self.context["category_id"]
+        # 解析密码是否加密
+        attrs["old_password"] = get_raw_password(category_id, attrs["old_password"])
+        attrs["new_password"] = get_raw_password(category_id, attrs["new_password"])
+        return attrs
+
 
 class PasswordListSettingsByTokenInputSLZ(serializers.Serializer):
-    token = serializers.CharField(required=True, max_length=254)
+    token = serializers.CharField(required=True, max_length=254, allow_blank=True)
