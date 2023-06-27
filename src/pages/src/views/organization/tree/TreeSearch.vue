@@ -118,13 +118,19 @@
           </li>
         </ul>
       </div>
-      <p class="no-data" v-show="!searchList.length && isNodata && !searchLoading">{{$t('没有找到相关的结果')}}</p>
+      <div class="no-data" v-show="!searchList.length && isNodata && !searchLoading">
+        <EmptyComponent
+          :is-search-empty="!searchList.length"
+          @handleEmpty="closeSearch" />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import EmptyComponent from '@/components/empty';
 export default {
+  components: { EmptyComponent },
   data() {
     return {
       searchKey: '',
@@ -622,8 +628,7 @@ export default {
 
   .no-data {
     text-align: center;
-    min-height: 62px;
-    line-height: 60px;
+    padding-bottom: 30px;
     font-size: 14px;
     color: #979ba5;
     border: 1px solid #dcdee5;

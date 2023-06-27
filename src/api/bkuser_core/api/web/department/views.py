@@ -110,8 +110,7 @@ class DepartmentRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
     permission_classes = [ManageDepartmentPermission]
 
-    # NOTE: no audit log here
-
+    @audit_general_log(operate_type=OperationType.DELETE.value)
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         # 当组织存在下级时无法删除

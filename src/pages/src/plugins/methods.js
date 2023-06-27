@@ -290,6 +290,9 @@ const methods = {
 
     // 转换字符串尖括号
     Vue.prototype.$xssVerification = function (data) {
+      if (typeof data === 'number') {
+        data = data.toString();
+      }
       return data.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     };
   },

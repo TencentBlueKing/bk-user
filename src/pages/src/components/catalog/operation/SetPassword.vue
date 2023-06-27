@@ -136,7 +136,7 @@
           <bk-input
             v-model.number="defaultPassword.freeze_after_days.value"
             type="number"
-            style="width: 120px;margin: 0 8px;"
+            style="width: 130px;margin: 0 8px;"
             :class="{ 'king-input': true, error: freezeDaysError }"
             @input="validateFreezeDays">
             <template slot="append">
@@ -217,7 +217,9 @@
             <template slot="label">
               <div
                 :class="['password-header', defaultPassword.init_password_method !== 'random_via_mail' ? 'hide' : '']">
-                <bk-checkbox-group v-model="randomPasswordList">
+                <bk-checkbox-group
+                  v-model="randomPasswordList"
+                  :class="$i18n.locale === 'en' ? 'checkbox-en' : 'checkbox-zh'">
                   <div
                     v-for="(item, index) in checkSendMethod" :key="index"
                     :class="['password-tab', item.status ? 'active-tab' : '']"
@@ -303,7 +305,9 @@
           @handleEditorText="handleEditorText">
           <template slot="label">
             <div class="password-header">
-              <bk-checkbox-group v-model="defaultPassword.password_expiration_notice_methods">
+              <bk-checkbox-group
+                :class="$i18n.locale === 'en' ? 'checkbox-en' : 'checkbox-zh'"
+                v-model="defaultPassword.password_expiration_notice_methods">
                 <div
                   v-for="(item, index) in checkboxInfo" :key="index"
                   :class="['password-tab', item.status ? 'active-tab' : '']"
@@ -676,7 +680,7 @@ export default {
       > .king-radio {
         cursor: pointer;
         padding: 0 38px 0 25px;
-        width: 20%;
+        width: 31%;
       }
       .input-content {
         display: flex;
@@ -791,7 +795,6 @@ export default {
         line-height: 50px;
         .bk-form-control {
           display: flex;
-          width: 85%;
           line-height: 50px;
           font-size: 14px;
           .password-tab {
@@ -802,6 +805,12 @@ export default {
               padding: 0 20px 0 5px;
             }
           }
+        }
+        .checkbox-zh {
+          width: 85% !important;
+        }
+        .checkbox-en {
+          width: 75% !important;
         }
         .edit-info {
           color: #3A84FF;

@@ -107,7 +107,7 @@
                     <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowAdd }]"></i>
                   </bk-button>
                   <ul class="bk-dropdown-list" slot="dropdown-content">
-                    <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户')}}</a></li>
+                    <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户1')}}</a></li>
                     <li><a href="javascript:;" @click="pullUserFn">{{$t('拉取已有用户')}}</a></li>
                   </ul>
                 </bk-dropdown-menu>
@@ -191,11 +191,15 @@
             <UserTable
               v-bkloading="{ isLoading: basicLoading, zIndex: 0 }"
               :user-message="userMessage"
+              :is-empty-search="isEmptySearch"
+              :is-table-data-error="isTableDataError"
+              :is-table-data-empty="isTableDataEmpty"
+              :is-click.sync="isClick"
+              :loading="basicLoading"
               :fields-list="fieldsList"
               :pagination="paginationConfig"
               :timer-map="timerMap"
               :status-map="statusMap"
-              :is-click.sync="isClick"
               @handlePageChange="handlePageChange"
               @handlePageLimitChange="handlePageLimitChange"
               @handleSetFieldList="handleSetFieldList"
@@ -203,7 +207,9 @@
               @updateTableData="updateTableData"
               @updateHeardList="updateHeardList"
               @isClickList="isClickList"
-              @deleteProfile="deleteProfile" />
+              @deleteProfile="deleteProfile"
+              @handleRefresh="getTableData"
+              @handleClickEmpty="handleClickEmpty" />
           </div>
         </div>
         <!-- 弹窗操作 -->
@@ -211,12 +217,13 @@
           <!-- 新增用户 侧边栏 -->
           <bk-sideslider
             class="king-sideslider"
-            :width="520"
+            :width="630"
             :show-mask="false"
             :is-show.sync="detailsBarInfo.isShow"
-            :quick-close="detailsBarInfo.quickClose"
+            :quick-close="true"
             :title="detailsBarInfo.title"
-            :style="{ visibility: isHideBar ? 'hidden' : 'visible' }">
+            :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
+            :before-close="beforeClose">
             <div slot="content" class="member-content" v-if="detailsBarInfo.isShow">
               <DetailsBar
                 :details-bar-info="detailsBarInfo"
@@ -407,6 +414,8 @@ export default {
       },
       // 表格请求出错
       isTableDataError: false,
+      // 表格请求结果为空
+      isTableDataEmpty: false,
       // 是否勾选了表格数据
       isClick: false,
       isShowSetDepartments: false,
@@ -685,6 +694,15 @@ export default {
             this.handleTabData.totalNumber = res.data.count;
           }
         }
+
+        this.isEmptyDepartment = false;
+        this.isTableDataEmpty = false;
+        this.isEmptySearch = false;
+        if (this.paginationConfig.count === 0) {
+          this.isTableDataEmpty = true;
+        }
+
+        this.isTableDataError = false;
       } catch (e) {
         console.warn(e);
         this.isTableDataError = true;
@@ -739,6 +757,14 @@ export default {
             this.handleTabData.totalNumber = res.data.count;
           }
         }
+
+        this.isEmptyDepartment = false;
+        this.isTableDataEmpty = false;
+        this.isEmptySearch = false;
+        if (this.paginationConfig.count === 0) {
+          this.isTableDataEmpty = true;
+        }
+
         this.isTableDataError = false;
       } catch (e) {
         console.warn(e);
@@ -813,8 +839,15 @@ export default {
         }
       });
     },
+    // 清空筛选条件
+    handleClickEmpty() {
+      this.tableSearchKey = [];
+      this.checkSearchKey = '';
+      this.getTableData();
+    },
     // 搜索table
     handleTableSearch(list) {
+      this.isTableDataEmpty = false;
       if (!list.length) return this.handleTableData();
       const valueList = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
       let key = '';
@@ -831,11 +864,13 @@ export default {
       const params = valueList.join('&');
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
         if (res.result) {
+          this.isEmptySearch = res.data.count === 0;
           this.filterUserData(res.data.results);
         }
       })
         .catch((e) => {
           console.warn(e);
+          this.isTableDataError = true;
         });
     },
     // 搜索文件配置列表
@@ -1037,7 +1072,6 @@ export default {
       this.detailsBarInfo.title = item.username;
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
-      this.detailsBarInfo.quickClose = true;
     },
     updateTableData(item) {
       this.tableData = item;
@@ -1125,14 +1159,14 @@ export default {
     // 编辑成员信息
     editProfile() {
       this.detailsBarInfo.type = 'edit';
-      this.detailsBarInfo.quickClose = false;
+      this.detailsBarInfo.title = this.$t('编辑用户');
     },
     handleCancelEdit() {
       if (this.detailsBarInfo.type === 'add') {
         this.detailsBarInfo.isShow = false;
       } else {
         this.detailsBarInfo.type = 'view';
-        this.detailsBarInfo.quickClose = true;
+        this.detailsBarInfo.title = this.$t('用户详情');
       }
     },
     // 新增用户 调用接口，拿到数据传给子组件
@@ -1141,7 +1175,6 @@ export default {
       this.detailsBarInfo.title = this.$t('新增用户');
       this.detailsBarInfo.type = 'add';
       this.detailsBarInfo.isShow = true;
-      this.detailsBarInfo.quickClose = false;
       // 设置所在的组织
       const department = this.treeSearchResult ? this.treeSearchResult : this.currentParam.item;
       this.detailsBarInfo.departments = [{
@@ -1327,6 +1360,25 @@ export default {
         .finally(() => {
           this.clickSecond = false;
         });
+    },
+    beforeClose() {
+      if (this.detailsBarInfo.type === 'view') {
+        this.detailsBarInfo.isShow = false;
+      } else {
+        if (window.changeInput) {
+          this.$bkInfo({
+            title: this.$t('确认离开当前页？'),
+            subTitle: this.$t('离开将会导致未保存信息丢失'),
+            okText: this.$t('离开'),
+            confirmFn: () => {
+              this.detailsBarInfo.isShow = false;
+              window.changeInput = false;
+            },
+          });
+        } else {
+          this.detailsBarInfo.isShow = false;
+        }
+      }
     },
     // 移入某个树节点
     handleMouseenter(event) {

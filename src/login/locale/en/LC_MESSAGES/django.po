@@ -726,7 +726,7 @@ msgstr "Forget password?"
 
 #: bklogin/templates/login.html:104
 msgid "技术支持"
-msgstr "Technical support"
+msgstr "Technical Support"
 
 #: bklogin/templates/login.html:105
 msgid "社区论坛"
@@ -734,7 +734,7 @@ msgstr "Community"
 
 #: bklogin/templates/login.html:106
 msgid "产品官网"
-msgstr "Home"
+msgstr "Official Website"
 
 #: bklogin/templates/login.html:108
 msgid "关注我们"

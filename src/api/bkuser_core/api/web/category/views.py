@@ -184,23 +184,32 @@ class CategorySettingNamespaceListCreateUpdateApi(
         metas = list_setting_metas(category.type, None, namespace)
         db_settings = Setting.objects.filter(meta__in=metas, category_id=category_id).all()
 
+        # 更新已存在
         for s in db_settings:
             key = s.meta.key
-            if key in ns_settings:
-                in_value = ns_settings[key]
+            if key not in ns_settings:
+                continue
+            in_value = ns_settings[key]
+            # 值变换才更新
+            if s.value != in_value["value"] or s.enabled != in_value["enabled"]:
                 s.value = in_value["value"]
                 s.enabled = in_value["enabled"]
                 s.save()
-
-                del ns_settings[key]
+                post_setting_update.send(
+                    sender=self,
+                    instance=s,
+                    operator=request.operator,
+                    extra_values={"request": request},
+                )
+            del ns_settings[key]
 
         metas_map = {m.key: m for m in metas}
-        # the left settings are new settings
+        # the left ns_settings are new settings
         for key, setting in ns_settings.items():
             if key not in metas_map:
                 continue
             meta = metas_map[key]
-            s, created = Setting.objects.update_or_create(
+            s, _ = Setting.objects.update_or_create(
                 meta=meta,
                 category_id=category_id,
                 defaults={
@@ -209,23 +218,17 @@ class CategorySettingNamespaceListCreateUpdateApi(
                 },
             )
 
-            if created:
-                post_setting_create.send(
-                    sender=self,
-                    instance=s,
-                    operator=request.operator,
-                    extra_values={"request": request},
-                )
-            else:
-                # 仅当更新成功时才发送信号
-                post_setting_update.send(
-                    sender=self,
-                    instance=s,
-                    operator=request.operator,
-                    extra_values={"request": request},
-                )
+            post_setting_create.send(
+                sender=self,
+                instance=s,
+                operator=request.operator,
+                extra_values={"request": request},
+            )
 
-        # Setting.objects.filter(meta__in=metas, category_id=category_id).all()
+        if ns_settings:
+            # 有新建的setting内容，刷新db_settings
+            db_settings = Setting.objects.filter(meta__in=metas, category_id=category_id).all()
+
         return Response(self.get_serializer_class()(db_settings, many=True).data)
 
 

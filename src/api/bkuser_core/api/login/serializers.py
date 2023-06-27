@@ -39,6 +39,8 @@ class LoginUpsertSerializer(serializers.Serializer):
     staff_status = serializers.CharField(required=False)
     wx_userid = serializers.CharField(required=False, allow_blank=True)
 
+    iso_code = serializers.CharField(required=False)
+
 
 class LoginBatchQuerySerializer(serializers.Serializer):
     username_list = serializers.ListField(child=serializers.CharField(), required=False)
@@ -56,6 +58,7 @@ class LoginBatchResponseSerializer(serializers.Serializer):
     time_zone = serializers.CharField()
     email = serializers.CharField()
     role = serializers.IntegerField()
+    iso_code = serializers.CharField()
 
     def get_username(self, data):
         return get_username(
@@ -87,6 +90,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "language",
             "domain",
             "category_id",
+            "iso_code",
             # NOTE: 这里缩减登陆成功之后的展示字段
             # "position",
             # "logo_url", => to logo?

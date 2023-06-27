@@ -384,3 +384,55 @@ export function clipboardCopy(content, callback) {
   callback && callback();
   document.body.removeChild(transfer);
 }
+
+/**
+ * 计算过期时间
+ */
+export function expireDate(val) {
+  const expireDate = new Date(val).getTime(); // 过期时间
+  const newDate = new Date().getTime(); // 当前时间
+  const newDays = expireDate - newDate;
+  // 相差天数
+  const days = Math.floor(newDays / (24 * 3600 * 1000));
+  let expireDateText = '';
+  if (days < 0) {
+    expireDateText = `${window.mainComponent.$t('已过期_过期时间_')}${moment(val).format('YYYY-MM-DD')}）`;
+  } else if (days > 0) {
+    expireDateText = `${days}${window.mainComponent.$t('天_过期时间_')}${moment(val).format('YYYY-MM-DD')}）`;
+  } else {
+    expireDateText = val;
+  }
+  return expireDateText;
+}
+
+export function expireDays(val, list) {
+  const expireDateList = [];
+  const expireDate = new Date(val).getTime(); // 过期时间
+  const newDate = new Date().getTime(); // 当前时间
+  const newDays = expireDate - newDate;
+  // 相差天数
+  const days = Math.floor(newDays / (24 * 3600 * 1000));
+  list.forEach((item) => {
+    const { days, text } = item;
+    if (item.days !== -1) {
+      const date = (val === '2100-01-01' || val === null) ? expireTime(new Date().getTime(), item.days) : expireTime(new Date(val).getTime(), item.days);
+      expireDateList.push({ days, text, date, time: `${window.mainComponent.$t('过期时间_')}${date}` });
+    } else {
+      expireDateList.push({ days, text, date: '2100-01-01' });
+    }
+  });
+  if (val !== '2100-01-01' && val !== null) {
+    const time = `${window.mainComponent.$t('过期时间_')}${val}`;
+    days > 0 ? expireDateList.unshift({ date: val, text: `${days}天`, time }) : expireDateList.unshift({ date: val, text: window.mainComponent.$t('已过期'), time });
+  }
+  return expireDateList;
+}
+
+export function expireTime(val, days) {
+  const currentDate = new Date((val / 1000 + (86400 * days)) * 1000);
+  const y = currentDate.getFullYear();
+  const m = currentDate.getMonth() + 1 < 10 ? `0${(currentDate.getMonth() + 1)}` : currentDate.getMonth() + 1;
+  const d = currentDate.getDate() < 10 ? `0${currentDate.getDate()}` : currentDate.getDate();
+  const newDate = `${y}-${m}-${d}`;
+  return newDate;
+}

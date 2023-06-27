@@ -9,39 +9,52 @@
   -->
 <template>
   <div data-test-id="profileInfo">
-    <ul v-if="profileInfoList.length">
-      <li class="infor-list" v-for="(item,index) in profileInfoList" :key="index">
-        <p class="desc">{{item.name}}
-          <span class="star" v-if="item.require">*</span>
-          <i
-            class="account-msg icon-user--l"
-            v-if="item.key === 'username'"
-            v-bk-tooltips="usernameTips"
-          ></i>
-          <i
-            class="account-msg icon-user--l"
-            v-if="item.key === 'display_name'"
-            v-bk-tooltips="item.name + $t('可随时修改，长度为1-32个字符')"
-          ></i>
-        </p>
-        <!-- 输入框 -->
-        <div class="input-text">
-          <InputPhone v-if="item.key === 'telephone'" :item="item" :edit-status="editStatus" />
-          <InputDate
-            v-else-if="item.key.includes(dateKey) || item.type === 'timer'"
-            :item="item" :edit-status="editStatus" />
-          <InputString
-            v-else-if="item.type === 'string' || item.type === 'number'"
-            :item="item"
-            :edit-status="editStatus" />
-          <InputSelect
-            v-else-if="item.type.indexOf('enum') !== -1"
-            :item="item"
-            :edit-status="editStatus"
-            :status-map="statusMap" />
-        </div>
-      </li>
-    </ul>
+    <bk-form
+      :model="profileInfoData"
+      :rules="rules"
+      ref="validateForm"
+      form-type="vertical"
+      v-if="profileInfoList.length">
+      <bk-form-item
+        class="infor-list"
+        v-for="(item,index) in profileInfoList" :key="index"
+        :label="item.display_name"
+        :required="item.require"
+        :property="item.key"
+        :error-display-type="'normal'">
+        <InputPhone
+          ref="phone"
+          v-if="item.key === 'telephone'"
+          :item="item"
+          :edit-status="editStatus"
+          @phone="(val) => item.isError = val" />
+        <bk-select
+          v-else-if="item.key.includes(dateKey)"
+          v-model="item.value"
+          :clearable="!item.require"
+          :disabled="editStatus && !item.editable"
+          @change="changSelect">
+          <bk-option
+            v-for="option in accountValidDaysList"
+            :key="option.date"
+            :id="option.date"
+            :name="option.time ? `${option.text}（${option.time}）` : option.text">
+          </bk-option>
+        </bk-select>
+        <InputDate
+          v-else-if="item.type === 'timer'"
+          :item="item" :edit-status="editStatus" />
+        <InputString
+          v-else-if="item.type === 'string' || item.type === 'number'"
+          :item="item"
+          :edit-status="editStatus" />
+        <InputSelect
+          v-else-if="item.type.indexOf('enum') !== -1"
+          :item="item"
+          :edit-status="editStatus"
+          :status-map="statusMap" />
+      </bk-form-item>
+    </bk-form>
   </div>
 
 </template>
@@ -51,7 +64,7 @@ import InputString from './InputString';
 import InputSelect from './InputSelect';
 import InputDate from './InputDate';
 import InputPhone from './InputPhone';
-
+import { expireDays } from '@/common/util';
 export default {
   components: {
     InputString,
@@ -72,16 +85,40 @@ export default {
       type: Object,
       default: {},
     },
+    rules: {
+      type: Array,
+      required: true,
+    },
+    expireDate: {
+      type: Object,
+      default: {},
+    },
   },
   data() {
     return {
-      usernameTips: {
-        width: 500,
-        placement: 'top-middle',
-        content: this.$t('由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头'),
-      },
       dateKey: ['account_expiration_date'],
     };
+  },
+  computed: {
+    profileInfoData() {
+      const obj = {};
+      this.profileInfoList.forEach((item) => {
+        this.$set(obj, item.key, item.value);
+      });
+      return obj;
+    },
+    accountValidDaysList() {
+      const date = (this.expireDate && this.expireDate.account_expiration_date) || null;
+      return expireDays(date, this.$store.state.passwordValidDaysList);
+    },
+  },
+  mounted() {
+    window.changeInput = false;
+  },
+  methods: {
+    changSelect() {
+      window.changeInput = true;
+    },
   },
 };
 </script>
@@ -100,10 +137,10 @@ export default {
   &:nth-child(1),
   &:nth-child(2) {
     .input-text {
-      width: 368px;
+      width: 475px;
 
       .select-text {
-        width: 368px;
+        width: 475px;
       }
     }
   }
@@ -156,6 +193,10 @@ export default {
       font-size: 16px;
       color: #ea3636;
     }
+  }
+
+  ::v-deep .form-error-tip {
+    width: 475px;
   }
 }
 .tips-style {
