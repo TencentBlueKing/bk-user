@@ -10,25 +10,24 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from django.db import transaction
+from django.conf import settings
 from django.db.models import Q
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser_core.api.web.recycle_bin.constants import CategoryCheckMessageEnum
 from bkuser_core.api.web.recycle_bin.serializers import (
-    BatchCategoryHardDeleteInputSlZ,
-    BatchCategoryRevertInputSlZ,
-    CategoryRevertCheckResultOutputSlZ,
-    CategoryRevertResultOutputSlZ,
     RecycleBinCategoryOutputSlZ,
     RecycleBinDepartmentOutputSlZ,
     RecycleBinProfileOutputSlZ,
     RecycleBinSearchInputSlZ,
 )
-from bkuser_core.api.web.recycle_bin.utils import check_category_in_recycle_bin
-from bkuser_core.api.web.utils import get_category_display_name_map
+from bkuser_core.api.web.recycle_bin.utils import (
+    check_conflict_before_revert_category,
+    list_conflict_before_revert_category,
+)
+from bkuser_core.api.web.utils import get_category_display_name_map, get_operator
 from bkuser_core.api.web.viewset import CustomPagination
+from bkuser_core.bkiam.permissions import IAMAction, ManageCategoryPermission, Permission
 from bkuser_core.categories.constants import CategoryStatus
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
@@ -64,9 +63,16 @@ class RecycleBinCategoryListApi(generics.ListAPIView):
             category_ids = ProfileCategory.objects.filter(
                 Q(domain__icontains=keyword) | Q(display_name__icontains=keyword),
                 enabled=False,
-                status=CategoryStatus.INACTIVE.value,
+                status=CategoryStatus.DELETED.value,
             ).values_list("id", flat=True)
             queryset = queryset.filter(object_id__in=category_ids)
+
+        # 只返回有权限的
+        operator = get_operator(self.request)
+        if settings.ENABLE_IAM:
+            fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY, category_id_key="object_id")
+            queryset = queryset.filter(fs)
+
         return queryset.all()
 
     def get_serializer_context(self):
@@ -106,6 +112,14 @@ class RecycleBinDepartmentListApi(generics.ListAPIView):
                 "id", flat=True
             )
             queryset = queryset.filter(object_id__in=department_ids)
+
+        # 只返回有目录查看权限的对应部门数据
+        operator = get_operator(self.request)
+        if settings.ENABLE_IAM:
+            fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
+            department_ids = Department.objects.filter(fs, enabled=False).values_list("id", flat=True)
+            queryset = queryset.filter(object_id__in=department_ids)
+
         return queryset.all()
 
     def get_serializer_context(self):
@@ -159,6 +173,18 @@ class RecycleBinProfileListApi(generics.ListAPIView):
                 status=ProfileStatus.DELETED.value,
             ).values_list("id", flat=True)
             queryset = queryset.filter(object_id__in=profile_ids)
+
+        # 只返回有目录查看权限的对应用户数据
+        operator = get_operator(self.request)
+        if settings.ENABLE_IAM:
+            fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
+            profile_ids = Profile.objects.filter(
+                fs,
+                enabled=False,
+                status=ProfileStatus.DELETED.value,
+            ).values_list("id", flat=True)
+            queryset = queryset.filter(object_id__in=profile_ids)
+
         return queryset.all()
 
     def get_serializer_context(self):
@@ -186,118 +212,66 @@ class RecycleBinProfileListApi(generics.ListAPIView):
         return output_slz_context
 
 
-class RecycleBinBatchCategoryRevertCheckApi(generics.CreateAPIView):
-    queryset = RecycleBin.objects.filter(object_type=RecycleBinObjectType.CATEGORY.value)
-    serializer_class = CategoryRevertCheckResultOutputSlZ
+class RecycleBinCategoryRevertHardDeleteApi(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [ManageCategoryPermission]
 
-    def post(self, request, *args, **kwargs):
-        input_slz = BatchCategoryRevertInputSlZ(data=request.data)
-        input_slz.is_valid(raise_exception=True)
-        data = input_slz.validated_data
+    queryset = ProfileCategory.objects.filter(enabled=False, status=CategoryStatus.DELETED.value)
+    lookup_url_kwarg = "id"
 
-        # 检查目录是否在回收站
-        for category_id in data["category_ids"]:
-            check_category_in_recycle_bin(category_id=category_id)
+    def _check_if_category_in_recycle_bin(self, category_id: str):
+        """
+        是否在回收站里
+        防御性检查，上面queryset已经过滤的是软删除的目录了，理论上会在回收站里
+        """
+        if not RecycleBin.objects.filter(
+            object_type=RecycleBinObjectType.CATEGORY.value, object_id=category_id
+        ).exists():
+            raise error_codes.CANNOT_FIND_CATEGORY_IN_RECYCLE_BIN.f(category_id=category_id)
 
-        # 待还原，需进行检查的软删除目录
-        check_detail_list: list = []
-        for category in ProfileCategory.objects.filter(id__in=data["category_ids"]):
-            check_detail: dict = {
-                "category_id": category.id,
-                "check_status": True,
-                "error_message": "",
-            }
-            # 重名检查
-            if ProfileCategory.objects.filter(enabled=True, display_name=category.display_name).exists():
-                check_detail["check_status"] = False
-                check_detail["error_message"] = CategoryCheckMessageEnum.DUPLICATE_DISPLAY_NAME.value
-                continue
-            # 重登录域检查
-            if ProfileCategory.objects.filter(enabled=True, domain=category.domain).exists():
-                check_detail["check_status"] = False
-                check_detail["error_message"] = CategoryCheckMessageEnum.DUPLICATE_DOMAIN.value
-                continue
+    def put(self, request, *args, **kwargs):
+        """还原目录"""
+        category = self.get_object()
+        self._check_if_category_in_recycle_bin(category.id)
 
-            check_detail_list.append(check_detail)
+        # 检查是否冲突
+        check_conflict_before_revert_category(category)
 
-        return Response(data=self.serializer_class(instance=check_detail_list, many=True).data)
-
-
-class RecycleBinBatchCategoryRevertApi(generics.CreateAPIView):
-    queryset = RecycleBin.objects.filter(object_type=RecycleBinObjectType.CATEGORY.value)
-    serializer_class = CategoryRevertResultOutputSlZ
-
-    def post(self, request, *args, **kwargs):
-        input_slz = BatchCategoryRevertInputSlZ(data=request.data)
-        input_slz.is_valid(raise_exception=True)
-        data = input_slz.validated_data
-
-        # 检查目录是否在回收站
-        for category_id in data["category_ids"]:
-            check_category_in_recycle_bin(category_id=category_id)
-
-        categories = ProfileCategory.objects.filter(id__in=data["category_ids"])
-
-        # 二次检查
-        for category in categories:
-            # 重名检查
-            if ProfileCategory.objects.filter(enabled=True, display_name=category.display_name).exists():
-                raise error_codes.REVERT_CATEGORIES_FAILED.f(
-                    category_id=category.id,
-                    error_message=CategoryCheckMessageEnum.DUPLICATE_DISPLAY_NAME.value,
-                )
-            # 重登录域检查
-            if ProfileCategory.objects.filter(enabled=True, domain=category.domain).exists():
-                raise error_codes.REVERT_CATEGORIES_FAILED.f(
-                    category_id=category.id,
-                    error_message=CategoryCheckMessageEnum.DUPLICATE_DOMAIN.value,
-                )
-
-        # 还原结果初始化
-        revert_results: dict = {
-            "successful_count": 0,
-        }
-        reverted_category_ids: list = []
-        with transaction.atomic():
-            for category in categories:
-                category.revert()
-                # 恢复原本的定时任务，增加审计日志
-                post_category_revert.send_robust(
-                    sender=self, instance=category, operator=request.operator, extra_values={"request": request}
-                )
-                revert_results["successful_count"] += 1
-                reverted_category_ids.append(category.id)
-
-        # 删除映射记录
-        self.queryset.filter(object_id__in=reverted_category_ids).delete()
-
-        return Response(self.serializer_class(revert_results).data)
-
-
-class RecycleBinCategoryBatchHardDeleteApi(generics.DestroyAPIView):
-    queryset = RecycleBin.objects.filter(object_type=RecycleBinObjectType.CATEGORY.value)
-
-    def destroy(self, request, *args, **kwargs):
-        slz = BatchCategoryHardDeleteInputSlZ(data=request.data)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        # 检查目录是否在回收站
-        for category_id in data["category_ids"]:
-            check_category_in_recycle_bin(category_id=category_id)
-
-        # 删除关联资源
-        categories_ids = data["category_ids"]
-        categories = ProfileCategory.objects.filter(
-            id__in=categories_ids, enabled=False, status=CategoryStatus.DELETED.value
+        # 还原
+        category.revert()
+        # 恢复原本的定时任务，增加审计日志
+        post_category_revert.send_robust(
+            sender=self, instance=category, operator=request.operator, extra_values={"request": request}
         )
 
-        for category in categories:
-            # 增加审计日志, 删除同步功能
-            post_category_hard_delete.send_robust(
-                sender=self, instance=category, operator=request.operator, extra_values={"request": request}
-            )
-            # 删除人员，部门，关系，目录设置
-            hard_delete_category_related_resource.delay(category_id=category.id)
+        # 删除回收站记录
+        RecycleBin.objects.filter(object_type=RecycleBinObjectType.CATEGORY.value, object_id=category.id).delete()
 
-        return Response()
+        return Response(status=status.HTTP_200_OK)
+
+    def delete(self, request, *args, **kwargs):
+        """硬删除目录"""
+        category = self.get_object()
+        self._check_if_category_in_recycle_bin(category.id)
+
+        # 增加审计日志, 删除同步功能
+        post_category_hard_delete.send_robust(
+            sender=self, instance=category, operator=request.operator, extra_values={"request": request}
+        )
+        # 异步：删除人员，部门，关系，目录设置
+        hard_delete_category_related_resource.delay(category_id=category.id)
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class RecycleBinCategoryRevertConflictApi(generics.ListAPIView):
+    permission_classes = [ManageCategoryPermission]
+
+    queryset = ProfileCategory.objects.filter(enabled=False, status=CategoryStatus.DELETED.value)
+    lookup_url_kwarg = "id"
+
+    def get(self, request, *args, **kwargs):
+        """检查还原目录是否会冲突"""
+        category = self.get_object()
+        # 查询冲突
+        conflicts = list_conflict_before_revert_category(category)
+        return Response(data=conflicts)

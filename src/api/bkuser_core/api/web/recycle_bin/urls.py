@@ -21,19 +21,14 @@ urlpatterns = [
         name="recycle_bin.category.list",
     ),
     path(
-        "categories/check/",
-        views.RecycleBinBatchCategoryRevertCheckApi.as_view(),
-        name="recycle_bin.category.revert.check",
+        "categories/<int:id>/",
+        views.RecycleBinCategoryRevertHardDeleteApi.as_view(),
+        name="recycle_bin.category.revert_hard_delete",
     ),
     path(
-        "categories/revert/",
-        views.RecycleBinBatchCategoryRevertApi.as_view(),
-        name="recycle_bin.category.revert",
-    ),
-    path(
-        "categories/hard_delete/",
-        views.RecycleBinCategoryBatchHardDeleteApi.as_view(),
-        name="recycle_bin.category.hard_delete",
+        "categories/<int:id>/conflicts/",
+        views.RecycleBinCategoryRevertConflictApi.as_view(),
+        name="recycle_bin.category.revert.conflict",
     ),
     path(
         "departments/",

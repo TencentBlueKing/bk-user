@@ -8,28 +8,37 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import logging
+from typing import List
+
+from django.utils.translation import ugettext_lazy as _
 
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
-from bkuser_core.recycle_bin.constants import RecycleBinObjectType
-from bkuser_core.recycle_bin.models import RecycleBin
-
-logger = logging.getLogger(__name__)
 
 
-def check_category_in_recycle_bin(category_id):
+def list_conflict_before_revert_category(category: ProfileCategory) -> List[str]:
+    """
+    在还原目录前，查询display_name和domain冲突
+    param category: 即将被还原的目录
+    return: 冲突列表
+    """
+    conflicts: List[str] = []
 
-    try:
-        instance = ProfileCategory.objects.get(id=category_id)
-        if instance.default:
-            logger.warning("Category<%s-%s> is default, can not delete", instance.id, instance.display_name)
-            return
+    if ProfileCategory.objects.filter(enabled=True, display_name=category.display_name).exists():
+        conflicts.append(_("目录名称重复"))
 
-        RecycleBin.objects.get(object_type=RecycleBinObjectType.CATEGORY.value, object_id=category_id)
+    if ProfileCategory.objects.filter(enabled=True, domain=category.domain).exists():
+        conflicts.append(_("目录登录域重复"))
 
-    except ProfileCategory.DoesNotExist:
-        raise error_codes.CANNOT_FIND_CATEGORY
+    return conflicts
 
-    except RecycleBin.DoesNotExist:
-        raise error_codes.CANNOT_FIND_CATEGORY_IN_RECYCLE_BIN.f(category_id=category_id)
+
+def check_conflict_before_revert_category(category: ProfileCategory):
+    """
+    在还原目录前，检查是否存在冲突，主要是检查display_name和domain
+    param category: 即将被还原的目录
+    return: raise Exception
+    """
+    conflicts = list_conflict_before_revert_category(category)
+    if conflicts:
+        raise error_codes.REVERT_CATEGORY_CONFLICT.f(",".join(conflicts), replace=True)

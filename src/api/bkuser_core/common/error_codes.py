@@ -157,7 +157,7 @@ error_codes.add_codes(
         ErrorCode("CATEGORY_TYPE_NOT_SUPPORTED", _("当前运行版本不支持此用户目录类型")),
         ErrorCode("PLUGIN_NOT_FOUND", _("找不到指定名称的插件")),
         ErrorCode("LOCAL_CATEGORY_NEEDS_EXCEL_FILE", _("本地目录需要Excel文件同步数据")),
-        ErrorCode("REVERT_CATEGORIES_FAILED", _("用户目录-{category_id}还原失败:{error_message}")),
+        ErrorCode("REVERT_CATEGORY_CONFLICT", _("用户目录还原冲突")),
         # 配置相关
         ErrorCode("CANNOT_FIND_SETTING_META", _("找不到对应的配置元信息")),
         ErrorCode("CANNOT_CREATE_SETTING", _("无法创建配置")),
