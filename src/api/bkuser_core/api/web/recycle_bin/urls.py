@@ -21,6 +21,16 @@ urlpatterns = [
         name="recycle_bin.category.list",
     ),
     path(
+        "categories/<int:id>/",
+        views.RecycleBinCategoryRevertHardDeleteApi.as_view(),
+        name="recycle_bin.category.revert_hard_delete",
+    ),
+    path(
+        "categories/<int:id>/conflicts/",
+        views.RecycleBinCategoryRevertConflictApi.as_view(),
+        name="recycle_bin.category.revert.conflict",
+    ),
+    path(
         "departments/",
         views.RecycleBinDepartmentListApi.as_view(),
         name="recycle_bin.department.list",

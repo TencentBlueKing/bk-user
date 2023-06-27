@@ -34,7 +34,7 @@ class HomeTreeListApi(generics.ListCreateAPIView):
         try:
             queryset = ProfileCategory.objects.filter(enabled=True)
             if settings.ENABLE_IAM:
-                fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
+                fs = Permission().make_category_filter(operator, IAMAction.VIEW_CATEGORY)
                 queryset = queryset.filter(fs)
             managed_categories = queryset.all()
         except IAMPermissionDenied:

@@ -13,8 +13,11 @@ import logging
 
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
+from bkuser_core.categories.constants import CategoryStatus
+from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.categories.plugins.base import TypeList, TypeProtocol
 from bkuser_core.categories.plugins.constants import DYNAMIC_FIELDS_SETTING_KEY
+from bkuser_core.categories.utils import change_periodic_sync_task_status
 from bkuser_core.common.progress import progress
 from bkuser_core.user_settings.models import Setting
 
@@ -41,6 +44,8 @@ def make_periodic_sync_task(category_id: int, operator: str, interval_seconds: i
 
 def update_periodic_sync_task(category_id: int, operator: str, interval_seconds: int):
     """更新同步周期任务"""
+    is_normal = ProfileCategory.objects.filter(id=category_id, status=CategoryStatus.NORMAL.value).exists()
+
     try:
         schedule, _ = IntervalSchedule.objects.get_or_create(every=interval_seconds, period=IntervalSchedule.SECONDS)
     except IntervalSchedule.MultipleObjectsReturned:
@@ -51,6 +56,8 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
         p: PeriodicTask = PeriodicTask.objects.get(name=str(category_id))
         p.interval = schedule
         p.kwargs = kwargs
+        # Note: 只有目录是正常状态下，更新任务信息后默认启动，否则还是不启动
+        p.enabled = is_normal
         p.save(update_fields=["interval", "kwargs"])
     except PeriodicTask.DoesNotExist:
         create_params = {
@@ -63,12 +70,18 @@ def update_periodic_sync_task(category_id: int, operator: str, interval_seconds:
         PeriodicTask.objects.create(**create_params)
 
 
-def delete_periodic_sync_task(category_id: int):
+def delete_periodic_sync_task(category_id: int, is_hard_delete: bool = False):
     """删除同步周期任务"""
-    guess_names = [f"plugin-sync-data-{category_id}", str(category_id)]
+    if not is_hard_delete:
+        # 软删除不触发，但需要变更状态
+        change_periodic_sync_task_status(category_id, is_enabled=False)
+        logger.info("Category<%s> is deleted softly. PeriodTask will not be deleted", category_id)
+        return
 
+    guess_names = [f"plugin-sync-data-{category_id}", str(category_id)]
     # 通过 category_id 来做任务名
     try:
+        logger.info("PeriodicTask %s deleted. [guess_names=%s]", str(category_id), guess_names)
         PeriodicTask.objects.filter(name__in=guess_names).delete()
     except PeriodicTask.DoesNotExist:
         logger.warning("PeriodicTask %s has been deleted, skip it. [guess_names=%s]", str(category_id), guess_names)
