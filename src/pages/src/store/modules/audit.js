@@ -23,8 +23,10 @@ export default {
       endTime = '',
       page = '',
       pageSize = '',
+      userName = '',
+      isSuccess = '',
     } = {}, _config = {}) {
-      return http.get(`api/v1/web/audits/logs/types/login/?start_time=${startTime}&end_time=${endTime}&page=${page}&page_size=${pageSize}`);
+      return http.get(`api/v1/web/audits/logs/types/login/?start_time=${startTime}&end_time=${endTime}&page=${page}&page_size=${pageSize}&username=${userName}&is_success=${isSuccess}`);
     },
     // 审计分页查询
     getList(_context, {

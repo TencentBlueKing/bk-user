@@ -146,9 +146,9 @@ body,
   z-index: -1000;
 }
 // bk.css hack
-.bk-dialog-wrapper .bk-info-box .bk-dialog-sub-header .bk-dialog-header-inner {
-  text-align: initial !important;
-}
+// .bk-dialog-wrapper .bk-info-box .bk-dialog-sub-header .bk-dialog-header-inner {
+//   text-align: initial !important;
+// }
 // bk-input error 公共样式
 .king-input.error input {
   border: 1px solid #fe5c5c;

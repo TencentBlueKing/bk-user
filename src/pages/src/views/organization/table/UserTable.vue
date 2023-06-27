@@ -19,9 +19,12 @@
       @selection-change="handleSelectionChange"
       @row-click="handleRowClick">
       <template slot="empty">
-        <bk-exception type="empty" scene="part">
-          <p class="empty-title">{{ $t('暂无数据') }}</p>
-        </bk-exception>
+        <EmptyComponent
+          :is-data-empty="isTableDataEmpty"
+          :is-search-empty="isEmptySearch"
+          :is-data-error="isTableDataError"
+          @handleEmpty="$emit('handleClickEmpty')"
+          @handleUpdate="$emit('handleRefresh')" />
       </template>
       <bk-table-column type="selection" width="60"></bk-table-column>
       <template v-for="field in setting.selectedFields">
@@ -69,7 +72,9 @@
 
 <script>
 import { dateConvert } from '@/common/util';
+import EmptyComponent from '@/components/empty';
 export default {
+  components: { EmptyComponent },
   props: {
     fieldsList: {
       type: Array,
@@ -78,6 +83,10 @@ export default {
     userMessage: {
       type: Object,
       default: {},
+    },
+    isEmptySearch: {
+      type: Boolean,
+      default: false,
     },
     // 控制设置所在组织、批量删除的显示
     isClick: {
@@ -91,6 +100,14 @@ export default {
     timerMap: {
       type: Array,
       required: true,
+    },
+    isTableDataError: {
+      type: Boolean,
+      default: false,
+    },
+    isTableDataEmpty: {
+      type: Boolean,
+      default: false,
     },
     pagination: {
       type: Object,

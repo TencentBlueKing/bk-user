@@ -142,7 +142,7 @@
       width="440"
       header-position="left"
       :title="$t('导入用户')"
-      :ok-text="$t('提交')"
+      :ok-text="$t('提交1')"
       :auto-close="false"
       v-model="showImport"
       @confirm="confirmImportUser"
@@ -274,6 +274,7 @@ export default {
           title: this.$t('确定停用该用户目录'),
           subTitle: this.$t('停用目录1') + item.display_name + this.$t('停用目录2'),
           confirmFn: this.confirmSwitchStatusSync.bind(this, item, false),
+          okText: this.$t('确认停用1'),
         });
       } else {
         // 激活目录
@@ -308,6 +309,7 @@ export default {
         title: this.$t('确定删除该用户目录'),
         subTitle: this.$t('删除目录1') + item.display_name + this.$t('删除目录2'),
         confirmFn: this.confirmDeleteCatalogSync.bind(this, item, index),
+        okText: this.$t('确认删除1'),
       });
     },
     confirmDeleteCatalogSync(item, index) {

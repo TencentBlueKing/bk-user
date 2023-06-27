@@ -13,7 +13,7 @@
       theme="primary" class="king-button"
       v-cursor="{ active: Boolean(authData) }"
       @click="addField">
-      {{$t('添加字段')}}
+      {{$t('添加字段1')}}
     </bk-button>
 
     <div class="table-content-wrapper" ref="userInfoField">
@@ -44,12 +44,15 @@
                   </div>
                 </td>
                 <td>
-                  <div class="td-container">
-                    <span class="name">{{item.name}}</span><span class="sign" v-if="item.builtin">{{$t('内置')}}</span>
+                  <div style="minWidth: 120px;display: flex;">
+                    <span class="field-name" v-bk-overflow-tips>{{item.name}}</span>
+                    <span :class="['sign', { 'sign-en': $i18n.locale === 'en' }]" v-if="item.builtin">
+                      {{$t('内置')}}
+                    </span>
                   </div>
                 </td>
                 <td>
-                  <div class="td-container">
+                  <div class="td-container" v-bk-overflow-tips>
                     <span class="name">{{item.key}}</span>
                   </div>
                 </td>
@@ -103,11 +106,12 @@
       class="king-sideslider"
       :transfer="true"
       :show-mask="false"
-      :quick-close="false"
+      :quick-close="true"
       :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
       :is-show.sync="fieldData.isShow"
       :title="fieldData.title"
-      :width="fieldData.width">
+      :width="fieldData.width"
+      :before-close="beforeClose">
       <div slot="content" class="member-content" v-if="fieldData.isShow">
         <FieldsAdd
           :set-type="setType"
@@ -295,6 +299,7 @@ export default {
               this.clickSecond = false;
             });
         },
+        okText: this.$t('确认删除1'),
       });
     },
     hideBar() {
@@ -304,6 +309,21 @@ export default {
     showBar() {
       this.isHideBar = false;
       this.basicLoading = false;
+    },
+    beforeClose() {
+      if (window.changeInput) {
+        this.$bkInfo({
+          title: this.$t('确认离开当前页？'),
+          subTitle: this.$t('离开将会导致未保存信息丢失'),
+          okText: this.$t('离开'),
+          confirmFn: () => {
+            this.fieldData.isShow = false;
+            window.changeInput = false;
+          },
+        });
+      } else {
+        this.fieldData.isShow = false;
+      }
     },
   },
 };
@@ -422,6 +442,11 @@ export default {
                   white-space: nowrap;
                   font-size: 12px;
                 }
+                .field-name {
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                }
               }
             }
           }
@@ -450,6 +475,11 @@ export default {
             text-align: center;
             border-radius: 2px;
             background: #c4c6cc;
+            display: inline-block;
+            min-width: 35px;
+          }
+          .sign-en {
+            min-width: 50px;
           }
 
           .icon-duihao-i {
