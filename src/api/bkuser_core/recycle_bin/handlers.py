@@ -53,7 +53,7 @@ def delete_category_sync_task(sender, instance: "ProfileCategory", **kwargs):
         )
         return
     logger.info("going to delete periodic task for Category<%s>, the category type is %s", instance.id, instance.type)
-    delete_periodic_sync_task(instance.id, from_hard_delete_signal=True)
+    delete_periodic_sync_task(instance.id, is_hard_delete=True)
 
 
 @receiver(post_category_revert)

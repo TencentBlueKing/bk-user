@@ -95,21 +95,3 @@ class RecycleBinProfileOutputSlZ(serializers.ModelSerializer):
     class Meta:
         model = RecycleBin
         fields = ["id", "expires", "category_display_name", "profile", "operator"]
-
-
-class BatchCategoryRevertInputSlZ(serializers.Serializer):
-    category_ids = serializers.ListField(required=True, help_text="被软删除的目录id列表")
-
-
-class BatchCategoryHardDeleteInputSlZ(serializers.Serializer):
-    category_ids = serializers.ListField(required=True, help_text="进行硬删除的对象id列表")
-
-
-class CategoryRevertCheckResultOutputSlZ(serializers.Serializer):
-    category_id = serializers.IntegerField(help_text="目录id")
-    check_result = serializers.BooleanField(help_text="检查结果")
-    error_message = serializers.CharField(help_text="检查信息")
-
-
-class CategoryRevertResultOutputSlZ(serializers.Serializer):
-    successful_count = serializers.IntegerField(help_text="目录还原成功个数")
