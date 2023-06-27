@@ -127,11 +127,17 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     password = serializers.CharField(required=False, write_only=True)
     display_name = serializers.CharField(required=False)
     old_password = serializers.CharField(required=False, write_only=True)  # 只有admin用户重置密码时才需要传递该字段
+    position = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = Profile
         # NOTE: 相对原来的api区别, 不支持extras/create_time/update_time更新
         exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
+
+    def validate_position(self, position):
+        if not position:
+            return None
+        return int(position)
 
     def validate_password(self, password):
         return get_raw_password(self.instance.category_id, password)
