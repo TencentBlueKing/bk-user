@@ -16,120 +16,121 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: bkuser_core/api/web/audit/constants.py:15 bkuser_core/bkiam/constants.py:134
 msgid "用户字段"
-msgstr "User Field"
+msgstr "用户字段"
 
 #: bkuser_core/api/web/audit/constants.py:16 bkuser_core/bkiam/constants.py:137
 msgid "用户"
-msgstr "User"
+msgstr "用户"
 
 #: bkuser_core/api/web/audit/constants.py:17
 #: bkuser_core/api/web/search/views.py:147 bkuser_core/bkiam/constants.py:136
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:96
 msgid "组织"
-msgstr "Departments"
+msgstr "组织"
 
 #: bkuser_core/api/web/audit/constants.py:18 bkuser_core/bkiam/constants.py:135
 msgid "用户目录"
-msgstr "Category ID"
+msgstr "用户目录"
 
 #: bkuser_core/api/web/audit/constants.py:19
 msgid "用户目录配置"
-msgstr "Category ID"
+msgstr "用户目录配置"
 
 #: bkuser_core/api/web/audit/constants.py:28
 msgid "创建"
-msgstr "Create"
+msgstr "创建"
 
 #: bkuser_core/api/web/audit/constants.py:29
 msgid "更新"
-msgstr "Update"
+msgstr "更新"
 
 #: bkuser_core/api/web/audit/constants.py:30
 msgid "删除"
-msgstr "Delete"
+msgstr "删除"
 
 #: bkuser_core/api/web/audit/constants.py:31
 msgid "获取"
-msgstr "Obtain"
+msgstr "获取"
 
 #: bkuser_core/api/web/audit/constants.py:32
 msgid "同步"
-msgstr "Sync"
+msgstr "同步"
 
 #: bkuser_core/api/web/audit/constants.py:33
 msgid "导出"
-msgstr "Export"
+msgstr "导出"
 
 #: bkuser_core/api/web/audit/constants.py:34
 msgid "导入"
-msgstr "Import"
+msgstr "导入"
 
 #: bkuser_core/api/web/audit/constants.py:35
 msgid "恢复"
-msgstr "Restore"
+msgstr "恢复"
 
 #: bkuser_core/api/web/audit/constants.py:36
 msgid "用户通过token重置密码"
-msgstr "User resets password through token"
+msgstr "用户通过token重置密码"
 
 #: bkuser_core/api/web/audit/constants.py:37
 msgid "管理员重置密码"
-msgstr "Administrator Password Reset"
+msgstr "管理员重置密码"
 
 #: bkuser_core/api/web/audit/constants.py:38
 msgid "用户通过旧密码修改"
-msgstr "The user changes their password using the old one."
+msgstr "用户通过旧密码修改"
 
 #: bkuser_core/api/web/audit/constants.py:53
 msgid "密码错误"
-msgstr "Incorrect password"
+msgstr "密码错误"
 
 #: bkuser_core/api/web/audit/constants.py:54
 msgid "密码过期"
-msgstr "Password expired"
+msgstr "密码过期"
 
 #: bkuser_core/api/web/audit/constants.py:55
 msgid "密码错误次数过多"
-msgstr "Account locked for too many times entering password incorrectly"
+msgstr "密码错误次数过多"
 
 #: bkuser_core/api/web/audit/constants.py:56
 msgid "用户已锁定"
-msgstr "User has been locked"
+msgstr "用户已锁定"
 
 #: bkuser_core/api/web/audit/constants.py:57
 msgid "用户已删除"
-msgstr "The user has been deleted"
+msgstr "用户已删除"
 
 #: bkuser_core/api/web/audit/constants.py:58
 msgid "需要修改初始密码"
-msgstr "Need to modify the initial password"
+msgstr "需要修改初始密码"
 
 #: bkuser_core/api/web/audit/constants.py:59
 msgid "用户账号已过期"
-msgstr "User account has expired"
+msgstr "用户账号已过期"
 
 #: bkuser_core/api/web/audit/serializers.py:25
 msgid "查询起始时间"
-msgstr "Start time of inquiry"
+msgstr "查询起始时间"
 
 #: bkuser_core/api/web/audit/serializers.py:26
 msgid "查询结束时间"
-msgstr "End time of query"
+msgstr "查询结束时间"
 
 #: bkuser_core/api/web/audit/serializers.py:27
 msgid "请求页码"
-msgstr "Request page number"
+msgstr "请求页码"
 
 #: bkuser_core/api/web/audit/serializers.py:28
 msgid "请求每页大小"
-msgstr "Request page size"
+msgstr "请求每页大小"
 
 #: bkuser_core/api/web/audit/serializers.py:34
 msgid "搜索关键字"
-msgstr "Search keyword"
+msgstr "搜索关键字"
 
 #: bkuser_core/api/web/audit/serializers.py:38
 msgid "ID"
@@ -137,128 +138,127 @@ msgstr "ID"
 
 #: bkuser_core/api/web/audit/serializers.py:39
 msgid "额外信息"
-msgstr "Additional Information"
+msgstr "额外信息"
 
 #: bkuser_core/api/web/audit/serializers.py:40
 #: bkuser_core/api/web/audit/serializers.py:89
 #: bkuser_core/api/web/export.py:215
 msgid "用户全名"
-msgstr "User Full Name"
+msgstr "用户全名"
 
 #: bkuser_core/api/web/audit/serializers.py:41
 msgid "操作者"
-msgstr "Operator"
+msgstr "操作者"
 
 #: bkuser_core/api/web/audit/serializers.py:42
 msgid "创建时间"
-msgstr "Creation time"
+msgstr "创建时间"
 
 #: bkuser_core/api/web/audit/serializers.py:43
 msgid "状态"
-msgstr "status"
+msgstr "状态"
 
 #: bkuser_core/api/web/audit/serializers.py:80
 #: bkuser_core/api/web/audit/serializers.py:125
 #: bkuser_core/api/web/export.py:227
 msgid "登录状态"
-msgstr "Login Status"
+msgstr "登录状态"
 
 #: bkuser_core/api/web/audit/serializers.py:81
 #: bkuser_core/api/web/audit/serializers.py:123
 msgid "登录用户名"
-msgstr "Login Username"
+msgstr "登录用户名"
 
 #: bkuser_core/api/web/audit/serializers.py:87
 msgid "是否登录成功"
-msgstr "is login success"
+msgstr "是否登录成功"
 
 #: bkuser_core/api/web/audit/serializers.py:88
 #: bkuser_core/api/web/audit/serializers.py:122
 #: bkuser_core/api/web/export.py:211
 msgid "登录用户"
-msgstr "Login User"
+msgstr "登录用户"
 
 #: bkuser_core/api/web/audit/serializers.py:90
 #: bkuser_core/api/web/audit/serializers.py:126
 #: bkuser_core/api/web/export.py:219
 msgid "登录时间"
-msgstr "Login Time"
+msgstr "登录时间"
 
 #: bkuser_core/api/web/audit/serializers.py:91
 msgid "所属目录"
-msgstr "Belongs to category"
+msgstr "所属目录"
 
 #: bkuser_core/api/web/audit/serializers.py:92
 #: bkuser_core/api/web/audit/serializers.py:124
 msgid "客户端 IP"
-msgstr "Client IP"
+msgstr "客户端 IP"
 
 #: bkuser_core/api/web/audit/serializers.py:93
 #: bkuser_core/api/web/audit/serializers.py:127
 msgid "失败原因"
-msgstr "Reason for failure"
+msgstr "失败原因"
 
 #: bkuser_core/api/web/audit/serializers.py:104
 #: bkuser_core/api/web/audit/serializers.py:145
 msgid "未知失败原因"
-msgstr "Unknown reason for failure"
+msgstr "未知失败原因"
 
 #: bkuser_core/api/web/audit/serializers.py:137
 #: bkuser_core/categories/constants.py:108
 msgid "成功"
-msgstr "Success"
+msgstr "成功"
 
 #: bkuser_core/api/web/audit/serializers.py:138
 #: bkuser_core/categories/constants.py:108
 msgid "失败"
-msgstr "Failure"
+msgstr "失败"
 
 #: bkuser_core/api/web/category/serializers.py:85
 msgid "登陆域"
-msgstr "Unknown domain"
+msgstr "登陆域"
 
 #: bkuser_core/api/web/category/serializers.py:86
 msgid "目录名"
-msgstr "Category name"
+msgstr "目录名"
 
 #: bkuser_core/api/web/category/serializers.py:93
 #: bkuser_core/categories/serializers.py:49
 msgid "登陆域为 {} 的用户目录已存在"
-msgstr "Category with Domain as {} already exists"
+msgstr "登陆域为 {} 的用户目录已存在"
 
 #: bkuser_core/api/web/department/views.py:120
 msgid "当前部门存在下级组织无法删除"
-msgstr ""
-"The current department has subordinate organizations and cannot be deleted"
+msgstr "当前部门存在下级组织无法删除"
 
 #: bkuser_core/api/web/department/views.py:123
 msgid "当前部门下存在用户无法删除"
-msgstr "There are users in the current department that cannot be deleted"
+msgstr "当前部门下存在用户无法删除"
 
 #: bkuser_core/api/web/export.py:223
 msgid "登录来源IP"
-msgstr "Login Source IP"
+msgstr ""
 
 #: bkuser_core/api/web/export.py:231
+#, fuzzy
+#| msgid "失败原因"
 msgid "登录失败原因"
-msgstr "Reason for failure"
+msgstr "失败原因"
 
 #: bkuser_core/api/web/field/serializers.py:64
 msgid "英文标识为 {} 的自定义字段已存在"
-msgstr "Dynamic field with english id `{}` already exists"
+msgstr "英文标识为 {} 的自定义字段已存在"
 
 #: bkuser_core/api/web/profile/views.py:341
 #: bkuser_core/profiles/v2/views.py:263
 msgid "该用户处于被删除状态，请联系管理员恢复"
-msgstr ""
-"This user is in a deleted state, please contact the administrator to restore "
-"it"
+msgstr "该用户处于被删除状态，请联系管理员恢复"
 
 #: bkuser_core/api/web/search/views.py:43
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:48
 #: bkuser_core/profiles/models.py:45
 msgid "邮箱"
-msgstr "Email"
+msgstr "邮箱"
 
 #: bkuser_core/api/web/search/views.py:44
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:142
@@ -270,85 +270,79 @@ msgstr "QQ"
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:37
 #: bkuser_core/profiles/models.py:68
 msgid "全名"
-msgstr "Display name"
+msgstr "全名"
 
 #: bkuser_core/api/web/search/views.py:46
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:59
 msgid "手机号"
-msgstr "Telephone"
+msgstr "手机号"
 
 #: bkuser_core/api/web/search/views.py:47 bkuser_core/profiles/models.py:132
 msgid "自定义字段"
-msgstr "dynamic field"
+msgstr "自定义字段"
 
 #: bkuser_core/api/web/search/views.py:48
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:26
 #: bkuser_core/profiles/models.py:43
 msgid "用户名"
-msgstr "Username"
+msgstr "用户名"
 
 #: bkuser_core/apis/v2/serializers.py:73 bkuser_core/apis/v2/serializers.py:106
 msgid "指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id"
-msgstr ""
-"Return fields of the specified object, support multiple selections, "
-"separated by commas, for example: username,status,id"
+msgstr "指定对象返回字段，支持多选，以逗号分隔，例如: username,status,id"
 
 #: bkuser_core/apis/v2/serializers.py:74
 msgid "查询字段，针对 exact_lookups,fuzzy_lookups 生效"
-msgstr "Query fields, effective for exact_lookups and fuzzy_lookups"
+msgstr "查询字段，针对 exact_lookups,fuzzy_lookups 生效"
 
 #: bkuser_core/apis/v2/serializers.py:77
 msgid ""
 "精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
 msgstr ""
-"Exactly query the field specified by lookup_field, support multiple "
-"selections, separated by commas, for example: cat,dog,fish"
+"精确查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
 
 #: bkuser_core/apis/v2/serializers.py:81
 msgid ""
 "模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
 msgstr ""
-"Exactly query the field specified by lookup_field, support multiple "
-"selections, separated by commas, for example: cat,dog,fish"
+"模糊查询 lookup_field 所指定的字段, 支持多选，以逗号分隔，例如: cat,dog,fish"
 
 #: bkuser_core/apis/v2/serializers.py:83
 msgid "在多个字段模糊搜索的内容"
-msgstr "Fuzzy search content in multiple fields"
+msgstr "在多个字段模糊搜索的内容"
 
 #: bkuser_core/apis/v2/serializers.py:84
 msgid "指定多个模糊搜索字段"
-msgstr "Specify multiple fuzzy search fields"
+msgstr "指定多个模糊搜索字段"
 
 #: bkuser_core/apis/v2/serializers.py:85
 msgid "是否按照最短匹配排序"
-msgstr "Is it sorted by shortest match"
+msgstr "是否按照最短匹配排序"
 
 #: bkuser_core/apis/v2/serializers.py:90
 msgid "时间过滤字段，支持 update_time, create_time"
-msgstr "Time filtering field, supports update_time and create_time"
+msgstr "时间过滤字段，支持 update_time, create_time"
 
 #: bkuser_core/apis/v2/serializers.py:95
 msgid "筛选某个时间点后的记录"
-msgstr "Filter records after a certain point in time"
+msgstr "筛选某个时间点后的记录"
 
 #: bkuser_core/apis/v2/serializers.py:100
 msgid "筛选某个时间点前的记录"
-msgstr "Filter records before a certain time point"
+msgstr "筛选某个时间点前的记录"
 
 #: bkuser_core/apis/v2/serializers.py:102
 #: bkuser_core/apis/v2/serializers.py:108
 msgid "是否包含已软删除的数据"
-msgstr "Does it include data that has been soft-deleted"
+msgstr "是否包含已软删除的数据"
 
 #: bkuser_core/apis/v2/serializers.py:107
 msgid "指定查询字段，内容为 lookup_value 所属字段, 例如: username"
-msgstr ""
-"Specify the query field, the content is the field of lookup_value, for "
-"example: username"
+msgstr "指定查询字段，内容为 lookup_value 所属字段, 例如: username"
 
 #: bkuser_core/audit/utils.py:130
 msgid "未知异常，请查阅日志了解详情"
-msgstr "Unknown exception, please check the log for details."
+msgstr "未知异常，请查阅日志了解详情"
 
 #: bkuser_core/bkiam/auth.py:32 bkuser_core/bkiam/auth.py:48
 msgid "Invalid username/password."
@@ -357,103 +351,103 @@ msgstr "Invalid username/password."
 #: bkuser_core/bkiam/auth.py:38 bkuser_core/bkiam/auth.py:42
 #, python-format
 msgid "无法从权限中心获取到鉴权 token, 原因: %s"
-msgstr "Failed to obtain authentication token from iam, reason: %s"
+msgstr "无法从权限中心获取到鉴权 token, 原因: %s"
 
 #: bkuser_core/bkiam/constants.py:32
 msgid "查询某个资源类型可用于配置权限的属性列表"
-msgstr ""
-"Query the list of properties that can be used to configure permissions for a "
-"certain resource type."
+msgstr "查询某个资源类型可用于配置权限的属性列表"
 
 #: bkuser_core/bkiam/constants.py:33
 msgid "获取一个资源类型某个属性的值列表"
-msgstr "Get a list of values for a certain property of a resource type."
+msgstr "获取一个资源类型某个属性的值列表"
 
 #: bkuser_core/bkiam/constants.py:34
 msgid "根据过滤条件查询实例"
-msgstr "Querying Instances Based on Filtering Conditions"
+msgstr "根据过滤条件查询实例"
 
 #: bkuser_core/bkiam/constants.py:35
 msgid "批量获取资源实例详情"
-msgstr "Batch get resource instance details."
+msgstr "批量获取资源实例详情"
 
 #: bkuser_core/bkiam/constants.py:36
 msgid "根据策略表达式查询资源实例"
-msgstr "Query resource instances based on strategy expressions"
+msgstr "根据策略表达式查询资源实例"
 
 #: bkuser_core/bkiam/constants.py:37
 msgid "搜索资源实例"
-msgstr "Search Resource Example"
+msgstr "搜索资源实例"
 
 #: bkuser_core/bkiam/constants.py:70
+#, fuzzy
+#| msgid "用户字段"
 msgid "用户字段管理"
-msgstr "User Field"
+msgstr "用户字段"
 
 #: bkuser_core/bkiam/constants.py:71
 msgid "查看字段"
-msgstr "View Fields"
+msgstr "查看字段"
 
 #: bkuser_core/bkiam/constants.py:72
 msgid "审计信息查看"
-msgstr "Audit Information Viewing"
+msgstr "审计信息查看"
 
 #: bkuser_core/bkiam/constants.py:73
+#, fuzzy
+#| msgid "用户目录"
 msgid "本地用户目录新建"
-msgstr "Category ID"
+msgstr "用户目录"
 
 #: bkuser_core/bkiam/constants.py:74
 msgid "LDAP目录新建"
-msgstr "LDAP Category Creation"
+msgstr "LDAP目录新建"
 
 #: bkuser_core/bkiam/constants.py:75
 msgid "MAD目录新建"
-msgstr "MAD Category Creation"
+msgstr "MAD目录新建"
 
 #: bkuser_core/bkiam/constants.py:76
 msgid "自定义目录新建"
-msgstr "Custom Category Creation"
+msgstr "自定义目录新建"
 
 #: bkuser_core/bkiam/constants.py:77
 msgid "目录管理"
-msgstr "Category Management"
+msgstr "目录管理"
 
 #: bkuser_core/bkiam/constants.py:78
 msgid "查看目录"
-msgstr "View Category"
+msgstr "查看目录"
 
 #: bkuser_core/bkiam/constants.py:79
 msgid "根组织新建"
-msgstr "Newly Built Root Tissue"
+msgstr "根组织新建"
 
 #: bkuser_core/bkiam/constants.py:80
 msgid "组织和成员管理"
-msgstr "Organization and Member Management"
+msgstr "组织和成员管理"
 
 #: bkuser_core/bkiam/constants.py:81
 msgid "组织和成员查看"
-msgstr "Organization and Member Viewing"
+msgstr "组织和成员查看"
 
 #: bkuser_core/bkiam/permissions.py:81 bkuser_core/bkiam/permissions.py:99
 #: bkuser_core/bkiam/permissions.py:116 bkuser_core/bkiam/permissions.py:136
 #: bkuser_core/bkiam/permissions.py:157 bkuser_core/bkiam/permissions.py:179
 #: bkuser_core/bkiam/permissions.py:191
 msgid "您没有权限进行该操作，请在权限中心申请。"
-msgstr ""
-"You do not have permission to perform this operation. Please apply for it in "
-"the iam."
+msgstr "您没有权限进行该操作，请在权限中心申请。"
 
 #: bkuser_core/categories/constants.py:26
 msgid "正常"
-msgstr "Normal"
+msgstr "正常"
 
 #: bkuser_core/categories/constants.py:27
 msgid "停用"
-msgstr "Disable"
+msgstr "停用"
 
 #: bkuser_core/categories/constants.py:45
 #: bkuser_core/categories/constants.py:75
 msgid "本地目录"
-msgstr "Local Category"
+msgstr "本地目录"
 
 #: bkuser_core/categories/constants.py:46
 #: bkuser_core/categories/constants.py:76
@@ -468,9 +462,7 @@ msgstr "OpenLDAP"
 #: bkuser_core/categories/constants.py:55
 #: bkuser_core/categories/constants.py:59
 msgid "本地支持用户的新增、删除、编辑、查询，以及用户的登录认证。"
-msgstr ""
-"Local support for user addition, deletion, editing, querying, as well as "
-"user login authentication."
+msgstr "本地支持用户的新增、删除、编辑、查询，以及用户的登录认证。"
 
 #: bkuser_core/categories/constants.py:56
 #: bkuser_core/categories/constants.py:60
@@ -478,549 +470,524 @@ msgid ""
 "支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成"
 "用户登录验证。"
 msgstr ""
-"Supports integration with Microsoft Active Directory, allowing for "
-"synchronization of user information locally or direct authentication through "
-"an API."
+"支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成"
+"用户登录验证。"
 
 #: bkuser_core/categories/constants.py:57
 #: bkuser_core/categories/constants.py:61
 msgid ""
 "支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
 msgstr ""
-"Supports integration with OpenLDAP to synchronize user information locally "
-"or directly authenticate users through an API."
+"支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证。"
 
 #: bkuser_core/categories/constants.py:58
 #: bkuser_core/categories/constants.py:62
 msgid "支持对接任意符合自定义数据拉取协议的用户系统。"
-msgstr ""
-"Supports integration with user systems that comply with custom data "
-"retrieval protocols."
+msgstr "支持对接任意符合自定义数据拉取协议的用户系统。"
 
 #: bkuser_core/categories/constants.py:88
 msgid "用户数据更新"
-msgstr "User Data Update"
+msgstr "用户数据更新"
 
 #: bkuser_core/categories/constants.py:89
 msgid "组织数据更新"
-msgstr "Update Organizational Data"
+msgstr "组织数据更新"
 
 #: bkuser_core/categories/constants.py:90
 msgid "用户间关系数据更新"
-msgstr "User Relationship Data Update"
+msgstr "用户间关系数据更新"
 
 #: bkuser_core/categories/constants.py:91
 msgid "用户和组织关系数据更新"
-msgstr "User and organization relationship data update"
+msgstr "用户和组织关系数据更新"
 
 #: bkuser_core/categories/constants.py:99
 msgid "手动导入"
-msgstr "Manual Import"
+msgstr "手动导入"
 
 #: bkuser_core/categories/constants.py:99
 msgid "定时同步"
-msgstr "Timed synchronization"
+msgstr "定时同步"
 
 #: bkuser_core/categories/constants.py:108
 msgid "同步中"
-msgstr "In progress of sync"
+msgstr "同步中"
 
 #: bkuser_core/categories/constants.py:108
 msgid "失败重试中"
-msgstr "Retrying due to failure"
+msgstr "失败重试中"
 
 #: bkuser_core/categories/managers.py:85
 #, python-brace-format
 msgid "当前目录处于同步状态, 请在 {timeout}s 后重试."
-msgstr ""
-"The current directory is in sync. Please retry after {timeout} seconds."
+msgstr "当前目录处于同步状态, 请在 {timeout}s 后重试."
 
 #: bkuser_core/categories/plugins/constants.py:22
 #, python-brace-format
 msgid "同步用户【{username}】成功"
-msgstr "User synchronization for [{username}] successful"
+msgstr "同步用户【{username}】成功"
 
 #: bkuser_core/categories/plugins/constants.py:23
 #, python-brace-format
 msgid "同步用户【{username}】失败, 失败原因: {error}"
-msgstr "Failed to synchronize user[{username}], reason: {error}"
+msgstr "同步用户【{username}】失败, 失败原因: {error}"
 
 #: bkuser_core/categories/plugins/constants.py:24
 #, python-brace-format
 msgid "同步组织【{department}】成功"
-msgstr "Synchronized organization [{department}] successfully."
+msgstr "同步组织【{department}】成功"
 
 #: bkuser_core/categories/plugins/constants.py:25
 #, python-brace-format
 msgid "同步组织【{department}】失败"
-msgstr "Failed to synchronize organization [{department}]."
+msgstr "同步组织【{department}】失败"
 
 #: bkuser_core/categories/plugins/constants.py:26
 #, python-brace-format
 msgid "同步组织【{department}】与用户【{username}】的关联关系成功"
-msgstr ""
-"The synchronization of the association between organization [{department}] "
-"and user [{username}] was successful."
+msgstr "同步组织【{department}】与用户【{username}】的关联关系成功"
 
 #: bkuser_core/categories/plugins/constants.py:27
 #, python-brace-format
 msgid ""
 "同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"
 msgstr ""
-"Failed to synchronize the association between organization [{department}] "
-"and user [{username}], reason for failure: {error}."
+"同步组织【{department}】与用户【{username}】的关联关系失败, 失败原因: {error}"
 
 #: bkuser_core/categories/plugins/constants.py:28
 #, python-brace-format
 msgid "同步用户【{username}】上级成功"
-msgstr "Synchronized user [{username}]'s leader successfully"
+msgstr "同步用户【{username}】上级成功"
 
 #: bkuser_core/categories/plugins/constants.py:29
 #, python-brace-format
 msgid "同步用户【{username}】上级失败, 失败原因: {error}"
-msgstr ""
-"Failed to synchronize the leader of user [{username}], reason for failure: "
-"{error}"
+msgstr "同步用户【{username}】上级失败, 失败原因: {error}"
 
 #: bkuser_core/categories/plugins/custom/helpers.py:99
 #, python-brace-format
 msgid "父组织【{department}】不存在"
-msgstr "The parent organization [{department}] does not exist."
+msgstr "父组织【{department}】不存在"
 
 #: bkuser_core/categories/plugins/custom/helpers.py:211
 #: bkuser_core/categories/plugins/ldap/helper.py:213
 msgid "部门不存在"
-msgstr "The department does not exist"
+msgstr "部门不存在"
 
 #: bkuser_core/categories/plugins/custom/helpers.py:235
 msgid "用户信息不存在"
-msgstr "User information does not exist"
+msgstr "用户信息不存在"
 
 #: bkuser_core/categories/plugins/custom/helpers.py:247
 msgid "无法设置自己为上级"
-msgstr "Unable to set oneself as leader"
+msgstr "无法设置自己为上级"
 
 #: bkuser_core/categories/plugins/custom/helpers.py:258
 #, python-brace-format
 msgid "上级【{username}】不存在"
-msgstr "The leader [{username}] does not exist."
+msgstr "上级【{username}】不存在"
 
 #: bkuser_core/categories/plugins/ldap/client.py:92
 msgid "LDAP服务器连接失败"
-msgstr "Test connection failed"
+msgstr "LDAP服务器连接失败"
 
 #: bkuser_core/categories/plugins/ldap/syncer.py:88
 msgid "无法获取用户组，请检查配置"
-msgstr "Unable to retrieve user group, please check configuration"
+msgstr "无法获取用户组，请检查配置"
 
 #: bkuser_core/categories/plugins/ldap/syncer.py:99
 msgid "无法获取组织部门，请检查配置"
-msgstr ""
-"Unable to retrieve organizational department, please check configuration"
+msgstr "无法获取组织部门，请检查配置"
 
 #: bkuser_core/categories/plugins/ldap/syncer.py:115
 msgid "无法获取用户数据, 请检查配置"
-msgstr "Unable to retrieve user data, please check the configuration"
+msgstr "无法获取用户数据, 请检查配置"
 
 #: bkuser_core/categories/plugins/local/exceptions.py:36
 msgid "解析字段 {} 失败: {}"
-msgstr "Failed to parse field {}: {}"
+msgstr "解析字段 {} 失败: {}"
 
 #: bkuser_core/categories/plugins/local/parsers.py:109
 msgid "无法分割"
-msgstr "Unable to divide"
+msgstr "无法分割"
 
 #: bkuser_core/categories/plugins/local/parsers.py:182
 #: bkuser_core/categories/plugins/local/parsers.py:209
 msgid "{} 是必须的"
-msgstr "{} is required"
+msgstr "{} 是必须的"
 
 #: bkuser_core/categories/plugins/local/parsers.py:189
 #: bkuser_core/profiles/validators.py:190
 #: bkuser_core/profiles/validators.py:191
 msgid "{} 不符合格式要求"
-msgstr "{} does not meet the format requirements"
+msgstr "{} 不符合格式要求"
 
 #: bkuser_core/categories/plugins/local/syncer.py:108
 #, python-brace-format
 msgid "第{index}行，字段{field}，原因：{reason}，数据：{data}"
-msgstr "Line {index}, Field {field}: Reason - {reason}. Data: {data}"
+msgstr "第{index}行，字段{field}，原因：{reason}，数据：{data}"
 
 #: bkuser_core/categories/plugins/local/syncer.py:341
 msgid "导入执行完成: 成功 {} 条记录, 失败 {} 条记录, 失败详情 {}"
-msgstr ""
-"Import execution completed: {} records succeeded, {} records failed, details "
-"of failures {}"
+msgstr "导入执行完成: 成功 {} 条记录, 失败 {} 条记录, 失败详情 {}"
 
 #: bkuser_core/categories/plugins/local/syncer.py:409
 msgid "找不到 {} 对应的字段信息, 请检查用户字段设置"
-msgstr ""
-"Cannot find field information corresponding to {}, please check user field "
-"settings."
+msgstr "找不到 {} 对应的字段信息, 请检查用户字段设置"
 
 #: bkuser_core/categories/plugins/local/syncer.py:494
 msgid "{} 字段是必填内容"
-msgstr "The {} field is required."
+msgstr "{} 字段是必填内容"
 
 #: bkuser_core/categories/plugins/local/syncer.py:519
 msgid "当前值 {} 找不到预设选项"
-msgstr "The current value {} cannot be found in the preset options."
+msgstr "当前值 {} 找不到预设选项"
 
 #: bkuser_core/common/error_codes.py:99
 msgid "存在不支持动态返回的字段"
-msgstr "Existing not supported fields for dynamic response"
+msgstr "存在不支持动态返回的字段"
 
 #: bkuser_core/common/error_codes.py:100
 msgid "查询参数错误，请检查"
-msgstr "Error query params, please check"
+msgstr "查询参数错误，请检查"
 
 #: bkuser_core/common/error_codes.py:101
 msgid "查询参数过长"
-msgstr "The query parameter is too long."
+msgstr "查询参数过长"
 
 #: bkuser_core/common/error_codes.py:102
 msgid "用户名信息缺失"
-msgstr "Username information is missing"
+msgstr "用户名信息缺失"
 
 #: bkuser_core/common/error_codes.py:103
 msgid "资源数据未被删除"
-msgstr "The resource data has not been deleted"
+msgstr "资源数据未被删除"
 
 #: bkuser_core/common/error_codes.py:104
 msgid "资源恢复失败"
-msgstr "Resource recovery failed"
+msgstr "资源恢复失败"
 
 #: bkuser_core/common/error_codes.py:106
 msgid "账号不存在"
-msgstr "Account does not exist"
+msgstr "账号不存在"
 
 #: bkuser_core/common/error_codes.py:107
 msgid "密码输入错误次数过多，已被锁定"
-msgstr "Account locked for too many times entering password incorrectly"
+msgstr "密码输入错误次数过多，已被锁定"
 
 #: bkuser_core/common/error_codes.py:108
 msgid "账户名格式错误"
-msgstr "Username format is not correct"
+msgstr "账户名格式错误"
 
 #: bkuser_core/common/error_codes.py:109
 msgid "账户或者密码错误，请重新输入"
-msgstr "Username or password is incorrect, please re-enter"
+msgstr "账户或者密码错误，请重新输入"
 
 #: bkuser_core/common/error_codes.py:110
 msgid "存在多个同名账号，请联系管理员"
-msgstr "Existing multiple same username account, please contract admin"
+msgstr "存在多个同名账号，请联系管理员"
 
 #: bkuser_core/common/error_codes.py:111
 msgid "账号长时间未登录，已被冻结，请联系管理员"
-msgstr "Account frozen for long time offline, please contract admin"
+msgstr "账号长时间未登录，已被冻结，请联系管理员"
 
 #: bkuser_core/common/error_codes.py:112
 msgid "账号已被管理员禁用，请联系管理员"
-msgstr "Account disabled by admin, please contract admin"
+msgstr "账号已被管理员禁用，请联系管理员"
 
 #: bkuser_core/common/error_codes.py:113
 msgid "未知登陆域"
-msgstr "Unknown domain"
+msgstr "未知登陆域"
 
 #: bkuser_core/common/error_codes.py:114
 msgid "该账户密码已到期"
-msgstr "Password is expired, please change it before login"
+msgstr "该账户密码已到期"
 
 #: bkuser_core/common/error_codes.py:115
 msgid "用户目录未启用"
-msgstr "Category is not available"
+msgstr "用户目录未启用"
 
 #: bkuser_core/common/error_codes.py:116
 msgid "传入参数错误"
-msgstr "Error params"
+msgstr "传入参数错误"
 
 #: bkuser_core/common/error_codes.py:117
 msgid "平台分配的初始密码未修改"
-msgstr "The initial password assigned by the platform has not been changed."
+msgstr "平台分配的初始密码未修改"
 
 #: bkuser_core/common/error_codes.py:118
 msgid "账号已被删除，请联系管理员"
-msgstr "Account disabled by admin, please contract admin"
+msgstr "账号已被删除，请联系管理员"
 
 #: bkuser_core/common/error_codes.py:119
 msgid "目录登录插件加载失败"
-msgstr "Category login plugin failed to load"
+msgstr "目录登录插件加载失败"
 
 #: bkuser_core/common/error_codes.py:120
 msgid "该用户账号已过期"
-msgstr "This user account has expired."
+msgstr "该用户账号已过期"
 
 #: bkuser_core/common/error_codes.py:121
 msgid "该用户账号已离职"
-msgstr "This user account has left the company."
+msgstr "该用户账号已离职"
 
 #: bkuser_core/common/error_codes.py:123 bkuser_core/common/error_codes.py:127
 #, python-brace-format
 msgid "新密码不能与最近{max_password_history}次密码相同"
-msgstr ""
-"The new password cannot be the same as any of the previous "
-"{max_password_history} passwords."
+msgstr "新密码不能与最近{max_password_history}次密码相同"
 
 #: bkuser_core/common/error_codes.py:124
 msgid "该用户没有提供邮箱，发送邮件失败"
-msgstr "Failed to send email for lacking email address"
+msgstr "该用户没有提供邮箱，发送邮件失败"
 
 #: bkuser_core/common/error_codes.py:125
 msgid "该目录下此用户名已存在"
-msgstr "Username already exist in this category"
+msgstr "该目录下此用户名已存在"
 
 #: bkuser_core/common/error_codes.py:126
 msgid "保存用户信息失败"
-msgstr "Failed to save user information"
+msgstr "保存用户信息失败"
 
 #: bkuser_core/common/error_codes.py:128
 msgid "该用户没有绑定手机号，发送短信失败"
-msgstr "Failed to send email for lacking email address"
+msgstr "该用户没有绑定手机号，发送短信失败"
 
 #: bkuser_core/common/error_codes.py:129
 msgid "该手机号被多个用户绑定，请输入具体的用户名或联系管理员处理"
-msgstr ""
-"This phone number has been bound by multiple users. Please enter the "
-"specific username or contact the administrator for assistance."
+msgstr "该手机号被多个用户绑定，请输入具体的用户名或联系管理员处理"
 
 #: bkuser_core/common/error_codes.py:130
 #, python-brace-format
 msgid "验证码已发送，有效时间为{effective_minutes}分钟，请勿重复发送"
-msgstr ""
-"The verification code has been sent and is valid for {effective_minutes} "
-"minutes. Please do not resend it."
+msgstr "验证码已发送，有效时间为{effective_minutes}分钟，请勿重复发送"
 
 #: bkuser_core/common/error_codes.py:131
 msgid "该手机号已超过当日重置密码短信发送限制次数"
-msgstr ""
-"The phone number has exceeded the limit of password reset SMS sent for today."
+msgstr "该手机号已超过当日重置密码短信发送限制次数"
 
 #: bkuser_core/common/error_codes.py:132
 msgid "验证码失效，请重新发送"
-msgstr "The verification code has expired, please resend it."
+msgstr "验证码失效，请重新发送"
 
 #: bkuser_core/common/error_codes.py:133
 msgid "你所输入验证码错误，请重新输入"
-msgstr "The verification code you entered is incorrect, please try again."
+msgstr "你所输入验证码错误，请重新输入"
 
 #: bkuser_core/common/error_codes.py:134
 msgid "你所输入验证码错误，验证次数已达上限，请验证码过期后重试"
-msgstr ""
-"The verification code you entered is incorrect. The number of verification "
-"attempts has reached the limit. Please try again after the verification code "
-"expires."
+msgstr "你所输入验证码错误，验证次数已达上限，请验证码过期后重试"
 
 #: bkuser_core/common/error_codes.py:135
 msgid "原密码校验失败"
-msgstr "Login check failed"
+msgstr "原密码校验失败"
 
 #: bkuser_core/common/error_codes.py:137
 msgid "上传文件过大"
-msgstr "Uploaded too large"
+msgstr "上传文件过大"
 
 #: bkuser_core/common/error_codes.py:138
 msgid "上传文件格式错误"
-msgstr "Uploaded with wrong format"
+msgstr "上传文件格式错误"
 
 #: bkuser_core/common/error_codes.py:140
 msgid "找不到对应的用户目录"
-msgstr "Category could not be found"
+msgstr "找不到对应的用户目录"
 
 #: bkuser_core/common/error_codes.py:141
 msgid "用户目录不能更新域字段"
-msgstr "Domain field can not be updated for category"
+msgstr "用户目录不能更新域字段"
 
 #: bkuser_core/common/error_codes.py:142
 msgid "默认用户目录不能被禁用"
-msgstr "Default category can not be disabled"
+msgstr "默认用户目录不能被禁用"
 
 #: bkuser_core/common/error_codes.py:143
 msgid "不能删除默认用户目录"
-msgstr "Default category can not be deleted"
+msgstr "不能删除默认用户目录"
 
 #: bkuser_core/common/error_codes.py:144
 msgid "本地目录需要上传文件进行同步"
-msgstr "Local category only support uploading file to sync data"
+msgstr "本地目录需要上传文件进行同步"
 
 #: bkuser_core/common/error_codes.py:145
 msgid "该目录不能够通过文件同步数据"
-msgstr "This category can not sync data by uploading file"
+msgstr "该目录不能够通过文件同步数据"
 
 #: bkuser_core/common/error_codes.py:146 bkuser_core/common/error_codes.py:149
 msgid "同步数据失败"
-msgstr "Data sync failed"
+msgstr "同步数据失败"
 
 #: bkuser_core/common/error_codes.py:147
 msgid "加载 LDAP Client 失败"
-msgstr "Load LDAP Client failed"
+msgstr "加载 LDAP Client 失败"
 
 #: bkuser_core/common/error_codes.py:148
 msgid "登陆校验失败"
-msgstr "Login check failed"
+msgstr "登陆校验失败"
 
 #: bkuser_core/common/error_codes.py:150
 msgid "创建同步任务失败"
-msgstr "Failed to create synchronization task"
+msgstr "创建同步任务失败"
 
 #: bkuser_core/common/error_codes.py:151
 msgid "加载数据同步模块失败"
-msgstr "Load data sync module failed"
+msgstr "加载数据同步模块失败"
 
 #: bkuser_core/common/error_codes.py:152
 msgid "存储同步数据失败"
-msgstr "Store synced data failed"
+msgstr "存储同步数据失败"
 
 #: bkuser_core/common/error_codes.py:153
 msgid "用户目录不支持测试连接"
-msgstr "This category can not test connection"
+msgstr "用户目录不支持测试连接"
 
 #: bkuser_core/common/error_codes.py:154
 msgid "测试连接失败"
-msgstr "Test connection failed"
+msgstr "测试连接失败"
 
 #: bkuser_core/common/error_codes.py:155
 msgid "测试获取数据失败"
-msgstr "Test fetch data failed"
+msgstr "测试获取数据失败"
 
 #: bkuser_core/common/error_codes.py:156
 msgid "该用户目录不能够手动写入数据"
-msgstr "This category not support to manage manually"
+msgstr "该用户目录不能够手动写入数据"
 
 #: bkuser_core/common/error_codes.py:157
 msgid "当前运行版本不支持此用户目录类型"
-msgstr "The current version does not support this category type"
+msgstr "当前运行版本不支持此用户目录类型"
 
 #: bkuser_core/common/error_codes.py:158
 msgid "找不到指定名称的插件"
-msgstr "Cannot find the specified plugin name"
+msgstr "找不到指定名称的插件"
 
 #: bkuser_core/common/error_codes.py:159
 msgid "本地目录需要Excel文件同步数据"
-msgstr "Local category only support uploading file to sync data"
+msgstr "本地目录需要Excel文件同步数据"
 
 #: bkuser_core/common/error_codes.py:161
 msgid "找不到对应的配置元信息"
-msgstr "Could not find the corresponding setting meta"
+msgstr "找不到对应的配置元信息"
 
 #: bkuser_core/common/error_codes.py:162
 msgid "无法创建配置"
-msgstr "Failed to create setting"
+msgstr "无法创建配置"
 
 #: bkuser_core/common/error_codes.py:163
 msgid "无法更新配置"
-msgstr "Unable to update configuration"
+msgstr "无法更新配置"
 
 #: bkuser_core/common/error_codes.py:165
 msgid "找不到对应的部门"
-msgstr "Category could not be found"
+msgstr "找不到对应的部门"
 
 #: bkuser_core/common/error_codes.py:166
 msgid "同一个部门下子部门命名冲突"
-msgstr "Sub-department naming conflicts in the same department"
+msgstr "同一个部门下子部门命名冲突"
 
 #: bkuser_core/common/error_codes.py:168
 msgid "字段不能被编辑"
-msgstr "Field can not be edited"
+msgstr "字段不能被编辑"
 
 #: bkuser_core/common/error_codes.py:169
 msgid "内置字段不能被删除"
-msgstr "Built-in field can not be deleted"
+msgstr "内置字段不能被删除"
 
 #: bkuser_core/common/error_codes.py:171
 msgid "用户Token已过期，请重新申请"
-msgstr "User token has been expired, please apply again"
+msgstr "用户Token已过期，请重新申请"
 
 #: bkuser_core/common/error_codes.py:172
 msgid "无法获取有效的用户 Token"
-msgstr "Can not get valid user token"
+msgstr "无法获取有效的用户 Token"
 
 #: bkuser_core/common/error_codes.py:176
 msgid "不能删除部门"
-msgstr "cannot delete the department"
+msgstr "不能删除部门"
 
 #: bkuser_core/common/error_codes.py:177
 msgid "审计日志为空，无法导出"
-msgstr "The audit log is empty and cannot be exported."
+msgstr "审计日志为空，无法导出"
 
 #: bkuser_core/common/error_codes.py:179
 msgid "未知自定义字段"
-msgstr "dynamic field"
+msgstr "未知自定义字段"
 
 #: bkuser_core/common/error_codes.py:180
 msgid "无法找到用户"
-msgstr "Unable to find user"
+msgstr "无法找到用户"
 
 #: bkuser_core/common/exception_handler.py:86
 msgid "您没有权限访问该资源"
-msgstr "You do not have permission to access this resource."
+msgstr "您没有权限访问该资源"
 
 #: bkuser_core/common/notifier.py:42 bkuser_core/common/notifier.py:84
 msgid "收件人不能为空"
-msgstr "Receiver can not be null"
+msgstr "收件人不能为空"
 
 #: bkuser_core/common/notifier.py:46
 msgid "[用户管理] 通知邮件"
-msgstr "[Bk-User] Notification"
+msgstr "[用户管理] 通知邮件"
 
 #: bkuser_core/departments/v2/serializers.py:155
 msgid "是否递归"
-msgstr "Recursive"
+msgstr "是否递归"
 
 #: bkuser_core/departments/v2/serializers.py:156
 msgid "是否返回全部字段"
-msgstr "Whether to return all fields"
+msgstr "是否返回全部字段"
 
 #: bkuser_core/departments/v2/serializers.py:157
 msgid "模糊查找用户的 username & display_name 字段"
-msgstr "Fuzzy search for username & display_name fields of users"
+msgstr "模糊查找用户的 username & display_name 字段"
 
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:70
 #: bkuser_core/profiles/models.py:73
 msgid "账户状态"
-msgstr "Account status"
+msgstr "账户状态"
 
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:83
 #: bkuser_core/profiles/models.py:79
 msgid "在职状态"
-msgstr "Staff status"
+msgstr "在职状态"
 
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:107
 #: bkuser_core/profiles/models.py:102
 msgid "上级"
-msgstr "Leaders"
+msgstr "上级"
 
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:118
 #: bkuser_core/profiles/models.py:97
 msgid "职务"
-msgstr "Position"
+msgstr "职务"
 
 #: bkuser_core/profiles/migrations/0002_auto_20191104_1541.py:131
 msgid "微信"
-msgstr "Wechat"
+msgstr "微信"
 
 #: bkuser_core/profiles/models.py:46
 msgid "手机号码"
-msgstr "Telephone number"
+msgstr "手机号码"
 
 #: bkuser_core/profiles/models.py:47
 msgid "微信ID"
-msgstr "Wechat ID"
+msgstr "微信ID"
 
 #: bkuser_core/profiles/models.py:48
 msgid "微信公众号OpenID"
-msgstr "Wechat Official Account ID"
+msgstr "微信公众号OpenID"
 
 #: bkuser_core/profiles/models.py:53
 msgid "标识"
-msgstr "Code"
+msgstr "标识"
 
 #: bkuser_core/profiles/models.py:64
 msgid "域"
-msgstr "Domain"
+msgstr "域"
 
 #: bkuser_core/profiles/models.py:65
 msgid "用户目录ID"
-msgstr "Category ID"
+msgstr "用户目录ID"
 
 #: bkuser_core/profiles/models.py:69
 msgid "Avatar"
@@ -1028,134 +995,110 @@ msgstr "Avatar"
 
 #: bkuser_core/profiles/models.py:87
 msgid "用户密码"
-msgstr "User password"
+msgstr "用户密码"
 
 #: bkuser_core/profiles/models.py:89
 msgid "密码有效期"
-msgstr "Password validity period"
+msgstr "密码有效期"
 
 #: bkuser_core/profiles/models.py:93
 msgid "密码最后更新时间"
-msgstr "Last password update time"
+msgstr "密码最后更新时间"
 
 #: bkuser_core/profiles/models.py:109
 msgid "账号过期时间"
-msgstr "Account expiration date"
+msgstr "账号过期时间"
 
 #: bkuser_core/profiles/models.py:115
 msgid "时区"
-msgstr "time zone"
+msgstr "时区"
 
 #: bkuser_core/profiles/models.py:121
 msgid "语言"
-msgstr "language"
+msgstr "语言"
 
 #: bkuser_core/profiles/models.py:127
 msgid "国际号码段"
-msgstr "iso"
+msgstr "国际号码段"
 
 #: bkuser_core/profiles/models.py:128
 msgid "国家代号"
-msgstr "iso"
+msgstr "国家代号"
 
 #: bkuser_core/profiles/models.py:135
 msgid "是否启用"
-msgstr "enabled"
+msgstr "是否启用"
 
 #: bkuser_core/profiles/models.py:142
 msgid "用户类型"
-msgstr "user type"
+msgstr "用户类型"
 
 #: bkuser_core/profiles/models.py:144
 msgid "角色"
-msgstr "role"
+msgstr "角色"
 
 #: bkuser_core/profiles/models.py:311
 msgid "过期通知时间"
-msgstr "Expiration Notice Time"
+msgstr "过期通知时间"
 
 #: bkuser_core/profiles/models.py:313
 msgid "过期类型"
-msgstr "Expiration Type"
+msgstr "过期类型"
 
 #: bkuser_core/profiles/password.py:29
 msgid "密码需要包含{}"
-msgstr "The password needs to include {}"
+msgstr "密码需要包含{}"
 
 #: bkuser_core/profiles/password.py:81
 msgid "密码不能包含超过 {} 位的{}: {}"
-msgstr "The password cannot contain more than {} characters of {}: {}"
+msgstr "密码不能包含超过 {} 位的{}: {}"
 
 #: bkuser_core/profiles/password.py:128
 msgid "密码不能包含超过 {} 位的重复字符: {}"
-msgstr "The password cannot contain repeated characters exceeding {} times: {}"
+msgstr "密码不能包含超过 {} 位的重复字符: {}"
 
 #: bkuser_core/profiles/password.py:163
 msgid "密码长度应该在 {} 到 {} 之间"
-msgstr "The password length should be between {} and {}"
+msgstr "密码长度应该在 {} 到 {} 之间"
 
 #: bkuser_core/profiles/validators.py:30
 msgid ""
 "{} 不符合 username 命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字"
 "符组成，以字母或数字开头"
 msgstr ""
-"{} does not meet specifications of username: Consists of 1-32 letters, "
-"numbers, underscore (_), dot (.), minus sign (-) characters, starting with a "
-"letter or number"
+"{} 不符合 username 命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字"
+"符组成，以字母或数字开头"
 
 #: bkuser_core/profiles/validators.py:35
 msgid ""
 "{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母"
 "或数字开头"
 msgstr ""
-"{} does not meet specifications of domain: Consists of 1-16 letters, "
-"numbers, dot (.), minus sign (-) characters, start with a letter or number"
+"{} 不符合 domain 命名规范: 由1-16位字母、数字、点(.)、减号(-)字符组成，以字母"
+"或数字开头"
 
 #: bkuser_core/profiles/validators.py:71
 msgid "自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录"
-msgstr ""
-"Dynamic field {} should be unique，and there is another record in category<{}"
-"> with value<{}>"
+msgstr "自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录"
 
 #: bkuser_core/profiles/validators.py:100
 #: bkuser_core/profiles/validators.py:121
 #: bkuser_core/profiles/validators.py:143
 msgid "{}不符合格式要求，无法转换"
-msgstr "{} does not meet the formatting requirements and cannot be converted."
+msgstr "{}不符合格式要求，无法转换"
 
 #: bkuser_core/profiles/validators.py:147
 msgid "{}不在枚举范围内"
-msgstr "{} is not within the range of enumeration"
+msgstr "{}不在枚举范围内"
 
 #: bkuser_core/profiles/validators.py:168
 msgid "{} 不符合格式要求，无法转换"
-msgstr "{} does not meet the formatting requirements and cannot be converted."
+msgstr "{} 不符合格式要求，无法转换"
 
 #: bkuser_core/profiles/validators.py:172
 msgid "{} 不在枚举范围内"
-msgstr "{} is not within the range of enumeration"
+msgstr "{} 不在枚举范围内"
 
 #: bkuser_core/profiles/validators.py:225
 msgid "抱歉，{} 是系统字段保留字，请修改"
-msgstr "Sorry, {} is a reserved word for system fields. Please modify it."
-
-#~ msgid "账户名和密码不匹配"
-#~ msgstr "Username and password don't match"
-
-#~ msgid "404, could not be found"
-#~ msgstr "404, could not be found"
-
-#~ msgid "403, permission denied"
-#~ msgstr "403, permission denied"
-
-#~ msgid "validation error: {exc}"
-#~ msgstr "validation error: {exc}"
-
-#~ msgid "request failed: {exc}"
-#~ msgstr "request failed: {exc}"
-
-#~ msgid "参数格式错误"
-#~ msgstr "Param format error"
-
-#~ msgid "是否分页"
-#~ msgstr "Whether to page"
+msgstr "抱歉，{} 是系统字段保留字，请修改"

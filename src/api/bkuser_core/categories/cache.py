@@ -16,6 +16,7 @@ LOCAL_CACHE_KEY_DEFAULT_CATEGORY_ID = "cate:id"
 LOCAL_CACHE_KEY_DEFAULT_CATEGORY_DOMAIN = "cate:domain"
 
 
+# pylint: disable=function-name-too-long
 def get_default_category_id_from_local_cache() -> int:
     """
     change the performance for now, should refactor it
@@ -31,6 +32,7 @@ def get_default_category_id_from_local_cache() -> int:
     return category_id
 
 
+# pylint: disable=function-name-too-long
 def get_default_category_domain_from_local_cache() -> str:
     cache = caches["locmem"]
 

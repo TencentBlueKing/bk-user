@@ -24,6 +24,25 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class BKLanguageMiddleware(MiddlewareMixin):
+    """
+    支持Header为Blueking-Language的语言设置
+    翻译默认是通过django.middleware.locale.LocaleMiddleware中间件来实现的
+    但是LocaleMiddleware中间件里优先对Cookie里语言，再对Header为Accept-Language的值
+    这里通过使用Blueking-Language值替换Accept-Language的值来达到设置语言的目的
+    Note: BKLanguageMiddleware 必须配置在django.middleware.locale.LocaleMiddleware之前
+    """
+
+    BK_LANGUAGE_HEADER = "HTTP_BLUEKING_LANGUAGE"
+    LANGUAGE_HEADER = "HTTP_ACCEPT_LANGUAGE"
+
+    def process_request(self, request):
+        bk_language = request.META.get(self.BK_LANGUAGE_HEADER)
+        if bk_language:
+            # Note: bk_language 优先级高于默认的
+            request.META[self.LANGUAGE_HEADER] = bk_language
+
+
 class MethodOverrideMiddleware(MiddlewareMixin):
     METHOD_OVERRIDE_HEADER = "HTTP_X_HTTP_METHOD_OVERRIDE"
 

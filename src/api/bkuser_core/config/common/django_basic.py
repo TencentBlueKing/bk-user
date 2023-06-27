@@ -46,6 +46,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "bkuser_core.common.middlewares.BKLanguageMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "bkuser_core.enhanced_account.middlewares.OperatorMiddleware",
     "bkuser_global.middlewares.TimezoneMiddleware",

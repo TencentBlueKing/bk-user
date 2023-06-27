@@ -263,7 +263,10 @@ export default {
         this.fieldsInfor = JSON.parse(JSON.stringify(this.currentEditorData));
         if (this.fieldsInfor.type === 'one_enum' || this.fieldsInfor.type === 'multi_enum') {
           this.defaultSelected = 'enum';
-          this.fieldsInfor.default = Number(this.fieldsInfor.default);
+          this.fieldsInfor.default = this.fieldsInfor.type === 'one_enum'
+            ? Number(this.fieldsInfor.default)
+            : this.fieldsInfor.default.slice(1, this.fieldsInfor.default.length - 1).split(',')
+              .map(item => Number(item));
         } else {
           this.defaultSelected = this.fieldsInfor.type;
         }
@@ -485,6 +488,9 @@ export default {
           font-size: 14px;
           color: rgba(99, 101, 110, 1);
         }
+      }
+      input::-webkit-input-placeholder {
+        color : #c4c6cc;
       }
     }
 
