@@ -69,6 +69,9 @@ import {
   bkVirtualScroll,
   bkOverflowTips,
   bkVersionDetail,
+  bkResizeLayout,
+  bkIcon,
+  bkTableSettingContent,
   bkLink,
 } from 'bk-magic-vue';
 
@@ -138,6 +141,10 @@ bkOverflowTips.setDefaultProps({
   delay: [400, 0],
 });
 Vue.use(bkOverflowTips);
+Vue.use(bkResizeLayout);
+Vue.use(bkIcon);
+Vue.use(bkTree);
+Vue.use(bkTableSettingContent);
 Vue.use(bkLink);
 
 // Vue prototype mount

@@ -9,135 +9,137 @@
   -->
 <template>
   <div :class="['look-user-info-wrapper',{ 'forbid-operate': isForbid }]">
-    <div class="action-btn-wrapper" v-if="currentCategoryType === 'local'">
-      <bk-button :disabled="isStatus" theme="primary" class="editor-btn" @click="editProfile">
-        {{$t('编辑')}}
-      </bk-button>
-      <template v-if="!isStatus">
-        <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="changeStatus">
-          {{!isForbid ? $t('禁用') : $t('启用')}}
+    <div class="look-user-info">
+      <div class="action-btn-wrapper" v-if="currentCategoryType === 'local'">
+        <bk-button :disabled="isStatus" theme="primary" class="editor-btn" @click="editProfile">
+          {{$t('编辑')}}
         </bk-button>
-        <template v-if="isAdmin">
-          <bk-button theme="default" class="editor-btn" disabled>
-            {{$t('删除')}}
+        <template v-if="!isStatus">
+          <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="changeStatus">
+            {{!isForbid ? $t('禁用') : $t('启用')}}
           </bk-button>
+          <template v-if="isAdmin">
+            <bk-button theme="default" class="editor-btn" disabled>
+              {{$t('删除')}}
+            </bk-button>
+          </template>
+          <template v-else>
+            <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="deleteProfile">
+              {{$t('删除')}}
+            </bk-button>
+          </template>
         </template>
         <template v-else>
-          <bk-button theme="default" :class="['editor-btn',{ 'forbidMark': isForbid }]" @click="deleteProfile">
-            {{$t('删除')}}
+          <bk-button theme="default" @click="restoreProfile">
+            {{$t('恢复')}}
           </bk-button>
         </template>
-      </template>
-      <template v-else>
-        <bk-button theme="default" @click="restoreProfile">
-          {{$t('恢复')}}
-        </bk-button>
-      </template>
-      <div class="reset">
-        <bk-button :disabled="isStatus" theme="default" @click="showResetDialog">
-          {{$t('重置密码')}}
-        </bk-button>
-        <div class="reset-dialog" v-if="isShowReset" v-click-outside="closeResetDialog">
-          <i class="arrow"></i>
-          <template v-if="isAdmin">
-            <h4 class="title">{{$t('原密码')}}</h4>
+        <div class="reset">
+          <bk-button :disabled="isStatus" theme="default" @click="showResetDialog">
+            {{$t('重置密码')}}
+          </bk-button>
+          <div class="reset-dialog" v-if="isShowReset" v-click-outside="closeResetDialog">
+            <i class="arrow"></i>
+            <template v-if="isAdmin">
+              <h4 class="title">{{$t('原密码')}}</h4>
+              <p class="pw-input-text">
+                <input
+                  autocomplete="old-password"
+                  :type="passwordInputType['oldPassword']"
+                  :placeholder="$t('请输入原密码')"
+                  :class="['editor-password',{ 'input-error': isCorrectOldPw }]"
+                  :maxlength="32"
+                  v-model="oldPassword"
+                  v-focus
+                  @focus="isCorrectOldPw = false" />
+                <i :class="['bk-icon', oldPasswordIconClass]" @click="changePasswordInputType('oldPassword')"></i>
+              </p>
+            </template>
+            <h4 class="title">{{$t('重置密码')}}</h4>
             <p class="pw-input-text">
+              <input type="text" class="hidden-password-input">
+              <input type="password" class="hidden-password-input">
               <input
-                autocomplete="old-password"
-                :type="passwordInputType['oldPassword']"
-                :placeholder="$t('请输入原密码')"
-                :class="['editor-password',{ 'input-error': isCorrectOldPw }]"
+                autocomplete="new-password"
+                :type="passwordInputType['newPassword']"
+                :placeholder="$t('请输入新密码')"
+                :class="['editor-password',{ 'input-error': isCorrectPw }]"
                 :maxlength="32"
-                v-model="oldPassword"
+                v-model="newPassword"
                 v-focus
-                @focus="isCorrectOldPw = false" />
-              <i :class="['bk-icon', oldPasswordIconClass]" @click="changePasswordInputType('oldPassword')"></i>
+                @focus="isCorrectPw = false" />
+              <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType('newPassword')"></i>
             </p>
-          </template>
-          <h4 class="title">{{$t('重置密码')}}</h4>
-          <p class="pw-input-text">
-            <input type="text" class="hidden-password-input">
-            <input type="password" class="hidden-password-input">
-            <input
-              autocomplete="new-password"
-              :type="passwordInputType['newPassword']"
-              :placeholder="$t('请输入新密码')"
-              :class="['editor-password',{ 'input-error': isCorrectPw }]"
-              :maxlength="32"
-              v-model="newPassword"
-              v-focus
-              @focus="isCorrectPw = false" />
-            <i :class="['bk-icon', passwordIconClass]" @click="changePasswordInputType('newPassword')"></i>
-          </p>
-          <div class="reset-btn">
-            <bk-button theme="primary" class="editor-btn" @click="confirmReset">{{$t('确认')}}</bk-button>
-            <bk-button theme="default" class="editor-btn" @click="isShowReset = false">{{$t('取消')}}</bk-button>
+            <div class="reset-btn">
+              <bk-button theme="primary" class="editor-btn" @click="confirmReset">{{$t('确认')}}</bk-button>
+              <bk-button theme="default" class="editor-btn" @click="isShowReset = false">{{$t('取消')}}</bk-button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="user-detail" data-test-id="activeFieldsData">
-      <div class="user-avatar-wrapper" :style="showUserInfo ? 'display: block' : 'display: none'">
-        <img :src="localAvatar || currentProfile.logo" width="68" height="68" @error="handleLoadAvatarError" />
-        <p v-if="isForbid" class="forbid-text">{{currentProfile.status === 'DISABLED' ? $t('已禁用') : $t('已锁定')}}</p>
+      <div class="user-detail" data-test-id="activeFieldsData">
+        <div class="user-avatar-wrapper" :style="showUserInfo ? 'display: block' : 'display: none'">
+          <img :src="localAvatar || currentProfile.logo" width="68" height="68" @error="handleLoadAvatarError" />
+          <p v-if="isForbid" class="forbid-text">{{currentProfile.status === 'DISABLED' ? $t('已禁用') : $t('已锁定')}}</p>
+        </div>
+        <ul v-if="fieldsList.length">
+          <li class="infor-content-list">
+            <h4 class="title" @click="isUserInfo">
+              <i :class="['bk-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
+              {{$t('用户信息')}}
+            </h4>
+            <div
+              :class="showUserInfo ? 'specific-text' : 'isHide'"
+              v-for="(fieldInfo, index) in activeFieldsList" :key="index">
+              <span class="name" v-bk-overflow-tips>{{fieldInfo.name}}</span>
+              <span class="gap">：</span>
+              <div class="desc" v-if="fieldInfo.key === 'telephone'" @click="viewTelephone">
+                <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
+              </div>
+              <div class="desc" v-else>
+                <p v-if="fieldInfo.key === 'account_expiration_date'" class="text">
+                  {{getExpireDays(fieldInfo.value)}}
+                </p>
+                <p v-else class="text">{{$xssVerification(fieldInfo.value || '') || '--'}}</p>
+              </div>
+            </div>
+          </li>
+          <li class="infor-content-list">
+            <h4 class="title" @click="isUserSetting">
+              <i :class="['bk-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
+              {{$t('用户设置')}}
+            </h4>
+            <div :style="showUserSetting ? 'display: block' : 'display: none'">
+              <div class="specific-text">
+                <span class="name">{{$t('所在组织')}}</span>
+                <span class="gap">：</span>
+                <p class="desc">
+                  <template v-for="(item, index) in currentProfile.department_name">
+                    <span :key="index" class="text" v-bk-overflow-tips>{{item}}</span>
+                  </template>
+                </p>
+              </div>
+              <div class="specific-text">
+                <span class="name">{{$t('直接上级')}}</span>
+                <span class="gap">：</span>
+                <p class="desc">
+                  <span class="text tag-text" v-if="currentProfile.leader && currentProfile.leader.length">
+                    {{switchTag(currentProfile.leader)}}
+                  </span>
+                  <span class="text" v-else>--</span>
+                </p>
+              </div>
+              <div class="specific-text">
+                <span class="name">{{$t('密码有效期')}}</span>
+                <span class="gap">：</span>
+                <p class="desc">
+                  <span class="text">{{passwordValidDays}}</span>
+                </p>
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
-      <ul v-if="fieldsList.length">
-        <li class="infor-content-list">
-          <h4 class="title" @click="isUserInfo">
-            <i :class="['bk-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
-            {{$t('用户信息')}}
-          </h4>
-          <div
-            :class="showUserInfo ? 'specific-text' : 'isHide'"
-            v-for="(fieldInfo, index) in activeFieldsList" :key="index">
-            <span class="name" v-bk-overflow-tips>{{fieldInfo.name}}</span>
-            <span class="gap">：</span>
-            <div class="desc" v-if="fieldInfo.key === 'telephone'" @click="viewTelephone">
-              <p :class="['text', { 'phone': phoneNumber === $t('点击查看') }]">{{phoneNumber}}</p>
-            </div>
-            <div class="desc" v-else>
-              <p v-if="fieldInfo.key === 'account_expiration_date'" class="text">
-                {{getExpireDays(fieldInfo.value)}}
-              </p>
-              <p v-else class="text">{{$xssVerification(fieldInfo.value || '') || '--'}}</p>
-            </div>
-          </div>
-        </li>
-        <li class="infor-content-list">
-          <h4 class="title" @click="isUserSetting">
-            <i :class="['bk-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
-            {{$t('用户设置')}}
-          </h4>
-          <div :style="showUserSetting ? 'display: block' : 'display: none'">
-            <div class="specific-text">
-              <span class="name">{{$t('所在组织')}}</span>
-              <span class="gap">：</span>
-              <p class="desc">
-                <template v-for="(item, index) in currentProfile.department_name">
-                  <span :key="index" class="text" v-bk-overflow-tips>{{item}}</span>
-                </template>
-              </p>
-            </div>
-            <div class="specific-text">
-              <span class="name">{{$t('直接上级')}}</span>
-              <span class="gap">：</span>
-              <p class="desc">
-                <span class="text tag-text" v-if="currentProfile.leader && currentProfile.leader.length">
-                  {{switchTag(currentProfile.leader)}}
-                </span>
-                <span class="text" v-else>--</span>
-              </p>
-            </div>
-            <div class="specific-text">
-              <span class="name">{{$t('密码有效期')}}</span>
-              <span class="gap">：</span>
-              <p class="desc">
-                <span class="text">{{passwordValidDays}}</span>
-              </p>
-            </div>
-          </div>
-        </li>
-      </ul>
     </div>
   </div>
 </template>
@@ -252,10 +254,18 @@ export default {
     // 获取用户信息
     getUserInfo() {
       this.activeFieldsList.forEach((item) => {
-        if ((item.options || []).length > 0) {
+        if ((item.options || []).length > 0 && item.type === 'one_enum') {
           item.options.map((key) => {
             if (key.id === this.currentProfile[item.key] || key.id === Number(this.currentProfile[item.key])) {
               item.value = this.$t(key.value);
+            }
+          });
+        } else if ((item.options || []).length > 0 && item.type === 'multi_enum') {
+          const valList = [];
+          item.options.map((key) => {
+            if (this.currentProfile[item.key].includes(key.id)) {
+              valList.push(this.$t(key.value));
+              item.value = valList.join(',');
             }
           });
         } else if (this.timerMap.includes(item.key)) {
@@ -295,7 +305,6 @@ export default {
           this.currentProfile.status = status;
           const message = this.isForbid ? this.$t('禁用') : this.$t('启用');
           this.messageSuccess(message + this.$t('成功'));
-          this.$emit('getTableData');
         }
       } catch (e) {
         console.warn(e);
@@ -467,7 +476,13 @@ export default {
 
 .look-user-info-wrapper {
   height: 100%;
-  padding: 24px 40px;
+  overflow: hidden;
+  overflow-y: auto;
+
+  @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+  .look-user-info {
+    padding: 24px;
+  }
 
   &.forbid-operate {
     .bk-button {

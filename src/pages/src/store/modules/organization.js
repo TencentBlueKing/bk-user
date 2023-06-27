@@ -107,7 +107,7 @@ export default {
     // 直接上级数据
     getSupOrganization(context, params, config = {}) {
       const { id, pageSize, page, keyword } = params;
-      return http.get(`api/v1/web/categories/${id}/profiles/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
+      return http.get(`api/v1/web/categories/${id}/profiles/?keyword=${keyword}&page=${page}&page_size=${pageSize}&has_not_department=true`);
     },
     // 根据id查看用户
     getProfileById(context, params, config = {}) {

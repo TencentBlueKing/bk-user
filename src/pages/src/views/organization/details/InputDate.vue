@@ -13,7 +13,7 @@
       font-size="14"
       class="king-date-picker"
       :placeholder="$t('请选择日期')"
-      :value="item.value"
+      :value="item.value === $t('永久') ? '2100-01-01' : item.value"
       :disabled="editStatus && !item.editable"
       :options="starttimePickerOptions"
       @change="changeDate">

@@ -352,6 +352,7 @@ export default {
 .audit-wrapper {
   height: 100%;
   color: #63656e;
+  padding: 40px;
   // 时间选择器和查询框
   .audit-heard-wrapper {
     display: flex;

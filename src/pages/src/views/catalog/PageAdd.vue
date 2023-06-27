@@ -88,6 +88,8 @@ export default {
 
 .add-page {
   color: $fontGray;
+  padding: 40px;
+  width: 100%;
 
   > h1.page-title {
     font-size: 24px;

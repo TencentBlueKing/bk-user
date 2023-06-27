@@ -47,6 +47,8 @@ class OperationType(AutoLowerEnum):
     CREATE = auto()
     UPDATE = auto()
     DELETE = auto()
+    HARD_DELETE = auto()
+    REVERT = auto()
     RETRIEVE = auto()
 
     SYNC = auto()
@@ -62,6 +64,8 @@ class OperationType(AutoLowerEnum):
         (CREATE, "创建"),
         (UPDATE, "更新"),
         (DELETE, "删除"),
+        (REVERT, "还原"),
+        (HARD_DELETE, "硬删除"),
         (RETRIEVE, "获取"),
         (SYNC, "同步"),
         (EXPORT, "导出"),

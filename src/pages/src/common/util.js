@@ -362,7 +362,7 @@ export function dateConvert(value) {
     case '2100-01-01':
       return window.mainComponent.$t('永久');
     default:
-      return moment.utc(value).format('YYYY-MM-DD HH:mm:ss');
+      return moment.utc(value).format('YYYY-MM-DD');
   }
 }
 

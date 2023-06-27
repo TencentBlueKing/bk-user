@@ -20,9 +20,9 @@
           :class="$route.name === 'organization' && 'router-link-active'"
           @click="goTo('organization')">{{ $t('组织架构') }}
         </a>
-        <a
+        <!-- <a
           href="javascript:void(0);"
-          :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('用户目录') }}</a>
+          :class="$route.name === 'catalog' && 'router-link-active'" @click="goTo('catalog')">{{ $t('用户目录') }}</a> -->
         <a
           href="javascript:void(0);"
           :class="$route.name === 'audit' && 'router-link-active'" @click="goTo('audit')">{{ $t('审计') }}</a>
@@ -32,6 +32,38 @@
       </p>
     </div>
     <div class="header-right" data-test-id="list_menuInfo">
+      <bk-dropdown-menu
+        ref="dropdownSwitch"
+        align="center"
+        @show="showSwitchDropdown = true"
+        @hide="showSwitchDropdown = false">
+        <div class="question-icon-trigger" :class="showSwitchDropdown && 'active'" slot="dropdown-trigger">
+          <div class="icon-circle-container">
+            <span
+              :class="['bk-sq-icon', $i18n.locale === 'en'
+                ? 'icon-yuyanqiehuanyingwen'
+                : 'icon-yuyanqiehuanzhongwen']"></span>
+          </div>
+        </div>
+        <ul class="bk-dropdown-list" slot="dropdown-content">
+          <li>
+            <a
+              href="javascript:;"
+              :class="[{ 'active-item': $i18n.locale === 'zh-cn' }]"
+              @click="handleSwitchLocale('zh-cn')">
+              <i class="bk-sq-icon icon-yuyanqiehuanzhongwen" style="font-size: 14px;" />
+              {{ $t('中文') }}
+            </a>
+            <a
+              href="javascript:;"
+              :class="[{ 'active-item': $i18n.locale === 'en' }]"
+              @click="handleSwitchLocale('en')">
+              <i class="bk-sq-icon icon-yuyanqiehuanyingwen" style="font-size: 14px;" />
+              English
+            </a>
+          </li>
+        </ul>
+      </bk-dropdown-menu>
       <bk-dropdown-menu
         ref="dropdownHelp"
         align="center"
@@ -85,6 +117,9 @@
 </template>
 
 <script>
+import Cookies from 'js-cookie';
+import I18n from '@/language/i18n';
+import '../static/blueking-icon/style.css';
 export default {
   name: 'HeaderBox',
   data() {
@@ -100,6 +135,7 @@ export default {
         username: '',
       },
       isDropdownShow: false,
+      showSwitchDropdown: false,
     };
   },
   created() {
@@ -195,6 +231,18 @@ export default {
         },
       });
     },
+    handleSwitchLocale(val) {
+      Cookies.set('blueking_language', val, {
+        expires: 3600,
+        path: '/',
+        domain: window.location.hostname
+          .split('.')
+          .slice(-2)
+          .join('.'),
+      });
+      I18n.locale = val;
+      window.location.reload();
+    },
   },
 };
 </script>
@@ -205,7 +253,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   position: relative;
-  margin-bottom: 20px;
+  // margin-bottom: 20px;
   padding: 0 25px;
   min-width: 1180px;
   height: 60px;
@@ -297,7 +345,7 @@ export default {
         border-radius: 16px;
         transition: all .2s;
 
-        .bk-icon {
+        .bk-icon, .bk-sq-icon {
           color: #979ba5;
           font-size: 16px;
           transition: all .2s;
@@ -310,7 +358,7 @@ export default {
           background: #252f43;
           transition: all .2s;
 
-          .bk-icon {
+          .bk-icon, .bk-sq-icon {
             color: #3a84ff;
             transition: all .2s;
           }
@@ -328,6 +376,14 @@ export default {
           color: #3a84ff;
           cursor: pointer;
         }
+      }
+    }
+
+    .active-item {
+      background-color: #E1ECFF;
+      color: #3a84ff;
+      &:hover {
+        background-color: #E1ECFF;
       }
     }
   }

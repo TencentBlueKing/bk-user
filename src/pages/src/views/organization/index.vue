@@ -8,79 +8,90 @@
   - specific language governing permissions and limitations under the License.
   -->
 <template>
-  <div class="organization-wrapper" @click="hiddenMenu" v-bkloading="{ isLoading: initLoading }">
-    <div class="organization-left" :style="{ width: treeBoxWidth + 'px' }" v-show="!initLoading">
-      <TreeSearch ref="searchChild" @searchTree="handleSearchTree" />
-      <div class="tree-loading-wrapper" v-bkloading="{ isLoading: treeLoading }">
-        <div class="tree-content-wrapper" ref="treePanel">
-          <OrganizationTree
-            v-show="!isShowingSearchTree"
-            :tree-data-list="treeDataList"
-            :tree-search-result="treeSearchResult"
-            :current-category-id="currentCategoryId"
-            @handleClickToggle="handleClickToggle"
-            @handleClickTreeNode="handleClickTreeNode"
-            @handleClickOption="handleClickOption"
-            @handleRename="handleRename"
-            @switchNodeOrder="switchNodeOrder"
-            @deleteDepartment="deleteDepartment"
-            @showTreeLoading="treeLoading = true"
-            @closeTreeLoading="treeLoading = false" />
-          <OrganizationTree
-            v-if="isShowingSearchTree"
-            :tree-data-list="searchTreeList"
-            :tree-search-result="treeSearchResult"
-            :current-category-id="currentCategoryId"
-            @handleClickOption="handleClickOption"
-            @handleRename="handleRename"
-            @deleteDepartment="deleteDepartment" />
+  <div class="organization-wrapper" @click="hiddenMenu($event)" v-bkloading="{ isLoading: initLoading }">
+    <bk-resize-layout
+      :min="260" :max="420" v-show="showingPage === 'showPageHome'">
+      <div slot="aside" class="organization-left" v-show="!initLoading">
+        <TreeSearch ref="searchChild" @searchTree="handleSearchTree" @addDirectory="addDirectory" />
+        <div class="tree-loading-wrapper" v-bkloading="{ isLoading: treeLoading }">
+          <div class="tree-content-wrapper" ref="treePanel">
+            <OrganizationTree
+              :tree-data-list="treeDataList"
+              :tree-search-result="treeSearchResult"
+              :current-category-id="currentCategoryId"
+              @handleClickTreeNode="handleClickTreeNode"
+              @handleClickToggle="handleClickToggle"
+              @handleRename="handleRename"
+              @handleClickOption="handleClickOption"
+              @deleteDepartment="deleteDepartment"
+              @switchNodeOrder="switchNodeOrder"
+              @handleConfigDirectory="handleClickConfig"
+              @handleMouseenter="handleMouseenter"
+              @handleMouseleave="handleMouseleave"
+              @addOrganization="addOrganization" />
+          </div>
         </div>
       </div>
-    </div>
-    <div class="organization-right" :style="{ width: 'calc(100% - ' + treeBoxWidth + 'px)' }" v-show="!initLoading">
-      <!-- 用户目录节点 -->
-      <div class="catalog-info" v-if="isShowCatalogPage">
-        <h1 class="catalog-name">
-          {{currentParam.item.display_name}}
-        </h1>
-        <p class="catalog-detail">
-          {{$t('含') + currentParam.item.departments.length +
-            $t('个组织') +
-            (currentParam.item.profile_count || '0') + $t('人')}}
-        </p>
-      </div>
-      <!-- 组织节点 -->
-      <template v-else>
+      <div slot="main" class="organization-right" v-show="!initLoading">
         <!-- 组织名称和人数 -->
         <div class="department-title">
-          <div class="title-content">
-            <span class="department-name" v-bk-overflow-tips>{{handleTabData.departName}}</span>
-            <span class="total-number" v-if="handleTabData.totalNumber !== null && noSearchOrSearchDepartment">
-              ({{handleTabData.totalNumber}})
-            </span>
+          <div class="title-left">
+            <div class="title-left-name">
+              <i
+                :class="[currentParam.item.display_name
+                  ? 'icon user-icon icon-root-node-i'
+                  : 'icon icon-user-file-close-01']"></i>
+              <span class="profile-name text-overflow">
+                {{ currentParam.item.display_name || currentParam.item.name}}
+              </span>
+              <span class="profile-count">
+                {{ handleTabData.totalNumber }}
+              </span>
+            </div>
+            <ul class="title-left-ul" v-if="currentParam.item.type">
+              <li>
+                {{ $t('目录类型：') + (currentCategoryType === 'local' ? $t('本地目录') : currentCategoryType) }}
+              </li>
+              <li>
+                {{ $t('登录域：') + currentParam.item.domain }}
+              </li>
+              <li>
+                {{ $t('目录状态：') }}
+                <span
+                  :class="[{ 'incomplete': !currentParam.item.configured },
+                           { 'deactivate': !currentParam.item.activated }]">{{ itemActivated }}</span>
+              </li>
+              <li>
+                {{ $t('更新时间：') + itemUpdateTime }}
+              </li>
+            </ul>
+          </div>
+          <div class="title-right">
+            <bk-button
+              v-if="currentParam.item.type"
+              :theme="'primary'" class="mr10" size="small"
+              @click="handleClickConfig">
+              {{ $t('目录配置') }}
+            </bk-button>
+            <OperationConfig
+              :node="currentParam.item"
+              :current-category-id="currentCategoryId"
+              @handleRename="handleRename"
+              @deleteDepartment="deleteDepartment" />
           </div>
         </div>
-        <!-- 组织下无成员 -->
-        <div class="empty-department" v-show="isEmptyDepartment" v-bkloading="{ isLoading: basicLoading }">
-          <div class="empty-search">
-            <img src="../../images/svg/info.svg" alt="info">
-            <p>{{$t('暂无组织成员')}}</p>
-            <template v-if="currentCategoryType === 'local' && isTableDataError === false">
-              <p class="tips">{{$t('如需添加组织成员，可通过以下两种方式进行')}}</p>
-              <div class="button-container">
-                <bk-button theme="primary" style="min-width: 120px;margin-right: 10px;" @click="addUserFn">
-                  {{$t('新增用户1')}}
-                </bk-button>
-                <!-- 从其他组织拉取 -->
-                <bk-button style="min-width: 120px;" @click="pullUserFn">
-                  {{$t('拉取已有用户')}}
-                </bk-button>
-              </div>
-            </template>
-          </div>
-        </div>
+        <!-- 目录配置未完成 -->
+        <bk-exception
+          v-if="!currentParam.item.configured && !currentParam.item.parent"
+          type="empty" scene="page">
+          <p style="font-size: 20px">{{$t('目录配置未完成')}}</p>
+          <bk-link
+            theme="primary"
+            class="empty-subtitle"
+            @click="handleClickConfig">{{ $t('继续配置') }}</bk-link>
+        </bk-exception>
         <!-- 正常分页查询有数据，或者筛选筛选、搜索无数据 -->
-        <div class="staff-info-wrapper" v-show="!isEmptyDepartment">
+        <div class="staff-info-wrapper" v-else>
           <!-- 表格上方的操作栏，组织树搜索结果为非组织时不渲染 -->
           <div class="table-actions" v-if="noSearchOrSearchDepartment">
             <!-- 本地用户目录 -->
@@ -131,8 +142,7 @@
                     @change="changeSearchLevel">
                   </bk-checkbox>
                   <span class="text text-overflow-hidden" v-bk-overflow-tips @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + (handleTabData.currentNumber === null ? ''
-                      : `(${handleTabData.currentNumber})`)}}
+                    {{$t('仅显示本级组织成员') + `(${handleTabData.totalNumber})`}}
                   </span>
                 </p>
               </div>
@@ -140,17 +150,13 @@
                 <!-- 用户搜索框 -->
                 <bk-search-select
                   class="king-input-search"
-                  style="width: 400px;margin-right: 20px;"
+                  style="width: 400px;"
                   :placeholder="$t('输入用户名/中文名，按Enter搜索')"
                   :data="searchFilterList"
                   :show-condition="false"
                   v-model="tableSearchKey"
                   @change="handleTableSearch"
                   @input-click.once="handleSearchList" />
-                <!-- 设置列表字段 -->
-                <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
-                  <i class="icon icon-user-cog"></i>
-                </div>
               </div>
             </template>
             <!-- 非本地用户目录 -->
@@ -172,16 +178,9 @@
                     class="king-checkbox" :checked="isSearchCurrentDepartment"
                     @change="changeSearchLevel"></bk-checkbox>
                   <span class="text" @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + (handleTabData.currentNumber === null ? ''
-                      : `(${handleTabData.currentNumber})`)}}
+                    {{$t('仅显示本级组织成员') + `(${handleTabData.totalNumber})`}}
                   </span>
                 </p>
-              </div>
-              <div class="table-actions-right-container">
-                <!-- 设置列表字段 -->
-                <div class="set-table-field" v-bk-tooltips.top="$t('设置列表字段')" @click="setFieldList">
-                  <i class="icon icon-user-cog"></i>
-                </div>
               </div>
             </template>
           </div>
@@ -198,142 +197,163 @@
               :is-click.sync="isClick"
               :loading="basicLoading"
               :fields-list="fieldsList"
-              :current-category-type="currentCategoryType"
-              :no-search-or-search-department="noSearchOrSearchDepartment"
-              :status-map="statusMap"
+              :pagination="paginationConfig"
               :timer-map="timerMap"
+              :status-map="statusMap"
+              @handlePageChange="handlePageChange"
+              @handlePageLimitChange="handlePageLimitChange"
+              @handleSetFieldList="handleSetFieldList"
               @viewDetails="viewDetails"
-              @showTableLoading="showTableLoading"
-              @closeTableLoading="closeTableLoading"
               @updateTableData="updateTableData"
               @updateHeardList="updateHeardList"
+              @isClickList="isClickList"
+              @deleteProfile="deleteProfile"
               @handleRefresh="getTableData"
               @handleClickEmpty="handleClickEmpty" />
-            <div class="table-pagination" v-if="noSearchOrSearchDepartment && paginationConfig.count > 0">
-              <div class="table-pagination-left">{{$t('共计')}}
-                {{Math.ceil(paginationConfig.count / paginationConfig.limit)}} {{$t('页')}}，
-              </div>
-              <div class="table-pagination-right">
-                <bk-pagination
-                  size="small"
-                  align="right"
-                  :current.sync="paginationConfig.current"
-                  :count="paginationConfig.count"
-                  :limit="paginationConfig.limit"
-                  :limit-list="limitList"
-                  @change="changeCurrentPage"
-                  @limit-change="changeLimitPage"></bk-pagination>
-              </div>
-            </div>
           </div>
         </div>
-      </template>
-    </div>
-    <!-- 新增用户 侧边栏 -->
-    <bk-sideslider
-      class="king-sideslider"
-      :width="630"
-      :show-mask="false"
-      :is-show.sync="detailsBarInfo.isShow"
-      :quick-close="true"
-      :title="detailsBarInfo.title"
-      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
-      :before-close="beforeClose">
-      <div slot="content" v-if="detailsBarInfo.isShow">
-        <DetailsBar
-          :details-bar-info="detailsBarInfo"
-          :current-profile="currentProfile"
-          :current-category-id="currentCategoryId"
-          :current-category-type="currentCategoryType"
-          :fields-list="fieldsList"
-          :status-map="statusMap"
-          :timer-map="timerMap"
-          @hideBar="hideBar"
-          @showBar="showBar"
-          @showBarLoading="showBarLoading"
-          @closeBarLoading="closeBarLoading"
-          @getTableData="getTableData"
-          @updateUserInfor="updateUserInfor"
-          @editProfile="editProfile"
-          @handleCancelEdit="handleCancelEdit"
-          @deleteProfile="deleteProfile"
-          @restoreProfile="restoreProfile" />
+        <!-- 弹窗操作 -->
+        <div class="operation-wrapper">
+          <!-- 新增用户 侧边栏 -->
+          <bk-sideslider
+            class="king-sideslider"
+            :width="630"
+            :show-mask="false"
+            :is-show.sync="detailsBarInfo.isShow"
+            :quick-close="true"
+            :title="detailsBarInfo.title"
+            :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
+            :before-close="beforeClose">
+            <div slot="content" class="member-content" v-if="detailsBarInfo.isShow">
+              <DetailsBar
+                :details-bar-info="detailsBarInfo"
+                :current-profile="currentProfile"
+                :current-category-id="currentCategoryId"
+                :current-category-type="currentCategoryType"
+                :fields-list="fieldsList"
+                :status-map="statusMap"
+                :timer-map="timerMap"
+                @hideBar="hideBar"
+                @showBar="showBar"
+                @showBarLoading="showBarLoading"
+                @closeBarLoading="closeBarLoading"
+                @updateUserInfor="updateUserInfor"
+                @editProfile="editProfile"
+                @handleCancelEdit="handleCancelEdit"
+                @deleteProfile="deleteProfile"
+                @restoreProfile="restoreProfile" />
+            </div>
+          </bk-sideslider>
+          <!-- 重命名、添加下级组织 -->
+          <bk-dialog
+            width="648"
+            header-position="left"
+            :auto-close="false"
+            :title="handleTabData.title"
+            v-model="handleTabData.isShow"
+            @confirm="actionConfirmFn"
+            @cancel="actionCancelFn">
+            <DialogContent
+              v-if="handleTabData.isShow"
+              ref="dialogContentRef"
+              :rename-data="renameData"
+              :handle-tab-data="handleTabData"
+              :set-table-fields="setTableFields"
+              @onEnter="actionConfirmFn" />
+          </bk-dialog>
+          <!-- 设置所在组织的弹窗 -->
+          <bk-dialog
+            width="721"
+            class="king-dialog department-dialog"
+            header-position="left"
+            :position="{ top: setDepartmentTop }"
+            :auto-close="false"
+            :title="$t('设置所在组织')"
+            v-model="isShowSetDepartments"
+            @confirm="selectDeConfirmFn"
+            @cancel="isShowSetDepartments = false">
+            <div class="select-department-wrapper clearfix">
+              <SetDepartment
+                v-if="isShowSetDepartments"
+                :current-category-id="currentCategoryId"
+                :initial-departments="initialDepartments"
+                @getDepartments="getDepartments" />
+            </div>
+          </bk-dialog>
+          <!-- 批量拉取用户 -->
+          <bk-dialog
+            width="440"
+            header-position="left"
+            v-model="batchUserInfo.isShow"
+            :auto-close="false"
+            :title="$t('拉取已有用户')"
+            :ok-text="$t('提交')"
+            @confirm="submitBatch"
+            @cancel="BatchCancelFn">
+            <div class="batch-content-wrapper">
+              <PullUser v-if="batchUserInfo.isShow" ref="pullUser" :id="currentCategoryId" @getPullUser="getPullUser" />
+            </div>
+          </bk-dialog>
+          <!-- 添加组织 -->
+          <div class="new-department" style="display: none;">
+            <div class="folder-icon">
+              <span class="icon icon-user-file-close-01"></span>
+            </div>
+            <bk-input
+              v-model="addOrganizationName"
+              type="text"
+              font-size="medium"
+              class="adding-input"
+              :placeholder="$t('按Enter键确认添加')"
+              @enter="confirmAdd"
+              @blur="cancelAdd"
+              @keydown="handleKeydown"
+            ></bk-input>
+          </div>
+        </div>
       </div>
-    </bk-sideslider>
-    <!-- 弹窗操作 -->
-    <div class="operation-wrapper">
-      <!-- 重命名、添加下级组织、设置列表字段 -->
-      <bk-dialog
-        width="648"
-        header-position="left"
-        :auto-close="false"
-        :title="handleTabData.title"
-        v-model="handleTabData.isShow"
-        @confirm="actionConfirmFn"
-        @cancel="actionCancelFn">
-        <DialogContent
-          v-if="handleTabData.isShow"
-          ref="dialogContentRef"
-          :rename-data="renameData"
-          :handle-tab-data="handleTabData"
-          :set-table-fields="setTableFields"
-          @onEnter="actionConfirmFn" />
-      </bk-dialog>
-      <!-- 设置所在组织的弹窗 -->
-      <bk-dialog
-        width="721"
-        class="king-dialog department-dialog"
-        header-position="left"
-        :position="{ top: setDepartmentTop }"
-        :auto-close="false"
-        :title="$t('设置所在组织')"
-        v-model="isShowSetDepartments"
-        @confirm="selectDeConfirmFn"
-        @cancel="isShowSetDepartments = false">
-        <div class="select-department-wrapper clearfix">
-          <SetDepartment
-            v-if="isShowSetDepartments"
-            :current-category-id="currentCategoryId"
-            :initial-departments="initialDepartments"
-            @getDepartments="getDepartments" />
-        </div>
-      </bk-dialog>
-      <!-- 批量拉取用户 -->
-      <bk-dialog
-        width="440"
-        header-position="left"
-        v-model="batchUserInfo.isShow"
-        :auto-close="false"
-        :title="$t('拉取已有用户')"
-        :ok-text="$t('提交')"
-        @confirm="submitBatch"
-        @cancel="BatchCancelFn">
-        <div class="batch-content-wrapper">
-          <PullUser v-if="batchUserInfo.isShow" ref="pullUser" :id="currentCategoryId" @getPullUser="getPullUser" />
-        </div>
-      </bk-dialog>
+    </bk-resize-layout>
+    <div id="catalog" v-show="showingPage !== 'showPageHome'">
+      <!-- 新增目录 -->
+      <PageAdd v-if="showingPage === 'showPageAdd'" :catalog-metas="catalogMetas" @changePage="changePage" />
+      <!-- 本地用户 -->
+      <LocalAdd v-if="showingPage === 'showLocalAdd'" @changePage="changePage" @cancel="handleCancel" />
+      <LocalSet v-if="showingPage === 'showLocalSet'" @changePage="changePage" :catalog-info="catalogInfo" />
+      <!-- MAD 用户 -->
+      <RemoteAdd
+        v-if="showingPage === 'showRemoteAddMad'"
+        @changePage="changePage"
+        @cancel="handleCancel" catalog-type="mad" />
+      <RemoteSet v-if="showingPage === 'showRemoteSetMad'" @changePage="changePage" :catalog-info="catalogInfo" />
+      <!-- LDAP 用户 -->
+      <RemoteAdd
+        v-if="showingPage === 'showRemoteAddLdap'"
+        @changePage="changePage"
+        @cancel="handleCancel" catalog-type="ldap" />
+      <RemoteSet v-if="showingPage === 'showRemoteSetLdap'" @changePage="changePage" :catalog-info="catalogInfo" />
     </div>
     <!-- table basic loading 时的遮罩层 -->
-    <div v-show="basicLoading || initLoading || isChangingWidth" class="loading-cover" @click.stop></div>
-    <!-- 可拖拽页面布局宽度 -->
-    <div ref="dragBar" :class="['drag-bar', isChangingWidth && 'dragging']" :style="{ left: treeBoxWidth - 1 + 'px' }">
-      <img
-        src="../../images/svg/drag-icon.svg" alt="drag"
-        draggable="false" class="drag-icon" @mousedown.left="dragBegin">
-    </div>
+    <div v-show="basicLoading || initLoading" class="loading-cover" @click.stop></div>
   </div>
 </template>
 
 <script>
+import moment from 'moment';
 import TreeSearch from './tree/TreeSearch';
-import OrganizationTree from './tree/OrganizationTree';
 import DialogContent from './tree/DialogContent';
-import UserTable from './table/UserTable';
 import PullUser from './table/PullUser';
 import DetailsBar from './details/DetailsBar';
+import OrganizationTree from './tree/OrganizationTree.vue';
+import UserTable from './table/UserTable.vue';
 
 import SetDepartment from '@/components/organization/SetDepartment';
 import mixin from './mixin';
+import PageAdd from '../catalog/PageAdd.vue';
+import LocalAdd from '../catalog/operation/LocalAdd';
+import LocalSet from '../catalog/operation/LocalSet';
+import RemoteAdd from '../catalog/operation/RemoteAdd';
+import RemoteSet from '../catalog/operation/RemoteSet';
+import OperationConfig from '@/components/organization/OperationConfig';
 
 export default {
   name: 'OrganizationIndex',
@@ -341,10 +361,16 @@ export default {
     DetailsBar,
     DialogContent,
     SetDepartment,
-    OrganizationTree,
-    UserTable,
     TreeSearch,
     PullUser,
+    OrganizationTree,
+    UserTable,
+    PageAdd,
+    LocalAdd,
+    LocalSet,
+    RemoteAdd,
+    RemoteSet,
+    OperationConfig,
   },
   mixins: [mixin],
   data() {
@@ -352,18 +378,11 @@ export default {
       initLoading: true,
       // 增加组织请求接口时给树组织一个loading
       treeLoading: false,
-      // 左边树组织内容宽度
-      treeBoxWidth: 260,
-      treeBoxMinWidth: 260,
-      treeBoxMaxWidth: 420,
-      // 是否正在拖拽宽度
-      isChangingWidth: false,
       paginationConfig: {
         current: 1,
         count: 1,
         limit: 10,
       },
-      limitList: [10, 20, 50, 100],
       clickSecond: false,
       // 保存的字段信息列表
       fieldsList: [],
@@ -374,6 +393,7 @@ export default {
         type: '',
         basicLoading: false,
         title: '',
+        quickClose: true,
       },
       // 点击保存时打开 loading，临时在样式上隐藏侧边栏
       isHideBar: false,
@@ -382,7 +402,7 @@ export default {
         departName: '',
         title: this.$t('添加下级组织'),
         isMark: false,
-        totalNumber: null,
+        totalNumber: 0,
         currentNumber: 0,
       },
       // 重命名的目录或组织
@@ -392,10 +412,6 @@ export default {
         tableHeardList: [],
         userInforList: [],
       },
-      // 组织为空
-      isEmptyDepartment: false,
-      // 搜索结果为空
-      isEmptySearch: false,
       // 表格请求出错
       isTableDataError: false,
       // 表格请求结果为空
@@ -404,7 +420,6 @@ export default {
       isClick: false,
       isShowSetDepartments: false,
       treeDataList: [],
-      searchTreeList: [],
       isShowingSearchTree: false,
       // 在搜索的结果里重命名或删除了组织，需要重新初始化数据
       hasTreeDataModified: false,
@@ -456,9 +471,19 @@ export default {
         qq: 'qq',
       },
       statusMap: {},
-      timerMap: ['account_expiration_date', 'last_login_time', 'create_time'],
+      timerMap: ['account_expiration_date', 'last_login_time', 'create_time', 'update_time'],
       checkSearchKey: '',
       departmentsId: null,
+      // 选中列表
+      isCheckList: [],
+      showingPage: 'showPageHome',
+      catalogMetas: [],
+      catalogInfo: '',
+      catalogList: [],
+      // 添加组织名称
+      addOrganizationName: '',
+      currentParentNode: null,
+      currentNode: null,
     };
   },
   computed: {
@@ -468,6 +493,23 @@ export default {
     isShowCatalogPage() {
       return Boolean(this.currentParam.item.type && !this.treeSearchResult);
     },
+    isRootDirectory() {
+      return this.currentParam.item.parent === null;
+    },
+    itemActivated() {
+      let text = '';
+      if (!this.currentParam.item.configured) {
+        text = this.$t('未完成');
+      } else if (this.currentParam.item.activated) {
+        text = this.$t('启用');
+      } else {
+        text = this.$t('停用');
+      }
+      return text;
+    },
+    itemUpdateTime() {
+      return moment.utc(this.currentParam.item.update_time).format('YYYY-MM-DD HH:mm:ss');
+    },
   },
   watch: {
     'currentParam.item'(val, oldVal) {
@@ -476,7 +518,7 @@ export default {
         return;
       }
       // 当变更选中节点（组织节点），更新用户信息列表
-      if (!val.type && (val.id !== oldVal.id || oldVal.type)) {
+      if (!val.type && (val.id !== oldVal.id || val.type !== oldVal.type)) {
         this.initTableData();
       }
       this.currentCategoryId = val.type ? val.id : this.findCategoryId(val);
@@ -498,7 +540,7 @@ export default {
             }
           });
           this.heardList.push({ name, id, multiable, children });
-        } else {
+        } else if (!this.timerMap.includes(id)) {
           this.heardList.push({ name, id });
         }
       });
@@ -521,19 +563,27 @@ export default {
         this.checkSearchKey = '';
       }
     },
+    // 当前节点背景颜色
+    currentNode(val, oldVal) {
+      if (val !== oldVal) {
+        val.style.background = '#e1ecff';
+        if (oldVal) {
+          oldVal.style.background = 'none';
+        }
+      }
+    },
+  },
+  created() {
+    this.initCatalogMetas();
+    this.getCatalogList();
+    if (this.$store.state.catalog.defaults.password === null) {
+      this.getDefaultInfo();
+    }
   },
   async mounted() {
-    // 初始化tree、用户信息title
-    const limit = Math.floor((this.$el.offsetHeight - 240) / 42);
-    this.paginationConfig.limit = limit;
-    const limitList = [10, 20, 50, 100];
-    if (!limitList.includes(limit)) {
-      limitList.push(limit);
-      limitList.sort((a, b) => a - b);
-    }
-    this.limitList = limitList;
     try {
       await Promise.all([this.initData(), this.getTableTitle()]);
+      this.getNodeColor();
     } catch (e) {
       console.warn(e);
     } finally {
@@ -547,7 +597,10 @@ export default {
         const res = await this.$store.dispatch('organization/getOrganizationTree');
         if (!res.data || !res.data.length) return;
         this.treeDataList = res.data;
-        this.treeDataList.forEach((catalog) => {
+        this.treeDataList.forEach((catalog, index) => {
+          if (index === 0) {
+            this.initRtxList(catalog.id);
+          }
           this.filterTreeData(catalog, this.treeDataList);
           catalog.children = catalog.departments;
           catalog.children.forEach((department) => {
@@ -561,6 +614,7 @@ export default {
           item: this.treeDataList[0],
         };
         this.treeDataList[0].showBackground = true;
+        this.treeDataList[0].expanded = true;
       } catch (e) {
         console.warn(e);
         const { response } = e;
@@ -618,19 +672,58 @@ export default {
         console.warn(e);
       }
     },
+    // 初始化直接上级列表
+    async initRtxList(id) {
+      try {
+        this.basicLoading = true;
+        const params = {
+          id,
+          pageSize: this.paginationConfig.limit,
+          page: this.paginationConfig.current,
+          keyword: '',
+        };
+        const res = await this.$store.dispatch('organization/getSupOrganization', params);
+        this.paginationConfig.count = res.data.count;
+        this.filterUserData(res.data.results);
+        if (!this.tableSearchKey.length) {
+          if (this.isSearchCurrentDepartment) {
+            // 当前组织下成员
+            this.handleTabData.totalNumber = res.data.count;
+          } else {
+            // 默认查询
+            this.handleTabData.totalNumber = res.data.count;
+          }
+        }
+
+        this.isEmptyDepartment = false;
+        this.isTableDataEmpty = false;
+        this.isEmptySearch = false;
+        if (this.paginationConfig.count === 0) {
+          this.isTableDataEmpty = true;
+        }
+
+        this.isTableDataError = false;
+      } catch (e) {
+        console.warn(e);
+        this.isTableDataError = true;
+      } finally {
+        this.basicLoading = false;
+        this.isClick = false;
+        this.tableSearchedKey = this.tableSearchKey;
+      }
+    },
+    getNodeColor() {
+      this.currentNode = document.getElementsByClassName('tree-drag-node')[0];
+    },
     // 激活节点变化、清空组织搜索刷新表格数据
     initTableData() {
-      this.paginationConfig.count = 1;
-      this.paginationConfig.current = 1;
-      this.handleTabData.totalNumber = null;
-      this.handleTabData.currentNumber = null;
+      this.handleTabData.totalNumber = 0;
       this.handleTabData.departName = this.currentParam.item.full_name || this.currentParam.item.display_name;
-      this.getTableData();
+      this.handleTableData();
     },
     async getTableData() {
       if (this.currentParam.item.isNewDeparment === true) {
         this.handleTabData.totalNumber = 0;
-        this.isEmptyDepartment = true;
         this.currentParam.item.isNewDeparment = false;
         return;
       }
@@ -652,27 +745,23 @@ export default {
           params.recursive = false;
         }
         const res = await this.$store.dispatch('organization/getProfiles', params);
-
-        this.filterUserData(res.data.data);
+        this.$set(this.currentParam.item, 'profile_count', res.data.count);
+        this.filterUserData(res.data.results);
         this.paginationConfig.count = res.data.count;
-        if (!this.tableSearchKey) {
+        if (!this.tableSearchKey.length) {
           if (this.isSearchCurrentDepartment) {
             // 当前组织下成员
-            this.handleTabData.totalNumber = res.data.total_count;
-            this.handleTabData.currentNumber = res.data.count;
+            this.handleTabData.totalNumber = res.data.count;
           } else {
             // 默认查询
             this.handleTabData.totalNumber = res.data.count;
-            this.handleTabData.currentNumber = res.data.current_count;
           }
         }
 
         this.isEmptyDepartment = false;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
-        if (this.handleTabData.totalNumber === 0) {
-          this.isEmptyDepartment = true;
-        } else if (this.paginationConfig.count === 0) {
+        if (this.paginationConfig.count === 0) {
           this.isTableDataEmpty = true;
         }
 
@@ -680,7 +769,6 @@ export default {
       } catch (e) {
         console.warn(e);
         this.isTableDataError = true;
-        this.isEmptyDepartment = true;
       } finally {
         this.basicLoading = false;
         this.isClick = false;
@@ -694,8 +782,8 @@ export default {
         return;
       }
       const userInforList = [];
-      const filterTitle = this.userMessage.tableHeardList.map(item => item.key);
       list.forEach((item) => {
+        const filterTitle = Object.keys(item);
         if (item.leaders) {
           this.$set(item, 'leader', item.leaders);
         }
@@ -722,23 +810,26 @@ export default {
         tempObj.originItem = originItem;
         userInforList.push(tempObj);
       });
-      this.userMessage.userInforList = userInforList;
+      this.userMessage.userInforList = list;
     },
     // 切换是否仅显示本级成员
     changeSearchLevel() {
-      this.paginationConfig.current = 1;
       this.isSearchCurrentDepartment = !this.isSearchCurrentDepartment;
-      this.getTableData();
+      this.handleTableData();
     },
 
     // 分页查询
-    changeCurrentPage() {
-      this.getTableData();
+    handlePageChange(page) {
+      this.paginationConfig.current = page;
+      this.handleTableData();
     },
-    changeLimitPage(limit) {
-      this.paginationConfig.current = 1;
+    handlePageLimitChange(limit) {
       this.paginationConfig.limit = limit;
-      this.getTableData();
+      this.handleTableData();
+    },
+    // 选中的用户列表
+    isClickList(selection) {
+      this.isCheckList = selection;
     },
     updateHeardList(value) {
       this.searchDataList = [];
@@ -757,7 +848,7 @@ export default {
     // 搜索table
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
-      if (!list.length) return this.getTableData();
+      if (!list.length) return this.handleTableData();
       const valueList = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
       let key = '';
       list.forEach((item) => {
@@ -833,24 +924,21 @@ export default {
     // 搜索结果： 1.展开tree 找到对应的node 加载用户信息列表
     async handleSearchTree(searchResult) {
       // 消除之前空组织对搜索结果的影响
-      this.isEmptyDepartment = false;
       this.treeSearchResult = searchResult;
       if (searchResult === null) {
         // 关闭搜索
         const currentItem = this.currentParam.item;
-        this.searchTreeList = [];
         this.isShowingSearchTree = false;
         if (this.hasTreeDataModified) {
           // 在搜索的结果里重命名或删除了组织，需要重新初始化数据
           this.initLoading = true;
           await this.initData();
+          this.getNodeColor();
           this.initLoading = false;
-        } else if (currentItem.type) {
-          // 恢复用户目录显示
-          this.userMessage.userInforList = [];
         } else {
           // 恢复组织显示
-          this.initTableData();
+          await this.initData();
+          this.getNodeColor();
         }
         this.hasTreeDataModified = false;
         // 恢复当前目录/组织类型
@@ -858,17 +946,14 @@ export default {
         this.currentCategoryType = currentItem.type ? currentItem.type : this.findCategoryType(currentItem);
       } else if (searchResult.groupType === 'department') {
         // 搜索结果为组织
-        this.paginationConfig.count = 1;
-        this.paginationConfig.current = 1;
-        this.handleTabData.totalNumber = null;
-        this.handleTabData.currentNumber = null;
+        this.handleTabData.totalNumber = 0;
         // 搜索的结果就是展示的组织
         this.setTreeDataFromSearchResult(searchResult, searchResult.category_id);
         // 获取该组织下的人员
-        this.getTableData();
+        this.handleTableData();
       } else {
         // 搜索结果为人员，只展示所在的第一个组织
-        this.setTreeDataFromSearchResult(searchResult.departments[0], searchResult.category_id);
+        this.setTreeDataFromSearchResult(searchResult, searchResult.category_id);
         // 直接将搜索的单个人员信息展示在表格中
         this.filterUserData([searchResult]);
         this.$nextTick(() => {
@@ -882,42 +967,44 @@ export default {
       this.isShowingSearchTree = true;
       if (!department) {
         this.handleTabData.departName = '';
-        this.searchTreeList = [];
         return;
       }
       this.handleTabData.departName = department.full_name;
       this.$set(department, 'showBackground', true);
       this.$set(department, 'showOption', false);
       // 判断是不是本地目录下的组织
-      this.treeDataList.forEach((catalog) => {
+      this.treeDataList = this.treeDataList.filter((catalog) => {
         if (catalog.id === catalogId) {
           department.isLocalDepartment = catalog.type === 'local';
           this.currentCategoryId = catalogId;
           this.currentCategoryType = catalog.type;
+          return catalog.children = catalog.children.filter((child) => {
+            if (child.id === department.id) {
+              this.currentParam.item = child;
+              this.handleClickTreeNode(child);
+              return child;
+            }
+          });
         }
       });
-      this.searchTreeList = [department];
     },
 
     // 重命名，添加下级组织，设置表字段弹窗操作
-    handleRename(item, type) {
+    handleRename(item, event) {
+      if (event) {
+        event.stopPropagation();
+      }
+      item.showOption = false;
+      const type = item.parent === null ? 'catalog' : 'department';
       this.renameData = { item, type };
       this.handleTabData.title = this.$t('重命名');
-      this.handleTabData.isShow = true;
-    },
-    setFieldList() {
-      this.handleTabData.title = this.$t('设置列表字段');
       this.handleTabData.isShow = true;
     },
     actionConfirmFn() {
       if (this.handleTabData.isNameError) {
         return;
       }
-      if (this.handleTabData.title === this.$t('设置列表字段')) {
-        // 设置列表字段
-        this.setTableFields = this.$refs.dialogContentRef.localSetTableFields;
-        this.confirmSetFieldList();
-      } else if (this.handleTabData.title === this.$t('重命名')) {
+      if (this.handleTabData.title === this.$t('重命名')) {
         // 重命名
         this.treeLoading = true;
         this.renameData.type === 'catalog' ? this.confirmRenameCatalog() : this.confirmRenameDepartment();
@@ -958,7 +1045,7 @@ export default {
         this.handleTabData.departName = fullName;
         this.messageSuccess(this.$t('重命名成功'));
         this.hasTreeDataModified = true;
-        this.getTableData();
+        this.handleTableData();
       } catch (e) {
         console.warn(e);
       } finally {
@@ -966,29 +1053,23 @@ export default {
       }
     },
     // 设置列表字段
-    async confirmSetFieldList() {
+    async handleSetFieldList(idList) {
       try {
-        const selected = this.setTableFields.filter(item => item.visible);
-        const idList = selected.map((item) => {
-          return item.id;
-        });
         this.basicLoading = true;
-        // idList.unshift('username', 'display_name', 'email', 'department_name')
         await this.$store.dispatch('setting/updateFieldsVisible', { idList });
         // 更新头部title + 用户信息列表
         await this.getTableTitle();
-        await this.getTableData();
+        await this.handleTableData();
       } catch (e) {
         console.warn(e);
         this.basicLoading = false;
       }
     },
-
     // 查看当前用户的信息
     viewDetails(item) {
       this.currentProfile = item;
       this.detailsBarInfo.type = 'view';
-      this.detailsBarInfo.title = this.$t('用户详情');
+      this.detailsBarInfo.title = item.username;
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
     },
@@ -1004,7 +1085,7 @@ export default {
         this.getProfileById();
         this.cancelHideBar();
       } else {
-        this.getTableData();
+        this.handleTableData();
       }
       this.detailsBarInfo.isShow = false;
       setTimeout(() => {
@@ -1109,10 +1190,9 @@ export default {
       }
       this.$refs.dropdownMore.hide();
       // 1.只勾选一条 则回显所设置的组织  2.勾选多条则不用，只用展开第一层
-      const userSelected = this.userMessage.userInforList.filter(item => item.isCheck);
-      if (userSelected.length === 1) {
+      if (this.isCheckList.length === 1) {
         // 因为这里必有组织，所以子组件定会 emit selectedDepartments 因此不用对 selectedDepartments 初始化
-        this.initialDepartments = userSelected[0].departments;
+        this.initialDepartments = this.isCheckList[0].departments;
       } else {
         this.initialDepartments = [];
       }
@@ -1133,7 +1213,7 @@ export default {
       }
 
       // 获取到勾选的用户id
-      const userSelected = this.userMessage.userInforList.filter(item => item.isCheck);
+      const userSelected = this.isCheckList.filter(item => item.id);
       // 获取到设置组织的id
       const departmentIds = this.getSelectedDepartments.map(item => item.id);
 
@@ -1154,7 +1234,7 @@ export default {
       this.isShowSetDepartments = false;
       try {
         await this.$store.dispatch('organization/batchAddDepart', params);
-        this.getTableData();
+        this.handleTableData();
         this.$bkMessage({
           message: this.$t('设置成功'),
           theme: 'success',
@@ -1184,12 +1264,10 @@ export default {
           this.basicLoading = true;
           try {
             const checkIds = [];
-            this.userMessage.userInforList.forEach((element) => {
-              if (element.isCheck) {
-                checkIds.push({
-                  id: element.id,
-                });
-              }
+            this.isCheckList.forEach((element) => {
+              checkIds.push({
+                id: element.id,
+              });
             });
             const res = await this.$store.dispatch('organization/deleteProfiles', checkIds);
             if (res.result === true) {
@@ -1198,7 +1276,7 @@ export default {
                 theme: 'success',
               });
             }
-            this.getTableData();
+            this.handleTableData();
           } catch (e) {
             console.warn(e);
             this.basicLoading = false;
@@ -1209,7 +1287,7 @@ export default {
       });
     },
     // 删除某一条用户信息，更新用户信息列表
-    deleteProfile() {
+    deleteProfile(id) {
       this.$bkInfo({
         title: this.$t('删除后会保留用户的数据，以便需要时审查'),
         extCls: 'king-info long-title',
@@ -1219,7 +1297,7 @@ export default {
           }
           this.clickSecond = true;
           this.hideBar();
-          this.$store.dispatch('organization/deleteProfiles', [{ id: this.currentProfile.id }]).then(async (res) => {
+          this.$store.dispatch('organization/deleteProfiles', [{ id: id ? id : this.currentProfile.id }]).then(async (res) => {
             if (res.result === true) {
               this.$bkMessage({
                 message: this.$t('删除成功'),
@@ -1236,7 +1314,7 @@ export default {
               this.basicLoading = false;
               this.$refs.searchChild.closeSearch();
             } else {
-              this.getTableData();
+              this.handleTableData();
             }
           })
             .catch((e) => {
@@ -1272,7 +1350,7 @@ export default {
           this.basicLoading = false;
           this.$refs.searchChild.closeSearch();
         } else {
-          this.getTableData();
+          this.handleTableData();
         }
       })
         .catch((e) => {
@@ -1302,15 +1380,31 @@ export default {
         }
       }
     },
+    // 移入某个树节点
+    handleMouseenter(event) {
+      const targetNode = event.target.parentNode.parentNode;
+      if (!targetNode.style.background || targetNode.style.background === 'none') {
+        targetNode.style.background = '#f0f1f5';
+      }
+    },
+    // 移出某个树节点
+    handleMouseleave(event) {
+      const targetNode = event.target.parentNode.parentNode;
+      if (targetNode.style.background === 'rgb(240, 241, 245)') {
+        targetNode.style.background = 'none';
+      }
+    },
     // 点击某个树节点
-    handleClickTreeNode(item, isSearchProfile = false) {
-      if (isSearchProfile) {
-        this.searchTreeList.forEach((item) => {
-          this.$set(item, 'showBackground', false);
-        });
+    handleClickTreeNode(item, event) {
+      if (event) {
+        this.currentNode = event.target.offsetParent.firstChild;
+      }
+      if (item.parent === null) {
+        this.initRtxList(item.id);
+      }
+      if (this.treeSearchResult && this.treeSearchResult.groupType !== 'department') {
         item.showBackground = true;
-        this.handleTabData.totalNumber = null;
-        this.handleTabData.currentNumber = null;
+        this.handleTabData.totalNumber = 0;
         this.handleTabData.departName = item.full_name;
         return;
       }
@@ -1358,6 +1452,9 @@ export default {
     },
     // 显示对应的子菜单
     handleClickOption(item, event) {
+      event.stopPropagation();
+      this.currentParentNode = event.target.offsetParent.offsetParent;
+      this.currentNode = event.target.offsetParent.offsetParent.firstChild;
       if (!this.treeSearchResult) {
         // 展示当前节点
         this.currentParam.item = item;
@@ -1370,7 +1467,8 @@ export default {
       this.$set(item, 'showBackground', true);
       this.$nextTick(() => {
         const calculateDistance = this.calculate(event.target);
-        const next = event.target.nextElementSibling;
+        const next = ((item.activated && item.configured) || item.parent)
+          ? event.target.nextElementSibling : event.target.nextElementSibling.nextElementSibling;
         next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
         next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
         const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
@@ -1396,11 +1494,11 @@ export default {
       return calculateDistance;
     },
     // 点击空白处 ，关闭子菜单
-    hiddenMenu() {
+    hiddenMenu(e) {
+      if (e.target.classList.contains('show-more')) {
+        return;
+      }
       this.treeDataList.forEach((item) => {
-        this.closeTreeMenu(item);
-      });
-      this.searchTreeList.forEach((item) => {
         this.closeTreeMenu(item);
       });
     },
@@ -1412,20 +1510,16 @@ export default {
         });
       }
     },
+    // 拖拽node
     async switchNodeOrder(param) {
       try {
         this.treeLoading = true;
-        const { item, index, type } = param;
-        const orderList = item.type ? item.directParent : item.directParent.children;
-        const targetIndex = type === 'up' ? index - 1 : index + 1;
+        const { dragNode, targetNode } = param;
         await this.$store.dispatch('organization/switchNodeOrder', {
-          id: item.id,
-          upId: orderList[targetIndex].id,
-          nodeType: item.type ? 'categories' : 'departments',
+          id: dragNode.id,
+          upId: targetNode.id,
+          nodeType: dragNode.type ? 'categories' : 'departments',
         });
-        // 本地更新
-        this.$set(orderList, index, orderList[targetIndex]);
-        this.$set(orderList, targetIndex, item);
       } catch (e) {
         console.warn(e);
       } finally {
@@ -1433,34 +1527,91 @@ export default {
       }
     },
     // 删除组织节点
-    deleteDepartment(deleteItem, deleteIndex) {
-      this.$bkInfo({
-        title: this.$t('删除后会保留该组织的数据'),
-        extCls: 'king-info long-title',
-        confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem, deleteIndex),
-      });
+    deleteDepartment(deleteItem) {
+      const h = this.$createElement;
+      deleteItem.display_name
+        ? this.$bkInfo({
+          title: this.$t('确认要删除当前目录？'),
+          subHeader: h(
+            'div',
+            {
+              style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
+            }, [
+              h('p', [this.$t('删除后，该目录下的数据将为你保存'),
+                h('span', {
+                  style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                }, deleteItem.id), this.$t('天。'),
+              ]),
+              h('p', [this.$t('你可以在'),
+                h('i', {
+                  class: 'icon user-icon icon-root-node-i',
+                  style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                }), this.$t('回收站中查看已删除的目录数据，并进行还原、彻底删除的操作。'),
+              ]),
+            ],
+          ),
+          extCls: 'king-info long-title',
+          confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem),
+        })
+        : this.$bkInfo({
+          title: this.$t('确认要删除当前组织？'),
+          subHeader: h(
+            'div',
+            {
+              style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
+            }, [
+              h('p', this.$t('删除后，跨组织的用户数据将不会受到影响；')),
+              h('p', [this.$t('该用户将为你保存'),
+                h('span', {
+                  style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                }, deleteItem.id), this.$t('天，你可以在'),
+                h('i', {
+                  class: 'icon user-icon icon-root-node-i',
+                  style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                }), this.$t('回收站中查看已删除的组织数据，并进行还原、彻底删除的操作。'),
+              ]),
+            ],
+          ),
+          extCls: 'king-info long-title',
+          confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem),
+        });
     },
     // 这里使用同步是为了点击确认后立即关闭info
-    syncConfirmDeleteDepartment(deleteItem, deleteIndex) {
-      this.confirmDeleteDepartment(deleteItem, deleteIndex);
+    syncConfirmDeleteDepartment(deleteItem) {
+      this.confirmDeleteDepartment(deleteItem);
     },
-    async confirmDeleteDepartment(deleteItem, deleteIndex) {
+    async confirmDeleteDepartment(deleteItem) {
       try {
         this.treeLoading = true;
-        await this.$store.dispatch('organization/deleteDepartment', { id: deleteItem.id });
-        this.messageSuccess(this.$t('删除成功'));
-        if (this.treeSearchResult) {
-          // 搜索里面删除组织后回到正常页面
-          this.hasTreeDataModified = true;
-          this.$refs.searchChild.closeSearch();
-        } else {
-          // 本地处理数据
-          deleteItem.directParent.children.splice(deleteIndex, 1);
-          if (!deleteItem.directParent.children.length) {
-            deleteItem.directParent.has_children = false;
+        if (deleteItem.display_name) {
+          await this.$store.dispatch('catalog/ajaxDeleteCatalog', { id: deleteItem.id });
+          this.messageSuccess(this.$t('目录删除成功'));
+          this.treeDataList = this.treeDataList.filter(item => item.id !== deleteItem.id);
+          if (this.treeSearchResult) {
+            // 搜索里面删除组织后回到正常页面
+            this.hasTreeDataModified = true;
+            this.$refs.searchChild.closeSearch();
+          } else {
+            // 本地处理数据
+            this.treeDataList[0].showBackground = true;
+            this.currentParam.item = this.treeDataList[0];
           }
-          deleteItem.directParent.showBackground = true;
-          this.currentParam.item = deleteItem.directParent;
+        } else {
+          await this.$store.dispatch('organization/deleteDepartment', { id: deleteItem.id });
+          this.messageSuccess(this.$t('组织删除成功'));
+          deleteItem.directParent.children = deleteItem.directParent.children.filter(item => item.id !== deleteItem.id);
+          if (this.treeSearchResult) {
+            // 搜索里面删除组织后回到正常页面
+            this.hasTreeDataModified = true;
+            this.$refs.searchChild.closeSearch();
+          } else {
+            // 本地处理数据
+            if (!deleteItem.directParent.children.length) {
+              deleteItem.directParent.has_children = false;
+            }
+            deleteItem.directParent.showBackground = true;
+            this.currentParam.item = deleteItem.directParent;
+          }
         }
       } catch (e) {
         console.warn(e);
@@ -1494,7 +1645,7 @@ export default {
           id: this.treeSearchResult ? this.treeSearchResult.id : this.currentParam.item.id,
           idList: selectIds,
         });
-        this.getTableData();
+        this.handleTableData();
       } catch (e) {
         console.warn(e);
         this.basicLoading = false;
@@ -1519,122 +1670,337 @@ export default {
       }
       return this.findCategoryType(item.directParent);
     },
-
-    // 控制页面布局宽度
-    dragBegin(e) {
-      this.isChangingWidth = true;
-      this.currentTreeBoxWidth = this.treeBoxWidth;
-      this.currentScreenX = e.screenX;
-      window.addEventListener('mousemove', this.dragMoving, { passive: true });
-      window.addEventListener('mouseup', this.dragStop, { passive: true });
+    handleTableData() {
+      this.isRootDirectory
+        ? this.initRtxList(this.currentParam.item.id)
+        : this.getTableData();
     },
-    dragMoving(e) {
-      const newTreeBoxWidth = this.currentTreeBoxWidth + e.screenX - this.currentScreenX;
-      if (newTreeBoxWidth <= this.treeBoxMinWidth) {
-        this.treeBoxWidth = this.treeBoxMinWidth;
-      } else if (newTreeBoxWidth >= this.treeBoxMaxWidth) {
-        this.treeBoxWidth = this.treeBoxMaxWidth;
-      } else {
-        this.treeBoxWidth = newTreeBoxWidth;
+    // 配置目录
+    addDirectory() {
+      this.showingPage = 'showPageAdd';
+    },
+    // 获取目录列表
+    async getCatalogList() {
+      try {
+        const res = await this.$store.dispatch('catalog/ajaxGetCatalogList');
+        this.catalogList = res.data;
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.$store.commit('updateInitLoading', false);
       }
     },
-    dragStop() {
-      this.isChangingWidth = false;
-      this.currentTreeBoxWidth = null;
-      this.currentScreenX = null;
-      window.removeEventListener('mousemove', this.dragMoving);
-      window.removeEventListener('mouseup', this.dragStop);
+    async initCatalogMetas() {
+      try {
+        const res = await this.$store.dispatch('catalog/ajaxGetCatalogMetas');
+        this.catalogMetas = res.data;
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    async getDefaultInfo() {
+      try {
+        const [password, connection, fieldsMad, fieldsLdap] = await Promise.all([
+          this.$store.dispatch('catalog/ajaxGetDefaultPassport'),
+          this.$store.dispatch('catalog/ajaxGetDefaultConnection'),
+          this.$store.dispatch('catalog/ajaxGetDefaultFields', { type: 'mad' }),
+          this.$store.dispatch('catalog/ajaxGetDefaultFields', { type: 'ldap' }),
+        ]);
+        const defaults = {
+          password: this.$convertDefault(password.data),
+          connection: this.$convertDefault(connection.data),
+          fieldsMad: this.$convertDefault(fieldsMad.data),
+          fieldsLdap: this.$convertDefault(fieldsLdap.data),
+        };
+        this.$store.commit('catalog/updateDefaults', defaults);
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    changePage(param) {
+      if (typeof param === 'object') { // 点击目录名跳转到设置页面
+        this.catalogInfo = { ...param };
+        switch (param.type) {
+          case 'local':
+            this.showingPage = 'showLocalSet';
+            break;
+          case 'mad':
+            this.showingPage = 'showRemoteSetMad';
+            break;
+          case 'ldap':
+            this.showingPage = 'showRemoteSetLdap';
+            break;
+        }
+      } else {
+        this.showingPage = param;
+      }
+    },
+    handleCancel() {
+      this.$bkInfo({
+        title: this.$t('您尚未完成所有设置，确定离开页面？'),
+        width: 560,
+        confirmFn: () => {
+          this.showingPage = 'showPageHome';
+        },
+      });
+    },
+    // 配置未完成目录
+    handleClickConfig(event) {
+      event.stopPropagation();
+      this.catalogList.map((item) => {
+        if (item.id === this.currentCategoryId) {
+          this.changePage(item);
+        }
+      });
+    },
+    // 添加组织
+    addOrganization(node, event) {
+      if (node.expanded) {
+        event.stopPropagation();
+      }
+      node.showOption = false;
+      node.showChildren = true;
+      const inputNode = document.getElementsByClassName('new-department')[0];
+      inputNode.style.display = 'flex';
+      if (node.type === 'local') {
+        const ulNode = this.currentParentNode.lastChild;
+        ulNode.appendChild(inputNode);
+        ulNode.lastChild.getElementsByClassName('bk-form-input')[0].focus();
+      }
+      if (node.isLocalDepartment) {
+        const liNode = this.currentParentNode;
+        liNode.after(inputNode);
+        liNode.nextElementSibling.getElementsByClassName('bk-form-input')[0].focus();
+      }
+    },
+    cancelAdd() {
+      const inputNode = document.getElementsByClassName('new-department')[0];
+      inputNode.style.display = 'none';
+      this.addOrganizationName = '';
+    },
+    handleKeydown(value, event) {
+      if (event.code === 'Escape') {
+        this.cancelAdd();
+      }
+    },
+    async confirmAdd() {
+      const name = this.addOrganizationName.trim();
+      if (!name) {
+        this.cancelAdd();
+        return;
+      }
+      try {
+        this.treeLoading = true;
+        if (this.currentParam.item.type) {
+          const params = {
+            name: this.addOrganizationName,
+            category_id: this.currentParam.item.id,
+          };
+          const res = await this.$store.dispatch('organization/addDepartment', params);
+          const newDepartment = res.data;
+          newDepartment.isNewDeparment = true;
+          this.filterTreeData(newDepartment, this.currentParam.item, this.currentParam.item.type === 'local');
+          this.currentParam.item.children.push(newDepartment);
+          this.handleClickTreeNode(newDepartment);
+        } else {
+          const params = {
+            name: this.addOrganizationName,
+            category_id: this.currentParam.item.parent.id,
+            parent: this.currentParam.item.id,
+          };
+          const res = await this.$store.dispatch('organization/addDepartment', params);
+          if (res.result === true) {
+            this.messageSuccess(`${this.$t('成功添加下级组织')} ${params.name}`);
+            if (this.currentParam.item.showChildren) {
+              this.isAddChild = true;
+            }
+            this.currentParam.item.has_children = true;
+            this.updateChildren(this.currentParam.item);
+          }
+        }
+        this.cancelAdd();
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.treeLoading = false;
+      }
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-    @import './index.scss';
+@import './index.scss';
 
-    .king-sideslider {
-      background-color: rgba(0, 0, 0, .6);
-    }
+.king-sideslider {
+  background-color: rgba(0, 0, 0, .6);
+}
 </style>
 
-<style>
-    /*@import '../../scss/mixins/scroller.scss';*/
+<style lang="scss">
+@import './index.scss';
+@import '../../scss/variable.scss';
+#catalog {
+  width: 100%;
+  // 新增、设置目录页面公共样式
+  .catalog-operation-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    color: $fontGray;
+    border-radius: 2px 2px 0 0;
+    border: 1px solid #dcdee5;
 
-    /*.bk-table>thead>tr>th, .bk-table>thead>tr>td, .bk-table>tbody>tr>th, .bk-table>tbody>tr>td {*/
+    > .steps {
+      width: 201px;
+      height: 100%;
+      background: #fafbfd;
+      border-right: 1px solid #dcdee5;
+      // 新增页面左边的步骤
+      > .king-steps {
+        padding: 30px;
+        height: 300px;
+        width: 100%;
 
-    /*    padding: 10px;*/
+        &.add-local-step {
+          height: 220px;
+        }
+      }
+      // 设置页面左边 bar 的背景
+      &.set-steps {
+        background: #fafbfd;
 
-    /*    overflow: hidden;*/
+        > .catalog-name-container {
+          margin: 0 20px 6px;
+          padding: 12px 10px 14px;
+          border-bottom: 1px solid #dcdee5;
 
-    /*    text-overflow: ellipsis;*/
+          > .catalog-name {
+            height: 19px;
+            line-height: 19px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #63656e;
+          }
+        }
+      }
+      // 设置页面左边的文字
+      > .setting-text {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 30px;
+        height: 42px;
+        line-height: 42px;
+        cursor: pointer;
 
-    /*    white-space: nowrap;*/
+        > span {
+          height: 21px;
+          line-height: 20px;
+          font-size: 14px;
+        }
 
-    /*}*/
+        > .unfinished {
+          margin-right: 20px;
+          padding: 2px 4px;
+          height: 16px;
+          line-height: 12px;
+          color: #fff;
+          font-weight: 600;
+          background: #c4c6cc;
+          transform: scale(.8);
+          border-radius: 2px;
+        }
 
-    /*.bk-table>tbody>tr>td {*/
+        &.active {
+          color: #3a84ff;
+          background: #e1ecff;
+        }
+      }
+    }
 
-    /*    font-size: 14px;*/
+    > .detail {
+      width: calc(100% - 201px);
 
-    /*}*/
+      > .scroll-container {
+        height: 100%;
+        overflow-y: auto;
 
-    /*.bk-sideslider-wrapper {*/
+        @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+      }
+    }
+  }
+  // 新增、设置目录各个步骤的公共样式
+  .catalog-setting-step {
+    padding: 38px 40px 54px;
+    display: flow-root;
 
-    /*    padding-bottom: 0 !important;*/
+    .info-container {
+      margin-bottom: 17px;
 
-    /*    overflow-y: hidden;*/
+      > .title-container {
+        display: flex;
 
-    /*}*/
+        > .title {
+          font-size: 14px;
+          line-height: 19px;
+          font-weight: normal;
+          margin-bottom: 8px;
+        }
 
-    /*.batch-content-wrapper .bk-tag-selector .bk-tag-input {*/
+        > .star {
+          height: 19px;
+          margin-left: 3px;
+          font-size: 14px;
+          vertical-align: middle;
+          color: #fe5c5c;
+        }
 
-    /*    max-height: 240px;*/
+        > .tips {
+          display: flex;
+          align-items: center;
+          height: 19px;
+          margin-left: 2px;
 
-    /*    overflow: hidden;*/
+          > .icon-user--l {
+            font-size: 16px;
+            outline: none;
+          }
+        }
+      }
 
-    /*    overflow-y: auto;*/
+      > .input-container {
+        display: flex;
+        align-items: center;
+        height: 32px;
+      }
 
-    /*}*/
+      > p.description {
+        margin-top: 8px;
+        font-size: 12px;
+        line-height: 16px;
+        color: $fontLight;
+      }
+    }
 
-    /*.batch-content-wrapper .bk-tag-selector .bk-tag-input::-webkit-scrollbar {*/
+    .error-text {
+      font-size: 12px;
+      color: #fe5c5c;
+    }
+  }
 
-    /*    width: 4px;*/
+  .save-setting-buttons {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border-top: 1px solid $borderColor;
+    padding: 10px 0 10px 40px;
 
-    /*    background-color: lighten(#e6e9ea, 80%);*/
-
-    /*}*/
-
-    /*.batch-content-wrapper .bk-tag-selector .bk-tag-input::-webkit-scrollbar {*/
-
-    /*    height: 5px;*/
-
-    /*    border-radius: 2px;*/
-
-    /*    background-color: #e6e9ea;*/
-
-    /*}*/
-
-    /*.bk-dropdown-menu .bk-button.bk-primary {*/
-
-    /*    background-color: #fff;*/
-
-    /*    color: #63656E;*/
-
-    /*    border-color: #C4C6CC;*/
-
-    /*    width: 106px;*/
-
-    /*    padding: 0 13px;*/
-
-    /*}*/
-
-    /*.bk-dropdown-menu .bk-dropdown-trigger .bk-icon {*/
-
-    /*    font-size: 12px;*/
-
-    /*    width: 14px;*/
-
-    /*    height: 14px;*/
-
-    /*}*/
+    > .king-button:not(:first-child) {
+      margin-left: 10px;
+    }
+  }
+}
 </style>

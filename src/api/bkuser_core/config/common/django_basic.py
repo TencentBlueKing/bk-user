@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     "bkuser_core.audit",
     "bkuser_core.categories",
     "bkuser_core.bkiam",
+    "bkuser_core.recycle_bin",
     # 数据库字段翻译，需要后置于需要翻译的 Django App
     "modeltranslation",
     # apigateway sdk

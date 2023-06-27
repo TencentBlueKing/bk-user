@@ -159,7 +159,7 @@
 
 .icon-user-file-close-01:before {
   content: '\e902';
-  color: #737987;
+  /* color: #737987; */
 }
 
 .icon-user-more:before {
