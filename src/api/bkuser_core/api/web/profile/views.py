@@ -37,6 +37,7 @@ from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentProfilePerm
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
@@ -189,6 +190,11 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         except ValueError:
             instance.country_code = settings.DEFAULT_COUNTRY_CODE
             instance.iso_code = settings.DEFAULT_IOS_CODE
+
+        # 过期状态，续期后需要调整为正常状态
+        # Note: 前提是基于EXPIRED状态一定是从NORMAL状态变更来的
+        if instance.status == ProfileStatus.EXPIRED.value and instance.account_expiration_date > now().date():
+            instance.status = ProfileStatus.NORMAL.value
 
         try:
             instance.save()

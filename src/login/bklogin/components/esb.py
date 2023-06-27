@@ -14,6 +14,7 @@ specific language governing permissions and limitations under the License.
 from urllib.parse import urljoin
 
 from django.conf import settings
+from django.utils import translation
 
 from .util import _remove_sensitive_info
 from bklogin.common.log import logger
@@ -23,6 +24,7 @@ from bkuser_global.local import local
 def _call_esb_api(http_func, url_path, data, timeout=30):
     # 默认请求头
     headers = {
+        "Blueking-Language": translation.get_language(),
         "Content-Type": "application/json",
         "X-Request-Id": local.request_id,
     }

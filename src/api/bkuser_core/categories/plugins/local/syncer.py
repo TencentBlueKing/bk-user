@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Sequence, Type
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
 from .client import ExcelHelper
@@ -125,7 +126,11 @@ class ExcelSyncer(Syncer):
         self._default_password_valid_days = int(ConfigProvider(self.category_id).get("password_valid_days"))
         self.fetcher: ExcelFetcher = self.get_fetcher()
 
-    def sync(self, raw_data_file, is_overwrite):
+    def sync(self, raw_data_file, is_overwrite, language=""):
+        # Note: 对于Excel导入，语言涉及到表头的读取，DynamicFieldInfo的display_name将会根据语言自动输出对应语言的值
+        if language:
+            translation.activate(language)
+
         user_rows, departments = self.fetcher.fetch(raw_data_file)
         with transaction.atomic():
             self._sync_departments(departments)
@@ -224,7 +229,10 @@ class ExcelSyncer(Syncer):
 
             # 拼接 profile 参数，生成 Profile 对象
             try:
-                profile_params = parser_set.parse_row(user_raw_info, skip_keys=["department_name", "leader"])
+                profile_params = parser_set.parse_row(
+                    user_raw_info,
+                    skip_keys=["department_name", "leader", "create_time", "last_login_time"],
+                )
                 logger.debug("profile_params: %s", profile_params)
                 # NOTE: 解析后, 非必填的字段 status=NORMAL, staff_status=IN, position=0
             except ParseFailedException as e:
@@ -393,13 +401,14 @@ class ParserSet:
     column_parsers: Dict[str, "ColumnParser"]
 
     def __post_init__(self):
-        fields = DynamicFieldInfo.objects.filter(enabled=True, display_name__in=self.titles)
+        fields = DynamicFieldInfo.objects.filter(enabled=True)
+        fields_display_name_map = {x.display_name: x for x in fields}
 
-        missing_names = set(self.titles) - {x.display_name for x in fields}
+        missing_names = set(self.titles) - set(fields_display_name_map.keys())
         if missing_names:
             raise ValueError(_("找不到 {} 对应的字段信息, 请检查用户字段设置").format(",".join(list(missing_names))))
 
-        self.fields = OrderedDict({fields.get(display_name=x).name: fields.get(display_name=x) for x in self.titles})
+        self.fields = OrderedDict({fields_display_name_map[x].name: fields_display_name_map[x] for x in self.titles})
 
     @classmethod
     def from_classes(

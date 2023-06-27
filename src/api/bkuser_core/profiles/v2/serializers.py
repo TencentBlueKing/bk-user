@@ -16,6 +16,7 @@ from rest_framework import serializers
 from bkuser_core.apis.v2.serializers import AdvancedRetrieveSerializer, CustomFieldsMixin, CustomFieldsModelSerializer
 from bkuser_core.departments.v2.serializers import ForSyncDepartmentSerializer, SimpleDepartmentSerializer
 from bkuser_core.profiles.cache import get_extras_default_from_local_cache
+from bkuser_core.profiles.constants import LanguageEnum
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.utils import get_username, parse_username_domain, remove_sensitive_fields_for_profile
 from bkuser_core.profiles.validators import validate_domain, validate_username
@@ -236,3 +237,7 @@ class UpdateProfileSerializer(CustomFieldsModelSerializer):
     class Meta:
         model = Profile
         exclude = ["category_id", "username", "domain"]
+
+
+class UpdateProfileLanguageSerializer(serializers.Serializer):
+    language = serializers.ChoiceField(choices=LanguageEnum.get_choices())

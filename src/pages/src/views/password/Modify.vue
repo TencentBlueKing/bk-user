@@ -11,7 +11,8 @@
   <div class="change-password-wrapper">
     <div class="login-box-content">
       <div class="heard-img">
-        <img src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
+        <img v-if="$i18n.locale === 'zh-cn'" src="../../images/svg/logo_cn.svg" alt="蓝鲸智云" width="160">
+        <img v-else src="../../images/logo_en.png" :alt="$t('蓝鲸智云')" width="160">
       </div>
       <div class="modify-content" data-test-id="passwordInfo">
         <h4 class="common-title">{{$t('更改密码')}}</h4>

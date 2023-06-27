@@ -141,7 +141,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             elif profile.staff_status == StaffStatus.OUT.value:
                 create_profile_log(
                     profile=profile,
-                    operation="Login",
+                    operation="LogIn",
                     request=request,
                     params={"is_success": False, "reason": LogInFailReason.RESIGNED_USER.value},
                 )
@@ -259,6 +259,7 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             )
             raise error_codes.USER_IS_EXPIRED
 
+    # pylint: disable=function-name-too-long
     @staticmethod
     def _generate_reset_passwd_url_with_token(profile: Profile) -> dict:
         data = {}
