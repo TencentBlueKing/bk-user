@@ -133,6 +133,8 @@ class PasswordModifyApi(generics.CreateAPIView):
         username = get_operator(request)
         # 注意, 这里的username是带域的
         username, domain = parse_username_domain(username)
+        if not domain:
+            domain = ProfileCategory.objects.get(default=True).domain
         instance = Profile.objects.get(username=username, domain=domain)
 
         # 通过context传入操作用户的目录id
@@ -175,9 +177,10 @@ class PasswordListSettingsByTokenApi(generics.ListAPIView):
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
-        token = data["token"]
+        token = data.get("token")
 
         if token:
+            # 根据profile_token 换取目录密码设置
             token_holder = get_token_handler(token)
             profile = token_holder.profile
         else:
@@ -186,7 +189,10 @@ class PasswordListSettingsByTokenApi(generics.ListAPIView):
             username, domain = parse_username_domain(username)
             if not domain:
                 domain = ProfileCategory.objects.get(default=True).domain
-            profile = Profile.objects.get(username=username, domain=domain)
+            try:
+                profile = Profile.objects.get(username=username, domain=domain)
+            except Profile.DoesNotExist:
+                raise error_codes.USER_DOES_NOT_EXIST
 
         category = get_category(profile.category_id)
         namespace = SettingsEnableNamespaces.PASSWORD.value

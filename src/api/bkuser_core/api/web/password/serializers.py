@@ -63,4 +63,4 @@ class PasswordModifyInputSLZ(serializers.Serializer):
 
 
 class PasswordListSettingsByTokenInputSLZ(serializers.Serializer):
-    token = serializers.CharField(required=True, max_length=254, allow_blank=True)
+    token = serializers.CharField(required=False, max_length=254)
