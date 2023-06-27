@@ -489,6 +489,9 @@ export default {
           color: rgba(99, 101, 110, 1);
         }
       }
+      input::-webkit-input-placeholder {
+        color : #c4c6cc;
+      }
     }
 
     .fill-text {

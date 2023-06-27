@@ -107,7 +107,7 @@
       :transfer="true"
       :show-mask="false"
       :quick-close="true"
-      :style="{ visibility: isHideBar ? 'hidden' : 'visible' }"
+      :style="{ display: isHideBar ? 'none' : 'block' }"
       :is-show.sync="fieldData.isShow"
       :title="fieldData.title"
       :width="fieldData.width"
