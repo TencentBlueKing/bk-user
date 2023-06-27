@@ -21,22 +21,22 @@ class TestCategory:
     def test_delete(self, test_ldap_category, test_profile, test_department, test_setting):
         test_ldap_category.delete()
 
-        assert not test_ldap_category.enabled
-        assert test_ldap_category.inactive
+        assert test_ldap_category.enabled is False
+        assert test_ldap_category.is_deleted
 
         assert (
-            Profile.objects.filter(category_id=test_ldap_category.id, enabled=False).count()
+            Profile.objects.filter(category_id=test_ldap_category.id, enabled=True).count()
             == Profile.objects.filter(category_id=test_ldap_category.id).count()
         )
         assert (
-            Profile.objects.filter(category_id=test_ldap_category.id, status="DELETED").count()
+            Profile.objects.filter(category_id=test_ldap_category.id, status="NORMAL").count()
             == Profile.objects.filter(category_id=test_ldap_category.id).count()
         )
         assert (
-            Department.objects.filter(category_id=test_ldap_category.id, enabled=False).count()
+            Department.objects.filter(category_id=test_ldap_category.id, enabled=True).count()
             == Department.objects.filter(category_id=test_ldap_category.id).count()
         )
         assert (
-            Setting.objects.filter(category_id=test_ldap_category.id, enabled=False).count()
+            Setting.objects.filter(category_id=test_ldap_category.id, enabled=True).count()
             == Setting.objects.filter(category_id=test_ldap_category.id).count()
         )

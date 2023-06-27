@@ -28,6 +28,8 @@ OPERATION_NAME_TUPLE = (
     ("create", _("创建")),
     ("update", _("更新")),
     ("delete", _("删除")),
+    ("hard_delete", _("硬删除")),
+    ("revert", _("还原")),
     ("retrieve", _("获取")),
     ("sync", _("同步")),
     ("export", _("导出")),
