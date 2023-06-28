@@ -129,21 +129,20 @@ class PasswordResetByTokenApi(generics.CreateAPIView):
 
 class PasswordModifyApi(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
-        slz = PasswordModifyInputSLZ(data=request.data)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-        old_password = data["old_password"]
-        new_password = data["new_password"]
-
         # SaaS 修改密码页面需要登录态, 登录用户即operator
         username = get_operator(request)
-
         # 注意, 这里的username是带域的
         username, domain = parse_username_domain(username)
         if not domain:
             domain = ProfileCategory.objects.get(default=True).domain
-
         instance = Profile.objects.get(username=username, domain=domain)
+
+        # 通过context传入操作用户的目录id
+        slz = PasswordModifyInputSLZ(data=request.data, context={"category_id": instance.category_id})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        old_password = data["old_password"]
+        new_password = data["new_password"]
 
         # 1. check old match
         if not instance.check_password(old_password):
@@ -178,10 +177,22 @@ class PasswordListSettingsByTokenApi(generics.ListAPIView):
         slz.is_valid(raise_exception=True)
 
         data = slz.validated_data
-        token = data["token"]
+        token = data.get("token")
 
-        token_holder = get_token_handler(token)
-        profile = token_holder.profile
+        if token:
+            # 根据profile_token 换取目录密码设置
+            token_holder = get_token_handler(token)
+            profile = token_holder.profile
+        else:
+            # 兼容登录态的change_password页面获取目录密码配置
+            username = get_operator(request)
+            username, domain = parse_username_domain(username)
+            if not domain:
+                domain = ProfileCategory.objects.get(default=True).domain
+            try:
+                profile = Profile.objects.get(username=username, domain=domain)
+            except Profile.DoesNotExist:
+                raise error_codes.USER_DOES_NOT_EXIST
 
         category = get_category(profile.category_id)
         namespace = SettingsEnableNamespaces.PASSWORD.value
