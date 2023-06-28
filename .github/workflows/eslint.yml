@@ -19,6 +19,7 @@ jobs:
     - name: Install modules
       run: |
         cd src/pages
+        npm cache clean --force
         npm i
     - name: Run ESLint
       run: |
