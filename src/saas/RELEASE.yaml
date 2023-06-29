@@ -600,3 +600,20 @@ versions:
         - "修复: 由于bk_token未unquote导致登出失败问题"
         - "修复: 忘记密码功能，仍可对异常状态用户发送信息"
         - "修复: 生产环境下未屏蔽swagger路由的问题"
+- version: "2.5.4"
+  date: "2023-06-29"
+  changeLogs:
+  - project: "__Global__"
+    detail:
+      - type: "NEW"
+        content:
+        - "组织架构与目录合并展示& 支持回收站功能"
+      - type: "OPTIMIZATION"
+        content:
+        - "登录审计支持搜索"
+        - "完善组织架构软删除审计日志"
+      - type: "FIX"
+        content:
+        - "修复: 用户在个人中心进行重置密码出现Token异常"
+        - "修复: 未配置完成的目录过一段时间之后变成已配置"
+        - "修复: 职位字段非必填显示，接口却要求必填的错误逻辑"

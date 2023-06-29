@@ -8,7 +8,7 @@ repos:
         entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/rtx.sh $@; fi"
         exclude: >
           (?x)^(
-            | src/pages/node_modules/
+            | src/pages/node_modules/*
           )$
       - id: IP check
         name: Check sensitive info
