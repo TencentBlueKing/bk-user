@@ -22,8 +22,7 @@
     <div class="recycle-content">
       <bk-tab
         ext-cls="recycle-content-tab"
-        :active.sync="active"
-        @tab-change="tabChange">
+        :active.sync="active">
         <bk-tab-panel
           v-for="panel in panels"
           v-bind="panel"
@@ -32,20 +31,31 @@
             <span class="panel-name">{{panel.label}}</span>
             <i class="panel-count">{{panel.count}}</i>
           </template>
-          <ProfileTab
+          <!-- <ProfileTab
+            ref="profile"
             v-if="panel.name === 'profile'"
             :data-list="profileData.results"
             :count="profileData.count"
+            :is-data-empty="isDataEmpty"
+            :is-search-empty="isSearchEmpty"
+            :is-data-error="isDataError"
             @searchList="searchProfile" />
           <DepartmentTab
+            ref="department"
             v-else-if="panel.name === 'department'"
             :data-list="departmentData.results"
             :count="departmentData.count"
-            @searchList="searchDepartment" />
+            :is-data-empty="isDataEmpty"
+            :is-search-empty="isSearchEmpty"
+            :is-data-error="isDataError"
+            @searchList="searchDepartment" /> -->
           <CategoryTab
-            v-else
+            ref="category"
             :data-list="categoryData.results"
             :count="categoryData.count"
+            :is-data-empty="isDataEmpty"
+            :is-search-empty="isSearchEmpty"
+            :is-data-error="isDataError"
             @searchList="searchCategory"
             @updateList="initCategoryList" />
         </bk-tab-panel>
@@ -55,14 +65,14 @@
 </template>
 
 <script>
-import ProfileTab from './tab/ProfileTab.vue';
-import DepartmentTab from './tab/DepartmentTab.vue';
+// import ProfileTab from './tab/ProfileTab.vue';
+// import DepartmentTab from './tab/DepartmentTab.vue';
 import CategoryTab from './tab/CategoryTab.vue';
 export default {
   name: 'RecycleIndex',
   components: {
-    ProfileTab,
-    DepartmentTab,
+    // ProfileTab,
+    // DepartmentTab,
     CategoryTab,
   },
   data() {
@@ -81,6 +91,12 @@ export default {
         pageSize: 10,
         page: 1,
       },
+      // 暂无数据
+      isDataEmpty: false,
+      // 搜索结果为空
+      isSearchEmpty: false,
+      // 数据异常
+      isDataError: false,
     };
   },
   async mounted() {
@@ -89,23 +105,27 @@ export default {
       this.$store.commit('updateInitLoading', false);
       Promise.all([
         await this.initRecoverySetting(),
-        await this.initProfileList(),
-        await this.initDepartmentList(),
+        // await this.initProfileList(),
+        // await this.initDepartmentList(),
         await this.initCategoryList(),
       ]);
-      this.panels = [{
-        name: 'profile',
-        label: this.$t('最近删除用户'),
-        count: this.profileData.count,
-      }, {
-        name: 'department',
-        label: this.$t('最近删除组织'),
-        count: this.departmentData.count,
-      }, {
-        name: 'category',
-        label: this.$t('最近删除目录'),
-        count: this.categoryData.count,
-      }];
+      this.panels = [
+        // {
+        //   name: 'profile',
+        //   label: this.$t('最近删除用户'),
+        //   count: this.profileData.count,
+        // },
+        // {
+        //   name: 'department',
+        //   label: this.$t('最近删除组织'),
+        //   count: this.departmentData.count,
+        // },
+        {
+          name: 'category',
+          label: this.$t('最近删除目录'),
+          count: this.categoryData.count,
+        }
+      ];
       this.isLoading = false;
     } catch (e) {
       console.warn(e);
@@ -122,38 +142,62 @@ export default {
       }
     },
     // 最近删除用户列表
-    async initProfileList() {
+    async initProfileList(keyword, limit, current) {
       try {
         this.isLoading = true;
+        this.isDataEmpty = false;
+        this.isSearchEmpty = false;
+        this.isDataError = false;
+        this.updatedParams(keyword, limit, current);
         const res = await this.$store.dispatch('setting/getProfileList', this.params);
+        if (res.data.count === 0) {
+          keyword === '' ? this.isDataEmpty = true : this.isSearchEmpty = true;
+        }
         this.profileData = res.data;
         this.isLoading = false;
       } catch (e) {
         console.warn(e);
+        this.isDataError = true;
         this.isLoading = false;
       }
     },
     // 最近删除组织列表
-    async initDepartmentList() {
+    async initDepartmentList(keyword, limit, current) {
       try {
         this.isLoading = true;
+        this.isDataEmpty = false;
+        this.isSearchEmpty = false;
+        this.isDataError = false;
+        this.updatedParams(keyword, limit, current);
         const res = await this.$store.dispatch('setting/getDepartmentList', this.params);
+        if (res.data.count === 0) {
+          keyword === '' ? this.isDataEmpty = true : this.isSearchEmpty = true;
+        }
         this.departmentData = res.data;
         this.isLoading = false;
       } catch (e) {
         console.warn(e);
+        this.isDataError = true;
         this.isLoading = false;
       }
     },
     // 最近删除目录列表
-    async initCategoryList() {
+    async initCategoryList(keyword, limit, current) {
       try {
         this.isLoading = true;
+        this.isDataEmpty = false;
+        this.isSearchEmpty = false;
+        this.isDataError = false;
+        this.updatedParams(keyword, limit, current);
         const res = await this.$store.dispatch('setting/getCategoryList', this.params);
+        if (res.data.count === 0) {
+          keyword === '' ? this.isDataEmpty = true : this.isSearchEmpty = true;
+        }
         this.categoryData = res.data;
         this.isLoading = false;
       } catch (e) {
         console.warn(e);
+        this.isDataError = true;
         this.isLoading = false;
       }
     },
@@ -165,24 +209,24 @@ export default {
       };
     },
     searchProfile(key, limit, current) {
-      this.updatedParams(key, limit, current);
-      this.initProfileList();
+      this.initProfileList(key, limit, current);
     },
     searchDepartment(key, limit, current) {
-      this.updatedParams(key, limit, current);
-      this.initDepartmentList();
+      this.initDepartmentList(key, limit, current);
     },
     searchCategory(key, limit, current) {
-      this.updatedParams(key, limit, current);
-      this.initCategoryList();
+      this.initCategoryList(key, limit, current);
     },
     tabChange(name) {
       switch (name) {
         case 'profile':
+          this.$refs.profile[0].tableSearchKey = '';
           return this.initProfileList();
         case 'department':
+          this.$refs.department[0].tableSearchKey = '';
           return this.initDepartmentList();
         case 'category':
+          this.$refs.category[0].tableSearchKey = '';
           return this.initCategoryList();
       };
     },

@@ -17,13 +17,17 @@
         ext-cls="user-table"
         :data="categoryList"
         :pagination="pagination"
+        :size="setting.size"
         @page-change="handlePageChange"
         @page-limit-change="handlePageLimitChange"
       >
         <template slot="empty">
-          <bk-exception type="empty" scene="part">
-            <p class="empty-title">{{ $t('暂无数据') }}</p>
-          </bk-exception>
+          <EmptyComponent
+            :is-data-empty="isDataEmpty"
+            :is-search-empty="isSearchEmpty"
+            :is-data-error="isDataError"
+            @handleEmpty="handleClear"
+            @handleUpdate="handleEnter" />
         </template>
         <template v-for="field in setting.selectedFields">
           <bk-table-column
@@ -124,8 +128,10 @@
 
 <script>
 import mixin from './mixin';
+import EmptyComponent from '@/components/empty';
 export default {
   name: 'CategoryTab',
+  components: { EmptyComponent },
   mixins: [mixin],
   data() {
     return {

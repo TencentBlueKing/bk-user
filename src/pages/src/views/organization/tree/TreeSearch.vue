@@ -414,7 +414,6 @@ export default {
 
 .search-content-wrapper {
   position: relative;
-  width: calc(100% - 32px);
   margin: 16px;
   font-size: 12px;
 }

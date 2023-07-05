@@ -123,7 +123,7 @@ export default {
           res.data.forEach((item) => {
             switch (item.key) {
               case 'enable_password_rsa_encrypted':
-                return this.isRsaEncrypted = true;
+                return this.isRsaEncrypted = item.value;
               case 'password_rsa_public_key':
                 return this.publicKey = Base64.decode(item.value);
               case 'password_min_length':

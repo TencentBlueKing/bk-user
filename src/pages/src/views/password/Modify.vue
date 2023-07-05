@@ -99,12 +99,12 @@ export default {
   methods: {
     async initRsa() {
       try {
-        const res = await this.$store.dispatch('password/getRsa', this.$route.query.token);
+        const res = await this.$store.dispatch('password/getRsa', this.$route.query.token || '');
         if (res.data) {
           res.data.forEach((item) => {
             switch (item.key) {
               case 'enable_password_rsa_encrypted':
-                return this.isRsaEncrypted = true;
+                return this.isRsaEncrypted = item.value;
               case 'password_rsa_public_key':
                 return this.publicKey = Base64.decode(item.value);
               case 'password_min_length':
