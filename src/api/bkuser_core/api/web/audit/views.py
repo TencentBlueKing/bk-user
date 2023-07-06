@@ -76,7 +76,7 @@ class LoginLogSearchQuerySetMinix:
         # Note: is_success为bool类型，经过Drf SLZ后有4种情况：（1）不存在（2）None（allow_null=True）（3）True（4）False
         #  当前场景下，不存在或None，则表示可以查询所有状态的记录
         is_success = data.get("is_success")
-        if is_success is not None:
+        if is_success is not None and "is_success" in self.request.query_params:
             logger.debug("login_in filter: is_success:<{}>".format(is_success))
             queryset = queryset.filter(is_success=is_success)
 
