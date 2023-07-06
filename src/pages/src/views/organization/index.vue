@@ -1221,47 +1221,8 @@ export default {
         return;
       }
       this.$refs.dropdownMore.hide();
-      const h = this.$createElement;
-      let instance1 = null;
-      let instance2 = null;
       this.$bkInfo({
         title: this.$t('确认要删除当前用户？'),
-        subHeader: h(
-          'div',
-          {
-            style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
-          }, [
-            h('p', [this.$t('删除后，该用户将为你保存'),
-              h('span', {
-                style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                on: {
-                  mouseleave: () => {
-                    instance1 && instance1.hide(100);
-                  },
-                  mouseenter: (e) => {
-                    instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
-                    instance1.show(1000);
-                  },
-                },
-              }, this.retentionDays), this.$t('天。'),
-            ]),
-            h('p', [this.$t('你可以在'),
-              h('i', {
-                class: 'bk-sq-icon icon-huishouxiang',
-                style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                on: {
-                  mouseleave: () => {
-                    instance2 && instance2.hide(100);
-                  },
-                  mouseenter: (e) => {
-                    instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
-                    instance2.show(1000);
-                  },
-                },
-              }), this.$t('回收站中查看已删除的用户数据，并进行还原、彻底删除的操作。'),
-            ]),
-          ],
-        ),
         extCls: 'king-info long-title',
         confirmFn: async () => {
           if (this.clickSecond) {
@@ -1295,47 +1256,8 @@ export default {
     },
     // 删除某一条用户信息，更新用户信息列表
     deleteProfile(id) {
-      const h = this.$createElement;
-      let instance1 = null;
-      let instance2 = null;
       this.$bkInfo({
         title: this.$t('确认要删除当前用户？'),
-        subHeader: h(
-          'div',
-          {
-            style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
-          }, [
-            h('p', [this.$t('删除后，该用户将为你保存'),
-              h('span', {
-                style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                on: {
-                  mouseleave: () => {
-                    instance1 && instance1.hide(100);
-                  },
-                  mouseenter: (e) => {
-                    instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
-                    instance1.show(1000);
-                  },
-                },
-              }, this.retentionDays), this.$t('天。'),
-            ]),
-            h('p', [this.$t('你可以在'),
-              h('i', {
-                class: 'bk-sq-icon icon-huishouxiang',
-                style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                on: {
-                  mouseleave: () => {
-                    instance2 && instance2.hide(100);
-                  },
-                  mouseenter: (e) => {
-                    instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
-                    instance2.show(1000);
-                  },
-                },
-              }), this.$t('回收站中查看已删除的用户数据，并进行还原、彻底删除的操作。'),
-            ]),
-          ],
-        ),
         extCls: 'king-info long-title',
         confirmFn: () => {
           if (this.clickSecond) {
@@ -1626,41 +1548,6 @@ export default {
         })
         : this.$bkInfo({
           title: this.$t('确认要删除当前组织？'),
-          subHeader: h(
-            'div',
-            {
-              style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
-            }, [
-              h('p', this.$t('删除后，跨组织的用户数据将不会受到影响；')),
-              h('p', [this.$t('该用户将为你保存'),
-                h('span', {
-                  style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                  on: {
-                    mouseleave: () => {
-                      instance1 && instance1.hide(100);
-                    },
-                    mouseenter: (e) => {
-                      instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
-                      instance1.show(1000);
-                    },
-                  },
-                }, this.retentionDays), this.$t('天，你可以在'),
-                h('i', {
-                  class: 'bk-sq-icon icon-huishouxiang',
-                  style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                  on: {
-                    mouseleave: () => {
-                      instance2 && instance2.hide(100);
-                    },
-                    mouseenter: (e) => {
-                      instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
-                      instance2.show(1000);
-                    },
-                  },
-                }), this.$t('回收站中查看已删除的组织数据，并进行还原、彻底删除的操作。'),
-              ]),
-            ],
-          ),
           extCls: 'king-info long-title',
           confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem),
         });
