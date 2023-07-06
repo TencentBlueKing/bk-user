@@ -244,6 +244,8 @@ export default {
     async  Auditderive() {
       const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
       const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
+      const userName = this.searchCondition.username;
+      const isSuccess = this.searchCondition.is_success;
       let url = window.AJAX_URL;
       if (url.endsWith('/')) {
         // 去掉末尾的斜杠
@@ -256,7 +258,7 @@ export default {
       if (this.panelActive === 'login' && this.auditList.length === 0) {
         this.handleWarning({ theme: 'error' });
       } else {
-        url = `${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}`;
+        url = `${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}&username=${userName}&is_success=${isSuccess}`;
         window.open(url);
       }
     },
