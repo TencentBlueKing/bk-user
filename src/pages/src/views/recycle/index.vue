@@ -124,7 +124,7 @@ export default {
           name: 'category',
           label: this.$t('最近删除目录'),
           count: this.categoryData.count,
-        }
+        },
       ];
       this.isLoading = false;
     } catch (e) {
