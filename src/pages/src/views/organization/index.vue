@@ -463,7 +463,6 @@ export default {
         telephone: 'telephone',
         status: 'status',
         staff_status: 'staff_status',
-        department_name: 'departments',
         leader: 'leaders',
         position: 'position',
         wx_userid: 'wx_userid',
@@ -691,41 +690,21 @@ export default {
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
           keyword: this.checkSearchKey,
-          hasNotDepartment: true,
-        };
-        const currentParams = {
-          id,
-          pageSize: this.paginationConfig.limit,
-          page: this.paginationConfig.current,
-          keyword: this.checkSearchKey,
-          hasNotDepartment: false,
+          hasNotDepartment: this.isSearchCurrentDepartment ? false : true,
         };
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
-        const current = await this.$store.dispatch('organization/getSupOrganization', currentParams);
         this.handleTabData.totalNumber = res.data.count;
-        this.handleTabData.currentNumber = current.data.count;
+        this.handleTabData.currentNumber = res.data.count;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
         this.isTableDataError = false;
-        if (!!this.tableSearchKey.length) return;
-        if (this.isSearchCurrentDepartment) {
-          // 当前组织下成员
-          this.paginationConfig.count = current.data.count;
-          this.filterUserData(current.data.results);
-        } else {
-          // 默认查询
-          this.paginationConfig.count = res.data.count;
-          this.filterUserData(res.data.results);
-        }
 
-        this.isEmptyDepartment = false;
-        this.isTableDataEmpty = false;
-        this.isEmptySearch = false;
+        if (!!this.tableSearchKey.length) return;
+        this.paginationConfig.count = res.data.count;
+        this.filterUserData(res.data.results);
         if (this.paginationConfig.count === 0) {
           this.isTableDataEmpty = true;
         }
-
-        this.isTableDataError = false;
       } catch (e) {
         console.warn(e);
         this.isTableDataError = true;
@@ -762,43 +741,22 @@ export default {
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
           keyword: this.checkSearchKey,
-          recursive: true,
-        };
-        const currentParams = {
-          id: id || this.currentParam.item.id,
-          pageSize: this.paginationConfig.limit,
-          page: this.paginationConfig.current,
-          keyword: this.checkSearchKey,
-          recursive: false,
+          recursive: this.isSearchCurrentDepartment ? false : true,
         };
         const res = await this.$store.dispatch('organization/getProfiles', params);
-        const current = await this.$store.dispatch('organization/getProfiles', currentParams);
         this.handleTabData.totalNumber = res.data.count;
-        this.handleTabData.currentNumber = current.data.count;
+        this.handleTabData.currentNumber = res.data.count;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
         this.isTableDataError = false;
-        if (!!this.tableSearchKey.length) return;
-        if (this.isSearchCurrentDepartment) {
-          // 当前组织下成员
-          this.$set(this.currentParam.item, 'profile_count', current.data.count);
-          this.filterUserData(current.data.results);
-          this.paginationConfig.count = current.data.count;
-        } else {
-          // 默认查询
-          this.$set(this.currentParam.item, 'profile_count', res.data.count);
-          this.filterUserData(res.data.results);
-          this.paginationConfig.count = res.data.count;
-        }
 
-        this.isEmptyDepartment = false;
-        this.isTableDataEmpty = false;
-        this.isEmptySearch = false;
+        if (!!this.tableSearchKey.length) return;
+        this.$set(this.currentParam.item, 'profile_count', res.data.count);
+        this.filterUserData(res.data.results);
+        this.paginationConfig.count = res.data.count;
         if (this.paginationConfig.count === 0) {
           this.isTableDataEmpty = true;
         }
-
-        this.isTableDataError = false;
       } catch (e) {
         console.warn(e);
         this.isTableDataError = true;
@@ -867,7 +825,7 @@ export default {
     updateHeardList(value) {
       this.searchDataList = [];
       value.forEach((item) => {
-        if (item.builtin) {
+        if (item.builtin && item.key !== 'department_name') {
           this.searchDataList.push(item);
         }
       });
@@ -882,7 +840,7 @@ export default {
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
       if (!list.length) return this.handleTableData();
-      const valueList = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
+      const valueList = [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`];
       let key = '';
       list.forEach((item) => {
         const value = [];
@@ -908,25 +866,7 @@ export default {
     },
     // 搜索文件配置列表
     handleSearchList() {
-      this.getDepartmentsList();
       this.getLeadersList();
-    },
-    // 获取部门列表
-    async getDepartmentsList() {
-      try {
-        const params = `category_id=${this.currentCategoryId}`;
-        const list = [];
-        const res = await this.$store.dispatch('organization/getDepartmentsList', params);
-        res.data.results.forEach((item) => {
-          list.push({
-            id: item.id,
-            name: item.full_name,
-          });
-        });
-        this.getChildrenList(list, 'department_name');
-      } catch (e) {
-        console.warn(e);
-      }
     },
     // 获取上级列表
     async getLeadersList() {
@@ -1502,6 +1442,8 @@ export default {
     },
     // 点击某个树节点
     handleClickTreeNode(item, event) {
+      this.paginationConfig.current = 1;
+      this.checkSearchKey = '';
       if (event) {
         this.currentNode = event.target.offsetParent.parentNode.parentNode;
       }
@@ -1557,7 +1499,7 @@ export default {
       }
     },
     // 显示对应的子菜单
-    handleClickOption(item, event) {
+    handleClickOption(item, event, scrollTop) {
       event.stopPropagation();
       this.currentParentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
       this.currentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
@@ -1576,7 +1518,7 @@ export default {
         const next = ((item.activated && item.configured) || item.parent)
           ? event.target.nextElementSibling : event.target.nextElementSibling.nextElementSibling;
         next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
-        next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
+        next.style.top = `${calculateDistance.getOffsetTop + 30 - scrollTop}px`;
         const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
         if (bottomHeight < 0) {
           next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;

@@ -10,6 +10,7 @@
 <template>
   <div class="organization-tree-wrapper">
     <bk-tree
+      ref="topTree"
       ext-cls="top-tree"
       :style="topTreeStyle"
       draggable
@@ -84,10 +85,11 @@ export default {
       availableDirectory: [],
       // 不可用目录
       unavailableDirectory: [],
-      treeBoxHeight: document.body.clientHeight - 126,
-      topTreeHeight: document.body.clientHeight - 166,
+      treeBoxHeight: document.body.clientHeight - 124,
+      topTreeHeight: document.body.clientHeight - 164,
       bottomTreeHeight: 40,
       timer: false,
+      treeScrollTop: 0,
     };
   },
   computed: {
@@ -133,16 +135,25 @@ export default {
     },
   },
   mounted() {
-    const that = this;
-    window.onresize = () => {
-      return (() => {
-        window.screenHeight = document.body.clientHeight;
-        that.treeBoxHeight = window.screenHeight - 126;
-        this.topTreeHeight = that.treeBoxHeight - this.bottomTreeHeight;
-      })();
+    window.onload = () => {
+      this.availableDirectoryHeight();
     };
+    window.onresize = () => {
+      this.availableDirectoryHeight();
+    };
+    const topTreeWrap = document.querySelector('.top-tree');
+    topTreeWrap.addEventListener('scroll', this.scrollChange, true);
   },
   methods: {
+    // 可用目录高度
+    availableDirectoryHeight() {
+      window.screenHeight = document.body.clientHeight;
+      this.treeBoxHeight = window.screenHeight - 124;
+      this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
+    },
+    scrollChange(e) {
+      this.treeScrollTop = e.target.scrollTop;
+    },
     clickBottomTree() {
       this.bottomTreeHeight = this.$refs.bottomTree.offsetHeight;
       this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
@@ -152,6 +163,8 @@ export default {
     },
     tpl(node) {
       return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}>
+        {(node.type && node.children.length) ? '' : <i class={'hide-icon'} />}
+        {(!node.type && node.has_children) ? <i class={'bk-icon icon-right-shape show-icon'} /> : ''}
         {node.display_name ? <i class={['icon user-icon icon-root-node-i', { 'active-icon': node.showBackground }]} />
           : <i class={['icon icon-user-file-close-01', { 'active-icon': node.showBackground }]} />}
         <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
@@ -159,7 +172,7 @@ export default {
           onClick={() => this.$emit('handleClickTreeNode', node, event)} v-bk-overflow-tips></span>
         <div class="option" v-if={node.type && this.treeSearchResult === null}>
           <i ref="more" class={['icon bk-icon icon-more', { 'show-more': node.showBackground }]}
-          onClick={() => this.$emit('handleClickOption', node, event)}></i>
+          onClick={() => this.$emit('handleClickOption', node, event, this.treeScrollTop)}></i>
           {(node.configured && !node.activated && node.type)
             ? <bk-tag class={'show-tag'} type="filled">{this.$t('停用1')}</bk-tag>
             : ''}
@@ -310,6 +323,22 @@ export default {
   .icon-user-file-close-01 {
     color: #a3c5fd;
   }
+  .hide-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    position: absolute;
+    background: #F5F7FA;
+    top: 8px;
+    left: -18px;
+  }
+  .show-icon {
+    font-size: 14px;
+    position: absolute;
+    left: -18px;
+    top: 9px;
+    color: #c0c4cc;
+  }
   .show-tag {
     padding: 0;
     width: 55px;
@@ -327,7 +356,7 @@ export default {
     position: absolute;
     width: 100%;
     height: var(--bottom-tree-height);
-    bottom: 1px;
+    bottom: 0;
     background: #F5F7FA;
     .bottom-tree-header {
       padding: 0 12px;
@@ -462,6 +491,14 @@ export default {
     &:hover::before {
       background: #f0f1f5;
     }
+    &:hover {
+      .hide-icon {
+        background: #f0f1f5;
+      }
+    }
+    .show-icon {
+      display: block;
+    }
     .tree-expanded-icon {
       vertical-align: sub;
     }
@@ -510,6 +547,20 @@ export default {
     }
     &:hover::before {
       background: #E2EDFF;
+    }
+    .hide-icon {
+      background: #E2EDFF;
+      z-index: 1;
+    }
+    .show-icon {
+      display: block;
+      z-index: 1;
+    }
+    &:hover {
+      .hide-icon {
+        background: #E2EDFF;
+        z-index: 1;
+      }
     }
   }
 }

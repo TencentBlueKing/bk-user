@@ -8,6 +8,18 @@ export default {
       type: Number,
       required: true,
     },
+    isDataEmpty: {
+      type: Boolean,
+      required: false,
+    },
+    isSearchEmpty: {
+      type: Boolean,
+      required: false,
+    },
+    isDataError: {
+      type: Boolean,
+      required: false,
+    },
   },
   data() {
     return {
@@ -39,6 +51,7 @@ export default {
       this.$emit('searchList', key, this.pagination.limit, this.pagination.current);
     },
     handleClear(key) {
+      this.tableSearchKey = key;
       this.$emit('searchList', key, this.pagination.limit, this.pagination.current);
     },
     handlePageChange(page) {

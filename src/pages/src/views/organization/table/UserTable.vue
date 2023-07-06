@@ -14,6 +14,7 @@
       ext-cls="user-table"
       :data="userMessage.userInforList"
       :pagination="pagination"
+      :size="setting.size"
       @page-change="handlePageChange"
       @page-limit-change="handlePageLimitChange"
       @selection-change="handleSelectionChange"
