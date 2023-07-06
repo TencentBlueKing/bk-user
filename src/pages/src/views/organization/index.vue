@@ -690,7 +690,7 @@ export default {
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
           keyword: this.checkSearchKey,
-          hasNotDepartment: this.isSearchCurrentDepartment ? false : true,
+          hasNotDepartment: !this.isSearchCurrentDepartment,
         };
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
         this.handleTabData.totalNumber = res.data.count;
@@ -741,7 +741,7 @@ export default {
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
           keyword: this.checkSearchKey,
-          recursive: this.isSearchCurrentDepartment ? false : true,
+          recursive: !this.isSearchCurrentDepartment,
         };
         const res = await this.$store.dispatch('organization/getProfiles', params);
         this.handleTabData.totalNumber = res.data.count;
