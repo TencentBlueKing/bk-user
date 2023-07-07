@@ -28,7 +28,8 @@ export default {
     },
     // 递归处理后台返回的数据
     filterTreeData(tree, directParent, isLocalDepartment = null) {
-    // 通过判断存在 type 确定用户目录，手动添加 has_children
+      // 通过判断存在 type 确定用户目录，手动添加 has_children
+      this.$set(tree, 'async', tree.has_children);
       if (tree.type) {
         this.$set(tree, 'has_children', !!tree.departments.length);
       }

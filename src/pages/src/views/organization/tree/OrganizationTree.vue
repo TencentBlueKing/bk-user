@@ -79,8 +79,6 @@ export default {
   },
   data() {
     return {
-      // 不可用目录展示状态
-      isDirectory: false,
       // 可用目录
       availableDirectory: [],
       // 不可用目录
@@ -153,18 +151,21 @@ export default {
     },
     scrollChange(e) {
       this.treeScrollTop = e.target.scrollTop;
+      this.$emit('updateScroll');
     },
     clickBottomTree() {
       this.bottomTreeHeight = this.$refs.bottomTree.offsetHeight;
       this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
+      const bottomTreeWrap = document.querySelector('.show-content');
+      if (!bottomTreeWrap) return;
+      bottomTreeWrap.addEventListener('scroll', this.scrollChange, true);
     },
     handleClickToggle(item) {
       this.$emit('handleClickToggle', item);
     },
     tpl(node) {
       return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}>
-        {(node.type && node.children.length) ? '' : <i class={'hide-icon'} />}
-        {(!node.type && node.has_children) ? <i class={'bk-icon icon-right-shape show-icon'} /> : ''}
+        {node.type && !node.children.length ? <i class={'hide-icon'} /> : ''}
         {node.display_name ? <i class={['icon user-icon icon-root-node-i', { 'active-icon': node.showBackground }]} />
           : <i class={['icon icon-user-file-close-01', { 'active-icon': node.showBackground }]} />}
         <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
@@ -332,13 +333,6 @@ export default {
     top: 8px;
     left: -18px;
   }
-  .show-icon {
-    font-size: 14px;
-    position: absolute;
-    left: -18px;
-    top: 9px;
-    color: #c0c4cc;
-  }
   .show-tag {
     padding: 0;
     width: 55px;
@@ -491,14 +485,7 @@ export default {
     &:hover::before {
       background: #f0f1f5;
     }
-    &:hover {
-      .hide-icon {
-        background: #f0f1f5;
-      }
-    }
-    .show-icon {
-      display: block;
-    }
+
     .tree-expanded-icon {
       vertical-align: sub;
     }
@@ -539,9 +526,6 @@ export default {
     width: 100%;
   }
   .node-li {
-    .tree-expanded-icon {
-      z-index: 1;
-    }
     &::before {
       background: #E2EDFF;
     }
@@ -550,10 +534,6 @@ export default {
     }
     .hide-icon {
       background: #E2EDFF;
-      z-index: 1;
-    }
-    .show-icon {
-      display: block;
       z-index: 1;
     }
     &:hover {
@@ -578,6 +558,7 @@ export default {
     border: 1px solid #dcdee5;
     box-shadow: 0 2px 6px rgba(51, 60, 72, .1);
     z-index: 1000000;
+    margin-left: 20px;
     // 英文
     &.chang-en {
       .specific-menu {
