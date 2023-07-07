@@ -17,6 +17,8 @@ export default {
       showImport: false,
       importId: '',
       importNode: {},
+      // 不可用目录展示状态
+      isDirectory: false,
     };
   },
   methods: {
@@ -131,6 +133,7 @@ export default {
         });
         node.activated = res.data.activated;
         const msg = node.activated ? this.$t('启用成功') : this.$t('停用成功');
+        this.isDirectory = !node.activated;
         this.messageSuccess(msg);
       } catch (e) {
         console.warn(e);

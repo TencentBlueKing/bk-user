@@ -26,7 +26,8 @@
               @deleteDepartment="deleteDepartment"
               @switchNodeOrder="switchNodeOrder"
               @handleConfigDirectory="handleClickConfig"
-              @addOrganization="addOrganization" />
+              @addOrganization="addOrganization"
+              @updateScroll="updateScroll" />
           </div>
         </div>
       </div>
@@ -605,6 +606,7 @@ export default {
           this.filterTreeData(catalog, this.treeDataList);
           catalog.children = catalog.departments;
           catalog.children.forEach((department) => {
+            this.$set(department, 'async', department.has_children);
             this.$set(department, 'category_id', catalog.id);
             this.filterTreeData(department, catalog, catalog.type === 'local');
           });
@@ -1439,7 +1441,7 @@ export default {
         const calculateDistance = this.calculate(event.target);
         const next = ((item.activated && item.configured) || item.parent)
           ? event.target.nextElementSibling : event.target.nextElementSibling.nextElementSibling;
-        next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
+        // next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
         next.style.top = `${calculateDistance.getOffsetTop + 30 - scrollTop}px`;
         const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
         if (bottomHeight < 0) {
@@ -1804,6 +1806,9 @@ export default {
       } finally {
         this.treeLoading = false;
       }
+    },
+    updateScroll() {
+      this.currentParam.item.showOption = false;
     },
   },
 };
