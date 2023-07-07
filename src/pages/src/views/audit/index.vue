@@ -241,11 +241,14 @@ export default {
       config.offsetY = 80;
       this.$bkMessage(config);
     },
-    async  Auditderive() {
+    async Auditderive() {
       const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
       const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
-      const userName = this.searchCondition.username;
-      const isSuccess = this.searchCondition.is_success;
+      let userName = '';
+      let isSuccess = '';
+      this.tableSearchKey.forEach((item) => {
+        item.id === 'username' ? userName = item.values[0].id : isSuccess = item.values[0].id;
+      });
       let url = window.AJAX_URL;
       if (url.endsWith('/')) {
         // 去掉末尾的斜杠
