@@ -142,6 +142,9 @@ export default {
     // 删除
     deleteDepartment(node) {
       this.stopBubbling(node);
+      if (!node.activated) {
+        this.$emit('deleteDepartment', node);
+      }
       if (node.has_children || node.default || (node.activated && node.configured)) {
         node.showDeleteTips = false;
         return;

@@ -249,7 +249,7 @@ export default {
       let text = '';
       if (node.default) {
         text = this.$t('默认目录不能被删除');
-      } else if (node.activated && node.configured) {
+      } else if (node.activated || node.configured) {
         text = this.$t('请先停用，方可删除目录');
       } else if (node.has_children) {
         text = this.$t('非空组织不能删除');
