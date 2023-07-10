@@ -144,7 +144,7 @@ export default {
           const reg = /^[a-zA-Z0-9]/;
           // eslint-disable-next-line no-useless-escape
           const notReg = /[^a-zA-Z0-9.\-]/;
-          result = value.match(reg) && !value.match(notReg) && value.length >= 1 && value.length <= 16;
+          result = value.match(reg) && !value.match(notReg) && value.length >= 1 && value.length <= 64;
         } else if (key === 'pull_cycle') {
           result = value >= 60 || value === 0;
         } else {

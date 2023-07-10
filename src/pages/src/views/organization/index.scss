@@ -5,35 +5,22 @@
   display: flex;
   height: 100%;
   width: 100%;
-  border: 1px solid #dcdee5;
 }
 
-.organization-left {
-  position: relative;
-  flex-shrink: 0;
-  width: 260px;
-  height: 100%;
-  background: #fafbfd;
-  border-right: 1px solid #dcdee5;
-
-  .tree-loading-wrapper {
-    height: calc(100% - 76px);
-    overflow: hidden;
-
-    .tree-content-wrapper {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      overflow-y: auto;
-
-      @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-    }
+::v-deep .bk-resize-layout {
+  width: 100%;
+  .bk-resize-layout-aside {
+    background: #F5F7FA;
   }
+}
+
+.tree-content-wrapper {
+  height: calc(100vh - 124px);
 }
 
 .organization-right {
   position: relative;
-  width: calc(100% - 260px);
+  width: 100%;
   height: 100%;
   // 用户目录
   .catalog-info {
@@ -60,111 +47,83 @@
   }
   // 组织标题
   .department-title {
-    padding: 14px 0 14px 20px;
-    font-size: 18px;
+    padding: 0 20px;
     font-weight: 400;
-    color: rgba(51, 60, 72, 1);
-    line-height: 25px;
+    height: 52px;
+    line-height: 52px;
     border-bottom: 1px solid #dcdee5;
+    display: flex;
+    justify-content: space-between;
 
-    .title-content {
-      display: inline-flex;
-      align-items: center;
-      position: relative;
-      max-width: calc(100% - 20px);
-      word-break: break-all;
-
-      .department-name {
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .title-left {
+      display: flex;
+      white-space: nowrap;
+      .title-left-name{
+        .icon-root-node-i {
+          font-size: 18px;
+          color: #C4C6CC;
+        }
+        .icon-user-file-close-01 {
+          font-size: 18px;
+          color: #a3c5fd;
+          vertical-align: middle;
+        }
+        .profile-name {
+          color: #313238;
+          font-size: 16px;
+          font-family: MicrosoftYaHei;
+          display: inline-block;
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          vertical-align: middle;
+        }
+        .profile-count {
+          font-size: 12px;
+          padding: 0 8px;
+          color: #979BA5;
+          background-color: #F0F1F5;
+        }
+      }
+      .title-left-ul {
+        display: flex;
+        font-size: 12px;
+        color: #979BA5;
         white-space: nowrap;
-      }
-
-      .total-number {
-        flex-shrink: 0;
-      }
-
-      .icon {
-        margin-left: 4px;
-        flex-shrink: 0;
-        font-size: 14px;
-        color: #979ba5;
-        cursor: pointer;
-      }
-
-      .dropdown-list {
-        width: 140px;
-        position: absolute;
-        top: 30px;
-        right: -130px;
-        z-index: 1600;
-        background: #fff;
-        border-radius: 2px;
-        border: 1px solid #dcdee5;
-        box-shadow: 0 2px 6px rgba(51, 60, 72, .1);
-        // 切换成英文
-        &.chang-en {
-          a {
-            padding: 0 10px;
-            white-space: normal;
-            line-height: 28px;
+        li {
+          padding: 0 20px;
+          position: relative;
+          .incomplete {
+            color: #F99E11;
+          }
+          .deactivate {
+            color: #313238;
+          }
+          &::before {
+            content: '|';
+            position: absolute;
+            right: 0px;
+            width: 1px;
+            height: 8px;
+            color: #EAEBF0;
           }
         }
-
-        a {
-          padding-left: 20px;
-          font-size: 14px;
-          display: block;
-          color: #737987;
-          line-height: 36px;
-          text-decoration: none;
-          white-space: nowrap;
-
-          &:hover {
-            color: #3b84ff;
-            background: #e1ecff;
-          }
-
-          &.disable {
-            cursor: not-allowed;
-            color: #c4c6cc;
-          }
+        li:last-child:before {
+            color: #fff;
         }
       }
     }
-  }
-  // 空组织
-  .empty-department {
-    height: calc(100% - 54px);
 
-    .empty-search {
+    .title-right {
+      max-width: 200px;
+      position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-flow: column;
-      height: 80%;
-
-      img {
-        width: 42px;
-        margin-bottom: 10px;
-      }
-
-      p {
-        margin-bottom: 6px;
-        height: 19px;
-        font-size: 14px;
-        font-weight: bold;
-        color: #63656e;
-        line-height: 19px;
-
-        &.tips {
-          margin-bottom: 20px;
-          font-size: 12px;
-          color: #979ba5;
-        }
-      }
     }
   }
+
   // 非空组织，操作栏和表格
   .staff-info-wrapper {
     padding: 20px 20px 0;
@@ -246,7 +205,7 @@
   }
 
   .table-actions-left-container.local-type {
-    width: calc(100% - 452px);
+    width: calc(100% - 400px);
 
     .filter-current {
       width: calc(100% - 260px);
@@ -274,27 +233,25 @@
 }
 // 表格和分页
 .department-staff-info {
-  height: calc(100% - 56px);
+  // height: calc(100% - 56px);
+
+  ::v-deep .user-table-wrapper {
+    height: 100%;
+    .user-table {
+      height: 100%;
+      .bk-table-body-wrapper {
+        max-height: calc(100vh - 315px);
+        overflow-y: auto;
+        @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+      }
+    }
+  }
 
   &.search-user {
     height: 100%;
 
     .table-list-wrapper {
       height: calc(100% - 20px);
-    }
-  }
-
-  > .table-pagination {
-    display: flex;
-    align-items: center;
-
-    > .table-pagination-left {
-      line-height: 32px;
-      font-size: 12px;
-    }
-
-    > .table-pagination-right {
-      flex-grow: 1;
     }
   }
 }
@@ -306,4 +263,42 @@
   left: 0;
   height: 100%;
   width: 100%;
+}
+// 添加组织
+.new-department {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  > .folder-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 20px;
+    top: 6px;
+    width: 20px;
+    height: 20px;
+    z-index: 10;
+
+    > .icon-user-file-close-01 {
+      font-size: 18px;
+
+      &::before {
+        color: #c4c6cc;
+      }
+    }
+  }
+
+  > .adding-input {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 32px;
+    line-height: initial;
+
+    ::v-deep .bk-form-input {
+      padding-left: 43px;
+    }
+  }
 }

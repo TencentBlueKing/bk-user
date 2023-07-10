@@ -141,6 +141,7 @@ error_codes.add_codes(
         ErrorCode("CANNOT_UPDATE_DOMAIN", _("用户目录不能更新域字段")),
         ErrorCode("CANNOT_DISABLE_DOMAIN", _("默认用户目录不能被禁用")),
         ErrorCode("CANNOT_DELETE_DEFAULT_CATEGORY", _("不能删除默认用户目录")),
+        ErrorCode("CANNOT_DELETE_ACTIVE_CATEGORY", _("不能删除未停用用户目录")),
         ErrorCode("LOCAL_CATEGORY_CANNOT_SYNC", _("本地目录需要上传文件进行同步")),
         ErrorCode("CATEGORY_CANNOT_IMPORT_BY_FILE", _("该目录不能够通过文件同步数据")),
         ErrorCode("LOAD_DATA_FAILED", _("同步数据失败")),
@@ -157,6 +158,7 @@ error_codes.add_codes(
         ErrorCode("CATEGORY_TYPE_NOT_SUPPORTED", _("当前运行版本不支持此用户目录类型")),
         ErrorCode("PLUGIN_NOT_FOUND", _("找不到指定名称的插件")),
         ErrorCode("LOCAL_CATEGORY_NEEDS_EXCEL_FILE", _("本地目录需要Excel文件同步数据")),
+        ErrorCode("REVERT_CATEGORY_CONFLICT", _("用户目录还原冲突")),
         # 配置相关
         ErrorCode("CANNOT_FIND_SETTING_META", _("找不到对应的配置元信息")),
         ErrorCode("CANNOT_CREATE_SETTING", _("无法创建配置")),
@@ -178,5 +180,7 @@ error_codes.add_codes(
         # 用户字段
         ErrorCode("UNKNOWN_FIELD", _("未知自定义字段")),
         ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
+        # 回收站相关
+        ErrorCode("CANNOT_FIND_CATEGORY_IN_RECYCLE_BIN", _("回收站中无法找到目录：{category_id}")),
     ]
 )

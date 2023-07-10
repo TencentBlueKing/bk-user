@@ -27,6 +27,9 @@
       :disabled="editStatus && !item.editable"
       :placeholder="inputType === 'number' ? $t('请输入数字') : item.holder"
       :class="{ 'input-error': item.isError }"
+      :max="999999999999999"
+      :min="-999999999999999"
+      :maxlength="15"
       v-model="item.value"
       @focus="handleFocus" />
   </div>

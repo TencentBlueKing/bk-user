@@ -34,6 +34,18 @@
         @left-icon-click="getSearchInfo"
         @enter="getSearchInfo">
       </bk-input>
+      <bk-search-select
+        v-else
+        v-model="tableSearchKey"
+        class="king-input-search"
+        style="width: 400px;"
+        :data="searchFilterList"
+        :show-condition="false"
+        :placeholder="$t('搜索登录用户、登录状态')"
+        :clearable="true"
+        @change="getSearchInfo"
+        @search="getSearchInfo"
+        @clear="handleClear" />
     </div>
     <bk-tab :active.sync="panelActive" type="card" ext-cls="audit-panel-class">
       <bk-tab-panel
@@ -106,6 +118,8 @@ export default {
           new Date(),
         ],
         keyword: '',
+        username: '',
+        is_success: '',
       },
       // 记录搜索过的关键字，blur 的时候如果和当前关键字不一样就刷新表格
       searchedKey: '',
@@ -176,6 +190,14 @@ export default {
       isSearchEmpty: false,
       // 数据异常
       isDataError: false,
+      tableSearchKey: '',
+      searchSelectList: [
+        { id: 'username', name: this.$t('登录用户') },
+        { id: 'is_success', name: this.$t('登录状态'),
+          children: [{ id: 1, name: this.$t('成功') }, { id: 0, name: this.$t('失败') }],
+        },
+      ],
+      searchFilterList: [],
     };
   },
   computed: {
@@ -191,9 +213,23 @@ export default {
   watch: {
     'panelActive'(val) {
       this.searchCondition.keyword = '';
+      this.tableSearchKey = '';
       this.auditList = [];
       this.paginationConfig.current = 1;
       this.initUserList(val);
+    },
+    tableSearchKey: {
+      immediate: true,
+      handler(val) {
+        this.searchFilterList = this.searchSelectList;
+        this.searchCondition.username = '';
+        this.searchCondition.is_success = '';
+        if (val.length) {
+          val.forEach((item) => {
+            this.searchFilterList = this.searchFilterList.filter(key => key.id !== item.id);
+          });
+        }
+      },
     },
   },
   mounted() {
@@ -205,9 +241,14 @@ export default {
       config.offsetY = 80;
       this.$bkMessage(config);
     },
-    async  Auditderive() {
+    async Auditderive() {
       const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
       const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
+      let userName = '';
+      let isSuccess = '';
+      this.tableSearchKey.length && this.tableSearchKey.forEach((item) => {
+        item.id === 'username' ? userName = item.values[0].id : isSuccess = item.values[0].id;
+      });
       let url = window.AJAX_URL;
       if (url.endsWith('/')) {
         // 去掉末尾的斜杠
@@ -220,7 +261,7 @@ export default {
       if (this.panelActive === 'login' && this.auditList.length === 0) {
         this.handleWarning({ theme: 'error' });
       } else {
-        url = `${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}`;
+        url = `${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}&username=${userName}&is_success=${isSuccess}`;
         window.open(url);
       }
     },
@@ -238,20 +279,32 @@ export default {
         const currentStatus = panelActive === 'operate';
         const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
         const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
+        if (this.tableSearchKey.length) {
+          this.tableSearchKey.forEach((item) => {
+            this.searchCondition[item.id] = item.values[0].id;
+          });
+        }
         const auditParam = {
           startTime,
           endTime,
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
         };
-        const param = currentStatus ? Object.assign(auditParam, { keyword: this.searchCondition.keyword }) : auditParam;
+        const param = currentStatus
+          ? Object.assign(auditParam, { keyword: this.searchCondition.keyword })
+          : Object.assign(auditParam, {
+            userName: this.searchCondition.username,
+            isSuccess: this.searchCondition.is_success,
+          });
         const url = currentStatus ? 'audit/getList' : 'audit/getLoginList';
         const res = await this.$store.dispatch(url, param);
         this.auditList = res.data.results;
         // 计算页码数
         this.paginationConfig.count = res.data.count;
-        if (res.data.count === 0) {
+        if (res.data.count === 0 && currentStatus) {
           this.searchCondition.keyword === '' ? this.isDataEmpty = true : this.isSearchEmpty = true;
+        } else if (res.data.count === 0 && !currentStatus) {
+          this.tableSearchKey === '' ? this.isDataEmpty = true : this.isSearchEmpty = true;
         }
       } catch (e) {
         console.warn(e);
@@ -277,12 +330,13 @@ export default {
       this.initUserList(this.panelActive);
     },
     handleClear() {
-      if (this.searchedKey !== '') {
+      if (this.searchedKey !== '' || this.tableSearchKey !== '') {
         this.getSearchInfo();
       }
     },
     handleEmpty() {
       this.searchCondition.keyword = '';
+      this.tableSearchKey = '';
       this.getSearchInfo();
     },
     /** 登录审计记录失败原因tips */
@@ -303,6 +357,7 @@ export default {
 .audit-wrapper {
   height: 100%;
   color: #63656e;
+  padding: 40px;
   // 时间选择器和查询框
   .audit-heard-wrapper {
     display: flex;
@@ -323,8 +378,8 @@ export default {
     font-size: 14px;
     cursor: pointer;
     color: #3a84ff;
-    right: 0px;
-    top: 65px;
+    right: 40px;
+    top: 110px;
     z-index: 999;
   }
   // 表格

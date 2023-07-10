@@ -156,7 +156,7 @@ class ProfileCreateInputSLZ(serializers.ModelSerializer):
 
     # not required
     logo = serializers.CharField(required=False)
-    position = serializers.IntegerField(required=False)
+    position = serializers.IntegerField(required=False, allow_null=True)
     wx_userid = serializers.CharField(required=False, allow_blank=True, allow_null=True, default="")
     qq = serializers.CharField(required=False, allow_blank=True, allow_null=True, default="")
     account_expiration_date = serializers.CharField(required=False, allow_null=True, allow_blank=True)

@@ -330,180 +330,180 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-    @import '../../scss/mixins/scroller';
+@import '../../scss/mixins/scroller';
 
-    .king-sideslider {
-      background-color: rgba(0, 0, 0, .6);
-    }
+.king-sideslider {
+  background-color: rgba(0, 0, 0, .6);
+}
 
-    .blue-background-class {
-      background: #e1ecff;
-    }
-    // 公共样式
-    .checkbox {
-      display: inline-block;
-      vertical-align: middle;
-      width: 14px;
-      height: 14px;
-      outline: none;
-      visibility: visible;
-      cursor: pointer;
-      background: #fff url('../../images/icon.png') 0 -95px;
-      appearance: none;
+.blue-background-class {
+  background: #e1ecff;
+}
+// 公共样式
+.checkbox {
+  display: inline-block;
+  vertical-align: middle;
+  width: 14px;
+  height: 14px;
+  outline: none;
+  visibility: visible;
+  cursor: pointer;
+  background: #fff url('../../images/icon.png') 0 -95px;
+  appearance: none;
 
-      &:checked {
-        background-position: -33px -95px;
+  &:checked {
+    background-position: -33px -95px;
+  }
+}
+
+.info-set-wrapper {
+  height: 100%;
+
+  > .king-button {
+    margin: 20px;
+    width: 100px;
+  }
+
+  .member-content {
+    height: 100%;
+    padding-bottom: 20px;
+  }
+
+  > .table-content-wrapper {
+    margin: 0 20px;
+    height: calc(100% - 85px);
+    border: 1px solid #e6e6e6;
+
+    > .table-container {
+      // table 公用样式
+      table {
+        color: #888;
+        width: 100%;
+        table-layout: fixed;
+        border: none;
+        border-collapse: collapse;
+        font-size: 12px;
+
+        tr {
+          height: 42px;
+          border-bottom: 1px solid #dcdee5;
+        }
+
+        td {
+          font-size: 12px;
+        }
       }
     }
 
-    .info-set-wrapper {
-      height: 100%;
+    > .thead-container {
+      height: 42px;
 
-      > .king-button {
-        margin: 20px;
-        width: 100px;
+      > table {
+        background: #fafbfd;
+
+        th {
+          padding: 0 10px;
+          text-align: left;
+          border: none;
+          color: #666;
+
+          &.hidden {
+            display: none;
+          }
+        }
       }
+    }
 
-      .member-content {
+    > .tbody-container {
+      height: calc(100% - 42px);
+
+      > .scroll-container {
         height: 100%;
-        padding-bottom: 20px;
-      }
+        overflow: auto;
 
-      > .table-content-wrapper {
-        margin: 0 20px;
-        height: calc(100% - 85px);
-        border: 1px solid #e6e6e6;
+        @include scroller($backgroundColor: #e6e9ea, $width: 4px);
 
-        > .table-container {
-          // table 公用样式
-          table {
-            color: #888;
-            width: 100%;
-            table-layout: fixed;
+        > table > tbody > tr {
+          &:hover {
+            background: #e1ecff;
+          }
+
+          > td {
+            padding: 0 10px;
             border: none;
-            border-collapse: collapse;
-            font-size: 12px;
 
-            tr {
-              height: 42px;
-              border-bottom: 1px solid #dcdee5;
+            &.hidden {
+              display: none;
             }
 
-            td {
+            > .td-container {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
               font-size: 12px;
             }
-          }
-        }
-
-        > .thead-container {
-          height: 42px;
-
-          > table {
-            background: #fafbfd;
-
-            th {
-              padding: 0 10px;
-              text-align: left;
-              border: none;
-              color: #666;
-
-              &.hidden {
-                display: none;
-              }
-            }
-          }
-        }
-
-        > .tbody-container {
-          height: calc(100% - 42px);
-
-          > .scroll-container {
-            height: 100%;
-            overflow: auto;
-
-            @include scroller($backgroundColor: #e6e9ea, $width: 4px);
-
-            > table > tbody > tr {
-              &:hover {
-                background: #e1ecff;
-              }
-
-              > td {
-                padding: 0 10px;
-                border: none;
-
-                &.hidden {
-                  display: none;
-                }
-
-                > .td-container {
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                  font-size: 12px;
-                }
-                .field-name {
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                }
-              }
-            }
-          }
-
-          .handle {
-            cursor: move;
-            position: relative;
-
-            .move-btn {
-              font-size: 16px;
-              position: absolute;
-              top: 50%;
-              left: calc(50% + 5px);
-              transform: translate(-50%, -50%);
-            }
-          }
-
-          .sign {
-            margin-left: 8px;
-            padding: 0 4px;
-            height: 15px;
-            font-size: 12px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 1);
-            line-height: 15px;
-            text-align: center;
-            border-radius: 2px;
-            background: #c4c6cc;
-            display: inline-block;
-            min-width: 35px;
-          }
-          .sign-en {
-            min-width: 50px;
-          }
-
-          .icon-duihao-i {
-            padding-left: 4px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #2dcb56;
-          }
-
-          .operate {
-            color: #3a84ff;
-            cursor: pointer;
-            outline: none;
-
-            &:last-child {
-              margin-left: 10px;
-            }
-
-            &.gray {
-              color: #c4c6cc;
-              cursor: not-allowed;
+            .field-name {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
             }
           }
         }
       }
+
+      .handle {
+        cursor: move;
+        position: relative;
+
+        .move-btn {
+          font-size: 16px;
+          position: absolute;
+          top: 50%;
+          left: calc(50% + 5px);
+          transform: translate(-50%, -50%);
+        }
+      }
+
+      .sign {
+        margin-left: 8px;
+        padding: 0 4px;
+        height: 15px;
+        font-size: 12px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 1);
+        line-height: 15px;
+        text-align: center;
+        border-radius: 2px;
+        background: #c4c6cc;
+        display: inline-block;
+        min-width: 35px;
+      }
+      .sign-en {
+        min-width: 50px;
+      }
+
+      .icon-duihao-i {
+        padding-left: 4px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #2dcb56;
+      }
+
+      .operate {
+        color: #3a84ff;
+        cursor: pointer;
+        outline: none;
+
+        &:last-child {
+          margin-left: 10px;
+        }
+
+        &.gray {
+          color: #c4c6cc;
+          cursor: not-allowed;
+        }
+      }
     }
+  }
+}
 </style>

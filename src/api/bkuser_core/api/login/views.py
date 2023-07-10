@@ -73,8 +73,12 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             except ProfileCategory.DoesNotExist:
                 raise error_codes.DOMAIN_UNKNOWN
 
+            # 限制异常状态目录下人员登录
             if category.inactive:
                 raise error_codes.CATEGORY_NOT_ENABLED
+            if category.is_deleted:
+                logger.info("Category<%s-%s> has been deleted", category.id, category.domain)
+                raise error_codes.DOMAIN_UNKNOWN
 
         logger.debug(
             "do login check, will check in category<%s-%s-%s>", category.type, category.display_name, category.id

@@ -30,7 +30,6 @@ from .serializers import (
     CategoryMetaOutputSLZ,
     CategoryNamespaceSettingUpdateInputSLZ,
     CategoryProfileListInputSLZ,
-    CategoryProfileOutputSLZ,
     CategorySettingCreateInputSLZ,
     CategorySettingOutputSLZ,
     CategorySyncResponseOutputSLZ,
@@ -41,6 +40,7 @@ from .serializers import (
 from bkuser_core.api.web.department.serializers import DepartmentsWithChildrenAndAncestorsOutputSLZ
 from bkuser_core.api.web.export import ProfileExcelExporter
 from bkuser_core.api.web.field.serializers import FieldOutputSLZ
+from bkuser_core.api.web.serializers import ProfileDetailOutputSLZ
 from bkuser_core.api.web.utils import get_category, get_operator, list_setting_metas
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.audit.constants import OperationType
@@ -52,7 +52,7 @@ from bkuser_core.bkiam.permissions import (
     Permission,
     ViewCategoryPermission,
 )
-from bkuser_core.categories.constants import CategoryType, SyncTaskType
+from bkuser_core.categories.constants import CategoryStatus, CategoryType, SyncTaskType
 from bkuser_core.categories.exceptions import ExistsSyncingTaskError, FetchDataFromRemoteFailed
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory, SyncTask
@@ -243,7 +243,7 @@ class CategoryListCreateApi(generics.ListCreateAPIView):
 
         queryset = ProfileCategory.objects.filter(enabled=True)
         if settings.ENABLE_IAM:
-            fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
+            fs = Permission().make_category_filter(operator, IAMAction.VIEW_CATEGORY)
             queryset = queryset.filter(fs)
 
         return queryset
@@ -293,12 +293,20 @@ class CategoryUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """删除用户目录"""
         instance = self.get_object()
+
         if instance.default:
             raise error_codes.CANNOT_DELETE_DEFAULT_CATEGORY
+        # 不可删除非停用目录
+        if instance.status != CategoryStatus.INACTIVE.value:
+            raise error_codes.CANNOT_DELETE_ACTIVE_CATEGORY
 
         # 依赖 model 的 delete 方法, 执行软删除
         instance.delete()
-        post_category_delete.send_robust(sender=self, instance=instance, operator=request.operator)
+
+        # 善后：回收站映射，软删除审计日志
+        post_category_delete.send_robust(
+            sender=self, instance=instance, operator=request.operator, extra_values={"request": request}
+        )
         return Response(status=status.HTTP_200_OK)
 
 
@@ -563,7 +571,7 @@ class CategoryOperationSwitchOrderApi(generics.UpdateAPIView):
 class CategoryProfileListApi(generics.ListAPIView):
     permission_classes = [ViewCategoryPermission]
     pagination_class = CustomPagination
-    serializer_class = CategoryProfileOutputSLZ
+    serializer_class = ProfileDetailOutputSLZ
 
     def get_queryset(self):
         slz = CategoryProfileListInputSLZ(data=self.request.query_params)
@@ -579,6 +587,18 @@ class CategoryProfileListApi(generics.ListAPIView):
         if keyword:
             # NOTE: 这里相对原来的差异, 抹掉了 id__icontains 的搜索
             queryset = queryset.filter(Q(username__icontains=keyword) | Q(display_name__icontains=keyword))
+
+        # 首页展示不关联部门的用户列表
+        has_no_department = data.get("has_no_department", False)
+        if has_no_department:
+            queryset = queryset.filter(departments__isnull=True)
+            # SQL:
+            # SELECT COUNT(*) AS `__count` FROM `profiles_profile`
+            # LEFT OUTER JOIN `departments_department_profiles`
+            # ON (`profiles_profile`.`id` = `departments_department_profiles`.`profile_id`)
+            # WHERE (`profiles_profile`.`category_id` = 1
+            #        AND `profiles_profile`.`enabled`
+            #        AND `departments_department_profiles`.`department_id` IS NULL);
 
         # do prefetch
         queryset = queryset.prefetch_related("departments", "leader")

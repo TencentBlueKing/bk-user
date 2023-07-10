@@ -77,7 +77,7 @@ class GeneralLogOutputSLZ(serializers.Serializer):
 class LoginLogListInputSLZ(LogListInputSLZ):
     """Login log list request"""
 
-    is_success = serializers.BooleanField(required=False, help_text=_("登录状态"))
+    is_success = serializers.BooleanField(required=False, allow_null=True, help_text=_("登录状态"))
     username = serializers.CharField(required=False, help_text=_("登录用户名"))
 
 

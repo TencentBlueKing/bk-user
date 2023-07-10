@@ -24,6 +24,7 @@ const Setting = () => import(/* webpackChunkName: 'Setting' */'../views/setting'
 const SetPassword = () => import(/* webpackChunkName: 'SetPassword' */'../views/password/Set');
 const ResetPassword = () => import(/* webpackChunkName: 'ResetPassword' */'../views/password/Reset');
 const ModifyPassword = () => import(/* webpackChunkName: 'ModifyPassword' */'../views/password/Modify');
+const Recycle = () => import(/* webpackChunkName: 'Recycle' */'../views/recycle');
 const NotFound = () => import(/* webpackChunkName: 'NotFound' */'../views/404');
 
 const routes = [
@@ -67,6 +68,11 @@ const routes = [
     component: SetPassword,
   },
   {
+    path: '/recycle',
+    name: 'recycle',
+    component: Recycle,
+  },
+  {
     path: '*',
     name: 'NotFound',
     component: NotFound,
@@ -86,7 +92,7 @@ const cancelRequest = async () => {
 };
 
 router.beforeEach(async (to, from, next) => {
-  if (['organization', 'catalog', 'audit', 'setting'].includes(to.name)) {
+  if (['organization', 'catalog', 'audit', 'setting', 'recycle'].includes(to.name)) {
     store.commit('updateInitLoading', true);
   }
   store.commit('updateNoAuthData', null);

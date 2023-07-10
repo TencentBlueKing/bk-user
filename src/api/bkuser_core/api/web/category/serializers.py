@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import List
 
 from django.utils.translation import ugettext_lazy as _
@@ -19,10 +20,13 @@ from bkuser_core.api.web.utils import get_extras_with_default_values
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
 from bkuser_core.categories.constants import CategoryStatus, CreateAbleCategoryType
 from bkuser_core.categories.models import ProfileCategory
+from bkuser_core.categories.utils import change_periodic_sync_task_status
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
 from bkuser_core.profiles.validators import validate_domain
 from bkuser_core.user_settings.models import Setting
+
+logger = logging.getLogger(__name__)
 
 
 class ExtraInfoSerializer(serializers.Serializer):
@@ -72,6 +76,7 @@ class CategoryDetailOutputSLZ(serializers.ModelSerializer):
         return list(unfilled_nss)
 
     def get_activated(self, obj) -> bool:
+        # TODO: make this a model property?
         return obj.status == CategoryStatus.NORMAL.value
 
     class Meta:
@@ -91,7 +96,6 @@ class CategoryCreateInputSLZ(serializers.Serializer):
     def validate(self, data):
         if ProfileCategory.objects.filter(domain=data["domain"]).exists():
             raise ValidationError(_("登陆域为 {} 的用户目录已存在").format(data["domain"]))
-
         return data
 
     def create(self, validated_data):
@@ -121,6 +125,14 @@ class CategoryUpdateInputSLZ(serializers.Serializer):
         if activated is not None:
             instance.status = CategoryStatus.NORMAL.value if activated else CategoryStatus.INACTIVE.value
             should_updated_fields.append("status")
+            # 变更同步任务使能状态
+            logger.info(
+                "going to change periodic task status<%s> for Category-<%s>, the category type is %s",
+                activated,
+                instance.id,
+                instance.type,
+            )
+            change_periodic_sync_task_status(instance.id, activated)
 
         display_name = validated_data.get("display_name")
         if display_name:
@@ -219,14 +231,7 @@ class CategoryProfileListInputSLZ(serializers.Serializer):
     page = serializers.IntegerField(required=False, default=1)
     page_size = serializers.IntegerField(required=False, default=10)
 
-
-class CategoryProfileOutputSLZ(serializers.Serializer):
-    """用户序列化"""
-
-    # NOTE: 搜索接口, 不需要返回用户所有信息
-    id = serializers.IntegerField(required=False, read_only=True)
-    username = serializers.CharField()
-    display_name = serializers.CharField(read_only=True)
+    has_no_department = serializers.BooleanField(required=False, default=False)
 
 
 class CategoryDepartmentListInputSLZ(serializers.Serializer):

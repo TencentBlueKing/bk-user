@@ -37,6 +37,7 @@ from bkuser_core.bkiam.permissions import IAMAction, ManageDepartmentProfilePerm
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 from bkuser_core.departments.models import Department
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import CountryISOCodeNotMatch
 from bkuser_core.profiles.models import DynamicFieldInfo, Profile
 from bkuser_core.profiles.signals import post_profile_create, post_profile_update
@@ -47,7 +48,6 @@ from bkuser_core.profiles.utils import (
     parse_username_domain,
     should_check_old_password,
 )
-from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
@@ -200,7 +200,7 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
             instance.save()
         except Exception:  # pylint: disable=broad-except
             logger.exception("failed to update profile")
-            return error_codes.SAVE_USER_INFO_FAILED
+            raise error_codes.SAVE_USER_INFO_FAILED
 
         post_profile_update.send(
             sender=self,

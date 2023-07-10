@@ -6,11 +6,15 @@ repos:
         verbose: true
         language: system
         entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/rtx.sh $@; fi"
+        exclude: >
+          (?x)^(
+            | src/pages/node_modules/*
+          )$
       - id: IP check
         name: Check sensitive info
         verbose: true
         language: system
-        exclude: "^(.*/poetry.lock|.*/requirements.txt)|src/login/locale/en/LC_MESSAGES/django.po|src/login/bklogin/templates/account/agreement.part"
+        exclude: "^(.*/poetry.lock|.*/requirements.txt)|src/pages/node_modules/|src/login/locale/|src/login/bklogin/templates/agreement.html"
         entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/ip.sh $@; fi"
       - id: isort
         name: isort

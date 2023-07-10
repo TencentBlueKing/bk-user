@@ -21,7 +21,6 @@
       @editProfile="editProfile"
       @deleteProfile="$emit('deleteProfile')"
       @restoreProfile="$emit('restoreProfile')"
-      @getTableData="$emit('getTableData')"
       @showBarLoading="$emit('showBarLoading')"
       @closeBarLoading="$emit('closeBarLoading')" />
     <!-- add/edit -->
@@ -366,13 +365,18 @@ export default {
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
         if (this.hiddenFields.includes(fieldInfo.key)) {
           return false;
-        } if (fieldInfo.key === 'telephone') {
+        }
+        if (fieldInfo.key === 'telephone') {
           fieldInfo.iso_code = this.currentProfile.iso_code || 'cn';
         }
         if (fieldInfo.editable) {
           fieldInfo.holder = this.$t('请输入');
         }
-        fieldInfo.value = this.currentProfile[fieldInfo.key];
+        if (fieldInfo.value === '--') {
+          fieldInfo.value = '';
+        } else {
+          fieldInfo.value = this.currentProfile[fieldInfo.key];
+        }
         fieldInfo.isError = false;
         return true;
       });
@@ -462,6 +466,9 @@ export default {
       this.profileInfoList.map((item) => {
         if (item.key === 'telephone') {
           phoneValue = this.$refs.userInfoData.$refs.phone[0].verifyInput(item.value);
+        }
+        if (item.key === 'position' && item.value === '') {
+          item.value = null;
         }
       });
       this.$refs.userInfoData.$refs.validateForm.validate().then(() => {

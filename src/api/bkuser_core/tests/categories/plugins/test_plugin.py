@@ -86,7 +86,7 @@ class TestPlugin:
         """test load settings"""
 
         for key, meta_info in settings.items():
-            plugin.init_settings(key, meta_info)
+            plugin.init_settings(key, meta_info, {test_category.id: True})
 
         assert (
             list(
@@ -106,14 +106,14 @@ class TestPlugin:
         update_time = meta.update_time
 
         time.sleep(0.1)
-        plugin.init_settings("foo", {"region": "a", "namespace": "b", "default": "wasd"})
+        plugin.init_settings("foo", {"region": "a", "namespace": "b", "default": "wasd"}, {test_category.id: True})
         new_update_time = SettingMeta.objects.get(category_type="test", key="foo", namespace="b").update_time
 
         assert update_time == new_update_time
 
         # region 可以被修改
         time.sleep(0.1)
-        plugin.init_settings("foo", {"region": "www", "namespace": "b"})
+        plugin.init_settings("foo", {"region": "www", "namespace": "b"}, {test_category.id: True})
         meta = SettingMeta.objects.get(category_type="test", key="foo", namespace="b")
         assert update_time != meta.update_time
         assert meta.region == "www"

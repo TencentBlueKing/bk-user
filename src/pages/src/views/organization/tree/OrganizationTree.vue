@@ -8,248 +8,66 @@
   - specific language governing permissions and limitations under the License.
   -->
 <template>
-  <div data-test-id="opOrganizaData">
-    <ul class="tree-menu">
-      <li class="tree-first-node" v-for="(item, index) in treeDataList" :key="item.id">
-        <div
-          :style="{ 'padding-left': 15 * (treeIndex + 1) + 'px' }"
-          :class="{ 'tree-node': true, 'first-tree-node': treeIndex === 0,
-                    'expand': item.showChildren, 'active': item.showBackground }">
-          <!-- 组织开关图标 -->
-          <div class="toggle-icon" v-if="treeIndex !== 0 && treeSearchResult === null" @click="handleClickToggle(item)">
-            <i class="icon icon-user-triangle" :class="{ 'hidden': !item.has_children }"></i>
-          </div>
-
-          <!-- 目录或组织的图标和名称 -->
-          <div class="main-node" @click="handleClickTreeNode(item)">
-            <div class="folder-icon" :class="treeIndex === 0 && treeSearchResult === null && 'root-node'">
-              <i v-if="treeIndex === 0 && treeSearchResult === null" class="icon user-icon icon-root-node-i"></i>
-              <i v-else class="icon icon-user-file-close-01"></i>
-            </div>
-            <div class="depart-name" v-bk-overflow-tips>{{item.name || item.display_name}}</div>
-          </div>
-
-          <!-- 用户目录，扩展操作 -->
-          <div class="option" v-if="item.type && treeSearchResult === null">
-            <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
-            <div
-              v-if="item.showOption" :class="{ 'dropdown-list': true,
-                                               'chang-en': $i18n.locale === 'en' }"
-              @click.stop="item.showOption = false">
-              <!-- 本地用户目录添加下级组织 -->
-              <div class="specific-menu" v-if="item.type === 'local'">
-                <a href="javascript:;" @click="addRootDepartment(item)">{{$t('添加根组织')}}</a>
-              </div>
-              <!-- 上移 -->
-              <div class="specific-menu">
-                <a
-                  href="javascript:;"
-                  :class="{ 'disable': index === 0 }"
-                  @click="shiftNodeUp(item, index)"
-                  @mouseenter="checkUpTips(item, index)"
-                  @mouseleave="closeUpTips(item)">
-                  {{$t('上移')}}
-                </a>
-                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
-                  <div class="arrow"></div>
-                  <p class="inner">{{$t('已经是最顶层')}}</p>
-                </div>
-              </div>
-              <!-- 下移 -->
-              <div class="specific-menu">
-                <a
-                  href="javascript:;"
-                  :class="{ 'disable': index === treeDataList.length - 1 }"
-                  @click="shiftNodeDown(item, index)"
-                  @mouseenter="checkDownTips(item, index)"
-                  @mouseleave="closeDownTips(item)">
-                  {{$t('下移')}}
-                </a>
-                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
-                  <div class="arrow"></div>
-                  <p class="inner">{{$t('已经是最顶层')}}</p>
-                </div>
-              </div>
-              <!-- 重命名 -->
-              <div class="specific-menu">
-                <a href="javascript:;" @click="handleRename(item, 'catalog')">{{$t('重命名')}}</a>
-              </div>
-            </div>
-          </div>
-
-          <!-- 本地用户目录下的组织，扩展操作，包括搜索结果为组织 -->
-          <div class="option" v-if="item.isLocalDepartment && noSearchOrSearchDepartment">
-            <i class="icon bk-icon icon-more" @click.stop="handleClickOption(item, $event)"></i>
-            <div
-              v-if="item.showOption" :class="{ 'dropdown-list': true, 'chang-en': $i18n.locale === 'en' }"
-              @click.stop="item.showOption = false">
-              <!-- 添加下级组织 -->
-              <div class="specific-menu" v-if="!treeSearchResult">
-                <a
-                  href="javascript:;"
-                  :class="{ 'disable': treeIndex === 9 }"
-                  @click="addChild(item)"
-                  @mouseenter="checkAddTips(item)"
-                  @mouseleave="closeAddTips(item)">
-                  {{$t('添加下级组织')}}
-                </a>
-                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showAddChildTips }">
-                  <div class="arrow"></div>
-                  <p class="inner">{{$t('最多只能添加十级')}}</p>
-                </div>
-              </div>
-              <!-- 上移 -->
-              <div class="specific-menu" v-if="!treeSearchResult">
-                <a
-                  href="javascript:;"
-                  :class="{ 'disable': index === 0 }"
-                  @click="shiftNodeUp(item, index)"
-                  @mouseenter="checkUpTips(item, index)"
-                  @mouseleave="closeUpTips(item)">
-                  {{$t('上移')}}
-                </a>
-                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftUpTips }">
-                  <div class="arrow"></div>
-                  <p class="inner">{{$t('已经是最顶层')}}</p>
-                </div>
-              </div>
-              <!-- 下移 -->
-              <div class="specific-menu" v-if="!treeSearchResult">
-                <a
-                  href="javascript:;"
-                  :class="{ 'disable': index === treeDataList.length - 1 }"
-                  @click="shiftNodeDown(item, index)"
-                  @mouseenter="checkDownTips(item, index)"
-                  @mouseleave="closeDownTips(item)">
-                  {{$t('下移')}}
-                </a>
-                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showShiftDownTips }">
-                  <div class="arrow"></div>
-                  <p class="inner">{{$t('已经是最底层')}}</p>
-                </div>
-              </div>
-              <!-- 重命名 -->
-              <div class="specific-menu">
-                <a href="javascript:;" @click="handleRename(item, 'department')">{{$t('重命名')}}</a>
-              </div>
-              <!-- 复制组织ID -->
-              <div class="specific-menu">
-                <a href="javascript:;" @click="handleCopyId(item.id)">
-                  {{$t('复制组织ID')}}
-                </a>
-              </div>
-              <!-- 复制组织名称 -->
-              <div class="specific-menu">
-                <a
-                  href="javascript:;" @click="handleCopyFullName(item.full_name)">
-                  {{$t('复制组织名称')}}
-                </a>
-              </div>
-              <!-- 删除 -->
-              <div class="specific-menu">
-                <a
-                  href="javascript:;"
-                  :class="['delete', { 'delete-disable': item.has_children }]"
-                  @click="deleteDepartment(item, index)"
-                  @mouseenter="checkDeleteTips(item)"
-                  @mouseleave="closeDeleteTips(item)">
-                  {{$t('删除')}}
-                </a>
-                <div class="tooltip-content" :class="{ 'show-tooltip-content': item.showDeleteTips }">
-                  <div class="arrow"></div>
-                  <p class="inner">{{$t('非空组织不能删除')}}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="tree-node-loading" v-if="item.showLoading">
-          <img src="../../../images/svg/loading.svg" alt="">
-          <span class="loading-text">{{$t('加载中')}}</span>
-        </div>
-
-        <OrganizationTree
-          v-if="item.children && item.children.length"
-          v-show="item.showChildren"
-          :tree-data-list="item.children"
-          :tree-index="treeIndex + 1"
-          :tree-search-result="treeSearchResult"
-          :current-category-id="currentCategoryId"
-          @handleClickToggle="handleClickToggle"
-          @handleClickTreeNode="handleClickTreeNode"
-          @handleClickOption="handleClickOption"
-          @handleRename="handleRename"
-          @switchNodeOrder="switchNodeOrder"
-          @deleteDepartment="deleteDepartment" />
-
-        <!-- 添加根组织 -->
-        <div v-if="addDepartmentShow && addDepartmentParentId === item.id" class="new-department">
-          <div class="folder-icon">
-            <span class="icon icon-user-file-close-01"></span>
-          </div>
-          <bk-input
-            v-focus
-            v-model="addDepartmentName"
-            ref="addRootDepartment"
-            type="text"
-            font-size="medium"
-            class="adding-input"
-            :placeholder="$t('按Enter键确认添加')"
-            @enter="confirmAdd(item)"
-            @blur="cancelAdd"
-            @keydown="handleKeydown"
-          ></bk-input>
-        </div>
-
-        <!-- 添加子组织 -->
-        <div v-if="addChildernShow && addChildernId === item.id" class="new-department">
-          <div class="folder-icon">
-            <span class="icon icon-user-file-close-01"></span>
-          </div>
-          <bk-input
-            v-focus
-            v-model="addChildernName"
-            ref="addRootChildren"
-            type="text"
-            font-size="medium"
-            class="adding-input"
-            :placeholder="$t('按Enter键确认添加')"
-            @enter="confirmAddChildren(item)"
-            @blur="cancelAddChildren"
-            @keydown="handleChildrenKeydown"
-          ></bk-input>
-        </div>
-      </li>
-    </ul>
+  <div class="organization-tree-wrapper">
+    <bk-tree
+      ref="topTree"
+      ext-cls="top-tree"
+      :style="topTreeStyle"
+      draggable
+      drag-sort
+      :data="availableDirectory"
+      :node-key="'id'"
+      :tpl="tpl"
+      :show-icon="false"
+      @on-expanded="handleClickToggle"
+      @on-drag-node="handleDragNode">
+    </bk-tree>
+    <div class="bottom-tree" @click="clickBottomTree" ref="bottomTree" style="bottomTreeStyle">
+      <p :class="['bottom-tree-header', { 'show-header': isDirectory }]" @click="handleClickDirectory">
+        <i :class="isDirectory ? 'bk-icon icon-angle-down' : 'bk-icon icon-angle-right'"></i>{{ $t('不可用目录') }}
+      </p>
+      <bk-tree
+        :ext-cls="['bottom-tree-content', { 'show-content': isDirectory }]"
+        draggable
+        drag-sort
+        :data="unavailableDirectory"
+        :node-key="'id'"
+        :tpl="tpl"
+        :show-icon="false"
+        @on-expanded="handleClickToggle"
+        @on-drag-node="handleDragNode">
+      </bk-tree>
+    </div>
+    <!-- 导入用户 -->
+    <bk-dialog
+      width="440"
+      header-position="left"
+      :title="$t('导入用户')"
+      :ok-text="$t('提交')"
+      :auto-close="false"
+      v-model="showImport"
+      @confirm="confirmImportUser"
+      @cancel="showImport = false">
+      <div>
+        <ImportUser v-if="showImport" ref="importUserRef" :id="importId" />
+      </div>
+    </bk-dialog>
   </div>
-
 </template>
 
 <script>
-import { clipboardCopy } from '@/common/util';
-import mixin from '../mixin';
+import mixin from '@/components/organization/mixin';
+import ImportUser from '@/components/catalog/home/ImportUser.vue';
 export default {
   name: 'OrganizationTree',
-  directives: {
-    focus: {
-      inserted(el) {
-        const input = el.getElementsByTagName('input')[0];
-        if (input) {
-          input.focus();
-        }
-      },
-    },
+  components: {
+    ImportUser,
   },
   mixins: [mixin],
   props: {
     treeDataList: {
       type: Array,
       default: [],
-    },
-    treeIndex: {
-      type: Number,
-      default: 0,
     },
     treeSearchResult: {
       type: Object,
@@ -261,524 +79,566 @@ export default {
   },
   data() {
     return {
-      // 根目录新增组织
-      addDepartmentShow: false,
-      addDepartmentParentId: '',
-      addDepartmentName: '',
-      // 添加下级组织
-      addChildernShow: false,
-      addChildernId: '',
-      addChildernName: '',
+      // 可用目录
+      availableDirectory: [],
+      // 不可用目录
+      unavailableDirectory: [],
+      treeBoxHeight: document.body.clientHeight - 124,
+      topTreeHeight: document.body.clientHeight - 164,
+      bottomTreeHeight: 40,
+      timer: false,
+      treeScrollTop: 0,
     };
   },
   computed: {
-    noSearchOrSearchDepartment() {
-      return Boolean(!this.treeSearchResult || (this.treeSearchResult && this.treeSearchResult.groupType === 'department'));
+    topTreeStyle() {
+      return {
+        '--top-tree-height': `${this.topTreeHeight}px`,
+        'overflow-y': 'auto',
+      };
+    },
+    bottomTreeStyle() {
+      return {
+        '--bottom-tree-height': `${this.bottomTreeHeight}px`,
+      };
     },
   },
+  watch: {
+    treeDataList: {
+      immediate: true,
+      deep: true,
+      handler(val) {
+        this.availableDirectory = [];
+        this.unavailableDirectory = [];
+        val.map((item) => {
+          if (item.activated && item.configured) {
+            this.availableDirectory.push(item);
+          } else {
+            this.unavailableDirectory.push(item);
+          }
+        });
+      },
+    },
+    treeBoxHeight(val) {
+      // 为了避免频繁触发resize函数导致页面卡顿，使用定时器
+      if (!this.timer) {
+        // 一旦监听到的screenWidth值改变，就将其重新赋给data里的screenWidth
+        this.screenHeight = val;
+        this.timer = true;
+        const that = this;
+        setTimeout(() => {
+          that.timer = false;
+        }, 400);
+      }
+    },
+  },
+  mounted() {
+    window.onload = () => {
+      this.availableDirectoryHeight();
+    };
+    window.onresize = () => {
+      this.availableDirectoryHeight();
+    };
+    const topTreeWrap = document.querySelector('.top-tree');
+    topTreeWrap.addEventListener('scroll', this.scrollChange, true);
+  },
   methods: {
+    // 可用目录高度
+    availableDirectoryHeight() {
+      window.screenHeight = document.body.clientHeight;
+      this.treeBoxHeight = window.screenHeight - 124;
+      this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
+    },
+    scrollChange(e) {
+      this.treeScrollTop = e.target.scrollTop;
+      this.$emit('updateScroll');
+    },
+    clickBottomTree() {
+      this.bottomTreeHeight = this.$refs.bottomTree.offsetHeight;
+      this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
+      const bottomTreeWrap = document.querySelector('.show-content');
+      if (!bottomTreeWrap) return;
+      bottomTreeWrap.addEventListener('scroll', this.scrollChange, true);
+    },
     handleClickToggle(item) {
       this.$emit('handleClickToggle', item);
     },
-    handleClickTreeNode(item) {
-      const isSearchProfile = this.treeSearchResult && this.treeSearchResult.type !== 'department';
-      this.$emit('handleClickTreeNode', item, isSearchProfile);
+    tpl(node) {
+      return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}>
+        {node.type && !node.children.length ? <i class={'hide-icon'} /> : ''}
+        {node.display_name ? <i class={['icon user-icon icon-root-node-i', { 'active-icon': node.showBackground }]} />
+          : <i class={['icon icon-user-file-close-01', { 'active-icon': node.showBackground }]} />}
+        <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
+          domPropsInnerHTML={node.display_name || node.name}
+          onClick={() => this.$emit('handleClickTreeNode', node, event)} v-bk-overflow-tips></span>
+        <div class="option" v-if={node.type && this.treeSearchResult === null}>
+          <i ref="more" class={['icon bk-icon icon-more', { 'show-more': node.showBackground }]}
+          onClick={() => this.$emit('handleClickOption', node, event, this.treeScrollTop)}></i>
+          {(node.configured && !node.activated && node.type)
+            ? <bk-tag class={'show-tag'} type="filled">{this.$t('停用1')}</bk-tag>
+            : ''}
+          {(!node.configured && node.type)
+            ? <bk-tag class={'show-tag'} theme="warning" type="filled">{this.$t('未完成')}</bk-tag>
+            : ''}
+          <div class={[node.showOption ? 'show-dropdown-list' : 'dropdown-list', { 'chang-en': this.$i18n.locale === 'en' }]}>
+            <div class="specific-menu">
+              <a href="javascript:;" onClick={() => this.$emit('addOrganization', node, event)}>{this.getAddOrganization(node)}</a>
+              <a href="javascript:;" onClick={() => this.$emit('handleRename', node, event)}>{this.$t('重命名')}</a>
+              {node.type
+                ? <div class="specific-menu">
+                    <a href="javascript:;" onClick={() => this.$emit('handleConfigDirectory', event)}>
+                      {this.$t('目录配置')}
+                    </a>
+                    <a href="javascript:;"
+                      class={{ 'delete-disable': node.default }}
+                      onMouseenter={this.checkSwitchTips.bind(this, node)}
+                      onMouseleave={this.closeSwitchTips.bind(this, node)}
+                      onClick={this.switchStatus.bind(this, node)}>
+                      {node.activated ? this.$t('停用') : this.$t('启用')}
+                    </a>
+                    <div class={['tooltip-content', { 'show-tooltip-content': node.showSwitchTips }]}>
+                      <p class="inner">{this.$t('默认目录不能被停用')}</p>
+                    </div>
+                  </div>
+                : ''}
+              {(node.type === 'mad' || node.type === 'ldap')
+                ? <div class="specific-menu">
+                    <a href="javascript:;"
+                    class={{ 'delete-disable': !node.configured }}
+                    onMouseenter={this.checkSyncTips.bind(this, node)}
+                    onMouseleave={this.closeSyncTips.bind(this, node)}
+                    onClick={this.syncCatalog.bind(this, node)}>
+                    {this.$t('同步')}
+                    </a>
+                    <div class={['tooltip-content', { 'show-tooltip-content': node.showSyncTips }]}>
+                      <p class="inner">{this.$t('目录未完成配置，无法操作')}</p>
+                    </div>
+                  </div>
+                : ''}
+              {node.type === 'local'
+                ? <div class="specific-menu">
+                    <a href="javascript:;"
+                    class={{ 'delete-disable': !node.has_children }}
+                    onMouseenter={this.checkExportTips.bind(this, node)}
+                    onMouseleave={this.closeExportTips.bind(this, node)}
+                    onClick={this.exportUser.bind(this, node)}>{this.$t('导出')}</a>
+                    <a href="javascript:;" onClick={this.importUser.bind(this, node)}>{this.$t('导入')}</a>
+                    <div class={['tooltip-content', { 'show-tooltip-content': node.showExportTips }]}>
+                      <p class="inner">{this.$t('空目录无需导出')}</p>
+                    </div>
+                  </div>
+                : ''}
+            </div>
+            <div class="specific-menu">
+              <a href="javascript:;"
+                class={['delete', { 'delete-disable': this.deleteDisabled(node) }]}
+                onClick={this.deleteDepartment.bind(this, node)}
+                onMouseenter={this.checkDeleteTips.bind(this, node)}
+                onMouseleave={this.closeDeleteTips.bind(this, node)}>
+                {this.$t('删除')}
+              </a>
+              <div class={['tooltip-content', { 'show-tooltip-content': node.showDeleteTips }]}>
+                {<p class="inner">{this.getDeleteTips(node)}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>;
     },
-    handleClickOption(item, event) {
-      this.$emit('handleClickOption', item, event);
+    getDeleteTips(node) {
+      let text = '';
+      if (node.default) {
+        text = this.$t('默认目录不能被删除');
+      } else if (node.activated || node.configured) {
+        text = this.$t('请先停用，方可删除目录');
+      } else if (node.has_children) {
+        text = this.$t('非空组织不能删除');
+      }
+      return text;
     },
-
-    // 上移、下移
-    switchNodeOrder(param) {
-      this.$emit('switchNodeOrder', param);
+    handleClickDirectory() {
+      this.isDirectory = !this.isDirectory;
     },
-    shiftNodeUp(item, index) {
-      item.showShiftUpTips = false;
-      if (index !== 0) {
-        this.$emit('switchNodeOrder', { item, index, type: 'up' });
+    checkSyncTips(item) {
+      if (!item.configured) {
+        this.$set(item, 'showSyncTips', true);
       }
     },
-    checkUpTips(item, index) {
-      if (index === 0) {
-        this.$set(item, 'showShiftUpTips', true);
+    closeSyncTips(item) {
+      item.showSyncTips = false;
+    },
+    checkExportTips(item) {
+      if (!item.has_children) {
+        this.$set(item, 'showExportTips', true);
       }
     },
-    closeUpTips(item) {
-      item.showShiftUpTips = false;
+    closeExportTips(item) {
+      item.showExportTips = false;
     },
-    shiftNodeDown(item, index) {
-      item.showShiftDownTips = false;
-      if (index !== this.treeDataList.length - 1) {
-        this.$emit('switchNodeOrder', { item, index, type: 'down' });
+    checkSwitchTips(item) {
+      if (item.default) {
+        this.$set(item, 'showSwitchTips', true);
       }
     },
-    checkDownTips(item, index) {
-      if (index === this.treeDataList.length - 1) {
-        this.$set(item, 'showShiftDownTips', true);
-      }
-    },
-    closeDownTips(item) {
-      item.showShiftDownTips = false;
-    },
-
-    // 重命名
-    handleRename(item, type) {
-      this.$emit('handleRename', item, type);
-    },
-
-    //  复制id或名称
-    handleCopyId(id) {
-      clipboardCopy(id, this.messageSuccess(this.$t('复制id成功')));
-    },
-    handleCopyFullName(name) {
-      clipboardCopy(name, this.messageSuccess(this.$t('复制组织名称成功')));
-    },
-
-    // 删除组织节点
-    deleteDepartment(item, index) {
-      if (item.has_children) {
-        item.showDeleteTips = false;
-        return;
-      }
-      this.$emit('deleteDepartment', item, index);
+    closeSwitchTips(item) {
+      item.showSwitchTips = false;
     },
     checkDeleteTips(item) {
-      if (item.has_children) {
+      if (item.default || (item.activated && item.configured) || item.has_children) {
         this.$set(item, 'showDeleteTips', true);
+      }
+      if (item.activated === false && item.has_children) {
+        this.$set(item, 'showDeleteTips', false);
       }
     },
     closeDeleteTips(item) {
       item.showDeleteTips = false;
     },
-
-    // 添加子组织
-    addChild(item) {
-      item.showAddChildTips = false;
-      this.addChildernShow = true;
-      this.addChildernId = item.id;
-      if (this.treeIndex === 9) {
-        return;
+    handleDragNode(node) {
+      this.$emit('switchNodeOrder', node);
+    },
+    deleteDisabled(item) {
+      let status = false;
+      if (item.default || (item.activated && item.configured) || item.has_children) {
+        status = true;
       }
-    },
-    cancelAddChildren() {
-      this.addChildernShow = false;
-      this.addChildernId = '';
-      this.addChildernName = '';
-    },
-    handleChildrenKeydown(value, event) {
-      if (event.code === 'Escape') {
-        this.cancelAddChildren();
+      if (item.activated === false && item.has_children) {
+        status = false;
       }
-    },
-    async confirmAddChildren(item) {
-      const name = this.addChildernName.trim();
-      if (!name) {
-        this.cancelAddChildren();
-        return;
-      }
-      try {
-        this.$emit('showTreeLoading');
-        const params = {
-          name: this.addChildernName,
-          parent: item.id,
-          category_id: this.currentCategoryId,
-        };
-        const res = await this.$store.dispatch('organization/addDepartment', params);
-        if (res.result === true) {
-          this.messageSuccess(`${this.$t('成功添加下级组织')} ${params.name}`);
-          if (item.showChildren) {
-            this.isAddChild = true;
-          }
-          item.has_children = true;
-          this.updateChildren(item);
-          this.cancelAddChildren();
-        }
-      } catch (e) {
-        console.warn(e);
-        this.$refs.addRootChildren[0].$el.getElementsByTagName('input')[0].focus();
-      } finally {
-        this.$emit('closeTreeLoading');
-      }
-    },
-    checkAddTips(item) {
-      if (this.treeIndex === 9) {
-        this.$set(item, 'showAddChildTips', true);
-      }
-    },
-    closeAddTips(item) {
-      item.showAddChildTips = false;
-    },
-
-    // 添加根组织
-    addRootDepartment(item) {
-      item.showChildren = true;
-      this.addDepartmentShow = true;
-      this.addDepartmentParentId = item.id;
-    },
-    cancelAdd() {
-      this.addDepartmentShow = false;
-      this.addDepartmentParentId = '';
-      this.addDepartmentName = '';
-    },
-    handleKeydown(value, event) {
-      if (event.code === 'Escape') {
-        this.cancelAdd();
-      }
-    },
-    async confirmAdd(item) {
-      const name = this.addDepartmentName.trim();
-      if (!name) {
-        this.cancelAdd();
-        return;
-      }
-      try {
-        this.$emit('showTreeLoading');
-        const params = {
-          name: this.addDepartmentName,
-          category_id: this.addDepartmentParentId,
-        };
-        const res = await this.$store.dispatch('organization/addDepartment', params);
-        const newDepartment = res.data;
-        newDepartment.isNewDeparment = true;
-        this.$parent.filterTreeData(newDepartment, item, item.type === 'local');
-        item.children.push(newDepartment);
-        this.cancelAdd();
-        this.$emit('handleClickTreeNode', newDepartment);
-      } catch (e) {
-        console.warn(e);
-        this.$refs.addRootDepartment[0].$el.getElementsByTagName('input')[0].focus();
-      } finally {
-        this.$emit('closeTreeLoading');
-      }
+      return status;
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-li.tree-first-node {
-  font-size: 14px;
-  font-weight: 400;
-  color: rgba(115, 121, 135, 1);
-  line-height: 36px;
-
-  @keyframes tree-opacity {
-    0% {
-      opacity: 0;
+@import '../../../scss/mixins/scroller.scss';
+.organization-tree-wrapper {
+  position: relative;
+  height: 100%;
+  .icon {
+    font-size: 18px;
+    color: #C4C6CC;
+    vertical-align: middle;
+  }
+  .icon-user-file-close-01 {
+    color: #a3c5fd;
+  }
+  .hide-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    position: absolute;
+    background: #F5F7FA;
+    top: 8px;
+    left: -18px;
+  }
+  .show-tag {
+    padding: 0;
+    width: 55px;
+    text-align: center;
+    vertical-align: bottom;
+  }
+  .top-tree {
+    padding: 0 16px;
+    height: var(--top-tree-height);
+    @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+    overflow-x: hidden;
+  }
+  .bottom-tree {
+    font-size: 14px;
+    position: absolute;
+    width: 100%;
+    height: var(--bottom-tree-height);
+    bottom: 0;
+    background: #F5F7FA;
+    .bottom-tree-header {
+      padding: 0 12px;
+      height: 40px;;
+      line-height: 40px;
+      border-top: 1px solid #DCDEE5;
+      i {
+        font-size: 22px;
+        vertical-align: middle;
+      }
+      &:hover {
+        cursor: pointer;
+        background: #FAFBFD;
+      }
     }
-
-    100% {
-      opacity: 1;
+    .show-header {
+      background: #FAFBFD;
+      border-bottom: 1px solid #F0F1F5;
+    }
+    .bottom-tree-content {
+      display: none;
+    }
+    ::v-deep .show-content {
+      display: block;
+      padding: 0 16px 40px;
+      max-height: 400px;
+      overflow-y: auto;
+      @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+      overflow-x: hidden;
+      .tree-drag-node {
+        .tree-node {
+          position: relative;
+          width: calc(100% - 65px);
+          padding-left: 3px;
+          .node-title {
+            width: calc(100% - 40px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+          }
+          .show-background {
+            .option {
+              display: flex;
+              .icon-more {
+                visibility: visible;
+              }
+              .bk-tag span {
+                display: block;
+                width: 55px;
+              }
+            }
+          }
+          .directory-warpper {
+            .option {
+              display: flex;
+              .icon-more {
+                visibility: hidden;
+              }
+              .bk-tag span {
+                display: block;
+                width: 55px;
+              }
+            }
+          }
+        }
+        &:hover {
+          & > .tree-node > .directory-warpper {
+            .icon-more {
+              visibility: visible;
+            }
+          }
+        }
+      }
+      .leaf .tree-node {
+        width: 100%;
+      }
     }
   }
-
-  > .tree-node {
-    display: flex;
-    align-items: center;
+}
+::v-deep .bk-tree {
+  li {
+    position: static;
+  }
+  .tree-drag-node {
     position: relative;
-    padding: 0 36px 0 20px;
-    transition: all .3s ease;
-
-    > .toggle-icon {
-      flex-shrink: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 16px;
-      height: 16px;
-      margin-right: 2px;
-      cursor: pointer;
-
-      > .icon-user-triangle {
-        opacity: 1;
-        font-size: 12px;
-        transform: rotate(-90deg);
-        transition: all .3s ease;
-
-        &::before {
-          color: #979ba5;
-        }
-
-        &.hidden {
-          opacity: 0;
-        }
-      }
-    }
-
-    > .main-node {
-      width: calc(100% - 18px);
-      flex-shrink: 1;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-
-      > .folder-icon {
-        display: flex;
-        justify-content: center;
+    .directory-warpper {
+      position: relative;
+      line-height: 32px;
+      height: 32px;
+      .option {
         align-items: center;
-        margin-right: 8px;
-        width: 20px;
+        position: absolute;
+        top: 5px;
+        right: 0;
         height: 20px;
-
-        &.root-node {
-          border-radius: 2px;
-          background: #c4c6cc;
-        }
-        // 根节点 icon
-        .icon-root-node-i {
-          font-size: 12px;
-          background: #c4c6cc;
-
-          &::before {
-            color: #fff;
-            background: #c4c6cc;
-          }
-        }
-        // 组织节点 icon
-        .icon-user-file-close-01 {
-          font-size: 18px;
-
-          &::before {
-            color: #a3c5fd;
-          }
-        }
-      }
-
-      > .depart-name {
-        width: calc(100% - 28px);
-        font-size: 14px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        width: 20px;
+        display: none;
       }
     }
-
-    > .option {
-      display: none;
-      align-items: center;
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 34px;
-      height: 36px;
-
-      > .icon-more {
+    .show-background {
+      position: relative;
+      line-height: 32px;
+      height: 32px;
+      .active-icon {
+        color: #4b8fff;
+      }
+      .option {
+        align-items: center;
+        position: absolute;
+        top: 5px;
+        right: 0;
+        height: 20px;
+        width: 20px;
+      }
+      .show-more {
+        color: #4b8fff;
+        display: block;
         font-size: 20px;
         cursor: pointer;
       }
-
-      > .dropdown-list {
-        position: fixed;
-        top: -1000px;
-        left: -1000px;
-        width: 174px;
-        background: #fff;
-        border-radius: 2px;
-        border: 1px solid #dcdee5;
-        box-shadow: 0 2px 6px rgba(51, 60, 72, .1);
-        z-index: 1000000;
-        // 英文
-        &.chang-en {
-          .specific-menu {
-            a {
-              padding: 0 10px;
-              white-space: normal;
-              line-height: 28px;
-            }
-
-            .tooltip-content {
-              width: 180px;
-            }
-          }
-        }
-        // 添加下级组织
-        .specific-menu {
-          position: relative;
-
-          .tooltip-content {
-            opacity: 0;
-            position: absolute;
-            left: 94px;
-            top: 2px;
-            padding: 0 5px;
-            font-size: 12px;
-            line-height: 32px;
-            width: 110px;
-            text-align: center;
-            background: #333;
-            color: #fff;
-            border-radius: 3px;
-            z-index: 2000;
-            transition: all .3s ease;
-
-            &.show-tooltip-content {
-              opacity: 1;
-            }
-
-            .arrow {
-              position: absolute;
-              top: 50%;
-              left: -1px;
-              width: 8px;
-              height: 8px;
-              border-top: 1px solid #333;
-              border-left: 1px solid #333;
-              transform: rotate(-45deg) translateY(-50%);
-              z-index: 10;
-              background: #333;
-            }
-          }
-
-          a {
-            padding-left: 20px;
-            font-size: 14px;
-            display: block;
-            color: #737987;
-            line-height: 36px;
-            text-decoration: none;
-            white-space: nowrap;
-
-            &.delete {
-              color: #ec4848;
-            }
-
-            &:hover {
-              color: #3b84ff;
-              background: #e1ecff;
-            }
-
-            &.disable {
-              cursor: not-allowed;
-              color: #c4c6cc;
-            }
-
-            &.delete-disable {
-              color: #c4c6cc;
-              cursor: not-allowed;
-            }
-          }
-        }
-      }
     }
-
-    .add-button {
-      display: none;
-      align-items: center;
+    &::before {
+      content: "";
+      display: block;
+      width: 1000px;
+      height: 37px;
       position: absolute;
-      top: 0;
-      right: 0;
-      width: 34px;
-      height: 36px;
-
-      > .icon-plus {
-        padding: 4px;
-        font-size: 12px;
-        font-weight: bold;
-        cursor: pointer;
-      }
+      right: -30px;
+      z-index: 0;
     }
-
-    &.first-tree-node {
-      padding-left: 20px !important;
-    }
-
-    &.expand > .toggle-icon > .icon-user-triangle {
-      transition: all .3s ease;
-      transform: rotate(0);
-    }
-
-    &:hover {
+    &:hover::before {
       background: #f0f1f5;
-
-      > .option,
-      .add-button {
-        display: flex;
-      }
     }
 
-    &.active {
-      color: #4b8fff;
-      background: #e1ecff;
-
-      > .main-node > .folder-icon {
-        .icon-user-file-close-01 {
-          &::before {
-            color: #4b8fff;
-          }
-        }
-
-        .icon-root-node-i::before {
-          background: #3a84ff !important;
-        }
-
-        &.root-node {
-          background: #3a84ff;
-        }
+    .tree-expanded-icon {
+      vertical-align: sub;
+    }
+    .tree-node {
+      position: relative;
+      width: calc(100% - 14px);
+      padding-left: 3px;
+      .node-title {
+        width: calc(100% - 40px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
       }
-
-      > .option {
-        display: flex;
+    }
+    &:hover {
+      & > .tree-node > .directory-warpper {
+        .option {
+          display: block;
+          align-items: center;
+          position: absolute;
+          top: 5px;
+          right: 0;
+          height: 20px;
+          width: 20px;
+          color: #737987;
+        }
+        .icon-more {
+          color: #737987;
+          display: block;
+          font-size: 20px;
+          cursor: pointer;
+        }
       }
     }
   }
+  .leaf .tree-node {
+    width: 100%;
+  }
+  .node-li {
+    &::before {
+      background: #E2EDFF;
+    }
+    &:hover::before {
+      background: #E2EDFF;
+    }
+    .hide-icon {
+      background: #E2EDFF;
+      z-index: 1;
+    }
+    &:hover {
+      .hide-icon {
+        background: #E2EDFF;
+        z-index: 1;
+      }
+    }
+  }
+}
+.option {
+  .dropdown-list {
+    display: none;
+  }
 
-  > .new-department {
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding-left: 35px;
-    padding-right: 20px;
-    height: 36px;
+  > .show-dropdown-list {
+    display: block;
+    position: fixed;
+    width: 180px;
+    background: #fff;
+    border-radius: 2px;
+    border: 1px solid #dcdee5;
+    box-shadow: 0 2px 6px rgba(51, 60, 72, .1);
+    z-index: 1000000;
+    margin-left: 20px;
+    // 英文
+    &.chang-en {
+      .specific-menu {
+        a {
+          padding: 0 10px;
+          white-space: normal;
+          line-height: 28px;
+        }
 
-    > .folder-icon {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: absolute;
-      left: 48px;
-      top: 8px;
-      width: 20px;
-      height: 20px;
-      z-index: 10;
+        .tooltip-content {
+          width: 300px;
+        }
+      }
+    }
+    // 添加下级组织
+    .specific-menu {
+      position: relative;
 
-      > .icon-user-file-close-01 {
-        font-size: 18px;
+      .tooltip-content {
+        opacity: 0;
+        position: absolute;
+        left: 94px;
+        top: 2px;
+        padding: 0 5px;
+        font-size: 12px;
+        line-height: 32px;
+        width: 160px;
+        text-align: center;
+        background: #333;
+        color: #fff;
+        border-radius: 3px;
+        z-index: 2000;
+        transition: all .3s ease;
 
-        &::before {
+        &.show-tooltip-content {
+          opacity: 1;
+        }
+
+        .arrow {
+          position: absolute;
+          top: 50%;
+          left: -1px;
+          width: 8px;
+          height: 8px;
+          border-top: 1px solid #333;
+          border-left: 1px solid #333;
+          transform: rotate(-45deg) translateY(-50%);
+          z-index: 10;
+          background: #333;
+        }
+      }
+
+      a {
+        padding-left: 20px;
+        font-size: 14px;
+        display: block;
+        color: #737987;
+        line-height: 36px;
+        text-decoration: none;
+        white-space: nowrap;
+
+        &.delete {
+          color: #ec4848;
+        }
+
+        &:hover {
+          color: #3b84ff;
+          background: #e1ecff;
+        }
+
+        &.disable {
+          cursor: not-allowed;
           color: #c4c6cc;
         }
+
+        &.delete-disable {
+          color: #c4c6cc;
+          cursor: not-allowed;
+        }
       }
-    }
-
-    > .adding-input {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 32px;
-      line-height: initial;
-
-      ::v-deep .bk-form-input {
-        padding-left: 41px;
-      }
-    }
-  }
-
-  > .tree-node-loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 32px;
-    animation: tree-opacity .3s;
-
-    > img {
-      width: 14px;
-    }
-
-    > .loading-text {
-      font-size: 12px;
-      padding-left: 4px;
-      color: #a3c5fd;
     }
   }
 }
