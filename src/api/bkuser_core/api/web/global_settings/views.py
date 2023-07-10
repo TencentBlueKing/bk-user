@@ -13,10 +13,12 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser_core.api.web.global_settings.serialziers import GlobalSettingOutputSLZ, GlobalSettingUpdateInputSLZ
+from bkuser_core.bkiam.permissions import ManageFieldPermission
 from bkuser_core.user_settings.models import GlobalSettings
 
 
 class GlobalSettingsListUpdateApi(generics.ListAPIView, generics.UpdateAPIView):
+    permission_classes = [ManageFieldPermission]  # Note: 以字段管理权限代替全局配置的权限
     serializer_class = GlobalSettingOutputSLZ
 
     def get_queryset(self):
