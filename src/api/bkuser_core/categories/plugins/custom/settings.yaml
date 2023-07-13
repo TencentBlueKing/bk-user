@@ -1,7 +1,0 @@
-paths:
-  default:
-    profile: "profiles"
-    department: "departments"
-api_host:
-  default: ""
-  example: "http://example.com"
