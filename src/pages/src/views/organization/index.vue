@@ -1257,9 +1257,9 @@ export default {
       });
     },
     // 删除某一条用户信息，更新用户信息列表
-    deleteProfile(id) {
+    deleteProfile({ id, username }) {
       this.$bkInfo({
-        title: this.$t('确认要删除当前用户？'),
+        title: this.$t('delete-user', { name: username }),
         extCls: 'king-info long-title',
         confirmFn: () => {
           if (this.clickSecond) {
@@ -1502,13 +1502,22 @@ export default {
       }
     },
     // 删除组织节点
-    deleteDepartment(deleteItem) {
+    deleteDepartment(deleteItem, event) {
+      if (event) {
+        event.stopPropagation();
+        deleteItem.showOption = false;
+        if (deleteItem.activated) return;
+        if (deleteItem.has_children || deleteItem.default || (deleteItem.activated && deleteItem.configured)) {
+          deleteItem.showDeleteTips = false;
+          return;
+        }
+      }
       const h = this.$createElement;
       let instance1 = null;
       let instance2 = null;
       deleteItem.display_name
         ? this.$bkInfo({
-          title: this.$t('确认要删除当前目录？'),
+          title: this.$t('delete-directory', { name: deleteItem.display_name }),
           subHeader: h(
             'div',
             {
@@ -1549,7 +1558,7 @@ export default {
           confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem),
         })
         : this.$bkInfo({
-          title: this.$t('确认要删除当前组织？'),
+          title: this.$t('delete-organization', { name: deleteItem.name }),
           extCls: 'king-info long-title',
           confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem),
         });
