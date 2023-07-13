@@ -232,7 +232,7 @@ export default {
             <div class="specific-menu">
               <a href="javascript:;"
                 class={['delete', { 'delete-disable': this.deleteDisabled(node) }]}
-                onClick={this.deleteDepartment.bind(this, node)}
+                onClick={() => this.$emit('deleteDepartment', node, event)}
                 onMouseenter={this.checkDeleteTips.bind(this, node)}
                 onMouseleave={this.closeDeleteTips.bind(this, node)}>
                 {this.$t('删除')}

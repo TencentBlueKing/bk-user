@@ -52,7 +52,7 @@
               <li class="dot-menu-item" @click="changeStatus(props.row)">
                 {{ props.row.status === 'DISABLED' ? $t('启用') : $t('禁用') }}
               </li>
-              <li class="dot-menu-item" @click="$emit('deleteProfile', props.row.id)">{{ $t('删除') }}</li>
+              <li class="dot-menu-item" @click="$emit('deleteProfile', props.row)">{{ $t('删除') }}</li>
             </ul>
           </bk-popover>
         </template>
