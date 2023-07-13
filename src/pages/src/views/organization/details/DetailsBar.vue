@@ -749,6 +749,7 @@ export default {
         padding: 0 30px 0 12px;
         font-size: 14px;
         color: #63656e;
+        background: #fff;
       }
     }
     &.leader-input {
@@ -790,6 +791,9 @@ export default {
 ::v-deep .bk-form  {
   .bk-label-text {
     font-size: 12px !important;
+  }
+  .bk-select-dropdown {
+    background: #fff;
   }
 }
 </style>

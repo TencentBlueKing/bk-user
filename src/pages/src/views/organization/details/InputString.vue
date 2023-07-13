@@ -27,9 +27,9 @@
       :disabled="editStatus && !item.editable"
       :placeholder="inputType === 'number' ? $t('请输入数字') : item.holder"
       :class="{ 'input-error': item.isError }"
-      :max="999999999999999"
-      :min="-999999999999999"
-      :maxlength="15"
+      :max="numberRule.max"
+      :min="numberRule.min"
+      :maxlength="numberRule.maxlength"
       v-model="item.value"
       @focus="handleFocus" />
   </div>
@@ -53,6 +53,17 @@ export default {
     },
     placeholderText() {
       return this.item.key === 'username' ? this.$t('字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头') : this.$t('请输入');
+    },
+    numberRule() {
+      let rules = {};
+      if (this.item.type === 'number') {
+        rules = {
+          max: 999999999999999,
+          min: -999999999999999,
+          maxlength: 15,
+        };
+      }
+      return rules;
     },
   },
   methods: {
