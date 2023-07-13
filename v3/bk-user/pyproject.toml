@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "bk-user"
+version = "0.1.0"
+description = ""
+authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
+readme = "README.md"
+packages = [{include = "bk_user"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+django = "3.2.20"
+djangorestframework = "3.14.0"
+celery = "5.3.1"
+django-celery-beat = "2.5.0"
+django-celery-results = "2.5.1"
+mysqlclient = "2.2.0"
+requests = "2.31.0"
+gunicorn = "20.1.0"
+gevent = "22.10.2"
+django-environ = "0.10.0"
+django-cors-headers = "4.2.0"
+django-prometheus = "2.3.1"
+whitenoise = "6.5.0"
+werkzeug = "2.3.6"
+python-json-logger = "2.0.7"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.277"
+black = "^23.7.0"
+mypy = "^1.4.1"
+types-requests = "^2.31.0.1"
+
+[tool.mypy]
+ignore_missing_imports = true
+show_error_codes = true
+strict_optional=true
+pretty=true
+check_untyped_defs = true
+namespace_packages = true
+
+[[tool.mypy.overrides]]
+module = [
+    "*.migrations.*",
+]
+ignore_errors = true
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
