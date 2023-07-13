@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "bk-login"
+version = "0.1.0"
+description = ""
+authors = ["nannan00 <17491932+nannan00@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "bk_login"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
