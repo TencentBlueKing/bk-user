@@ -20,7 +20,8 @@
       :tpl="tpl"
       :show-icon="false"
       @on-expanded="handleClickToggle"
-      @on-drag-node="handleDragNode">
+      @on-drag-node="handleDragNode"
+      @async-load-nodes="handleClickToggle">
     </bk-tree>
     <div class="bottom-tree" @click="clickBottomTree" ref="bottomTree" style="bottomTreeStyle">
       <p :class="['bottom-tree-header', { 'show-header': isDirectory }]" @click="handleClickDirectory">
