@@ -19,7 +19,7 @@
       :status-map="statusMap"
       :timer-map="timerMap"
       @editProfile="editProfile"
-      @deleteProfile="$emit('deleteProfile')"
+      @deleteProfile="$emit('deleteProfile', currentProfile)"
       @restoreProfile="$emit('restoreProfile')"
       @showBarLoading="$emit('showBarLoading')"
       @closeBarLoading="$emit('closeBarLoading')" />
