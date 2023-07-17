@@ -31,7 +31,6 @@
       :multiple="false"
       :files="files"
       :handle-res-code="handleRes"
-      :url="'https://jsonplaceholder.typicode.com/posts/'"
     />
     <bk-form-item label="所属数据源" property="data_source" required>
       <bk-select v-model="formData.data_source">

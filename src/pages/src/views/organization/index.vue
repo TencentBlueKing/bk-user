@@ -3,11 +3,7 @@
     <template #menu>
       <OrganizationTree @change-node="(node) => changeNode(node)" />
     </template>
-    <template #main-header>
-      <span class="header-left-name">{{ state.nodeItem.name}}</span>
-      <bk-tag class="header-left-num">{{ state.nodeItem.id}}</bk-tag>
-    </template>
-    <template #main-content>
+    <!-- <template #main-content>
       <bk-tab
         v-model:active="active"
         type="unborder-card"
@@ -23,17 +19,17 @@
           <DetailsInfo v-if="index === 1" />
         </bk-tab-panel>
       </bk-tab>
-    </template>
+    </template> -->
   </MainView>
 </template>
 
 <script setup lang="tsx">
+import { useMainViewStore } from "@/store/mainView";
 import { ref, reactive } from "vue";
 import MainView from "@/components/layouts/MainView.vue";
 import OrganizationTree from "./tree/OrganizationTree.vue";
-import UserInfo from "./details/UserInfo.vue";
-import DetailsInfo from "./details/DetailsInfo.vue";
 
+const mainViewStore = useMainViewStore();
 const state = reactive({
   nodeItem: {
     name: "",
@@ -47,6 +43,7 @@ const panels = reactive([
 const active = ref("user_info");
 
 const changeNode = (node: any) => {
+  mainViewStore.breadCrumbsTitle = node.title;
   state.nodeItem = node;
 };
 </script>
@@ -65,7 +62,7 @@ const changeNode = (node: any) => {
   .bk-tab-header {
     background: #fff;
     border-bottom: none;
-    box-shadow: 0 3px 4px 0 #0000000a;
+    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.04);
     font-size: 14px;
     line-height: 36px !important;
     .bk-tab-header-item {

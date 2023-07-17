@@ -107,3 +107,24 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-drag:before {
 	content: "\e11e";
 }
+.icon-lishijilu:before {
+	content: "\e11f";
+}
+.icon-add-2:before {
+	content: "\e120";
+}
+.icon-expand-line:before {
+	content: "\e121";
+}
+.icon-block-shape:before {
+	content: "\e123";
+}
+.icon-win:before {
+	content: "\e122";
+}
+.icon-qw:before {
+	content: "\e124";
+}
+.icon-wechat:before {
+	content: "\e125";
+}

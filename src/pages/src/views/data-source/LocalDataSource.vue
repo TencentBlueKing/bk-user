@@ -3,13 +3,17 @@
     <header>
       <bk-dropdown trigger="click" placement="bottom-start">
         <bk-button theme="primary">
-          <Plus style="font-size: 16px;" />
+          <i class="user-icon icon-add-2 mr8" />
           新建数据源
         </bk-button>
         <template #content>
           <bk-dropdown-menu extCls="dropdown-menu-ul">
             <p class="dropdown-title">数据源类型选择</p>
-            <bk-dropdown-item v-for="item in dropdownList" :key="item">
+            <bk-dropdown-item
+              v-for="item in dropdownList"
+              :key="item"
+              @click="newDataSource(item)"
+            >
               <i :class="item.icon"></i>
               <div class="dropdown-item">
                 <span class="dropdown-item-title">{{ item.title }}</span>
@@ -38,8 +42,8 @@
 </template>
 
 <script setup lang="tsx">
-import { Plus } from "bkui-vue/lib/icon";
 import { ref } from "vue";
+import router from "@/router/index";
 import { statusIcon } from "@/utils";
 
 const searchVal = ref("");
@@ -48,24 +52,28 @@ const dropdownList = ref([
     icon: "user-icon icon-info-i",
     title: "本地数据源",
     subTitle: "支持用户的增删改查，以及用户的登录认证",
+    type: "local",
   },
-  {
-    icon: "user-icon icon-info-i",
-    title: "Microsoft Active Directory",
-    subTitle:
-      "支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证",
-  },
-  {
-    icon: "user-icon icon-info-i",
-    title: "OpenLDAP",
-    subTitle:
-      "支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证",
-  },
-  {
-    icon: "user-icon icon-info-i",
-    title: "企业微信",
-    subTitle: "支持企业微信用户数据同步和登录认证",
-  },
+  //   {
+  //     icon: "user-icon icon-win",
+  //     title: "Microsoft Active Directory",
+  //     subTitle:
+  //       "支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证",
+  //     type: "mad",
+  //   },
+  //   {
+  //     icon: "user-icon icon-info-i",
+  //     title: "OpenLDAP",
+  //     subTitle:
+  //       "支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证",
+  //     type: "ldap",
+  //   },
+  //   {
+  //     icon: "user-icon icon-qw",
+  //     title: "企业微信",
+  //     subTitle: "支持企业微信用户数据同步和登录认证",
+  //     type: "wechat",
+  //   },
 ]);
 
 const tableData = [
@@ -77,8 +85,8 @@ const tableData = [
     modified_at: "2022-04-30  22:35:49",
   },
   {
-    name: "企业内部AD",
-    type: "weixin",
+    name: "企业内部",
+    type: "local",
     status: "disabled",
     modified_by: "v_yutyi",
     modified_at: "2022-04-30  22:35:49",
@@ -91,7 +99,7 @@ const columns = [
     field: "name",
     render: ({ data }: { data: any }) => {
       return (
-        <bk-button text theme="primary">
+        <bk-button text theme="primary" onClick={handleClick.bind(this, data)}>
           {data.name}
         </bk-button>
       );
@@ -109,7 +117,7 @@ const columns = [
       return (
         <div>
           <img src={statusIcon[data.status].icon} class="account-status-icon" />
-          <span>{ statusIcon[data.status].text }</span>
+          <span>{statusIcon[data.status].text}</span>
         </div>
       );
     },
@@ -123,6 +131,24 @@ const columns = [
     field: "modified_at",
   },
 ];
+
+function handleClick(item) {
+  router.push({
+    name: "dataConfDetails",
+    params: {
+      name: item.name,
+      type: item.type,
+    },
+  });
+}
+function newDataSource(item) {
+  router.push({
+    name: "newLocal",
+    params: {
+      type: item.type,
+    },
+  });
+}
 </script>
 
 <style lang="less" scoped>
@@ -175,6 +201,7 @@ const columns = [
     padding: 10px 16px;
     .user-icon {
       font-size: 24px;
+      color: #979ba5;
     }
     .dropdown-item {
       margin-left: 15px;

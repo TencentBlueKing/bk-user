@@ -5,12 +5,13 @@ module.exports = async function user(req, res, next) {
     return;
   }
   const request = require('request');
-  request(`http://login.o.oa.com/user/get_info?bk_ticket=${req.cookies.bk_ticket}`, (err, response, body) => {
+  const requestURL = '';
+  request(requestURL, (err, response, body) => {
     if (err) {
       return;
     }
 
-    const loginURL = 'http://login.o.oa.com/plain?';
+    const loginURL = '';
 
     const data = JSON.parse(body || '{}');
 

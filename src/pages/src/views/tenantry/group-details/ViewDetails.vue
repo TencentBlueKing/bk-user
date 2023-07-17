@@ -12,32 +12,32 @@
           <span class="details-content-value">{{ item.value }}</span>
         </div>
       </div>
-      <div class="details-content-img"></div>
+      <img v-if="tenantsData.logo" class="user-logo" :src="tenantsData.logo" alt="">
+      <img v-else class="user-logo" src="../../../images/avatar.png" alt="">
     </li>
     <li>
       <div class="details-content-title">管理员</div>
       <bk-table
         class="details-content-table"
-        :data="userData"
+        :data="managersList"
         :columns="columns"
+        show-overflow-tooltip
       />
     </li>
   </ul>
 </template>
 
 <script setup lang="tsx">
-import { ref, computed, reactive } from "vue";
+import { reactive, computed } from "vue";
 
 const props = defineProps({
-  basicInfo: {
+  tenantsData: {
     type: Object,
     default: {},
   },
-  userData: {
-    type: Array,
-    default: [],
-  },
 });
+
+const managersList = computed(() => props.tenantsData.managers.filter(item => item.id));
 
 const columns = [
   {
@@ -45,8 +45,9 @@ const columns = [
     field: "username",
   },
   {
-    label: "全名",
-    field: "display_name",
+    label: "姓名",
+    field: "full_name",
+    render: ({ cell }: { cell: string }) => <span>{cell || '--'}</span>,
   },
   {
     label: "邮箱",
@@ -54,22 +55,22 @@ const columns = [
   },
   {
     label: "手机号",
-    field: "telephone",
+    field: "phone",
   },
 ];
 
 const basicData = reactive([
   {
     name: "公司名称",
-    value: props.basicInfo.name,
+    value: props.tenantsData.name,
   },
   {
     name: "公司ID",
-    value: props.basicInfo.id,
+    value: props.tenantsData.id,
   },
   {
     name: "人员数量",
-    value: props.basicInfo.isShow ? "显示" : "隐藏",
+    value: props.tenantsData.feature_flags.user_number_visible ? "显示" : "隐藏",
   },
 ]);
 </script>
@@ -112,12 +113,14 @@ const basicData = reactive([
         }
       }
     }
-    .details-content-img {
-      font-size: 50px;
-      color: #c4c6cc;
+    .user-logo {
       position: absolute;
-      top: calc(50% - 25%);
+      top: 60px;
       right: 0;
+      width: 72px;
+      height: 72px;
+      border: 1px dashed #c4c6cc;
+      object-fit: contain;
     }
   }
   li:last-child {

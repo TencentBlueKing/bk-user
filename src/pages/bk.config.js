@@ -14,6 +14,12 @@ module.exports = {
     return {
       devServer: {
         setupMiddlewares: mockServer,
+        proxy: {
+          '/api': {
+            target: '',
+            changeOrigin: true,
+          },
+        },
       },
     };
   },

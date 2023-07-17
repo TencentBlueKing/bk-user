@@ -1,18 +1,36 @@
 <template>
   <div class="main-container">
-    <slot name="menu" />
+    <div
+      class="main-menu"
+      :class="[{ 'main-menu--collapsed': menuStore.toggleCollapsed }]">
+      <slot name="menu" />
+    </div>
     <div class="main-container-content">
-      <div class="main-header">
-        <slot name="main-header" />
-      </div>
-      <div class="main-content">
-        <slot name="main-content" />
-      </div>
+      <MainBreadcrumbs
+        v-if="!mainViewStore.customBreadcrumbs"
+        class="main-container__breadcrumbs" />
+      <slot name="main-content">
+        <div
+          class="main-container__view user-scroll-y user-scroll-x"
+          :class="[{
+            'pd-24': mainViewStore.hasPadding,
+            'has-breadcrumbs': !mainViewStore.customBreadcrumbs
+          }]">
+          <RouterView />
+        </div>
+      </slot>
     </div>
   </div>
 </template>
 
-<script setup lang="tsx"></script>
+<script setup lang="tsx">
+import { useMenu } from '@/store/useMenu';
+import { useMainViewStore } from '@/store/mainView';
+import MainBreadcrumbs from './MainBreadcrumbs.vue';
+
+const menuStore = useMenu();
+const mainViewStore = useMainViewStore();
+</script>
 
 <style lang="less">
 .main-container {
@@ -26,14 +44,83 @@
   height: 100%;
   min-width: 940px;
   flex: 1;
-  .main-header {
-    height: 52px;
-    line-height: 52px;
-    padding: 0 24px;
+}
+
+.main-container__view {
+  height: 100%;
+  background-color: #f5f7fa;
+
+  &.has-breadcrumbs {
+    height: calc(100% - 52px);
+  }
+}
+
+.main-menu {
+  position: relative;
+  z-index: 101;
+  height: 100%;
+  background-color: #fff;
+  flex-shrink: 0;
+
+  &--collapsed {
+    width: 60px;
+  }
+
+  .bk-menu {
+    height: 100%;
+
+    .submenu-header {
+      flex-shrink: 0;
+    }
+  }
+
+  &__list {
+    height: calc(100vh - 108px);
+    padding: 12px 0 4px;
+
+    &.user-scroll-y {
+      &::-webkit-scrollbar-thumb {
+        background-color: #515560;
+        border-radius: 4px;
+      }
+
+      &:hover {
+        &::-webkit-scrollbar-thumb {
+          background-color: #515560;
+        }
+      }
+    }
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    width: 60px;
+    height: 56px;
+    padding-left: 14px;
+    color: #96a2b9;
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    width: 32px;
+    height: 32px;
     font-size: 16px;
-    color: #313238;
-    background: #fff;
-    box-shadow: 0 3px 4px 0 #0000000a;
+    cursor: pointer;
+    border-radius: 50%;
+    transform: rotate(180deg);
+    transition: all 0.2s;
+    justify-content: center;
+
+    &:hover {
+      color: #3a84ff;
+      background: linear-gradient(270deg, #e1ecff, #e1ecff);
+    }
+
+    &--active {
+      transform: rotate(0);
+    }
   }
 }
 </style>

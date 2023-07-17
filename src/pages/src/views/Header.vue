@@ -12,7 +12,7 @@
         style="display: flex; align-items: center; text-decoration: none;"
         :to="{ name: 'organization' }"
       >
-        <img height="26" src="#" width="26" />
+        <i class="user-icon icon-user-logo-i" />
         <span class="title-desc">蓝鲸用户管理</span>
       </RouterLink>
     </template>
@@ -79,6 +79,7 @@
       </div>
     </template>
     <router-view></router-view>
+    <Login />
   </bk-navigation>
 </template>
 
@@ -87,6 +88,7 @@ import { ref, reactive } from "vue";
 import { useUser } from "@/store/user";
 import { logout } from "@/common/auth";
 import { DownShape, HelpDocumentFill } from "bkui-vue/lib/icon";
+import Login from "@/components/layouts/Login.vue";
 
 const state = reactive({
   logoutDropdown: false,
@@ -98,23 +100,23 @@ const userInfo = ref(user.user);
 const headerNav = reactive([
   {
     name: "组织架构",
-    path: "organization" ,
+    path: "organization",
   },
   {
     name: "数据源管理",
-    path: "source" ,
+    path: "datasource",
   },
   {
     name: "租户管理",
-    path: "tenantry" ,
+    path: "tenantry",
   },
   {
     name: "审计",
-    path: "audit" ,
+    path: "audit",
   },
   {
     name: "设置",
-    path: "setting" ,
+    path: "setting",
   },
 ]);
 const languageNav = reactive([
@@ -150,7 +152,10 @@ const toLink = (item: any) => {
 .main-navigation {
   :deep(.bk-navigation-header) {
     background-color: #0e1525;
-
+    .icon-user-logo-i {
+      color: #458df4;
+      font-size: 28px;
+    }
     .title-desc {
       color: #eaebf0;
     }

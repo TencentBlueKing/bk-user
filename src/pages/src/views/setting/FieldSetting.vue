@@ -8,7 +8,6 @@
       class="field-setting-table"
       :columns="columns"
       :data="tableData"
-      :max-height="tableMaxHeight"
       row-key="id"
       :border="['outer']"
       settings
@@ -22,8 +21,10 @@
 import { ref, reactive, nextTick } from "vue";
 import { Plus } from "bkui-vue/lib/icon";
 import Sortable from "sortablejs";
+import { useMainViewStore } from "@/store/mainView";
 
-const tableMaxHeight = ref(0);
+const store = useMainViewStore();
+store.customBreadcrumbs = false;
 const tableData: any = [
   {
     builtin: true,
@@ -138,7 +139,7 @@ const pagination = reactive({
 // 展示字段状态
 const fieldStatus = (type: boolean) => {
   if (type) {
-    return <i class="user-icon icon-duihao-i" />
+    return <i class="user-icon icon-duihao-i" />;
   }
 };
 
@@ -159,33 +160,8 @@ const initSortable = (className: string) => {
   });
 };
 
-const initTableHeight = () => {
-  const windowInnerHeight = window.innerHeight;
-  const tableHeaderHeight = 42;
-  const paginationHeight = 40;
-  const pageOffsetTop = 168;
-  const pageOffsetBottom = 40;
-  const tableRowHeight = 42;
-
-  const tableRowTotalHeight =
-    windowInnerHeight -
-    tableHeaderHeight -
-    paginationHeight -
-    pageOffsetTop -
-    pageOffsetBottom;
-
-  const rowNum = Math.max(Math.floor(tableRowTotalHeight / tableRowHeight), 2);
-  const pageLimit = new Set([...pagination.limitList, rowNum]);
-  pagination.limit = rowNum;
-  pagination.limitList = [...pageLimit].sort((a, b) => a - b);
-
-  tableMaxHeight.value =
-    tableHeaderHeight + rowNum * tableRowHeight + paginationHeight + 3;
-};
-
 nextTick(() => {
   initSortable("field-setting-table");
-  initTableHeight();
 });
 </script>
 
