@@ -28,7 +28,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,6 +38,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_prometheus',
     'bkuser.auth',
+    'bkuser.apps.data_source',
+    'bkuser.apps.tenant',
 ]
 
 MIDDLEWARE = [
@@ -215,8 +216,7 @@ LOGGING = {
         "verbose": {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "fmt": (
-                "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
-                "%(funcName)s %(process)d %(thread)d %(message)s"
+                "%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"
             ),
         },
         "simple": {"format": "%(levelname)s %(message)s"},

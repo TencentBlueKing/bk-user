@@ -8,10 +8,25 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import path, include
+from enum import auto
+
+from django.utils.translation import gettext_lazy as _
+
+from bkuser.common.enum import AutoLowerEnum
 
 
-urlpatterns = [
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-]
+class DataSourceType(AutoLowerEnum):
+    """目录类型
+
+    TODO: 当目录和数据源解耦完成吼，这里的类型实际上就应该去除
+    """
+
+    LOCAL = auto()
+    MAD = auto()
+    LDAP = auto()
+
+    _choices_labels = (
+        (LOCAL, _("本地目录")),
+        (MAD, _("Microsoft Active Directory")),
+        (LDAP, _("OpenLDAP")),
+    )

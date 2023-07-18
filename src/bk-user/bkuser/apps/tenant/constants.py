@@ -8,10 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import path, include
+import pytz
+
+from bkuser.common.enum import ChoicesEnum
 
 
-urlpatterns = [
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-]
+class LanguageEnum(ChoicesEnum):
+    ZH_CN = "zh-cn"
+    EN = "en"
+
+    _choices_labels = ((ZH_CN, "中文"), (EN, "英文"))
+
+
+TIME_ZONE_LIST = pytz.common_timezones
+TIME_ZONE_CHOICES = [(i, i) for i in TIME_ZONE_LIST]

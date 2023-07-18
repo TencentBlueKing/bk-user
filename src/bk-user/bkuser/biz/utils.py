@@ -8,10 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import path, include
+import random
+import string
 
 
-urlpatterns = [
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-]
+def gen_random_str(length):
+    # 必须包含至少一个数字
+    chars = string.ascii_letters + string.digits
+
+    random_chars = [random.choice(chars) for _ in range(length)]
+    if any([c.isdigit() for c in random_chars]):
+        return "".join(random_chars)
+
+    random_chars[0] = random.choice(string.digits)
+    random.shuffle(random_chars)
+    return "".join(random_chars)
