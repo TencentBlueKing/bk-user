@@ -16,6 +16,7 @@ from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
 
 
+# pylint: disable=function-name-too-long
 def list_conflict_before_revert_category(category: ProfileCategory) -> List[str]:
     """
     在还原目录前，查询display_name和domain冲突
@@ -33,6 +34,7 @@ def list_conflict_before_revert_category(category: ProfileCategory) -> List[str]
     return conflicts
 
 
+# pylint: disable=function-name-too-long
 def check_conflict_before_revert_category(category: ProfileCategory):
     """
     在还原目录前，检查是否存在冲突，主要是检查display_name和domain
