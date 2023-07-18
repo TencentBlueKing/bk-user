@@ -9,13 +9,16 @@
   -->
 <template>
   <div id="app">
-    <HeaderBox v-if="showHeader" @reloadRouter="routerKey += 1" />
-    <main class="main-content">
-      <router-view :key="routerKey" />
-      <KingLoading v-show="initLoading"></KingLoading>
-      <NoAuthority v-if="noAuthData" :no-auth-data="noAuthData" @reloadRouter="routerKey += 1" />
-    </main>
-    <Login v-if="loginData" :login-data="loginData" />
+    <NoAccessAuthority v-if="noAccessAuthData" :no-access-auth-data="noAccessAuthData" />
+    <template v-else>
+      <HeaderBox v-if="showHeader" @reloadRouter="routerKey += 1" />
+      <main class="main-content">
+        <router-view :key="routerKey" />
+        <KingLoading v-show="initLoading"></KingLoading>
+        <NoAuthority v-if="noAuthData" :no-auth-data="noAuthData" @reloadRouter="routerKey += 1" />
+      </main>
+      <Login v-if="loginData" :login-data="loginData" />
+    </template>
     <!-- <FooterBox /> -->
   </div>
 </template>
@@ -26,6 +29,7 @@ import HeaderBox from './Header';
 import Login from '@/components/login';
 import NoAuthority from '@/components/authority/NoAuthority';
 import KingLoading from '@/components/KingLoading';
+import NoAccessAuthority from './components/authority/NoAccessAuthority.vue';
 
 export default {
   name: 'App',
@@ -34,6 +38,7 @@ export default {
     Login,
     NoAuthority,
     KingLoading,
+    NoAccessAuthority,
     // FooterBox,
   },
   data() {
@@ -49,6 +54,9 @@ export default {
     },
     noAuthData() {
       return this.$store.state.noAuthData;
+    },
+    noAccessAuthData() {
+      return this.$store.state.noAccessAuthData;
     },
   },
   created() {

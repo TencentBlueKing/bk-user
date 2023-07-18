@@ -572,4 +572,5 @@ export default {
   目录还原成功: 'Directory restoration successfully',
   目录删除成功: 'Directory deletion successfully',
   '确认要还原当前目录？': 'Restore the current directory?',
+  无该应用访问权限: 'No access permission for the application',
 };
