@@ -8,10 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import os
 import hashlib
-from urllib.parse import urlparse
+import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 import environ
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_prometheus',
     'bkuser.auth',
+    'bkuser.apps.tenant',
 ]
 
 MIDDLEWARE = [
@@ -215,8 +216,7 @@ LOGGING = {
         "verbose": {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "fmt": (
-                "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
-                "%(funcName)s %(process)d %(thread)d %(message)s"
+                "%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"
             ),
         },
         "simple": {"format": "%(levelname)s %(message)s"},

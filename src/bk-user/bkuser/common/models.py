@@ -8,17 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser.common.views import VueTemplateView
-from django.conf.urls import url
-from django.urls import include, path
-from django.views.decorators.cache import never_cache
-
-urlpatterns = [
-    path('api/v1/web/', include("bkuser.apis.web.urls")),
-]
+from django.db import models
 
 
-# static file
-urlpatterns += [
-    url(r"^.*$", never_cache(VueTemplateView.as_view())),
-]
+class TimestampedModel(models.Model):
+    """Model with 'created' and 'updated' fields."""
+
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
