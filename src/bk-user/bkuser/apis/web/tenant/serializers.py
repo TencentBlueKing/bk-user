@@ -8,3 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+from rest_framework import serializers
+
+
+class TenantUpdateInputSLZ(serializers.Serializer):
+    name = serializers.CharField(required=True, help_text="租户名称")
+    logo = serializers.CharField(required=False, help_text="租户名称")
+    manager_ids = serializers.ListField(required=True, help_text="租户名称")
+    enabled_user_count_display = serializers.BooleanField(required=True, help_text="人数展示使能状态")
+
+
+class TenantUpdateOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户ID")

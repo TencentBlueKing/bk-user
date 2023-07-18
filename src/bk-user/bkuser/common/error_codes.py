@@ -41,6 +41,15 @@ class ErrorCodeCategoryEnum(Enum):
     NOT_IMPLEMENTED = 'NOT_IMPLEMENTED'
 
 
+class ErrorCodeTenantEnum(Enum):
+    CREATE_TENANT_FAILED = 'CREATE_TENANT_FAILED'
+    UPDATE_TENANT_FAILED = 'UPDATE_TENANT_FAILED'
+    TENANT_NOT_EXIST = 'TENANT_NOT_EXIST'
+    BIND_TENANT_USER_FAILED = 'BIND_TENANT_USER_FAILED'
+    TENANT_USER_NOT_EXIST = 'TENANT_USER_NOT_EXIST'
+    UPDATE_TENANT_MANAGERS_FAILED = 'UPDATE_TENANT_MANAGERS_FAILED'
+
+
 class ErrorCodes:
     # 通用
     INVALID_ARGUMENT = ErrorCode(_('参数非法'))
@@ -69,6 +78,38 @@ class ErrorCodes:
     REMOTE_REQUEST_ERROR = ErrorCode(_('调用外部系统API异常'))
     # 数据源
     DATA_SOURCE_TYPE_NOT_SUPPORTED = ErrorCode(_('数据源类型不支持'))
+    # 租户
+    CREATE_TENANT_FAILED = ErrorCode(
+        _('租户创建失败'),
+        code_category=ErrorCodeTenantEnum.CREATE_TENANT_FAILED.value,
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
+
+    UPDATE_TENANT_FAILED =  ErrorCode(
+        _('租户更新失败'),
+        code_category=ErrorCodeTenantEnum.UPDATE_TENANT_FAILED.value,
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
+    TENANT_NOT_EXIST =  ErrorCode(
+        _('租户创建失败'),
+        code_category=ErrorCodeTenantEnum.TENANT_NOT_EXIST.value,
+        status_code=HTTPStatus.NOT_FOUND,
+    )
+    BIND_TENANT_USER_FAILED =  ErrorCode(
+        _('数据源用户绑定租户失败'),
+        code_category=ErrorCodeTenantEnum.BIND_TENANT_USER_FAILED.value,
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
+    TENANT_USER_NOT_EXIST = ErrorCode(
+        _('无法找到对应租户用户'),
+        code_category=ErrorCodeTenantEnum.TENANT_USER_NOT_EXIST.value,
+        status_code=HTTPStatus.NOT_FOUND,
+    )
+    UPDATE_TENANT_MANAGERS_FAILED =  ErrorCode(
+        _('更新租户管理员失败'),
+        code_category=ErrorCodeTenantEnum.UPDATE_TENANT_MANAGERS_FAILED.value,
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
 
 
 # 实例化一个全局对象

@@ -13,4 +13,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path("data-sources/", include("bkuser.apis.web.data_source.urls")),
+    path("tenants/", include("bkuser.apis.web.tenant.urls")),
 ]

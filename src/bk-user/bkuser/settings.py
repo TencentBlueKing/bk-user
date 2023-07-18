@@ -28,7 +28,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,6 +38,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_prometheus',
     'bkuser.auth',
+    'bkuser.apps.tenant',
 ]
 
 MIDDLEWARE = [
