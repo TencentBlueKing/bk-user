@@ -209,10 +209,14 @@ function handleReject(error, config) {
       } catch (e) {
         console.warn('登录401响应数据结构错误', e);
       }
-    } else if (status === 403) {
+    } else if (status === 403 && error.code === -1) {
       store.commit('updateNoAuthData', {
         requestId: config.requestId,
         data,
+      });
+    } else if (status === 403 && error.code === -2) {
+      store.commit('updateNoAccessAuthData', {
+        message: error.message,
       });
     } else if (data && data.message) {
       messageError(data.message);
