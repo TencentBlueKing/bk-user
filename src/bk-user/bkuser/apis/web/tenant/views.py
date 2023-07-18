@@ -8,3 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser.apis.web.tenant.filters import TenantFilter
+from bkuser.apis.web.tenant.serializers import TenantOutputSLZ, TenantSearchSLZ
+from bkuser.apps.tenant.models import Tenant
+from rest_framework import generics
+from rest_framework.response import Response
+
+
+class TenantListCreateApi(generics.ListCreateAPIView):
+    queryset = Tenant.objects.filter()
+    serializer_class = TenantOutputSLZ
+    filter_backends = [TenantFilter]
+    pagination_class = None
+
+    def list(self, request, *args, **kwargs):
+        slz = TenantSearchSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data)
