@@ -16,6 +16,7 @@ from django.template.loader import get_template
 from django.template.response import TemplateResponse
 
 from .proxy import BkUserApiProxy
+from bkuser_shell.account.decorators import login_exempt
 from bkuser_shell.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,11 @@ class CommonProxyNoAuthViewSet(BkUserApiProxy):
 class WebPageViewSet(BkUserApiProxy):
     serializer_class = None
     permission_classes: list = []
+
+    @classmethod
+    def as_view(cls, actions=None, **initkwargs):
+        view = super().as_view(actions, **initkwargs)
+        return login_exempt(view)
 
     def index(self, request):
         try:

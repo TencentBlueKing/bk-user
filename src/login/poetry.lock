@@ -70,6 +70,20 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "bk-iam"
+version = "1.3.4"
+description = "bk-iam python sdk"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+cachetools = ">=3.1.1,<6.0"
+curlify = "2.2.1"
+requests = "*"
+six = ">=1.11.0"
+
+[[package]]
 name = "black"
 version = "21.12b0"
 description = "The uncompromising code formatter."
@@ -1408,7 +1422,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "e8f71bd25cd11df26e7d42861d5a6edbbb444828e1e4e6c4f0c6833fde815457"
+content-hash = "9cb113d959a612755b8cab61ff95cd99584d1c431e9e297791132ab36e76d436"
 
 [metadata.files]
 aiocontextvars = [
@@ -1438,6 +1452,9 @@ backcall = [
 backoff = [
     {file = "backoff-1.10.0-py2.py3-none-any.whl", hash = "sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd"},
     {file = "backoff-1.10.0.tar.gz", hash = "sha256:b8fba021fac74055ac05eb7c7bfce4723aedde6cd0a504e5326bcb0bdd6d19a4"},
+]
+bk-iam = [
+    {file = "bk-iam-1.3.4.tar.gz", hash = "sha256:74272e23db7a9400c9abb4515b26442c813142df1bdf02f58df2fa8522469684"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},

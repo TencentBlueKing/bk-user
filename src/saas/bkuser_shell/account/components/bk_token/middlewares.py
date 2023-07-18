@@ -15,6 +15,7 @@ from django.conf import settings
 from django.contrib import auth
 from django.utils.deprecation import MiddlewareMixin
 
+from .exceptions import NoPermissionAccessError
 from bkuser_shell.account.components.bk_token.forms import AuthenticationForm
 from bkuser_shell.account.conf import ConfFixture
 from bkuser_shell.account.handlers.response import ResponseHandler
@@ -46,7 +47,13 @@ class LoginRequiredMiddleware(MiddlewareMixin):
         form = AuthenticationForm(request.COOKIES)
         if form.is_valid():
             bk_token = form.cleaned_data[settings.TOKEN_COOKIE_NAME]
-            user = auth.authenticate(request=request, bk_token=bk_token)
+            try:
+                user = auth.authenticate(request=request, bk_token=bk_token)
+            except NoPermissionAccessError as error:
+                # 特殊情况，认证通过，但无访问该应用权限
+                handler = ResponseHandler(ConfFixture, settings)
+                return handler.build_403_of_access_permission_response(request, str(error))
+
             if user:
                 # Succeed to log in, recall self to exit process
                 if user.username != request.user.username:

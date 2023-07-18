@@ -9,31 +9,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from enum import Enum
+from django.conf import settings
+from iam import IAM
 
 
-class ApiErrorCodeEnum(Enum):
-    SUCCESS = "00"
-    PARAM_NOT_VALID = "1200"
-    USER_NOT_EXISTS = "1201"
-    # 做兼容
-    USER_NOT_EXISTS2 = "1300"
-    USER_INFO_UPDATE_FAIL = "1202"
-
-
-class ApiErrorCodeEnumV2(Enum):
-    SUCCESS = 0
-    PARAM_NOT_VALID = 1302100
-    USER_NOT_EXISTS = 1302101
-    USER_INFO_UPDATE_FAIL = 1302102
-    USER_NOT_EXISTS2 = 1302103
-    NOT_ACCESS_APP_PERMISSION = 1302403
-
-
-class ApiErrorCodeEnumV3(Enum):
-    SUCCESS = 0
-    PARAM_NOT_VALID = 1302100
-    USER_NOT_EXISTS = 1302101
-    USER_INFO_UPDATE_FAIL = 1302102
-    USER_NOT_EXISTS2 = 1302103
-    # RESOUCE_OWNER_MISMATCH=1302200,
+def new_iam():
+    bk_apigateway_url = settings.BK_API_URL_TMPL.format(api_name="bk-iam").rstrip("/")
+    return IAM(settings.BK_APP_CODE, settings.BK_APP_SECRET, bk_apigateway_url=f"{bk_apigateway_url}/prod")
