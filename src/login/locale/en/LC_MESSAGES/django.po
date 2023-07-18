@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-28 17:15+0800\n"
+"POT-Creation-Date: 2023-07-17 22:26+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,11 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: bklogin/api/permissions.py:74
+#, python-brace-format
+msgid "请联系 {contacts} 开通权限。"
+msgstr "Please contact {contacts} to activate permissions."
 
 #: bklogin/bkauth/utils.py:63
 msgid "参数 bk_token 缺失"
@@ -26,6 +31,7 @@ msgid "参数 bk_token 非法"
 msgstr "Parameters bk_token is illegal"
 
 #: bklogin/bkauth/utils.py:90
+#, python-format
 msgid "不存在 bk_token[%s] 的记录"
 msgstr "Record of bk_token [%s] does not exist"
 
@@ -45,13 +51,13 @@ msgstr "Login validity is illegal"
 msgid "长时间无操作，登录态已过期"
 msgstr "Login status has expired"
 
-#: bklogin/bkauth/views.py:107
+#: bklogin/bkauth/views.py:111
 msgid "账户或者密码错误，请重新输入"
 msgstr "Username or password is incorrect"
 
 #: bklogin/common/exceptions.py:46
 msgid "登录校验失败，请重置密码"
-msgstr ""
+msgstr "Login verification failed, please reset your password"
 
 #: bklogin/healthz/views.py:60
 #, python-format
@@ -72,7 +78,7 @@ msgstr "Have not logged in BlueKing platform (page 401)"
 msgid "您需要登录蓝鲸智云"
 msgstr "You need to log in BlueKing"
 
-#: bklogin/templates/401.html:21 bklogin/templates/login.html:66
+#: bklogin/templates/401.html:21 bklogin/templates/login.html:74
 msgid "立即登录"
 msgstr "Log in"
 
@@ -704,47 +710,59 @@ msgstr "Login|BlueKing"
 msgid "img/logo/logo_ch.png"
 msgstr "img/logo/logo_en.png"
 
-#: bklogin/templates/login.html:47
+#: bklogin/templates/login.html:48
+msgid "该账户已到期，如需续期，请联系"
+msgstr "This account has expired. If you wish to renew it, please contact"
+
+#: bklogin/templates/login.html:48
+msgid "管理员"
+msgstr "Administrator"
+
+#: bklogin/templates/login.html:50
+msgid "提示信息"
+msgstr "Tips"
+
+#: bklogin/templates/login.html:55
 msgid "请输入用户名"
 msgstr "Please enter your username"
 
-#: bklogin/templates/login.html:51
+#: bklogin/templates/login.html:59
 msgid "请输入密码"
 msgstr "Please enter your password"
 
-#: bklogin/templates/login.html:57
+#: bklogin/templates/login.html:65
 msgid "请修改密码"
 msgstr "Change Password"
 
-#: bklogin/templates/login.html:71
+#: bklogin/templates/login.html:79
 msgid "用户协议 >"
 msgstr "Agreement >"
 
-#: bklogin/templates/login.html:73
+#: bklogin/templates/login.html:81
 msgid "忘记密码？"
 msgstr "Forget password?"
 
-#: bklogin/templates/login.html:104
+#: bklogin/templates/login.html:112
 msgid "技术支持"
 msgstr "Technical Support"
 
-#: bklogin/templates/login.html:105
+#: bklogin/templates/login.html:113
 msgid "社区论坛"
 msgstr "Community"
 
-#: bklogin/templates/login.html:106
+#: bklogin/templates/login.html:114
 msgid "产品官网"
 msgstr "Official Website"
 
-#: bklogin/templates/login.html:108
+#: bklogin/templates/login.html:116
 msgid "关注我们"
 msgstr "Follow us"
 
-#: bklogin/templates/login.html:113
+#: bklogin/templates/login.html:121
 msgid "蓝鲸智云 版权所有"
 msgstr "BlueKing Copyright"
 
-#: bklogin/templates/login.html:120
+#: bklogin/templates/login.html:128
 msgid ""
 "您的浏览器非Chrome，建议您使用最新版本的Chrome浏览，以保证最好的体验效果"
 msgstr ""

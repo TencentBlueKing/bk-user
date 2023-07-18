@@ -274,3 +274,15 @@ if ENABLE_PASSWORD_RSA_ENCRYPTED:
         message = f"password rsa encrypted is enabled, but b64decode fail, {rsa_key_info}"
         print(message)
         raise e
+
+
+# ==============================================================================
+# IAM: SaaS Access Control
+# ==============================================================================
+BK_APP_CODE = env.str("BK_APP_CODE", "bk_login")
+BK_APP_SECRET = env.str("BK_APP_CODE", "")
+ENABLE_IAM = env.bool("ENABLE_IAM", default=False)
+BK_SYSTEM_ID_IN_IAM = env.str("BK_SYSTEM_ID_IN_IAM", BK_APP_CODE)
+BK_REQUIRED_ACCESS_CONTROLLED_APPS = env.dict("BK_REQUIRED_ACCESS_CONTROLLED_APPS", default={})
+BK_API_URL_TMPL = env("BK_API_URL_TMPL", default="")
+BK_ACCESS_APP_DENIED_CONTACTS = env.list("BK_ACCESS_APP_DENIED_CONTACTS", default=[])

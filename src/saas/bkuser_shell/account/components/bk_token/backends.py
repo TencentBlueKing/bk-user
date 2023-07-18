@@ -15,6 +15,7 @@ from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.db import IntegrityError
 
+from .exceptions import NoPermissionAccessError
 from bkuser_shell.account import get_user_model
 from bkuser_shell.account.conf import ConfFixture
 from bkuser_shell.account.http import send
@@ -49,6 +50,8 @@ class TokenBackend(ModelBackend):
             user.is_staff = is_admin
             user.save()
             return user
+        except NoPermissionAccessError:
+            raise
         except IntegrityError:
             logger.exception("get_or_create UserModel fail or update UserProperty fail. username=%s", username)
             return None
@@ -80,7 +83,11 @@ class TokenBackend(ModelBackend):
             'request_id': 'eac0fee52ba24a47a335fd3fef75c099'
         }
         """
-        api_params = {settings.TOKEN_COOKIE_NAME: bk_token}
+        api_params = {
+            "bk_app_code": settings.APP_ID,
+            "bk_app_secret": settings.APP_TOKEN,
+            settings.TOKEN_COOKIE_NAME: bk_token,
+        }
 
         try:
             response = send(ConfFixture.USER_INFO_URL, "GET", api_params, verify=False)
@@ -100,9 +107,14 @@ class TokenBackend(ModelBackend):
             elif settings.DEFAULT_BK_API_VER == "":
                 user_info["username"] = origin_user_info.get("username", "")
             return True, user_info
-        else:
-            logger.error("Failed to Get User Info: error=%s, ret=%s", response.get("message", ""), response)
-            return False, {}
+
+        code = response.get("code")
+        # 特殊：用户认证成功，但用户无应用访问权限
+        if code == 1302403:
+            raise NoPermissionAccessError(response.get("message"))
+
+        logger.error("Failed to Get User Info: error=%s, ret=%s", response.get("message", ""), response)
+        return False, {}
 
     @staticmethod
     def verify_bk_token(bk_token):
@@ -113,7 +125,11 @@ class TokenBackend(ModelBackend):
         @return: False,None True,username
         @rtype: bool,None/str
         """
-        api_params = {settings.TOKEN_COOKIE_NAME: bk_token}
+        api_params = {
+            "bk_app_code": settings.APP_ID,
+            "bk_app_secret": settings.APP_TOKEN,
+            settings.TOKEN_COOKIE_NAME: bk_token,
+        }
 
         try:
             response = send(ConfFixture.VERIFY_URL, "GET", api_params, verify=False)
@@ -123,10 +139,13 @@ class TokenBackend(ModelBackend):
 
         if response.get("result") or response.get("ret") == 0:
             data = response.get("data")
-            username = data.get("username")
+            username = data.get("bk_username")
             return True, username
-        else:
-            logger.error(
-                "Fail to verify bk_token, error=%s, ret=%s", response.get("message", "<Unknown issue>"), response
-            )
-            return False, None
+
+        code = response.get("code")
+        # 特殊：用户认证成功，但用户无应用访问权限
+        if code == 1302403:
+            raise NoPermissionAccessError(response.get("message"))
+
+        logger.error("Fail to verify bk_token, error=%s, ret=%s", response.get("message", "<Unknown issue>"), response)
+        return False, None
