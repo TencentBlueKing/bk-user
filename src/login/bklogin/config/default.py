@@ -280,7 +280,7 @@ if ENABLE_PASSWORD_RSA_ENCRYPTED:
 # IAM: SaaS Access Control
 # ==============================================================================
 BK_APP_CODE = env.str("BK_APP_CODE", "bk_login")
-BK_APP_SECRET = env.str("BK_APP_CODE", "")
+BK_APP_SECRET = env.str("BK_APP_SECRET", "")
 ENABLE_IAM = env.bool("ENABLE_IAM", default=False)
 BK_SYSTEM_ID_IN_IAM = env.str("BK_SYSTEM_ID_IN_IAM", BK_APP_CODE)
 BK_REQUIRED_ACCESS_CONTROLLED_APPS = env.dict("BK_REQUIRED_ACCESS_CONTROLLED_APPS", default={})
