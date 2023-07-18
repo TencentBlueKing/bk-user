@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_prometheus',
     'bkuser.auth',
+    'django_filters',
     'bkuser.apps.tenant',
 ]
 
@@ -302,3 +303,5 @@ LOGGING = {
         },
     },
 }
+
+DEFAULT_LOGO_DATA = ""

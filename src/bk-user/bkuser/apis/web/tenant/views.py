@@ -8,21 +8,42 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser.apis.web.tenant.filters import TenantFilter
-from bkuser.apis.web.tenant.serializers import TenantOutputSLZ, TenantSearchSLZ
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apis.web.tenant.serializers import TenantDetailSLZ, TenantOutputSLZ, TenantSearchSLZ, TenantUsersSLZ
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from rest_framework import generics
 from rest_framework.response import Response
 
 
 class TenantListCreateApi(generics.ListCreateAPIView):
-    queryset = Tenant.objects.filter()
+    queryset = Tenant.objects.all()
     serializer_class = TenantOutputSLZ
-    filter_backends = [TenantFilter]
     pagination_class = None
 
     def list(self, request, *args, **kwargs):
         slz = TenantSearchSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
+        name = slz.data.get("name")
+        if name:
+            self.queryset = Tenant.objects.filter(name__icontains=name)
+
         serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data)
+
+
+class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
+    queryset = Tenant.objects.all()
+    lookup_url_kwarg = "id"
+    serializer_class = TenantDetailSLZ
+
+    def list(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.queryset)
+        return Response(serializer.data)
+
+
+class TenantUsersListApi(generics.ListAPIView):
+    def list(self, request, *args, **kwargs):
+        tenant_id = kwargs["tenant_id"]
+        tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)
+        serializer = TenantUsersSLZ(tenant_users, many=True)
+
         return Response(serializer.data)

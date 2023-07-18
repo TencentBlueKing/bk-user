@@ -12,4 +12,8 @@ from django.urls import path
 
 from . import views
 
-urlpatterns = [path("", views.TenantListCreateApi.as_view(), name="tenant.list_create")]
+urlpatterns = [
+    path("", views.TenantListCreateApi.as_view(), name="tenant.list_create"),
+    path("<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="tenant.detail"),
+    path("<str:tenant_id>/users/", views.TenantUsersListApi.as_view(), name="tenant.users"),
+]
