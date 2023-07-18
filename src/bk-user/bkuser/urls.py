@@ -8,12 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.views.decorators.cache import never_cache
-from django.urls import path, include
-from django.conf.urls import url
-
 from bkuser.common.views import VueTemplateView
-
+from django.conf.urls import url
+from django.urls import include, path
+from django.views.decorators.cache import never_cache
 
 urlpatterns = [
     path('api/v1/web/', include("bkuser.apis.web.urls")),

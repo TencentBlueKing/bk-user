@@ -8,17 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser.apis.web.tenant.serializers import TenantDetailSLZ
-from bkuser.apps.tenant.models import Tenant
-from rest_framework import generics
-from rest_framework.response import Response
+
+from django.db import models
 
 
-class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
-    queryset = Tenant.objects.all()
-    lookup_url_kwarg = "id"
-    serializer_class = TenantDetailSLZ
+class TimestampedModel(models.Model):
+    """Model with 'created' and 'updated' fields."""
 
-    def list(self, request, *args, **kwargs):
-        serializer = self.get_serializer(self.queryset)
-        return Response(serializer.data)
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
