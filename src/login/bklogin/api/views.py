@@ -76,7 +76,7 @@ class CheckLoginViewV2(View):
         # bk_token有效情况下，鉴权用户是否有应用访问权限
         is_allowed, message = verify_permission_of_access_app(request, username)
         if not is_allowed:
-            return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.NOT_ACCESS_APP_PERMISSION.value)
+            return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.ACCESS_PERMISSION_DENIED.value)
 
         return APIV2OKJsonResponse("user authentication succeeded", data={"bk_username": username})
 
@@ -98,7 +98,7 @@ class UserViewV2(View):
             # bk_token有效情况下，鉴权用户是否有应用访问权限
             is_allowed, message = verify_permission_of_access_app(request, username)
             if not is_allowed:
-                return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.NOT_ACCESS_APP_PERMISSION.value)
+                return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.ACCESS_PERMISSION_DENIED.value)
 
         # 获取用户数据
         ok, message, data = usermgr.get_user(username, "v2")

@@ -14,6 +14,7 @@ from typing import Tuple
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from django.db import IntegrityError
+from django.utils.translation import get_language
 
 from .exceptions import NoPermissionAccessError
 from bkuser_shell.account import get_user_model
@@ -83,6 +84,7 @@ class TokenBackend(ModelBackend):
             'request_id': 'eac0fee52ba24a47a335fd3fef75c099'
         }
         """
+        headers = {"Blueking-Language": get_language()}
         api_params = {
             "bk_app_code": settings.APP_ID,
             "bk_app_secret": settings.APP_TOKEN,
@@ -90,7 +92,7 @@ class TokenBackend(ModelBackend):
         }
 
         try:
-            response = send(ConfFixture.USER_INFO_URL, "GET", api_params, verify=False)
+            response = send(ConfFixture.USER_INFO_URL, "GET", api_params, headers=headers, verify=False)
         except Exception:  # pylint: disable=broad-except
             logger.exception("Abnormal error in get_user_info: bk_token=%s***", bk_token[:6])
             return False, {}
@@ -125,6 +127,7 @@ class TokenBackend(ModelBackend):
         @return: False,None True,username
         @rtype: bool,None/str
         """
+        headers = {"Blueking-Language": get_language()}
         api_params = {
             "bk_app_code": settings.APP_ID,
             "bk_app_secret": settings.APP_TOKEN,
@@ -132,7 +135,7 @@ class TokenBackend(ModelBackend):
         }
 
         try:
-            response = send(ConfFixture.VERIFY_URL, "GET", api_params, verify=False)
+            response = send(ConfFixture.VERIFY_URL, "GET", api_params, headers=headers, verify=False)
         except Exception:  # pylint: disable=broad-except
             logger.exception("Abnormal error in verify_bk_token: bk_token=%s***", bk_token[:6])
             return False, None

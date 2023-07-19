@@ -68,6 +68,7 @@ MIDDLEWARE = (
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "bkuser_global.middlewares.RequestProvider",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "bklogin.bk_i18n.middlewares.BKLanguageMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
