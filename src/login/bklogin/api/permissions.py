@@ -41,4 +41,4 @@ def verify_permission_of_access_app(request, username):
     if is_allowed:
         return True, ""
 
-    return False, _("请联系 {contacts} 开通。").format(contacts=", ".join(settings.BK_ACCESS_APP_DENIED_CONTACTS))
+    return False, _("请联系 {contacts} 开通权限。").format(contacts=", ".join(settings.BK_ACCESS_APP_DENIED_CONTACTS))
