@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=function-name-too-long
 @receiver(post_category_delete)
 def create_recycle_bin_category_relationship(sender, instance, operator: str, **kwargs):
     relationship_kv: dict = {
