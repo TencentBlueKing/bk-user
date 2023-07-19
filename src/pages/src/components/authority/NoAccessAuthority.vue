@@ -18,10 +18,9 @@
 
 <script>
 export default {
-  props: {
-    noAccessAuthData: {
-      type: String,
-      default: '',
+  computed: {
+    noAccessAuthData() {
+      return this.$store.state.noAccessAuthData;
     },
   },
 };

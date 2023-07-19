@@ -25,6 +25,7 @@ const SetPassword = () => import(/* webpackChunkName: 'SetPassword' */'../views/
 const ResetPassword = () => import(/* webpackChunkName: 'ResetPassword' */'../views/password/Reset');
 const ModifyPassword = () => import(/* webpackChunkName: 'ModifyPassword' */'../views/password/Modify');
 const Recycle = () => import(/* webpackChunkName: 'Recycle' */'../views/recycle');
+const NoAccessAuthority = () => import(/* webpackChunkName: 'Recycle' */'../components/authority/NoAccessAuthority.vue');
 const NotFound = () => import(/* webpackChunkName: 'NotFound' */'../views/404');
 
 const routes = [
@@ -71,6 +72,11 @@ const routes = [
     path: '/recycle',
     name: 'recycle',
     component: Recycle,
+  },
+  {
+    path: '/no_access_authority',
+    name: 'NoAccessAuthority',
+    component: NoAccessAuthority,
   },
   {
     path: '*',
