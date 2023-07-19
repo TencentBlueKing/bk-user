@@ -216,6 +216,7 @@ function handleReject(error, config) {
       });
     } else if (status === 403 && data.code === -2) {
       store.commit('updateNoAccessAuthData', data.message);
+      store.commit('updateInitLoading', false);
     } else if (data && data.message) {
       messageError(data.message);
     } else if (status === 500) {

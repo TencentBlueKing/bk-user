@@ -9,16 +9,14 @@
   -->
 <template>
   <div id="app">
+    <HeaderBox v-if="showHeader" @reloadRouter="routerKey += 1" :no-access-auth-data="noAccessAuthData" />
     <NoAccessAuthority v-if="noAccessAuthData" :no-access-auth-data="noAccessAuthData" />
-    <template v-else>
-      <HeaderBox v-if="showHeader" @reloadRouter="routerKey += 1" />
-      <main class="main-content">
-        <router-view :key="routerKey" />
-        <KingLoading v-show="initLoading"></KingLoading>
-        <NoAuthority v-if="noAuthData" :no-auth-data="noAuthData" @reloadRouter="routerKey += 1" />
-      </main>
-      <Login v-if="loginData" :login-data="loginData" />
-    </template>
+    <main class="main-content" v-else>
+      <router-view :key="routerKey" />
+      <KingLoading v-show="initLoading"></KingLoading>
+      <NoAuthority v-if="noAuthData" :no-auth-data="noAuthData" @reloadRouter="routerKey += 1" />
+    </main>
+    <Login v-if="loginData" :login-data="loginData" />
     <!-- <FooterBox /> -->
   </div>
 </template>
