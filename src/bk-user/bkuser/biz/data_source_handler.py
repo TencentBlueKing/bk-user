@@ -73,5 +73,8 @@ class DataSourceHandler:
         instance.save()
         return instance
 
+    def filter_users(self, data_source_id, **kwargs):
+        return DataSourceUser.objects.filter(data_source_id=data_source_id, **kwargs)
+
 
 data_source_handler = DataSourceHandler()

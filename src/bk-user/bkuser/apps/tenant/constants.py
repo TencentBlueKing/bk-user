@@ -8,16 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from enum import Enum
+
 import pytz
 
-from bkuser.common.enum import ChoicesEnum
 
-
-class LanguageEnum(ChoicesEnum):
+class LanguageEnum(Enum):
     ZH_CN = "zh-cn"
     EN = "en"
 
     _choices_labels = ((ZH_CN, "中文"), (EN, "英文"))
+
+    @classmethod
+    def get_choices(cls) -> tuple:
+        return cls._choices_labels.value
 
 
 TIME_ZONE_LIST = pytz.common_timezones

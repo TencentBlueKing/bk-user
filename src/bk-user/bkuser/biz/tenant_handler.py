@@ -11,7 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 import uuid
 
+from django.db import transaction
+
+from bkuser.apps.data_source.constants import DEFAULT_DATA_SOURCE_NAME
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantManager, TenantDataSourceRelationShip
+from bkuser.biz.data_source_handler import data_source_handler
 from bkuser.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
@@ -117,6 +121,41 @@ class TenantHandler:
         except Exception as e:
             logger.exception(f"update tenant info failed, exception: {e}")
             raise error_codes.UPDATE_TENANT_FAILED
+
+    def init_tenant_with_managers(self, init_tenant_data: dict) -> Tenant:
+
+        with transaction.atomic():
+            # 初始化租户
+            tenant = tenant_handler.create_tenant(init_tenant_data)
+            # 初始化本地数据源（密码配置初始化，需要根据tenant_data的manager_password进行，owner为当前租户，命名为本地数据源）
+            data_source = data_source_handler.create_data_source(name=DEFAULT_DATA_SOURCE_NAME, owner=tenant.id)
+            # 更新初始化后的数据源密码配置
+            password_settings: dict = init_tenant_data["password_settings"]
+            data_source_handler.update_plugin_config(
+                instance=data_source, update_data=password_settings, namespace="password"
+            )
+
+        with transaction.atomic():
+            # 初始化管理员在数据源的信息
+            # 创建数据源用户
+            new_users: list[dict] = init_tenant_data["managers"]
+            username_list = data_source_handler.create_data_source_users(data_source, new_users)
+
+        # 租户用户初始化
+        data_source_users = data_source_handler.filter_users(
+            data_source_id=data_source.id,
+            username__in=username_list
+        ).values("id", "username")
+        with transaction.atomic():
+            # 绑定到数据源到租户
+            tenant_handler.data_source_bind_tenant(data_source_id=data_source.id, tenant_id=tenant.id)
+            # 从数据源绑定管理员到租户
+            tenant_users = tenant_handler.data_source_users_bind_tenant(tenant.id, data_source_users, is_init=True)
+            # 绑定权限
+            manager_ids = [user.id for user in tenant_users]
+            tenant_handler.update_tenant_managers(tenant.id, manager_ids, is_init=True)
+
+        return tenant
 
 
 tenant_handler = TenantHandler()
