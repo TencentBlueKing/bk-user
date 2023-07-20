@@ -284,7 +284,7 @@ export default {
   重置密码成功: 'Reset password successfully',
   按Enter键确认添加: 'Press Enter to confirm',
   '搜索用户名/账户': 'Search for username/account',
-  '输入用户名/中文名，按Enter搜索': 'Search username/display_name',
+  '输入用户名/全名，按Enter搜索': 'Search username/display_name',
   请输入账户: 'Enter account',
   搜索: 'Search',
   没有找到相关的结果: 'Search result is empty',

@@ -3,106 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <script src="iconcool.js"></script>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./iconcool.js"></script>
   <style>
-html,
-body,
-ul,
-li {
-  margin: 0;
-  padding: 0;
-}
-.container {
-  margin: 0 auto;
-  padding: 50px;
-  width: 980px;
-}
-.container .page-title {
-  margin: 0;
-  padding: 0;
-}
-.container .page-title .logo {
-  height: 50px;
-}
-.tab-wrapper {
-  padding-top: 26px;
-  border-bottom: 1px solid #dcdee5;
-  overflow: hidden;
-}
-.tab-wrapper .tab-panel {
-  float: left;
-  padding: 9px;
-  min-width: 124px;
-  font-size: 16px;
-  color: #979ba5;
-  text-align: center;
-  cursor: pointer;
-}
-.tab-wrapper .tab-panel.active {
-  color: #313238;
-  border-bottom: 3px solid #361ec6;
-}
-.tab-content {
-  display: none;
-}
-.tab-content.active {
-  display: block;
-}
-.icon-list .icon-item {
-  display: inline-block;
-  margin-top: 20px;
-  width: 116px;
-  color: #313238;
-  text-align: center;
-  vertical-align: top;
-  overflow: hidden;
-  list-style: none;
-}
-.icon-list .icon-item .icon {
-  display: inline-block;
-  height: 92px;
-  line-height: 92px;
-  font-size: 44px;
-}
-.icon-list .icon-text {
-  margin: 0;
-  font-size: 14px;
-  word-break: break-all;
-}
-.icon-list .colorful-icon {
-  display: inline-block;
-  margin-top: 20px;
-  width: 116px;
-  text-align: center;
-  vertical-align: top;
-  overflow: hidden;
-  list-style: none;
-}
-.icon-list .colorful-icon .icon {
-  display: block;
-  margin: 0 auto;
-  width: 1em;
-  height: 92px;
-  font-size: 44px;
-}
-.describe-title {
-  margin: 60px 0 0;
-  padding-bottom: 10px;
-  font-size: 20px;
-  font-weight: normal;
-  color: #313238;
-  border-bottom: 1px solid #dcdee5;
-}
-.use-describe {
-  padding-left: 20px;
-}
-.use-describe li {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #313238;
-  line-height: 20px;
-}
+    html,
+    body,
+    ul,
+    li {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      margin: 0 auto;
+      padding: 50px;
+      width: 980px;
+    }
+    .container .page-title {
+      margin: 0;
+      padding: 0;
+    }
+    .container .page-title .logo {
+      height: 50px;
+    }
+    .tab-wrapper {
+      padding-top: 26px;
+      border-bottom: 1px solid #dcdee5;
+      overflow: hidden;
+    }
+    .tab-wrapper .tab-panel {
+      float: left;
+      padding: 9px;
+      min-width: 124px;
+      font-size: 16px;
+      color: #979ba5;
+      text-align: center;
+      cursor: pointer;
+    }
+    .tab-wrapper .tab-panel.active {
+      color: #313238;
+      border-bottom: 3px solid #361ec6;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .icon-list .icon-item {
+      display: inline-block;
+      margin-top: 20px;
+      width: 116px;
+      color: #313238;
+      text-align: center;
+      vertical-align: top;
+      overflow: hidden;
+      list-style: none;
+    }
+    .icon-list .icon-item .icon {
+      display: inline-block;
+      height: 92px;
+      line-height: 92px;
+      font-size: 44px;
+    }
+    .icon-list .icon-text {
+      margin: 0;
+      font-size: 14px;
+      word-break: break-all;
+    }
+    .icon-list .colorful-icon {
+      display: inline-block;
+      margin-top: 20px;
+      width: 116px;
+      text-align: center;
+      vertical-align: top;
+      overflow: hidden;
+      list-style: none;
+    }
+    .icon-list .colorful-icon .icon {
+      display: block;
+      margin: 0 auto;
+      width: 1em;
+      height: 92px;
+      font-size: 44px;
+    }
+    .describe-title {
+      margin: 60px 0 0;
+      padding-bottom: 10px;
+      font-size: 20px;
+      font-weight: normal;
+      color: #313238;
+      border-bottom: 1px solid #dcdee5;
+    }
+    .use-describe {
+      padding-left: 20px;
+    }
+    .use-describe li {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #313238;
+      line-height: 20px;
+    }
   </style>
   <title>Icon Cool</title>
 </head>
@@ -116,8 +116,15 @@ li {
       <div class="tab-panel"  data-type="multipleColor">彩色图标</div>
     </div>
     <section class="tab-content single-color active" data-type="singleColor">
-    <div data-test-id="iconData">
       <ul class="icon-list">
+        <li class="icon-item" title="info-i">
+          <span class="icon user-icon icon-info-i"></span>
+          <p class="icon-text">info-i</p>
+        </li>
+        <li class="icon-item" title="dobble-arrow-i">
+          <span class="icon user-icon icon-dobble-arrow-i"></span>
+          <p class="icon-text">dobble-arrow-i</p>
+        </li>
         <li class="icon-item" title="user-logo-i">
           <span class="icon user-icon icon-user-logo-i"></span>
           <p class="icon-text">user-logo-i</p>
@@ -130,29 +137,131 @@ li {
           <span class="icon user-icon icon-duihao-i"></span>
           <p class="icon-text">duihao-i</p>
         </li>
+        <li class="icon-item" title="unfilled-i">
+          <span class="icon user-icon icon-unfilled-i"></span>
+          <p class="icon-text">unfilled-i</p>
+        </li>
+        <li class="icon-item" title="todo-i">
+          <span class="icon user-icon icon-todo-i"></span>
+          <p class="icon-text">todo-i</p>
+        </li>
+        <li class="icon-item" title="loading-i">
+          <span class="icon user-icon icon-loading-i"></span>
+          <p class="icon-text">loading-i</p>
+        </li>
+        <li class="icon-item" title="add-hollow">
+          <span class="icon user-icon icon-add-hollow"></span>
+          <p class="icon-text">add-hollow</p>
+        </li>
+        <li class="icon-item" title="close-fill">
+          <span class="icon user-icon icon-close-fill"></span>
+          <p class="icon-text">close-fill</p>
+        </li>
+        <li class="icon-item" title="organization-fill">
+          <span class="icon user-icon icon-organization-fill"></span>
+          <p class="icon-text">organization-fill</p>
+        </li>
+        <li class="icon-item" title="personal-user">
+          <span class="icon user-icon icon-personal-user"></span>
+          <p class="icon-text">personal-user</p>
+        </li>
+        <li class="icon-item" title="outline-list">
+          <span class="icon user-icon icon-outline-list"></span>
+          <p class="icon-text">outline-list</p>
+        </li>
+        <li class="icon-item" title="duihao-2">
+          <span class="icon user-icon icon-duihao-2"></span>
+          <p class="icon-text">duihao-2</p>
+        </li>
+        <li class="icon-item" title="file-close">
+          <span class="icon user-icon icon-file-close"></span>
+          <p class="icon-text">file-close</p>
+        </li>
+        <li class="icon-item" title="info-fill">
+          <span class="icon user-icon icon-info-fill"></span>
+          <p class="icon-text">info-fill</p>
+        </li>
+        <li class="icon-item" title="user-directory">
+          <span class="icon user-icon icon-user-directory"></span>
+          <p class="icon-text">user-directory</p>
+        </li>
+        <li class="icon-item" title="homepage">
+          <span class="icon user-icon icon-homepage"></span>
+          <p class="icon-text">homepage</p>
+        </li>
+        <li class="icon-item" title="arrow-left">
+          <span class="icon user-icon icon-arrow-left"></span>
+          <p class="icon-text">arrow-left</p>
+        </li>
+        <li class="icon-item" title="arrow-right">
+          <span class="icon user-icon icon-arrow-right"></span>
+          <p class="icon-text">arrow-right</p>
+        </li>
+        <li class="icon-item" title="minus-fill">
+          <span class="icon user-icon icon-minus-fill"></span>
+          <p class="icon-text">minus-fill</p>
+        </li>
+        <li class="icon-item" title="plus-fill">
+          <span class="icon user-icon icon-plus-fill"></span>
+          <p class="icon-text">plus-fill</p>
+        </li>
+        <li class="icon-item" title="warning">
+          <span class="icon user-icon icon-warning"></span>
+          <p class="icon-text">warning</p>
+        </li>
+        <li class="icon-item" title="abnormal">
+          <span class="icon user-icon icon-abnormal"></span>
+          <p class="icon-text">abnormal</p>
+        </li>
+        <li class="icon-item" title="more">
+          <span class="icon user-icon icon-more"></span>
+          <p class="icon-text">more</p>
+        </li>
+        <li class="icon-item" title="unknown">
+          <span class="icon user-icon icon-unknown"></span>
+          <p class="icon-text">unknown</p>
+        </li>
+        <li class="icon-item" title="normal">
+          <span class="icon user-icon icon-normal"></span>
+          <p class="icon-text">normal</p>
+        </li>
+        <li class="icon-item" title="drag">
+          <span class="icon user-icon icon-drag"></span>
+          <p class="icon-text">drag</p>
+        </li>
+        <li class="icon-item" title="lishijilu">
+          <span class="icon user-icon icon-lishijilu"></span>
+          <p class="icon-text">lishijilu</p>
+        </li>
       </ul>
-    </div>
       <h3 class="describe-title">为什么使用</h3>
-     <div data-test-id="meritInfo">
       <ul class="use-describe">
         <li>弹性，在网页或者 app 上，展示字体是很便捷的。用字体图标可以很方便的改变 icon 的颜色，或者加入一些其他的效果</li>
         <li>可缩放，可以很方便的改变图标的大小</li>
         <li>矢量，字体图标是矢量的并且具有独立的分辨率，不管在高分辨率还是低分辨率，不管是在网页还是手机端，都具有很好的展示效果，不会出现锯齿或者马赛克模糊</li>
         <li>节省加载时间，字体图标很小，每个小图标只有几 kb，大大节省了加载时间</li>
       </ul>
-     </div>
       <h3 class="describe-title">如何使用</h3>
-      <div data-test-id="teachingInfo">
-        <ul class="use-describe">
-          <li>将整个目录复制到您的项目里</li>
-          <li>引入 style.css</li>
-          <li>挑选相应图标并获取类名，如 .bk-icon .icon-demo</li>
-        </ul>
-      </div>
+      <ul class="use-describe">
+        <li>将整个目录复制到您的项目里</li>
+        <li>引入 style.css</li>
+        <li>挑选相应图标并获取类名，如 .bk-icon .icon-demo</li>
+      </ul>
     </section>
     <section class="tab-content multiple-color"  data-type="multipleColor">
-    <div data-test-id="otherIconData">
       <ul class="icon-list">
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-info-i"></use>
+          </svg>
+          <p class="icon-text">info-i</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-dobble-arrow-i"></use>
+          </svg>
+          <p class="icon-text">dobble-arrow-i</p>
+        </li>
         <li class="colorful-icon">
           <svg class="icon svg-icon">
             <use xlink:href="#icon-user-logo-i"></use>
@@ -171,17 +280,157 @@ li {
           </svg>
           <p class="icon-text">duihao-i</p>
         </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-unfilled-i"></use>
+          </svg>
+          <p class="icon-text">unfilled-i</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-todo-i"></use>
+          </svg>
+          <p class="icon-text">todo-i</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-loading-i"></use>
+          </svg>
+          <p class="icon-text">loading-i</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-add-hollow"></use>
+          </svg>
+          <p class="icon-text">add-hollow</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-close-fill"></use>
+          </svg>
+          <p class="icon-text">close-fill</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-organization-fill"></use>
+          </svg>
+          <p class="icon-text">organization-fill</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-personal-user"></use>
+          </svg>
+          <p class="icon-text">personal-user</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-outline-list"></use>
+          </svg>
+          <p class="icon-text">outline-list</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-duihao-2"></use>
+          </svg>
+          <p class="icon-text">duihao-2</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-file-close"></use>
+          </svg>
+          <p class="icon-text">file-close</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-info-fill"></use>
+          </svg>
+          <p class="icon-text">info-fill</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-user-directory"></use>
+          </svg>
+          <p class="icon-text">user-directory</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-homepage"></use>
+          </svg>
+          <p class="icon-text">homepage</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-arrow-left"></use>
+          </svg>
+          <p class="icon-text">arrow-left</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-arrow-right"></use>
+          </svg>
+          <p class="icon-text">arrow-right</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-minus-fill"></use>
+          </svg>
+          <p class="icon-text">minus-fill</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-plus-fill"></use>
+          </svg>
+          <p class="icon-text">plus-fill</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-warning"></use>
+          </svg>
+          <p class="icon-text">warning</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-abnormal"></use>
+          </svg>
+          <p class="icon-text">abnormal</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-more"></use>
+          </svg>
+          <p class="icon-text">more</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-unknown"></use>
+          </svg>
+          <p class="icon-text">unknown</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-normal"></use>
+          </svg>
+          <p class="icon-text">normal</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-drag"></use>
+          </svg>
+          <p class="icon-text">drag</p>
+        </li>
+        <li class="colorful-icon">
+          <svg class="icon svg-icon">
+            <use xlink:href="#icon-lishijilu"></use>
+          </svg>
+          <p class="icon-text">lishijilu</p>
+        </li>
       </ul>
-    </div>
       <h3 class="describe-title">为什么使用</h3>
-     <div data-test-id="supportSVGInfo">
       <ul class="use-describe">
-        <li>支持彩色图标</li>
-        <li>跨 SVG 使用，使用 use 可调用文档中加载的所有 SVG 图标 </li>
-    </ul>
-     </div>
+          <li>支持彩色图标</li>
+          <li>跨 SVG 使用，使用 use 可调用文档中加载的所有 SVG 图标 </li>
+      </ul>
       <h3 class="describe-title">如何使用</h3>
-    <div data-test-id="hintInfo">
       <ul class="use-describe">
         <li>将下载的资源文件中 iconcool.js 文件外部资源通过 script 标签引入</li>
         <li>在 html 模板文件中挑选对应的对应图标的名称使用，例如：
@@ -192,7 +441,6 @@ li {
           </pre>
         </li>
       </ul>
-    </div>
       </section>
     </section>
   </div>
@@ -208,7 +456,7 @@ li {
         })
 
         e.target.classList.add('active')
-
+        
         tabContents.forEach(function (item) {
           const contentType = item.dataset.type
           if (contentType === type) {
@@ -218,7 +466,7 @@ li {
           }
         })
       }
-
+      
     })
   </script>
 </body>

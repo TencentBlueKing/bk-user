@@ -164,6 +164,13 @@
   .table-actions-right-container {
     display: flex;
     align-items: center;
+    .sync-details {
+      font-size: 14px;
+      color: #3a84ff;
+      i {
+        margin-right: 5px;
+      }
+    }
   }
   // 更多操作
   .king-dropdown-menu {
@@ -205,7 +212,7 @@
   }
 
   .table-actions-left-container.local-type {
-    width: calc(100% - 400px);
+    width: calc(100% - 520px);
 
     .filter-current {
       width: calc(100% - 260px);

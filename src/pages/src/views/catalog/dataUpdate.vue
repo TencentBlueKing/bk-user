@@ -9,21 +9,15 @@
   -->
 <template>
   <div class="update-page">
-    <div class="header">
-      <span @click="showPageHome" class="user-catalog ">
-        {{$t('用户目录')}} >
-      </span>
-      <span class="update-decord">{{$t('数据更新记录')}}</span>
-    </div>
     <div class="catalog-table" data-test-id="list_dataUpdateInfo">
       <bk-table
         :data="updateList"
         :size="'small'"
         v-bkloading="{ isLoading: tableLoading }"
         :pagination="pagination"
-        @page-change="handlePageChange"
-        @page-limit-change="pageLimitChange">
-        <bk-table-column :label="$t('开始时间')">
+        @page-change="(page) => $emit('dataUpdatePageChange', page)"
+        @page-limit-change="(limit) => $emit('dateUpdatePageLimit', limit)">
+        <bk-table-column :label="$t('开始时间')" :width="180">
           <template slot-scope="{ row }">
             <span :title="row.name">{{row.create_time | convertIsoTime}}</span>
           </template>
@@ -129,17 +123,24 @@ export default {
       return `${year} ${time}`;
     },
   },
+  props: {
+    updateList: {
+      type: Array,
+      default: [],
+    },
+    pagination: {
+      type: Object,
+      default: null,
+    },
+    tableLoading: {
+      type: Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
-      tableLoading: false,
       showDiary: false,
-      updateList: [],
       updateDetailList: [],
-      pagination: {
-        current: 1,
-        count: 0,
-        limit: 10,
-      },
       mapList: {
         users: this.$t('用户数据更新'),
         departments: this.$t('组织数据更新'),
@@ -151,10 +152,6 @@ export default {
         auto: this.$t('定时触发'),
       },
     };
-  },
-  created() {
-    // 数据更新记录
-    this.getUpdateList();
   },
   methods: {
     timeText(row) {
@@ -174,41 +171,12 @@ export default {
         return `${hour}${this.$t('小时')}${min}${this.$t('分钟')}`;
       }
     },
-    showPageHome() {
-      this.$emit('changePage', 'showPageHome');
-    },
     isShowDiary(item) {
       this.showDiary = true;
       this.getUpdateDetailList(item);
     },
     handleExpanded(item) {
       item.expanded = !item.expanded;
-    },
-    handlePageChange(page) {
-      this.pagination.current = page;
-      this.getUpdateList(true);
-    },
-    pageLimitChange(currentLimit) {
-      this.pagination.limit = currentLimit;
-      this.pagination.current = 1;
-      this.getUpdateList(true);
-    },
-    // 获取数据更新记录
-    async getUpdateList() {
-      try {
-        this.tableLoading = true;
-        const params = {
-          page: this.pagination.current,
-          page_size: this.pagination.limit,
-        };
-        const res = await this.$store.dispatch('catalog/ajaxGetUpdateRecord', params);
-        this.updateList = res.data.results;
-        this.pagination.count = res.data.count;
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        this.tableLoading = false;
-      }
     },
     // 获取日志更新详细数据
     async getUpdateDetailList(item) {
@@ -232,17 +200,6 @@ export default {
 .update-page {
       height: 100%;
       color: $fontGray;
- > .header {
-      .user-catalog {
-        font-size: 14px;
-        color: #979ba5;
-        cursor: pointer;
-    }
-      .update-decord{
-        font-size: 14px;
-        color: #313238;
-    }
-  }
 > .catalog-table {
     margin-top: 25px;
     padding-bottom: 25px;
@@ -250,11 +207,11 @@ export default {
       color: #3a84ff;
       cursor: pointer;
     }
-   }
-   .log-level {
-      color: #313238;
-      font-weight: 400;
-   }
+  }
+  .log-level {
+    color: #313238;
+    font-weight: 400;
+  }
   .content {
     margin-left: 32px;
     margin-top: 24px;
@@ -291,7 +248,7 @@ export default {
       font-size:12px;
       color:#666770;
       font-family: PingFangSC, PingFangSC-Regular;
-      }
+    }
   }
   .success {
     display: inline-block;
@@ -312,11 +269,11 @@ export default {
     margin-right: 8px;
   }
   .status-img {
-      vertical-align:middle;
-    }
+    vertical-align:middle;
+  }
   .status-text {
-      vertical-align:middle;
-      margin: 0 5px;
-    }
+    vertical-align:middle;
+    margin: 0 5px;
+  }
 }
 </style>
