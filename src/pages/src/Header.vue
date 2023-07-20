@@ -247,15 +247,25 @@ export default {
       });
     },
     handleSwitchLocale(val) {
+      const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+      const scriptId = 'jsonp-script';
+      const prevJsonpScript = document.getElementById(scriptId);
+      if (prevJsonpScript) {
+        document.body.removeChild(prevJsonpScript);
+      }
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = `${api}?language=${val}`;
+      script.id = scriptId;
+      document.body.appendChild(script);
+
       Cookies.set('blueking_language', val, {
         expires: 3600,
         path: '/',
-        domain: window.location.hostname
-          .split('.')
-          .slice(-2)
-          .join('.'),
+        domain: window.BK_DOMAIN,
       });
       I18n.locale = val;
+      document.querySelector('html').setAttribute('lang', val);
       window.location.reload();
     },
   },
