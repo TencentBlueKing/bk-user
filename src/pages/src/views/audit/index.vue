@@ -29,9 +29,9 @@
         style="width: 400px;"
         :placeholder="$t('搜索操作用户、操作对象、操作类型')"
         :clearable="true"
-        :right-icon="'bk-icon icon-search'"
+        :left-icon="'bk-icon icon-search'"
         @clear="handleClear"
-        @right-icon-click="getSearchInfo"
+        @left-icon-click="getSearchInfo"
         @enter="getSearchInfo">
       </bk-input>
       <bk-search-select
@@ -241,9 +241,14 @@ export default {
       config.offsetY = 80;
       this.$bkMessage(config);
     },
-    async  Auditderive() {
+    async Auditderive() {
       const startTime = this.getMyDate(this.searchCondition.dateRange[0]);
       const endTime = this.getMyDate(this.searchCondition.dateRange[1]);
+      let userName = '';
+      let isSuccess = '';
+      this.tableSearchKey.length && this.tableSearchKey.forEach((item) => {
+        item.id === 'username' ? userName = item.values[0].id : isSuccess = item.values[0].id;
+      });
       let url = window.AJAX_URL;
       if (url.endsWith('/')) {
         // 去掉末尾的斜杠
@@ -256,7 +261,7 @@ export default {
       if (this.panelActive === 'login' && this.auditList.length === 0) {
         this.handleWarning({ theme: 'error' });
       } else {
-        url = `${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}`;
+        url = `${url}/api/v1/web/audits/logs/types/login/operations/export/?start_time=${startTime}&end_time=${endTime}&username=${userName}&is_success=${isSuccess}`;
         window.open(url);
       }
     },
@@ -373,8 +378,8 @@ export default {
     font-size: 14px;
     cursor: pointer;
     color: #3a84ff;
-    right: 0px;
-    top: 65px;
+    right: 40px;
+    top: 110px;
     z-index: 999;
   }
   // 表格

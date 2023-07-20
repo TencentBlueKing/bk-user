@@ -26,9 +26,8 @@
               @deleteDepartment="deleteDepartment"
               @switchNodeOrder="switchNodeOrder"
               @handleConfigDirectory="handleClickConfig"
-              @handleMouseenter="handleMouseenter"
-              @handleMouseleave="handleMouseleave"
-              @addOrganization="addOrganization" />
+              @addOrganization="addOrganization"
+              @updateScroll="updateScroll" />
           </div>
         </div>
       </div>
@@ -142,7 +141,7 @@
                     @change="changeSearchLevel">
                   </bk-checkbox>
                   <span class="text text-overflow-hidden" v-bk-overflow-tips @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + `(${handleTabData.totalNumber})`}}
+                    {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
                   </span>
                 </p>
               </div>
@@ -178,7 +177,7 @@
                     class="king-checkbox" :checked="isSearchCurrentDepartment"
                     @change="changeSearchLevel"></bk-checkbox>
                   <span class="text" @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + `(${handleTabData.totalNumber})`}}
+                    {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
                   </span>
                 </p>
               </div>
@@ -194,12 +193,11 @@
               :is-empty-search="isEmptySearch"
               :is-table-data-error="isTableDataError"
               :is-table-data-empty="isTableDataEmpty"
-              :is-click.sync="isClick"
-              :loading="basicLoading"
               :fields-list="fieldsList"
               :pagination="paginationConfig"
               :timer-map="timerMap"
               :status-map="statusMap"
+              :is-click.sync="isClick"
               @handlePageChange="handlePageChange"
               @handlePageLimitChange="handlePageLimitChange"
               @handleSetFieldList="handleSetFieldList"
@@ -412,6 +410,8 @@ export default {
         tableHeardList: [],
         userInforList: [],
       },
+      // 搜索结果为空
+      isEmptySearch: false,
       // 表格请求出错
       isTableDataError: false,
       // 表格请求结果为空
@@ -464,7 +464,6 @@ export default {
         telephone: 'telephone',
         status: 'status',
         staff_status: 'staff_status',
-        department_name: 'departments',
         leader: 'leaders',
         position: 'position',
         wx_userid: 'wx_userid',
@@ -484,6 +483,8 @@ export default {
       addOrganizationName: '',
       currentParentNode: null,
       currentNode: null,
+      // 回收保留天数
+      retentionDays: null,
     };
   },
   computed: {
@@ -513,6 +514,7 @@ export default {
   },
   watch: {
     'currentParam.item'(val, oldVal) {
+      this.departmentsId = val.id;
       // 搜索结果为 profile 时切换节点不刷新表格数据
       if (this.treeSearchResult && this.treeSearchResult.groupType !== 'department') {
         return;
@@ -563,12 +565,12 @@ export default {
         this.checkSearchKey = '';
       }
     },
-    // 当前节点背景颜色
+    // 当前节点添加className
     currentNode(val, oldVal) {
       if (val !== oldVal) {
-        val.style.background = '#e1ecff';
+        val.classList.add('node-li');
         if (oldVal) {
-          oldVal.style.background = 'none';
+          oldVal.classList.remove('node-li');
         }
       }
     },
@@ -582,7 +584,7 @@ export default {
   },
   async mounted() {
     try {
-      await Promise.all([this.initData(), this.getTableTitle()]);
+      await Promise.all([this.initData(), this.getTableTitle(), this.initRecoverySetting()]);
       this.getNodeColor();
     } catch (e) {
       console.warn(e);
@@ -604,6 +606,7 @@ export default {
           this.filterTreeData(catalog, this.treeDataList);
           catalog.children = catalog.departments;
           catalog.children.forEach((department) => {
+            this.$set(department, 'async', department.has_children);
             this.$set(department, 'category_id', catalog.id);
             this.filterTreeData(department, catalog, catalog.type === 'local');
           });
@@ -672,6 +675,14 @@ export default {
         console.warn(e);
       }
     },
+    async initRecoverySetting() {
+      try {
+        const res = await this.$store.dispatch('setting/getGlobalSettings');
+        this.retentionDays = res.data[0].value;
+      } catch (e) {
+        console.warn(e);
+      }
+    },
     // 初始化直接上级列表
     async initRtxList(id) {
       try {
@@ -680,29 +691,22 @@ export default {
           id,
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
-          keyword: '',
+          keyword: this.checkSearchKey,
+          hasNotDepartment: !this.isSearchCurrentDepartment,
         };
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
-        this.paginationConfig.count = res.data.count;
-        this.filterUserData(res.data.results);
-        if (!this.tableSearchKey.length) {
-          if (this.isSearchCurrentDepartment) {
-            // 当前组织下成员
-            this.handleTabData.totalNumber = res.data.count;
-          } else {
-            // 默认查询
-            this.handleTabData.totalNumber = res.data.count;
-          }
-        }
-
-        this.isEmptyDepartment = false;
+        this.handleTabData.totalNumber = res.data.count;
+        this.handleTabData.currentNumber = res.data.count;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
+        this.isTableDataError = false;
+
+        if (!!this.tableSearchKey.length) return;
+        this.paginationConfig.count = res.data.count;
+        this.filterUserData(res.data.results);
         if (this.paginationConfig.count === 0) {
           this.isTableDataEmpty = true;
         }
-
-        this.isTableDataError = false;
       } catch (e) {
         console.warn(e);
         this.isTableDataError = true;
@@ -739,33 +743,22 @@ export default {
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
           keyword: this.checkSearchKey,
-          recursive: true,
+          recursive: !this.isSearchCurrentDepartment,
         };
-        if (this.isSearchCurrentDepartment) {
-          params.recursive = false;
-        }
         const res = await this.$store.dispatch('organization/getProfiles', params);
+        this.handleTabData.totalNumber = res.data.count;
+        this.handleTabData.currentNumber = res.data.count;
+        this.isTableDataEmpty = false;
+        this.isEmptySearch = false;
+        this.isTableDataError = false;
+
+        if (!!this.tableSearchKey.length) return;
         this.$set(this.currentParam.item, 'profile_count', res.data.count);
         this.filterUserData(res.data.results);
         this.paginationConfig.count = res.data.count;
-        if (!this.tableSearchKey.length) {
-          if (this.isSearchCurrentDepartment) {
-            // 当前组织下成员
-            this.handleTabData.totalNumber = res.data.count;
-          } else {
-            // 默认查询
-            this.handleTabData.totalNumber = res.data.count;
-          }
-        }
-
-        this.isEmptyDepartment = false;
-        this.isTableDataEmpty = false;
-        this.isEmptySearch = false;
         if (this.paginationConfig.count === 0) {
           this.isTableDataEmpty = true;
         }
-
-        this.isTableDataError = false;
       } catch (e) {
         console.warn(e);
         this.isTableDataError = true;
@@ -834,7 +827,7 @@ export default {
     updateHeardList(value) {
       this.searchDataList = [];
       value.forEach((item) => {
-        if (item.builtin) {
+        if (item.builtin && item.key !== 'department_name') {
           this.searchDataList.push(item);
         }
       });
@@ -849,7 +842,7 @@ export default {
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
       if (!list.length) return this.handleTableData();
-      const valueList = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
+      const valueList = [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`];
       let key = '';
       list.forEach((item) => {
         const value = [];
@@ -875,25 +868,7 @@ export default {
     },
     // 搜索文件配置列表
     handleSearchList() {
-      this.getDepartmentsList();
       this.getLeadersList();
-    },
-    // 获取部门列表
-    async getDepartmentsList() {
-      try {
-        const params = `category_id=${this.currentCategoryId}`;
-        const list = [];
-        const res = await this.$store.dispatch('organization/getDepartmentsList', params);
-        res.data.results.forEach((item) => {
-          list.push({
-            id: item.id,
-            name: item.full_name,
-          });
-        });
-        this.getChildrenList(list, 'department_name');
-      } catch (e) {
-        console.warn(e);
-      }
     },
     // 获取上级列表
     async getLeadersList() {
@@ -1073,11 +1048,6 @@ export default {
       this.detailsBarInfo.isShow = true;
       this.detailsBarInfo.basicLoading = false;
     },
-    updateTableData(item) {
-      this.tableData = item;
-      if (!item.length) return;
-      this.departmentsId = item[0].departments[0].id;
-    },
     // 侧边栏 点击保存 更新列表 userMessage.userInforList
     async updateUserInfor() {
       if (this.treeSearchResult && this.treeSearchResult.groupType !== 'department') {
@@ -1254,7 +1224,7 @@ export default {
       }
       this.$refs.dropdownMore.hide();
       this.$bkInfo({
-        title: this.$t('删除后会保留用户的数据，以便需要时审查'),
+        title: this.$t('确认要删除当前用户？'),
         extCls: 'king-info long-title',
         confirmFn: async () => {
           if (this.clickSecond) {
@@ -1287,9 +1257,9 @@ export default {
       });
     },
     // 删除某一条用户信息，更新用户信息列表
-    deleteProfile(id) {
+    deleteProfile({ id, username }) {
       this.$bkInfo({
-        title: this.$t('删除后会保留用户的数据，以便需要时审查'),
+        title: this.$t('delete-user', { name: username }),
         extCls: 'king-info long-title',
         confirmFn: () => {
           if (this.clickSecond) {
@@ -1396,8 +1366,10 @@ export default {
     },
     // 点击某个树节点
     handleClickTreeNode(item, event) {
+      this.paginationConfig.current = 1;
+      this.checkSearchKey = '';
       if (event) {
-        this.currentNode = event.target.offsetParent.firstChild;
+        this.currentNode = event.target.offsetParent.parentNode.parentNode;
       }
       if (item.parent === null) {
         this.initRtxList(item.id);
@@ -1451,10 +1423,10 @@ export default {
       }
     },
     // 显示对应的子菜单
-    handleClickOption(item, event) {
+    handleClickOption(item, event, scrollTop) {
       event.stopPropagation();
-      this.currentParentNode = event.target.offsetParent.offsetParent;
-      this.currentNode = event.target.offsetParent.offsetParent.firstChild;
+      this.currentParentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
+      this.currentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
       if (!this.treeSearchResult) {
         // 展示当前节点
         this.currentParam.item = item;
@@ -1469,8 +1441,8 @@ export default {
         const calculateDistance = this.calculate(event.target);
         const next = ((item.activated && item.configured) || item.parent)
           ? event.target.nextElementSibling : event.target.nextElementSibling.nextElementSibling;
-        next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
-        next.style.top = `${calculateDistance.getOffsetTop + 30}px`;
+        // next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
+        next.style.top = `${calculateDistance.getOffsetTop + 30 - scrollTop}px`;
         const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
         if (bottomHeight < 0) {
           next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
@@ -1515,6 +1487,9 @@ export default {
       try {
         this.treeLoading = true;
         const { dragNode, targetNode } = param;
+        if (dragNode.category_id !== targetNode.category_id || dragNode.parent.id !== targetNode.parent.id) {
+          return;
+        }
         await this.$store.dispatch('organization/switchNodeOrder', {
           id: dragNode.id,
           upId: targetNode.id,
@@ -1527,11 +1502,22 @@ export default {
       }
     },
     // 删除组织节点
-    deleteDepartment(deleteItem) {
+    deleteDepartment(deleteItem, event) {
+      if (event) {
+        event.stopPropagation();
+        deleteItem.showOption = false;
+        if (deleteItem.activated) return;
+        if (deleteItem.has_children || deleteItem.default || (deleteItem.activated && deleteItem.configured)) {
+          deleteItem.showDeleteTips = false;
+          return;
+        }
+      }
       const h = this.$createElement;
+      let instance1 = null;
+      let instance2 = null;
       deleteItem.display_name
         ? this.$bkInfo({
-          title: this.$t('确认要删除当前目录？'),
+          title: this.$t('delete-directory', { name: deleteItem.display_name }),
           subHeader: h(
             'div',
             {
@@ -1540,12 +1526,30 @@ export default {
               h('p', [this.$t('删除后，该目录下的数据将为你保存'),
                 h('span', {
                   style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                }, deleteItem.id), this.$t('天。'),
+                  on: {
+                    mouseleave: () => {
+                      instance1 && instance1.hide(100);
+                    },
+                    mouseenter: (e) => {
+                      instance1 = instance1 || this.$bkPopover(e.target, { content: this.$t('由 admin 在 [回收策略设置] 中统一配置'), arrow: true, placement: 'top' });
+                      instance1.show(1000);
+                    },
+                  },
+                }, this.retentionDays), this.$t('天。'),
               ]),
               h('p', [this.$t('你可以在'),
                 h('i', {
-                  class: 'icon user-icon icon-root-node-i',
+                  class: 'bk-sq-icon icon-huishouxiang',
                   style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
+                  on: {
+                    mouseleave: () => {
+                      instance2 && instance2.hide(100);
+                    },
+                    mouseenter: (e) => {
+                      instance2 = instance2 || this.$bkPopover(e.target, { content: this.$t('在顶部导航栏的右侧'), arrow: true, placement: 'top' });
+                      instance2.show(1000);
+                    },
+                  },
                 }), this.$t('回收站中查看已删除的目录数据，并进行还原、彻底删除的操作。'),
               ]),
             ],
@@ -1554,24 +1558,7 @@ export default {
           confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem),
         })
         : this.$bkInfo({
-          title: this.$t('确认要删除当前组织？'),
-          subHeader: h(
-            'div',
-            {
-              style: { color: '#63656E', fontSize: '14px', lineHeight: '24px' },
-            }, [
-              h('p', this.$t('删除后，跨组织的用户数据将不会受到影响；')),
-              h('p', [this.$t('该用户将为你保存'),
-                h('span', {
-                  style: { color: '#EA3636', fontWeight: '700', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                }, deleteItem.id), this.$t('天，你可以在'),
-                h('i', {
-                  class: 'icon user-icon icon-root-node-i',
-                  style: { color: '#699DF4', fontSize: '16px', cursor: 'pointer', borderBottom: '1px dashed #C4C6CC', padding: '0 5px' },
-                }), this.$t('回收站中查看已删除的组织数据，并进行还原、彻底删除的操作。'),
-              ]),
-            ],
-          ),
+          title: this.$t('delete-organization', { name: deleteItem.name }),
           extCls: 'king-info long-title',
           confirmFn: this.syncConfirmDeleteDepartment.bind(this, deleteItem),
         });
@@ -1717,7 +1704,7 @@ export default {
         console.warn(e);
       }
     },
-    changePage(param) {
+    changePage(param, update) {
       if (typeof param === 'object') { // 点击目录名跳转到设置页面
         this.catalogInfo = { ...param };
         switch (param.type) {
@@ -1733,6 +1720,10 @@ export default {
         }
       } else {
         this.showingPage = param;
+        if (update) {
+          this.initData();
+          this.getNodeColor();
+        }
       }
     },
     handleCancel() {
@@ -1763,12 +1754,12 @@ export default {
       const inputNode = document.getElementsByClassName('new-department')[0];
       inputNode.style.display = 'flex';
       if (node.type === 'local') {
-        const ulNode = this.currentParentNode.lastChild;
+        const ulNode = this.currentParentNode.parentNode.lastChild;
         ulNode.appendChild(inputNode);
         ulNode.lastChild.getElementsByClassName('bk-form-input')[0].focus();
       }
       if (node.isLocalDepartment) {
-        const liNode = this.currentParentNode;
+        const liNode = this.currentParentNode.parentNode;
         liNode.after(inputNode);
         liNode.nextElementSibling.getElementsByClassName('bk-form-input')[0].focus();
       }
@@ -1824,6 +1815,9 @@ export default {
       } finally {
         this.treeLoading = false;
       }
+    },
+    updateScroll() {
+      this.currentParam.item.showOption = false;
     },
   },
 };

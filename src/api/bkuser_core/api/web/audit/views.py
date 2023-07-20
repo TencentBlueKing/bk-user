@@ -65,16 +65,7 @@ class GeneralLogListApi(generics.ListAPIView):
         return queryset
 
 
-class LoginLogListApi(generics.ListAPIView):
-    permission_classes = [ViewAuditPermission]
-    pagination_class = CustomPagination
-    serializer_class = LoginLogOutputSLZ
-    filter_backends = [StartTimeEndTimeFilterBackend]
-
-    def get_serializer_context(self):
-        # set into context, for slz to_representation
-        return {"category_name_map": get_category_display_name_map()}
-
+class LoginLogSearchQuerySetMinix:
     def get_queryset(self):
         queryset = LogIn.objects.all()
         slz = LoginLogListInputSLZ(data=self.request.query_params)
@@ -82,11 +73,12 @@ class LoginLogListApi(generics.ListAPIView):
         data = slz.validated_data
 
         # TODO: use drf Filter
-        # Note: 有2种场景，(1)is_success参数存在则按照is_success的值进行查询（2）is_success参数不存在，则查询所有
-        #  这里对于布尔类型的is_success，Drf SLZ在无参数时，默认为False，所以只能使用原始的query_params进行 in 判断
-        if "is_success" in self.request.query_params:
-            logger.debug("login_in filter: is_success:<{}>".format(data["is_success"]))
-            queryset = queryset.filter(is_success=data["is_success"])
+        # Note: is_success为bool类型，经过Drf SLZ后有4种情况：（1）不存在（2）None（allow_null=True）（3）True（4）False
+        #  当前场景下，不存在或None，则表示可以查询所有状态的记录
+        is_success = data.get("is_success")
+        if is_success is not None and "is_success" in self.request.query_params:
+            logger.debug("login_in filter: is_success:<{}>".format(is_success))
+            queryset = queryset.filter(is_success=is_success)
 
         username = data.get("username")
         if username:
@@ -96,19 +88,23 @@ class LoginLogListApi(generics.ListAPIView):
         return queryset
 
 
-class LoginLogExportApi(generics.ListAPIView):
+class LoginLogListApi(LoginLogSearchQuerySetMinix, generics.ListAPIView):
+    permission_classes = [ViewAuditPermission]
+    pagination_class = CustomPagination
+    serializer_class = LoginLogOutputSLZ
+    filter_backends = [StartTimeEndTimeFilterBackend]
+
+    def get_serializer_context(self):
+        # set into context, for slz to_representation
+        return {"category_name_map": get_category_display_name_map()}
+
+
+class LoginLogExportApi(LoginLogSearchQuerySetMinix, generics.ListAPIView):
     permission_classes = [ViewAuditPermission]
     # 登录审计日志导出 不需要分页
     # pagination_class = CustomPagination
 
     filter_backends = [StartTimeEndTimeFilterBackend]
-
-    def get_queryset(self):
-        queryset = LogIn.objects.all()
-        slz = LoginLogListInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-
-        return queryset
 
     def get(self, request, *args, **kwargs):
         """导出登录日志"""

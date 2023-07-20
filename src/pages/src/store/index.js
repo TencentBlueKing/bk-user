@@ -47,6 +47,22 @@ const store = new Vuex.Store({
       days: -1,
       text: i18n.t('永久'),
     }],
+    recycleDaysList: [{
+      days: 7,
+      text: i18n.t('7天'),
+    }, {
+      days: 30,
+      text: i18n.t('30天'),
+    }, {
+      days: 90,
+      text: i18n.t('90天'),
+    }, {
+      days: 180,
+      text: i18n.t('180天'),
+    }, {
+      days: 365,
+      text: i18n.t('1年'),
+    }],
     initLoading: false,
     // 接口返回403的相关数据
     noAuthData: null,

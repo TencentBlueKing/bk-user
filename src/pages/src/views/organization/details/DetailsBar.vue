@@ -19,7 +19,7 @@
       :status-map="statusMap"
       :timer-map="timerMap"
       @editProfile="editProfile"
-      @deleteProfile="$emit('deleteProfile')"
+      @deleteProfile="$emit('deleteProfile', currentProfile)"
       @restoreProfile="$emit('restoreProfile')"
       @showBarLoading="$emit('showBarLoading')"
       @closeBarLoading="$emit('closeBarLoading')" />
@@ -467,6 +467,9 @@ export default {
         if (item.key === 'telephone') {
           phoneValue = this.$refs.userInfoData.$refs.phone[0].verifyInput(item.value);
         }
+        if (item.key === 'position' && item.value === '') {
+          item.value = null;
+        }
       });
       this.$refs.userInfoData.$refs.validateForm.validate().then(() => {
         // 编辑
@@ -746,6 +749,7 @@ export default {
         padding: 0 30px 0 12px;
         font-size: 14px;
         color: #63656e;
+        background: #fff;
       }
     }
     &.leader-input {
@@ -787,6 +791,9 @@ export default {
 ::v-deep .bk-form  {
   .bk-label-text {
     font-size: 12px !important;
+  }
+  .bk-select-dropdown {
+    background: #fff;
   }
 }
 </style>

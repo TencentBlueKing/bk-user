@@ -14,6 +14,7 @@
       ext-cls="user-table"
       :data="userMessage.userInforList"
       :pagination="pagination"
+      :size="setting.size"
       @page-change="handlePageChange"
       @page-limit-change="handlePageLimitChange"
       @selection-change="handleSelectionChange"
@@ -51,7 +52,7 @@
               <li class="dot-menu-item" @click="changeStatus(props.row)">
                 {{ props.row.status === 'DISABLED' ? $t('启用') : $t('禁用') }}
               </li>
-              <li class="dot-menu-item" @click="$emit('deleteProfile', props.row.id)">{{ $t('删除') }}</li>
+              <li class="dot-menu-item" @click="$emit('deleteProfile', props.row)">{{ $t('删除') }}</li>
             </ul>
           </bk-popover>
         </template>
@@ -219,67 +220,77 @@ export default {
 
 <style lang="scss" scoped>
 .icon-more {
-    display: inline-block;
-    font-size: 18px;
-    border-radius: 50%;
-    padding: 3px;
-    color: #3A84FF;
-    &:hover {
-        cursor: pointer;
-        background-color: rgba(235,237,240);
-    }
+  display: inline-block;
+  font-size: 18px;
+  border-radius: 50%;
+  padding: 3px;
+  color: #3a84ff;
+
+  &:hover {
+    cursor: pointer;
+    background-color: rgba(235, 237, 240);
+  }
 }
+
 .dot-menu {
-    display: inline-block;
-    vertical-align: middle;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .tippy-tooltip.dot-menu-theme {
-    padding: 0;
+  padding: 0;
 }
+
 .dot-menu-trigger {
-    display: block;
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 50%;
-    text-align: center;
-    font-size: 0;
-    color: #979BA5;
-    cursor: pointer;
+  display: block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 0;
+  color: #979ba5;
+  cursor: pointer;
 }
+
 .dot-menu-trigger:hover {
-    color: #3A84FF;
-    background-color: #EBECF0;
+  color: #3a84ff;
+  background-color: #ebecf0;
 }
+
 .dot-menu-trigger:before {
-    content: "";
-    display: inline-block;
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background-color: currentColor;
-    box-shadow: 0 -4px 0 currentColor, 0 4px 0 currentColor;
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow: 0 -4px 0 currentColor, 0 4px 0 currentColor;
 }
+
 .dot-menu-list {
-    margin: 0;
-    padding: 5px 0;
-    min-width: 50px;
-    list-style: none;
+  margin: 0;
+  padding: 5px 0;
+  min-width: 50px;
+  list-style: none;
 }
+
 .dot-menu-list .dot-menu-item {
-    padding: 0 10px;
-    font-size: 12px;
-    line-height: 26px;
-    cursor: pointer;
-    &:hover {
-        background-color: #eaf3ff;
-        color: #3a84ff;
-    }
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 26px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #eaf3ff;
+    color: #3a84ff;
+  }
 }
+
 .empty-title {
   color: #63656e;
 }
+
 ::v-deep .user-table tr {
   cursor: pointer;
 }

@@ -10,9 +10,9 @@
 <template>
   <div class="organization-tree-wrapper">
     <bk-tree
+      ref="topTree"
       ext-cls="top-tree"
       :style="topTreeStyle"
-      enable-title-tip
       draggable
       drag-sort
       :data="availableDirectory"
@@ -20,7 +20,8 @@
       :tpl="tpl"
       :show-icon="false"
       @on-expanded="handleClickToggle"
-      @on-drag-node="handleDragNode">
+      @on-drag-node="handleDragNode"
+      @async-load-nodes="handleClickToggle">
     </bk-tree>
     <div class="bottom-tree" @click="clickBottomTree" ref="bottomTree" style="bottomTreeStyle">
       <p :class="['bottom-tree-header', { 'show-header': isDirectory }]" @click="handleClickDirectory">
@@ -28,7 +29,6 @@
       </p>
       <bk-tree
         :ext-cls="['bottom-tree-content', { 'show-content': isDirectory }]"
-        enable-title-tip
         draggable
         drag-sort
         :data="unavailableDirectory"
@@ -80,16 +80,15 @@ export default {
   },
   data() {
     return {
-      // 不可用目录展示状态
-      isDirectory: false,
       // 可用目录
       availableDirectory: [],
       // 不可用目录
       unavailableDirectory: [],
-      treeBoxHeight: document.body.clientHeight - 126,
-      topTreeHeight: document.body.clientHeight - 166,
+      treeBoxHeight: document.body.clientHeight - 124,
+      topTreeHeight: document.body.clientHeight - 164,
       bottomTreeHeight: 40,
       timer: false,
+      treeScrollTop: 0,
     };
   },
   computed: {
@@ -135,27 +134,39 @@ export default {
     },
   },
   mounted() {
-    const that = this;
-    window.onresize = () => {
-      return (() => {
-        window.screenHeight = document.body.clientHeight;
-        that.treeBoxHeight = window.screenHeight - 126;
-        this.topTreeHeight = that.treeBoxHeight - this.bottomTreeHeight;
-      })();
+    window.onload = () => {
+      this.availableDirectoryHeight();
     };
+    window.onresize = () => {
+      this.availableDirectoryHeight();
+    };
+    const topTreeWrap = document.querySelector('.top-tree');
+    topTreeWrap.addEventListener('scroll', this.scrollChange, true);
   },
   methods: {
+    // 可用目录高度
+    availableDirectoryHeight() {
+      window.screenHeight = document.body.clientHeight;
+      this.treeBoxHeight = window.screenHeight - 124;
+      this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
+    },
+    scrollChange(e) {
+      this.treeScrollTop = e.target.scrollTop;
+      this.$emit('updateScroll');
+    },
     clickBottomTree() {
       this.bottomTreeHeight = this.$refs.bottomTree.offsetHeight;
       this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
+      const bottomTreeWrap = document.querySelector('.show-content');
+      if (!bottomTreeWrap) return;
+      bottomTreeWrap.addEventListener('scroll', this.scrollChange, true);
     },
     handleClickToggle(item) {
       this.$emit('handleClickToggle', item);
     },
     tpl(node) {
-      return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}
-        onMouseenter={() => this.$emit('handleMouseenter', event)}
-        onMouseleave={() => this.$emit('handleMouseleave', event)}>
+      return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}>
+        {node.type && !node.children.length ? <i class={'hide-icon'} /> : ''}
         {node.display_name ? <i class={['icon user-icon icon-root-node-i', { 'active-icon': node.showBackground }]} />
           : <i class={['icon icon-user-file-close-01', { 'active-icon': node.showBackground }]} />}
         <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
@@ -163,9 +174,9 @@ export default {
           onClick={() => this.$emit('handleClickTreeNode', node, event)} v-bk-overflow-tips></span>
         <div class="option" v-if={node.type && this.treeSearchResult === null}>
           <i ref="more" class={['icon bk-icon icon-more', { 'show-more': node.showBackground }]}
-          onClick={() => this.$emit('handleClickOption', node, event)}></i>
+          onClick={() => this.$emit('handleClickOption', node, event, this.treeScrollTop)}></i>
           {(node.configured && !node.activated && node.type)
-            ? <bk-tag class={'show-tag'} type="filled">{this.$t('停用')}</bk-tag>
+            ? <bk-tag class={'show-tag'} type="filled">{this.$t('停用1')}</bk-tag>
             : ''}
           {(!node.configured && node.type)
             ? <bk-tag class={'show-tag'} theme="warning" type="filled">{this.$t('未完成')}</bk-tag>
@@ -221,8 +232,8 @@ export default {
             </div>
             <div class="specific-menu">
               <a href="javascript:;"
-                class={['delete', { 'delete-disable': node.default || (node.activated && node.configured) || node.has_children }]}
-                onClick={this.deleteDepartment.bind(this, node)}
+                class={['delete', { 'delete-disable': this.deleteDisabled(node) }]}
+                onClick={() => this.$emit('deleteDepartment', node, event)}
                 onMouseenter={this.checkDeleteTips.bind(this, node)}
                 onMouseleave={this.closeDeleteTips.bind(this, node)}>
                 {this.$t('删除')}
@@ -239,7 +250,7 @@ export default {
       let text = '';
       if (node.default) {
         text = this.$t('默认目录不能被删除');
-      } else if (node.activated && node.configured) {
+      } else if (node.activated || node.configured) {
         text = this.$t('请先停用，方可删除目录');
       } else if (node.has_children) {
         text = this.$t('非空组织不能删除');
@@ -274,8 +285,11 @@ export default {
       item.showSwitchTips = false;
     },
     checkDeleteTips(item) {
-      if (item.default || item.activated || item.has_children) {
+      if (item.default || (item.activated && item.configured) || item.has_children) {
         this.$set(item, 'showDeleteTips', true);
+      }
+      if (item.activated === false && item.has_children) {
+        this.$set(item, 'showDeleteTips', false);
       }
     },
     closeDeleteTips(item) {
@@ -283,6 +297,16 @@ export default {
     },
     handleDragNode(node) {
       this.$emit('switchNodeOrder', node);
+    },
+    deleteDisabled(item) {
+      let status = false;
+      if (item.default || (item.activated && item.configured) || item.has_children) {
+        status = true;
+      }
+      if (item.activated === false && item.has_children) {
+        status = false;
+      }
+      return status;
     },
   },
 };
@@ -301,28 +325,36 @@ export default {
   .icon-user-file-close-01 {
     color: #a3c5fd;
   }
-  .icon-more {
-    display: none;
+  .hide-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    position: absolute;
+    background: #F5F7FA;
+    top: 8px;
+    left: -18px;
   }
   .show-tag {
     padding: 0;
-    width: 40px;
+    width: 55px;
     text-align: center;
     vertical-align: bottom;
   }
   .top-tree {
+    padding: 0 16px;
     height: var(--top-tree-height);
     @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+    overflow-x: hidden;
   }
   .bottom-tree {
     font-size: 14px;
     position: absolute;
     width: 100%;
     height: var(--bottom-tree-height);
-    bottom: 1px;
+    bottom: 0;
     background: #F5F7FA;
     .bottom-tree-header {
-      padding: 0 16px;
+      padding: 0 12px;
       height: 40px;;
       line-height: 40px;
       border-top: 1px solid #DCDEE5;
@@ -342,76 +374,178 @@ export default {
     .bottom-tree-content {
       display: none;
     }
-    .show-content {
+    ::v-deep .show-content {
       display: block;
+      padding: 0 16px 40px;
       max-height: 400px;
       overflow-y: auto;
       @include scroller($backgroundColor: #e6e9ea, $width: 4px);
+      overflow-x: hidden;
+      .tree-drag-node {
+        .tree-node {
+          position: relative;
+          width: calc(100% - 65px);
+          padding-left: 3px;
+          .node-title {
+            width: calc(100% - 40px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+          }
+          .show-background {
+            .option {
+              display: flex;
+              .icon-more {
+                visibility: visible;
+              }
+              .bk-tag span {
+                display: block;
+                width: 55px;
+              }
+            }
+          }
+          .directory-warpper {
+            .option {
+              display: flex;
+              .icon-more {
+                visibility: hidden;
+              }
+              .bk-tag span {
+                display: block;
+                width: 55px;
+              }
+            }
+          }
+        }
+        &:hover {
+          & > .tree-node > .directory-warpper {
+            .icon-more {
+              visibility: visible;
+            }
+          }
+        }
+      }
+      .leaf .tree-node {
+        width: 100%;
+      }
     }
   }
 }
-::v-deep .bk-tree .tree-drag-node {
-  padding: 0 16px;
-  .tree-expanded-icon {
-    vertical-align: sub;
+::v-deep .bk-tree {
+  li {
+    position: static;
   }
-  .tree-node {
-    width: calc(100% - 14px);
-    padding-left: 3px;
-    .node-title {
-      width: calc(100% - 40px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
-  }
-}
-.tree-drag-node {
-  padding: 0 16px;
-  .directory-warpper {
-    line-height: 32px;
-    height: 32px;
-  }
-  .show-background {
-    line-height: 32px;
-    height: 32px;
-    .active-icon {
-      color: #4b8fff;
-    }
-    .show-more {
-      color: #4b8fff;
-      display: block;
-      position: absolute;
-      font-size: 20px;
-      left: -20px;
-      top: 10px;
-      cursor: pointer;
-    }
-  }
-  &:hover {
-    cursor: pointer;
-    & > .tree-node > .directory-warpper {
-      .icon-more {
-        display: inline-block;
+  .tree-drag-node {
+    position: relative;
+    .directory-warpper {
+      position: relative;
+      line-height: 32px;
+      height: 32px;
+      .option {
+        align-items: center;
         position: absolute;
-        left: -20px;
-        top: 10px;
+        top: 5px;
+        right: 0;
+        height: 20px;
+        width: 20px;
+        display: none;
+      }
+    }
+    .show-background {
+      position: relative;
+      line-height: 32px;
+      height: 32px;
+      .active-icon {
+        color: #4b8fff;
+      }
+      .option {
+        align-items: center;
+        position: absolute;
+        top: 5px;
+        right: 0;
+        height: 20px;
+        width: 20px;
+      }
+      .show-more {
+        color: #4b8fff;
+        display: block;
         font-size: 20px;
-        color: #737987;
-        text-align: center;
         cursor: pointer;
+      }
+    }
+    &::before {
+      content: "";
+      display: block;
+      width: 1000px;
+      height: 37px;
+      position: absolute;
+      right: -30px;
+      z-index: 0;
+    }
+    &:hover::before {
+      background: #f0f1f5;
+    }
+
+    .tree-expanded-icon {
+      vertical-align: sub;
+    }
+    .tree-node {
+      position: relative;
+      width: calc(100% - 14px);
+      padding-left: 3px;
+      .node-title {
+        width: calc(100% - 40px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+    }
+    &:hover {
+      & > .tree-node > .directory-warpper {
+        .option {
+          display: block;
+          align-items: center;
+          position: absolute;
+          top: 5px;
+          right: 0;
+          height: 20px;
+          width: 20px;
+          color: #737987;
+        }
+        .icon-more {
+          color: #737987;
+          display: block;
+          font-size: 20px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  .leaf .tree-node {
+    width: 100%;
+  }
+  .node-li {
+    &::before {
+      background: #E2EDFF;
+    }
+    &:hover::before {
+      background: #E2EDFF;
+    }
+    .hide-icon {
+      background: #E2EDFF;
+      z-index: 1;
+    }
+    &:hover {
+      .hide-icon {
+        background: #E2EDFF;
+        z-index: 1;
       }
     }
   }
 }
 .option {
-  align-items: center;
-  position: absolute;
-  top: 0;
-  right: 10px;
-  height: 36px;
-
   .dropdown-list {
     display: none;
   }
@@ -419,12 +553,13 @@ export default {
   > .show-dropdown-list {
     display: block;
     position: fixed;
-    width: 174px;
+    width: 180px;
     background: #fff;
     border-radius: 2px;
     border: 1px solid #dcdee5;
     box-shadow: 0 2px 6px rgba(51, 60, 72, .1);
     z-index: 1000000;
+    margin-left: 20px;
     // 英文
     &.chang-en {
       .specific-menu {

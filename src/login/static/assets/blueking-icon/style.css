@@ -83,3 +83,9 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-fuzzy-search-allow:before {
 	content: "\e114";
 }
+.icon-huishouxiang:before {
+	content: "\e115";
+}
+.icon-ziduan:before {
+	content: "\e116";
+}
