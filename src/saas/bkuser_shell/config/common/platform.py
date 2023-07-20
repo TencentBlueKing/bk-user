@@ -17,6 +17,9 @@ from . import env
 APP_ID = env("BK_APP_CODE")
 APP_TOKEN = env("BK_APP_SECRET")
 
+# 蓝鲸域名
+BK_DOMAIN = env("BK_DOMAIN", default=env("BKPAAS_BK_DOMAIN", default=""))
+
 # 蓝鲸智云开发者中心的域名，形如：http://paas.example.com
 BK_PAAS_URL = env("BK_PAAS_URL")
 
