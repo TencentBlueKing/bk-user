@@ -10,21 +10,16 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from django.db import transaction
-from rest_framework import generics
-from rest_framework.response import Response
-
 from bkuser.apis.web.tenant.serializers import (
     TenantCreateInputSlZ,
     TenantCreateOutputSLZ,
     TenantUpdateInputSLZ,
     TenantUpdateOutputSLZ,
 )
-from bkuser.apps.data_source.constants import DEFAULT_DATA_SOURCE_NAME
-from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import Tenant
-from bkuser.biz.data_source_handler import data_source_handler
 from bkuser.biz.tenant_handler import tenant_handler
+from rest_framework import generics
+from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 

@@ -11,12 +11,11 @@ specific language governing permissions and limitations under the License.
 import hashlib
 import logging
 
+from bkuser.apps.data_source.constants import DataSourcePluginType
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser
+from bkuser.biz.utils import gen_random_str
 from django.contrib.auth.hashers import make_password
 from django.utils.encoding import force_bytes
-
-from bkuser.apps.data_source.constants import DataSourceType
-from bkuser.apps.data_source.models import DataSourcePlugin, DataSource, DataSourceUser
-from bkuser.biz.utils import gen_random_str
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ class DataSourceHandler:
         logger.info("use data_source_name and owner to be code: %s -> %s", tmp_str, sha)
         return sha
 
-    def create_data_source(self, name, owner, data_source_type=DataSourceType.LOCAL.value):
+    def create_data_source(self, name: str, owner: str, data_source_type=DataSourcePluginType.LOCAL.value):
         local_data_source_plugin = DataSourcePlugin.objects.get(type=data_source_type)
         code = self._get_code(name, owner)
         data_source = DataSource.objects.create(

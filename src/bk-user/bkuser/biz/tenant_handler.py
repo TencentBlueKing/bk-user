@@ -11,12 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 import uuid
 
-from django.db import transaction
-
 from bkuser.apps.data_source.constants import DEFAULT_DATA_SOURCE_NAME
-from bkuser.apps.tenant.models import Tenant, TenantUser, TenantManager, TenantDataSourceRelationShip
+from bkuser.apps.tenant.models import Tenant, TenantDataSourceRelationShip, TenantManager, TenantUser
 from bkuser.biz.data_source_handler import data_source_handler
 from bkuser.common.error_codes import error_codes
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +82,7 @@ class TenantHandler:
         tenant_users = TenantUser.objects.filter(id__in=users, tenant_id=tenant_id).values_list("id", flat=True)
         not_exist_users = set([str(item) for item in tenant_users]) - set(users)
         if not_exist_users:
-            logger.error(f"update managers for tenant failed, get not_exist_users: {len(not_exist_users)}")
+            logger.error(f"update managers for tenant failed, get not_exist_user. counts: {len(not_exist_users)}")
             raise error_codes.TENANT_USER_NOT_EXIST
 
         # 新旧租户管理员比对
@@ -107,6 +106,9 @@ class TenantHandler:
                 raise error_codes.UPDATE_TENANT_MANAGERS_FAILED
 
     def update_tenant(self, tenant: Tenant, update_data: dict):
+        """
+        更新租户基础信息
+        """
         model_fields_keys = [x.name for x in tenant._meta.get_fields() if x.name != "id"]
         # 限制不能更新租户ID
         for key, new_value in update_data.items():
@@ -143,8 +145,7 @@ class TenantHandler:
 
         # 租户用户初始化
         data_source_users = data_source_handler.filter_users(
-            data_source_id=data_source.id,
-            username__in=username_list
+            data_source_id=data_source.id, username__in=username_list
         ).values("id", "username")
         with transaction.atomic():
             # 绑定到数据源到租户
