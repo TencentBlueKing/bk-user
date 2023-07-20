@@ -41,6 +41,10 @@ def shell(request):
         # 静态文件加载目录
         "BK_STATIC_URL": settings.BUILD_STATIC,
         "USERNAME": request.user.username,
+        # 组件
+        "BK_COMPONENT_API_URL": settings.BK_COMPONENT_API_URL,
+        # Cookie Domain
+        "BK_DOMAIN": settings.BK_DOMAIN,
     }
 
     return context

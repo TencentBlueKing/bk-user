@@ -14,7 +14,7 @@
         <i class="user-icon icon-user-logo-i"></i>
         <span class="title">{{ $t('蓝鲸用户管理') }}</span>
       </h1>
-      <p class="nav-list">
+      <p class="nav-list" v-if="!noAccessAuthData">
         <a
           href="javascript:void(0);"
           :class="$route.name === 'organization' && 'router-link-active'"
@@ -33,6 +33,7 @@
     </div>
     <div class="header-right" data-test-id="list_menuInfo">
       <a
+        v-if="!noAccessAuthData"
         href="javascript:void(0);"
         :class="['recycling-station', { 'recycle': $route.name === 'recycle' }]"
         @click="goTo('recycle')">
@@ -89,6 +90,7 @@
         </ul>
       </bk-dropdown-menu>
       <bk-dropdown-menu
+        v-if="!noAccessAuthData"
         ref="dropdown"
         @show="showUserInfo"
         @hide="hideUserInfo"><bk-icon type="down-shape" />
@@ -128,6 +130,12 @@ import I18n from '@/language/i18n';
 import '../static/blueking-icon/style.css';
 export default {
   name: 'HeaderBox',
+  props: {
+    noAccessAuthData: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
     return {
       showHelpDropdown: false,
@@ -166,6 +174,7 @@ export default {
       }
     },
     goHome() {
+      if (this.noAccessAuthData) return;
       if (this.$route.name === 'organization') {
         location.reload();
       } else {
@@ -238,15 +247,25 @@ export default {
       });
     },
     handleSwitchLocale(val) {
+      const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+      const scriptId = 'jsonp-script';
+      const prevJsonpScript = document.getElementById(scriptId);
+      if (prevJsonpScript) {
+        document.body.removeChild(prevJsonpScript);
+      }
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = `${api}?language=${val}`;
+      script.id = scriptId;
+      document.body.appendChild(script);
+
       Cookies.set('blueking_language', val, {
         expires: 3600,
         path: '/',
-        domain: window.location.hostname
-          .split('.')
-          .slice(-2)
-          .join('.'),
+        domain: window.BK_DOMAIN,
       });
       I18n.locale = val;
+      document.querySelector('html').setAttribute('lang', val);
       window.location.reload();
     },
   },

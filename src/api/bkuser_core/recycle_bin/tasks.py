@@ -23,6 +23,7 @@ from bkuser_core.user_settings.models import Setting
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=function-name-too-long
 @app.task
 def hard_delete_category_related_resource(category_id: int):
     with transaction.atomic():

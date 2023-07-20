@@ -45,6 +45,13 @@ class ResponseHandler(object):
         }
         return JsonResponse(context, status=401)
 
+    def build_403_of_access_permission_response(self, request, message):
+        """
+        处理认证通过但无访问权限
+        """
+        context = {"code": -2, "message": message}
+        return JsonResponse(context, status=403)
+
     def _build_page_401_response_to_platform(self, request):
         """
         Directly redirect to PAAS-LOGIN-PLATFORM

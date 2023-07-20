@@ -9,6 +9,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
 from django.conf.urls import include, url
 from django.http import HttpResponse
 from django.views import i18n as django_i18n_views
@@ -107,3 +108,12 @@ urlpatterns = [
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns  # noqa
 
 urlpatterns += staticfiles_urlpatterns()
+
+# 启用IAM，配置回调地址
+if settings.ENABLE_IAM:
+    from bklogin.bkiam.resource_providers import dispatcher
+
+    # IAM 回调资源
+    urlpatterns += [
+        url(r'^api/v1/iam/resource/$', dispatcher.as_view()),
+    ]

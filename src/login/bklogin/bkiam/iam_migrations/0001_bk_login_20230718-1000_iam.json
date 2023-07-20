@@ -1,0 +1,76 @@
+{
+  "system_id": "bk_login",
+  "operations": [
+    {
+      "operation": "upsert_system",
+      "data": {
+        "id": "bk_login",
+        "name": "统一登录",
+        "name_en": "bk-login",
+        "description": "统一登录是蓝鲸体系统一SaaS和周边系统的认证源",
+        "description_en": "BlueKing login is the authentication source for BlueKing system's SaaS and peripheral systems",
+        "clients": "bk_login",
+        "provider_config": {
+          "host": "http://bk-login-web",
+          "auth": "basic"
+        }
+      }
+    },
+    {
+      "operation": "upsert_resource_type",
+      "data": {
+        "id": "app",
+        "name": "应用",
+        "name_en": "application",
+        "description": "应用是蓝鲸SaaS或蓝鲸体系内的系统/平台",
+        "description_en": "The application refers to the BlueKing SaaS or systems/platforms within the BlueKin ecosystem.",
+        "parents": [],
+        "provider_config": {
+          "path": "/api/v1/iam/resource/"
+        },
+        "version": 1
+      }
+    },
+    {
+      "operation": "upsert_instance_selection",
+      "data": {
+        "id": "app",
+        "name": "蓝鲸应用",
+        "name_en": "app",
+        "resource_type_chain": [
+          {
+            "system_id": "bk_login",
+            "id": "app"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "upsert_action",
+      "data": {
+        "id": "access_app",
+        "name": "应用访问",
+        "name_en": "Access App",
+        "description": "对应用的访问权限",
+        "description_en": "Access rights to the application",
+        "type": "view",
+        "related_resource_types": [
+          {
+            "system_id": "bk_login",
+            "id": "app",
+            "name_alias": "应用",
+            "name_alias_en": "app",
+            "scope": {},
+            "related_instance_selections": [
+              {
+                "system_id": "bk_login",
+                "id": "app"
+              }
+            ]
+          }
+        ],
+        "version": 1
+      }
+    }
+  ]
+}

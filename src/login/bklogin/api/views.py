@@ -12,6 +12,7 @@ specific language governing permissions and limitations under the License.
 from django.views.generic import View
 
 from bklogin.api.constants import ApiErrorCodeEnum, ApiErrorCodeEnumV2, ApiErrorCodeEnumV3
+from bklogin.api.permissions import verify_permission_of_access_app
 from bklogin.api.utils import (
     APIV1FailJsonResponse,
     APIV1OKJsonResponse,
@@ -71,6 +72,12 @@ class CheckLoginViewV2(View):
         is_valid, username, message = validate_bk_token(request.GET)
         if not is_valid:
             return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.PARAM_NOT_VALID.value)
+
+        # bk_token有效情况下，鉴权用户是否有应用访问权限
+        is_allowed, message = verify_permission_of_access_app(request, username)
+        if not is_allowed:
+            return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.ACCESS_PERMISSION_DENIED.value)
+
         return APIV2OKJsonResponse("user authentication succeeded", data={"bk_username": username})
 
 
@@ -87,6 +94,11 @@ class UserViewV2(View):
             username = request.GET.get("bk_username")
             if not is_from_esb or not username:
                 return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.PARAM_NOT_VALID.value)
+        else:
+            # bk_token有效情况下，鉴权用户是否有应用访问权限
+            is_allowed, message = verify_permission_of_access_app(request, username)
+            if not is_allowed:
+                return APIV2FailJsonResponse(message, code=ApiErrorCodeEnumV2.ACCESS_PERMISSION_DENIED.value)
 
         # 获取用户数据
         ok, message, data = usermgr.get_user(username, "v2")
