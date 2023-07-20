@@ -19,7 +19,7 @@
           @keydown.up="selectUp"
           @keydown.down="selectDown"
           @keydown.enter="selectEnter" />
-        <bk-icon type="plus" @click="() => $emit('addDirectory')" />
+        <bk-icon type="plus" v-bk-tooltips.top="$t('新建目录')" class="top-middle" @click="() => $emit('addDirectory')" />
       </div>
       <i v-show="!searchKey && !hasSelected" class="icon icon-user-search"></i>
       <i v-show="searchKey && !hasSelected" class="bk-icon icon-close-circle-shape" @click="closeSearch"></i>

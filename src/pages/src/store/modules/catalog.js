@@ -47,7 +47,8 @@ export default {
 
     // 获取数据更新记录
     ajaxGetUpdateRecord(_context, params, config = {}) {
-      const url = `/api/v1/web/sync_tasks/?page=${params.page}&page_size=${params.page_size}`;
+      const { categoryId, page, pageSize } = params;
+      const url = `/api/v1/web/sync_tasks/?category_id=${categoryId}&page=${page}&page_size=${pageSize}`;
       return http.get(url, config);
     },
 

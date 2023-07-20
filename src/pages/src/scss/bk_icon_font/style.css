@@ -1,22 +1,11 @@
-/**
-* by making 蓝鲸智云-用户管理(Bk-User) available.
-* Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
-* Licensed under the MIT License (the "License");
-* you may not use this file except in compliance with the License. You may obtain a copy of the License at
-* http://opensource.org/licenses/MIT
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and limitations under the License.
-*/
 @font-face {
-  font-family: 'user';
-  src: url('fonts/iconcool.svg#iconcool') format('svg'),
-    url('fonts/iconcool.ttf') format('truetype'),
-    url('fonts/iconcool.woff') format('woff'),
-    url('fonts/iconcool.eot?#iefix') format('embedded-opentype');
-  font-weight: normal;
-  font-style: normal;
+	font-family: "user";
+	src: url("fonts/iconcool.svg#iconcool") format("svg"),
+url("fonts/iconcool.ttf") format("truetype"),
+url("fonts/iconcool.woff") format("woff"),
+url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
+    font-weight: normal;
+    font-style: normal;
 }
 
 .user-icon {
@@ -29,20 +18,95 @@
   text-transform: none;
   line-height: 1;
   text-align: center;
-
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-info-i:before {
+	content: "\e105";
+}
+.icon-dobble-arrow-i:before {
+	content: "\e108";
+}
 .icon-user-logo-i:before {
-  content: '\e5e5';
+	content: "\e102";
 }
-
 .icon-root-node-i:before {
-  content: '\eb8f';
+	content: "\e103";
 }
-
 .icon-duihao-i:before {
-  content: '\ed44';
+	content: "\e104";
+}
+.icon-unfilled-i:before {
+	content: "\e106";
+}
+.icon-todo-i:before {
+	content: "\e107";
+}
+.icon-loading-i:before {
+	content: "\e109";
+}
+.icon-add-hollow:before {
+	content: "\e10a";
+}
+.icon-close-fill:before {
+	content: "\e10b";
+}
+.icon-organization-fill:before {
+	content: "\e10d";
+}
+.icon-personal-user:before {
+	content: "\e10c";
+}
+.icon-outline-list:before {
+	content: "\e10e";
+}
+.icon-duihao-2:before {
+	content: "\e10f";
+}
+.icon-file-close:before {
+	content: "\e110";
+}
+.icon-info-fill:before {
+	content: "\e111";
+}
+.icon-user-directory:before {
+	content: "\e113";
+}
+.icon-homepage:before {
+	content: "\e114";
+}
+.icon-arrow-left:before {
+	content: "\e117";
+}
+.icon-arrow-right:before {
+	content: "\e116";
+}
+.icon-minus-fill:before {
+	content: "\e119";
+}
+.icon-plus-fill:before {
+	content: "\e118";
+}
+.icon-warning:before {
+	content: "\e115";
+}
+.icon-abnormal:before {
+	content: "\e11b";
+}
+.icon-more:before {
+	content: "\e11c";
+}
+.icon-unknown:before {
+	content: "\e11a";
+}
+.icon-normal:before {
+	content: "\e11d";
+}
+.icon-drag:before {
+	content: "\e11e";
+}
+.icon-lishijilu:before {
+	content: "\e11f";
 }

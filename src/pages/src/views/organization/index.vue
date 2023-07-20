@@ -80,135 +80,165 @@
           </div>
         </div>
         <!-- 目录配置未完成 -->
-        <bk-exception
-          v-if="!currentParam.item.configured && !currentParam.item.parent"
-          type="empty" scene="page">
-          <p style="font-size: 20px">{{$t('目录配置未完成')}}</p>
-          <bk-link
-            theme="primary"
-            class="empty-subtitle"
-            @click="handleClickConfig">{{ $t('继续配置') }}</bk-link>
-        </bk-exception>
-        <!-- 正常分页查询有数据，或者筛选筛选、搜索无数据 -->
+        <template v-if="!showSyncDetails">
+          <bk-exception
+            v-if="!currentParam.item.configured && !currentParam.item.parent"
+            type="empty" scene="page">
+            <p style="font-size: 20px">{{$t('目录配置未完成')}}</p>
+            <bk-link
+              theme="primary"
+              class="empty-subtitle"
+              @click="handleClickConfig">{{ $t('继续配置') }}</bk-link>
+          </bk-exception>
+          <!-- 正常分页查询有数据，或者筛选筛选、搜索无数据 -->
+          <div class="staff-info-wrapper" v-else>
+            <!-- 表格上方的操作栏，组织树搜索结果为非组织时不渲染 -->
+            <div class="table-actions" v-if="noSearchOrSearchDepartment">
+              <!-- 本地用户目录 -->
+              <template v-if="currentCategoryType === 'local'">
+                <div class="table-actions-left-container local-type" data-test-id="list_operationUser">
+                  <!-- 添加成员 -->
+                  <bk-dropdown-menu
+                    ref="dropdownAdd" class="king-dropdown-menu"
+                    :disabled="basicLoading" @show="isDropdownShowAdd = true"
+                    @hide="isDropdownShowAdd = false">
+                    <bk-button slot="dropdown-trigger" class="king-button">
+                      <span class="more-action">{{$t('添加用户')}}</span>
+                      <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowAdd }]"></i>
+                    </bk-button>
+                    <ul class="bk-dropdown-list" slot="dropdown-content">
+                      <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户1')}}</a></li>
+                      <li><a href="javascript:;" @click="pullUserFn">{{$t('拉取已有用户')}}</a></li>
+                    </ul>
+                  </bk-dropdown-menu>
+                  <!-- 更多操作 -->
+                  <bk-dropdown-menu
+                    ref="dropdownMore" class="king-dropdown-menu"
+                    :disabled="basicLoading" @show="isDropdownShowMore = true"
+                    @hide="isDropdownShowMore = false">
+                    <bk-button slot="dropdown-trigger" class="king-button">
+                      <span class="more-action">{{$t('更多操作')}}</span>
+                      <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowMore }]"></i>
+                    </bk-button>
+                    <ul class="bk-dropdown-list" slot="dropdown-content">
+                      <li>
+                        <a
+                          href="javascript:;" :class="{ 'disabled': !isClick }"
+                          @click="handleSetDepartment">{{$t('设置所在组织')}}
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="javascript:;" :class="{ 'disabled': !isClick }"
+                          @click="deleteProfiles">{{$t('批量删除')}}
+                        </a>
+                      </li>
+                    </ul>
+                  </bk-dropdown-menu>
+                  <!-- 仅显示本级组织成员 -->
+                  <p class="filter-current">
+                    <bk-checkbox
+                      class="king-checkbox" :checked="isSearchCurrentDepartment"
+                      @change="changeSearchLevel">
+                    </bk-checkbox>
+                    <span class="text text-overflow-hidden" v-bk-overflow-tips @click="changeSearchLevel">
+                      {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
+                    </span>
+                  </p>
+                </div>
+                <div class="table-actions-right-container">
+                  <!-- 用户搜索框 -->
+                  <bk-search-select
+                    class="king-input-search"
+                    style="width: 400px;"
+                    :placeholder="$t('输入用户名/全名，按Enter搜索')"
+                    :data="searchFilterList"
+                    :show-condition="false"
+                    v-model="tableSearchKey"
+                    @change="handleTableSearch"
+                    @input-click.once="handleSearchList" />
+                </div>
+              </template>
+              <!-- 非本地用户目录 -->
+              <template v-else>
+                <div class="table-actions-left-container">
+                  <!-- 用户搜索框 -->
+                  <bk-search-select
+                    class="king-input-search"
+                    style="width: 400px;margin-right: 20px;"
+                    :placeholder="$t('输入用户名/全名，按Enter搜索')"
+                    :data="searchFilterList"
+                    :show-condition="false"
+                    v-model="tableSearchKey"
+                    @change="handleTableSearch"
+                    @input-click.once="handleSearchList" />
+                  <!-- 仅显示本级组织成员 -->
+                  <p class="filter-current">
+                    <bk-checkbox
+                      class="king-checkbox" :checked="isSearchCurrentDepartment"
+                      @change="changeSearchLevel"></bk-checkbox>
+                    <span class="text" @click="changeSearchLevel">
+                      {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
+                    </span>
+                  </p>
+                </div>
+                <div class="table-actions-right-container">
+                  <bk-button
+                    class="sync-details"
+                    v-if="currentParam.item.type "
+                    :text="true"
+                    title="primary"
+                    @click="handleClickUpdate">
+                    <i class="user-icon icon-lishijilu"></i>
+                    {{ $t('数据更新记录') }}
+                  </bk-button>
+                </div>
+              </template>
+            </div>
+            <div
+              :class="['department-staff-info',{ 'set-height': !userMessage.userInforList.length && !basicLoading,
+                                                 'search-user': !noSearchOrSearchDepartment }]">
+              <!-- table表格 用户信息 -->
+              <UserTable
+                v-bkloading="{ isLoading: basicLoading, zIndex: 0 }"
+                :user-message="userMessage"
+                :is-empty-search="isEmptySearch"
+                :is-table-data-error="isTableDataError"
+                :is-table-data-empty="isTableDataEmpty"
+                :fields-list="fieldsList"
+                :pagination="paginationConfig"
+                :timer-map="timerMap"
+                :status-map="statusMap"
+                :is-click.sync="isClick"
+                @handlePageChange="handlePageChange"
+                @handlePageLimitChange="handlePageLimitChange"
+                @handleSetFieldList="handleSetFieldList"
+                @viewDetails="viewDetails"
+                @updateTableData="updateTableData"
+                @updateHeardList="updateHeardList"
+                @isClickList="isClickList"
+                @deleteProfile="deleteProfile"
+                @handleRefresh="getTableData"
+                @handleClickEmpty="handleClickEmpty" />
+            </div>
+          </div>
+        </template>
         <div class="staff-info-wrapper" v-else>
-          <!-- 表格上方的操作栏，组织树搜索结果为非组织时不渲染 -->
-          <div class="table-actions" v-if="noSearchOrSearchDepartment">
-            <!-- 本地用户目录 -->
-            <template v-if="currentCategoryType === 'local'">
-              <div class="table-actions-left-container local-type" data-test-id="list_operationUser">
-                <!-- 添加成员 -->
-                <bk-dropdown-menu
-                  ref="dropdownAdd" class="king-dropdown-menu"
-                  :disabled="basicLoading" @show="isDropdownShowAdd = true"
-                  @hide="isDropdownShowAdd = false">
-                  <bk-button slot="dropdown-trigger" class="king-button">
-                    <span class="more-action">{{$t('添加用户')}}</span>
-                    <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowAdd }]"></i>
-                  </bk-button>
-                  <ul class="bk-dropdown-list" slot="dropdown-content">
-                    <li><a href="javascript:;" @click="addUserFn">{{$t('新增用户1')}}</a></li>
-                    <li><a href="javascript:;" @click="pullUserFn">{{$t('拉取已有用户')}}</a></li>
-                  </ul>
-                </bk-dropdown-menu>
-                <!-- 更多操作 -->
-                <bk-dropdown-menu
-                  ref="dropdownMore" class="king-dropdown-menu"
-                  :disabled="basicLoading" @show="isDropdownShowMore = true"
-                  @hide="isDropdownShowMore = false">
-                  <bk-button slot="dropdown-trigger" class="king-button">
-                    <span class="more-action">{{$t('更多操作')}}</span>
-                    <i :class="['bk-icon icon-angle-down',{ 'icon-flip': isDropdownShowMore }]"></i>
-                  </bk-button>
-                  <ul class="bk-dropdown-list" slot="dropdown-content">
-                    <li>
-                      <a
-                        href="javascript:;" :class="{ 'disabled': !isClick }"
-                        @click="handleSetDepartment">{{$t('设置所在组织')}}
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="javascript:;" :class="{ 'disabled': !isClick }"
-                        @click="deleteProfiles">{{$t('批量删除')}}
-                      </a>
-                    </li>
-                  </ul>
-                </bk-dropdown-menu>
-                <!-- 仅显示本级组织成员 -->
-                <p class="filter-current">
-                  <bk-checkbox
-                    class="king-checkbox" :checked="isSearchCurrentDepartment"
-                    @change="changeSearchLevel">
-                  </bk-checkbox>
-                  <span class="text text-overflow-hidden" v-bk-overflow-tips @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
-                  </span>
-                </p>
-              </div>
-              <div class="table-actions-right-container">
-                <!-- 用户搜索框 -->
-                <bk-search-select
-                  class="king-input-search"
-                  style="width: 400px;"
-                  :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                  :data="searchFilterList"
-                  :show-condition="false"
-                  v-model="tableSearchKey"
-                  @change="handleTableSearch"
-                  @input-click.once="handleSearchList" />
-              </div>
-            </template>
-            <!-- 非本地用户目录 -->
-            <template v-else>
-              <div class="table-actions-left-container">
-                <!-- 用户搜索框 -->
-                <bk-search-select
-                  class="king-input-search"
-                  style="width: 400px;margin-right: 20px;"
-                  :placeholder="$t('输入用户名/中文名，按Enter搜索')"
-                  :data="searchFilterList"
-                  :show-condition="false"
-                  v-model="tableSearchKey"
-                  @change="handleTableSearch"
-                  @input-click.once="handleSearchList" />
-                <!-- 仅显示本级组织成员 -->
-                <p class="filter-current">
-                  <bk-checkbox
-                    class="king-checkbox" :checked="isSearchCurrentDepartment"
-                    @change="changeSearchLevel"></bk-checkbox>
-                  <span class="text" @click="changeSearchLevel">
-                    {{$t('仅显示本级组织成员') + `(${handleTabData.currentNumber})`}}
-                  </span>
-                </p>
-              </div>
-            </template>
-          </div>
-          <div
-            :class="['department-staff-info',{ 'set-height': !userMessage.userInforList.length && !basicLoading,
-                                               'search-user': !noSearchOrSearchDepartment }]">
-            <!-- table表格 用户信息 -->
-            <UserTable
-              v-bkloading="{ isLoading: basicLoading, zIndex: 0 }"
-              :user-message="userMessage"
-              :is-empty-search="isEmptySearch"
-              :is-table-data-error="isTableDataError"
-              :is-table-data-empty="isTableDataEmpty"
-              :fields-list="fieldsList"
-              :pagination="paginationConfig"
-              :timer-map="timerMap"
-              :status-map="statusMap"
-              :is-click.sync="isClick"
-              @handlePageChange="handlePageChange"
-              @handlePageLimitChange="handlePageLimitChange"
-              @handleSetFieldList="handleSetFieldList"
-              @viewDetails="viewDetails"
-              @updateTableData="updateTableData"
-              @updateHeardList="updateHeardList"
-              @isClickList="isClickList"
-              @deleteProfile="deleteProfile"
-              @handleRefresh="getTableData"
-              @handleClickEmpty="handleClickEmpty" />
-          </div>
+          <bk-button
+            class="sync-details"
+            v-if="currentParam.item.type"
+            :text="true"
+            title="primary"
+            @click="showSyncDetails = false">
+            <i class="user-icon icon-arrow-left"></i>
+            {{ $t('返回上一页') }}
+          </bk-button>
+          <DataUpdate
+            :update-list="dataUpdateList"
+            :pagination="dataUpdatePagination"
+            :table-loading="dataUpdateLoading"
+            @dataUpdatePageChange="dataUpdatePageChange"
+            @dateUpdatePageLimit="dateUpdatePageLimit" />
         </div>
         <!-- 弹窗操作 -->
         <div class="operation-wrapper">
@@ -352,6 +382,7 @@ import LocalSet from '../catalog/operation/LocalSet';
 import RemoteAdd from '../catalog/operation/RemoteAdd';
 import RemoteSet from '../catalog/operation/RemoteSet';
 import OperationConfig from '@/components/organization/OperationConfig';
+import DataUpdate from '../catalog/dataUpdate.vue';
 
 export default {
   name: 'OrganizationIndex',
@@ -369,6 +400,7 @@ export default {
     RemoteAdd,
     RemoteSet,
     OperationConfig,
+    DataUpdate,
   },
   mixins: [mixin],
   data() {
@@ -485,6 +517,15 @@ export default {
       currentNode: null,
       // 回收保留天数
       retentionDays: null,
+      // 数据更新记录配置
+      showSyncDetails: false,
+      dataUpdateLoading: false,
+      dataUpdateList: [],
+      dataUpdatePagination: {
+        current: 1,
+        count: 1,
+        limit: 10,
+      },
     };
   },
   computed: {
@@ -687,6 +728,7 @@ export default {
     async initRtxList(id) {
       try {
         this.basicLoading = true;
+        this.showSyncDetails = false;
         const params = {
           id,
           pageSize: this.paginationConfig.limit,
@@ -734,6 +776,7 @@ export default {
 
       try {
         this.basicLoading = true;
+        this.showSyncDetails = false;
         let id = '';
         if (this.treeSearchResult && this.treeSearchResult.groupType === 'department') {
           id = this.treeSearchResult.id;
@@ -836,13 +879,13 @@ export default {
     handleClickEmpty() {
       this.tableSearchKey = [];
       this.checkSearchKey = '';
-      this.getTableData();
+      this.handleTableData();
     },
     // 搜索table
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
       if (!list.length) return this.handleTableData();
-      const valueList = [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`];
+      const valueList = [`category_id=${this.currentCategoryId}`];
       let key = '';
       list.forEach((item) => {
         const value = [];
@@ -1085,6 +1128,7 @@ export default {
     async getProfileById() {
       try {
         this.basicLoading = true;
+        this.showSyncDetails = false;
         const res = await this.$store.dispatch('organization/getProfileById', { id: this.treeSearchResult.id });
         const searchList = [res.data];
         this.filterUserData(searchList);
@@ -1818,6 +1862,33 @@ export default {
     },
     updateScroll() {
       this.currentParam.item.showOption = false;
+    },
+    // 更新数据记录
+    async handleClickUpdate() {
+      try {
+        this.showSyncDetails = true;
+        this.dataUpdateLoading = true;
+        const params = {
+          categoryId: this.currentCategoryId,
+          page: this.dataUpdatePagination.current,
+          pageSize: this.dataUpdatePagination.limit,
+        };
+        const res = await this.$store.dispatch('catalog/ajaxGetUpdateRecord', params);
+        this.dataUpdateList = res.data.results;
+        this.dataUpdatePagination.count = res.data.count;
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        this.dataUpdateLoading = false;
+      }
+    },
+    dataUpdatePageChange(page) {
+      this.dataUpdatePagination.current = page;
+      this.handleClickUpdate();
+    },
+    dateUpdatePageLimit(limit) {
+      this.dataUpdatePagination.limit = limit;
+      this.handleClickUpdate();
     },
   },
 };
