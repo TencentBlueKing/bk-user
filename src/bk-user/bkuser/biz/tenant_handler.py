@@ -21,40 +21,45 @@ logger = logging.getLogger(__name__)
 
 
 class TenantHandler:
-    def _generate_uuid(self):
+    def _generate_uuid(self) -> str:
         return str(uuid.uuid1())
 
-    def _is_existed(self, tenant_id: str) -> bool:
+    def _is_exist(self, tenant_id: str) -> bool:
         return Tenant.objects.filter(id=tenant_id).exists()
 
-    def create_tenant(self, tenant: dict) -> Tenant:
+    def create_tenant(self, base_tenant_info: dict) -> Tenant:
         """
         创建租户
         """
         try:
+            logger.info(f"Creating Tenant<{base_tenant_info['id']}-{base_tenant_info['name']}>")
             instance = Tenant.objects.create(
-                id=tenant["id"],
-                name=tenant["name"],
-                enabled_user_count_display=tenant["enabled_user_count_display"],
-                logo=tenant.get("logo", ""),
+                id=base_tenant_info["id"],
+                name=base_tenant_info["name"],
+                enabled_user_count_display=base_tenant_info["enabled_user_count_display"],
+                logo=base_tenant_info.get("logo", ""),
             )
             return instance
         except Exception as e:
-            logger.exception(f"Creating Tenant<{tenant['id']}-{tenant['name']}> Failed, exception:{e}")
+            logger.exception(
+                f"Creating Tenant<{base_tenant_info['id']}-{base_tenant_info['name']}> Failed, exception:{e}")
             raise error_codes.CREATE_TENANT_FAILED
 
     def data_source_bind_tenant(self, tenant_id: str, data_source_id: int, is_init=False):
-        if not is_init and not self._is_existed(tenant_id):
+        if not is_init and not self._is_exist(tenant_id):
+            logger.error(f"Tenant<{tenant_id}> is not existed")
             raise error_codes.TENANT_NOT_EXIST
-        return TenantDataSourceRelationShip.objects.create(tenant_id=tenant_id, data_source_id=data_source_id)
+        logger.info(f"Binding data_source<{data_source_id}> to tenant<{tenant_id}>")
+        TenantDataSourceRelationShip.objects.create(tenant_id=tenant_id, data_source_id=data_source_id)
 
     def data_source_users_bind_tenant(
-        self, tenant_id: str, data_source_users: list[dict], is_init=False
+            self, tenant_id: str, data_source_users: list[dict], is_init=False
     ) -> list[TenantUser]:
         """
         数据源用户绑定租户
         """
-        if not is_init and not self._is_existed(tenant_id):
+        if not is_init and not self._is_exist(tenant_id):
+            logger.error(f"Tenant<{tenant_id}> is not existed")
             raise error_codes.TENANT_NOT_EXIST
         tenant_user_objects: list[TenantUser] = [
             TenantUser(
@@ -72,11 +77,12 @@ class TenantHandler:
             logger.exception(f"Binding user to Tenant<{tenant_id}> failed, exception:{e}")
             raise error_codes.BIND_TENANT_USER_FAILED
 
-    def update_tenant_managers(self, tenant_id: str, users: list[str], is_init=False) -> list[TenantManager]:
+    def update_tenant_managers(self, tenant_id: str, users: list[uuid], is_init=False) -> list[TenantManager]:
         """
         更新租户管理员
         """
-        if not is_init and not self._is_existed(tenant_id):
+        if not is_init and not self._is_exist(tenant_id):
+            logger.error(f"Tenant<{tenant_id}> is not existed")
             raise error_codes.TENANT_NOT_EXIST
 
         tenant_users = TenantUser.objects.filter(id__in=users, tenant_id=tenant_id).values_list("id", flat=True)
@@ -87,7 +93,7 @@ class TenantHandler:
 
         # 新旧租户管理员比对
         current_managers = TenantManager.objects.filter(tenant_user_id__in=users, tenant_id=tenant_id)
-
+        # 移除管理员
         manager_to_del = set(current_managers) - set(users)
         if manager_to_del:
             TenantManager.objects.filter(tenant_id=tenant_id, tenant_user_id__in=manager_to_del).delete()
@@ -105,12 +111,12 @@ class TenantHandler:
                 logger.exception(f"update managers for tenant<{tenant_id}> failed, exception: {e}")
                 raise error_codes.UPDATE_TENANT_MANAGERS_FAILED
 
-    def update_tenant(self, tenant: Tenant, update_data: dict):
+    def update_tenant(self, tenant: Tenant, update_data: dict) -> Tenant:
         """
         更新租户基础信息
         """
-        model_fields_keys = [x.name for x in tenant._meta.get_fields() if x.name != "id"]
         # 限制不能更新租户ID
+        model_fields_keys = [x.name for x in tenant._meta.get_fields() if x.name != "id"]
         for key, new_value in update_data.items():
             if key not in model_fields_keys:
                 continue
@@ -134,7 +140,9 @@ class TenantHandler:
             # 更新初始化后的数据源密码配置
             password_settings: dict = init_tenant_data["password_settings"]
             data_source_handler.update_plugin_config(
-                instance=data_source, update_data=password_settings, namespace="password"
+                instance=data_source,
+                update_settings=password_settings,
+                namespace="password"
             )
 
         with transaction.atomic():

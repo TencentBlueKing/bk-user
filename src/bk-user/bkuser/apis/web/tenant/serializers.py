@@ -24,6 +24,9 @@ class TenantManagersCreateInputSLZ(serializers.Serializer):
 class DataSourcePasswordInitInputSLZ(serializers.Serializer):
     init_password = serializers.CharField(required=True, help_text="初始化密码")
     init_password_method = serializers.CharField(required=True, help_text="初始化密码方式")
+    init_notify_method = serializers.ListField(required=True, help_text="账号初始化通知方式")
+    init_mail_config = serializers.JSONField(required=True, help_text="账号初始化通知邮件模板")
+    init_sms_config = serializers.JSONField(required=True, help_text="账号初始化通知短信模板")
 
 
 class TenantCreateInputSlZ(serializers.Serializer):

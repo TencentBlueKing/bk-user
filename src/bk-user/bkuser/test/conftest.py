@@ -31,28 +31,28 @@ def default_local_data_source(default_tenant) -> DataSource:
 def default_local_data_source_users(default_local_data_source):
     fake_users = [
         {
-            "username": "fake_user_1",
+            "username": "tenant_user_1",
             "telephone": "12345678901",
-            "email": "fake_user_1@qq.com",
-            "display_name": "fake_user_1",
+            "email": "tenant_user_1@qq.com",
+            "display_name": "tenant_user_1",
         },
         {
-            "username": "fake_user_2",
+            "username": "tenant_user_2",
             "telephone": "12345678902",
-            "email": "fake_user_2@qq.com",
-            "display_name": "fake_user_2",
+            "email": "tenant_user_2@qq.com",
+            "display_name": "tenant_user_2",
         },
         {
-            "username": "fake_user_3",
+            "username": "tenant_user_3",
             "telephone": "12345678903",
-            "email": "fake_user_3@qq.com",
-            "display_name": "fake_user_3",
+            "email": "tenant_user_3@qq.com",
+            "display_name": "tenant_user_3",
         },
         {
-            "username": "fake_user_4",
+            "username": "tenant_user_4",
             "telephone": "12345678904",
-            "email": "fake_user_4@qq.com",
-            "display_name": "fake_user_4",
+            "email": "tenant_user_4@qq.com",
+            "display_name": "tenant_user_4",
         },
     ]
     username_list = data_source_handler.create_data_source_users(instance=default_local_data_source, users=fake_users)
