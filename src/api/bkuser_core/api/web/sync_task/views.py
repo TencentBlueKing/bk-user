@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 from django.conf import settings
 from rest_framework import generics
 
-from .serializers import SyncTaskOutputSLZ, SyncTaskProcessOutputSLZ
+from .serializers import SyncTaskInputSLZ, SyncTaskOutputSLZ, SyncTaskProcessOutputSLZ
 from bkuser_core.api.web.utils import get_operator
 from bkuser_core.api.web.viewset import CustomPagination
 from bkuser_core.bkiam.constants import IAMAction
@@ -27,8 +27,15 @@ class SyncTaskListApi(generics.ListAPIView):
 
     def get_queryset(self):
         operator = get_operator(self.request)
+        slz = SyncTaskInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
         queryset = SyncTask.objects.all().order_by("-create_time")
+        category_id = data.get("category_id")
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+
         if settings.ENABLE_IAM:
             fs = Permission().make_filter_of_category(operator, IAMAction.VIEW_CATEGORY)
             queryset = queryset.filter(fs)
