@@ -22,6 +22,10 @@ class CategoryForSyncTaskSerializer(serializers.ModelSerializer):
         fields = ("id", "display_name")
 
 
+class SyncTaskInputSLZ(serializers.Serializer):
+    category_id = serializers.IntegerField(required=False)
+
+
 class SyncTaskOutputSLZ(serializers.Serializer):
     id = serializers.CharField()
     category = CategoryForSyncTaskSerializer()
