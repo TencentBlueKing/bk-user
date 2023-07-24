@@ -22,12 +22,12 @@
         <a
           href="javascript:;"
           :class="['right', { 'delete-disable': !node.configured }]"
-          v-if="node.type === 'mad' || node.type === 'ldap'"
+          v-if="node.type !== 'local'"
           v-bk-tooltips.left="$t('目录未完成配置，无法操作')"
           :disabled="node.configured"
           @click="syncCatalog(node)">{{ $t('同步') }}</a>
         <!-- 导入导出 -->
-        <template v-if="node.type === 'local'">
+        <template v-else>
           <a
             href="javascript:;"
             :class="['right', { 'delete-disable': !node.has_children }]"
@@ -52,7 +52,7 @@
           }]"
           v-bk-tooltips.left="deleteTips"
           :disabled="!deleteDisabled(node)"
-          @click="deleteDepartment(node)">{{ $t('删除') }}</a>
+          @click="() => $emit('deleteDepartment', node)">{{ $t('删除') }}</a>
       </div>
     </div>
     <!-- 导入用户 -->
@@ -100,7 +100,7 @@ export default {
       let text = '';
       if (this.node.default) {
         text = this.$t('默认目录不能被删除');
-      } else if (this.node.activated && this.node.configured) {
+      } else if (this.node.activated) {
         text = this.$t('请先停用，方可删除目录');
       } else if (this.node.has_children) {
         text = this.$t('非空组织不能删除');
@@ -114,10 +114,10 @@ export default {
     },
     deleteDisabled(item) {
       let status = false;
-      if (item.default || (item.activated && item.configured) || item.has_children) {
+      if (item.default || item.activated || item.has_children) {
         status = true;
       }
-      if (item.activated === false && item.has_children) {
+      if (item.activated === false) {
         status = false;
       }
       return status;
@@ -129,6 +129,7 @@ export default {
 <style lang="scss" scoped>
 .operation-config {
   position: relative;
+  line-height: 0px;
   .icon-more {
     width: 26px;
     height: 26px;

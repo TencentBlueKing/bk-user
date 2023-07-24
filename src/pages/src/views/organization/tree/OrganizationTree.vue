@@ -36,7 +36,8 @@
         :tpl="tpl"
         :show-icon="false"
         @on-expanded="handleClickToggle"
-        @on-drag-node="handleDragNode">
+        @on-drag-node="handleDragNode"
+        @async-load-nodes="handleClickToggle">
       </bk-tree>
     </div>
     <!-- 导入用户 -->
@@ -165,14 +166,18 @@ export default {
       this.$emit('handleClickToggle', item);
     },
     tpl(node) {
-      return <div class={node.showBackground ? 'show-background' : 'directory-warpper'}>
+      return <div class={[
+        'node-content',
+        `${node.showBackground ? 'show-background' : 'directory-warpper'}`,
+        { nodeTag: (node.configured && !node.activated && node.type) || (!node.configured && node.type) },
+      ]}>
         {node.type && !node.children.length ? <i class={'hide-icon'} /> : ''}
         {node.display_name ? <i class={['icon user-icon icon-root-node-i', { 'active-icon': node.showBackground }]} />
           : <i class={['icon icon-user-file-close-01', { 'active-icon': node.showBackground }]} />}
         <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
           domPropsInnerHTML={node.display_name || node.name}
           onClick={() => this.$emit('handleClickTreeNode', node, event)} v-bk-overflow-tips></span>
-        <div class="option" v-if={node.type && this.treeSearchResult === null}>
+        {this.treeSearchResult === null ? <div class="option">
           <i ref="more" class={['icon bk-icon icon-more', { 'show-more': node.showBackground }]}
           onClick={() => this.$emit('handleClickOption', node, event, this.treeScrollTop)}></i>
           {(node.configured && !node.activated && node.type)
@@ -202,20 +207,6 @@ export default {
                     </div>
                   </div>
                 : ''}
-              {(node.type === 'mad' || node.type === 'ldap')
-                ? <div class="specific-menu">
-                    <a href="javascript:;"
-                    class={{ 'delete-disable': !node.configured }}
-                    onMouseenter={this.checkSyncTips.bind(this, node)}
-                    onMouseleave={this.closeSyncTips.bind(this, node)}
-                    onClick={this.syncCatalog.bind(this, node)}>
-                    {this.$t('同步')}
-                    </a>
-                    <div class={['tooltip-content', { 'show-tooltip-content': node.showSyncTips }]}>
-                      <p class="inner">{this.$t('目录未完成配置，无法操作')}</p>
-                    </div>
-                  </div>
-                : ''}
               {node.type === 'local'
                 ? <div class="specific-menu">
                     <a href="javascript:;"
@@ -228,7 +219,18 @@ export default {
                       <p class="inner">{this.$t('空目录无需导出')}</p>
                     </div>
                   </div>
-                : ''}
+                : <div class="specific-menu">
+                    <a href="javascript:;"
+                    class={{ 'delete-disable': !node.configured }}
+                    onMouseenter={this.checkSyncTips.bind(this, node)}
+                    onMouseleave={this.closeSyncTips.bind(this, node)}
+                    onClick={this.syncCatalog.bind(this, node)}>
+                    {this.$t('同步')}
+                    </a>
+                    <div class={['tooltip-content', { 'show-tooltip-content': node.showSyncTips }]}>
+                      <p class="inner">{this.$t('目录未完成配置，无法操作')}</p>
+                    </div>
+                  </div>}
             </div>
             <div class="specific-menu">
               <a href="javascript:;"
@@ -243,16 +245,16 @@ export default {
               </div>
             </div>
           </div>
-        </div>
+        </div> : ''}
       </div>;
     },
     getDeleteTips(node) {
       let text = '';
       if (node.default) {
         text = this.$t('默认目录不能被删除');
-      } else if (node.activated || node.configured) {
+      } else if (node.activated) {
         text = this.$t('请先停用，方可删除目录');
-      } else if (node.has_children) {
+      } else if (!node.type && node.has_children) {
         text = this.$t('非空组织不能删除');
       }
       return text;
@@ -285,10 +287,10 @@ export default {
       item.showSwitchTips = false;
     },
     checkDeleteTips(item) {
-      if (item.default || (item.activated && item.configured) || item.has_children) {
+      if (item.default || item.activated || item.has_children) {
         this.$set(item, 'showDeleteTips', true);
       }
-      if (item.activated === false && item.has_children) {
+      if (item.activated === false) {
         this.$set(item, 'showDeleteTips', false);
       }
     },
@@ -300,10 +302,10 @@ export default {
     },
     deleteDisabled(item) {
       let status = false;
-      if (item.default || (item.activated && item.configured) || item.has_children) {
+      if (item.default || item.activated || item.has_children) {
         status = true;
       }
-      if (item.activated === false && item.has_children) {
+      if (item.activated === false) {
         status = false;
       }
       return status;
@@ -381,10 +383,12 @@ export default {
       overflow-y: auto;
       @include scroller($backgroundColor: #e6e9ea, $width: 4px);
       overflow-x: hidden;
+      .node-content.nodeTag {
+        width: calc(100% - 65px);
+      }
       .tree-drag-node {
         .tree-node {
           position: relative;
-          width: calc(100% - 65px);
           padding-left: 3px;
           .node-title {
             width: calc(100% - 40px);
