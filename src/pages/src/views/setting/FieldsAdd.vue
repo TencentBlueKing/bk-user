@@ -17,7 +17,7 @@
           :placeholder="$t('最多不得超过12个字符（6个汉字）')"
           :class="['select-text', { 'input-error': verifyInfor.name, 'disable-input': fieldsInfor.builtin }]"
           :disabled="fieldsInfor.builtin"
-          v-model="fieldsInfor.name"
+          v-model.trim="fieldsInfor.name"
           @blur="verifyInput('name')"
           @focus="hiddenVerify(arguments, 'name')" />
         <i class="icon icon-user-exclamation-circle-shape" v-show="verifyInfor.name"></i>
@@ -37,7 +37,7 @@
           :placeholder="$t('请输入')"
           :class="['select-text', { 'input-error': verifyInfor.englishMark, 'disable-input': !!currentEditorData.key }]"
           :disabled="!!currentEditorData.key"
-          v-model="fieldsInfor.key"
+          v-model.trim="fieldsInfor.key"
           @blur="verifyInput('englishMark')"
           @focus="hiddenVerify(arguments, 'englishMark')" />
         <i class="icon icon-user-exclamation-circle-shape" v-show="verifyInfor.englishMark"></i>

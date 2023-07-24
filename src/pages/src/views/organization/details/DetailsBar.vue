@@ -49,8 +49,10 @@
           </h4>
           <div :class="showUserSetting ? 'mark-width' : 'isHide'">
             <bk-form
+              ref="userSetting"
               :model="userSettingData"
-              form-type="vertical">
+              form-type="vertical"
+              :rules="userSettingRules">
               <bk-form-item
                 class="leader-input"
                 :label="$t('直接上级')"
@@ -99,11 +101,10 @@
                 :required="true"
                 :property="'department_name'"
                 :error-display-type="'normal'">
-                <div class="input-text" @click="showSetDepartments">
-                  <span class="select-text">
-                    {{formatDepartments(initialDepartments)}}
-                  </span>
-                </div>
+                <bk-input
+                  class="input-text"
+                  :value="formatDepartments(initialDepartments)"
+                  @focus="showSetDepartments" />
               </bk-form-item>
               <bk-form-item
                 :label="$t('密码有效期')"
@@ -290,6 +291,15 @@ export default {
           },
         ],
       },
+      userSettingRules: {
+        department_name: [
+          {
+            required: true,
+            message: this.$t('必填项'),
+            trigger: 'change',
+          },
+        ],
+      },
     };
   },
   computed: {
@@ -310,7 +320,7 @@ export default {
           return false;
         }
         fieldInfo.holder = this.$t('请输入');
-        fieldInfo.value = fieldInfo.default;
+        fieldInfo.value = fieldInfo.type === 'multi_enum' ? JSON.parse(fieldInfo.default) : fieldInfo.default;
         fieldInfo.isError = false;
         return true;
       });
@@ -470,8 +480,14 @@ export default {
         if (item.key === 'position' && item.value === '') {
           item.value = null;
         }
+        if (item.type === 'number' && item.key !== 'telephone') {
+          item.value = item.value.toString();
+        }
       });
-      this.$refs.userInfoData.$refs.validateForm.validate().then(() => {
+      Promise.all([
+        this.$refs.userInfoData.$refs.validateForm.validate(),
+        this.$refs.userSetting.validate(),
+      ]).then(() => {
         // 编辑
         if (this.detailsBarInfo.type === 'edit') {
           // 点击保存时，只在样式上隐藏侧边栏，打开loading

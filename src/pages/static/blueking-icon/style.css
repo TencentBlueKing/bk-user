@@ -89,3 +89,18 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-ziduan:before {
 	content: "\e116";
 }
+.icon-down-shape:before {
+	content: "\e117";
+}
+.icon-right-shape:before {
+	content: "\e118";
+}
+.icon-lishijilu:before {
+	content: "\e119";
+}
+.icon-arrow-left:before {
+	content: "\e11a";
+}
+.icon-arrow-right:before {
+	content: "\e11b";
+}
