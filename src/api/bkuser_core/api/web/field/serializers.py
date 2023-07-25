@@ -67,9 +67,10 @@ class DynamicFieldCreateInputSLZ(serializers.ModelSerializer):
 
 
 class DynamicFieldUpdateInputSLZ(serializers.Serializer):
-    display_name = serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
     require = serializers.BooleanField(required=False, default=False)
     unique = serializers.BooleanField(required=False, default=False)
+    editable = serializers.BooleanField(required=False, default=False)
     options = serializers.JSONField(required=False)
     order = serializers.IntegerField(required=False)
     default = serializers.JSONField(required=False)
