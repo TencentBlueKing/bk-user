@@ -57,10 +57,15 @@ class TestTenantHandler:
 
     def test_update_tenant_managers(self, default_tenant, tenant_users):
         assert tenant_users.exists()
-        tenant_user_ids = [str(item) for item in tenant_users.values_list("id", flat=True)]
+        tenant_user_ids = list(tenant_users.values_list("id", flat=True))
         tenant_handler.update_tenant_managers(default_tenant.id, tenant_user_ids)
 
-        assert TenantManager.objects.filter(tenant_id=default_tenant.id, tenant_user_id__in=tenant_users).exists()
+        assert TenantManager.objects.filter(tenant_id=default_tenant.id, tenant_user_id__in=tenant_user_ids).exists()
+        tenant_managers = TenantManager.objects.filter(
+            tenant_id=default_tenant.id,
+            tenant_user_id__in=tenant_user_ids
+        ).values_list("tenant_user_id", flat=True)
+        assert list(tenant_managers) == tenant_user_ids
         assert TenantManager.objects.filter(
             tenant_id=default_tenant.id, tenant_user_id__in=tenant_users
         ).count() == len(tenant_users)

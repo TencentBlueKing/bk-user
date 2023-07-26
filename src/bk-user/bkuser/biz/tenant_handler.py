@@ -17,14 +17,17 @@ from bkuser.biz.data_source_handler import data_source_handler
 from bkuser.common.error_codes import error_codes
 from django.db import transaction
 
+from bkuser.utils.uuid import generate_uuid_str
+
 logger = logging.getLogger(__name__)
 
 
 class TenantHandler:
-    def _generate_uuid(self) -> str:
-        return str(uuid.uuid1())
 
     def _is_exist(self, tenant_id: str) -> bool:
+        """
+        根据提供的租户id，判断租户是否存在
+        """
         return Tenant.objects.filter(id=tenant_id).exists()
 
     def create_tenant(self, base_tenant_info: dict) -> Tenant:
@@ -63,7 +66,7 @@ class TenantHandler:
             raise error_codes.TENANT_NOT_EXIST
         tenant_user_objects: list[TenantUser] = [
             TenantUser(
-                id=self._generate_uuid(),
+                id=generate_uuid_str(),
                 tenant_id=tenant_id,
                 data_source_user_id=user["id"],
                 username=user["username"],
@@ -77,7 +80,7 @@ class TenantHandler:
             logger.exception(f"Binding user to Tenant<{tenant_id}> failed, exception:{e}")
             raise error_codes.BIND_TENANT_USER_FAILED
 
-    def update_tenant_managers(self, tenant_id: str, users: list[uuid], is_init=False) -> list[TenantManager]:
+    def update_tenant_managers(self, tenant_id: str, users: list[str], is_init=False) -> list[TenantManager]:
         """
         更新租户管理员
         """
@@ -86,23 +89,27 @@ class TenantHandler:
             raise error_codes.TENANT_NOT_EXIST
 
         tenant_users = TenantUser.objects.filter(id__in=users, tenant_id=tenant_id).values_list("id", flat=True)
-        not_exist_users = set([str(item) for item in tenant_users]) - set(users)
+        not_exist_users = set(list(tenant_users)) - set(users)
         if not_exist_users:
             logger.error(f"update managers for tenant failed, get not_exist_user. counts: {len(not_exist_users)}")
             raise error_codes.TENANT_USER_NOT_EXIST
 
+        current_managers = TenantManager.objects.filter(
+            tenant_user_id__in=users,
+            tenant_id=tenant_id
+        ).values_list("tenant_user_id", flat=True)
         # 新旧租户管理员比对
-        current_managers = TenantManager.objects.filter(tenant_user_id__in=users, tenant_id=tenant_id)
         # 移除管理员
-        manager_to_del = set(current_managers) - set(users)
+        manager_to_del = list(set(current_managers) - set(users))
         if manager_to_del:
             TenantManager.objects.filter(tenant_id=tenant_id, tenant_user_id__in=manager_to_del).delete()
 
         # 过滤出新管理员
-        new_manager = set(users) - set(tenant_users)
+        new_manager = list(set(users) - set(current_managers))
         if new_manager:
+            logger.info(f"new managers<count:{len(new_manager)}> for tenant<{tenant_id}>")
             tenant_managers_objects: list[TenantManager] = []
-            for manager_id in list(new_manager):
+            for manager_id in new_manager:
                 tenant_managers_objects.append(TenantManager(tenant_id=tenant_id, tenant_user_id=manager_id))
             try:
                 tenant_managers = TenantManager.objects.bulk_create(tenant_managers_objects)

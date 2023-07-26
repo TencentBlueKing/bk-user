@@ -16,13 +16,12 @@ pytestmark = pytest.mark.django_db
 
 
 class TestDataSourceHandler:
-    @pytest.fixture
+
     def test_default_local_data_source(self, default_tenant) -> DataSource:
-        instance = data_source_handler.create_data_source(name="default_local_data_source", owner=default_tenant.id)
+        instance = data_source_handler.create_data_source(name="test_default_local_data_source", owner=default_tenant.id)
         return instance
 
-    @pytest.fixture
-    def test_default_local_data_source_users(self, test_default_local_data_source):
+    def test_default_local_data_source_users(self, default_local_data_source):
         test_users_data = [
             {
                 "username": "fake_user_1",
@@ -50,17 +49,17 @@ class TestDataSourceHandler:
             },
         ]
         username_list = data_source_handler.create_data_source_users(
-            instance=test_default_local_data_source, users=test_users_data
+            instance=default_local_data_source, users=test_users_data
         )
 
         assert username_list == [item["username"] for item in test_users_data]
-        assert DataSourceUser.objects.filter(data_source_id=test_default_local_data_source.id).exists()
-        assert DataSourceUser.objects.filter(data_source_id=test_default_local_data_source.id).count() == len(
+        assert DataSourceUser.objects.filter(data_source_id=default_local_data_source.id).exists()
+        assert DataSourceUser.objects.filter(data_source_id=default_local_data_source.id).count() == len(
             test_users_data
         )
         return [
             {"id": item["id"], "username": item["username"]}
-            for item in DataSourceUser.objects.filter(data_source_id=test_default_local_data_source.id).values(
+            for item in DataSourceUser.objects.filter(data_source_id=default_local_data_source.id).values(
                 "id", "username"
             )
         ]

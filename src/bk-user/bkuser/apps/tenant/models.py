@@ -34,7 +34,7 @@ class TenantDataSourceRelationShip(models.Model):
 
 
 class TenantUser(models.Model):
-    id = models.UUIDField(primary_key=True, verbose_name=_("租用用户ID/蓝鲸账户"))
+    id = models.CharField(primary_key=True, max_length=64, verbose_name=_("租用用户ID/蓝鲸账户"))
     username = models.CharField(max_length=256, verbose_name=_("数据源username"))
     display_name = models.CharField(max_length=256, verbose_name=_("数据源display_name"))
     data_source_user_id = models.IntegerField(verbose_name=_("逻辑外键：数据源用户id"))
@@ -58,7 +58,7 @@ class TenantUser(models.Model):
 
 class TenantManager(models.Model):
     tenant_id = models.CharField(max_length=256, verbose_name="逻辑外键：租户ID")
-    tenant_user_id = models.UUIDField(verbose_name="逻辑外键：租户用户ID")
+    tenant_user_id = models.CharField(max_length=64, verbose_name="逻辑外键：租户用户ID")
 
     class Meta:
         unique_together = ("tenant_id", "tenant_user_id")

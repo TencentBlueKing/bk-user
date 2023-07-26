@@ -21,7 +21,6 @@ class DataSourcePlugin(models.Model):
 
 class DataSource(models.Model):
     name = models.CharField(max_length=256, verbose_name=_("数据源名称"))
-    code = models.CharField(max_length=256)
     status = models.CharField(max_length=256, verbose_name=_("数据源状态"))
     owner = models.CharField(max_length=256, verbose_name=_("归属租户"))
     plugin_id = models.IntegerField(verbose_name=_("数据源插件id"))

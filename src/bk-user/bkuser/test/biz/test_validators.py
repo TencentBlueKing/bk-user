@@ -11,8 +11,9 @@ specific language governing permissions and limitations under the License.
 
 
 import pytest
-from bkuser.apis.web.tenant.validators import validate_id
 from rest_framework.exceptions import ValidationError
+
+from bkuser.biz.validators import validate_tenant_id
 
 pytestmark = pytest.mark.django_db
 
@@ -37,7 +38,7 @@ class TestValidator:
         """
         校验正确的租户ID
         """
-        validate_id(tenant_id)
+        validate_tenant_id(tenant_id)
 
     @pytest.mark.parametrize(
         "tenant_id",
@@ -56,4 +57,4 @@ class TestValidator:
         校验错误的租户ID
         """
         with pytest.raises(ValidationError):
-            validate_id(tenant_id)
+            validate_tenant_id(tenant_id)

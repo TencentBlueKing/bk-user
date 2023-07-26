@@ -8,18 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import random
-import string
+import uuid
+
+from bkuser.utils.uuid import generate_uuid_str
 
 
-def gen_random_str(length):
-    # 必须包含至少一个数字
-    chars = string.ascii_letters + string.digits
-
-    random_chars = [random.choice(chars) for _ in range(length)]
-    if any([c.isdigit() for c in random_chars]):
-        return "".join(random_chars)
-
-    random_chars[0] = random.choice(string.digits)
-    random.shuffle(random_chars)
-    return "".join(random_chars)
+def test_generate_uuid_str():
+    uuid_str = generate_uuid_str()
+    assert uuid_str
+    uuid_object = uuid.UUID(uuid_str)
+    assert type(uuid_object) == uuid.UUID
