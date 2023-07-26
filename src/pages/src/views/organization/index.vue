@@ -867,11 +867,11 @@ export default {
     // 分页查询
     handlePageChange(page) {
       this.paginationConfig.current = page;
-      this.checkSearchKey ? this.handleTableSearch(this.tableSearchKey) : this.handleTableData();
+      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.handleTableData();
     },
     handlePageLimitChange(limit) {
       this.paginationConfig.limit = limit;
-      this.checkSearchKey ? this.handleTableSearch(this.tableSearchKey) : this.handleTableData();
+      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.handleTableData();
     },
     // 选中的用户列表
     isClickList(selection) {
@@ -1779,8 +1779,7 @@ export default {
       } else {
         this.showingPage = param;
         if (update) {
-          this.initData();
-          this.getNodeColor();
+          Promise.all([this.initData(), this.getCatalogList(), this.getNodeColor()]);
         }
       }
     },

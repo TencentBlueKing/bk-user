@@ -8,7 +8,7 @@
   - specific language governing permissions and limitations under the License.
   -->
 <template>
-  <div class="organization-tree-wrapper">
+  <div class="organization-tree-wrapper" ref="treebox">
     <bk-tree
       ref="topTree"
       ext-cls="top-tree"
@@ -119,7 +119,22 @@ export default {
             this.unavailableDirectory.push(item);
           }
         });
+        this.$nextTick(() => {
+          this.topTreeHeight = this.$refs.treebox.offsetHeight - this.$refs.bottomTree.offsetHeight;
+        });
       },
+    },
+    treeSearchResult() {
+      if (this.availableDirectory.length) {
+        this.availableDirectory.forEach((item) => {
+          this.$set(item, 'expanded', true);
+        });
+      } else {
+        this.unavailableDirectory.forEach((item) => {
+          this.isDirectory = true;
+          this.$set(item, 'expanded', true);
+        });
+      }
     },
     treeBoxHeight(val) {
       // 为了避免频繁触发resize函数导致页面卡顿，使用定时器
@@ -177,7 +192,7 @@ export default {
         <span class={node.showBackground ? 'node-title node-selected' : 'node-title'}
           domPropsInnerHTML={node.display_name || node.name}
           onClick={() => this.$emit('handleClickTreeNode', node, event)} v-bk-overflow-tips></span>
-        {this.treeSearchResult === null ? <div class="option">
+        <div class="option">
           <i ref="more" class={['icon bk-icon icon-more', { 'show-more': node.showBackground }]}
           onClick={() => this.$emit('handleClickOption', node, event, this.treeScrollTop)}></i>
           {(node.configured && !node.activated && node.type)
@@ -245,7 +260,7 @@ export default {
               </div>
             </div>
           </div>
-        </div> : ''}
+        </div>
       </div>;
     },
     getDeleteTips(node) {
