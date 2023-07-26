@@ -13,7 +13,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, status
@@ -198,9 +198,9 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
 
         try:
             instance.save()
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("failed to update profile")
-            raise error_codes.SAVE_USER_INFO_FAILED
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception("failed to update profile, exception: %s", e)
+            raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         post_profile_update.send(
             sender=self,
@@ -365,9 +365,9 @@ class ProfileCreateApi(generics.CreateAPIView):
 
         try:
             instance = slz.save()
-        except Exception:
-            logger.exception("failed to save profile")
-            raise error_codes.SAVE_USER_INFO_FAILED
+        except Exception as e:
+            logger.exception("failed to save profile, %s", e)
+            raise error_codes.SAVE_USER_INFO_FAILED.f(failed_message=e)
 
         # 善后工作
         post_profile_create.send(
