@@ -1479,7 +1479,7 @@ export default {
       }
     },
     // 显示对应的子菜单
-    handleClickOption(item, event, scrollTop) {
+    handleClickOption(item, event) {
       event.stopPropagation();
       this.currentParentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
       this.currentNode = event.target.offsetParent.offsetParent.parentNode.parentNode;
@@ -1494,32 +1494,17 @@ export default {
       this.$set(item, 'showOption', true);
       this.$set(item, 'showBackground', true);
       this.$nextTick(() => {
-        const calculateDistance = this.calculate(event.target);
         const next = ((item.activated && item.configured) || item.parent)
           ? event.target.nextElementSibling : event.target.nextElementSibling.nextElementSibling;
-        // next.style.left = `${calculateDistance.getOffsetLeft + 20}px`;
-        next.style.top = `${calculateDistance.getOffsetTop + 30 - scrollTop}px`;
-        const bottomHeight = window.innerHeight - (next.offsetTop - window.pageYOffset) - next.offsetHeight;
-        if (bottomHeight < 0) {
-          next.style.top = `${calculateDistance.getOffsetTop - next.offsetHeight - 8}px`;
+        const dom = event.target;
+        const { top } = dom.getBoundingClientRect();
+        const bottomHeight = window.innerHeight - top - 20;
+        if (bottomHeight < next.clientHeight) {
+          next.style.top = `${top - next.clientHeight - 12}px`;
+        } else  {
+          next.style.top = `${top + 26}px`;
         }
       });
-    },
-    // 计算treeNode面板的位置
-    calculate(currentDom) {
-      const calculateDistance = {
-        getOffsetLeft: 0,
-        getOffsetTop: 0,
-      };
-      calculateDistance.getOffsetLeft = currentDom.offsetLeft;
-      calculateDistance.getOffsetTop = currentDom.offsetTop - this.$refs.treePanel.scrollTop;
-      let currentParent = currentDom.offsetParent;
-      while (currentParent !== null) {
-        calculateDistance.getOffsetLeft += currentParent.offsetLeft;
-        calculateDistance.getOffsetTop += currentParent.offsetTop;
-        currentParent = currentParent.offsetParent;
-      }
-      return calculateDistance;
     },
     // 点击空白处 ，关闭子菜单
     hiddenMenu(e) {
