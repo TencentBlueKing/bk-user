@@ -14,7 +14,8 @@ from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, Generator, List
 
 import phonenumbers
-from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.validators import EmailValidator
 from django.utils.translation import ugettext_lazy as _
 
 from .exceptions import ParseFailedException
@@ -209,9 +210,9 @@ class PhoneNumberParser(CellParser):
             try:
                 logger.debug("use country_code:CN to parse")
                 pn = phonenumbers.parse(raw_content, "CN")
-                # phonenumbers库在验证号码的时候 过短也会解析为有效号码，所以这里先简单做个过短的校验
-                if len(str(pn.national_number)) < 11:
-                    raise ParseFailedException(field_name=self.name, reason=_("The telephone was too short to parse."))
+                # phonenumbers库在验证号码的时：过短会解析为有效号码，超过250的字节才算超长=》所以这里需要显式做中国号码的长度校验
+                if len(str(pn.national_number)) != 11:
+                    raise ParseFailedException(field_name=self.name, reason=_("{} 不符合长度要求").format(raw_content))
 
             except Exception as e:
                 raise ParseFailedException(field_name=self.name, reason=_("{}".format(e)))
@@ -245,10 +246,10 @@ class EmailCellParser(CellParser):
     name = "email"
 
     def parse(self, raw_content: str) -> dict:
-        # 正则表达式来匹配电子邮件的格式
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-
-        if re.match(pattern, raw_content):
-            return {self.name: raw_content}
-        else:
+        email_validator = EmailValidator()
+        try:
+            email_validator(raw_content)
+        except ValidationError as e:
+            logger.debug("failed to parse email: {}".format(e))
             raise ParseFailedException(field_name=self.name, reason=_("{} 不符合格式要求").format(raw_content))
+        return {self.name: raw_content}
