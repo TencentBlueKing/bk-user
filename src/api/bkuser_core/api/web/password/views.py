@@ -63,9 +63,9 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
         # 1. get profile by email
         try:
             profile = Profile.objects.get(email=email)
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             """吞掉异常，保证不能判断出邮箱是否存在"""
-            logger.exception("failed to get profile by email<%s>", email)
+            logger.exception("failed to get profile by email<%s>, exception: %s", email, e)
             return Response(data={})
 
         # 用户状态校验
@@ -77,7 +77,7 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
             logger.error(
                 error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
             )
-            return Response(data={})
+            raise error_codes.USER_IS_ABNORMAL.f(status=profile.status)
 
         # FIXME:需要check是否有频率限制，否则会对用户有骚扰 send_password_by_email
         token_holder = ProfileTokenHolder.objects.create(profile=profile)
@@ -235,7 +235,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
                 logger.error(
                     error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
                 )
-                return Response(data={})
+                raise error_codes.USER_IS_ABNORMAL.f(status=profile.status)
 
         except Profile.DoesNotExist:
             logger.exception(
@@ -244,7 +244,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
             raise error_codes.USER_DOES_NOT_EXIST
 
         except Profile.MultipleObjectsReturned:
-            logger.exception("this telephone had bound to multi profiles", input_telephone, input_telephone)
+            logger.exception("this telephone<%s> had bound to multi profiles", input_telephone)
             raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
 
         # 生成verification_code_token
