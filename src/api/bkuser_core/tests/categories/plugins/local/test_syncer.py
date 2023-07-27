@@ -62,8 +62,8 @@ class TestExcelSyncer:
             (
                 ["A", "B", "C"],
                 [
-                    [*["aaaa"] * 6, ""],
-                    [*["bbbb"] * 6, "A/B/C"],
+                    [*["aaaa"] * 2, "aaaa@test.com", "13000000000", *["aaaa"] * 2, ""],
+                    [*["bbbb"] * 2, "bbbb@test.com", "13000000001", *["bbbb"] * 2, "A/B/C"],
                 ],
                 COMMON_TITLES,
                 {"aaaa", "bbbb"},
@@ -71,9 +71,9 @@ class TestExcelSyncer:
             (
                 ["A", "B", "C"],
                 [
-                    [*["aaaa"] * 6, "", "ddd"],
-                    [*["bbbb"] * 6, "A/B/C", "qqq"],
-                    [*["cccc"] * 6, "A/B/C", ""],
+                    [*["aaaa"] * 2, "bbbb@test.com", "13000000000", *["aaaa"] * 2, "", "ddd"],
+                    [*["bbbb"] * 2, "bbbb@test.com", "13000000000", *["bbbb"] * 2, "A/B/C", "qqq"],
+                    [*["cccc"] * 2, "cccc@test.com", "13000000000", *["cccc"] * 2, "A/B/C", ""],
                 ],
                 [*COMMON_TITLES, "自定义字段1"],
                 {"aaaa", "bbbb", "cccc"},
@@ -109,8 +109,8 @@ class TestExcelSyncer:
         [
             (
                 [
-                    [*["aaaa"] * 2, "xxxx@xxxx.xyz", *["aaaa"] * 3, ""],
-                    [*["bbbb"] * 2, "xxxx@xxxx.xyz", *["bbbb"] * 3, ""],
+                    [*["aaaa"] * 2, "xxxx@xxxx.xyz", "13000000000", *["aaaa"] * 2, ""],
+                    [*["bbbb"] * 2, "xxxx@xxxx.xyz", "13000000000", *["bbbb"] * 2, ""],
                 ],
                 COMMON_TITLES,
                 {
@@ -140,8 +140,8 @@ class TestExcelSyncer:
         [
             (
                 [
-                    [*["aaaa"] * 6, "", ""],
-                    [*["bbbb"] * 6, "", "aaaa"],
+                    [*["aaaa"] * 2, "aaaa@test.com", "13000000000", *["aaaa"] * 2, "", ""],
+                    [*["bbbb"] * 2, "bbbb@test.com", "13000000000", *["bbbb"] * 2, "", "aaaa"],
                 ],
                 [*COMMON_TITLES, "上级"],
                 {"aaaa", "bbbb"},
@@ -187,7 +187,7 @@ class TestExcelSyncer:
         with pytest.raises(Exception) as exc_info:
             syncer._sync_users(make_parser_set(titles), users)
         assert (
-            "导入执行完成: 成功 1 条记录, 失败 2 条记录" in exc_info.value.args[0]
+            "导入执行完成: 成功 0 条记录, 失败 3 条记录" in exc_info.value.args[0]
             or "导入执行完成: 成功 0 条记录, 失败 1 条记录" in exc_info.value.args[0]
         )
 

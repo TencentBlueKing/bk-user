@@ -18,6 +18,7 @@ from bkuser_core.categories.plugins.local.parsers import (
     ColumnParser,
     DepartmentCellParser,
     DepartmentColumnParser,
+    EmailCellParser,
     LeadersCellParser,
     PhoneNumberParser,
     UsernameCellParser,
@@ -125,13 +126,46 @@ class TestPhoneNumberParser:
             PhoneNumberParser(1).parse("")
 
     @pytest.mark.parametrize(
-        "case, expected",
+        "case",
         [
-            ("+", {"telephone": "+"}),
+            "+",
+            "12345",
+            "1300000000012",
         ],
     )
-    def test_parse_exception(self, case, expected):
-        assert PhoneNumberParser(1).parse(case) == expected
+    def test_parse_exception(self, case):
+        with pytest.raises(ParseFailedException):
+            PhoneNumberParser(1).parse(case)
+
+
+class TestEmailParser:
+    @pytest.mark.parametrize(
+        "case, expected",
+        [
+            ("abc@xyz.com", ({"email": "abc@xyz.com"})),
+            ("123@xyz.com", ({"email": "123@xyz.com"})),
+            ("test@example.net", ({"email": "test@example.net"})),
+        ],
+    )
+    def test_normal_email(self, case, expected):
+        r = EmailCellParser(1).parse(case)
+        assert expected == r
+
+    def test_parse_empty(self):
+        with pytest.raises(ParseFailedException):
+            EmailCellParser(1).parse("")
+
+    @pytest.mark.parametrize(
+        "case",
+        [
+            "123@",
+            "123",
+            "123.com",
+        ],
+    )
+    def test_parse_exception(self, case):
+        with pytest.raises(ParseFailedException):
+            EmailCellParser(1).parse(case)
 
 
 class TestLeadersCellParser:
