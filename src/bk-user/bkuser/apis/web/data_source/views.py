@@ -15,7 +15,7 @@ from rest_framework.response import Response
 class DataSourceListCreateApi(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         username = request.user.username
-        return Response([{'username': username}])
+        return Response([{"username": username}])
 
     def post(self, request, *args, **kwargs):
         return Response(status=status.HTTP_201_CREATED)

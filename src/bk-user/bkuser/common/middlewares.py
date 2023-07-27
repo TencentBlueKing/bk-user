@@ -15,7 +15,8 @@ class RequestProvider:
     """request_id中间件
     调用链使用
     """
-    REQUEST_ID_HEADER_KEY = 'X-Request-Id'
+
+    REQUEST_ID_HEADER_KEY = "X-Request-Id"
 
     def __init__(self, get_response=None):
         self.get_response = get_response

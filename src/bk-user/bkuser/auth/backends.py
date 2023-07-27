@@ -12,8 +12,8 @@ import logging
 import traceback
 
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
 from django.contrib.auth.backends import BaseBackend
+from django.db import IntegrityError
 
 from bkuser.component import login
 
@@ -69,8 +69,8 @@ class TokenBackend(BaseBackend):
         """
         try:
             data = login.get_user_info(bk_token)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.exception("Abnormal error in get_user_info...:%s" % e)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("Abnormal error in get_user_info, bk_token=%s", bk_token)
             return False, {}
 
         user_info = {

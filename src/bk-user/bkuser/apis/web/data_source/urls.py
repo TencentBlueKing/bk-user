@@ -12,8 +12,6 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
     path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
 ]
-
