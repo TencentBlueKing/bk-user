@@ -27,7 +27,8 @@
               @switchNodeOrder="switchNodeOrder"
               @handleConfigDirectory="handleClickConfig"
               @addOrganization="addOrganization"
-              @updateScroll="updateScroll" />
+              @updateScroll="updateScroll"
+              @updateAcitveNode="updateAcitveNode" />
           </div>
         </div>
       </div>
@@ -58,7 +59,9 @@
                 {{ $t('目录状态：') }}
                 <span
                   :class="[{ 'incomplete': !currentParam.item.configured },
-                           { 'deactivate': !currentParam.item.activated }]">{{ itemActivated }}</span>
+                           { 'deactivate': currentParam.item.configured && !currentParam.item.activated }]">
+                  {{ itemActivated }}
+                </span>
               </li>
               <li>
                 {{ $t('更新时间：') + itemUpdateTime }}
@@ -189,7 +192,7 @@
                     :text="true"
                     title="primary"
                     @click="handleClickUpdate">
-                    <i class="user-icon icon-lishijilu"></i>
+                    <i class="bk-sq-icon icon-lishijilu"></i>
                     {{ $t('数据更新记录') }}
                   </bk-button>
                 </div>
@@ -230,7 +233,7 @@
             :text="true"
             title="primary"
             @click="showSyncDetails = false">
-            <i class="user-icon icon-arrow-left"></i>
+            <i class="bk-sq-icon icon-arrow-left"></i>
             {{ $t('返回上一页') }}
           </bk-button>
           <DataUpdate
@@ -540,12 +543,12 @@ export default {
     },
     itemActivated() {
       let text = '';
-      if (!this.currentParam.item.configured) {
-        text = this.$t('未完成');
-      } else if (this.currentParam.item.activated) {
-        text = this.$t('启用');
-      } else {
+      if (this.currentParam.item.configured && !this.currentParam.item.activated) {
         text = this.$t('停用');
+      } else if (!this.currentParam.item.configured) {
+        text = this.$t('未完成');
+      } else {
+        text = this.$t('启用');
       }
       return text;
     },
@@ -561,7 +564,7 @@ export default {
         return;
       }
       // 当变更选中节点（组织节点），更新用户信息列表
-      if (!val.type && (val.id !== oldVal.id || val.type !== oldVal.type)) {
+      if (val !== oldVal) {
         this.initTableData();
       }
       this.currentCategoryId = val.type ? val.id : this.findCategoryId(val);
@@ -761,6 +764,13 @@ export default {
     getNodeColor() {
       this.currentNode = document.getElementsByClassName('tree-drag-node')[0];
     },
+    updateAcitveNode() {
+      this.$nextTick(() => {
+        const activeNode = document.getElementsByClassName('show-background')[0];
+        if (!activeNode) return;
+        this.currentNode = activeNode.parentNode.parentNode;
+      });
+    },
     // 激活节点变化、清空组织搜索刷新表格数据
     initTableData() {
       this.handleTabData.totalNumber = 0;
@@ -857,11 +867,11 @@ export default {
     // 分页查询
     handlePageChange(page) {
       this.paginationConfig.current = page;
-      this.handleTableData();
+      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.handleTableData();
     },
     handlePageLimitChange(limit) {
       this.paginationConfig.limit = limit;
-      this.handleTableData();
+      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.handleTableData();
     },
     // 选中的用户列表
     isClickList(selection) {
@@ -884,8 +894,9 @@ export default {
     // 搜索table
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
+      this.basicLoading = true;
       if (!list.length) return this.handleTableData();
-      const valueList = [`category_id=${this.currentCategoryId}`];
+      const valueList = [`category_id=${this.currentCategoryId}&page=${this.paginationConfig.current}&page_size=${this.paginationConfig.limit}`];
       let key = '';
       list.forEach((item) => {
         const value = [];
@@ -900,13 +911,16 @@ export default {
       const params = valueList.join('&');
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
         if (res.result) {
+          this.basicLoading = false;
           this.isEmptySearch = res.data.count === 0;
+          this.paginationConfig.count = res.data.count;
           this.filterUserData(res.data.results);
         }
       })
         .catch((e) => {
           console.warn(e);
           this.isTableDataError = true;
+          this.basicLoading = false;
         });
     },
     // 搜索文件配置列表
@@ -1005,6 +1019,7 @@ export default {
           });
         }
       });
+      this.updateAcitveNode();
     },
 
     // 重命名，添加下级组织，设置表字段弹窗操作
@@ -1415,9 +1430,6 @@ export default {
       if (event) {
         this.currentNode = event.target.offsetParent.parentNode.parentNode;
       }
-      if (item.parent === null) {
-        this.initRtxList(item.id);
-      }
       if (this.treeSearchResult && this.treeSearchResult.groupType !== 'department') {
         item.showBackground = true;
         this.handleTabData.totalNumber = 0;
@@ -1549,12 +1561,11 @@ export default {
     deleteDepartment(deleteItem, event) {
       if (event) {
         event.stopPropagation();
-        deleteItem.showOption = false;
-        if (deleteItem.activated) return;
-        if (deleteItem.has_children || deleteItem.default || (deleteItem.activated && deleteItem.configured)) {
-          deleteItem.showDeleteTips = false;
-          return;
-        }
+      }
+      deleteItem.showOption = false;
+      if (deleteItem.default || deleteItem.activated || (!deleteItem.type && deleteItem.has_children)) {
+        deleteItem.showDeleteTips = false;
+        return;
       }
       const h = this.$createElement;
       let instance1 = null;
@@ -1627,6 +1638,7 @@ export default {
             this.treeDataList[0].showBackground = true;
             this.currentParam.item = this.treeDataList[0];
           }
+          this.updateAcitveNode();
         } else {
           await this.$store.dispatch('organization/deleteDepartment', { id: deleteItem.id });
           this.messageSuccess(this.$t('组织删除成功'));
@@ -1639,10 +1651,12 @@ export default {
             // 本地处理数据
             if (!deleteItem.directParent.children.length) {
               deleteItem.directParent.has_children = false;
+              deleteItem.directParent.async = false;
             }
             deleteItem.directParent.showBackground = true;
             this.currentParam.item = deleteItem.directParent;
           }
+          this.updateAcitveNode();
         }
       } catch (e) {
         console.warn(e);
@@ -1765,8 +1779,7 @@ export default {
       } else {
         this.showingPage = param;
         if (update) {
-          this.initData();
-          this.getNodeColor();
+          Promise.all([this.initData(), this.getCatalogList(), this.getNodeColor()]);
         }
       }
     },
@@ -1776,6 +1789,8 @@ export default {
         width: 560,
         confirmFn: () => {
           this.showingPage = 'showPageHome';
+          this.getCatalogList();
+          this.initData();
         },
       });
     },
@@ -1829,18 +1844,19 @@ export default {
         if (this.currentParam.item.type) {
           const params = {
             name: this.addOrganizationName,
-            category_id: this.currentParam.item.id,
+            category_id: this.currentCategoryId,
           };
           const res = await this.$store.dispatch('organization/addDepartment', params);
           const newDepartment = res.data;
-          newDepartment.isNewDeparment = true;
+          newDepartment.isNewDeparment = false;
           this.filterTreeData(newDepartment, this.currentParam.item, this.currentParam.item.type === 'local');
           this.currentParam.item.children.push(newDepartment);
           this.handleClickTreeNode(newDepartment);
+          this.updateAcitveNode();
         } else {
           const params = {
             name: this.addOrganizationName,
-            category_id: this.currentParam.item.parent.id,
+            category_id: this.currentCategoryId,
             parent: this.currentParam.item.id,
           };
           const res = await this.$store.dispatch('organization/addDepartment', params);
@@ -1850,6 +1866,7 @@ export default {
               this.isAddChild = true;
             }
             this.currentParam.item.has_children = true;
+            this.currentParam.item.async = true;
             this.updateChildren(this.currentParam.item);
           }
         }

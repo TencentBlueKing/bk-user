@@ -14,10 +14,11 @@ export default {
           item.showChildren = !item.showChildren;
         }
         this.isAddChild = false;
-        item.children = res.data.children;
-        item.children.forEach((element) => {
+        res.data.children.forEach((element) => {
           this.filterTreeData(element, item, item.isLocalDepartment);
         });
+        this.$set(item, 'children', res.data.children);
+        this.$set(item, 'expanded', true);
       })
         .catch((e) => {
           console.warn(e);
