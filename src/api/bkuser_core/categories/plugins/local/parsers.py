@@ -14,7 +14,8 @@ from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, Generator, List
 
 import phonenumbers
-from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.validators import EmailValidator
 from django.utils.translation import ugettext_lazy as _
 
 from .exceptions import ParseFailedException
@@ -202,12 +203,31 @@ class PhoneNumberParser(CellParser):
     def parse(self, raw_content: str) -> dict:
         try:
             pn = phonenumbers.parse(raw_content)
-        except Exception:  # pylint: disable=broad-except
+
+        except phonenumbers.NumberParseException:
+            # 无地区码手机号的解析可能异常，尝试使用默认的中国地区码进行解析
             logger.debug("failed to parse phone number: %s", raw_content)
-            # 当无法分割国际号码段时，直接存储
-            if not raw_content:
-                raise ParseFailedException(field_name=self.name, reason=_("{} 是必须的").format(self.name))
-            return {self.name: raw_content}
+            try:
+                logger.debug("use country_code:CN to parse")
+                pn = phonenumbers.parse(raw_content, "CN")
+                # phonenumbers库在验证号码的时：过短会解析为有效号码，超过250的字节才算超长=》所以这里需要显式做中国号码的长度校验
+                if len(str(pn.national_number)) != 11:
+                    raise ParseFailedException(field_name=self.name, reason=_("{} 不符合长度要求").format(raw_content))
+
+            except Exception as e:
+                raise ParseFailedException(field_name=self.name, reason=_("{}".format(e)))
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.debug("failed to parse phone number: %s", raw_content)
+            raise ParseFailedException(field_name=self.name, reason=_("{}".format(e)))
+
+        # 这里历史代码在except捕获异常后还是进行返回 =》导致实际是跳过了校验，暂时注释以便后续追溯
+        # except Exception:  # pylint: disable=broad-except
+        #     logger.debug("failed to parse phone number: %s", raw_content)
+        #     # 当无法分割国际号码段时，直接存储
+        #     if not raw_content:
+        #         raise ParseFailedException(field_name=self.name, reason=_("{} 是必须的").format(self.name))
+        #     return {self.name: raw_content}
 
         country_code, iso_code = align_country_iso_code(str(pn.country_code), "")
         return {
@@ -215,3 +235,21 @@ class PhoneNumberParser(CellParser):
             "telephone": str(pn.national_number),
             "iso_code": iso_code,
         }
+
+
+@dataclass
+class EmailCellParser(CellParser):
+    """
+    邮箱解析
+    """
+
+    name = "email"
+
+    def parse(self, raw_content: str) -> dict:
+        email_validator = EmailValidator()
+        try:
+            email_validator(raw_content)
+        except ValidationError as e:
+            logger.debug("failed to parse email: {}".format(e))
+            raise ParseFailedException(field_name=self.name, reason=_("{} 不符合格式要求").format(raw_content))
+        return {self.name: raw_content}

@@ -26,6 +26,7 @@ from .parsers import (
     ColumnParser,
     DepartmentCellParser,
     DepartmentColumnParser,
+    EmailCellParser,
     LeadersCellParser,
     PhoneNumberParser,
     UsernameCellParser,
@@ -425,6 +426,7 @@ class ParserSet:
             DepartmentCellParser,
             LeadersCellParser,
             PhoneNumberParser,
+            EmailCellParser,
         ]:
             l_parsers[cell_cls.name] = cell_cls.__call__(category_id)
 
