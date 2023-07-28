@@ -60,6 +60,9 @@ class OperationType(AutoLowerEnum):
     ADMIN_RESET_PASSWORD = auto()  # 管理员重置密码
     MODIFY_PASSWORD = auto()  # 用户通过旧密码修改
 
+    SET_FIELD_VISIBLE = auto()  # 展示字段设置显示
+    SET_FIELD_INVISIBLE = auto()  # 展示字段设置屏蔽
+
     _choices_labels = (
         (CREATE, "创建"),
         (UPDATE, "更新"),
@@ -74,6 +77,8 @@ class OperationType(AutoLowerEnum):
         (FORGET_PASSWORD, "用户通过token重置密码"),
         (ADMIN_RESET_PASSWORD, "管理员重置密码"),
         (MODIFY_PASSWORD, "用户通过旧密码修改"),
+        (SET_FIELD_VISIBLE, "设置字段展示"),
+        (SET_FIELD_INVISIBLE, "设置字段隐藏"),
     )
 
 
