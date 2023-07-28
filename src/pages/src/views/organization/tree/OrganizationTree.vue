@@ -505,6 +505,12 @@ export default {
     &:hover::before {
       background: #f0f1f5;
     }
+    &:hover {
+      .hide-icon {
+        background: #f0f1f5;
+        z-index: 1;
+      }
+    }
 
     .tree-expanded-icon {
       vertical-align: sub;
