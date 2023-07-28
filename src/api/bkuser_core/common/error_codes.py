@@ -119,7 +119,6 @@ error_codes.add_codes(
         ErrorCode("CATEGORY_PLUGIN_LOAD_FAIL", _("目录登录插件加载失败"), 3210023),
         ErrorCode("USER_IS_EXPIRED", _("该用户账号已过期"), 3210024),
         ErrorCode("USER_IS_RESIGNED", _("该用户账号已离职"), 3210025),
-        ErrorCode("USER_IS_ABNORMAL", _("该用户账号处于异常状态:{status}，请联系管理员")),
         # 用户相关
         ErrorCode("PASSWORD_DUPLICATED", _("新密码不能与最近{max_password_history}次密码相同")),
         ErrorCode("EMAIL_NOT_PROVIDED", _("该用户没有提供邮箱，发送邮件失败")),
