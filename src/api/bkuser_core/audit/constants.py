@@ -21,6 +21,7 @@ class LogInFailReason(AutoLowerEnum):
     TOO_MANY_FAILURE = auto()
     LOCKED_USER = auto()
     DISABLED_USER = auto()
+    DELETED_USER = auto()
     EXPIRED_USER = auto()
     RESIGNED_USER = auto()
     SHOULD_CHANGE_INITIAL_PASSWORD = auto()
@@ -30,7 +31,8 @@ class LogInFailReason(AutoLowerEnum):
         (EXPIRED_PASSWORD, "密码过期"),
         (TOO_MANY_FAILURE, "密码错误次数过多"),
         (LOCKED_USER, "用户已锁定"),
-        (DISABLED_USER, "用户已删除"),
+        (DISABLED_USER, "用户已禁用"),
+        (DELETED_USER, "用户已删除"),
         (EXPIRED_USER, "用户账号已过期"),
         (RESIGNED_USER, "用户已离职"),
         (SHOULD_CHANGE_INITIAL_PASSWORD, "需要修改初始密码"),

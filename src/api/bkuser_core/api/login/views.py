@@ -110,13 +110,17 @@ class ProfileLoginViewSet(viewsets.ViewSet):
                 ProfileStatus.DISABLED.value,
                 ProfileStatus.DELETED.value,
             ]:
+                if profile.status == ProfileStatus.DISABLED.value:
+                    failed_reason = LogInFailReason.DISABLED_USER.value
+                else:
+                    failed_reason = LogInFailReason.DELETED_USER.value
                 create_profile_log(
                     profile=profile,
                     operation="LogIn",
                     request=request,
-                    params={"is_success": False, "reason": LogInFailReason.DISABLED_USER.value},
+                    params={"is_success": False, "reason": failed_reason},
                 )
-                logger.info("login check, profile<%s> of %s is disabled or deleted", profile.username, message_detail)
+                logger.info("login check, profile<%s> of %s is %s", profile.username, message_detail, profile.status)
                 raise error_codes.PASSWORD_ERROR
                 # NOTE: 安全原因, 不能返回账户状态
                 # if profile.status == ProfileStatus.DISABLED.value:
