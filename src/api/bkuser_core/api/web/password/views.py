@@ -41,6 +41,7 @@ from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import ProfileEmailEmpty
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
@@ -77,7 +78,7 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
             logger.error(
                 error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
             )
-            return Response(data={})
+            raise error_codes.USER_IS_ABNORMAL.f(status=ProfileStatus.get_choice_label(profile.status))
 
         # FIXME:需要check是否有频率限制，否则会对用户有骚扰 send_password_by_email
         token_holder = ProfileTokenHolder.objects.create(profile=profile)
@@ -235,7 +236,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
                 logger.error(
                     error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
                 )
-                return Response(data={})
+                raise error_codes.USER_IS_ABNORMAL.f(status=ProfileStatus.get_choice_label(profile.status))
 
         except Profile.DoesNotExist:
             logger.exception(
@@ -244,7 +245,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
             raise error_codes.USER_DOES_NOT_EXIST
 
         except Profile.MultipleObjectsReturned:
-            logger.exception("this telephone had bound to multi profiles", input_telephone, input_telephone)
+            logger.exception("this telephone<%s> had bound to multi profiles", input_telephone)
             raise error_codes.TELEPHONE_BOUND_TO_MULTI_PROFILE
 
         # 生成verification_code_token
