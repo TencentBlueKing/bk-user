@@ -41,6 +41,7 @@ from bkuser_core.audit.constants import OperationType
 from bkuser_core.audit.utils import create_general_log
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.error_codes import error_codes
+from bkuser_core.profiles.constants import ProfileStatus
 from bkuser_core.profiles.exceptions import ProfileEmailEmpty
 from bkuser_core.profiles.models import Profile, ProfileTokenHolder
 from bkuser_core.profiles.signals import post_profile_update
@@ -63,9 +64,9 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
         # 1. get profile by email
         try:
             profile = Profile.objects.get(email=email)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             """吞掉异常，保证不能判断出邮箱是否存在"""
-            logger.exception("failed to get profile by email<%s>, exception: %s", email, e)
+            logger.exception("failed to get profile by email<%s>", email)
             return Response(data={})
 
         # 用户状态校验
@@ -77,7 +78,7 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
             logger.error(
                 error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
             )
-            raise error_codes.USER_IS_ABNORMAL.f(status=profile.status)
+            raise error_codes.USER_IS_ABNORMAL.f(status=ProfileStatus.get_choice_label(profile.status))
 
         # FIXME:需要check是否有频率限制，否则会对用户有骚扰 send_password_by_email
         token_holder = ProfileTokenHolder.objects.create(profile=profile)
@@ -235,7 +236,7 @@ class PasswordResetSendVerificationCodeApi(generics.CreateAPIView):
                 logger.error(
                     error_msg, profile.id, f"{profile.username}@{profile.domain}", profile.enabled, profile.status
                 )
-                raise error_codes.USER_IS_ABNORMAL.f(status=profile.status)
+                raise error_codes.USER_IS_ABNORMAL.f(status=ProfileStatus.get_choice_label(profile.status))
 
         except Profile.DoesNotExist:
             logger.exception(
