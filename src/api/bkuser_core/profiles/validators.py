@@ -67,6 +67,14 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
                 continue
 
             if s.extras[f.name] == target_value:
+                logging.info(
+                    "profile<%s@%s> has the same value<%s> of field<%s-%s>",
+                    s.username,
+                    s.domain,
+                    target_value,
+                    f.name,
+                    f.display_name,
+                )
                 raise ValidationError(
                     _("自定义字段 {} 需要保证唯一，而目录<id:{}>中已经存在值为 {} 的记录").format(f.display_name, category_id, target_value)
                 )

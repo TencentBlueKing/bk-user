@@ -290,9 +290,10 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         try:
             instance = serializer.save()
-        except Exception:
-            logger.exception("failed to save profile")
-            raise error_codes.SAVE_USER_INFO_FAILED
+        except Exception as e:
+            username = f"{serializer.validated_data['username']}@{serializer.validated_data['domain']}"
+            logger.exception(f"failed to create profile<{username}>")
+            raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         # 善后工作
         post_profile_create.send(
@@ -374,9 +375,10 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
 
         try:
             instance.save()
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("failed to update profile")
-            raise error_codes.SAVE_USER_INFO_FAILED
+        except Exception as e:  # pylint: disable=broad-except
+            username = f"{instance.username}@{instance.domain}"
+            logger.exception(f"failed to update profile<{username}>")
+            raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         post_profile_update.send(
             sender=self,

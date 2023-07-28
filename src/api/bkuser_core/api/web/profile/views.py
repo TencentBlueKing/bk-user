@@ -199,7 +199,8 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         try:
             instance.save()
         except Exception as e:  # pylint: disable=broad-except
-            logger.exception("failed to update profile, exception: %s", e)
+            username = f"{instance.username}@{instance.domain}"
+            logger.exception(f"failed to update profile<{username}>")
             raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         post_profile_update.send(
@@ -366,8 +367,9 @@ class ProfileCreateApi(generics.CreateAPIView):
         try:
             instance = slz.save()
         except Exception as e:
-            logger.exception("failed to save profile, %s", e)
-            raise error_codes.SAVE_USER_INFO_FAILED.f(failed_message=e)
+            username = f"{slz.validated_data['username']}@{slz.validated_data['domain']}"
+            logger.exception(f"failed to create profile<{username}>")
+            raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         # 善后工作
         post_profile_create.send(
