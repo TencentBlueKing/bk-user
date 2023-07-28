@@ -31,6 +31,11 @@ export default {
       if (tree.type) {
         this.$set(tree, 'has_children', !!tree.departments.length);
       }
+      this.$nextTick(() => {
+        if (!tree.level) {
+          this.$set(tree, 'level', directParent.level + 1);
+        }
+      });
       // 组织节点添加一个类型标记
       if (isLocalDepartment !== null) {
         tree.isLocalDepartment = isLocalDepartment;

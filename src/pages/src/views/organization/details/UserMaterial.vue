@@ -85,7 +85,7 @@
         <ul v-if="fieldsList.length">
           <li class="infor-content-list">
             <h4 class="title" @click="isUserInfo">
-              <i :class="['bk-sq-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
+              <i :class="['bk-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
               {{$t('用户信息')}}
             </h4>
             <div
@@ -106,7 +106,7 @@
           </li>
           <li class="infor-content-list">
             <h4 class="title" @click="isUserSetting">
-              <i :class="['bk-sq-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
+              <i :class="['bk-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
               {{$t('用户设置')}}
             </h4>
             <div :style="showUserSetting ? 'display: block' : 'display: none'">

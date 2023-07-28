@@ -240,6 +240,7 @@ export default {
     handleDelete(row) {
       this.categoryId = row.id;
       this.deleteDialog.isShow = true;
+      this.deleteText = '';
     },
     confirmDelete() {
       this.$store.dispatch('setting/categoriesHardDelete', {

@@ -191,7 +191,7 @@ export default {
         this.updatedParams(keyword, limit, current);
         const res = await this.$store.dispatch('setting/getCategoryList', this.params);
         if (res.data.count === 0) {
-          keyword === '' ? this.isDataEmpty = true : this.isSearchEmpty = true;
+          !keyword ? this.isDataEmpty = true : this.isSearchEmpty = true;
         }
         this.categoryData = res.data;
         this.isLoading = false;

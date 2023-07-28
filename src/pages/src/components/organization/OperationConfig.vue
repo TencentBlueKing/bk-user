@@ -22,12 +22,12 @@
         <a
           href="javascript:;"
           :class="['right', { 'delete-disable': !node.configured }]"
-          v-if="node.type !== 'local'"
+          v-if="node.type && node.type !== 'local'"
           v-bk-tooltips.left="$t('目录未完成配置，无法操作')"
           :disabled="node.configured"
           @click="syncCatalog(node)">{{ $t('同步') }}</a>
         <!-- 导入导出 -->
-        <template v-else>
+        <template v-if="node.type === 'local'">
           <a
             href="javascript:;"
             :class="['right', { 'delete-disable': !node.has_children }]"

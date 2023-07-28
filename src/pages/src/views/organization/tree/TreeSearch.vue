@@ -621,6 +621,7 @@ export default {
         text-overflow: ellipsis;
         white-space: nowrap;
         color: #979ba5;
+        max-width: 245px;
       }
     }
   }

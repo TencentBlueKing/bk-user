@@ -28,7 +28,7 @@
       <div class="user-infor-wrapper" ref="userInforWrapper">
         <div class="information-box" data-test-id="superiorData">
           <h4 class="infor-title" @click="isUserInfo">
-            <i :class="['bk-sq-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
+            <i :class="['bk-icon', showUserInfo ? 'icon-down-shape' : 'icon-up-shape']" />
             {{$t('用户信息')}}
           </h4>
           <div :class="showUserInfo ? 'fill-infor-wrapper' : 'isHide'">
@@ -44,7 +44,7 @@
               :img-src="currentProfile === null ? $store.state.localAvatar : currentProfile.logo" />
           </div>
           <h4 class="infor-title" style="margin-top: 30px" @click="isUserSetting">
-            <i :class="['bk-sq-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
+            <i :class="['bk-icon', showUserSetting ? 'icon-down-shape' : 'icon-up-shape']" />
             {{$t('用户设置')}}
           </h4>
           <div :class="showUserSetting ? 'mark-width' : 'isHide'">
