@@ -203,7 +203,16 @@ export default {
             : ''}
           <div class={[node.showOption ? 'show-dropdown-list' : 'dropdown-list', { 'chang-en': this.$i18n.locale === 'en' }]}>
             <div class="specific-menu">
-              <a href="javascript:;" onClick={() => this.$emit('addOrganization', node, event)}>{this.getAddOrganization(node)}</a>
+              <a href="javascript:;"
+                class={{ 'delete-disable': node.level > 9 }}
+                onMouseenter={this.checkAddTips.bind(this, node)}
+                onMouseleave={this.closeAddTips.bind(this, node)}
+                onClick={() => this.$emit('addOrganization', node, event)}>
+                {this.getAddOrganization(node)}
+              </a>
+              <div class={['tooltip-content', { 'show-tooltip-content': node.showLevelTips }]}>
+                <p class="inner">{this.$t('最多只能添加十级')}</p>
+              </div>
               <a href="javascript:;" onClick={() => this.$emit('handleRename', node, event)}>{this.$t('重命名')}</a>
               {node.type
                 ? <div class="specific-menu">
@@ -222,6 +231,20 @@ export default {
                     </div>
                   </div>
                 : ''}
+              {(node.type && node.type !== 'local')
+                ? <div class="specific-menu">
+                    <a href="javascript:;"
+                    class={{ 'delete-disable': !node.configured }}
+                    onMouseenter={this.checkSyncTips.bind(this, node)}
+                    onMouseleave={this.closeSyncTips.bind(this, node)}
+                    onClick={this.syncCatalog.bind(this, node)}>
+                    {this.$t('同步')}
+                    </a>
+                    <div class={['tooltip-content', { 'show-tooltip-content': node.showSyncTips }]}>
+                      <p class="inner">{this.$t('目录未完成配置，无法操作')}</p>
+                    </div>
+                  </div>
+                : ''}
               {node.type === 'local'
                 ? <div class="specific-menu">
                     <a href="javascript:;"
@@ -234,18 +257,7 @@ export default {
                       <p class="inner">{this.$t('空目录无需导出')}</p>
                     </div>
                   </div>
-                : <div class="specific-menu">
-                    <a href="javascript:;"
-                    class={{ 'delete-disable': !node.configured }}
-                    onMouseenter={this.checkSyncTips.bind(this, node)}
-                    onMouseleave={this.closeSyncTips.bind(this, node)}
-                    onClick={this.syncCatalog.bind(this, node)}>
-                    {this.$t('同步')}
-                    </a>
-                    <div class={['tooltip-content', { 'show-tooltip-content': node.showSyncTips }]}>
-                      <p class="inner">{this.$t('目录未完成配置，无法操作')}</p>
-                    </div>
-                  </div>}
+                : ''}
             </div>
             <div class="specific-menu">
               <a href="javascript:;"
@@ -324,6 +336,15 @@ export default {
         status = false;
       }
       return status;
+    },
+    checkAddTips(item) {
+      console.log('item', item);
+      if (item.level > 9) {
+        this.$set(item, 'showLevelTips', true);
+      }
+    },
+    closeAddTips(item) {
+      item.showLevelTips = false;
     },
   },
 };

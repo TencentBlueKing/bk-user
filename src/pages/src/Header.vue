@@ -96,7 +96,7 @@
         @hide="hideUserInfo"><bk-icon type="down-shape" />
         <div class="question-icon-trigger active-username" :class="isDropdownShow && 'active'" slot="dropdown-trigger">
           <span class="name">{{ userInfo.username }}</span>
-          <i :class="['bk-sq-icon icon-down-shape', { 'icon-up-shape': isDropdownShow }]" />
+          <i :class="['bk-icon icon-down-shape', { 'icon-up-shape': isDropdownShow }]" />
         </div>
         <ul class="bk-dropdown-list" slot="dropdown-content">
           <li><a href="javascript:;" @click="handleLogOut">{{ $t('退出登录') }}</a></li>

@@ -649,9 +649,11 @@ export default {
           }
           this.filterTreeData(catalog, this.treeDataList);
           catalog.children = catalog.departments;
+          catalog.level = 1;
           catalog.children.forEach((department) => {
             this.$set(department, 'async', department.has_children);
             this.$set(department, 'category_id', catalog.id);
+            this.$set(department, 'level', catalog.level + 1);
             this.filterTreeData(department, catalog, catalog.type === 'local');
           });
         });
@@ -961,6 +963,7 @@ export default {
         // 关闭搜索
         const currentItem = this.currentParam.item;
         this.isShowingSearchTree = false;
+        this.treeLoading = true;
         if (this.hasTreeDataModified) {
           // 在搜索的结果里重命名或删除了组织，需要重新初始化数据
           this.initLoading = true;
@@ -973,6 +976,7 @@ export default {
           this.getNodeColor();
         }
         this.hasTreeDataModified = false;
+        this.treeLoading = false;
         // 恢复当前目录/组织类型
         this.currentCategoryId = currentItem.type ? currentItem.id : this.findCategoryId(currentItem);
         this.currentCategoryType = currentItem.type ? currentItem.type : this.findCategoryType(currentItem);
@@ -1790,6 +1794,7 @@ export default {
     },
     // 添加组织
     addOrganization(node, event) {
+      if (node.level > 9) return;
       if (node.expanded) {
         event.stopPropagation();
       }
