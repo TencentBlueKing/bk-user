@@ -8,11 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from .serializers import TestInputSLZ, TestOutputSLZ
+
 
 class DataSourceListCreateApi(generics.ListCreateAPIView):
+    pagination_class = None
+
+    @swagger_auto_schema(
+        query_serializer=TestInputSLZ(),
+        responses={status.HTTP_201_CREATED: TestOutputSLZ(many=True)},
+        tags=["data_source"],
+    )
     def get(self, request, *args, **kwargs):
         username = request.user.username
         return Response([{"username": username}])

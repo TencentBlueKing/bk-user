@@ -23,6 +23,7 @@ django-prometheus = "2.3.1"
 whitenoise = "6.5.0"
 werkzeug = "2.3.6"
 python-json-logger = "2.0.7"
+drf-yasg = "^1.21.7"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"
@@ -104,7 +105,7 @@ exclude = [
 
 [tool.ruff.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
-max-complexity = 12
+max-complexity = 10
 
 [tool.ruff.isort]
 relative-imports-order = "closest-to-furthest"

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_celery_beat",
     "django_prometheus",
+    "drf_yasg",
     "bkuser.auth",
 ]
 
@@ -126,6 +127,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["bkuser.common.renderers.BkStandardApiJSONRenderer"],
     "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
+}
+
+SWAGGER_SETTINGS = {
+    "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser.common.swagger.BkStandardResponseSwaggerAutoSchema",
 }
 
 # Celery
