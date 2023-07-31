@@ -8,3 +8,49 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
+
+from bkuser.apis.web.tenant.serializers import (
+    TenantCreateInputSlZ,
+    TenantCreateOutputSLZ,
+    TenantUpdateInputSLZ,
+    TenantUpdateOutputSLZ,
+)
+from bkuser.apps.tenant.models import Tenant
+from bkuser.biz.tenant_handler import tenant_handler
+from rest_framework import generics
+from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
+
+
+class TenantListCreateApi(generics.ListCreateAPIView):
+    queryset = Tenant.objects.filter()
+    serializer_class = TenantCreateOutputSLZ
+
+    def post(self, request, *args, **kwargs):
+        slz = TenantCreateInputSlZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 初始化租户和租户管理员
+        tenant = tenant_handler.init_tenant_with_managers(data)
+
+        return Response(data=TenantCreateOutputSLZ(instance=tenant).data)
+
+
+class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
+    queryset = Tenant.objects.filter()
+    serializer_class = TenantUpdateOutputSLZ
+
+    def put(self, request, *args, **kwargs):
+        slz = TenantUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        instance = self.get_object()
+        tenant_handler.update_tenant(instance, data)
+
+        new_manager_ids = data["manager_ids"]
+        tenant_handler.update_tenant_managers(instance.id, new_manager_ids)
+        return Response(data=TenantUpdateOutputSLZ(instance=instance).data)
