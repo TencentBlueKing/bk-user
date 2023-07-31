@@ -323,3 +323,5 @@ LOGGING = {
         },
     },
 }
+
+DEFAULT_LOGO_DATA = ""
