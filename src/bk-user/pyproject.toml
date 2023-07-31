@@ -4,7 +4,11 @@ version = "0.1.0"
 description = ""
 authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
 readme = "README.md"
-packages = [{include = "bk_user"}]
+
+[[tool.poetry.source]]
+name = "tencent"
+url = "https://mirrors.tencent.com/pypi/simple/"
+priority = "default"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
