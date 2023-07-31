@@ -201,15 +201,6 @@ site
 **/*/logs/
 
 
-# ignore global code
-**/src/api/bkuser_global
-**/src/saas/bkuser_global
-# sdk
-**/src/saas/bkuser_sdk
-
-# dev config
-**/*dev*.py
-
 # for web pages
 **/src/saas/static
 **/src/pages/static/lib.bundle.js
@@ -219,8 +210,3 @@ site
 # poetry
 # only one in root dir, which is aiming for ci
 poetry.lock
-
-# helm
-**/deploy/helm/*/charts/
-**/deploy/helm/local_values.yaml
-**/deploy/helm/dist/
