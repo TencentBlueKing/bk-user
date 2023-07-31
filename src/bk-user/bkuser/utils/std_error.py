@@ -14,9 +14,9 @@ from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union, overload
 _DEFAULT_ERROR_CODE_CATEGORY = "INVALID_ARGUMENT"
 _DEFAULT_STATUS_CODE = 400
 
-ExtraFormatterFunc = Callable[[str, 'APIError'], str]
+ExtraFormatterFunc = Callable[[str, "APIError"], str]
 
-T = TypeVar('T', bound='APIError')
+T = TypeVar("T", bound="APIError")
 
 
 class APIError(Exception):
@@ -30,9 +30,9 @@ class APIError(Exception):
     :param data: stores extra data in current Exception object
     """
 
-    delimiter = ': '
+    delimiter = ": "
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         code: str,
         message: str,
@@ -66,7 +66,7 @@ class APIError(Exception):
             obj_message = message
         else:
             # Note: use `f` to join str for compatibility with lazy loaded messages，such as django i18n gettext
-            obj_message = f'{self._message}{self.delimiter}{message}'
+            obj_message = f"{self._message}{self.delimiter}{message}"
         obj_message = self._render(obj_message, kwargs)
         return self._clone(message=obj_message)
 
@@ -113,7 +113,7 @@ class APIError(Exception):
         return message
 
     def __str__(self) -> str:
-        return f'<{self.__class__.__name__}: {self.code}({self.code_num})-{self.message}>'
+        return f"<{self.__class__.__name__}: {self.code}({self.code_category})-{self.message}>"
 
 
 class ErrorCode:
@@ -124,32 +124,32 @@ class ErrorCode:
 
     def __init__(self, *args, **kwargs):
         self._code = None
-        self._error_cls = kwargs.pop('error_cls', APIError)
+        self._error_cls = kwargs.pop("error_cls", APIError)
         # Save arguments for making error object later
         self._error_args = args
         self._error_kwargs = kwargs
 
     @overload
-    def __get__(self, obj: None, obj_type: None) -> 'ErrorCode':
+    def __get__(self, obj: None, obj_type: None) -> "ErrorCode":
         ...
 
     @overload
     def __get__(self, obj: object, obj_type: Type) -> APIError:
         ...
 
-    def __get__(self, obj: Union[None, object], obj_type: Union[None, Type]) -> Union['ErrorCode', APIError]:
+    def __get__(self, obj: Union[None, object], obj_type: Union[None, Type]) -> Union["ErrorCode", APIError]:
         """When retrieving `ErrorCode` via object attribute, always making a brand new `APIError`
         exception object
         """
         if obj is None:
             return self
         if not self._code:
-            raise RuntimeError('must be initialized as a descriptor')
+            raise RuntimeError("must be initialized as a descriptor")
 
         try:
             return self._error_cls(self._code, *self._error_args, **self._error_kwargs)
         except TypeError as e:
-            raise TypeError(f'Unable to make {self._error_cls.__name__} object: {e}')
+            raise TypeError(f"Unable to make {self._error_cls.__name__} object: {e}")
 
     def __set_name__(self, obj_type, name):
         """Set field name as error code object's code"""

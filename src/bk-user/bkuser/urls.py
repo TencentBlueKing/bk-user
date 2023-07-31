@@ -8,16 +8,39 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.views.decorators.cache import never_cache
-from django.urls import path, include
+from django.conf import settings
 from django.conf.urls import url
+from django.urls import include, path
+from django.views.decorators.cache import never_cache
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 
 from bkuser.common.views import VueTemplateView
 
-
 urlpatterns = [
-    path('api/v1/web/', include("bkuser.apis.web.urls")),
+    path("api/v1/web/", include("bkuser.apis.web.urls")),
 ]
+
+# swagger doc
+if settings.DEBUG:
+    schema_view = get_schema_view(
+        openapi.Info(
+            title="BK-User API",
+            default_version="vx",
+            description="BK-User API Document",
+            terms_of_service="http://bk-user.bking.com",
+            contact=openapi.Contact(email="blueking@tencent.com"),
+            license=openapi.License(name="BSD License"),
+        ),
+        public=False,
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    urlpatterns += [
+        path("swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"),
+        path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
+        path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    ]
 
 
 # static file

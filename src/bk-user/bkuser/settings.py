@@ -8,10 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import os
 import hashlib
-from urllib.parse import urlparse
+import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 import environ
 
@@ -24,59 +24,60 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = env.bool("DEBUG", False)
 
 ALLOWED_HOSTS = ["*"]
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'rest_framework',
-    'corsheaders',
-    'django_celery_beat',
-    'django_prometheus',
-    'bkuser.auth',
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "rest_framework",
+    "corsheaders",
+    "django_celery_beat",
+    "django_prometheus",
+    "drf_yasg",
+    "bkuser.auth",
 ]
 
 MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
-    'bkuser.common.middlewares.RequestProvider',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'bkuser.auth.middlewares.LoginMiddleware',
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "bkuser.common.middlewares.RequestProvider",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "bkuser.auth.middlewares.LoginMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
-ROOT_URLCONF = 'bkuser.urls'
+ROOT_URLCONF = "bkuser.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'bkuser.wsgi.application'
+WSGI_APPLICATION = "bkuser.wsgi.application"
 
 # Database
 DATABASES = {
@@ -90,27 +91,27 @@ DATABASES = {
     },
 }
 # Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Auth
-AUTHENTICATION_BACKENDS = ['bkuser.auth.backends.TokenBackend']
-AUTH_USER_MODEL = 'bkuser_auth.User'
+AUTHENTICATION_BACKENDS = ["bkuser.auth.backends.TokenBackend"]
+AUTH_USER_MODEL = "bkuser_auth.User"
 
 # Internationalization
-LANGUAGE_CODE = 'zh-hans'
-LANGUAGE_COOKIE_NAME = 'blueking_language'
-LOCALE_PATHS = [BASE_DIR / 'locale']
+LANGUAGE_CODE = "zh-hans"
+LANGUAGE_COOKIE_NAME = "blueking_language"
+LOCALE_PATHS = [BASE_DIR / "locale"]
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-TIME_ZONE = 'Asia/Shanghai'
+TIME_ZONE = "Asia/Shanghai"
 
 # SITE
-SITE_URL = '/'
+SITE_URL = "/"
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
-WHITENOISE_STATIC_PREFIX = '/staticfiles/'
-STATIC_URL = SITE_URL + 'staticfiles/'
+WHITENOISE_STATIC_PREFIX = "/staticfiles/"
+STATIC_URL = SITE_URL + "staticfiles/"
 
 # cookie
 SESSION_COOKIE_NAME = "bkuser_sessionid"
@@ -126,6 +127,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["bkuser.common.renderers.BkStandardApiJSONRenderer"],
     "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
+}
+
+SWAGGER_SETTINGS = {
+    "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser.common.swagger.BkStandardResponseSwaggerAutoSchema",
 }
 
 # Celery
@@ -152,9 +157,9 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 # CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
-CELERY_IMPORTS = []
+# CELERY_IMPORTS = []
 # 内置的周期任务
-CELERYBEAT_SCHEDULE = {}
+# CELERYBEAT_SCHEDULE = {}
 # Celery消息队列
 BROKER_URL = env.str("BK_BROKER_URL", default="")
 
@@ -194,6 +199,9 @@ CORS_ORIGIN_WHITELIST = (
     if _BK_USER_IS_SPECIAL_PORT
     else [f"{_BK_USER_SCHEME}://{_BK_USER_NETLOC}"]
 )
+# debug/联调测试时需要允许额外的域名跨域请求
+CORS_ORIGIN_ADDITIONAL_WHITELIST = env.list("CORS_ORIGIN_ADDITIONAL_WHITELIST", default=[])
+CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 
 # Login
 LOGIN_SERVICE_URL = env.str("BK_LOGIN_URL", default="/")
@@ -203,22 +211,29 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # 日志配置
 LOG_LEVEL = env.str("LOG_LEVEL", default="ERROR")
 _LOG_CLASS = "logging.handlers.RotatingFileHandler"
-_DEFAULT_LOG_DIR = BASE_DIR.parent / "logs" / BK_APP_CODE
+_DEFAULT_LOG_DIR = BASE_DIR.parent / "logs"
 _LOG_DIR = env.str("LOG_FILE_DIR", default=_DEFAULT_LOG_DIR)
 _LOG_FILE_NAME_PREFIX = env.str("LOG_FILE_NAME_PREFIX", default=BK_APP_CODE)
 if not os.path.exists(_LOG_DIR):
     os.makedirs(_LOG_DIR)
+_LOGGING_FORMAT = {
+    "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+    "fmt": ("%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"),
+}
+if env.bool("IS_LOCAL_DEBUG", False):
+    _LOGGING_FORMAT = {
+        "format": (
+            "%(levelname)s [%(asctime)s] %(pathname)s "
+            "%(lineno)d %(funcName)s %(process)d %(thread)d "
+            "\n \t%(message)s \n"
+        ),
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+    }
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {
-            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            "fmt": (
-                "%(levelname)s %(asctime)s %(pathname)s %(lineno)d "
-                "%(funcName)s %(process)d %(thread)d %(message)s"
-            ),
-        },
+        "verbose": _LOGGING_FORMAT,
         "simple": {"format": "%(levelname)s %(message)s"},
     },
     "handlers": {
