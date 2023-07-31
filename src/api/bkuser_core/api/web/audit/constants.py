@@ -38,8 +38,8 @@ OPERATION_NAME_TUPLE = (
     ("forget_password", _("用户通过token重置密码")),
     ("admin_reset_password", _("管理员重置密码")),
     ("modify_password", _("用户通过旧密码修改")),
-    ("set_field_visible", "设置字段展示"),
-    ("set_field_invisible", "设置字段隐藏"),
+    ("set_field_visible", _("设置字段展示")),
+    ("set_field_invisible", _("设置字段隐藏")),
 )
 
 OPERATION_VALUE_MAP = {x[1]: x[0] for x in OPERATION_NAME_TUPLE}
@@ -58,7 +58,8 @@ LOGIN_FAILED_REASON_TUPLE = (
     ("expired_password", _("密码过期")),
     ("too_many_failure", _("密码错误次数过多")),
     ("locked_user", _("用户已锁定")),
-    ("disabled_user", _("用户已删除")),
+    ("disabled_user", _("用户已禁用")),
+    ("deleted_user", _("用户已删除")),
     ("should_change_initial_password", _("需要修改初始密码")),
     ("expired_user", _("用户账号已过期")),
 )
