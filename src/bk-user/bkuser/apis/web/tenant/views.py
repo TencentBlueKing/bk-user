@@ -22,8 +22,9 @@ from bkuser.apis.web.tenant.serializers import (
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant_handler import tenant_handler
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,12 @@ class TenantListCreateApi(generics.ListCreateAPIView):
     serializer_class = TenantOutputSLZ
     pagination_class = None
 
+    @swagger_auto_schema(
+        operation_description="租户列表",
+        query_serializer=TenantSearchSLZ(),
+        responses={status.HTTP_200_OK: TenantOutputSLZ(many=True)},
+        tags=["tenant"],
+    )
     def list(self, request, *args, **kwargs):
         slz = TenantSearchSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
@@ -59,6 +66,11 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
     lookup_url_kwarg = "id"
     serializer_class = TenantDetailSLZ
 
+    @swagger_auto_schema(
+        operation_description="租户详情",
+        responses={status.HTTP_200_OK: TenantDetailSLZ()},
+        tags=["tenant"],
+    )
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.queryset)
         return Response(serializer.data)
@@ -77,6 +89,11 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
 
 
 class TenantUsersListApi(generics.ListAPIView):
+    @swagger_auto_schema(
+        operation_description="租户下用户列表",
+        responses={status.HTTP_200_OK: TenantUsersSLZ(many=True)},
+        tags=["tenant"],
+    )
     def list(self, request, *args, **kwargs):
         tenant_id = kwargs["tenant_id"]
         tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)
