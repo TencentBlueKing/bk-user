@@ -8,8 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.renderers import JSONRenderer
 from rest_framework import status
+from rest_framework.renderers import JSONRenderer
 
 
 class BkStandardApiJSONRenderer(JSONRenderer):
@@ -24,14 +24,14 @@ class BkStandardApiJSONRenderer(JSONRenderer):
     - Wrapped: `{"error": {"code": "xxxx",...}}`
     """
 
-    format = 'bk_std_json'
+    format = "bk_std_json"
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         # Wrap response data on demand
-        resp = renderer_context['response']
+        resp = renderer_context["response"]
         if status.is_success(resp.status_code):
-            data = {'data': data}
+            data = {"data": data}
         elif status.is_client_error(resp.status_code) or status.is_server_error(resp.status_code):
-            data = {'error': data}
+            data = {"error": data}
         # For status codes other than (2xx, 4xx, 5xx), do not wrap data
         return super().render(data, accepted_media_type=None, renderer_context=None)

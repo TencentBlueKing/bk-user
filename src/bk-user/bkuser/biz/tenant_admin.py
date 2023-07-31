@@ -12,18 +12,21 @@ from bkuser.apps.tenant.models import DataSource, DataSourceUser, TenantDataSour
 
 
 def get_managers_info_by_tenant_id(tenant_id):
+    """获取租户管理员"""
     manager_ids = TenantManager.objects.filter(tenant_id=tenant_id).values_list("tenant_user_id", flat=True)
     managers = TenantUser.objects.filter(id__in=manager_ids).values("id", "username", "display_name")
     return managers
 
 
 def get_user_info_by_tenant_user_id(tenant_user_id, user_field):
+    """获取租户用户信息"""
     data_source_user_id = TenantUser.objects.get(id=tenant_user_id).data_source_user_id
     user_info = DataSourceUser.objects.filter(id=data_source_user_id).values(user_field).first()[user_field]
     return user_info
 
 
 def get_data_sources_info_by_tenant_id(tenant_id):
+    """获取租户绑定的数据源"""
     data_source_ids = TenantDataSourceBinding.objects.filter(tenant_id=tenant_id).values_list(
         "data_source_id", flat=True
     )

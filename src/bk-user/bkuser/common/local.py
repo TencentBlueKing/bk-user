@@ -15,8 +15,8 @@ from werkzeug.local import release_local
 
 _local = _Local()
 
-REQUEST_ID_META_KEY = 'HTTP_X_REQUEST_ID'
-BKAPI_REQUEST_ID_META_KEY = 'HTTP_X_BKAPI_REQUEST_ID'
+REQUEST_ID_META_KEY = "HTTP_X_REQUEST_ID"
+BKAPI_REQUEST_ID_META_KEY = "HTTP_X_BKAPI_REQUEST_ID"
 
 
 def new_request_id():
@@ -38,8 +38,7 @@ class Local(Singleton):
     @property
     def request(self):
         """获取全局 request 对象"""
-        request = getattr(_local, 'request', None)
-        return request
+        return getattr(_local, "request", None)
 
     @request.setter
     def request(self, value):
@@ -55,7 +54,9 @@ class Local(Singleton):
 
     def get_http_request_id(self):
         """从接入层获取 request_id，若不存在，则新建并写入"""
-        request_id = self.request.META.get(REQUEST_ID_META_KEY, '') or self.request.META.get(BKAPI_REQUEST_ID_META_KEY, '')
+        request_id = self.request.META.get(REQUEST_ID_META_KEY, "") or self.request.META.get(
+            BKAPI_REQUEST_ID_META_KEY, ""
+        )
         if not request_id:
             request_id = new_request_id()
             self.request.META[REQUEST_ID_META_KEY] = request_id

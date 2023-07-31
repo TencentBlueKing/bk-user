@@ -15,7 +15,7 @@
 
 本地开发时，你需要分别为四个模块——后台 API、SaaS 前端、SaaS 后端、蓝鲸登录——创建开发环境。
 
-在开始开发前，你需要为整个项目安装并初始化 `pre-commit`， 
+在开始开发前，你需要为整个项目安装并初始化 `pre-commit`，
 
 ``` bash
 pre-commit install

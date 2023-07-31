@@ -14,6 +14,11 @@ files = [
 [package.dependencies]
 vine = ">=5.0.0"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "asgiref"
 version = "3.7.2"
@@ -31,6 +36,11 @@ typing-extensions = {version = ">=4", markers = "python_version < \"3.11\""}
 [package.extras]
 tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "billiard"
 version = "4.1.0"
@@ -41,6 +51,11 @@ files = [
     {file = "billiard-4.1.0-py3-none-any.whl", hash = "sha256:0f50d6be051c6b2b75bfbc8bfd85af195c5739c281d3f5b86a5640c65563614a"},
     {file = "billiard-4.1.0.tar.gz", hash = "sha256:1ad2eeae8e28053d729ba3373d34d9d6e210f6e4d8bf0a9c64f92bd053f1edf5"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "black"
@@ -86,6 +101,11 @@ colorama = ["colorama (>=0.4.3)"]
 d = ["aiohttp (>=3.7.4)"]
 jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "celery"
@@ -142,6 +162,11 @@ yaml = ["PyYAML (>=3.10)"]
 zookeeper = ["kazoo (>=1.3.1)"]
 zstd = ["zstandard (==0.21.0)"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "certifi"
 version = "2023.5.7"
@@ -152,6 +177,11 @@ files = [
     {file = "certifi-2023.5.7-py3-none-any.whl", hash = "sha256:c6c2e98f5c7869efca1f8916fed228dd91539f9f1b444c314c06eef02980c716"},
     {file = "certifi-2023.5.7.tar.gz", hash = "sha256:0f0d56dc5a6ad56fd4ba36484d6cc34451e1c6548c61daad8c320169f91eddc7"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "cffi"
@@ -228,6 +258,11 @@ files = [
 
 [package.dependencies]
 pycparser = "*"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "charset-normalizer"
@@ -313,6 +348,11 @@ files = [
     {file = "charset_normalizer-3.2.0-py3-none-any.whl", hash = "sha256:8e098148dd37b4ce3baca71fb394c81dc5d9c7728c95df695d2dca218edf40e6"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "click"
 version = "8.1.4"
@@ -327,6 +367,11 @@ files = [
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "click-didyoumean"
 version = "0.3.0"
@@ -340,6 +385,11 @@ files = [
 
 [package.dependencies]
 click = ">=7"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "click-plugins"
@@ -357,6 +407,11 @@ click = ">=4.0"
 
 [package.extras]
 dev = ["coveralls", "pytest (>=3.6)", "pytest-cov", "wheel"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "click-repl"
@@ -376,6 +431,11 @@ prompt-toolkit = ">=3.0.36"
 [package.extras]
 testing = ["pytest (>=7.2.1)", "pytest-cov (>=4.0.0)", "tox (>=4.4.3)"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "colorama"
 version = "0.4.6"
@@ -386,6 +446,11 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "cron-descriptor"
@@ -399,6 +464,11 @@ files = [
 
 [package.extras]
 dev = ["polib"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "django"
@@ -420,6 +490,11 @@ sqlparse = ">=0.2.2"
 argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "django-celery-beat"
 version = "2.5.0"
@@ -439,6 +514,11 @@ django-timezone-field = ">=5.0"
 python-crontab = ">=2.3.4"
 tzdata = "*"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "django-celery-results"
 version = "2.5.1"
@@ -454,6 +534,11 @@ files = [
 celery = ">=5.2.7,<6.0"
 Django = ">=3.2.18"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "django-cors-headers"
 version = "4.2.0"
@@ -467,6 +552,11 @@ files = [
 
 [package.dependencies]
 Django = ">=3.2"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "django-environ"
@@ -484,6 +574,11 @@ develop = ["coverage[toml] (>=5.0a4)", "furo (>=2021.8.17b43,<2021.9.dev0)", "py
 docs = ["furo (>=2021.8.17b43,<2021.9.dev0)", "sphinx (>=3.5.0)", "sphinx-notfound-page"]
 testing = ["coverage[toml] (>=5.0a4)", "pytest (>=4.6.11)"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "django-prometheus"
 version = "2.3.1"
@@ -497,6 +592,11 @@ files = [
 
 [package.dependencies]
 prometheus-client = ">=0.7"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "django-timezone-field"
@@ -513,6 +613,11 @@ files = [
 Django = ">=2.2,<3.0.dev0 || >=3.2.dev0,<5.0"
 pytz = "*"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "djangorestframework"
 version = "3.14.0"
@@ -527,6 +632,40 @@ files = [
 [package.dependencies]
 django = ">=3.0"
 pytz = "*"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
+name = "drf-yasg"
+version = "1.21.7"
+description = "Automated generation of real Swagger/OpenAPI 2.0 schemas from Django Rest Framework code."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "drf-yasg-1.21.7.tar.gz", hash = "sha256:4c3b93068b3dfca6969ab111155e4dd6f7b2d680b98778de8fd460b7837bdb0d"},
+    {file = "drf_yasg-1.21.7-py3-none-any.whl", hash = "sha256:f85642072c35e684356475781b7ecf5d218fff2c6185c040664dd49f0a4be181"},
+]
+
+[package.dependencies]
+django = ">=2.2.16"
+djangorestframework = ">=3.10.3"
+inflection = ">=0.3.1"
+packaging = ">=21.0"
+pytz = ">=2021.1"
+pyyaml = ">=5.1"
+uritemplate = ">=3.0.0"
+
+[package.extras]
+coreapi = ["coreapi (>=2.3.3)", "coreschema (>=0.0.4)"]
+validation = ["swagger-spec-validator (>=2.1.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "gevent"
@@ -603,6 +742,11 @@ monitor = ["psutil (>=5.7.0)"]
 recommended = ["backports.socketpair", "cffi (>=1.12.2)", "dnspython (>=1.16.0,<2.0)", "idna", "psutil (>=5.7.0)", "selectors2"]
 test = ["backports.socketpair", "cffi (>=1.12.2)", "contextvars (==2.4)", "coverage (>=5.0)", "coveralls (>=1.7.0)", "dnspython (>=1.16.0,<2.0)", "futures", "idna", "mock", "objgraph", "psutil (>=5.7.0)", "requests", "selectors2"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "greenlet"
 version = "2.0.2"
@@ -676,6 +820,11 @@ files = [
 docs = ["Sphinx", "docutils (<0.18)"]
 test = ["objgraph", "psutil"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "gunicorn"
 version = "20.1.0"
@@ -696,6 +845,11 @@ gevent = ["gevent (>=1.4.0)"]
 setproctitle = ["setproctitle"]
 tornado = ["tornado (>=0.2)"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "idna"
 version = "3.4"
@@ -706,6 +860,27 @@ files = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
     {file = "idna-3.4.tar.gz", hash = "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
+name = "inflection"
+version = "0.5.1"
+description = "A port of Ruby on Rails inflector to Python"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "inflection-0.5.1-py2.py3-none-any.whl", hash = "sha256:f38b2b640938a4f35ade69ac3d053042959b62a0f1076a5bbaa1b9526605a8a2"},
+    {file = "inflection-0.5.1.tar.gz", hash = "sha256:1a29730d366e996aaacffb2f1f1cb9593dc38e2ddd30c91250c6dde09ea9b417"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "kombu"
@@ -738,6 +913,11 @@ sqlalchemy = ["sqlalchemy (>=1.4.48,<2.1)"]
 sqs = ["boto3 (>=1.26.143)", "pycurl (>=7.43.0.5)", "urllib3 (>=1.26.16)"]
 yaml = ["PyYAML (>=3.10)"]
 zookeeper = ["kazoo (>=2.8.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "markupsafe"
@@ -798,6 +978,11 @@ files = [
     {file = "MarkupSafe-2.1.3.tar.gz", hash = "sha256:af598ed32d6ae86f1b747b82783958b1a4ab8f617b06fe68795c7f026abbdcad"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "mypy"
 version = "1.4.1"
@@ -844,6 +1029,11 @@ install-types = ["pip"]
 python2 = ["typed-ast (>=1.4.0,<2)"]
 reports = ["lxml"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "mypy-extensions"
 version = "1.0.0"
@@ -854,6 +1044,11 @@ files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "mysqlclient"
@@ -871,6 +1066,11 @@ files = [
     {file = "mysqlclient-2.2.0.tar.gz", hash = "sha256:04368445f9c487d8abb7a878e3d23e923e6072c04a6c320f9e0dc8a82efba14e"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "packaging"
 version = "23.1"
@@ -882,6 +1082,11 @@ files = [
     {file = "packaging-23.1.tar.gz", hash = "sha256:a392980d2b6cffa644431898be54b0045151319d1e7ec34f0cfed48767dd334f"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "pathspec"
 version = "0.11.1"
@@ -892,6 +1097,11 @@ files = [
     {file = "pathspec-0.11.1-py3-none-any.whl", hash = "sha256:d8af70af76652554bd134c22b3e8a1cc46ed7d91edcdd721ef1a0c51a84a5293"},
     {file = "pathspec-0.11.1.tar.gz", hash = "sha256:2798de800fa92780e33acca925945e9a19a133b715067cf165b8866c15a31687"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "platformdirs"
@@ -908,6 +1118,11 @@ files = [
 docs = ["furo (>=2023.5.20)", "proselint (>=0.13)", "sphinx (>=7.0.1)", "sphinx-autodoc-typehints (>=1.23,!=1.23.4)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.3.1)", "pytest-cov (>=4.1)", "pytest-mock (>=3.10)"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "prometheus-client"
 version = "0.17.1"
@@ -921,6 +1136,11 @@ files = [
 
 [package.extras]
 twisted = ["twisted"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "prompt-toolkit"
@@ -936,6 +1156,11 @@ files = [
 [package.dependencies]
 wcwidth = "*"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "pycparser"
 version = "2.21"
@@ -946,6 +1171,11 @@ files = [
     {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
     {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "python-crontab"
@@ -965,6 +1195,11 @@ python-dateutil = "*"
 cron-description = ["cron-descriptor"]
 cron-schedule = ["croniter"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "python-dateutil"
 version = "2.8.2"
@@ -979,6 +1214,11 @@ files = [
 [package.dependencies]
 six = ">=1.5"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "python-json-logger"
 version = "2.0.7"
@@ -990,6 +1230,11 @@ files = [
     {file = "python_json_logger-2.0.7-py3-none-any.whl", hash = "sha256:f380b826a991ebbe3de4d897aeec42760035ac760345e57b812938dc8b35e2bd"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "pytz"
 version = "2023.3"
@@ -1000,6 +1245,65 @@ files = [
     {file = "pytz-2023.3-py2.py3-none-any.whl", hash = "sha256:a151b3abb88eda1d4e34a9814df37de2a80e301e68ba0fd856fb9b46bfbbbffb"},
     {file = "pytz-2023.3.tar.gz", hash = "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
+name = "pyyaml"
+version = "6.0.1"
+description = "YAML parser and emitter for Python"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "PyYAML-6.0.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d858aa552c999bc8a8d57426ed01e40bef403cd8ccdd0fc5f6f04a00414cac2a"},
+    {file = "PyYAML-6.0.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:fd66fc5d0da6d9815ba2cebeb4205f95818ff4b79c3ebe268e75d961704af52f"},
+    {file = "PyYAML-6.0.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:69b023b2b4daa7548bcfbd4aa3da05b3a74b772db9e23b982788168117739938"},
+    {file = "PyYAML-6.0.1-cp310-cp310-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:81e0b275a9ecc9c0c0c07b4b90ba548307583c125f54d5b6946cfee6360c733d"},
+    {file = "PyYAML-6.0.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ba336e390cd8e4d1739f42dfe9bb83a3cc2e80f567d8805e11b46f4a943f5515"},
+    {file = "PyYAML-6.0.1-cp310-cp310-win32.whl", hash = "sha256:bd4af7373a854424dabd882decdc5579653d7868b8fb26dc7d0e99f823aa5924"},
+    {file = "PyYAML-6.0.1-cp310-cp310-win_amd64.whl", hash = "sha256:fd1592b3fdf65fff2ad0004b5e363300ef59ced41c2e6b3a99d4089fa8c5435d"},
+    {file = "PyYAML-6.0.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6965a7bc3cf88e5a1c3bd2e0b5c22f8d677dc88a455344035f03399034eb3007"},
+    {file = "PyYAML-6.0.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f003ed9ad21d6a4713f0a9b5a7a0a79e08dd0f221aff4525a2be4c346ee60aab"},
+    {file = "PyYAML-6.0.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:42f8152b8dbc4fe7d96729ec2b99c7097d656dc1213a3229ca5383f973a5ed6d"},
+    {file = "PyYAML-6.0.1-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:062582fca9fabdd2c8b54a3ef1c978d786e0f6b3a1510e0ac93ef59e0ddae2bc"},
+    {file = "PyYAML-6.0.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d2b04aac4d386b172d5b9692e2d2da8de7bfb6c387fa4f801fbf6fb2e6ba4673"},
+    {file = "PyYAML-6.0.1-cp311-cp311-win32.whl", hash = "sha256:1635fd110e8d85d55237ab316b5b011de701ea0f29d07611174a1b42f1444741"},
+    {file = "PyYAML-6.0.1-cp311-cp311-win_amd64.whl", hash = "sha256:bf07ee2fef7014951eeb99f56f39c9bb4af143d8aa3c21b1677805985307da34"},
+    {file = "PyYAML-6.0.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:50550eb667afee136e9a77d6dc71ae76a44df8b3e51e41b77f6de2932bfe0f47"},
+    {file = "PyYAML-6.0.1-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1fe35611261b29bd1de0070f0b2f47cb6ff71fa6595c077e42bd0c419fa27b98"},
+    {file = "PyYAML-6.0.1-cp36-cp36m-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:704219a11b772aea0d8ecd7058d0082713c3562b4e271b849ad7dc4a5c90c13c"},
+    {file = "PyYAML-6.0.1-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:afd7e57eddb1a54f0f1a974bc4391af8bcce0b444685d936840f125cf046d5bd"},
+    {file = "PyYAML-6.0.1-cp36-cp36m-win32.whl", hash = "sha256:fca0e3a251908a499833aa292323f32437106001d436eca0e6e7833256674585"},
+    {file = "PyYAML-6.0.1-cp36-cp36m-win_amd64.whl", hash = "sha256:f22ac1c3cac4dbc50079e965eba2c1058622631e526bd9afd45fedd49ba781fa"},
+    {file = "PyYAML-6.0.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:b1275ad35a5d18c62a7220633c913e1b42d44b46ee12554e5fd39c70a243d6a3"},
+    {file = "PyYAML-6.0.1-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:18aeb1bf9a78867dc38b259769503436b7c72f7a1f1f4c93ff9a17de54319b27"},
+    {file = "PyYAML-6.0.1-cp37-cp37m-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:596106435fa6ad000c2991a98fa58eeb8656ef2325d7e158344fb33864ed87e3"},
+    {file = "PyYAML-6.0.1-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:baa90d3f661d43131ca170712d903e6295d1f7a0f595074f151c0aed377c9b9c"},
+    {file = "PyYAML-6.0.1-cp37-cp37m-win32.whl", hash = "sha256:9046c58c4395dff28dd494285c82ba00b546adfc7ef001486fbf0324bc174fba"},
+    {file = "PyYAML-6.0.1-cp37-cp37m-win_amd64.whl", hash = "sha256:4fb147e7a67ef577a588a0e2c17b6db51dda102c71de36f8549b6816a96e1867"},
+    {file = "PyYAML-6.0.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:1d4c7e777c441b20e32f52bd377e0c409713e8bb1386e1099c2415f26e479595"},
+    {file = "PyYAML-6.0.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a0cd17c15d3bb3fa06978b4e8958dcdc6e0174ccea823003a106c7d4d7899ac5"},
+    {file = "PyYAML-6.0.1-cp38-cp38-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:28c119d996beec18c05208a8bd78cbe4007878c6dd15091efb73a30e90539696"},
+    {file = "PyYAML-6.0.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7e07cbde391ba96ab58e532ff4803f79c4129397514e1413a7dc761ccd755735"},
+    {file = "PyYAML-6.0.1-cp38-cp38-win32.whl", hash = "sha256:184c5108a2aca3c5b3d3bf9395d50893a7ab82a38004c8f61c258d4428e80206"},
+    {file = "PyYAML-6.0.1-cp38-cp38-win_amd64.whl", hash = "sha256:1e2722cc9fbb45d9b87631ac70924c11d3a401b2d7f410cc0e3bbf249f2dca62"},
+    {file = "PyYAML-6.0.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:9eb6caa9a297fc2c2fb8862bc5370d0303ddba53ba97e71f08023b6cd73d16a8"},
+    {file = "PyYAML-6.0.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:c8098ddcc2a85b61647b2590f825f3db38891662cfc2fc776415143f599bb859"},
+    {file = "PyYAML-6.0.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5773183b6446b2c99bb77e77595dd486303b4faab2b086e7b17bc6bef28865f6"},
+    {file = "PyYAML-6.0.1-cp39-cp39-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:b786eecbdf8499b9ca1d697215862083bd6d2a99965554781d0d8d1ad31e13a0"},
+    {file = "PyYAML-6.0.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bc1bf2925a1ecd43da378f4db9e4f799775d6367bdb94671027b73b393a7c42c"},
+    {file = "PyYAML-6.0.1-cp39-cp39-win32.whl", hash = "sha256:faca3bdcf85b2fc05d06ff3fbc1f83e1391b3e724afa3feba7d13eeab355484c"},
+    {file = "PyYAML-6.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:510c9deebc5c0225e8c96813043e62b680ba2f9c50a08d3724c7f28a747d1486"},
+    {file = "PyYAML-6.0.1.tar.gz", hash = "sha256:bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "requests"
@@ -1021,6 +1325,11 @@ urllib3 = ">=1.21.1,<3"
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "ruff"
@@ -1048,6 +1357,11 @@ files = [
     {file = "ruff-0.0.277.tar.gz", hash = "sha256:2dab13cdedbf3af6d4427c07f47143746b6b95d9e4a254ac369a0edb9280a0d2"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "setuptools"
 version = "68.0.0"
@@ -1064,6 +1378,11 @@ docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "pygments-g
 testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pip-run (>=8.8)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-ruff", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
 testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "six"
 version = "1.16.0"
@@ -1074,6 +1393,11 @@ files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "sqlparse"
@@ -1091,6 +1415,11 @@ dev = ["build", "flake8"]
 doc = ["sphinx"]
 test = ["pytest", "pytest-cov"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "tomli"
 version = "2.0.1"
@@ -1101,6 +1430,11 @@ files = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "types-requests"
@@ -1116,6 +1450,11 @@ files = [
 [package.dependencies]
 types-urllib3 = "*"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "types-urllib3"
 version = "1.26.25.13"
@@ -1126,6 +1465,11 @@ files = [
     {file = "types-urllib3-1.26.25.13.tar.gz", hash = "sha256:3300538c9dc11dad32eae4827ac313f5d986b8b21494801f1bf97a1ac6c03ae5"},
     {file = "types_urllib3-1.26.25.13-py3-none-any.whl", hash = "sha256:5dbd1d2bef14efee43f5318b5d36d805a489f6600252bb53626d4bfafd95e27c"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "typing-extensions"
@@ -1138,6 +1482,11 @@ files = [
     {file = "typing_extensions-4.7.1.tar.gz", hash = "sha256:b75ddc264f0ba5615db7ba217daeb99701ad295353c45f9e95963337ceeeffb2"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "tzdata"
 version = "2023.3"
@@ -1148,6 +1497,27 @@ files = [
     {file = "tzdata-2023.3-py2.py3-none-any.whl", hash = "sha256:7e65763eef3120314099b6939b5546db7adce1e7d6f2e179e3df563c70511eda"},
     {file = "tzdata-2023.3.tar.gz", hash = "sha256:11ef1e08e54acb0d4f95bdb1be05da659673de4acbd21bf9c69e94cc5e907a3a"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
+name = "uritemplate"
+version = "4.1.1"
+description = "Implementation of RFC 6570 URI Templates"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "uritemplate-4.1.1-py2.py3-none-any.whl", hash = "sha256:830c08b8d99bdd312ea4ead05994a38e8936266f84b9a7878232db50b044e02e"},
+    {file = "uritemplate-4.1.1.tar.gz", hash = "sha256:4346edfc5c3b79f694bccd6d6099a322bbeb628dbf2cd86eea55a456ce5124f0"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "urllib3"
@@ -1166,6 +1536,11 @@ secure = ["certifi", "cryptography (>=1.9)", "idna (>=2.0.0)", "pyopenssl (>=17.
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "vine"
 version = "5.0.0"
@@ -1177,6 +1552,11 @@ files = [
     {file = "vine-5.0.0.tar.gz", hash = "sha256:7d3b1624a953da82ef63462013bbd271d3eb75751489f9807598e8f340bd637e"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "wcwidth"
 version = "0.2.6"
@@ -1187,6 +1567,11 @@ files = [
     {file = "wcwidth-0.2.6-py2.py3-none-any.whl", hash = "sha256:795b138f6875577cd91bba52baf9e445cd5118fd32723b460e30a0af30ea230e"},
     {file = "wcwidth-0.2.6.tar.gz", hash = "sha256:a5220780a404dbe3353789870978e472cfe477761f06ee55077256e509b156d0"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "werkzeug"
@@ -1205,6 +1590,11 @@ MarkupSafe = ">=2.1.1"
 [package.extras]
 watchdog = ["watchdog (>=2.3)"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "whitenoise"
 version = "6.5.0"
@@ -1218,6 +1608,11 @@ files = [
 
 [package.extras]
 brotli = ["Brotli"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "zope-event"
@@ -1236,6 +1631,11 @@ setuptools = "*"
 [package.extras]
 docs = ["Sphinx"]
 test = ["zope.testrunner"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [[package]]
 name = "zope-interface"
@@ -1284,7 +1684,12 @@ docs = ["Sphinx", "repoze.sphinx.autointerface"]
 test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "d07e09f5fd4438f88e59d923c35d232b2e1918beae5535700153ccb22d58a023"
+content-hash = "d9383d10b442876bb818d0b1c551ed23c448892a7fa111d730bc2b820d2e8c75"

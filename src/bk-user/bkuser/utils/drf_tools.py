@@ -39,11 +39,10 @@ def stringify_validation_error(error: ValidationError) -> List[str]:
                 if key != api_settings.NON_FIELD_ERRORS_KEY:
                     _keys.append(str(key))
                 traverse(err, _keys)
+        elif not keys:
+            results.append(str(err_detail))
         else:
-            if not keys:
-                results.append(str(err_detail))
-            else:
-                results.append("{}: {}".format(".".join(keys), str(err_detail)))
+            results.append("{}: {}".format(".".join(keys), str(err_detail)))
 
     traverse(error.detail, [])
     return sorted(results)

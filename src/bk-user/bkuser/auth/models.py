@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import List
+
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
@@ -20,12 +22,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS: List[str] = []
 
     class Meta:
         verbose_name = "user"
         verbose_name_plural = "users"
-        db_table = 'auth_user'
+        db_table = "auth_user"
 
     def get_property(self, key):
         try:
