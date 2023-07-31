@@ -11,26 +11,26 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
-from bkuser.utils.std_error import APIError
-from bkuser.utils.drf_tools import stringify_validation_error
-from bkuser.common.error_codes import error_codes
-
 from django.conf import settings
-from django.views.generic.base import TemplateView
-from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http.response import Http404
-from rest_framework.response import Response
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.generic.base import TemplateView
 from rest_framework.exceptions import (
     AuthenticationFailed,
+    MethodNotAllowed,
     NotAuthenticated,
-    ValidationError,
+    NotFound,
     ParseError,
     PermissionDenied,
-    MethodNotAllowed,
     UnsupportedMediaType,
-    NotFound,
+    ValidationError,
 )
+from rest_framework.response import Response
 from rest_framework.views import set_rollback
+
+from bkuser.common.error_codes import error_codes
+from bkuser.utils.drf_tools import stringify_validation_error
+from bkuser.utils.std_error import APIError
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def one_line_error(error: ValidationError):
     try:
         return stringify_validation_error(error)[0]
     except Exception:
-        logger.exception('Error getting one line error from %s', error)
+        logger.exception("Error getting one line error from %s", error)
         return "param format error"
 
 
@@ -133,7 +133,6 @@ class VueTemplateView(TemplateView):
                 "LOGIN_SERVICE_URL": settings.LOGIN_SERVICE_URL.rstrip("/"),
             }
 
-            response = super(VueTemplateView, self).get(request, **context)
-            return response
+            return super(VueTemplateView, self).get(request, **context)
         except Exception as error:  # pylint: disable=broad-except
             logger.warning(f"render VueTemplateView（index.html） fail: {error}")

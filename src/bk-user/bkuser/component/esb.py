@@ -8,15 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import logging
 import json
+import logging
 from urllib.parse import urlparse
 
 from django.conf import settings
 
-from bkuser.utils.url import url_join
-from bkuser.common.local import local
 from bkuser.common.error_codes import error_codes
+from bkuser.common.local import local
+from bkuser.utils.url import url_join
 
 logger = logging.getLogger("component")
 
@@ -26,15 +26,19 @@ def _call_esb_api(http_func, url_path, **kwargs):
     if "headers" not in kwargs:
         kwargs["headers"] = {}
     # 添加默认请求头
-    kwargs["headers"].update({
-        "Content-Type": "application/json",
-        "X-Request-Id": request_id,
-        "X-Bkapi-Authorization": json.dumps({
-            "bk_app_code": settings.BK_APP_CODE,
-            "bk_app_secret": settings.BK_APP_SECRET,
-            "bk_username": "admin",  # 存在后台任务，无法使用登录态的方式
-        })
-    })
+    kwargs["headers"].update(
+        {
+            "Content-Type": "application/json",
+            "X-Request-Id": request_id,
+            "X-Bkapi-Authorization": json.dumps(
+                {
+                    "bk_app_code": settings.BK_APP_CODE,
+                    "bk_app_secret": settings.BK_APP_SECRET,
+                    "bk_username": "admin",  # 存在后台任务，无法使用登录态的方式
+                }
+            ),
+        }
+    )
 
     url = url_join(settings.BK_COMPONENT_API_URL, url_path)
 

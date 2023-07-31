@@ -8,3 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from rest_framework import serializers
+
+
+class TestInputSLZ(serializers.Serializer):
+    a = serializers.CharField(help_text="测试字段", max_length=10)
+
+
+class TestOutputSLZ(serializers.Serializer):
+    username = serializers.CharField(help_text="用户名", max_length=10)

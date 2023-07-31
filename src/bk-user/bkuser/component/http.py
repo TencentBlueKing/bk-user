@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-# -*- coding: utf-8 -*-
 import logging
 import time
 from urllib.parse import urlparse
@@ -18,13 +17,14 @@ from django.conf import settings
 from requests.adapters import HTTPAdapter
 
 logger = logging.getLogger("component")
+# 定义慢请求耗时，单位毫秒
+SLOW_REQUEST_LATENCY = 100
 
 
 def _gen_header():
-    headers = {
+    return {
         "Content-Type": "application/json",
     }
-    return headers
 
 
 session = requests.Session()
@@ -48,21 +48,12 @@ def _http_request(method, url, **kwargs):
         kwargs["verify"] = False
 
     st = time.time()
+
+    if method not in ["GET", "POST", "DELETE", "PUT", "PATCH", "HEAD"]:
+        return False, {"error": "method not supported"}
+
     try:
-        if method == "GET":
-            resp = session.get(url=url, **kwargs)
-        elif method == "HEAD":
-            resp = session.head(url=url, **kwargs)
-        elif method == "POST":
-            resp = session.post(url=url, **kwargs)
-        elif method == "DELETE":
-            resp = session.delete(url=url, **kwargs)
-        elif method == "PUT":
-            resp = session.put(url=url, **kwargs)
-        elif method == "PATCH":
-            resp = session.patch(url=url, **kwargs)
-        else:
-            return False, {"error": "method not supported"}
+        resp = session.request(method, url, **kwargs)
     except requests.exceptions.RequestException as e:
         logger.exception("http request error! %s %s, kwargs: %s", method, url, kwargs)
         return False, {"error": str(e)}
@@ -70,11 +61,11 @@ def _http_request(method, url, **kwargs):
         # record
         latency = int((time.time() - st) * 1000)
         # greater than 100ms
-        if latency > 100:
+        if latency > SLOW_REQUEST_LATENCY:
             logger.warning("http slow request! method: %s, url: %s, latency: %dms", method, url, latency)
 
         # 状态非20x，说明是异常请求
-        if resp.status_code < 200 or resp.status_code > 299:
+        if not (200 <= resp.status_code <= 299):  # noqa: PLR2004
             content = resp.content[:256] if resp.content else ""
             logger.error(
                 "http request fail! %s %s, kwargs: %s, response.status_code: %s, response.body: %s",
@@ -92,7 +83,11 @@ def _http_request(method, url, **kwargs):
                 )
             }
 
-        return True, resp.json()
+        try:
+            return True, resp.json()
+        except Exception as e:
+            logger.exception("http response body not json! %s %s, kwargs: %s", method, url, kwargs)
+            return False, {"error": str(e)}
 
 
 def http_get(url, **kwargs):

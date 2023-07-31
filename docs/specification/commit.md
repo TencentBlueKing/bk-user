@@ -32,7 +32,7 @@ type:messsge issue
   * refactor 代码重构重构
   * test 添加缺失的测试，重构测试;没有生产代码更改
   * chore 构建脚本，任务等相关代码
-* message 本次提交的描述 
+* message 本次提交的描述
 * issue 本次提交关联的issue id
 
 ## Merge Request/Pull Request建议
