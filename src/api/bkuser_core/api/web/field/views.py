@@ -20,7 +20,7 @@ from .serializers import (
     FieldOutputSLZ,
 )
 from bkuser_core.audit.constants import OperationType
-from bkuser_core.audit.utils import audit_general_log
+from bkuser_core.audit.utils import audit_general_log, create_general_log
 from bkuser_core.bkiam.permissions import ManageFieldPermission
 from bkuser_core.categories.signals import post_dynamic_field_delete
 from bkuser_core.common.error_codes import error_codes
@@ -73,8 +73,19 @@ class FieldManageableApi(generics.GenericAPIView):
 class FieldVisiableUpdateApi(generics.UpdateAPIView):
     permission_classes = [ManageFieldPermission]
 
-    # NOTE: 无法通过这个记录审计日志, 会导致drf报错, 这个装饰器封装只支持 /url/{id}/ 这种形式
-    # @audit_general_log(operate_type=OperationType.UPDATE.value)
+    def _add_fields_update_visible_audit_log(self, queryset, visible):
+        visible_operate_type_map = {
+            True: OperationType.SET_FIELD_VISIBLE.value,
+            False: OperationType.SET_FIELD_INVISIBLE.value,
+        }
+        for item in queryset:
+            create_general_log(
+                operator=self.request.operator,
+                operate_type=visible_operate_type_map[visible],
+                operator_obj=item,
+                request=self.request,
+            )
+
     def patch(self, request, *args, **kwargs):
         slz = DynamicFieldUpdateVisibleInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
@@ -82,11 +93,22 @@ class FieldVisiableUpdateApi(generics.UpdateAPIView):
         data = slz.validated_data
         updating_ids = data["updating_ids"]
 
-        # update all to False
-        DynamicFieldInfo.objects.update(visible=False)
-        # update current to True
-        DynamicFieldInfo.objects.filter(id__in=updating_ids).update(visible=True)
+        # current visible fields
+        current_visible_field_ids = DynamicFieldInfo.objects.filter(visible=True).values_list("id", flat=True)
 
+        # to visible = False
+        invisible_field_ids = set(current_visible_field_ids) - set(updating_ids)
+        if invisible_field_ids:
+            invisible_fields = DynamicFieldInfo.objects.filter(id__in=list(invisible_field_ids))
+            invisible_fields.update(visible=False)
+            self._add_fields_update_visible_audit_log(invisible_fields, visible=False)
+
+        # to visible = True
+        visible_field_ids = set(updating_ids) - set(current_visible_field_ids)
+        if visible_field_ids:
+            visible_fields = DynamicFieldInfo.objects.filter(id__in=list(visible_field_ids))
+            visible_fields.update(visible=True)
+            self._add_fields_update_visible_audit_log(visible_fields, visible=True)
         return Response({})
 
 

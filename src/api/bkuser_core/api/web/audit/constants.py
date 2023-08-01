@@ -36,6 +36,8 @@ OPERATION_NAME_TUPLE = (
     ("forget_password", _("用户通过token重置密码")),
     ("admin_reset_password", _("管理员重置密码")),
     ("modify_password", _("用户通过旧密码修改")),
+    ("set_field_visible", "设置字段展示"),
+    ("set_field_invisible", "设置字段隐藏"),
 )
 
 OPERATION_VALUE_MAP = {x[1]: x[0] for x in OPERATION_NAME_TUPLE}
