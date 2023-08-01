@@ -16,9 +16,9 @@ from bkuser.apis.web.tenant.serializers import (
     TenantDetailSLZ,
     TenantOutputSLZ,
     TenantSearchSLZ,
-    TenantUsersSLZ,
     TenantUpdateInputSLZ,
     TenantUpdateOutputSLZ,
+    TenantUsersSLZ,
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant_handler import tenant_handler
@@ -50,6 +50,12 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_description="新建租户",
+        request_body=TenantCreateInputSlZ(),
+        responses={status.HTTP_201_CREATED: TenantCreateOutputSLZ()},
+        tags=["tenants"],
+    )
     def post(self, request, *args, **kwargs):
         slz = TenantCreateInputSlZ(data=request.data)
         slz.is_valid(raise_exception=True)
@@ -75,6 +81,12 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(self.queryset)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_description="更新租户",
+        request_body=TenantUpdateInputSLZ(),
+        responses={status.HTTP_200_OK: None},
+        tags=["tenants"],
+    )
     def put(self, request, *args, **kwargs):
         slz = TenantUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
