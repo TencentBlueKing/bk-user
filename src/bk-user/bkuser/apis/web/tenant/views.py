@@ -10,10 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, status
-from rest_framework.response import Response
-
 from bkuser.apis.web.tenant.serializers import (
     TenantCreateInputSlZ,
     TenantCreateOutputSLZ,
@@ -26,6 +22,9 @@ from bkuser.apis.web.tenant.serializers import (
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant_handler import tenant_handler
+from rest_framework import generics, status
+from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +34,12 @@ class TenantListCreateApi(generics.ListCreateAPIView):
     serializer_class = TenantOutputSLZ
     pagination_class = None
 
+    @swagger_auto_schema(
+        operation_description="租户列表",
+        query_serializer=TenantSearchSLZ(),
+        responses={status.HTTP_200_OK: TenantOutputSLZ(many=True)},
+        tags=["tenant"],
+    )
     def list(self, request, *args, **kwargs):
         slz = TenantSearchSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
@@ -46,8 +51,9 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         return Response(serializer.data)
 
     @swagger_auto_schema(
+        operation_description="新建租户",
         request_body=TenantCreateInputSlZ(),
-        responses={status.HTTP_200_OK: TenantCreateOutputSLZ()},
+        responses={status.HTTP_201_CREATED: TenantCreateOutputSLZ()},
         tags=["tenants"],
     )
     def post(self, request, *args, **kwargs):
@@ -66,13 +72,19 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
     lookup_url_kwarg = "id"
     serializer_class = TenantDetailSLZ
 
+    @swagger_auto_schema(
+        operation_description="租户详情",
+        responses={status.HTTP_200_OK: TenantDetailSLZ()},
+        tags=["tenant"],
+    )
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.queryset)
         return Response(serializer.data)
 
     @swagger_auto_schema(
+        operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUpdateOutputSLZ()},
+        responses={status.HTTP_200_OK: None},
         tags=["tenants"],
     )
     def put(self, request, *args, **kwargs):
@@ -89,6 +101,11 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
 
 
 class TenantUsersListApi(generics.ListAPIView):
+    @swagger_auto_schema(
+        operation_description="租户下用户列表",
+        responses={status.HTTP_200_OK: TenantUsersSLZ(many=True)},
+        tags=["tenant"],
+    )
     def list(self, request, *args, **kwargs):
         tenant_id = kwargs["tenant_id"]
         tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)
