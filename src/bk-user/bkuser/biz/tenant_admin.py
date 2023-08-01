@@ -8,27 +8,25 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from bkuser.apps.tenant.models import DataSource, DataSourceUser, TenantDataSourceBinding, TenantManager, TenantUser
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.tenant.models import TenantDataSourceRelationShip, TenantManager, TenantUser
 
 
 def get_managers_info_by_tenant_id(tenant_id):
     """获取租户管理员"""
     manager_ids = TenantManager.objects.filter(tenant_id=tenant_id).values_list("tenant_user_id", flat=True)
-    managers = TenantUser.objects.filter(id__in=manager_ids).values("id", "username", "display_name")
-    return managers
+    return TenantUser.objects.filter(id__in=manager_ids).values("id", "username", "display_name")
 
 
 def get_user_info_by_tenant_user_id(tenant_user_id, user_field):
     """获取租户用户信息"""
     data_source_user_id = TenantUser.objects.get(id=tenant_user_id).data_source_user_id
-    user_info = DataSourceUser.objects.filter(id=data_source_user_id).values(user_field).first()[user_field]
-    return user_info
+    return DataSourceUser.objects.filter(id=data_source_user_id).values(user_field).first()[user_field]
 
 
 def get_data_sources_info_by_tenant_id(tenant_id):
     """获取租户绑定的数据源"""
-    data_source_ids = TenantDataSourceBinding.objects.filter(tenant_id=tenant_id).values_list(
+    data_source_ids = TenantDataSourceRelationShip.objects.filter(tenant_id=tenant_id).values_list(
         "data_source_id", flat=True
     )
-    data_sources_info = DataSource.objects.filter(id__in=data_source_ids).values("id", "name")
-    return data_sources_info
+    return DataSource.objects.filter(id__in=data_source_ids).values("id", "name")
