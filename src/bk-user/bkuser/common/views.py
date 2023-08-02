@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
+from blue_krill.web.drf_utils import stringify_validation_error
 from django.conf import settings
 from django.http.response import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -29,7 +30,6 @@ from rest_framework.response import Response
 from rest_framework.views import set_rollback
 
 from bkuser.common.error_codes import error_codes
-from bkuser.utils.drf_tools import stringify_validation_error
 from bkuser.utils.std_error import APIError
 
 logger = logging.getLogger(__name__)
