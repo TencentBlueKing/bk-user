@@ -8,9 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+from django.db import models
 
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+class TimestampedModel(models.Model):
+    """Model with 'created' and 'updated' fields."""
+
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True

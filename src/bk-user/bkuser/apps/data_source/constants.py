@@ -8,9 +8,26 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+from enum import Enum
+
+from django.utils.translation import gettext_lazy as _
 
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+class DataSourcePluginType(Enum):
+
+    LOCAL = "local"
+    MAD = "mad"
+    LDAP = "ldap"
+
+    _choices_labels = (
+        (LOCAL, _("本地目录")),
+        (MAD, _("Microsoft Active Directory")),
+        (LDAP, _("OpenLDAP")),
+    )
+
+    @classmethod
+    def get_choices(cls) -> tuple:
+        return cls._choices_labels.value
+
+
+DEFAULT_DATA_SOURCE_NAME = "本地数据源"

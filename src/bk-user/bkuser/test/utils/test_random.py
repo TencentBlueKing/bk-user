@@ -8,9 +8,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+import uuid
+
+import pytest
+import re
+
+from bkuser.utils.random import generate_random_str
 
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+@pytest.mark.parametrize(
+    "length",
+    [2, 3, 5, 7, 9, 11],
+)
+def test_generate_random_str(length):
+    random_str = generate_random_str(length)
+    result = re.fullmatch(re.compile(r"^[A-Za-z0-9]+$"), random_str)
+    assert result

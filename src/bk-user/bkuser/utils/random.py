@@ -8,9 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+import random
+import string
 
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+def generate_random_str(length):
+    """
+    生成长度为length的随机字符串,至包含一个数字和字母
+    """
+    chars = string.ascii_letters + string.digits
+
+    random_chars = [random.choice(chars) for _ in range(length)]
+    if any([c.isdigit() for c in random_chars]):
+        return "".join(random_chars)
+
+    random_chars[0] = random.choice(string.digits)
+    random.shuffle(random_chars)
+    return "".join(random_chars)
+

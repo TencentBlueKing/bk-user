@@ -23,7 +23,7 @@ urlpatterns = [
 ]
 
 # swagger doc
-if settings.DEBUG:
+if settings.SWAGGER_ENABLE:
     schema_view = get_schema_view(
         openapi.Info(
             title="BK-User API",

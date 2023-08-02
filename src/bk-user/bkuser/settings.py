@@ -14,14 +14,18 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import environ
+import urllib3
 
 # environ
 env = environ.Env()
 # load environment variables from .env file
 environ.Env.read_env()
 
+# no more useless warning
+urllib3.disable_warnings()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", False)
@@ -34,12 +38,15 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
     "django_celery_beat",
     "django_prometheus",
     "drf_yasg",
     "bkuser.auth",
+    "bkuser.apps.data_source",
+    "bkuser.apps.tenant",
 ]
 
 MIDDLEWARE = [
@@ -128,7 +135,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["bkuser.common.renderers.BkStandardApiJSONRenderer"],
     "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
 }
-
+SWAGGER_ENABLE = env.bool("SWAGGER_ENABLE", default=False)
 SWAGGER_SETTINGS = {
     "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser.common.swagger.BkStandardResponseSwaggerAutoSchema",
 }
@@ -211,7 +218,7 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # 日志配置
 LOG_LEVEL = env.str("LOG_LEVEL", default="ERROR")
 _LOG_CLASS = "logging.handlers.RotatingFileHandler"
-_DEFAULT_LOG_DIR = BASE_DIR.parent / "logs"
+_DEFAULT_LOG_DIR = BASE_DIR / "logs"
 _LOG_DIR = env.str("LOG_FILE_DIR", default=_DEFAULT_LOG_DIR)
 _LOG_FILE_NAME_PREFIX = env.str("LOG_FILE_NAME_PREFIX", default=BK_APP_CODE)
 if not os.path.exists(_LOG_DIR):
@@ -317,3 +324,5 @@ LOGGING = {
         },
     },
 }
+
+DEFAULT_LOGO_DATA = ""
