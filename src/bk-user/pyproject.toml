@@ -35,6 +35,8 @@ ruff = "^0.0.277"
 black = "^23.7.0"
 mypy = "^1.4.1"
 types-requests = "^2.31.0.1"
+pytest = "^7.4.0"
+pytest-django = "^4.5.2"
 
 [tool.black]
 line-length = 119
