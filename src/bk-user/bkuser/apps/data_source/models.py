@@ -12,6 +12,8 @@ specific language governing permissions and limitations under the License.
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from bkuser.common.models import TimestampedModel
+
 
 class DataSourcePlugin(models.Model):
     type = models.CharField(max_length=256, verbose_name=_("数据源插件类型"))
@@ -27,7 +29,7 @@ class DataSource(models.Model):
     plugin_config = models.JSONField(verbose_name=_("数据源配置"))
 
 
-class DataSourceUser(models.Model):
+class DataSourceUser(TimestampedModel):
     data_source_id = models.CharField(max_length=256, verbose_name=_("数据源ID"))
     username = models.CharField(verbose_name=_("用户名"), max_length=255)
     display_name = models.CharField(max_length=256, verbose_name=_("全名"))
