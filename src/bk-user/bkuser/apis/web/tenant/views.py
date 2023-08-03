@@ -60,7 +60,6 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         operation_description="租户列表",
         query_serializer=TenantSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantSearchOutputSLZ(many=True)},
-        tags=["tenant"],
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -69,7 +68,6 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         operation_description="新建租户",
         request_body=TenantCreateInputSlZ(),
         responses={status.HTTP_201_CREATED: TenantCreateOutputSLZ()},
-        tags=["tenants"],
     )
     def post(self, request, *args, **kwargs):
         slz = TenantCreateInputSlZ(data=request.data)
@@ -113,7 +111,6 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
     @swagger_auto_schema(
         operation_description="租户详情",
         responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
-        tags=["tenant"],
     )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
@@ -122,7 +119,6 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
         operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
         responses={status.HTTP_200_OK: None},
-        tags=["tenants"],
     )
     def put(self, request, *args, **kwargs):
         slz = TenantUpdateInputSLZ(data=request.data)
@@ -151,7 +147,6 @@ class TenantUsersListApi(generics.ListAPIView):
     @swagger_auto_schema(
         operation_description="租户下用户列表",
         responses={status.HTTP_200_OK: TenantUserSearchOutputSchema(many=True)},
-        tags=["tenant"],
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

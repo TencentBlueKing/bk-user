@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "bkuser.auth",
     "bkuser.apps.data_source",
     "bkuser.apps.tenant",
+    "bkuser.apps.data_source_organization",
+    "bkuser.apps.tenant_organization",
 ]
 
 MIDDLEWARE = [
@@ -118,7 +120,8 @@ SITE_URL = "/"
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = "/staticfiles/"
-STATIC_URL = SITE_URL + "staticfiles/"
+# STATIC_URL 也可以是CDN地址
+STATIC_URL = env.str("STATIC_URL", SITE_URL + "staticfiles/")
 
 # cookie
 SESSION_COOKIE_NAME = "bkuser_sessionid"
@@ -183,7 +186,7 @@ SECRET_KEY = BK_APP_SECRET
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
 # BK USER URL
 BK_USER_URL = env.str("BK_USER_URL")
-AJAX_URL_PREFIX = SITE_URL + "api/v1"
+AJAX_BASE_URL = SITE_URL + "api/v1"
 
 # csrf
 _BK_USER_URL_PARSE_URL = urlparse(BK_USER_URL)
@@ -211,7 +214,7 @@ CORS_ORIGIN_ADDITIONAL_WHITELIST = env.list("CORS_ORIGIN_ADDITIONAL_WHITELIST", 
 CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 
 # Login
-LOGIN_SERVICE_URL = env.str("BK_LOGIN_URL", default="/")
+BK_LOGIN_URL = env.str("BK_LOGIN_URL", default="/")
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 
