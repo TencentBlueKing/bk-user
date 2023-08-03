@@ -13,7 +13,8 @@ import logging
 
 from blue_krill.web.drf_utils import stringify_validation_error
 from django.conf import settings
-from django.http.response import Http404
+from django.http.response import Http404, HttpResponseNotFound
+from django.template.exceptions import TemplateDoesNotExist
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
 from rest_framework.exceptions import (
@@ -134,5 +135,7 @@ class VueTemplateView(TemplateView):
             }
 
             return super(VueTemplateView, self).get(request, **context)
+        except TemplateDoesNotExist:
+            return HttpResponseNotFound("Not Found")
         except Exception as error:  # pylint: disable=broad-except
             logger.warning(f"render VueTemplateView（index.html） fail: {error}")

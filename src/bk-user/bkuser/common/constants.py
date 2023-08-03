@@ -8,3 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
+
+from blue_krill.data_types.enum import EnumField, StructuredEnum
+
+
+class BkLanguageEnum(str, StructuredEnum):
+    ZH_CN = EnumField("zh-cn", label="中文")
+    EN = EnumField("en", label="英文")
+
+
+# 永久：2100-01-01 00:00:00
+PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, second=0)
