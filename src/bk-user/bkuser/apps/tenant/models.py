@@ -9,59 +9,65 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, LanguageEnum
 from bkuser.common.models import TimestampedModel
 
 
 class Tenant(TimestampedModel):
-    id = models.CharField(primary_key=True, max_length=256)
-    name = models.CharField(max_length=256, unique=True, verbose_name=_("租户名称"))
-    logo = models.TextField(verbose_name=_("base64化的logo图片"), blank=True, null=True)
-    is_default = models.BooleanField(default=False, verbose_name=_("默认租户"))
-    enabled_user_count_display = models.BooleanField(default=False, verbose_name=_("使能可查看用户数量"))
-
-    def __str__(self):
-        return f"{self.id}-{self.name}"
-
-
-class TenantDataSourceRelationShip(models.Model):
-    tenant_id = models.CharField(max_length=256, verbose_name=_("逻辑外键：租户ID"))
-    data_source_id = models.CharField(max_length=256, verbose_name=_("逻辑外键：数据源用户id"))
+    id = models.CharField("租户唯一标识", primary_key=True, max_length=128)
+    name = models.CharField("租户名称", max_length=128, unique=True)
+    logo = models.TextField("Logo", null=True, blank=True, default="")
+    is_default = models.BooleanField("是否默认租户", default=False)
+    is_user_number_visible = models.BooleanField("人员数量是否可见", default=True)
 
     class Meta:
-        unique_together = ["tenant_id", "data_source_id"]
-
-
-class TenantUser(TimestampedModel):
-    id = models.CharField(primary_key=True, max_length=64, verbose_name=_("租用用户ID/蓝鲸账户"))
-    username = models.CharField(max_length=256, verbose_name=_("数据源username"))
-    display_name = models.CharField(max_length=256, verbose_name=_("数据源display_name"))
-    logo = models.TextField(max_length=256)
-    data_source_user_id = models.IntegerField(verbose_name=_("逻辑外键：数据源用户id"))
-    tenant_id = models.CharField(max_length=256, verbose_name=_("逻辑外键：租户ID"))
-    time_zone = models.CharField(
-        verbose_name=_("时区"),
-        choices=TIME_ZONE_CHOICES,
-        default="Asia/Shanghai",
-        max_length=32,
-    )
-    language = models.CharField(
-        verbose_name=_("语言"),
-        choices=LanguageEnum.get_choices(),
-        default=LanguageEnum.ZH_CN.value,
-        max_length=32,
-    )
-
-    def __str__(self):
-        return f"{self.id}-{self.tenant_id}-{self.username}"
+        ordering = ["created_time"]
 
 
 class TenantManager(models.Model):
-    tenant_id = models.CharField(max_length=256, verbose_name="逻辑外键：租户ID")
-    tenant_user_id = models.CharField(max_length=64, verbose_name="逻辑外键：租户用户ID")
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True)
+    tenant_user_id = models.CharField("租户用户ID", max_length=128, db_index=True)
 
     class Meta:
-        unique_together = ("tenant_id", "tenant_user_id")
-        index_together = ("tenant_id", "tenant_user_id")
+        unique_together = [
+            ("tenant", "tenant_user_id"),
+        ]
+
+
+# TODO: 是否直接定义 TenantCommonConfig 表，DynamicFieldInfo是一个JSON字段
+# class DynamicFieldInfo(TimestampedModel):
+#     """动态的用户字段元信息"""
+#
+#     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True)
+#
+#     id = models.CharField("字段唯一标识", max_length=64)
+#     name = models.CharField("字段名称", max_length=64)
+#     # TODO: 需要枚举支持的数据类型
+#     data_type = models.CharField("数据类型", max_length=32)
+#     require = models.BooleanField("是否必填", default=False)
+#     unique = models.BooleanField("是否唯一", default=False)
+#     editable = models.BooleanField("是否可b", default=False)
+#     # TODO：不同类型，可能有额外配置，比如枚举有key和value选项，是否配置为json_schema格式，便于校验呢？？？
+#
+#     class Meta:
+#         unique_together = [
+#             ("tenant", "id"),
+#             ("tenant", "name"),
+#         ]
+
+
+# # TODO: 是否直接定义 TenantCommonConfig 表，AccountValidityPeriod是一个JSON字段？
+# class AccountValidityPeriodConfig:
+#     """账号时效配置"""
+#
+#     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
+#
+#     enabled = models.BooleanField("是否启用", default=True)
+#     # TODO: 定义枚举，设置默认值为永久
+#     validity_period_seconds = models.IntegerField("有效期(单位：秒)", default=-1)
+#     # TODO: 定义枚举，设置默认值为7天
+#     reminder_period_days = models.IntegerField("提醒周期(单位：天)", default=7)
+#     # TODO: 定义枚举，同时需要考虑到与企业ESB配置的支持的通知方式有关，是否定义字段？
+#     notification_method = models.CharField("通知方式", max_length=32, default="email")
+#     # TODO: 需要考虑不同通知方式，可能无法使用相同模板，或者其他设计方式
+#     notification_content_template = models.TextField("通知模板", default="")

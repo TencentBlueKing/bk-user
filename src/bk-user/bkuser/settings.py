@@ -325,4 +325,12 @@ LOGGING = {
     },
 }
 
-DEFAULT_LOGO_DATA = ""
+# ---------------
+# 项目自定义配置
+# ---------------
+# 数据源插件默认Logo，值为base64格式图片数据
+DATA_SOURCE_PLUGIN_DEFAULT_LOGO = ""
+# 租户默认Logo，值为base64格式图片数据
+TENANT_DEFAULT_LOGO = ""
+# 数据源用户默认Logo，值为base64格式图片数据
+DATA_SOURCE_USER_DEFAULT_LOGO = ""

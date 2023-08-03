@@ -10,45 +10,60 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import generics, status
+from rest_framework.response import Response
+
 from bkuser.apis.web.tenant.serializers import (
     TenantCreateInputSlZ,
     TenantCreateOutputSLZ,
-    TenantDetailSLZ,
-    TenantOutputSLZ,
-    TenantSearchSLZ,
+    TenantRetrieveOutputSLZ,
+    TenantSearchInputSLZ,
+    TenantSearchOutputSLZ,
     TenantUpdateInputSLZ,
-    TenantUpdateOutputSLZ,
-    TenantUsersSLZ,
+    TenantUserSearchOutputSchema,
+    TenantUserSearchOutputSLZ,
 )
-from bkuser.apps.tenant.models import Tenant, TenantUser
-from bkuser.biz.tenant_handler import tenant_handler
-from rest_framework import generics, status
-from rest_framework.response import Response
-from drf_yasg.utils import swagger_auto_schema
+from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant_organization.models import TenantUser
+from bkuser.biz.data_source import DataSourceHandler
+from bkuser.biz.tenant import TenantHandler
 
 logger = logging.getLogger(__name__)
 
 
 class TenantListCreateApi(generics.ListCreateAPIView):
-    queryset = Tenant.objects.all()
-    serializer_class = TenantOutputSLZ
     pagination_class = None
+
+    serializer_class = TenantSearchOutputSLZ
+
+    def get_serializer_context(self):
+        # set into context, for slz to_representation
+        return {
+            "tenant_manager_map": TenantHandler.get_tenant_manager_map(),
+            "data_source_map": DataSourceHandler.get_data_source_map_by_owner(),
+        }
+
+    def get_queryset(self):
+        slz = TenantSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        queryset = Tenant.objects.all()
+
+        if data.get("name"):
+            queryset = Tenant.objects.filter(name__icontains=data["name"])
+
+        return queryset
 
     @swagger_auto_schema(
         operation_description="租户列表",
-        query_serializer=TenantSearchSLZ(),
-        responses={status.HTTP_200_OK: TenantOutputSLZ(many=True)},
+        query_serializer=TenantSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantSearchOutputSLZ(many=True)},
         tags=["tenant"],
     )
-    def list(self, request, *args, **kwargs):
-        slz = TenantSearchSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        name = slz.data.get("name")
-        if name:
-            self.queryset = Tenant.objects.filter(name__icontains=name)
-
-        serializer = self.get_serializer(self.get_queryset(), many=True)
-        return Response(serializer.data)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_description="新建租户",
@@ -62,24 +77,46 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         data = slz.validated_data
 
         # 初始化租户和租户管理员
-        tenant = tenant_handler.init_tenant_with_managers(data)
+        tenant_info = {
+            "id": data["id"],
+            "name": data["name"],
+            "is_user_number_visible": data["is_user_number_visible"],
+            "logo": data.get("logo") or "",
+        }
+        managers = [
+            {
+                "username": i["username"],
+                "full_name": i["full_name"],
+                "email": i["email"],
+                "phone": i["phone"],
+                "phone_country_code": i.get("phone_country_code", "86"),
+            }
+            for i in data["managers"]
+        ]
+        tenant_id = TenantHandler.create_with_managers(tenant_info, managers)
 
-        return Response(data=TenantCreateOutputSLZ(instance=tenant).data)
+        return Response({"id": tenant_id})
 
 
 class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
-    serializer_class = TenantDetailSLZ
+    serializer_class = TenantRetrieveOutputSLZ
+
+    def get_serializer_context(self):
+        # set into context, for slz to_representation
+        tenant_id = self.kwargs[self.lookup_url_kwarg]
+        return {
+            "tenant_manager_map": TenantHandler.get_tenant_manager_map(tenant_ids=[tenant_id]),
+        }
 
     @swagger_auto_schema(
         operation_description="租户详情",
-        responses={status.HTTP_200_OK: TenantDetailSLZ()},
+        responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
         tags=["tenant"],
     )
-    def list(self, request, *args, **kwargs):
-        serializer = self.get_serializer(self.queryset)
-        return Response(serializer.data)
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_description="更新租户",
@@ -93,22 +130,28 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
         data = slz.validated_data
 
         instance = self.get_object()
-        tenant_handler.update_tenant(instance, data)
 
-        new_manager_ids = data["manager_ids"]
-        tenant_handler.update_tenant_managers(instance.id, new_manager_ids)
-        return Response(data=TenantUpdateOutputSLZ(instance=instance).data)
+        should_updated_info = {
+            "name": data["name"],
+            "logo": data.get("logo") or "",
+            "is_user_number_visible": data["is_user_number_visible"],
+        }
+        TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
+
+        return Response()
 
 
 class TenantUsersListApi(generics.ListAPIView):
+    serializer_class = TenantUserSearchOutputSLZ
+
+    def get_queryset(self):
+        tenant_id = self.kwargs["tenant_id"]
+        return TenantUser.objects.filter(tenant_id=tenant_id)
+
     @swagger_auto_schema(
         operation_description="租户下用户列表",
-        responses={status.HTTP_200_OK: TenantUsersSLZ(many=True)},
+        responses={status.HTTP_200_OK: TenantUserSearchOutputSchema(many=True)},
         tags=["tenant"],
     )
-    def list(self, request, *args, **kwargs):
-        tenant_id = kwargs["tenant_id"]
-        tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)
-        serializer = TenantUsersSLZ(tenant_users, many=True)
-
-        return Response(serializer.data)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
