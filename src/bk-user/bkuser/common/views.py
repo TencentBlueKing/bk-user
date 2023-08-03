@@ -13,8 +13,7 @@ import logging
 
 from blue_krill.web.drf_utils import stringify_validation_error
 from django.conf import settings
-from django.http.response import Http404, HttpResponseNotFound
-from django.template.exceptions import TemplateDoesNotExist
+from django.http.response import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
 from rest_framework.exceptions import (
@@ -123,7 +122,7 @@ class VueTemplateView(TemplateView):
                 # BK_DOMAIN
                 "BK_DOMAIN": settings.BK_DOMAIN,
                 "BK_USER_URL": settings.BK_USER_URL.rstrip("/"),
-                "AJAX_URL_PREFIX": settings.AJAX_URL_PREFIX.rstrip("/"),
+                "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
                 # 去除末尾的 /, 前端约定
                 "STATIC_URL": settings.STATIC_URL.rstrip("/"),
                 # 去除开头的 . document.domain需要
@@ -131,11 +130,8 @@ class VueTemplateView(TemplateView):
                 # csrftoken name
                 "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
                 "BK_COMPONENT_API_URL": settings.BK_COMPONENT_API_URL.rstrip("/"),
-                "LOGIN_SERVICE_URL": settings.LOGIN_SERVICE_URL.rstrip("/"),
             }
 
             return super(VueTemplateView, self).get(request, **context)
-        except TemplateDoesNotExist:
-            return HttpResponseNotFound("Not Found")
         except Exception as error:  # pylint: disable=broad-except
             logger.warning(f"render VueTemplateView（index.html） fail: {error}")
