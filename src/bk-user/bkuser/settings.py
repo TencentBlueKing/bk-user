@@ -326,3 +326,16 @@ LOGGING = {
 }
 
 DEFAULT_LOGO_DATA = ""
+
+# ------------------------------------------ Healthz 配置 ------------------------------------------
+
+# 调用 Healthz API 需要的 Token
+HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
+
+# 服务健康探针配置
+HEALTHZ_PROBES = env.list(
+    "HEALTHZ_PROBES",
+    default=[
+        "bkuser.apis.healthz.probes.MysqlProbe",
+    ],
+)

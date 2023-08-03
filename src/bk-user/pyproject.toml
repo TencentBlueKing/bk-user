@@ -29,6 +29,7 @@ werkzeug = "2.3.6"
 python-json-logger = "2.0.7"
 drf-yasg = "^1.21.7"
 blue-krill = "1.2.3"
+pymysql = "1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"

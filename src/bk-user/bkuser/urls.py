@@ -20,6 +20,7 @@ from bkuser.common.views import VueTemplateView
 
 urlpatterns = [
     path("api/v1/web/", include("bkuser.apis.web.urls")),
+    path("api/", include("bkuser.apis.healthz.urls")),
 ]
 
 # swagger doc
@@ -45,5 +46,5 @@ if settings.SWAGGER_ENABLE:
 
 # static file
 urlpatterns += [
-    url(r"^.*$", never_cache(VueTemplateView.as_view())),
+    url("^$", never_cache(VueTemplateView.as_view())),
 ]
