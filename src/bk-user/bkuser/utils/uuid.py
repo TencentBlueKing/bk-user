@@ -8,12 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
 import uuid
 
 
-def generate_uuid_str() -> str:
-    """
-    生成uuid字符串
-    """
-    return str(uuid.uuid3(uuid.uuid1(), uuid.uuid4().hex))
+def generate_uuid() -> str:
+    return uuid.uuid4().hex
