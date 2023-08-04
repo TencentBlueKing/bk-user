@@ -92,7 +92,7 @@ class TenantHandler:
                 id=tenant_info["id"],
                 name=tenant_info["name"],
                 logo=tenant_info["logo"],
-                is_user_number_visible=tenant_info["is_user_number_visible"],
+                feature_flags=tenant_info["feature_flags"],
             )
 
             # TODO: 开发本地数据源时，重写（直接调用本地数据源Handler）
@@ -143,7 +143,7 @@ class TenantHandler:
             Tenant.objects.filter(id=tenant_id).update(
                 name=tenant_info["name"],
                 logo=tenant_info["logo"],
-                is_user_number_visible=tenant_info["is_user_number_visible"],
+                feature_flags=tenant_info["feature_flags"],
             )
 
             if should_deleted_manager_ids:

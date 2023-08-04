@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.db import models
 
+from bkuser.apps.tenant.constants import TenantFeatureFlag
 from bkuser.common.models import TimestampedModel
 
 
@@ -18,15 +19,19 @@ class Tenant(TimestampedModel):
     name = models.CharField("租户名称", max_length=128, unique=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
     is_default = models.BooleanField("是否默认租户", default=False)
-    is_user_number_visible = models.BooleanField("人员数量是否可见", default=True)
+    feature_flags = models.JSONField("租户特性标志集", default=dict)
 
     class Meta:
-        ordering = ["created_time"]
+        ordering = ["created_at"]
+
+    def has_feature_flag(self, ff: TenantFeatureFlag) -> bool:
+        default_flags = TenantFeatureFlag.get_default_flags()
+        return self.feature_flags.get(ff, default_flags[ff])
 
 
 class TenantManager(models.Model):
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True)
-    tenant_user_id = models.CharField("租户用户ID", max_length=128, db_index=True)
+    tenant_user_id = models.CharField("租户用户 ID", max_length=128, db_index=True)
 
     class Meta:
         unique_together = [

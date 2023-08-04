@@ -28,7 +28,7 @@ whitenoise = "6.5.0"
 werkzeug = "2.3.6"
 python-json-logger = "2.0.7"
 drf-yasg = "^1.21.7"
-blue-krill = "1.2.5"
+blue-krill = "2.0.0"
 django-mptt = "0.14.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -38,6 +38,7 @@ mypy = "^1.4.1"
 types-requests = "^2.31.0.1"
 pytest = "^7.4.0"
 pytest-django = "^4.5.2"
+types-pytz = "^2023.3.0.0"
 
 [tool.black]
 line-length = 119

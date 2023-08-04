@@ -8,10 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Dict, List
+
 from django.conf import settings
 from rest_framework import serializers
 
 from bkuser.apps.data_source_organization.models import DataSourceUser
+from bkuser.apps.tenant.models import Tenant
 from bkuser.biz.validators import validate_tenant_id
 
 
@@ -24,18 +27,22 @@ class TenantManagerCreateInputSLZ(serializers.Serializer):
     phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
 
 
-class TenantCreateInputSlZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户ID", validators=[validate_tenant_id])
+class TenantFeatureFlagSLZ(serializers.Serializer):
+    user_number_visible = serializers.BooleanField(help_text="人员数量是否可见", default=True)
+
+
+class TenantCreateInputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户 ID", validators=[validate_tenant_id])
     name = serializers.CharField(help_text="租户名称")
-    is_user_number_visible = serializers.BooleanField(help_text="人员数量是否可见")
-    logo = serializers.CharField(help_text="租户logo", required=False)
+    logo = serializers.CharField(help_text="租户 Logo", required=False)
     managers = serializers.ListField(help_text="管理人列表", child=TenantManagerCreateInputSLZ(), allow_empty=False)
+    feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
     # TODO: 目前还没设计数据源，待开发本地数据源时再补充
     # password_config
 
 
 class TenantCreateOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户ID")
+    id = serializers.CharField(help_text="租户 ID")
 
 
 class TenantSearchInputSLZ(serializers.Serializer):
@@ -43,20 +50,20 @@ class TenantSearchInputSLZ(serializers.Serializer):
 
 
 class TenantSearchOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户ID")
+    id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
-    logo = serializers.SerializerMethodField(help_text="租户Logo")
-    create_time = serializers.SerializerMethodField(help_text="创建时间")
+    logo = serializers.SerializerMethodField(help_text="租户 Logo")
+    created_at = serializers.SerializerMethodField(help_text="创建时间")
     managers = serializers.SerializerMethodField(help_text="租户管理员")
     data_sources = serializers.SerializerMethodField(help_text="租户数据源")
 
-    def get_logo(self, obj):
+    def get_logo(self, obj: Tenant) -> str:
         return obj.logo or settings.TENANT_DEFAULT_LOGO
 
-    def get_create_time(self, obj):
-        return obj.create_time_display
+    def get_created_at(self, obj: Tenant) -> str:
+        return obj.created_at_display
 
-    def get_managers(self, obj):
+    def get_managers(self, obj: Tenant) -> List[Dict]:
         tenant_manager_map = self.context["tenant_manager_map"]
         managers = tenant_manager_map.get(obj.id) or []
         return [
@@ -75,16 +82,16 @@ class TenantSearchOutputSLZ(serializers.Serializer):
 
 class TenantUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="租户名称")
-    logo = serializers.CharField(help_text="租户Logo", required=False)
-    is_user_number_visible = serializers.BooleanField(help_text="人员数量是否可见")
-    manager_ids = serializers.ListField(child=serializers.CharField(), help_text="租户用户ID列表", allow_empty=False)
+    logo = serializers.CharField(help_text="租户 Logo", required=False)
+    manager_ids = serializers.ListField(child=serializers.CharField(), help_text="租户用户 ID 列表", allow_empty=False)
+    feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
 
 
 class TenantRetrieveOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户ID")
+    id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
-    logo = serializers.SerializerMethodField(help_text="租户Logo")
-    is_user_number_visible = serializers.BooleanField(help_text="人员数量是否可见")
+    logo = serializers.SerializerMethodField(help_text="租户 Logo")
+    feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
     managers = serializers.SerializerMethodField()
 
     def get_managers(self, obj):
@@ -107,7 +114,7 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
 
 
 class TenantUserSearchOutputSchema(serializers.Serializer):
-    id = serializers.CharField(help_text="用户ID")
+    id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="租户用户名")
     full_name = serializers.CharField(help_text="管理员姓名")
     email = serializers.EmailField(help_text="管理员邮箱")
@@ -117,7 +124,7 @@ class TenantUserSearchOutputSchema(serializers.Serializer):
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="用户ID")
+    id = serializers.CharField(help_text="用户 ID")
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -8,27 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.db import models
-from django.utils import timezone
+from blue_krill.data_types.enum import FeatureFlag, FeatureFlagField
+from django.utils.translation import gettext_lazy as _
 
 
-class TimestampedModel(models.Model):
-    """Model with 'created' and 'updated' fields."""
+class TenantFeatureFlag(FeatureFlag):  # type: ignore
+    """租户特性标志"""
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    @property
-    def created_at_display(self):
-        # 转换成本地时间
-        local_time = timezone.localtime(self.created_at)
-        return local_time.strftime("%Y-%m-%d %H:%M:%S")
-
-    @property
-    def updated_at_display(self):
-        # 转换成本地时间
-        local_time = timezone.localtime(self.updated_at)
-        return local_time.strftime("%Y-%m-%d %H:%M:%S")
-
-    class Meta:
-        abstract = True
+    USER_NUMBER_VISIBLE = FeatureFlagField(label=_("人员数量是否可见"), default=True)

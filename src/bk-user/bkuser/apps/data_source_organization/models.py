@@ -15,7 +15,7 @@ from bkuser.common.models import TimestampedModel
 
 
 class DataSourceUser(TimestampedModel):
-    data_source_id = models.IntegerField("数据源ID")
+    data_source_id = models.IntegerField("数据源 ID")
 
     # ----------------------- 内置字段相关 -----------------------
     username = models.CharField("用户名", max_length=128)
@@ -48,11 +48,11 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
 
     user = models.OneToOneField(DataSourceUser, on_delete=models.CASCADE)
     password = models.CharField("用户密码", null=True, blank=True, default="", max_length=255)
-    password_update_time = models.DateTimeField("密码最后更新时间", null=True, blank=True)
-    password_expired_time = models.DateTimeField("密码过期时间", null=True, blank=True)
+    password_updated_at = models.DateTimeField("密码最后更新时间", null=True, blank=True)
+    password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)
 
     # data_source_id/username为冗余字段，便于认证时快速匹配
-    data_source_id = models.IntegerField("数据源ID")
+    data_source_id = models.IntegerField("数据源 ID")
     username = models.CharField("用户名", max_length=128)
 
     class Meta:
@@ -66,7 +66,7 @@ class DataSourceDepartment(TimestampedModel):
     数据源部门
     """
 
-    data_source_id = models.IntegerField("数据源ID")
+    data_source_id = models.IntegerField("数据源 ID")
 
     # 部门标识，不同于自增 id，多数情况存储各个公司组织架构系统的id, 非必须
     code = models.CharField("部门标识", null=True, blank=True, max_length=128)
@@ -83,10 +83,10 @@ class DataSourceDepartmentRelation(MPTTModel, TimestampedModel):
     数据源部门关系
     """
 
-    id = models.IntegerField("部门ID", primary_key=True)
+    id = models.IntegerField("部门 ID", primary_key=True)
     parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
     # 冗余字段
-    data_source_id = models.IntegerField("数据源ID")
+    data_source_id = models.IntegerField("数据源 ID")
 
     class Meta:
         index_together = [
@@ -95,13 +95,13 @@ class DataSourceDepartmentRelation(MPTTModel, TimestampedModel):
         ]
 
 
-class DataSourceDepartmentUser(TimestampedModel):
+class DataSourceDepartmentUserRelation(TimestampedModel):
     """
-    数据源部门用户
+    数据源部门 - 用户关联表
     """
 
-    department_id = models.IntegerField("数据源部门ID", db_index=True)
-    user_id = models.IntegerField("数据源用户ID", db_index=True)
+    department_id = models.IntegerField("数据源部门 ID", db_index=True)
+    user_id = models.IntegerField("数据源用户 ID", db_index=True)
 
     class Meta:
         ordering = ["id"]
@@ -110,13 +110,13 @@ class DataSourceDepartmentUser(TimestampedModel):
         ]
 
 
-class DataSourceUserLeader(TimestampedModel):
+class DataSourceUserLeaderRelation(TimestampedModel):
     """
-    数据源用户Leader
+    数据源用户 - Leader 关联表
     """
 
-    user_id = models.IntegerField("数据源用户ID", db_index=True)
-    leader_id = models.IntegerField("数据源用户LeaderID", db_index=True)
+    user_id = models.IntegerField("数据源用户 ID", db_index=True)
+    leader_id = models.IntegerField("数据源用户 Leader ID", db_index=True)
 
     class Meta:
         ordering = ["id"]
