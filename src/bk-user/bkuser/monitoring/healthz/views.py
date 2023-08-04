@@ -15,8 +15,8 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from bkuser.apis.healthz.probes import get_default_probes
-from bkuser.apis.healthz.serializers import DianosisSerializer
+from bkuser.monitoring.healthz.probes import get_default_probes
+from bkuser.monitoring.healthz.serializers import DianosisSerializer
 
 
 class HealthzApi(viewsets.ViewSet):
