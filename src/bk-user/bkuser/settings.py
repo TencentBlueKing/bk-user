@@ -337,3 +337,16 @@ DATA_SOURCE_PLUGIN_DEFAULT_LOGO = ""
 TENANT_DEFAULT_LOGO = ""
 # 数据源用户默认Logo，值为base64格式图片数据
 DATA_SOURCE_USER_DEFAULT_LOGO = ""
+
+# ------------------------------------------ Healthz 配置 ------------------------------------------
+
+# 调用 Healthz API 需要的 Token
+HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
+
+# 服务健康探针配置
+HEALTHZ_PROBES = env.list(
+    "HEALTHZ_PROBES",
+    default=[
+        "bkuser.apis.healthz.probes.MysqlProbe",
+    ],
+)

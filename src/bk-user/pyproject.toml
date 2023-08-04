@@ -28,7 +28,7 @@ whitenoise = "6.5.0"
 werkzeug = "2.3.6"
 python-json-logger = "2.0.7"
 drf-yasg = "^1.21.7"
-blue-krill = "1.2.3"
+blue-krill = "1.2.5"
 django-mptt = "0.14.0"
 
 [tool.poetry.group.dev.dependencies]

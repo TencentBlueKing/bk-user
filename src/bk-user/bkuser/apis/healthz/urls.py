@@ -13,6 +13,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("ping/", views.HealthzApi.as_view({"get": "ping"}), name="api.ping"),
     path("healthz/", views.HealthzApi.as_view({"get": "healthz"}), name="api.healthz"),
-    path("readyz/", views.HealthzApi.as_view({"get": "readyz"}), name="api.readyz"),
 ]

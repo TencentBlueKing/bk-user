@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from blue_krill.monitoring.probe.base import ProbeSet
 from django.conf import settings
+from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -23,8 +24,8 @@ class HealthzApi(viewsets.ViewSet):
 
     permission_classes = [AllowAny]
 
-    def readyz(self, request):
-        return Response()
+    def ping(self, request):
+        return HttpResponse("pong")
 
     def healthz(self, request):
         token = request.query_params.get("token", "")
