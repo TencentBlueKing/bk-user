@@ -13,7 +13,9 @@ import logging
 
 from blue_krill.web.drf_utils import stringify_validation_error
 from django.conf import settings
-from django.http.response import Http404
+from django.http.response import Http404, HttpResponseNotFound
+from django.template.exceptions import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
 from rest_framework.exceptions import (
@@ -116,7 +118,14 @@ class VueTemplateView(TemplateView):
     template_name = "index.html"
 
     @xframe_options_exempt
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
+        # 尝试获取模板，找不到模板，则404
+        try:
+            get_template(self.template_name)
+        except TemplateDoesNotExist:
+            return HttpResponseNotFound("Not Found")
+
+        # Context
         try:
             context = {
                 # BK_DOMAIN
@@ -132,6 +141,10 @@ class VueTemplateView(TemplateView):
                 "BK_COMPONENT_API_URL": settings.BK_COMPONENT_API_URL.rstrip("/"),
             }
 
-            return super(VueTemplateView, self).get(request, **context)
-        except Exception as error:  # pylint: disable=broad-except
-            logger.warning(f"render VueTemplateView（index.html） fail: {error}")
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("get context for index.html failed")
+            context = {}
+
+        kwargs.update(context)
+
+        return super(VueTemplateView, self).get(request, *args, **kwargs)

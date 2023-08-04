@@ -29,6 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", False)
+IS_LOCAL = env.bool("IS_LOCAL", default=False)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -230,7 +231,7 @@ _LOGGING_FORMAT = {
     "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
     "fmt": ("%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"),
 }
-if env.bool("IS_LOCAL_DEBUG", False):
+if IS_LOCAL:
     _LOGGING_FORMAT = {
         "format": (
             "%(levelname)s [%(asctime)s] %(pathname)s "
@@ -247,10 +248,7 @@ LOGGING = {
         "simple": {"format": "%(levelname)s %(message)s"},
     },
     "handlers": {
-        "null": {
-            "level": "DEBUG",
-            "class": "logging.NullHandler",
-        },
+        "null": {"level": "DEBUG", "class": "logging.NullHandler"},
         "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "simple"},
         "root": {
             "class": _LOG_CLASS,
@@ -263,13 +261,6 @@ LOGGING = {
             "class": _LOG_CLASS,
             "formatter": "verbose",
             "filename": os.path.join(_LOG_DIR, "%s-component.log" % _LOG_FILE_NAME_PREFIX),
-            "maxBytes": 1024 * 1024 * 10,
-            "backupCount": 5,
-        },
-        "mysql": {
-            "class": _LOG_CLASS,
-            "formatter": "verbose",
-            "filename": os.path.join(_LOG_DIR, "%s-mysql.log" % _LOG_FILE_NAME_PREFIX),
             "maxBytes": 1024 * 1024 * 10,
             "backupCount": 5,
         },
@@ -288,42 +279,31 @@ LOGGING = {
             "propagate": True,
         },
         "django.server": {
-            "handlers": ["console"],
+            "handlers": ["root", "console"],
             "level": LOG_LEVEL,
-            "propagate": True,
+            "propagate": False,
         },
         "django.request": {
-            "handlers": ["root"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "django.db.backends": {
-            "handlers": ["mysql"],
+            "handlers": ["root", "console"],
             "level": LOG_LEVEL,
-            "propagate": True,
+            "propagate": False,
         },
         # the root logger ,用于整个project的logger
         "root": {
-            "handlers": ["root"],
+            "handlers": ["root", "console"],
             "level": LOG_LEVEL,
-            "propagate": True,
+            "propagate": False,
         },
         # 组件调用日志
         "component": {
-            "handlers": ["component"],
+            "handlers": ["component", "console"],
             "level": LOG_LEVEL,
-            "propagate": True,
+            "propagate": False,
         },
         "celery": {
-            "handlers": ["celery"],
+            "handlers": ["celery", "console"],
             "level": LOG_LEVEL,
-            "propagate": True,
-        },
-        # 普通app日志
-        "app": {
-            "handlers": ["root"],
-            "level": LOG_LEVEL,
-            "propagate": True,
+            "propagate": False,
         },
     },
 }
