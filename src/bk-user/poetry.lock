@@ -131,13 +131,13 @@ reference = "tencent"
 
 [[package]]
 name = "blue-krill"
-version = "1.2.5"
+version = "2.0.0"
 description = "Tools and common packages for blueking paas"
 optional = false
-python-versions = ">=3.6.2,<3.11"
+python-versions = ">=3.8,<3.11"
 files = [
-    {file = "blue-krill-1.2.5.tar.gz", hash = "sha256:090b94ea243734436197c831ee448581375cb762d58913b9e6e06853fc668f83"},
-    {file = "blue_krill-1.2.5-py3-none-any.whl", hash = "sha256:eb8f3ed86022f3ee2d9835bfe78ca18f6a485cc888e966fe6ccac8d79e8341f5"},
+    {file = "blue_krill-2.0.0-py3-none-any.whl", hash = "sha256:7c36b2577d2c83cae47541be7e98b5c26f8c2161f557ae06f26204a0da225c37"},
+    {file = "blue_krill-2.0.0.tar.gz", hash = "sha256:8259101d990d6d4537445d475b3b0e5e4824a41787301761b735651b7a6c1080"},
 ]
 
 [package.dependencies]
@@ -146,7 +146,7 @@ click = "*"
 cryptography = ">=3.0.0,<4.0.0"
 curlify = ">=2.2.1,<3.0.0"
 django-environ = ">=0.8.1,<0.9.0"
-pydantic = ">=1.7,<2.0"
+pydantic = "*"
 pyjwt = ">=1.7.1"
 python-editor = ">=1.0.4,<2.0.0"
 requests = "*"
@@ -1925,6 +1925,22 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent"
 
 [[package]]
+name = "types-pytz"
+version = "2023.3.0.0"
+description = "Typing stubs for pytz"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-pytz-2023.3.0.0.tar.gz", hash = "sha256:ecdc70d543aaf3616a7e48631543a884f74205f284cefd6649ddf44c6a820aac"},
+    {file = "types_pytz-2023.3.0.0-py3-none-any.whl", hash = "sha256:4fc2a7fbbc315f0b6630e0b899fd6c743705abe1094d007b0e612d10da15e0f3"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
 name = "types-requests"
 version = "2.31.0.2"
 description = "Typing stubs for requests"
@@ -2303,4 +2319,4 @@ reference = "tencent"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "021246754562e98df7e7ecde0cff4311a903e6b0078ee81ff252cc652cc42978"
+content-hash = "ad6f75b7dfa8326956c759ef4c86d4607193ace83e39807d70ef5ec60f96712a"

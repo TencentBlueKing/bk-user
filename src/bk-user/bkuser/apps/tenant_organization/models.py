@@ -31,7 +31,7 @@ class TenantUser(TimestampedModel):
     id = models.CharField("蓝鲸用户对外唯一标识", primary_key=True, max_length=128)
 
     # 蓝鲸特有
-    language = models.CharField("语言", choices=BkLanguageEnum.get_choices(), default="Asia/Shanghai", max_length=32)
+    language = models.CharField("语言", choices=BkLanguageEnum.get_choices(), default="zh-cn", max_length=32)
     time_zone = models.CharField("时区", choices=TIME_ZONE_CHOICES, default="Asia/Shanghai", max_length=32)
 
     # wx_userid/wx_openid 兼容旧版本迁移
@@ -39,7 +39,7 @@ class TenantUser(TimestampedModel):
     wx_openid = models.CharField("微信公众号OpenID", null=True, blank=True, default="", max_length=64)
 
     # 账号有效期相关
-    account_expired_time = models.DateTimeField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
+    account_expired_at = models.DateTimeField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
 
     # 手机&邮箱相关：手机号&邮箱都可以继承数据源或自定义
     is_inherited_phone = models.BooleanField("是否继承数据源手机号", default=True)

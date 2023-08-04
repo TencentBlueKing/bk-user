@@ -15,7 +15,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apis.web.tenant.serializers import (
-    TenantCreateInputSlZ,
+    TenantCreateInputSLZ,
     TenantCreateOutputSLZ,
     TenantRetrieveOutputSLZ,
     TenantSearchInputSLZ,
@@ -66,11 +66,11 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
     @swagger_auto_schema(
         operation_description="新建租户",
-        request_body=TenantCreateInputSlZ(),
+        request_body=TenantCreateInputSLZ(),
         responses={status.HTTP_201_CREATED: TenantCreateOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
-        slz = TenantCreateInputSlZ(data=request.data)
+        slz = TenantCreateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -78,7 +78,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         tenant_info = {
             "id": data["id"],
             "name": data["name"],
-            "is_user_number_visible": data["is_user_number_visible"],
+            "feature_flags": data["feature_flags"],
             "logo": data.get("logo") or "",
         }
         managers = [
@@ -130,7 +130,7 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
         should_updated_info = {
             "name": data["name"],
             "logo": data.get("logo") or "",
-            "is_user_number_visible": data["is_user_number_visible"],
+            "feature_flags": data["feature_flags"],
         }
         TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
 
