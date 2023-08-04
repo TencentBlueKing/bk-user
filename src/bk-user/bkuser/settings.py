@@ -328,9 +328,20 @@ LOGGING = {
     },
 }
 
-# ---------------
-# 项目自定义配置
-# ---------------
+# ------------------------------------------ Healthz 配置 ------------------------------------------
+
+# 调用 Healthz API 需要的 Token
+HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
+# 服务健康探针配置
+HEALTHZ_PROBES = env.list(
+    "HEALTHZ_PROBES",
+    default=[
+        "bkuser.apis.healthz.probes.MysqlProbe",
+    ],
+)
+
+# ------------------------------------------ 业务逻辑配置 ------------------------------------------
+
 # 数据源插件默认Logo，值为base64格式图片数据
 DATA_SOURCE_PLUGIN_DEFAULT_LOGO = ""
 # 租户默认Logo，值为base64格式图片数据
