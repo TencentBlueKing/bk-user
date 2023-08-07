@@ -47,7 +47,7 @@ def one_line_error(error: ValidationError):
         return "param format error"
 
 
-def _handle_exception(request, exc) -> APIError:
+def _handle_exception(request, exc) -> APIError:  # noqa: ruff: PLR0911
     """统一处理异常，并转换成 APIError"""
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
         return error_codes.UNAUTHENTICATED
@@ -62,7 +62,7 @@ def _handle_exception(request, exc) -> APIError:
         return error_codes.INVALID_ARGUMENT.f(exc.detail)
 
     if isinstance(exc, ValidationError):
-        error_codes.VALIDATION_ERROR.f(one_line_error(exc)).set_detail({"message": json.dumps(exc.detail)})
+        return error_codes.VALIDATION_ERROR.f(one_line_error(exc)).set_detail({"message": json.dumps(exc.detail)})
 
     if isinstance(exc, APIError):
         # 回滚事务
