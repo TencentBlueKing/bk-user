@@ -144,36 +144,6 @@ SWAGGER_SETTINGS = {
     "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser.common.swagger.BkStandardResponseSwaggerAutoSchema",
 }
 
-# Celery
-# 连接 BROKER 超时时间
-BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
-# CELERY与RabbitMQ增加60秒心跳设置项
-BROKER_HEARTBEAT = 60
-# CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
-CELERYD_CONCURRENCY = env.int("CELERYD_CONCURRENCY", default=2)
-# 与周期任务配置的定时相关UTC
-CELERY_ENABLE_UTC = False
-# 周期任务beat生产者来源
-CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-# 任务结果存储
-CELERY_RESULT_BACKEND = "django-db"
-# Celery队列名称
-CELERY_DEFAULT_QUEUE = "bkuser"
-# close celery hijack root logger
-CELERYD_HIJACK_ROOT_LOGGER = False
-# disable remote control
-CELERY_ENABLE_REMOTE_CONTROL = False
-# Celery 消息序列化
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-# CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
-# CELERY_IMPORTS = []
-# 内置的周期任务
-# CELERYBEAT_SCHEDULE = {}
-# Celery消息队列
-BROKER_URL = env.str("BK_BROKER_URL", default="")
-
 # Requests pool config
 REQUESTS_POOL_CONNECTIONS = env.int("REQUESTS_POOL_CONNECTIONS", default=20)
 REQUESTS_POOL_MAXSIZE = env.int("REQUESTS_POOL_MAXSIZE", default=20)
@@ -218,6 +188,39 @@ CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 BK_LOGIN_URL = env.str("BK_LOGIN_URL", default="/")
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
+
+# ------------------------------------------ Celery 配置 ------------------------------------------
+
+# 连接 BROKER 超时时间
+BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
+# CELERY与RabbitMQ增加60秒心跳设置项
+BROKER_HEARTBEAT = 60
+# CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
+CELERYD_CONCURRENCY = env.int("CELERYD_CONCURRENCY", default=2)
+# 与周期任务配置的定时相关UTC
+CELERY_ENABLE_UTC = False
+# 周期任务beat生产者来源
+CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+# 任务结果存储
+CELERY_RESULT_BACKEND = "django-db"
+# Celery队列名称
+CELERY_DEFAULT_QUEUE = "bkuser"
+# close celery hijack root logger
+CELERYD_HIJACK_ROOT_LOGGER = False
+# disable remote control
+CELERY_ENABLE_REMOTE_CONTROL = False
+# Celery 消息序列化
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+# CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
+# CELERY_IMPORTS = []
+# 内置的周期任务
+# CELERYBEAT_SCHEDULE = {}
+# Celery消息队列
+BROKER_URL = env.str("BK_BROKER_URL", default="")
+
+# ------------------------------------------ 日志配置 ------------------------------------------
 
 # 日志配置
 LOG_LEVEL = env.str("LOG_LEVEL", default="ERROR")
@@ -327,11 +330,9 @@ METRIC_TOKEN = env.str("METRIC_TOKEN", "")
 
 # ------------------------------------------ Tracing 配置 ------------------------------------------
 
-# tracing: sentry 相关配置
 # Sentry DSN 配置
 SENTRY_DSN = env.str("SENTRY_DSN", "")
 
-# tracing: otel 相关配置
 # 是否开启 OTEL 数据上报，默认不启用
 ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", False)
 # 上报数据服务名称，一般使用默认值即可

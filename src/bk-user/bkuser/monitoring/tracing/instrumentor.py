@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-权限中心(BlueKing-IAM) available.
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
 Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at http://opensource.org/licenses/MIT
@@ -9,17 +9,21 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import json
+import logging
 from http import HTTPStatus
 from typing import Collection
 
 from django.conf import settings
 from opentelemetry.instrumentation import dbapi
+from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor  # type: ignore
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.trace import Span, Status, StatusCode, format_trace_id
+
+logger = logging.getLogger(__name__)
 
 
 def requests_callback(span: Span, response):
@@ -128,19 +132,15 @@ class BKUserInstrumentor(BaseInstrumentor):
 
     def _instrument(self, **kwargs):
         LoggingInstrumentor().instrument()
-        print("otel instructment: logging")
+        logger.info("otel instructment: logging")
         RequestsInstrumentor().instrument(span_callback=requests_callback)
-        print("otel instructment: requests")
+        logger.info("otel instructment: requests")
         DjangoInstrumentor().instrument(request_hook=django_request_hook, response_hook=django_response_hook)
-        print("otel instructment: django")
+        logger.info("otel instructment: django")
         RedisInstrumentor().instrument()
-        print("otel instructment: redis")
-
-        if getattr(settings, "IS_USE_CELERY", False):
-            from opentelemetry.instrumentation.celery import CeleryInstrumentor
-
-            CeleryInstrumentor().instrument()
-            print("otel instructment: celery")
+        logger.info("otel instructment: redis")
+        CeleryInstrumentor().instrument()
+        logger.info("otel instructment: celery")
 
         if getattr(settings, "OTEL_INSTRUMENT_DB_API", False):
             import MySQLdb  # noqa
@@ -152,9 +152,9 @@ class BKUserInstrumentor(BaseInstrumentor):
                 "mysql",
                 {"database": "db", "port": "port", "host": "host", "user": "user"},
             )
-            print("otel instructment: database api")
+            logger.info("otel instructment: database api")
 
     def _uninstrument(self, **kwargs):
         for instrumentor in self.instrumentors:
-            print("otel uninstrument", instrumentor)
+            logger.info("otel uninstrument %s", instrumentor)
             instrumentor.uninstrument()
