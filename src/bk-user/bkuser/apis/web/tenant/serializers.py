@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import Dict, List
 
 from django.conf import settings
+from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 
 from bkuser.apps.data_source_organization.models import DataSourceUser
@@ -49,6 +50,17 @@ class TenantSearchInputSLZ(serializers.Serializer):
     name = serializers.CharField(required=False, help_text="租户名", allow_blank=True)
 
 
+class TenantSearchManagerOutputSchema(serializers.Serializer):
+    id = serializers.CharField(help_text="用户 ID")
+    username = serializers.CharField(help_text="用户名")
+    full_name = serializers.CharField(help_text="姓名")
+
+
+class TenantSearchDataSourceOutputSchema(serializers.Serializer):
+    id = serializers.CharField(help_text="数据源 ID")
+    name = serializers.CharField(help_text="数据源名称")
+
+
 class TenantSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
@@ -63,6 +75,7 @@ class TenantSearchOutputSLZ(serializers.Serializer):
     def get_created_at(self, obj: Tenant) -> str:
         return obj.created_at_display
 
+    @swagger_serializer_method(serializer_or_field=TenantSearchManagerOutputSchema(many=True))
     def get_managers(self, obj: Tenant) -> List[Dict]:
         tenant_manager_map = self.context["tenant_manager_map"]
         managers = tenant_manager_map.get(obj.id) or []
@@ -75,6 +88,7 @@ class TenantSearchOutputSLZ(serializers.Serializer):
             for i in managers
         ]
 
+    @swagger_serializer_method(serializer_or_field=TenantSearchDataSourceOutputSchema(many=True))
     def get_data_sources(self, obj):
         data_source_map = self.context["data_source_map"]
         return data_source_map.get(obj.id) or []
@@ -87,6 +101,16 @@ class TenantUpdateInputSLZ(serializers.Serializer):
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
 
 
+class TenantRetrieveManagerOutputSchema(serializers.Serializer):
+    id = serializers.CharField(help_text="用户 ID")
+    username = serializers.CharField(help_text="租户用户名")
+    full_name = serializers.CharField(help_text="用户姓名")
+    email = serializers.EmailField(help_text="用户邮箱")
+    # TODO: 手机号&区号补充校验
+    phone = serializers.CharField(help_text="用户手机号")
+    phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
+
+
 class TenantRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
@@ -94,6 +118,7 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
     managers = serializers.SerializerMethodField()
 
+    @swagger_serializer_method(serializer_or_field=TenantRetrieveManagerOutputSchema(many=True))
     def get_managers(self, obj):
         tenant_manager_map = self.context["tenant_manager_map"]
         managers = tenant_manager_map.get(obj.id) or []
@@ -116,10 +141,10 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
 class TenantUserSearchOutputSchema(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="租户用户名")
-    full_name = serializers.CharField(help_text="管理员姓名")
-    email = serializers.EmailField(help_text="管理员邮箱")
+    full_name = serializers.CharField(help_text="用户姓名")
+    email = serializers.EmailField(help_text="用户邮箱")
     # TODO: 手机号&区号补充校验
-    phone = serializers.CharField(help_text="管理员手机号")
+    phone = serializers.CharField(help_text="用户手机号")
     phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
 
 
