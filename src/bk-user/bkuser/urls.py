@@ -20,7 +20,10 @@ from bkuser.common.views import VueTemplateView
 
 urlpatterns = [
     path("api/v1/web/", include("bkuser.apis.web.urls")),
+    # healthz
     path("", include("bkuser.monitoring.healthz.urls")),
+    # prometheus
+    path("", include("bkuser.monitoring.metrics.urls")),
 ]
 
 # swagger doc

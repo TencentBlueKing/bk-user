@@ -31,7 +31,7 @@ class HealthzApi(viewsets.ViewSet):
         token = request.query_params.get("token", "")
         if not settings.HEALTHZ_TOKEN:
             return Response(
-                data={"errors": "Token was not configured in settings, request denied"},
+                data={"errors": "Healthz token was not configured in settings, request denied"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if not (token and token == settings.HEALTHZ_TOKEN):

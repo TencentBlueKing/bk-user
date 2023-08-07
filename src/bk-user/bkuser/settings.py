@@ -316,9 +316,37 @@ HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
 HEALTHZ_PROBES = env.list(
     "HEALTHZ_PROBES",
     default=[
-        "bkuser.apis.healthz.probes.MysqlProbe",
+        "bkuser.monitoring.healthz.probes.MysqlProbe",
     ],
 )
+
+# ------------------------------------------ Metric 配置 ------------------------------------------
+
+# 调用 Metric API 需要的 Token
+METRIC_TOKEN = env.str("METRIC_TOKEN", "")
+
+# ------------------------------------------ Tracing 配置 ------------------------------------------
+
+# tracing: sentry 相关配置
+# Sentry DSN 配置
+SENTRY_DSN = env.str("SENTRY_DSN", "")
+
+# tracing: otel 相关配置
+# 是否开启 OTEL 数据上报，默认不启用
+ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", False)
+# 上报数据服务名称，一般使用默认值即可
+OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", "bk-user-v3")
+# sdk 采样规则（always_on / always_off ...）
+OTEL_SAMPLER = env.str("OTEL_SAMPLER", "always_on")
+# OTEL 上报地址（grpc）
+OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", "")
+# OTEL 上报到监控平台的数据 Token，可通过监控平台上新建应用获得
+OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", "")
+# 是否记录 DB 相关 tracing
+OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", False)
+
+if ENABLE_OTEL_TRACE or SENTRY_DSN:
+    INSTALLED_APPS += ("bkuser.monitoring.tracing",)
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 
