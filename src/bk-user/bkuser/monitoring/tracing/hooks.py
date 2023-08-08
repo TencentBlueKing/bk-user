@@ -9,12 +9,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import json
-from http import HTTPStatus
 from typing import Dict
 
 import requests
 from django.http import HttpRequest, HttpResponse
 from opentelemetry.trace import Span, StatusCode, format_trace_id
+from rest_framework import status
 
 
 def handle_api_error(span: Span, result: Dict):
@@ -23,12 +23,12 @@ def handle_api_error(span: Span, result: Dict):
         return
 
     err = result["error"]
-    span.set_attribute("err_code", err.get("code", ""))
-    span.set_attribute("err_msg", err.get("message", ""))
-    span.set_attribute("err_system", err.get("system", ""))
+    span.set_attribute("error_code", err.get("code", ""))
+    span.set_attribute("error_message", err.get("message", ""))
+    span.set_attribute("error_system", err.get("system", ""))
     # 错误详情若存在，则统一存到一个字段中
     if err_details := err.get("details", []):
-        span.set_attribute("err_details", json.dumps(err_details))
+        span.set_attribute("error_details", json.dumps(err_details))
 
 
 def requests_response_hook(span: Span, response: requests.Response):
@@ -60,21 +60,24 @@ def requests_response_hook(span: Span, response: requests.Response):
         span.set_attribute("request_id", request_id)
 
     if "message" in result:
-        span.set_attribute("err_msg", result["message"])
+        span.set_attribute("error_message", result["message"])
 
     # 旧版本 API 中，code 为 0/'0'/'00' 表示成功
     code = result.get("code")
     if code is not None:
-        span.set_attribute("err_code", str(code))
+        span.set_attribute("error_code", str(code))
         if str(code) in ["0", "00"]:
             span.set_status(StatusCode.OK)
         else:
             span.set_status(StatusCode.ERROR)
 
+        # 后续均为处理新版 API 协议逻辑，因此此处直接 return
+        return
+
     # 根据新版本 HTTP API 协议，处理错误详情
     handle_api_error(span, result)
 
-    if response.status_code >= HTTPStatus.OK and response.status_code < HTTPStatus.MULTIPLE_CHOICES:
+    if status.is_success(response.status_code):
         span.set_status(StatusCode.OK)
     else:
         span.set_status(StatusCode.ERROR)
@@ -98,7 +101,7 @@ def django_response_hook(span: Span, request: HttpRequest, response: HttpRespons
         return
 
     # 新版本协议中按照标准 HTTP 协议，200 <= code < 300 的都是正常
-    if response.status_code >= HTTPStatus.OK and response.status_code < HTTPStatus.MULTIPLE_CHOICES:
+    if status.is_success(response.status_code):
         span.set_status(StatusCode.OK)
         return
 
