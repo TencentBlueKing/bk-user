@@ -30,6 +30,7 @@ from rest_framework.exceptions import (
 )
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
+from sentry_sdk import capture_exception
 
 from bkuser.common.error_codes import error_codes
 from bkuser.utils.std_error import APIError
@@ -47,7 +48,7 @@ def one_line_error(error: ValidationError):
 
 
 def _handle_exception(request, exc) -> APIError:  # noqa: ruff: PLR0911
-    """统一处理异常，并转换成api error"""
+    """统一处理异常，并转换成 APIError"""
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
         return error_codes.UNAUTHENTICATED
 
@@ -68,7 +69,7 @@ def _handle_exception(request, exc) -> APIError:  # noqa: ruff: PLR0911
         set_rollback()
         return exc
 
-    # 非预期内的异常（1）记录日志（2）推送Sentry (3) 以系统异常响应
+    # 非预期内的异常（1）记录日志（2）推送到 sentry (3) 以系统异常响应
     logger.exception(
         "catch unexpected error, request url->[%s], request method->[%s] request params->[%s]",
         request.path,
@@ -76,7 +77,8 @@ def _handle_exception(request, exc) -> APIError:  # noqa: ruff: PLR0911
         json.dumps(getattr(request, request.method, None)),
     )
 
-    # TODO: 推送异常到 sentry
+    # 推送异常到 sentry
+    capture_exception(exc)
 
     # Note: 系统异常不暴露异常详情信息，避免敏感信息泄露
     return error_codes.SYSTEM_ERROR

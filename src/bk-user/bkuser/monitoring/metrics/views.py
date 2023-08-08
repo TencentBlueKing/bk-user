@@ -8,24 +8,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from .local import local
+from django.conf import settings
+from django_prometheus.exports import ExportToDjangoView
+from rest_framework import status
+from rest_framework.response import Response
 
 
-class RequestProvider:
-    """request_id中间件（调用链使用）"""
+def metric_view(request):
+    """metric view with basic auth"""
+    token = request.GET.get("token", "")
+    if not settings.METRIC_TOKEN:
+        return Response(
+            data={"errors": "Metric token was not configured in settings, request denied"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not (token and token == settings.METRIC_TOKEN):
+        return Response(
+            data={"errors": "Please provide valid token"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
-    REQUEST_ID_HEADER_KEY = "X-Request-Id"
-
-    def __init__(self, get_response=None):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        local.request = request
-        request.request_id = local.get_http_request_id()
-
-        response = self.get_response(request)
-        response[self.REQUEST_ID_HEADER_KEY] = request.request_id
-
-        local.release()
-
-        return response
+    return ExportToDjangoView(request)

@@ -20,7 +20,7 @@ from bkuser.common.views import VueTemplateView
 
 urlpatterns = [
     path("api/v1/web/", include("bkuser.apis.web.urls")),
-    path("", include("bkuser.monitoring.healthz.urls")),
+    path("", include("bkuser.monitoring.urls")),
 ]
 
 # swagger doc
