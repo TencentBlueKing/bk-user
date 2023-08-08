@@ -10,13 +10,28 @@ specific language governing permissions and limitations under the License.
 """
 import json
 from http import HTTPStatus
+from typing import Dict
 
 import requests
 from django.http import HttpRequest, HttpResponse
 from opentelemetry.trace import Span, StatusCode, format_trace_id
 
 
-def requests_response_hook(span: Span, response: requests.Response):  # noqa: ruff: C901 PLR0912
+def handle_api_error(span: Span, result: Dict):
+    """统一处理新版 HTTP API 协议中的错误详情"""
+    if "error" not in result:
+        return
+
+    err = result["error"]
+    span.set_attribute("err_code", err.get("code", ""))
+    span.set_attribute("err_msg", err.get("message", ""))
+    span.set_attribute("err_system", err.get("system", ""))
+    # 错误详情若存在，则统一存到一个字段中
+    if err_details := err.get("details", []):
+        span.set_attribute("err_details", json.dumps(err_details))
+
+
+def requests_response_hook(span: Span, response: requests.Response):
     """用于处理 requests 库发起的请求响应，需要兼容支持新旧 esb，apigw，新版 HTTP 协议"""
     if (
         # requests 请求异常, 例如访问超时等
@@ -56,15 +71,8 @@ def requests_response_hook(span: Span, response: requests.Response):  # noqa: ru
         else:
             span.set_status(StatusCode.ERROR)
 
-    # 新版本 HTTP API 协议，错误详情均在 error 字段中
-    if "error" in result:
-        err = result["error"]
-        span.set_attribute("err_code", err.get("code", ""))
-        span.set_attribute("err_msg", err.get("message", ""))
-        span.set_attribute("err_system", err.get("system", ""))
-        # 错误详情若存在，则统一存到一个字段中
-        if err_details := err.get("details", []):
-            span.set_attribute("err_details", json.dumps(err_details))
+    # 根据新版本 HTTP API 协议，处理错误详情
+    handle_api_error(span, result)
 
     if response.status_code >= HTTPStatus.OK and response.status_code < HTTPStatus.MULTIPLE_CHOICES:
         span.set_status(StatusCode.OK)
@@ -106,13 +114,4 @@ def django_response_hook(span: Span, request: HttpRequest, response: HttpRespons
     if request_id := result.get("request_id"):
         span.set_attribute("request_id", request_id)
 
-    if "error" not in result:
-        return
-
-    err = result["error"]
-    span.set_attribute("err_code", err.get("code", ""))
-    span.set_attribute("err_msg", err.get("message", ""))
-    span.set_attribute("err_system", err.get("system", ""))
-    # 错误详情若存在，则统一存到一个字段中
-    if err_details := err.get("details", []):
-        span.set_attribute("err_details", json.dumps(err_details))
+    handle_api_error(span, result)
