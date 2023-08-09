@@ -42,6 +42,8 @@ opentelemetry-instrumentation-requests = "0.40b0"
 opentelemetry-instrumentation-logging = "0.40b0"
 opentelemetry-instrumentation-celery = "0.40b0"
 redis = "4.6.0"
+django-redis = "5.3.0"
+pydantic = "2.1.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"
