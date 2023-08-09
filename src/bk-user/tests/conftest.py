@@ -8,12 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
-
-def url_join(host: str, path: str) -> str:
-    """
-    拼接host, path生成url
-
-    处理host, path有多余/的情况
-    """
-    return "{}/{}".format(host.rstrip("/"), path.lstrip("/"))

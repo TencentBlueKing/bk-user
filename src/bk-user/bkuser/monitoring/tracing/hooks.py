@@ -52,7 +52,7 @@ def requests_response_hook(span: Span, response: requests.Response):
         # new esb and apigateway
         response.headers.get("x-bkapi-request-id")
         # legacy api
-        or response.headers.get("x-request-id")
+        or response.headers.get("X-Request-Id")
         # old esb and other
         or result.get("request_id", "")
     )
@@ -113,8 +113,9 @@ def django_response_hook(span: Span, request: HttpRequest, response: HttpRespons
     if not isinstance(result, dict):
         return
 
-    # 若响应体中包含 request_id，则一并记录
-    if request_id := result.get("request_id"):
+    # 若能够获取到 request_id，则一并记录
+    request_id = response.headers.get("X-Request-Id") or result.get("request_id")
+    if request_id:
         span.set_attribute("request_id", request_id)
 
     handle_api_error(span, result)

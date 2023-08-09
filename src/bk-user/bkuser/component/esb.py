@@ -10,13 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 import json
 import logging
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 from django.conf import settings
 
 from bkuser.common.error_codes import error_codes
 from bkuser.common.local import local
-from bkuser.utils.url import url_join
 
 logger = logging.getLogger("component")
 
@@ -51,7 +50,7 @@ def _call_esb_api(http_func, url_path, **kwargs):
         }
     )
 
-    url = url_join(settings.BK_COMPONENT_API_URL, url_path)
+    url = urljoin(settings.BK_COMPONENT_API_URL, url_path)
 
     ok, resp_data = http_func(url, **kwargs)
     if not ok:

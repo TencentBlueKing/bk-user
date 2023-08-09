@@ -246,6 +246,11 @@ if IS_LOCAL:
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "request_id_filter": {
+            "()": "bkuser.common.log.RequestIDFilter",
+        }
+    },
     "formatters": {
         "verbose": _LOGGING_FORMAT,
         "simple": {"format": "%(levelname)s %(message)s"},
@@ -256,6 +261,7 @@ LOGGING = {
         "root": {
             "class": _LOG_CLASS,
             "formatter": "verbose",
+            "filters": ["request_id_filter"],
             "filename": os.path.join(_LOG_DIR, "%s-django.log" % _LOG_FILE_NAME_PREFIX),
             "maxBytes": 1024 * 1024 * 10,
             "backupCount": 5,
@@ -263,6 +269,7 @@ LOGGING = {
         "component": {
             "class": _LOG_CLASS,
             "formatter": "verbose",
+            "filters": ["request_id_filter"],
             "filename": os.path.join(_LOG_DIR, "%s-component.log" % _LOG_FILE_NAME_PREFIX),
             "maxBytes": 1024 * 1024 * 10,
             "backupCount": 5,
@@ -270,6 +277,7 @@ LOGGING = {
         "celery": {
             "class": _LOG_CLASS,
             "formatter": "verbose",
+            "filters": ["request_id_filter"],
             "filename": os.path.join(_LOG_DIR, "%s-celery.log" % _LOG_FILE_NAME_PREFIX),
             "maxBytes": 1024 * 1024 * 10,
             "backupCount": 5,
