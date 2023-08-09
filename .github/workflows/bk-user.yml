@@ -53,6 +53,10 @@ jobs:
         run: poetry install
       - name: Run unittest
         working-directory: src/bk-user
+        # TODO 使用更合适的方式解决“必须的”配置项问题
         run: |
+          export BK_APP_SECRET=""
+          export BK_USER_URL=""
+          export BK_COMPONENT_API_URL=""
           export DJANGO_SETTINGS_MODULE=bkuser.settings
           poetry run pytest ./tests
