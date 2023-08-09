@@ -18,6 +18,7 @@ from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import (
     AuthenticationFailed,
     MethodNotAllowed,
@@ -114,6 +115,30 @@ def custom_exception_handler(exc, context):
     }
 
     return Response(data=data, status=error.status_code)
+
+
+class ExcludePutAPIViewMixin:
+    """
+    对于DRF便捷APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），Update操作同时包括put/patch
+    但是大部分时候都不是两个都需要，该类是为了排除Put
+    Note: 由于类继承顺序，所以必须在UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView之前
+    """
+
+    @swagger_auto_schema(auto_schema=None)
+    def patch(self, request, *args, **kwargs):
+        return self.http_method_not_allowed(request, *args, **kwargs)  # type: ignore[attr-defined]
+
+
+class ExcludePatchAPIViewMixin:
+    """
+    对于DRF便捷APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），Update操作同时包括put/patch
+    但是大部分时候都不是两个都需要，该类是为了排除Patch
+    Note: 由于类继承顺序，所以必须在UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView之前
+    """
+
+    @swagger_auto_schema(auto_schema=None)
+    def patch(self, request, *args, **kwargs):
+        return self.http_method_not_allowed(request, *args, **kwargs)  # type: ignore[attr-defined]
 
 
 class VueTemplateView(TemplateView):

@@ -21,13 +21,19 @@ from bkuser.apis.web.tenant.serializers import (
     TenantSearchInputSLZ,
     TenantSearchOutputSLZ,
     TenantUpdateInputSLZ,
-    TenantUserSearchOutputSchema,
     TenantUserSearchOutputSLZ,
 )
 from bkuser.apps.tenant.models import Tenant
 from bkuser.apps.tenant_organization.models import TenantUser
 from bkuser.biz.data_source import DataSourceHandler
-from bkuser.biz.tenant import TenantHandler
+from bkuser.biz.tenant import (
+    TenantBaseInfo,
+    TenantEditableBaseInfo,
+    TenantFeatureFlag,
+    TenantHandler,
+    TenantManagerWithoutID,
+)
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
 
@@ -75,20 +81,20 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         data = slz.validated_data
 
         # 初始化租户和租户管理员
-        tenant_info = {
-            "id": data["id"],
-            "name": data["name"],
-            "feature_flags": data["feature_flags"],
-            "logo": data.get("logo") or "",
-        }
+        tenant_info = TenantBaseInfo(
+            id=data["id"],
+            name=data["name"],
+            feature_flags=TenantFeatureFlag(**data["feature_flags"]),
+            logo=data.get("logo") or "",
+        )
         managers = [
-            {
-                "username": i["username"],
-                "full_name": i["full_name"],
-                "email": i["email"],
-                "phone": i["phone"],
-                "phone_country_code": i.get("phone_country_code", "86"),
-            }
+            TenantManagerWithoutID(
+                username=i["username"],
+                full_name=i["full_name"],
+                email=i["email"],
+                phone=i["phone"],
+                phone_country_code=i.get("phone_country_code", "86"),
+            )
             for i in data["managers"]
         ]
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers)
@@ -96,7 +102,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         return Response({"id": tenant_id})
 
 
-class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
+class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
     serializer_class = TenantRetrieveOutputSLZ
@@ -118,7 +124,7 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
     @swagger_auto_schema(
         operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
-        responses={status.HTTP_200_OK: None},
+        responses={status.HTTP_200_OK: ""},
     )
     def put(self, request, *args, **kwargs):
         slz = TenantUpdateInputSLZ(data=request.data)
@@ -127,11 +133,10 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
 
         instance = self.get_object()
 
-        should_updated_info = {
-            "name": data["name"],
-            "logo": data.get("logo") or "",
-            "feature_flags": data["feature_flags"],
-        }
+        should_updated_info = TenantEditableBaseInfo(
+            name=data["name"], logo=data.get("logo") or "", feature_flags=TenantFeatureFlag(**data["feature_flags"])
+        )
+
         TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
 
         return Response()
@@ -146,7 +151,7 @@ class TenantUsersListApi(generics.ListAPIView):
 
     @swagger_auto_schema(
         operation_description="租户下用户列表",
-        responses={status.HTTP_200_OK: TenantUserSearchOutputSchema(many=True)},
+        responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
