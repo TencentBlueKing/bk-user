@@ -140,9 +140,7 @@ class Cache:
         map_key_data = {self._make_key(key): value for key, value in data.items()}
         self.cache.set_many(map_key_data, timeout, version)
 
-    def lock(  # noqa: ruff: PLR0913
-        self, key, version=None, timeout=None, sleep=0.1, blocking_timeout=None, client=None
-    ):
+    def lock(self, key, version=None, timeout=None, sleep=0.1, blocking_timeout=None, client=None):  # noqa: PLR0913
         if not self.lock_supported:
             raise NotImplementedError(f"{self.type} cache not support lock")
 

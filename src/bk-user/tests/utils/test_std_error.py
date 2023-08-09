@@ -29,7 +29,7 @@ class TestErrorCode:
 
         assert isinstance(exc, APIError)
         assert exc.code == "foo_bar"
-        assert exc.status_code == 500  # noqa: ruff: PLR2004
+        assert exc.status_code == 500  # noqa: PLR2004
         assert exc.message == "foo message"
 
     def test_formatted(self):

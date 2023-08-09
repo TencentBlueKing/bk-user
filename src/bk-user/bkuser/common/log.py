@@ -16,7 +16,7 @@ from bkuser.common.local import local
 class RequestIDFilter(logging.Filter):
     """
     request id log filter
-    日志记录中增加request id
+    日志记录中增加 request id
     """
 
     def filter(self, record):

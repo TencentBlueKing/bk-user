@@ -222,7 +222,7 @@ BROKER_URL = env.str("BK_BROKER_URL", default="")
 
 # ------------------------------------------ 缓存配置 ------------------------------------------
 
-REDIS_HOST = env.str("REDIS_HOST")
+REDIS_HOST = env.str("REDIS_HOST", "localhost")
 REDIS_PORT = env.int("REDIS_PORT", 6379)
 REDIS_PASSWORD = env.str("REDIS_PASSWORD", "")
 REDIS_MAX_CONNECTIONS = env.int("REDIS_MAX_CONNECTIONS", 100)

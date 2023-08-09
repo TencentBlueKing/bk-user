@@ -10,13 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 import re
 
-from rest_framework.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
+from rest_framework.exceptions import ValidationError
 
 TENANT_ID_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9._-]){0,31}"
 
 
 def validate_tenant_id(value):
     if not re.fullmatch(re.compile(TENANT_ID_REGEX), value):
-        raise ValidationError(_("{} 不符合 租户ID 的命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头").format(value))
+        raise ValidationError(
+            _("{} 不符合 租户ID 的命名规范: 由1-32位字母、数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头").format(value)  # noqa: E501
+        )
