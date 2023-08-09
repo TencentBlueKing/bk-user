@@ -93,11 +93,11 @@ WSGI_APPLICATION = "bkuser.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": env.str("MYSQL_NAME"),
-        "USER": env.str("MYSQL_USER"),
-        "PASSWORD": env.str("MYSQL_PASSWORD"),
-        "HOST": env.str("MYSQL_HOST"),
-        "PORT": env.int("MYSQL_PORT"),
+        "NAME": env.str("MYSQL_NAME", "bk-user"),
+        "USER": env.str("MYSQL_USER", "root"),
+        "PASSWORD": env.str("MYSQL_PASSWORD", ""),
+        "HOST": env.str("MYSQL_HOST", "localhost"),
+        "PORT": env.int("MYSQL_PORT", 3306),
     },
 }
 # Default primary key field type
