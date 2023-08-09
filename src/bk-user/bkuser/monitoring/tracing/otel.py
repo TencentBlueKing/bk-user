@@ -29,7 +29,7 @@ class LazyBatchSpanProcessor(BatchSpanProcessor):
         self.done = True
         with self.condition:
             self.condition.notify_all()
-        self.worker_thread.join()
+        self.worker_thread.join()  # type: ignore
         self.done = False
         self.worker_thread = None  # type: ignore
 
