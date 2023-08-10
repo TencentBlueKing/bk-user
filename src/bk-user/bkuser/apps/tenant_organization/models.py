@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
 from django.db import models
 
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
@@ -49,7 +50,7 @@ class TenantUser(TimestampedModel):
         max_length=16,
         null=True,
         blank=True,
-        default="86",
+        default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
     is_inherited_email = models.BooleanField("是否继承数据源邮箱", default=True)
     custom_email = models.EmailField("自定义邮箱", null=True, blank=True, default="")

@@ -125,7 +125,7 @@ class ExcludePutAPIViewMixin:
     """
 
     @swagger_auto_schema(auto_schema=None)
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request, *args, **kwargs)  # type: ignore[attr-defined]
 
 

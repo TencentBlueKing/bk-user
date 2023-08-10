@@ -28,7 +28,9 @@ class TenantManagerCreateInputSLZ(serializers.Serializer):
     email = serializers.EmailField(help_text="管理员邮箱")
     # TODO: 手机号&区号补充校验
     phone = serializers.CharField(help_text="管理员手机号")
-    phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
+    phone_country_code = serializers.CharField(
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
 
 
 class TenantFeatureFlagSLZ(serializers.Serializer):
@@ -73,7 +75,7 @@ class TenantSearchOutputSLZ(serializers.Serializer):
     data_sources = serializers.SerializerMethodField(help_text="租户数据源")
 
     def get_logo(self, obj: Tenant) -> str:
-        return obj.logo or settings.TENANT_DEFAULT_LOGO
+        return obj.logo or settings.DEFAULT_TENANT_LOGO
 
     def get_created_at(self, obj: Tenant) -> str:
         return obj.created_at_display
@@ -110,7 +112,9 @@ class TenantRetrieveManagerOutputSchema(serializers.Serializer):
     full_name = serializers.CharField(help_text="用户姓名")
     email = serializers.EmailField(help_text="用户邮箱")
     phone = serializers.CharField(help_text="用户手机号")
-    phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
+    phone_country_code = serializers.CharField(
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
 
 
 class TenantRetrieveOutputSLZ(serializers.Serializer):
@@ -135,7 +139,7 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
         ]
 
     def get_logo(self, obj: Tenant) -> str:
-        return obj.logo or settings.TENANT_DEFAULT_LOGO
+        return obj.logo or settings.DEFAULT_TENANT_LOGO
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
@@ -144,7 +148,9 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="用户姓名")
     email = serializers.EmailField(help_text="用户邮箱")
     phone = serializers.CharField(help_text="用户手机号")
-    phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
+    phone_country_code = serializers.CharField(
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
 
     def to_representation(self, instance: TenantUser) -> Dict:
         data = super().to_representation(instance)
@@ -155,6 +161,6 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
             data["email"] = data_source_user.email
             data["phone"] = data_source_user.phone
             data["phone_country_code"] = data_source_user.phone_country_code
-            data["logo"] = data_source_user.logo or settings.DATA_SOURCE_USER_DEFAULT_LOGO
+            data["logo"] = data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
 
         return data

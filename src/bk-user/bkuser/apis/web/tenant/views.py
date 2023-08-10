@@ -93,7 +93,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
                 full_name=i["full_name"],
                 email=i["email"],
                 phone=i["phone"],
-                phone_country_code=i.get("phone_country_code", "86"),
+                phone_country_code=i["phone_country_code"],
             )
             for i in data["managers"]
         ]

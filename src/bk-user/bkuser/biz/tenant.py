@@ -21,7 +21,9 @@ from bkuser.apps.tenant_organization.models import TenantUser
 from bkuser.utils.uuid import generate_uuid
 
 
-class DataSourceUserInfo(BaseModel):
+class DataSourceUserInfo(
+    BaseModel,
+):
     """数据源用户信息"""
 
     username: str
