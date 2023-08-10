@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -21,13 +22,20 @@ from bkuser.apis.web.tenant.serializers import (
     TenantSearchInputSLZ,
     TenantSearchOutputSLZ,
     TenantUpdateInputSLZ,
-    TenantUserSearchOutputSchema,
+    TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
 from bkuser.apps.tenant.models import Tenant
 from bkuser.apps.tenant_organization.models import TenantUser
 from bkuser.biz.data_source import DataSourceHandler
-from bkuser.biz.tenant import TenantHandler
+from bkuser.biz.tenant import (
+    TenantBaseInfo,
+    TenantEditableBaseInfo,
+    TenantFeatureFlag,
+    TenantHandler,
+    TenantManagerWithoutID,
+)
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
 
@@ -75,20 +83,20 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         data = slz.validated_data
 
         # 初始化租户和租户管理员
-        tenant_info = {
-            "id": data["id"],
-            "name": data["name"],
-            "feature_flags": data["feature_flags"],
-            "logo": data.get("logo") or "",
-        }
+        tenant_info = TenantBaseInfo(
+            id=data["id"],
+            name=data["name"],
+            feature_flags=TenantFeatureFlag(**data["feature_flags"]),
+            logo=data.get("logo") or "",
+        )
         managers = [
-            {
-                "username": i["username"],
-                "full_name": i["full_name"],
-                "email": i["email"],
-                "phone": i["phone"],
-                "phone_country_code": i.get("phone_country_code", "86"),
-            }
+            TenantManagerWithoutID(
+                username=i["username"],
+                full_name=i["full_name"],
+                email=i["email"],
+                phone=i["phone"],
+                phone_country_code=i["phone_country_code"],
+            )
             for i in data["managers"]
         ]
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers)
@@ -96,7 +104,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         return Response({"id": tenant_id})
 
 
-class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
+class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
     serializer_class = TenantRetrieveOutputSLZ
@@ -118,7 +126,7 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
     @swagger_auto_schema(
         operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
-        responses={status.HTTP_200_OK: None},
+        responses={status.HTTP_200_OK: ""},
     )
     def put(self, request, *args, **kwargs):
         slz = TenantUpdateInputSLZ(data=request.data)
@@ -127,11 +135,10 @@ class TenantRetrieveUpdateApi(generics.RetrieveUpdateAPIView):
 
         instance = self.get_object()
 
-        should_updated_info = {
-            "name": data["name"],
-            "logo": data.get("logo") or "",
-            "feature_flags": data["feature_flags"],
-        }
+        should_updated_info = TenantEditableBaseInfo(
+            name=data["name"], logo=data.get("logo") or "", feature_flags=TenantFeatureFlag(**data["feature_flags"])
+        )
+
         TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
 
         return Response()
@@ -142,11 +149,23 @@ class TenantUsersListApi(generics.ListAPIView):
 
     def get_queryset(self):
         tenant_id = self.kwargs["tenant_id"]
-        return TenantUser.objects.filter(tenant_id=tenant_id)
+        slz = TenantUserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        queryset = TenantUser.objects.filter(tenant_id=tenant_id)
+        if keyword := data.get("keyword"):
+            # FIXME: 考虑冗余搜索字段在TenantUser表或加上外键约束，否则直接搜索DataSourceUser表后再过滤，性能会比较差
+            queryset = queryset.filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+            )
+
+        return queryset
 
     @swagger_auto_schema(
         operation_description="租户下用户列表",
-        responses={status.HTTP_200_OK: TenantUserSearchOutputSchema(many=True)},
+        query_serializer=TenantUserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

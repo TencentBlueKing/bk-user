@@ -12,6 +12,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from django.db import transaction
+from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.data_source_organization.models import DataSourceUser
@@ -20,9 +21,59 @@ from bkuser.apps.tenant_organization.models import TenantUser
 from bkuser.utils.uuid import generate_uuid
 
 
+class DataSourceUserInfo(
+    BaseModel,
+):
+    """数据源用户信息"""
+
+    username: str
+    full_name: str
+    email: str
+    phone: str
+    phone_country_code: str
+
+
+class TenantUserWithInheritedInfo(BaseModel):
+    """租户用户，带其继承的用户信息"""
+
+    id: str
+    data_source_user: DataSourceUserInfo
+
+
+class TenantFeatureFlag(BaseModel):
+    """租户特性集"""
+
+    user_number_visible: bool = False
+
+
+class TenantBaseInfo(BaseModel):
+    """租户基本信息"""
+
+    id: str
+    name: str
+    logo: str = ""
+    feature_flags: TenantFeatureFlag
+
+
+class TenantEditableBaseInfo(BaseModel):
+    """租户可编辑的基本信息"""
+
+    name: str
+    logo: str = ""
+    feature_flags: TenantFeatureFlag
+
+
+class TenantManagerWithoutID(BaseModel):
+    username: str
+    full_name: str
+    email: str
+    phone: str
+    phone_country_code: str
+
+
 class TenantUserHandler:
     @staticmethod
-    def list_tenant_user_by_id(tenant_user_ids: List[str]) -> List[Dict]:
+    def list_tenant_user_by_id(tenant_user_ids: List[str]) -> List[TenantUserWithInheritedInfo]:
         """
         查询租户用户信息
         """
@@ -42,16 +93,16 @@ class TenantUserHandler:
                 continue
 
             data.append(
-                {
-                    "id": i.id,
-                    "data_source_user": {
-                        "username": data_source_user.username,
-                        "full_name": data_source_user.full_name,
-                        "email": data_source_user.email,
-                        "phone": data_source_user.phone,
-                        "phone_country_code": data_source_user.phone_country_code,
-                    },
-                }
+                TenantUserWithInheritedInfo(
+                    id=i.id,
+                    data_source_user=DataSourceUserInfo(
+                        username=data_source_user.username,
+                        full_name=data_source_user.full_name,
+                        email=data_source_user.email,
+                        phone=data_source_user.phone,
+                        phone_country_code=data_source_user.phone_country_code,
+                    ),
+                )
             )
 
         return data
@@ -59,7 +110,7 @@ class TenantUserHandler:
 
 class TenantHandler:
     @staticmethod
-    def get_tenant_manager_map(tenant_ids: Optional[List[str]] = None) -> Dict[str, List[Dict]]:
+    def get_tenant_manager_map(tenant_ids: Optional[List[str]] = None) -> Dict[str, List[TenantUserWithInheritedInfo]]:
         """
         查询租户管理员
         """
@@ -70,7 +121,7 @@ class TenantHandler:
         # 查询管理员对应的信息
         tenant_user_ids = [i.tenant_user_id for i in tenant_managers]
         tenant_users = TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)
-        tenant_users_map = {i["id"]: i for i in tenant_users}
+        tenant_users_map = {i.id: i for i in tenant_users}
 
         # 按照{tenant_id: List[tenant_user]}格式组装s
         data = defaultdict(list)
@@ -82,23 +133,18 @@ class TenantHandler:
         return data
 
     @staticmethod
-    def create_with_managers(tenant_info: Dict, managers: List[Dict]) -> str:
+    def create_with_managers(tenant_info: TenantBaseInfo, managers: List[TenantManagerWithoutID]) -> str:
         """
         创建租户，支持同时创建租户管理员
         """
         with transaction.atomic():
             # 创建租户本身
-            tenant = Tenant.objects.create(
-                id=tenant_info["id"],
-                name=tenant_info["name"],
-                logo=tenant_info["logo"],
-                feature_flags=tenant_info["feature_flags"],
-            )
+            tenant = Tenant.objects.create(**tenant_info.model_dump())
 
             # TODO: 开发本地数据源时，重写（直接调用本地数据源Handler）
             # 创建本地数据源，名称则使用租户名称
             data_source = DataSource.objects.create(
-                name=f"{tenant_info['name']}-本地数据源",
+                name=f"{tenant_info.name}-本地数据源",
                 owner_tenant_id=tenant.id,
                 plugin=DataSourcePlugin.objects.get(id="local"),
             )
@@ -107,15 +153,9 @@ class TenantHandler:
             # Note: 批量创建无法返回ID，这里使用循环创建
             tenant_manager_objs = []
             for i in managers:
-                data_source_user = DataSourceUser.objects.create(
-                    data_source_id=data_source.id,
-                    username=i["username"],
-                    full_name=i["full_name"],
-                    email=i["email"],
-                    phone=i["phone"],
-                    phone_country_code=i["phone_country_code"],
-                )
-
+                # 创建数据源用户
+                data_source_user = DataSourceUser.objects.create(data_source_id=data_source.id, **i.model_dump())
+                # 创建对应的租户用户
                 tenant_user = TenantUser.objects.create(
                     data_source_user_id=data_source_user.id,
                     tenant_id=tenant.id,
@@ -127,24 +167,22 @@ class TenantHandler:
             if tenant_manager_objs:
                 TenantManager.objects.bulk_create(tenant_manager_objs, batch_size=100)
 
-        return tenant_info["id"]
+        return tenant_info.id
 
     @staticmethod
-    def update_with_managers(tenant_id: str, tenant_info: Dict, manager_ids: List[str]):
+    def update_with_managers(tenant_id: str, tenant_info: TenantEditableBaseInfo, manager_ids: List[str]):
         """
         【覆盖】更新租户
         """
         old_manager_ids = TenantManager.objects.filter(tenant_id=tenant_id).values_list("tenant_user_id", flat=True)
 
+        # 新旧对比 => 需要删除的管理员ID，需要新增的管理员ID
         should_deleted_manager_ids = set(old_manager_ids) - set(manager_ids)
         should_add_manager_ids = set(manager_ids) - set(old_manager_ids)
 
         with transaction.atomic():
-            Tenant.objects.filter(id=tenant_id).update(
-                name=tenant_info["name"],
-                logo=tenant_info["logo"],
-                feature_flags=tenant_info["feature_flags"],
-            )
+            # 更新基本信息
+            Tenant.objects.filter(id=tenant_id).update(**tenant_info.model_dump())
 
             if should_deleted_manager_ids:
                 TenantManager.objects.filter(

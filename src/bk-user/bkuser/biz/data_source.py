@@ -11,12 +11,21 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict, List, Optional
 
+from pydantic import BaseModel
+
 from bkuser.apps.data_source.models import DataSource
+
+
+class DataSourceSimpleInfo(BaseModel):
+    id: int
+    name: str
 
 
 class DataSourceHandler:
     @staticmethod
-    def get_data_source_map_by_owner(owner_tenant_ids: Optional[List[str]] = None) -> Dict[str, List[Dict]]:
+    def get_data_source_map_by_owner(
+        owner_tenant_ids: Optional[List[str]] = None,
+    ) -> Dict[str, List[DataSourceSimpleInfo]]:
         """
         查询数据源
         """
@@ -26,11 +35,6 @@ class DataSourceHandler:
 
         data = defaultdict(list)
         for i in data_sources:
-            data[i.owner_tenant_id].append(
-                {
-                    "id": i.id,
-                    "name": i.name,
-                }
-            )
+            data[i.owner_tenant_id].append(DataSourceSimpleInfo(id=i.id, name=i.name))
 
         return data

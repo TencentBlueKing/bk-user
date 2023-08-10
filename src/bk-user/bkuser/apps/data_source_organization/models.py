@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -22,7 +23,9 @@ class DataSourceUser(TimestampedModel):
     full_name = models.CharField("姓名", max_length=128)
     email = models.EmailField("邮箱", null=True, blank=True, default="")
     phone = models.CharField("手机号", max_length=32)
-    phone_country_code = models.CharField("手机国际区号", max_length=16, null=True, blank=True, default="86")
+    phone_country_code = models.CharField(
+        "手机国际区号", max_length=16, null=True, blank=True, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
     logo = models.TextField("Logo", max_length=256, null=True, blank=True, default="")
     # ----------------------- 内置字段相关 -----------------------
 

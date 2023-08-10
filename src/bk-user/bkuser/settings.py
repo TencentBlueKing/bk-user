@@ -492,8 +492,10 @@ if ENABLE_OTEL_TRACE or SENTRY_DSN:
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 
 # 数据源插件默认Logo，值为base64格式图片数据
-DATA_SOURCE_PLUGIN_DEFAULT_LOGO = ""
+DEFAULT_DATA_SOURCE_PLUGIN_LOGO = ""
 # 租户默认Logo，值为base64格式图片数据
-TENANT_DEFAULT_LOGO = ""
+DEFAULT_TENANT_LOGO = ""
 # 数据源用户默认Logo，值为base64格式图片数据
-DATA_SOURCE_USER_DEFAULT_LOGO = ""
+DEFAULT_DATA_SOURCE_USER_LOGO = ""
+# 默认手机国际区号
+DEFAULT_PHONE_COUNTRY_CODE = env.str("DEFAULT_PHONE_COUNTRY_CODE", default="86")
