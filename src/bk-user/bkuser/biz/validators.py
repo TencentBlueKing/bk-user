@@ -13,7 +13,7 @@ import re
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-TENANT_ID_REGEX = r"^([a-zA-Z])([a-zA-Z0-9.-]){2,31}"
+TENANT_ID_REGEX = r"^[a-zA-Z][a-zA-Z0-9.-]{2,31}"
 
 
 def validate_tenant_id(value):
