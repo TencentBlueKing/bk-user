@@ -1,0 +1,62 @@
+name: bkuser_ci_check
+on:
+  push:
+    branches: [master, ft_tenant, ft_tenant_manage]
+    paths:
+      - "src/bk-user/**"
+  pull_request:
+    branches: [master, ft_tenant, ft_tenant_manage]
+    paths:
+      - "src/bk-user/**"
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: Format with black
+        run: |
+          pip install black==23.7.0 click==8.1.6
+          black src/bk-user --config=src/bk-user/pyproject.toml
+      - name: Lint with ruff
+        run: |
+          pip install ruff==0.0.277
+          ruff src/bk-user --config=src/bk-user/pyproject.toml
+      - name: Lint with mypy
+        run: |
+          pip install mypy==1.4.1 types-requests==2.31.0.2 types-setuptools==57.4.18 types-dataclasses==0.1.7 types-redis==3.5.18 types-PyMySQL==1.1.0.1 types-six==0.1.9 types-toml==0.1.5 types-pytz==2023.3.0.0 types-urllib3==1.26.25.14
+          mypy src/bk-user --config-file=src/bk-user/pyproject.toml
+  test:
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v2.3.0
+        with:
+          poetry-version: "1.5.1"
+      - name: Start Redis Container
+        uses: supercharge/redis-github-action@1.4.0
+        with:
+          redis-version: "3.2.0"
+      - name: Install dependencies
+        working-directory: src/bk-user
+        run: poetry install
+      - name: Run unittest
+        working-directory: src/bk-user
+        # TODO 使用更合适的方式解决“必须的”配置项问题
+        run: |
+          export BK_APP_SECRET=""
+          export BK_USER_URL=""
+          export BK_COMPONENT_API_URL=""
+          export DJANGO_SETTINGS_MODULE=bkuser.settings
+          poetry run pytest ./tests

@@ -8,14 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import re
-
-from django.utils.translation import gettext_lazy as _
-from rest_framework.exceptions import ValidationError
-
-TENANT_ID_REGEX = r"^[a-zA-Z][a-zA-Z0-9.-]{2,31}"
-
-
-def validate_tenant_id(value):
-    if not re.fullmatch(re.compile(TENANT_ID_REGEX), value):
-        raise ValidationError(_("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、点(.)、连接符(-)字符组成，以字母开头").format(value))  # noqa: E501

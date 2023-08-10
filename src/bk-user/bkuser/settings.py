@@ -93,11 +93,11 @@ WSGI_APPLICATION = "bkuser.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": env.str("MYSQL_NAME"),
-        "USER": env.str("MYSQL_USER"),
-        "PASSWORD": env.str("MYSQL_PASSWORD"),
-        "HOST": env.str("MYSQL_HOST"),
-        "PORT": env.int("MYSQL_PORT"),
+        "NAME": env.str("MYSQL_NAME", "bk-user"),
+        "USER": env.str("MYSQL_USER", "root"),
+        "PASSWORD": env.str("MYSQL_PASSWORD", ""),
+        "HOST": env.str("MYSQL_HOST", "localhost"),
+        "PORT": env.int("MYSQL_PORT", 3306),
     },
 }
 # Default primary key field type
@@ -220,6 +220,109 @@ CELERY_RESULT_SERIALIZER = "json"
 # Celery消息队列
 BROKER_URL = env.str("BK_BROKER_URL", default="")
 
+# ------------------------------------------ 缓存配置 ------------------------------------------
+
+REDIS_HOST = env.str("REDIS_HOST", "localhost")
+REDIS_PORT = env.int("REDIS_PORT", 6379)
+REDIS_PASSWORD = env.str("REDIS_PASSWORD", "")
+REDIS_MAX_CONNECTIONS = env.int("REDIS_MAX_CONNECTIONS", 100)
+REDIS_DB = env.int("REDIS_DB", 0)
+
+REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
+REDIS_SENTINEL_MASTER_NAME = env.str("REDIS_SENTINEL_MASTER_NAME", "master")
+REDIS_SENTINEL_PASSWORD = env.str("REDIS_SENTINEL_PASSWORD", "")
+REDIS_SENTINEL_ADDR_STR = env.str("REDIS_SENTINEL_ADDR", "")
+# parse sentinel address from "host1:port1,host2:port2" to [("host1", port1), ("host2", port2)]
+REDIS_SENTINEL_ADDR_LIST = []
+try:
+    REDIS_SENTINEL_ADDR_LIST = [tuple(addr.split(":")) for addr in REDIS_SENTINEL_ADDR_STR.split(",") if addr]
+except Exception as e:  # pylint: disable=broad-except
+    print(f"REDIS_SENTINEL_ADDR {REDIS_SENTINEL_ADDR_STR} is invalid: {e}")
+
+CACHES = {
+    # 默认缓存是本地内存，使用最近最少使用（LRU）的淘汰策略，使用 pickle 序列化数据
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        # 多个本地内存缓存时才需要设置
+        "LOCATION": "",
+        # 默认过期时间：30 min
+        "TIMEOUT": 60 * 30,
+        # 缓存的 Key 前缀
+        "KEY_PREFIX": "bkuser",
+        # 内存缓存特有参数
+        "OPTIONS": {
+            # 支持缓存的 key 最多数量，越大将会占用更多内存
+            "MAX_ENTRIES": 1000,
+            # 当达到 MAX_ENTRIES 时被淘汰的部分条目，淘汰率是 1 / CULL_FREQUENCY，默认淘汰 1/3 的缓存 key
+            "CULL_FREQUENCY": 3,
+        },
+    },
+    "redis": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        # 若需要支持主从配置，则 LOCATION 为 List[master_url, slave_url]
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
+        # 默认过期时间：30 min
+        "TIMEOUT": 60 * 30,
+        # 缓存的 Key 前缀
+        "KEY_PREFIX": "bkuser",
+        # 避免同缓存 Key 在不同 SaaS 版本之间存在差异导致读取的值非期望的
+        "VERSION": 3,
+        "OPTIONS": {
+            # Sentinel 模式 django_redis.client.SentinelClient (django-redis>=5.0.0)
+            # 集群模式 django_redis.client.HerdClient
+            # 单实例模式 django_redis.client.DefaultClient
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": REDIS_PASSWORD,
+            # socket 建立连接超时设置，单位秒
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            # 连接建立后的读写操作超时设置，单位秒
+            "SOCKET_TIMEOUT": 5,
+            # redis 只作为缓存使用, 触发异常不能影响正常逻辑，可能只是稍微慢点而已
+            "IGNORE_EXCEPTIONS": True,
+            # 默认使用 pickle 序列化数据，可选序列化方式有：pickle、json、msgpack
+            # "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer"
+            # Redis 连接池配置
+            "CONNECTION_POOL_KWARGS": {
+                # redis-py 默认不会关闭连接, 可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
+                "max_connections": REDIS_MAX_CONNECTIONS
+            },
+        },
+    },
+}
+
+# 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
+DJANGO_REDIS_LOGGER = "root"
+
+# redis sentinel
+if REDIS_USE_SENTINEL:
+    # Enable the alternate connection factory.
+    DJANGO_REDIS_CONNECTION_FACTORY = "django_redis.pool.SentinelConnectionFactory"
+    CACHES["redis"]["LOCATION"] = f"redis://{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}"  # type: ignore
+    CACHES["redis"]["OPTIONS"]["CLIENT_CLASS"] = "django_redis.client.SentinelClient"  # type: ignore
+    CACHES["redis"]["OPTIONS"]["SENTINELS"] = REDIS_SENTINEL_ADDR_LIST  # type: ignore
+    CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {  # type: ignore
+        "password": REDIS_SENTINEL_PASSWORD,
+        "socket_timeout": 5,
+    }
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"  # type: ignore
+
+# default celery broker
+if not BROKER_URL:
+    # https://docs.celeryq.dev/en/v4.3.0/history/whatsnew-4.0.html?highlight=sentinel#redis-support-for-sentinel
+    if REDIS_USE_SENTINEL:
+        BROKER_URL = ";".join(
+            [f"sentinel://:{REDIS_PASSWORD}@" + ":".join(addr) + f"/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR_LIST]
+        )
+        BROKER_TRANSPORT_OPTIONS = {
+            "master_name": REDIS_SENTINEL_MASTER_NAME,
+            "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
+            "socket_timeout": 5,
+            "socket_connect_timeout": 5,
+            "socket_keepalive": True,
+        }
+    else:
+        BROKER_URL = f"redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+
 # ------------------------------------------ 日志配置 ------------------------------------------
 
 # 日志配置
@@ -246,6 +349,11 @@ if IS_LOCAL:
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "request_id_filter": {
+            "()": "bkuser.common.log.RequestIDFilter",
+        }
+    },
     "formatters": {
         "verbose": _LOGGING_FORMAT,
         "simple": {"format": "%(levelname)s %(message)s"},
@@ -256,6 +364,7 @@ LOGGING = {
         "root": {
             "class": _LOG_CLASS,
             "formatter": "verbose",
+            "filters": ["request_id_filter"],
             "filename": os.path.join(_LOG_DIR, "%s-django.log" % _LOG_FILE_NAME_PREFIX),
             "maxBytes": 1024 * 1024 * 10,
             "backupCount": 5,
@@ -263,6 +372,7 @@ LOGGING = {
         "component": {
             "class": _LOG_CLASS,
             "formatter": "verbose",
+            "filters": ["request_id_filter"],
             "filename": os.path.join(_LOG_DIR, "%s-component.log" % _LOG_FILE_NAME_PREFIX),
             "maxBytes": 1024 * 1024 * 10,
             "backupCount": 5,
@@ -270,6 +380,7 @@ LOGGING = {
         "celery": {
             "class": _LOG_CLASS,
             "formatter": "verbose",
+            "filters": ["request_id_filter"],
             "filename": os.path.join(_LOG_DIR, "%s-celery.log" % _LOG_FILE_NAME_PREFIX),
             "maxBytes": 1024 * 1024 * 10,
             "backupCount": 5,
@@ -291,7 +402,7 @@ LOGGING = {
             "level": LOG_LEVEL,
             "propagate": False,
         },
-        # the root logger ,用于整个project的logger
+        # the root logger, 用于整个项目的 logger
         "root": {
             "handlers": ["root", "console"],
             "level": LOG_LEVEL,
