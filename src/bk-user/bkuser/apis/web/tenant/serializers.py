@@ -142,12 +142,16 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
         return obj.logo or settings.DEFAULT_TENANT_LOGO
 
 
+class TenantUserSearchInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", required=False)
+
+
 class TenantUserSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
-    username = serializers.CharField(help_text="租户用户名")
-    full_name = serializers.CharField(help_text="用户姓名")
-    email = serializers.EmailField(help_text="用户邮箱")
-    phone = serializers.CharField(help_text="用户手机号")
+    username = serializers.CharField(help_text="租户用户名", required=False)
+    full_name = serializers.CharField(help_text="用户姓名", required=False)
+    email = serializers.EmailField(help_text="用户邮箱", required=False)
+    phone = serializers.CharField(help_text="用户手机号", required=False)
     phone_country_code = serializers.CharField(
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )

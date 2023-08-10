@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from django.conf import settings
 from django.db import models
 
+from bkuser.apps.data_source_organization.models import DataSourceUser
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import TimestampedModel
 
@@ -22,8 +23,9 @@ class TenantUser(TimestampedModel):
     租户用户即蓝鲸用户
     """
 
-    # 对应的数据源用户
-    data_source_user_id = models.IntegerField("外键关联的数据源用户ID")
+    # 对应的数据源用户，这里ForeignKey只是为了使用联表查询方便，db_constraint=False表示不设置DB外键约束
+    # 等价于 data_source_user_id = models.IntegerField("外键关联的数据源用户ID")
+    data_source_user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
     # 冗余字段
     tenant_id = models.CharField("外键关联的租户ID", max_length=128)
 

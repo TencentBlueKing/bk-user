@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -21,6 +22,7 @@ from bkuser.apis.web.tenant.serializers import (
     TenantSearchInputSLZ,
     TenantSearchOutputSLZ,
     TenantUpdateInputSLZ,
+    TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
 from bkuser.apps.tenant.models import Tenant
@@ -147,10 +149,22 @@ class TenantUsersListApi(generics.ListAPIView):
 
     def get_queryset(self):
         tenant_id = self.kwargs["tenant_id"]
-        return TenantUser.objects.filter(tenant_id=tenant_id)
+        slz = TenantUserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        queryset = TenantUser.objects.filter(tenant_id=tenant_id)
+        if keyword := data.get("keyword"):
+            # FIXME: 考虑冗余搜索字段在TenantUser表或加上外键约束，否则直接搜索DataSourceUser表后再过滤，性能会比较差
+            queryset = queryset.filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+            )
+
+        return queryset
 
     @swagger_auto_schema(
         operation_description="租户下用户列表",
+        query_serializer=TenantUserSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):

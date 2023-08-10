@@ -95,7 +95,7 @@ class TenantUserHandler:
             data.append(
                 TenantUserWithInheritedInfo(
                     id=i.id,
-                    data_source_user=DataSourceUser(
+                    data_source_user=DataSourceUserInfo(
                         username=data_source_user.username,
                         full_name=data_source_user.full_name,
                         email=data_source_user.email,
