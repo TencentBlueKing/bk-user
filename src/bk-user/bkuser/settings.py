@@ -290,54 +290,26 @@ CACHES = {
     },
 }
 
+# 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
+DJANGO_REDIS_LOGGER = "root"
+
 # redis sentinel
 if REDIS_USE_SENTINEL:
     # Enable the alternate connection factory.
     DJANGO_REDIS_CONNECTION_FACTORY = "django_redis.pool.SentinelConnectionFactory"
-
-    CACHES["redis"] = {
-        "BACKEND": "django_redis.cache.RedisCache",
-        # The hostname in LOCATION is the primary (service / master) name
-        "LOCATION": f"redis://{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}",
-        # 默认过期时间：30 min
-        "TIMEOUT": 60 * 30,
-        # 缓存的Key的前缀
-        "KEY_PREFIX": "bkuser",
-        # 避免同缓存 Key 在不同 SaaS 版本之间存在差异导致读取的值非期望的
-        "VERSION": 3,
-        "OPTIONS": {
-            # While the default client will work, this will check you
-            # have configured things correctly, and also create a
-            # primary and replica pool for the service specified by
-            # LOCATION rather than requiring two URLs.
-            "CLIENT_CLASS": "django_redis.client.SentinelClient",
-            "PASSWORD": REDIS_PASSWORD,
-            # socket 建立连接超时设置，单位秒
-            "SOCKET_CONNECT_TIMEOUT": 5,
-            # 连接建立后的读写操作超时设置，单位秒
-            "SOCKET_TIMEOUT": 5,
-            # redis 只作为缓存使用, 触发异常不能影响正常逻辑，可能只是稍微慢点而已
-            "IGNORE_EXCEPTIONS": True,
-            # Sentinels which are passed directly to redis Sentinel.
-            "SENTINELS": REDIS_SENTINEL_ADDR_LIST,
-            # kwargs for redis Sentinel (optional).
-            "SENTINEL_KWARGS": {
-                "password": REDIS_SENTINEL_PASSWORD,
-                "socket_timeout": 5,
-            },
-            # You can still override the connection pool (optional).
-            "CONNECTION_POOL_CLASS": "redis.sentinel.SentinelConnectionPool",
-            # Redis 连接池配置
-            "CONNECTION_POOL_KWARGS": {
-                # redis-py 默认不会关闭连接, 可能会造成连接过多，导致 Redis 无法服务，因此需要设置最大值连接数
-                "max_connections": REDIS_MAX_CONNECTIONS
-            },
-        },
+    CACHES["redis"]["LOCATION"] = f"redis://{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}"  # type: ignore
+    CACHES["redis"]["OPTIONS"]["CLIENT_CLASS"] = "django_redis.client.SentinelClient"  # type: ignore
+    CACHES["redis"]["OPTIONS"]["SENTINELS"] = REDIS_SENTINEL_ADDR_LIST  # type: ignore
+    CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {  # type: ignore
+        "password": REDIS_SENTINEL_PASSWORD,
+        "socket_timeout": 5,
     }
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"  # type: ignore
 
-    # celery broker
+# default celery broker
+if not BROKER_URL:
     # https://docs.celeryq.dev/en/v4.3.0/history/whatsnew-4.0.html?highlight=sentinel#redis-support-for-sentinel
-    if not BROKER_URL:
+    if REDIS_USE_SENTINEL:
         BROKER_URL = ";".join(
             [f"sentinel://:{REDIS_PASSWORD}@" + ":".join(addr) + f"/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR_LIST]
         )
@@ -348,9 +320,8 @@ if REDIS_USE_SENTINEL:
             "socket_connect_timeout": 5,
             "socket_keepalive": True,
         }
-
-# 当 Redis Cache 使用 IGNORE_EXCEPTIONS 时，设置指定的 logger 输出异常
-DJANGO_REDIS_LOGGER = "root"
+    else:
+        BROKER_URL = f"redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 
