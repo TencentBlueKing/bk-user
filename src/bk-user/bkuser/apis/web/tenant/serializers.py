@@ -16,6 +16,9 @@ from rest_framework import serializers
 
 from bkuser.apps.data_source_organization.models import DataSourceUser
 from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant_organization.models import TenantUser
+from bkuser.biz.data_source import DataSourceSimpleInfo
+from bkuser.biz.tenant import TenantUserWithInheritedInfo
 from bkuser.biz.validators import validate_tenant_id
 
 
@@ -25,7 +28,9 @@ class TenantManagerCreateInputSLZ(serializers.Serializer):
     email = serializers.EmailField(help_text="管理员邮箱")
     # TODO: 手机号&区号补充校验
     phone = serializers.CharField(help_text="管理员手机号")
-    phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
+    phone_country_code = serializers.CharField(
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
 
 
 class TenantFeatureFlagSLZ(serializers.Serializer):
@@ -70,28 +75,28 @@ class TenantSearchOutputSLZ(serializers.Serializer):
     data_sources = serializers.SerializerMethodField(help_text="租户数据源")
 
     def get_logo(self, obj: Tenant) -> str:
-        return obj.logo or settings.TENANT_DEFAULT_LOGO
+        return obj.logo or settings.DEFAULT_TENANT_LOGO
 
     def get_created_at(self, obj: Tenant) -> str:
         return obj.created_at_display
 
     @swagger_serializer_method(serializer_or_field=TenantSearchManagerOutputSchema(many=True))
     def get_managers(self, obj: Tenant) -> List[Dict]:
-        tenant_manager_map = self.context["tenant_manager_map"]
+        tenant_manager_map: Dict[str, List[TenantUserWithInheritedInfo]] = self.context["tenant_manager_map"]
         managers = tenant_manager_map.get(obj.id) or []
         return [
             {
-                "id": i["id"],
-                "username": i["data_source_user"]["username"],
-                "full_name": i["data_source_user"]["full_name"],
+                "id": i.id,
+                **i.data_source_user.model_dump(include={"username", "full_name"}),
             }
             for i in managers
         ]
 
     @swagger_serializer_method(serializer_or_field=TenantSearchDataSourceOutputSchema(many=True))
-    def get_data_sources(self, obj):
-        data_source_map = self.context["data_source_map"]
-        return data_source_map.get(obj.id) or []
+    def get_data_sources(self, obj: Tenant) -> List[Dict]:
+        data_source_map: Dict[str, List[DataSourceSimpleInfo]] = self.context["data_source_map"]
+        data_sources = data_source_map.get(obj.id) or []
+        return [i.model_dump(include={"id", "name"}) for i in data_sources]
 
 
 class TenantUpdateInputSLZ(serializers.Serializer):
@@ -106,9 +111,10 @@ class TenantRetrieveManagerOutputSchema(serializers.Serializer):
     username = serializers.CharField(help_text="租户用户名")
     full_name = serializers.CharField(help_text="用户姓名")
     email = serializers.EmailField(help_text="用户邮箱")
-    # TODO: 手机号&区号补充校验
     phone = serializers.CharField(help_text="用户手机号")
-    phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
+    phone_country_code = serializers.CharField(
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
 
 
 class TenantRetrieveOutputSLZ(serializers.Serializer):
@@ -119,39 +125,38 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
     managers = serializers.SerializerMethodField()
 
     @swagger_serializer_method(serializer_or_field=TenantRetrieveManagerOutputSchema(many=True))
-    def get_managers(self, obj):
-        tenant_manager_map = self.context["tenant_manager_map"]
+    def get_managers(self, obj: Tenant) -> List[Dict]:
+        tenant_manager_map: Dict[str, List[TenantUserWithInheritedInfo]] = self.context["tenant_manager_map"]
         managers = tenant_manager_map.get(obj.id) or []
         return [
             {
-                "id": i["id"],
-                "username": i["data_source_user"]["username"],
-                "full_name": i["data_source_user"]["full_name"],
-                "email": i["data_source_user"]["email"],
-                "phone": i["data_source_user"]["phone"],
-                "phone_country_code": i["data_source_user"]["phone_country_code"],
+                "id": i.id,
+                **i.data_source_user.model_dump(
+                    include={"username", "full_name", "email", "phone", "phone_country_code"}
+                ),
             }
             for i in managers
         ]
 
-    def get_logo(self, obj):
-        return obj.logo or settings.TENANT_DEFAULT_LOGO
+    def get_logo(self, obj: Tenant) -> str:
+        return obj.logo or settings.DEFAULT_TENANT_LOGO
 
 
-class TenantUserSearchOutputSchema(serializers.Serializer):
-    id = serializers.CharField(help_text="用户 ID")
-    username = serializers.CharField(help_text="租户用户名")
-    full_name = serializers.CharField(help_text="用户姓名")
-    email = serializers.EmailField(help_text="用户邮箱")
-    # TODO: 手机号&区号补充校验
-    phone = serializers.CharField(help_text="用户手机号")
-    phone_country_code = serializers.CharField(help_text="手机号国际区号", required=False, default="86")
+class TenantUserSearchInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", required=False)
 
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
+    username = serializers.CharField(help_text="租户用户名", required=False)
+    full_name = serializers.CharField(help_text="用户姓名", required=False)
+    email = serializers.EmailField(help_text="用户邮箱", required=False)
+    phone = serializers.CharField(help_text="用户手机号", required=False)
+    phone_country_code = serializers.CharField(
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: TenantUser) -> Dict:
         data = super().to_representation(instance)
         data_source_user = DataSourceUser.objects.filter(id=instance.data_source_user_id).first()
         if data_source_user is not None:
@@ -160,6 +165,6 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
             data["email"] = data_source_user.email
             data["phone"] = data_source_user.phone
             data["phone_country_code"] = data_source_user.phone_country_code
-            data["logo"] = data_source_user.logo or settings.DATA_SOURCE_USER_DEFAULT_LOGO
+            data["logo"] = data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
 
         return data

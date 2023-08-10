@@ -8,8 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
 from django.db import models
 
+from bkuser.apps.data_source_organization.models import DataSourceUser
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import TimestampedModel
 
@@ -21,8 +23,9 @@ class TenantUser(TimestampedModel):
     租户用户即蓝鲸用户
     """
 
-    # 对应的数据源用户
-    data_source_user_id = models.IntegerField("外键关联的数据源用户ID")
+    # 对应的数据源用户，这里ForeignKey只是为了使用联表查询方便，db_constraint=False表示不设置DB外键约束
+    # 等价于 data_source_user_id = models.IntegerField("外键关联的数据源用户ID")
+    data_source_user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
     # 冗余字段
     tenant_id = models.CharField("外键关联的租户ID", max_length=128)
 
@@ -49,7 +52,7 @@ class TenantUser(TimestampedModel):
         max_length=16,
         null=True,
         blank=True,
-        default="86",
+        default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
     is_inherited_email = models.BooleanField("是否继承数据源邮箱", default=True)
     custom_email = models.EmailField("自定义邮箱", null=True, blank=True, default="")
