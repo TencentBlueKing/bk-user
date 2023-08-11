@@ -32,7 +32,7 @@ class APIError(Exception):
 
     delimiter = ": "
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         code: str,
         message: str,

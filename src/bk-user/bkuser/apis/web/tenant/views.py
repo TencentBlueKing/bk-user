@@ -25,8 +25,7 @@ from bkuser.apis.web.tenant.serializers import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
-from bkuser.apps.tenant.models import Tenant
-from bkuser.apps.tenant_organization.models import TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.tenant import (
     TenantBaseInfo,
@@ -153,9 +152,8 @@ class TenantUsersListApi(generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = TenantUser.objects.filter(tenant_id=tenant_id)
+        queryset = TenantUser.objects.select_related("data_source_user").filter(tenant_id=tenant_id)
         if keyword := data.get("keyword"):
-            # FIXME: 考虑冗余搜索字段在TenantUser表或加上外键约束，否则直接搜索DataSourceUser表后再过滤，性能会比较差
             queryset = queryset.filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )

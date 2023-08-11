@@ -14,10 +14,8 @@ from typing import Dict, List, Optional
 from django.db import transaction
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source_organization.models import DataSourceUser
-from bkuser.apps.tenant.models import Tenant, TenantManager
-from bkuser.apps.tenant_organization.models import TenantUser
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser
+from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -77,17 +75,12 @@ class TenantUserHandler:
         """
         查询租户用户信息
         """
-        tenant_users = TenantUser.objects.filter(id__in=tenant_user_ids)
-        data_source_user_ids = [i.data_source_user_id for i in tenant_users]
-
-        # 查询关联的data_source_user
-        data_source_users = DataSourceUser.objects.filter(id__in=data_source_user_ids)
-        data_source_users_map = {i.id: i for i in data_source_users}
+        tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
 
         # 返回租户用户本身信息和对应数据源用户信息
         data = []
         for i in tenant_users:
-            data_source_user = data_source_users_map.get(i.data_source_user_id)
+            data_source_user = i.data_source_user
             # 对于数据源用户不存在，则表示该租户用户已经不可用
             if data_source_user is None:
                 continue
@@ -123,7 +116,7 @@ class TenantHandler:
         tenant_users = TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)
         tenant_users_map = {i.id: i for i in tenant_users}
 
-        # 按照{tenant_id: List[tenant_user]}格式组装s
+        # 按照 {tenant_id: List[tenant_user]} 格式组装
         data = defaultdict(list)
         for i in tenant_managers:
             tenant_user = tenant_users_map.get(i.tenant_user_id)
@@ -154,15 +147,16 @@ class TenantHandler:
             tenant_manager_objs = []
             for i in managers:
                 # 创建数据源用户
-                data_source_user = DataSourceUser.objects.create(data_source_id=data_source.id, **i.model_dump())
+                data_source_user = DataSourceUser.objects.create(data_source=data_source, **i.model_dump())
                 # 创建对应的租户用户
                 tenant_user = TenantUser.objects.create(
-                    data_source_user_id=data_source_user.id,
-                    tenant_id=tenant.id,
+                    data_source_user=data_source_user,
+                    tenant=tenant,
+                    data_source=data_source,
                     id=generate_uuid(),
                 )
 
-                tenant_manager_objs.append(TenantManager(tenant=tenant, tenant_user_id=tenant_user.id))
+                tenant_manager_objs.append(TenantManager(tenant=tenant, tenant_user=tenant_user))
 
             if tenant_manager_objs:
                 TenantManager.objects.bulk_create(tenant_manager_objs, batch_size=100)
