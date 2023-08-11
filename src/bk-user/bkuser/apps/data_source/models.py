@@ -43,7 +43,6 @@ class DataSource(TimestampedModel):
 
 
 class DataSourceUser(TimestampedModel):
-    # 逻辑外键，DB不外键约束
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
 
     # ----------------------- 内置字段相关 -----------------------
@@ -55,15 +54,12 @@ class DataSourceUser(TimestampedModel):
         "手机国际区号", max_length=16, null=True, blank=True, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
     logo = models.TextField("Logo", max_length=256, null=True, blank=True, default="")
-    # ----------------------- 内置字段相关 -----------------------
 
     # ----------------------- 其他 -----------------------
     extras = models.JSONField("自定义字段", default=dict)
-    # ----------------------- 其他 -----------------------
 
     # ----------------------- 状态相关 -----------------------
     # TODO: (1) 用户管理里涉及的功能状态 （2）企业本身的员工状态
-    # ----------------------- 状态相关 -----------------------
 
     class Meta:
         ordering = ["id"]
@@ -84,7 +80,6 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
     password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)
 
     # data_source_id/username为冗余字段，便于认证时快速匹配
-    # 逻辑外键，DB不外键约束
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     username = models.CharField("用户名", max_length=128)
 
@@ -99,7 +94,6 @@ class DataSourceDepartment(TimestampedModel):
     数据源部门
     """
 
-    # 逻辑外键，DB不外键约束
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
 
     # 部门标识，不同于自增 id，多数情况存储各个公司组织架构系统的id, 非必须
@@ -117,13 +111,11 @@ class DataSourceDepartmentRelation(MPTTModel, TimestampedModel):
     数据源部门关系
     """
 
-    # 逻辑外键，DB不外键约束
     department = models.OneToOneField(
         DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False, primary_key=True
     )
     parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
     # 冗余字段
-    # 逻辑外键，DB不外键约束
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
@@ -138,9 +130,7 @@ class DataSourceDepartmentUserRelation(TimestampedModel):
     数据源部门 - 用户关联表
     """
 
-    # 逻辑外键，DB不外键约束
     department = models.ForeignKey(DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False)
-    # 逻辑外键，DB不外键约束
     user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
@@ -155,9 +145,7 @@ class DataSourceUserLeaderRelation(TimestampedModel):
     数据源用户 - Leader 关联表
     """
 
-    # 逻辑外键，DB不外键约束
     user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
-    # 逻辑外键，DB不外键约束
     leader = models.ForeignKey(DataSourceUser, related_name="leader", on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:

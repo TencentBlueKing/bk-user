@@ -39,13 +39,10 @@ class TenantUser(TimestampedModel):
     租户用户即蓝鲸用户
     """
 
-    # 逻辑外键，DB不外键约束
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
-    # 逻辑外键，DB不外键约束
     data_source_user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
 
     # 冗余字段
-    # 逻辑外键，DB不外键约束
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
     # Note: 值：对于新用户则为uuid，对于迁移则兼容旧版本 username@domain或username
@@ -87,13 +84,10 @@ class TenantDepartment(TimestampedModel):
     租户部门即蓝鲸部门
     """
 
-    # 逻辑外键，DB不外键约束
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
-    # 逻辑外键，DB不外键约束
     data_source_department = models.ForeignKey(DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False)
 
     # 冗余字段
-    # 逻辑外键，DB不外键约束
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
     # 目前租户部门暂无其他特别属性，后续可以加入一些统计相关字段(比如，递归人数、当前层级人数等)
@@ -106,7 +100,6 @@ class TenantDepartment(TimestampedModel):
 
 class TenantManager(models.Model):
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True)
-    # 逻辑外键，DB不外键约束
     tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
 
     class Meta:
