@@ -14,9 +14,8 @@ from django.conf import settings
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 
-from bkuser.apps.data_source_organization.models import DataSourceUser
-from bkuser.apps.tenant.models import Tenant
-from bkuser.apps.tenant_organization.models import TenantUser
+from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceSimpleInfo
 from bkuser.biz.tenant import TenantUserWithInheritedInfo
 from bkuser.biz.validators import validate_tenant_id

@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import hashlib
 import os
 from pathlib import Path
+from typing import Any, Dict
 from urllib.parse import urlparse
 
 import environ
@@ -48,8 +49,6 @@ INSTALLED_APPS = [
     "bkuser.auth",
     "bkuser.apps.data_source",
     "bkuser.apps.tenant",
-    "bkuser.apps.data_source_organization",
-    "bkuser.apps.tenant_organization",
 ]
 
 MIDDLEWARE = [
@@ -231,15 +230,11 @@ REDIS_DB = env.int("REDIS_DB", 0)
 REDIS_USE_SENTINEL = env.bool("REDIS_USE_SENTINEL", False)
 REDIS_SENTINEL_MASTER_NAME = env.str("REDIS_SENTINEL_MASTER_NAME", "master")
 REDIS_SENTINEL_PASSWORD = env.str("REDIS_SENTINEL_PASSWORD", "")
-REDIS_SENTINEL_ADDR_STR = env.str("REDIS_SENTINEL_ADDR", "")
-# parse sentinel address from "host1:port1,host2:port2" to [("host1", port1), ("host2", port2)]
-REDIS_SENTINEL_ADDR_LIST = []
-try:
-    REDIS_SENTINEL_ADDR_LIST = [tuple(addr.split(":")) for addr in REDIS_SENTINEL_ADDR_STR.split(",") if addr]
-except Exception as e:  # pylint: disable=broad-except
-    print(f"REDIS_SENTINEL_ADDR {REDIS_SENTINEL_ADDR_STR} is invalid: {e}")
+# env[REDIS_SENTINEL_ADDR] format: "host1:port1,host2:port2"
+# REDIS_SENTINEL_ADDR value: ["host1:port1", "host2:port2"]
+REDIS_SENTINEL_ADDR = env.list("REDIS_SENTINEL_ADDR", default=[])
 
-CACHES = {
+CACHES: Dict[str, Any] = {
     # 默认缓存是本地内存，使用最近最少使用（LRU）的淘汰策略，使用 pickle 序列化数据
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -297,22 +292,20 @@ DJANGO_REDIS_LOGGER = "root"
 if REDIS_USE_SENTINEL:
     # Enable the alternate connection factory.
     DJANGO_REDIS_CONNECTION_FACTORY = "django_redis.pool.SentinelConnectionFactory"
-    CACHES["redis"]["LOCATION"] = f"redis://{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}"  # type: ignore
-    CACHES["redis"]["OPTIONS"]["CLIENT_CLASS"] = "django_redis.client.SentinelClient"  # type: ignore
-    CACHES["redis"]["OPTIONS"]["SENTINELS"] = REDIS_SENTINEL_ADDR_LIST  # type: ignore
-    CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {  # type: ignore
-        "password": REDIS_SENTINEL_PASSWORD,
-        "socket_timeout": 5,
-    }
-    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"  # type: ignore
+    CACHES["redis"]["LOCATION"] = f"redis://{REDIS_SENTINEL_MASTER_NAME}/{REDIS_DB}"
+    CACHES["redis"]["OPTIONS"]["CLIENT_CLASS"] = "django_redis.client.SentinelClient"
+    # parse sentinel address from ["host1:port1", "host2:port2"] to [("host1", port1), ("host2", port2)]
+    CACHES["redis"]["OPTIONS"]["SENTINELS"] = [tuple(addr.split(":")) for addr in REDIS_SENTINEL_ADDR]
+    CACHES["redis"]["OPTIONS"]["SENTINEL_KWARGS"] = {"password": REDIS_SENTINEL_PASSWORD, "socket_timeout": 5}
+    CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"
 
 # default celery broker
 if not BROKER_URL:
-    # https://docs.celeryq.dev/en/v4.3.0/history/whatsnew-4.0.html?highlight=sentinel#redis-support-for-sentinel
+    # use Redis as the default broker
+    BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    # https://docs.celeryq.dev/en/v5.3.1/getting-started/backends-and-brokers/redis.html#broker-redis
     if REDIS_USE_SENTINEL:
-        BROKER_URL = ";".join(
-            [f"sentinel://:{REDIS_PASSWORD}@" + ":".join(addr) + f"/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR_LIST]
-        )
+        BROKER_URL = ";".join([f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR])
         BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
             "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
@@ -320,8 +313,6 @@ if not BROKER_URL:
             "socket_connect_timeout": 5,
             "socket_keepalive": True,
         }
-    else:
-        BROKER_URL = f"redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 

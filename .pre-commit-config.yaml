@@ -24,7 +24,7 @@ repos:
         name: Check sensitive info of ip
         verbose: true
         language: system
-        exclude: ^(.*/\.env|.*/poetry\.lock|.*/pyproject\.toml|src/bk-user/logs|src/pages/node_modules/)
+        exclude: ^(.*/\.env|.*/poetry\.lock|.*/pyproject\.toml|\.github/workflows/bk-user.yml|src/bk-user/logs|src/pages/node_modules/)
         entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/ip.sh $@; fi"
   - repo: local
     hooks:

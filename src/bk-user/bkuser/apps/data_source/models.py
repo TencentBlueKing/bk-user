@@ -8,7 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
 from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.common.models import TimestampedModel
 
@@ -38,3 +40,128 @@ class DataSource(TimestampedModel):
 
     class Meta:
         ordering = ["id"]
+
+
+class DataSourceUser(TimestampedModel):
+    # 逻辑外键，DB不外键约束
+    data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
+
+    # ----------------------- 内置字段相关 -----------------------
+    username = models.CharField("用户名", max_length=128)
+    full_name = models.CharField("姓名", max_length=128)
+    email = models.EmailField("邮箱", null=True, blank=True, default="")
+    phone = models.CharField("手机号", max_length=32)
+    phone_country_code = models.CharField(
+        "手机国际区号", max_length=16, null=True, blank=True, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
+    logo = models.TextField("Logo", max_length=256, null=True, blank=True, default="")
+    # ----------------------- 内置字段相关 -----------------------
+
+    # ----------------------- 其他 -----------------------
+    extras = models.JSONField("自定义字段", default=dict)
+    # ----------------------- 其他 -----------------------
+
+    # ----------------------- 状态相关 -----------------------
+    # TODO: (1) 用户管理里涉及的功能状态 （2）企业本身的员工状态
+    # ----------------------- 状态相关 -----------------------
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = [
+            ("username", "data_source"),
+            ("full_name", "data_source"),
+        ]
+
+
+class LocalDataSourceIdentityInfo(TimestampedModel):
+    """
+    本地数据源特有，认证相关信息
+    """
+
+    user = models.OneToOneField(DataSourceUser, on_delete=models.CASCADE)
+    password = models.CharField("用户密码", null=True, blank=True, default="", max_length=255)
+    password_updated_at = models.DateTimeField("密码最后更新时间", null=True, blank=True)
+    password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)
+
+    # data_source_id/username为冗余字段，便于认证时快速匹配
+    # 逻辑外键，DB不外键约束
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+    username = models.CharField("用户名", max_length=128)
+
+    class Meta:
+        unique_together = [
+            ("username", "data_source"),
+        ]
+
+
+class DataSourceDepartment(TimestampedModel):
+    """
+    数据源部门
+    """
+
+    # 逻辑外键，DB不外键约束
+    data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
+
+    # 部门标识，不同于自增 id，多数情况存储各个公司组织架构系统的id, 非必须
+    code = models.CharField("部门标识", null=True, blank=True, max_length=128)
+    name = models.CharField("部门名称", max_length=255)
+    # 额外信息
+    extras = models.JSONField("自定义字段", default=dict)
+
+    class Meta:
+        ordering = ["id"]
+
+
+class DataSourceDepartmentRelation(MPTTModel, TimestampedModel):
+    """
+    数据源部门关系
+    """
+
+    # 逻辑外键，DB不外键约束
+    department = models.OneToOneField(
+        DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False, primary_key=True
+    )
+    parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
+    # 冗余字段
+    # 逻辑外键，DB不外键约束
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
+
+    class Meta:
+        index_together = [
+            ("tree_id", "lft", "rght"),
+            ("parent_id", "tree_id", "lft"),
+        ]
+
+
+class DataSourceDepartmentUserRelation(TimestampedModel):
+    """
+    数据源部门 - 用户关联表
+    """
+
+    # 逻辑外键，DB不外键约束
+    department = models.ForeignKey(DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False)
+    # 逻辑外键，DB不外键约束
+    user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = [
+            ("user", "department"),
+        ]
+
+
+class DataSourceUserLeaderRelation(TimestampedModel):
+    """
+    数据源用户 - Leader 关联表
+    """
+
+    # 逻辑外键，DB不外键约束
+    user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
+    # 逻辑外键，DB不外键约束
+    leader = models.ForeignKey(DataSourceUser, related_name="leader", on_delete=models.DO_NOTHING, db_constraint=False)
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = [
+            ("user", "leader"),
+        ]
