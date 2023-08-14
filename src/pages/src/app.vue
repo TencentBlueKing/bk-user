@@ -8,7 +8,7 @@ import { Message } from 'bkui-vue';
 import HeaderBox from './views/Header.vue';
 
 // 加载完用户数据才会展示页面
-const isLoading = ref(true);
+const isLoading = ref(false);
 // 获取用户数据
 const user = useUser();
 getUser()

@@ -270,7 +270,7 @@ const fetchTenantsList = () => {
       state.list = res.data;
       state.tableLoading = false;
     })
-    .finally(() => {
+    .catch(() => {
       state.isTableDataError = true;
       state.tableLoading = false;
     });
@@ -288,7 +288,7 @@ const handleEnter = () => {
       state.list = res.data;
       state.tableLoading = false;
     })
-    .finally(() => {
+    .catch(() => {
       state.isTableDataError = true;
       state.tableLoading = false;
     });

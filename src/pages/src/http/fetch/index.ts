@@ -38,17 +38,17 @@ interface Http {
   patch: HttpMethod;
 }
 
-const baseURL = /http(s)?:\/\//.test(process.env.BK_AJAX_URL_PREFIX)
-  ? process.env.BK_AJAX_URL_PREFIX
-  : location.origin + window.SITE_URL + process.env.BK_AJAX_URL_PREFIX;
+const baseURL = /http(s)?:\/\//.test(window.AJAX_BASE_URL)
+  ? window.AJAX_BASE_URL
+  : location.origin + window.STATIC_URL + window.AJAX_BASE_URL;
 
 const axiosInstance = axios.create({
   baseURL,
   withCredentials: true,
-  xsrfCookieName: '',
+  xsrfCookieName: window.CSRF_COOKIE_NAME,
   xsrfHeaderName: 'X-CSRFToken',
   headers: {
-    'X-CSRFToken': '',
+    'X-CSRFToken': window.CSRF_COOKIE_NAME,
     'x-requested-with': 'XMLHttpRequest',
   },
 });
