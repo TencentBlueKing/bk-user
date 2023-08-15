@@ -1545,6 +1545,11 @@ type = "legacy"
 url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "opentelemetry-exporter-jaeger-thrift"
 version = "1.19.0"
@@ -1566,6 +1571,11 @@ type = "legacy"
 url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent"
 
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [[package]]
 name = "opentelemetry-exporter-otlp"
 version = "1.19.0"
@@ -1580,6 +1590,11 @@ files = [
 [package.dependencies]
 opentelemetry-exporter-otlp-proto-grpc = "1.19.0"
 opentelemetry-exporter-otlp-proto-http = "1.19.0"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [package.source]
 type = "legacy"
@@ -1628,6 +1643,11 @@ opentelemetry-sdk = ">=1.19.0,<1.20.0"
 
 [package.extras]
 test = ["pytest-grpc"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [package.source]
 type = "legacy"
@@ -2409,6 +2429,11 @@ files = [
     {file = "python_editor-1.0.4-py2-none-any.whl", hash = "sha256:5f98b069316ea1c2ed3f67e7f5df6c0d8f10b689964a4a811ff64f0106819ec8"},
     {file = "python_editor-1.0.4-py3-none-any.whl", hash = "sha256:1bf6e860a8ad52a14c3ee1252d5dc25b2030618ed80c022598f00176adc8367d"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
 
 [package.source]
 type = "legacy"
