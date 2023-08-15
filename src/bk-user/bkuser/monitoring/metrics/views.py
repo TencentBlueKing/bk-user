@@ -8,12 +8,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.conf import settings
+from django_prometheus.exports import ExportToDjangoView
+from rest_framework import status
+from rest_framework.response import Response
 
 
-def url_join(host: str, path: str) -> str:
-    """
-    拼接host, path生成url
+def metric_view(request):
+    """metric view with basic auth"""
+    token = request.GET.get("token", "")
+    if not settings.METRIC_TOKEN:
+        return Response(
+            data={"errors": "Metric token was not configured in settings, request denied"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not (token and token == settings.METRIC_TOKEN):
+        return Response(
+            data={"errors": "Please provide valid token"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
-    处理host, path有多余/的情况
-    """
-    return "{}/{}".format(host.rstrip("/"), path.lstrip("/"))
+    return ExportToDjangoView(request)

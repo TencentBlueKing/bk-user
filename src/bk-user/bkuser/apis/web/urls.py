@@ -11,5 +11,5 @@ specific language governing permissions and limitations under the License.
 from django.urls import include, path
 
 urlpatterns = [
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
+    path("tenants/", include("bkuser.apis.web.tenant.urls")),
 ]

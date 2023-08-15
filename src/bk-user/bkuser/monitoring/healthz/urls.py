@@ -8,9 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+from django.urls import path
 
+from . import views
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+urlpatterns = [
+    path("ping", views.HealthzApi.as_view({"get": "ping"}), name="api.ping"),
+    path("healthz", views.HealthzApi.as_view({"get": "healthz"}), name="api.healthz"),
+]

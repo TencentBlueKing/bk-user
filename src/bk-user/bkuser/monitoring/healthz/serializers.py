@@ -8,24 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, status
-from rest_framework.response import Response
-
-from .serializers import TestInputSLZ, TestOutputSLZ
+from rest_framework import serializers
 
 
-class DataSourceListCreateApi(generics.ListCreateAPIView):
-    pagination_class = None
+class IssueSerializer(serializers.Serializer):
+    fatal = serializers.BooleanField(help_text="是否致命", default=False)
+    description = serializers.CharField(help_text="问题描述", default="")
 
-    @swagger_auto_schema(
-        query_serializer=TestInputSLZ(),
-        responses={status.HTTP_201_CREATED: TestOutputSLZ(many=True)},
-        tags=["data_source"],
-    )
-    def get(self, request, *args, **kwargs):
-        username = request.user.username
-        return Response([{"username": username}])
 
-    def post(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_201_CREATED)
+class DianosisSerializer(serializers.Serializer):
+    system_name = serializers.CharField(help_text="探测的系统名称")
+    alive = serializers.BooleanField(help_text="探测的系统是否存活", default=True)
+    issues = IssueSerializer(help_text="检查到的问题", many=True)

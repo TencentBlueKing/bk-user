@@ -8,9 +8,35 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
+from celery.signals import worker_process_init
 from django.apps import AppConfig
 
+from .otel import setup_by_settings
+from .sentry import init_sentry_sdk
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+
+class TracingConfig(AppConfig):
+    name = "bkuser.monitoring.tracing"
+
+    def ready(self):
+        setup_by_settings()
+        init_sentry_sdk(
+            django_integrated=True,
+            redis_integrated=True,
+            celery_integrated=True,
+        )
+
+
+@worker_process_init.connect(weak=False)
+def worker_process_init_otel_trace_setup(*args, **kwargs):
+    setup_by_settings()
+
+
+@worker_process_init.connect(weak=False)
+def worker_process_init_sentry_setup(*args, **kwargs):
+    init_sentry_sdk(
+        django_integrated=True,
+        redis_integrated=True,
+        celery_integrated=True,
+    )

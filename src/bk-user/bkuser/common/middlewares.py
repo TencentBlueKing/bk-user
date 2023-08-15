@@ -12,9 +12,7 @@ from .local import local
 
 
 class RequestProvider:
-    """request_id中间件
-    调用链使用
-    """
+    """request_id中间件（调用链使用）"""
 
     REQUEST_ID_HEADER_KEY = "X-Request-Id"
 

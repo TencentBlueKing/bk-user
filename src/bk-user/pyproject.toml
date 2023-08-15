@@ -21,19 +21,38 @@ mysqlclient = "2.2.0"
 requests = "2.31.0"
 gunicorn = "20.1.0"
 gevent = "22.10.2"
-django-environ = "0.10.0"
+django-environ = "0.8.1"
 django-cors-headers = "4.2.0"
 django-prometheus = "2.3.1"
 whitenoise = "6.5.0"
 werkzeug = "2.3.6"
 python-json-logger = "2.0.7"
 drf-yasg = "^1.21.7"
+blue-krill = "2.0.0"
+django-mptt = "0.14.0"
+sentry-sdk = "1.5.6"
+opentelemetry-api = "1.19.0"
+opentelemetry-sdk = "1.19.0"
+opentelemetry-exporter-otlp = "1.19.0"
+opentelemetry-exporter-jaeger = "1.19.0"
+opentelemetry-instrumentation-django = "0.40b0"
+opentelemetry-instrumentation-dbapi = "0.40b0"
+opentelemetry-instrumentation-redis = "0.40b0"
+opentelemetry-instrumentation-requests = "0.40b0"
+opentelemetry-instrumentation-logging = "0.40b0"
+opentelemetry-instrumentation-celery = "0.40b0"
+redis = "4.6.0"
+django-redis = "5.3.0"
+pydantic = "2.1.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"
 black = "^23.7.0"
 mypy = "^1.4.1"
 types-requests = "^2.31.0.1"
+pytest = "^7.4.0"
+pytest-django = "^4.5.2"
+types-pytz = "^2023.3.0.0"
 
 [tool.black]
 line-length = 119
@@ -75,6 +94,10 @@ ignore = [
     "SIM105",
     # Use ternary operator {contents} instead of if-else-block
     "SIM108",
+    # Avoid too many arguments
+    "PLR0913",
+    # Avoid too many return statements
+    "PLR0911"
 ]
 # Same as Black.
 line-length = 119

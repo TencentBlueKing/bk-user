@@ -20,10 +20,11 @@ from bkuser.common.views import VueTemplateView
 
 urlpatterns = [
     path("api/v1/web/", include("bkuser.apis.web.urls")),
+    path("", include("bkuser.monitoring.urls")),
 ]
 
 # swagger doc
-if settings.DEBUG:
+if settings.SWAGGER_ENABLE:
     schema_view = get_schema_view(
         openapi.Info(
             title="BK-User API",
@@ -45,5 +46,5 @@ if settings.DEBUG:
 
 # static file
 urlpatterns += [
-    url(r"^.*$", never_cache(VueTemplateView.as_view())),
+    url("", never_cache(VueTemplateView.as_view())),
 ]

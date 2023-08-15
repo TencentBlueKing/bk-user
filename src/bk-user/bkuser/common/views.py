@@ -11,10 +11,14 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
+from blue_krill.web.drf_utils import stringify_validation_error
 from django.conf import settings
-from django.http.response import Http404
+from django.http.response import Http404, HttpResponseNotFound
+from django.template.exceptions import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import (
     AuthenticationFailed,
     MethodNotAllowed,
@@ -27,9 +31,9 @@ from rest_framework.exceptions import (
 )
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
+from sentry_sdk import capture_exception
 
 from bkuser.common.error_codes import error_codes
-from bkuser.utils.drf_tools import stringify_validation_error
 from bkuser.utils.std_error import APIError
 
 logger = logging.getLogger(__name__)
@@ -45,7 +49,7 @@ def one_line_error(error: ValidationError):
 
 
 def _handle_exception(request, exc) -> APIError:
-    """统一处理异常，并转换成api error"""
+    """统一处理异常，并转换成 APIError"""
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
         return error_codes.UNAUTHENTICATED
 
@@ -59,14 +63,14 @@ def _handle_exception(request, exc) -> APIError:
         return error_codes.INVALID_ARGUMENT.f(exc.detail)
 
     if isinstance(exc, ValidationError):
-        error_codes.VALIDATION_ERROR.f(one_line_error(exc)).set_detail({"message": json.dumps(exc.detail)})
+        return error_codes.VALIDATION_ERROR.f(one_line_error(exc)).set_detail({"message": json.dumps(exc.detail)})
 
     if isinstance(exc, APIError):
         # 回滚事务
         set_rollback()
         return exc
 
-    # 非预期内的异常（1）记录日志（2）推送Sentry (3) 以系统异常响应
+    # 非预期内的异常（1）记录日志（2）推送到 sentry (3) 以系统异常响应
     logger.exception(
         "catch unexpected error, request url->[%s], request method->[%s] request params->[%s]",
         request.path,
@@ -74,7 +78,8 @@ def _handle_exception(request, exc) -> APIError:
         json.dumps(getattr(request, request.method, None)),
     )
 
-    # TODO: 推送异常到 sentry
+    # 推送异常到 sentry
+    capture_exception(exc)
 
     # Note: 系统异常不暴露异常详情信息，避免敏感信息泄露
     return error_codes.SYSTEM_ERROR
@@ -112,17 +117,48 @@ def custom_exception_handler(exc, context):
     return Response(data=data, status=error.status_code)
 
 
+class ExcludePutAPIViewMixin:
+    """
+    对于DRF便捷APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），Update操作同时包括put/patch
+    但是大部分时候都不是两个都需要，该类是为了排除Put
+    Note: 由于类继承顺序，所以必须在UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView之前
+    """
+
+    @swagger_auto_schema(auto_schema=None)
+    def put(self, request, *args, **kwargs):
+        return self.http_method_not_allowed(request, *args, **kwargs)  # type: ignore[attr-defined]
+
+
+class ExcludePatchAPIViewMixin:
+    """
+    对于DRF便捷APIView（UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView），Update操作同时包括put/patch
+    但是大部分时候都不是两个都需要，该类是为了排除Patch
+    Note: 由于类继承顺序，所以必须在UpdateAPIView/RetrieveUpdateAPIView/RetrieveUpdateDestroyAPIView之前
+    """
+
+    @swagger_auto_schema(auto_schema=None)
+    def patch(self, request, *args, **kwargs):
+        return self.http_method_not_allowed(request, *args, **kwargs)  # type: ignore[attr-defined]
+
+
 class VueTemplateView(TemplateView):
     template_name = "index.html"
 
     @xframe_options_exempt
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
+        # 尝试获取模板，找不到模板，则404
+        try:
+            get_template(self.template_name)
+        except TemplateDoesNotExist:
+            return HttpResponseNotFound("Not Found")
+
+        # Context
         try:
             context = {
                 # BK_DOMAIN
                 "BK_DOMAIN": settings.BK_DOMAIN,
                 "BK_USER_URL": settings.BK_USER_URL.rstrip("/"),
-                "AJAX_URL_PREFIX": settings.AJAX_URL_PREFIX.rstrip("/"),
+                "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
                 # 去除末尾的 /, 前端约定
                 "STATIC_URL": settings.STATIC_URL.rstrip("/"),
                 # 去除开头的 . document.domain需要
@@ -130,9 +166,12 @@ class VueTemplateView(TemplateView):
                 # csrftoken name
                 "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
                 "BK_COMPONENT_API_URL": settings.BK_COMPONENT_API_URL.rstrip("/"),
-                "LOGIN_SERVICE_URL": settings.LOGIN_SERVICE_URL.rstrip("/"),
             }
 
-            return super(VueTemplateView, self).get(request, **context)
-        except Exception as error:  # pylint: disable=broad-except
-            logger.warning(f"render VueTemplateView（index.html） fail: {error}")
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("get context for index.html failed")
+            context = {}
+
+        kwargs.update(context)
+
+        return super(VueTemplateView, self).get(request, *args, **kwargs)

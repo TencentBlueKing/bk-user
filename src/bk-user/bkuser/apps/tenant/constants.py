@@ -8,9 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+import pytz
+from blue_krill.data_types.enum import FeatureFlag, FeatureFlagField
+from django.utils.translation import gettext_lazy as _
+
+TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.common_timezones)]
 
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+class TenantFeatureFlag(FeatureFlag):  # type: ignore
+    """租户特性标志"""
+
+    USER_NUMBER_VISIBLE = FeatureFlagField(label=_("人员数量是否可见"), default=True)

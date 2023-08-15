@@ -8,9 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+from blue_krill.monitoring.probe.mysql import MySQLProbe, transfer_django_db_settings
+from django.conf import settings
+from django.utils.module_loading import import_string
 
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+def get_default_probes():
+    return [import_string(p) for p in settings.HEALTHZ_PROBES]
+
+
+class MysqlProbe(MySQLProbe):
+    name = "bkuser-mysql"
+    config = transfer_django_db_settings(settings.DATABASES["default"])

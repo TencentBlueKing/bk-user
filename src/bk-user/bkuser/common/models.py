@@ -8,9 +8,27 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+from django.db import models
+from django.utils import timezone
 
 
-class TenantConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.tenant"
+class TimestampedModel(models.Model):
+    """Model with 'created' and 'updated' fields."""
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def created_at_display(self):
+        # 转换成本地时间
+        local_time = timezone.localtime(self.created_at)
+        return local_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    @property
+    def updated_at_display(self):
+        # 转换成本地时间
+        local_time = timezone.localtime(self.updated_at)
+        return local_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    class Meta:
+        abstract = True
