@@ -1,0 +1,140 @@
+<template>
+  <div class="member-selector-wrapper" :class="{ 'is-focus': isFocous }">
+    <bk-select
+      class="member-selector"
+      :clearable="false"
+      :collapse-tags="false"
+      placeholder="请输入"
+      filterable
+      multiple
+      multiple-mode="tag"
+      :remote-method="remoteFilter"
+      :scroll-loading="scrollLoading"
+      @blur="handleCancel"
+      @change="handleChange"
+      @focus="handleFocus"
+      @scroll-end="handleScrollEnd"
+    >
+      <bk-option
+        v-for="item of state.list"
+        :key="item.id"
+        :label="item.username"
+        :value="item.username"
+      >
+        <img v-if="item.logo" class="logo-style" :src="item.logo" />
+        <span>{{ item.username }}</span>
+      </bk-option>
+      <template #extension>
+        <bk-button text @click="handleClick">确定</bk-button>
+        <bk-button text @click="handleCancel">取消</bk-button>
+      </template>
+    </bk-select>
+  </div>
+</template>
+
+<script setup lang="tsx">
+import { reactive, ref } from "vue";
+
+const props = defineProps({
+  modelValue: {
+    type: Array,
+    default: () => [],
+  },
+  state: {
+    type: Object,
+    default: () => {},
+  },
+  params: {
+    type: Object,
+    default: () => {},
+  },
+});
+
+const emit = defineEmits(["update:modelValue", "selcetList", "scrollChange", "searchUserList"]);
+const isFocous = ref(false);
+const scrollLoading = ref(false);
+
+// 远程搜索人员
+const remoteFilter = async (value: string) => {
+  await emit("searchUserList", value);
+};
+const handleChange = (values: string[]) => {
+  emit("update:modelValue", values);
+};
+const handleFocus = () => {
+  isFocous.value = true;
+};
+const handleClick = () => {
+  const list = [];
+  props.state.list.forEach((item) => {
+    if (props.modelValue.includes(item.username)) {
+      list.push(item);
+    }
+  });
+  emit("selcetList", list);
+}
+const handleCancel = () => {
+  emit("selcetList");
+  emit("searchUserList", "");
+}
+const handleScrollEnd = () => {
+  if (props.params.page_size > props.state.count) return;
+  scrollLoading.value = true;
+  setTimeout(() => {
+    emit("scrollChange");
+    scrollLoading.value = false;
+  }, 1000);
+}
+</script>
+
+<style lang="less">
+.bk-select {
+  .bk-select-trigger {
+    .bk-select-tag:not(.collapse-tag) {
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid transparent;
+      &:hover {
+          border-color: #3a84ff;
+      }
+    }
+    .angle-up {
+      display: none !important;
+    }
+  }
+}
+.is-selected {
+  background-color: #e1ecff !important; 
+}
+.bk-select-dropdown {
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #dcdee5;
+    border-radius: 4px;
+  }
+  .logo-style {
+    width: 22px;
+    height: 22px;
+    border: 1px solid #C4C6CC;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+}
+.bk-select-extension {
+  justify-content: space-around;
+  .bk-button {
+    width: 50%;
+    height: 100%;
+    border-radius: 0;
+    &:first-child {
+      border-right: 1px solid #dcdee5;
+    }
+  }
+}
+</style>

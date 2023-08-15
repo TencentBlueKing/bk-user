@@ -1,0 +1,97 @@
+@font-face {
+	font-family: "bk-sq";
+	src: url("fonts/iconcool.svg#iconcool") format("svg"),
+url("fonts/iconcool.ttf") format("truetype"),
+url("fonts/iconcool.woff") format("woff"),
+url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+.bk-sq-icon {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'bk-sq' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  text-align: center;
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-yuyanqiehuanzhongwen:before {
+	content: "\e102";
+}
+.icon-yuyanqiehuanyingwen:before {
+	content: "\e101";
+}
+.icon-kejian:before {
+	content: "\e103";
+}
+.icon-invisible-eye:before {
+	content: "\e104";
+}
+.icon-v7:before {
+	content: "\e105";
+}
+.icon-logo:before {
+	content: "\e106";
+}
+.icon-lanjingzhiyunen:before {
+	content: "\e107";
+}
+.icon-add-hollow:before {
+	content: "\e10a";
+}
+.icon-close-fill:before {
+	content: "\e108";
+}
+.icon-file-close:before {
+	content: "\e109";
+}
+.icon-organization-fill:before {
+	content: "\e10b";
+}
+.icon-info-fill:before {
+	content: "\e10e";
+}
+.icon-outline-list:before {
+	content: "\e10c";
+}
+.icon-personal-user:before {
+	content: "\e110";
+}
+.icon-user-directory:before {
+	content: "\e10d";
+}
+.icon-duihao:before {
+	content: "\e10f";
+}
+.icon-email:before {
+	content: "\e111";
+}
+.icon-yanzhengma:before {
+	content: "\e112";
+}
+.icon-exact-search-allow:before {
+	content: "\e113";
+}
+.icon-fuzzy-search-allow:before {
+	content: "\e114";
+}
+.icon-huishouxiang:before {
+	content: "\e115";
+}
+.icon-ziduan:before {
+	content: "\e116";
+}
+.icon-down-shape:before {
+	content: "\e117";
+}
+.icon-right-shape:before {
+	content: "\e118";
+}

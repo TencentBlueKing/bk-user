@@ -1,0 +1,130 @@
+@font-face {
+	font-family: "user";
+	src: url("fonts/iconcool.svg#iconcool") format("svg"),
+url("fonts/iconcool.ttf") format("truetype"),
+url("fonts/iconcool.woff") format("woff"),
+url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+.user-icon {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'user' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  text-align: center;
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-info-i:before {
+	content: "\e105";
+}
+.icon-dobble-arrow-i:before {
+	content: "\e108";
+}
+.icon-user-logo-i:before {
+	content: "\e102";
+}
+.icon-root-node-i:before {
+	content: "\e103";
+}
+.icon-duihao-i:before {
+	content: "\e104";
+}
+.icon-unfilled-i:before {
+	content: "\e106";
+}
+.icon-todo-i:before {
+	content: "\e107";
+}
+.icon-loading-i:before {
+	content: "\e109";
+}
+.icon-add-hollow:before {
+	content: "\e10a";
+}
+.icon-close-fill:before {
+	content: "\e10b";
+}
+.icon-organization-fill:before {
+	content: "\e10d";
+}
+.icon-personal-user:before {
+	content: "\e10c";
+}
+.icon-outline-list:before {
+	content: "\e10e";
+}
+.icon-duihao-2:before {
+	content: "\e10f";
+}
+.icon-file-close:before {
+	content: "\e110";
+}
+.icon-info-fill:before {
+	content: "\e111";
+}
+.icon-user-directory:before {
+	content: "\e113";
+}
+.icon-homepage:before {
+	content: "\e114";
+}
+.icon-arrow-left:before {
+	content: "\e117";
+}
+.icon-arrow-right:before {
+	content: "\e116";
+}
+.icon-minus-fill:before {
+	content: "\e119";
+}
+.icon-plus-fill:before {
+	content: "\e118";
+}
+.icon-warning:before {
+	content: "\e115";
+}
+.icon-abnormal:before {
+	content: "\e11b";
+}
+.icon-more:before {
+	content: "\e11c";
+}
+.icon-unknown:before {
+	content: "\e11a";
+}
+.icon-normal:before {
+	content: "\e11d";
+}
+.icon-drag:before {
+	content: "\e11e";
+}
+.icon-lishijilu:before {
+	content: "\e11f";
+}
+.icon-add-2:before {
+	content: "\e120";
+}
+.icon-expand-line:before {
+	content: "\e121";
+}
+.icon-block-shape:before {
+	content: "\e123";
+}
+.icon-win:before {
+	content: "\e122";
+}
+.icon-qw:before {
+	content: "\e124";
+}
+.icon-wechat:before {
+	content: "\e125";
+}
