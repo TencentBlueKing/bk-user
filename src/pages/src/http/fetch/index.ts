@@ -48,7 +48,7 @@ const axiosInstance = axios.create({
   xsrfCookieName: window.CSRF_COOKIE_NAME,
   xsrfHeaderName: 'X-CSRFToken',
   headers: {
-    'X-CSRFToken': window.CSRF_COOKIE_NAME,
+    'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
     'x-requested-with': 'XMLHttpRequest',
   },
 });
