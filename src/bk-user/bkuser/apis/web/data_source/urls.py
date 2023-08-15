@@ -8,10 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
+from django.urls import path
+
+from bkuser.apis.web.data_source import views
 
 urlpatterns = [
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("data_source/", include("bkuser.apis.web.data_source.urls")),
-
+    path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source.list_create"),
 ]
