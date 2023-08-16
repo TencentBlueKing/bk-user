@@ -15,6 +15,7 @@ module.exports = {
     return {
       devServer: {
         setupMiddlewares: mockServer,
+        https: true,
         proxy: {
           '/api': {
             target: '',

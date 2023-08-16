@@ -1,5 +1,3 @@
-import fetch from './fetch';
+import http from './fetch';
 
-const apiPerfix = '/api/v1/web';
-
-export const getUser = () => fetch.get(`${apiPerfix}/user`);
+export const currentUser = () => http.get('/api/v1/web/basic/current-user/');

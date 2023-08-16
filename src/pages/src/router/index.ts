@@ -9,31 +9,31 @@ export default createRouter({
       component: () => import("@/views/organization/index.vue"),
     },
     {
-      path: "/tenantry",
-      name: "tenantry",
+      path: "/tenant",
+      name: "tenant",
       redirect: {
         name: "tenantInfo",
       },
       meta: {
         navName: "集团概览",
       },
-      component: () => import("@/views/tenantry/index.vue"),
+      component: () => import("@/views/tenant/index.vue"),
       children: [
         {
           path: "info",
           name: "tenantInfo",
           meta: {
-            routeParentName: "tenantry",
+            routeParentName: "tenant",
             navName: "集团概览",
             isMenu: true,
           },
-          component: () => import("@/views/tenantry/group-details/index.vue"),
+          component: () => import("@/views/tenant/group-details/index.vue"),
         },
         // {
         //   path: "setting",
         //   name: "globalSetting",
         //   meta: {
-        //     routeParentName: "tenantry",
+        //     routeParentName: "tenant",
         //     navName: "全局设置",
         //     isMenu: true,
         //   },
@@ -57,7 +57,6 @@ export default createRouter({
           meta: {
             routeParentName: "datasource",
             navName: "数据源管理",
-            activeMenu: "dataConf",
           },
           component: () => import("@/views/data-source/LocalCompany.vue"),
           children: [
@@ -67,7 +66,6 @@ export default createRouter({
               meta: {
                 routeParentName: "datasource",
                 navName: "数据源管理",
-                activeMenu: "dataConf",
               },
               component: () =>
                 import("@/views/data-source/LocalDataSource.vue"),
@@ -78,7 +76,6 @@ export default createRouter({
               meta: {
                 routeParentName: "datasource",
                 navName: "数据源管理",
-                activeMenu: "dataConf",
               },
               component: () =>
                 import("@/views/data-source/OtherDataSource.vue"),
@@ -91,7 +88,6 @@ export default createRouter({
           meta: {
             routeParentName: "datasource",
             navName: "数据源详情",
-            activeMenu: "dataConf",
           },
           component: () =>
             import("@/views/data-source/local-details/index.vue"),
@@ -102,7 +98,6 @@ export default createRouter({
           meta: {
             routeParentName: "datasource",
             navName: "新建数据源",
-            activeMenu: "dataConf",
           },
           component: () =>
             import("@/views/data-source/new-data/NewLocalData.vue"),
