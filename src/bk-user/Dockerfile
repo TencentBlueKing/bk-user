@@ -1,10 +1,18 @@
-FROM python:3.10.12-slim-buster
+FROM node:18.17.1-bullseye-slim AS StaticBuilding
+ENV NPM_VERSION 9.6.7
+
+COPY src/pages /
+WORKDIR /
+RUN npm install
+RUN npm run build
+
+FROM python:3.10.12-slim-bullseye
 USER root
 
 RUN rm /etc/apt/sources.list && \
-    echo "deb https://mirrors.tencent.com/debian buster main" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.tencent.com/debian-security buster/updates main" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.tencent.com/debian buster-updates main" >> /etc/apt/sources.list
+    echo "deb https://mirrors.tencent.com/debian bullseye main" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tencent.com/debian-security bullseye-security main" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tencent.com/debian bullseye-updates main" >> /etc/apt/sources.list
 
 RUN mkdir ~/.pip &&  printf '[global]\nindex-url = https://mirrors.tencent.com/pypi/simple/' > ~/.pip/pip.conf
 
@@ -24,5 +32,8 @@ RUN poetry config virtualenvs.create false && poetry install --only main
 COPY src/bk-user/bkuser /app/bkuser
 COPY src/bk-user/bin /app/bin
 COPY src/bk-user/manage.py /app
+
+COPY --from=StaticBuilding /dist /app/staticfiles
+COPY --from=StaticBuilding /dist/index.html /app/templates/index.html
 
 CMD ["bash", "/app/bin/start.sh"]

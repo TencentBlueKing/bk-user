@@ -94,5 +94,3 @@ app.set('view engine', 'html');
 app.listen(PORT, () => {
   console.log(`App is running in port ${PORT}`);
 });
-
-
