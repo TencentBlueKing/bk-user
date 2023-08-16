@@ -156,7 +156,7 @@ SECRET_KEY = BK_APP_SECRET
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
 # BK USER URL
 BK_USER_URL = env.str("BK_USER_URL")
-AJAX_BASE_URL = SITE_URL + "api/v1"
+AJAX_BASE_URL = ""
 
 # csrf
 _BK_USER_URL_PARSE_URL = urlparse(BK_USER_URL)

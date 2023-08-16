@@ -8,6 +8,7 @@ module.exports = {
   cache: true,
   open: true,
   replaceStatic: true,
+  outputAssetsDirName: '',
 
   // webpack config 配置
   configureWebpack() {

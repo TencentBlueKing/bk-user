@@ -40,7 +40,7 @@ interface Http {
 
 const baseURL = /http(s)?:\/\//.test(window.AJAX_BASE_URL)
   ? window.AJAX_BASE_URL
-  : location.origin + window.STATIC_URL + window.AJAX_BASE_URL;
+  : location.origin + window.AJAX_BASE_URL;
 
 const axiosInstance = axios.create({
   baseURL,
@@ -48,7 +48,7 @@ const axiosInstance = axios.create({
   xsrfCookieName: window.CSRF_COOKIE_NAME,
   xsrfHeaderName: 'X-CSRFToken',
   headers: {
-    'X-CSRFToken': window.CSRF_COOKIE_NAME,
+    'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
     'x-requested-with': 'XMLHttpRequest',
   },
 });
@@ -120,5 +120,5 @@ methods.forEach((method) => {
     },
   });
 });
-  
+
 export default http as Http;
