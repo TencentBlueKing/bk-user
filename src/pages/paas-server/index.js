@@ -27,7 +27,7 @@ app.use(user);
 // 注入全局变量
 const GLOBAL_VAR = {
   SITE_URL: process.env.SITE_URL || '',
-  STATIC_URL: process.env.STATIC_URL || '',
+  STATIC_URL: window.STATIC_URL || '',
   // 当前应用的环境，预发布环境为 stag，正式环境为 prod
   BKPAAS_ENVIRONMENT: process.env.BKPAAS_ENVIRONMENT || '',
   // EngineApp名称，拼接规则：bkapp-{appcode}-{BKPAAS_ENVIRONMENT}
