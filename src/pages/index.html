@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="icon" href="{{ STATIC_URL }}/images/favicon.png" type="image/x-icon" />
-    <link rel="shortcut icon" href="{{ STATIC_URL }}/images/favicon.png" type="image/x-icon" />
+    <link rel="icon" href="{{ BK_STATIC_URL }}/images/favicon.png" type="image/x-icon" />
+    <link rel="shortcut icon" href="{{ BK_STATIC_URL }}/images/favicon.png" type="image/x-icon" />
     <meta charset="utf-8">
     <title> index </title>
   </head>
@@ -14,7 +14,7 @@
         // 开发环境域名
         window.AJAX_BASE_URL = '{{ AJAX_BASE_URL }}'
         // 静态资源路径
-        window.STATIC_URL = '{{ STATIC_URL }}'
+        window.BK_STATIC_URL = '{{ BK_STATIC_URL }}'
         window.CSRF_COOKIE_NAME = '{{ CSRF_COOKIE_NAME }}'
       </script>
     </body>

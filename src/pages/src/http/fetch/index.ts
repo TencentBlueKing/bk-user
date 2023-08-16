@@ -40,7 +40,7 @@ interface Http {
 
 const baseURL = /http(s)?:\/\//.test(window.AJAX_BASE_URL)
   ? window.AJAX_BASE_URL
-  : location.origin + window.STATIC_URL + window.AJAX_BASE_URL;
+  : location.origin + window.AJAX_BASE_URL;
 
 const axiosInstance = axios.create({
   baseURL,
@@ -120,5 +120,5 @@ methods.forEach((method) => {
     },
   });
 });
-  
+
 export default http as Http;
