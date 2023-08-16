@@ -157,10 +157,11 @@ class VueTemplateView(TemplateView):
             context = {
                 # BK_DOMAIN
                 "BK_DOMAIN": settings.BK_DOMAIN,
+                "BK_LOGIN_URL": settings.BK_LOGIN_URL.rstrip("/"),
                 "BK_USER_URL": settings.BK_USER_URL.rstrip("/"),
                 "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
                 # 去除末尾的 /, 前端约定
-                "STATIC_URL": settings.STATIC_URL.rstrip("/"),
+                "BK_STATIC_URL": settings.STATIC_URL.rstrip("/"),
                 # 去除开头的 . document.domain需要
                 "SESSION_COOKIE_DOMAIN": settings.SESSION_COOKIE_DOMAIN.lstrip("."),
                 # csrftoken name
