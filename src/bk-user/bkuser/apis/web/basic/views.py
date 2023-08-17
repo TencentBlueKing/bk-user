@@ -8,11 +8,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import generics, status
+from rest_framework.response import Response
 
-urlpatterns = [
-    # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
-    path("basic/", include("bkuser.apis.web.basic.urls")),
-    # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-]
+from .serializers import CurrentUserRetrieveSchema
+
+
+class CurrentUserRetrieveApi(generics.RetrieveAPIView):
+    @swagger_auto_schema(
+        operation_description="当前用户信息",
+        responses={status.HTTP_200_OK: CurrentUserRetrieveSchema()},
+        tags=["basic.current_user"],
+    )
+    def get(self, request, *args, **kwargs):
+        # FIXME: 待新版登录后重构，return更多信息
+        current_user = request.user
+        info = {
+            "username": current_user.username,
+        }
+
+        return Response(info)
