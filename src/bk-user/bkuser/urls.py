@@ -19,7 +19,9 @@ from rest_framework import permissions
 from bkuser.common.views import VueTemplateView
 
 urlpatterns = [
+    # 产品功能API
     path("api/v1/web/", include("bkuser.apis.web.urls")),
+    # 用于监控相关的，比如ping/healthz/sentry/metrics/otel等等
     path("", include("bkuser.monitoring.urls")),
 ]
 
