@@ -26,7 +26,7 @@ from bkuser.utils.uuid import generate_uuid
 class DataSourceUserBaseInfo(
     BaseModel,
 ):
-    """数据源用户信息"""
+    """数据源用户基础信息"""
 
     username: str
     full_name: str

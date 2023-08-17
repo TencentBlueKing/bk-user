@@ -8,14 +8,35 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 import re
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.models import DataSourceDepartment
+
 TENANT_ID_REGEX = r"^[a-zA-Z][a-zA-Z0-9-]{2,31}"
+DATASOURCE_USERNAME_REGEX = r"^[a-zA-Z][a-zA-Z0-9-]{2,31}"
+
+logger = logging.getLogger(__name__)
 
 
 def validate_tenant_id(value):
     if not re.fullmatch(re.compile(TENANT_ID_REGEX), value):
         raise ValidationError(_("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(value))  # noqa: E501
+
+
+def validate_data_source_user_username(value):
+    if not re.fullmatch(re.compile(DATASOURCE_USERNAME_REGEX), value):
+        raise ValidationError(_("{} 不符合 用户名 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(value))  # noqa: E501
+
+
+def validate_data_source_department_ids(value):
+    if len(value) != DataSourceDepartment.objects.filter(id__in=value).count():
+        raise ValidationError(_("传递了不存在的部门信息").format(value))
+
+
+def validate_data_source_leader_ids(value):
+    if len(value) != DataSourceDepartment.objects.filter(id__in=value).count():
+        raise ValidationError(_("传递了不存在的上级信息").format(value))

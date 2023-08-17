@@ -12,7 +12,6 @@ from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.validators import validate_phone, validate_username
 from bkuser.common.models import TimestampedModel
 
 
@@ -68,14 +67,6 @@ class DataSourceUser(TimestampedModel):
             ("username", "data_source"),
             ("full_name", "data_source"),
         ]
-
-    def custom_validate(self):
-        validate_username(self.username)
-        validate_phone(self.phone_country_code, self.phone)
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        self.custom_validate()
-        super().save(force_insert, force_update, using, update_fields)
 
 
 class LocalDataSourceIdentityInfo(TimestampedModel):
