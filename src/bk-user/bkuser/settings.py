@@ -156,7 +156,7 @@ SECRET_KEY = BK_APP_SECRET
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
 # BK USER URL
 BK_USER_URL = env.str("BK_USER_URL")
-AJAX_BASE_URL = ""
+AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
 
 # csrf
 _BK_USER_URL_PARSE_URL = urlparse(BK_USER_URL)
@@ -185,6 +185,13 @@ CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 
 # Login
 BK_LOGIN_URL = env.str("BK_LOGIN_URL", default="/")
+# 登录小窗相关
+BK_LOGIN_PLAIN_URL = env.str("BK_LOGIN_PLAIN_URL", default=BK_LOGIN_URL.rstrip("/") + "/plain/")
+BK_LOGIN_PLAIN_WINDOW_WIDTH = env.int("BK_LOGIN_PLAIN_WINDOW_WIDTH", default=415)
+BK_LOGIN_PLAIN_WINDOW_HEIGHT = env.int("BK_LOGIN_PLAIN_WINDOW_HEIGHT", default=415)
+# 登录回调地址参数Key
+BK_LOGIN_CALLBACK_URL_PARAM_KEY = env.str("BK_LOGIN_CALLBACK_URL_PARAM_KEY", default="c_url")
+
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 

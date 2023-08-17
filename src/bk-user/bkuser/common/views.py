@@ -16,6 +16,7 @@ from django.conf import settings
 from django.http.response import Http404, HttpResponseNotFound
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic.base import TemplateView
 from drf_yasg.utils import swagger_auto_schema
@@ -51,7 +52,17 @@ def one_line_error(error: ValidationError):
 def _handle_exception(request, exc) -> APIError:
     """统一处理异常，并转换成 APIError"""
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
-        return error_codes.UNAUTHENTICATED
+        # Q: 为什么需要f("")
+        # A: 如果直接 set_data , 那么 set_data 是影响 UNAUTHENTICATED 这个"全局变量"的，而 format 是返回 clone 后的对象
+        return error_codes.UNAUTHENTICATED.f("").set_data(
+            {
+                "login_url": settings.BK_LOGIN_URL,
+                "login_plain_url": settings.BK_LOGIN_PLAIN_URL,
+                "width": settings.BK_LOGIN_PLAIN_WINDOW_WIDTH,
+                "height": settings.BK_LOGIN_PLAIN_WINDOW_HEIGHT,
+                "callback_url_param_key": settings.BK_LOGIN_CALLBACK_URL_PARAM_KEY,
+            }
+        )
 
     if isinstance(exc, PermissionDenied):
         return error_codes.NO_PERMISSION.f(exc.detail)
@@ -155,17 +166,23 @@ class VueTemplateView(TemplateView):
         # Context
         try:
             context = {
+                # TITLE
+                "TITLE": _("用户管理 | 腾讯蓝鲸智云"),
                 # BK_DOMAIN
                 "BK_DOMAIN": settings.BK_DOMAIN,
+                # BK LOGIN
                 "BK_LOGIN_URL": settings.BK_LOGIN_URL.rstrip("/"),
+                "BK_LOGIN_CALLBACK_URL_PARAM_KEY": settings.BK_LOGIN_CALLBACK_URL_PARAM_KEY,
+                # BK USER
                 "BK_USER_URL": settings.BK_USER_URL.rstrip("/"),
                 "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
                 # 去除末尾的 /, 前端约定
                 "BK_STATIC_URL": settings.STATIC_URL.rstrip("/"),
                 # 去除开头的 . document.domain需要
                 "SESSION_COOKIE_DOMAIN": settings.SESSION_COOKIE_DOMAIN.lstrip("."),
-                # csrftoken name
+                # CSRF TOKEN COOKIE NAME
                 "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
+                # ESB
                 "BK_COMPONENT_API_URL": settings.BK_COMPONENT_API_URL.rstrip("/"),
             }
 

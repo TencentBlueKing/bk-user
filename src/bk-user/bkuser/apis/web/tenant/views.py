@@ -64,6 +64,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         return queryset
 
     @swagger_auto_schema(
+        tags=["tenant"],
         operation_description="租户列表",
         query_serializer=TenantSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantSearchOutputSLZ(many=True)},
@@ -72,6 +73,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         return self.list(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        tags=["tenant"],
         operation_description="新建租户",
         request_body=TenantCreateInputSLZ(),
         responses={status.HTTP_201_CREATED: TenantCreateOutputSLZ()},
@@ -100,7 +102,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         ]
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers)
 
-        return Response({"id": tenant_id})
+        return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data)
 
 
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
@@ -116,6 +118,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         }
 
     @swagger_auto_schema(
+        tags=["tenant"],
         operation_description="租户详情",
         responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
     )
@@ -123,6 +126,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         return self.retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        tags=["tenant"],
         operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
         responses={status.HTTP_200_OK: ""},
@@ -161,6 +165,7 @@ class TenantUsersListApi(generics.ListAPIView):
         return queryset
 
     @swagger_auto_schema(
+        tags=["tenant"],
         operation_description="租户下用户列表",
         query_serializer=TenantUserSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
