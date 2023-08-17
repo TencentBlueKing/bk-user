@@ -27,7 +27,7 @@ class DataSourceHandler:
         owner_tenant_ids: Optional[List[str]] = None,
     ) -> Dict[str, List[DataSourceSimpleInfo]]:
         """
-        查询数据源
+        查询租户下数据源
         """
         data_sources = DataSource.objects.all()
         if owner_tenant_ids is not None:
