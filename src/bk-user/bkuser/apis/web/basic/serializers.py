@@ -11,5 +11,5 @@ specific language governing permissions and limitations under the License.
 from rest_framework import serializers
 
 
-class CurrentUserRetrieveSchema(serializers.Serializer):
+class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")

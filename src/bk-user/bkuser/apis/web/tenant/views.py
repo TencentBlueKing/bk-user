@@ -102,7 +102,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         ]
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers)
 
-        return Response({"id": tenant_id})
+        return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data)
 
 
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):

@@ -12,13 +12,13 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import CurrentUserRetrieveSchema
+from .serializers import CurrentUserRetrieveOutputSLZ
 
 
 class CurrentUserRetrieveApi(generics.RetrieveAPIView):
     @swagger_auto_schema(
         operation_description="当前用户信息",
-        responses={status.HTTP_200_OK: CurrentUserRetrieveSchema()},
+        responses={status.HTTP_200_OK: CurrentUserRetrieveOutputSLZ()},
         tags=["basic.current_user"],
     )
     def get(self, request, *args, **kwargs):
@@ -28,4 +28,4 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
             "username": current_user.username,
         }
 
-        return Response(info)
+        return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
