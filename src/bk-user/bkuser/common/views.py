@@ -53,7 +53,7 @@ def _handle_exception(request, exc) -> APIError:
     """统一处理异常，并转换成 APIError"""
     if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
         # Q: 为什么需要f("")
-        # A: 如果直接set_data, 那么set_data是影响UNAUTHENTICATED这个"全局变量"的， 而format是返回 clone后的对象
+        # A: 如果直接 set_data , 那么 set_data 是影响 UNAUTHENTICATED 这个"全局变量"的，而 format 是返回 clone 后的对象
         return error_codes.UNAUTHENTICATED.f("").set_data(
             {
                 "login_url": settings.BK_LOGIN_URL,
