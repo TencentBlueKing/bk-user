@@ -13,7 +13,16 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
+from bkuser.common.error_codes import error_codes
+
+
+class DataSourceDepartmentInfo(BaseModel):
+    id: int
+    name: str
+    data_source_id: int
+    children: list
+    full_name: str
 
 
 class DataSourceSimpleInfo(BaseModel):
@@ -38,3 +47,34 @@ class DataSourceHandler:
             data[i.owner_tenant_id].append(DataSourceSimpleInfo(id=i.id, name=i.name))
 
         return data
+
+
+class DataSourceDepartmentHandler:
+    @staticmethod
+    def retrieve_department(department_id: int) -> DataSourceDepartmentInfo:
+        """
+        获取单个部门信息
+        """
+        try:
+            # 生成组织架构路径
+            parent_ids = (
+                DataSourceDepartmentRelation.objects.get(id=department_id)
+                .get_ancestors(include_self=True)
+                .values_list("id", flat=True)
+            )
+            parents = DataSourceDepartment.objects.filter(id__in=parent_ids).values_list("name", flat=True)
+            full_name = "/".join(list(parents))
+            # 构建基础信息
+            department = DataSourceDepartment.objects.get(id=department_id)
+            base_info = {
+                "id": department.id,
+                "name": department.name,
+                "full_name": full_name,
+                "data_source_id": department.data_source_id,
+                "children": DataSourceDepartmentRelation.objects.filter(parent_id=department.id).values(
+                    "id", flat=True
+                ),
+            }
+            return DataSourceDepartmentInfo(**base_info)
+        except DataSourceDepartment.DoesNotExist:
+            raise error_codes.OBJECT_NOT_FOUND

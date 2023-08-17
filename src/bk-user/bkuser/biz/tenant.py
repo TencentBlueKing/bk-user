@@ -14,8 +14,8 @@ from typing import Dict, List, Optional
 from django.db import transaction
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceUser
-from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourcePlugin, DataSourceUser
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -65,6 +65,12 @@ class TenantManagerWithoutID(BaseModel):
     email: str
     phone: str
     phone_country_code: str
+
+
+class TenantDepartmentBaseInfo(BaseModel):
+    tenant_department_id: int
+    name: str
+    has_children: bool
 
 
 class TenantUserHandler:
@@ -186,3 +192,33 @@ class TenantHandler:
                     [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in should_add_manager_ids],
                     batch_size=100,
                 )
+
+
+class TenantDepartmentHandler:
+    @staticmethod
+    def get_tenant_departments_info_map(
+        tenant_id: str, data_source_departments: Optional[List[int]] = None
+    ) -> Dict[int, TenantDepartmentBaseInfo]:
+        """
+        获取租户的部门映射
+        """
+        # tenant_id 租户下部门关系映射
+        tenant_departments = TenantDepartment.objects.filter(tenant_id=tenant_id)
+        if data_source_departments:
+            tenant_departments = tenant_departments.filter(data_source_department_id__in=data_source_departments)
+        # 构建映射关系数据
+        departments_map: dict = {}
+        for item in tenant_departments:
+            # NOTE: 协同数据源，可能存在未授权全部子部门
+            children_ids = DataSourceDepartmentRelation.objects.filter(
+                parent_id=item.data_source_department.id
+            ).values_list("department_id", flat=True)
+            has_children = TenantDepartment.objects.filter(data_source_department_id__in=children_ids).exists()
+            departments_map[item.data_source_department.id] = TenantDepartmentBaseInfo(
+                **{
+                    "tenant_department_id": item.id,
+                    "name": item.data_source_department.name,
+                    "has_children": has_children,
+                }
+            )
+        return departments_map
