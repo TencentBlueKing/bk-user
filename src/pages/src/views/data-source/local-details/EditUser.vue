@@ -114,7 +114,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { ref, toRefs } from "vue";
 
 const formRef = ref("");
