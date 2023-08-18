@@ -12,7 +12,7 @@
             v-for="item in menuData"
             :key="item.key">
             <template #icon>
-              <i class="user-icon icon-block-shape" />
+              <i class="user-icon icon-qingximoban" />
             </template>
             {{ item.name }}
           </bk-menu-item>
@@ -43,7 +43,7 @@ const { activeKey, handleChangeMenu } = useMenuInfo();
 const menuData = reactive([
   {
     name: "数据源管理",
-    key: "dataConf",
+    key: "local",
   },
   // {
   //   name: "跨公司协同",

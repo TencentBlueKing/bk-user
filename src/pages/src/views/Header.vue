@@ -66,7 +66,7 @@
           @hide="() => (state.logoutDropdown = false)"
           @show="() => (state.logoutDropdown = true)"
         >
-          <div class="help-info">
+          <div class="help-info" :class="state.logoutDropdown && 'active-username'">
             <span class="help-info-name">{{ userInfo.username }}</span>
             <DownShape class="help-info-icon" />
           </div>
@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import { useUser } from "@/store/user";
 import { logout } from "@/common/auth";
 import { DownShape, HelpDocumentFill } from "bkui-vue/lib/icon";
@@ -95,8 +95,10 @@ const state = reactive({
   helpDropdown: false,
   languageDrodown: false,
 });
-const user = useUser();
-const userInfo = ref(user.user);
+
+const userStore = useUser();
+const userInfo = computed(() => userStore.user);
+
 const headerNav = reactive([
   {
     name: "组织架构",
@@ -108,12 +110,12 @@ const headerNav = reactive([
   },
   {
     name: "租户管理",
-    path: "tenantry",
+    path: "tenant",
   },
-  {
-    name: "审计",
-    path: "audit",
-  },
+  // {
+  //   name: "审计",
+  //   path: "audit",
+  // },
   {
     name: "设置",
     path: "setting",
@@ -205,10 +207,7 @@ const toLink = (item: any) => {
         color: #3a84ff;
       }
     }
-    .help-info-icon {
-      vertical-align: middle;
-    }
-    &:hover {
+    .active-username {
       color: #3a84ff;
       cursor: pointer;
       .help-info-icon {
@@ -216,6 +215,9 @@ const toLink = (item: any) => {
         transition: all 0.2s;
         transform: rotate(180deg);
       }
+    }
+    .help-info-icon {
+      vertical-align: middle;
     }
     .help-info-name {
       padding-right: 4px;
