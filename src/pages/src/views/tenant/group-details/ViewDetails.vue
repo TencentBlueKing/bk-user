@@ -13,7 +13,7 @@
         </div>
       </div>
       <img v-if="tenantsData.logo" class="user-logo" :src="tenantsData.logo" alt="">
-      <img v-else class="user-logo" src="../../../images/avatar.png" alt="">
+      <img v-else class="user-logo" src="@/images/avatar.png" alt="">
     </li>
     <li>
       <div class="details-content-title">管理员</div>

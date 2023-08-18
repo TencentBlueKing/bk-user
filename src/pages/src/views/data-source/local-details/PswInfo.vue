@@ -1,10 +1,10 @@
 <template>
-  <div class="account-info-wrapper user-scroll-y">
-    <ul class="account-info-content">
+  <div class="details-info-wrapper user-scroll-y">
+    <ul class="details-info-content">
       <li class="content-item">
         <div class="item-header">
           <p class="item-title">账号信息</p>
-          <bk-button outline theme="primary">
+          <bk-button outline theme="primary" @click="handleClickEdit">
             编辑
           </bk-button>
         </div>
@@ -43,6 +43,7 @@
 
 <script setup lang="tsx">
 import { reactive } from "vue";
+import router from "@/router";
 
 const accountMap = {
   account_validity: "账号有效期",
@@ -124,57 +125,14 @@ const state = reactive({
     },
   ],
 });
+
+const handleClickEdit = () => {
+  router.push({
+    name: "newLocal",
+  });
+}
 </script>
 
 <style lang="less" scoped>
-.account-info-wrapper {
-  padding: 24px;
-  .account-info-content {
-    background: #fff;
-    padding: 0 24px;
-    .item-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      .bk-button {
-        width: 64px;
-      }
-    }
-    .content-item {
-      padding-top: 24px;
-      border-bottom: 1px solid #EAEBF0;
-      .item-title {
-        font-size: 14px;
-        font-weight: 700;
-      }
-      .item-content {
-        padding: 20px 0 20px 0;
-        li {
-          line-height: 40px;
-          width: 100%;
-          font-size: 14px;
-          display: flex;
-          .key {
-            display: inline-block;
-            width: 180px;
-            text-align: right;
-          }
-          .value {
-            color: #313238;
-          }
-        }
-      }
-      .flex {
-        display: flex;
-        flex-wrap: wrap;
-        li {
-          width: 50%;
-        }
-      }
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-  }
-}
+@import "@/css/tenantViewStyle.less";
 </style>

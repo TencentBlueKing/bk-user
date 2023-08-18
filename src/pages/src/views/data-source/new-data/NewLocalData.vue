@@ -143,7 +143,7 @@
       </template>
       <div class="btn">
         <bk-button theme="primary" class="mr8">提交</bk-button>
-        <bk-button>取消</bk-button>
+        <bk-button @click="handleClickCancel">取消</bk-button>
       </div>
     </bk-form>
   </div>
@@ -153,6 +153,7 @@
 import MainBreadcrumbsDetails from "@/components/layouts/MainBreadcrumbsDetails.vue";
 import { useRoute } from "vue-router";
 import { computed, ref, reactive } from "vue";
+import router from "@/router";
 
 const route = useRoute();
 
@@ -217,6 +218,10 @@ const dataSourceConfig = reactive({
     { value: 15, label: "15天" },
   ],
 });
+
+const handleClickCancel = () => {
+  router.go(-1);
+}
 </script>
 
 <style lang="less" scoped>
