@@ -60,12 +60,15 @@ const userMap = {
   user_id: "用户ID",
   user_name: "用户名",
   full_name: "全名",
-  email: "邮箱",
-  phone: "手机号",
+  data_source: "所属数据源",
   department: "所属组织",
   leader: "直属上级",
+  email: "邮箱",
+  phone: "手机号",
   status: "在职状态",
   position: "职务",
+  wechat: "微信",
+  qq: "QQ",
   account_expiration_date: "账号过期时间",
   password_expiration_date: "密码过期时间",
 }
@@ -82,6 +85,10 @@ const basicData = reactive([
   {
     key: "full_name",
     value: "bbb",
+  },
+  {
+    key: "data_source",
+    value: "--",
   },
   {
     key: "email",
@@ -108,6 +115,14 @@ const basicData = reactive([
     value: "产品经理",
   },
   {
+    key: "wechat",
+    value: "--",
+  },
+  {
+    key: "qq",
+    value: "--",
+  },
+  {
     key: "account_expiration_date",
     value: "2023-10-10",
   },
@@ -120,10 +135,9 @@ const basicData = reactive([
 
 <style lang="less" scoped>
 .details-content {
-  padding: 0 40px;
+  padding: 20px 40px;
   li {
     list-style: none;
-    padding: 20px 0;
     border-bottom: 1px solid #dcdee5;
     position: relative;
     .details-content-info {

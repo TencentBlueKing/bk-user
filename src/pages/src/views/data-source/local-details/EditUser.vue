@@ -157,7 +157,7 @@ const handleSubmit = () => {}
 
   .add-user-form {
     position: relative;
-    padding: 28px 40px 40px;
+    padding: 28px 40px 60px;
     .bk-upload {
       position: absolute;
       top: 54px;

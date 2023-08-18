@@ -218,7 +218,6 @@ const handleBeforeClose = async () => {
     }
   }
   :deep(.bk-modal-content) {
-    max-height: calc(100vh - 100px) !important;
     overflow-y: auto;
 
     &::-webkit-scrollbar {
