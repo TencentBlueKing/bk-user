@@ -23,46 +23,31 @@ from bkuser.common.error_codes import error_codes
 
 
 class DataSourceUserListCreateApi(generics.ListCreateAPIView):
+    queryset = DataSource.objects.all()
     pagination_class = None
+    lookup_url_kwarg = "id"
 
     @swagger_auto_schema(
         operation_description="新建数据源用户",
-        query_serializer=UserCreateInputSLZ(),
-        responses={status.HTTP_201_CREATED: UserCreateOutputSLZ(many=True)},
+        request_body=UserCreateInputSLZ(),
+        responses={status.HTTP_201_CREATED: UserCreateOutputSLZ()},
         tags=["data_source"],
     )
     def post(self, request, *args, **kwargs):
-        slz = UserCreateInputSLZ(data=request.data)
+        slz = UserCreateInputSLZ(data=request.data, context={"data_source": self.get_object()})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        data_source_id = kwargs["id"]
-
-        # 校验数据源是否存在
-        try:
-            data_source = DataSource.objects.get(id=data_source_id)
-        except Exception:
-            raise error_codes.DATA_SOURCE_NOT_EXIST
+        data_source = self.get_object()
 
         # 不允许对非本地数据源进行用户新增操作
-        else:
-            if data_source.plugin.id != "local":
-                raise error_codes.CANNOT_CREATE_USER
-
+        if not data_source.editable:
+            raise error_codes.CANNOT_CREATE_USER
         # 校验是否已存在该用户
-        try:
-            DataSourceUser.objects.get(
-                username=data["username"],
-                data_source=data_source,
-            )
-        except Exception:
-            pass
-
-        else:
+        if DataSourceUser.objects.filter(username=data["username"], data_source=data_source).exists():
             raise error_codes.DATA_SOURCE_USER_ALREADY_EXISTED
 
         # 用户数据整合
         base_user_info = DataSourceUserBaseInfo(
-            data_source=data_source,
             username=data["username"],
             full_name=data["full_name"],
             email=data["email"],
@@ -77,4 +62,4 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         user_id = DataSourceOrganizationHandler.create_user(
             data_source=data_source, base_user_info=base_user_info, relation_info=relation_info
         )
-        return Response({"id": user_id})
+        return Response(UserCreateOutputSLZ(instance={"id": user_id}).data)

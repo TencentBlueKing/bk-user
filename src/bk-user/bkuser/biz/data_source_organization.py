@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
+from typing import List, Optional
 
 from django.db import transaction
 from pydantic import BaseModel
@@ -23,9 +23,7 @@ from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.utils.uuid import generate_uuid
 
 
-class DataSourceUserBaseInfo(
-    BaseModel,
-):
+class DataSourceUserBaseInfo(BaseModel):
     """数据源用户基础信息"""
 
     username: str
@@ -35,13 +33,11 @@ class DataSourceUserBaseInfo(
     phone_country_code: str
 
 
-class DataSourceUserRelationInfo(
-    BaseModel,
-):
+class DataSourceUserRelationInfo(BaseModel):
     """数据源用户关系信息"""
 
-    department_ids: List
-    leader_ids: List
+    department_ids: Optional[List[str]] = None
+    leader_ids: Optional[List[str]] = None
 
 
 class DataSourceOrganizationHandler:
@@ -59,19 +55,27 @@ class DataSourceOrganizationHandler:
             user = DataSourceUser.objects.create(**create_user_info_map)
 
             # 批量创建数据源用户-部门关系
-            department_user_relation_objs = [
-                DataSourceDepartmentUserRelation(department_id=department_id, user_id=user.id)
-                for department_id in relation_info.model_dump()["department_ids"]
-            ]
+            department_user_relation_objs = (
+                [
+                    DataSourceDepartmentUserRelation(department_id=dept_id, user_id=user.id)
+                    for dept_id in relation_info.department_ids
+                ]
+                if relation_info.department_ids
+                else []
+            )
 
             if department_user_relation_objs:
-                DataSourceDepartmentUserRelation.objects.bulk_create(department_user_relation_objs, batch_size=100)
+                DataSourceDepartmentUserRelation.objects.bulk_create(department_user_relation_objs)
 
             # 批量创建数据源用户-上级关系
-            user_leader_relation_objs = [
-                DataSourceUserLeaderRelation(leader_id=leader_id, user_id=user.id)
-                for leader_id in relation_info.model_dump()["leader_ids"]
-            ]
+            user_leader_relation_objs = (
+                [
+                    DataSourceUserLeaderRelation(leader_id=leader_id, user_id=user.id)
+                    for leader_id in relation_info.leader_ids
+                ]
+                if relation_info.leader_ids
+                else []
+            )
 
             if user_leader_relation_objs:
                 DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relation_objs)

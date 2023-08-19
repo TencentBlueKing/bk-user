@@ -13,5 +13,5 @@ from django.urls import path
 from bkuser.apis.web.data_source import views
 
 urlpatterns = [
-    path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source.list_create"),
+    path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source_user.list_create"),
 ]

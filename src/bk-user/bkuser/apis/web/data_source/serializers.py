@@ -10,21 +10,15 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-import phonenumbers
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from phonenumbers import region_code_for_country_code
 from rest_framework import serializers
 
-from bkuser.biz.validators import (
-    validate_data_source_department_ids,
-    validate_data_source_leader_ids,
-    validate_data_source_user_username,
-)
+from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
+from bkuser.biz.validators import validate_data_source_user_username
+from bkuser.common.validators import validate_phone_with_country_code
 
 logger = logging.getLogger(__name__)
-CHINESE_REGION = "CN"
-CHINESE_PHONE_LENGTH = 11
 
 
 class UserCreateInputSLZ(serializers.Serializer):
@@ -36,43 +30,30 @@ class UserCreateInputSLZ(serializers.Serializer):
     )
     phone = serializers.CharField(help_text="手机号")
     logo = serializers.CharField(help_text="用户 Logo", required=False)
-    department_ids = serializers.ListField(
-        help_text="部门ID列表",
-        child=serializers.IntegerField(),
-        default=[],
-        validators=[validate_data_source_department_ids],
-    )
-    leader_ids = serializers.ListField(
-        help_text="上级ID列表",
-        child=serializers.IntegerField(),
-        default=[],
-        validators=[validate_data_source_leader_ids],
-    )
+    department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField(), default=[])
+    leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField(), default=[])
 
     def validate(self, data):
-        # 根据国家码获取对应地区码
-        try:
-            region = region_code_for_country_code(int(data["phone_country_code"]))
-
-        except Exception:
-            logger.debug("failed to parse phone_country_code: %s, ", data["phone_country_code"])  # noqa: E501
-            raise serializers.ValidationError(_("手机地区码 {} 不符合解析规则").format(data["phone_country_code"]))  # noqa: E501
-
-        else:
-            # phonenumbers库在验证号码的时：过短会解析为有效号码，超过250的字节才算超长
-            # =》所以这里需要显式做中国号码的长度校验
-            if region == CHINESE_REGION and len(data["phone"]) != CHINESE_PHONE_LENGTH:
-                raise serializers.ValidationError(_("手机号 {} 不符合长度要求").format(data["phone"]))
-
-            try:
-                # 按照指定地区码解析手机号
-                phonenumbers.parse(data["phone"], region)
-
-            except Exception:  # pylint: disable=broad-except
-                logger.debug("failed to parse phone number: %s", data["phone"])
-                raise serializers.ValidationError(_("手机号 {} 不符合规则").format(data["phone"]))
-
+        validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
         return data
+
+    def validate_department_ids(self, department_ids):
+        diff_department_ids = set(department_ids) - set(
+            DataSourceDepartment.objects.filter(
+                id__in=department_ids, data_source=self.context["data_source"]
+            ).values_list("id", flat=True)
+        )
+        if diff_department_ids:
+            raise serializers.ValidationError(_("传递了错误的部门信息: {}").format(diff_department_ids))
+
+    def validate_leader_ids(self, leader_ids):
+        diff_leader_ids = set(leader_ids) - set(
+            DataSourceUser.objects.filter(id__in=leader_ids, data_source=self.context["data_source"]).values_list(
+                "id", flat=True
+            )
+        )
+        if diff_leader_ids:
+            raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
 
 
 class UserCreateOutputSLZ(serializers.Serializer):

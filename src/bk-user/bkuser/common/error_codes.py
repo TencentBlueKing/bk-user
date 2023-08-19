@@ -71,8 +71,7 @@ class ErrorCodes:
     # 数据源
     DATA_SOURCE_TYPE_NOT_SUPPORTED = ErrorCode(_("数据源类型不支持"))
     CANNOT_CREATE_USER = ErrorCode(_("该数据源不支持新增用户"))
-    DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
-    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("用户已存在"))
+    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
 
     # 租户
     CREATE_TENANT_FAILED = ErrorCode(_("租户创建失败"))
