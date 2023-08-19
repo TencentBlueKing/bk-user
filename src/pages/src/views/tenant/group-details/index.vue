@@ -45,7 +45,10 @@
       <template #header>
         <span>{{ detailsConfig.title }}</span>
         <div v-if="isView">
-          <bk-button @click="handleClick('edit', state.tenantsData)"
+          <bk-button
+            outline
+            theme="primary"
+            @click="handleClick('edit', state.tenantsData)"
             >编辑</bk-button
           >
         </div>

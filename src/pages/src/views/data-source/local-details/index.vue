@@ -6,7 +6,7 @@
           <template #icon>
             <i :class="typeText.icon" />
           </template>
-          {{ typeText.name }}
+          {{ typeText.text }}
         </bk-tag>
       </template>
     </MainBreadcrumbsDetails>
@@ -34,19 +34,15 @@ import { useRoute } from "vue-router";
 import { ref, reactive, computed } from "vue";
 import UserInfo from "./UserInfo.vue";
 import PswInfo from "./PswInfo.vue";
+import { dataSourceType } from "@/utils";
 
 const route = useRoute();
 
 // 当前面包屑展示文案
 const subtitle = computed(() => route.params.name);
 const typeText = computed(() => {
-  switch (route.params.type) {
-    case "local":
-      return {
-        name: "本地",
-        icon: "user-icon icon-wechat",
-      };
-  }
+  const { text, icon } = dataSourceType[route.params.type];
+  return { text, icon };
 });
 
 const activeKey = ref("user");

@@ -13,7 +13,7 @@
         </div>
       </div>
       <img v-if="tenantsData.logo" class="user-logo" :src="tenantsData.logo" alt="">
-      <img v-else class="user-logo" src="../../../images/avatar.png" alt="">
+      <img v-else class="user-logo" src="@/images/avatar.png" alt="">
     </li>
     <li>
       <div class="details-content-title">管理员</div>
@@ -94,6 +94,7 @@ const basicData = reactive([
       .details-content-item {
         line-height: 40px;
         width: 100%;
+        display: flex;
         .details-content-key {
           font-size: 14px;
           color: #63656e;

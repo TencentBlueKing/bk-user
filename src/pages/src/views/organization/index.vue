@@ -3,7 +3,7 @@
     <template #menu>
       <OrganizationTree @change-node="(node) => changeNode(node)" />
     </template>
-    <!-- <template #main-content>
+    <template #main-content>
       <bk-tab
         v-model:active="active"
         type="unborder-card"
@@ -19,7 +19,7 @@
           <DetailsInfo v-if="index === 1" />
         </bk-tab-panel>
       </bk-tab>
-    </template> -->
+    </template>
   </MainView>
 </template>
 
@@ -28,6 +28,8 @@ import { useMainViewStore } from "@/store/mainView";
 import { ref, reactive } from "vue";
 import MainView from "@/components/layouts/MainView.vue";
 import OrganizationTree from "./tree/OrganizationTree.vue";
+import UserInfo from "./details/UserInfo.vue";
+import DetailsInfo from "./details/DetailsInfo.vue";
 
 const mainViewStore = useMainViewStore();
 const state = reactive({
@@ -48,6 +50,11 @@ const changeNode = (node: any) => {
 };
 </script>
 
+<style lang="less">
+.main-breadcrumbs {
+  box-shadow: none;
+}
+</style>
 <style lang="less" scoped>
 .header-left-name {
   font-size: 16px;

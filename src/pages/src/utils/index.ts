@@ -74,3 +74,22 @@ export const logoColor = [
   "#3A84FF", "#699DF4", "#18B456", "#51BE68", "#FF9C01", "#FFB848", "#EA3636", "#FF5656",
   "#3762B8", "#3E96C2", "#61B2C2", "#85CCA8", "#FFC685", "#FFA66B", "#F5876C", "#D66F6B",
 ];
+
+export const dataSourceType = {
+  local: {
+    icon: 'user-icon icon-shujuku',
+    text: "本地",
+  },
+  mad: {
+    icon: 'user-icon icon-win',
+    text: "MAD",
+  },
+  ldap: {
+    icon: 'user-icon icon-ladp',
+    text: "OpenLDAP",
+  },
+  wechat: {
+    icon: 'user-icon icon-qiyeweixin',
+    text: "企业微信",
+  },
+}

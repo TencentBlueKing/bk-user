@@ -44,12 +44,12 @@
 <script setup lang="tsx">
 import { ref } from "vue";
 import router from "@/router/index";
-import { statusIcon } from "@/utils";
+import { statusIcon, dataSourceType } from "@/utils";
 
 const searchVal = ref("");
 const dropdownList = ref([
   {
-    icon: "user-icon icon-info-i",
+    icon: "user-icon icon-shujuku",
     title: "本地数据源",
     subTitle: "支持用户的增删改查，以及用户的登录认证",
     type: "local",
@@ -62,14 +62,14 @@ const dropdownList = ref([
   //     type: "mad",
   //   },
   //   {
-  //     icon: "user-icon icon-info-i",
+  //     icon: "user-icon icon-ladp",
   //     title: "OpenLDAP",
   //     subTitle:
   //       "支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证",
   //     type: "ldap",
   //   },
   //   {
-  //     icon: "user-icon icon-qw",
+  //     icon: "user-icon icon-qiyeweixin",
   //     title: "企业微信",
   //     subTitle: "支持企业微信用户数据同步和登录认证",
   //     type: "wechat",
@@ -108,6 +108,14 @@ const columns = [
   {
     label: "数据源类型",
     field: "type",
+    render: ({ data }: { data: any }) => {
+      return (
+        <div>
+          <i class={[dataSourceType[data.type].icon, 'type-icon']} />
+          <span>{dataSourceType[data.type].text}</span>
+        </div>
+      )
+    }
   },
   {
     label: "状态",
@@ -177,6 +185,11 @@ function newDataSource(item) {
     .bk-table-footer {
       padding: 0 15px;
       background: #fff;
+    }
+    .type-icon {
+      font-size: 14px;
+      color: #979BA5;
+      margin-right: 8px;
     }
     .account-status-icon {
       width: 16px;
