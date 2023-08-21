@@ -96,7 +96,10 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
       ? `${loginData.login_plain_url}?size=small&${loginData.callback_url_param_key}=${encodeURIComponent(window.location.href)}`
       : '';
 
-    src && window.login.showLogin({
+    if (error.config.url === '/api/v1/web/basic/current-user/') {
+      return window.location.href = src;
+    }
+    window.login.showLogin({
       src,
       width: loginData.width,
       height: loginData.height,
