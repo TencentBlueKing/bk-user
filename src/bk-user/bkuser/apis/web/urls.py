@@ -15,5 +15,5 @@ urlpatterns = [
     path("basic/", include("bkuser.apis.web.basic.urls")),
     # 租户
     path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("data_source/", include("bkuser.apis.web.data_source.urls")),
+    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
 ]

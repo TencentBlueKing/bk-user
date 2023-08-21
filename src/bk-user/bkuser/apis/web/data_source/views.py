@@ -11,25 +11,21 @@ specific language governing permissions and limitations under the License.
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 
-from bkuser.apis.web.data_source.serializers import UserSearchInputSLZ, UserSearchOutput
+from bkuser.apis.web.data_source.serializers import UserSearchInputSLZ, UserSearchOutputSLZ
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.common.error_codes import error_codes
+from bkuser.common.pagination import CustomPageNumberPagination
 
 
 class DataSourceUserListCreateApi(generics.ListCreateAPIView):
-    pagination_class = None
-    serializer_class = UserSearchOutput
+    pagination_class = CustomPageNumberPagination
+    serializer_class = UserSearchOutputSLZ
 
-    @swagger_auto_schema(
-        operation_description="数据源用户列表",
-        query_serializer=UserSearchInputSLZ(),
-        responses={status.HTTP_200_OK: UserSearchOutput(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
+    def get_queryset(self):
         slz = UserSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        data_source_id = kwargs["id"]
+        data_source_id = self.kwargs["id"]
 
         # 校验数据源是否存在
         try:
@@ -37,9 +33,17 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         except Exception:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
-        self.queryset = DataSourceUser.objects.filter(data_source=data_source)
+        queryset = DataSourceUser.objects.filter(data_source=data_source)
 
         if data.get("username"):
-            self.queryset = DataSourceUser.objects.filter(username__icontains=data["username"])
+            queryset = DataSourceUser.objects.filter(username__icontains=data["username"])
 
+        return queryset
+
+    @swagger_auto_schema(
+        operation_description="数据源用户列表",
+        query_serializer=UserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: UserSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
