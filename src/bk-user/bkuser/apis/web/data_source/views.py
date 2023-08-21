@@ -34,13 +34,13 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         tags=["data_source"],
     )
     def post(self, request, *args, **kwargs):
-        slz = UserCreateInputSLZ(data=request.data, context={"data_source": self.get_object()})
+        data_source = self.get_object()
+        slz = UserCreateInputSLZ(data=request.data, context={"data_source": data_source})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        data_source = self.get_object()
 
         # 不允许对非本地数据源进行用户新增操作
-        if not data_source.editable:
+        if not data_source.user_editable:
             raise error_codes.CANNOT_CREATE_USER
         # 校验是否已存在该用户
         if DataSourceUser.objects.filter(username=data["username"], data_source=data_source).exists():

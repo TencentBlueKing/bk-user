@@ -45,6 +45,7 @@ class UserCreateInputSLZ(serializers.Serializer):
         )
         if diff_department_ids:
             raise serializers.ValidationError(_("传递了错误的部门信息: {}").format(diff_department_ids))
+        return department_ids
 
     def validate_leader_ids(self, leader_ids):
         diff_leader_ids = set(leader_ids) - set(
@@ -54,6 +55,7 @@ class UserCreateInputSLZ(serializers.Serializer):
         )
         if diff_leader_ids:
             raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
+        return leader_ids
 
 
 class UserCreateOutputSLZ(serializers.Serializer):

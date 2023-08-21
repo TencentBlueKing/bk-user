@@ -44,7 +44,7 @@ opentelemetry-instrumentation-celery = "0.40b0"
 redis = "4.6.0"
 django-redis = "5.3.0"
 pydantic = "2.1.1"
-phonenumbers = "^8.13.18"
+phonenumbers = "8.13.18"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"

@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List, Optional
+from typing import List
 
 from django.db import transaction
 from pydantic import BaseModel
@@ -36,8 +36,8 @@ class DataSourceUserBaseInfo(BaseModel):
 class DataSourceUserRelationInfo(BaseModel):
     """数据源用户关系信息"""
 
-    department_ids: Optional[List[str]] = None
-    leader_ids: Optional[List[str]] = None
+    department_ids: List[int]
+    leader_ids: List[int]
 
 
 class DataSourceOrganizationHandler:
@@ -55,27 +55,19 @@ class DataSourceOrganizationHandler:
             user = DataSourceUser.objects.create(**create_user_info_map)
 
             # 批量创建数据源用户-部门关系
-            department_user_relation_objs = (
-                [
-                    DataSourceDepartmentUserRelation(department_id=dept_id, user_id=user.id)
-                    for dept_id in relation_info.department_ids
-                ]
-                if relation_info.department_ids
-                else []
-            )
+            department_user_relation_objs = [
+                DataSourceDepartmentUserRelation(department_id=dept_id, user_id=user.id)
+                for dept_id in relation_info.department_ids
+            ]
 
             if department_user_relation_objs:
                 DataSourceDepartmentUserRelation.objects.bulk_create(department_user_relation_objs)
 
             # 批量创建数据源用户-上级关系
-            user_leader_relation_objs = (
-                [
-                    DataSourceUserLeaderRelation(leader_id=leader_id, user_id=user.id)
-                    for leader_id in relation_info.leader_ids
-                ]
-                if relation_info.leader_ids
-                else []
-            )
+            user_leader_relation_objs = [
+                DataSourceUserLeaderRelation(leader_id=leader_id, user_id=user.id)
+                for leader_id in relation_info.leader_ids
+            ]
 
             if user_leader_relation_objs:
                 DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relation_objs)
