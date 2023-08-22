@@ -13,5 +13,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("departments/<str:id>/children/", views.TenantDepartmentChildrenListApi.as_view()),
+    path(
+        "departments/<int:id>/children/",
+        views.TenantDepartmentChildrenListApi.as_view(),
+        name="organization.children.list",
+    ),
 ]
