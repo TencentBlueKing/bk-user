@@ -18,8 +18,9 @@ module.exports = {
         https: true,
         proxy: {
           '/api': {
-            target: '',
+            target: process.env.AJAX_BASE_URL,
             changeOrigin: true,
+            secure: false,
           },
         },
       },
