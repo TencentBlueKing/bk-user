@@ -3,7 +3,6 @@ module.exports = {
   extends: ['@blueking/eslint-config-bk/tsvue3'],
   plugins: [
     'simple-import-sort',
-    'codecc',
   ],
   rules: {
     'simple-import-sort/imports': ['error', {
