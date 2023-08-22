@@ -70,6 +70,7 @@ class ErrorCodes:
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
     # 数据源
     DATA_SOURCE_TYPE_NOT_SUPPORTED = ErrorCode(_("数据源类型不支持"))
+    DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     # 租户
     CREATE_TENANT_FAILED = ErrorCode(_("租户创建失败"))
     UPDATE_TENANT_FAILED = ErrorCode(_("租户更新失败"))
