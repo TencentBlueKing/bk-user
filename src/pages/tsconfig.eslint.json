@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    // 👇️ 在此处添加要 lint 的所有目录和文件
+    "src",
+
+    // 添加我们看到“parserOptions.project”错误的所有文件
+    ".eslintrc.js"
+  ],
+  "exclude": [
+    "static"
+  ]
+}
