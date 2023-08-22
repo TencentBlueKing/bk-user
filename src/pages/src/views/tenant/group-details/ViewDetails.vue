@@ -20,15 +20,19 @@
       <bk-table
         class="details-content-table"
         :data="managersList"
-        :columns="columns"
         show-overflow-tooltip
-      />
+      >
+        <bk-table-column prop="username" label="用户名" />
+        <bk-table-column prop="full_name" label="姓名" />
+        <bk-table-column prop="email" label="邮箱" />
+        <bk-table-column prop="phone" label="手机号" />
+      </bk-table>
     </li>
   </ul>
 </template>
 
-<script setup lang="tsx">
-import { reactive, computed } from "vue";
+<script setup lang="ts">
+import { computed, reactive } from 'vue';
 
 const props = defineProps({
   tenantsData: {
@@ -39,38 +43,18 @@ const props = defineProps({
 
 const managersList = computed(() => props.tenantsData.managers.filter(item => item.id));
 
-const columns = [
-  {
-    label: "用户名",
-    field: "username",
-  },
-  {
-    label: "姓名",
-    field: "full_name",
-    render: ({ cell }: { cell: string }) => <span>{cell || '--'}</span>,
-  },
-  {
-    label: "邮箱",
-    field: "email",
-  },
-  {
-    label: "手机号",
-    field: "phone",
-  },
-];
-
 const basicData = reactive([
   {
-    name: "公司名称",
+    name: '公司名称',
     value: props.tenantsData.name,
   },
   {
-    name: "公司ID",
+    name: '公司ID',
     value: props.tenantsData.id,
   },
   {
-    name: "人员数量",
-    value: props.tenantsData.feature_flags.user_number_visible ? "显示" : "隐藏",
+    name: '人员数量',
+    value: props.tenantsData.feature_flags.user_number_visible ? '显示' : '隐藏',
   },
 ]);
 </script>

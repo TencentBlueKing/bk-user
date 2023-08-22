@@ -149,7 +149,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 

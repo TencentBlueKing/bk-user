@@ -1,12 +1,11 @@
 <template>
   <div class="field-setting-content user-scroll-y">
     <bk-button class="add-field" theme="primary" @click="addField">
-      <Plus style="font-size: 18px;" />
+      <i class="user-icon icon-add-2 mr8" />
       添加字段
     </bk-button>
     <bk-table
       class="field-setting-table"
-      :columns="columns"
       :data="tableData"
       row-key="id"
       :border="['outer']"
@@ -22,11 +21,47 @@
           @handleUpdate="fetchFieldList"
         />
       </template>
+      <bk-table-column prop="name" label="字段名称">
+        <template #default="{ row }">
+          <div class="field-name">
+            <i class="user-icon icon-drag move" />
+            <span class="name">{{ row.name }}</span>
+            <bk-tag theme="info" v-if="row.builtin">内置</bk-tag>
+          </div>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="key" label="英文标识"></bk-table-column>
+      <bk-table-column prop="type" label="字段类型"></bk-table-column>
+      <bk-table-column prop="require" label="是否必填">
+        <template #default="{ row }">
+          <i :class="fieldStatus(row.require)"></i>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="unique" label="是否唯一">
+        <template #default="{ row }">
+          <i :class="fieldStatus(row.unique)"></i>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="editable" label="是否可编辑">
+        <template #default="{ row }">
+          <i :class="fieldStatus(row.editable)"></i>
+        </template>
+      </bk-table-column>
+      <bk-table-column label="操作">
+        <template #default="{ row }">
+          <bk-button text theme="primary" class="mr8" @click="editField(row)">
+            编辑
+          </bk-button>
+          <bk-button text theme="primary" @click="deleteField(row)">
+            删除
+          </bk-button>
+        </template>
+      </bk-table-column>
     </bk-table>
     <!-- 添加字段的侧边栏 -->
     <bk-sideslider
       :width="520"
-      :isShow="fieldData.isShow"
+      :is-show="fieldData.isShow"
       :title="fieldData.title"
       :before-close="handleBeforeClose"
       quick-close>
@@ -38,15 +73,16 @@
   </div>
 </template>
 
-<script setup lang="tsx">
-import { ref, reactive, nextTick, inject } from "vue";
-import { Plus } from "bkui-vue/lib/icon";
-import Sortable from "sortablejs";
-import { useMainViewStore } from "@/store/mainView";
-import Empty from "@/components/Empty.vue";
-import FieldsAdd from "./FieldsAdd.vue";
-import InfoBox from "bkui-vue/lib/info-box";
-import { Message } from "bkui-vue";
+<script setup lang="ts">
+import { Message } from 'bkui-vue';
+import InfoBox from 'bkui-vue/lib/info-box';
+import Sortable from 'sortablejs';
+import { inject, nextTick, reactive, ref } from 'vue';
+
+import FieldsAdd from './FieldsAdd.vue';
+
+import Empty from '@/components/Empty.vue';
+import { useMainViewStore } from '@/store/mainView';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
@@ -64,112 +100,54 @@ const fieldData = reactive({
   isTableDataError: false,
 });
 
-const state = reactive({
-  currentField: {},
-})
-
 const tableData: any = [
   {
     builtin: true,
     configurable: false,
-    default: "",
-    display_name: "用户名",
+    default: '',
+    display_name: '用户名',
     editable: false,
     enabled: true,
     id: 1,
-    key: "username",
-    name: "用户名",
+    key: 'username',
+    name: '用户名',
     order: 1,
     require: true,
-    type: "string",
+    type: 'string',
     unique: true,
     visible: true,
   },
   {
     builtin: true,
     configurable: true,
-    default: "",
-    display_name: "全名",
+    default: '',
+    display_name: '全名',
     editable: true,
     enabled: true,
     id: 2,
-    key: "display_name",
-    name: "全名",
+    key: 'display_name',
+    name: '全名',
     order: 2,
     require: true,
-    type: "string",
+    type: 'string',
     unique: false,
     visible: true,
   },
   {
     builtin: true,
     configurable: false,
-    default: "",
-    display_name: "邮箱",
+    default: '',
+    display_name: '邮箱',
     editable: true,
     enabled: true,
     id: 3,
-    key: "email",
-    name: "邮箱",
+    key: 'email',
+    name: '邮箱',
     order: 3,
     require: true,
-    type: "string",
+    type: 'string',
     unique: false,
     visible: true,
-  },
-];
-const columns = [
-  {
-    label: "字段名称",
-    field: "name",
-    render: ({ data }: { data: any }) => {
-      return (
-        <div class="field-name">
-          <i class="user-icon icon-drag move" />
-          <span class="name">{data.name}</span>
-          {data.builtin ? <bk-tag theme="info">内置</bk-tag> : ""}
-        </div>
-      );
-    },
-  },
-  {
-    label: "英文标识",
-    field: "key",
-  },
-  {
-    label: "字段类型",
-    field: "type",
-  },
-  {
-    label: "是否必填",
-    field: "require",
-    render: ({ data }: { data: any }) => fieldStatus(data.require),
-  },
-  {
-    label: "是否唯一",
-    field: "unique",
-    render: ({ data }: { data: any }) => fieldStatus(data.unique),
-  },
-  {
-    label: "是否可编辑",
-    field: "editable",
-    render: ({ data }: { data: any }) => fieldStatus(data.editable),
-  },
-  {
-    label: "操作",
-    field: "",
-    render: ({ data }: { data: any }) => {
-      return (
-        <div>
-          <bk-button text theme="primary" class="mr8" onClick={editField.bind(this, data)}>
-            编辑
-          </bk-button>
-          <bk-button text theme="primary" onClick={deleteField.bind(this, data)}>
-            删除
-          </bk-button>
-        </div>
-      );
-    },
   },
 ];
 
@@ -182,58 +160,56 @@ const pagination = reactive({
 // 展示字段状态
 const fieldStatus = (type: boolean) => {
   if (type) {
-    return <i class="user-icon icon-duihao-i" />;
+    return 'user-icon icon-duihao-i';
   }
 };
 
 const initSortable = (className: string) => {
   // 获取表格row的父节点
-  const table = document.querySelector(
-    "." + className + " .bk-table-body tbody"
-  );
+  const table = document.querySelector(`.${className} .bk-table-body tbody`);
   // 创建拖拽实例
   Sortable.create(table, {
-    handle: ".move",
+    handle: '.move',
     group: table,
-    ghostClass: "blue-background-class",
+    ghostClass: 'blue-background-class',
     animation: 150,
     onUpdate: (event: any) => {
-      console.log("event", event);
+      console.log('event', event);
     },
   });
 };
 
 nextTick(() => {
-  initSortable("field-setting-table");
+  initSortable('field-setting-table');
 });
 
 const addField = () => {
   fieldData.currentEditorData = {};
-  fieldData.title = "添加字段";
-  fieldData.setType = "add";
+  fieldData.title = '添加字段';
+  fieldData.setType = 'add';
   fieldData.isShow = true;
-}
+};
 
 const editField = (item) => {
   fieldData.currentEditorData = item;
-  fieldData.title = "编辑字段";
-  fieldData.setType = "edit";
+  fieldData.title = '编辑字段';
+  fieldData.setType = 'edit';
   fieldData.isShow = true;
-}
+};
 
 const deleteField = (item) => {
   InfoBox({
-    title: "确认要删除吗？",
-    confirmText: "确认删除",
+    title: '确认要删除吗？',
+    confirmText: '确认删除',
     onConfirm: () => {
       Message({
-        message: "删除成功",
+        message: '删除成功',
         theme: 'success',
         delay: 1500,
       });
-    }
-  })
-}
+    },
+  });
+};
 const handleBeforeClose = async () => {
   let enableLeave = true;
   if (window.changeInput) {
@@ -249,9 +225,9 @@ const handleBeforeClose = async () => {
 
 const handleCancel = () => {
   fieldData.isShow = false;
-}
+};
 
-const fetchFieldList = () => {}
+const fetchFieldList = () => {};
 </script>
 
 <style lang="less" scoped>

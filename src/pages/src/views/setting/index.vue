@@ -31,12 +31,11 @@
   </MainView>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { reactive } from 'vue';
 
-import { useMenuInfo } from '../../hooks/useMenuInfo';
-
 import MainView from '@/components/layouts/MainView.vue';
+import { useMenuInfo } from '@/hooks/useMenuInfo';
 import { useMenu } from '@/store/useMenu';
 
 const menuStore = useMenu();
@@ -51,10 +50,14 @@ const menuData = reactive([
     name: '登录设置',
     key: 'login',
   },
+  {
+    name: '账号设置',
+    key: 'account',
+  },
 ]);
 
 </script>
 
 <style lang="less" scoped>
-@import url("../../css/menuStyle.less");
+@import url("@/css/menuStyle.less");
 </style>

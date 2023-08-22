@@ -73,6 +73,7 @@
           <template #content>
             <bk-dropdown-menu>
               <bk-dropdown-item @click="logout">退出登录</bk-dropdown-item>
+              <bk-dropdown-item @click="toIndividualCenter">个人中心</bk-dropdown-item>
             </bk-dropdown-menu>
           </template>
         </bk-dropdown>
@@ -89,6 +90,7 @@ import { computed, reactive, ref } from 'vue';
 
 import { logout } from '@/common/auth';
 import Login from '@/components/layouts/Login.vue';
+import router from '@/router';
 import { useUser } from '@/store/user';
 
 const state = reactive({
@@ -148,6 +150,11 @@ const helpNav = reactive([
 ]);
 const toLink = (item: any) => {
   window.open(item.url, '_blank');
+};
+const toIndividualCenter = () => {
+  router.push({
+    name: 'personalCenter',
+  });
 };
 </script>
 
