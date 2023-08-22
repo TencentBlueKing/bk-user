@@ -14,6 +14,6 @@ from . import views
 
 urlpatterns = [
     # 租户
-    path("tenants/", views.TenantsListApi.as_view(), name="tenant_departments.retrieve_tenant"),
-    path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="tenant_departments.retrieve_tenant"),
+    path("tenants/", views.TenantListApi.as_view(), name="organization.tenant.list"),
+    path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="organization.tenant.retrieve_update"),
 ]

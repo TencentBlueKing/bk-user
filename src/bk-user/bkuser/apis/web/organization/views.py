@@ -14,42 +14,39 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.web.tenant_organization.serializers import (
-    TenantsListOutputSLZ,
-    TenantsRetrieveOutputSLZ,
-    TenantUpdateInputSLZ,
-)
+from bkuser.apis.web.organization.serializers import TenantListOutputSLZ
+from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
 from bkuser.apps.tenant.models import Tenant
 from bkuser.biz.tenant import (
+    TenantDepartmentHandler,
     TenantEditableBaseInfo,
     TenantFeatureFlag,
     TenantHandler,
 )
+from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
 
 
-class TenantsListApi(generics.ListAPIView):
+class TenantListApi(generics.ListAPIView):
     pagination_class = None
     queryset = Tenant.objects.all()
-    serializer_class = TenantsListOutputSLZ
+    serializer_class = TenantListOutputSLZ
 
     def _get_tenant_id(self) -> str:
-        # TODO 根据登录用户获取租户
-        return self.queryset.first().id
+        return self.request.user.get_property("tenant_id")
 
     def get_serializer_context(self):
-        return {"current_tenant_id": self._get_tenant_id()}
-
-    def get_queryset(self):
-        tenant_id = self._get_tenant_id()
-        # TODO 协同数据源, 以租户的形式展示, 如何获取？
-        return Tenant.objects.filter(id__in=[tenant_id])
+        tenant_ids = list(self.queryset.values_list("id", flat=True))
+        tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_departments_by_id(
+            tenant_ids, self._get_tenant_id()
+        )
+        return {"tenant_root_departments_map": tenant_root_departments_map}
 
     @swagger_auto_schema(
         operation_description="租户列表",
-        responses={status.HTTP_200_OK: TenantsListOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -58,24 +55,18 @@ class TenantsListApi(generics.ListAPIView):
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = Tenant.objects.all()
     pagination_class = None
-    serializer_class = TenantsRetrieveOutputSLZ
+    serializer_class = TenantRetrieveOutputSLZ
     lookup_url_kwarg = "id"
 
     def _get_tenant_id(self) -> str:
-        # TODO 根据当前租户获取租户ID
-        return self.queryset.first().id
+        return self.request.user.get_property("tenant_id")
 
     def get_serializer_context(self):
-        # 根据当前登录的租户用户，获取租户ID
-        tenant_id = self._get_tenant_id()
-        # NOTE 因协同数据源，而展示的租户，不返回管理员
-        return {
-            "tenant_manager_map": TenantHandler.get_tenant_manager_map(tenant_ids=[tenant_id]),
-        }
+        return {"current_tenant_id": self._get_tenant_id()}
 
     @swagger_auto_schema(
         operation_description="单个租户详情",
-        responses={status.HTTP_200_OK: TenantsRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
@@ -91,14 +82,13 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         data = slz.validated_data
 
         instance = self.get_object()
-        # NOTE 因协同数据源，而展示的租户，不返回管理员
+        # NOTE 因协同数据源而展示的租户，非当前租户, 无权限做更新操作
         if self._get_tenant_id() != instance.id:
-            return Response
+            raise error_codes.NO_PERMISSION
 
         should_updated_info = TenantEditableBaseInfo(
-            name=data["name"], logo=data.get("logo") or "", feature_flags=TenantFeatureFlag(**data["feature_flags"])
+            name=data["name"], logo=data["logo"] or "", feature_flags=TenantFeatureFlag(**data["feature_flags"])
         )
 
         TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
-
         return Response()

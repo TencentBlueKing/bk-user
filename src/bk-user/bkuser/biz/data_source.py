@@ -14,15 +14,12 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
-from bkuser.common.error_codes import error_codes
 
 
-class DataSourceDepartmentInfo(BaseModel):
+class DataSourceDepartmentInfoWithChildren(BaseModel):
     id: int
     name: str
-    data_source_id: int
-    children: list
-    full_name: str
+    children: List[int]
 
 
 class DataSourceSimpleInfo(BaseModel):
@@ -48,33 +45,34 @@ class DataSourceHandler:
 
         return data
 
+    @staticmethod
+    def get_data_sources_by_tenant(tenant_ids: List[str]) -> Dict[str, List[int]]:
+        # 当前属于租户的数据源
+        tenant_data_source_map: Dict = {}
+        data_sources = DataSource.objects.filter(owner_tenant_id__in=tenant_ids).values("id", "owner_tenant_id")
+        for item in data_sources:
+            tenant_id = item["owner_tenant_id"]
+            if tenant_id in tenant_data_source_map:
+                tenant_data_source_map[tenant_id].append(item["id"])
+            else:
+                tenant_data_source_map[tenant_id] = [item["id"]]
+        # TODO 协同数据源获取
+        return tenant_data_source_map
+
 
 class DataSourceDepartmentHandler:
     @staticmethod
-    def retrieve_department(department_id: int) -> DataSourceDepartmentInfo:
+    def get_department_info_by_id(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
         """
-        获取单个部门信息
+        获取部门基础信息
         """
-        try:
-            # 生成组织架构路径
-            parent_ids = (
-                DataSourceDepartmentRelation.objects.get(id=department_id)
-                .get_ancestors(include_self=True)
-                .values_list("id", flat=True)
+        departments = DataSourceDepartment.objects.filter(id__in=department_ids)
+        departments_map: Dict = {}
+        for item in departments:
+            children = DataSourceDepartmentRelation.objects.get(department=item).get_children()
+            departments_map[item.id] = DataSourceDepartmentInfoWithChildren(
+                id=item.id,
+                name=item.name,
+                children=list(children.values_list("department_id", flat=True)),
             )
-            parents = DataSourceDepartment.objects.filter(id__in=parent_ids).values_list("name", flat=True)
-            full_name = "/".join(list(parents))
-            # 构建基础信息
-            department = DataSourceDepartment.objects.get(id=department_id)
-            base_info = {
-                "id": department.id,
-                "name": department.name,
-                "full_name": full_name,
-                "data_source_id": department.data_source_id,
-                "children": DataSourceDepartmentRelation.objects.filter(parent_id=department.id).values(
-                    "id", flat=True
-                ),
-            }
-            return DataSourceDepartmentInfo(**base_info)
-        except DataSourceDepartment.DoesNotExist:
-            raise error_codes.OBJECT_NOT_FOUND
+        return departments_map
