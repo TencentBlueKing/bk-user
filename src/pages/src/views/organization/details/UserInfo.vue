@@ -23,32 +23,40 @@
     <bk-sideslider
       ext-cls="details-edit-wrapper"
       :width="640"
-      v-model:isShow="detailsConfig.isShow"
+      :isShow="detailsConfig.isShow"
       :title="detailsConfig.title"
+      :before-close="handleBeforeClose"
       quick-close
     >
       <template #header>
         <span>{{ detailsConfig.title }}</span>
+        <div v-if="isView">
+          <bk-button
+            outline
+            theme="primary"
+            @click="handleClick('edit')">
+            编辑
+          </bk-button>
+          <bk-button>重置</bk-button>
+          <bk-button>删除</bk-button>
+        </div>
       </template>
-      <EditUser v-if="!isView" />
-      <template #footer v-if="!isView">
-        <bk-button theme="primary">
-          保存
-        </bk-button>
-        <bk-button>
-          取消
-        </bk-button>
-      </template>
+      <ViewUser v-if="isView" />
+      <EditUser
+        v-else
+        @handleCancelEdit="handleCancelEdit"  />
     </bk-sideslider>
   </div>
 </template>
 
 <script setup lang="tsx">
 import { Plus, AngleDown, AngleUp } from "bkui-vue/lib/icon";
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, inject } from "vue";
 import EditUser from "./EditUser.vue";
+import ViewUser from "./ViewUser.vue";
 import { statusIcon } from "@/utils";
 
+const editLeaveBefore = inject("editLeaveBefore");
 const isSearchCurrentDepartment = ref(false);
 const searchVal = ref("");
 
@@ -153,47 +161,81 @@ const handleClick = (type: string, item: any) => {
   detailsConfig.type = enumData[type].type;
   detailsConfig.isShow = true;
 };
+
+const handleCancelEdit = () => {
+  detailsConfig.type = "view";
+  detailsConfig.title = "公司详情";
+}
+
+const handleBeforeClose = async () => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+    detailsConfig.isShow = false;
+  } else {
+    detailsConfig.isShow = false;
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
+};
 </script>
 
 <style lang="less" scoped>
 .user-info-wrapper {
   width: 100%;
-  padding: 24px;
   height: calc(100vh - 140px);
+  padding: 24px;
+
   header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+
     .header-right {
       width: 400px;
     }
   }
+
   :deep(.user-info-table) {
     .bk-table-head {
       table thead th {
         text-align: center;
       }
+
       .table-head-settings {
         border-right: none;
       }
     }
+
     .bk-table-footer {
       padding: 0 15px;
       background: #fff;
     }
+
     .account-status-icon {
       width: 16px;
       height: 16px;
-      vertical-align: middle;
       margin-right: 5px;
+      vertical-align: middle;
     }
   }
 }
+
 .details-edit-wrapper {
+  :deep(.bk-sideslider-title) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px 0 50px !important;
+
+    .bk-button {
+      padding: 5px 17px !important;
+    }
+  }
+
   :deep(.bk-modal-content) {
-    height: calc(100vh - 106px);
-    padding: 28px 40px 40px;
     overflow-y: auto;
 
     &::-webkit-scrollbar {
@@ -211,14 +253,6 @@ const handleClick = (type: string, item: any) => {
         background-color: #979ba5;
       }
     }
-  }
-  :deep(.bk-sideslider-footer) {
-    padding: 0 24px;
-    background: #fafbfd;
-    .bk-button {
-      width: 88px;
-      margin-right: 8px;
-    }
-  }
+  } 
 }
 </style>

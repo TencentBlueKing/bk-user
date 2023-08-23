@@ -8,13 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
+from django.urls import path
+
+from . import views
 
 urlpatterns = [
-    # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
-    path("basic/", include("bkuser.apis.web.basic.urls")),
     # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
+    path("tenants/", views.TenantListApi.as_view(), name="organization.tenant.list"),
+    path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="organization.tenant.retrieve_update"),
+    path(
+        "departments/<int:id>/children/",
+        views.TenantDepartmentChildrenListApi.as_view(),
+        name="organization.children.list",
+    ),
 ]

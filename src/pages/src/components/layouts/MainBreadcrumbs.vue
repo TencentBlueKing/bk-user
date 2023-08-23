@@ -14,12 +14,13 @@
 </template>
 
 <script setup lang="ts">
-import { useMainViewStore } from '@/store/mainView';
-import { useRoute, useRouter } from 'vue-router';
 import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+import { useMainViewStore } from '@/store/mainView';
 
 const store = useMainViewStore();
-const route = useRoute()
+const route = useRoute();
 const router = useRouter();
 
 /**
@@ -47,15 +48,15 @@ const handleBack = () => {
 
 <style lang="less">
   .main-breadcrumbs {
-    display: flex;
-    align-items: center;
     position: relative;
     z-index: 11;
+    display: flex;
     width: 100%;
     height: 52px;
     padding: 0 24px;
     background-color: #fff;
-    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.04);
+    box-shadow: 0 3px 4px 0 rgb(0 0 0 / 4%);
+    align-items: center;
 
     &__back {
       margin-right: 10px;

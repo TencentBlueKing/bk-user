@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="tsx">
-import { reactive, ref } from "vue";
+import { reactive, ref } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -50,16 +50,16 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue", "selcetList", "scrollChange", "searchUserList"]);
+const emit = defineEmits(['update:modelValue', 'selectList', 'scrollChange', 'searchUserList']);
 const isFocous = ref(false);
 const scrollLoading = ref(false);
 
 // 远程搜索人员
 const remoteFilter = async (value: string) => {
-  await emit("searchUserList", value);
+  await emit('searchUserList', value);
 };
 const handleChange = (values: string[]) => {
-  emit("update:modelValue", values);
+  emit('update:modelValue', values);
 };
 const handleFocus = () => {
   isFocous.value = true;
@@ -71,20 +71,20 @@ const handleClick = () => {
       list.push(item);
     }
   });
-  emit("selcetList", list);
-}
+  emit('selectList', list);
+};
 const handleCancel = () => {
-  emit("selcetList");
-  emit("searchUserList", "");
-}
+  emit('selectList', []);
+  emit('searchUserList', '');
+};
 const handleScrollEnd = () => {
-  if (props.params.page_size > props.state.count) return;
+  if (props.params.page_size >= props.state.count) return;
   scrollLoading.value = true;
   setTimeout(() => {
-    emit("scrollChange");
+    emit('scrollChange');
     scrollLoading.value = false;
   }, 1000);
-}
+};
 </script>
 
 <style lang="less">
@@ -94,18 +94,22 @@ const handleScrollEnd = () => {
       min-height: 42px;
       padding: 0 10px;
       border: 1px solid transparent;
+
       &:hover {
-          border-color: #3a84ff;
+        border-color: #3a84ff;
       }
     }
+
     .angle-up {
       display: none !important;
     }
   }
 }
+
 .is-selected {
-  background-color: #e1ecff !important; 
+  background-color: #e1ecff !important;
 }
+
 .bk-select-dropdown {
   overflow-y: auto;
 
@@ -118,20 +122,24 @@ const handleScrollEnd = () => {
     background-color: #dcdee5;
     border-radius: 4px;
   }
+
   .logo-style {
     width: 22px;
     height: 22px;
+    margin-right: 5px;
     border: 1px solid #C4C6CC;
     border-radius: 50%;
-    margin-right: 5px;
   }
 }
+
 .bk-select-extension {
   justify-content: space-around;
+
   .bk-button {
     width: 50%;
     height: 100%;
     border-radius: 0;
+
     &:first-child {
       border-right: 1px solid #dcdee5;
     }

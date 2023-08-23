@@ -1,6 +1,6 @@
-import Cookies from 'js-cookie';
 import axios, { AxiosError, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { Message } from 'bkui-vue';
+import Cookies from 'js-cookie';
 import qs from 'query-string';
 
 interface LoginData {
@@ -87,9 +87,26 @@ const handleResponse = <T>({
 };
 
 const handleReject = (error: AxiosError, config: Record<string, any>) => {
-  const {
-    message,
-  } = error;
+  const { status } = error.response;
+  const { message, data } = error.response.data.error;
+
+  if (status === 401) {
+    const loginData = data;
+    const src = loginData?.login_url
+      ? `${loginData.login_plain_url}?size=small&${loginData.callback_url_param_key}=${encodeURIComponent(window.location.href)}`
+      : '';
+
+    if (error.config.url === '/api/v1/web/basic/current-user/') {
+      return window.location.href = src;
+    }
+    window.login.showLogin({
+      src,
+      width: loginData.width,
+      height: loginData.height,
+    });
+
+    return;
+  }
 
   // 全局捕获错误给出提示
   if (config.globalError) {

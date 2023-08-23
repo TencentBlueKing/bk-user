@@ -100,7 +100,7 @@
 
 <script setup lang="tsx">
 import { ref, reactive, computed, nextTick } from "vue";
-import { emailRegx, telRegx } from "@/common/regex";
+import { emailRegx, telRegx, usernameRegx, tenantIdRegx } from "@/common/regex";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
 import { getBase64 } from "@/utils";
 import Empty from "@/components/Empty.vue";
@@ -171,6 +171,11 @@ const rulesBasicInfo = {
       message: "必填项",
       trigger: "blur",
     },
+    {
+      validator: (value: string) => tenantIdRegx.rule.test(value),
+      message: tenantIdRegx.message,
+      trigger: "blur",
+    },
   ],
 };
 
@@ -182,10 +187,8 @@ const rulesUserInfo = {
       trigger: "blur",
     },
     {
-      validator: (value: string) => {
-        return value.length <= 32;
-      },
-      message: "不能多于32个字符",
+      validator: (value: string) => usernameRegx.rule.test(value),
+      message: usernameRegx.message,
       trigger: "blur",
     },
   ],
@@ -284,7 +287,7 @@ const fieldItemFn = (row: any) => {
                 v-model={formData.managers[index][column.field]}
                 state={state}
                 params={params}
-                onSelcetList={selcetList}
+                onselectList={selectList}
                 onScrollChange={scrollChange}
                 onSearchUserList={fetchUserList} />
             : <bk-input v-model={formData.managers[index][column.field]} disabled={column.field !== 'username'} />
@@ -325,14 +328,14 @@ const columns = [
           <bk-button
             style="margin: 0 15px;"
             text
-            onClick={handleAddItem.bind(this, index)}
+            onClick={handleItemChange.bind(this, index, 'add')}
           >
             <i class="user-icon icon-plus-fill" />
           </bk-button>
           <bk-button
             text
             disabled={formData.managers.length === 1}
-            onClick={handleRemoveItem.bind(this, index)}
+            onClick={handleItemChange.bind(this, index, 'remove')}
           >
             <i class="user-icon icon-minus-fill" />
           </bk-button>
@@ -345,7 +348,7 @@ const columns = [
 /**
  * 获取表格数据
  */
-function getTableItem(): TableItem {
+ function getTableItem(): TableItem {
   return {
     username: "",
     full_name: "",
@@ -355,41 +358,34 @@ function getTableItem(): TableItem {
   };
 }
 
-function handleAddItem(index: number) {
-  formData.managers.splice(index + 1, 0, getTableItem());
-  window.changeInput = true;
-  fetchUserList("");
-}
+function handleItemChange(index: number, action: 'add' | 'remove') {
+  if(action === 'add') {
+    formData.managers.splice(index + 1, 0, getTableItem());
+  } else if (action === 'remove') {
+    formData.managers.splice(index, 1);
+  }
 
-function handleRemoveItem(index: number) {
-  formData.managers.splice(index, 1);
   window.changeInput = true;
   fetchUserList("");
 }
 // 校验表单
 async function handleSubmit() {
-  if (props.type === "add") {
-    await Promise.all([
-      basicRef.value.validate(),
-      userRef.value.validate(),
-      // passwordRef.value.validate(),
-    ]);
-    createTenantsFn();
-  } else {
-    await Promise.all([
-      basicRef.value.validate(),
-      userRef.value.validate(),
-    ]);
-    putTenantsFn();
-  }
+  const validationPromises = [
+    basicRef.value.validate(),
+    userRef.value.validate(),
+  ];
+
+  await Promise.all(validationPromises);
+
+  props.type === "add" ? createTenantsFn() : putTenantsFn();
 }
+
 // 新建租户
 function createTenantsFn() {
-  if (!formData.logo) delete formData.logo;
-  createTenants(formData)
-    .then(() => {
-      emit('updateTenantsList');
-    });
+  const data = { ...formData };
+  if (!data.logo) delete data.logo;
+
+  createTenants(data).then(() => emit('updateTenantsList'));
 }
 // 更新租户
 function putTenantsFn() {
@@ -401,24 +397,22 @@ function putTenantsFn() {
       user_number_visible: formData.feature_flags.user_number_visible,
     },
     manager_ids,
-  }
+  };
+
   if (!params.logo) delete params.logo;
-  // delete formData.password_settings;
-  putTenants(formData.id, params)
-    .then(() => {
-      emit('updateTenantsList');
-    });
+
+  putTenants(formData.id, params).then(() => emit('updateTenantsList'));
 }
 
 // 搜索管理员
 const handleEnter = (value: string) => {
-  formData.managers = props.tenantsData.managers.filter(item => item.username.indexOf(value) !== -1);
+  formData.managers = props.tenantsData.managers.filter(item => item.username.includes(value));
   state.isEmptySearch = !formData.managers.length;
 }
 // 清除搜索管理员
 const handleClear = () => {
   state.username = "";
-  formData.managers = props.tenantsData.managers;
+  formData.managers = [...props.tenantsData.managers];
 }
 // 获取管理员列表
 const fetchUserList = (value: string) => {
@@ -434,18 +428,18 @@ const fetchUserList = (value: string) => {
   }
 }
 
-const selcetList = (list) => {
+const selectList = (list) => {
   formData.managers = formData.managers.filter(item => item.id);
   nextTick(() => {
-    list && list.length
-      ? formData.managers.push(...list)
-      : formData.managers.push({
-          username: "",
-          full_name: "",
-          email: "",
-          phone: "",
-          phone_country_code: "86",
-        });
+    const managers = list && list.length ? list : [{
+      username: "",
+      full_name: "",
+      email: "",
+      phone: "",
+      phone_country_code: "86",
+    }];
+
+    formData.managers.push(...managers);
   });
 }
 
@@ -466,95 +460,5 @@ const handleChange = () => {
 </script>
 
 <style lang="less" scoped>
-.operation-wrapper {
-  position: relative;
-  background: #f5f7fa;
-  .operation-content {
-    padding: 0 24px;
-    .operation-card {
-      list-style: none;
-      margin: 16px 0;
-      padding: 16px 20px 24px;
-      background: #fff;
-      box-shadow: 0 2px 4px 0 #1919290d;
-      border-radius: 2px;
-      .operation-content-title {
-        font-size: 14px;
-        color: #63656e;
-        font-weight: 700;
-        line-height: 40px;
-      }
-      .operation-content-info {
-        display: flex;
-        justify-content: space-between;
-        padding-right: 60px;
-        .operation-content-form {
-          .bk-input {
-            width: 420px;
-          }
-          :deep(.bk-form-error) {
-            width: 420px;
-            position: initial !important;
-          }
-        }
-      }
-      :deep(.bk-form-item) {
-        &:last-child {
-          margin-bottom: 0;
-        }
-      }
-      .item-style {
-        :deep(.bk-form-label) {
-          float: unset;
-          width: 100%;
-          text-align: left;
-        }
-        :deep(.bk-form-content) {
-          margin-left: 0 !important;
-          .bk-form-error {
-            left: 145px;
-          }
-        }
-      }
-      .operation-content-table {
-        margin-top: 16px;
-        :deep(.bk-table-body) {
-          .cell {
-            padding: 0 !important;
-            .bk-form-item {
-              margin-bottom: 0;
-              .bk-form-content {
-                margin-left: 0 !important;
-                .bk-input {
-                  height: 42px;
-                  border-color: transparent;
-                }
-                .bk-input:hover:not(.is-disabled) {
-                  border-color: #3a84ff;
-                }
-              }
-            }
-            .user-icon {
-              color: #dcdee5;
-              &:hover {
-                color: #c4c6cc;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  .footer {
-    position: fixed;
-    bottom: 0;
-    height: 48px;
-    line-height: 48px;
-    padding: 0 24px;
-    .bk-button {
-      width: 88px;
-      margin-right: 8px;
-    }
-  }
-}
+@import url("@/css/tenantEditStyle.less");
 </style>

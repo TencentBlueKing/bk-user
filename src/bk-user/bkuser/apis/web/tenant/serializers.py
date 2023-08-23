@@ -17,7 +17,7 @@ from rest_framework import serializers
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceSimpleInfo
-from bkuser.biz.tenant import TenantUserWithInheritedInfo
+from bkuser.biz.tenant import TenantHandler, TenantUserWithInheritedInfo
 from bkuser.biz.validators import validate_tenant_id
 
 
@@ -54,13 +54,13 @@ class TenantSearchInputSLZ(serializers.Serializer):
     name = serializers.CharField(required=False, help_text="租户名", allow_blank=True)
 
 
-class TenantSearchManagerOutputSchema(serializers.Serializer):
+class TenantSearchManagerOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
 
 
-class TenantSearchDataSourceOutputSchema(serializers.Serializer):
+class TenantSearchDataSourceOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="数据源 ID")
     name = serializers.CharField(help_text="数据源名称")
 
@@ -79,7 +79,7 @@ class TenantSearchOutputSLZ(serializers.Serializer):
     def get_created_at(self, obj: Tenant) -> str:
         return obj.created_at_display
 
-    @swagger_serializer_method(serializer_or_field=TenantSearchManagerOutputSchema(many=True))
+    @swagger_serializer_method(serializer_or_field=TenantSearchManagerOutputSLZ(many=True))
     def get_managers(self, obj: Tenant) -> List[Dict]:
         tenant_manager_map: Dict[str, List[TenantUserWithInheritedInfo]] = self.context["tenant_manager_map"]
         managers = tenant_manager_map.get(obj.id) or []
@@ -91,7 +91,7 @@ class TenantSearchOutputSLZ(serializers.Serializer):
             for i in managers
         ]
 
-    @swagger_serializer_method(serializer_or_field=TenantSearchDataSourceOutputSchema(many=True))
+    @swagger_serializer_method(serializer_or_field=TenantSearchDataSourceOutputSLZ(many=True))
     def get_data_sources(self, obj: Tenant) -> List[Dict]:
         data_source_map: Dict[str, List[DataSourceSimpleInfo]] = self.context["data_source_map"]
         data_sources = data_source_map.get(obj.id) or []
@@ -100,12 +100,12 @@ class TenantSearchOutputSLZ(serializers.Serializer):
 
 class TenantUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="租户名称")
-    logo = serializers.CharField(help_text="租户 Logo", required=False)
+    logo = serializers.CharField(help_text="租户 Logo", required=False, default=settings.DEFAULT_TENANT_LOGO)
     manager_ids = serializers.ListField(child=serializers.CharField(), help_text="租户用户 ID 列表", allow_empty=False)
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
 
 
-class TenantRetrieveManagerOutputSchema(serializers.Serializer):
+class TenantRetrieveManagerOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="租户用户名")
     full_name = serializers.CharField(help_text="用户姓名")
@@ -123,18 +123,16 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
     managers = serializers.SerializerMethodField()
 
-    @swagger_serializer_method(serializer_or_field=TenantRetrieveManagerOutputSchema(many=True))
+    @swagger_serializer_method(serializer_or_field=TenantRetrieveManagerOutputSLZ(many=True))
     def get_managers(self, obj: Tenant) -> List[Dict]:
-        tenant_manager_map: Dict[str, List[TenantUserWithInheritedInfo]] = self.context["tenant_manager_map"]
-        managers = tenant_manager_map.get(obj.id) or []
+        # 根据当前登录的租户用户，获取租户ID
+        # NOTE 因协同数据源而展示的租户，不返回管理员
+        if obj.id != self.context["current_tenant_id"]:
+            return []
+        managers = TenantHandler.retrieve_tenant_managers(obj.id)
         return [
-            {
-                "id": i.id,
-                **i.data_source_user.model_dump(
-                    include={"username", "full_name", "email", "phone", "phone_country_code"}
-                ),
-            }
-            for i in managers
+            {"id": manager.id, **manager.data_source_user.model_dump(include={"username", "full_name"})}
+            for manager in managers
         ]
 
     def get_logo(self, obj: Tenant) -> str:

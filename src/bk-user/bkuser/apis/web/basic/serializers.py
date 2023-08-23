@@ -13,3 +13,4 @@ from rest_framework import serializers
 
 class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")
+    tenant_id = serializers.CharField(help_text="租户 ID")

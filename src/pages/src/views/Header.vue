@@ -66,7 +66,7 @@
           @hide="() => (state.logoutDropdown = false)"
           @show="() => (state.logoutDropdown = true)"
         >
-          <div class="help-info">
+          <div class="help-info" :class="state.logoutDropdown && 'active-username'">
             <span class="help-info-name">{{ userInfo.username }}</span>
             <DownShape class="help-info-icon" />
           </div>
@@ -84,67 +84,70 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
-import { useUser } from "@/store/user";
-import { logout } from "@/common/auth";
-import { DownShape, HelpDocumentFill } from "bkui-vue/lib/icon";
-import Login from "@/components/layouts/Login.vue";
+import { DownShape, HelpDocumentFill } from 'bkui-vue/lib/icon';
+import { computed, reactive, ref } from 'vue';
+
+import { logout } from '@/common/auth';
+import Login from '@/components/layouts/Login.vue';
+import { useUser } from '@/store/user';
 
 const state = reactive({
   logoutDropdown: false,
   helpDropdown: false,
   languageDrodown: false,
 });
-const user = useUser();
-const userInfo = ref(user.user);
+
+const userStore = useUser();
+const userInfo = computed(() => userStore.user);
+
 const headerNav = reactive([
   {
-    name: "组织架构",
-    path: "organization",
+    name: '组织架构',
+    path: 'organization',
   },
   {
-    name: "数据源管理",
-    path: "datasource",
+    name: '数据源管理',
+    path: 'datasource',
   },
   {
-    name: "租户管理",
-    path: "tenantry",
+    name: '租户管理',
+    path: 'tenant',
   },
+  // {
+  //   name: "审计",
+  //   path: "audit",
+  // },
   {
-    name: "审计",
-    path: "audit",
-  },
-  {
-    name: "设置",
-    path: "setting",
+    name: '设置',
+    path: 'setting',
   },
 ]);
 const languageNav = reactive([
   {
-    name: "中文",
-    icon: "bk-sq-icon icon-yuyanqiehuanzhongwen",
+    name: '中文',
+    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
   },
   {
-    name: "English",
-    icon: "bk-sq-icon icon-yuyanqiehuanyingwen",
+    name: 'English',
+    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
   },
 ]);
 const helpNav = reactive([
   {
-    name: "产品文档",
-    url: "",
+    name: '产品文档',
+    url: '',
   },
   {
-    name: "版本日志",
-    url: "",
+    name: '版本日志',
+    url: '',
   },
   {
-    name: "问题反馈",
-    url: "",
+    name: '问题反馈',
+    url: '',
   },
 ]);
 const toLink = (item: any) => {
-  window.open(item.url, "_blank");
+  window.open(item.url, '_blank');
 };
 </script>
 
@@ -152,14 +155,17 @@ const toLink = (item: any) => {
 .main-navigation {
   :deep(.bk-navigation-header) {
     background-color: #0e1525;
+
     .icon-user-logo-i {
-      color: #458df4;
       font-size: 28px;
+      color: #458df4;
     }
+
     .title-desc {
       color: #eaebf0;
     }
   }
+
   :deep(.container-content) {
     padding: 0 !important;
   }
@@ -170,8 +176,8 @@ const toLink = (item: any) => {
 }
 
 .main-navigation-left {
-  font-size: 14px;
   margin-left: 20px;
+  font-size: 14px;
   line-height: 52px;
 }
 
@@ -191,40 +197,50 @@ const toLink = (item: any) => {
 }
 
 .main-navigation-right {
+  margin: 0 10px;
   color: #96a2b9;
-  margin: 0px 10px;
+
   .bk-dropdown {
     padding: 0 10px;
+
     .help-info {
       padding: 5px;
       border-radius: 50%;
     }
+
     .active {
       background: #252f43;
+
       .bk-sq-icon, .help-info-name {
         color: #3a84ff;
       }
     }
+
+    .active-username {
+      color: #3a84ff;
+      cursor: pointer;
+
+      .help-info-icon {
+        display: inline-block;
+        transform: rotate(180deg);
+        transition: all 0.2s;
+      }
+    }
+
     .help-info-icon {
       vertical-align: middle;
     }
-    &:hover {
-      color: #3a84ff;
-      cursor: pointer;
-      .help-info-icon {
-        display: inline-block;
-        transition: all 0.2s;
-        transform: rotate(180deg);
-      }
-    }
+
     .help-info-name {
       padding-right: 4px;
       font-size: 14px;
+
       span {
         font-size: 16px;
         vertical-align: middle;
       }
     }
+
     .bk-sq-icon {
       font-size: 16px;
     }

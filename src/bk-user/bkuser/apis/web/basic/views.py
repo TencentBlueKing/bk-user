@@ -26,6 +26,7 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
         current_user = request.user
         info = {
             "username": current_user.username,
+            "tenant_id": current_user.get_property("tenant_id"),
         }
 
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)

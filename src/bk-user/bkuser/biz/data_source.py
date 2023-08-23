@@ -13,7 +13,13 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
+
+
+class DataSourceDepartmentInfoWithChildren(BaseModel):
+    id: int
+    name: str
+    children_ids: List[int]
 
 
 class DataSourceSimpleInfo(BaseModel):
@@ -38,3 +44,24 @@ class DataSourceHandler:
             data[i.owner_tenant_id].append(DataSourceSimpleInfo(id=i.id, name=i.name))
 
         return data
+
+
+class DataSourceDepartmentHandler:
+    @staticmethod
+    def get_department_info_map_by_id(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
+        """
+        获取部门基础信息
+        """
+        departments = DataSourceDepartment.objects.filter(id__in=department_ids)
+        departments_map: Dict = {}
+        for item in departments:
+            departments_map[item.id] = DataSourceDepartmentInfoWithChildren(
+                id=item.id,
+                name=item.name,
+                children_ids=list(
+                    DataSourceDepartmentRelation.objects.get(department=item)
+                    .get_children()
+                    .values_list("department_id", flat=True)
+                ),
+            )
+        return departments_map
