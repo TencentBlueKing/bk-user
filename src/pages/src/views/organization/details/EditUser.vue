@@ -125,31 +125,31 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, toRefs } from "vue";
+import { ref, toRefs } from 'vue';
 
-const formRef = ref("");
-const inputRef = ref("");
+const formRef = ref('');
+const inputRef = ref('');
 const formData = ref({
-  username: "",
-  display_name: "",
-  data_source: "",
-  department_name: "",
-  leader: "",
-  email: "",
-  telphone: "",
-  weixi: "",
-  qq: "",
-  account_expiration_time: "",
-  password_expiration_time: "",
+  username: '',
+  display_name: '',
+  data_source: '',
+  department_name: '',
+  leader: '',
+  email: '',
+  telphone: '',
+  weixi: '',
+  qq: '',
+  account_expiration_time: '',
+  password_expiration_time: '',
 });
-let iti = null;
+const iti = null;
 const files: any = [];
 const rules = {
   name: [
     {
       validator: (value: string) => value.length > 2,
-      message: "姓名长度不能小于2",
-      trigger: "change",
+      message: '姓名长度不能小于2',
+      trigger: 'change',
     },
   ],
 };
@@ -164,34 +164,41 @@ const handleRes = (response: any) => {
 <style lang="less" scoped>
 .edit-user-wrapper {
   position: relative;
+
   .add-user-form {
     position: relative;
     padding: 20px 40px 60px;
+
     .bk-upload {
       position: absolute;
       top: 28px;
       right: 32px;
     }
+
     .form-item-flex {
       display: flex;
       justify-content: space-between;
+
       .bk-form-item {
         width: 268px;
+
         .input-text {
           position: relative;
         }
       }
     }
   }
+
   .footer {
     position: fixed;
     bottom: 0;
     width: 100%;
     height: 48px;
-    line-height: 48px;
     padding: 0 24px;
+    line-height: 48px;
     background: #FAFBFD;
     box-shadow: 0 -1px 0 0 #DCDEE5;
+
     .bk-button {
       width: 88px;
       margin-right: 8px;

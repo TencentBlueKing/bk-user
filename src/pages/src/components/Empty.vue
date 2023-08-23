@@ -42,25 +42,27 @@ const props = defineProps({
 
 <style lang="less" scoped>
 .no-data-wrapper {
-  height: 100%;
   width: 100%;
+  height: 100%;
 
   .empty-search-text {
     display: block;
+    width: 100%;
     font-size: 12px;
     line-height: 20px;
     text-align: center;
-    width: 100%;
   }
 
   :deep(.bk-exception-text.part-text) {
     line-height: 25px;
+
     p {
       display: flex;
       font-size: 12px;
       color: #979BA5;
     }
   }
+
   :deep(.bk-link-text) {
     font-size: 12px;
   }

@@ -1,4 +1,4 @@
-import { acceptHMRUpdate, defineStore } from "pinia";
+import { acceptHMRUpdate, defineStore } from 'pinia';
 
 export const useMainViewStore = defineStore('mainView', {
   state: () => ({

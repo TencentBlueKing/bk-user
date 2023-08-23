@@ -1,5 +1,7 @@
-import type { IFetchConfig } from './index';
 import { Message } from 'bkui-vue';
+
+import type { IFetchConfig } from './index';
+
 import { showLoginModal } from '@/common/auth';
 
 // 请求执行失败拦截器

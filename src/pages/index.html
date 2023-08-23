@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="icon" href="{{ BK_STATIC_URL }}/images/logo.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="{{ BK_STATIC_URL }}/images/logo.ico" type="image/x-icon" />
+    <link rel="icon" href="<%= process.env.BK_STATIC_URL %>/images/logo.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="<%= process.env.BK_STATIC_URL %>/images/logo.ico" type="image/x-icon" />
     <meta charset="utf-8">
     <title> {{ TITLE }} </title>
   </head>
@@ -10,12 +10,12 @@
       <div class="app"></div>
       <script>
         // 登录页面
-        window.BK_LOGIN_URL = '{{ BK_LOGIN_URL }}'
+        window.BK_LOGIN_URL = '<%= process.env.BK_LOGIN_URL %>';
         // 开发环境域名
-        window.AJAX_BASE_URL = '{{ AJAX_BASE_URL }}'
+        window.AJAX_BASE_URL = '<%= process.env.BK_AJAX_BASE_URL %>';
         // 静态资源路径
-        window.BK_STATIC_URL = '{{ BK_STATIC_URL }}'
-        window.CSRF_COOKIE_NAME = '{{ CSRF_COOKIE_NAME }}'
+        window.BK_STATIC_URL = '<%= process.env.BK_STATIC_URL %>';
+        window.CSRF_COOKIE_NAME = '<%= process.env.BK_CSRF_COOKIE_NAME %>';
       </script>
     </body>
 </html>

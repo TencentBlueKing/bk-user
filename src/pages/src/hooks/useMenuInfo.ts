@@ -1,5 +1,5 @@
-import { RouteLocationNormalizedLoaded, RouteRecordRaw, useRoute, useRouter } from "vue-router";
 import { computed } from 'vue';
+import { RouteLocationNormalizedLoaded, RouteRecordRaw, useRoute, useRouter } from 'vue-router';
 
 export const useMenuInfo = () => {
   const route = useRoute();
@@ -34,4 +34,4 @@ export const useMenuInfo = () => {
     openedKeys,
     handleChangeMenu,
   };
-}
+};

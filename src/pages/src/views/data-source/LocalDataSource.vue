@@ -162,74 +162,89 @@ function newDataSource(item) {
 <style lang="less" scoped>
 .user-info-wrapper {
   width: 100%;
-  padding: 24px;
   height: calc(100vh - 140px);
+  padding: 24px;
+
   header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+
     .header-right {
       width: 400px;
     }
   }
+
   :deep(.user-info-table) {
     .bk-table-head {
       table thead th {
         text-align: center;
       }
+
       .table-head-settings {
         border-right: none;
       }
     }
+
     .bk-table-footer {
       padding: 0 15px;
       background: #fff;
     }
+
     .type-icon {
+      margin-right: 8px;
       font-size: 14px;
       color: #979BA5;
-      margin-right: 8px;
     }
+
     .account-status-icon {
       width: 16px;
       height: 16px;
-      vertical-align: middle;
       margin-right: 5px;
+      vertical-align: middle;
     }
   }
 }
+
 .dropdown-menu-ul {
   width: 380px;
-  font-family: "MicrosoftYaHei";
+  font-family: MicrosoftYaHei;
+
   .dropdown-title {
-    color: #63656e;
     padding: 12px 16px;
+    color: #63656e;
   }
+
   .bk-dropdown-item {
     display: flex;
-    align-items: center;
     height: 100%;
-    line-height: 32px;
     padding: 10px 16px;
+    line-height: 32px;
+    align-items: center;
+
     .user-icon {
       font-size: 24px;
       color: #979ba5;
     }
+
     .dropdown-item {
       margin-left: 15px;
+
       span {
         display: block;
       }
+
       .dropdown-item-title {
         font-size: 14px;
         font-weight: 700;
       }
+
       .dropdown-item-subtitle {
-        color: #979ba5;
         width: 300px;
-        white-space: break-spaces;
         line-height: 20px;
+        color: #979ba5;
+        white-space: break-spaces;
       }
     }
   }

@@ -39,7 +39,7 @@
                 v-for="(item, index) in dataSourceConfig.passwordMustIncludes"
                 :key="index"
                 :label="item.value"
-                >{{ item.label }}</bk-checkbox
+              >{{ item.label }}</bk-checkbox
               >
             </bk-checkbox-group>
           </bk-form-item>
@@ -59,7 +59,7 @@
                 v-for="(item, index) in dataSourceConfig.excludeElementsConfig"
                 :key="index"
                 :label="item.value"
-                >{{ item.label }}</bk-checkbox
+              >{{ item.label }}</bk-checkbox
               >
             </bk-checkbox-group>
           </bk-form-item>
@@ -135,7 +135,7 @@
                 v-for="(item, index) in dataSourceConfig.noticeTime"
                 :key="index"
                 :label="item.value"
-                >{{ item.label }}</bk-checkbox
+              >{{ item.label }}</bk-checkbox
               >
             </bk-checkbox-group>
           </bk-form-item>
@@ -150,115 +150,125 @@
 </template>
 
 <script setup lang="tsx">
-import MainBreadcrumbsDetails from "@/components/layouts/MainBreadcrumbsDetails.vue";
-import { useRoute } from "vue-router";
-import { computed, ref, reactive } from "vue";
-import router from "@/router";
+import { computed, reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
+
+import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
+import router from '@/router';
 
 const route = useRoute();
 
 // 当前面包屑展示文案
 const typeText = computed(() => {
   switch (route.params.type) {
-    case "local":
+    case 'local':
       return {
-        name: "本地",
-        icon: "user-icon icon-shujuku",
+        name: '本地',
+        icon: 'user-icon icon-shujuku',
       };
   }
 });
 
 const data = reactive({
-  name: "",
+  name: '',
   openLogin: true,
-  passwordLength: "",
-  passwordRultLength: "",
+  passwordLength: '',
+  passwordRultLength: '',
   passwordMustIncludes: [],
   excludeElementsConfig: [],
   passwordValidDaysList: 30,
   maxTrailTimesList: 3,
-  autoUnlockSeconds: "",
+  autoUnlockSeconds: '',
   forceResetFirstLogin: true,
-  initPasswordMethod: "",
+  initPasswordMethod: '',
   noticeTime: [],
 });
 
 const dataSourceConfig = reactive({
   passwordMustIncludes: [
-    { value: "lower", label: "小写字母" },
-    { value: "upper", label: "大写字母" },
-    { value: "int", label: "数字" },
-    { value: "special", label: "特殊字符（除空格）" },
+    { value: 'lower', label: '小写字母' },
+    { value: 'upper', label: '大写字母' },
+    { value: 'int', label: '数字' },
+    { value: 'special', label: '特殊字符（除空格）' },
   ],
   excludeElementsConfig: [
-    { value: "keyboard_seq", label: "键盘序" },
-    { value: "alphabet_seq", label: "连续字母序" },
-    { value: "num_seq", label: "连续数字序" },
-    { value: "special_seq", label: "连续特殊符号序" },
-    { value: "duplicate_char", label: "重复字母、数字、特殊符号" },
+    { value: 'keyboard_seq', label: '键盘序' },
+    { value: 'alphabet_seq', label: '连续字母序' },
+    { value: 'num_seq', label: '连续数字序' },
+    { value: 'special_seq', label: '连续特殊符号序' },
+    { value: 'duplicate_char', label: '重复字母、数字、特殊符号' },
   ],
   passwordValidDaysList: [
-    { days: 30, text: "一个月" },
-    { days: 90, text: "三个月" },
-    { days: 180, text: "六个月" },
-    { days: 365, text: "一年" },
-    { days: -1, text: "永久" },
+    { days: 30, text: '一个月' },
+    { days: 90, text: '三个月' },
+    { days: 180, text: '六个月' },
+    { days: 365, text: '一年' },
+    { days: -1, text: '永久' },
   ],
   maxTrailTimesList: [
-    { times: 3, text: "3次" },
-    { times: 5, text: "5次" },
-    { times: 10, text: "10次" },
+    { times: 3, text: '3次' },
+    { times: 5, text: '5次' },
+    { times: 10, text: '10次' },
   ],
   forceResetFirstLogin: true,
-  initPasswordMethod: "fixed_preset",
-  fixedPassword: "",
+  initPasswordMethod: 'fixed_preset',
+  fixedPassword: '',
   noticeTime: [
-    { value: 1, label: "1天" },
-    { value: 7, label: "7天" },
-    { value: 15, label: "15天" },
+    { value: 1, label: '1天' },
+    { value: 7, label: '7天' },
+    { value: 15, label: '15天' },
   ],
 });
 
 const handleClickCancel = () => {
   router.go(-1);
-}
+};
 </script>
 
 <style lang="less" scoped>
 .data-source-wrapper {
   .data-source-content {
-    padding: 24px;
     height: calc(100vh - 104px);
+    padding: 24px;
+
     .content-item {
-      background: #ffffff;
-      box-shadow: 0 2px 4px 0 #1919290d;
+      background: #fff;
       border-radius: 2px;
+      box-shadow: 0 2px 4px 0 #1919290d;
+
       .item-title {
+        padding: 16px 0 16px 24px;
         font-size: 14px;
         font-weight: 700;
-        padding: 16px 0 16px 24px;
       }
+
       :deep(.bk-form-item) {
-        font-size: 14px;
-        margin-left: 64px;
         padding-bottom: 24px;
-        margin-bottom: 0px;
+        margin-bottom: 0;
+        margin-left: 64px;
+        font-size: 14px;
+
         &:last-child {
           margin-bottom: 24px;
         }
+
         .bk-radio-button {
           width: 80px;
+
           .bk-radio-button-label {
             font-size: 14px !important;
           }
         }
+
         .bk-radio-label {
           font-size: 14px !important;
         }
       }
+
       .form-item-flex {
         :deep(.bk-form-content) {
           display: flex;
+
           .input-password {
             width: 240px;
             margin-left: 24px;
@@ -266,6 +276,7 @@ const handleClickCancel = () => {
         }
       }
     }
+
     .btn {
       button {
         width: 88px;

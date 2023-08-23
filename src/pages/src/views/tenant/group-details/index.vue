@@ -328,16 +328,19 @@ const handleBeforeClose = async () => {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+
       .content-search-input {
         width: 400px;
       }
     }
+
     :deep(.bk-table) {
       .item-name {
         display: flex;
         align-items: center;
         height: 42px;
         line-height: 42px;
+
         img {
           width: 16px;
           height: 16px;
@@ -345,38 +348,42 @@ const handleBeforeClose = async () => {
           border: 1px solid #C4C6CC;
           border-radius: 50%;
         }
+
         .logo {
           display: inline-block;
           width: 16px;
-          line-height: 16px;
-          text-align: center;
+          margin-right: 8px;
+          font-size: 12px;
           font-weight: 700;
+          line-height: 16px;
           color: #fff;
+          text-align: center;
           background-color: #C4C6CC;
           border-radius: 4px;
           flex-shrink: 0;
-          font-size: 12px;
-          margin-right: 8px;
         }
       }
     }
   }
 }
+
 .details-wrapper {
   :deep(.bk-sideslider-title) {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 24px 0 50px !important;
+
     .bk-button {
       padding: 5px 17px !important;
     }
   }
 }
+
 .details-edit-wrapper {
   :deep(.bk-modal-content) {
-    background: #f5f7fa;
     height: calc(100vh - 106px);
+    background: #f5f7fa;
   }
 }
 </style>
