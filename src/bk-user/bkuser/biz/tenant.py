@@ -14,7 +14,14 @@ from typing import Dict, List, Optional
 from django.db import transaction
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourcePlugin, DataSourceUser
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+    DataSourcePlugin,
+    DataSourceUser,
+    DataSourceUserLeaderRelation,
+)
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
 from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceHandler, DataSourceSimpleInfo
 from bkuser.utils.uuid import generate_uuid
@@ -28,6 +35,7 @@ class DataSourceUserInfo(BaseModel):
     email: str
     phone: str
     phone_country_code: str
+    logo: str
 
 
 class TenantUserWithInheritedInfo(BaseModel):
@@ -74,6 +82,12 @@ class TenantDepartmentBaseInfo(BaseModel):
     has_children: bool
 
 
+class TenantUserLeaderInfo(BaseModel):
+    id: str
+    username: str
+    full_name: str
+
+
 class TenantUserHandler:
     @staticmethod
     def list_tenant_user_by_id(tenant_user_ids: List[str]) -> List[TenantUserWithInheritedInfo]:
@@ -99,11 +113,83 @@ class TenantUserHandler:
                         email=data_source_user.email,
                         phone=data_source_user.phone,
                         phone_country_code=data_source_user.phone_country_code,
+                        logo=data_source_user.logo,
                     ),
                 )
             )
 
         return data
+
+    @staticmethod
+    def get_tenant_user_leaders_map_by_id(tenant_user_ids: List[str]) -> Dict[str, List[TenantUserLeaderInfo]]:
+        tenant_users = TenantUser.objects.filter(id__in=tenant_user_ids)
+        # 从数据源中获取租户用户每个上级
+        data_source_leaders = DataSourceUserLeaderRelation.objects.filter(
+            user_id__in=tenant_users.values_list("data_source_user_id")
+        )
+        # 数据源上下级关系映射
+        data_source_leaders_map: Dict[int, List[int]] = {}
+        for item in data_source_leaders:
+            if item.user_id in data_source_leaders_map:
+                data_source_leaders_map[item.user_id].append(item.leader_id)
+            else:
+                data_source_leaders_map[item.user_id] = [item.leader_id]
+
+        # NOTE：如果用户通过协同数据源而来，被授权的上级一定会绑定该租户
+        tenant_user_leaders = TenantUser.objects.select_related("data_source_user").filter(
+            data_source_user_id__in=data_source_leaders.values_list("leader_id", flat=True),
+            tenant_id=tenant_users.first().tenant_id,
+        )
+
+        # 转换上级数据为租户数据
+        data_source_leader_convert_tenant_user_map: Dict[int, TenantUserLeaderInfo] = {}
+        for leader in tenant_user_leaders:
+            user = leader.data_source_user
+            data_source_leader_convert_tenant_user_map[leader.data_source_user_id] = TenantUserLeaderInfo(
+                id=leader.id,
+                username=user.username,
+                full_name=user.full_name,
+            )
+
+        # 租户用户ID-租户用户上级数据 整合
+        tenant_user_leaders_map: Dict = {}
+        for item in tenant_users:
+            data_source_leaders = data_source_leaders_map.get(item.data_source_user_id)
+            if not data_source_leaders:
+                continue
+            data = [
+                data_source_leader_convert_tenant_user_map[i]
+                for i in data_source_leaders
+                if data_source_leader_convert_tenant_user_map.get(i)
+            ]
+            tenant_user_leaders_map[item.id] = data
+        return tenant_user_leaders_map
+
+    @staticmethod
+    def get_tenant_user_departments_map_by_id(tenant_user_ids: List[str]) -> Dict[str, List[TenantDepartmentBaseInfo]]:
+        tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
+        data: Dict = {}
+        for tenant_user in tenant_users:
+            departments = DataSourceDepartmentUserRelation.objects.filter(user=tenant_user.data_source_user)
+            if not departments.exists():
+                continue
+            department_ids = list(departments.values_list("department_id", flat=True))
+            tenant_department_infos = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
+                tenant_id=tenant_user.tenant_id, data_source_department_ids=department_ids
+            )
+
+            data[tenant_user.id] = tenant_department_infos
+        return data
+
+    @staticmethod
+    def get_tenant_user_ids_by_tenant_department(tenant_department_id: int, recursive: bool = True):
+        tenant_department = TenantDepartment.objects.get(id=tenant_department_id)
+        data_source_user_ids = DataSourceDepartmentHandler.get_user_ids_by_department_id(
+            department_id=tenant_department.data_source_department_id, recursive=recursive
+        )
+        return list(
+            TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids).values_list("id", flat=True)
+        )
 
 
 class TenantHandler:

@@ -13,7 +13,12 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+)
 
 
 class DataSourceDepartmentInfoWithChildren(BaseModel):
@@ -65,3 +70,20 @@ class DataSourceDepartmentHandler:
                 ),
             )
         return departments_map
+
+    @staticmethod
+    def get_user_ids_by_department_id(department_id: int, recursive: bool = True) -> List[str]:
+        # 是否返回子部门用户
+        if not recursive:
+            user_ids = DataSourceDepartmentUserRelation.objects.filter(department_id=department_id).values_list(
+                "user_id"
+            )
+        else:
+            department = DataSourceDepartmentRelation.objects.get(department_id=department_id)
+            recursive_department_ids = department.get_descendants(include_self=True).values_list(
+                "department_id", flat=True
+            )
+            user_ids = DataSourceDepartmentUserRelation.objects.filter(
+                department_id__in=recursive_department_ids
+            ).values_list("user_id")
+        return list(user_ids)

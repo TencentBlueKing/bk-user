@@ -10,23 +10,102 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
+from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.web.organization.serializers import TenantDepartmentChildrenListOutputSLZ, TenantListOutputSLZ
+from bkuser.apis.web.organization.serializers import (
+    TenantDepartmentChildrenListOutputSLZ,
+    TenantDepartmentUserListOutputSLZ,
+    TenantDepartmentUserSearchInputSLZ,
+    TenantListOutputSLZ,
+    TenantUserRetrieveOutputSLZ,
+)
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import (
     TenantDepartmentHandler,
     TenantEditableBaseInfo,
     TenantFeatureFlag,
     TenantHandler,
+    TenantUserHandler,
 )
 from bkuser.common.error_codes import error_codes
+from bkuser.common.pagination import CustomPageNumberPagination
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
+
+
+class TenantDepartmentUserListApi(generics.ListAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    pagination_class = CustomPageNumberPagination
+    serializer_class = TenantDepartmentUserListOutputSLZ
+
+    def get_serializer_context(self):
+        # 过滤出该租户部门(包括子部门)的租户用户
+        tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant_department(
+            tenant_department_id=self.kwargs["id"], recursive=self.request.query_params.get("recursive", True)
+        )
+
+        # 租户用户基础信息
+        tenant_users = TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)
+        tenant_users_info_map = {i.id: i for i in tenant_users}
+
+        # 租户用户所属租户组织
+        tenant_user_departments_map = TenantUserHandler.get_tenant_user_departments_map_by_id(tenant_user_ids)
+
+        # 租户用户上级信息
+        tenant_user_leaders_map = TenantUserHandler.get_tenant_user_leaders_map_by_id(tenant_user_ids)
+        return {
+            "tenant_users_info": tenant_users_info_map,
+            "tenant_user_departments": tenant_user_departments_map,
+            "tenant_user_leaders": tenant_user_leaders_map,
+        }
+
+    @swagger_auto_schema(
+        operation_description="租户部门下用户详情列表",
+        responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantDepartmentUserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        # 过滤该租户部门下的用户
+        tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant_department(
+            tenant_department_id=self.kwargs["id"], recursive=data.get("recursive")
+        )
+
+        # build response
+        queryset = self.filter_queryset(self.get_queryset().filter(id__in=tenant_user_ids))
+        if keyword := data.get("keyword"):
+            queryset = queryset.select_related("data_source_user").filter(
+                Q(data_source_user__username__icontains=keyword)
+                | Q(data_source_user__email__icontains=keyword)
+                | Q(data_source_user__phone__icontains=keyword),
+            )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class TenantUsersRetrieveApi(generics.RetrieveAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    serializer_class = TenantUserRetrieveOutputSLZ
+
+    @swagger_auto_schema(
+        operation_description="租户部门下单个用户详情",
+        responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
 
 
 class TenantListApi(generics.ListAPIView):
