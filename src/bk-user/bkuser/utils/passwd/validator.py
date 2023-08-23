@@ -30,7 +30,7 @@ class PasswordValidator:
         ret = ValidateResult(ok=True, details=[])
 
         for func in [
-            # 长度检查
+            # 密码长度检查
             self._validate_length,
             # 包含的字符检查
             self._validate_contains,
@@ -47,7 +47,7 @@ class PasswordValidator:
         return ret
 
     def _validate_length(self, password: str) -> List[str]:
-        """长度检查"""
+        """密码长度检查"""
         if len(password) > self.rule.max_length:
             return [_("密码长度至多 {} 位").format(self.rule.max_length)]
 
@@ -57,7 +57,7 @@ class PasswordValidator:
         return []
 
     def _validate_contains(self, password: str) -> List[str]:
-        """字符包含检查"""
+        """包含的字符检查"""
         contained_chars = set(password)
         errors: List[str] = []
 
@@ -141,8 +141,9 @@ class PasswordValidator:
         """基于 zxcvbn 能力进行检查（连续性）"""
         errors: List[str] = []
 
+        not_continuous_cnt = self.rule.not_continuous_count
         # 没有限制最大连续长度的，提前返回
-        if not self.rule.not_continuous_count:
+        if not not_continuous_cnt:
             return errors
 
         # 标记位，避免同一规则反复触发
@@ -153,7 +154,7 @@ class PasswordValidator:
 
         for m in matches:
             # 匹配到的密码片段长度小于限制长度，可直接跳过检查
-            if len(m.token) < self.rule.not_continuous_count:
+            if len(m.token) < not_continuous_cnt:
                 continue
 
             # 1. 键盘序检查（仅检查标准键盘序 qwerty）
@@ -163,7 +164,7 @@ class PasswordValidator:
                 and m.graph == "qwerty"
                 and not catch_keyboard_order
             ):
-                errors.append(_("密码不可包含 {} 位键盘序（{}）").format(self.rule.not_continuous_count, m.token))
+                errors.append(_("密码不可包含 {} 位键盘序（{}）").format(not_continuous_cnt, m.token))
                 catch_keyboard_order = True
 
             # 2. 连续字母序检查，先前已经将 password 小写化，因此此处仅检查 sequence == lower 即可
@@ -173,7 +174,7 @@ class PasswordValidator:
                 and m.sequence == "lower"
                 and not catch_continuous_letters
             ):
-                errors.append(_("密码不可包含 {} 位连续字母序（{}）").format(self.rule.not_continuous_count, m.token))
+                errors.append(_("密码不可包含 {} 位连续字母序（{}）").format(not_continuous_cnt, m.token))
                 catch_continuous_letters = True
 
             # 3. 连续数字序检查
@@ -183,17 +184,12 @@ class PasswordValidator:
                 and m.sequence == "digits"
                 and not catch_continuous_digits
             ):
-                errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(self.rule.not_continuous_count, m.token))
+                errors.append(_("密码不可包含连续 {} 位数字序（{}）").format(not_continuous_cnt, m.token))
                 catch_continuous_digits = True
 
             # 4. 重复字符检查
             if self.rule.not_repeated_symbol and m.pattern == ZxcvbnPattern.REPEAT and not catch_repeated_symbol:
-                errors.append(
-                    _("密码不可包含 {} 位重复字符（{}）").format(
-                        self.rule.not_continuous_count,
-                        m.base_token,
-                    )
-                )
+                errors.append(_("密码不可包含 {} 位重复字符（{}）").format(not_continuous_cnt, m.base_token))
                 catch_repeated_symbol = True
 
         return errors

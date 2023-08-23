@@ -67,12 +67,12 @@ class PasswordRule(BaseModel):
             ]
         ):
             raise ValueError(
-                "at least one of contain_lowercase, contain_uppercase, ",
+                "at least one of contain_lowercase, contain_uppercase, "
                 "contain_digit, contain_punctuation must be True",
             )
 
         # 如果设置【密码不允许连续 N 位出现】的限制，则
-        if self.not_continuous_count != 0:
+        if self.not_continuous_count:
             # 1. 该 N 值不允许低于下限，否则会难以生成/设置合法的密码
             if self.not_continuous_count < MIN_NOT_CONTINUOUS_COUNT:
                 raise ValueError(f"not_continuous_count cannot less than {MIN_NOT_CONTINUOUS_COUNT} when set")
@@ -99,7 +99,7 @@ class ValidateResult(BaseModel):
 
     # 校验结果
     ok: bool
-    # 密码检查的问题，弱通过检查，则为空列表
+    # 密码检查出的问题
     details: List[str]
 
     @property
