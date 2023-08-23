@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { Message } from 'bkui-vue';
 import {
   ref,
 } from 'vue';
-import { useUser } from '@/store/user';
-import { currentUser } from '@/http/api';
-import { Message } from 'bkui-vue';
+
 import HeaderBox from './views/Header.vue';
+
+import { currentUser } from '@/http/api';
+import { useUser } from '@/store/user';
 
 // 加载完用户数据才会展示页面
 const isLoading = ref(false);

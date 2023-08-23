@@ -460,5 +460,5 @@ const handleChange = () => {
 </script>
 
 <style lang="less" scoped>
-@import "@/css/tenantEditStyle.less";
+@import url("@/css/tenantEditStyle.less");
 </style>

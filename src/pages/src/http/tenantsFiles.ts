@@ -1,11 +1,11 @@
 import http from './fetch';
 import type {
-  TenantsListResult,
   NewTenantParams,
   TenantDetailsResult,
+  TenantsListResult,
   TenantUpdateParams,
-  TenantUsersListResult,
   TenantUsersListParams,
+  TenantUsersListResult,
 } from './types/tenantsFiles';
 
 /**
@@ -16,7 +16,7 @@ export const getTenants = (): Promise<TenantsListResult> => http.get('/api/v1/we
 /**
  * 搜索租户列表
  */
- export const searchTenants = (name: string): Promise<TenantsListResult> => http.get(`/api/v1/web/tenants/?name=${name}`);
+export const searchTenants = (name: string): Promise<TenantsListResult> => http.get(`/api/v1/web/tenants/?name=${name}`);
 
 /**
  * 新建租户
@@ -44,4 +44,4 @@ export const getTenantUsers = (id: string) => http.get(`/api/v1/web/tenants/${id
 export const getTenantUsersList = (params: TenantUsersListParams): Promise<TenantUsersListResult> => {
   const { tenant_id, keyword, page, page_size  } = params;
   return http.get(`/api/v1/web/tenants/${tenant_id}/users/?keyword=${keyword}&page=${page}&page_size=${page_size}`);
-}
+};

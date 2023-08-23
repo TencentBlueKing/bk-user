@@ -17,14 +17,15 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive } from "vue";
-import { useMenuInfo } from "@/hooks/useMenuInfo";
-import router from "@/router/index";
+import { reactive, ref } from 'vue';
+
+import { useMenuInfo } from '@/hooks/useMenuInfo';
+import router from '@/router/index';
 
 const { activeKey } = useMenuInfo();
-const active = ref("local");
+const active = ref('local');
 const panels = reactive([
-  { name: "local", label: "本公司" },
+  { name: 'local', label: '本公司' },
   // { name: "other", label: "其他公司" },
 ]);
 

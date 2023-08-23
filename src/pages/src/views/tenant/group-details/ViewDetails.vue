@@ -78,42 +78,49 @@ const basicData = reactive([
 <style lang="less" scoped>
 .details-content {
   padding: 0 40px;
+
   li {
-    list-style: none;
-    padding: 20px 0;
-    border-bottom: 1px solid #dcdee5;
     position: relative;
+    padding: 20px 0;
+    list-style: none;
+    border-bottom: 1px solid #dcdee5;
+
     .details-content-title {
       font-size: 14px;
-      color: #63656e;
       font-weight: 700;
       line-height: 40px;
+      color: #63656e;
     }
+
     .details-content-info {
       width: calc(100% - 92px);
+
       .details-content-item {
-        line-height: 40px;
-        width: 100%;
         display: flex;
+        width: 100%;
+        line-height: 40px;
+
         .details-content-key {
-          font-size: 14px;
-          color: #63656e;
           display: inline-block;
           width: 100px;
+          font-size: 14px;
+          color: #63656e;
           text-align: right;
         }
+
         .details-content-value {
-          font-size: 14px;
-          color: #313238;
           display: inline-block;
           width: calc(100% - 100px);
           overflow: hidden;
+          font-size: 14px;
+          color: #313238;
           text-overflow: ellipsis;
           white-space: nowrap;
           vertical-align: top;
         }
       }
     }
+
     .user-logo {
       position: absolute;
       top: 60px;
@@ -124,12 +131,15 @@ const basicData = reactive([
       object-fit: contain;
     }
   }
+
   li:last-child {
     border-bottom: none;
   }
 }
+
 .details-content-table {
   margin-top: 16px;
+
   :deep(.bk-fixed-bottom-border) {
     border-top: none;
   }

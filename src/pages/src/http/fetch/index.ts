@@ -1,6 +1,6 @@
-import Cookies from 'js-cookie';
 import axios, { AxiosError, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { Message } from 'bkui-vue';
+import Cookies from 'js-cookie';
 import qs from 'query-string';
 
 interface LoginData {

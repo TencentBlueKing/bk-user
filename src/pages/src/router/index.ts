@@ -1,33 +1,33 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory } from 'vue-router';
 
 export default createRouter({
   history: createWebHistory(window.SITE_URL),
   routes: [
     {
-      path: "/",
-      name: "organization",
-      component: () => import("@/views/organization/index.vue"),
+      path: '/',
+      name: 'organization',
+      component: () => import('@/views/organization/index.vue'),
     },
     {
-      path: "/tenant",
-      name: "tenant",
+      path: '/tenant',
+      name: 'tenant',
       redirect: {
-        name: "tenantInfo",
+        name: 'tenantInfo',
       },
       meta: {
-        navName: "集团概览",
+        navName: '集团概览',
       },
-      component: () => import("@/views/tenant/index.vue"),
+      component: () => import('@/views/tenant/index.vue'),
       children: [
         {
-          path: "info",
-          name: "tenantInfo",
+          path: 'info',
+          name: 'tenantInfo',
           meta: {
-            routeParentName: "tenant",
-            navName: "集团概览",
+            routeParentName: 'tenant',
+            navName: '集团概览',
             isMenu: true,
           },
-          component: () => import("@/views/tenant/group-details/index.vue"),
+          component: () => import('@/views/tenant/group-details/index.vue'),
         },
         // {
         //   path: "setting",
@@ -41,104 +41,100 @@ export default createRouter({
       ],
     },
     {
-      path: "/datasource",
-      name: "datasource",
+      path: '/datasource',
+      name: 'datasource',
       redirect: {
-        name: "local",
+        name: 'local',
       },
       meta: {
-        navName: "数据源管理",
+        navName: '数据源管理',
       },
-      component: () => import("@/views/data-source/index.vue"),
+      component: () => import('@/views/data-source/index.vue'),
       children: [
         {
-          path: "",
-          name: "",
+          path: '',
+          name: '',
           meta: {
-            routeParentName: "datasource",
-            navName: "数据源管理",
+            routeParentName: 'datasource',
+            navName: '数据源管理',
           },
-          component: () => import("@/views/data-source/LocalCompany.vue"),
+          component: () => import('@/views/data-source/LocalCompany.vue'),
           children: [
             {
-              path: "local",
-              name: "local",
+              path: 'local',
+              name: 'local',
               meta: {
-                routeParentName: "datasource",
-                navName: "数据源管理",
+                routeParentName: 'datasource',
+                navName: '数据源管理',
               },
-              component: () =>
-                import("@/views/data-source/LocalDataSource.vue"),
+              component: () => import('@/views/data-source/LocalDataSource.vue'),
             },
             {
-              path: "other",
-              name: "other",
+              path: 'other',
+              name: 'other',
               meta: {
-                routeParentName: "datasource",
-                navName: "数据源管理",
+                routeParentName: 'datasource',
+                navName: '数据源管理',
               },
-              component: () =>
-                import("@/views/data-source/OtherDataSource.vue"),
+              component: () => import('@/views/data-source/OtherDataSource.vue'),
             },
           ],
         },
         {
-          path: "local-details/:name/:type",
-          name: "dataConfDetails",
+          path: 'local-details/:name/:type',
+          name: 'dataConfDetails',
           meta: {
-            routeParentName: "datasource",
-            navName: "数据源详情",
+            routeParentName: 'datasource',
+            navName: '数据源详情',
           },
-          component: () =>
-            import("@/views/data-source/local-details/index.vue"),
+          component: () => import('@/views/data-source/local-details/index.vue'),
         },
         {
-          path: "new-local/:type",
-          name: "newLocal",
+          path: 'new-local/:type',
+          name: 'newLocal',
           meta: {
-            routeParentName: "datasource",
-            navName: "新建数据源",
+            routeParentName: 'datasource',
+            navName: '新建数据源',
           },
-          component: () =>
-            import("@/views/data-source/new-data/NewLocalData.vue"),
+          component: () => import('@/views/data-source/new-data/NewLocalData.vue'),
         },
       ],
     },
     {
-      path: "/audit",
-      name: "audit",
-      component: () => import("@/views/audit/index.vue"),
+      path: '/audit',
+      name: 'audit',
+      component: () => import('@/views/audit/index.vue'),
     },
     {
-      path: "/setting",
-      name: "setting",
+      path: '/setting',
+      name: 'setting',
       redirect: {
-        name: "userFields",
+        name: 'userFields',
       },
       meta: {
-        navName: "用户字段设置",
+        navName: '用户字段设置',
       },
-      component: () => import("@/views/setting/index.vue"),
+      component: () => import('@/views/setting/index.vue'),
       children: [
         {
-          path: "fields",
-          name: "userFields",
+          path: 'fields',
+          name: 'userFields',
           meta: {
-            routeParentName: "setting",
-            navName: "用户字段设置",
+            routeParentName: 'setting',
+            navName: '用户字段设置',
             isMenu: true,
           },
-          component: () => import("@/views/setting/FieldSetting.vue"),
+          component: () => import('@/views/setting/FieldSetting.vue'),
         },
         {
-          path: "login",
-          name: "login",
+          path: 'login',
+          name: 'login',
           meta: {
-            routeParentName: "setting",
-            navName: "登录设置",
+            routeParentName: 'setting',
+            navName: '登录设置',
             isMenu: true,
           },
-          component: () => import("@/views/setting/LoginSetting.vue"),
+          component: () => import('@/views/setting/LoginSetting.vue'),
         },
       ],
     },

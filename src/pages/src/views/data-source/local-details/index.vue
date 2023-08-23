@@ -29,12 +29,14 @@
 </template>
 
 <script setup lang="ts">
-import MainBreadcrumbsDetails from "@/components/layouts/MainBreadcrumbsDetails.vue";
-import { useRoute } from "vue-router";
-import { ref, reactive, computed } from "vue";
-import UserInfo from "./UserInfo.vue";
-import PswInfo from "./PswInfo.vue";
-import { dataSourceType } from "@/utils";
+import { computed, reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
+
+import PswInfo from './PswInfo.vue';
+import UserInfo from './UserInfo.vue';
+
+import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
+import { dataSourceType } from '@/utils';
 
 const route = useRoute();
 
@@ -45,10 +47,10 @@ const typeText = computed(() => {
   return { text, icon };
 });
 
-const activeKey = ref("user");
+const activeKey = ref('user');
 const panels = reactive([
-  { name: "user", label: "用户信息" },
-  { name: "account", label: "账密信息" },
+  { name: 'user', label: '用户信息' },
+  { name: 'account', label: '账密信息' },
 ]);
 </script>
 

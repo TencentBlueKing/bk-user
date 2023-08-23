@@ -32,27 +32,29 @@
 </template>
 
 <script setup lang="tsx">
-import { reactive } from "vue";
-import { useMenu } from "@/store/useMenu";
-import { useMenuInfo } from "../../hooks/useMenuInfo";
-import MainView from "@/components/layouts/MainView.vue";
+import { reactive } from 'vue';
+
+import { useMenuInfo } from '../../hooks/useMenuInfo';
+
+import MainView from '@/components/layouts/MainView.vue';
+import { useMenu } from '@/store/useMenu';
 
 const menuStore = useMenu();
 const { activeKey, handleChangeMenu } = useMenuInfo();
 
 const menuData = reactive([
   {
-    name: "用户字段设置",
-    key: "userFields",
+    name: '用户字段设置',
+    key: 'userFields',
   },
   {
-    name: "登录设置",
-    key: "login",
+    name: '登录设置',
+    key: 'login',
   },
 ]);
 
 </script>
 
 <style lang="less" scoped>
-@import "../../css/menuStyle.less";
+@import url("../../css/menuStyle.less");
 </style>

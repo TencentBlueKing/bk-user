@@ -1,13 +1,14 @@
-import { createApp } from 'vue';
+// 全量引入 bkui-vue
+import bkui, { InfoBox } from 'bkui-vue';
 import { createPinia } from 'pinia';
-import router from './router';
+import { createApp } from 'vue';
+
 import App from './app.vue';
+import router from './router';
+
 import './css/index.css';
 import '../static/bk_icon_font/style.css';
 import '../static/blueking-icon/style.css';
-
-// 全量引入 bkui-vue
-import bkui, { InfoBox } from 'bkui-vue';
 // 全量引入 bkui-vue 样式
 import 'bkui-vue/dist/style.css';
 
@@ -46,7 +47,7 @@ window.leaveBefore = leaveBefore;
 
 window.loginBox = true;
 let pre = window;
-while(pre.parent && pre.parent !== pre) {
+while (pre.parent && pre.parent !== pre) {
   pre = pre.parent;
   if (pre.loginBox) {
     pre.close?.();
@@ -56,7 +57,7 @@ while(pre.parent && pre.parent !== pre) {
 
 window.close = () => {
   window.login.hideLogin();
-}
+};
 
 createApp(App)
   .use(router)

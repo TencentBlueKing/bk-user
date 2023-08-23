@@ -256,33 +256,39 @@ const fetchFieldList = () => {}
 
 <style lang="less" scoped>
 .field-setting-content {
-  padding: 24px;
   height: calc(100vh - 104px);
+  padding: 24px;
+
   .add-field {
     margin-bottom: 16px;
   }
+
   :deep(.field-setting-table) {
     .field-name {
       .move {
-        color: #c8c8c8;
         font-size: 16px;
+        color: #c8c8c8;
         cursor: move;
       }
+
       .name {
-        color: #63656e;
         margin: 0 8px;
+        color: #63656e;
       }
     }
+
     .icon-duihao-i {
-      color: #2dcb56;
       font-size: 16px;
+      color: #2dcb56;
     }
+
     .bk-table-footer {
       padding: 0 15px;
       background: #fff;
     }
   }
 }
+
 .blue-background-class {
   background: red;
 }
