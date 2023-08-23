@@ -1,4 +1,4 @@
-/*CSS Reset*/
+/* CSS Reset */
 html,
 body,
 div,
@@ -116,8 +116,8 @@ mark,
 audio,
  
 video {
-  margin: 0;
   padding: 0;
+  margin: 0;
 }
 
 /* HTML5 display-role reset for older browsers */
@@ -145,14 +145,13 @@ section {
 
 body {
   font-family: 'Helvetica Neue', Helvetica, STHeiTi, sans-serif;
-  line-height: 1.5;
   font-size: 12px;
+  line-height: 1.5;
   color: #000;
-  user-select: none;
-  user-select: none;
   text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
   outline: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1,
@@ -210,14 +209,12 @@ input,
 select,
 textarea {
   box-sizing: content-box;
-  box-sizing: content-box;
-  box-sizing: content-box;
 }
 
 button {
-  appearance: none;
-  border: 0;
   background: none;
+  border: 0;
+  appearance: none;
 }
 
 a {

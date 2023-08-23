@@ -15,10 +15,12 @@ module.exports = {
     return {
       devServer: {
         setupMiddlewares: mockServer,
+        https: true,
         proxy: {
           '/api': {
-            target: '',
+            target: process.env.AJAX_BASE_URL,
             changeOrigin: true,
+            secure: false,
           },
         },
       },

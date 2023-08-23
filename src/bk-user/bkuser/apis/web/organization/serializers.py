@@ -41,3 +41,9 @@ class TenantListOutputSLZ(serializers.Serializer):
         if not departments:
             return []
         return [item.model_dump(include={"id", "name", "has_children"}) for item in departments]
+
+
+class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="租户部门ID")
+    name = serializers.CharField(help_text="部门名称")
+    has_children = serializers.BooleanField(help_text="是否有子部门")

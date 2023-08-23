@@ -21,19 +21,20 @@
 </template>
 
 <script setup lang="ts">
-import { useMainViewStore } from '@/store/mainView';
-import { useRoute, useRouter } from 'vue-router';
 import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+import { useMainViewStore } from '@/store/mainView';
 
 const props = defineProps({
   subtitle: {
     type: String,
-    default: "",
+    default: '',
   },
 });
 
 const store = useMainViewStore();
-const route = useRoute()
+const route = useRoute();
 const router = useRouter();
 store.customBreadcrumbs = true;
 /**
@@ -62,16 +63,16 @@ const handleBack = () => {
 
 <style lang="less">
 .main-breadcrumbs-details {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   position: relative;
   z-index: 11;
+  display: flex;
   width: 100%;
   height: 52px;
   padding: 0 24px;
   background-color: #fff;
-  box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: 0 3px 4px 0 rgb(0 0 0 / 4%);
+  align-items: center;
+  justify-content: space-between;
 
   &__back {
     margin-right: 10px;
@@ -84,6 +85,7 @@ const handleBack = () => {
     margin-right: 8px;
     font-size: 16px;
     color: #313238;
+
     .subtitle {
       font-size: 14px;
       color: #63656E;

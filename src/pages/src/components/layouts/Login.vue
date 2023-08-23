@@ -17,14 +17,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from "vue";
-import { watch } from "vue";
+import { computed, reactive, watch } from 'vue';
 
 type LoginInfo = {
   src: string,
   width: number,
   height: number,
-}
+};
 
 const state = reactive({
   src: '',
@@ -60,13 +59,10 @@ window.login = {
 <style lang="less" scoped>
 .login-modal {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: 99999;
   font-size: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgb(0 0 0 / 60%);
 
   &__container {
     position: relative;

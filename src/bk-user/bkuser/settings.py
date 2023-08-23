@@ -468,3 +468,6 @@ DEFAULT_TENANT_LOGO = ""
 DEFAULT_DATA_SOURCE_USER_LOGO = ""
 # 默认手机国际区号
 DEFAULT_PHONE_COUNTRY_CODE = env.str("DEFAULT_PHONE_COUNTRY_CODE", default="86")
+# FIXME:  待新版登录完成后删除Mock用户租户数据，格式：key1=value1;key2=value2
+MOCK_USER_TENANTS = env.dict("MOCK_USER_TENANTS", default={})
+MOCK_USER_DEFAULT_TENANT = env.str("MOCK_USER_DEFAULT_TENANT", default="")

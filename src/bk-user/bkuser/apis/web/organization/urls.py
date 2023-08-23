@@ -16,4 +16,9 @@ urlpatterns = [
     # 租户
     path("tenants/", views.TenantListApi.as_view(), name="organization.tenant.list"),
     path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="organization.tenant.retrieve_update"),
+    path(
+        "departments/<int:id>/children/",
+        views.TenantDepartmentChildrenListApi.as_view(),
+        name="organization.children.list",
+    ),
 ]

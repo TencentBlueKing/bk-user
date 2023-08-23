@@ -1,6 +1,6 @@
 <template>
   <div class="field-setting-content user-scroll-y">
-    <bk-button class="add-field" theme="primary">
+    <bk-button class="add-field" theme="primary" @click="addField">
       <Plus style="font-size: 18px;" />
       添加字段
     </bk-button>
@@ -13,18 +13,61 @@
       settings
       show-overflow-tooltip
       :pagination="pagination"
-    />
+    >
+      <template #empty>
+        <Empty
+          :is-data-empty="fieldData.isTableDataEmpty"
+          :is-data-error="fieldData.isTableDataError"
+          @handleEmpty="fetchFieldList"
+          @handleUpdate="fetchFieldList"
+        />
+      </template>
+    </bk-table>
+    <!-- 添加字段的侧边栏 -->
+    <bk-sideslider
+      :width="520"
+      :isShow="fieldData.isShow"
+      :title="fieldData.title"
+      :before-close="handleBeforeClose"
+      quick-close>
+      <FieldsAdd
+        :set-type="fieldData.setType"
+        :current-editor-data="fieldData.currentEditorData"
+        @handleCancel="handleCancel" />
+    </bk-sideslider>
   </div>
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, nextTick } from "vue";
+import { ref, reactive, nextTick, inject } from "vue";
 import { Plus } from "bkui-vue/lib/icon";
 import Sortable from "sortablejs";
 import { useMainViewStore } from "@/store/mainView";
+import Empty from "@/components/Empty.vue";
+import FieldsAdd from "./FieldsAdd.vue";
+import InfoBox from "bkui-vue/lib/info-box";
+import { Message } from "bkui-vue";
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
+
+const editLeaveBefore = inject('editLeaveBefore');
+const fieldData = reactive({
+  isShow: false,
+  title: '添加字段',
+  // 点击保存时打开 loading，临时在样式上隐藏侧边栏
+  isHideBar: false,
+  // 侧边栏区分添加字段、编辑字段
+  setType: '',
+  currentEditorData: {},
+  isTableDataEmpty: false,
+  isTableDataError: false,
+});
+
+const state = reactive({
+  currentField: {},
+})
+
 const tableData: any = [
   {
     builtin: true,
@@ -118,10 +161,10 @@ const columns = [
     render: ({ data }: { data: any }) => {
       return (
         <div>
-          <bk-button text theme="primary" class="mr8">
+          <bk-button text theme="primary" class="mr8" onClick={editField.bind(this, data)}>
             编辑
           </bk-button>
-          <bk-button text theme="primary">
+          <bk-button text theme="primary" onClick={deleteField.bind(this, data)}>
             删除
           </bk-button>
         </div>
@@ -163,37 +206,89 @@ const initSortable = (className: string) => {
 nextTick(() => {
   initSortable("field-setting-table");
 });
+
+const addField = () => {
+  fieldData.currentEditorData = {};
+  fieldData.title = "添加字段";
+  fieldData.setType = "add";
+  fieldData.isShow = true;
+}
+
+const editField = (item) => {
+  fieldData.currentEditorData = item;
+  fieldData.title = "编辑字段";
+  fieldData.setType = "edit";
+  fieldData.isShow = true;
+}
+
+const deleteField = (item) => {
+  InfoBox({
+    title: "确认要删除吗？",
+    confirmText: "确认删除",
+    onConfirm: () => {
+      Message({
+        message: "删除成功",
+        theme: 'success',
+        delay: 1500,
+      });
+    }
+  })
+}
+const handleBeforeClose = async () => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+    fieldData.isShow = false;
+  } else {
+    fieldData.isShow = false;
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
+};
+
+const handleCancel = () => {
+  fieldData.isShow = false;
+}
+
+const fetchFieldList = () => {}
 </script>
 
 <style lang="less" scoped>
 .field-setting-content {
-  padding: 24px;
   height: calc(100vh - 104px);
+  padding: 24px;
+
   .add-field {
     margin-bottom: 16px;
   }
+
   :deep(.field-setting-table) {
     .field-name {
       .move {
-        color: #c8c8c8;
         font-size: 16px;
+        color: #c8c8c8;
         cursor: move;
       }
+
       .name {
-        color: #63656e;
         margin: 0 8px;
+        color: #63656e;
       }
     }
+
     .icon-duihao-i {
-      color: #2dcb56;
       font-size: 16px;
+      color: #2dcb56;
     }
+
     .bk-table-footer {
       padding: 0 15px;
       background: #fff;
     }
   }
 }
+
 .blue-background-class {
   background: red;
 }

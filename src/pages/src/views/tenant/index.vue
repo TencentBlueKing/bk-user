@@ -12,7 +12,7 @@
             v-for="item in menuData"
             :key="item.key">
             <template #icon>
-              <i class="user-icon icon-block-shape" />
+              <i class="user-icon icon-qingximoban" />
             </template>
             {{ item.name }}
           </bk-menu-item>
@@ -32,18 +32,20 @@
 </template>
 
 <script setup lang="tsx">
-import { useMenu } from "@/store/useMenu";
-import { useMenuInfo } from "../../hooks/useMenuInfo";
-import MainView from "@/components/layouts/MainView.vue";
-import { reactive } from "vue";
+import { reactive } from 'vue';
+
+import { useMenuInfo } from '../../hooks/useMenuInfo';
+
+import MainView from '@/components/layouts/MainView.vue';
+import { useMenu } from '@/store/useMenu';
 
 const menuStore = useMenu();
 const { activeKey, handleChangeMenu } = useMenuInfo();
 
 const menuData = reactive([
   {
-    name: "集团概览",
-    key: "tenantInfo",
+    name: '集团概览',
+    key: 'tenantInfo',
   },
   // {
   //   name: "全局设置",
@@ -53,5 +55,5 @@ const menuData = reactive([
 </script>
 
 <style lang="less" scoped>
-@import "../../css/menuStyle.less";
+@import url("../../css/menuStyle.less");
 </style>

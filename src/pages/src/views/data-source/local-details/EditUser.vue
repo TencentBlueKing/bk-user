@@ -21,10 +21,13 @@
       <bk-form-item
         style="width: 440px;"
         label="全名"
-        property="display_name"
+        property="full_name"
         required
       >
-        <bk-input v-model="formData.display_name" placeholder="全名可随时修改" />
+        <bk-input
+          v-model="formData.full_name"
+          placeholder="全名可随时修改"
+        />
       </bk-form-item>
       <BkUpload
         theme="picture"
@@ -32,27 +35,8 @@
         :multiple="false"
         :files="files"
         :handle-res-code="handleRes"
+        :url="'https://jsonplaceholder.typicode.com/posts/'"
       />
-      <bk-form-item label="所属数据源" property="data_source" required>
-        <bk-select v-model="formData.data_source">
-          <bk-option value="1" label="" />
-          <bk-option value="2" label="" />
-        </bk-select>
-      </bk-form-item>
-      <div class="form-item-flex">
-        <bk-form-item label="所属组织" property="department_name" required>
-          <bk-select v-model="formData.department_name">
-            <bk-option value="1" label="" />
-            <bk-option value="2" label="" />
-          </bk-select>
-        </bk-form-item>
-        <bk-form-item label="直属上司" property="leader" required>
-          <bk-select v-model="formData.leader">
-            <bk-option value="1" label="" />
-            <bk-option value="2" label="" />
-          </bk-select>
-        </bk-form-item>
-      </div>
       <bk-form-item label="邮箱" property="email" required>
         <bk-input v-model="formData.email" placeholder="请输入" />
       </bk-form-item>
@@ -67,6 +51,20 @@
         </div>
       </bk-form-item>
       <div class="form-item-flex">
+        <bk-form-item label="所属组织" property="department_name" required>
+          <bk-select v-model="formData.department_name">
+            <bk-option value="1" label="" />
+            <bk-option value="2" label="" />
+          </bk-select>
+        </bk-form-item>
+        <bk-form-item label="直属上级" property="leader" required>
+          <bk-select v-model="formData.leader">
+            <bk-option value="1" label="" />
+            <bk-option value="2" label="" />
+          </bk-select>
+        </bk-form-item>
+      </div>
+      <div class="form-item-flex">
         <bk-form-item label="在职状态" required>
           <bk-radio-group>
             <bk-radio label="在职" />
@@ -78,14 +76,6 @@
             <bk-radio label="员工" />
             <bk-radio label="组长" />
           </bk-radio-group>
-        </bk-form-item>
-      </div>
-      <div class="form-item-flex">
-        <bk-form-item label="微信" property="weixi" required>
-          <bk-input v-model="formData.weixi" placeholder="请输入" />
-        </bk-form-item>
-        <bk-form-item label="QQ" property="qq" required>
-          <bk-input v-model="formData.qq" placeholder="请输入" />
         </bk-form-item>
       </div>
       <div class="form-item-flex">
@@ -114,8 +104,8 @@
       </div>
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary">
-        保存
+      <bk-button theme="primary" @click="handleSubmit">
+        提交
       </bk-button>
       <bk-button @click="() => $emit('handleCancelEdit')">
         取消
@@ -124,32 +114,29 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { ref, toRefs } from 'vue';
 
 const formRef = ref('');
 const inputRef = ref('');
 const formData = ref({
   username: '',
-  display_name: '',
-  data_source: '',
+  full_name: '',
   department_name: '',
   leader: '',
   email: '',
   telphone: '',
-  weixi: '',
-  qq: '',
   account_expiration_time: '',
   password_expiration_time: '',
 });
 const iti = null;
 const files: any = [];
 const rules = {
-  name: [
+  username: [
     {
       validator: (value: string) => value.length > 2,
       message: '姓名长度不能小于2',
-      trigger: 'change',
+      trigger: 'blur',
     },
   ],
 };
@@ -159,19 +146,22 @@ const handleRes = (response: any) => {
   }
   return false;
 };
+
+const handleSubmit = () => {};
 </script>
 
 <style lang="less" scoped>
 .edit-user-wrapper {
   position: relative;
+  overflow-x: hidden;
 
   .add-user-form {
     position: relative;
-    padding: 20px 40px 60px;
+    padding: 28px 40px 60px;
 
     .bk-upload {
       position: absolute;
-      top: 28px;
+      top: 54px;
       right: 32px;
     }
 

@@ -133,7 +133,7 @@ class TenantHandler:
     @staticmethod
     def retrieve_tenant_managers(tenant_id: str) -> List[TenantUserWithInheritedInfo]:
         """
-        查询单个租户的
+        查询单个租户的租户管理员
         """
         tenant_managers = TenantManager.objects.filter(tenant_id=tenant_id)
         # 查询管理员对应的信息
@@ -273,3 +273,14 @@ class TenantDepartmentHandler:
             )
             tenant_root_department_map[tenant_id] = tenant_root_department
         return tenant_root_department_map
+
+    @staticmethod
+    def get_tenant_department_children_by_id(tenant_department_id: int) -> List[TenantDepartmentBaseInfo]:
+        tenant_department = TenantDepartment.objects.get(id=tenant_department_id)
+        # 获取二级组织
+        children = DataSourceDepartmentRelation.objects.get(
+            department=tenant_department.data_source_department
+        ).get_children()
+        return TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
+            tenant_department.tenant_id, children.values_list("department_id", flat=True)
+        )

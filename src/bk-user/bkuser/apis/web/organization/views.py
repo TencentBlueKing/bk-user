@@ -14,7 +14,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.web.organization.serializers import TenantListOutputSLZ
+from bkuser.apis.web.organization.serializers import TenantDepartmentChildrenListOutputSLZ, TenantListOutputSLZ
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
 from bkuser.apps.tenant.models import Tenant
 from bkuser.biz.tenant import (
@@ -92,3 +92,19 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
 
         TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
         return Response()
+
+
+class TenantDepartmentChildrenListApi(generics.ListAPIView):
+    pagination_class = None
+    serializer_class = TenantDepartmentChildrenListOutputSLZ
+
+    @swagger_auto_schema(
+        operation_description="租户部门的二级子部门列表",
+        responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_department_id = self.kwargs["id"]
+        # 拉取子部门信息列表
+        tenant_department_children = TenantDepartmentHandler.get_tenant_department_children_by_id(tenant_department_id)
+        data = [item.model_dump(include={"id", "name", "has_children"}) for item in tenant_department_children]
+        return Response(self.get_serializer(data, many=True).data)
