@@ -50,29 +50,31 @@
 </template>
 
 <script setup lang="tsx">
-import { reactive, computed } from "vue";
-import EditInfo from "./EditDetailsInfo.vue";
+import { computed, reactive } from 'vue';
+
+import EditInfo from './EditDetailsInfo.vue';
+
 import {
   getTenantDetails,
-} from "@/http/tenantsFiles";
+} from '@/http/tenantsFiles';
 
 const userData = [];
 const userColumns = [
   {
-    label: "用户名",
-    field: "username",
+    label: '用户名',
+    field: 'username',
   },
   {
-    label: "全名",
-    field: "full_name",
+    label: '全名',
+    field: 'full_name',
   },
   {
-    label: "邮箱",
-    field: "email",
+    label: '邮箱',
+    field: 'email',
   },
   {
-    label: "手机号",
-    field: "phone",
+    label: '手机号',
+    field: 'phone',
   },
 ];
 
@@ -81,24 +83,24 @@ const state = reactive({
   tenantsData: {},
 });
 
-const userNumberVisible = computed(() => state.tenantsData?.feature_flags?.user_number_visible ? "显示" : "隐藏");
+const userNumberVisible = computed(() => (state.tenantsData?.feature_flags?.user_number_visible ? '显示' : '隐藏'));
 
 const fetchTenantDetails = async () => {
   await getTenantDetails('jianantest').then((res: any) => {
     state.tenantsData = res.data;
   });
-}
+};
 fetchTenantDetails();
 
 const handleClickEdit = () => {
   state.isEdit = true;
-}
+};
 
 const handleCancel = () => {
   state.isEdit = false;
-}
+};
 </script>
 
 <style lang="less" scoped>
-@import "@/css/tenantViewStyle.less";
+@import url("@/css/tenantViewStyle.less");
 </style>

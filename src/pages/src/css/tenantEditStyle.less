@@ -1,73 +1,91 @@
 .operation-wrapper {
   position: relative;
   background: #f5f7fa;
+
   .operation-content {
     padding: 0 24px;
+
     .operation-card {
-      list-style: none;
-      margin: 16px 0;
       padding: 16px 20px 24px;
+      margin: 16px 0;
+      list-style: none;
       background: #fff;
-      box-shadow: 0 2px 4px 0 #1919290d;
       border-radius: 2px;
+      box-shadow: 0 2px 4px 0 #1919290d;
+
       .operation-content-title {
         font-size: 14px;
-        color: #63656e;
         font-weight: 700;
         line-height: 40px;
+        color: #63656e;
       }
+
       .operation-content-info {
         display: flex;
         justify-content: space-between;
         padding-right: 60px;
+
         .operation-content-form {
           .bk-input {
             width: 420px;
           }
+
           :deep(.bk-form-error) {
-            width: 420px;
             position: initial !important;
+            width: 420px;
           }
         }
       }
+
       :deep(.bk-form-item) {
         &:last-child {
           margin-bottom: 0;
         }
       }
+
       .item-style {
         :deep(.bk-form-label) {
           float: unset;
           width: 100%;
           text-align: left;
         }
+
         :deep(.bk-form-content) {
           margin-left: 0 !important;
+
           .bk-form-error {
             left: 145px;
           }
         }
       }
+
       .operation-content-table {
         margin-top: 16px;
+
         :deep(.bk-table-body) {
           .cell {
             padding: 0 !important;
+
             .bk-form-item {
               margin-bottom: 0;
+
               .bk-form-content {
                 margin-left: 0 !important;
+
                 .bk-input {
                   height: 42px;
                   border-color: transparent;
                 }
+
                 .bk-input:hover:not(.is-disabled) {
                   border-color: #3a84ff;
                 }
               }
             }
+
             .user-icon {
               color: #dcdee5;
+
               &:hover {
                 color: #c4c6cc;
               }
@@ -77,12 +95,14 @@
       }
     }
   }
+
   .footer {
     position: fixed;
     bottom: 0;
     height: 48px;
-    line-height: 48px;
     padding: 0 24px;
+    line-height: 48px;
+
     .bk-button {
       width: 88px;
       margin-right: 8px;

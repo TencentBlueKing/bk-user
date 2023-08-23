@@ -136,38 +136,44 @@ const basicData = reactive([
 <style lang="less" scoped>
 .details-content {
   padding: 20px 40px;
+
   li {
+    position: relative;
     list-style: none;
     border-bottom: 1px solid #dcdee5;
-    position: relative;
+
     .details-content-info {
       width: calc(100% - 100px);
+
       .details-content-item {
-        line-height: 40px;
-        width: 100%;
         display: flex;
+        width: 100%;
+        line-height: 40px;
+
         .details-content-key {
-          font-size: 14px;
-          color: #63656e;
           display: inline-block;
           width: 100px;
-          text-align: right;
           overflow: hidden;
+          font-size: 14px;
+          color: #63656e;
+          text-align: right;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
+
         .details-content-value {
-          font-size: 14px;
-          color: #313238;
           display: inline-block;
           width: calc(100% - 100px);
           overflow: hidden;
+          font-size: 14px;
+          color: #313238;
           text-overflow: ellipsis;
           white-space: nowrap;
           vertical-align: top;
         }
       }
     }
+
     .user-logo {
       position: absolute;
       top: 20px;
@@ -178,6 +184,7 @@ const basicData = reactive([
       object-fit: contain;
     }
   }
+
   li:last-child {
     border-bottom: none;
   }

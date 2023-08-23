@@ -195,28 +195,33 @@ const handleBeforeClose = async () => {
 <style lang="less" scoped>
 .user-info-wrapper {
   width: 100%;
-  padding: 24px;
   height: calc(100vh - 140px);
+  padding: 24px;
+
   header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+
     .header-right {
       width: 320px;
     }
   }
 }
+
 .details-edit-wrapper {
   :deep(.bk-sideslider-title) {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 24px 0 50px !important;
+
     .bk-button {
       padding: 5px 17px !important;
     }
   }
+
   :deep(.bk-modal-content) {
     overflow-y: auto;
 

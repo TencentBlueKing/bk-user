@@ -40,13 +40,13 @@
             label="one_enum"
             name="egRadio"
             :disabled="isEdit"
-            >单选</bk-radio
+          >单选</bk-radio
           >
           <bk-radio
             label="multi_enum"
             name="egRadio"
             :disabled="isEdit"
-            >多选</bk-radio
+          >多选</bk-radio
           >
         </bk-radio-group>
       </div>
@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, reactive, ref, watch, computed } from "vue";
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 
 const props = defineProps({
   currentEditorData: {
@@ -175,10 +175,10 @@ let fieldsInfor = reactive({
   }, {
     id: 1, value: '', isErrorValue: false,
   }],
-  multiple: ["editable"],
+  multiple: ['editable'],
 });
 const state = reactive({
-  defaultSelected: "string",
+  defaultSelected: 'string',
   isDeleteOption: true,
   nameError: '',
   isRepeatClick: false,
@@ -193,20 +193,20 @@ const verifyInfor = reactive({
 });
 const typeList = [
   {
-    id: "string",
-    name: "字符串",
+    id: 'string',
+    name: '字符串',
   },
   {
-    id: "enum",
-    name: "枚举",
+    id: 'enum',
+    name: '枚举',
   },
   {
-    id: "number",
-    name: "数值",
+    id: 'number',
+    name: '数值',
   },
   {
-    id: "timer",
-    name: "日期",
+    id: 'timer',
+    name: '日期',
   },
 ];
 
@@ -214,25 +214,25 @@ const rulesFields = {
   name: [
     {
       required: true,
-      message: "必填项",
-      trigger: "blur",
+      message: '必填项',
+      trigger: 'blur',
     },
     {
       validator: (value: string) => value.length <= 12,
-      message: "最多不得超过12个字符（6个汉字）",
-      trigger: "blur",
+      message: '最多不得超过12个字符（6个汉字）',
+      trigger: 'blur',
     },
   ],
   key: [
     {
       required: true,
-      message: "必填项",
-      trigger: "blur",
+      message: '必填项',
+      trigger: 'blur',
     },
     {
       validator: (value: string) => /^[a-zA-Z]+$/.test(value),
-      message:"由英文字母组成",
-      trigger: "blur",
+      message: '由英文字母组成',
+      trigger: 'blur',
     },
   ],
 };
@@ -264,7 +264,7 @@ const initData = () => {
       state.defaultSelected = fieldsInfor.type;
     }
   }
-}
+};
 initData();
 
 // 下拉框 选择对应的类型，布尔值 字符串 枚举 数值
@@ -281,18 +281,18 @@ const selectedType = (newType, oldType) => {
     fieldsInfor.type = newType;
     state.isShowEg = false;
   }
-}
+};
 // 失焦校验枚举
 const verifyEgValue = (item) => {
   if (!item.value.length) {
     item.isErrorValue = true;
   }
-}
-  // 获焦隐藏枚举的错误提示
+};
+// 获焦隐藏枚举的错误提示
 const hiddenEgError = (item) => {
   item.isErrorValue = false;
   window.changeInput = true;
-}
+};
 // 删除枚举
 const deleteEg = (index) => {
   window.changeInput = true;
@@ -300,7 +300,7 @@ const deleteEg = (index) => {
     return;
   }
   fieldsInfor.options.splice(index, 1);
-}
+};
 // 添加枚举类型
 const addEg = () => {
   window.changeInput = true;
@@ -313,7 +313,7 @@ const addEg = () => {
     isErrorValue: false,
   };
   fieldsInfor.options.push(param);
-}
+};
 const getByteLen = (str) => {
   // 匹配所有的中文
   const reg = /[\u4E00-\u9FA5]/;
@@ -328,7 +328,7 @@ const getByteLen = (str) => {
     }
   }
   return len;
-}
+};
 // 表单校验
 const submitInfor = () => {
   fieldsRef.value.validate();
@@ -339,54 +339,57 @@ const submitInfor = () => {
       }
     });
   }
-}
+};
 </script>
 
 <style lang="less" scoped>
 .fields-add-wrapper {
-  padding: 24px 0;
   height: calc(100vh - 52px);
+  padding: 24px 0;
+
   .bk-form {
     padding: 0 24px;
   }
+
   .enumerate-wrapper {
     position: relative;
+    z-index: 10;
     padding: 0 30px;
     margin-bottom: 30px;
-    color: rgba(99, 101, 110, 1);
-    background: rgba(255, 255, 255, 1);
+    color: rgb(99 101 110 / 100%);
+    background: rgb(255 255 255 / 100%);
+    border: 1px solid rgb(221 228 235 / 100%);
     border-radius: 2px;
-    border: 1px solid rgba(221, 228, 235, 1);
-    z-index: 10;
+
     .arrow {
       position: absolute;
       top: -5px;
       left: 51px;
+      z-index: 10;
       width: 8px;
       height: 8px;
+      background: white;
       border-top: 1px solid #dde4eb;
       border-left: 1px solid #dde4eb;
       transform: rotate(45deg);
-      z-index: 10;
-      background: white;
     }
 
     .enum-title {
-      line-height: 38px;
-      font-weight: bold;
-      color: rgba(115, 121, 135, 1);
       font-size: 0;
+      font-weight: bold;
+      line-height: 38px;
+      color: rgb(115 121 135 / 100%);
 
       .text,
       .icon {
         display: inline-block;
-        vertical-align: middle;
         font-size: 14px;
+        vertical-align: middle;
       }
 
       .icon {
-        font-size: 16px;
         margin-right: 6px;
+        font-size: 16px;
       }
 
       .text {
@@ -425,32 +428,32 @@ const submitInfor = () => {
 
         span {
           display: inline-block;
-          vertical-align: middle;
           font-size: 14px;
+          vertical-align: middle;
 
           &.default {
             width: 56px;
           }
 
           &.text {
-            margin-left: 20px;
-            margin-right: 10px;
             width: 200px;
+            margin-right: 10px;
+            margin-left: 20px;
           }
         }
       }
 
       .content-list {
         padding-bottom: 10px;
-        font-size: 0;
         margin-bottom: 10px;
+        font-size: 0;
 
         .select-box {
           position: relative;
           display: inline-block;
-          vertical-align: middle;
-          font-size: 14px;
           height: 32px;
+          font-size: 14px;
+          vertical-align: middle;
 
           &.default-box {
             width: 56px;
@@ -474,19 +477,19 @@ const submitInfor = () => {
           }
 
           &.text-box {
-            margin: 0 20px;
             width: 200px;
+            margin: 0 20px;
           }
 
           > .select-text {
-            padding-left: 10px;
-            height: 32px;
-            line-height: 32px;
             width: 100%;
-            resize: none;
-            outline: none;
+            height: 32px;
+            padding-left: 10px;
+            line-height: 32px;
             border: 1px solid #c4c6cc;
             border-radius: 2px;
+            outline: none;
+            resize: none;
           }
 
           > .input-container {
@@ -510,21 +513,21 @@ const submitInfor = () => {
               > input[type="radio"] {
                 width: 16px;
                 height: 16px;
+                color: #fff;
+                cursor: pointer;
+                background-color: #fff;
                 border: 1px solid #979ba5;
                 border-radius: 50%;
-                background-color: #fff;
-                background-clip: content-box;
                 outline: none;
-                color: #fff;
                 visibility: visible;
-                cursor: pointer;
+                background-clip: content-box;
                 appearance: none;
 
                 &.is-checked {
                   padding: 3px;
                   color: #3a84ff;
-                  border-color: currentColor;
-                  background-color: currentColor;
+                  background-color: currentcolor;
+                  border-color: currentcolor;
                 }
               }
             }
@@ -533,14 +536,14 @@ const submitInfor = () => {
           > .user-icon {
             position: relative;
             top: 6px;
-            cursor: pointer;
             margin-right: 5px;
             font-size: 20px;
             color: #c7d1da;
+            cursor: pointer;
 
             &.forbid {
-              cursor: not-allowed;
               color: #c4c6cc;
+              cursor: not-allowed;
             }
 
             &:last-child {
@@ -558,10 +561,12 @@ const submitInfor = () => {
       }
     }
   }
+
   .select-type {
     display: flex;
     padding: 0 24px 30px;
   }
+
   .submit-btn {
     padding: 0 24px;
 
