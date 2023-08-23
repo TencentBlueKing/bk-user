@@ -33,4 +33,4 @@ class TenantDepartmentChildrenListApi(generics.ListAPIView):
         # 拉取子部门信息列表
         tenant_department_children = TenantDepartmentHandler.get_tenant_department_children_by_id(tenant_department_id)
         data = [item.model_dump(include={"id", "name", "has_children"}) for item in tenant_department_children]
-        return Response(self.get_serializer(data, many=True).data)
+        return Response(TenantDepartmentChildrenListOutputSLZ(data, many=True).data)
