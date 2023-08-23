@@ -14,11 +14,9 @@ from rest_framework import generics, status
 from bkuser.apis.web.data_source.serializers import UserSearchInputSLZ, UserSearchOutputSLZ
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.common.error_codes import error_codes
-from bkuser.common.pagination import CustomPageNumberPagination
 
 
 class DataSourceUserListCreateApi(generics.ListCreateAPIView):
-    pagination_class = CustomPageNumberPagination
     serializer_class = UserSearchOutputSLZ
 
     def get_queryset(self):
@@ -28,9 +26,8 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         data_source_id = self.kwargs["id"]
 
         # 校验数据源是否存在
-        try:
-            data_source = DataSource.objects.get(id=data_source_id)
-        except Exception:
+        data_source = DataSource.objects.filter(id=data_source_id).first()
+        if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
         queryset = DataSourceUser.objects.filter(data_source=data_source)

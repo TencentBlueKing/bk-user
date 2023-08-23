@@ -14,7 +14,7 @@ from rest_framework import serializers
 from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation, DataSourceUser
 
 
-class DataSourceSearchDepartmentsOutputSchema(serializers.Serializer):
+class DataSourceSearchDepartmentsOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
 
@@ -23,7 +23,6 @@ class UserSearchInputSLZ(serializers.Serializer):
     username = serializers.CharField(required=False, help_text="用户名", allow_blank=True)
 
 
-@swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSchema(many=True))
 class UserSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户ID")
     username = serializers.CharField(help_text="用户名")
@@ -32,7 +31,8 @@ class UserSearchOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱")
     departments = serializers.SerializerMethodField(help_text="用户部门")
 
-    # TODO:考虑抽象一个函数 获取数据后传递到context
+    # FIXME:考虑抽象一个函数 获取数据后传递到context
+    @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser):
         return [
             {"id": department_user_relation.department.id, "name": department_user_relation.department.name}
