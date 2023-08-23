@@ -42,10 +42,8 @@ class DataSource(TimestampedModel):
         ordering = ["id"]
 
     @property
-    def user_editable(self) -> bool:
-        if self.plugin.id == "local":
-            return True
-        return False
+    def editable(self) -> bool:
+        return self.plugin.id == "local"
 
 
 class DataSourceUser(TimestampedModel):

@@ -20,3 +20,8 @@ class BkLanguageEnum(str, StructuredEnum):
 
 # 永久：2100-01-01 00:00:00
 PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, second=0)
+
+# 中国手机号地区码
+CHINESE_REGION = "CN"
+# 中国手机号长度
+CHINESE_PHONE_LENGTH = 11

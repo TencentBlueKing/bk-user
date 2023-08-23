@@ -11,11 +11,10 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import phonenumbers
-from django.utils.translation import gettext_lazy as _
 from phonenumbers import NumberParseException, region_code_for_country_code
-from rest_framework import serializers
 
-from bkuser.apps.data_source.constants import CHINESE_PHONE_LENGTH, CHINESE_REGION
+from bkuser.common.constants import CHINESE_PHONE_LENGTH, CHINESE_REGION
+from bkuser.common.error_codes import error_codes
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +25,16 @@ def validate_phone_with_country_code(phone: str, country_code: str):
 
     except ValueError:
         logger.debug("failed to parse phone_country_code: %s, ", country_code)
-        raise serializers.ValidationError(_("手机地区码 {} 不符合解析规则").format(country_code))
+        raise error_codes.PHONE_PARSE_ERROR.f("手机地区码 {} 解析异常".format(country_code))
 
     # phonenumbers库在验证号码的时：过短会解析为有效号码，超过250的字节才算超长
     # =》所以这里需要显式做中国号码的长度校验
     if region == CHINESE_REGION and len(phone) != CHINESE_PHONE_LENGTH:
-        raise serializers.ValidationError(_("手机号 {} 不符合长度要求").format(phone))
-
+        raise error_codes.PHONE_PARSE_ERROR.f("手机号 {} 长度异常".format(phone))
     try:
         # 按照指定地区码解析手机号
         phonenumbers.parse(phone, region)
 
     except NumberParseException:  # pylint: disable=broad-except
         logger.debug("failed to parse phone number: %s", phone)
-        raise serializers.ValidationError(_("手机号 {} 不符合规则").format(phone))
+        raise error_codes.PHONE_PARSE_ERROR.f("手机号 {} 解析异常".format(phone))

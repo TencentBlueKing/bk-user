@@ -66,6 +66,9 @@ class ErrorCodes:
         code_category=ErrorCodeCategoryEnum.INTERNAL,
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
+    # 手机号校验
+    PHONE_PARSE_ERROR = ErrorCode(_("手机号码解析异常"))
+
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
     # 数据源

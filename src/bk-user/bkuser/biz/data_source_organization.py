@@ -51,8 +51,7 @@ class DataSourceOrganizationHandler:
         # TODO：补充日志
         with transaction.atomic():
             # 创建数据源用户
-            create_user_info_map = {"data_source": data_source, **base_user_info.model_dump()}
-            user = DataSourceUser.objects.create(**create_user_info_map)
+            user = DataSourceUser.objects.create(data_source=data_source, **base_user_info.model_dump())
 
             # 批量创建数据源用户-部门关系
             department_user_relation_objs = [
