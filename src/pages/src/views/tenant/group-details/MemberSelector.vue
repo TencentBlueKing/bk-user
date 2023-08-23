@@ -50,7 +50,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue", "selcetList", "scrollChange", "searchUserList"]);
+const emit = defineEmits(["update:modelValue", "selectList", "scrollChange", "searchUserList"]);
 const isFocous = ref(false);
 const scrollLoading = ref(false);
 
@@ -71,14 +71,14 @@ const handleClick = () => {
       list.push(item);
     }
   });
-  emit("selcetList", list);
+  emit("selectList", list);
 }
 const handleCancel = () => {
-  emit("selcetList");
+  emit("selectList", []);
   emit("searchUserList", "");
 }
 const handleScrollEnd = () => {
-  if (props.params.page_size > props.state.count) return;
+  if (props.params.page_size >= props.state.count) return;
   scrollLoading.value = true;
   setTimeout(() => {
     emit("scrollChange");
