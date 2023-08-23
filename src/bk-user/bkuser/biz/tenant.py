@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourcePlugin, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
-from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceHandler
+from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceHandler, DataSourceSimpleInfo
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -135,10 +135,8 @@ class TenantHandler:
         """
         查询单个租户的租户管理员
         """
-        tenant_managers = TenantManager.objects.filter(tenant_id=tenant_id)
-        # 查询管理员对应的信息
-        tenant_user_ids = [i.tenant_user_id for i in tenant_managers]
-        return TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)
+        # 查询单个租户的管理员对应的信息
+        return TenantHandler.get_tenant_manager_map([tenant_id]).get(tenant_id) or []
 
     @staticmethod
     def create_with_managers(tenant_info: TenantBaseInfo, managers: List[TenantManagerWithoutID]) -> str:
@@ -204,6 +202,19 @@ class TenantHandler:
                     batch_size=100,
                 )
 
+    @staticmethod
+    def get_data_source_ids_map_by_id(tenant_ids: List[str]) -> Dict[str, List[int]]:
+        # 当前属于租户的数据源
+        tenant_data_source_map: Dict = {}
+        data_sources: Dict[str, List[DataSourceSimpleInfo]] = DataSourceHandler.get_data_source_map_by_owner(
+            tenant_ids
+        )
+        for tenant_id, data_source_list in data_sources.items():
+            data_source_ids: List = [data_source.id for data_source in data_source_list]
+            tenant_data_source_map[tenant_id] = data_source_ids
+        # TODO 协同数据源获取
+        return tenant_data_source_map
+
 
 class TenantDepartmentHandler:
     @staticmethod
@@ -217,12 +228,12 @@ class TenantDepartmentHandler:
         tenant_departments = TenantDepartment.objects.filter(tenant_id=tenant_id)
 
         # 获取数据源部门基础信息
-        data_source_departments = DataSourceDepartmentHandler.get_department_info_by_id(data_source_department_ids)
+        data_source_departments = DataSourceDepartmentHandler.get_department_info_map_by_id(data_source_department_ids)
 
         # data_source_departments中包含了父子部门的ID，协同数据源需要查询绑定了该租户
         department_ids = list(data_source_departments.keys())
         for department in data_source_departments.values():
-            department_ids += department.children
+            department_ids += department.children_ids
 
         # NOTE: 协同数据源，可能存在未授权全部子部门
         # 提前拉取所有映射, 过滤绑定的租户部门
@@ -243,7 +254,9 @@ class TenantDepartmentHandler:
             # 部门基础信息
             data_source_department_info = data_source_departments[data_source_department_id]
             # 只要一个子部门被授权，都是存在子部门
-            children_flag = [True for child in data_source_department_info.children if child in bound_departments_ids]
+            children_flag = [
+                True for child in data_source_department_info.children_ids if child in bound_departments_ids
+            ]
             data.append(
                 TenantDepartmentBaseInfo(
                     id=tenant_department.id,
@@ -254,10 +267,10 @@ class TenantDepartmentHandler:
         return data
 
     @staticmethod
-    def get_tenant_root_departments_by_id(
-        tenant_ids: List[str], convert_tenant_id: str
+    def get_tenant_root_department_map_by_tenant_id(
+        tenant_ids: List[str], current_tenant_id: str
     ) -> Dict[str, List[TenantDepartmentBaseInfo]]:
-        data_source_map = DataSourceHandler.get_data_sources_by_tenant(tenant_ids)
+        data_source_map = TenantHandler.get_data_source_ids_map_by_id(tenant_ids)
 
         # 通过获取数据源的根节点
         tenant_root_department_map: Dict = {}
@@ -267,9 +280,9 @@ class TenantDepartmentHandler:
                 .filter(data_source_id__in=data_source_ids)
                 .values_list("department_id", flat=True)
             )
-            # 转换数据源部门为当前为 convert_tenant_id租户的租户部门
+            # 转换数据源部门为当前为 current_tenant_id 租户的租户部门
             tenant_root_department = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
-                tenant_id=convert_tenant_id, data_source_department_ids=list(root_department_ids)
+                tenant_id=current_tenant_id, data_source_department_ids=list(root_department_ids)
             )
             tenant_root_department_map[tenant_id] = tenant_root_department
         return tenant_root_department_map
