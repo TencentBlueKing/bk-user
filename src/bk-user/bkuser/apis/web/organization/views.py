@@ -39,7 +39,7 @@ class TenantListApi(generics.ListAPIView):
 
     def get_serializer_context(self):
         tenant_ids = list(self.queryset.values_list("id", flat=True))
-        tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_departments_by_id(
+        tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_department_map_by_tenant_id(
             tenant_ids, self._get_tenant_id()
         )
         return {"tenant_root_departments_map": tenant_root_departments_map}
@@ -107,4 +107,4 @@ class TenantDepartmentChildrenListApi(generics.ListAPIView):
         # 拉取子部门信息列表
         tenant_department_children = TenantDepartmentHandler.get_tenant_department_children_by_id(tenant_department_id)
         data = [item.model_dump(include={"id", "name", "has_children"}) for item in tenant_department_children]
-        return Response(self.get_serializer(data, many=True).data)
+        return Response(TenantDepartmentChildrenListOutputSLZ(data, many=True).data)

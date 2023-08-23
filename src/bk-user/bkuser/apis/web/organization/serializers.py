@@ -36,10 +36,7 @@ class TenantListOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=TenantDepartmentOutputSLZ(many=True))
     def get_departments(self, instance: Tenant):
-        departments = self.context["tenant_root_departments_map"].get(instance.id)
-        # 可能存在了授权了数据源，但是一个根部门都未授权的情况存在
-        if not departments:
-            return []
+        departments = self.context["tenant_root_departments_map"].get(instance.id) or []
         return [item.model_dump(include={"id", "name", "has_children"}) for item in departments]
 
 
