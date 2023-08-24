@@ -17,7 +17,7 @@ from rest_framework import serializers
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceSimpleInfo
-from bkuser.biz.tenant import TenantHandler, TenantUserWithInheritedInfo
+from bkuser.biz.tenant import TenantUserWithInheritedInfo
 from bkuser.biz.validators import validate_tenant_id
 
 
@@ -125,14 +125,16 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=TenantRetrieveManagerOutputSLZ(many=True))
     def get_managers(self, obj: Tenant) -> List[Dict]:
-        # 根据当前登录的租户用户，获取租户ID
-        # NOTE 因协同数据源而展示的租户，不返回管理员
-        if obj.id != self.context["current_tenant_id"]:
-            return []
-        managers = TenantHandler.retrieve_tenant_managers(obj.id)
+        tenant_manager_map: Dict[str, List[TenantUserWithInheritedInfo]] = self.context["tenant_manager_map"]
+        managers = tenant_manager_map.get(obj.id) or []
         return [
-            {"id": manager.id, **manager.data_source_user.model_dump(include={"username", "full_name"})}
-            for manager in managers
+            {
+                "id": i.id,
+                **i.data_source_user.model_dump(
+                    include={"username", "full_name", "email", "phone", "phone_country_code"}
+                ),
+            }
+            for i in managers
         ]
 
     def get_logo(self, obj: Tenant) -> str:
