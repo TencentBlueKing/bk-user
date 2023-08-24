@@ -62,7 +62,8 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         return self.request.user.get_property("tenant_id")
 
     def get_serializer_context(self):
-        return {"current_tenant_id": self._get_tenant_id()}
+        current_tenant_id = self._get_tenant_id()
+        return {"tenant_manager_map": {current_tenant_id: TenantHandler.retrieve_tenant_managers(current_tenant_id)}}
 
     @swagger_auto_schema(
         operation_description="单个租户详情",
