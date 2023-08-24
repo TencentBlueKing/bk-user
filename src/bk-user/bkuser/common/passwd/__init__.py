@@ -8,13 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
+from .exceptions import PasswordStrengthError
+from .generator import PasswordGenerator
+from .models import PasswordRule, ValidateResult
+from .validator import PasswordValidator
 
-urlpatterns = [
-    # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
-    path("basic/", include("bkuser.apis.web.basic.urls")),
-    # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
+__all__ = [
+    # 密码规则
+    "PasswordRule",
+    # 密码生成器
+    "PasswordGenerator",
+    # 密码强度校验器
+    "PasswordValidator",
+    # 密码校验结果
+    "ValidateResult",
+    # 密码强度过低异常
+    "PasswordStrengthError",
 ]
