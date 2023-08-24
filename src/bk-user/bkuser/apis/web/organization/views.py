@@ -32,7 +32,6 @@ from bkuser.biz.tenant import (
     TenantUserHandler,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.pagination import CustomPageNumberPagination
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
@@ -41,7 +40,6 @@ logger = logging.getLogger(__name__)
 class TenantDepartmentUserListApi(generics.ListAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    pagination_class = CustomPageNumberPagination
     serializer_class = TenantDepartmentUserListOutputSLZ
 
     def get_serializer_context(self):
@@ -66,7 +64,9 @@ class TenantDepartmentUserListApi(generics.ListAPIView):
         }
 
     @swagger_auto_schema(
-        operation_description="租户部门下用户详情列表",
+        tags=["tenant-organization"],
+        operation_description="租户部门下用户列表",
+        query_serializer=TenantDepartmentUserSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
@@ -82,9 +82,7 @@ class TenantDepartmentUserListApi(generics.ListAPIView):
         queryset = self.filter_queryset(self.get_queryset().filter(id__in=tenant_user_ids))
         if keyword := data.get("keyword"):
             queryset = queryset.select_related("data_source_user").filter(
-                Q(data_source_user__username__icontains=keyword)
-                | Q(data_source_user__email__icontains=keyword)
-                | Q(data_source_user__phone__icontains=keyword),
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -101,6 +99,7 @@ class TenantUsersRetrieveApi(generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
+        tags=["tenant-organization"],
         operation_description="租户部门下单个用户详情",
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
@@ -124,6 +123,7 @@ class TenantListApi(generics.ListAPIView):
         return {"tenant_root_departments_map": tenant_root_departments_map}
 
     @swagger_auto_schema(
+        tags=["tenant-organization"],
         operation_description="租户列表",
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
@@ -145,6 +145,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         return {"tenant_manager_map": {current_tenant_id: TenantHandler.retrieve_tenant_managers(current_tenant_id)}}
 
     @swagger_auto_schema(
+        tags=["tenant-organization"],
         operation_description="单个租户详情",
         responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
     )
@@ -152,6 +153,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         return self.retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        tags=["tenant-organization"],
         operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
         responses={status.HTTP_200_OK: ""},
@@ -179,6 +181,7 @@ class TenantDepartmentChildrenListApi(generics.ListAPIView):
     serializer_class = TenantDepartmentChildrenListOutputSLZ
 
     @swagger_auto_schema(
+        tags=["tenant-organization"],
         operation_description="租户部门的二级子部门列表",
         responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
     )

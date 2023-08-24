@@ -16,7 +16,6 @@ from rest_framework import serializers
 
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
-from bkuser.common.serializers import PagePageNumberInputSLZ
 
 
 class TenantDepartmentOutputSLZ(serializers.Serializer):
@@ -36,7 +35,7 @@ class TenantUserLeaderOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="租户名称")
 
 
-class TenantDepartmentUserSearchInputSLZ(PagePageNumberInputSLZ):
+class TenantDepartmentUserSearchInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
     keyword = serializers.CharField(help_text="搜索关键字", required=False)
 
@@ -52,7 +51,6 @@ class TenantUserInfoOutputSLZ(serializers.Serializer):
     )
     account_expired_at = serializers.DateTimeField(help_text="账号过期时间")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
-    leaders = serializers.SerializerMethodField(help_text="用户上级")
 
 
 class TenantDepartmentUserListOutputSLZ(TenantUserInfoOutputSLZ):
@@ -60,11 +58,6 @@ class TenantDepartmentUserListOutputSLZ(TenantUserInfoOutputSLZ):
     def get_departments(self, instance: TenantUser) -> List[Dict]:
         departments = self.context["tenant_user_departments"].get(instance.id) or []
         return [{"id": i.id, "name": i.name} for i in departments]
-
-    @swagger_serializer_method(serializer_or_field=TenantUserLeaderOutputSLZ(many=True))
-    def get_leaders(self, instance: TenantUser) -> List[Dict]:
-        leader_infos = self.context["tenant_user_leaders"].get(instance.id) or []
-        return [{"id": i.id, "username": i.username, "full_name": i.full_name} for i in leader_infos]
 
     def to_representation(self, instance: TenantUser) -> Dict:
         data = super().to_representation(instance)
@@ -85,6 +78,8 @@ class TenantDepartmentUserListOutputSLZ(TenantUserInfoOutputSLZ):
 
 
 class TenantUserRetrieveOutputSLZ(TenantUserInfoOutputSLZ):
+    leaders = serializers.SerializerMethodField(help_text="用户上级")
+
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, instance: TenantUser) -> List[Dict]:
         tenant_user_departments = TenantUserHandler.get_tenant_user_departments_map_by_id([instance.id])

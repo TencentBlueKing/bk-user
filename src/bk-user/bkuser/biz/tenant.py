@@ -17,19 +17,23 @@ from pydantic import BaseModel
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartmentRelation,
-    DataSourceDepartmentUserRelation,
     DataSourcePlugin,
     DataSourceUser,
-    DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
-from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceHandler, DataSourceSimpleInfo
+from bkuser.biz.data_source import (
+    DataSourceDepartmentHandler,
+    DataSourceHandler,
+    DataSourceSimpleInfo,
+    DataSourceUserHandler,
+)
 from bkuser.utils.uuid import generate_uuid
 
 
 class DataSourceUserInfo(BaseModel):
     """数据源用户信息"""
 
+    id: int
     username: str
     full_name: str
     email: str
@@ -108,6 +112,7 @@ class TenantUserHandler:
                 TenantUserWithInheritedInfo(
                     id=i.id,
                     data_source_user=DataSourceUserInfo(
+                        id=data_source_user.id,
                         username=data_source_user.username,
                         full_name=data_source_user.full_name,
                         email=data_source_user.email,
@@ -122,58 +127,63 @@ class TenantUserHandler:
 
     @staticmethod
     def get_tenant_user_leaders_map_by_id(tenant_user_ids: List[str]) -> Dict[str, List[TenantUserLeaderInfo]]:
-        tenant_users = TenantUser.objects.filter(id__in=tenant_user_ids)
-        # 从数据源中获取租户用户每个上级
-        data_source_leaders = DataSourceUserLeaderRelation.objects.filter(
-            user_id__in=tenant_users.values_list("data_source_user_id")
+        tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
+        # 从数据源中获取租户用户每个上级, 获取数据源用户上下级映射
+        data_source_user_leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(
+            tenant_users.values_list("data_source_user_id", flat=True)
         )
-        # 数据源上下级关系映射
-        data_source_leaders_map: Dict[int, List[int]] = {}
-        for item in data_source_leaders:
-            if item.user_id in data_source_leaders_map:
-                data_source_leaders_map[item.user_id].append(item.leader_id)
-            else:
-                data_source_leaders_map[item.user_id] = [item.leader_id]
 
         # NOTE：如果用户通过协同数据源而来，被授权的上级一定会绑定该租户
+        data_source_leader_ids: List = []
+        for leader_ids in data_source_user_leader_ids_map.values():
+            data_source_leader_ids += leader_ids
         tenant_user_leaders = TenantUser.objects.select_related("data_source_user").filter(
-            data_source_user_id__in=data_source_leaders.values_list("leader_id", flat=True),
+            data_source_user_id__in=set(data_source_leader_ids),
             tenant_id=tenant_users.first().tenant_id,
         )
 
-        # 转换上级数据为租户数据
-        data_source_leader_convert_tenant_user_map: Dict[int, TenantUserLeaderInfo] = {}
-        for leader in tenant_user_leaders:
-            user = leader.data_source_user
-            data_source_leader_convert_tenant_user_map[leader.data_source_user_id] = TenantUserLeaderInfo(
-                id=leader.id,
-                username=user.username,
-                full_name=user.full_name,
+        tenant_user_leaders_info = TenantUserHandler.list_tenant_user_by_id(
+            tenant_user_leaders.values_list("id", flat=True)
+        )
+        # 构建上级在数据源用户ID-租户用户数据源的关系映射
+        data_source_leader_convert_tenant_user_map: Dict = {}
+        for user in tenant_user_leaders_info:
+            data_source_leader_convert_tenant_user_map[user.data_source_user.id] = TenantUserLeaderInfo(
+                id=user.id,
+                username=user.data_source_user.username,
+                full_name=user.data_source_user.full_name,
             )
 
-        # 租户用户ID-租户用户上级数据 整合
-        tenant_user_leaders_map: Dict = {}
-        for item in tenant_users:
-            data_source_leaders = data_source_leaders_map.get(item.data_source_user_id)
-            if not data_source_leaders:
+        # 租户用户ID-租户上级用户数据映射
+        tenant_user_leaders_map = defaultdict(list)
+        for user in tenant_users:
+            data_source_user_leader_ids: List = data_source_user_leader_ids_map.get(user.data_source_user.id) or []
+            # 判断数据源中该用户是否有上级
+            if not data_source_user_leader_ids:
                 continue
+            # 判断该租户用户的上级是否绑定了该租户
             data = [
-                data_source_leader_convert_tenant_user_map[i]
-                for i in data_source_leaders
-                if data_source_leader_convert_tenant_user_map.get(i)
+                data_source_leader_convert_tenant_user_map[leader_id]
+                for leader_id in data_source_user_leader_ids
+                if data_source_leader_convert_tenant_user_map.get(leader_id)
             ]
-            tenant_user_leaders_map[item.id] = data
+            tenant_user_leaders_map[user.id] = data
+
         return tenant_user_leaders_map
 
     @staticmethod
     def get_tenant_user_departments_map_by_id(tenant_user_ids: List[str]) -> Dict[str, List[TenantDepartmentBaseInfo]]:
         tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
-        data: Dict = {}
+        # 数据源用户-部门关系映射
+        data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
+            data_source_user_ids=tenant_users.values_list("data_source_user_id", flat=True)
+        )
+        # 租户用户-租户部门数据关系
+        data: Dict = defaultdict(list)
         for tenant_user in tenant_users:
-            departments = DataSourceDepartmentUserRelation.objects.filter(user=tenant_user.data_source_user)
-            if not departments.exists():
+            department_ids = data_source_user_department_ids_map.get(tenant_user.data_source_user_id) or []
+            if not department_ids:
                 continue
-            department_ids = list(departments.values_list("department_id", flat=True))
             tenant_department_infos = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
                 tenant_id=tenant_user.tenant_id, data_source_department_ids=department_ids
             )
@@ -184,7 +194,7 @@ class TenantUserHandler:
     @staticmethod
     def get_tenant_user_ids_by_tenant_department(tenant_department_id: int, recursive: bool = True):
         tenant_department = TenantDepartment.objects.get(id=tenant_department_id)
-        data_source_user_ids = DataSourceDepartmentHandler.get_user_ids_by_department_id(
+        data_source_user_ids = DataSourceDepartmentHandler.list_department_user_ids(
             department_id=tenant_department.data_source_department_id, recursive=recursive
         )
         return list(
@@ -291,7 +301,7 @@ class TenantHandler:
     @staticmethod
     def get_data_source_ids_map_by_id(tenant_ids: List[str]) -> Dict[str, List[int]]:
         # 当前属于租户的数据源
-        tenant_data_source_map: Dict = {}
+        tenant_data_source_map = defaultdict(list)
         data_sources: Dict[str, List[DataSourceSimpleInfo]] = DataSourceHandler.get_data_source_map_by_owner(
             tenant_ids
         )
@@ -359,7 +369,7 @@ class TenantDepartmentHandler:
         data_source_map = TenantHandler.get_data_source_ids_map_by_id(tenant_ids)
 
         # 通过获取数据源的根节点
-        tenant_root_department_map: Dict = {}
+        tenant_root_department_map = defaultdict(list)
         for tenant_id, data_source_ids in data_source_map.items():
             root_department_ids = (
                 DataSourceDepartmentRelation.objects.root_nodes()
