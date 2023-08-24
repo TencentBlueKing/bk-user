@@ -29,7 +29,7 @@ class PasswordGenerator:
 
     def generate(self) -> str:
         """生成密码"""
-        for __ in range(settings.GENERATE_RANDOM_PASSWORD_MAX_TRY_TIMES):
+        for __ in range(settings.GENERATE_RANDOM_PASSWORD_MAX_RETRIES):
             password = self._gen_random_password()
             if self._validate(password).ok:
                 return password
