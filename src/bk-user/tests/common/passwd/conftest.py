@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.utils.passwd import PasswordRule
+from bkuser.common.passwd import PasswordRule
 
 
 @pytest.fixture()

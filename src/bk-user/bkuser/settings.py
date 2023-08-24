@@ -471,3 +471,16 @@ DEFAULT_PHONE_COUNTRY_CODE = env.str("DEFAULT_PHONE_COUNTRY_CODE", default="86")
 # FIXME:  待新版登录完成后删除Mock用户租户数据，格式：key1=value1;key2=value2
 MOCK_USER_TENANTS = env.dict("MOCK_USER_TENANTS", default={})
 MOCK_USER_DEFAULT_TENANT = env.str("MOCK_USER_DEFAULT_TENANT", default="")
+
+# 密码强度相关限制
+# 最小密码长度，过小的下限会导致在选择严格的规则后，难以生成/设置合法的密码（建议最低值 9）
+MIN_PASSWORD_LENGTH = env.int("MIN_PASSWORD_LENGTH", 10)
+# 最小的限制连续长度，过小的下限会导致难以生成/设置合法的密码（建议最低值 3）
+MIN_NOT_CONTINUOUS_COUNT = env.int("MIN_NOT_CONTINUOUS_COUNT", 3)
+# 弱密码词总长度占总密码长度的最大阈值，过高的阈值可能导致密码中包含过多的
+# 诸如 random, password，123456 之类的弱密码常见词（建议最高值 0.6）
+MAX_WEAK_PASSWD_COMBINATION_THRESHOLD = env.float("MAX_WEAK_PASSWD_COMBINATION_THRESHOLD", 0.5)
+# 根据规则随机生成密码最大重试次数，若密码规则不合理，将无法在有限次数内成功生成
+GENERATE_RANDOM_PASSWORD_MAX_TRY_TIMES = env.int("GENERATE_RANDOM_PASSWORD_TRY_TIMES", 10)
+# zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
+MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)

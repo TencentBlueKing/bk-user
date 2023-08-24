@@ -11,8 +11,12 @@ specific language governing permissions and limitations under the License.
 import random
 import string
 
-from bkuser.utils.passwd.models import PasswordRule, ValidateResult
-from bkuser.utils.passwd.validator import PasswordValidator
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+
+from bkuser.common.passwd.exceptions import PasswordGenerateError
+from bkuser.common.passwd.models import PasswordRule, ValidateResult
+from bkuser.common.passwd.validator import PasswordValidator
 
 
 class PasswordGenerator:
@@ -25,11 +29,12 @@ class PasswordGenerator:
 
     def generate(self) -> str:
         """生成密码"""
-        while True:
-            # TODO 特别极端的情况：规则过于严苛，一直无法生成合适的密码？目前通过限制 Rule 参数下限解决
+        for __ in range(settings.GENERATE_RANDOM_PASSWORD_MAX_TRY_TIMES):
             password = self._gen_random_password()
             if self._validate(password).ok:
                 return password
+
+        raise PasswordGenerateError(_("无法在有限次数内生成符合预设规则的随机密码，请调整规则"))
 
     def _gen_charsets(self) -> str:
         """根据指定的规则，生成可选字符集"""

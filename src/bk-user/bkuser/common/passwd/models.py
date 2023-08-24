@@ -11,9 +11,11 @@ specific language governing permissions and limitations under the License.
 
 from typing import List
 
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, model_validator
 
-from bkuser.utils.passwd.constants import MIN_NOT_CONTINUOUS_COUNT, MIN_PASSWORD_LENGTH
+from bkuser.common.passwd.constants import ZxcvbnPattern
 
 
 class PasswordRule(BaseModel):
@@ -50,12 +52,12 @@ class PasswordRule(BaseModel):
     @model_validator(mode="after")
     def validate_attrs(self) -> "PasswordRule":
         """校验密码规则是否合法"""
-        if self.min_length < MIN_PASSWORD_LENGTH:
-            raise ValueError(f"min_length must be greater than or equal to {MIN_PASSWORD_LENGTH}")
+        if self.min_length < settings.MIN_PASSWORD_LENGTH:
+            raise ValueError(_("密码最小长度不得小于 {} 位").format(settings.MIN_PASSWORD_LENGTH))
 
         # 限制的最小长度，大于最大长度，不是合法的规则
         if self.min_length > self.max_length:
-            raise ValueError("min_length cannot greater than max_length")
+            raise ValueError(_("密码最小长度不得大于最大长度"))
 
         # 没有选择任意字符集，不是合法的规则
         if not any(
@@ -66,30 +68,34 @@ class PasswordRule(BaseModel):
                 self.contain_punctuation,
             ]
         ):
-            raise ValueError(
-                "at least one of contain_lowercase, contain_uppercase, "
-                "contain_digit, contain_punctuation must be True",
-            )
+            raise ValueError(_("至少应该选择小写字母，大写字母，数字，特殊符号中的一个字符集"))
+
+        any_continuous_scene_selected = any(
+            [
+                self.not_keyboard_order,
+                self.not_continuous_letter,
+                self.not_continuous_digit,
+                self.not_repeated_symbol,
+            ]
+        )
 
         # 如果设置【密码不允许连续 N 位出现】的限制，则
         if self.not_continuous_count:
             # 1. 该 N 值不允许低于下限，否则会难以生成/设置合法的密码
-            if self.not_continuous_count < MIN_NOT_CONTINUOUS_COUNT:
-                raise ValueError(f"not_continuous_count cannot less than {MIN_NOT_CONTINUOUS_COUNT} when set")
+            if self.not_continuous_count < settings.MIN_NOT_CONTINUOUS_COUNT:
+                raise ValueError(
+                    _(
+                        "当设置不允许连续 N 位出现的规则时，该值不可小于 {}",
+                    ).format(settings.MIN_NOT_CONTINUOUS_COUNT)
+                )
 
             # 2. 必须至少包含一个指定的连续性场景
-            if not any(
-                [
-                    self.not_keyboard_order,
-                    self.not_continuous_letter,
-                    self.not_continuous_digit,
-                    self.not_repeated_symbol,
-                ]
-            ):
-                raise ValueError(
-                    "at least one of not_keyboard_order, not_continuous_letter, "
-                    "not_continuous_digit, not_repeated_symbol must be True"
-                )
+            if not any_continuous_scene_selected:
+                raise ValueError(_("至少应该选择键盘序，连续字母序，连续数字序，重复字符中的一个场景"))
+
+        # 限制没有配置 N 位出现时，不可以选择任意连续性场景，避免出现无效数据
+        if any_continuous_scene_selected and not self.not_continuous_count:
+            raise ValueError(_("需要先设置 [密码不允许连续 N 位出现] 值，才可以选择连续性场景"))
 
         return self
 
@@ -100,11 +106,11 @@ class ValidateResult(BaseModel):
     # 校验结果
     ok: bool
     # 密码检查出的问题
-    details: List[str]
+    errors: List[str]
 
     @property
     def exception_message(self) -> str:
-        return ", ".join([str(d) for d in self.details])
+        return ", ".join([str(d) for d in self.errors])
 
 
 class ZxcvbnMatch(BaseModel):
@@ -125,7 +131,7 @@ class ZxcvbnMatch(BaseModel):
     # - regex 正则
     # - spatial 空间连续性
     # - bruteforce 暴力破解
-    pattern: str
+    pattern: ZxcvbnPattern
 
     # 以下为不同的匹配模式的自定义字段，目前仅提取项目需要的
 

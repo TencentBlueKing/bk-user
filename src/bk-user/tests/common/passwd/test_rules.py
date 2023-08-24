@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import Dict
 
 import pytest
-from bkuser.utils.passwd import PasswordRule
+from bkuser.common.passwd import PasswordRule
 from pydantic import ValidationError
 
 
@@ -65,7 +65,7 @@ class TestPasswordRule:
         with pytest.raises(ValidationError) as e:
             PasswordRule(**passwd_rule_cfg)
 
-        assert "min_length must be greater than or equal to" in str(e)
+        assert "密码最小长度不得小于 10 位" in str(e)
 
     def test_with_min_gt_max_length(self, passwd_rule_cfg):
         """密码最大最小长度冲突"""
@@ -74,7 +74,7 @@ class TestPasswordRule:
         with pytest.raises(ValidationError) as e:
             PasswordRule(**passwd_rule_cfg)
 
-        assert "min_length cannot greater than max_length" in str(e)
+        assert "密码最小长度不得大于最大长度" in str(e)
 
     def test_without_any_charset(self, passwd_rule_cfg):
         """没有指定任何一个字符集"""
@@ -83,7 +83,7 @@ class TestPasswordRule:
         with pytest.raises(ValidationError) as e:
             PasswordRule(**passwd_rule_cfg)
 
-        assert "at least one of contain_lowercase" in str(e)
+        assert "至少应该选择小写字母，大写字母，数字，特殊符号中的一个字符集" in str(e)
 
     def test_set_too_small_not_continuous_count(self, passwd_rule_cfg):
         """设置连续性限制，但阈值过低"""
@@ -92,7 +92,7 @@ class TestPasswordRule:
         with pytest.raises(ValidationError) as e:
             PasswordRule(**passwd_rule_cfg)
 
-        assert "not_continuous_count cannot less than" in str(e)
+        assert "当设置不允许连续 N 位出现的规则时，该值不可小于 3" in str(e)
 
     def test_set_not_continuous_count_without_scene(self, passwd_rule_cfg):
         """设置连续性限制，但没有指定场景"""
@@ -101,4 +101,13 @@ class TestPasswordRule:
         with pytest.raises(ValidationError) as e:
             PasswordRule(**passwd_rule_cfg)
 
-        assert "at least one of not_keyboard_order, not_continuous_letter" in str(e)
+        assert "至少应该选择键盘序，连续字母序，连续数字序，重复字符中的一个场景" in str(e)
+
+    def test_select_scene_without_set_not_continuous_count(self, passwd_rule_cfg):
+        """选择场景，但没有设置连续性限制（部分无效配置）"""
+
+        passwd_rule_cfg["not_keyboard_order"] = True
+        with pytest.raises(ValidationError) as e:
+            PasswordRule(**passwd_rule_cfg)
+
+        assert "需要先设置 [密码不允许连续 N 位出现] 值，才可以选择连续性场景" in str(e)

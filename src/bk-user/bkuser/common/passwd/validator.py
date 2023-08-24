@@ -9,14 +9,15 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import string
-from typing import List
+from typing import Dict, List
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from zxcvbn import zxcvbn
 
-from bkuser.utils.passwd import PasswordStrengthError
-from bkuser.utils.passwd.constants import MAX_WEAK_PASSWD_COMBINATION_THRESHOLD, ZxcvbnPattern
-from bkuser.utils.passwd.models import PasswordRule, ValidateResult, ZxcvbnMatch
+from bkuser.common.passwd import PasswordStrengthError
+from bkuser.common.passwd.constants import ZxcvbnPattern
+from bkuser.common.passwd.models import PasswordRule, ValidateResult, ZxcvbnMatch
 
 
 class PasswordValidator:
@@ -27,7 +28,7 @@ class PasswordValidator:
 
     def validate(self, password: str, raise_exception=False) -> ValidateResult:
         """根据指定规则，校验密码中存在的问题"""
-        ret = ValidateResult(ok=True, details=[])
+        ret = ValidateResult(ok=True, errors=[])
 
         for func in [
             # 密码长度检查
@@ -38,8 +39,9 @@ class PasswordValidator:
             self._validate_with_zxcvbn,
         ]:
             errors = func(password)  # noqa
-            ret.ok &= not bool(errors)
-            ret.details += errors
+            if errors:
+                ret.ok = False
+                ret.errors += errors
 
         if not ret.ok and raise_exception:
             raise PasswordStrengthError(ret.exception_message)
@@ -83,16 +85,18 @@ class PasswordValidator:
 
         # NOTE 产品功能上，连续字母序是不区分大小写的，即 abCDef 应当算是连续字母序，
         # 但 zxcvbn 连续字母序匹配是区分大小写的，因此这里使用 password.lower() 进行检查
-        matches = self._gen_zxcvbn_matches(password.lower())
+        zxcvbn_result = zxcvbn(password.lower())
+        matches = self._gen_zxcvbn_matches(zxcvbn_result)
 
         return (
+            self._validate_by_zxcvbn_score(zxcvbn_result)
             # 对使用弱密码组合的情况进行限制
-            self._validate_weak_passwd_combination(password, matches)
+            + self._validate_weak_passwd_combination(password, matches)
             # 对键盘序，连续字母，连续数字，连续重复等连续性场景进行检查
             + self._validate_continuous(matches)
         )
 
-    def _gen_zxcvbn_matches(self, password: str) -> List[ZxcvbnMatch]:
+    def _gen_zxcvbn_matches(self, zxcvbn_result: Dict) -> List[ZxcvbnMatch]:
         """调用 zxcvbn 获取匹配结果"""
         return [
             ZxcvbnMatch(
@@ -115,8 +119,15 @@ class PasswordValidator:
                 graph=m.get("graph", ""),
                 turns=m.get("turns", 0),
             )
-            for m in zxcvbn(password)["sequence"]
+            for m in zxcvbn_result["sequence"]
         ]
+
+    def _validate_by_zxcvbn_score(self, zxcvbn_result: Dict) -> List[str]:
+        """根据 zxcvbn 给出的密码评级进行检查"""
+        if zxcvbn_result["score"] < settings.MIN_ZXCVBN_PASSWORD_SCORE:
+            return [_("密码强度评级过低")]
+
+        return []
 
     def _validate_weak_passwd_combination(self, password: str, matches: List[ZxcvbnMatch]) -> List[str]:
         """基于 zxcvbn 能力进行检查（弱密码字典）"""
@@ -127,7 +138,7 @@ class PasswordValidator:
 
         ratio = len("".join(matched_words)) / len(password)
         # 限制包含的弱密码比例，不可超过预设的阈值
-        if ratio > MAX_WEAK_PASSWD_COMBINATION_THRESHOLD:
+        if ratio > settings.MAX_WEAK_PASSWD_COMBINATION_THRESHOLD:
             return [
                 _("密码中包含过多的常见单词或弱密码（如：{} 或 {}）").format(
                     matched_words[0],

@@ -11,15 +11,6 @@ specific language governing permissions and limitations under the License.
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
-# 最小密码长度，过小的下限会导致难以生成/设置合法的密码（最低不能低于 9）
-MIN_PASSWORD_LENGTH = 10
-
-# 最小的限制连续长度，过小的下限会导致难以生成/设置合法的密码（最低不能低于 3）
-MIN_NOT_CONTINUOUS_COUNT = 3
-
-# 弱密码词总长度占总密码长度的最大阈值，过高的阈值可能导致密码中包含过多的诸如 random, password 之类的弱密码常见词
-MAX_WEAK_PASSWD_COMBINATION_THRESHOLD = 0.6
-
 
 class ZxcvbnPattern(str, StructuredEnum):
     """密码片段匹配模式"""

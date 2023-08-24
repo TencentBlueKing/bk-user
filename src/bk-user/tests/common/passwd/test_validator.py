@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
-from bkuser.utils.passwd import PasswordStrengthError, PasswordValidator
+from bkuser.common.passwd import PasswordStrengthError, PasswordValidator
 
 
 @pytest.fixture()
@@ -57,13 +57,29 @@ class TestPasswordValidator:
     @pytest.mark.parametrize(
         ("password", "errors"),
         [
-            ("qwert123456", ["密码中包含过多的常见单词或弱密码（如：qwert 或 trewq）"]),
-            ("trewq123456", ["密码中包含过多的常见单词或弱密码（如：qwert 或 trewq）"]),
+            # 弱密码场景
+            ("aaaccc", ["密码强度评级过低"]),
+            ("23456789", ["密码强度评级过低"]),
+            ("iuytrew", ["密码强度评级过低"]),
+            # 强密码场景
+            ("aif5ke3co2", []),
+            ("aif5&83co2", []),
+            ("ai-*5ke3$o2", []),
+        ],
+    )
+    def test_validate_with_zxcvbn_too_lower_score(self, simple_validator, password, errors):
+        assert simple_validator._validate_with_zxcvbn(password) == errors
+
+    @pytest.mark.parametrize(
+        ("password", "errors"),
+        [
+            ("qwert12345678-*", ["密码中包含过多的常见单词或弱密码（如：qwert 或 trewq）"]),
+            ("trewq123456-*", ["密码中包含过多的常见单词或弱密码（如：qwert 或 trewq）"]),
             ("123456—&qwert", ["密码中包含过多的常见单词或弱密码（如：123456 或 654321）"]),
             # 仅包含单个弱密码词，但是超过阈值
-            ("gbome12345678", ["密码中包含过多的常见单词或弱密码（如：12345678 或 87654321）"]),
+            ("gbome12345678-*", ["密码中包含过多的常见单词或弱密码（如：12345678 或 87654321）"]),
             # 包含弱密码组合，但是没有超过阈值的
-            ("trewq*720J&@(123456", []),
+            ("trewq*70%20*J&@(123456", []),
             # 使用 leet 映射进行替换的，可以通过检查
             ("qw3rt1847359", []),
         ],
@@ -93,7 +109,7 @@ class TestPasswordValidator:
         ret = strict_validator.validate(password)
 
         assert ret.ok is False
-        assert ret.details == [
+        assert ret.errors == [
             "密码长度至少 24 位",
             "密码不能包含空格或空白符号",
             "密码必须包含特殊符号",
@@ -112,6 +128,7 @@ class TestPasswordValidator:
             [
                 "密码长度至少 24 位",
                 "密码必须包含大写字母",
+                "密码强度评级过低",
                 "密码中包含过多的常见单词或弱密码（如：abc123 或 321cba）",
             ]
         )
@@ -121,4 +138,4 @@ class TestPasswordValidator:
         ret = strict_validator.validate(password)
 
         assert ret.ok is True
-        assert ret.details == []
+        assert ret.errors == []
