@@ -41,7 +41,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { reactive } from 'vue';
 
 import router from '@/router';
@@ -54,7 +54,7 @@ const accountMap = {
   max_trail_times_list: '密码试错次数',
   password_must_includes: '密码必须包含',
   auto_unlock_seconds: '锁定时间',
-  password_rult_length: '密码不允许',
+  password_rule_length: '密码不允许',
   frozen: '冻结',
   password_valid_days_list: '密码有效期',
   init_password_method: '初始密码获取方式',
@@ -95,7 +95,7 @@ const state = reactive({
       value: '600秒',
     },
     {
-      key: 'password_rult_length',
+      key: 'password_rule_length',
       value: ['连续8位出现', '连续字母序'],
     },
     {

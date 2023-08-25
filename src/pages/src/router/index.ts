@@ -136,7 +136,22 @@ export default createRouter({
           },
           component: () => import('@/views/setting/LoginSetting.vue'),
         },
+        {
+          path: 'account',
+          name: 'account',
+          meta: {
+            routeParentName: 'setting',
+            navName: '账号设置',
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/AccountSetting.vue'),
+        },
       ],
+    },
+    {
+      path: '/personal-center',
+      name: 'personalCenter',
+      component: () => import('@/views/personal-center/index.vue'),
     },
   ],
 });

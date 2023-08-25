@@ -57,7 +57,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { DownShape, RightShape } from 'bkui-vue/lib/icon';
 import { reactive, ref } from 'vue';
 

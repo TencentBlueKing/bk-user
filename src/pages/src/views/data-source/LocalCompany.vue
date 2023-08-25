@@ -16,7 +16,7 @@
   </bk-tab>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { reactive, ref } from 'vue';
 
 import { useMenuInfo } from '@/hooks/useMenuInfo';
@@ -26,7 +26,7 @@ const { activeKey } = useMenuInfo();
 const active = ref('local');
 const panels = reactive([
   { name: 'local', label: '本公司' },
-  // { name: "other", label: "其他公司" },
+  // { name: 'other', label: '其他公司' },
 ]);
 
 const handleChange = (name) => {
