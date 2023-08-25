@@ -2,7 +2,7 @@
   <div class="group-details-wrapper user-scroll-y">
     <div class="main-content">
       <div class="content-search">
-        <bk-button theme="primary" @click="handleClick('add', '')">
+        <bk-button theme="primary" @click="handleClick('add')">
           <i class="user-icon icon-add-2 mr8" />
           新建公司
         </bk-button>
@@ -20,7 +20,6 @@
         <bk-table
           class="content-table"
           :data="state.list"
-          :columns="columns"
           show-overflow-tooltip>
           <template #empty>
             <Empty
@@ -31,13 +30,58 @@
               @handleUpdate="fetchTenantsList"
             />
           </template>
+          <bk-table-column prop="name" label="公司名">
+            <template #default="{ row, index }">
+              <div class="item-name">
+                <img v-if="row.logo" :src="row.logo" />
+                <span v-else class="logo" :style="`background-color: ${logoColor[index]}`">
+                  {{ convertLogo(row.name) }}
+                </span>
+                <bk-button
+                  text
+                  theme="primary"
+                  @click="handleClick('view', row)"
+                >
+                  {{ row.name }}
+                </bk-button>
+              </div>
+            </template>
+          </bk-table-column>
+          <bk-table-column prop="id" label="公司ID"></bk-table-column>
+          <bk-table-column prop="managers" label="公司管理员">
+            <template #default="{ row }">
+              <bk-tag v-for="(item, index) in row.managers" :key="index">{{ item.username }}</bk-tag>
+            </template>
+          </bk-table-column>
+          <bk-table-column prop="data_sources" label="已绑定数据源">
+            <template #default="{ row }">
+              <span>{{ convertFormat(row.data_sources) }}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column prop="create_at" label="创建时间">
+            <template #default="{ row }">
+              <span>{{ moment(row.create_time).format("YYYY-MM-DD HH:mm:ss") }}</span>
+            </template>
+          </bk-table-column>
+          <bk-table-column label="操作">
+            <template #default="{ row }">
+              <bk-button
+                text
+                theme="primary"
+                style="margin-right: 8px;"
+                @click="handleClick('edit', row)"
+              >
+                编辑
+              </bk-button>
+            </template>
+          </bk-table-column>
         </bk-table>
       </bk-loading>
     </div>
     <bk-sideslider
       :ext-cls="['details-wrapper', { 'details-edit-wrapper': !isView }]"
       :width="isView ? 640 : 960"
-      :isShow="detailsConfig.isShow"
+      :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
       quick-close
@@ -49,7 +93,7 @@
             outline
             theme="primary"
             @click="handleClick('edit', state.tenantsData)"
-            >编辑</bk-button
+          >编辑</bk-button
           >
         </div>
       </template>
@@ -67,26 +111,28 @@
   </div>
 </template>
 
-<script setup lang="tsx">
-import { ref, reactive, watch, computed, nextTick, inject } from "vue";
+<script setup lang="ts">
+import InfoBox from 'bkui-vue/lib/info-box';
+import moment from 'moment';
+import { computed, inject, reactive, ref, watch } from 'vue';
+
+import OperationDetails from './OperationDetails.vue';
+import ViewDetails from './ViewDetails.vue';
+
+import Empty from '@/components/Empty.vue';
 import {
+  getTenantDetails,
   getTenants,
   searchTenants,
-  getTenantDetails,
-} from "@/http/tenantsFiles";
-import { logoColor } from "@/utils";
-import moment from "moment";
-import InfoBox from "bkui-vue/lib/info-box";
-import { useMainViewStore } from "@/store/mainView";
-import Empty from "@/components/Empty.vue";
-import ViewDetails from "./ViewDetails.vue";
-import OperationDetails from "./OperationDetails.vue";
+} from '@/http/tenantsFiles';
+import { useMainViewStore } from '@/store/mainView';
+import { logoColor } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 
 const editLeaveBefore = inject('editLeaveBefore');
-const searchName = ref("");
+const searchName = ref('');
 const state = reactive({
   list: [],
   tableLoading: true,
@@ -98,110 +144,40 @@ const state = reactive({
   isTableDataEmpty: false,
   // 租户详情数据
   tenantsData: {
-    name: "",
-    id: "",
+    name: '',
+    id: '',
     feature_flags: {
       user_number_visible: true,
     },
-    logo: "",
+    logo: '',
     managers: [
       {
-        username: "",
-        full_name: "",
-        email: "",
-        phone: "",
-        phone_country_code: "86",
+        username: '',
+        full_name: '',
+        email: '',
+        phone: '',
+        phone_country_code: '86',
       },
     ],
   },
 });
-const columns = [
-  {
-    label: "公司名",
-    field: "name",
-    render: ({ data, index }: { data: any, index: any }) => {
-      return (
-        <div class="item-name">
-          {
-            data.logo
-              ? <img src={data.logo} />
-              : <span class="logo" style={`background-color: ${logoColor[index]}`}>
-                  {data.name.charAt(0).toUpperCase()}
-                </span>
-          }
-          <bk-button
-            text
-            theme="primary"
-            onClick={handleClick.bind(this, "view", data)}
-          >
-            {data.name}
-          </bk-button>
-        </div>
-      );
-    },
-  },
-  {
-    label: "公司ID",
-    field: "id",
-  },
-  {
-    label: "公司管理员",
-    field: "managers",
-    render: ({ data }: { data: any }) =>
-      data.managers.map((item: any) => <bk-tag>{item.username}</bk-tag>),
-  },
-  {
-    label: "已绑定数据源",
-    field: "data_sources",
-    render: ({ data }: { data: any }) => {
-      const list = data.data_sources.map((item: any) => item.name);
-      return <span>{list.join(",")}</span>
-    }
-  },
-  {
-    label: "创建时间",
-    field: "create_at",
-    render: ({ data }: { data: any }) => (
-      <span>{moment(data.create_time).format("YYYY-MM-DD HH:mm:ss")}</span>
-    ),
-  },
-  {
-    label: "操作",
-    field: "",
-    width: 80,
-    render: ({ data }: { data: any }) => {
-      return (
-        <div>
-          <bk-button
-            text
-            theme="primary"
-            style="margin-right: 8px;"
-            onClick={handleClick.bind(this, "edit", data)}
-          >
-            编辑
-          </bk-button>
-        </div>
-      );
-    },
-  },
-];
 const detailsConfig = reactive({
   isShow: false,
-  title: "",
-  type: "",
+  title: '',
+  type: '',
 });
 const enumData = {
   view: {
-    title: "公司详情",
-    type: "view",
+    title: '公司详情',
+    type: 'view',
   },
   add: {
-    title: "新建公司",
-    type: "add",
+    title: '新建公司',
+    type: 'add',
   },
   edit: {
-    title: "编辑公司",
-    type: "edit",
+    title: '编辑公司',
+    type: 'edit',
   },
 };
 
@@ -210,18 +186,19 @@ watch(
   () => {
     if (!detailsConfig.isShow) {
       state.tenantsData = {
-        name: "",
-        id: "",
+        name: '',
+        id: '',
         feature_flags: {
           user_number_visible: true,
         },
-        logo: "",
+        logo: '',
         managers: [
           {
-            username: "",
-            display_name: "",
-            email: "",
-            telephone: "",
+            username: '',
+            full_name: '',
+            email: '',
+            phone: '',
+            phone_country_code: '86',
           },
         ],
         // password_settings: {
@@ -233,13 +210,16 @@ watch(
         // },
       };
     }
-  }
+  },
 );
 
-const isView = computed(() => detailsConfig.type === "view");
+const isView = computed(() => detailsConfig.type === 'view');
 
-const handleClick = async (type: string, item: any) => {
-  if (type !== "add") {
+const convertLogo = name => name?.charAt(0).toUpperCase();
+const convertFormat = name => name?.map(item => item?.name).join(',') || '--';
+
+const handleClick = async (type: string, item?: any) => {
+  if (type !== 'add') {
     await getTenantDetails(item.id).then((res: any) => {
       state.tenantsData = res.data;
     });
@@ -250,17 +230,17 @@ const handleClick = async (type: string, item: any) => {
 };
 
 const handleCancelEdit = async () => {
-  if (detailsConfig.type === "add") {
+  if (detailsConfig.type === 'add') {
     detailsConfig.isShow = false;
   } else {
-    detailsConfig.type = "view";
-    detailsConfig.title = "公司详情";
+    detailsConfig.type = 'view';
+    detailsConfig.title = '公司详情';
     window.changeInput = false;
   }
 };
 // 获取租户列表
 const fetchTenantsList = () => {
-  searchName.value = "";
+  searchName.value = '';
   state.tableLoading = true;
   state.isTableDataEmpty = false;
   state.isEmptySearch = false;
