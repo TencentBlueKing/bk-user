@@ -124,7 +124,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { ref, toRefs } from 'vue';
 
 const formRef = ref('');
@@ -142,7 +142,6 @@ const formData = ref({
   account_expiration_time: '',
   password_expiration_time: '',
 });
-const iti = null;
 const files: any = [];
 const rules = {
   name: [

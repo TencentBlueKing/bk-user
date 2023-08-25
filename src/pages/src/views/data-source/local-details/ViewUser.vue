@@ -22,8 +22,8 @@
   </ul>
 </template>
 
-<script setup lang="tsx">
-import { reactive, computed } from "vue";
+<script setup lang="ts">
+import { computed, reactive } from 'vue';
 
 const props = defineProps({
   tenantsData: {
@@ -32,88 +32,66 @@ const props = defineProps({
   },
 });
 
-const managersList = computed(() =>
-  props.tenantsData.managers.filter((item) => item.id)
-);
-
-const columns = [
-  {
-    label: "用户名",
-    field: "username",
-  },
-  {
-    label: "姓名",
-    field: "full_name",
-    render: ({ cell }: { cell: string }) => <span>{cell || "--"}</span>,
-  },
-  {
-    label: "邮箱",
-    field: "email",
-  },
-  {
-    label: "手机号",
-    field: "phone",
-  },
-];
+const managersList = computed(() => props.tenantsData.managers.filter(item => item.id));
 
 const userMap = {
-  user_id: "用户ID",
-  user_name: "用户名",
-  full_name: "全名",
-  email: "邮箱",
-  phone: "手机号",
-  department: "所属组织",
-  leader: "直属上级",
-  status: "在职状态",
-  position: "职务",
-  account_expiration_date: "账号过期时间",
-  password_expiration_date: "密码过期时间",
-}
+  user_id: '用户ID',
+  user_name: '用户名',
+  full_name: '全名',
+  email: '邮箱',
+  phone: '手机号',
+  department: '所属组织',
+  leader: '直属上级',
+  status: '在职状态',
+  position: '职务',
+  account_expiration_date: '账号过期时间',
+  password_expiration_date: '密码过期时间',
+};
 
 const basicData = reactive([
   {
-    key: "user_id",
-    value: "123",
+    key: 'user_id',
+    value: '123',
   },
   {
-    key: "user_name",
-    value: "aaa",
+    key: 'user_name',
+    value: 'aaa',
   },
   {
-    key: "full_name",
-    value: "bbb",
+    key: 'full_name',
+    value: 'bbb',
   },
   {
-    key: "email",
-    value: "124567345@qq.com",
+    key: 'email',
+    value: '124567345@qq.com',
   },
   {
-    key: "phone",
-    value: "15756734555",
+    key: 'phone',
+    value: '15756734555',
   },
   {
-    key: "department",
-    value: "总公司",
+    key: 'department',
+    value: '总公司',
   },
   {
-    key: "leader",
-    value: "Morty Zhang（李三）",
+    key: 'leader',
+    value: 'Morty Zhang（李三）',
   },
   {
-    key: "status",
-    value: "在职",
+    key: 'status',
+    value: '在职',
   },
   {
-    key: "position",
-    value: "产品经理",
+    key: 'position',
+    value: '产品经理',
   },
   {
-    key: "account_expiration_date",
-    value: "2023-10-10",
+    key: 'account_expiration_date',
+    value: '2023-10-10',
   },
   {
-    key: "password_expiration_date",
-    value: "2023-10-10",
+    key: 'password_expiration_date',
+    value: '2023-10-10',
   },
 ]);
 </script>

@@ -287,7 +287,7 @@ const fieldItemFn = (row: any) => {
                 v-model={formData.managers[index][column.field]}
                 state={state}
                 params={params}
-                onselectList={selectList}
+                onSelectList={selectList}
                 onScrollChange={scrollChange}
                 onSearchUserList={fetchUserList} />
             : <bk-input v-model={formData.managers[index][column.field]} disabled={column.field !== 'username'} />

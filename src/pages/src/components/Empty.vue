@@ -23,7 +23,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 const props = defineProps({
   isDataEmpty: {
     type: Boolean,

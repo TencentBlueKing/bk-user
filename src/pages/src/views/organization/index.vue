@@ -23,7 +23,7 @@
   </MainView>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { reactive, ref } from 'vue';
 
 import DetailsInfo from './details/DetailsInfo.vue';

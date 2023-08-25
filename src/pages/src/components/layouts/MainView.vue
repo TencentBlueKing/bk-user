@@ -23,7 +23,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import MainBreadcrumbs from './MainBreadcrumbs.vue';
 
 import { useMainViewStore } from '@/store/mainView';
