@@ -2,6 +2,8 @@
 
 from django.db import migrations
 
+from bkuser.apps.data_source.constants import DataSourcePluginEnum
+
 
 def forwards_func(apps, schema_editor):
     """
@@ -9,10 +11,10 @@ def forwards_func(apps, schema_editor):
     """
     DataSourcePlugin = apps.get_model("data_source", "DataSourcePlugin")
     # FIXME: 待数据源插件确定后，重新初始化，国际化，这里暂时不使用枚举等
-    if not DataSourcePlugin.objects.filter(id="local").exists():
+    if not DataSourcePlugin.objects.filter(id=DataSourcePluginEnum.LOCAL).exists():
         DataSourcePlugin.objects.create(
-            id="local",
-            name="本地数据源",
+            id=DataSourcePluginEnum.LOCAL,
+            name=DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL),
             description="支持用户和部门的增删改查，以及用户的登录认证",
         )
 

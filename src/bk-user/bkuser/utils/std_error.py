@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 # 参考来源：https://github.com/TencentBlueKing/bkpaas-python-sdk/blob/master/sdks/blue-krill/blue_krill/web/std_error.py
 from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union, overload
 
+from pydantic import ValidationError
+
 _DEFAULT_ERROR_CODE_CATEGORY = "INVALID_ARGUMENT"
 _DEFAULT_STATUS_CODE = 400
 
@@ -154,3 +156,19 @@ class ErrorCode:
     def __set_name__(self, obj_type, name):
         """Set field name as error code object's code"""
         self._code = name
+
+
+def stringify_pydantic_error(exc: ValidationError) -> str:
+    """Transform a pydantic Exception object to a one-line string"""
+
+    err_msgs = []
+    for err in exc.errors():
+        # Note: 裁剪掉不必要的 Value error, 前缀
+        msg = err["msg"].lstrip("Value error, ")
+
+        if loc_msg := " -> ".join([str(i) for i in err["loc"]]):
+            msg = f"{loc_msg}: {msg}"
+
+        err_msgs.append(msg)
+
+    return ", ".join(err_msgs)

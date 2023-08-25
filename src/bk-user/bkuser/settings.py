@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "bkuser.auth",
     "bkuser.apps.data_source",
     "bkuser.apps.tenant",
+    "bkuser.apps.sync",
 ]
 
 MIDDLEWARE = [

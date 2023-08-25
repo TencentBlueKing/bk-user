@@ -9,8 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.utils.std_error import APIError, ErrorCode
+from bkuser.utils.std_error import APIError, ErrorCode, stringify_pydantic_error
 from django.utils.translation import gettext_lazy
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 
 def _format_message(message, exc):
@@ -74,3 +75,35 @@ class TestAPIError:
         exc = APIError("foo", gettext_lazy("message"))
         formatted_exc = exc.format(gettext_lazy("new message"))
         assert formatted_exc.message == "message: new message"
+
+
+@pytest.mark.parametrize(
+    ("foo", "bar", "err_msg"),
+    [
+        (9, 10, "foo: Input should be greater than 10, bar: Input should be less than 10"),
+        (11, 10, "bar: Input should be less than 10"),
+        # 由于 Field 的校验提前异常，不会触发 validate_attrs 的校验
+        (12, 10, "bar: Input should be less than 10"),
+        (12, 8, "foo can't be even"),
+        (11, 9, "bar can't be odd"),
+    ],
+)
+def test_stringify_pydantic_error(foo, bar, err_msg):
+    class TModel(BaseModel):
+        foo: int = Field(gt=10)
+        bar: int = Field(lt=10)
+
+        @model_validator(mode="after")
+        def validate_attrs(self):
+            if not self.foo & 1:
+                raise ValueError("foo can't be even")
+
+            if self.bar & 1:
+                raise ValueError("bar can't be odd")
+
+            return self
+
+    try:
+        TModel(foo=foo, bar=bar)
+    except ValidationError as e:
+        assert stringify_pydantic_error(e) == err_msg  # noqa: PT017
