@@ -12,13 +12,40 @@ import logging
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 
-from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceDepartmentUserRelation, DataSourceUser
 from bkuser.biz.validators import validate_data_source_user_username
 from bkuser.common.validators import validate_phone_with_country_code
 
 logger = logging.getLogger(__name__)
+
+
+class UserSearchInputSLZ(serializers.Serializer):
+    username = serializers.CharField(required=False, help_text="用户名", allow_blank=True)
+
+
+class DataSourceSearchDepartmentsOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="部门ID")
+    name = serializers.CharField(help_text="部门名称")
+
+
+class UserSearchOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="用户ID")
+    username = serializers.CharField(help_text="用户名")
+    full_name = serializers.CharField(help_text="全名")
+    phone = serializers.CharField(help_text="手机号")
+    email = serializers.CharField(help_text="邮箱")
+    departments = serializers.SerializerMethodField(help_text="用户部门")
+
+    # FIXME:考虑抽象一个函数 获取数据后传递到context
+    @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
+    def get_departments(self, obj: DataSourceUser):
+        return [
+            {"id": department_user_relation.department.id, "name": department_user_relation.department.name}
+            for department_user_relation in DataSourceDepartmentUserRelation.objects.filter(user=obj)
+        ]
 
 
 class UserCreateInputSLZ(serializers.Serializer):

@@ -12,7 +12,12 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.web.data_source.serializers import UserCreateInputSLZ, UserCreateOutputSLZ
+from bkuser.apis.web.data_source.serializers import (
+    UserCreateInputSLZ,
+    UserCreateOutputSLZ,
+    UserSearchInputSLZ,
+    UserSearchOutputSLZ,
+)
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
@@ -25,7 +30,34 @@ from bkuser.common.error_codes import error_codes
 class DataSourceUserListCreateApi(generics.ListCreateAPIView):
     queryset = DataSource.objects.all()
     pagination_class = None
+    serializer_class = UserSearchOutputSLZ
     lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        slz = UserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        data_source_id = self.kwargs["id"]
+
+        # 校验数据源是否存在
+        data_source = DataSource.objects.filter(id=data_source_id).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST
+
+        queryset = DataSourceUser.objects.filter(data_source=data_source)
+
+        if data.get("username"):
+            queryset = DataSourceUser.objects.filter(username__icontains=data["username"])
+
+        return queryset
+
+    @swagger_auto_schema(
+        operation_description="数据源用户列表",
+        query_serializer=UserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: UserSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_description="新建数据源用户",
@@ -34,7 +66,11 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         tags=["data_source"],
     )
     def post(self, request, *args, **kwargs):
-        data_source = self.get_object()
+        # 校验数据源是否存在
+        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST
+
         slz = UserCreateInputSLZ(data=request.data, context={"data_source": data_source})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
