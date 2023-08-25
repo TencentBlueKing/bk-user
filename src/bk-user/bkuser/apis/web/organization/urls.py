@@ -21,4 +21,7 @@ urlpatterns = [
         views.TenantDepartmentChildrenListApi.as_view(),
         name="organization.children.list",
     ),
+    # 租户用户
+    path("departments/<int:id>/users/", views.TenantDepartmentUserListApi.as_view(), name="departments.users.list"),
+    path("users/<str:id>/", views.TenantUsersRetrieveApi.as_view(), name="department.users.retrieve"),
 ]
