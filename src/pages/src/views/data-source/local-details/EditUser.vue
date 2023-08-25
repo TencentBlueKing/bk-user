@@ -131,7 +131,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 
-import { emailRegex, telRegex, usernameRegex } from '@/common/regex';
+import useValidate from '@/hooks/use-validate';
 import { getBase64 } from '@/utils';
 
 const props = defineProps({
@@ -144,6 +144,8 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+
+const validate = useValidate();
 
 const formRef = ref();
 const formData = reactive({
@@ -171,54 +173,10 @@ const files = computed(() => {
   return [];
 });
 const rules = {
-  username: [
-    {
-      required: true,
-      message: '必填项',
-      trigger: 'blur',
-    },
-    {
-      validator: (value: string) => usernameRegex.rule.test(value),
-      message: usernameRegex.message,
-      trigger: 'blur',
-    },
-  ],
-  full_name: [
-    {
-      required: true,
-      message: '必填项',
-      trigger: 'blur',
-    },
-    {
-      validator: (value: string) => value.length <= 32,
-      message: '不能多于32个字符',
-      trigger: 'blur',
-    },
-  ],
-  email: [
-    {
-      required: true,
-      message: '必填项',
-      trigger: 'blur',
-    },
-    {
-      validator: (value: string) => emailRegex.rule.test(value),
-      message: emailRegex.message,
-      trigger: 'blur',
-    },
-  ],
-  phone: [
-    {
-      required: true,
-      message: '必填项',
-      trigger: 'blur',
-    },
-    {
-      validator: (value: string) => telRegex.rule.test(value),
-      message: telRegex.message,
-      trigger: 'blur',
-    },
-  ],
+  username: [validate.required, validate.userName],
+  full_name: [validate.required, validate.name],
+  email: [validate.required, validate.email],
+  phone: [validate.required, validate.phone],
 };
 const handleRes = (response: any) => {
   if (response.id) {
