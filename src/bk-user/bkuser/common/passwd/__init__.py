@@ -8,20 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import path
+from .exceptions import PasswordStrengthError
+from .generator import PasswordGenerator
+from .models import PasswordRule, ValidateResult
+from .validator import PasswordValidator
 
-from . import views
-
-urlpatterns = [
-    # 租户
-    path("tenants/", views.TenantListApi.as_view(), name="organization.tenant.list"),
-    path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="organization.tenant.retrieve_update"),
-    path(
-        "departments/<int:id>/children/",
-        views.TenantDepartmentChildrenListApi.as_view(),
-        name="organization.children.list",
-    ),
-    # 租户用户
-    path("departments/<int:id>/users/", views.TenantDepartmentUserListApi.as_view(), name="departments.users.list"),
-    path("users/<str:id>/", views.TenantUsersRetrieveApi.as_view(), name="department.users.retrieve"),
+__all__ = [
+    # 密码规则
+    "PasswordRule",
+    # 密码生成器
+    "PasswordGenerator",
+    # 密码强度校验器
+    "PasswordValidator",
+    # 密码校验结果
+    "ValidateResult",
+    # 密码强度过低异常
+    "PasswordStrengthError",
 ]
