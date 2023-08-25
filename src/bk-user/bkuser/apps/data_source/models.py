@@ -41,6 +41,10 @@ class DataSource(TimestampedModel):
     class Meta:
         ordering = ["id"]
 
+    @property
+    def editable(self) -> bool:
+        return self.plugin.id == "local"
+
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
