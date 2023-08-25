@@ -2,21 +2,50 @@
   <ul class="details-content">
     <li>
       <div class="details-content-info">
-        <div
-          class="details-content-item"
-          v-for="(item, index) in basicData"
-          :key="index"
-        >
-          <span class="details-content-key">{{ userMap[item.key] }}：</span>
-          <span class="details-content-value">{{ item.value }}</span>
+        <div class="details-content-item">
+          <span class="details-content-key">用户ID：</span>
+          <span class="details-content-value">{{ props.userData.id }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">用户名：</span>
+          <span class="details-content-value">{{ props.userData.username }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">全名：</span>
+          <span class="details-content-value">{{ props.userData.full_name }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">邮箱：</span>
+          <span class="details-content-value">{{ props.userData.email }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">手机号：</span>
+          <span class="details-content-value">{{ props.userData.phone }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">所属组织：</span>
+          <div class="details-content-value" v-if="props.userData.departments.length > 0">
+            <span v-for="(item, index) in props.userData.departments" :key="index">
+              {{ item.name}}
+            </span>
+          </div>
+          <span class="details-content-value" v-else>{{ '--' }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">直属上级：</span>
+          <div class="details-content-value" v-if="props.userData.leaders.length > 0">
+            <span v-for="(item, index) in props.userData.leaders" :key="index">
+              {{ item.username }}
+            </span>
+          </div>
+          <span class="details-content-value" v-else>{{ '--' }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">账号过期时间：</span>
+          <span class="details-content-value">{{ dateConvert(props.userData.account_expired_at) }}</span>
         </div>
       </div>
-      <img
-        v-if="tenantsData.logo"
-        class="user-logo"
-        :src="tenantsData.logo"
-        alt=""
-      />
+      <img v-if="props.userData.logo" class="user-logo" :src="props.userData.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>
@@ -24,91 +53,15 @@
 
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
+import moment from 'moment';
+import { dateConvert } from '@/utils';
 
 const props = defineProps({
-  tenantsData: {
+  userData: {
     type: Object,
     default: {},
   },
 });
-
-const managersList = computed(() => props.tenantsData.managers.filter(item => item.id));
-
-const userMap = {
-  user_id: '用户ID',
-  user_name: '用户名',
-  full_name: '全名',
-  data_source: '所属数据源',
-  department: '所属组织',
-  leader: '直属上级',
-  email: '邮箱',
-  phone: '手机号',
-  status: '在职状态',
-  position: '职务',
-  wechat: '微信',
-  qq: 'QQ',
-  account_expiration_date: '账号过期时间',
-  password_expiration_date: '密码过期时间',
-};
-
-const basicData = reactive([
-  {
-    key: 'user_id',
-    value: '123',
-  },
-  {
-    key: 'user_name',
-    value: 'aaa',
-  },
-  {
-    key: 'full_name',
-    value: 'bbb',
-  },
-  {
-    key: 'data_source',
-    value: '--',
-  },
-  {
-    key: 'email',
-    value: '124567345@qq.com',
-  },
-  {
-    key: 'phone',
-    value: '15756734555',
-  },
-  {
-    key: 'department',
-    value: '总公司',
-  },
-  {
-    key: 'leader',
-    value: 'Morty Zhang（李三）',
-  },
-  {
-    key: 'status',
-    value: '在职',
-  },
-  {
-    key: 'position',
-    value: '产品经理',
-  },
-  {
-    key: 'wechat',
-    value: '--',
-  },
-  {
-    key: 'qq',
-    value: '--',
-  },
-  {
-    key: 'account_expiration_date',
-    value: '2023-10-10',
-  },
-  {
-    key: 'password_expiration_date',
-    value: '2023-10-10',
-  },
-]);
 </script>
 
 <style lang="less" scoped>
@@ -140,7 +93,7 @@ const basicData = reactive([
         }
 
         .details-content-value {
-          display: inline-block;
+          display: flex;
           width: calc(100% - 100px);
           overflow: hidden;
           font-size: 14px;
@@ -148,6 +101,7 @@ const basicData = reactive([
           text-overflow: ellipsis;
           white-space: nowrap;
           vertical-align: top;
+          flex-wrap: wrap;
         }
       }
     }

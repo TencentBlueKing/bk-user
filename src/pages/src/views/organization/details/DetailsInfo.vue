@@ -11,7 +11,7 @@
         <ul class="item-content flex" style="width: 72%">
           <li>
             <span class="key">公司名称：</span>
-            <span class="value">{{ state.tenantsData.name }}</span>
+            <span class="value">{{ state.userData.name }}</span>
           </li>
           <li>
             <span class="key">人员数量：</span>
@@ -19,62 +19,87 @@
           </li>
           <li>
             <span class="key">公司ID：</span>
-            <span class="value">{{ state.tenantsData.id }}</span>
+            <span class="value">{{ state.userData.id }}</span>
           </li>
           <li>
             <span class="key">更新时间：</span>
             <span class="value">--</span>
           </li>
-          <li>
-            <span class="key">公司状态：</span>
-            <span class="value">启用</span>
-          </li>
-          <img src="@/images/avatar.png" />
+          <img v-if="state.userData.logo" :src="state.userData.logo" />
+          <img v-else src="@/images/avatar.png" />
         </ul>
       </li>
       <li class="content-item">
         <div class="item-title">管理员</div>
         <bk-table
           class="user-info-table"
-          :data="state.tenantsData.managers"
+          :data="state.userData.managers"
           show-overflow-tooltip
         >
-          <bk-table-column prop="username" label="用户名"></bk-table-column>
-          <bk-table-column prop="full_name" label="全名"></bk-table-column>
-          <bk-table-column prop="phone" label="手机号"></bk-table-column>
-          <bk-table-column prop="email" label="邮箱"></bk-table-column>
+          <template #empty>
+            <Empty :is-data-empty="state.isDataEmpty" />
+          </template>
+          <bk-table-column prop="username" label="用户名" />
+          <bk-table-column prop="full_name" label="全名" />
+          <bk-table-column prop="phone" label="手机号" />
+          <bk-table-column prop="email" label="邮箱" />
         </bk-table>
       </li>
     </ul>
     <EditInfo
       v-else
-      :tenants-data="state.tenantsData"
-      @handleCancel="handleCancel" />
+      :tenants-data="state.userData"
+      :managers="state.managers"
+      @handleCancel="handleCancel"
+      @updateTenantsList="updateTenantsList" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
+import { computed, reactive, watch } from 'vue';
 
 import EditInfo from './EditDetailsInfo.vue';
 
+import Empty from '@/components/Empty.vue';
 import {
   getTenantDetails,
 } from '@/http/tenantsFiles';
 
-const state = reactive({
-  isEdit: false,
-  tenantsData: {},
+const props = defineProps({
+  userData: {
+    type: Object,
+    default: {},
+  },
 });
 
-const userNumberVisible = computed(() => (state.tenantsData?.feature_flags?.user_number_visible ? '显示' : '隐藏'));
+const emit = defineEmits(['updateTenantsList']);
 
-const fetchTenantDetails = async () => {
-  await getTenantDetails('jianantest').then((res: any) => {
-    state.tenantsData = res.data;
-  });
-};
-fetchTenantDetails();
+const state = reactive({
+  isEdit: false,
+  userData: {},
+  managers: [],
+  isDataEmpty: false,
+});
+
+const userNumberVisible = computed(() => (props?.userData?.feature_flags?.user_number_visible ? '显示' : '隐藏'));
+
+watch(() => props.userData.id, () => handleCancel());
+watch(() => props.userData.managers, (value) => {
+  state.userData = props.userData;
+  if (value.length > 0) {
+    state.managers = props.userData.managers;
+    state.isDataEmpty = false;
+  } else {
+    state.managers = [{
+      username: '',
+      full_name: '',
+      email: '',
+      phone: '',
+      phone_country_code: '86',
+    }];
+    state.isDataEmpty = true;
+  }
+});
 
 const handleClickEdit = () => {
   state.isEdit = true;
@@ -82,6 +107,11 @@ const handleClickEdit = () => {
 
 const handleCancel = () => {
   state.isEdit = false;
+};
+
+const updateTenantsList = () => {
+  emit('updateTenantsList');
+  handleCancel();
 };
 </script>
 
