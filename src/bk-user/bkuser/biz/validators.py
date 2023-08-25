@@ -27,4 +27,6 @@ def validate_tenant_id(value):
 
 def validate_data_source_user_username(value):
     if not re.fullmatch(re.compile(DATA_SOURCE_USERNAME_REGEX), value):
-        raise ValidationError(_("{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母开头").format(value))  # noqa: E501
+        raise ValidationError(
+            _("{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母开头").format(value),  # noqa: E501
+        )
