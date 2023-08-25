@@ -87,3 +87,21 @@ class UserCreateInputSLZ(serializers.Serializer):
 
 class UserCreateOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="数据源用户ID")
+
+
+class LeaderSearchInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", required=False)
+
+
+class LeaderSearchOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="上级ID")
+    username = serializers.CharField(help_text="上级名称")
+
+
+class DepartmentSearchInputSLZ(serializers.Serializer):
+    name = serializers.CharField(required=False, help_text="部门名称", allow_blank=True)
+
+
+class DepartmentSearchOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="部门ID")
+    name = serializers.CharField(help_text="部门名称")

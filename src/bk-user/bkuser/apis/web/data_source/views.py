@@ -8,17 +8,22 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apis.web.data_source.serializers import (
+    DepartmentSearchInputSLZ,
+    DepartmentSearchOutputSLZ,
+    LeaderSearchInputSLZ,
+    LeaderSearchOutputSLZ,
     UserCreateInputSLZ,
     UserCreateOutputSLZ,
     UserSearchInputSLZ,
     UserSearchOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
@@ -99,3 +104,60 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
             data_source=data_source, base_user_info=base_user_info, relation_info=relation_info
         )
         return Response(UserCreateOutputSLZ(instance={"id": user_id}).data)
+
+
+class DataSourceLeadersListApi(generics.ListAPIView):
+    serializer_class = LeaderSearchOutputSLZ
+
+    def get_queryset(self):
+        slz = LeaderSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 校验数据源是否存在
+        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST
+
+        queryset = DataSourceUser.objects.filter(data_source=data_source)
+        if keyword := data.get("keyword"):
+            queryset = queryset.filter(Q(username__icontains=keyword) | Q(full_name__icontains=keyword))
+
+        return queryset
+
+    @swagger_auto_schema(
+        operation_description="数据源上级列表",
+        query_serializer=LeaderSearchInputSLZ(),
+        responses={status.HTTP_200_OK: LeaderSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class DataSourceDepartmentsListApi(generics.ListAPIView):
+    serializer_class = DepartmentSearchOutputSLZ
+
+    def get_queryset(self):
+        slz = DepartmentSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 校验数据源是否存在
+        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST
+
+        queryset = DataSourceDepartment.objects.filter(data_source=data_source)
+
+        if name := data.get("name"):
+            queryset = queryset.filter(name__icontains=name)
+
+        return queryset
+
+    @swagger_auto_schema(
+        operation_description="数据源部门列表",
+        query_serializer=DepartmentSearchInputSLZ(),
+        responses={status.HTTP_200_OK: DepartmentSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
