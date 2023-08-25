@@ -72,7 +72,7 @@
 
 <script setup lang="tsx">
 import { ref, reactive, computed } from "vue";
-import { emailRegx, telRegx } from "@/common/regex";
+import { emailRegex, telRegex } from "@/common/regex";
 import { getBase64 } from "@/utils";
 import Empty from "@/components/Empty.vue";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
@@ -173,8 +173,8 @@ const rulesUserInfo = {
       trigger: "blur",
     },
     {
-      validator: (value: string) => emailRegx.rule.test(value),
-      message: emailRegx.message,
+      validator: (value: string) => emailRegex.rule.test(value),
+      message: emailRegex.message,
       trigger: "blur",
     },
   ],
@@ -185,8 +185,8 @@ const rulesUserInfo = {
       trigger: "blur",
     },
     {
-      validator: (value: string) => telRegx.rule.test(value),
-      message: telRegx.message,
+      validator: (value: string) => telRegex.rule.test(value),
+      message: telRegex.message,
       trigger: "blur",
     },
   ],

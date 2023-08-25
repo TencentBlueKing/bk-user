@@ -30,16 +30,16 @@
       </div>
       <div class="main-navigation-right">
         <bk-dropdown
-          @hide="() => (state.languageDrodown = false)"
-          @show="() => (state.languageDrodown = true)"
+          @hide="() => (state.languageDropdown = false)"
+          @show="() => (state.languageDropdown = true)"
         >
-          <div class="help-info" :class="state.languageDrodown && 'active'">
+          <div class="help-info" :class="state.languageDropdown && 'active'">
             <i class="bk-sq-icon icon-yuyanqiehuanzhongwen"></i>
           </div>
           <template #content>
             <bk-dropdown-menu>
               <bk-dropdown-item v-for="(item, index) in languageNav" :key="index">
-                <i :class="item.icon" style="fontSize: 16px; margin-right: 5px;"></i>
+                <i :class="item.icon" style=" margin-right: 5px;font-size: 16px;"></i>
                 <span>{{ item.name }}</span>
               </bk-dropdown-item>
             </bk-dropdown-menu>
@@ -96,7 +96,7 @@ import { useUser } from '@/store/user';
 const state = reactive({
   logoutDropdown: false,
   helpDropdown: false,
-  languageDrodown: false,
+  languageDropdown: false,
 });
 
 const userStore = useUser();

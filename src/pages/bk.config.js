@@ -23,6 +23,9 @@ module.exports = {
             secure: false,
           },
         },
+        client: {
+          overlay: false,
+        },
       },
     };
   },

@@ -131,7 +131,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 
-import { emailRegx, telRegx, usernameRegx } from '@/common/regex';
+import { emailRegex, telRegex, usernameRegex } from '@/common/regex';
 import { getBase64 } from '@/utils';
 
 const props = defineProps({
@@ -178,8 +178,8 @@ const rules = {
       trigger: 'blur',
     },
     {
-      validator: (value: string) => usernameRegx.rule.test(value),
-      message: usernameRegx.message,
+      validator: (value: string) => usernameRegex.rule.test(value),
+      message: usernameRegex.message,
       trigger: 'blur',
     },
   ],
@@ -202,8 +202,8 @@ const rules = {
       trigger: 'blur',
     },
     {
-      validator: (value: string) => emailRegx.rule.test(value),
-      message: emailRegx.message,
+      validator: (value: string) => emailRegex.rule.test(value),
+      message: emailRegex.message,
       trigger: 'blur',
     },
   ],
@@ -214,8 +214,8 @@ const rules = {
       trigger: 'blur',
     },
     {
-      validator: (value: string) => telRegx.rule.test(value),
-      message: telRegx.message,
+      validator: (value: string) => telRegex.rule.test(value),
+      message: telRegex.message,
       trigger: 'blur',
     },
   ],
