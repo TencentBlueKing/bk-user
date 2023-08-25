@@ -8,6 +8,44 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import generics, status
+
+from bkuser.apis.web.data_source.serializers import UserSearchInputSLZ, UserSearchOutputSLZ
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.common.error_codes import error_codes
+
+
+class DataSourceUserListCreateApi(generics.ListCreateAPIView):
+    serializer_class = UserSearchOutputSLZ
+
+    def get_queryset(self):
+        slz = UserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        data_source_id = self.kwargs["id"]
+
+        # 校验数据源是否存在
+        data_source = DataSource.objects.filter(id=data_source_id).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST
+
+        queryset = DataSourceUser.objects.filter(data_source=data_source)
+
+        if data.get("username"):
+            queryset = DataSourceUser.objects.filter(username__icontains=data["username"])
+
+        return queryset
+
+    @swagger_auto_schema(
+        operation_description="数据源用户列表",
+        query_serializer=UserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: UserSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status

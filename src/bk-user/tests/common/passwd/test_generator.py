@@ -8,20 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import path
+from bkuser.common.passwd import PasswordGenerator
 
-from . import views
 
-urlpatterns = [
-    # 租户
-    path("tenants/", views.TenantListApi.as_view(), name="organization.tenant.list"),
-    path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="organization.tenant.retrieve_update"),
-    path(
-        "departments/<int:id>/children/",
-        views.TenantDepartmentChildrenListApi.as_view(),
-        name="organization.children.list",
-    ),
-    # 租户用户
-    path("departments/<int:id>/users/", views.TenantDepartmentUserListApi.as_view(), name="departments.users.list"),
-    path("users/<str:id>/", views.TenantUsersRetrieveApi.as_view(), name="department.users.retrieve"),
-]
+class TestPasswordGenerator:
+    """密码生成器单元测试"""
+
+    def test_generate_with_strict_passwd_rule(self, strict_passwd_rule):
+        # PasswordGenerator 内置 PasswordValidator，因此此处检查确实生成了密码即可
+        password = PasswordGenerator(strict_passwd_rule).generate()
+        assert password != ""
+
+    def test_generate_with_simple_passwd_rule(self, simple_passwd_rule):
+        # PasswordGenerator 内置 PasswordValidator，因此此处检查确实生成了密码即可
+        password = PasswordGenerator(simple_passwd_rule).generate()
+        assert password != ""

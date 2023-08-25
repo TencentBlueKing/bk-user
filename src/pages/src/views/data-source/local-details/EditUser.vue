@@ -35,36 +35,50 @@
         :multiple="false"
         :files="files"
         :handle-res-code="handleRes"
-        :url="'https://jsonplaceholder.typicode.com/posts/'"
+        :url="formData.logo"
+        :custom-request="customRequest"
+        @delete="handleDelete"
       />
       <bk-form-item label="邮箱" property="email" required>
         <bk-input v-model="formData.email" placeholder="请输入" />
       </bk-form-item>
-      <bk-form-item label="手机号" property="telphone" required>
+      <bk-form-item label="手机号" property="phone" required>
         <div class="input-text">
           <bk-input
-            ref="inputRef"
-            v-model="formData.telphone"
+            v-model="formData.phone"
             placeholder="请输入"
             type="number"
           />
         </div>
       </bk-form-item>
       <div class="form-item-flex">
-        <bk-form-item label="所属组织" property="department_name" required>
-          <bk-select v-model="formData.department_name">
-            <bk-option value="1" label="" />
-            <bk-option value="2" label="" />
+        <bk-form-item label="所属组织">
+          <bk-select
+            v-model="formData.department_ids"
+            filterable
+            :remote-method="remoteFilter"
+            @toggle="handleSelectDepartment">
+            <bk-option
+              v-for="item in state.departmentList"
+              :key="item.id"
+              :value="item.id"
+              :label="item.name" />
           </bk-select>
         </bk-form-item>
-        <bk-form-item label="直属上级" property="leader" required>
-          <bk-select v-model="formData.leader">
-            <bk-option value="1" label="" />
-            <bk-option value="2" label="" />
+        <bk-form-item label="直属上级">
+          <bk-select
+            v-model="formData.leader_ids"
+            filterable>
+            <bk-option
+              v-for="item in state.leaderList"
+              :key="item.id"
+              :value="item.id"
+              :label="item.name" />
           </bk-select>
         </bk-form-item>
       </div>
-      <div class="form-item-flex">
+      <!-- 一期不做 -->
+      <!-- <div class="form-item-flex">
         <bk-form-item label="在职状态" required>
           <bk-radio-group>
             <bk-radio label="在职" />
@@ -101,7 +115,7 @@
             clearable
           />
         </bk-form-item>
-      </div>
+      </div> -->
     </bk-form>
     <div class="footer">
       <bk-button theme="primary" @click="handleSubmit">
@@ -115,27 +129,93 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
-const formRef = ref('');
-const inputRef = ref('');
-const formData = ref({
-  username: '',
-  full_name: '',
-  department_name: '',
-  leader: '',
-  email: '',
-  telphone: '',
-  account_expiration_time: '',
-  password_expiration_time: '',
+import { emailRegx, telRegx, usernameRegx } from '@/common/regex';
+import { getBase64 } from '@/utils';
+
+const props = defineProps({
+  type: {
+    type: String,
+    default: '',
+  },
+  usersData: {
+    type: Object,
+    default: () => ({}),
+  },
 });
-const iti = null;
-const files: any = [];
+
+const formRef = ref();
+const formData = reactive({
+  ...props.usersData,
+});
+const state = reactive({
+  departmentList: [
+    { id: '1', name: '总公司' },
+    { id: '2', name: '分公司' },
+  ],
+  leaderList: [
+    { id: '1', name: 'aa' },
+    { id: '2', name: 'bb' },
+  ],
+});
+
+const files = computed(() => {
+  const img = [];
+  if (formData.logo !== '') {
+    img.push({
+      url: formData.logo,
+    });
+    return img;
+  }
+  return [];
+});
 const rules = {
   username: [
     {
-      validator: (value: string) => value.length > 2,
-      message: '姓名长度不能小于2',
+      required: true,
+      message: '必填项',
+      trigger: 'blur',
+    },
+    {
+      validator: (value: string) => usernameRegx.rule.test(value),
+      message: usernameRegx.message,
+      trigger: 'blur',
+    },
+  ],
+  full_name: [
+    {
+      required: true,
+      message: '必填项',
+      trigger: 'blur',
+    },
+    {
+      validator: (value: string) => value.length <= 32,
+      message: '不能多于32个字符',
+      trigger: 'blur',
+    },
+  ],
+  email: [
+    {
+      required: true,
+      message: '必填项',
+      trigger: 'blur',
+    },
+    {
+      validator: (value: string) => emailRegx.rule.test(value),
+      message: emailRegx.message,
+      trigger: 'blur',
+    },
+  ],
+  phone: [
+    {
+      required: true,
+      message: '必填项',
+      trigger: 'blur',
+    },
+    {
+      validator: (value: string) => telRegx.rule.test(value),
+      message: telRegx.message,
       trigger: 'blur',
     },
   ],
@@ -147,7 +227,30 @@ const handleRes = (response: any) => {
   return false;
 };
 
-const handleSubmit = () => {};
+const customRequest = (event) => {
+  getBase64(event.file).then((res) => {
+    formData.logo = res;
+  })
+    .catch((e) => {
+      console.warn(e);
+    });
+};
+
+const handleDelete = () => {
+  formData.logo = '';
+};
+
+const handleSubmit = () => {
+  formRef.value.validate();
+};
+
+const handleSelectDepartment = (value) => {
+  console.log('value', value);
+};
+
+const remoteFilter = (value: string) => {
+  console.log('value', value);
+};
 </script>
 
 <style lang="less" scoped>

@@ -31,12 +31,11 @@
   </MainView>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { reactive, ref } from 'vue';
 
-import { useMenuInfo } from '../../hooks/useMenuInfo';
-
 import MainView from '@/components/layouts/MainView.vue';
+import { useMenuInfo } from '@/hooks/useMenuInfo';
 import { useMenu } from '@/store/useMenu';
 
 const menuStore = useMenu();
@@ -48,8 +47,8 @@ const menuData = reactive([
     key: 'local',
   },
   // {
-  //   name: "跨公司协同",
-  //   key: "crossCompany",
+  //   name: '跨公司协同',
+  //   key: 'crossCompany',
   // },
 ]);
 </script>

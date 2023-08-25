@@ -36,10 +36,14 @@
         <div class="item-title">管理员</div>
         <bk-table
           class="user-info-table"
-          :columns="userColumns"
           :data="state.tenantsData.managers"
           show-overflow-tooltip
-        />
+        >
+          <bk-table-column prop="username" label="用户名"></bk-table-column>
+          <bk-table-column prop="full_name" label="全名"></bk-table-column>
+          <bk-table-column prop="phone" label="手机号"></bk-table-column>
+          <bk-table-column prop="email" label="邮箱"></bk-table-column>
+        </bk-table>
       </li>
     </ul>
     <EditInfo
@@ -49,7 +53,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { computed, reactive } from 'vue';
 
 import EditInfo from './EditDetailsInfo.vue';
@@ -57,26 +61,6 @@ import EditInfo from './EditDetailsInfo.vue';
 import {
   getTenantDetails,
 } from '@/http/tenantsFiles';
-
-const userData = [];
-const userColumns = [
-  {
-    label: '用户名',
-    field: 'username',
-  },
-  {
-    label: '全名',
-    field: 'full_name',
-  },
-  {
-    label: '邮箱',
-    field: 'email',
-  },
-  {
-    label: '手机号',
-    field: 'phone',
-  },
-];
 
 const state = reactive({
   isEdit: false,

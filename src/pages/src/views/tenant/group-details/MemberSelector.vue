@@ -32,7 +32,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { reactive, ref } from 'vue';
 
 const props = defineProps({

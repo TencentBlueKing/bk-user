@@ -3188,7 +3188,22 @@ type = "legacy"
 url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent"
 
+[[package]]
+name = "zxcvbn"
+version = "4.4.28"
+description = ""
+optional = false
+python-versions = "*"
+files = [
+    {file = "zxcvbn-4.4.28.tar.gz", hash = "sha256:151bd816817e645e9064c354b13544f85137ea3320ca3be1fb6873ea75ef7dc1"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "59d4ac43b235bdd9151c7d7b9819c46b9ea6733684d4d309fd2f24fa829a617b"
+content-hash = "210c6345f6d0364cd7955ef942a2866f49628a69c42f20ad67634bd37f4a68db"
