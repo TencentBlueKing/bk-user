@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from .exceptions import PasswordStrengthError
+from .exceptions import PasswordGenerateError, PasswordStrengthError
 from .generator import PasswordGenerator
 from .models import PasswordRule, ValidateResult
 from .validator import PasswordValidator
@@ -24,4 +24,6 @@ __all__ = [
     "ValidateResult",
     # 密码强度过低异常
     "PasswordStrengthError",
+    # 不合理的规则导致生成密码失败
+    "PasswordGenerateError",
 ]
