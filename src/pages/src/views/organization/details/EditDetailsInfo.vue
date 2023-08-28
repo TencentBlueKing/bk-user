@@ -72,10 +72,10 @@
 
 <script setup lang="tsx">
 import { ref, reactive, computed } from "vue";
-import { emailRegx, telRegx } from "@/common/regex";
 import { getBase64 } from "@/utils";
 import Empty from "@/components/Empty.vue";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
+import useValidate from "@/hooks/use-validate";
 
 interface TableItem {
   username: string;
@@ -95,6 +95,8 @@ const props = defineProps({
     default: {},
   },
 });
+
+const validate = useValidate();
 
 const basicRef = ref();
 const userRef = ref();
@@ -118,88 +120,19 @@ const params = reactive({
 });
 
 const rulesBasicInfo = {
-  name: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => value.length <= 32,
-      message: "不能多于32个字符",
-      trigger: "blur",
-    },
-  ],
-  id: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-  ],
+  name: [validate.required, validate.name],
+  id: [validate.required],
 };
 
 const rulesUserInfo = {
-  username: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => {
-        return value.length <= 32;
-      },
-      message: "不能多于32个字符",
-      trigger: "blur",
-    },
-  ],
-  full_name: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => value.length <= 32,
-      message: "不能多于32个字符",
-      trigger: "blur",
-    },
-  ],
-  email: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => emailRegx.rule.test(value),
-      message: emailRegx.message,
-      trigger: "blur",
-    },
-  ],
-  phone: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => telRegx.rule.test(value),
-      message: telRegx.message,
-      trigger: "blur",
-    },
-  ],
+  username: [validate.required, validate.name],
+  full_name: [validate.required, validate.name],
+  email: [validate.required, validate.email],
+  phone: [validate.required, validate.phone],
 };
 
 const rulesPasswordInfo = {
-  init_password: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-  ],
+  init_password: [validate.required],
 };
 
 const files = computed(() => {
