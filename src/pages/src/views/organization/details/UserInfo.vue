@@ -13,17 +13,48 @@
     </header>
     <bk-table
       class="user-info-table"
-      :columns="columns"
       :data="tableData"
       :pagination="pagination"
       settings
       :border="['outer']"
-    />
+    >
+      <bk-table-column prop="username" label="用户名">
+        <template #default="{ row }">
+          <bk-button text theme="primary" @click="handleClick('view', row)">
+            {{ row.username }}
+          </bk-button>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="full_name" label="全名"></bk-table-column>
+      <bk-table-column prop="status" label="状态">
+        <template #default="{ row }">
+          <div>
+            <img :src="statusIcon[row.status]?.icon" class="account-status-icon" />
+            <span>{{ statusIcon[row.status]?.text }}</span>
+          </div>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="phone" label="手机号"></bk-table-column>
+      <bk-table-column prop="email" label="邮箱"></bk-table-column>
+      <bk-table-column prop="department_name" label="组织"></bk-table-column>
+      <bk-table-column label="操作">
+        <template #default="{ row }">
+          <bk-button
+            theme="primary"
+            text
+            class="mr8"
+            @click="handleClick('edit', row)"
+          >
+            编辑
+          </bk-button>
+        </template>
+      </bk-table-column>
+    </bk-table>
     <!-- 查看/编辑用户 -->
     <bk-sideslider
       ext-cls="details-edit-wrapper"
       :width="640"
-      :isShow="detailsConfig.isShow"
+      :is-show="detailsConfig.isShow"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
       quick-close
@@ -44,97 +75,45 @@
       <ViewUser v-if="isView" />
       <EditUser
         v-else
-        @handleCancelEdit="handleCancelEdit"  />
+        @handleCancelEdit="handleCancelEdit" />
     </bk-sideslider>
   </div>
 </template>
 
-<script setup lang="tsx">
-import { Plus, AngleDown, AngleUp } from "bkui-vue/lib/icon";
-import { ref, reactive, computed, inject } from "vue";
-import EditUser from "./EditUser.vue";
-import ViewUser from "./ViewUser.vue";
-import { statusIcon } from "@/utils";
+<script setup lang="ts">
+import { computed, inject, reactive, ref } from 'vue';
 
-const editLeaveBefore = inject("editLeaveBefore");
+import EditUser from './EditUser.vue';
+import ViewUser from './ViewUser.vue';
+
+import { statusIcon } from '@/utils';
+
+const editLeaveBefore = inject('editLeaveBefore');
 const isSearchCurrentDepartment = ref(false);
-const searchVal = ref("");
+const searchVal = ref('');
 
 const detailsConfig = reactive({
   isShow: false,
-  title: "",
-  type: "",
+  title: '',
+  type: '',
 });
 
 const tableData = [
   {
-    username: "lululi",
-    display_name: "lululi",
-    status: "normal",
-    email: "lululi@qq.com",
-    telephone: "18123456789",
-    department_name: "总公司",
+    username: 'lululi',
+    full_name: 'lululi',
+    status: 'normal',
+    email: 'lululi@qq.com',
+    phone: '18123456789',
+    department_name: '总公司',
   },
   {
-    username: "helloword",
-    display_name: "helloword",
-    status: "disabled",
-    email: "helloword@qq.com",
-    telephone: "18123456789",
-    department_name: "总公司",
-  },
-];
-
-const columns = [
-  {
-    label: "用户名",
-    field: "username",
-    render: ({ data }: { data: any }) => {
-      return (
-        <bk-button text theme="primary" onClick={handleClick.bind(this, 'view', data)}>
-          { data.username }
-        </bk-button>
-      );
-    },
-  },
-  {
-    label: "全名",
-    field: "display_name",
-  },
-  {
-    label: "账号状态",
-    field: "status",
-    render: ({ data }: { data: any }) => {
-      return (
-        <div>
-          <img src={statusIcon[data.status].icon} class="account-status-icon" />
-          <span>{ statusIcon[data.status].text }</span>
-        </div>
-      );
-    },
-  },
-  {
-    label: "邮箱",
-    field: "email",
-  },
-  {
-    label: "手机号",
-    field: "telephone",
-  },
-  {
-    label: "组织",
-    field: "department_name",
-  },
-  {
-    label: "操作",
-    field: "",
-    render: ({ data }: { data: any }) => {
-      return (
-        <bk-button text theme="primary" onClick={handleClick.bind(this, 'edit', data)}>
-          编辑
-        </bk-button>
-      );
-    },
+    username: 'helloword',
+    full_name: 'helloword',
+    status: 'disabled',
+    email: 'helloword@qq.com',
+    phone: '18123456789',
+    department_name: '总公司',
   },
 ];
 
@@ -144,13 +123,13 @@ const pagination = {
 };
 
 const enumData = {
-  "view": {
-    title: "用户详情",
-    type: "view",
+  view: {
+    title: '用户详情',
+    type: 'view',
   },
-  "edit": {
-    title: "编辑用户",
-    type: "edit",
+  edit: {
+    title: '编辑用户',
+    type: 'edit',
   },
 };
 
@@ -163,9 +142,9 @@ const handleClick = (type: string, item: any) => {
 };
 
 const handleCancelEdit = () => {
-  detailsConfig.type = "view";
-  detailsConfig.title = "公司详情";
-}
+  detailsConfig.type = 'view';
+  detailsConfig.title = '公司详情';
+};
 
 const handleBeforeClose = async () => {
   let enableLeave = true;
@@ -253,6 +232,6 @@ const handleBeforeClose = async () => {
         background-color: #979ba5;
       }
     }
-  } 
+  }
 }
 </style>

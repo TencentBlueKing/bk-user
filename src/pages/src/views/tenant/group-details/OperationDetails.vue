@@ -100,11 +100,11 @@
 
 <script setup lang="tsx">
 import { ref, reactive, computed, nextTick } from "vue";
-import { emailRegx, telRegx, usernameRegx, tenantIdRegx } from "@/common/regex";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
 import { getBase64 } from "@/utils";
 import Empty from "@/components/Empty.vue";
 import MemberSelector from "./MemberSelector.vue";
+import useValidate from "@/hooks/use-validate";
 
 interface TableItem {
   username: string;
@@ -131,6 +131,8 @@ const props = defineProps({
 
 const emit = defineEmits(['updateTenantsList']);
 
+const validate = useValidate();
+
 const basicRef = ref();
 const userRef = ref();
 const passwordRef = ref();
@@ -153,91 +155,19 @@ const params = reactive({
 });
 
 const rulesBasicInfo = {
-  name: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => value.length <= 32,
-      message: "不能多于32个字符",
-      trigger: "blur",
-    },
-  ],
-  id: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => tenantIdRegx.rule.test(value),
-      message: tenantIdRegx.message,
-      trigger: "blur",
-    },
-  ],
+  name: [validate.required, validate.name],
+  id: [validate.required, validate.id],
 };
 
 const rulesUserInfo = {
-  username: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => usernameRegx.rule.test(value),
-      message: usernameRegx.message,
-      trigger: "blur",
-    },
-  ],
-  full_name: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => value.length <= 32,
-      message: "不能多于32个字符",
-      trigger: "blur",
-    },
-  ],
-  email: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => emailRegx.rule.test(value),
-      message: emailRegx.message,
-      trigger: "blur",
-    },
-  ],
-  phone: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-    {
-      validator: (value: string) => telRegx.rule.test(value),
-      message: telRegx.message,
-      trigger: "blur",
-    },
-  ],
+  username: [validate.required, validate.userName],
+  full_name: [validate.required, validate.name],
+  email: [validate.required, validate.email],
+  phone: [validate.required, validate.phone],
 };
 
 const rulesPasswordInfo = {
-  init_password: [
-    {
-      required: true,
-      message: "必填项",
-      trigger: "blur",
-    },
-  ],
+  init_password: [validate.required],
 };
 
 const files = computed(() => {
@@ -287,7 +217,7 @@ const fieldItemFn = (row: any) => {
                 v-model={formData.managers[index][column.field]}
                 state={state}
                 params={params}
-                onselectList={selectList}
+                onSelectList={selectList}
                 onScrollChange={scrollChange}
                 onSearchUserList={fetchUserList} />
             : <bk-input v-model={formData.managers[index][column.field]} disabled={column.field !== 'username'} />

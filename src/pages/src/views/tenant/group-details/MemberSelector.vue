@@ -1,5 +1,5 @@
 <template>
-  <div class="member-selector-wrapper" :class="{ 'is-focus': isFocous }">
+  <div class="member-selector-wrapper" :class="{ 'is-focus': isFocus }">
     <bk-select
       class="member-selector"
       :clearable="false"
@@ -32,7 +32,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
+<script setup lang="ts">
 import { reactive, ref } from 'vue';
 
 const props = defineProps({
@@ -51,7 +51,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'selectList', 'scrollChange', 'searchUserList']);
-const isFocous = ref(false);
+const isFocus = ref(false);
 const scrollLoading = ref(false);
 
 // 远程搜索人员
@@ -62,7 +62,7 @@ const handleChange = (values: string[]) => {
   emit('update:modelValue', values);
 };
 const handleFocus = () => {
-  isFocous.value = true;
+  isFocus.value = true;
 };
 const handleClick = () => {
   const list = [];

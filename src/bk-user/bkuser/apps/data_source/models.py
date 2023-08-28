@@ -45,6 +45,10 @@ class DataSource(TimestampedModel):
     class Meta:
         ordering = ["id"]
 
+    @property
+    def editable(self) -> bool:
+        return self.plugin.id == "local"
+
 
 class DataSourceUserFieldMapping(BaseModel):
     """数据源用户字段映射"""

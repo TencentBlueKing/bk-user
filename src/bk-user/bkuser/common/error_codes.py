@@ -66,11 +66,17 @@ class ErrorCodes:
         code_category=ErrorCodeCategoryEnum.INTERNAL,
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
+    # 手机号校验
+    PHONE_PARSE_ERROR = ErrorCode(_("手机号码解析异常"))
+
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
     # 数据源
     DATA_SOURCE_TYPE_NOT_SUPPORTED = ErrorCode(_("数据源类型不支持"))
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
+    CANNOT_CREATE_USER = ErrorCode(_("该数据源不支持新增用户"))
+    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
+
     # 租户
     CREATE_TENANT_FAILED = ErrorCode(_("租户创建失败"))
     UPDATE_TENANT_FAILED = ErrorCode(_("租户更新失败"))
