@@ -193,12 +193,34 @@ class TenantUserHandler:
 
     @staticmethod
     def get_tenant_user_ids_by_tenant_department(tenant_department_id: int, recursive: bool = True):
-        tenant_department = TenantDepartment.objects.get(id=tenant_department_id)
+        """
+        获取租户部门下租户用户
+        """
+        tenant_department = TenantDepartment.objects.filter(id=tenant_department_id)
+        if not tenant_department.exists():
+            return []
+        tenant_department = tenant_department.first()
         data_source_user_ids = DataSourceDepartmentHandler.list_department_user_ids(
             department_id=tenant_department.data_source_department_id, recursive=recursive
         )
         return list(
             TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids).values_list("id", flat=True)
+        )
+
+    @staticmethod
+    def get_tenant_user_ids_by_tenant(current_tenant_id: str, tenant_id: str) -> List[str]:
+        """
+        获取current_tenant_id租户下所有用户
+        """
+        data_source_ids_map: Dict = TenantHandler.get_data_source_ids_map_by_id([current_tenant_id, tenant_id])
+        if current_tenant_id != tenant_id:
+            # TODO 获取协同数据源授权到当前租户
+            pass
+        data_source_ids: List[int] = []
+        for data_sources in data_source_ids_map.values():
+            data_source_ids += data_sources
+        return TenantUser.objects.filter(data_source_id__in=data_source_ids, tenant_id=current_tenant_id).values_list(
+            "id", flat=True
         )
 
 
@@ -385,7 +407,10 @@ class TenantDepartmentHandler:
 
     @staticmethod
     def get_tenant_department_children_by_id(tenant_department_id: int) -> List[TenantDepartmentBaseInfo]:
-        tenant_department = TenantDepartment.objects.get(id=tenant_department_id)
+        tenant_department = TenantDepartment.objects.filter(id=tenant_department_id)
+        if not tenant_department.exists():
+            return []
+        tenant_department = tenant_department.first()
         # 获取二级组织
         children = DataSourceDepartmentRelation.objects.get(
             department=tenant_department.data_source_department

@@ -17,10 +17,11 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.organization.serializers import (
     TenantDepartmentChildrenListOutputSLZ,
-    TenantDepartmentUserListOutputSLZ,
     TenantDepartmentUserSearchInputSLZ,
     TenantListOutputSLZ,
+    TenantUserListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
+    TenantUserSearchInputSLZ,
 )
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
 from bkuser.apps.tenant.models import Tenant, TenantUser
@@ -40,12 +41,21 @@ logger = logging.getLogger(__name__)
 class TenantDepartmentUserListApi(generics.ListAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    serializer_class = TenantDepartmentUserListOutputSLZ
+    serializer_class = TenantUserListOutputSLZ
+
+    def _get_tenant_id(self) -> str:
+        return self.request.user.get_property("tenant_id")
+
+    def _get_tenant_department_user_ids(self, recursive):
+        # 过滤该租户部门下的用户
+        return TenantUserHandler.get_tenant_user_ids_by_tenant_department(
+            tenant_department_id=self.kwargs["id"], recursive=recursive
+        )
 
     def get_serializer_context(self):
-        # 过滤出该租户部门(包括子部门)的租户用户
-        tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant_department(
-            tenant_department_id=self.kwargs["id"], recursive=self.request.query_params.get("recursive", True)
+        # 过滤出该租户/部门(包括子部门)的租户用户
+        tenant_user_ids = self._get_tenant_department_user_ids(
+            recursive=self.request.query_params.get("recursive", True)
         )
 
         # 租户用户基础信息
@@ -55,28 +65,23 @@ class TenantDepartmentUserListApi(generics.ListAPIView):
         # 租户用户所属租户组织
         tenant_user_departments_map = TenantUserHandler.get_tenant_user_departments_map_by_id(tenant_user_ids)
 
-        # 租户用户上级信息
-        tenant_user_leaders_map = TenantUserHandler.get_tenant_user_leaders_map_by_id(tenant_user_ids)
         return {
             "tenant_users_info": tenant_users_info_map,
             "tenant_user_departments": tenant_user_departments_map,
-            "tenant_user_leaders": tenant_user_leaders_map,
         }
 
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户部门下用户列表",
         query_serializer=TenantDepartmentUserSearchInputSLZ(),
-        responses={status.HTTP_200_OK: TenantDepartmentUserListOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         slz = TenantDepartmentUserSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
         # 过滤该租户部门下的用户
-        tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant_department(
-            tenant_department_id=self.kwargs["id"], recursive=data.get("recursive")
-        )
+        tenant_user_ids = self._get_tenant_department_user_ids(recursive=data["recursive"])
 
         # build response
         queryset = self.filter_queryset(self.get_queryset().filter(id__in=tenant_user_ids))
@@ -191,3 +196,62 @@ class TenantDepartmentChildrenListApi(generics.ListAPIView):
         tenant_department_children = TenantDepartmentHandler.get_tenant_department_children_by_id(tenant_department_id)
         data = [item.model_dump(include={"id", "name", "has_children"}) for item in tenant_department_children]
         return Response(TenantDepartmentChildrenListOutputSLZ(data, many=True).data)
+
+
+class TenantUserListApi(generics.ListAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    serializer_class = TenantUserListOutputSLZ
+
+    def _get_tenant_id(self) -> str:
+        return self.request.user.get_property("tenant_id")
+
+    def get_tenant_user_ids(self):
+        # 获取租户下所有用户
+        return TenantUserHandler.get_tenant_user_ids_by_tenant(
+            current_tenant_id=self._get_tenant_id(), tenant_id=self.kwargs["id"]
+        )
+
+    def get_serializer_context(self):
+        # 过滤出该租户租户用户
+        tenant_user_ids = self.get_tenant_user_ids()
+
+        # 租户用户基础信息
+        tenant_users = TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)
+        tenant_users_info_map = {i.id: i for i in tenant_users}
+
+        # 租户用户所属租户组织
+        tenant_user_departments_map = TenantUserHandler.get_tenant_user_departments_map_by_id(tenant_user_ids)
+
+        return {
+            "tenant_users_info": tenant_users_info_map,
+            "tenant_user_departments": tenant_user_departments_map,
+        }
+
+    @swagger_auto_schema(
+        tags=["tenant-organization"],
+        operation_description="租户下用户列表",
+        query_serializer=TenantUserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantUserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 租户用户列表ids
+        tenant_user_ids = self.get_tenant_user_ids()
+
+        # build response
+        queryset = self.filter_queryset(self.get_queryset().filter(id__in=tenant_user_ids))
+        if keyword := data.get("keyword"):
+            queryset = queryset.select_related("data_source_user").filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+            )
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
