@@ -55,6 +55,7 @@ types-requests = "^2.31.0.1"
 pytest = "^7.4.0"
 pytest-django = "^4.5.2"
 types-pytz = "^2023.3.0.0"
+import-linter = "^1.11.1"
 
 [tool.black]
 line-length = 119
@@ -138,6 +139,64 @@ max-complexity = 10
 
 [tool.ruff.isort]
 relative-imports-order = "closest-to-furthest"
+
+[tool.importlinter]
+root_package = "bkuser"
+
+# 分层
+[[tool.importlinter.contracts]]
+name = "Layers contract"
+type = "layers"
+layers = [
+    "bkuser.apis | bkuser.auth | bkuser.monitoring",
+    "bkuser.biz",
+    "bkuser.apps | bkuser.component",
+    "bkuser.common",
+    "bkuser.utils",
+]
+
+# apps 分层
+[[tool.importlinter.contracts]]
+name = "Apps Layers contract"
+type = "layers"
+layers = [
+    "bkuser.apps.tenant",
+    "bkuser.apps.data_source | bkuser.apps.identity_provider",
+]
+
+# biz 分层
+[[tool.importlinter.contracts]]
+name = "Biz Layers contract"
+type = "layers"
+layers = [
+    "bkuser.biz.tenant",
+    "bkuser.biz.data_source | bkuser.biz.data_source_organization",
+    "bkuser.biz.validators",
+]
+
+# apis 独立模块
+[[tool.importlinter.contracts]]
+name = "Apis Independence contract"
+type = "independence"
+modules = [
+    "bkuser.apis.login",
+    "bkuser.apis.open",
+    "bkuser.apis.web",
+]
+
+# apis.web 独立模块
+[[tool.importlinter.contracts]]
+name = "Apis Web Independence contract"
+type = "independence"
+modules = [
+    "bkuser.apis.web.basic",
+    "bkuser.apis.web.data_source",
+    "bkuser.apis.web.organization",
+    "bkuser.apis.web.tenant",
+]
+ignore_imports = [
+    "bkuser.apis.web.*.views -> bkuser.apis.web.*.serializers",
+]
 
 [build-system]
 requires = ["poetry-core"]
