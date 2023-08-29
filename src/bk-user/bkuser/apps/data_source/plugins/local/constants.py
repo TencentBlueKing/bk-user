@@ -15,9 +15,38 @@ from django.utils.translation import gettext_lazy as _
 # 本地数据源密码最大长度
 MAX_PASSWORD_LENGTH = 32
 
+# 永远不会过期的时间标识
+NEVER_EXPIRE_TIME = -1
+
+# 每一天的秒数
+ONE_DAY_SECONDS = 24 * 60 * 60
+
+# 密码可选最长有效期：10年
+MAX_PASSWORD_VALID_TIME = 10 * 365 * ONE_DAY_SECONDS
+
+# 可选最长锁定时间：10年
+MAX_LOCK_TIME = 10 * 365 * ONE_DAY_SECONDS
+
+# 连续性限制上下限
+MIN_NOT_CONTINUOUS_COUNT = 5
+MAX_NOT_CONTINUOUS_COUNT = 10
+
+# 重试密码次数上限
+PASSWORD_MAX_RETRIES = 10
+
+# 保留的历史密码上限
+MAX_RESERVED_PREVIOUS_PASSWORD_COUNT = 5
+
 
 class PasswordGenerateMethod(str, StructuredEnum):
     """密码生成方式"""
 
     RANDOM = EnumField("random", label=_("随机生成"))
     FIXED = EnumField("fixed", label=_("固定值"))
+
+
+class NotifyMethod(str, StructuredEnum):
+    """通知方式"""
+
+    EMAIL = EnumField("email", label=_("邮件通知"))
+    SMS = EnumField("sms", label=_("短信通知"))

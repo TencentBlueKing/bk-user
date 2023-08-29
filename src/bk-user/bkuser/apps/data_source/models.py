@@ -8,14 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Optional
-
 from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
-from pydantic import BaseModel
 
-from bkuser.apps.data_source.constants import FieldMappingRelation
 from bkuser.common.models import TimestampedModel
 
 
@@ -48,19 +44,6 @@ class DataSource(TimestampedModel):
     @property
     def editable(self) -> bool:
         return self.plugin.id == "local"
-
-
-class DataSourceUserFieldMapping(BaseModel):
-    """数据源用户字段映射"""
-
-    # 数据源原始字段
-    source_field: str
-    # 映射关系
-    mapping_relation: FieldMappingRelation
-    # 用户管理用户字段
-    target_field: str
-    # 表达式内容，仅映射关系为表达式时有效
-    expression: Optional[str] = None
 
 
 class DataSourceUser(TimestampedModel):

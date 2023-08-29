@@ -8,21 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from pydantic import ValidationError
+from typing import Optional
+
+from pydantic import BaseModel
+
+from bkuser.apps.data_source.constants import FieldMappingOperation
 
 
-def stringify_pydantic_error(exc: ValidationError) -> str:
-    """Transform a pydantic Exception object to a one-line string"""
+class DataSourceUserFieldMapping(BaseModel):
+    """数据源用户字段映射"""
 
-    err_msgs = []
-    for err in exc.errors():
-        # Note: 裁剪掉不必要的 `Value error, ` 前缀
-        msg = err["msg"].removeprefix("Value error, ")
-
-        loc_msg = " -> ".join([str(i) for i in err["loc"]])
-        if loc_msg:
-            msg = f"{loc_msg}: {msg}"
-
-        err_msgs.append(msg)
-
-    return ", ".join(err_msgs)
+    # 数据源原始字段
+    source_field: str
+    # 映射关系
+    mapping_operation: FieldMappingOperation
+    # 用户管理用户字段
+    target_field: str
+    # 表达式内容，仅映射关系为表达式时有效
+    expression: Optional[str] = None

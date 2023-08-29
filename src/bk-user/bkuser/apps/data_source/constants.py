@@ -23,7 +23,7 @@ class DataSourcePluginEnum(str, StructuredEnum):
     MAD = EnumField("mad", label=_("MAD"))
 
 
-class FieldMappingRelation(str, StructuredEnum):
+class FieldMappingOperation(str, StructuredEnum):
     """字段映射关系"""
 
     DIRECT = EnumField("direct", label=_("直接"))

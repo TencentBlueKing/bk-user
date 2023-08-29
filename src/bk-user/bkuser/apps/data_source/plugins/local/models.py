@@ -13,9 +13,20 @@ from typing import List, Optional
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from bkuser.apps.data_source.plugins.local.constants import MAX_PASSWORD_LENGTH, PasswordGenerateMethod
+from bkuser.apps.data_source.plugins.local.constants import (
+    MAX_LOCK_TIME,
+    MAX_NOT_CONTINUOUS_COUNT,
+    MAX_PASSWORD_LENGTH,
+    MAX_PASSWORD_VALID_TIME,
+    MAX_RESERVED_PREVIOUS_PASSWORD_COUNT,
+    MIN_NOT_CONTINUOUS_COUNT,
+    NEVER_EXPIRE_TIME,
+    PASSWORD_MAX_RETRIES,
+    NotifyMethod,
+    PasswordGenerateMethod,
+)
 from bkuser.common.passwd import PasswordRule, PasswordValidator
-from bkuser.utils.std_error import stringify_pydantic_error
+from bkuser.utils.pydantic import stringify_pydantic_error
 
 
 class PasswordRuleConfig(BaseModel):
@@ -36,7 +47,7 @@ class PasswordRuleConfig(BaseModel):
 
     # --- 连续性限制类 ---
     # 不允许连续出现位数
-    not_continuous_count: int = Field(ge=5, le=10)
+    not_continuous_count: int = Field(ge=MIN_NOT_CONTINUOUS_COUNT, le=MAX_NOT_CONTINUOUS_COUNT)
     # 不允许键盘序
     not_keyboard_order: bool
     # 不允许连续字母序
@@ -46,12 +57,12 @@ class PasswordRuleConfig(BaseModel):
     # 不允许重复字母，数字，特殊字符
     not_repeated_symbol: bool
 
-    # 密码有效期（单位：秒），-1 表示永久
-    valid_time: int = Field(ge=-1, le=10 * 365 * 24 * 60 * 60)
+    # 密码有效期（单位：秒）
+    valid_time: int = Field(ge=NEVER_EXPIRE_TIME, le=MAX_PASSWORD_VALID_TIME)
     # 密码试错次数
-    max_try_times: int = Field(ge=0, le=10)
+    max_retries: int = Field(ge=0, le=PASSWORD_MAX_RETRIES)
     # 锁定时间（单位：秒）
-    lock_time: int = Field(ge=0, le=180 * 24 * 60 * 60)
+    lock_time: int = Field(ge=NEVER_EXPIRE_TIME, le=MAX_LOCK_TIME)
 
     def to_rule(self) -> PasswordRule:
         """转换成密码工具可用的规则"""
@@ -73,32 +84,29 @@ class PasswordRuleConfig(BaseModel):
         )
 
 
-class NotifyConfig(BaseModel):
+class NotificationConfig(BaseModel):
     """通知相关配置"""
 
-    # 以邮件方式通知
-    notify_by_email: bool
-    # 以短信方式通知
-    notify_by_sms: bool
+    methods: List[NotifyMethod]
     # 通知模板
-    notify_template: str
+    template: str
 
 
 class PasswordInitialConfig(BaseModel):
     """初始密码设置"""
 
     # 首次登录后强制修改密码
-    must_change_after_first_login: bool
+    force_change_after_first_login: bool
     # 修改密码时候不能使用之前的密码
     cannot_use_previous_password: bool
     # 之前的 N 个密码不能被本次修改使用，仅当 cannot_use_previous_password 为 True 时有效
-    reserved_previous_password_count: int = Field(gt=0, le=3)
+    reserved_previous_password_count: int = Field(default=0, ge=0, le=MAX_RESERVED_PREVIOUS_PASSWORD_COUNT)
     # 初始密码生成方式
     generate_method: PasswordGenerateMethod
     # 固定初始密码（仅密码生成方式为'固定值'时有效）
     fixed_password: Optional[str] = None
     # 通知相关配置
-    notify: NotifyConfig
+    notification: NotificationConfig
 
 
 class PasswordExpireConfig(BaseModel):
@@ -107,7 +115,7 @@ class PasswordExpireConfig(BaseModel):
     # 在密码到期多久前提醒，单位：秒，多个值表示多次提醒
     remind_before_expire: List[int]
     # 通知相关配置
-    notify: NotifyConfig
+    notify: NotificationConfig
 
 
 class LocalDataSourcePluginConfig(BaseModel):

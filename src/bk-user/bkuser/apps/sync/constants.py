@@ -30,7 +30,7 @@ class SyncTaskStatus(str, StructuredEnum):
     FAILED = EnumField("failed", label=_("失败"))
 
 
-class SyncOperate(str, StructuredEnum):
+class SyncOperation(str, StructuredEnum):
     """同步操作枚举"""
 
     CREATE = EnumField("create", label=_("创建"))
@@ -38,8 +38,8 @@ class SyncOperate(str, StructuredEnum):
     DELETE = EnumField("delete", label=_("删除"))
 
 
-class DataSourceSyncStepName(str, StructuredEnum):
-    """数据源同步步骤枚举"""
+class DataSourceSyncObjectType(str, StructuredEnum):
+    """数据源同步数据类型枚举"""
 
     USER = EnumField("user", label=_("用户"))
     DEPARTMENT = EnumField("department", label=_("部门"))
@@ -47,8 +47,8 @@ class DataSourceSyncStepName(str, StructuredEnum):
     DEPARTMENT_RELATION = EnumField("department_relation", label=_("部门关系"))
 
 
-class DataSourceSyncSubStepName(str, StructuredEnum):
-    """数据源同步子步骤枚举"""
+class DataSourceSyncStepName(str, StructuredEnum):
+    """数据源同步步骤枚举"""
 
     FETCH_DATA = EnumField("fetch_data", label=_("获取数据"))
     DATA_FORMAT = EnumField("data_format", label=_("数据格式化"))
@@ -56,14 +56,14 @@ class DataSourceSyncSubStepName(str, StructuredEnum):
     SAVE_DATA = EnumField("save_data", label=_("数据入库"))
 
 
-class TenantSyncStepName(str, StructuredEnum):
-    """租户同步步骤枚举"""
+class TenantSyncObjectType(str, StructuredEnum):
+    """租户同步数据类型枚举"""
 
     USER = EnumField("user", label=_("用户"))
     DEPARTMENT = EnumField("department", label=_("部门"))
 
 
-class TenantSyncSubStepName(str, StructuredEnum):
-    """租户同步子步骤枚举"""
+class TenantSyncStepName(str, StructuredEnum):
+    """租户同步步骤枚举"""
 
     SAVE_DATA = EnumField("save_data", label=_("数据入库"))
