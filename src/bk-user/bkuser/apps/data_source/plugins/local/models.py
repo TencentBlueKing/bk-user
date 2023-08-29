@@ -22,7 +22,7 @@ from bkuser.apps.data_source.plugins.local.constants import (
     MIN_NOT_CONTINUOUS_COUNT,
     NEVER_EXPIRE_TIME,
     PASSWORD_MAX_RETRIES,
-    NotifyMethod,
+    NotificationMethod,
     PasswordGenerateMethod,
 )
 from bkuser.common.passwd import PasswordRule, PasswordValidator
@@ -87,7 +87,7 @@ class PasswordRuleConfig(BaseModel):
 class NotificationConfig(BaseModel):
     """通知相关配置"""
 
-    methods: List[NotifyMethod]
+    methods: List[NotificationMethod]
     # 通知模板
     template: str
 
@@ -96,7 +96,7 @@ class PasswordInitialConfig(BaseModel):
     """初始密码设置"""
 
     # 首次登录后强制修改密码
-    force_change_after_first_login: bool
+    force_change_at_first_login: bool
     # 修改密码时候不能使用之前的密码
     cannot_use_previous_password: bool
     # 之前的 N 个密码不能被本次修改使用，仅当 cannot_use_previous_password 为 True 时有效

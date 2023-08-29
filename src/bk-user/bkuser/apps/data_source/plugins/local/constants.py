@@ -45,7 +45,7 @@ class PasswordGenerateMethod(str, StructuredEnum):
     FIXED = EnumField("fixed", label=_("固定值"))
 
 
-class NotifyMethod(str, StructuredEnum):
+class NotificationMethod(str, StructuredEnum):
     """通知方式"""
 
     EMAIL = EnumField("email", label=_("邮件通知"))
