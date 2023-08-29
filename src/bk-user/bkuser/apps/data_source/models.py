@@ -36,7 +36,7 @@ class DataSource(TimestampedModel):
     # 同步任务启用/禁用配置、周期配置等
     sync_config = models.JSONField("数据源同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
-    field_mapping = models.JSONField("用户字段映射", default=dict)
+    field_mapping = models.JSONField("用户字段映射", default=list)
 
     class Meta:
         ordering = ["id"]
@@ -48,12 +48,13 @@ class DataSource(TimestampedModel):
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
+    code = models.CharField("用户标识", max_length=128, unique=True)
 
     # ----------------------- 内置字段相关 -----------------------
     username = models.CharField("用户名", max_length=128)
     full_name = models.CharField("姓名", max_length=128)
     email = models.EmailField("邮箱", null=True, blank=True, default="")
-    phone = models.CharField("手机号", max_length=32)
+    phone = models.CharField("手机号", null=True, blank=True, default="", max_length=32)
     phone_country_code = models.CharField(
         "手机国际区号", max_length=16, null=True, blank=True, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
@@ -68,8 +69,8 @@ class DataSourceUser(TimestampedModel):
     class Meta:
         ordering = ["id"]
         unique_together = [
+            ("code", "data_source"),
             ("username", "data_source"),
-            ("full_name", "data_source"),
         ]
 
 

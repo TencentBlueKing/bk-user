@@ -8,21 +8,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from pydantic import ValidationError
+
+from blue_krill.data_types.enum import EnumField, StructuredEnum
+from django.utils.translation import gettext_lazy as _
 
 
-def stringify_pydantic_error(exc: ValidationError) -> str:
-    """Transform a pydantic Exception object to a one-line string"""
+class DataSourcePluginEnum(str, StructuredEnum):
+    """数据源插件枚举"""
 
-    err_msgs = []
-    for err in exc.errors():
-        # Note: 裁剪掉不必要的 `Value error, ` 前缀
-        msg = err["msg"].removeprefix("Value error, ")
+    LOCAL = EnumField("local", label=_("本地"))
+    GENERAL = EnumField("general", label=_("通用"))
+    WECOM = EnumField("wecom", label=_("企业微信"))
+    LDAP = EnumField("ldap", label=_("LDAP"))
+    MAD = EnumField("mad", label=_("MAD"))
 
-        loc_msg = " -> ".join([str(i) for i in err["loc"]])
-        if loc_msg:
-            msg = f"{loc_msg}: {msg}"
 
-        err_msgs.append(msg)
+class FieldMappingOperation(str, StructuredEnum):
+    """字段映射关系"""
 
-    return ", ".join(err_msgs)
+    DIRECT = EnumField("direct", label=_("直接"))
+    EXPRESSION = EnumField("expression", label=_("表达式"))

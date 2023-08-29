@@ -8,21 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from pydantic import ValidationError
 
 
-def stringify_pydantic_error(exc: ValidationError) -> str:
-    """Transform a pydantic Exception object to a one-line string"""
+class LocalDataSourceDataParser:
+    """本地数据源数据解析器"""
 
-    err_msgs = []
-    for err in exc.errors():
-        # Note: 裁剪掉不必要的 `Value error, ` 前缀
-        msg = err["msg"].removeprefix("Value error, ")
+    # TODO (su) 从 excel 中读取用户，部门，leader 等信息，转换成需要的格式
 
-        loc_msg = " -> ".join([str(i) for i in err["loc"]])
-        if loc_msg:
-            msg = f"{loc_msg}: {msg}"
-
-        err_msgs.append(msg)
-
-    return ", ".join(err_msgs)
+    ...

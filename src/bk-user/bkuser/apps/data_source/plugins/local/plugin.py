@@ -8,21 +8,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from pydantic import ValidationError
+from typing import List
+
+from bkuser.apps.data_source.plugins.base import BaseDataSourcePlugin
+from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.apps.data_source.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
-def stringify_pydantic_error(exc: ValidationError) -> str:
-    """Transform a pydantic Exception object to a one-line string"""
+class LocalDataSourcePlugin(BaseDataSourcePlugin):
+    """本地数据源插件"""
 
-    err_msgs = []
-    for err in exc.errors():
-        # Note: 裁剪掉不必要的 `Value error, ` 前缀
-        msg = err["msg"].removeprefix("Value error, ")
+    def __init__(self, plugin_config: LocalDataSourcePluginConfig):
+        self.plugin_config = plugin_config
 
-        loc_msg = " -> ".join([str(i) for i in err["loc"]])
-        if loc_msg:
-            msg = f"{loc_msg}: {msg}"
+    def fetch_departments(self) -> List[RawDataSourceDepartment]:
+        """获取部门信息"""
+        return []
 
-        err_msgs.append(msg)
-
-    return ", ".join(err_msgs)
+    def fetch_users(self) -> List[RawDataSourceUser]:
+        """获取用户信息"""
+        return []

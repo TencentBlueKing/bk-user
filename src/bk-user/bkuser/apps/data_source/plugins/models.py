@@ -8,21 +8,30 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from pydantic import ValidationError
+from typing import Dict, List
+
+from pydantic import BaseModel
 
 
-def stringify_pydantic_error(exc: ValidationError) -> str:
-    """Transform a pydantic Exception object to a one-line string"""
+class RawDataSourceUser(BaseModel):
+    """原始数据源用户信息"""
 
-    err_msgs = []
-    for err in exc.errors():
-        # Note: 裁剪掉不必要的 `Value error, ` 前缀
-        msg = err["msg"].removeprefix("Value error, ")
+    # 用户唯一标识
+    id: str
+    # 用户名，邮箱，手机号等个人信息
+    properties: Dict[str, str]
+    # 直接上级信息
+    leaders: List[str]
+    # 所属部门信息
+    departments: List[str]
 
-        loc_msg = " -> ".join([str(i) for i in err["loc"]])
-        if loc_msg:
-            msg = f"{loc_msg}: {msg}"
 
-        err_msgs.append(msg)
+class RawDataSourceDepartment(BaseModel):
+    """原始数据源部门信息"""
 
-    return ", ".join(err_msgs)
+    # 部门唯一标识（如：IEG）
+    id: str
+    # 部门名称
+    name: str
+    # 上级部门
+    parent: str
