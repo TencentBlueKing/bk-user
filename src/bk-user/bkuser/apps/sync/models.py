@@ -28,8 +28,8 @@ class DataSourceSyncTask(TimestampedModel):
     """数据源同步任务"""
 
     data_source_id = models.IntegerField("数据源 ID")
-    status = models.CharField("任务总状态", choices=SyncTaskStatus.get_django_choices(), max_length=32)
-    trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_django_choices(), max_length=32)
+    status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
+    trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
     start_time = models.DateTimeField("任务开始时间")
     duration = models.DurationField("任务持续时间")
@@ -39,9 +39,9 @@ class DataSourceSyncStep(TimestampedModel):
     """数据源同步步骤"""
 
     task = models.ForeignKey(DataSourceSyncTask, on_delete=models.CASCADE, related_name="steps")
-    object_type = models.CharField("对象类型", choices=DataSourceSyncObjectType.get_django_choices(), max_length=32)
-    step_name = models.CharField("步骤名称", choices=DataSourceSyncStepName.get_django_choices(), max_length=32)
-    status = models.CharField("当前步骤状态", choices=SyncTaskStatus.get_django_choices(), max_length=32)
+    object_type = models.CharField("对象类型", choices=DataSourceSyncObjectType.get_choices(), max_length=32)
+    step_name = models.CharField("步骤名称", choices=DataSourceSyncStepName.get_choices(), max_length=32)
+    status = models.CharField("当前步骤状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     details = models.JSONField("详细信息", default=dict)
     logs = models.TextField("日志", default="")
 
@@ -53,7 +53,7 @@ class DataSourceUserChangeLog(TimestampedModel):
     task = models.ForeignKey(DataSourceSyncTask, on_delete=models.CASCADE, related_name="user_change_logs")
     data_source_id = models.IntegerField("数据源 ID")
     user_id = models.CharField("数据源用户 ID", max_length=64)
-    operation = models.CharField("操作类型", choices=SyncOperation.get_django_choices(), max_length=32)
+    operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     # 数据源原始数据
     user_code = models.CharField("用户唯一标识", max_length=128)
     username = models.CharField("用户名", max_length=128)
@@ -66,7 +66,7 @@ class DataSourceDepartmentChangeLog(TimestampedModel):
     id = models.UUIDField("变更日志 ID", default=uuid.uuid4, primary_key=True)
     task = models.ForeignKey(DataSourceSyncTask, on_delete=models.CASCADE, related_name="department_change_logs")
     data_source_id = models.IntegerField("数据源 ID")
-    operation = models.CharField("操作类型", choices=SyncOperation.get_django_choices(), max_length=32)
+    operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     department_id = models.CharField("数据源部门 ID", max_length=128)
     # 数据源原始数据
     department_code = models.CharField("部门唯一标识", max_length=128)
@@ -78,8 +78,8 @@ class TenantSyncTask(TimestampedModel):
 
     tenant_id = models.IntegerField("租户 ID")
     data_source_id = models.IntegerField("数据源 ID")
-    status = models.CharField("任务总状态", choices=SyncTaskStatus.get_django_choices(), max_length=32)
-    trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_django_choices(), max_length=32)
+    status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
+    trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
     start_time = models.DateTimeField("任务开始时间")
     duration = models.DurationField("任务持续时间")
@@ -89,9 +89,9 @@ class TenantSyncStep(TimestampedModel):
     """租户同步任务步骤"""
 
     task = models.ForeignKey(TenantSyncTask, on_delete=models.CASCADE, related_name="steps")
-    object_type = models.CharField("对象类型", choices=TenantSyncObjectType.get_django_choices(), max_length=32)
-    step_name = models.CharField("步骤名称", choices=TenantSyncStepName.get_django_choices(), max_length=32)
-    status = models.CharField("当前步骤状态", choices=SyncTaskStatus.get_django_choices(), max_length=32)
+    object_type = models.CharField("对象类型", choices=TenantSyncObjectType.get_choices(), max_length=32)
+    step_name = models.CharField("步骤名称", choices=TenantSyncStepName.get_choices(), max_length=32)
+    status = models.CharField("当前步骤状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     details = models.JSONField("详细信息", default=dict)
     logs = models.TextField("日志", default="")
 
@@ -103,7 +103,7 @@ class TenantUserChangeLog(TimestampedModel):
     task = models.ForeignKey(TenantSyncTask, on_delete=models.CASCADE, related_name="user_change_logs")
     tenant_id = models.IntegerField("租户 ID")
     data_source_id = models.IntegerField("数据源 ID")
-    operation = models.CharField("操作类型", choices=SyncOperation.get_django_choices(), max_length=32)
+    operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     user_id = models.CharField("用户 ID", max_length=64)
     username = models.CharField("用户名", max_length=128)
     full_name = models.CharField("用户全名", max_length=128)
@@ -116,6 +116,6 @@ class TenantDepartmentChangeLog(TimestampedModel):
     task = models.ForeignKey(TenantSyncTask, on_delete=models.CASCADE, related_name="department_change_logs")
     tenant_id = models.IntegerField("租户 ID")
     data_source_id = models.IntegerField("数据源 ID")
-    operation = models.CharField("操作类型", choices=SyncOperation.get_django_choices(), max_length=32)
+    operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     department_id = models.CharField("部门 ID", max_length=128)
     department_name = models.CharField("部门名称", max_length=255)

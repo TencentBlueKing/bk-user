@@ -115,7 +115,7 @@ class PasswordExpireConfig(BaseModel):
     # 在密码到期多久前提醒，单位：秒，多个值表示多次提醒
     remind_before_expire: List[int]
     # 通知相关配置
-    notify: NotificationConfig
+    notification: NotificationConfig
 
 
 class LocalDataSourcePluginConfig(BaseModel):
