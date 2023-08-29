@@ -42,6 +42,6 @@ export const getTenantUsers = (id: string) => http.get(`/api/v1/web/tenants/${id
  * 获取租户下的用户列表
  */
 export const getTenantUsersList = (params: TenantUsersListParams): Promise<TenantUsersListResult> => {
-  const { tenant_id, keyword, page, page_size  } = params;
-  return http.get(`/api/v1/web/tenants/${tenant_id}/users/?keyword=${keyword}&page=${page}&page_size=${page_size}`);
+  const { tenantId, keyword, page, pageSize  } = params;
+  return http.get(`/api/v1/web/tenants/${tenantId}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
 };

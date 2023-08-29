@@ -33,16 +33,32 @@
     background-color: #dcdee5;
     border-radius: 4px;
   }
-
-  &:hover {
-    &::-webkit-scrollbar-thumb {
-      background-color: #979ba5;
-    }
-  }
 }
 
 .text-overflow {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.img-logo {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 1px solid #C4C6CC;
+  border-radius: 50%;
+}
+
+.span-logo {
+  display: inline-block;
+  width: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  color: #fff;
+  text-align: center;
+  background-color: #C4C6CC;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-right: 8px;
 }

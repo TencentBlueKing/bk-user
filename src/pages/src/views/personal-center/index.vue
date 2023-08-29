@@ -1,13 +1,13 @@
 <template>
   <bk-resize-layout
-    class="individual-center-wrapper"
+    class="personal-center-wrapper"
     immediate
     :min="320"
     :max="500"
     :initial-divide="320"
   >
     <template #aside>
-      <div class="individual-center-left">
+      <div class="personal-center-left">
         <div class="left-search">
           <bk-input />
         </div>
@@ -44,7 +44,7 @@
       </div>
     </template>
     <template #main>
-      <div class="individual-center-main">
+      <div class="personal-center-main">
         <header>
           <div class="header-left">
             <img v-if="state.item.logo" :src="state.item.logo" />
@@ -74,6 +74,43 @@
             </bk-button>
           </div>
         </header>
+        <div class="details-info-wrapper">
+          <ul class="details-info-content">
+            <li class="content-item">
+              <div class="item-header">
+                <p class="item-title">身份信息</p>
+                <bk-button outline theme="primary" @click="handleClickEdit">
+                  编辑
+                </bk-button>
+              </div>
+              <ul class="item-content flex">
+                <li v-for="(item, index) in state.idInfo" :key="index">
+                  <span class="key">{{ dataMap[item.key] }}：</span>
+                  <span class="value">{{ item.value }}</span>
+                </li>
+              </ul>
+            </li>
+            <li class="content-item">
+              <div class="item-header">
+                <p class="item-title">个人社交账号</p>
+              </div>
+              <ul class="item-content ">
+                <li></li>
+              </ul>
+            </li>
+            <li class="content-item">
+              <div class="item-header">
+                <p class="item-title">MFA设置</p>
+              </div>
+              <ul class="item-content">
+                <li>
+                  <span class="key"></span>
+                  <span class="value"></span>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
       </div>
     </template>
   </bk-resize-layout>
@@ -108,9 +145,54 @@ const accountList = reactive([
     state: false,
   },
 ]);
+
+const dataMap = {
+  username: '用户名',
+  tenant_id: '所属租户ID',
+  full_name: '全名',
+  department: '所属组织',
+  email: '邮箱',
+  leader: '直属上级',
+  phone: '手机号',
+  job: '职务',
+};
 const state = reactive({
   activeIndex: 0,
   item: {},
+  idInfo: [
+    {
+      key: 'username',
+      value: '张三',
+    },
+    {
+      key: 'tenant_id',
+      value: 'test',
+    },
+    {
+      key: 'full_name',
+      value: '张三',
+    },
+    {
+      key: 'department',
+      value: '总公司',
+    },
+    {
+      key: 'email',
+      value: '123@qq.com',
+    },
+    {
+      key: 'leader',
+      value: '李四',
+    },
+    {
+      key: 'phone',
+      value: '13122334455',
+    },
+    {
+      key: 'job',
+      value: '产品经理',
+    },
+  ],
 });
 
 const handleClickItem = (item, index) => {
@@ -121,11 +203,13 @@ handleClickItem(accountList[0], 0);
 </script>
 
 <style lang="less" scoped>
-.individual-center-wrapper {
+@import url("@/css/tenantViewStyle.less");
+
+.personal-center-wrapper {
   width: 100%;
   height: calc(100vh - 52px);
 
-  .individual-center-left {
+  .personal-center-left {
     height: 100%;
     background-color: #fff;
 
@@ -213,7 +297,7 @@ handleClickItem(accountList[0], 0);
     }
   }
 
-  .individual-center-main {
+  .personal-center-main {
     padding: 24px;
 
     header {

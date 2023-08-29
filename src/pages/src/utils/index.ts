@@ -4,6 +4,7 @@ import abnormalImg from '@/images/abnormal.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
 import warningImg from '@/images/warning.svg';
+import moment from 'moment';
 
 export const statusIcon = {
   normal: {
@@ -92,3 +93,16 @@ export const dataSourceType = {
     text: '企业微信',
   },
 };
+
+// 日期转换
+ export function dateConvert(value: string) {
+  value = moment.utc(value).format('YYYY-MM-DD');
+  switch (value) {
+    case null:
+      return '--';
+    case '2100-01-01':
+      return '永久';
+    default:
+      return value;
+  }
+}

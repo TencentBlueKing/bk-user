@@ -94,8 +94,8 @@ export interface TenantUsersListResult {
  * 租户下的用户列表
  */
 export interface TenantUsersListParams {
-  tenant_id: string,
+  tenantId: string,
   keyword: string,
   page: number,
-  page_size: number,
+  pageSize: number,
 }

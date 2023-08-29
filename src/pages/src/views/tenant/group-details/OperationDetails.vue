@@ -148,10 +148,10 @@ const state = reactive({
 });
 
 const params = reactive({
-  tenant_id: props.tenantsData.id,
+  tenantId: props.tenantsData.id,
   keyword: "",
   page: 1,
-  page_size: 10,
+  pageSize: 10,
 });
 
 const rulesBasicInfo = {
@@ -256,7 +256,7 @@ const columns = [
       return (
         <div style="font-size: 16px;">
           <bk-button
-            style="margin: 0 15px;"
+            style="margin: 0 10px;"
             text
             onClick={handleItemChange.bind(this, index, 'add')}
           >
@@ -347,7 +347,7 @@ const handleClear = () => {
 // 获取管理员列表
 const fetchUserList = (value: string) => {
   params.keyword = value;
-  if (params.tenant_id) {
+  if (params.tenantId) {
     getTenantUsersList(params).then((res) => {
       const list = formData.managers.map((item) => item.username);
       state.count = res.data.count;
@@ -374,7 +374,7 @@ const selectList = (list) => {
 }
 
 const scrollChange = () => {
-  params.page_size += 10;
+  params.pageSize += 10;
   getTenantUsersList(params).then((res) => {
     const list = formData.managers.map((item) => item.username);
     state.count = res.data.count;

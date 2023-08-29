@@ -49,12 +49,6 @@
             :data="formData.managers"
             :columns="columns"
           >
-            <template #empty>
-              <Empty
-                :is-search-empty="state.isEmptySearch"
-                @handleEmpty="handleClear"
-              />
-            </template>
           </bk-table>
         </bk-form>
       </div>
@@ -71,10 +65,11 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, watch, nextTick } from "vue";
 import { getBase64 } from "@/utils";
-import Empty from "@/components/Empty.vue";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
+import { getTenantUsersList } from "@/http/tenantsFiles";
+import { putTenantOrganizationDetails } from "@/http/organizationFiles";
 import useValidate from "@/hooks/use-validate";
 
 interface TableItem {
@@ -94,20 +89,26 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  managers: {
+    type: Array,
+    default: [],
+  },
 });
 
 const validate = useValidate();
+const emit = defineEmits(['updateTenantsList']);
 
 const basicRef = ref();
 const userRef = ref();
-const passwordRef = ref();
 const formData = reactive({
-  ...props.tenantsData,
+  id: props.tenantsData.id,
+  name: props.tenantsData.name,
+  logo: props.tenantsData.logo,
+  feature_flags: props.tenantsData.feature_flags,
+  managers: props.managers,
 });
 const state = reactive({
   username: "",
-  // 搜索结果为空
-  isEmptySearch: false,
   count: 0,
   list: [],
 });
@@ -129,10 +130,6 @@ const rulesUserInfo = {
   full_name: [validate.required, validate.name],
   email: [validate.required, validate.email],
   phone: [validate.required, validate.phone],
-};
-
-const rulesPasswordInfo = {
-  init_password: [validate.required],
 };
 
 const files = computed(() => {
@@ -180,6 +177,9 @@ const fieldItemFn = (row: any) => {
             v-model={formData.managers[index][column.field]}
             state={state}
             params={params}
+            onSelectList={selectList}
+            onScrollChange={scrollChange}
+            onSearchUserList={fetchUserList}
           />
         ) : (
           <bk-input
@@ -215,7 +215,6 @@ const columns = [
   {
     label: "手机号",
     field: "phone",
-    width: 150,
     render: fieldItemFn,
   },
   {
@@ -226,16 +225,16 @@ const columns = [
       return (
         <div style="font-size: 16px;">
           <bk-button
-            style="margin: 0 15px;"
+            style="margin: 0 10px;"
             text
-            onClick={handleAddItem.bind(this, index)}
+            onClick={handleItemChange.bind(this, index, 'add')}
           >
             <i class="user-icon icon-plus-fill" />
           </bk-button>
           <bk-button
             text
             disabled={formData.managers.length === 1}
-            onClick={handleRemoveItem.bind(this, index)}
+            onClick={handleItemChange.bind(this, index, 'remove')}
           >
             <i class="user-icon icon-minus-fill" />
           </bk-button>
@@ -258,15 +257,89 @@ function getTableItem(): TableItem {
   };
 }
 
-function handleAddItem(index: number) {
-  formData.managers.splice(index + 1, 0, getTableItem());
+function handleItemChange(index: number, action: 'add' | 'remove') {
+  if(action === 'add') {
+    formData.managers.splice(index + 1, 0, getTableItem());
+  } else if (action === 'remove') {
+    formData.managers.splice(index, 1);
+  }
+
+  window.changeInput = true;
+  fetchUserList();
 }
 
-function handleRemoveItem(index: number) {
-  formData.managers.splice(index, 1);
+// 获取管理员列表
+const fetchUserList = () => {
+  if (params.tenant_id) {
+    getTenantUsersList(params).then((res) => {
+      const list = formData.managers.map((item) => item.username);
+      state.count = res.data.count;
+      state.list = res.data.results.filter(
+        (item) => !list.includes(item.username)
+      );
+    });
+  }
 }
+fetchUserList();
+
+const selectList = (list) => {
+  formData.managers = formData.managers.filter(item => item.id);
+  nextTick(() => {
+    const managers = list?.length ? list : [{
+      username: "",
+      full_name: "",
+      email: "",
+      phone: "",
+      phone_country_code: "86",
+    }];
+
+    formData.managers.push(...managers);
+  });
+}
+
+const scrollChange = () => {
+  params.page_size += 10;
+  getTenantUsersList(params).then((res) => {
+    const list = formData.managers.map((item) => item.username);
+    state.count = res.data.count;
+    state.list = res.data.results.filter(
+      (item) => !list.includes(item.username)
+    );
+  });
+}
+
 // 校验表单
-function handleSubmit() {}
+async function handleSubmit() {
+  const validationPromises = [
+    basicRef.value.validate(),
+    userRef.value.validate(),
+  ];
+
+  await Promise.all(validationPromises);
+  putTenantOrganization();
+}
+
+function putTenantOrganization() {
+  const manager_ids = formData.managers.map(item => item.id);
+  const params = {
+    name: formData.name,
+    logo: formData.logo,
+    feature_flags: {
+      user_number_visible: formData.feature_flags.user_number_visible,
+    },
+    manager_ids,
+  };
+
+  if (!params.logo) delete params.logo;
+
+  putTenantOrganizationDetails(formData.id, params)
+    .then(() => {
+      emit('updateTenantsList');
+    })
+    .catch((e) => {
+      console.warn(e);
+    });
+}
 </script>
 
 <style lang="less" scoped>
