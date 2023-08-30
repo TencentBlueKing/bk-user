@@ -21,7 +21,6 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
 )
-from bkuser.biz.data_source_organization import DataSourceOrganizationHandler
 from bkuser.biz.validators import validate_data_source_user_username
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -139,15 +138,14 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
-        user_departments_map = DataSourceOrganizationHandler.get_user_departments_map_by_user_id(user_ids=[obj.id])
+        user_departments_map = self.context["user_departments_map"]
         departments = user_departments_map.get(obj.id) or []
         return [{"id": dept.id, "name": dept.name} for dept in departments]
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
     def get_leaders(self, obj: DataSourceUser) -> List[Dict]:
-        user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([obj.id])
+        user_leaders_map = self.context["user_leaders_map"]
         leaders = user_leaders_map.get(obj.id) or []
-
         return [{"id": leader.id, "username": leader.username} for leader in leaders]
 
 

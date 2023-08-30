@@ -172,6 +172,13 @@ class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.Retriev
     lookup_url_kwarg = "id"
     serializer_class = UserRetrieveOutputSLZ
 
+    def get_serializer_context(self):
+        user_departments_map = DataSourceOrganizationHandler.get_user_departments_map_by_user_id(
+            user_ids=[self.kwargs["id"]]
+        )
+        user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([self.kwargs["id"]])
+        return {"user_departments_map": user_departments_map, "user_leaders_map": user_leaders_map}
+
     @swagger_auto_schema(
         operation_description="数据源用户详情",
         responses={status.HTTP_200_OK: UserRetrieveOutputSLZ()},
