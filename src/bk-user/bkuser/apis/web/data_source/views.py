@@ -20,16 +20,20 @@ from bkuser.apis.web.data_source.serializers import (
     LeaderSearchOutputSLZ,
     UserCreateInputSLZ,
     UserCreateOutputSLZ,
+    UserRetrieveOutputSLZ,
     UserSearchInputSLZ,
     UserSearchOutputSLZ,
+    UserUpdateInputSLZ,
 )
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
+    DataSourceUserEditableBaseInfo,
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class DataSourceUserListCreateApi(generics.ListCreateAPIView):
@@ -161,3 +165,52 @@ class DataSourceDepartmentsListApi(generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
+    queryset = DataSourceUser.objects.all()
+    lookup_url_kwarg = "id"
+    serializer_class = UserRetrieveOutputSLZ
+
+    @swagger_auto_schema(
+        operation_description="数据源用户详情",
+        responses={status.HTTP_200_OK: UserRetrieveOutputSLZ()},
+        tags=["data_source"],
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="更新数据源用户",
+        request_body=UserUpdateInputSLZ(),
+        responses={status.HTTP_200_OK: ""},
+        tags=["data_source"],
+    )
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        data_source = instance.data_source
+        if not data_source.editable:
+            raise error_codes.CANNOT_UPDATE_USER
+
+        slz = UserUpdateInputSLZ(data=request.data, context={"data_source": data_source})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 用户数据整合
+        base_user_info = DataSourceUserEditableBaseInfo(
+            full_name=data["full_name"],
+            email=data["email"],
+            phone_country_code=data["phone_country_code"],
+            phone=data["phone"],
+            logo=data["logo"],
+        )
+
+        relation_info = DataSourceUserRelationInfo(
+            department_ids=data["department_ids"], leader_ids=data["leader_ids"]
+        )
+
+        DataSourceOrganizationHandler.update_user(
+            user=instance, base_user_info=base_user_info, relation_info=relation_info
+        )
+
+        return Response()

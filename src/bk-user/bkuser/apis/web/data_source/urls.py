@@ -16,4 +16,5 @@ urlpatterns = [
     path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source_user.list_create"),
     path("<int:id>/leaders/", views.DataSourceLeadersListApi.as_view(), name="data_source_leaders.list"),
     path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_departments.list"),
+    path("user/<int:id>/", views.DataSourceUserRetrieveUpdateApi.as_view(), name="data_source_user.retrieve_update"),
 ]
