@@ -28,5 +28,5 @@ urlpatterns = [
     # 租户部门下用户
     path("departments/<int:id>/users/", views.TenantDepartmentUserListApi.as_view(), name="departments.users.list"),
     # 租户用户详情
-    path("users/<str:id>/", views.TenantUsersRetrieveApi.as_view(), name="department.users.retrieve"),
+    path("users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="department.users.retrieve"),
 ]
