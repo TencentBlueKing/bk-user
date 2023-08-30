@@ -16,11 +16,11 @@ from django.utils.translation import gettext_lazy as _
 class DataSourcePluginEnum(str, StructuredEnum):
     """数据源插件枚举"""
 
-    LOCAL = EnumField("local", label=_("本地"))
-    GENERAL = EnumField("general", label=_("通用"))
+    LOCAL = EnumField("local", label=_("本地数据源"))
+    GENERAL = EnumField("general", label=_("通用数据源"))
     WECOM = EnumField("wecom", label=_("企业微信"))
-    LDAP = EnumField("ldap", label=_("LDAP"))
-    MAD = EnumField("mad", label=_("MAD"))
+    LDAP = EnumField("ldap", label=_("OpenLDAP"))
+    MAD = EnumField("mad", label=_("MicrosoftActiveDirectory"))
 
 
 class FieldMappingOperation(str, StructuredEnum):
