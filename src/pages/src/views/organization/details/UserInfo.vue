@@ -16,6 +16,7 @@
     </header>
     <bk-table
       class="user-info-table"
+      remote-pagination
       :data="state.managers"
       :pagination="props.pagination"
       :border="['outer']"
@@ -72,15 +73,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref, watch } from 'vue';
+import { inject, reactive, ref, watch } from 'vue';
+
 import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
-import { statusIcon } from '@/utils';
-
 import {
-  getTenantUsers
+  getTenantUsers,
 } from '@/http/organizationFiles';
+// import { statusIcon } from '@/utils';
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -104,7 +105,7 @@ const props = defineProps({
   keyword: {
     type: String,
     default: '',
-  }
+  },
 });
 const emit = defineEmits(['searchUsers', 'changeUsers', 'updatePageLimit', 'updatePageCurrent']);
 const isCurrentUsers = ref(false);
@@ -160,11 +161,11 @@ const formatConvert = (data) => {
   return departments;
 };
 const pageLimitChange = (limit) => {
-  emit('updatePageLimit', limit)
-}
+  emit('updatePageLimit', limit);
+};
 const pageCurrentChange = (current) => {
   emit('updatePageCurrent', current);
-}
+};
 </script>
 
 <style lang="less" scoped>
