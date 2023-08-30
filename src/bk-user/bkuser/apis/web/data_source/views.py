@@ -81,7 +81,7 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         data = slz.validated_data
 
         # 不允许对非本地数据源进行用户新增操作
-        if not data_source.editable:
+        if not data_source.is_local:
             raise error_codes.CANNOT_CREATE_USER
         # 校验是否已存在该用户
         if DataSourceUser.objects.filter(username=data["username"], data_source=data_source).exists():
