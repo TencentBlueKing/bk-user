@@ -15,13 +15,18 @@ from . import views
 urlpatterns = [
     # 租户
     path("tenants/", views.TenantListApi.as_view(), name="organization.tenant.list"),
+    # 租户详情/编辑
     path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="organization.tenant.retrieve_update"),
+    # 租户用户列表
+    path("tenants/<str:id>/users/", views.TenantUserListApi.as_view(), name="organization.tenant.users.list"),
+    # 租户部门下子部门
     path(
         "departments/<int:id>/children/",
         views.TenantDepartmentChildrenListApi.as_view(),
         name="organization.children.list",
     ),
-    # 租户用户
+    # 租户部门下用户
     path("departments/<int:id>/users/", views.TenantDepartmentUserListApi.as_view(), name="departments.users.list"),
-    path("users/<str:id>/", views.TenantUsersRetrieveApi.as_view(), name="department.users.retrieve"),
+    # 租户用户详情
+    path("users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="department.users.retrieve"),
 ]

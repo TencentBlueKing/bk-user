@@ -98,6 +98,8 @@ class TenantUserHandler:
         """
         查询租户用户信息
         """
+        if not tenant_user_ids:
+            return []
         tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
 
         # 返回租户用户本身信息和对应数据源用户信息
@@ -127,6 +129,8 @@ class TenantUserHandler:
 
     @staticmethod
     def get_tenant_user_leaders_map_by_id(tenant_user_ids: List[str]) -> Dict[str, List[TenantUserLeaderInfo]]:
+        if not tenant_user_ids:
+            return {}
         tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
         # 从数据源中获取租户用户每个上级, 获取数据源用户上下级映射
         data_source_user_leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(
@@ -192,13 +196,31 @@ class TenantUserHandler:
         return data
 
     @staticmethod
-    def get_tenant_user_ids_by_tenant_department(tenant_department_id: int, recursive: bool = True):
-        tenant_department = TenantDepartment.objects.get(id=tenant_department_id)
+    def get_tenant_user_ids_by_tenant_department(tenant_department_id: int, recursive: bool = True) -> List[str]:
+        """
+        获取租户部门下租户用户
+        """
+        tenant_department = TenantDepartment.objects.filter(id=tenant_department_id).first()
+        if not tenant_department:
+            return []
         data_source_user_ids = DataSourceDepartmentHandler.list_department_user_ids(
             department_id=tenant_department.data_source_department_id, recursive=recursive
         )
         return list(
             TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids).values_list("id", flat=True)
+        )
+
+    @staticmethod
+    def get_tenant_user_ids_by_tenant(tenant_id: str) -> List[str]:
+        """
+        获取ID=tenant_id的租户下（非协同数据源），所有租户用户
+        """
+        data_source_ids_map: Dict = TenantHandler.get_data_source_ids_map_by_ids([tenant_id])
+        data_source_ids: List[int] = []
+        for data_sources in data_source_ids_map.values():
+            data_source_ids += data_sources
+        return TenantUser.objects.filter(data_source_id__in=data_source_ids, tenant_id=tenant_id).values_list(
+            "id", flat=True
         )
 
 
@@ -299,7 +321,7 @@ class TenantHandler:
                 )
 
     @staticmethod
-    def get_data_source_ids_map_by_id(tenant_ids: List[str]) -> Dict[str, List[int]]:
+    def get_data_source_ids_map_by_ids(tenant_ids: List[str]) -> Dict[str, List[int]]:
         # 当前属于租户的数据源
         tenant_data_source_map = defaultdict(list)
         data_sources: Dict[str, List[DataSourceSimpleInfo]] = DataSourceHandler.get_data_source_map_by_owner(
@@ -324,7 +346,9 @@ class TenantDepartmentHandler:
         tenant_departments = TenantDepartment.objects.filter(tenant_id=tenant_id)
 
         # 获取数据源部门基础信息
-        data_source_departments = DataSourceDepartmentHandler.get_department_info_map_by_id(data_source_department_ids)
+        data_source_departments = DataSourceDepartmentHandler.get_department_info_map_by_ids(
+            data_source_department_ids
+        )
 
         # data_source_departments中包含了父子部门的ID，协同数据源需要查询绑定了该租户
         department_ids = list(data_source_departments.keys())
@@ -366,7 +390,7 @@ class TenantDepartmentHandler:
     def get_tenant_root_department_map_by_tenant_id(
         tenant_ids: List[str], current_tenant_id: str
     ) -> Dict[str, List[TenantDepartmentBaseInfo]]:
-        data_source_map = TenantHandler.get_data_source_ids_map_by_id(tenant_ids)
+        data_source_map = TenantHandler.get_data_source_ids_map_by_ids(tenant_ids)
 
         # 通过获取数据源的根节点
         tenant_root_department_map = defaultdict(list)
@@ -385,7 +409,9 @@ class TenantDepartmentHandler:
 
     @staticmethod
     def get_tenant_department_children_by_id(tenant_department_id: int) -> List[TenantDepartmentBaseInfo]:
-        tenant_department = TenantDepartment.objects.get(id=tenant_department_id)
+        tenant_department = TenantDepartment.objects.filter(id=tenant_department_id).first()
+        if not tenant_department:
+            return []
         # 获取二级组织
         children = DataSourceDepartmentRelation.objects.get(
             department=tenant_department.data_source_department

@@ -54,7 +54,7 @@ class DataSourceHandler:
 
 class DataSourceDepartmentHandler:
     @staticmethod
-    def get_department_info_map_by_id(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
+    def get_department_info_map_by_ids(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
         """
         获取部门基础信息
         """

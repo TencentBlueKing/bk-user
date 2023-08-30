@@ -85,6 +85,7 @@ class ErrorCodes:
     BIND_TENANT_USER_FAILED = ErrorCode(_("数据源用户绑定租户失败"))
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     UPDATE_TENANT_MANAGERS_FAILED = ErrorCode(_("更新租户管理员失败"))
+    GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到租户用户所在租户"))
 
 
 # 实例化一个全局对象
