@@ -6,7 +6,7 @@
       </bk-checkbox>
       <bk-input
         class="header-right"
-        v-model="props.keyword"
+        v-model="searchValue"
         placeholder="搜索用户名、全名"
         type="search"
         clearable
@@ -113,6 +113,7 @@ const detailsConfig = reactive({
   isShow: false,
   title: '',
 });
+const searchValue = ref(props.keyword);
 
 const state = reactive({
   managers: [],

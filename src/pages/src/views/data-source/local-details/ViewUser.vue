@@ -23,16 +23,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
+import { reactive } from 'vue';
 
-const props = defineProps({
+defineProps({
   tenantsData: {
     type: Object,
     default: {},
   },
 });
 
-const managersList = computed(() => props.tenantsData.managers.filter(item => item.id));
 
 const userMap = {
   user_id: '用户ID',

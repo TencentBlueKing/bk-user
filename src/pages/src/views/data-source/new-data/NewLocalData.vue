@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive } from 'vue';
 import { useRoute } from 'vue-router';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
@@ -162,6 +162,11 @@ const route = useRoute();
 const typeText = computed(() => {
   switch (route.params.type) {
     case 'local':
+      return {
+        name: '本地',
+        icon: 'user-icon icon-shujuku',
+      };
+    default:
       return {
         name: '本地',
         icon: 'user-icon icon-shujuku',
