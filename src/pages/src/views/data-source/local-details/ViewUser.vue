@@ -2,97 +2,56 @@
   <ul class="details-content">
     <li>
       <div class="details-content-info">
-        <div
-          class="details-content-item"
-          v-for="(item, index) in basicData"
-          :key="index"
-        >
-          <span class="details-content-key">{{ userMap[item.key] }}：</span>
-          <span class="details-content-value">{{ item.value }}</span>
+        <div class="details-content-item">
+          <span class="details-content-key">用户名：</span>
+          <span class="details-content-value">{{ props.usersData.username }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">全名：</span>
+          <span class="details-content-value">{{ props.usersData.full_name }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">邮箱：</span>
+          <span class="details-content-value">{{ props.usersData.email }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">手机号：</span>
+          <span class="details-content-value">{{ props.usersData.phone }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">所属组织：</span>
+          <div class="details-content-value" v-if="props.usersData.departments.length > 0">
+            <span v-for="(item, index) in props.usersData.departments" :key="index">
+              {{ item.name}}
+            </span>
+          </div>
+          <span class="details-content-value" v-else>{{ '--' }}</span>
+        </div>
+        <div class="details-content-item">
+          <span class="details-content-key">直属上级：</span>
+          <div class="details-content-value" v-if="props.usersData.leaders.length > 0">
+            <span v-for="(item, index) in props.usersData.leaders" :key="index">
+              {{ item.username }}
+            </span>
+          </div>
+          <span class="details-content-value" v-else>{{ '--' }}</span>
         </div>
       </div>
-      <img
-        v-if="tenantsData.logo"
-        class="user-logo"
-        :src="tenantsData.logo"
-        alt=""
-      />
+      <img v-if="props.usersData.logo" class="user-logo" :src="props.usersData.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { defineProps } from 'vue';
 
-defineProps({
-  tenantsData: {
+const props = defineProps({
+  usersData: {
     type: Object,
-    default: {},
+    default: () => ({}),
   },
 });
-
-
-const userMap = {
-  user_id: '用户ID',
-  user_name: '用户名',
-  full_name: '全名',
-  email: '邮箱',
-  phone: '手机号',
-  department: '所属组织',
-  leader: '直属上级',
-  status: '在职状态',
-  position: '职务',
-  account_expiration_date: '账号过期时间',
-  password_expiration_date: '密码过期时间',
-};
-
-const basicData = reactive([
-  {
-    key: 'user_id',
-    value: '123',
-  },
-  {
-    key: 'user_name',
-    value: 'aaa',
-  },
-  {
-    key: 'full_name',
-    value: 'bbb',
-  },
-  {
-    key: 'email',
-    value: '124567345@qq.com',
-  },
-  {
-    key: 'phone',
-    value: '15756734555',
-  },
-  {
-    key: 'department',
-    value: '总公司',
-  },
-  {
-    key: 'leader',
-    value: 'Morty Zhang（李三）',
-  },
-  {
-    key: 'status',
-    value: '在职',
-  },
-  {
-    key: 'position',
-    value: '产品经理',
-  },
-  {
-    key: 'account_expiration_date',
-    value: '2023-10-10',
-  },
-  {
-    key: 'password_expiration_date',
-    value: '2023-10-10',
-  },
-]);
 </script>
 
 <style lang="less" scoped>
@@ -125,14 +84,19 @@ const basicData = reactive([
         }
 
         .details-content-value {
-          display: inline-block;
+          display: flex;
           width: calc(100% - 100px);
-          overflow: hidden;
           font-size: 14px;
           color: #313238;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          vertical-align: top;
+          flex-wrap: wrap;
+
+          span {
+            display: inline-block;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
         }
       }
     }
