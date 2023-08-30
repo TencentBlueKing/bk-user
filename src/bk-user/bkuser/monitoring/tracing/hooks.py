@@ -31,7 +31,7 @@ def handle_api_error(span: Span, result: Dict):
         span.set_attribute("error_details", json.dumps(err_details))
 
 
-def requests_response_hook(span: Span, response: requests.Response):
+def requests_response_hook(span: Span, request: requests.Request, response: requests.Response):
     """用于处理 requests 库发起的请求响应，需要兼容支持新旧 esb，apigw，新版 HTTP 协议"""
     if (
         # requests 请求异常, 例如访问超时等
