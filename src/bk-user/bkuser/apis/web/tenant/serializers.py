@@ -119,9 +119,10 @@ class TenantRetrieveManagerOutputSLZ(serializers.Serializer):
 class TenantRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
+    updated_at = serializers.SerializerMethodField(help_text="更新时间")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
-    managers = serializers.SerializerMethodField()
+    managers = serializers.SerializerMethodField(help_text="租户管理员")
 
     @swagger_serializer_method(serializer_or_field=TenantRetrieveManagerOutputSLZ(many=True))
     def get_managers(self, obj: Tenant) -> List[Dict]:
@@ -139,6 +140,9 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
 
     def get_logo(self, obj: Tenant) -> str:
         return obj.logo or settings.DEFAULT_TENANT_LOGO
+
+    def get_updated_at(self, obj: Tenant) -> str:
+        return obj.updated_at_display
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):

@@ -35,9 +35,12 @@ class TenantUserLeaderOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="租户名称")
 
 
-class TenantDepartmentUserSearchInputSLZ(serializers.Serializer):
-    recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
+class TenantUserSearchInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", required=False)
+
+
+class TenantDepartmentUserSearchInputSLZ(TenantUserSearchInputSLZ):
+    recursive = serializers.BooleanField(help_text="包含子部门的人员", default=False)
 
 
 class TenantUserInfoOutputSLZ(serializers.Serializer):
@@ -53,7 +56,7 @@ class TenantUserInfoOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
 
 
-class TenantDepartmentUserListOutputSLZ(TenantUserInfoOutputSLZ):
+class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, instance: TenantUser) -> List[Dict]:
         departments = self.context["tenant_user_departments"].get(instance.id) or []
