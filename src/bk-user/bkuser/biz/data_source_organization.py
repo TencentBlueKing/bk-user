@@ -190,15 +190,13 @@ class DataSourceOrganizationHandler:
         根据部门ID获取部门信息
         """
         departments = DataSourceDepartment.objects.filter(id__in=department_ids)
-        data: List[DataSourceUserDepartmentInfo] = [
+        return [
             DataSourceUserDepartmentInfo(
                 id=dept.id,
                 name=dept.name,
             )
             for dept in departments
         ]
-
-        return data
 
     @staticmethod
     def get_user_department_ids_map(user_ids: List[int]) -> Dict[int, List[int]]:
@@ -247,15 +245,13 @@ class DataSourceOrganizationHandler:
         根据上级ID获取上级信息
         """
         leaders = DataSourceUser.objects.filter(id__in=leaders_ids)
-        data: List[DataSourceUserLeaderInfo] = [
+        return [
             DataSourceUserLeaderInfo(
                 id=leader.id,
                 username=leader.username,
             )
             for leader in leaders
         ]
-
-        return data
 
     @staticmethod
     def get_user_leaders_map_by_user_id(user_ids: List[int]):
