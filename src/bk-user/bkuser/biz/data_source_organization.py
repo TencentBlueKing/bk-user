@@ -189,13 +189,9 @@ class DataSourceOrganizationHandler:
         """
         根据部门ID获取部门信息
         """
-        departments = DataSourceDepartment.objects.filter(id__in=department_ids)
         return [
-            DataSourceUserDepartmentInfo(
-                id=dept.id,
-                name=dept.name,
-            )
-            for dept in departments
+            DataSourceUserDepartmentInfo(id=dept.id, name=dept.name)
+            for dept in DataSourceDepartment.objects.filter(id__in=department_ids)
         ]
 
     @staticmethod
@@ -244,13 +240,9 @@ class DataSourceOrganizationHandler:
         """
         根据上级ID获取上级信息
         """
-        leaders = DataSourceUser.objects.filter(id__in=leaders_ids)
         return [
-            DataSourceUserLeaderInfo(
-                id=leader.id,
-                username=leader.username,
-            )
-            for leader in leaders
+            DataSourceUserLeaderInfo(id=leader.id, username=leader.username)
+            for leader in DataSourceUser.objects.filter(id__in=leaders_ids)
         ]
 
     @staticmethod
