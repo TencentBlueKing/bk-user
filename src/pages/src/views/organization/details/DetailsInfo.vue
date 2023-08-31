@@ -61,9 +61,6 @@ import { computed, reactive, watch } from 'vue';
 import EditInfo from './EditDetailsInfo.vue';
 
 import Empty from '@/components/Empty.vue';
-import {
-  getTenantDetails,
-} from '@/http/tenantsFiles';
 
 const props = defineProps({
   userData: {

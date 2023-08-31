@@ -144,6 +144,7 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+defineEmits(['handleCancelEdit']);
 
 const validate = useValidate();
 
