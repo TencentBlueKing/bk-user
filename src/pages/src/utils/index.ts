@@ -1,10 +1,10 @@
 import { Message } from 'bkui-vue';
+import moment from 'moment';
 
 import abnormalImg from '@/images/abnormal.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
 import warningImg from '@/images/warning.svg';
-import moment from 'moment';
 
 export const statusIcon = {
   normal: {
@@ -70,7 +70,7 @@ export const getBase64 = (file: any) => new Promise((resolve, reject) => {
 });
 
 // 无logo首字母色彩取值范围
-export const logoColor = [
+export const LOGO_COLOR = [
   '#3A84FF', '#699DF4', '#18B456', '#51BE68', '#FF9C01', '#FFB848', '#EA3636', '#FF5656',
   '#3762B8', '#3E96C2', '#61B2C2', '#85CCA8', '#FFC685', '#FFA66B', '#F5876C', '#D66F6B',
 ];
@@ -95,7 +95,7 @@ export const dataSourceType = {
 };
 
 // 日期转换
- export function dateConvert(value: string) {
+export function dateConvert(value: string) {
   value = moment.utc(value).format('YYYY-MM-DD');
   switch (value) {
     case null:

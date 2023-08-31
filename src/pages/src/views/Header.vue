@@ -86,7 +86,7 @@
 
 <script setup lang="ts">
 import { DownShape, HelpDocumentFill } from 'bkui-vue/lib/icon';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive } from 'vue';
 
 import { logout } from '@/common/auth';
 import Login from '@/components/layouts/Login.vue';

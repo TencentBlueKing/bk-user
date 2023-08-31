@@ -52,8 +52,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
-import moment from 'moment';
 import { dateConvert } from '@/utils';
 
 const props = defineProps({

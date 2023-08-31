@@ -6,7 +6,7 @@
           class="user-icon icon-arrow-left main-breadcrumbs__back"
           @click="handleBack" />
         <span class="main-breadcrumbs__current">
-          <span class="titile">{{ current }}</span>
+          <span class="tittle">{{ current }}</span>
           <span class="subtitle" v-if="props.subtitle">
             &nbsp;-&nbsp;
             {{ props.subtitle }}
@@ -44,7 +44,6 @@ const current = computed(() => store.breadCrumbsTitle || route.meta.navName);
 /**
  * back control
  */
-const showBack = computed(() => route.meta.showBack);
 const handleBack = () => {
   const { back } = window.history.state;
   if (back) {

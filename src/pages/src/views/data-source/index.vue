@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { reactive } from 'vue';
 
 import MainView from '@/components/layouts/MainView.vue';
 import { useMenuInfo } from '@/hooks/useMenuInfo';

@@ -9,14 +9,13 @@
           label="name"
           children="children"
           :node-content-action="['selected', 'expand', 'click', 'collapse']"
+          :selected="selectedId"
           @node-click="changeNode"
         >
           <template #nodeAction="item">
             <span v-if="!item.__attr__.isRoot" style="color: #979ba5;">
-              <DownShape v-if="item.has_children && item.__attr__.isOpen" />
-              <RightShape
-                v-if="item.has_children && !item.__attr__.isOpen"
-              />
+              <DownShape class="h-[34px] mt-[4px]" v-if="item.has_children && item.__attr__.isOpen" />
+              <RightShape class="h-[34px] mt-[4px]" v-if="item.has_children && !item.__attr__.isOpen" />
             </span>
           </template>
           <template #nodeType="item">
@@ -95,8 +94,9 @@
 </template>
 
 <script setup lang="ts">
+import { overflowTitle } from 'bkui-vue';
 import { DownShape, RightShape } from 'bkui-vue/lib/icon';
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 import DetailsInfo from './details/DetailsInfo.vue';
 import UserInfo from './details/UserInfo.vue';
@@ -109,6 +109,8 @@ import {
 } from '@/http/organizationFiles';
 import { copy } from '@/utils';
 
+const vOverflowTitle = overflowTitle;
+
 const treeRef = ref();
 const state = reactive({
   isLoading: false,
@@ -120,7 +122,7 @@ const state = reactive({
   isEmptySearch: false,
   pagination: {
     current: 1,
-    count: 10,
+    count: 0,
     limit: 10,
   },
 });
@@ -190,6 +192,8 @@ const changeNode = async (node) => {
     await getTenantDepartmentsUser(node.id);
   }
 };
+
+const selectedId = computed(() => `${state.currentItem.id}`);
 
 const handleClick = (type, item) => {
   copy(item[type]);

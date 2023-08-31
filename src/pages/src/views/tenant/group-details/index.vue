@@ -34,7 +34,7 @@
             <template #default="{ row, index }">
               <div class="item-name">
                 <img v-if="row.logo" :src="row.logo" />
-                <span v-else class="logo" :style="`background-color: ${logoColor[index]}`">
+                <span v-else class="logo" :style="`background-color: ${LOGO_COLOR[index]}`">
                   {{ convertLogo(row.name) }}
                 </span>
                 <bk-button
@@ -112,7 +112,6 @@
 </template>
 
 <script setup lang="ts">
-import InfoBox from 'bkui-vue/lib/info-box';
 import moment from 'moment';
 import { computed, inject, reactive, ref, watch } from 'vue';
 
@@ -126,7 +125,7 @@ import {
   searchTenants,
 } from '@/http/tenantsFiles';
 import { useMainViewStore } from '@/store/mainView';
-import { logoColor } from '@/utils';
+import { LOGO_COLOR } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
