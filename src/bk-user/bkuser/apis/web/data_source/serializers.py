@@ -128,7 +128,7 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱")
     phone_country_code = serializers.CharField(help_text="手机区号")
     phone = serializers.CharField(help_text="手机号")
-    logo = serializers.SerializerMethodField(help_text="租户 Logo")
+    logo = serializers.SerializerMethodField(help_text="用户Logo")
 
     departments = serializers.SerializerMethodField(help_text="部门信息")
     leaders = serializers.SerializerMethodField(help_text="上级信息")
@@ -139,13 +139,13 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
         user_departments_map = self.context["user_departments_map"]
-        departments = user_departments_map.get(obj.id) or []
+        departments = user_departments_map.get(obj.id, [])
         return [{"id": dept.id, "name": dept.name} for dept in departments]
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
     def get_leaders(self, obj: DataSourceUser) -> List[Dict]:
         user_leaders_map = self.context["user_leaders_map"]
-        leaders = user_leaders_map.get(obj.id) or []
+        leaders = user_leaders_map.get(obj.id, [])
         return [{"id": leader.id, "username": leader.username} for leader in leaders]
 
 

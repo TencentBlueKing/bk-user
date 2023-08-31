@@ -118,10 +118,12 @@ class DataSourceOrganizationHandler:
         old_department_ids = DataSourceDepartmentUserRelation.objects.filter(user=user).values_list(
             "department_id", flat=True
         )
+
         # 需要新增的用户部门信息
         should_created_department_ids = set(department_ids) - set(old_department_ids)
         # 需要删除的用户部门信息
         should_deleted_department_ids = set(old_department_ids) - set(department_ids)
+
         # DB新增
         if should_created_department_ids:
             should_created_relations = [
@@ -129,6 +131,7 @@ class DataSourceOrganizationHandler:
                 for department_id in should_created_department_ids
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(should_created_relations)
+
         # DB删除
         if should_deleted_department_ids:
             DataSourceDepartmentUserRelation.objects.filter(
@@ -140,16 +143,19 @@ class DataSourceOrganizationHandler:
         """更新用户-上级关系"""
         # 查询旧用户上级信息
         old_leader_ids = DataSourceUserLeaderRelation.objects.filter(user=user).values_list("leader_id", flat=True)
+
         # 需要新增的用户部门信息
         should_created_leader_ids = set(leader_ids) - set(old_leader_ids)
         # 需要删除的用户部门信息
         should_deleted_leader_ids = set(old_leader_ids) - set(leader_ids)
+
         # DB新增
         if should_created_leader_ids:
             should_created_relations = [
                 DataSourceUserLeaderRelation(leader_id=leader_id, user=user) for leader_id in should_created_leader_ids
             ]
             DataSourceUserLeaderRelation.objects.bulk_create(should_created_relations)
+
         # DB删除
         if should_deleted_leader_ids:
             DataSourceUserLeaderRelation.objects.filter(user=user, leader_id__in=should_deleted_leader_ids).delete()
@@ -162,10 +168,12 @@ class DataSourceOrganizationHandler:
 
         with transaction.atomic():
             # 更新用户基础信息
-            attrs_to_update = ["full_name", "email", "phone", "phone_country_code", "logo"]
+            user.full_name = base_user_info.full_name
+            user.email = base_user_info.email
+            user.phone = base_user_info.phone
+            user.phone_country_code = base_user_info.phone_country_code
+            user.logo = base_user_info.logo
 
-            for attr in attrs_to_update:
-                setattr(user, attr, getattr(base_user_info, attr))
             user.save()
 
             # 更新用户-部门关系
@@ -177,7 +185,7 @@ class DataSourceOrganizationHandler:
             DataSourceOrganizationHandler.update_user_leader_relations(user=user, leader_ids=relation_info.leader_ids)
 
     @staticmethod
-    def get_department_info_by_id(department_ids: List[int]) -> List[DataSourceUserDepartmentInfo]:
+    def list_department_info_by_id(department_ids: List[int]) -> List[DataSourceUserDepartmentInfo]:
         """
         根据部门ID获取部门信息
         """
@@ -200,9 +208,7 @@ class DataSourceOrganizationHandler:
         department_user_relations = DataSourceDepartmentUserRelation.objects.filter(user_id__in=user_ids)
         user_department_ids_map = defaultdict(list)
         for r in department_user_relations:
-            user_id = r.user_id
-            department_id = r.department_id
-            user_department_ids_map[user_id].append(department_id)
+            user_department_ids_map[r.user_id].append(r.department_id)
 
         return user_department_ids_map
 
@@ -215,12 +221,10 @@ class DataSourceOrganizationHandler:
 
         data: Dict = {}
         for user_id in user_ids:
-            department_ids = user_department_ids_map.get(user_id) or []
+            department_ids = user_department_ids_map.get(user_id)
             if not department_ids:
                 continue
-            department_infos = DataSourceOrganizationHandler.get_department_info_by_id(department_ids=department_ids)
-
-            data[user_id] = department_infos
+            data[user_id] = DataSourceOrganizationHandler.list_department_info_by_id(department_ids=department_ids)
 
         return data
 
@@ -229,19 +233,16 @@ class DataSourceOrganizationHandler:
         """
         获取用户-所有上级ID关系映射
         """
-        user_leader_relations = DataSourceUserLeaderRelation.objects.prefetch_related("leader").filter(
-            user_id__in=user_ids
-        )
+        user_leader_relations = DataSourceUserLeaderRelation.objects.filter(user_id__in=user_ids)
 
         user_leader_ids_map = defaultdict(list)
         for r in user_leader_relations:
-            leader_id = r.leader_id
-            user_leader_ids_map[r.user_id].append(leader_id)
+            user_leader_ids_map[r.user_id].append(r.leader_id)
 
         return user_leader_ids_map
 
     @staticmethod
-    def get_leader_info_by_id(leaders_ids: List[int]) -> List[DataSourceUserLeaderInfo]:
+    def list_leader_info_by_id(leaders_ids: List[int]) -> List[DataSourceUserLeaderInfo]:
         """
         根据上级ID获取上级信息
         """
@@ -262,12 +263,12 @@ class DataSourceOrganizationHandler:
         获取用户-所有上级信息数据
         """
         user_leader_ids_map = DataSourceOrganizationHandler.get_user_leader_ids_map(user_ids=user_ids)
+
         data: Dict = {}
         for user_id in user_ids:
-            leaders_ids = user_leader_ids_map.get(user_id) or []
+            leaders_ids = user_leader_ids_map.get(user_id)
             if not leaders_ids:
                 continue
-            leader_infos = DataSourceOrganizationHandler.get_leader_info_by_id(leaders_ids=leaders_ids)
+            data[user_id] = DataSourceOrganizationHandler.list_leader_info_by_id(leaders_ids=leaders_ids)
 
-            data[user_id] = leader_infos
         return data
