@@ -89,7 +89,7 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
         page = self.paginate_queryset(queryset)
-        if page:
+        if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
@@ -251,7 +251,7 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
         page = self.paginate_queryset(queryset)
-        if page:
+        if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 

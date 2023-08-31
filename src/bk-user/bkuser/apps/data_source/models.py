@@ -8,10 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import uuid
+
 from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
+from bkuser.apps.data_source.constants import DataSourcePluginEnum
 from bkuser.common.models import TimestampedModel
 
 
@@ -42,13 +45,14 @@ class DataSource(TimestampedModel):
         ordering = ["id"]
 
     @property
-    def editable(self) -> bool:
-        return self.plugin.id == "local"
+    def is_local(self) -> bool:
+        """检查类型是否为本地数据源"""
+        return self.plugin.id == DataSourcePluginEnum.LOCAL
 
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
-    code = models.CharField("用户标识", max_length=128, unique=True)
+    code = models.CharField("用户标识", max_length=128, default=uuid.uuid4)
 
     # ----------------------- 内置字段相关 -----------------------
     username = models.CharField("用户名", max_length=128)
