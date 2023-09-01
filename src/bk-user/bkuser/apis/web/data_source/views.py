@@ -81,7 +81,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        current_user = self.request.user.username
+        current_user = request.user.username
         ds = DataSource.objects.create(
             name=data["name"],
             owner_tenant_id=self.get_current_tenant_id(),
@@ -133,7 +133,7 @@ class DataSourceRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMix
 
         data_source.plugin_config = data["plugin_config"]
         data_source.field_mapping = data["field_mapping"]
-        data_source.updater = self.request.user.username
+        data_source.updater = request.user.username
         data_source.save()
 
         return Response()
