@@ -77,7 +77,7 @@
 import { Message } from 'bkui-vue';
 import InfoBox from 'bkui-vue/lib/info-box';
 import Sortable from 'sortablejs';
-import { inject, nextTick, reactive, ref } from 'vue';
+import { inject, nextTick, reactive } from 'vue';
 
 import FieldsAdd from './FieldsAdd.vue';
 
@@ -197,7 +197,7 @@ const editField = (item) => {
   fieldData.isShow = true;
 };
 
-const deleteField = (item) => {
+const deleteField = () => {
   InfoBox({
     title: '确认要删除吗？',
     confirmText: '确认删除',

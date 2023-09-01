@@ -3,12 +3,6 @@ import { Message } from 'bkui-vue';
 import Cookies from 'js-cookie';
 import qs from 'query-string';
 
-interface LoginData {
-  width: number,
-  height: number,
-  login_url: string,
-}
-
 type Methods = 'delete' | 'get' | 'head' | 'options' | 'post' | 'put' | 'patch';
 
 interface ResolveResponseParams<D> {

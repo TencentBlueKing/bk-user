@@ -163,7 +163,7 @@ const tableData = [
 
 const isView = computed(() => detailsConfig.type === 'view');
 
-const handleClick = (type: string, item?: any) => {
+const handleClick = (type: string) => {
   // if (type !== "add") {
   //   detailsConfig.usersData = res.data;
   // }

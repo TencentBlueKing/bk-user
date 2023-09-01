@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import router from '@/router/index';
 import { dataSourceType, statusIcon } from '@/utils';

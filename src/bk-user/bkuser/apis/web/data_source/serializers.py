@@ -242,3 +242,75 @@ class DepartmentSearchInputSLZ(serializers.Serializer):
 class DepartmentSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
+
+
+class UserDepartmentOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="部门ID")
+    name = serializers.CharField(help_text="部门名称")
+
+
+class UserLeaderOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="上级ID")
+    username = serializers.CharField(help_text="上级用户名")
+
+
+class UserRetrieveOutputSLZ(serializers.Serializer):
+    username = serializers.CharField(help_text="用户名")
+    full_name = serializers.CharField(help_text="全名")
+    email = serializers.CharField(help_text="邮箱")
+    phone_country_code = serializers.CharField(help_text="手机区号")
+    phone = serializers.CharField(help_text="手机号")
+    logo = serializers.SerializerMethodField(help_text="用户Logo")
+
+    departments = serializers.SerializerMethodField(help_text="部门信息")
+    leaders = serializers.SerializerMethodField(help_text="上级信息")
+
+    def get_logo(self, obj: DataSourceUser) -> str:
+        return obj.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
+
+    @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
+    def get_departments(self, obj: DataSourceUser) -> List[Dict]:
+        user_departments_map = self.context["user_departments_map"]
+        departments = user_departments_map.get(obj.id, [])
+        return [{"id": dept.id, "name": dept.name} for dept in departments]
+
+    @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
+    def get_leaders(self, obj: DataSourceUser) -> List[Dict]:
+        user_leaders_map = self.context["user_leaders_map"]
+        leaders = user_leaders_map.get(obj.id, [])
+        return [{"id": leader.id, "username": leader.username} for leader in leaders]
+
+
+class UserUpdateInputSLZ(serializers.Serializer):
+    full_name = serializers.CharField(help_text="姓名")
+    email = serializers.CharField(help_text="邮箱")
+    phone_country_code = serializers.CharField(help_text="手机国际区号")
+    phone = serializers.CharField(help_text="手机号")
+    logo = serializers.CharField(help_text="用户 Logo", allow_blank=True)
+
+    department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField())
+    leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField())
+
+    def validate(self, data):
+        validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+        return data
+
+    def validate_department_ids(self, department_ids):
+        diff_department_ids = set(department_ids) - set(
+            DataSourceDepartment.objects.filter(
+                id__in=department_ids, data_source=self.context["data_source"]
+            ).values_list("id", flat=True)
+        )
+        if diff_department_ids:
+            raise serializers.ValidationError(_("传递了错误的部门信息: {}").format(diff_department_ids))
+        return department_ids
+
+    def validate_leader_ids(self, leader_ids):
+        diff_leader_ids = set(leader_ids) - set(
+            DataSourceUser.objects.filter(id__in=leader_ids, data_source=self.context["data_source"]).values_list(
+                "id", flat=True
+            )
+        )
+        if diff_leader_ids:
+            raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
+        return leader_ids

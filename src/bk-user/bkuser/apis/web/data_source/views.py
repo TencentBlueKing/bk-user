@@ -21,6 +21,7 @@ from bkuser.apps.data_source.signals import post_create_data_source
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
+    DataSourceUserEditableBaseInfo,
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
@@ -194,7 +195,7 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
 
         # 不允许对非本地数据源进行用户新增操作
         if not data_source.is_local:
-            raise error_codes.CANNOT_CREATE_USER
+            raise error_codes.CANNOT_CREATE_DATA_SOURCE_USER
         # 校验是否已存在该用户
         if DataSourceUser.objects.filter(username=data["username"], data_source=data_source).exists():
             raise error_codes.DATA_SOURCE_USER_ALREADY_EXISTED
@@ -288,4 +289,59 @@ class DataSourceUserImportExportApi(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         """导入本地数据源用户数据（Excel 格式）"""
         # TODO 实现代码逻辑
+        return Response()
+
+
+class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
+    queryset = DataSourceUser.objects.all()
+    lookup_url_kwarg = "id"
+    serializer_class = slzs.UserRetrieveOutputSLZ
+
+    def get_serializer_context(self):
+        user_departments_map = DataSourceOrganizationHandler.get_user_departments_map_by_user_id(
+            user_ids=[self.kwargs["id"]]
+        )
+        user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([self.kwargs["id"]])
+        return {"user_departments_map": user_departments_map, "user_leaders_map": user_leaders_map}
+
+    @swagger_auto_schema(
+        operation_description="数据源用户详情",
+        responses={status.HTTP_200_OK: slzs.UserRetrieveOutputSLZ()},
+        tags=["data_source"],
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="更新数据源用户",
+        request_body=slzs.UserUpdateInputSLZ(),
+        responses={status.HTTP_200_OK: ""},
+        tags=["data_source"],
+    )
+    def put(self, request, *args, **kwargs):
+        user = self.get_object()
+        if not user.data_source.is_local:
+            raise error_codes.CANNOT_UPDATE_DATA_SOURCE_USER
+
+        slz = slzs.UserUpdateInputSLZ(data=request.data, context={"data_source": user.data_source})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 用户数据整合
+        base_user_info = DataSourceUserEditableBaseInfo(
+            full_name=data["full_name"],
+            email=data["email"],
+            phone_country_code=data["phone_country_code"],
+            phone=data["phone"],
+            logo=data["logo"],
+        )
+
+        relation_info = DataSourceUserRelationInfo(
+            department_ids=data["department_ids"], leader_ids=data["leader_ids"]
+        )
+
+        DataSourceOrganizationHandler.update_user(
+            user=user, base_user_info=base_user_info, relation_info=relation_info
+        )
+
         return Response()
