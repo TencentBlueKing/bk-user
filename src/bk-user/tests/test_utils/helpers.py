@@ -8,19 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.request import Request
+import random
 
-from bkuser.common.error_codes import error_codes
+DFT_RANDOM_CHARACTER_SET = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 
-class CurrentUserTenantMixin:
-    """当前用户所属租户"""
-
-    request: Request
-
-    def get_current_tenant_id(self):
-        tenant_id = self.request.user.get_property("tenant_id")
-        if not tenant_id:
-            raise error_codes.GET_CURRENT_TENANT_FAILED
-
-        return tenant_id
+def generate_random_string(length=16, chars=DFT_RANDOM_CHARACTER_SET):
+    rand = random.SystemRandom()
+    return "".join(rand.choice(chars) for _ in range(length))

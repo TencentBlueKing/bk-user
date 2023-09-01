@@ -9,17 +9,154 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import Any, Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
+from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceDepartmentUserRelation, DataSourceUser
+from bkuser.apps.data_source.constants import DataSourcePluginEnum, FieldMappingOperation
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceDepartmentUserRelation,
+    DataSourcePlugin,
+    DataSourceUser,
+)
+from bkuser.apps.data_source.plugins.constants import DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP
 from bkuser.biz.validators import validate_data_source_user_username
 from bkuser.common.validators import validate_phone_with_country_code
+from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
+
+
+class DataSourceSearchInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", required=False)
+
+
+class DataSourceSearchOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="数据源 ID")
+    name = serializers.CharField(help_text="数据源名称")
+    owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
+    plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
+    collaborative_companies = serializers.SerializerMethodField(help_text="协作公司")
+    status = serializers.CharField(help_text="数据源状态")
+    updater = serializers.CharField(help_text="更新者")
+    updated_at = serializers.SerializerMethodField(help_text="更新时间")
+
+    def get_plugin_name(self, obj: DataSource) -> str:
+        return self.context["data_source_plugin_map"].get(obj.plugin_id, "")
+
+    @swagger_serializer_method(
+        serializer_or_field=serializers.ListField(
+            help_text="协作公司",
+            child=serializers.CharField(),
+            allow_empty=True,
+        )
+    )
+    def get_collaborative_companies(self, obj: DataSource) -> List[str]:
+        # TODO 目前未支持数据源跨租户协作，因此该数据均为空
+        return []
+
+    def get_updated_at(self, obj: DataSource) -> str:
+        return obj.updated_at_display
+
+
+class DataSourceFieldMappingSLZ(serializers.Serializer):
+    """单个数据源字段映射"""
+
+    source_field = serializers.CharField(help_text="数据源原始字段")
+    mapping_operation = serializers.ChoiceField(help_text="映射关系", choices=FieldMappingOperation.get_choices())
+    target_field = serializers.CharField(help_text="目标字段")
+    expression = serializers.CharField(help_text="表达式", required=False)
+
+
+class DataSourceCreateInputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="数据源名称", max_length=128)
+    plugin_id = serializers.CharField(help_text="数据源插件 ID")
+    plugin_config = serializers.JSONField(help_text="数据源插件配置")
+    field_mapping = serializers.ListField(
+        help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
+    )
+
+    def validate_plugin_id(self, plugin_id: str) -> str:
+        if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
+            raise ValidationError(_("数据源插件不存在"))
+
+        return plugin_id
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 除本地数据源类型外，都需要配置字段映射
+        if attrs["plugin_id"] != DataSourcePluginEnum.LOCAL and not attrs["field_mapping"]:
+            raise ValidationError(_("当前数据源类型必须配置字段映射"))
+
+        PluginConfigCls = DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.get(attrs["plugin_id"])  # noqa: N806
+        # 自定义插件，可能没有对应的配置类，不需要做格式检查
+        if not PluginConfigCls:
+            return attrs
+
+        try:
+            PluginConfigCls(**attrs["plugin_config"])
+        except PDValidationError as e:
+            raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        return attrs
+
+
+class DataSourceCreateOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="数据源 ID")
+
+
+class DataSourcePluginOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="数据源插件唯一标识")
+    name = serializers.CharField(help_text="数据源插件名称")
+    description = serializers.CharField(help_text="数据源插件描述")
+    logo = serializers.CharField(help_text="数据源插件 Logo")
+
+
+class DataSourceRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="数据源 ID")
+    name = serializers.CharField(help_text="数据源名称")
+    owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
+    status = serializers.CharField(help_text="数据源状态")
+    plugin = DataSourcePluginOutputSLZ(help_text="数据源插件")
+    plugin_config = serializers.JSONField(help_text="数据源插件配置")
+    sync_config = serializers.JSONField(help_text="数据源同步任务配置")
+    field_mapping = serializers.JSONField(help_text="用户字段映射")
+
+
+class DataSourceUpdateInputSLZ(serializers.Serializer):
+    plugin_config = serializers.JSONField(help_text="数据源插件配置")
+    field_mapping = serializers.ListField(
+        help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
+    )
+
+    def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
+        PluginConfigCls = DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.get(self.context["plugin_id"])  # noqa: N806
+        # 自定义插件，可能没有对应的配置类，不需要做格式检查
+        if not PluginConfigCls:
+            return plugin_config
+
+        try:
+            PluginConfigCls(**plugin_config)
+        except PDValidationError as e:
+            raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        return plugin_config
+
+    def validate_field_mapping(self, field_mapping: List[Dict]) -> List[Dict]:
+        # 除本地数据源类型外，都需要配置字段映射
+        if self.context["plugin_id"] == DataSourcePluginEnum.LOCAL:
+            return field_mapping
+
+        if not field_mapping:
+            raise ValidationError(_("当前数据源类型必须配置字段映射"))
+
+        return field_mapping
 
 
 class UserSearchInputSLZ(serializers.Serializer):

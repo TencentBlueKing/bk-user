@@ -32,3 +32,13 @@ class TimestampedModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class AuditedModel(TimestampedModel):
+    """Model with 'created', 'updated', 'creator' and 'updater' fields."""
+
+    creator = models.CharField(max_length=128, null=True, blank=True)
+    updater = models.CharField(max_length=128, null=True, blank=True)
+
+    class Meta:
+        abstract = True

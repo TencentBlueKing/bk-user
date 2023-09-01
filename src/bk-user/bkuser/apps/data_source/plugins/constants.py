@@ -8,19 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.request import Request
 
-from bkuser.common.error_codes import error_codes
+from bkuser.apps.data_source.constants import DataSourcePluginEnum
+from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig
 
-
-class CurrentUserTenantMixin:
-    """当前用户所属租户"""
-
-    request: Request
-
-    def get_current_tenant_id(self):
-        tenant_id = self.request.user.get_property("tenant_id")
-        if not tenant_id:
-            raise error_codes.GET_CURRENT_TENANT_FAILED
-
-        return tenant_id
+# 数据源插件配置类映射表
+DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP = {
+    DataSourcePluginEnum.LOCAL: LocalDataSourcePluginConfig,
+}

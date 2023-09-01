@@ -8,19 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.request import Request
 
-from bkuser.common.error_codes import error_codes
+from typing import Optional
+
+from bkuser.auth.models import User
+from tests.test_utils.helpers import generate_random_string
+from tests.test_utils.tenant import DEFAULT_TENANT
 
 
-class CurrentUserTenantMixin:
-    """当前用户所属租户"""
-
-    request: Request
-
-    def get_current_tenant_id(self):
-        tenant_id = self.request.user.get_property("tenant_id")
-        if not tenant_id:
-            raise error_codes.GET_CURRENT_TENANT_FAILED
-
-        return tenant_id
+def create_user(username: Optional[str] = None) -> User:
+    """创建测试用用户"""
+    username = username or generate_random_string(length=8)
+    user, _ = User.objects.get_or_create(username=username)
+    user.set_property("tenant_id", DEFAULT_TENANT)
+    return user

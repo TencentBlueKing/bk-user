@@ -8,3 +8,27 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import pytest
+from bkuser.auth.models import User
+
+from tests.test_utils.auth import create_user
+from tests.test_utils.helpers import generate_random_string
+from tests.test_utils.tenant import create_tenant
+
+
+@pytest.fixture()
+def default_tenant() -> str:
+    """初始化默认租户"""
+    return create_tenant().id
+
+
+@pytest.fixture()
+def random_tenant() -> str:
+    """生成随机租户"""
+    return create_tenant(generate_random_string()).id
+
+
+@pytest.fixture()
+def bk_user(default_tenant) -> User:
+    """生成随机用户"""
+    return create_user()

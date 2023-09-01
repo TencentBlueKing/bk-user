@@ -8,19 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.request import Request
+import django.dispatch
 
-from bkuser.common.error_codes import error_codes
-
-
-class CurrentUserTenantMixin:
-    """当前用户所属租户"""
-
-    request: Request
-
-    def get_current_tenant_id(self):
-        tenant_id = self.request.user.get_property("tenant_id")
-        if not tenant_id:
-            raise error_codes.GET_CURRENT_TENANT_FAILED
-
-        return tenant_id
+post_create_data_source = django.dispatch.Signal(providing_args=["data_source"])

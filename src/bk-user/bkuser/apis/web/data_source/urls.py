@@ -13,7 +13,24 @@ from django.urls import path
 from bkuser.apis.web.data_source import views
 
 urlpatterns = [
+    # 数据源插件列表
+    path("plugins/", views.DataSourcePluginListApi.as_view(), name="data_source_plugin.list"),
+    # 数据源创建/获取列表
+    path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
+    # 数据源更新/获取
+    path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),
+    # 通用数据源连通性测试
+    path(
+        "<int:id>/connectivity/",
+        views.DataSourceConnectivityApi.as_view(),
+        name="data_source.connectivity_test",
+    ),
+    # 数据源用户
     path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source_user.list_create"),
+    # 本地数据源用户导入导出
+    path("<int:id>/users/io/", views.DataSourceUserImportExportApi.as_view(), name="data_source_user.import_export"),
+    # 数据源用户 Leader
     path("<int:id>/leaders/", views.DataSourceLeadersListApi.as_view(), name="data_source_leaders.list"),
+    # 数据源部门
     path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_departments.list"),
 ]
