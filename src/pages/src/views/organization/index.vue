@@ -11,6 +11,7 @@
           :node-content-action="['selected', 'expand', 'click', 'collapse']"
           :selected="selectedId"
           @node-click="changeNode"
+          @node-expand="changeNode"
         >
           <template #nodeAction="item">
             <span v-if="!item.__attr__.isRoot" style="color: #979ba5;">
@@ -37,6 +38,7 @@
               trigger="click"
               placement="bottom-start"
               ref="dropdownMenu"
+              @click.stop
             >
               <i class="user-icon icon-more"></i>
               <template #content>
@@ -179,6 +181,12 @@ initData();
 
 const changeNode = async (node) => {
   if (state.currentItem.id === node.id) return;
+  state.currentItem = {
+    id: node.id,
+    name: node.name,
+    managers: [],
+  };
+  state.tabLoading = true;
   params.keyword = '';
   if (node.isRoot) {
     panels[1].isVisible = true;
@@ -238,11 +246,6 @@ const getTenantDepartmentsUser = async (id) => {
 
 const getDepartmentsDetails = async (node) => {
   const res = await getTenantDepartments(node.id);
-  state.currentItem = {
-    id: node.id,
-    name: node.name,
-    managers: [],
-  };
   node.children = res.data;
 };
 // 搜索人员信息
