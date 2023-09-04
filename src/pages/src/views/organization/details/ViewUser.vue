@@ -4,28 +4,28 @@
       <div class="details-content-info">
         <div class="details-content-item">
           <span class="details-content-key">用户ID：</span>
-          <span class="details-content-value">{{ props.userData.id }}</span>
+          <span class="details-content-value">{{ userData.id }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">用户名：</span>
-          <span class="details-content-value">{{ props.userData.username }}</span>
+          <span class="details-content-value">{{ userData.username }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">全名：</span>
-          <span class="details-content-value">{{ props.userData.full_name }}</span>
+          <span class="details-content-value">{{ userData.full_name }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">邮箱：</span>
-          <span class="details-content-value">{{ props.userData.email }}</span>
+          <span class="details-content-value">{{ userData.email }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">手机号：</span>
-          <span class="details-content-value">{{ props.userData.phone }}</span>
+          <span class="details-content-value">{{ userData.phone }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">所属组织：</span>
-          <div class="details-content-value" v-if="props.userData.departments.length > 0">
-            <span v-for="(item, index) in props.userData.departments" :key="index">
+          <div class="details-content-value" v-if="userData.departments.length > 0">
+            <span v-for="(item, index) in userData.departments" :key="index">
               {{ item.name}}
             </span>
           </div>
@@ -33,8 +33,8 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">直属上级：</span>
-          <div class="details-content-value" v-if="props.userData.leaders.length > 0">
-            <span v-for="(item, index) in props.userData.leaders" :key="index">
+          <div class="details-content-value" v-if="userData.leaders.length > 0">
+            <span v-for="(item, index) in userData.leaders" :key="index">
               {{ item.username }}
             </span>
           </div>
@@ -42,10 +42,10 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">账号过期时间：</span>
-          <span class="details-content-value">{{ dateConvert(props.userData.account_expired_at) }}</span>
+          <span class="details-content-value">{{ dateConvert(userData.account_expired_at) }}</span>
         </div>
       </div>
-      <img v-if="props.userData.logo" class="user-logo" :src="props.userData.logo" alt="" />
+      <img v-if="userData.logo" class="user-logo" :src="userData.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>

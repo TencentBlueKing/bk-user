@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue';
+import { computed, defineEmits, defineProps, reactive, watch } from 'vue';
 
 import EditInfo from './EditDetailsInfo.vue';
 
@@ -110,6 +110,7 @@ const handleClickEdit = () => {
 };
 
 const handleCancel = () => {
+  state.managers = props.userData.managers.filter(item => item.username);
   state.isEdit = false;
   window.changeInput = false;
 };

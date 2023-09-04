@@ -156,6 +156,9 @@ const props = defineProps({
   currentId: {
     type: Number,
   },
+  dataSourceId: {
+    type: Number,
+  },
 });
 const emit = defineEmits(['updateUsers', 'handleCancelEdit']);
 
@@ -164,7 +167,6 @@ const validate = useValidate();
 const formRef = ref();
 const formData = reactive({
   ...props.usersData,
-  id: props.currentId,
 });
 const state = reactive({
   departments: [],
@@ -216,8 +218,8 @@ const customRequest = (event) => {
 };
 
 const initData = async () => {
-  const departments = await getDataSourceDepartments(props.currentId, '');
-  const leaders = await getDataSourceLeaders(props.currentId, '');
+  const departments = await getDataSourceDepartments(props.dataSourceId, '');
+  const leaders = await getDataSourceLeaders(props.dataSourceId, '');
   state.departments = departments.data.results;
   state.leaders = leaders.data.results;
 };
@@ -232,19 +234,26 @@ const handleSubmit = async () => {
   await formRef.value.validate();
   const data = { ...formData };
   if (!data.logo) delete data.logo;
-  props.type === 'edit'
-    ? await putDataSourceUserDetails(data)
-    : await newDataSourceUser(data);
-  emit('updateUsers', '');
+  let text = '';
+  if (props.type === 'edit') {
+    data.id = props.currentId;
+    text = '用户更新成功';
+    await putDataSourceUserDetails(data);
+  } else {
+    data.id = props.dataSourceId;
+    text = '用户创建成功';
+    await newDataSourceUser(data);
+  }
+  emit('updateUsers', '', text);
 };
 
 const searchDepartments = async (value: string) => {
-  const departments = await getDataSourceDepartments(props.currentId, value);
+  const departments = await getDataSourceDepartments(props.dataSourceId, value);
   state.departments = departments.data.results;
 };
 
 const searchLeaders = async (value: string) => {
-  const leaders = await getDataSourceLeaders(props.currentId, value);
+  const leaders = await getDataSourceLeaders(props.dataSourceId, value);
   state.leaders = leaders.data.results;
 };
 

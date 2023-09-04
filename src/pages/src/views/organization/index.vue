@@ -164,7 +164,7 @@ const params = reactive({
 
 const convertLogo = name => name?.charAt(0).toUpperCase();
 
-const isTenant = computed(() => (!!state.currentItem.isRoot));
+const isTenant = computed(() => (!!state.currentTenant.isRoot));
 
 const initData = async () => {
   try {
@@ -208,6 +208,7 @@ const changeNode = async (node) => {
     return Promise.resolve(enableLeave);
   }
   state.tabLoading = true;
+  params.page = 1;
   params.keyword = '';
   if (node.isRoot) {
     panels[1].isVisible = true;
@@ -287,28 +288,33 @@ const getTenantDepartmentsUser = async (id) => {
 
 const getDepartmentsDetails = async (node) => {
   const res = await getTenantDepartments(node.id);
-  state.currentTenant = res.data;
+  state.currentTenant = node;
   node.children = res.data;
 };
 // 搜索人员信息
 const searchUsers = (value: string) => {
   params.keyword = value;
-  state.currentItem.isRoot ? getTenantUsers(state.currentItem.id) : getTenantDepartmentsUser(state.currentItem.id);
+  getUserList();
 };
 // 仅显示本级用户
 const changeUsers = async (value: boolean) => {
   params.recursive = value;
+  params.page = 1;
   await getTenantDepartmentsUser(state.currentItem.id);
 };
-const updatePageLimit = async (limit) => {
+const updatePageLimit = (limit) => {
   state.pagination.limit = limit;
   params.pageSize = limit;
-  await getTenantDepartmentsUser(state.currentItem.id);
+  getUserList();
 };
-const updatePageCurrent = async (current) => {
+const updatePageCurrent = (current) => {
   state.pagination.current = current;
   params.page = current;
-  await getTenantDepartmentsUser(state.currentItem.id);
+  getUserList();
+};
+
+const getUserList = () => {
+  state.currentTenant.isRoot ? getTenantUsers(state.currentItem.id) : getTenantDepartmentsUser(state.currentItem.id);
 };
 </script>
 

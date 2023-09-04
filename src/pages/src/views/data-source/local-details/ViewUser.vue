@@ -4,24 +4,24 @@
       <div class="details-content-info">
         <div class="details-content-item">
           <span class="details-content-key">用户名：</span>
-          <span class="details-content-value">{{ props.usersData.username }}</span>
+          <span class="details-content-value">{{ usersData.username }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">全名：</span>
-          <span class="details-content-value">{{ props.usersData.full_name }}</span>
+          <span class="details-content-value">{{ usersData.full_name }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">邮箱：</span>
-          <span class="details-content-value">{{ props.usersData.email }}</span>
+          <span class="details-content-value">{{ usersData.email }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">手机号：</span>
-          <span class="details-content-value">{{ props.usersData.phone }}</span>
+          <span class="details-content-value">{{ usersData.phone }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">所属组织：</span>
-          <div class="details-content-value" v-if="props.usersData.departments.length > 0">
-            <span v-for="(item, index) in props.usersData.departments" :key="index">
+          <div class="details-content-value" v-if="usersData.departments.length > 0">
+            <span v-for="(item, index) in usersData.departments" :key="index">
               {{ item.name}}
             </span>
           </div>
@@ -29,15 +29,15 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">直属上级：</span>
-          <div class="details-content-value" v-if="props.usersData.leaders.length > 0">
-            <span v-for="(item, index) in props.usersData.leaders" :key="index">
+          <div class="details-content-value" v-if="usersData.leaders.length > 0">
+            <span v-for="(item, index) in usersData.leaders" :key="index">
               {{ item.username }}
             </span>
           </div>
           <span class="details-content-value" v-else>{{ '--' }}</span>
         </div>
       </div>
-      <img v-if="props.usersData.logo" class="user-logo" :src="props.usersData.logo" alt="" />
+      <img v-if="usersData.logo" class="user-logo" :src="usersData.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
     </li>
   </ul>
@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
 
-const props = defineProps({
+defineProps({
   usersData: {
     type: Object,
     default: () => ({}),
