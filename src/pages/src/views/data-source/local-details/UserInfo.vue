@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="props.isLoading" class="user-info-wrapper user-scroll-y">
+  <bk-loading :loading="isLoading" class="user-info-wrapper user-scroll-y">
     <header>
       <div>
         <bk-button theme="primary" class="mr8" @click="handleClick('add')">
@@ -20,15 +20,15 @@
     </header>
     <bk-table
       class="user-info-table"
-      :data="props.users"
+      :data="users"
       :border="['outer']"
       show-overflow-tooltip
     >
       <template #empty>
         <Empty
-          :is-data-empty="props.isDataEmpty"
-          :is-search-empty="props.isEmptySearch"
-          :is-data-error="props.isDataError"
+          :is-data-empty="isDataEmpty"
+          :is-search-empty="isEmptySearch"
+          :is-data-error="isDataError"
           @handleEmpty="handleClear"
           @handleUpdate="handleClear"
         />
@@ -95,7 +95,8 @@
           v-else
           :type="detailsConfig.type"
           :users-data="detailsConfig.usersData"
-          :current-id="props.currentId"
+          :current-id="detailsConfig.id"
+          :data-source-id="dataSourceId"
           @handleCancelEdit="handleCancelEdit"
           @updateUsers="updateUsers" />
       </template>
@@ -104,6 +105,7 @@
 </template>
 
 <script setup lang="ts">
+import { Message } from 'bkui-vue';
 import { computed, defineEmits, defineProps, inject, reactive, ref, watch } from 'vue';
 
 import EditUser from './EditUser.vue';
@@ -112,7 +114,7 @@ import ViewUser from './ViewUser.vue';
 import Empty from '@/components/Empty.vue';
 import { getDataSourceUserDetails } from '@/http/dataSourceFiles';
 
-const props = defineProps({
+defineProps({
   users: {
     type: Array,
     default: () => ([]),
@@ -121,7 +123,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  currentId: {
+  dataSourceId: {
     type: Number,
   },
   isDataEmpty: {
@@ -232,9 +234,13 @@ const formatConvert = (data) => {
   return departments;
 };
 
-const updateUsers = (value) => {
+const updateUsers = (value, text) => {
   detailsConfig.isShow = false;
   emit('updateUsers', value);
+  Message({
+    theme: 'success',
+    message: text,
+  });
 };
 
 const handleEnter = () => {

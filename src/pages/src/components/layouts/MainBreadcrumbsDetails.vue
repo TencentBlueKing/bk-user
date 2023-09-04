@@ -7,9 +7,9 @@
           @click="handleBack" />
         <span class="main-breadcrumbs__current">
           <span class="tittle">{{ current }}</span>
-          <span class="subtitle" v-if="props.subtitle">
+          <span class="subtitle" v-if="subtitle">
             &nbsp;-&nbsp;
-            {{ props.subtitle }}
+            {{ subtitle }}
           </span>
         </span>
         <slot name="tag" />
@@ -21,12 +21,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineProps } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { useMainViewStore } from '@/store/mainView';
 
-const props = defineProps({
+defineProps({
   subtitle: {
     type: String,
     default: '',

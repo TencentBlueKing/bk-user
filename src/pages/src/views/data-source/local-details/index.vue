@@ -25,7 +25,7 @@
           v-if="activeKey === 'user'"
           :users="state.users"
           :is-loading="state.isLoading"
-          :current-id="currentId"
+          :data-source-id="currentId"
           :is-data-empty="state.isDataEmpty"
           :is-empty-search="state.isEmptySearch"
           :is-data-error="state.isDataError"
