@@ -16,8 +16,8 @@ urlpatterns = [
     # 数据源用户
     path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source_user.list_create"),
     # 数据源用户 Leader
-    path("<int:id>/leaders/", views.DataSourceLeadersListApi.as_view(), name="data_source_leaders.list"),
+    path("<int:id>/leaders/", views.DataSourceLeadersListApi.as_view(), name="data_source_leader.list"),
     # 数据源部门
-    path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_departments.list"),
+    path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_department.list"),
     path("users/<int:id>/", views.DataSourceUserRetrieveUpdateApi.as_view(), name="data_source_user.retrieve_update"),
 ]

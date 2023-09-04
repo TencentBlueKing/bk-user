@@ -16,6 +16,8 @@
         <bk-input
           v-model="formData.username"
           placeholder="数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头"
+          :disabled="isEdit"
+          @focus="handleChange"
         />
       </bk-form-item>
       <bk-form-item
@@ -27,6 +29,7 @@
         <bk-input
           v-model="formData.full_name"
           placeholder="全名可随时修改"
+          @focus="handleChange"
         />
       </bk-form-item>
       <BkUpload
@@ -40,14 +43,14 @@
         @delete="handleDelete"
       />
       <bk-form-item label="邮箱" property="email" required>
-        <bk-input v-model="formData.email" placeholder="请输入" />
+        <bk-input v-model="formData.email" placeholder="请输入" @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="手机号" property="phone" required>
         <div class="input-text">
           <bk-input
             v-model="formData.phone"
             placeholder="请输入"
-            type="number"
+            @focus="handleChange"
           />
         </div>
       </bk-form-item>
@@ -56,24 +59,30 @@
           <bk-select
             v-model="formData.department_ids"
             filterable
-            :remote-method="remoteFilter"
-            @toggle="handleSelectDepartment">
+            multiple
+            :input-search="false"
+            :remote-method="searchDepartments"
+            @change="handleChange">
             <bk-option
-              v-for="item in state.departmentList"
-              :key="item.id"
-              :value="item.id"
+              v-for="item in state.departments"
+              :key="Number(item.id)"
+              :value="Number(item.id)"
               :label="item.name" />
           </bk-select>
         </bk-form-item>
         <bk-form-item label="直属上级">
           <bk-select
             v-model="formData.leader_ids"
-            filterable>
+            filterable
+            multiple
+            :input-search="false"
+            :remote-method="searchLeaders"
+            @change="handleChange">
             <bk-option
-              v-for="item in state.leaderList"
-              :key="item.id"
-              :value="item.id"
-              :label="item.name" />
+              v-for="item in state.leaders"
+              :key="Number(item.id)"
+              :value="Number(item.id)"
+              :label="item.username" />
           </bk-select>
         </bk-form-item>
       </div>
@@ -121,7 +130,7 @@
       <bk-button theme="primary" @click="handleSubmit">
         提交
       </bk-button>
-      <bk-button @click="() => $emit('handleCancelEdit')">
+      <bk-button @click="() => emit('handleCancelEdit')">
         取消
       </bk-button>
     </div>
@@ -129,9 +138,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
 import useValidate from '@/hooks/use-validate';
+import { getDataSourceDepartments, getDataSourceLeaders, newDataSourceUser, putDataSourceUserDetails } from '@/http/dataSourceFiles';
 import { getBase64 } from '@/utils';
 
 const props = defineProps({
@@ -143,26 +153,34 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  currentId: {
+    type: Number,
+  },
 });
-defineEmits(['handleCancelEdit']);
+const emit = defineEmits(['updateUsers', 'handleCancelEdit']);
 
 const validate = useValidate();
 
 const formRef = ref();
 const formData = reactive({
   ...props.usersData,
+  id: props.currentId,
 });
 const state = reactive({
-  departmentList: [
-    { id: '1', name: '总公司' },
-    { id: '2', name: '分公司' },
-  ],
-  leaderList: [
-    { id: '1', name: 'aa' },
-    { id: '2', name: 'bb' },
-  ],
+  departments: [],
+  leaders: [],
 });
 
+watch(() => props.usersData.departments, (val) => {
+  if (val) {
+    formData.department_ids = props.usersData.departments.map(item => item.id);
+    formData.leader_ids = props.usersData.leaders.map(item => item.id);
+  }
+}, {
+  immediate: true,
+});
+
+const isEdit = computed(() => props.type === 'edit');
 const files = computed(() => {
   const img = [];
   if (formData.logo !== '') {
@@ -173,6 +191,7 @@ const files = computed(() => {
   }
   return [];
 });
+
 const rules = {
   username: [validate.required, validate.userName],
   full_name: [validate.required, validate.name],
@@ -193,22 +212,44 @@ const customRequest = (event) => {
     .catch((e) => {
       console.warn(e);
     });
+  handleChange();
 };
+
+const initData = async () => {
+  const departments = await getDataSourceDepartments(props.currentId, '');
+  const leaders = await getDataSourceLeaders(props.currentId, '');
+  state.departments = departments.data.results;
+  state.leaders = leaders.data.results;
+};
+initData();
 
 const handleDelete = () => {
   formData.logo = '';
+  handleChange();
 };
 
-const handleSubmit = () => {
-  formRef.value.validate();
+const handleSubmit = async () => {
+  await formRef.value.validate();
+  const data = { ...formData };
+  if (!data.logo) delete data.logo;
+  props.type === 'edit'
+    ? await putDataSourceUserDetails(data)
+    : await newDataSourceUser(data);
+  emit('updateUsers', '');
 };
 
-const handleSelectDepartment = (value) => {
-  console.log('value', value);
+const searchDepartments = async (value: string) => {
+  const departments = await getDataSourceDepartments(props.currentId, value);
+  state.departments = departments.data.results;
 };
 
-const remoteFilter = (value: string) => {
-  console.log('value', value);
+const searchLeaders = async (value: string) => {
+  const leaders = await getDataSourceLeaders(props.currentId, value);
+  state.leaders = leaders.data.results;
+};
+
+const handleChange = () => {
+  window.changeInput = true;
 };
 </script>
 

@@ -81,9 +81,10 @@ class UserCreateInputSLZ(serializers.Serializer):
 
     def validate_leader_ids(self, leader_ids):
         diff_leader_ids = set(leader_ids) - set(
-            DataSourceUser.objects.filter(id__in=leader_ids, data_source=self.context["data_source"]).values_list(
-                "id", flat=True
-            )
+            DataSourceUser.objects.filter(
+                id__in=leader_ids,
+                data_source=self.context["data_source"],
+            ).values_list("id", flat=True)
         )
         if diff_leader_ids:
             raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
@@ -154,7 +155,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱")
     phone_country_code = serializers.CharField(help_text="手机国际区号")
     phone = serializers.CharField(help_text="手机号")
-    logo = serializers.CharField(help_text="用户 Logo", allow_blank=True)
+    logo = serializers.CharField(help_text="用户 Logo", allow_blank=True, required=False, default="")
 
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField())
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField())
@@ -175,9 +176,10 @@ class UserUpdateInputSLZ(serializers.Serializer):
 
     def validate_leader_ids(self, leader_ids):
         diff_leader_ids = set(leader_ids) - set(
-            DataSourceUser.objects.filter(id__in=leader_ids, data_source=self.context["data_source"]).values_list(
-                "id", flat=True
-            )
+            DataSourceUser.objects.filter(
+                id__in=leader_ids,
+                data_source=self.context["data_source"],
+            ).values_list("id", flat=True)
         )
         if diff_leader_ids:
             raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))

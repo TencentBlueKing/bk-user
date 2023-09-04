@@ -1,5 +1,5 @@
 <template>
-  <div class="user-info-wrapper user-scroll-y">
+  <bk-loading :loading="props.isLoading" class="user-info-wrapper user-scroll-y">
     <header>
       <div>
         <bk-button theme="primary" class="mr8" @click="handleClick('add')">
@@ -9,14 +9,30 @@
         <bk-button class="mr8" style="width: 64px;">导入</bk-button>
         <!-- <bk-button>导出</bk-button> -->
       </div>
-      <bk-input class="header-right" v-model="searchVal" type="search" />
+      <bk-input
+        class="header-right"
+        v-model="searchVal"
+        placeholder="搜索公司名、姓名"
+        type="search"
+        clearable
+        @enter="handleEnter"
+        @clear="handleClear" />
     </header>
     <bk-table
       class="user-info-table"
-      :data="tableData"
+      :data="props.users"
       :border="['outer']"
       show-overflow-tooltip
     >
+      <template #empty>
+        <Empty
+          :is-data-empty="props.isDataEmpty"
+          :is-search-empty="props.isEmptySearch"
+          :is-data-error="props.isDataError"
+          @handleEmpty="handleClear"
+          @handleUpdate="handleClear"
+        />
+      </template>
       <bk-table-column prop="username" label="用户名">
         <template #default="{ row }">
           <bk-button text theme="primary" @click="handleClick('view', row)">
@@ -42,12 +58,12 @@
           >
             编辑
           </bk-button>
-          <bk-button theme="primary" text class="mr8">
+          <!-- <bk-button theme="primary" text class="mr8">
             重置密码
           </bk-button>
           <bk-button theme="primary" text>
             删除
-          </bk-button>
+          </bk-button> -->
         </template>
       </bk-table-column>
     </bk-table>
@@ -66,11 +82,11 @@
           <bk-button
             outline
             theme="primary"
-            @click="handleClick('edit', detailsConfig.usersData)">
+            @click="handleClick('edit', detailsConfig)">
             编辑
           </bk-button>
-          <bk-button>重置</bk-button>
-          <bk-button>删除</bk-button>
+          <!-- <bk-button>重置</bk-button>
+          <bk-button>删除</bk-button> -->
         </div>
       </template>
       <template #default>
@@ -79,18 +95,49 @@
           v-else
           :type="detailsConfig.type"
           :users-data="detailsConfig.usersData"
-          @handleCancelEdit="handleCancelEdit" />
+          :current-id="props.currentId"
+          @handleCancelEdit="handleCancelEdit"
+          @updateUsers="updateUsers" />
       </template>
     </bk-sideslider>
-  </div>
+  </bk-loading>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref } from 'vue';
+import { computed, defineEmits, defineProps, inject, reactive, ref, watch } from 'vue';
 
 import EditUser from './EditUser.vue';
 import ViewUser from './ViewUser.vue';
 
+import Empty from '@/components/Empty.vue';
+import { getDataSourceUserDetails } from '@/http/dataSourceFiles';
+
+const props = defineProps({
+  users: {
+    type: Array,
+    default: () => ([]),
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
+  },
+  currentId: {
+    type: Number,
+  },
+  isDataEmpty: {
+    type: Boolean,
+    default: false,
+  },
+  isEmptySearch: {
+    type: Boolean,
+    default: false,
+  },
+  isDataError: {
+    type: Boolean,
+    default: false,
+  },
+});
+const emit = defineEmits(['updateUsers']);
 const editLeaveBefore = inject('editLeaveBefore');
 const searchVal = ref('');
 const detailsConfig = reactive({
@@ -100,13 +147,14 @@ const detailsConfig = reactive({
   usersData: {
     username: '',
     full_name: '',
-    department_ids: '',
-    leader_ids: '',
+    department_ids: [],
+    leader_ids: [],
     email: '',
     phone_country_code: '+86',
     phone: '',
     logo: '',
   },
+  id: '',
 });
 
 const enumData = {
@@ -124,55 +172,39 @@ const enumData = {
   },
 };
 
-const tableData = [
-  {
-    id: '1',
-    username: 'Loretta Wolfe',
-    full_name: 'Larry Carlson',
-    phone: '13122334455',
-    email: '13122334455@qq.com',
-    departments: [
-      {
-        id: 1,
-        name: 'IEG',
-      },
-      {
-        id: 2,
-        name: '技术运营部',
-      },
-    ],
+watch(
+  () => detailsConfig.isShow,
+  () => {
+    if (!detailsConfig.isShow) {
+      detailsConfig.usersData = {
+        username: '',
+        full_name: '',
+        department_ids: [],
+        leader_ids: [],
+        email: '',
+        phone_country_code: '+86',
+        phone: '',
+        logo: '',
+      };
+    }
   },
-  {
-    id: '2',
-    username: 'Jeanette Stephens',
-    full_name: 'Bettie Ramos',
-    phone: '13122334455',
-    email: '13122334455@qq.com',
-    departments: [
-      {
-        id: 1,
-        name: 'IEG',
-      },
-      {
-        id: 2,
-        name: '技术运营部',
-      },
-    ],
-  },
-];
+);
 
 const isView = computed(() => detailsConfig.type === 'view');
 
-const handleClick = (type: string) => {
-  // if (type !== "add") {
-  //   detailsConfig.usersData = res.data;
-  // }
+const handleClick = async (type: string, item?: any) => {
+  if (type !== 'add') {
+    const res = await getDataSourceUserDetails(item.id);
+    detailsConfig.usersData = res.data;
+    detailsConfig.id = item.id;
+  }
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
   detailsConfig.isShow = true;
 };
 
 const handleCancelEdit = () => {
+  window.changeInput = false;
   if (detailsConfig.type === 'add') {
     detailsConfig.isShow = false;
   } else {
@@ -198,6 +230,20 @@ const handleBeforeClose = async () => {
 const formatConvert = (data) => {
   const departments = data?.map(item => item.name).join('/') || '--';
   return departments;
+};
+
+const updateUsers = (value) => {
+  detailsConfig.isShow = false;
+  emit('updateUsers', value);
+};
+
+const handleEnter = () => {
+  emit('updateUsers', searchVal.value);
+};
+
+const handleClear = () => {
+  searchVal.value = '';
+  emit('updateUsers', searchVal.value);
 };
 </script>
 

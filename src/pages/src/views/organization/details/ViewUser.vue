@@ -52,12 +52,14 @@
 </template>
 
 <script setup lang="ts">
+import { defineProps } from 'vue';
+
 import { dateConvert } from '@/utils';
 
-const props = defineProps({
+defineProps({
   userData: {
     type: Object,
-    default: {},
+    default: () => ({}),
   },
 });
 </script>
@@ -93,13 +95,17 @@ const props = defineProps({
         .details-content-value {
           display: flex;
           width: calc(100% - 100px);
-          overflow: hidden;
           font-size: 14px;
           color: #313238;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          vertical-align: top;
           flex-wrap: wrap;
+
+          span {
+            display: inline-block;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
         }
       }
     }

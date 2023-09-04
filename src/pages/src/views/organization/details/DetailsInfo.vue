@@ -4,7 +4,11 @@
       <li class="content-item">
         <div class="item-header">
           <p class="item-title">基本信息</p>
-          <bk-button outline theme="primary" @click="handleClickEdit">
+          <bk-button
+            outline
+            theme="primary"
+            :disabled="!isCurrentTenant"
+            @click="handleClickEdit">
             编辑
           </bk-button>
         </div>
@@ -23,7 +27,7 @@
           </li>
           <li>
             <span class="key">更新时间：</span>
-            <span class="value">--</span>
+            <span class="value">{{ state.userData.updated_at }}</span>
           </li>
           <img v-if="state.userData.logo" :src="state.userData.logo" />
           <img v-else src="@/images/avatar.png" />
@@ -61,7 +65,9 @@ import { computed, reactive, watch } from 'vue';
 import EditInfo from './EditDetailsInfo.vue';
 
 import Empty from '@/components/Empty.vue';
+import { useUser } from '@/store/user';
 
+const userStore = useUser();
 const props = defineProps({
   userData: {
     type: Object,
@@ -79,6 +85,7 @@ const state = reactive({
 });
 
 const userNumberVisible = computed(() => (props?.userData?.feature_flags?.user_number_visible ? '显示' : '隐藏'));
+const isCurrentTenant = computed(() => props?.userData?.id === userStore.user.tenant_id);
 
 watch(() => props.userData.id, () => handleCancel());
 watch(() => props.userData.managers, (value) => {
@@ -104,6 +111,7 @@ const handleClickEdit = () => {
 
 const handleCancel = () => {
   state.isEdit = false;
+  window.changeInput = false;
 };
 
 const updateTenantsList = () => {
