@@ -19,19 +19,28 @@ urlpatterns = [
     path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
     # 数据源更新/获取
     path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),
-    # 通用数据源连通性测试
+    # 数据源启/停
     path(
-        "<int:id>/connectivity/",
-        views.DataSourceConnectivityApi.as_view(),
-        name="data_source.connectivity_test",
+        "<int:id>/operations/switch_status/",
+        views.DataSourceSwitchStatusApi.as_view(),
+        name="data_source.switch_status",
     ),
-    # 数据源用户
-    path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source_user.list_create"),
-    # 本地数据源用户导入导出
-    path("<int:id>/users/io/", views.DataSourceUserImportExportApi.as_view(), name="data_source_user.import_export"),
-    # 数据源用户 Leader
-    path("<int:id>/leaders/", views.DataSourceLeadersListApi.as_view(), name="data_source_leaders.list"),
-    # 数据源部门
-    path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_departments.list"),
-    path("user/<int:id>/", views.DataSourceUserRetrieveUpdateApi.as_view(), name="data_source_user.retrieve_update"),
+    # 连通性测试
+    path(
+        "<int:id>/operations/test_connection/",
+        views.DataSourceTestConnectionApi.as_view(),
+        name="data_source.test_connection",
+    ),
+    # 获取用户信息导入模板
+    path(
+        "<int:id>/operations/download_template/",
+        views.DataSourceTemplateApi.as_view(),
+        name="data_source.download_template",
+    ),
+    # 导出数据源用户数据
+    path("<int:id>/operations/export/", views.DataSourceExportApi.as_view(), name="data_source.export_data"),
+    # 数据源导入
+    path("<int:id>/operations/import/", views.DataSourceImportApi.as_view(), name="data_source.import_from_excel"),
+    # 手动触发数据源同步
+    path("<int:id>/operations/sync/", views.DataSourceSyncApi.as_view(), name="data_source.sync"),
 ]

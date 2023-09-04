@@ -157,7 +157,7 @@ class TestDataSourceListApi:
         assert ds["owner_tenant_id"] == data_source.owner_tenant_id
         assert ds["plugin_name"] == DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL)
         assert ds["status"] == DataSourceStatus.ENABLED
-        assert ds["collaborative_companies"] == []
+        assert ds["cooperation_tenants"] == []
 
     def test_list_other_tenant_data_source(self, api_client, random_tenant, data_source):
         resp = api_client.get(reverse("data_source.list_create"), data={"keyword": data_source.name})
@@ -172,7 +172,7 @@ class TestDataSourceUpdateApi:
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
             data={"plugin_config": local_ds_plugin_config},
         )
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
         assert resp.data["plugin_config"]["enable_login_by_password"] is False
@@ -207,4 +207,18 @@ class TestDataSourceRetrieveApi:
     def test_retrieve_other_tenant_data_source(self, api_client, random_tenant, data_source):
         resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
         # 无法查看到其他租户的数据源信息
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+class TestDataSourceSwitchStatusApi:
+    def test_switch(self, api_client, data_source):
+        url = reverse("data_source.switch_status", kwargs={"id": data_source.id})
+        # 默认启用，切换后不可用
+        assert api_client.patch(url).data["status"] == DataSourceStatus.DISABLED
+        # 再次切换，变成可用
+        assert api_client.patch(url).data["status"] == DataSourceStatus.ENABLED
+
+    def test_patch_other_tenant_data_source(self, api_client, random_tenant, data_source):
+        resp = api_client.patch(reverse("data_source.switch_status", kwargs={"id": data_source.id}))
+        # 无法操作其他租户的数据源信息
         assert resp.status_code == status.HTTP_404_NOT_FOUND

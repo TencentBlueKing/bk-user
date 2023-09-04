@@ -72,7 +72,7 @@ class ErrorCodes:
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
     # 数据源
-    DATA_SOURCE_TYPE_NOT_SUPPORTED = ErrorCode(_("数据源类型不支持"))
+    DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("数据源不支持该操作"))
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     CANNOT_CREATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持新增用户"))
     CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))

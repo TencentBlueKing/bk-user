@@ -266,7 +266,7 @@ class TenantHandler:
             # 创建租户本身
             tenant = Tenant.objects.create(**tenant_info.model_dump())
 
-            # FIXME: 开发本地数据源时，重写（直接调用本地数据源Handler）
+            # FIXME (su): 开发本地数据源时，重写（直接调用本地数据源Handler）
             # 创建本地数据源，名称则使用租户名称
             data_source = DataSource.objects.create(
                 name=f"{tenant_info.name}-本地数据源",

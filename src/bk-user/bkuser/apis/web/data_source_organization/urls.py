@@ -8,14 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
+from django.urls import path
+
+from bkuser.apis.web.data_source_organization import views
 
 urlpatterns = [
-    # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
-    path("basic/", include("bkuser.apis.web.basic.urls")),
-    # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source_organization.urls")),
+    # 数据源用户
+    path("<int:id>/users/", views.DataSourceUserListCreateApi.as_view(), name="data_source_user.list_create"),
+    # 数据源用户 Leader
+    path("<int:id>/leaders/", views.DataSourceLeadersListApi.as_view(), name="data_source_leaders.list"),
+    # 数据源部门
+    path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_departments.list"),
+    path("users/<int:id>/", views.DataSourceUserRetrieveUpdateApi.as_view(), name="data_source_user.retrieve_update"),
 ]
