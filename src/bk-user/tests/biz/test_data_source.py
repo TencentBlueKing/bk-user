@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+"""
+TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
+Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
+Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/MIT
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+"""
+
+import pytest
+from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+    DataSourceUserLeaderRelation,
+)
+from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceUserHandler
+
+pytestmark = pytest.mark.django_db
+
+
+class TestDataSourceDepartmentHandler:
+    def test_get_department_info_map_by_ids(self, fake_data_source_departments):
+        fake_department_ids = [department.id for department in fake_data_source_departments]
+        departments_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(fake_department_ids)
+
+        for item in DataSourceDepartment.objects.filter(id__in=fake_department_ids):
+            departments_info = departments_map.get(item.id)
+            assert departments_info
+            assert item.name == departments_info.name
+            children_ids = (
+                DataSourceDepartmentRelation.objects.get(department=item)
+                .get_children()
+                .values_list("department_id", flat=True)
+            )
+            assert list(children_ids) == departments_info.children_ids
+
+    @pytest.mark.parametrize(
+        "not_exist_data_source_department_ids",
+        [
+            [],
+            [1, 2, 3],
+            [11, 22, 33],
+            [14, 24, 34],
+        ],
+    )
+    def test_not_exist_get_department_info_map_by_ids(self, not_exist_data_source_department_ids):
+        departments_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(
+            not_exist_data_source_department_ids
+        )
+        assert departments_map == {}
+
+    def test_get_user_department_ids_map(self, fake_data_source_departments, fake_data_source_users):
+        user_ids = [user.id for user in fake_data_source_users]
+
+        user_department_relationship_map = DataSourceDepartmentHandler.get_user_department_ids_map(user_ids)
+        for user in user_ids:
+            department_ids = user_department_relationship_map.get(user)
+            assert department_ids
+            assert list(department_ids) == list(
+                DataSourceDepartmentUserRelation.objects.filter(user_id=user).values_list("department_id", flat=True)
+            )
+
+    @pytest.mark.parametrize(
+        "not_exist_data_source_user_ids",
+        [
+            [],
+            [1, 2, 3],
+            [11, 22, 33],
+            [14, 24, 34],
+        ],
+    )
+    def test_not_exist_get_user_department_ids_map(self, not_exist_data_source_user_ids):
+        department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(not_exist_data_source_user_ids)
+        assert department_ids_map == {}
+
+
+class TestDataSourceUserHandler:
+    def test_get_user_leader_ids_map(self, fake_data_source_users):
+        data_source_user_ids = [item.id for item in fake_data_source_users]
+        leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(data_source_user_ids)
+
+        for user_id in data_source_user_ids:
+            leader_ids = leader_ids_map.get(user_id)
+            if not DataSourceUserLeaderRelation.objects.filter(user_id=user_id):
+                assert not leader_ids
+            else:
+                assert leader_ids == list(
+                    DataSourceUserLeaderRelation.objects.filter(user_id=user_id).values_list("leader_id", flat=True)
+                )
+
+    @pytest.mark.parametrize(
+        "not_exist_data_source_user_ids",
+        [
+            [],
+            [11, 22, 33],
+            [14, 24, 34],
+        ],
+    )
+    def test_not_exist_get_user_leader_ids_map(self, not_exist_data_source_user_ids):
+        department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(not_exist_data_source_user_ids)
+        assert department_ids_map == {}
