@@ -34,6 +34,21 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          # The MySQL docker container requires these environment variables to be set
+          # so we can create and migrate the test database.
+          # See: https://hub.docker.com/_/mysql
+          MYSQL_DATABASE: bk-user
+          MYSQL_ROOT_PASSWORD: mysql_root_pass
+        ports:
+          # Opens port 3306 on service container and host
+          # https://docs.github.com/en/actions/using-containerized-services/about-service-containers
+          - 3306:3306
+          # Before continuing, verify the mysql container is reachable from the ubuntu host
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -58,5 +73,6 @@ jobs:
           export BK_APP_SECRET=""
           export BK_USER_URL=""
           export BK_COMPONENT_API_URL=""
+          export MYSQL_PASSWORD=mysql_root_pass
           export DJANGO_SETTINGS_MODULE=bkuser.settings
           poetry run pytest ./tests
