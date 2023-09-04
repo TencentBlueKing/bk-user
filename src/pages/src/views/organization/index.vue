@@ -58,9 +58,9 @@
     </div>
     <div class="organization-main">
       <header>
-        <img class="img-logo" v-if="state.currentItem.logo" :src="state.currentItem.logo" />
-        <span v-else class="span-logo">{{ convertLogo(state.currentItem.name) }}</span>
-        <span class="name">{{ state.currentItem.name }}</span>
+        <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
+        <span v-else class="span-logo">{{ convertLogo(state.currentTenant.name) }}</span>
+        <span class="name">{{ state.currentTenant.name }}</span>
       </header>
       <bk-tab
         v-model:active="state.active"
@@ -78,16 +78,21 @@
           <bk-loading :loading="state.tabLoading">
             <UserInfo
               v-if="index === 0"
-              :user-data="state.currentItem"
+              :user-data="state.currentUsers"
               :is-data-empty="state.isDataEmpty"
               :is-empty-search="state.isEmptySearch"
+              :is-data-error="state.isDataError"
               :pagination="state.pagination"
               :keyword="params.keyword"
+              :is-tenant="isTenant"
               @searchUsers="searchUsers"
               @changeUsers="changeUsers"
               @updatePageLimit="updatePageLimit"
               @updatePageCurrent="updatePageCurrent" />
-            <DetailsInfo v-if="index === 1" :user-data="state.currentItem" @updateTenantsList="initData" />
+            <DetailsInfo
+              v-if="index === 1"
+              :user-data="state.currentTenant"
+              @updateTenantsList="initData" />
           </bk-loading>
         </bk-tab-panel>
       </bk-tab>
@@ -98,7 +103,7 @@
 <script setup lang="ts">
 import { overflowTitle } from 'bkui-vue';
 import { DownShape, RightShape } from 'bkui-vue/lib/icon';
-import { computed, reactive, ref } from 'vue';
+import { computed, inject, reactive, ref } from 'vue';
 
 import DetailsInfo from './details/DetailsInfo.vue';
 import UserInfo from './details/UserInfo.vue';
@@ -108,20 +113,25 @@ import {
   getTenantDepartmentsList,
   getTenantOrganizationDetails,
   getTenantOrganizationList,
+  getTenantUsersList,
 } from '@/http/organizationFiles';
 import { copy } from '@/utils';
 
 const vOverflowTitle = overflowTitle;
+const editLeaveBefore = inject('editLeaveBefore');
 
 const treeRef = ref();
 const state = reactive({
   isLoading: false,
   tabLoading: false,
   treeData: [],
+  currentTenant: {},
+  currentUsers: [],
   currentItem: {},
   active: 'user_info',
   isDataEmpty: false,
   isEmptySearch: false,
+  isDataError: false,
   pagination: {
     current: 1,
     count: 0,
@@ -154,6 +164,8 @@ const params = reactive({
 
 const convertLogo = name => name?.charAt(0).toUpperCase();
 
+const isTenant = computed(() => (!!state.currentItem.isRoot));
+
 const initData = async () => {
   try {
     state.isLoading = true;
@@ -162,6 +174,8 @@ const initData = async () => {
     state.treeData.forEach((item, index) => {
       if (index === 0) {
         getTenantDetails(item.id);
+        getTenantUsers(item.id);
+        state.currentItem = item;
       }
       item.isRoot = true;
       item.children = item.departments;
@@ -186,6 +200,13 @@ const changeNode = async (node) => {
     name: node.name,
     managers: [],
   };
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
   state.tabLoading = true;
   params.keyword = '';
   if (node.isRoot) {
@@ -193,6 +214,7 @@ const changeNode = async (node) => {
     state.active = 'user_info';
     // 切换租户
     await getTenantDetails(node.id);
+    await getTenantUsers(node.id);
   } else {
     panels[1].isVisible = false;
     // 切换组织
@@ -211,34 +233,53 @@ const tabChange = (val) => {
   state.active = val;
 };
 
-const getTenantDetails = async (id: string) => {
-  state.tabLoading = true;
-  state.isDataEmpty = false;
-  state.isEmptySearch = false;
-  const res = await getTenantOrganizationDetails(id);
-  if (res.data.managers.length === 0) {
-    params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
+const getTenantUsers = async (id) => {
+  try {
+    state.tabLoading = true;
+    params.id = id;
+    const data = { ...params };
+    delete data.recursive;
+    state.isDataEmpty = false;
+    state.isEmptySearch = false;
+    state.isDataError = false;
+    const res = await getTenantUsersList(data);
+    if (res.data.count === 0) {
+      params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
+    }
+    state.pagination.count = res.data.count;
+    state.currentUsers = res.data.results;
+    state.tabLoading = false;
+  } catch (e) {
+    state.isDataError = true;
+    state.tabLoading = false;
+  } finally {
+    state.tabLoading = false;
   }
+};
+
+const getTenantDetails = async (id: string) => {
+  const res = await getTenantOrganizationDetails(id);
   state.pagination.count = res.data.managers.length;
-  state.currentItem = res.data;
-  state.currentItem.isRoot = true;
-  state.tabLoading = false;
+  state.currentTenant = res.data;
+  state.currentTenant.isRoot = true;
 };
 
 const getTenantDepartmentsUser = async (id) => {
-  state.tabLoading = true;
-  params.id = id;
-  state.isDataEmpty = false;
-  state.isEmptySearch = false;
   try {
+    state.tabLoading = true;
+    params.id = id;
+    state.isDataEmpty = false;
+    state.isEmptySearch = false;
+    state.isDataError = false;
     const res = await getTenantDepartmentsList(params);
     if (res.data.count === 0) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
     state.pagination.count = res.data.count;
-    state.currentItem.managers = res.data.results;
+    state.currentUsers = res.data.results;
+    state.tabLoading = false;
   } catch (e) {
-    console.log(e);
+    state.isDataError = true;
   } finally {
     state.tabLoading = false;
   }
@@ -246,12 +287,13 @@ const getTenantDepartmentsUser = async (id) => {
 
 const getDepartmentsDetails = async (node) => {
   const res = await getTenantDepartments(node.id);
+  state.currentTenant = res.data;
   node.children = res.data;
 };
 // 搜索人员信息
-const searchUsers = async (value: string) => {
+const searchUsers = (value: string) => {
   params.keyword = value;
-  await getTenantDepartmentsUser(state.currentItem.id);
+  state.currentItem.isRoot ? getTenantUsers(state.currentItem.id) : getTenantDepartmentsUser(state.currentItem.id);
 };
 // 仅显示本级用户
 const changeUsers = async (value: boolean) => {

@@ -109,7 +109,7 @@ const headerNav = reactive([
   },
   {
     name: '数据源管理',
-    path: 'datasource',
+    path: 'dataSource',
   },
   {
     name: '租户管理',

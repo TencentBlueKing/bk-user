@@ -104,6 +104,7 @@ const dropdownList = ref([
 
 const tableData = [
   {
+    id: 2,
     name: '联通子公司正式员工',
     type: 'local',
     status: 'normal',
@@ -111,6 +112,7 @@ const tableData = [
     modified_at: '2022-04-30  22:35:49',
   },
   {
+    id: 7,
     name: '企业内部',
     type: 'local',
     status: 'disabled',
@@ -125,6 +127,7 @@ function handleClick(item) {
     params: {
       name: item.name,
       type: item.type,
+      id: item.id,
     },
   });
 }
@@ -178,6 +181,7 @@ function newDataSource(item) {
     }
 
     .account-status-icon {
+      display: inline-block;
       width: 16px;
       height: 16px;
       margin-right: 5px;

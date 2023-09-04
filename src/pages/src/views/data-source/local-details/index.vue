@@ -21,7 +21,15 @@
         :name="item.name"
         :label="item.label"
       >
-        <UserInfo v-if="activeKey === 'user'" />
+        <UserInfo
+          v-if="activeKey === 'user'"
+          :users="state.users"
+          :is-loading="state.isLoading"
+          :current-id="currentId"
+          :is-data-empty="state.isDataEmpty"
+          :is-empty-search="state.isEmptySearch"
+          :is-data-error="state.isDataError"
+          @updateUsers="updateUsers" />
         <PswInfo v-else />
       </bk-tab-panel>
     </bk-tab>
@@ -36,6 +44,7 @@ import PswInfo from './PswInfo.vue';
 import UserInfo from './UserInfo.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
+import { getDataSourceUsers } from '@/http/dataSourceFiles';
 import { dataSourceType } from '@/utils';
 
 const route = useRoute();
@@ -46,12 +55,50 @@ const typeText = computed(() => {
   const { text, icon } = dataSourceType[route.params.type];
   return { text, icon };
 });
+const currentId = computed(() => Number(route.params.id));
 
 const activeKey = ref('user');
 const panels = reactive([
   { name: 'user', label: '用户信息' },
   { name: 'account', label: '账密信息' },
 ]);
+
+const state = reactive({
+  isLoading: false,
+  users: [],
+  departments: [],
+  // 搜索结果为空
+  isEmptySearch: false,
+  // 表格请求出错
+  isDataError: false,
+  // 表格请求结果为空
+  isDataEmpty: false,
+});
+
+const getUsers = async (value?: string) => {
+  try {
+    state.isLoading = true;
+    state.isDataEmpty = false;
+    state.isEmptySearch = false;
+    state.isDataError = false;
+    value = value ? value : '';
+    const res = await getDataSourceUsers(currentId.value, value);
+    if (res.data.length === 0) {
+      value === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
+    }
+    state.users = res.data;
+    state.isLoading = false;
+  } catch (error) {
+    state.isDataError = true;
+  } finally {
+    state.isLoading = false;
+  }
+};
+getUsers();
+
+const updateUsers = (value: string) => {
+  getUsers(value);
+};
 </script>
 
 <style lang="less">

@@ -229,6 +229,7 @@ const handleClick = async (type: string, item?: any) => {
 };
 
 const handleCancelEdit = async () => {
+  window.changeInput = false;
   if (detailsConfig.type === 'add') {
     detailsConfig.isShow = false;
   } else {

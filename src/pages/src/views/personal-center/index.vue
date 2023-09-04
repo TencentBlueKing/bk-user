@@ -271,6 +271,7 @@ handleClickItem(accountList[0], 0);
           cursor: pointer;
 
           img {
+            display: inline-block;
             width: 22px;
             height: 22px;
             vertical-align: middle;
