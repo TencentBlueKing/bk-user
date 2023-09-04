@@ -41,8 +41,8 @@ export default createRouter({
       ],
     },
     {
-      path: '/datasource',
-      name: 'datasource',
+      path: '/data-source',
+      name: 'dataSource',
       redirect: {
         name: 'local',
       },
@@ -55,8 +55,9 @@ export default createRouter({
           path: '',
           name: '',
           meta: {
-            routeParentName: 'datasource',
+            routeParentName: 'data-source',
             navName: '数据源管理',
+            activeMenu: 'local',
           },
           component: () => import('@/views/data-source/LocalCompany.vue'),
           children: [
@@ -64,8 +65,9 @@ export default createRouter({
               path: 'local',
               name: 'local',
               meta: {
-                routeParentName: 'datasource',
+                routeParentName: 'dataSource',
                 navName: '数据源管理',
+                activeMenu: 'local',
               },
               component: () => import('@/views/data-source/LocalDataSource.vue'),
             },
@@ -73,19 +75,21 @@ export default createRouter({
               path: 'other',
               name: 'other',
               meta: {
-                routeParentName: 'datasource',
+                routeParentName: 'dataSource',
                 navName: '数据源管理',
+                activeMenu: 'local',
               },
               component: () => import('@/views/data-source/OtherDataSource.vue'),
             },
           ],
         },
         {
-          path: 'local-details/:name/:type',
+          path: 'local-details/:name/:type/:id',
           name: 'dataConfDetails',
           meta: {
-            routeParentName: 'datasource',
+            routeParentName: 'dataSource',
             navName: '数据源详情',
+            activeMenu: 'local',
           },
           component: () => import('@/views/data-source/local-details/index.vue'),
         },
@@ -93,8 +97,9 @@ export default createRouter({
           path: 'new-local/:type',
           name: 'newLocal',
           meta: {
-            routeParentName: 'datasource',
+            routeParentName: 'dataSource',
             navName: '新建数据源',
+            activeMenu: 'local',
           },
           component: () => import('@/views/data-source/new-data/NewLocalData.vue'),
         },

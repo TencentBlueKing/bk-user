@@ -20,3 +20,13 @@ export interface DepartmentsListParams {
   pageSize: number,
   recursive: boolean,
 }
+
+/**
+ * 租户下用户列表参数
+ */
+export interface TenantListParams {
+  id: string,
+  keyword: string,
+  page: number,
+  pageSize: number,
+}

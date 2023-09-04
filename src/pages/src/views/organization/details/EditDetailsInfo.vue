@@ -11,7 +11,7 @@
             :rules="rulesBasicInfo"
           >
             <bk-form-item label="公司名称" property="name" required>
-              <bk-input v-model="formData.name" />
+              <bk-input v-model="formData.name" @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="公司ID" property="id" required>
               <bk-input
@@ -22,6 +22,7 @@
             <bk-form-item label="人员数量">
               <bk-radio-group
                 v-model="formData.feature_flags.user_number_visible"
+                @change="handleChange"
               >
                 <bk-radio-button :label="true">显示</bk-radio-button>
                 <bk-radio-button :label="false">隐藏</bk-radio-button>
@@ -53,7 +54,7 @@
         </bk-form>
       </div>
     </div>
-    <div class="footer">
+    <div class="footer-box">
       <bk-button theme="primary" @click="handleSubmit">
         提交
       </bk-button>
@@ -65,7 +66,7 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, computed, watch, nextTick } from "vue";
+import { ref, reactive, computed, nextTick } from "vue";
 import { getBase64 } from "@/utils";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
 import { getTenantUsersList } from "@/http/tenantsFiles";
@@ -157,10 +158,12 @@ const customRequest = (event) => {
     .catch((e) => {
       console.warn(e);
     });
+  handleChange();
 };
 
 const handleDelete = () => {
   formData.logo = "";
+  handleChange();
 };
 
 const fieldItemFn = (row: any) => {
@@ -340,8 +343,26 @@ function putTenantOrganization() {
       console.warn(e);
     });
 }
+
+const handleChange = () => {
+  window.changeInput = true;
+}
 </script>
 
 <style lang="less" scoped>
 @import url("@/css/tenantEditStyle.less");
+
+.operation-content {
+  padding: 0 !important;
+}
+
+.footer-box {
+  height: 48px;
+  line-height: 48px;
+
+  .bk-button {
+    width: 88px;
+    margin-right: 8px;
+  }
+}
 </style>

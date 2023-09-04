@@ -52,6 +52,7 @@
 .span-logo {
   display: inline-block;
   width: 16px;
+  margin-right: 8px;
   font-size: 12px;
   font-weight: 700;
   line-height: 16px;
@@ -60,5 +61,4 @@
   background-color: #C4C6CC;
   border-radius: 4px;
   flex-shrink: 0;
-  margin-right: 8px;
 }
