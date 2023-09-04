@@ -100,7 +100,9 @@ class TenantSearchOutputSLZ(serializers.Serializer):
 
 class TenantUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="租户名称")
-    logo = serializers.CharField(help_text="租户 Logo", required=False, default=settings.DEFAULT_TENANT_LOGO)
+    logo = serializers.CharField(
+        help_text="租户 Logo", required=False, allow_blank=True, default=settings.DEFAULT_TENANT_LOGO
+    )
     manager_ids = serializers.ListField(child=serializers.CharField(), help_text="租户用户 ID 列表", allow_empty=False)
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
 
