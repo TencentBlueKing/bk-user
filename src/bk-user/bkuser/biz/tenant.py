@@ -12,6 +12,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from django.db import transaction
+from django.utils.timezone import now
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
@@ -307,7 +308,7 @@ class TenantHandler:
 
         with transaction.atomic():
             # 更新基本信息
-            Tenant.objects.filter(id=tenant_id).update(**tenant_info.model_dump())
+            Tenant.objects.filter(id=tenant_id).update(updated_at=now(), **tenant_info.model_dump())
 
             if should_deleted_manager_ids:
                 TenantManager.objects.filter(
