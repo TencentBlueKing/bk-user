@@ -154,7 +154,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱")
     phone_country_code = serializers.CharField(help_text="手机国际区号")
     phone = serializers.CharField(help_text="手机号")
-    logo = serializers.CharField(help_text="用户 Logo", allow_blank=True)
+    logo = serializers.CharField(help_text="用户 Logo", allow_blank=True, required=False, default="")
 
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField())
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField())
