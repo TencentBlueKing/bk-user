@@ -119,7 +119,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     def get_serializer_context(self):
         tenant_ids = list(self.queryset.values_list("id", flat=True))
         tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_department_map_by_tenant_id(
-            tenant_ids, self.get_current_tenant_id(self.request)
+            tenant_ids, self.get_current_tenant_id()
         )
         return {"tenant_root_departments_map": tenant_root_departments_map}
 
@@ -131,7 +131,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         # 将当前租户置顶
-        current_tenant_id: str = self.get_current_tenant_id(request)
+        current_tenant_id: str = self.get_current_tenant_id()
 
         # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
         sorted_queryset = sorted(queryset, key=lambda t: t.id != current_tenant_id)
@@ -148,7 +148,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
     lookup_url_kwarg = "id"
 
     def get_serializer_context(self):
-        current_tenant_id = self.get_current_tenant_id(self.request)
+        current_tenant_id = self.get_current_tenant_id()
         return {"tenant_manager_map": {current_tenant_id: TenantHandler.retrieve_tenant_managers(current_tenant_id)}}
 
     @swagger_auto_schema(
@@ -172,7 +172,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
 
         instance = self.get_object()
         # NOTE 非当前租户, 无权限做更新操作
-        if self.get_current_tenant_id(request) != instance.id:
+        if self.get_current_tenant_id() != instance.id:
             raise error_codes.NO_PERMISSION
 
         should_updated_info = TenantEditableBaseInfo(
@@ -207,7 +207,7 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
     def get_tenant_user_ids(self, tenant_id):
         # 当前获取租户下所有用户
-        current_tenant_id = self.get_current_tenant_id(self.request)
+        current_tenant_id = self.get_current_tenant_id()
         if tenant_id != current_tenant_id:
             # FIXME 因协同数据源,绑定的租户用户
             return []

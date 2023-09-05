@@ -21,6 +21,9 @@ from bkuser.apps.data_source.models import (
 
 
 def create_data_source_departments_with_relationship(data_source_id: int):
+    """
+    创建数据源部门，并以首个对象为其余对象的父部门
+    """
     data_source_departments: List[DataSourceDepartment] = []
     for i in range(10):
         department = DataSourceDepartment.objects.create(data_source_id=data_source_id, name=f"fake_dept_{i}")
@@ -36,6 +39,9 @@ def create_data_source_departments_with_relationship(data_source_id: int):
 
 
 def create_data_source_users_with_relationship(data_source_id: int, department_ids: List[int]):
+    """
+    创建数据源用户，并以首个对象为其余对象的上级, 随机关联部门
+    """
     data_source_users: List[DataSourceUser] = []
     for i in range(10):
         fake_user = DataSourceUser.objects.create(

@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, computed, nextTick } from "vue";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits } from "vue";
 import { getBase64 } from "@/utils";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
 import { getTenantUsersList } from "@/http/tenantsFiles";
@@ -115,10 +115,10 @@ const state = reactive({
 });
 
 const params = reactive({
-  tenant_id: props.tenantsData.id,
+  tenantId: props.tenantsData.id,
   keyword: "",
   page: 1,
-  page_size: 10,
+  pageSize: 10,
 });
 
 const rulesBasicInfo = {
@@ -268,12 +268,14 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
   }
 
   window.changeInput = true;
-  fetchUserList();
+  fetchUserList('');
 }
 
 // 获取管理员列表
-const fetchUserList = () => {
-  if (params.tenant_id) {
+const fetchUserList = (value: string) => {
+  params.keyword = value;
+  params.page = 1;
+  if (params.tenantId) {
     getTenantUsersList(params).then((res) => {
       const list = formData.managers.map((item) => item.username);
       state.count = res.data.count;
@@ -283,7 +285,7 @@ const fetchUserList = () => {
     });
   }
 }
-fetchUserList();
+fetchUserList('');
 
 const selectList = (list) => {
   formData.managers = formData.managers.filter(item => item.id);
@@ -301,13 +303,13 @@ const selectList = (list) => {
 }
 
 const scrollChange = () => {
-  params.page_size += 10;
+  params.page += 1;
   getTenantUsersList(params).then((res) => {
     const list = formData.managers.map((item) => item.username);
     state.count = res.data.count;
-    state.list = res.data.results.filter(
+    state.list.push(...res.data.results.filter(
       (item) => !list.includes(item.username)
-    );
+    ));
   });
 }
 

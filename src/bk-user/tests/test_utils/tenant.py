@@ -13,14 +13,29 @@ from typing import List, Optional
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.utils.uuid import generate_uuid
 
+# 默认租户 ID & 名称
 DEFAULT_TENANT = "default"
 
 
 def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
-    return Tenant.objects.create(id=tenant_id, name=tenant_id, feature_flags={"user_number_visible": True})
+    """
+    创建租户
+    """
+    tenant, _ = Tenant.objects.get_or_create(
+        id=tenant_id,
+        defaults={
+            "name": tenant_id,
+            "is_default": bool(tenant_id == DEFAULT_TENANT),
+            "feature_flags": {"user_number_visible": True},
+        },
+    )
+    return tenant
 
 
 def create_tenant_users(tenant_id: str, data_source_id: int, data_source_user_ids: List[int]) -> List[TenantUser]:
+    """
+    创建租户用户
+    """
     tenant_users: List[TenantUser] = []
     for user_id in data_source_user_ids:
         tenant_user = TenantUser.objects.create(
@@ -34,8 +49,11 @@ def create_tenant_users(tenant_id: str, data_source_id: int, data_source_user_id
 
 
 def create_tenant_departments(
-    tenant_id: str, data_source_id, data_source_department_ids: List[int]
+    tenant_id: str, data_source_id: int, data_source_department_ids: List[int]
 ) -> List[TenantDepartment]:
+    """
+    创建租户部门
+    """
     tenant_departments: List[TenantDepartment] = []
     for department in data_source_department_ids:
         tenant_department = TenantDepartment.objects.create(

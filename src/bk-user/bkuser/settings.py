@@ -98,6 +98,9 @@ DATABASES = {
         "PASSWORD": env.str("MYSQL_PASSWORD", ""),
         "HOST": env.str("MYSQL_HOST", "localhost"),
         "PORT": env.int("MYSQL_PORT", 3306),
+        "TEST": {
+            "CHARSET": "utf8mb4",
+        },
     },
 }
 # Default primary key field type

@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, computed, nextTick } from "vue";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits } from "vue";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
 import { getBase64 } from "@/utils";
 import Empty from "@/components/Empty.vue";
@@ -347,6 +347,7 @@ const handleClear = () => {
 // 获取管理员列表
 const fetchUserList = (value: string) => {
   params.keyword = value;
+  params.page = 1;
   if (params.tenantId) {
     getTenantUsersList(params).then((res) => {
       const list = formData.managers.map((item) => item.username);
@@ -374,13 +375,13 @@ const selectList = (list) => {
 }
 
 const scrollChange = () => {
-  params.pageSize += 10;
+  params.page += 1;
   getTenantUsersList(params).then((res) => {
     const list = formData.managers.map((item) => item.username);
     state.count = res.data.count;
-    state.list = res.data.results.filter(
+    state.list.push(...res.data.results.filter(
       (item) => !list.includes(item.username)
-    );
+    ));
   });
 }
 

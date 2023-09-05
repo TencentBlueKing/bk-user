@@ -12,6 +12,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from django.db import transaction
+from django.utils.timezone import now
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
@@ -177,17 +178,18 @@ class TenantUserHandler:
 
     @staticmethod
     def get_tenant_user_departments_map_by_id(tenant_user_ids: List[str]) -> Dict[str, List[TenantDepartmentBaseInfo]]:
-        tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
+        tenant_users = TenantUser.objects.filter(id__in=tenant_user_ids)
         # 数据源用户-部门关系映射
         data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
-            data_source_user_ids=tenant_users.values_list("data_source_user_id", flat=True)
+            user_ids=tenant_users.values_list("data_source_user_id", flat=True)
         )
         # 租户用户-租户部门数据关系
-        data: Dict = defaultdict(list)
+        data: Dict = {}
         for tenant_user in tenant_users:
-            department_ids = data_source_user_department_ids_map.get(tenant_user.data_source_user_id) or []
+            department_ids = data_source_user_department_ids_map.get(tenant_user.data_source_user_id)
             if not department_ids:
                 continue
+
             tenant_department_infos = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
                 tenant_id=tenant_user.tenant_id, data_source_department_ids=department_ids
             )
@@ -265,7 +267,7 @@ class TenantHandler:
             # 创建租户本身
             tenant = Tenant.objects.create(**tenant_info.model_dump())
 
-            # FIXME: 开发本地数据源时，重写（直接调用本地数据源Handler）
+            # FIXME (su): 开发本地数据源时，重写（直接调用本地数据源Handler）
             # 创建本地数据源，名称则使用租户名称
             data_source = DataSource.objects.create(
                 name=f"{tenant_info.name}-本地数据源",
@@ -307,7 +309,7 @@ class TenantHandler:
 
         with transaction.atomic():
             # 更新基本信息
-            Tenant.objects.filter(id=tenant_id).update(**tenant_info.model_dump())
+            Tenant.objects.filter(id=tenant_id).update(updated_at=now(), **tenant_info.model_dump())
 
             if should_deleted_manager_ids:
                 TenantManager.objects.filter(
@@ -353,7 +355,7 @@ class TenantDepartmentHandler:
         # data_source_departments中包含了父子部门的ID，协同数据源需要查询绑定了该租户
         department_ids = list(data_source_departments.keys())
         for department in data_source_departments.values():
-            department_ids += department.children_ids
+            department_ids += department.child_ids
 
         # NOTE: 协同数据源，可能存在未授权全部子部门
         # 提前拉取所有映射, 过滤绑定的租户部门
@@ -374,9 +376,7 @@ class TenantDepartmentHandler:
             # 部门基础信息
             data_source_department_info = data_source_departments[data_source_department_id]
             # 只要一个子部门被授权，都是存在子部门
-            children_flag = [
-                True for child in data_source_department_info.children_ids if child in bound_departments_ids
-            ]
+            children_flag = [True for child in data_source_department_info.child_ids if child in bound_departments_ids]
             data.append(
                 TenantDepartmentBaseInfo(
                     id=tenant_department.id,

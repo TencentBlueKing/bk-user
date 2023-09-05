@@ -1,11 +1,11 @@
 name: bkuser_ci_check
 on:
   push:
-    branches: [master, ft_tenant, ft_tenant_manage]
+    branches: [master, ft_tenant]
     paths:
       - "src/bk-user/**"
   pull_request:
-    branches: [master, ft_tenant, ft_tenant_manage]
+    branches: [master, ft_tenant]
     paths:
       - "src/bk-user/**"
 jobs:
@@ -35,28 +35,38 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Start MySQL Container
+        uses: samin/mysql-action@v1.3
+        with:
+          mysql version: "8.0"
+          mysql database: bk-user
+          mysql user: root
+          mysql password: root_pwd
+          mysql root password: root_pwd
+      - name: Start Redis Container
+        uses: supercharge/redis-github-action@1.4.0
+        with:
+          redis-version: "3.2.0"
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2.3.0
         with:
           poetry-version: "1.5.1"
-      - name: Start Redis Container
-        uses: supercharge/redis-github-action@1.4.0
-        with:
-          redis-version: "3.2.0"
       - name: Install dependencies
         working-directory: src/bk-user
         run: poetry install
       - name: Run unittest
         working-directory: src/bk-user
-        # TODO 使用更合适的方式解决“必须的”配置项问题
         run: |
-          export BK_APP_SECRET=""
+          # random secret
+          export BK_APP_SECRET="fod6MKVTVi_3M5HgGoj-qI7b3l0dgCzTBwGypnDz4vg="
           export BK_USER_URL=""
           export BK_COMPONENT_API_URL=""
+          export MYSQL_PASSWORD=root_pwd
+          export MYSQL_HOST="127.0.0.1"
           export DJANGO_SETTINGS_MODULE=bkuser.settings
           poetry run pytest ./tests

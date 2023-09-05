@@ -9,16 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.auth.models import User
 from rest_framework.test import APIClient
-
-
-@pytest.fixture()
-def bk_user(fake_tenant) -> User:
-    """创建测试用用户"""
-    user, _ = User.objects.get_or_create(username="fake_user")
-    user.set_property("tenant_id", fake_tenant.id)
-    return user
 
 
 @pytest.fixture()

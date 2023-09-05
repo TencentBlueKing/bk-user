@@ -42,7 +42,7 @@ class TenantCreateInputSLZ(serializers.Serializer):
     logo = serializers.CharField(help_text="租户 Logo", required=False)
     managers = serializers.ListField(help_text="管理人列表", child=TenantManagerCreateInputSLZ(), allow_empty=False)
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
-    # TODO: 目前还没设计数据源，待开发本地数据源时再补充
+    # FIXME (su): 目前还没设计数据源，待开发本地数据源时再补充
     # password_config
 
 
@@ -100,7 +100,9 @@ class TenantSearchOutputSLZ(serializers.Serializer):
 
 class TenantUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="租户名称")
-    logo = serializers.CharField(help_text="租户 Logo", required=False, default=settings.DEFAULT_TENANT_LOGO)
+    logo = serializers.CharField(
+        help_text="租户 Logo", required=False, allow_blank=True, default=settings.DEFAULT_TENANT_LOGO
+    )
     manager_ids = serializers.ListField(child=serializers.CharField(), help_text="租户用户 ID 列表", allow_empty=False)
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
 

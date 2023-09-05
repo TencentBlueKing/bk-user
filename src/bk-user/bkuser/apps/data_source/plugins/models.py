@@ -35,3 +35,11 @@ class RawDataSourceDepartment(BaseModel):
     name: str
     # 上级部门
     parent: str
+
+
+class TestConnectionResult(BaseModel):
+    """连通性测试结果，包含示例数据"""
+
+    error_message: str
+    user: RawDataSourceUser
+    department: RawDataSourceDepartment
