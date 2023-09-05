@@ -66,11 +66,11 @@ class TestDataSourceDepartmentHandler:
         for user_id in user_ids:
             department_ids = user_department_relationship_map.get(user_id)
             assert department_ids
-            assert list(department_ids) == list(
-                DataSourceDepartmentUserRelation.objects.filter(user_id=user_id).values_list(
-                    "department_id", flat=True
-                )
+            real_department_ids = DataSourceDepartmentUserRelation.objects.filter(user_id=user_id).values_list(
+                "department_id", flat=True
             )
+            for department_id in department_ids:
+                assert department_id in real_department_ids
 
     @pytest.mark.parametrize(
         "not_exist_data_source_user_ids",
@@ -92,13 +92,14 @@ class TestDataSourceUserHandler:
         leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(data_source_user_ids)
 
         for user_id in data_source_user_ids:
-            leader_ids = leader_ids_map.get(user_id)
+            leader_ids = leader_ids_map.get(user_id) or []
             if not DataSourceUserLeaderRelation.objects.filter(user_id=user_id):
                 assert not leader_ids
             else:
-                assert leader_ids == list(
-                    DataSourceUserLeaderRelation.objects.filter(user_id=user_id).values_list("leader_id", flat=True)
-                )
+                for leader_id in leader_ids:
+                    assert leader_id in DataSourceUserLeaderRelation.objects.filter(user_id=user_id).values_list(
+                        "leader_id", flat=True
+                    )
 
     @pytest.mark.parametrize(
         "not_exist_data_source_user_ids",

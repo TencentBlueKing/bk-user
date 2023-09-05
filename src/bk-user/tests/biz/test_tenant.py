@@ -37,7 +37,8 @@ class TestTenantUserHandler:
 
             tenant_users = TenantUser.objects.filter(data_source_user_id__in=data_source_leader_ids)
             assert len(tenant_user_leader_ids) == tenant_users.count()
-            assert not set(tenant_user_leader_ids) - set(tenant_users.values_list("id", flat=True))
+            for tenant_leader_id in tenant_user_leader_ids:
+                assert tenant_leader_id in tenant_users.values_list("id", flat=True)
 
     def test_get_tenant_user_departments_map_by_id(
         self,
