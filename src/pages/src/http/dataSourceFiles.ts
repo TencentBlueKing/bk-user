@@ -28,9 +28,9 @@ export const getDataSourceLeaders = (id: string, keyword: string) => http.get(`/
 /**
  * 数据源用户详情
  */
-export const getDataSourceUserDetails = (id: string) => http.get(`/api/v1/web/data-sources/user/${id}/`);
+export const getDataSourceUserDetails = (id: string) => http.get(`/api/v1/web/data-sources/users/${id}/`);
 
 /**
  * 更新数据源用户
  */
-export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => http.put(`/api/v1/web/data-sources/user/${params.id}/`, params);
+export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => http.put(`/api/v1/web/data-sources/users/${params.id}/`, params);
