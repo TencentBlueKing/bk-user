@@ -33,6 +33,7 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
     name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
+    plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
     cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
     status = serializers.CharField(help_text="数据源状态")

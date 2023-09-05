@@ -27,6 +27,7 @@ from bkuser.apis.web.data_source.serializers import (
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.data_source.plugins.constants import DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP
 from bkuser.apps.data_source.signals import post_create_data_source, post_update_data_source
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
@@ -77,7 +78,10 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         tags=["data_source"],
         operation_description="新建数据源",
         request_body=DataSourceCreateInputSLZ(),
-        responses={status.HTTP_201_CREATED: DataSourceCreateOutputSLZ()},
+        responses={
+            status.HTTP_201_CREATED: DataSourceCreateOutputSLZ(),
+            **DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP,
+        },
     )
     def post(self, request, *args, **kwargs):
         slz = DataSourceCreateInputSLZ(data=request.data)
@@ -115,7 +119,10 @@ class DataSourceRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMix
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源详情",
-        responses={status.HTTP_200_OK: DataSourceRetrieveOutputSLZ()},
+        responses={
+            status.HTTP_200_OK: DataSourceRetrieveOutputSLZ(),
+            **DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP,
+        },
     )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
@@ -124,7 +131,10 @@ class DataSourceRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMix
         tags=["data_source"],
         operation_description="更新数据源",
         request_body=DataSourceUpdateInputSLZ(),
-        responses={status.HTTP_204_NO_CONTENT: ""},
+        responses={
+            status.HTTP_204_NO_CONTENT: "",
+            **DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP,
+        },
     )
     def put(self, request, *args, **kwargs):
         data_source = self.get_object()
