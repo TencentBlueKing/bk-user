@@ -279,6 +279,7 @@ const handleEnter = () => {
 // 更新租户列表
 const updateTenantsList = () => {
   detailsConfig.isShow = false;
+  window.changeInput = false;
   fetchTenantsList();
 };
 
