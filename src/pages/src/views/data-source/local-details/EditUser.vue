@@ -245,6 +245,7 @@ const handleSubmit = async () => {
     await newDataSourceUser(data);
   }
   emit('updateUsers', '', text);
+  window.changeInput = false;
 };
 
 const searchDepartments = async (value: string) => {
