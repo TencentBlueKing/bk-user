@@ -41,3 +41,13 @@ export interface PutDataSourceUserParams {
   department_ids?: [],
   leader_ids?: [],
 }
+
+/**
+ * 数据源用户信息列表参数
+ */
+export interface DataSourceUsersParams {
+  id: string,
+  username: string,
+  page: number,
+  pageSize: number,
+}
