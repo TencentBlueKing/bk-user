@@ -1,11 +1,11 @@
 name: bkuser_ci_check
 on:
   push:
-    branches: [master, ft_tenant, ft_tenant_manage]
+    branches: [master, ft_tenant]
     paths:
       - "src/bk-user/**"
   pull_request:
-    branches: [master, ft_tenant, ft_tenant_manage]
+    branches: [master, ft_tenant]
     paths:
       - "src/bk-user/**"
 jobs:
@@ -34,38 +34,31 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          # The MySQL docker container requires these environment variables to be set
-          # so we can create and migrate the test database.
-          # See: https://hub.docker.com/_/mysql
-          MYSQL_DATABASE: bk-user
-          MYSQL_ROOT_PASSWORD: mysql_root_pass
-        ports:
-          # Opens port 3306 on service container and host
-          # https://docs.github.com/en/actions/using-containerized-services/about-service-containers
-          - 3306:3306
-          # Before continuing, verify the mysql container is reachable from the ubuntu host
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2.3.0
         with:
           poetry-version: "1.5.1"
+      - name: Install dependencies
+        working-directory: src/bk-user
+        run: poetry install
+      - name: Start MySQL Container
+        uses: samin/mysql-action@v1.3
+        with:
+          mysql version: "8.0"
+          mysql database: bk-user
+          mysql root password: root
+          mysql user: root
+          mysql password: root
       - name: Start Redis Container
         uses: supercharge/redis-github-action@1.4.0
         with:
           redis-version: "3.2.0"
-      - name: Install dependencies
-        working-directory: src/bk-user
-        run: poetry install
       - name: Run unittest
         working-directory: src/bk-user
         # TODO 使用更合适的方式解决“必须的”配置项问题
@@ -73,6 +66,7 @@ jobs:
           export BK_APP_SECRET=""
           export BK_USER_URL=""
           export BK_COMPONENT_API_URL=""
-          export MYSQL_PASSWORD=mysql_root_pass
+          export MYSQL_PASSWORD=root
+          export MYSQL_HOST="127.0.0.1"
           export DJANGO_SETTINGS_MODULE=bkuser.settings
           poetry run pytest ./tests
