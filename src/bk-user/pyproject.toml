@@ -46,6 +46,7 @@ django-redis = "5.3.0"
 pydantic = "2.1.1"
 zxcvbn = "4.4.28"
 phonenumbers = "8.13.18"
+jsonref = "1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"
