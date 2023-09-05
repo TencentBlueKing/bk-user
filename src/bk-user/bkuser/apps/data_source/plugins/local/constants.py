@@ -50,3 +50,12 @@ class NotificationMethod(str, StructuredEnum):
 
     EMAIL = EnumField("email", label=_("邮件通知"))
     SMS = EnumField("sms", label=_("短信通知"))
+
+
+class NotificationScene(str, StructuredEnum):
+    """通知场景"""
+
+    USER_INITIALIZE = EnumField("user_initialize", label=_("用户初始化"))
+    RESET_PASSWORD = EnumField("reset_password", label=_("重置密码"))
+    PASSWORD_EXPIRING = EnumField("password_expiring", label=_("密码即将过期"))
+    PASSWORD_EXPIRED = EnumField("password_expired", label=_("密码过期"))

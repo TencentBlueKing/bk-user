@@ -23,9 +23,10 @@ from bkuser.apps.data_source.plugins.local.constants import (
     NEVER_EXPIRE_TIME,
     PASSWORD_MAX_RETRIES,
     NotificationMethod,
+    NotificationScene,
     PasswordGenerateMethod,
 )
-from bkuser.common.passwd import PasswordRule, PasswordValidator
+from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 
@@ -84,12 +85,40 @@ class PasswordRuleConfig(BaseModel):
         )
 
 
+class NotificationTemplate(BaseModel):
+    """通知模板"""
+
+    # 通知方式 如短信，邮件
+    method: NotificationMethod
+    # 通知场景 如将过期，已过期
+    scene: NotificationScene
+    # 模板标题
+    title: Optional[str] = None
+    # 模板发送方
+    sender: str
+    # 模板内容（text）格式
+    content: str
+    # 模板内容（html）格式
+    content_html: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_attrs(self) -> "NotificationTemplate":
+        if self.method == NotificationMethod.EMAIL:
+            if not self.title:
+                raise ValueError(_("邮件通知模板需要提供标题"))
+
+            if not self.content_html:
+                raise ValueError(_("邮件通知模板需要提供 HTML 格式内容"))
+
+        return self
+
+
 class NotificationConfig(BaseModel):
     """通知相关配置"""
 
-    methods: List[NotificationMethod]
+    enabled_methods: List[NotificationMethod]
     # 通知模板
-    template: str
+    templates: List[NotificationTemplate]
 
 
 class PasswordInitialConfig(BaseModel):
@@ -124,15 +153,23 @@ class LocalDataSourcePluginConfig(BaseModel):
     # 是否允许使用账密登录
     enable_login_by_password: bool
     # 密码生成规则
-    password_rule: PasswordRuleConfig
+    password_rule: Optional[PasswordRuleConfig] = None
     # 密码初始化/修改规则
-    password_initial: PasswordInitialConfig
+    password_initial: Optional[PasswordInitialConfig] = None
     # 密码到期规则
-    password_expire: PasswordExpireConfig
+    password_expire: Optional[PasswordExpireConfig] = None
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "LocalDataSourcePluginConfig":
         """插件配置合法性检查"""
+        # 如果没有开启账密登录，则不需要检查配置
+        if not self.enable_login_by_password:
+            return self
+
+        # 若启用账密登录，则各字段都需要配置上
+        if not (self.password_rule and self.password_initial and self.password_expire):
+            raise ValueError(_("密码生成规则、初始密码设置、密码到期设置均不能为空"))
+
         try:
             rule = self.password_rule.to_rule()
         except ValidationError as e:
@@ -146,6 +183,12 @@ class LocalDataSourcePluginConfig(BaseModel):
             # 若配置固定密码，则需要检查是否符合定义的密码强度规则
             ret = PasswordValidator(rule).validate(self.password_initial.fixed_password)
             if not ret.ok:
-                raise ValueError("固定密码的值不符合密码规则：{}".format(ret.exception_message))
+                raise ValueError(_("固定密码的值不符合密码规则：{}").format(ret.exception_message))
+        else:
+            # 随机生成密码的，校验下能否在有限次数内成功生成
+            try:
+                PasswordGenerator(rule).generate()
+            except PasswordGenerateError:
+                raise ValueError(_("无法根据预设规则生成符合条件的密码，请调整规则"))
 
         return self

@@ -13,7 +13,11 @@ from typing import Any, Dict
 import pytest
 from bkuser.apps.data_source.constants import DataSourcePluginEnum, DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source.plugins.local.constants import NotificationMethod, PasswordGenerateMethod
+from bkuser.apps.data_source.plugins.local.constants import (
+    NotificationMethod,
+    NotificationScene,
+    PasswordGenerateMethod,
+)
 from django.urls import reverse
 from rest_framework import status
 
@@ -49,15 +53,73 @@ def local_ds_plugin_config() -> Dict[str, Any]:
             "generate_method": PasswordGenerateMethod.RANDOM,
             "fixed_password": None,
             "notification": {
-                "methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
-                "template": "你的密码是 xxx",
+                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
+                "templates": [
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.USER_INITIALIZE,
+                        "title": "您的账户已经成功创建",
+                        "sender": "蓝鲸智云",
+                        "content": "您的账户已经成功创建，请尽快修改密码",
+                        "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
+                    },
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.RESET_PASSWORD,
+                        "title": "登录密码重置",
+                        "sender": "蓝鲸智云",
+                        "content": "点击以下链接以重置代码",
+                        "content_html": "<p>点击以下链接以重置代码</p>",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.USER_INITIALIZE,
+                        "sender": "蓝鲸智云",
+                        "content": "您的账户已经成功创建，请尽快修改密码",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.RESET_PASSWORD,
+                        "sender": "蓝鲸智云",
+                        "content": "点击以下链接以重置代码",
+                    },
+                ],
             },
         },
         "password_expire": {
             "remind_before_expire": [3600, 7200],
             "notification": {
-                "methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
-                "template": "密码即将过期,请尽快修改",
+                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
+                "templates": [
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.PASSWORD_EXPIRING,
+                        "title": "【蓝鲸智云】密码即将到期提醒！",
+                        "sender": "蓝鲸智云",
+                        "content": "您的密码即将到期！",
+                        "content_html": "<p>您的密码即将到期！</p>",
+                    },
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.PASSWORD_EXPIRED,
+                        "title": "【蓝鲸智云】密码到期提醒！",
+                        "sender": "蓝鲸智云",
+                        "content": "点击以下链接以重置代码",
+                        "content_html": "<p>您的密码已到期！</p>",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.PASSWORD_EXPIRING,
+                        "sender": "蓝鲸智云",
+                        "content": "您的密码即将到期！",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.PASSWORD_EXPIRED,
+                        "sender": "蓝鲸智云",
+                        "content": "您的密码已到期！",
+                    },
+                ],
             },
         },
     }
@@ -104,6 +166,17 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_201_CREATED
 
+    def test_create_with_minimal_plugin_config(self, api_client):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": {"enable_login_by_password": False},
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
     def test_create_with_not_exist_plugin(self, api_client):
         resp = api_client.post(
             reverse("data_source.list_create"),
@@ -123,6 +196,32 @@ class TestDataSourceCreateApi:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "plugin_config: 该字段是必填项。" in resp.data["message"]
+
+    def test_create_with_broken_plugin_config(self, api_client, local_ds_plugin_config):
+        local_ds_plugin_config["password_initial"] = None
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "密码生成规则、初始密码设置、密码到期设置均不能为空" in resp.data["message"]
+
+    def test_create_with_invalid_notification_template(self, api_client, local_ds_plugin_config):
+        local_ds_plugin_config["password_expire"]["notification"]["templates"][0]["title"] = None
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.LOCAL,
+                "plugin_config": local_ds_plugin_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "邮件通知模板需要提供标题" in resp.data["message"]
 
     def test_create_with_invalid_plugin_config(self, api_client, local_ds_plugin_config):
         local_ds_plugin_config.pop("enable_login_by_password")
