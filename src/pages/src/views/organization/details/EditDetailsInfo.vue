@@ -55,7 +55,7 @@
       </div>
     </div>
     <div class="footer-box">
-      <bk-button theme="primary" @click="handleSubmit">
+      <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
       <bk-button @click="() => $emit('handleCancel')">
@@ -112,6 +112,7 @@ const state = reactive({
   username: "",
   count: 0,
   list: [],
+  isLoading: false,
 });
 
 const params = reactive({
@@ -321,6 +322,7 @@ async function handleSubmit() {
   ];
 
   await Promise.all(validationPromises);
+  state.isLoading = true;
   putTenantOrganization();
 }
 
@@ -343,6 +345,9 @@ function putTenantOrganization() {
     })
     .catch((e) => {
       console.warn(e);
+    })
+    .finally(() => {
+      state.isLoading = false;
     });
 }
 

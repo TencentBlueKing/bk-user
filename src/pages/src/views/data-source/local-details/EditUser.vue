@@ -127,7 +127,7 @@
       </div> -->
     </bk-form>
     <div class="footer">
-      <bk-button theme="primary" @click="handleSubmit">
+      <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
       <bk-button @click="() => emit('handleCancelEdit')">
@@ -171,6 +171,7 @@ const formData = reactive({
 const state = reactive({
   departments: [],
   leaders: [],
+  isLoading: false,
 });
 
 watch(() => props.usersData.departments, (val) => {
@@ -232,6 +233,7 @@ const handleDelete = () => {
 
 const handleSubmit = async () => {
   await formRef.value.validate();
+  state.isLoading = true;
   const data = { ...formData };
   if (!data.logo) delete data.logo;
   let text = '';
@@ -245,6 +247,7 @@ const handleSubmit = async () => {
     await newDataSourceUser(data);
   }
   emit('updateUsers', '', text);
+  state.isLoading = false;
   window.changeInput = false;
 };
 
