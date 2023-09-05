@@ -178,17 +178,18 @@ class TenantUserHandler:
 
     @staticmethod
     def get_tenant_user_departments_map_by_id(tenant_user_ids: List[str]) -> Dict[str, List[TenantDepartmentBaseInfo]]:
-        tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
+        tenant_users = TenantUser.objects.filter(id__in=tenant_user_ids)
         # 数据源用户-部门关系映射
         data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
-            data_source_user_ids=tenant_users.values_list("data_source_user_id", flat=True)
+            user_ids=tenant_users.values_list("data_source_user_id", flat=True)
         )
         # 租户用户-租户部门数据关系
-        data: Dict = defaultdict(list)
+        data: Dict = {}
         for tenant_user in tenant_users:
-            department_ids = data_source_user_department_ids_map.get(tenant_user.data_source_user_id) or []
+            department_ids = data_source_user_department_ids_map.get(tenant_user.data_source_user_id)
             if not department_ids:
                 continue
+
             tenant_department_infos = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
                 tenant_id=tenant_user.tenant_id, data_source_department_ids=department_ids
             )
@@ -266,7 +267,7 @@ class TenantHandler:
             # 创建租户本身
             tenant = Tenant.objects.create(**tenant_info.model_dump())
 
-            # FIXME: 开发本地数据源时，重写（直接调用本地数据源Handler）
+            # FIXME (su): 开发本地数据源时，重写（直接调用本地数据源Handler）
             # 创建本地数据源，名称则使用租户名称
             data_source = DataSource.objects.create(
                 name=f"{tenant_info.name}-本地数据源",

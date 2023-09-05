@@ -13,6 +13,13 @@ from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
+class DataSourceStatus(str, StructuredEnum):
+    """数据源状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("未启用"))
+
+
 class DataSourcePluginEnum(str, StructuredEnum):
     """数据源插件枚举"""
 

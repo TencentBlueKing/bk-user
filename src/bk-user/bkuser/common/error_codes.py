@@ -72,7 +72,7 @@ class ErrorCodes:
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
     # 数据源
-    DATA_SOURCE_TYPE_NOT_SUPPORTED = ErrorCode(_("数据源类型不支持"))
+    DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("数据源不支持该操作"))
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     CANNOT_CREATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持新增用户"))
     CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))
@@ -85,7 +85,7 @@ class ErrorCodes:
     BIND_TENANT_USER_FAILED = ErrorCode(_("数据源用户绑定租户失败"))
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     UPDATE_TENANT_MANAGERS_FAILED = ErrorCode(_("更新租户管理员失败"))
-    GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到租户用户所在租户"))
+    GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
 
 
 # 实例化一个全局对象

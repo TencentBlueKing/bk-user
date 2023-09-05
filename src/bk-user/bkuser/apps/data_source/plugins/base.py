@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 from abc import ABC, abstractmethod
 from typing import List
 
-from bkuser.apps.data_source.plugins.models import RawDataSourceDepartment, RawDataSourceUser
+from bkuser.apps.data_source.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 
 
 class BaseDataSourcePlugin(ABC):
@@ -25,4 +25,9 @@ class BaseDataSourcePlugin(ABC):
     @abstractmethod
     def fetch_users(self) -> List[RawDataSourceUser]:
         """获取用户信息"""
+        ...
+
+    @abstractmethod
+    def test_connection(self) -> TestConnectionResult:
+        """连通性测试（非本地数据源需提供）"""
         ...

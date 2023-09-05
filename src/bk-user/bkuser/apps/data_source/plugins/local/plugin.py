@@ -10,9 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
+from django.utils.translation import ugettext_lazy as _
+
 from bkuser.apps.data_source.plugins.base import BaseDataSourcePlugin
 from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig
-from bkuser.apps.data_source.plugins.models import RawDataSourceDepartment, RawDataSourceUser
+from bkuser.apps.data_source.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 
 
 class LocalDataSourcePlugin(BaseDataSourcePlugin):
@@ -28,3 +30,6 @@ class LocalDataSourcePlugin(BaseDataSourcePlugin):
     def fetch_users(self) -> List[RawDataSourceUser]:
         """获取用户信息"""
         return []
+
+    def test_connection(self) -> TestConnectionResult:
+        raise NotImplementedError(_("本地数据源不支持连通性测试"))

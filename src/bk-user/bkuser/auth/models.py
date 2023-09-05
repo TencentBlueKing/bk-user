@@ -57,6 +57,9 @@ class UserProperty(models.Model):
         db_table = "auth_user_property"
         unique_together = (("user", "key"),)
 
+    def __str__(self):
+        return f"{self.key}: {self.value}"
+
 
 class UserProxy(User):
     class Meta:

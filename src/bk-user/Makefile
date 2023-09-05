@@ -15,7 +15,7 @@ dj-settings: ## 设置 DJANGO_SETTINGS_MODULE
 	export DJANGO_SETTINGS_MODULE=bkuser.settings
 
 test: dj-settings ## 执行项目单元测试（pytest）
-	pytest --maxfail=5 -l --reuse-db bkuser
+	pytest --maxfail=1 -l --reuse-db tests
 
 i18n-po: dj-settings ## 将源代码 & 模版中的 message 采集到 django.po
 	python manage.py makemessages -d django -l en -e html,part -e py
