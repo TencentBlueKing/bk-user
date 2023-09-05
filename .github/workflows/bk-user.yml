@@ -35,18 +35,6 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2.3.0
-        with:
-          poetry-version: "1.5.1"
-      - name: Install dependencies
-        working-directory: src/bk-user
-        run: poetry install
       - name: Start MySQL Container
         uses: samin/mysql-action@v1.3
         with:
@@ -59,10 +47,22 @@ jobs:
         uses: supercharge/redis-github-action@1.4.0
         with:
           redis-version: "3.2.0"
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v2.3.0
+        with:
+          poetry-version: "1.5.1"
+      - name: Install dependencies
+        working-directory: src/bk-user
+        run: poetry install
       - name: Run unittest
         working-directory: src/bk-user
         run: |
-          # random secret, generate by "from cryptography.fernet import Fernet; Fernet.generate_key()"
+          # random secret
           export BK_APP_SECRET="fod6MKVTVi_3M5HgGoj-qI7b3l0dgCzTBwGypnDz4vg="
           export BK_USER_URL=""
           export BK_COMPONENT_API_URL=""

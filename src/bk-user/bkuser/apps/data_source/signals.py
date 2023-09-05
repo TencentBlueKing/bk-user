@@ -11,3 +11,5 @@ specific language governing permissions and limitations under the License.
 import django.dispatch
 
 post_create_data_source = django.dispatch.Signal(providing_args=["data_source"])
+
+post_update_data_source = django.dispatch.Signal(providing_args=["data_source"])

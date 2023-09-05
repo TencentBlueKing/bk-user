@@ -27,7 +27,7 @@ from bkuser.apis.web.data_source.serializers import (
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source.signals import post_create_data_source
+from bkuser.apps.data_source.signals import post_create_data_source, post_update_data_source
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
@@ -135,10 +135,13 @@ class DataSourceRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMix
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        data_source.plugin_config = data["plugin_config"]
-        data_source.field_mapping = data["field_mapping"]
-        data_source.updater = request.user.username
-        data_source.save()
+        with transaction.atomic():
+            data_source.plugin_config = data["plugin_config"]
+            data_source.field_mapping = data["field_mapping"]
+            data_source.updater = request.user.username
+            data_source.save()
+
+            post_update_data_source.send(sender=self.__class__, data_source=data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
