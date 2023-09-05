@@ -52,21 +52,21 @@ jobs:
         with:
           mysql version: "8.0"
           mysql database: bk-user
-          mysql root password: root
           mysql user: root
-          mysql password: root
+          mysql password: root_pwd
+          mysql root password: root_pwd
       - name: Start Redis Container
         uses: supercharge/redis-github-action@1.4.0
         with:
           redis-version: "3.2.0"
       - name: Run unittest
         working-directory: src/bk-user
-        # TODO 使用更合适的方式解决“必须的”配置项问题
         run: |
-          export BK_APP_SECRET=""
+          # random secret, generate by "from cryptography.fernet import Fernet; Fernet.generate_key()"
+          export BK_APP_SECRET="fod6MKVTVi_3M5HgGoj-qI7b3l0dgCzTBwGypnDz4vg="
           export BK_USER_URL=""
           export BK_COMPONENT_API_URL=""
-          export MYSQL_PASSWORD=root
+          export MYSQL_PASSWORD=root_pwd
           export MYSQL_HOST="127.0.0.1"
           export DJANGO_SETTINGS_MODULE=bkuser.settings
           poetry run pytest ./tests
