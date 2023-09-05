@@ -22,7 +22,11 @@
       class="user-info-table"
       :data="users"
       :border="['outer']"
+      remote-pagination
+      :pagination="pagination"
       show-overflow-tooltip
+      @page-limit-change="pageLimitChange"
+      @page-value-change="pageCurrentChange"
     >
       <template #empty>
         <Empty
@@ -138,8 +142,12 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  pagination: {
+    type: Object,
+    default: () => ({}),
+  },
 });
-const emit = defineEmits(['updateUsers']);
+const emit = defineEmits(['updateUsers', 'updatePageLimit', 'updatePageCurrent']);
 const editLeaveBefore = inject('editLeaveBefore');
 const searchVal = ref('');
 const detailsConfig = reactive({
@@ -251,6 +259,13 @@ const handleClear = () => {
   searchVal.value = '';
   emit('updateUsers', searchVal.value);
 };
+
+const pageLimitChange = (limit) => {
+  emit('updatePageLimit', limit);
+};
+const pageCurrentChange = (current) => {
+  emit('updatePageCurrent', current);
+};
 </script>
 
 <style lang="less" scoped>
@@ -267,6 +282,30 @@ const handleClear = () => {
 
     .header-right {
       width: 320px;
+    }
+  }
+
+  :deep(.user-info-table) {
+    .bk-table-head {
+      table thead th {
+        text-align: center;
+      }
+
+      .table-head-settings {
+        border-right: none;
+      }
+    }
+
+    .bk-table-footer {
+      padding: 0 15px;
+      background: #fff;
+    }
+
+    .account-status-icon {
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+      vertical-align: middle;
     }
   }
 }

@@ -1,5 +1,6 @@
 import http from './fetch';
 import type {
+  DataSourceUsersParams,
   DataSourceUsersResult,
   NewDataSourceUserParams,
   PutDataSourceUserParams,
@@ -8,7 +9,10 @@ import type {
 /**
  * 数据源用户信息列表
  */
-export const getDataSourceUsers = (id: string, username: string): Promise<DataSourceUsersResult> => http.get(`/api/v1/web/data-sources/${id}/users/?username=${username}`);
+export const getDataSourceUsers = (params: DataSourceUsersParams): Promise<DataSourceUsersResult> => {
+  const { id, username, page, pageSize } = params;
+  return http.get(`/api/v1/web/data-sources/${id}/users/?username=${username}&page=${page}&page_size=${pageSize}`);
+};
 
 /**
  * 新建数据源用户
