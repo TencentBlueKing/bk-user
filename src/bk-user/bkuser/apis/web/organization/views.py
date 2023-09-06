@@ -130,8 +130,10 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        # TODO 过滤出与当前租户有协同关系的租户
         # 将当前租户置顶
         current_tenant_id: str = self.get_current_tenant_id()
+        queryset = queryset.filter(id__in=[current_tenant_id])
 
         # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
         sorted_queryset = sorted(queryset, key=lambda t: t.id != current_tenant_id)
