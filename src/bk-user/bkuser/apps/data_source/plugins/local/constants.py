@@ -27,8 +27,7 @@ MAX_PASSWORD_VALID_TIME = 10 * 365 * ONE_DAY_SECONDS
 # 可选最长锁定时间：10年
 MAX_LOCK_TIME = 10 * 365 * ONE_DAY_SECONDS
 
-# 连续性限制上下限
-MIN_NOT_CONTINUOUS_COUNT = 5
+# 连续性限制上限
 MAX_NOT_CONTINUOUS_COUNT = 10
 
 # 重试密码次数上限
@@ -50,3 +49,12 @@ class NotificationMethod(str, StructuredEnum):
 
     EMAIL = EnumField("email", label=_("邮件通知"))
     SMS = EnumField("sms", label=_("短信通知"))
+
+
+class NotificationScene(str, StructuredEnum):
+    """通知场景"""
+
+    USER_INITIALIZE = EnumField("user_initialize", label=_("用户初始化"))
+    RESET_PASSWORD = EnumField("reset_password", label=_("重置密码"))
+    PASSWORD_EXPIRING = EnumField("password_expiring", label=_("密码即将过期"))
+    PASSWORD_EXPIRED = EnumField("password_expired", label=_("密码过期"))
