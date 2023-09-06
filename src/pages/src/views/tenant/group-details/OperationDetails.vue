@@ -88,7 +88,7 @@
       </div> -->
     </div>
     <div class="footer">
-      <bk-button theme="primary" @click="handleSubmit">
+      <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
       <bk-button @click="() => $emit('handleCancelEdit')">
@@ -145,6 +145,7 @@ const state = reactive({
   isEmptySearch: false,
   count: 0,
   list: [],
+  isLoading: false,
 });
 
 const params = reactive({
@@ -306,7 +307,7 @@ async function handleSubmit() {
   ];
 
   await Promise.all(validationPromises);
-
+  state.isLoading = true;
   props.type === "add" ? createTenantsFn() : putTenantsFn();
 }
 
@@ -315,7 +316,11 @@ function createTenantsFn() {
   const data = { ...formData };
   if (!data.logo) delete data.logo;
 
-  createTenants(data).then(() => emit('updateTenantsList'));
+  createTenants(data).then(() => {
+    emit('updateTenantsList', '公司创建成功');
+  }).finally(() => {
+    state.isLoading = false;
+  });
 }
 // 更新租户
 function putTenantsFn() {
@@ -331,7 +336,11 @@ function putTenantsFn() {
 
   if (!params.logo) delete params.logo;
 
-  putTenants(formData.id, params).then(() => emit('updateTenantsList'));
+  putTenants(formData.id, params).then(() => {
+    emit('updateTenantsList', '公司更新成功');
+  }).finally(() => {
+    state.isLoading = false;
+  });
 }
 
 // 搜索管理员

@@ -1,6 +1,6 @@
 <template>
   <bk-loading class="organization-wrapper" :loading="state.isLoading">
-    <div class="tree-wrapper user-scroll-y">
+    <bk-loading class="tree-wrapper user-scroll-y" :loading="state.treeLoading">
       <div class="tree-main">
         <bk-tree
           ref="treeRef"
@@ -55,7 +55,7 @@
           </template>
         </bk-tree>
       </div>
-    </div>
+    </bk-loading>
     <div class="organization-main">
       <header>
         <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
@@ -92,7 +92,7 @@
             <DetailsInfo
               v-if="index === 1"
               :user-data="state.currentTenant"
-              @updateTenantsList="initData" />
+              @updateTenantsList="updateTenantsList" />
           </bk-loading>
         </bk-tab-panel>
       </bk-tab>
@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { overflowTitle } from 'bkui-vue';
+import { Message, overflowTitle } from 'bkui-vue';
 import { DownShape, RightShape } from 'bkui-vue/lib/icon';
 import { computed, inject, reactive, ref } from 'vue';
 
@@ -123,6 +123,7 @@ const editLeaveBefore = inject('editLeaveBefore');
 const treeRef = ref();
 const state = reactive({
   isLoading: false,
+  treeLoading: false,
   tabLoading: false,
   treeData: [],
   currentTenant: {},
@@ -169,6 +170,7 @@ const isTenant = computed(() => (!!state.currentTenant.isRoot));
 const initData = async () => {
   try {
     state.isLoading = true;
+    state.treeLoading = true;
     const res = await getTenantOrganizationList();
     state.treeData = res.data;
     state.treeData.forEach((item, index) => {
@@ -189,6 +191,7 @@ const initData = async () => {
     console.log(e);
   } finally {
     state.isLoading = false;
+    state.treeLoading = false;
   }
 };
 initData();
@@ -209,6 +212,7 @@ const changeNode = async (node) => {
   }
   state.tabLoading = true;
   params.page = 1;
+  state.pagination.current = 1;
   params.keyword = '';
   if (node.isRoot) {
     panels[1].isVisible = true;
@@ -315,6 +319,14 @@ const updatePageCurrent = (current) => {
 
 const getUserList = () => {
   state.currentTenant.isRoot ? getTenantUsers(state.currentItem.id) : getTenantDepartmentsUser(state.currentItem.id);
+};
+
+const updateTenantsList = () => {
+  getTenantDetails(state.currentTenant.id);
+  Message({
+    theme: 'success',
+    message: '租户信息更新成功',
+  });
 };
 </script>
 

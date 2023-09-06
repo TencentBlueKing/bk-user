@@ -47,6 +47,7 @@
   margin-right: 8px;
   border: 1px solid #C4C6CC;
   border-radius: 50%;
+  object-fit: contain;
 }
 
 .span-logo {
