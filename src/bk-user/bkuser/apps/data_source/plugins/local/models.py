@@ -19,7 +19,6 @@ from bkuser.apps.data_source.plugins.local.constants import (
     MAX_PASSWORD_LENGTH,
     MAX_PASSWORD_VALID_TIME,
     MAX_RESERVED_PREVIOUS_PASSWORD_COUNT,
-    MIN_NOT_CONTINUOUS_COUNT,
     NEVER_EXPIRE_TIME,
     PASSWORD_MAX_RETRIES,
     NotificationMethod,
@@ -48,7 +47,7 @@ class PasswordRuleConfig(BaseModel):
 
     # --- 连续性限制类 ---
     # 不允许连续出现位数
-    not_continuous_count: int = Field(ge=MIN_NOT_CONTINUOUS_COUNT, le=MAX_NOT_CONTINUOUS_COUNT)
+    not_continuous_count: int = Field(default=0, ge=0, le=MAX_NOT_CONTINUOUS_COUNT)
     # 不允许键盘序
     not_keyboard_order: bool
     # 不允许连续字母序
@@ -151,7 +150,7 @@ class LocalDataSourcePluginConfig(BaseModel):
     """本地数据源插件配置"""
 
     # 是否允许使用账密登录
-    enable_login_by_password: bool
+    enable_account_password_login: bool
     # 密码生成规则
     password_rule: Optional[PasswordRuleConfig] = None
     # 密码初始化/修改规则
@@ -163,7 +162,7 @@ class LocalDataSourcePluginConfig(BaseModel):
     def validate_attrs(self) -> "LocalDataSourcePluginConfig":
         """插件配置合法性检查"""
         # 如果没有开启账密登录，则不需要检查配置
-        if not self.enable_login_by_password:
+        if not self.enable_account_password_login:
             return self
 
         # 若启用账密登录，则各字段都需要配置上
