@@ -140,7 +140,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_tenants()
         # 将当前租户置顶
-        current_tenant_id = self.get_current_tenant_id()
+        current_tenant_id: str = self.get_current_tenant_id()
         # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
         sorted_queryset = sorted(queryset, key=lambda t: t.id != current_tenant_id)
 
