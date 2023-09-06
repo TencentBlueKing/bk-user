@@ -33,8 +33,6 @@ def create_data_source_departments_with_relations(data_source) -> List[DataSourc
     root = DataSourceDepartmentRelation.objects.create(
         department=data_source_departments[0], data_source=data_source, parent=None
     )
-    # 组织树重建
-    DataSourceDepartmentRelation.objects.rebuild()
 
     for data_source_department in data_source_departments[1:]:
         DataSourceDepartmentRelation.objects.create(

@@ -69,16 +69,15 @@ class TestTenantRetrieveUpdateApi:
 
     def test_retrieve_other_tenant(self, api_client, random_tenant):
         resp = api_client.get(reverse("organization.tenant.retrieve_update", kwargs={"id": random_tenant}))
-        resp_data = resp.data
         tenant = Tenant.objects.get(id=random_tenant)
 
-        assert tenant.id == resp_data["id"]
-        assert tenant.name == resp_data["name"]
-        assert tenant.updated_at_display == resp_data["updated_at"]
-        assert tenant.logo == resp_data["logo"]
-        assert tenant.feature_flags == resp_data["feature_flags"]
+        assert tenant.id == resp.data["id"]
+        assert tenant.name == resp.data["name"]
+        assert tenant.updated_at_display == resp.data["updated_at"]
+        assert tenant.logo == resp.data["logo"]
+        assert tenant.feature_flags == resp.data["feature_flags"]
         # 非当前用户所在租户，不返回管理员
-        assert not resp_data["managers"]
+        assert not resp.data["managers"]
 
     def test_retrieve_not_exist_tenant(self, api_client):
         resp = api_client.get(reverse("organization.tenant.retrieve_update", kwargs={"id": generate_random_string()}))
@@ -150,7 +149,7 @@ class TestTenantDepartmentChildrenListApi:
             assert tenant_department_children.count() == len(resp.data)
             for department in resp.data:
                 tenant_department = tenant_department_children.filter(id=department["id"]).first()
-                assert tenant_department
+                assert tenant_department is not None
                 assert tenant_department.data_source_department.name == department["name"]
 
 
@@ -171,11 +170,11 @@ class TestTenantDepartmentUserListApi:
                     department=tenant_department.data_source_department
                 ).values_list("user_id", flat=True),
             )
-            result_data_ids = [user["id"] for user in resp_data["results"]]
+            result_tenant_user_ids = [item["id"] for item in resp_data["results"]]
 
             assert tenant_users.count() == resp_data["count"]
-            for item in tenant_users:
-                assert item.id in result_data_ids
+            for tenant_user in tenant_users:
+                assert tenant_user.id in result_tenant_user_ids
 
 
 class TestTenantUserRetrieveApi:
@@ -183,19 +182,18 @@ class TestTenantUserRetrieveApi:
         for tenant_user in tenant_users:
             resp = api_client.get(reverse("department.users.retrieve", kwargs={"id": tenant_user.id}))
 
-            resp_data = resp.data
             data_source_user = tenant_user.data_source_user
 
-            assert tenant_user.id == resp_data["id"]
+            assert tenant_user.id == resp.data["id"]
             real_account_expired_at = timezone.localtime(tenant_user.account_expired_at)
-            assert real_account_expired_at.strftime("%Y-%m-%d %H:%M:%S") == resp_data["account_expired_at"]
+            assert real_account_expired_at.strftime("%Y-%m-%d %H:%M:%S") == resp.data["account_expired_at"]
 
-            assert data_source_user.username == resp_data["username"]
-            assert data_source_user.full_name == resp_data["full_name"]
+            assert data_source_user.username == resp.data["username"]
+            assert data_source_user.full_name == resp.data["full_name"]
 
-            assert data_source_user.email == resp_data["email"]
-            assert data_source_user.phone == resp_data["phone"]
-            assert data_source_user.phone_country_code == resp_data["phone_country_code"]
+            assert data_source_user.email == resp.data["email"]
+            assert data_source_user.phone == resp.data["phone"]
+            assert data_source_user.phone_country_code == resp.data["phone_country_code"]
 
             # 接口返回结果和数据库数据做比对
             tenant_departments = TenantDepartment.objects.filter(
@@ -205,7 +203,7 @@ class TestTenantUserRetrieveApi:
                 tenant_id=tenant_user.tenant_id,
             )
 
-            for department in resp_data["departments"]:
+            for department in resp.data["departments"]:
                 assert department["id"] in tenant_departments
 
             data_source_leader_ids = DataSourceUserLeaderRelation.objects.filter(user=data_source_user).values_list(
@@ -214,5 +212,5 @@ class TestTenantUserRetrieveApi:
             tenant_leaders = TenantUser.objects.filter(
                 data_source_user_id__in=data_source_leader_ids, tenant_id=tenant_user.tenant_id
             ).values_list("id", flat=True)
-            for user in resp_data["leaders"]:
+            for user in resp.data["leaders"]:
                 assert user["id"] in tenant_leaders

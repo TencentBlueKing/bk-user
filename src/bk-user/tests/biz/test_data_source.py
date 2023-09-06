@@ -30,7 +30,7 @@ class TestDataSourceDepartmentHandler:
 
         for item in local_data_source_departments:
             departments_info = departments_map.get(item.id)
-            assert departments_info
+            assert departments_info is not None
             assert item.name == departments_info.name
 
             child_ids = (
@@ -64,7 +64,7 @@ class TestDataSourceDepartmentHandler:
         user_department_relationship_map = DataSourceDepartmentHandler.get_user_department_ids_map(user_ids)
         for user_id in user_ids:
             department_ids = user_department_relationship_map.get(user_id)
-            assert department_ids
+            assert department_ids is not None
             real_department_ids = DataSourceDepartmentUserRelation.objects.filter(user_id=user_id).values_list(
                 "department_id", flat=True
             )
@@ -82,7 +82,12 @@ class TestDataSourceDepartmentHandler:
     )
     def test_not_exist_get_user_department_ids_map(self, not_exist_data_source_user_ids: List[int]):
         department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(not_exist_data_source_user_ids)
-        assert not department_ids_map
+
+        if not not_exist_data_source_user_ids:
+            assert not department_ids_map
+
+        for user_id in not_exist_data_source_user_ids:
+            assert department_ids_map.get(user_id) is None
 
 
 class TestDataSourceUserHandler:
@@ -91,10 +96,12 @@ class TestDataSourceUserHandler:
         leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(data_source_user_ids)
 
         for user_id in data_source_user_ids:
-            leader_ids = leader_ids_map.get(user_id) or []
-            if not DataSourceUserLeaderRelation.objects.filter(user_id=user_id):
-                assert not leader_ids
+            leader_ids = leader_ids_map.get(user_id)
+            if not DataSourceUserLeaderRelation.objects.filter(user_id=user_id).exists():
+                assert leader_ids is None
             else:
+                assert leader_ids is not None
+
                 for leader_id in leader_ids:
                     assert leader_id in DataSourceUserLeaderRelation.objects.filter(user_id=user_id).values_list(
                         "leader_id", flat=True
@@ -109,5 +116,9 @@ class TestDataSourceUserHandler:
         ],
     )
     def test_not_exist_get_user_leader_ids_map(self, not_exist_data_source_user_ids: List[int]):
-        department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(not_exist_data_source_user_ids)
-        assert not department_ids_map
+        user_leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(not_exist_data_source_user_ids)
+        if not not_exist_data_source_user_ids:
+            assert not user_leader_ids_map
+
+        for user_id in not_exist_data_source_user_ids:
+            assert user_leader_ids_map.get(user_id) is None
