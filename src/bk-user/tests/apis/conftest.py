@@ -9,7 +9,11 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+from bkuser.apps.data_source.constants import DataSourcePluginEnum
+from bkuser.apps.data_source.models import DataSource
 from rest_framework.test import APIClient
+
+from tests.test_utils.helpers import generate_random_string
 
 
 @pytest.fixture()
@@ -18,3 +22,16 @@ def api_client(bk_user) -> APIClient:
     client = APIClient()
     client.force_authenticate(user=bk_user)
     return client
+
+
+@pytest.fixture()
+def local_data_source(default_tenant: str) -> DataSource:
+    """
+    生成测试数据源
+    """
+
+    local_data_source, _ = DataSource.objects.get_or_create(
+        name=generate_random_string(),
+        defaults={"owner_tenant_id": default_tenant, "plugin_id": DataSourcePluginEnum.LOCAL.value},
+    )
+    return local_data_source

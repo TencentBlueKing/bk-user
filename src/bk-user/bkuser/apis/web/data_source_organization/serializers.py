@@ -100,7 +100,7 @@ class LeaderSearchInputSLZ(serializers.Serializer):
 
 
 class LeaderSearchOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="上级ID")
+    id = serializers.IntegerField(help_text="上级ID")
     username = serializers.CharField(help_text="上级名称")
 
 
@@ -109,7 +109,7 @@ class DepartmentSearchInputSLZ(serializers.Serializer):
 
 
 class DepartmentSearchOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="部门ID")
+    id = serializers.IntegerField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
 
 
