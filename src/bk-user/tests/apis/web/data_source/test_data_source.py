@@ -30,7 +30,7 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture()
 def local_ds_plugin_config() -> Dict[str, Any]:
     return {
-        "enable_login_by_password": True,
+        "enable_account_password_login": True,
         "password_rule": {
             "min_length": 12,
             "contain_lowercase": True,
@@ -172,7 +172,7 @@ class TestDataSourceCreateApi:
             data={
                 "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
-                "plugin_config": {"enable_login_by_password": False},
+                "plugin_config": {"enable_account_password_login": False},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -224,7 +224,7 @@ class TestDataSourceCreateApi:
         assert "邮件通知模板需要提供标题" in resp.data["message"]
 
     def test_create_with_invalid_plugin_config(self, api_client, local_ds_plugin_config):
-        local_ds_plugin_config.pop("enable_login_by_password")
+        local_ds_plugin_config.pop("enable_account_password_login")
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
@@ -234,7 +234,7 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "插件配置不合法：enable_login_by_password: Field required" in resp.data["message"]
+        assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
 
     def test_create_without_required_field_mapping(self, api_client):
         """非本地数据源，需要字段映射配置"""
@@ -266,7 +266,7 @@ class TestDataSourceListApi:
 
 class TestDataSourceUpdateApi:
     def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_config):
-        local_ds_plugin_config["enable_login_by_password"] = False
+        local_ds_plugin_config["enable_account_password_login"] = False
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
             data={"plugin_config": local_ds_plugin_config},
@@ -274,16 +274,16 @@ class TestDataSourceUpdateApi:
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
-        assert resp.data["plugin_config"]["enable_login_by_password"] is False
+        assert resp.data["plugin_config"]["enable_account_password_login"] is False
 
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_config):
-        local_ds_plugin_config.pop("enable_login_by_password")
+        local_ds_plugin_config.pop("enable_account_password_login")
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
             data={"plugin_config": local_ds_plugin_config},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "插件配置不合法：enable_login_by_password: Field required" in resp.data["message"]
+        assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
 
     def test_update_without_required_field_mapping(self, api_client):
         """非本地数据源，需要字段映射配置"""
