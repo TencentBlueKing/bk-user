@@ -15,7 +15,6 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
-    DataSourceUser,
     DataSourceUserLeaderRelation,
 )
 from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceUserHandler
@@ -24,7 +23,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestDataSourceDepartmentHandler:
-    def test_get_department_info_map_by_ids(self, local_data_source_departments: List[DataSourceDepartment]):
+    def test_get_department_info_map_by_ids(self, local_data_source_departments):
         departments_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(
             [department.id for department in local_data_source_departments]
         )
@@ -51,15 +50,15 @@ class TestDataSourceDepartmentHandler:
             [14, 24, 34],
         ],
     )
-    def test_not_exist_get_department_info_map_by_ids(self, not_exist_data_source_department_ids: List[int]):
+    def test_not_exist_get_department_info_map_by_ids(self, not_exist_data_source_department_ids):
         departments_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(
             not_exist_data_source_department_ids
         )
+        data_source_departments = DataSourceDepartment.objects.filter(id__in=not_exist_data_source_department_ids)
+        assert data_source_departments.count() == len(departments_map.keys())
         assert not departments_map
 
-    def test_get_user_department_ids_map(
-        self, local_data_source_departments: List[DataSourceDepartment], local_data_source_users: List[DataSourceUser]
-    ):
+    def test_get_user_department_ids_map(self, local_data_source_departments, local_data_source_users):
         user_ids = [user.id for user in local_data_source_users]
 
         user_department_relationship_map = DataSourceDepartmentHandler.get_user_department_ids_map(user_ids)
@@ -87,7 +86,7 @@ class TestDataSourceDepartmentHandler:
 
 
 class TestDataSourceUserHandler:
-    def test_get_user_leader_ids_map(self, local_data_source_users: List[DataSourceUser]):
+    def test_get_user_leader_ids_map(self, local_data_source_users):
         data_source_user_ids = [item.id for item in local_data_source_users]
         leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(data_source_user_ids)
 

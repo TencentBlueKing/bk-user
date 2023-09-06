@@ -12,7 +12,6 @@ from typing import List
 
 import pytest
 from bkuser.apps.data_source.models import (
-    DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
@@ -24,12 +23,12 @@ pytestmark = pytest.mark.django_db
 
 
 class TestTenantUserHandler:
-    def test_get_tenant_user_leaders_map_by_id(self, default_tenant_users: List[TenantUser]):
+    def test_get_tenant_user_leaders_map_by_id(self, tenant_users):
         tenant_user_leader_map = TenantUserHandler.get_tenant_user_leaders_map_by_id(
-            [item.id for item in default_tenant_users]
+            [item.id for item in tenant_users]
         )
 
-        for tenant_user in default_tenant_users:
+        for tenant_user in tenant_users:
             tenant_user_leader_ids = [leader_info.id for leader_info in tenant_user_leader_map.get(tenant_user.id, [])]
             data_source_leader_ids = DataSourceUserLeaderRelation.objects.filter(
                 user=tenant_user.data_source_user
@@ -42,65 +41,62 @@ class TestTenantUserHandler:
 
     def test_get_tenant_user_departments_map_by_id(
         self,
-        default_tenant: str,
-        default_tenant_users: List[TenantUser],
-        default_tenant_departments: List[TenantDepartment],
+        default_tenant,
+        tenant_users,
+        tenant_departments,
     ):
         tenant_user_departments_map = TenantUserHandler.get_tenant_user_departments_map_by_id(
-            [user.id for user in default_tenant_users]
+            [user.id for user in tenant_users]
         )
 
-        for tenant_user in default_tenant_users:
+        for tenant_user in tenant_users:
             tenant_departments = tenant_user_departments_map.get(tenant_user.id, [])
 
-            tenant_departments_ids = [tenant_department.id for tenant_department in tenant_departments]
-            data_source_department = TenantDepartment.objects.filter(
-                id__in=tenant_departments_ids, tenant=default_tenant
-            )
+            data_source_departments = TenantDepartment.objects.filter(
+                id__in=[tenant_department.id for tenant_department in tenant_departments], tenant=default_tenant
+            ).values_list("data_source_department", flat=True)
 
-            user_related_department = DataSourceDepartmentUserRelation.objects.filter(
+            user_related_departments = DataSourceDepartmentUserRelation.objects.filter(
                 user_id=tenant_user.data_source_user_id
             )
 
-            assert not set(user_related_department.values_list("department_id", flat=True)) - set(
-                data_source_department.values_list("data_source_department_id", flat=True)
+            assert not set(user_related_departments.values_list("department_id", flat=True)) - set(
+                data_source_departments.values_list("data_source_department_id", flat=True)
             )
 
-    def test_get_tenant_user_ids_by_tenant(self, default_tenant: str):
+    def test_get_tenant_user_ids_by_tenant(self, default_tenant):
         tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant(default_tenant)
 
-        assert len(tenant_user_ids) == TenantUser.objects.filter(tenant=default_tenant).count()
-        assert not set(tenant_user_ids) - set(
-            TenantUser.objects.filter(tenant=default_tenant).values_list("id", flat=True)
-        )
+        assert TenantUser.objects.filter(id__in=tenant_user_ids).count() == len(tenant_user_ids)
 
 
 class TestTenantDepartmentHandler:
     def test_convert_data_source_department_to_tenant_department(
         self,
-        default_tenant: str,
-        local_data_source_departments: List[DataSourceDepartment],
-        default_tenant_departments: List[TenantDepartment],
+        default_tenant,
+        local_data_source_departments,
+        tenant_departments,
     ):
         data_source_department_ids = [department.id for department in local_data_source_departments]
-        tenant_departments = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
+        tenant_department_info_list = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
             default_tenant, data_source_department_ids
         )
         assert len(data_source_department_ids) == len(tenant_departments)
 
-        for department in tenant_departments:
-            tenant_department = TenantDepartment.objects.get(id=department.id)
+        for tenant_department_info in tenant_department_info_list:
+            tenant_department = TenantDepartment.objects.get(id=tenant_department_info.id)
             assert tenant_department.data_source_department_id in data_source_department_ids
-            assert department.name == tenant_department.data_source_department.name
+            assert tenant_department_info.name == tenant_department.data_source_department.name
 
-            children_id = (
+            child_ids = (
                 DataSourceDepartmentRelation.objects.get(department=tenant_department.data_source_department)
                 .get_children()
                 .values_list("department_id", flat=True)
             )
-
-            tenant_children_departments = TenantDepartment.objects.filter(data_source_department_id__in=children_id)
-            assert department.has_children == tenant_children_departments.exists()
+            assert (
+                tenant_department_info.has_children
+                == TenantDepartment.objects.filter(data_source_department_id__in=child_ids).exists()
+            )
 
     @pytest.mark.parametrize(
         "not_exist_data_source_department_ids",

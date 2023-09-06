@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
 
 import pytest
 from bkuser.apps.data_source.models import (
@@ -17,10 +16,12 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
-from bkuser.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from tests.test_utils.helpers import generate_random_string
 
 pytestmark = pytest.mark.django_db
 
@@ -28,45 +29,45 @@ pytestmark = pytest.mark.django_db
 class TestTenantListApi:
     def test_list_tenants(
         self,
-        api_client: APIClient,
-        bk_user: User,
-        default_tenant: str,
-        random_tenant: str,
-        default_tenant_departments: List[TenantDepartment],
+        api_client,
+        bk_user,
+        default_tenant,
+        tenant_departments,
     ):
         resp = api_client.get(reverse("organization.tenant.list"))
 
         # 至少会有一个当前用户所属的租户
+        current_tenant_id = bk_user.get_property("tenant_id")
         assert len(resp.data) >= 1
-        resp_data = resp.data
-        for tenant_info in resp_data:
-            if tenant_info["id"] != bk_user.get_property("tenant_id"):
+        assert current_tenant_id == resp.data[0]["id"]
+
+        for tenant_info in resp.data:
+            if tenant_info["id"] != current_tenant_id:
                 assert not tenant_info["departments"]
             else:
                 assert len(tenant_info["departments"]) >= 1
 
 
 class TestTenantRetrieveUpdateApi:
-    NOT_EXIST_TENANT_ID = 9999
-
-    def test_retrieve_tenant(self, api_client: APIClient, bk_user: User):
+    def test_retrieve_tenant(self, api_client, bk_user, default_tenant):
         tenant_id = bk_user.get_property("tenant_id")
-        resp = api_client.get(reverse("organization.tenant.retrieve_update", kwargs={"id": tenant_id}))
-        resp_data = resp.data
+        resp = api_client.get(
+            reverse("organization.tenant.retrieve_update", kwargs={"id": bk_user.get_property("tenant_id")})
+        )
+
         tenant = Tenant.objects.get(id=tenant_id)
 
-        assert tenant_id == resp_data["id"]
-        assert tenant.id == resp_data["id"]
-        assert tenant.name == resp_data["name"]
-        assert tenant.updated_at_display == resp_data["updated_at"]
-        assert tenant.logo == resp_data["logo"]
-        assert tenant.feature_flags == resp_data["feature_flags"]
-        assert TenantManager.objects.filter(tenant=tenant).count() == len(resp_data["managers"])
+        assert tenant.id == resp.data["id"]
+        assert tenant.name == resp.data["name"]
+        assert tenant.updated_at_display == resp.data["updated_at"]
+        assert tenant.logo == resp.data["logo"]
+        assert tenant.feature_flags == resp.data["feature_flags"]
+        assert TenantManager.objects.filter(tenant=tenant).count() == len(resp.data["managers"])
 
-        for item in resp_data["managers"]:
+        for item in resp.data["managers"]:
             assert TenantManager.objects.filter(tenant=tenant, tenant_user_id=item["id"]).exists()
 
-    def test_retrieve_other_tenant(self, api_client: APIClient, random_tenant: str):
+    def test_retrieve_other_tenant(self, api_client, random_tenant):
         resp = api_client.get(reverse("organization.tenant.retrieve_update", kwargs={"id": random_tenant}))
         resp_data = resp.data
         tenant = Tenant.objects.get(id=random_tenant)
@@ -79,12 +80,12 @@ class TestTenantRetrieveUpdateApi:
         # 非当前用户所在租户，不返回管理员
         assert not resp_data["managers"]
 
-    def test_retrieve_not_exist_tenant(self, api_client: APIClient):
-        resp = api_client.get(reverse("organization.tenant.retrieve_update", kwargs={"id": self.NOT_EXIST_TENANT_ID}))
+    def test_retrieve_not_exist_tenant(self, api_client):
+        resp = api_client.get(reverse("organization.tenant.retrieve_update", kwargs={"id": generate_random_string()}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_update_tenant(self, api_client: APIClient, default_tenant: str, default_tenant_users: List[TenantUser]):
-        new_manager_ids = [user.id for user in default_tenant_users]
+    def test_update_tenant(self, api_client, default_tenant, tenant_users):
+        new_manager_ids = [user.id for user in tenant_users]
         update_data = {
             "id": "fake-tenant-updated",
             "name": "fake-tenant-updated",
@@ -105,9 +106,7 @@ class TestTenantRetrieveUpdateApi:
                 TenantManager.objects.filter(tenant=tenant).values_list("tenant_user_id", flat=True)
             )
 
-    def test_update_other_tenant(
-        self, api_client: APIClient, random_tenant: str, default_tenant_users: List[TenantUser]
-    ):
+    def test_update_other_tenant(self, api_client, random_tenant, tenant_users):
         resp = api_client.put(
             reverse("organization.tenant.retrieve_update", kwargs={"id": random_tenant}),
             data={
@@ -115,7 +114,7 @@ class TestTenantRetrieveUpdateApi:
                 "name": "fake-tenant-updated",
                 "feature_flags": {"user_number_visible": False},
                 "logo": "aabb",
-                "manager_ids": [user.id for user in default_tenant_users],
+                "manager_ids": [user.id for user in tenant_users],
             },
         )
         # 进行更新非当前用户的租户，异常返回
@@ -123,15 +122,13 @@ class TestTenantRetrieveUpdateApi:
 
 
 class TestTenantUserListApi:
-    def test_list_tenant_users(
-        self, api_client: APIClient, default_tenant: str, default_tenant_users: List[TenantUser]
-    ):
+    def test_list_tenant_users(self, api_client, default_tenant, tenant_users):
         resp = api_client.get(reverse("organization.tenant.users.list", kwargs={"id": default_tenant}))
 
         assert TenantUser.objects.filter(tenant_id=default_tenant).count() == resp.data["count"]
         for item in resp.data["results"]:
             tenant_user = TenantUser.objects.filter(id=item["id"]).first()
-            assert tenant_user
+            assert tenant_user is not None
             assert tenant_user.data_source_user.username == item["username"]
             assert tenant_user.data_source_user.full_name == item["full_name"]
             assert tenant_user.data_source_user.email == item["email"]
@@ -141,8 +138,8 @@ class TestTenantUserListApi:
 
 
 class TestTenantDepartmentChildrenListApi:
-    def test_retrieve_children(self, api_client: APIClient, default_tenant_departments: List[TenantDepartment]):
-        for item in default_tenant_departments:
+    def test_retrieve_children(self, api_client, tenant_departments):
+        for item in tenant_departments:
             resp = api_client.get(reverse("organization.children.list", kwargs={"id": item.id}))
 
             children = DataSourceDepartmentRelation.objects.get(department=item.data_source_department).get_children()
@@ -161,10 +158,10 @@ class TestTenantDepartmentUserListApi:
     def test_list_department_users(
         self,
         api_client: APIClient,
-        default_tenant_departments: List[TenantDepartment],
-        default_tenant_users: List[TenantUser],
+        tenant_departments,
+        tenant_users,
     ):
-        for tenant_department in default_tenant_departments:
+        for tenant_department in tenant_departments:
             resp = api_client.get(reverse("departments.users.list", kwargs={"id": tenant_department.id}))
             resp_data = resp.data
 
@@ -182,15 +179,16 @@ class TestTenantDepartmentUserListApi:
 
 
 class TestTenantUserRetrieveApi:
-    def test_retrieve_user(self, api_client: APIClient, default_tenant_users: List[TenantUser]):
-        for tenant_user in default_tenant_users:
+    def test_retrieve_user(self, api_client, tenant_users):
+        for tenant_user in tenant_users:
             resp = api_client.get(reverse("department.users.retrieve", kwargs={"id": tenant_user.id}))
 
             resp_data = resp.data
             data_source_user = tenant_user.data_source_user
 
             assert tenant_user.id == resp_data["id"]
-            assert tenant_user.account_expired_at.strftime("%Y-%m-%d %H:%M:%S") == resp_data["account_expired_at"]
+            real_account_expired_at = timezone.localtime(tenant_user.account_expired_at)
+            assert real_account_expired_at.strftime("%Y-%m-%d %H:%M:%S") == resp_data["account_expired_at"]
 
             assert data_source_user.username == resp_data["username"]
             assert data_source_user.full_name == resp_data["full_name"]

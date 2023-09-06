@@ -32,34 +32,34 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     return tenant
 
 
-def create_tenant_users(tenant_id: str, data_source_id: int, data_source_user_ids: List[int]) -> List[TenantUser]:
+def create_tenant_users(tenant, data_source_users) -> List[TenantUser]:
     """
     创建租户用户
     """
-    tenant_users: List[TenantUser] = []
-    for user_id in data_source_user_ids:
-        tenant_user = TenantUser.objects.create(
-            data_source_user_id=user_id,
-            data_source_id=data_source_id,
-            tenant_id=tenant_id,
+    tenant_users = [
+        TenantUser(
+            data_source_user=user,
+            data_source=user.data_source,
+            tenant_id=tenant,
             id=generate_uuid(),
         )
-        tenant_users.append(tenant_user)
-    return tenant_users
+        for user in data_source_users
+    ]
+    TenantUser.objects.bulk_create(tenant_users)
+    return list(TenantUser.objects.filter(tenant_id=tenant))
 
 
-def create_tenant_departments(
-    tenant_id: str, data_source_id: int, data_source_department_ids: List[int]
-) -> List[TenantDepartment]:
+def create_tenant_departments(tenant, data_source_departments) -> List[TenantDepartment]:
     """
     创建租户部门
     """
-    tenant_departments: List[TenantDepartment] = []
-    for department in data_source_department_ids:
-        tenant_department = TenantDepartment.objects.create(
-            data_source_department_id=department,
-            data_source_id=data_source_id,
-            tenant_id=tenant_id,
+    tenant_departments = [
+        TenantDepartment(
+            data_source_department=department,
+            data_source=department.data_source,
+            tenant_id=tenant,
         )
-        tenant_departments.append(tenant_department)
-    return tenant_departments
+        for department in data_source_departments
+    ]
+    TenantDepartment.objects.bulk_create(tenant_departments)
+    return list(TenantDepartment.objects.filter(tenant_id=tenant))

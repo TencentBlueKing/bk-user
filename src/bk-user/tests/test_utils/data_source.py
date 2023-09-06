@@ -18,42 +18,63 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from tests.test_utils.helpers import generate_random_string
 
 
-def create_data_source_departments_with_relationship(data_source_id: int):
+def create_data_source_departments_with_relations(data_source) -> List[DataSourceDepartment]:
     """
     创建数据源部门，并以首个对象为其余对象的父部门
     """
-    data_source_departments: List[DataSourceDepartment] = []
-    for i in range(10):
-        department = DataSourceDepartment.objects.create(data_source_id=data_source_id, name=f"fake_dept_{i}")
-        data_source_departments.append(department)
+    departments = [DataSourceDepartment(data_source=data_source, name=generate_random_string()) for _ in range(10)]
+    DataSourceDepartment.objects.bulk_create(departments)
 
+    data_source_departments = list(DataSourceDepartment.objects.filter(data_source=data_source))
     # 添加部门关系
     root = DataSourceDepartmentRelation.objects.create(
-        department=data_source_departments[0], data_source_id=data_source_id
+        department=data_source_departments[0], data_source=data_source, parent=None
     )
-    for item in data_source_departments[1:]:
-        DataSourceDepartmentRelation.objects.create(department=item, data_source_id=data_source_id, parent=root)
+    # 组织树重建
+    DataSourceDepartmentRelation.objects.rebuild()
+
+    for data_source_department in data_source_departments[1:]:
+        DataSourceDepartmentRelation.objects.create(
+            department=data_source_department, data_source=data_source, parent=root
+        )
+
+    # 组织树重建
+    DataSourceDepartmentRelation.objects.rebuild()
     return data_source_departments
 
 
-def create_data_source_users_with_relationship(data_source_id: int, department_ids: List[int]):
+def create_data_source_users_with_relations(data_source, departments) -> List[DataSourceUser]:
     """
     创建数据源用户，并以首个对象为其余对象的上级, 随机关联部门
     """
-    data_source_users: List[DataSourceUser] = []
-    for i in range(10):
-        fake_user = DataSourceUser.objects.create(
-            full_name=f"fake-user-{i}", username=f"fake-user-{i}", phone="1312345678", data_source_id=data_source_id
+    users = [
+        DataSourceUser(
+            full_name=generate_random_string(),
+            username=generate_random_string(),
+            email=f"{generate_random_string()}@qq.com",
+            phone="13123456789",
+            data_source=data_source,
         )
-        data_source_users.append(fake_user)
+        for _ in range(10)
+    ]
+    DataSourceUser.objects.bulk_create(users)
 
+    data_source_users = list(DataSourceUser.objects.filter(data_source=data_source))
     # 添加上下级关系
-    leader = data_source_users[0]
-    for user in data_source_users[1:]:
-        DataSourceUserLeaderRelation.objects.get_or_create(user=user, leader=leader)
+    user_relations = [
+        DataSourceUserLeaderRelation(user=data_source_user, leader=data_source_users[0])
+        for data_source_user in data_source_users[1:]
+    ]
+    DataSourceUserLeaderRelation.objects.bulk_create(user_relations)
 
-    for item in data_source_users:
-        DataSourceDepartmentUserRelation.objects.get_or_create(user=item, department_id=random.choice(department_ids))
+    # 添加部门-人员关系
+    user_department_relations = [
+        DataSourceDepartmentUserRelation(user=data_source_user, department=random.choice(departments))
+        for data_source_user in data_source_users
+    ]
+    DataSourceDepartmentUserRelation.objects.bulk_create(user_department_relations)
+
     return data_source_users

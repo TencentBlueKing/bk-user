@@ -375,13 +375,12 @@ class TenantDepartmentHandler:
                 continue
             # 部门基础信息
             data_source_department_info = data_source_departments[data_source_department_id]
-            # 只要一个子部门被授权，都是存在子部门
-            children_flag = [True for child in data_source_department_info.child_ids if child in bound_departments_ids]
+            # 协同数据源：只要一个子部门被授权给该租户，has_children=True
             data.append(
                 TenantDepartmentBaseInfo(
                     id=tenant_department.id,
                     name=data_source_department_info.name,
-                    has_children=any(children_flag),
+                    has_children=bool(set(data_source_department_info.child_ids) & set(bound_departments_ids)),
                 )
             )
         return data
