@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import List
 
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
@@ -116,8 +117,21 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     queryset = Tenant.objects.all()
     serializer_class = TenantListOutputSLZ
 
+    def get_tenants(self) -> List:
+        """
+        获取当前租户以及有协同关系的租户
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        # TODO 过滤出与当前租户有协同关系的租户
+        # 将当前租户置顶
+        current_tenant_id: str = self.get_current_tenant_id()
+        queryset = queryset.filter(id__in=[current_tenant_id])
+
+        # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
+        return sorted(queryset, key=lambda t: t.id != current_tenant_id)
+
     def get_serializer_context(self):
-        tenant_ids = list(self.queryset.values_list("id", flat=True))
+        tenant_ids = [tenant.id for tenant in self.get_tenants()]
         tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_department_map_by_tenant_id(
             tenant_ids, self.get_current_tenant_id()
         )
@@ -129,17 +143,8 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        # TODO 过滤出与当前租户有协同关系的租户
-        # 将当前租户置顶
-        current_tenant_id: str = self.get_current_tenant_id()
-        queryset = queryset.filter(id__in=[current_tenant_id])
-
-        # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
-        sorted_queryset = sorted(queryset, key=lambda t: t.id != current_tenant_id)
-
-        serializer = self.get_serializer(sorted_queryset, many=True)
-
+        queryset = self.get_tenants()
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 
