@@ -113,8 +113,10 @@ class TestDataSourceOrganizationHandler:
         DataSourceOrganizationHandler.update_user_department_relations(user, new_department_ids)
 
         # 验证用户-部门关系是否更新成功
-        relations = DataSourceDepartmentUserRelation.objects.filter(user=user)
-        assert set(relations.values_list("department_id", flat=True)) == set(new_department_ids)
+        department_ids = DataSourceDepartmentUserRelation.objects.filter(user=user).values_list(
+            "department_id", flat=True
+        )
+        assert set(department_ids) == set(new_department_ids)
 
     def test_update_user_leader_relations(self, data_source_users):
         user = random.choice(data_source_users)
@@ -128,8 +130,8 @@ class TestDataSourceOrganizationHandler:
         DataSourceOrganizationHandler.update_user_leader_relations(user, new_leader_ids)
 
         # 验证用户-上级关系是否更新成功
-        relations = DataSourceUserLeaderRelation.objects.filter(user=user)
-        assert set(relations.values_list("leader_id", flat=True)) == set(new_leader_ids)
+        leaders = DataSourceUserLeaderRelation.objects.filter(user=user).values_list("leader_id", flat=True)
+        assert set(leaders) == set(new_leader_ids)
 
     def test_update_user(self, data_source_users, editable_base_user_info, relation_info):
         user = random.choice(data_source_users)
