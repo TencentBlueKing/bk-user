@@ -36,6 +36,10 @@ def create_tenant_users(tenant, data_source_users) -> List[TenantUser]:
     """
     创建租户用户
     """
+    # 避免重复创建
+    tenant_users = TenantUser.objects.filter(tenant_id=tenant, data_source_user__in=data_source_users)
+    if tenant_users.exists():
+        return list(tenant_users)
     tenant_users = [
         TenantUser(
             data_source_user=user,
@@ -46,13 +50,20 @@ def create_tenant_users(tenant, data_source_users) -> List[TenantUser]:
         for user in data_source_users
     ]
     TenantUser.objects.bulk_create(tenant_users)
-    return list(TenantUser.objects.filter(tenant_id=tenant))
+    return list(TenantUser.objects.filter(tenant_id=tenant, data_source_user__in=data_source_users))
 
 
 def create_tenant_departments(tenant, data_source_departments) -> List[TenantDepartment]:
     """
     创建租户部门
     """
+    # 避免重复创建
+    tenant_departments = TenantDepartment.objects.filter(
+        tenant_id=tenant, data_source_department__in=data_source_departments
+    )
+    if tenant_departments.exists():
+        return list(tenant_departments)
+
     tenant_departments = [
         TenantDepartment(
             data_source_department=department,
@@ -62,4 +73,4 @@ def create_tenant_departments(tenant, data_source_departments) -> List[TenantDep
         for department in data_source_departments
     ]
     TenantDepartment.objects.bulk_create(tenant_departments)
-    return list(TenantDepartment.objects.filter(tenant_id=tenant))
+    return list(TenantDepartment.objects.filter(tenant_id=tenant, data_source_department__in=data_source_departments))

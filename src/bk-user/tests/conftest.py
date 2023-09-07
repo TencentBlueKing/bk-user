@@ -30,6 +30,6 @@ def random_tenant() -> str:
 
 
 @pytest.fixture()
-def bk_user() -> User:
+def bk_user(default_tenant) -> User:
     """生成随机用户"""
     return create_user()
