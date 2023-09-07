@@ -15,6 +15,12 @@ from bkuser.apis.web.data_source import views
 urlpatterns = [
     # 数据源插件列表
     path("plugins/", views.DataSourcePluginListApi.as_view(), name="data_source_plugin.list"),
+    # 数据源插件默认配置
+    path(
+        "plugins/<str:id>/default-config/",
+        views.DataSourcePluginDefaultConfigApi.as_view(),
+        name="data_source_plugin.default_config",
+    ),
     # 数据源创建/获取列表
     path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
     # 数据源更新/获取

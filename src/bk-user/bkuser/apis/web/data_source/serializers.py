@@ -119,6 +119,10 @@ class DataSourcePluginOutputSLZ(serializers.Serializer):
     logo = serializers.CharField(help_text="数据源插件 Logo")
 
 
+class DataSourcePluginDefaultConfigOutputSLZ(serializers.Serializer):
+    config = serializers.JSONField(help_text="数据源插件默认配置")
+
+
 class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
     name = serializers.CharField(help_text="数据源名称")
