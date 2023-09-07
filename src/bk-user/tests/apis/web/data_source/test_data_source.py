@@ -42,7 +42,7 @@ def local_ds_plugin_config() -> Dict[str, Any]:
             "not_continuous_letter": True,
             "not_continuous_digit": True,
             "not_repeated_symbol": True,
-            "valid_time": 86400,
+            "valid_time": 7,
             "max_retries": 3,
             "lock_time": 3600,
         },
@@ -87,7 +87,7 @@ def local_ds_plugin_config() -> Dict[str, Any]:
             },
         },
         "password_expire": {
-            "remind_before_expire": [3600, 7200],
+            "remind_before_expire": [1, 7],
             "notification": {
                 "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
                 "templates": [
@@ -151,6 +151,16 @@ class TestDataSourcePluginListApi:
         # 至少会有一个本地数据源插件
         assert len(resp.data) >= 1
         assert DataSourcePluginEnum.LOCAL in [d["id"] for d in resp.data]
+
+
+class TestDataSourcePluginDefaultConfigApi:
+    def test_retrieve(self, api_client):
+        resp = api_client.get(reverse("data_source_plugin.default_config", args=[DataSourcePluginEnum.LOCAL.value]))
+        assert resp.status_code == status.HTTP_200_OK
+
+    def test_retrieve_not_exists(self, api_client):
+        resp = api_client.get(reverse("data_source_plugin.default_config", args=["not_exists"]))
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestDataSourceCreateApi:

@@ -57,7 +57,7 @@ class PasswordRuleConfig(BaseModel):
     # 不允许重复字母，数字，特殊字符
     not_repeated_symbol: bool
 
-    # 密码有效期（单位：秒）
+    # 密码有效期（单位：天）
     valid_time: int = Field(ge=NEVER_EXPIRE_TIME, le=MAX_PASSWORD_VALID_TIME)
     # 密码试错次数
     max_retries: int = Field(ge=0, le=PASSWORD_MAX_RETRIES)
@@ -140,7 +140,7 @@ class PasswordInitialConfig(BaseModel):
 class PasswordExpireConfig(BaseModel):
     """密码到期相关配置"""
 
-    # 在密码到期多久前提醒，单位：秒，多个值表示多次提醒
+    # 在密码到期多久前提醒，单位：天，多个值表示多次提醒
     remind_before_expire: List[int]
     # 通知相关配置
     notification: NotificationConfig

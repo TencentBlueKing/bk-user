@@ -71,6 +71,10 @@ class ErrorCodes:
 
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
+
+    # 数据源插件
+    DATA_SOURCE_PLUGIN_NOT_DEFAULT_CONFIG = ErrorCode(_("当前数据源插件未提供默认配置"))
+
     # 数据源
     DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("数据源不支持该操作"))
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
