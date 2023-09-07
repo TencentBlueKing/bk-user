@@ -152,7 +152,7 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
 
 class UserUpdateInputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名")
-    email = serializers.CharField(help_text="邮箱")
+    email = serializers.EmailField(help_text="邮箱")
     phone_country_code = serializers.CharField(help_text="手机国际区号")
     phone = serializers.CharField(help_text="手机号")
     logo = serializers.CharField(help_text="用户 Logo", allow_blank=True, required=False, default="")
