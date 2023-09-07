@@ -116,35 +116,30 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     queryset = Tenant.objects.all()
     serializer_class = TenantListOutputSLZ
 
-    def get_tenants(self):
-        """
-        获取当前租户以及有协同关系的租户
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-        # TODO 过滤出与当前租户有协同关系的租户
-        current_tenant_id: str = self.get_current_tenant_id()
-        return queryset.filter(id__in=[current_tenant_id])
-
-    def get_serializer_context(self):
-        tenant_ids = list(self.get_tenants().values_list("id", flat=True))
-        tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_department_map_by_tenant_id(
-            tenant_ids, self.get_current_tenant_id()
-        )
-        return {"tenant_root_departments_map": tenant_root_departments_map}
-
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户列表",
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        queryset = self.get_tenants()
-        # 将当前租户置顶
         current_tenant_id: str = self.get_current_tenant_id()
+
+        # 获取当前租户以及有协同关系的租户
+        # TODO 过滤出与当前租户有协同关系的租户
+        queryset = self.filter_queryset(self.get_queryset()).filter(id__in=[current_tenant_id])
+
+        # 将当前租户置顶
         # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
         sorted_queryset = sorted(queryset, key=lambda t: t.id != current_tenant_id)
 
-        serializer = self.get_serializer(sorted_queryset, many=True)
+        # 获取租户根组织
+        tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_department_map_by_tenant_id(
+            list(queryset.values_list("id", flat=True)), current_tenant_id
+        )
+
+        serializer = TenantListOutputSLZ(
+            sorted_queryset, many=True, context={"tenant_root_departments_map": tenant_root_departments_map}
+        )
 
         return Response(serializer.data)
 
