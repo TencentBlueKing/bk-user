@@ -25,12 +25,12 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
 )
-from bkuser.apis.web.data_source.utils import DefaultPluginConfigProvider
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.data_source.plugins.constants import DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP
 from bkuser.apps.data_source.signals import post_create_data_source, post_update_data_source
+from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
@@ -50,8 +50,6 @@ class DataSourcePluginListApi(generics.ListAPIView):
 
 
 class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
-    serializer_class = DataSourcePluginDefaultConfigOutputSLZ
-
     @swagger_auto_schema(
         tags=["data_source_plugin"],
         operation_description="数据源插件默认配置",
@@ -65,7 +63,7 @@ class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
         if not config:
             raise error_codes.DATA_SOURCE_PLUGIN_NOT_DEFAULT_CONFIG
 
-        return Response(self.serializer_class(instance={"config": config.model_dump()}).data)
+        return Response(DataSourcePluginDefaultConfigOutputSLZ(instance={"config": config.model_dump()}).data)
 
 
 class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):

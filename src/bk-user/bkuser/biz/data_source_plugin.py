@@ -32,7 +32,7 @@ class DefaultPluginConfigProvider:
     """默认插件配置提供者"""
 
     def get(self, plugin_id: str) -> Optional[BaseModel]:
-        """获取不用插件类型的默认插件配置"""
+        """获取指定插件类型的默认插件配置"""
         if plugin_id == DataSourcePluginEnum.LOCAL:
             return self._get_default_local_plugin_config()
 
