@@ -70,23 +70,51 @@ class DefaultPluginConfigProvider:
                             scene=NotificationScene.USER_INITIALIZE,
                             title="蓝鲸智云 - 您的账户已经成功创建！",
                             sender="蓝鲸智云",
-                            content="您好：\n您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n 登录帐户：{username}，初始登录密码：{password} 为了保障帐户安全，建议您尽快登录平台修改密码：{url} 此邮件为系统自动发送，请勿回复。",  # noqa: E501
-                            content_html="<p>您好：</p><p>您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息</p><p>登录帐户：{username}，初始登录密码：{password}</p><p>为了保障帐户安全，建议您尽快登录平台修改密码：{url}</p><p>此邮件为系统自动发送，请勿回复。</p>",  # noqa: E501
+                            content=(
+                                "您好：\n"
+                                + "您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n"
+                                + " 登录帐户：{username}，初始登录密码：{password}\n"
+                                + "为了保障帐户安全，建议您尽快登录平台修改密码：{url}\n"
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
+                            content_html=(
+                                "<p>您好：</p>"
+                                + "<p>您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息</p>"
+                                + "<p>登录帐户：{username}，初始登录密码：{password}</p>"
+                                + "<p>为了保障帐户安全，建议您尽快登录平台修改密码：{url}</p>"
+                                + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                         NotificationTemplate(
                             method=NotificationMethod.EMAIL,
                             scene=NotificationScene.RESET_PASSWORD,
                             title="蓝鲸智云 - 登录密码重置",
                             sender="蓝鲸智云",
-                            content="您好：\n我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url}\n该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}\n此邮件为系统自动发送，请勿回复。",  # noqa: E501
-                            content_html="<p>您好：</p><p>我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url}  </p><p>该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}</p><p>此邮件为系统自动发送，请勿回复。</p>",  # noqa: E501
+                            content=(
+                                "您好：\n"
+                                + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url}\n"
+                                + "该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}\n"
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
+                            content_html=(
+                                "<p>您好：</p>"
+                                + "<p>我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url} </p>"
+                                + "<p>该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}</p>"
+                                + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                         NotificationTemplate(
                             method=NotificationMethod.SMS,
                             scene=NotificationScene.USER_INITIALIZE,
                             title=None,
                             sender="蓝鲸智云",
-                            content="您好：\n您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n 登录帐户：{username}，初始登录密码：{password} 为了保障帐户安全，建议您尽快登录平台修改密码：{url} 此邮件为系统自动发送，请勿回复。",  # noqa: E501
+                            content=(
+                                "您好：\n"
+                                + "您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n"
+                                + " 登录帐户：{username}，初始登录密码：{password}\n"
+                                + "为了保障帐户安全，建议您尽快登录平台修改密码：{url}\n"
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
                             content_html=None,
                         ),
                         NotificationTemplate(
@@ -94,7 +122,12 @@ class DefaultPluginConfigProvider:
                             scene=NotificationScene.RESET_PASSWORD,
                             title=None,
                             sender="蓝鲸智云",
-                            content="您好：\n我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url}\n该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}\n此邮件为系统自动发送，请勿回复。",  # noqa: E501
+                            content=(
+                                "您好：\n"
+                                + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url}\n"
+                                + "该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}\n"
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
                             content_html=None,
                         ),
                     ],
@@ -110,23 +143,43 @@ class DefaultPluginConfigProvider:
                             scene=NotificationScene.PASSWORD_EXPIRING,
                             title="蓝鲸智云 - 密码即将到期提醒",
                             sender="蓝鲸智云",
-                            content="{username}，您好：\n您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。\n此邮件为系统自动发送，请勿回复。",  # noqa: E501
-                            content_html="<p>{username}，您好：</p><p>您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。</p><p>此邮件为系统自动发送，请勿回复。</p>",  # noqa: E501
+                            content=(
+                                "{username}，您好：\n"
+                                + "您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。\n"  # noqa: E501
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
+                            content_html=(
+                                "<p>{username}，您好：</p>"
+                                + "<p>您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。</p>"  # noqa: E501
+                                + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                         NotificationTemplate(
                             method=NotificationMethod.EMAIL,
                             scene=NotificationScene.PASSWORD_EXPIRED,
                             title="蓝鲸智云 - 密码已过期提醒",
                             sender="蓝鲸智云",
-                            content="{username}，您好：\n您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。\n此邮件为系统自动发送，请勿回复。",  # noqa: E501
-                            content_html="<p>{username}，您好：</p><p>您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。</p><p>此邮件为系统自动发送，请勿回复。</p>",  # noqa: E501
+                            content=(
+                                "{username}，您好：\n"
+                                + "您的蓝鲸智云平台密码已过期，为避免影响正常使用，请尽快登陆平台修改密码。\n"  # noqa: E501
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
+                            content_html=(
+                                "<p>{username}，您好：</p>"
+                                + "<p>您的蓝鲸智云平台密码已过期，为避免影响正常使用，请尽快登陆平台修改密码。</p>"
+                                + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                         NotificationTemplate(
                             method=NotificationMethod.SMS,
                             scene=NotificationScene.PASSWORD_EXPIRING,
                             title=None,
                             sender="蓝鲸智云",
-                            content="{username}，您好：\n您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。\n此邮件为系统自动发送，请勿回复。",  # noqa: E501
+                            content=(
+                                "{username}，您好：\n"
+                                + "您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。\n"  # noqa: E501
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
                             content_html=None,
                         ),
                         NotificationTemplate(
@@ -134,8 +187,11 @@ class DefaultPluginConfigProvider:
                             scene=NotificationScene.PASSWORD_EXPIRED,
                             title=None,
                             sender="蓝鲸智云",
-                            content="{username}，您好：\n您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。\n此邮件为系统自动发送，请勿回复。",
-                            # noqa: E501
+                            content=(
+                                "{username}，您好：\n"
+                                + "您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。\n"  # noqa: E501
+                                + "此邮件为系统自动发送，请勿回复。"
+                            ),
                             content_html=None,
                         ),
                     ],
