@@ -113,8 +113,6 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
 
 class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
-    queryset = Tenant.objects.all()
-    serializer_class = TenantListOutputSLZ
 
     @swagger_auto_schema(
         tags=["tenant-organization"],
@@ -126,7 +124,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         # 获取当前租户以及有协同关系的租户
         # TODO 过滤出与当前租户有协同关系的租户
-        queryset = self.filter_queryset(self.get_queryset()).filter(id__in=[current_tenant_id])
+        queryset = Tenant.objects.filter(id__in=[current_tenant_id])
 
         # 将当前租户置顶
         # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
