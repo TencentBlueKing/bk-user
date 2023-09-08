@@ -73,7 +73,7 @@ class DefaultPluginConfigProvider:
                             content=(
                                 "您好：\n"
                                 + "您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n"
-                                + " 登录帐户：{username}，初始登录密码：{password}\n"
+                                + "登录帐户：{username}，初始登录密码：{password}\n"
                                 + "为了保障帐户安全，建议您尽快登录平台修改密码：{url}\n"
                                 + "此邮件为系统自动发送，请勿回复。"
                             ),
@@ -111,11 +111,17 @@ class DefaultPluginConfigProvider:
                             content=(
                                 "您好：\n"
                                 + "您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息\n"
-                                + " 登录帐户：{username}，初始登录密码：{password}\n"
+                                + "登录帐户：{username}，初始登录密码：{password}\n"
                                 + "为了保障帐户安全，建议您尽快登录平台修改密码：{url}\n"
-                                + "此邮件为系统自动发送，请勿回复。"
+                                + "该短信为系统自动发送，请勿回复。"
                             ),
-                            content_html=None,
+                            content_html=(
+                                "<p>您好：</p>"
+                                + "<p>您的蓝鲸智云帐户已经成功创建，以下是您的帐户信息</p>"
+                                + "<p>登录帐户：{username}，初始登录密码：{password}</p>"
+                                + "<p>为了保障帐户安全，建议您尽快登录平台修改密码：{url}</p>"
+                                + "<p>该短信为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                         NotificationTemplate(
                             method=NotificationMethod.SMS,
@@ -126,9 +132,14 @@ class DefaultPluginConfigProvider:
                                 "您好：\n"
                                 + "我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url}\n"
                                 + "该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}\n"
-                                + "此邮件为系统自动发送，请勿回复。"
+                                + "该短信为系统自动发送，请勿回复。"
                             ),
-                            content_html=None,
+                            content_html=(
+                                "<p>您好：</p>"
+                                + "<p>我们收到了您重置密码的申请，请点击下方链接进行密码重置：{url} </p>"
+                                + "<p>该链接有效时间为 3 小时，过期后请重新点击密码重置链接：{reset_url}</p>"
+                                + "<p>该短信为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                     ],
                 ),
@@ -178,9 +189,13 @@ class DefaultPluginConfigProvider:
                             content=(
                                 "{username}，您好：\n"
                                 + "您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。\n"  # noqa: E501
-                                + "此邮件为系统自动发送，请勿回复。"
+                                + "该短信为系统自动发送，请勿回复。"
                             ),
-                            content_html=None,
+                            content_html=(
+                                "<p>{username}，您好：</p>"
+                                + "<p>您的蓝鲸智云平台密码将于 {expired_at} 天后过期，为避免影响使用，请尽快登陆平台修改密码。</p>"  # noqa: E501
+                                + "<p>该短信为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                         NotificationTemplate(
                             method=NotificationMethod.SMS,
@@ -190,9 +205,13 @@ class DefaultPluginConfigProvider:
                             content=(
                                 "{username}，您好：\n"
                                 + "您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。\n"  # noqa: E501
-                                + "此邮件为系统自动发送，请勿回复。"
+                                + "该短信为系统自动发送，请勿回复。"
                             ),
-                            content_html=None,
+                            content_html=(
+                                "<p>{username}，您好：</p>"
+                                + "<p>您的蓝鲸智云平台密码已过期，为避免影响使用，请尽快登陆平台修改密码。</p>"  # noqa: E501
+                                + "<p>该短信为系统自动发送，请勿回复。</p>"
+                            ),
                         ),
                     ],
                 ),
