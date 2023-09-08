@@ -98,16 +98,12 @@ class NotificationTemplate(BaseModel):
     # 模板内容（text）格式
     content: str
     # 模板内容（html）格式
-    content_html: Optional[str] = None
+    content_html: str
 
     @model_validator(mode="after")
     def validate_attrs(self) -> "NotificationTemplate":
-        if self.method == NotificationMethod.EMAIL:
-            if not self.title:
-                raise ValueError(_("邮件通知模板需要提供标题"))
-
-            if not self.content_html:
-                raise ValueError(_("邮件通知模板需要提供 HTML 格式内容"))
+        if self.method == NotificationMethod.EMAIL and not self.title:
+            raise ValueError(_("邮件通知模板需要提供标题"))
 
         return self
 
