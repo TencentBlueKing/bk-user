@@ -111,7 +111,7 @@ class TenantManager(models.Model):
 class UserBuiltinField(TimestampedModel):
     """用户内置字段"""
 
-    field_name = models.CharField("字段名称", unique=True, max_length=128)
+    name = models.CharField("字段名称", unique=True, max_length=128)
     display_name = models.CharField("展示用名称", max_length=128)
     data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
     required = models.BooleanField("是否必填")
@@ -124,18 +124,17 @@ class TenantUserCustomField(TimestampedModel):
     """租户用户自定义字段"""
 
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_constraint=False)
-    field_name = models.CharField("字段名称", max_length=128)
+    name = models.CharField("字段名称", max_length=128)
     display_name = models.CharField("展示用名称", max_length=128)
     data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
     required = models.BooleanField("是否必填")
-    unique = models.BooleanField("是否唯一")
     order = models.IntegerField("展示顺序", default=0)
     default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default={})
 
     class Meta:
         unique_together = [
-            ("tenant", "field_name"),
+            ("tenant", "name"),
             ("tenant", "display_name"),
         ]
 
