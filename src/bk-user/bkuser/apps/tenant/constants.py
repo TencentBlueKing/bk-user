@@ -26,6 +26,5 @@ class UserFieldDataType(str, StructuredEnum):
 
     STRING = EnumField("string", label=_("字符串"))
     NUMBER = EnumField("number", label=_("数字"))
-    DATETIME = EnumField("datetime", label=_("日期时间"))
     ENUM = EnumField("enum", label=_("枚举"))
     MULTI_ENUM = EnumField("multi_enum", label=_("多选枚举"))
