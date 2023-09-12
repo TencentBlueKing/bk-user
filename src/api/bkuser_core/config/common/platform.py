@@ -25,9 +25,10 @@ APP_TOKEN = env("BK_APP_SECRET")
 # ==============================================================================
 # 蓝鲸平台 URL
 BK_PAAS_URL = env("BK_PAAS_URL")
+BK_PAAS_INNER_HOST = env("BK_PAAS_INNER_HOST", default=BK_PAAS_URL)
 
 # ESB Api URL
-BK_COMPONENT_API_URL = env("BK_COMPONENT_API_URL", default=BK_PAAS_URL)
+BK_COMPONENT_API_URL = env("BK_COMPONENT_API_URL", default=BK_PAAS_INNER_HOST)
 
 # ESB API 路径前缀
 BK_PAAS_API_PATH_PREFIX = env("BK_PAAS_API_PATH_PREFIX", default="/component")
