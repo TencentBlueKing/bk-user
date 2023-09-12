@@ -18,7 +18,7 @@ class CurrentUserTenantMixin:
 
     request: Request
 
-    def get_current_tenant_id(self):
+    def get_current_tenant_id(self) -> str:
         tenant_id = self.request.user.get_property("tenant_id")
         if not tenant_id:
             raise error_codes.GET_CURRENT_TENANT_FAILED
