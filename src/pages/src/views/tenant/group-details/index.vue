@@ -58,11 +58,7 @@
               <span>{{ convertFormat(row.data_sources) }}</span>
             </template>
           </bk-table-column>
-          <bk-table-column prop="create_at" label="创建时间">
-            <template #default="{ row }">
-              <span>{{ moment(row.create_time).format("YYYY-MM-DD HH:mm:ss") }}</span>
-            </template>
-          </bk-table-column>
+          <bk-table-column prop="created_at" label="创建时间" />
           <bk-table-column label="操作">
             <template #default="{ row }">
               <bk-button
@@ -113,7 +109,6 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import moment from 'moment';
 import { computed, inject, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';

@@ -84,7 +84,7 @@ export default createRouter({
           ],
         },
         {
-          path: 'local-details/:name/:type/:id',
+          path: 'local-details/:id',
           name: 'dataConfDetails',
           meta: {
             routeParentName: 'dataSource',
@@ -94,7 +94,7 @@ export default createRouter({
           component: () => import('@/views/data-source/local-details/index.vue'),
         },
         {
-          path: 'new-local/:type',
+          path: 'new-local/:type/:id?',
           name: 'newLocal',
           meta: {
             routeParentName: 'dataSource',
