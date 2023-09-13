@@ -17,9 +17,7 @@ from .constants import IdpCategory, IdpStatus
 
 
 class IdpPlugin(models.Model):
-    """
-    认证源插件
-    """
+    """认证源插件"""
 
     category = models.CharField("分类", max_length=32, choices=IdpCategory.get_choices())
     id = models.CharField("认证源插件唯一标识", primary_key=True, max_length=128)
@@ -29,13 +27,11 @@ class IdpPlugin(models.Model):
 
 
 class Idp(AuditedModel):
-    """
-    认证源
-    """
+    """认证源"""
 
-    # 登录回调场景下，该ID是URL Path的一部分
+    # 登录回调场景下，该 ID 是 URL Path 的一部分
     id = models.CharField("认证源标识", primary_key=True, max_length=128, default=generate_uuid)
-    name = models.CharField("数据源名称", max_length=128, unique=True)
+    name = models.CharField("认证源名称", max_length=128, unique=True)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
     status = models.CharField("认证源状态", max_length=32, choices=IdpStatus.get_choices(), default=IdpStatus.ENABLED)
     # Note: 认证源插件被删除的前提是，插件没有被任何认证源使用

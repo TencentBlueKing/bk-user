@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 ('creator', models.CharField(blank=True, max_length=128, null=True)),
                 ('updater', models.CharField(blank=True, max_length=128, null=True)),
                 ('id', models.CharField(default=bkuser.utils.uuid.generate_uuid, max_length=128, primary_key=True, serialize=False, verbose_name='认证源标识')),
-                ('name', models.CharField(max_length=128, unique=True, verbose_name='数据源名称')),
+                ('name', models.CharField(max_length=128, unique=True, verbose_name='认证源名称')),
                 ('owner_tenant_id', models.CharField(db_index=True, max_length=64, verbose_name='归属租户')),
                 ('status', models.CharField(choices=[('enabled', '启用'), ('disabled', '未启用')], default=bkuser.apps.idp.constants.IdpStatus['ENABLED'], max_length=32, verbose_name='认证源状态')),
                 ('plugin_config', models.JSONField(default=dict, verbose_name='插件配置')),
