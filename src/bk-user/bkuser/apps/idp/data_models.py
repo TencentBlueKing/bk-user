@@ -8,16 +8,26 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.dispatch import receiver
+from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.data_source.signals import post_update_data_source
+from .constants import AllowBindScopeObjectType
 
 
-@receiver(post_update_data_source)
-def initial_local_data_source_user_identity_info(sender, data_source: DataSource, **kwargs):
-    """
-    TODO (su) 数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用账密登录，
-    则需要对没有账密信息的用户，进行密码的初始化 & 发送通知
-    """
-    ...
+class DataSourceMatchRule(BaseModel):
+    """认证源与数据源匹配规则"""
+
+    # 认证源原始字段
+    source_field: str
+    # 匹配的数据源 ID
+    data_source_id: int
+    # 匹配的数据源字段
+    target_field: str
+
+
+class AllowBindScope(BaseModel):
+    """允许关联社会化认证源的租户组织架构范围"""
+
+    # 范围对象的类型
+    type: AllowBindScopeObjectType
+    # 范围对象的ID
+    id: str
