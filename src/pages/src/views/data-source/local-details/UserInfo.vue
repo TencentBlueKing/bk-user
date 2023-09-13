@@ -110,44 +110,19 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, defineEmits, defineProps, inject, reactive, ref, watch } from 'vue';
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 import EditUser from './EditUser.vue';
 import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
-import { getDataSourceUserDetails } from '@/http/dataSourceFiles';
+import { getDataSourceUserDetails, getDataSourceUsers } from '@/http/dataSourceFiles';
 
-defineProps({
-  users: {
-    type: Array,
-    default: () => ([]),
-  },
-  isLoading: {
-    type: Boolean,
-    default: false,
-  },
-  dataSourceId: {
-    type: Number,
-  },
-  isDataEmpty: {
-    type: Boolean,
-    default: false,
-  },
-  isEmptySearch: {
-    type: Boolean,
-    default: false,
-  },
-  isDataError: {
-    type: Boolean,
-    default: false,
-  },
-  pagination: {
-    type: Object,
-    default: () => ({}),
-  },
-});
-const emit = defineEmits(['updateUsers', 'updatePageLimit', 'updatePageCurrent']);
+const route = useRoute();
+
+const currentId = computed(() => Number(route.params.id));
+
 const editLeaveBefore = inject('editLeaveBefore');
 const searchVal = ref('');
 const detailsConfig = reactive({
@@ -202,6 +177,49 @@ watch(
 
 const isView = computed(() => detailsConfig.type === 'view');
 
+onMounted(() => {
+  getUsers();
+});
+
+const isLoading = ref(false);
+const isDataEmpty = ref(false);
+const isEmptySearch = ref(false);
+const isDataError = ref(false);
+
+const params = reactive({
+  id: currentId.value,
+  username: '',
+  page: 1,
+  pageSize: 10,
+});
+
+const pagination = reactive({
+  current: 1,
+  count: 0,
+  limit: 10,
+});
+
+const users = ref([]);
+
+const getUsers = async () => {
+  try {
+    isLoading.value = true;
+    isDataEmpty.value = false;
+    isEmptySearch.value = false;
+    isDataError.value = false;
+    const res = await getDataSourceUsers(params);
+    if (res.data.count === 0) {
+      params.username === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
+    }
+    pagination.count = res.data.count;
+    users.value = res.data.results;
+  } catch (error) {
+    isDataError.value = true;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
     const res = await getDataSourceUserDetails(item.id);
@@ -244,7 +262,8 @@ const formatConvert = (data) => {
 
 const updateUsers = (value, text) => {
   detailsConfig.isShow = false;
-  emit('updateUsers', value);
+  params.username = value;
+  getUsers();
   Message({
     theme: 'success',
     message: text,
@@ -252,19 +271,25 @@ const updateUsers = (value, text) => {
 };
 
 const handleEnter = () => {
-  emit('updateUsers', searchVal.value);
+  params.username = searchVal.value;
+  getUsers();
 };
 
 const handleClear = () => {
   searchVal.value = '';
-  emit('updateUsers', searchVal.value);
+  params.username = '';
+  getUsers();
 };
 
 const pageLimitChange = (limit) => {
-  emit('updatePageLimit', limit);
+  pagination.limit = limit;
+  params.pageSize = limit;
+  getUsers();
 };
 const pageCurrentChange = (current) => {
-  emit('updatePageCurrent', current);
+  pagination.current = current;
+  params.page = current;
+  getUsers();
 };
 </script>
 

@@ -106,3 +106,75 @@ export function dateConvert(value: string) {
       return value;
   }
 }
+
+// 数据源启用状态
+export const dataSourceStatus = {
+  enabled: {
+    icon: normalImg,
+    text: '正常',
+  },
+  disabled: {
+    icon: unknownImg,
+    text: '未启用',
+  },
+};
+
+export const validTime = {
+  30: '一个月',
+  90: '三个月',
+  180: '六个月',
+  365: '一年',
+  '-1': '永久',
+};
+
+export function validTimeMap(value: number) {
+  return validTime[value];
+}
+
+export const noticeTime = {
+  1: '1天',
+  7: '7天',
+  15: '15天',
+};
+export function noticeTimeMap(value: any) {
+  const list: string[] = value?.map(key => noticeTime[key]).filter(Boolean) || [];
+  return list.join('，');
+};
+
+export const notification = {
+  email: '邮箱',
+  sms: '短信',
+};
+
+export function notificationMap(value: any) {
+  const list: string[] = value?.map(key => notification[key]).filter(Boolean) || [];
+  return list.join('，');
+};
+
+export const passwordMustIncludes = {
+  contain_lowercase: '小写字母',
+  contain_uppercase: '连续字母序',
+  contain_digit: '数字',
+  contain_punctuation: '特殊字符（除空格）',
+};
+
+export function passwordMustIncludesMap(value: any) {
+  const list: string[] = Object.entries(value)
+    .filter(([key, val]) => passwordMustIncludes[key] && val)
+    .map(([key]) => passwordMustIncludes[key]);
+  return list.join('，');
+};
+
+export const passwordNotAllowed = {
+  not_keyboard_order: '键盘序',
+  not_continuous_letter: '连续字母序',
+  not_continuous_digit: '连续数字序',
+  not_repeated_symbol: '重复字母、数字、特殊符号',
+};
+
+export function passwordNotAllowedMap(value: any) {
+  const list: string[] = Object.entries(value)
+    .filter(([key, val]) => passwordNotAllowed[key] && val)
+    .map(([key]) => passwordNotAllowed[key]);
+  return list.join('，') || '--';
+};

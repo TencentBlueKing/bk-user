@@ -2,7 +2,9 @@ import http from './fetch';
 import type {
   DataSourceUsersParams,
   DataSourceUsersResult,
+  NewDataSourceParams,
   NewDataSourceUserParams,
+  PutDataSourceParams,
   PutDataSourceUserParams,
 } from './types/dataSourceFiles';
 
@@ -38,3 +40,33 @@ export const getDataSourceUserDetails = (id: string) => http.get(`/api/v1/web/da
  * 更新数据源用户
  */
 export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => http.put(`/api/v1/web/data-sources/users/${params.id}/`, params);
+
+/**
+ * 数据源列表
+ */
+export const getDataSourceList = (keyword: string) => http.get(`/api/v1/web/data-sources/?keyword=${keyword}`);
+
+/**
+ * 数据源插件列表
+ */
+export const getDataSourcePlugins = () => http.get('/api/v1/web/data-sources/plugins/');
+
+/**
+ * 新建数据源
+ */
+export const newDataSource = (params: NewDataSourceParams) => http.post('/api/v1/web/data-sources/', params);
+
+/**
+ * 数据源详情
+ */
+export const getDataSourceDetails = (id: string) => http.get(`/api/v1/web/data-sources/${id}/`);
+
+/**
+ * 新建数据源默认配置
+ */
+export const getDefaultConfig = (id: string) => http.get(`/api/v1/web/data-sources/plugins/${id}/default-config/`);
+
+/**
+ * 更新数据源
+ */
+export const putDataSourceDetails = (params: PutDataSourceParams) => http.put(`/api/v1/web/data-sources/${params.id}/`, params);

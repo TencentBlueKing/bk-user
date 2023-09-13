@@ -51,3 +51,22 @@ export interface DataSourceUsersParams {
   page: number,
   pageSize: number,
 }
+
+/**
+ * 新建数据源参数
+ */
+export interface NewDataSourceParams {
+  name: string,
+  plugin_id: string,
+  plugin_config: {},
+  field_mapping: [],
+}
+
+/**
+ * 更新数据源参数
+ */
+export interface PutDataSourceParams {
+  id: string,
+  plugin_config: {},
+  field_mapping: [],
+}

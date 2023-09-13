@@ -1,10 +1,13 @@
 import { computed, inject } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, useRoute, useRouter } from 'vue-router';
 
+import { useMainViewStore } from '@/store/mainView';
+
 export const useMenuInfo = () => {
   const route = useRoute();
   const router = useRouter();
   const editLeaveBefore = inject('editLeaveBefore');
+  const store = useMainViewStore();
 
   // 获取 menu 相关配置
   const { children } = route.matched[0];
@@ -14,6 +17,7 @@ export const useMenuInfo = () => {
 
   // 获取 menu 默认激活信息
   const activeMenu = computed<RouteLocationNormalizedLoaded | RouteRecordRaw | undefined>(() => {
+    store.breadCrumbsTitle = route.meta.navName;
     const { activeMenu } = route.meta;
     if (activeMenu) {
       return routes.value.find((route: RouteRecordRaw) => route.name === activeMenu);

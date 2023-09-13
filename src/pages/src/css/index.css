@@ -63,3 +63,13 @@
   border-radius: 4px;
   flex-shrink: 0;
 }
+
+.clearfix {
+  &::after {
+    display: block;
+    clear: both;
+    font-size: 0;
+    content: '';
+    visibility: hidden;
+  }
+}
