@@ -84,7 +84,7 @@ ignore_errors = true
 # Enable Pyflakes `E` and `F` codes by default.
 select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM"]
 # All Rule: https://beta.ruff.rs/docs/rules/
-# Disable E501 until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
+# Add `noqa: E501` manually when necessary until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
 ignore = [
     # Logging statement uses f-string
     "G004",

@@ -8,21 +8,32 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict, List
+import re
+from typing import Any, Dict, List
 
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
+from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.constants import DataSourcePluginEnum
 from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.data_source.plugins.local.constants import PasswordGenerateMethod
+from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig, NotificationConfig
+from bkuser.apps.tenant.constants import TENANT_ID_REGEX
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceSimpleInfo
+from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.biz.tenant import TenantUserWithInheritedInfo
-from bkuser.biz.validators import validate_tenant_id
+from bkuser.biz.validators import validate_data_source_user_username
+from bkuser.common.passwd import PasswordValidator
+from bkuser.utils.pydantic import stringify_pydantic_error
 
 
 class TenantManagerCreateInputSLZ(serializers.Serializer):
-    username = serializers.CharField(help_text="管理员用户名")
+    username = serializers.CharField(help_text="管理员用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="管理员姓名")
     email = serializers.EmailField(help_text="管理员邮箱")
     # TODO: 手机号&区号补充校验
@@ -36,14 +47,63 @@ class TenantFeatureFlagSLZ(serializers.Serializer):
     user_number_visible = serializers.BooleanField(help_text="人员数量是否可见", default=True)
 
 
+class TenantManagerPasswordInitialConfigSLZ(serializers.Serializer):
+    force_change_at_first_login = serializers.BooleanField(help_text="首次登录后强制修改密码", default=True)
+    cannot_use_previous_password = serializers.BooleanField(help_text="修改密码时候不能使用之前的密码", default=True)
+    reserved_previous_password_count = serializers.IntegerField(
+        help_text="之前的 N 个密码不能被本次修改使用",
+        default=3,
+    )
+    generate_method = serializers.ChoiceField(help_text="密码生成方式", choices=PasswordGenerateMethod.get_choices())
+    fixed_password = serializers.CharField(
+        help_text="固定初始密码", required=False, allow_null=True, allow_blank=True, default=None
+    )
+    notification = serializers.JSONField(help_text="通知相关配置")
+
+    def validate_fixed_password(self, fixed_password: str) -> str:
+        if not fixed_password:
+            return fixed_password
+
+        cfg: LocalDataSourcePluginConfig = DefaultPluginConfigProvider().get(  # type: ignore
+            DataSourcePluginEnum.LOCAL,
+        )
+        ret = PasswordValidator(cfg.password_rule.to_rule()).validate(fixed_password)  # type: ignore
+        if not ret.ok:
+            raise ValidationError(_("固定密码的值不符合密码规则：{}").format(ret.exception_message))
+
+        return fixed_password
+
+    def validate_notification(self, notification: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            NotificationConfig(**notification)
+        except PDValidationError as e:
+            raise ValidationError(_("通知配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        return notification
+
+
 class TenantCreateInputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户 ID", validators=[validate_tenant_id])
+    id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
-    logo = serializers.CharField(help_text="租户 Logo", required=False)
+    logo = serializers.CharField(help_text="租户 Logo", required=False, allow_blank=True, default="")
     managers = serializers.ListField(help_text="管理人列表", child=TenantManagerCreateInputSLZ(), allow_empty=False)
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
-    # FIXME (su): 目前还没设计数据源，待开发本地数据源时再补充
-    # password_config
+    password_initial_config = TenantManagerPasswordInitialConfigSLZ()
+
+    def validate_id(self, id: str) -> str:
+        if Tenant.objects.filter(id=id).exists():
+            raise ValidationError(_("租户 ID {} 已被使用").format(id))
+
+        if not re.fullmatch(TENANT_ID_REGEX, id):
+            raise ValidationError(_("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(id))  # noqa: E501
+
+        return id
+
+    def validate_name(self, name: str) -> str:
+        if Tenant.objects.filter(name=name).exists():
+            raise ValidationError(_("租户名 {} 已存在").format(name))
+
+        return name
 
 
 class TenantCreateOutputSLZ(serializers.Serializer):
