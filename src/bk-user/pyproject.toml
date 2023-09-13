@@ -82,12 +82,10 @@ ignore_errors = true
 
 [tool.ruff]
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM"]
+select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
 # All Rule: https://beta.ruff.rs/docs/rules/
 # Add `noqa: E501` manually when necessary until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
 ignore = [
-    # Logging statement uses f-string
-    "G004",
     # Consider moving this statement to an else block
     "TRY300",
     # Use raise from to specify exception cause
@@ -101,7 +99,9 @@ ignore = [
     # Avoid too many arguments
     "PLR0913",
     # Avoid too many return statements
-    "PLR0911"
+    "PLR0911",
+    # raise-without-from-inside-except
+    "B904"
 ]
 # Same as Black.
 line-length = 119
@@ -162,7 +162,7 @@ name = "Apps Layers contract"
 type = "layers"
 layers = [
     "bkuser.apps.tenant",
-    "bkuser.apps.data_source | bkuser.apps.identity_provider",
+    "bkuser.apps.data_source | bkuser.apps.idp",
 ]
 
 # biz 分层

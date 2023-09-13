@@ -154,3 +154,20 @@ class TenantUserCustomField(TimestampedModel):
 #     notification_method = models.CharField("通知方式", max_length=32, default="email")
 #     # TODO: 需要考虑不同通知方式，可能无法使用相同模板，或者其他设计方式
 #     notification_content_template = models.TextField("通知模板", default="")
+
+
+# class TenantUserSocialAccountRelation(TimestampedModel):
+#     """租户用户与社交账号绑定表"""
+#
+#     tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+#     idp = models.ForeignKey(Idp, on_delete=models.DO_NOTHING, db_constraint=False)
+#     social_client_id = models.CharField("社交认证源对应的ClientID", max_length=128)
+#     social_account_id = models.CharField("绑定的社交账号ID", max_length=128)
+#
+#     class Meta:
+#         unique_together = [
+#             ("social_account_id", "tenant_user", "idp", "social_client_id"),
+#         ]
+#         index_together = [
+#             ("social_account_id", "idp", "social_client_id"),
+#         ]
