@@ -14,19 +14,13 @@ import re
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-TENANT_ID_REGEX = r"^[a-zA-Z][a-zA-Z0-9-]{2,31}"
-DATA_SOURCE_USERNAME_REGEX = r"^[a-zA-Z][a-zA-Z0-9._-]{2,31}"
+from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 
 logger = logging.getLogger(__name__)
 
 
-def validate_tenant_id(value):
-    if not re.fullmatch(re.compile(TENANT_ID_REGEX), value):
-        raise ValidationError(_("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(value))  # noqa: E501
-
-
 def validate_data_source_user_username(value):
-    if not re.fullmatch(re.compile(DATA_SOURCE_USERNAME_REGEX), value):
+    if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, value):
         raise ValidationError(
             _("{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母开头").format(value),  # noqa: E501
         )

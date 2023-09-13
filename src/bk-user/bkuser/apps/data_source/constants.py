@@ -8,9 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import re
 
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
+
+DATA_SOURCE_USERNAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9._-]{2,31}")
 
 
 class DataSourceStatus(str, StructuredEnum):

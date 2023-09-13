@@ -13,13 +13,17 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
+from bkuser.apps.data_source.constants import DataSourcePluginEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
+    DataSourcePlugin,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
+from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 
 
 class DataSourceDepartmentInfoWithChildren(BaseModel):
@@ -50,6 +54,24 @@ class DataSourceHandler:
             data[i.owner_tenant_id].append(DataSourceSimpleInfo(id=i.id, name=i.name))
 
         return data
+
+    @staticmethod
+    def create_local_data_source_with_merge_config(
+        data_source_name: str,
+        owner_tenant_id: str,
+        password_initial_config: PasswordInitialConfig,
+    ) -> DataSource:
+        """使用与默认配置合并后的插件配置，创建本地数据源"""
+        plugin_id = DataSourcePluginEnum.LOCAL
+        plugin_config: LocalDataSourcePluginConfig = DefaultPluginConfigProvider().get(plugin_id)  # type: ignore
+        plugin_config.password_initial = password_initial_config
+
+        return DataSource.objects.create(
+            name=data_source_name,
+            owner_tenant_id=owner_tenant_id,
+            plugin=DataSourcePlugin.objects.get(id=plugin_id),
+            plugin_config=plugin_config.model_dump(),
+        )
 
 
 class DataSourceDepartmentHandler:

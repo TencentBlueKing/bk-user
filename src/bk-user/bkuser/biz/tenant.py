@@ -13,14 +13,11 @@ from typing import Dict, List, Optional
 
 from django.db import transaction
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import (
-    DataSource,
-    DataSourceDepartmentRelation,
-    DataSourcePlugin,
-    DataSourceUser,
-)
+from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceUser
+from bkuser.apps.data_source.plugins.local.models import PasswordInitialConfig
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
 from bkuser.biz.data_source import (
     DataSourceDepartmentHandler,
@@ -252,27 +249,23 @@ class TenantHandler:
 
     @staticmethod
     def retrieve_tenant_managers(tenant_id: str) -> List[TenantUserWithInheritedInfo]:
-        """
-        查询单个租户的租户管理员
-        """
-        # 查询单个租户的管理员对应的信息
+        """查询单个租户的租户管理员"""
         return TenantHandler.get_tenant_manager_map([tenant_id]).get(tenant_id) or []
 
     @staticmethod
-    def create_with_managers(tenant_info: TenantBaseInfo, managers: List[TenantManagerWithoutID]) -> str:
-        """
-        创建租户，支持同时创建租户管理员
-        """
+    def create_with_managers(
+        tenant_info: TenantBaseInfo,
+        managers: List[TenantManagerWithoutID],
+        password_initial_config: PasswordInitialConfig,
+    ) -> str:
+        """创建租户，支持同时创建租户管理员"""
         with transaction.atomic():
             # 创建租户本身
             tenant = Tenant.objects.create(**tenant_info.model_dump())
 
-            # FIXME (su): 开发本地数据源时，重写（直接调用本地数据源Handler）
-            # 创建本地数据源，名称则使用租户名称
-            data_source = DataSource.objects.create(
-                name=f"{tenant_info.name}-本地数据源",
-                owner_tenant_id=tenant.id,
-                plugin=DataSourcePlugin.objects.get(id="local"),
+            # 创建本地数据源
+            data_source = DataSourceHandler.create_local_data_source_with_merge_config(
+                _("{}-本地数据源").format(tenant_info.name), tenant.id, password_initial_config
             )
 
             # 添加数据源用户和租户用户
@@ -292,7 +285,7 @@ class TenantHandler:
                 tenant_manager_objs.append(TenantManager(tenant=tenant, tenant_user=tenant_user))
 
             if tenant_manager_objs:
-                TenantManager.objects.bulk_create(tenant_manager_objs, batch_size=100)
+                TenantManager.objects.bulk_create(tenant_manager_objs)
 
         return tenant_info.id
 
