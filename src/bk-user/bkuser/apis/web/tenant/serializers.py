@@ -50,7 +50,7 @@ class TenantFeatureFlagSLZ(serializers.Serializer):
 class TenantManagerPasswordInitialConfigSLZ(serializers.Serializer):
     force_change_at_first_login = serializers.BooleanField(help_text="首次登录后强制修改密码", default=True)
     cannot_use_previous_password = serializers.BooleanField(help_text="修改密码时候不能使用之前的密码", default=True)
-    reserved_previous_password_count = serializers.BooleanField(
+    reserved_previous_password_count = serializers.IntegerField(
         help_text="之前的 N 个密码不能被本次修改使用",
         default=3,
     )
@@ -77,7 +77,7 @@ class TenantManagerPasswordInitialConfigSLZ(serializers.Serializer):
         try:
             NotificationConfig(**notification)
         except PDValidationError as e:
-            raise ValidationError(stringify_pydantic_error(e))
+            raise ValidationError(_("通知配置不合法：{}").format(stringify_pydantic_error(e)))
 
         return notification
 
