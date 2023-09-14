@@ -19,10 +19,10 @@
       <div class="content-item">
         <p class="item-title">基础信息</p>
         <bk-form-item label="数据源名称" property="name" required>
-          <bk-input style="width: 560px;" v-model="formData.name" :disabled="isDisabled" />
+          <bk-input style="width: 560px;" v-model="formData.name" :disabled="isDisabled" @change="handleChange" />
         </bk-form-item>
         <bk-form-item label="" required>
-          <bk-checkbox v-model="formData.config.enable_account_password_login">
+          <bk-checkbox v-model="formData.config.enable_account_password_login" @change="handleChange">
             开启账密登录
           </bk-checkbox>
         </bk-form-item>
@@ -38,6 +38,7 @@
               :min="10"
               :max="31"
               v-model="formData.config.password_rule.min_length"
+              @change="handleChange"
             />
           </bk-form-item>
           <bk-form-item label="密码必须包含" required>
@@ -58,7 +59,7 @@
               />
               <span>位 出现</span>
             </div>
-            <p class="error-text" v-show="passwordCountError">不能小于5位，大于10位</p>
+            <p class="error-text" v-show="passwordCountError">可选值范围：5-10</p>
             <bk-checkbox v-model="formData.config.password_rule.not_keyboard_order">键盘序</bk-checkbox>
             <bk-checkbox v-model="formData.config.password_rule.not_continuous_letter">连续字母序</bk-checkbox>
             <bk-checkbox v-model="formData.config.password_rule.not_continuous_digit">连续数字序</bk-checkbox>
@@ -66,7 +67,7 @@
             <p class="error-text" v-show="passwordConfigError">密码规则不得为空</p>
           </bk-form-item>
           <bk-form-item label="密码有效期" required>
-            <bk-radio-group v-model="formData.config.password_rule.valid_time">
+            <bk-radio-group v-model="formData.config.password_rule.valid_time" @change="handleChange">
               <bk-radio-button
                 v-for="(item, index) in passwordValidDaysList"
                 :key="index"
@@ -77,7 +78,7 @@
             </bk-radio-group>
           </bk-form-item>
           <bk-form-item label="密码试错次数" required>
-            <bk-radio-group v-model="formData.config.password_rule.max_retries">
+            <bk-radio-group v-model="formData.config.password_rule.max_retries" @change="handleChange">
               <bk-radio-button
                 v-for="(item, index) in maxTrailTimesList"
                 :key="index"
@@ -94,33 +95,40 @@
               suffix="秒"
               :min="0"
               v-model="formData.config.password_rule.lock_time"
+              @change="handleChange"
             />
           </bk-form-item>
         </div>
         <div class="content-item">
           <p class="item-title">初始密码设置</p>
           <bk-form-item label="" required>
-            <bk-checkbox v-model="formData.config.password_initial.force_change_at_first_login">
+            <bk-checkbox
+              v-model="formData.config.password_initial.force_change_at_first_login"
+              @change="handleChange">
               首次登录强制修改密码
             </bk-checkbox>
           </bk-form-item>
           <bk-form-item label="" required>
             <div>
-              <bk-checkbox v-model="formData.config.password_initial.cannot_use_previous_password">
+              <bk-checkbox
+                v-model="formData.config.password_initial.cannot_use_previous_password"
+                @change="handleChange">
                 修改密码时不能重复前
               </bk-checkbox>
               <bk-input
                 style="width: 85px;"
                 type="number"
                 behavior="simplicity"
-                :min="5"
+                :min="0"
+                :max="5"
                 v-model="formData.config.password_initial.reserved_previous_password_count"
+                @change="handleChange"
               />
               <span>次 用过的密码</span>
             </div>
           </bk-form-item>
           <bk-form-item class="form-item-flex" label="密码生成方式" required>
-            <bk-radio-group v-model="formData.config.password_initial.generate_method">
+            <bk-radio-group v-model="formData.config.password_initial.generate_method" @change="handleChange">
               <bk-radio label="random">随机</bk-radio>
               <bk-radio label="fixed">固定</bk-radio>
             </bk-radio-group>
@@ -136,7 +144,7 @@
               <p class="fixed-password-error" v-show="fixedPasswordError">密码长度至少12位，必须包含大小写字母、数字</p>
             </div>
           </bk-form-item>
-          <bk-form-item label="通知方式" required>
+          <bk-form-item label="通知方式" property="config.password_initial.notification.enabled_methods" required>
             <NotifyEditorTemplate
               :active-methods="activeMethods"
               :checkbox-info="checkboxInfo"
@@ -155,7 +163,8 @@
                 <div class="password-header">
                   <bk-checkbox-group
                     class="checkbox-zh"
-                    v-model="formData.config.password_initial.notification.enabled_methods">
+                    v-model="formData.config.password_initial.notification.enabled_methods"
+                    @change="handleChange">
                     <bk-checkbox
                       v-for="(item, index) in checkboxInfo" :key="index"
                       :class="['password-tab', item.status ? 'active-tab' : '']"
@@ -166,7 +175,7 @@
                   </bk-checkbox-group>
                   <div class="edit-info" @click="passwordInitialTemplate">
                     <span style="font-size:14px">编辑通知模板</span>
-                    <AngleUp v-if="isDropdownPasswordExpire" />
+                    <AngleUp v-if="isDropdownPasswordInitial" />
                     <AngleDown v-else />
                   </div>
                 </div>
@@ -177,7 +186,7 @@
         <div class="content-item">
           <p class="item-title">密码到期提醒</p>
           <bk-form-item label="提醒时间" property="config.password_expire.remind_before_expire" required>
-            <bk-checkbox-group v-model="formData.config.password_expire.remind_before_expire">
+            <bk-checkbox-group v-model="formData.config.password_expire.remind_before_expire" @change="handleChange">
               <bk-checkbox
                 v-for="(item, index) in noticeTimeList"
                 :key="index"
@@ -186,7 +195,7 @@
               >
             </bk-checkbox-group>
           </bk-form-item>
-          <bk-form-item label="通知方式" required>
+          <bk-form-item label="通知方式" property="config.password_expire.notification.enabled_methods" required>
             <NotifyEditorTemplate
               :active-methods="activeMethods"
               :checkbox-info="checkboxInfo"
@@ -201,7 +210,8 @@
                 <div class="password-header">
                   <bk-checkbox-group
                     class="checkbox-zh"
-                    v-model="formData.config.password_expire.notification.enabled_methods">
+                    v-model="formData.config.password_expire.notification.enabled_methods"
+                    @change="handleChange">
                     <bk-checkbox
                       v-for="(item, index) in checkboxInfo" :key="index"
                       :class="['password-tab', item.status ? 'active-tab' : '']"
@@ -334,14 +344,19 @@ watch(() => formData.config?.password_rule, (value) => {
 
   if (!passwordConfigError.value && isCountInRange) {
     passwordCountError.value = false;
+  } else if (!passwordConfigError.value && !isCountInRange) {
+    passwordCountError.value = !isCountInRange;
   } else {
     passwordCountError.value = count === 0 && !passwordConfigError.value;
     passwordConfigError.value = count !== 0 && passwordConfigError.value;
   }
 }, { deep: true });
 
-watch(() => formData.config?.password_rule?.not_continuous_count, (value) => {
+watch(() => formData.config?.password_rule?.not_continuous_count, (value, oldVal) => {
   if (!value) return;
+  if (value !== oldVal) {
+    window.changeInput = true;
+  }
   const list = Object.entries(formData.config?.password_rule)
     .filter(([key, val]) => passwordNotAllowed[key] && val)
     .map(val => val);
@@ -351,7 +366,7 @@ watch(() => formData.config?.password_rule?.not_continuous_count, (value) => {
   const isValueInRange = value >= 5 && value <= 10;
   passwordCountError.value = !isValueInRange;
   passwordConfigError.value = !!list.every(v => !v);
-}, { deep: true });
+});
 
 watch(() => formData.config?.password_initial?.generate_method, (value) => {
   if (value === 'random') {
@@ -417,6 +432,8 @@ const handleClickCancel = () => {
 const btnLoading = ref(false);
 const handleSubmit = async () => {
   try {
+    fixedPasswordError.value = formData.config?.password_initial?.generate_method === 'fixed'
+      && !formData.config.password_initial.fixed_password;
     if (passwordRuleError.value
       || passwordCountError.value
       || passwordConfigError.value
@@ -458,6 +475,7 @@ const updateDataSource = async (params) => {
     plugin_config: params.plugin_config,
   };
   await putDataSourceDetails(data);
+  window.changeInput = false;
   router.push({ name: 'local' });
   Message({
     theme: 'success',
@@ -467,6 +485,7 @@ const updateDataSource = async (params) => {
 
 const getDataSource = async (params) => {
   await newDataSource(params);
+  window.changeInput = false;
   router.push({ name: 'local' });
   Message({
     theme: 'success',
@@ -481,6 +500,10 @@ const handleBlur = () => {
 
 const handleFocus = () => {
   fixedPasswordError.value = false;
+};
+
+const handleChange = () => {
+  window.changeInput = true;
 };
 </script>
 
