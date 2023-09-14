@@ -174,7 +174,7 @@ const expiredSms = findMethodScene('sms', props.expiredSmsKey);
 
 <style lang="less" scoped>
 .tab-box {
-  width: 860px;
+  width: 800px;
   border: 1px solid #3A84FF;
 }
 

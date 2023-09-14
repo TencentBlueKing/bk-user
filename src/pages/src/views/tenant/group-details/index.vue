@@ -115,6 +115,7 @@ import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import { getDefaultConfig } from '@/http/dataSourceFiles';
 import {
   getTenantDetails,
   getTenants,
@@ -154,6 +155,7 @@ const state = reactive({
         phone_country_code: '86',
       },
     ],
+    password_initial_config: {},
   },
 });
 const detailsConfig = reactive({
@@ -196,13 +198,7 @@ watch(
             phone_country_code: '86',
           },
         ],
-        // password_settings: {
-        //   init_password: "",
-        //   init_password_method: "fixed_password",
-        //   init_notify_method: [],
-        //   init_sms_config: {},
-        //   init_mail_config: {},
-        // },
+        password_initial_config: {},
       };
     }
   },
@@ -215,9 +211,11 @@ const convertFormat = name => name?.map(item => item?.name).join(',') || '--';
 
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
-    await getTenantDetails(item.id).then((res: any) => {
-      state.tenantsData = res.data;
-    });
+    const res = await getTenantDetails(item.id);
+    state.tenantsData = res.data;
+  } else {
+    const res = await getDefaultConfig('local');
+    state.tenantsData.password_initial_config = res.data.config.password_initial;
   }
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
@@ -366,6 +364,16 @@ const handleBeforeClose = async () => {
   :deep(.bk-modal-content) {
     height: calc(100vh - 106px);
     background: #f5f7fa;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #dcdee5;
+      border-radius: 4px;
+    }
   }
 }
 </style>

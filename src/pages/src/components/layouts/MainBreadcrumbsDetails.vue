@@ -48,7 +48,9 @@ const handleBack = () => {
   const { back } = window.history.state;
   if (back) {
     router.go(-1);
-    store.customBreadcrumbs = false;
+    if (!window.changeInput) {
+      store.customBreadcrumbs = false;
+    }
   } else {
     const { matched } = route;
     const count = matched.length;
