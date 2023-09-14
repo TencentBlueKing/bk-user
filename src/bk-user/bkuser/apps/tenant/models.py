@@ -133,8 +133,8 @@ class TenantUserCustomField(TimestampedModel):
 
     class Meta:
         unique_together = [
-            ("tenant", "name"),
-            ("tenant", "display_name"),
+            ("name", "tenant"),
+            ("display_name", "tenant"),
         ]
 
 
