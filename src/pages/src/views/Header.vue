@@ -190,7 +190,6 @@ const toIndividualCenter = () => {
 
     .container-content {
       padding: 0 !important;
-      overflow: hidden;
     }
   }
 

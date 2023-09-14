@@ -1,16 +1,17 @@
 <template>
   <div class="fields-add-wrapper user-scroll-y">
     <bk-form ref="fieldsRef" form-type="vertical" :model="fieldsInfor" :rules="rulesFields">
-      <bk-form-item label="字段名称" property="name" required>
+      <bk-form-item label="字段名称" property="display_name" required>
         <bk-input
           placeholder="最多不得超过12个字符（6个汉字）"
-          :disabled="fieldsInfor.builtin"
-          v-model="fieldsInfor.name" />
+          v-model="fieldsInfor.display_name"
+          @focus="handleChange" />
       </bk-form-item>
-      <bk-form-item label="英文标识" property="key" required>
+      <bk-form-item label="英文标识" property="name" required>
         <bk-input
           :disabled="isEdit"
-          v-model="fieldsInfor.key" />
+          v-model="fieldsInfor.name"
+          @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="字段类型" required>
         <bk-select
@@ -27,7 +28,7 @@
         </bk-select>
       </bk-form-item>
     </bk-form>
-    <div class="enumerate-wrapper" v-if="state.isShowEg">
+    <div class="enumerate-wrapper" v-if="state.isShowEg || fieldsInfor.data_type.indexOf('enum') !== -1">
       <i class="arrow"></i>
       <h4 class="enum-title">
         <i class="icon icon-user-cog"></i>
@@ -35,9 +36,9 @@
       </h4>
       <div class="type-select-wrapper">
         <p class="desc">枚举类型</p>
-        <bk-radio-group class="king-radio-group" v-model="fieldsInfor.type">
+        <bk-radio-group class="king-radio-group" v-model="fieldsInfor.data_type">
           <bk-radio
-            label="one_enum"
+            label="enum"
             name="egRadio"
             :disabled="isEdit"
           >单选</bk-radio
@@ -64,7 +65,7 @@
             <div class="select-box default-box">
               <div class="input-container">
                 <label
-                  v-if="fieldsInfor.type === 'one_enum'"
+                  v-if="fieldsInfor.data_type === 'enum'"
                   class="king-radio"
                 >
                   <input
@@ -85,18 +86,17 @@
                 </label>
               </div>
             </div>
-            <div class="select-box text-box">
-              <input
-                type="text"
-                :class="['select-text', { 'input-error': item.isErrorValue }]"
-                v-model="item.value"
-                @keyup.enter="addEg"
-                @blur="verifyEgValue(item)"
-                @focus="hiddenEgError(item)"
-              />
-              <p class="hint" v-show="item.isErrorValue">
-                该字段是必填项
-              </p>
+            <div class="select-box icon-box">
+              <bk-form ref="enumRef" :model="item" :rules="rulesEnum">
+                <bk-form-item property="value" required>
+                  <bk-input
+                    type="text"
+                    class="select-text"
+                    v-model="item.value"
+                    @change="handleChange"
+                  />
+                </bk-form-item>
+              </bk-form>
             </div>
             <div class="select-box icon-box">
               <i
@@ -115,39 +115,38 @@
     </div>
     <div class="select-type">
       <bk-checkbox
-        :value="fieldsInfor.require"
+        :value="fieldsInfor.required"
         :disabled="fieldsInfor.builtin"
-        v-model="fieldsInfor.require">
-        <bk-popover content="该字段在用户信息里必须填写" placement="top">
-          <span>必填</span>
-        </bk-popover>
+        v-model="fieldsInfor.required"
+        @change="handleChange">
+        <span v-bk-tooltips="{ content: '该字段在用户信息里必须填写' }">必填</span>
       </bk-checkbox>
-      <bk-checkbox
+      <!-- <bk-checkbox
         :value="fieldsInfor.unique"
         :disabled="isEdit"
         v-model="fieldsInfor.unique">
-        <bk-popover content="该字段在不同用户信息里不能相同" placement="top">
-          <span>唯一</span>
-        </bk-popover>
-      </bk-checkbox>
-      <bk-checkbox
+        <span v-bk-tooltips="{ content: '该字段在不同用户信息里不能相同' }">唯一</span>
+      </bk-checkbox> -->
+      <!-- <bk-checkbox
         :value="fieldsInfor.editable"
         v-model="fieldsInfor.editable"
         :disabled="fieldsInfor.builtin">
-        <bk-popover content="该字段在用户信息里可编辑" placement="top">
-          <span>可编辑</span>
-        </bk-popover>
-      </bk-checkbox>
+        <span v-bk-tooltips="{ content: '该字段在用户信息里可编辑' }">可编辑</span>
+      </bk-checkbox> -->
     </div>
     <div class="submit-btn">
-      <bk-button theme="primary" @click="submitInfor">保存</bk-button>
+      <bk-button theme="primary" @click="submitInfor" :loading="state.btnLoading">保存</bk-button>
       <bk-button theme="default" @click="$emit('handleCancel')">取消</bk-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
+import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { computed, defineEmits, defineProps, nextTick, onMounted, reactive, ref, watch } from 'vue';
+
+import useValidate from '@/hooks/use-validate';
+import { newCustomFields, putCustomFields } from '@/http/settingFiles';
 
 const props = defineProps({
   currentEditorData: {
@@ -159,24 +158,13 @@ const props = defineProps({
     default: '',
   },
 });
-defineEmits(['handleCancel', 'submitData']);
+const emit = defineEmits(['handleCancel', 'submitData']);
 
+const validate = useValidate();
 const fieldsRef = ref();
-let fieldsInfor = reactive({
-  name: '',
-  key: '',
-  type: 'one_enum',
-  require: false,
-  unique: false,
-  editable: true,
-  builtin: false,
-  default: 0,
-  options: [{
-    id: 0, value: '', isErrorValue: false,
-  }, {
-    id: 1, value: '', isErrorValue: false,
-  }],
-  multiple: ['editable'],
+const enumRef = ref();
+const fieldsInfor = reactive({
+  ...props.currentEditorData,
 });
 const state = reactive({
   defaultSelected: 'string',
@@ -185,6 +173,7 @@ const state = reactive({
   isRepeatClick: false,
   // 是否是枚举，显示对应的内容
   isShowEg: false,
+  btnLoading: false,
 });
 const typeList = [
   {
@@ -206,35 +195,17 @@ const typeList = [
 ];
 
 const rulesFields = {
-  name: [
-    {
-      required: true,
-      message: '必填项',
-      trigger: 'blur',
-    },
-    {
-      validator: (value: string) => value.length <= 12,
-      message: '最多不得超过12个字符（6个汉字）',
-      trigger: 'blur',
-    },
-  ],
-  key: [
-    {
-      required: true,
-      message: '必填项',
-      trigger: 'blur',
-    },
-    {
-      validator: (value: string) => /^[a-zA-Z]+$/.test(value),
-      message: '由英文字母组成',
-      trigger: 'blur',
-    },
-  ],
+  display_name: [validate.required, validate.fieldsDisplayName],
+  name: [validate.required, validate.fieldsName],
+};
+
+const rulesEnum = {
+  value: [validate.required],
 };
 
 const isEdit = computed(() => props?.setType === 'edit');
 
-watch(() => fieldsInfor.type, (val) => {
+watch(() => fieldsInfor.data_type, (val) => {
   if (!props?.currentEditorData?.id) {
     fieldsInfor.default = val === 'multi_enum' ? [0] : 0;
   }
@@ -246,46 +217,33 @@ watch(() => fieldsInfor.options.length, (val) => {
   }
 });
 
-const initData = () => {
+
+onMounted(() => {
   if (props?.currentEditorData?.id) {
-    fieldsInfor = JSON.parse(JSON.stringify(props.currentEditorData));
-    if (fieldsInfor.type === 'one_enum' || fieldsInfor.type === 'multi_enum') {
+    if (fieldsInfor.data_type === 'enum' || fieldsInfor.data_type === 'multi_enum') {
       state.defaultSelected = 'enum';
-      fieldsInfor.default = fieldsInfor.type === 'one_enum'
-        ? Number(fieldsInfor.default)
-        : fieldsInfor.default.slice(1, fieldsInfor.default.length - 1).split(',')
-          .map(item => Number(item));
     } else {
-      state.defaultSelected = fieldsInfor.type;
+      state.defaultSelected = fieldsInfor.data_type;
     }
   }
-};
-initData();
+});
 
 // 下拉框 选择对应的类型，布尔值 字符串 枚举 数值
-// eslint-disable-next-line no-unused-vars
 const selectedType = (newType) => {
   window.changeInput = true;
   if (newType === 'enum') {
     state.isShowEg = true;
     // 如果选择了枚举值 type 设置为单选
-    if (fieldsInfor.type.indexOf('enum') === -1) {
-      fieldsInfor.type = 'one_enum';
+    if (fieldsInfor.data_type.indexOf('enum') === -1) {
+      fieldsInfor.data_type = 'enum';
     }
   } else {
-    fieldsInfor.type = newType;
+    fieldsInfor.data_type = newType;
     state.isShowEg = false;
   }
 };
-// 失焦校验枚举
-const verifyEgValue = (item) => {
-  if (!item.value.length) {
-    item.isErrorValue = true;
-  }
-};
-// 获焦隐藏枚举的错误提示
-const hiddenEgError = (item) => {
-  item.isErrorValue = false;
+
+const handleChange = () => {
   window.changeInput = true;
 };
 // 删除枚举
@@ -305,20 +263,59 @@ const addEg = () => {
   const param = {
     id: fieldsInfor.options.length,
     value: '',
-    isErrorValue: false,
   };
   fieldsInfor.options.push(param);
+  nextTick(() => {
+    const inputList = document.querySelectorAll('.content-list input');
+    inputList[inputList.length - 1].focus();
+  });
 };
 
 // 表单校验
-const submitInfor = () => {
-  fieldsRef.value.validate();
-  if (state.isShowEg) {
-    fieldsInfor.options.forEach((option) => {
-      if (!option.value.length) {
-        option.isErrorValue = true;
+const submitInfor = async () => {
+  try {
+    const isEnumType = fieldsInfor.data_type === 'enum' || fieldsInfor.data_type === 'multi_enum';
+
+    if (isEnumType) {
+      await Promise.all([
+        fieldsRef.value.validate(),
+        ...enumRef.value.map(item => item.validate()),
+      ]);
+    } else {
+      await fieldsRef.value.validate();
+    }
+
+    state.btnLoading = true;
+
+    if (isEdit.value) {
+      await putCustomFields({
+        id: fieldsInfor.id,
+        display_name: fieldsInfor.display_name,
+        required: fieldsInfor.required,
+        default: fieldsInfor.default,
+        options: fieldsInfor.options,
+      });
+      emit('submitData', '修改字段成功');
+    } else {
+      const newFieldData = {
+        name: fieldsInfor.name,
+        display_name: fieldsInfor.display_name,
+        required: fieldsInfor.required,
+        data_type: fieldsInfor.data_type,
+      };
+
+      if (isEnumType) {
+        newFieldData.options = fieldsInfor.options;
+        newFieldData.default = fieldsInfor.default;
       }
-    });
+
+      await newCustomFields(newFieldData);
+      emit('submitData', '添加字段成功');
+    }
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    state.btnLoading = false;
   }
 };
 </script>
@@ -457,9 +454,9 @@ const submitInfor = () => {
             }
           }
 
-          &.text-box {
+          ::v-deep .bk-form-content {
             width: 200px;
-            margin: 0 20px;
+            margin-left: 0 !important;
           }
 
           > .select-text {
@@ -467,7 +464,6 @@ const submitInfor = () => {
             height: 32px;
             padding-left: 10px;
             line-height: 32px;
-            border: 1px solid #c4c6cc;
             border-radius: 2px;
             outline: none;
             resize: none;
