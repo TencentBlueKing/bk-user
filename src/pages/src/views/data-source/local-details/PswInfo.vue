@@ -27,7 +27,10 @@
           </li>
           <li>
             <span class="key">密码不允许：</span>
-            <span class="value">{{ passwordNotAllowedMap(passwordRule) }}</span>
+            <span class="value">
+              连续{{ passwordRule?.not_continuous_count }}位出现
+              {{ passwordNotAllowedMap(passwordRule) }}
+            </span>
           </li>
           <li>
             <span class="key">密码有效期：</span>

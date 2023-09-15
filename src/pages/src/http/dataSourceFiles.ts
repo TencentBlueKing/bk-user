@@ -70,3 +70,8 @@ export const getDefaultConfig = (id: string) => http.get(`/api/v1/web/data-sourc
  * 更新数据源
  */
 export const putDataSourceDetails = (params: PutDataSourceParams) => http.put(`/api/v1/web/data-sources/${params.id}/`, params);
+
+/**
+ * 变更数据源状态
+ */
+export const changeSwitchStatus = (id: string) => http.patch(`/api/v1/web/data-sources/${id}/operations/switch_status/`);
