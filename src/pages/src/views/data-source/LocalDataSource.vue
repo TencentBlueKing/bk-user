@@ -14,7 +14,7 @@
               :key="item"
               @click="newDataSource(item)"
             >
-              <img v-if="item.logo" src="" alt="">
+              <img v-if="item.logo" :src="item.logo">
               <i v-else :class="dataSourceType[item.id].icon"></i>
               <div class="dropdown-item">
                 <span class="dropdown-item-title">{{ item.name }}</span>
@@ -233,6 +233,11 @@ function newDataSource(item) {
     padding: 10px 16px;
     line-height: 32px;
     align-items: center;
+
+    img {
+      width: 16px;
+      height: 16px;
+    }
 
     .user-icon {
       font-size: 24px;

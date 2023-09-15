@@ -70,17 +70,14 @@
               <bk-radio label="random">随机</bk-radio>
               <bk-radio label="fixed">固定</bk-radio>
             </bk-radio-group>
-            <div>
-              <bk-input
-                :class="['input-password', { 'input-error': fixedPasswordError }]"
-                v-if="formData.password_initial_config.generate_method === 'fixed'"
-                type="password"
-                v-model="formData.password_initial_config.fixed_password"
-                @blur="handleBlur"
-                @focus="handleFocus"
-              />
-              <p class="fixed-password error" v-show="fixedPasswordError">密码长度至少12位，必须包含大小写字母、数字</p>
-            </div>
+            <bk-input
+              class="input-password"
+              v-if="formData.password_initial_config.generate_method === 'fixed'"
+              type="password"
+              v-model="formData.password_initial_config.fixed_password"
+              @blur="handleBlur"
+              @focus="handleFocus"
+            />
           </bk-form-item>
           <bk-form-item label="通知方式" required>
             <NotifyEditorTemplate
@@ -204,7 +201,6 @@ const rulesUserInfo = {
   phone: [validate.required, validate.phone],
 };
 
-const fixedPasswordError = ref(false);
 const enabledMethodsError = ref(false);
 const activeMethods = ref('email');
 // 初始密码
@@ -218,22 +214,12 @@ const checkboxInfo = [
 watch(() => formData.password_initial_config?.generate_method, (value) => {
   if (value === 'random') {
     formData.password_initial_config.fixed_password = null;
-    fixedPasswordError.value = false;
   }
 });
 
 watch(() => formData.password_initial_config?.notification?.enabled_methods, (value) => {
   enabledMethodsError.value = !value.length;
 });
-
-const handleBlur = () => {
-  const result = /^\S*(?=\S{12,})(?=\S*\d)(?=\S*[A-Z])(?=\S*[a-z])\S*$/.test(formData.password_initial_config.fixed_password);
-  fixedPasswordError.value = !result;
-};
-
-const handleFocus = () => {
-  fixedPasswordError.value = false;
-};
 
 const handleClickLabel = (item) => {
   checkboxInfo.forEach((element) => {
@@ -385,10 +371,7 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 }
 // 校验表单
 async function handleSubmit() {
-  fixedPasswordError.value = formData.password_initial_config?.generate_method === 'fixed'
-    && !formData.password_initial_config.fixed_password;
-  
-  if (fixedPasswordError.value || enabledMethodsError.value) return;
+  if (enabledMethodsError.value) return;
 
   await Promise.all([basicRef.value.validate(), userRef.value.validate()]);
 
@@ -496,10 +479,6 @@ const handleChange = () => {
       width: 240px;
       margin-left: 24px;
     }
-
-    .input-error {
-      border-color: #ea3636;
-    }
   }
 }
 
@@ -512,9 +491,5 @@ const handleChange = () => {
   color: #ea3636;
   text-align: left;
   animation: form-error-appear-animation 0.15s;
-}
-
-.fixed-password {
-  left: 147px;
 }
 </style>

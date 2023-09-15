@@ -176,5 +176,5 @@ export function passwordNotAllowedMap(value: any) {
   const list: string[] = Object.entries(value)
     .filter(([key, val]) => passwordNotAllowed[key] && val)
     .map(([key]) => passwordNotAllowed[key]);
-  return list.join('，') || '--';
+  return list.join('，');
 };

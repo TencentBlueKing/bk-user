@@ -9,6 +9,11 @@
           {{ typeText }}
         </bk-tag>
       </template>
+      <template #right>
+        <bk-button v-if="statusText" class="w-[64px]" @click="handleClick">
+          {{ statusText }}
+        </bk-button>
+      </template>
     </MainBreadcrumbsDetails>
     <bk-tab
       v-model:active="activeKey"
@@ -29,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import { Message } from 'bkui-vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -36,7 +42,7 @@ import PswInfo from './PswInfo.vue';
 import UserInfo from './UserInfo.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
-import { getDataSourceList } from '@/http/dataSourceFiles';
+import { changeSwitchStatus, getDataSourceList } from '@/http/dataSourceFiles';
 import { dataSourceType } from '@/utils';
 
 const route = useRoute();
@@ -54,10 +60,13 @@ const isLoading = ref(false);
 const subtitle = ref('');
 const typeText = ref('');
 const typeIcon = ref('');
+const statusText = ref('');
+const switchStatus = ref('');
 
 onMounted(async () => {
   isLoading.value = true;
   const res = await getDataSourceList('');
+  await getSwitchStatus();
   res.data.forEach((item) => {
     if (item.id === currentId.value) {
       const { text, icon } = dataSourceType[item.plugin_id];
@@ -68,6 +77,18 @@ onMounted(async () => {
   });
   isLoading.value = false;
 });
+
+const getSwitchStatus = async () => {
+  const res = await changeSwitchStatus(route.params.id);
+  switchStatus.value = res.data?.status;
+  statusText.value = res.data?.status === 'disabled' ? '启用' : '停用';
+};
+
+const handleClick = async () => {
+  await getSwitchStatus();
+  const message = switchStatus.value === 'disabled' ? '停用成功' : '启用成功';
+  Message({ theme: 'success', message });
+};
 </script>
 
 <style lang="less">

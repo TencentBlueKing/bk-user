@@ -4,9 +4,9 @@
       <template #tag>
         <bk-tag>
           <template #icon>
-            <i :class="typeText.icon" />
+            <i :class="dataSourceType[route.params.type].icon" />
           </template>
-          {{ typeText.name }}
+          {{ dataSourceType[route.params.type].text }}
         </bk-tag>
       </template>
     </MainBreadcrumbsDetails>
@@ -46,7 +46,7 @@
             <bk-checkbox v-model="formData.config.password_rule.contain_uppercase">大写字母</bk-checkbox>
             <bk-checkbox v-model="formData.config.password_rule.contain_digit">数字</bk-checkbox>
             <bk-checkbox v-model="formData.config.password_rule.contain_punctuation">特殊字符（除空格）</bk-checkbox>
-            <p class="error-text" v-show="passwordRuleError">密码规则不得为空</p>
+            <p class="error-text" v-show="passwordRuleError">至少包含一类字符</p>
           </bk-form-item>
           <bk-form-item label="" required>
             <div>
@@ -64,7 +64,7 @@
             <bk-checkbox v-model="formData.config.password_rule.not_continuous_letter">连续字母序</bk-checkbox>
             <bk-checkbox v-model="formData.config.password_rule.not_continuous_digit">连续数字序</bk-checkbox>
             <bk-checkbox v-model="formData.config.password_rule.not_repeated_symbol">重复字母、数字、特殊符号</bk-checkbox>
-            <p class="error-text" v-show="passwordConfigError">密码规则不得为空</p>
+            <p class="error-text" v-show="passwordConfigError">至少包含一类连续性场景</p>
           </bk-form-item>
           <bk-form-item label="密码有效期" required>
             <bk-radio-group v-model="formData.config.password_rule.valid_time" @change="handleChange">
@@ -132,17 +132,12 @@
               <bk-radio label="random">随机</bk-radio>
               <bk-radio label="fixed">固定</bk-radio>
             </bk-radio-group>
-            <div>
-              <bk-input
-                :class="['input-password', { 'input-error': fixedPasswordError }]"
-                v-if="formData.config.password_initial.generate_method === 'fixed'"
-                v-model="formData.config.password_initial.fixed_password"
-                @blur="handleBlur"
-                @focus="handleFocus"
-                type="password"
-              />
-              <p class="fixed-password-error" v-show="fixedPasswordError">密码长度至少12位，必须包含大小写字母、数字</p>
-            </div>
+            <bk-input
+              class="input-password"
+              v-if="formData.config.password_initial.generate_method === 'fixed'"
+              v-model="formData.config.password_initial.fixed_password"
+              type="password"
+            />
           </bk-form-item>
           <bk-form-item label="通知方式" property="config.password_initial.notification.enabled_methods" required>
             <NotifyEditorTemplate
@@ -251,27 +246,11 @@ import useValidate from '@/hooks/use-validate';
 import { getDataSourceDetails, getDefaultConfig, newDataSource, putDataSourceDetails } from '@/http/dataSourceFiles';
 import router from '@/router';
 import { useMainViewStore } from '@/store/mainView';
-import { passwordMustIncludes, passwordNotAllowed } from '@/utils';
+import { dataSourceType, passwordMustIncludes, passwordNotAllowed } from '@/utils';
 
 const route = useRoute();
 const validate = useValidate();
 const store = useMainViewStore();
-
-// 当前面包屑展示文案
-const typeText = computed(() => {
-  switch (route.params.type) {
-    case 'local':
-      return {
-        name: '本地',
-        icon: 'user-icon icon-shujuku',
-      };
-    default:
-      return {
-        name: '本地',
-        icon: 'user-icon icon-shujuku',
-      };
-  }
-});
 
 const isDisabled = ref(false);
 const currentId = computed(() => {
@@ -493,15 +472,6 @@ const getDataSource = async (params) => {
   });
 };
 
-const handleBlur = () => {
-  const result = /^\S*(?=\S{12,})(?=\S*\d)(?=\S*[A-Z])(?=\S*[a-z])\S*$/.test(formData.config.password_initial.fixed_password);
-  fixedPasswordError.value = !result;
-};
-
-const handleFocus = () => {
-  fixedPasswordError.value = false;
-};
-
 const handleChange = () => {
   window.changeInput = true;
 };
@@ -554,17 +524,6 @@ const handleChange = () => {
           color: #ea3636;
           animation: form-error-appear-animation .15s;
         }
-
-        .fixed-password-error {
-          position: absolute;
-          left: 155px;
-          padding-top: 4px;
-          font-size: 12px;
-          line-height: 1;
-          color: #ea3636;
-          text-align: left;
-          animation: form-error-appear-animation 0.15s;
-        }
       }
 
       .form-item-flex {
@@ -574,10 +533,6 @@ const handleChange = () => {
           .input-password {
             width: 240px;
             margin-left: 24px;
-          }
-
-          .input-error {
-            border-color: #ea3636;
           }
         }
       }
