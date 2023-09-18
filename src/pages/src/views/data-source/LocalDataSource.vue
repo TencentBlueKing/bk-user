@@ -59,8 +59,9 @@
         </bk-table-column>
         <bk-table-column prop="plugin_id" label="数据源类型">
           <template #default="{ row }">
-            <div>
-              <i :class="[dataSourceType[row.plugin_id]?.icon, 'type-icon']" />
+            <div class="datasource-type-icon" v-for="item in state.typeList" :key="item">
+              <img v-if="item.id === row.plugin_id && item.logo" :src="item.logo">
+              <i v-else :class="[dataSourceType[row.plugin_id]?.icon, 'type-icon']" />
               <span>{{ dataSourceType[row.plugin_id]?.text }}</span>
             </div>
           </template>
@@ -156,6 +157,7 @@ function handleClick(item) {
     name: 'dataConfDetails',
     params: {
       id: item.id,
+      status: item.status,
     },
   });
 }
@@ -235,8 +237,8 @@ function newDataSource(item) {
     align-items: center;
 
     img {
-      width: 16px;
-      height: 16px;
+      width: 24px;
+      height: 24px;
     }
 
     .user-icon {

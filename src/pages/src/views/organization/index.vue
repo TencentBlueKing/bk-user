@@ -339,6 +339,7 @@ const updateTenantsList = () => {
   height: calc(100vh - 52px);
 
   .organization-main {
+    width: calc(100% - 280px);
     height: calc(100% - 52px);
 
     header {

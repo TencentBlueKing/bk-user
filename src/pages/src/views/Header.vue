@@ -160,6 +160,8 @@ const toIndividualCenter = () => {
 
 <style lang="less" scoped>
 .main-navigation {
+  min-width: 1200px;
+
   :deep(.bk-navigation-header) {
     background-color: #0e1525;
 
@@ -173,8 +175,13 @@ const toIndividualCenter = () => {
     }
   }
 
-  :deep(.container-content) {
-    padding: 0 !important;
+  :deep(.navigation-container) {
+    min-width: 1200px;
+
+    .container-content {
+      padding: 0 !important;
+      overflow: hidden;
+    }
   }
 
   :deep(.header-right) {
