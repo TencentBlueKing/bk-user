@@ -17,35 +17,38 @@ from bkuser.apps.tenant.models import TenantUserCustomField
 
 @pytest.fixture()
 def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
-    fields = [
-        TenantUserCustomField(
-            tenant=default_tenant,
-            name="age",
-            display_name="年龄",
-            data_type=UserFieldDataType.NUMBER,
-            required=False,
-            default=0,
-        ),
-        TenantUserCustomField(
-            tenant=default_tenant,
-            name="gender",
-            display_name="性别",
-            data_type=UserFieldDataType.ENUM,
-            required=True,
-            default="male",
-            options={
+    age_field, _ = TenantUserCustomField.objects.get_or_create(
+        tenant=default_tenant,
+        name="age",
+        defaults={
+            "display_name": "年龄",
+            "data_type": UserFieldDataType.NUMBER,
+            "required": False,
+            "default": 0,
+        },
+    )
+    gender_field, _ = TenantUserCustomField.objects.get_or_create(
+        tenant=default_tenant,
+        name="gender",
+        defaults={
+            "display_name": "性别",
+            "data_type": UserFieldDataType.ENUM,
+            "required": True,
+            "default": "male",
+            "options": {
                 "male": "男",
                 "female": "女",
                 "other": "其他",
             },
-        ),
-        TenantUserCustomField(
-            tenant=default_tenant,
-            name="region",
-            display_name="籍贯",
-            data_type=UserFieldDataType.STRING,
-            required=True,
-        ),
-    ]
-    TenantUserCustomField.objects.bulk_create(fields)
-    return fields
+        },
+    )
+    region_field, _ = TenantUserCustomField.objects.get_or_create(
+        tenant=default_tenant,
+        name="region",
+        defaults={
+            "display_name": "籍贯",
+            "data_type": UserFieldDataType.STRING,
+            "required": True,
+        },
+    )
+    return [age_field, gender_field, region_field]
