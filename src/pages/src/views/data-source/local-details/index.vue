@@ -29,7 +29,9 @@
         :name="item.name"
         :label="item.label"
       >
-        <UserInfo v-if="activeKey === 'user'" />
+        <UserInfo
+          v-if="activeKey === 'user'"
+          :data-source-id="currentId" />
         <PswInfo v-else />
       </bk-tab-panel>
     </bk-tab>

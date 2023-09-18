@@ -110,7 +110,7 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
+import { computed, defineProps, inject, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import EditUser from './EditUser.vue';
@@ -119,6 +119,11 @@ import ViewUser from './ViewUser.vue';
 import Empty from '@/components/Empty.vue';
 import { getDataSourceUserDetails, getDataSourceUsers } from '@/http/dataSourceFiles';
 
+defineProps({
+  dataSourceId: {
+    type: Number,
+  },
+});
 const route = useRoute();
 
 const currentId = computed(() => Number(route.params.id));
