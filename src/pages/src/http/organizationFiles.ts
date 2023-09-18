@@ -1,6 +1,7 @@
 import http from './fetch';
 import type {
   DepartmentsListParams,
+  TenantListParams,
   UpdateTenantParams,
 } from './types/organizationFiles';
 
@@ -38,4 +39,12 @@ export const getTenantUsers = (id: string) => http.get(`/api/v1/web/tenant-organ
 export const getTenantDepartmentsList = (params: DepartmentsListParams) => {
   const { id, keyword, page, pageSize, recursive  } = params;
   return http.get(`/api/v1/web/tenant-organization/departments/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}&recursive=${recursive}`);
+};
+
+/**
+ * 租户下用户列表
+ */
+export const getTenantUsersList = (params: TenantListParams) => {
+  const { id, keyword, page, pageSize } = params;
+  return http.get(`/api/v1/web/tenant-organization/tenants/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
 };

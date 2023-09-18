@@ -46,3 +46,8 @@ repos:
         types: [python]
         entry: mypy --config-file=src/bk-user/pyproject.toml
         files: src/bk-user/
+      - id: import-linter
+        name: import-linter
+        require_serial: true
+        language: system
+        entry: bash -c "cd src/bk-user && lint-imports"

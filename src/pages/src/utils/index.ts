@@ -1,10 +1,10 @@
 import { Message } from 'bkui-vue';
+import moment from 'moment';
 
 import abnormalImg from '@/images/abnormal.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
 import warningImg from '@/images/warning.svg';
-import moment from 'moment';
 
 export const statusIcon = {
   normal: {
@@ -70,7 +70,7 @@ export const getBase64 = (file: any) => new Promise((resolve, reject) => {
 });
 
 // 无logo首字母色彩取值范围
-export const logoColor = [
+export const LOGO_COLOR = [
   '#3A84FF', '#699DF4', '#18B456', '#51BE68', '#FF9C01', '#FFB848', '#EA3636', '#FF5656',
   '#3762B8', '#3E96C2', '#61B2C2', '#85CCA8', '#FFC685', '#FFA66B', '#F5876C', '#D66F6B',
 ];
@@ -95,7 +95,7 @@ export const dataSourceType = {
 };
 
 // 日期转换
- export function dateConvert(value: string) {
+export function dateConvert(value: string) {
   value = moment.utc(value).format('YYYY-MM-DD');
   switch (value) {
     case null:
@@ -106,3 +106,75 @@ export const dataSourceType = {
       return value;
   }
 }
+
+// 数据源启用状态
+export const dataSourceStatus = {
+  enabled: {
+    icon: normalImg,
+    text: '正常',
+  },
+  disabled: {
+    icon: unknownImg,
+    text: '未启用',
+  },
+};
+
+export const validTime = {
+  30: '一个月',
+  90: '三个月',
+  180: '六个月',
+  365: '一年',
+  '-1': '永久',
+};
+
+export function validTimeMap(value: number) {
+  return validTime[value];
+}
+
+export const noticeTime = {
+  1: '1天',
+  7: '7天',
+  15: '15天',
+};
+export function noticeTimeMap(value: any) {
+  const list: string[] = value?.map(key => noticeTime[key]).filter(Boolean) || [];
+  return list.join('，');
+};
+
+export const notification = {
+  email: '邮箱',
+  sms: '短信',
+};
+
+export function notificationMap(value: any) {
+  const list: string[] = value?.map(key => notification[key]).filter(Boolean) || [];
+  return list.join('，');
+};
+
+export const passwordMustIncludes = {
+  contain_lowercase: '小写字母',
+  contain_uppercase: '连续字母序',
+  contain_digit: '数字',
+  contain_punctuation: '特殊字符（除空格）',
+};
+
+export function passwordMustIncludesMap(value: any) {
+  const list: string[] = Object.entries(value)
+    .filter(([key, val]) => passwordMustIncludes[key] && val)
+    .map(([key]) => passwordMustIncludes[key]);
+  return list.join('，');
+};
+
+export const passwordNotAllowed = {
+  not_keyboard_order: '键盘序',
+  not_continuous_letter: '连续字母序',
+  not_continuous_digit: '连续数字序',
+  not_repeated_symbol: '重复字母、数字、特殊符号',
+};
+
+export function passwordNotAllowedMap(value: any) {
+  const list: string[] = Object.entries(value)
+    .filter(([key, val]) => passwordNotAllowed[key] && val)
+    .map(([key]) => passwordNotAllowed[key]);
+  return list.join('，');
+};

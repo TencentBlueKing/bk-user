@@ -12,7 +12,7 @@ from django.conf import settings
 from django.db import models
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TenantFeatureFlag
+from bkuser.apps.tenant.constants import TenantFeatureFlag, UserFieldDataType
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import TimestampedModel
 
@@ -62,7 +62,7 @@ class TenantUser(TimestampedModel):
 
     # 手机&邮箱相关：手机号&邮箱都可以继承数据源或自定义
     is_inherited_phone = models.BooleanField("是否继承数据源手机号", default=True)
-    custom_phone = models.CharField("自定义手机号", max_length=32)
+    custom_phone = models.CharField("自定义手机号", max_length=32, null=True, blank=True, default="")
     custom_phone_country_code = models.CharField(
         "自定义手机号的国际区号",
         max_length=16,
@@ -71,7 +71,7 @@ class TenantUser(TimestampedModel):
         default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
     is_inherited_email = models.BooleanField("是否继承数据源邮箱", default=True)
-    custom_email = models.EmailField("自定义邮箱", null=True, blank=True, default="")
+    custom_email = models.EmailField("自定义邮箱", max_length=256, null=True, blank=True, default="")
 
     class Meta:
         unique_together = [
@@ -108,26 +108,34 @@ class TenantManager(models.Model):
         ]
 
 
-# TODO: 是否直接定义 TenantCommonConfig 表，DynamicFieldInfo是一个JSON字段
-# class DynamicFieldInfo(TimestampedModel):
-#     """动态的用户字段元信息"""
-#
-#     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True)
-#
-#     id = models.CharField("字段唯一标识", max_length=64)
-#     name = models.CharField("字段名称", max_length=64)
-#     # TODO: 需要枚举支持的数据类型
-#     data_type = models.CharField("数据类型", max_length=32)
-#     require = models.BooleanField("是否必填", default=False)
-#     unique = models.BooleanField("是否唯一", default=False)
-#     editable = models.BooleanField("是否可b", default=False)
-#     # TODO：不同类型，可能有额外配置，比如枚举有key和value选项，是否配置为json_schema格式，便于校验呢？？？
-#
-#     class Meta:
-#         unique_together = [
-#             ("tenant", "id"),
-#             ("tenant", "name"),
-#         ]
+class UserBuiltinField(TimestampedModel):
+    """用户内置字段"""
+
+    name = models.CharField("字段名称", unique=True, max_length=128)
+    display_name = models.CharField("展示用名称", unique=True, max_length=128)
+    data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
+    required = models.BooleanField("是否必填")
+    unique = models.BooleanField("是否唯一")
+    default = models.JSONField("默认值", default="")
+    options = models.JSONField("配置项", default={})
+
+
+class TenantUserCustomField(TimestampedModel):
+    """租户用户自定义字段"""
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_constraint=False)
+    name = models.CharField("字段名称", max_length=128)
+    display_name = models.CharField("展示用名称", max_length=128)
+    data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
+    required = models.BooleanField("是否必填")
+    default = models.JSONField("默认值", default="")
+    options = models.JSONField("配置项", default={})
+
+    class Meta:
+        unique_together = [
+            ("name", "tenant"),
+            ("display_name", "tenant"),
+        ]
 
 
 # # TODO: 是否直接定义 TenantCommonConfig 表，AccountValidityPeriod是一个JSON字段？
@@ -145,3 +153,20 @@ class TenantManager(models.Model):
 #     notification_method = models.CharField("通知方式", max_length=32, default="email")
 #     # TODO: 需要考虑不同通知方式，可能无法使用相同模板，或者其他设计方式
 #     notification_content_template = models.TextField("通知模板", default="")
+
+
+# class TenantUserSocialAccountRelation(TimestampedModel):
+#     """租户用户与社交账号绑定表"""
+#
+#     tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
+#     idp = models.ForeignKey(Idp, on_delete=models.DO_NOTHING, db_constraint=False)
+#     social_client_id = models.CharField("社交认证源对应的ClientID", max_length=128)
+#     social_account_id = models.CharField("绑定的社交账号ID", max_length=128)
+#
+#     class Meta:
+#         unique_together = [
+#             ("social_account_id", "tenant_user", "idp", "social_client_id"),
+#         ]
+#         index_together = [
+#             ("social_account_id", "idp", "social_client_id"),
+#         ]

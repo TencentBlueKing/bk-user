@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 
 import environ
 import urllib3
+from django.utils.encoding import force_bytes
 
 # environ
 env = environ.Env()
@@ -49,6 +50,9 @@ INSTALLED_APPS = [
     "bkuser.auth",
     "bkuser.apps.data_source",
     "bkuser.apps.tenant",
+    "bkuser.apps.sync",
+    "bkuser.apps.idp",
+    "bkuser.apps.natural_user",
 ]
 
 MIDDLEWARE = [
@@ -97,6 +101,9 @@ DATABASES = {
         "PASSWORD": env.str("MYSQL_PASSWORD", ""),
         "HOST": env.str("MYSQL_HOST", "localhost"),
         "PORT": env.int("MYSQL_PORT", 3306),
+        "TEST": {
+            "CHARSET": "utf8mb4",
+        },
     },
 }
 # Default primary key field type
@@ -122,6 +129,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = "/staticfiles/"
 # STATIC_URL 也可以是CDN地址
 STATIC_URL = env.str("STATIC_URL", SITE_URL + "staticfiles/")
+# Media files (excel, pdf, ...)
+MEDIA_ROOT = BASE_DIR / "media"
 
 # cookie
 SESSION_COOKIE_NAME = "bkuser_sessionid"
@@ -151,6 +160,15 @@ BK_APP_CODE = env.str("BK_APP_CODE", default="bkuser")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
+
+# 蓝鲸数据库内容加密私钥
+# 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
+# 详情查看：https://cryptography.io/en/latest/fernet/
+BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
+
+# 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
+BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
+ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
 
 # bk_language domain
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
@@ -484,3 +502,9 @@ MAX_WEAK_PASSWD_COMBINATION_THRESHOLD = env.float("MAX_WEAK_PASSWD_COMBINATION_T
 GENERATE_RANDOM_PASSWORD_MAX_RETRIES = env.int("GENERATE_RANDOM_PASSWORD_MAX_RETRIES", 10)
 # zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
 MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
+
+# 数据导出配置
+# 名称前缀规范：https://docs.qq.com/sheet/DTktLdUtmRldob21P?tab=uty37p&c=C3A0A0
+EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
+# 成员，组织信息导出模板
+EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"

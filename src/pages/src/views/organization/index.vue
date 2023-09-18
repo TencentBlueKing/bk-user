@@ -1,6 +1,6 @@
 <template>
   <bk-loading class="organization-wrapper" :loading="state.isLoading">
-    <div class="tree-wrapper user-scroll-y">
+    <bk-loading class="tree-wrapper user-scroll-y" :loading="state.treeLoading">
       <div class="tree-main">
         <bk-tree
           ref="treeRef"
@@ -9,14 +9,14 @@
           label="name"
           children="children"
           :node-content-action="['selected', 'expand', 'click', 'collapse']"
+          :selected="selectedId"
           @node-click="changeNode"
+          @node-expand="changeNode"
         >
           <template #nodeAction="item">
             <span v-if="!item.__attr__.isRoot" style="color: #979ba5;">
-              <DownShape v-if="item.has_children && item.__attr__.isOpen" />
-              <RightShape
-                v-if="item.has_children && !item.__attr__.isOpen"
-              />
+              <DownShape class="h-[34px] mt-[4px]" v-if="item.has_children && item.__attr__.isOpen" />
+              <RightShape class="h-[34px] mt-[4px]" v-if="item.has_children && !item.__attr__.isOpen" />
             </span>
           </template>
           <template #nodeType="item">
@@ -38,6 +38,7 @@
               trigger="click"
               placement="bottom-start"
               ref="dropdownMenu"
+              @click.stop
             >
               <i class="user-icon icon-more"></i>
               <template #content>
@@ -54,12 +55,12 @@
           </template>
         </bk-tree>
       </div>
-    </div>
+    </bk-loading>
     <div class="organization-main">
       <header>
-        <img class="img-logo" v-if="state.currentItem.logo" :src="state.currentItem.logo" />
-        <span v-else class="span-logo">{{ convertLogo(state.currentItem.name) }}</span>
-        <span class="name">{{ state.currentItem.name }}</span>
+        <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
+        <span v-else class="span-logo">{{ convertLogo(state.currentTenant.name) }}</span>
+        <span class="name">{{ state.currentTenant.name }}</span>
       </header>
       <bk-tab
         v-model:active="state.active"
@@ -77,16 +78,21 @@
           <bk-loading :loading="state.tabLoading">
             <UserInfo
               v-if="index === 0"
-              :user-data="state.currentItem"
+              :user-data="state.currentUsers"
               :is-data-empty="state.isDataEmpty"
               :is-empty-search="state.isEmptySearch"
+              :is-data-error="state.isDataError"
               :pagination="state.pagination"
               :keyword="params.keyword"
+              :is-tenant="isTenant"
               @searchUsers="searchUsers"
               @changeUsers="changeUsers"
               @updatePageLimit="updatePageLimit"
               @updatePageCurrent="updatePageCurrent" />
-            <DetailsInfo v-if="index === 1" :user-data="state.currentItem" @updateTenantsList="initData" />
+            <DetailsInfo
+              v-if="index === 1"
+              :user-data="state.currentTenant"
+              @updateTenantsList="updateTenantsList" />
           </bk-loading>
         </bk-tab-panel>
       </bk-tab>
@@ -95,8 +101,9 @@
 </template>
 
 <script setup lang="ts">
+import { Message, overflowTitle } from 'bkui-vue';
 import { DownShape, RightShape } from 'bkui-vue/lib/icon';
-import { reactive, ref } from 'vue';
+import { computed, inject, reactive, ref } from 'vue';
 
 import DetailsInfo from './details/DetailsInfo.vue';
 import UserInfo from './details/UserInfo.vue';
@@ -106,21 +113,29 @@ import {
   getTenantDepartmentsList,
   getTenantOrganizationDetails,
   getTenantOrganizationList,
+  getTenantUsersList,
 } from '@/http/organizationFiles';
 import { copy } from '@/utils';
+
+const vOverflowTitle = overflowTitle;
+const editLeaveBefore = inject('editLeaveBefore');
 
 const treeRef = ref();
 const state = reactive({
   isLoading: false,
+  treeLoading: false,
   tabLoading: false,
   treeData: [],
+  currentTenant: {},
+  currentUsers: [],
   currentItem: {},
   active: 'user_info',
   isDataEmpty: false,
   isEmptySearch: false,
+  isDataError: false,
   pagination: {
     current: 1,
-    count: 10,
+    count: 0,
     limit: 10,
   },
 });
@@ -150,14 +165,19 @@ const params = reactive({
 
 const convertLogo = name => name?.charAt(0).toUpperCase();
 
+const isTenant = computed(() => (!!state.currentTenant.isRoot));
+
 const initData = async () => {
   try {
     state.isLoading = true;
+    state.treeLoading = true;
     const res = await getTenantOrganizationList();
     state.treeData = res.data;
     state.treeData.forEach((item, index) => {
       if (index === 0) {
         getTenantDetails(item.id);
+        getTenantUsers(item.id);
+        state.currentItem = item;
       }
       item.isRoot = true;
       item.children = item.departments;
@@ -171,18 +191,35 @@ const initData = async () => {
     console.log(e);
   } finally {
     state.isLoading = false;
+    state.treeLoading = false;
   }
 };
 initData();
 
 const changeNode = async (node) => {
   if (state.currentItem.id === node.id) return;
+  state.currentItem = {
+    id: node.id,
+    name: node.name,
+    managers: [],
+  };
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
+  state.tabLoading = true;
+  params.page = 1;
+  state.pagination.current = 1;
   params.keyword = '';
   if (node.isRoot) {
     panels[1].isVisible = true;
     state.active = 'user_info';
     // 切换租户
     await getTenantDetails(node.id);
+    await getTenantUsers(node.id);
   } else {
     panels[1].isVisible = false;
     // 切换组织
@@ -190,6 +227,8 @@ const changeNode = async (node) => {
     await getTenantDepartmentsUser(node.id);
   }
 };
+
+const selectedId = computed(() => `${state.currentItem.id}`);
 
 const handleClick = (type, item) => {
   copy(item[type]);
@@ -199,34 +238,53 @@ const tabChange = (val) => {
   state.active = val;
 };
 
-const getTenantDetails = async (id: string) => {
-  state.tabLoading = true;
-  state.isDataEmpty = false;
-  state.isEmptySearch = false;
-  const res = await getTenantOrganizationDetails(id);
-  if (res.data.managers.length === 0) {
-    params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
+const getTenantUsers = async (id) => {
+  try {
+    state.tabLoading = true;
+    params.id = id;
+    const data = { ...params };
+    delete data.recursive;
+    state.isDataEmpty = false;
+    state.isEmptySearch = false;
+    state.isDataError = false;
+    const res = await getTenantUsersList(data);
+    if (res.data.count === 0) {
+      params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
+    }
+    state.pagination.count = res.data.count;
+    state.currentUsers = res.data.results;
+    state.tabLoading = false;
+  } catch (e) {
+    state.isDataError = true;
+    state.tabLoading = false;
+  } finally {
+    state.tabLoading = false;
   }
+};
+
+const getTenantDetails = async (id: string) => {
+  const res = await getTenantOrganizationDetails(id);
   state.pagination.count = res.data.managers.length;
-  state.currentItem = res.data;
-  state.currentItem.isRoot = true;
-  state.tabLoading = false;
+  state.currentTenant = res.data;
+  state.currentTenant.isRoot = true;
 };
 
 const getTenantDepartmentsUser = async (id) => {
-  state.tabLoading = true;
-  params.id = id;
-  state.isDataEmpty = false;
-  state.isEmptySearch = false;
   try {
+    state.tabLoading = true;
+    params.id = id;
+    state.isDataEmpty = false;
+    state.isEmptySearch = false;
+    state.isDataError = false;
     const res = await getTenantDepartmentsList(params);
     if (res.data.count === 0) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
     state.pagination.count = res.data.count;
-    state.currentItem.managers = res.data.results;
+    state.currentUsers = res.data.results;
+    state.tabLoading = false;
   } catch (e) {
-    console.log(e);
+    state.isDataError = true;
   } finally {
     state.tabLoading = false;
   }
@@ -234,32 +292,41 @@ const getTenantDepartmentsUser = async (id) => {
 
 const getDepartmentsDetails = async (node) => {
   const res = await getTenantDepartments(node.id);
-  state.currentItem = {
-    id: node.id,
-    name: node.name,
-    managers: [],
-  };
+  state.currentTenant = node;
   node.children = res.data;
 };
 // 搜索人员信息
-const searchUsers = async (value: string) => {
+const searchUsers = (value: string) => {
   params.keyword = value;
-  await getTenantDepartmentsUser(state.currentItem.id);
+  getUserList();
 };
 // 仅显示本级用户
 const changeUsers = async (value: boolean) => {
   params.recursive = value;
+  params.page = 1;
   await getTenantDepartmentsUser(state.currentItem.id);
 };
-const updatePageLimit = async (limit) => {
+const updatePageLimit = (limit) => {
   state.pagination.limit = limit;
   params.pageSize = limit;
-  await getTenantDepartmentsUser(state.currentItem.id);
+  getUserList();
 };
-const updatePageCurrent = async (current) => {
+const updatePageCurrent = (current) => {
   state.pagination.current = current;
   params.page = current;
-  await getTenantDepartmentsUser(state.currentItem.id);
+  getUserList();
+};
+
+const getUserList = () => {
+  state.currentTenant.isRoot ? getTenantUsers(state.currentItem.id) : getTenantDepartmentsUser(state.currentItem.id);
+};
+
+const updateTenantsList = () => {
+  getTenantDetails(state.currentTenant.id);
+  Message({
+    theme: 'success',
+    message: '租户信息更新成功',
+  });
 };
 </script>
 

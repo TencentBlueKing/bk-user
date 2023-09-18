@@ -47,11 +47,13 @@
   margin-right: 8px;
   border: 1px solid #C4C6CC;
   border-radius: 50%;
+  object-fit: contain;
 }
 
 .span-logo {
   display: inline-block;
   width: 16px;
+  margin-right: 8px;
   font-size: 12px;
   font-weight: 700;
   line-height: 16px;
@@ -60,5 +62,14 @@
   background-color: #C4C6CC;
   border-radius: 4px;
   flex-shrink: 0;
-  margin-right: 8px;
+}
+
+.clearfix {
+  &::after {
+    display: block;
+    clear: both;
+    font-size: 0;
+    content: '';
+    visibility: hidden;
+  }
 }

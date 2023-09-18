@@ -13,20 +13,20 @@ const myResolver = ResolverFactory.createResolver({
 });
 
 module.exports = {
-  plugins: [
-    [
-      'postcss-import',
-      {
-        resolve(id, baseDir) {
-          return myResolver.resolveSync({}, baseDir, id);
-        },
+  plugins: {
+    'postcss-simple-vars': {},
+    'postcss-mixins': {},
+    'postcss-nested-ancestors': {},
+    'postcss-nested': {},
+    'postcss-preset-env': {},
+    'postcss-url': {},
+    'postcss-import': {
+      resolve(id, baseDir) {
+        return myResolver.resolveSync({}, baseDir, id);
       },
-    ],
-    'postcss-simple-vars',
-    'postcss-mixins',
-    'postcss-nested-ancestors',
-    'postcss-nested',
-    'postcss-preset-env',
-    'postcss-url',
-  ],
+    },
+    'tailwindcss/nesting': 'postcss-nesting',
+    tailwindcss: {},
+    autoprefixer: {},
+  },
 };

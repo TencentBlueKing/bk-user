@@ -86,7 +86,7 @@
 
 <script setup lang="ts">
 import { DownShape, HelpDocumentFill } from 'bkui-vue/lib/icon';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive } from 'vue';
 
 import { logout } from '@/common/auth';
 import Login from '@/components/layouts/Login.vue';
@@ -109,7 +109,7 @@ const headerNav = reactive([
   },
   {
     name: '数据源管理',
-    path: 'datasource',
+    path: 'dataSource',
   },
   {
     name: '租户管理',

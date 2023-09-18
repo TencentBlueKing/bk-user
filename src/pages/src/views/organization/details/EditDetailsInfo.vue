@@ -11,7 +11,7 @@
             :rules="rulesBasicInfo"
           >
             <bk-form-item label="公司名称" property="name" required>
-              <bk-input v-model="formData.name" />
+              <bk-input v-model="formData.name" @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="公司ID" property="id" required>
               <bk-input
@@ -22,6 +22,7 @@
             <bk-form-item label="人员数量">
               <bk-radio-group
                 v-model="formData.feature_flags.user_number_visible"
+                @change="handleChange"
               >
                 <bk-radio-button :label="true">显示</bk-radio-button>
                 <bk-radio-button :label="false">隐藏</bk-radio-button>
@@ -53,8 +54,8 @@
         </bk-form>
       </div>
     </div>
-    <div class="footer">
-      <bk-button theme="primary" @click="handleSubmit">
+    <div class="footer-box">
+      <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
       <bk-button @click="() => $emit('handleCancel')">
@@ -65,7 +66,7 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, computed, watch, nextTick } from "vue";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits } from "vue";
 import { getBase64 } from "@/utils";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
 import { getTenantUsersList } from "@/http/tenantsFiles";
@@ -111,13 +112,14 @@ const state = reactive({
   username: "",
   count: 0,
   list: [],
+  isLoading: false,
 });
 
 const params = reactive({
-  tenant_id: props.tenantsData.id,
+  tenantId: props.tenantsData.id,
   keyword: "",
   page: 1,
-  page_size: 10,
+  pageSize: 10,
 });
 
 const rulesBasicInfo = {
@@ -157,10 +159,12 @@ const customRequest = (event) => {
     .catch((e) => {
       console.warn(e);
     });
+  handleChange();
 };
 
 const handleDelete = () => {
   formData.logo = "";
+  handleChange();
 };
 
 const fieldItemFn = (row: any) => {
@@ -265,12 +269,14 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
   }
 
   window.changeInput = true;
-  fetchUserList();
+  fetchUserList('');
 }
 
 // 获取管理员列表
-const fetchUserList = () => {
-  if (params.tenant_id) {
+const fetchUserList = (value: string) => {
+  params.keyword = value;
+  params.page = 1;
+  if (params.tenantId) {
     getTenantUsersList(params).then((res) => {
       const list = formData.managers.map((item) => item.username);
       state.count = res.data.count;
@@ -280,7 +286,7 @@ const fetchUserList = () => {
     });
   }
 }
-fetchUserList();
+fetchUserList('');
 
 const selectList = (list) => {
   formData.managers = formData.managers.filter(item => item.id);
@@ -298,13 +304,13 @@ const selectList = (list) => {
 }
 
 const scrollChange = () => {
-  params.page_size += 10;
+  params.page += 1;
   getTenantUsersList(params).then((res) => {
     const list = formData.managers.map((item) => item.username);
     state.count = res.data.count;
-    state.list = res.data.results.filter(
+    state.list.push(...res.data.results.filter(
       (item) => !list.includes(item.username)
-    );
+    ));
   });
 }
 
@@ -316,6 +322,7 @@ async function handleSubmit() {
   ];
 
   await Promise.all(validationPromises);
+  state.isLoading = true;
   putTenantOrganization();
 }
 
@@ -338,10 +345,31 @@ function putTenantOrganization() {
     })
     .catch((e) => {
       console.warn(e);
+    })
+    .finally(() => {
+      state.isLoading = false;
     });
+}
+
+const handleChange = () => {
+  window.changeInput = true;
 }
 </script>
 
 <style lang="less" scoped>
 @import url("@/css/tenantEditStyle.less");
+
+.operation-content {
+  padding: 0 !important;
+}
+
+.footer-box {
+  height: 48px;
+  line-height: 48px;
+
+  .bk-button {
+    width: 88px;
+    margin-right: 8px;
+  }
+}
 </style>

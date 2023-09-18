@@ -1,12 +1,15 @@
 <template>
   <div class="user-info-wrapper user-scroll-y">
-    <header v-if="!props.userData.isRoot">
-      <bk-checkbox v-model="isCurrentUsers" @change="emit('changeUsers', isCurrentUsers)">
+    <header>
+      <bk-checkbox
+        :class="{ 'is-status': isTenant }"
+        v-model="isCurrentUsers"
+        @change="emit('changeUsers', isCurrentUsers ? false : true)">
         仅显示本级用户（<span>{{ props.pagination.count }}</span>）
       </bk-checkbox>
       <bk-input
         class="header-right"
-        v-model="props.keyword"
+        v-model="searchValue"
         placeholder="搜索用户名、全名"
         type="search"
         clearable
@@ -16,7 +19,8 @@
     </header>
     <bk-table
       class="user-info-table"
-      :data="state.managers"
+      remote-pagination
+      :data="userList"
       :pagination="props.pagination"
       :border="['outer']"
       show-overflow-tooltip
@@ -27,7 +31,9 @@
         <Empty
           :is-data-empty="props.isDataEmpty"
           :is-search-empty="props.isEmptySearch"
-          @handleEmpty="handleClear" />
+          :is-data-error="props.isDataError"
+          @handleEmpty="handleClear"
+          @handleUpdate="handleClear" />
       </template>
       <bk-table-column prop="username" label="用户名">
         <template #default="{ row }">
@@ -72,15 +78,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, inject, reactive, ref } from 'vue';
+
 import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
-import { statusIcon } from '@/utils';
-
 import {
-  getTenantUsers
+  getTenantUsers,
 } from '@/http/organizationFiles';
+// import { statusIcon } from '@/utils';
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -97,6 +103,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isDataError: {
+    type: Boolean,
+    default: false,
+  },
   pagination: {
     type: Object,
     default: () => ({}),
@@ -104,29 +114,25 @@ const props = defineProps({
   keyword: {
     type: String,
     default: '',
-  }
+  },
+  isTenant: {
+    type: Boolean,
+    default: false,
+  },
 });
 const emit = defineEmits(['searchUsers', 'changeUsers', 'updatePageLimit', 'updatePageCurrent']);
-const isCurrentUsers = ref(false);
+const isCurrentUsers = ref(true);
 const detailsConfig = reactive({
   isShow: false,
   title: '',
 });
+const searchValue = ref(props.keyword);
 
 const state = reactive({
-  managers: [],
   userInfo: {},
 });
 
-watch(() => props.userData.managers, (value) => {
-  if (value.length > 0) {
-    state.managers = props.userData.managers;
-    state.isDataEmpty = false;
-  } else {
-    state.managers = [];
-    state.isDataEmpty = true;
-  }
-});
+const userList = computed(() => props?.userData || []);
 
 const handleClick = async (item: any) => {
   const res = await getTenantUsers(item.id);
@@ -160,11 +166,11 @@ const formatConvert = (data) => {
   return departments;
 };
 const pageLimitChange = (limit) => {
-  emit('updatePageLimit', limit)
-}
+  emit('updatePageLimit', limit);
+};
 const pageCurrentChange = (current) => {
   emit('updatePageCurrent', current);
-}
+};
 </script>
 
 <style lang="less" scoped>
@@ -178,6 +184,10 @@ const pageCurrentChange = (current) => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+
+    .is-status {
+      visibility: hidden;
+    }
 
     .header-right {
       width: 400px;

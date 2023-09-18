@@ -24,7 +24,9 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
+import { defineProps } from 'vue';
+
+defineProps({
   isDataEmpty: {
     type: Boolean,
     default: false,
@@ -38,6 +40,8 @@ const props = defineProps({
     default: false,
   },
 });
+
+defineEmits(['handleEmpty', 'handleUpdate']);
 </script>
 
 <style lang="less" scoped>

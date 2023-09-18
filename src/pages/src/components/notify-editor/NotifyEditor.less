@@ -1,0 +1,66 @@
+.tab-box {
+  .password-header {
+    display: flex;
+    line-height: 50px;
+
+    .bk-checkbox-group {
+      display: flex;
+      font-size: 14px;
+      line-height: 50px;
+
+      .password-tab {
+        padding-left: 20px;
+
+        .checkbox-item {
+          display: inline-block;
+          padding: 0 20px 0 5px;
+          font-size: 14px;
+        }
+
+        .bk-checkbox {
+          vertical-align: middle;
+        }
+      }
+    }
+
+    .checkbox-zh {
+      width: 85% !important;
+    }
+
+    .checkbox-en {
+      width: 75% !important;
+    }
+
+    .edit-info {
+      color: #3A84FF;
+
+      :hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+::v-deep .show-tab-color {
+  .password-header {
+    display: flex;
+    border-bottom: 1px solid #dcdee5;
+
+    .active-tab {
+      border-bottom: 2px solid #3A84FF;
+    }
+
+    .password-tab span:hover {
+      color: #3a84ff;
+      cursor: pointer;
+    }
+  }
+
+  .bk-tab-label-list .bk-tab-label-item.active::after {
+    height: 2px;
+  }
+
+  .bk-tab-header {
+    background-image: linear-gradient(transparent 41px, #dcdee5 0);
+  }
+}

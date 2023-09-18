@@ -35,6 +35,7 @@ from bkuser.biz.tenant import (
     TenantManagerWithoutID,
 )
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.plugins.local.models import PasswordInitialConfig
 
 logger = logging.getLogger(__name__)
 
@@ -84,12 +85,8 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         data = slz.validated_data
 
         # 初始化租户和租户管理员
-        tenant_info = TenantBaseInfo(
-            id=data["id"],
-            name=data["name"],
-            feature_flags=TenantFeatureFlag(**data["feature_flags"]),
-            logo=data.get("logo") or "",
-        )
+        feature_flags = TenantFeatureFlag(**data["feature_flags"])
+        tenant_info = TenantBaseInfo(id=data["id"], name=data["name"], feature_flags=feature_flags, logo=data["logo"])
         managers = [
             TenantManagerWithoutID(
                 username=i["username"],
@@ -100,7 +97,9 @@ class TenantListCreateApi(generics.ListCreateAPIView):
             )
             for i in data["managers"]
         ]
-        tenant_id = TenantHandler.create_with_managers(tenant_info, managers)
+        # 本地数据源密码初始化配置
+        config = PasswordInitialConfig(**data["password_initial_config"])
+        tenant_id = TenantHandler.create_with_managers(tenant_info, managers, config)
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data)
 

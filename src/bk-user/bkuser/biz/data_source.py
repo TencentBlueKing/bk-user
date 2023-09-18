@@ -18,8 +18,12 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
+    DataSourcePlugin,
     DataSourceUserLeaderRelation,
 )
+from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
 
 
 class DataSourceDepartmentInfoWithChildren(BaseModel):
@@ -51,25 +55,43 @@ class DataSourceHandler:
 
         return data
 
+    @staticmethod
+    def create_local_data_source_with_merge_config(
+        data_source_name: str,
+        owner_tenant_id: str,
+        password_initial_config: PasswordInitialConfig,
+    ) -> DataSource:
+        """使用与默认配置合并后的插件配置，创建本地数据源"""
+        plugin_id = DataSourcePluginEnum.LOCAL
+        plugin_config: LocalDataSourcePluginConfig = DefaultPluginConfigProvider().get(plugin_id)  # type: ignore
+        plugin_config.password_initial = password_initial_config
+
+        return DataSource.objects.create(
+            name=data_source_name,
+            owner_tenant_id=owner_tenant_id,
+            plugin=DataSourcePlugin.objects.get(id=plugin_id),
+            plugin_config=plugin_config.model_dump(),
+        )
+
 
 class DataSourceDepartmentHandler:
     @staticmethod
-    def get_department_info_map_by_id(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
+    def get_department_info_map_by_ids(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
         """
         获取部门基础信息
         """
-        departments = DataSourceDepartment.objects.filter(id__in=department_ids)
         departments_map: Dict = {}
-        for item in departments:
-            departments_map[item.id] = DataSourceDepartmentInfoWithChildren(
-                id=item.id,
-                name=item.name,
+        for dept in DataSourceDepartment.objects.filter(id__in=department_ids):
+            departments_map[dept.id] = DataSourceDepartmentInfoWithChildren(
+                id=dept.id,
+                name=dept.name,
                 children_ids=list(
-                    DataSourceDepartmentRelation.objects.get(department=item)
+                    DataSourceDepartmentRelation.objects.get(department=dept)
                     .get_children()
                     .values_list("department_id", flat=True)
                 ),
             )
+
         return departments_map
 
     @staticmethod
@@ -80,9 +102,9 @@ class DataSourceDepartmentHandler:
         # 是否返回子部门用户
         if not recursive:
             return list(
-                DataSourceDepartmentUserRelation.objects.filter(department_id=department_id).values_list(
-                    "user_id", flat=True
-                )
+                DataSourceDepartmentUserRelation.objects.filter(
+                    department_id=department_id,
+                ).values_list("user_id", flat=True)
             )
 
         department = DataSourceDepartmentRelation.objects.get(department_id=department_id)
@@ -90,44 +112,37 @@ class DataSourceDepartmentHandler:
             "department_id", flat=True
         )
         return list(
-            DataSourceDepartmentUserRelation.objects.filter(department_id__in=recursive_department_ids).values_list(
-                "user_id", flat=True
-            )
+            DataSourceDepartmentUserRelation.objects.filter(
+                department_id__in=recursive_department_ids,
+            ).values_list("user_id", flat=True)
         )
 
     @staticmethod
-    def get_user_department_ids_map(data_source_user_ids: List[int]) -> Dict[int, List[int]]:
+    def get_user_department_ids_map(user_ids: List[int]) -> Dict[int, List[int]]:
         """
-        获取数据源用户-部门id关系映射
+        批量获取数据源用户部门 id 信息
+
+        :param user_ids: 数据源用户 ID 列表
+        :returns: 多个数据源用户部门 ID 列表
         """
-        user_departments = DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids)
         user_department_ids_map = defaultdict(list)
-        for item in user_departments:
-            user_id = item.user_id
-            department_id = item.department_id
-            if item.user_id in user_department_ids_map:
-                user_department_ids_map[user_id].append(department_id)
-            else:
-                user_department_ids_map[user_id] = [department_id]
+        for item in DataSourceDepartmentUserRelation.objects.filter(user_id__in=user_ids):
+            user_department_ids_map[item.user_id].append(item.department_id)
 
         return user_department_ids_map
 
 
 class DataSourceUserHandler:
     @staticmethod
-    def get_user_leader_ids_map(data_source_user_ids: List[int]) -> Dict[int, List[int]]:
+    def get_user_leader_ids_map(user_ids: List[int]) -> Dict[int, List[int]]:
         """
-        获取数据源用户,上下级关系映射
+        批量获取数据源用户 leader id 信息
+
+        :param user_ids: 数据源用户 ID 列表
+        :returns: 多个数据源用户 leader ID 列表
         """
-        data_source_leaders = DataSourceUserLeaderRelation.objects.prefetch_related("leader").filter(
-            user_id__in=data_source_user_ids
-        )
-        # 数据源上下级关系映射
-        data_source_leaders_map = defaultdict(list)
-        for item in data_source_leaders:
-            leader_id = item.leader_id
-            if item.user_id in data_source_leaders_map:
-                data_source_leaders_map[item.user_id].append(leader_id)
-            else:
-                data_source_leaders_map[item.user_id] = [leader_id]
-        return data_source_leaders_map
+        leaders_map = defaultdict(list)
+        for relation in DataSourceUserLeaderRelation.objects.filter(user_id__in=user_ids):
+            leaders_map[relation.user_id].append(relation.leader_id)
+
+        return leaders_map

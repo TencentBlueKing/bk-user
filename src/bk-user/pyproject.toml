@@ -46,6 +46,8 @@ django-redis = "5.3.0"
 pydantic = "2.1.1"
 zxcvbn = "4.4.28"
 phonenumbers = "8.13.18"
+jsonref = "1.1.0"
+openpyxl = "3.1.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"
@@ -55,6 +57,7 @@ types-requests = "^2.31.0.1"
 pytest = "^7.4.0"
 pytest-django = "^4.5.2"
 types-pytz = "^2023.3.0.0"
+import-linter = "^1.11.1"
 
 [tool.black]
 line-length = 119
@@ -80,12 +83,10 @@ ignore_errors = true
 
 [tool.ruff]
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM"]
+select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
 # All Rule: https://beta.ruff.rs/docs/rules/
-# Disable E501 until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
+# Add `noqa: E501` manually when necessary until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
 ignore = [
-    # Logging statement uses f-string
-    "G004",
     # Consider moving this statement to an else block
     "TRY300",
     # Use raise from to specify exception cause
@@ -99,7 +100,11 @@ ignore = [
     # Avoid too many arguments
     "PLR0913",
     # Avoid too many return statements
-    "PLR0911"
+    "PLR0911",
+    # Exception should be named with `Error` suffix
+    "N818",
+    # raise-without-from-inside-except
+    "B904"
 ]
 # Same as Black.
 line-length = 119
@@ -138,6 +143,66 @@ max-complexity = 10
 
 [tool.ruff.isort]
 relative-imports-order = "closest-to-furthest"
+
+[tool.importlinter]
+root_package = "bkuser"
+
+# 分层
+[[tool.importlinter.contracts]]
+name = "Layers contract"
+type = "layers"
+layers = [
+    "bkuser.apis | bkuser.auth | bkuser.monitoring",
+    "bkuser.biz",
+    "bkuser.apps | bkuser.component",
+    "bkuser.plugins",
+    "bkuser.common",
+    "bkuser.utils",
+]
+
+# apps 分层
+[[tool.importlinter.contracts]]
+name = "Apps Layers contract"
+type = "layers"
+layers = [
+    "bkuser.apps.sync",
+    "bkuser.apps.tenant",
+    "bkuser.apps.data_source | bkuser.apps.idp",
+]
+
+# biz 分层
+[[tool.importlinter.contracts]]
+name = "Biz Layers contract"
+type = "layers"
+layers = [
+    "bkuser.biz.tenant",
+    "bkuser.biz.data_source | bkuser.biz.data_source_organization | bkuser.biz.exporters",
+    "bkuser.biz.validators",
+]
+
+# apis 独立模块
+[[tool.importlinter.contracts]]
+name = "Apis Independence contract"
+type = "independence"
+modules = [
+    "bkuser.apis.login",
+    "bkuser.apis.open",
+    "bkuser.apis.web",
+]
+
+# apis.web 独立模块
+[[tool.importlinter.contracts]]
+name = "Apis Web Independence contract"
+type = "independence"
+modules = [
+    "bkuser.apis.web.basic",
+    "bkuser.apis.web.data_source",
+    "bkuser.apis.web.organization",
+    "bkuser.apis.web.tenant",
+]
+ignore_imports = [
+    "bkuser.apis.web.*.views -> bkuser.apis.web.*.serializers",
+]
 
 [build-system]
 requires = ["poetry-core"]

@@ -6,10 +6,10 @@
           class="user-icon icon-arrow-left main-breadcrumbs__back"
           @click="handleBack" />
         <span class="main-breadcrumbs__current">
-          <span class="titile">{{ current }}</span>
-          <span class="subtitle" v-if="props.subtitle">
+          <span class="tittle">{{ current }}</span>
+          <span class="subtitle" v-if="subtitle">
             &nbsp;-&nbsp;
-            {{ props.subtitle }}
+            {{ subtitle }}
           </span>
         </span>
         <slot name="tag" />
@@ -21,12 +21,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineProps } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { useMainViewStore } from '@/store/mainView';
 
-const props = defineProps({
+defineProps({
   subtitle: {
     type: String,
     default: '',
@@ -44,12 +44,13 @@ const current = computed(() => store.breadCrumbsTitle || route.meta.navName);
 /**
  * back control
  */
-const showBack = computed(() => route.meta.showBack);
 const handleBack = () => {
   const { back } = window.history.state;
   if (back) {
     router.go(-1);
-    store.customBreadcrumbs = false;
+    if (!window.changeInput) {
+      store.customBreadcrumbs = false;
+    }
   } else {
     const { matched } = route;
     const count = matched.length;

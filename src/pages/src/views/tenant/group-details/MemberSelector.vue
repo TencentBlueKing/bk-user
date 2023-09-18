@@ -9,6 +9,7 @@
       multiple
       multiple-mode="tag"
       :remote-method="remoteFilter"
+      enable-scroll-load
       :scroll-loading="scrollLoading"
       @blur="handleCancel"
       @change="handleChange"
@@ -33,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { defineEmits, defineProps, ref } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -53,9 +54,11 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'selectList', 'scrollChange', 'searchUserList']);
 const isFocus = ref(false);
 const scrollLoading = ref(false);
+const isSearch = ref(false);
 
 // 远程搜索人员
 const remoteFilter = async (value: string) => {
+  value ? isSearch.value = true : isSearch.value = false;
   await emit('searchUserList', value);
 };
 const handleChange = (values: string[]) => {
@@ -78,7 +81,7 @@ const handleCancel = () => {
   emit('searchUserList', '');
 };
 const handleScrollEnd = () => {
-  if (props.params.page_size >= props.state.count) return;
+  if (isSearch.value || props.state.count < (props.params.page * 10)) return;
   scrollLoading.value = true;
   setTimeout(() => {
     emit('scrollChange');

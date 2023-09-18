@@ -10,14 +10,15 @@
           <bk-dropdown-menu ext-cls="dropdown-menu-ul">
             <p class="dropdown-title">数据源类型选择</p>
             <bk-dropdown-item
-              v-for="item in dropdownList"
+              v-for="item in state.typeList"
               :key="item"
               @click="newDataSource(item)"
             >
-              <i :class="item.icon"></i>
+              <img v-if="item.logo" :src="item.logo">
+              <i v-else :class="dataSourceType[item.id].icon"></i>
               <div class="dropdown-item">
-                <span class="dropdown-item-title">{{ item.title }}</span>
-                <span class="dropdown-item-subtitle">{{ item.subTitle }}</span>
+                <span class="dropdown-item-title">{{ item.name }}</span>
+                <span class="dropdown-item-subtitle">{{ item.description }}</span>
               </div>
             </bk-dropdown-item>
           </bk-dropdown-menu>
@@ -28,103 +29,133 @@
         v-model="searchVal"
         placeholder="搜索数据源名称"
         type="search"
+        clearable
+        @enter="handleEnter"
+        @clear="handleClear"
       />
     </header>
-    <bk-table
-      class="user-info-table"
-      :data="tableData"
-      settings
-      :border="['outer']"
-      show-overflow-tooltip
-    >
-      <bk-table-column prop="name" label="数据源名称">
-        <template #default="{ row }">
-          <bk-button text theme="primary" @click="handleClick(row)">
-            {{ row.name }}
-          </bk-button>
+    <bk-loading :loading="state.isLoading">
+      <bk-table
+        class="user-info-table"
+        :data="state.list"
+        :border="['outer']"
+        show-overflow-tooltip
+      >
+        <template #empty>
+          <Empty
+            :is-data-empty="state.isDataEmpty"
+            :is-search-empty="state.isEmptySearch"
+            :is-data-error="state.isDataError"
+            @handleEmpty="handleClear"
+            @handleUpdate="fetchDataSourceList"
+          />
         </template>
-      </bk-table-column>
-      <bk-table-column prop="type" label="数据源类型">
-        <template #default="{ row }">
-          <div>
-            <i :class="[dataSourceType[row.type]?.icon, 'type-icon']" />
-            <span>{{ dataSourceType[row.type]?.text }}</span>
-          </div>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="status" label="状态">
-        <template #default="{ row }">
-          <div>
-            <img :src="statusIcon[row.status]?.icon" class="account-status-icon" />
-            <span>{{ statusIcon[row.status]?.text }}</span>
-          </div>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="modified_by" label="更新人"></bk-table-column>
-      <bk-table-column prop="modified_at" label="更新时间"></bk-table-column>
-    </bk-table>
+        <bk-table-column prop="name" label="数据源名称">
+          <template #default="{ row }">
+            <bk-button text theme="primary" @click="handleClick(row)">
+              {{ row.name }}
+            </bk-button>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="plugin_id" label="数据源类型">
+          <template #default="{ row }">
+            <div>
+              <i :class="[dataSourceType[row.plugin_id]?.icon, 'type-icon']" />
+              <span>{{ dataSourceType[row.plugin_id]?.text }}</span>
+            </div>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="status" label="状态" :filter="{ list: statusFilters }">
+          <template #default="{ row }">
+            <div>
+              <img :src="dataSourceStatus[row.status]?.icon" class="account-status-icon" />
+              <span>{{ dataSourceStatus[row.status]?.text }}</span>
+            </div>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="updater" label="更新人">
+          <template #default="{ row }">
+            <span>{{ row.updater || '--' }}</span>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="updated_at" label="更新时间"></bk-table-column>
+      </bk-table>
+    </bk-loading>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
+import Empty from '@/components/Empty.vue';
+import { getDataSourceList, getDataSourcePlugins } from '@/http/dataSourceFiles';
 import router from '@/router/index';
-import { dataSourceType, statusIcon } from '@/utils';
+import { useMainViewStore } from '@/store/mainView';
+import { dataSourceStatus, dataSourceType } from '@/utils';
+
+const store = useMainViewStore();
+store.customBreadcrumbs = false;
 
 const searchVal = ref('');
-const dropdownList = ref([
-  {
-    icon: 'user-icon icon-shujuku',
-    title: '本地数据源',
-    subTitle: '支持用户的增删改查，以及用户的登录认证',
-    type: 'local',
-  },
-  // {
-  //   icon: 'user-icon icon-win',
-  //   title: 'Microsoft Active Directory',
-  //   subTitle:
-  //       '支持对接 Microsoft Active Directory，将用户信息同步到本地或者直接通过接口完成用户登录验证',
-  //   type: 'mad',
-  // },
-  // {
-  //   icon: 'user-icon icon-ladp',
-  //   title: 'OpenLDAP',
-  //   subTitle:
-  //       '支持对接 OpenLDAP，将用户信息同步到本地或者直接通过接口完成用户登录验证',
-  //   type: 'ldap',
-  // },
-  // {
-  //   icon: 'user-icon icon-qiyeweixin',
-  //   title: '企业微信',
-  //   subTitle: '支持企业微信用户数据同步和登录认证',
-  //   type: 'wechat',
-  // },
-]);
+const state = reactive({
+  isLoading: false,
+  list: [],
+  // 搜索结果为空
+  isEmptySearch: false,
+  // 表格请求出错
+  isDataError: false,
+  // 表格请求结果为空
+  isDataEmpty: false,
+  typeList: [],
+});
 
-const tableData = [
-  {
-    name: '联通子公司正式员工',
-    type: 'local',
-    status: 'normal',
-    modified_by: 'v_yutyi',
-    modified_at: '2022-04-30  22:35:49',
-  },
-  {
-    name: '企业内部',
-    type: 'local',
-    status: 'disabled',
-    modified_by: 'v_yutyi',
-    modified_at: '2022-04-30  22:35:49',
-  },
+const statusFilters = [
+  { text: '正常', value: 'enabled' },
+  { text: '未启用', value: 'disabled' },
 ];
+
+onMounted(() => {
+  fetchDataSourceList();
+  getDataSourcePlugins().then((res) => {
+    state.typeList = res.data;
+  });
+});
+
+const fetchDataSourceList = async () => {
+  try {
+    state.isLoading = true;
+    state.isDataEmpty = false;
+    state.isEmptySearch = false;
+    state.isDataError = false;
+    const res = await getDataSourceList(searchVal.value);
+    if (res.data.length === 0) {
+      searchVal.value === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
+    }
+    state.list = res.data;
+    state.isLoading = false;
+  } catch (error) {
+    state.isDataError = true;
+  } finally {
+    state.isLoading = false;
+  }
+};
+
+// 搜索数据源列表
+const handleEnter = (value: string) => {
+  searchVal.value = value;
+  fetchDataSourceList();
+};
+
+const handleClear = () => {
+  searchVal.value = '';
+  fetchDataSourceList();
+};
 
 function handleClick(item) {
   router.push({
     name: 'dataConfDetails',
     params: {
-      name: item.name,
-      type: item.type,
+      id: item.id,
     },
   });
 }
@@ -132,7 +163,7 @@ function newDataSource(item) {
   router.push({
     name: 'newLocal',
     params: {
-      type: item.type,
+      type: item.id,
     },
   });
 }
@@ -178,6 +209,7 @@ function newDataSource(item) {
     }
 
     .account-status-icon {
+      display: inline-block;
       width: 16px;
       height: 16px;
       margin-right: 5px;
@@ -201,6 +233,11 @@ function newDataSource(item) {
     padding: 10px 16px;
     line-height: 32px;
     align-items: center;
+
+    img {
+      width: 16px;
+      height: 16px;
+    }
 
     .user-icon {
       font-size: 24px;

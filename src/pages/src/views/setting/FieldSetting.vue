@@ -24,7 +24,6 @@
       <bk-table-column prop="name" label="字段名称">
         <template #default="{ row }">
           <div class="field-name">
-            <i class="user-icon icon-drag move" />
             <span class="name">{{ row.name }}</span>
             <bk-tag theme="info" v-if="row.builtin">内置</bk-tag>
           </div>
@@ -76,8 +75,7 @@
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
 import InfoBox from 'bkui-vue/lib/info-box';
-import Sortable from 'sortablejs';
-import { inject, nextTick, reactive, ref } from 'vue';
+import { inject, reactive } from 'vue';
 
 import FieldsAdd from './FieldsAdd.vue';
 
@@ -164,25 +162,6 @@ const fieldStatus = (type: boolean) => {
   }
 };
 
-const initSortable = (className: string) => {
-  // 获取表格row的父节点
-  const table = document.querySelector(`.${className} .bk-table-body tbody`);
-  // 创建拖拽实例
-  Sortable.create(table, {
-    handle: '.move',
-    group: table,
-    ghostClass: 'blue-background-class',
-    animation: 150,
-    onUpdate: (event: any) => {
-      console.log('event', event);
-    },
-  });
-};
-
-nextTick(() => {
-  initSortable('field-setting-table');
-});
-
 const addField = () => {
   fieldData.currentEditorData = {};
   fieldData.title = '添加字段';
@@ -197,7 +176,7 @@ const editField = (item) => {
   fieldData.isShow = true;
 };
 
-const deleteField = (item) => {
+const deleteField = () => {
   InfoBox({
     title: '确认要删除吗？',
     confirmText: '确认删除',
@@ -241,12 +220,6 @@ const fetchFieldList = () => {};
 
   :deep(.field-setting-table) {
     .field-name {
-      .move {
-        font-size: 16px;
-        color: #c8c8c8;
-        cursor: move;
-      }
-
       .name {
         margin: 0 8px;
         color: #63656e;

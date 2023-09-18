@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
 const props = defineProps({
   currentEditorData: {
@@ -159,6 +159,7 @@ const props = defineProps({
     default: '',
   },
 });
+defineEmits(['handleCancel', 'submitData']);
 
 const fieldsRef = ref();
 let fieldsInfor = reactive({
@@ -184,12 +185,6 @@ const state = reactive({
   isRepeatClick: false,
   // 是否是枚举，显示对应的内容
   isShowEg: false,
-});
-const verifyInfor = reactive({
-  name: false,
-  englishMark: false,
-  egId: false,
-  egValue: false,
 });
 const typeList = [
   {
@@ -269,7 +264,7 @@ initData();
 
 // 下拉框 选择对应的类型，布尔值 字符串 枚举 数值
 // eslint-disable-next-line no-unused-vars
-const selectedType = (newType, oldType) => {
+const selectedType = (newType) => {
   window.changeInput = true;
   if (newType === 'enum') {
     state.isShowEg = true;
@@ -314,21 +309,7 @@ const addEg = () => {
   };
   fieldsInfor.options.push(param);
 };
-const getByteLen = (str) => {
-  // 匹配所有的中文
-  const reg = /[\u4E00-\u9FA5]/;
-  let len = 0;
-  // 去掉前后空格
-  str = str.replace(/(^\s+)|(\s+$)/g, '').replace(/\s/g, '');
-  for (let i = 0; i < str.length; i++) {
-    if (reg.test(str[i])) {
-      len += 2;
-    } else {
-      len += 1;
-    }
-  }
-  return len;
-};
+
 // 表单校验
 const submitInfor = () => {
   fieldsRef.value.validate();
