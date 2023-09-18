@@ -27,7 +27,8 @@
           </li>
           <li>
             <span class="key">密码不允许：</span>
-            <span class="value">
+            <span class="value" v-if="passwordRule?.not_continuous_count === 0">--</span>
+            <span class="value" v-else>
               连续{{ passwordRule?.not_continuous_count }}位出现
               {{ passwordNotAllowedMap(passwordRule) }}
             </span>

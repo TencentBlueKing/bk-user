@@ -84,7 +84,7 @@ export default createRouter({
           ],
         },
         {
-          path: 'local-details/:id',
+          path: 'local-details/:id/:status',
           name: 'dataConfDetails',
           meta: {
             routeParentName: 'dataSource',

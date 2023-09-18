@@ -4,9 +4,12 @@
       <template #tag>
         <bk-tag>
           <template #icon>
-            <i :class="dataSourceType[route.params.type].icon" />
+            <div class="datasource-type-icon" v-for="item in typeList" :key="item">
+              <img v-if="item.id === route.params.type && item.logo" :src="item.logo">
+              <i v-else :class="dataSourceType[route.params.type].icon" />
+              <span>{{ dataSourceType[route.params.type].text }}</span>
+            </div>
           </template>
-          {{ dataSourceType[route.params.type].text }}
         </bk-tag>
       </template>
     </MainBreadcrumbsDetails>
@@ -36,7 +39,7 @@
               type="number"
               suffix="至32位"
               :min="10"
-              :max="31"
+              :max="32"
               v-model="formData.config.password_rule.min_length"
               @change="handleChange"
             />
@@ -243,7 +246,7 @@ import { useRoute } from 'vue-router';
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import useValidate from '@/hooks/use-validate';
-import { getDataSourceDetails, getDefaultConfig, newDataSource, putDataSourceDetails } from '@/http/dataSourceFiles';
+import { getDataSourceDetails, getDataSourcePlugins, getDefaultConfig, newDataSource, putDataSourceDetails } from '@/http/dataSourceFiles';
 import router from '@/router';
 import { useMainViewStore } from '@/store/mainView';
 import { dataSourceType, passwordMustIncludes, passwordNotAllowed } from '@/utils';
@@ -283,9 +286,13 @@ const rulesInfo = {
   min_length: [validate.required],
 };
 
+const typeList = ref([]);
+
 onMounted(async () => {
   isLoading.value = true;
   try {
+    const pluginsRes = await getDataSourcePlugins();
+    typeList.value = pluginsRes.data;
     if (currentId.value) {
       store.breadCrumbsTitle = '编辑数据源';
       const res = await getDataSourceDetails(currentId.value);
