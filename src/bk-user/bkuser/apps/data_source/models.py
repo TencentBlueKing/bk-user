@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import uuid
 
 from django.conf import settings
 from django.db import models
@@ -58,7 +57,7 @@ class DataSource(AuditedModel):
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
-    code = models.CharField("用户标识", max_length=128, default=uuid.uuid4)
+    # code = models.CharField("用户标识", max_length=128, default=uuid.uuid4)
 
     # ----------------------- 内置字段相关 -----------------------
     username = models.CharField("用户名", max_length=128)
@@ -79,7 +78,7 @@ class DataSourceUser(TimestampedModel):
     class Meta:
         ordering = ["id"]
         unique_together = [
-            ("code", "data_source"),
+            # ("code", "data_source"),
             ("username", "data_source"),
         ]
 

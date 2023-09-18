@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from rest_framework.request import Request
 
+from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.error_codes import error_codes
 
 
@@ -24,3 +25,6 @@ class CurrentUserTenantMixin:
             raise error_codes.GET_CURRENT_TENANT_FAILED
 
         return tenant_id
+
+    def get_current_tenant_user(self) -> TenantUser:
+        return TenantUser.objects.get(id=self.request.user.id)
