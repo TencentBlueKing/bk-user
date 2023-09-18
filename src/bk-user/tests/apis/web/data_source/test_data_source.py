@@ -179,7 +179,6 @@ class TestDataSourceCreateApi:
                 # 本地数据源不需要字段映射配置
             },
         )
-        print(resp.content)
         assert resp.status_code == status.HTTP_201_CREATED
 
     def test_create_with_minimal_plugin_config(self, api_client):
