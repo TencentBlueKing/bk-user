@@ -27,4 +27,7 @@ class CurrentUserTenantMixin:
         return tenant_id
 
     def get_current_tenant_user(self) -> TenantUser:
-        return TenantUser.objects.get(id=self.request.user.id)
+        tenant_user = TenantUser.objects.filter(id=self.request.user.id).first()
+        if not tenant_user:
+            raise error_codes.TENANT_USER_NOT_EXIST
+        return tenant_user

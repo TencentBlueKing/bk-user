@@ -49,7 +49,7 @@ class NatureUserHandler:
         """
         tenant_user = TenantUser.objects.filter(id=tenant_user_id).first()
         if not tenant_user:
-            raise error_codes.GET_CURRENT_TENANT_USER_ID_FAILED
+            raise error_codes.TENANT_USER_NOT_EXIST
 
         natural_user = DataSourceUserNaturalUserRelation.objects.filter(
             data_source_user_id=tenant_user.data_source_user_id

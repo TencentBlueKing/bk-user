@@ -16,7 +16,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.person_center.serializers import (
-    NaturalUserRelatedTenantUserListOutputSLZ,
+    NaturalUserWithTenantUserListOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.tenant.models import TenantUser
@@ -27,9 +27,9 @@ class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView)
     pagination_class = None
 
     @swagger_auto_schema(
-        tags=["user-center"],
+        tags=["person_center"],
         operation_description="个人中心-关联账户列表",
-        responses={status.HTTP_200_OK: NaturalUserRelatedTenantUserListOutputSLZ()},
+        responses={status.HTTP_200_OK: NaturalUserWithTenantUserListOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         current_tenant_user = self.get_current_tenant_user()
@@ -37,15 +37,14 @@ class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView)
         # 获取当前登录的租户用户的自然人
         nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user.id)
 
-        # 未绑定自然人，则返回当用户所属数据源用户
-        data_source_user_ids: List = [current_tenant_user.data_source_user_id]
+        data_source_user_ids: List[int] = []
 
         # 当前租户用户的数据源用户绑定了自然人，返回自然人绑定数据源用户
         if nature_user is not None:
             data_source_user_ids += nature_user.data_source_user_ids
         else:
             # 未绑定自然人，则返回当用户所属数据源用户
-            data_source_user_ids = [current_tenant_user.data_source_user_id]
+            data_source_user_ids.append(current_tenant_user.data_source_user.id)
 
         # 将当前登录置顶
         # 通过比对租户用户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
@@ -68,7 +67,7 @@ class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView)
             ],
         )
 
-        return Response(NaturalUserRelatedTenantUserListOutputSLZ(data).data)
+        return Response(NaturalUserWithTenantUserListOutputSLZ(data).data)
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
@@ -77,7 +76,7 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
-        tags=["user-center"],
+        tags=["person_center"],
         operation_description="个人中心-关联账户详情",
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )

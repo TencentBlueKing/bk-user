@@ -90,7 +90,6 @@ class ErrorCodes:
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     UPDATE_TENANT_MANAGERS_FAILED = ErrorCode(_("更新租户管理员失败"))
     GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
-    GET_CURRENT_TENANT_USER_ID_FAILED = ErrorCode(_("无法找到当前用户ID"))
 
 
 # 实例化一个全局对象
