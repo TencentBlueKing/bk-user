@@ -145,7 +145,12 @@ class LocalDataSourceDataParser:
         for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
             if user_orgs := row[self.org_col_idx].value:
                 for org in user_orgs.split(","):
-                    organizations.add(org.strip())
+                    cur_org = org.strip()
+                    organizations.add(cur_org)
+                    # 所有的父部门都要被添加进来
+                    while "/" in cur_org:
+                        cur_org, __, __ = cur_org.rpartition("/")
+                        organizations.add(cur_org.strip())
 
         # 组织路径：本数据源部门 Code 映射表
         org_code_map = {org: gen_code(org) for org in organizations}

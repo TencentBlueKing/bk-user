@@ -73,7 +73,7 @@ class LocalDataSourceIdentityInfoInitializer:
 
         self._init_users_identity_info([user])
 
-    def _can_skip(self):
+    def _can_skip(self) -> bool:
         """预先判断能否直接跳过"""
 
         # 不是本地数据源的，不需要初始化

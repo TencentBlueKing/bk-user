@@ -81,23 +81,29 @@ class TestLocalDataSourceDataParser:
         company_code = gen_code("公司")
         dept_a_code = gen_code("公司/部门A")
         dept_b_code = gen_code("公司/部门B")
+        dept_c_code = gen_code("公司/部门C")
         center_aa_code = gen_code("公司/部门A/中心AA")
         center_ab_code = gen_code("公司/部门A/中心AB")
         group_aaa_code = gen_code("公司/部门A/中心AA/小组AAA")
         group_aba_code = gen_code("公司/部门A/中心AB/小组ABA")
         center_ba_code = gen_code("公司/部门B/中心BA")
         group_baa_code = gen_code("公司/部门B/中心BA/小组BAA")
+        center_ca_code = gen_code("公司/部门C/中心CA")
+        group_caa_code = gen_code("公司/部门C/中心CA/小组CAA")
 
         assert sorted(parser.get_departments(), key=lambda d: d.name) == [
             RawDataSourceDepartment(code=center_aa_code, name="中心AA", parent=dept_a_code),
             RawDataSourceDepartment(code=center_ab_code, name="中心AB", parent=dept_a_code),
             RawDataSourceDepartment(code=center_ba_code, name="中心BA", parent=dept_b_code),
+            RawDataSourceDepartment(code=center_ca_code, name="中心CA", parent=dept_c_code),
             RawDataSourceDepartment(code=company_code, name="公司", parent=None),
             RawDataSourceDepartment(code=group_aaa_code, name="小组AAA", parent=center_aa_code),
             RawDataSourceDepartment(code=group_aba_code, name="小组ABA", parent=center_ab_code),
             RawDataSourceDepartment(code=group_baa_code, name="小组BAA", parent=center_ba_code),
+            RawDataSourceDepartment(code=group_caa_code, name="小组CAA", parent=center_ca_code),
             RawDataSourceDepartment(code=dept_a_code, name="部门A", parent=company_code),
             RawDataSourceDepartment(code=dept_b_code, name="部门B", parent=company_code),
+            RawDataSourceDepartment(code=dept_c_code, name="部门C", parent=company_code),
         ]
 
     def test_get_users(self, user_wk):
@@ -127,7 +133,7 @@ class TestLocalDataSourceDataParser:
                     "full_name": "李四",
                     "email": "lisi@m.com",
                     "age": "21",
-                    "gender": "male",
+                    "gender": "female",
                     "region": "region-1",
                     "phone": "13512345672",
                     "phone_country_code": "86",
@@ -172,7 +178,7 @@ class TestLocalDataSourceDataParser:
                     "full_name": "柳七",
                     "email": "liuqi@m.com",
                     "age": "24",
-                    "gender": "male",
+                    "gender": "female",
                     "region": "region-4",
                     "phone": "13512345675",
                     "phone_country_code": "63",
@@ -202,7 +208,7 @@ class TestLocalDataSourceDataParser:
                     "full_name": "杨九",
                     "email": "yangjiu@m.com",
                     "age": "26",
-                    "gender": "male",
+                    "gender": "female",
                     "region": "region-6",
                     "phone": "13512345677",
                     "phone_country_code": "86",
@@ -232,7 +238,7 @@ class TestLocalDataSourceDataParser:
                     "full_name": "林十一",
                     "email": "linshiyi@m.com",
                     "age": "28",
-                    "gender": "male",
+                    "gender": "female",
                     "region": "region-8",
                     "phone": "13512345679",
                     "phone_country_code": "86",
@@ -256,14 +262,29 @@ class TestLocalDataSourceDataParser:
                 departments=[gen_code("公司/部门B/中心BA/小组BAA")],
             ),
             RawDataSourceUser(
+                code=gen_code("qinshisan"),
+                properties={
+                    "username": "qinshisan",
+                    "full_name": "秦十三",
+                    "email": "qinshisan@m.com",
+                    "age": "30",
+                    "gender": "female",
+                    "region": "region-10",
+                    "phone": "13512245671",
+                    "phone_country_code": "86",
+                },
+                leaders=[gen_code("lisi")],
+                departments=[gen_code("公司/部门C/中心CA/小组CAA")],
+            ),
+            RawDataSourceUser(
                 code=gen_code("freedom"),
                 properties={
                     "username": "freedom",
                     "full_name": "自由人",
                     "email": "freedom@m.com",
-                    "age": "30",
-                    "gender": "male",
-                    "region": "region-10",
+                    "age": "666",
+                    "gender": "other",
+                    "region": "solar-system",
                     "phone": "1351234567",
                     "phone_country_code": "49",
                 },

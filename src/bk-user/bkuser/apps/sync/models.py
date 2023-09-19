@@ -87,7 +87,7 @@ class DataSourceDepartmentChangeLog(TimestampedModel):
 class TenantSyncTask(TimestampedModel):
     """租户同步任务"""
 
-    tenant_id = models.IntegerField("租户 ID")
+    tenant_id = models.CharField("租户 ID", max_length=128)
     data_source_id = models.IntegerField("数据源 ID")
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
