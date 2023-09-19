@@ -22,6 +22,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.plugins.local.utils import gen_code
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -77,7 +78,9 @@ class DataSourceOrganizationHandler:
         # TODO：补充日志
         with transaction.atomic():
             # 创建数据源用户
-            user = DataSourceUser.objects.create(data_source=data_source, **base_user_info.model_dump())
+            user = DataSourceUser.objects.create(
+                data_source=data_source, code=gen_code(base_user_info.username), **base_user_info.model_dump()
+            )
 
             # 批量创建数据源用户-部门关系
             department_user_relation_objs = [

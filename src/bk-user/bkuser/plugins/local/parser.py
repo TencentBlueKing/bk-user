@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from collections import Counter
-from hashlib import sha256
 from typing import List
 
 import phonenumbers
@@ -21,10 +20,12 @@ from bkuser.plugins.local.exceptions import (
     CustomColumnNameInvalid,
     DuplicateColumnName,
     DuplicateUsername,
+    RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
     UserLeaderInvalid,
     UserSheetNotExists,
 )
+from bkuser.plugins.local.utils import gen_code
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
@@ -125,10 +126,11 @@ class LocalDataSourceDataParser:
             info = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
             for field_name in self.required_field_names:
                 if not info.get(field_name):
-                    raise ValueError(_("待导入文件中必填字段 {} 存在空值").format(field_name))
+                    raise RequiredFieldIsEmpty(_("待导入文件中必填字段 {} 存在空值").format(field_name))
 
             usernames.append(info["username"])
-            leaders.extend([ld.strip() for ld in info["leaders"].split(",") if ld])
+            if user_leaders := info["leaders"]:
+                leaders.extend([ld.strip() for ld in user_leaders.split(",") if ld])
 
         # 6. 检查用户名是否有重复的
         if duplicate_usernames := [n for n, cnt in Counter(usernames).items() if cnt > 1]:
@@ -146,7 +148,7 @@ class LocalDataSourceDataParser:
                     organizations.add(org.strip())
 
         # 组织路径：本数据源部门 Code 映射表
-        org_code_map = {org: self.gen_code(org) for org in organizations}
+        org_code_map = {org: gen_code(org) for org in organizations}
         for org in organizations:
             parent_org, __, dept_name = org.rpartition("/")
             self.departments.append(
@@ -159,10 +161,10 @@ class LocalDataSourceDataParser:
 
             department_codes, leader_codes = [], []
             if organizations := properties.pop("organizations"):
-                department_codes = [self.gen_code(org.strip()) for org in organizations.split(",") if org]
+                department_codes = [gen_code(org.strip()) for org in organizations.split(",") if org]
 
             if leaders := properties.pop("leaders"):
-                leader_codes = [self.gen_code(ld.strip()) for ld in leaders.split(",") if ld]
+                leader_codes = [gen_code(ld.strip()) for ld in leaders.split(",") if ld]
 
             phone_number = str(properties.pop("phone_number"))
             # 默认认为是不带国际代码的
@@ -177,15 +179,9 @@ class LocalDataSourceDataParser:
             properties = {k: str(v) for k, v in properties.items() if v is not None}
             self.users.append(
                 RawDataSourceUser(
-                    code=self.gen_code(properties["username"]),
+                    code=gen_code(properties["username"]),
                     properties=properties,
                     leaders=leader_codes,
                     departments=department_codes,
                 )
             )
-
-    @staticmethod
-    def gen_code(username_or_org: str) -> str:
-        # 本地数据源组织没有提供用户及部门 code 的方式，
-        # 因此使用 sha256 计算以避免冲突，也便于后续插入 DB 时进行比较
-        return sha256(username_or_org.encode("utf-8")).hexdigest()

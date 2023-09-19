@@ -31,6 +31,10 @@ class DuplicateColumnName(LocalDataSourcePluginError):
     """待导入文件中存在重复列名"""
 
 
+class RequiredFieldIsEmpty(LocalDataSourcePluginError):
+    """待导入文件中必填字段为空"""
+
+
 class DuplicateUsername(LocalDataSourcePluginError):
     """待导入文件中存在重复用户"""
 

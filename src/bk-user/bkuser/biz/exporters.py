@@ -155,7 +155,7 @@ class DataSourceUserExporter:
             .values("user_id", "department_id")
         )
         return {
-            user_id: [r["department_id"] for r in group]
+            user_id: sorted([r["department_id"] for r in group])
             for user_id, group in groupby(relations, key=lambda r: r["user_id"])
         }
 
@@ -171,7 +171,7 @@ class DataSourceUserExporter:
             .values("user_id", "leader_id")
         )
         return {
-            user_id: [r["leader_id"] for r in group]
+            user_id: sorted([r["leader_id"] for r in group])
             for user_id, group in groupby(relations, key=lambda r: r["user_id"])
         }
 
