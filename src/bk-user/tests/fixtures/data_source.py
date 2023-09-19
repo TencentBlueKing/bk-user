@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Any, Dict
+
 import pytest
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -19,29 +21,139 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.constants import NotificationMethod, NotificationScene, PasswordGenerateMethod
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import DEFAULT_TENANT
 
 
 @pytest.fixture()
-def bare_local_data_source() -> DataSource:
+def local_ds_plugin_config() -> Dict[str, Any]:
+    return {
+        "enable_account_password_login": True,
+        "password_rule": {
+            "min_length": 12,
+            "contain_lowercase": True,
+            "contain_uppercase": True,
+            "contain_digit": True,
+            "contain_punctuation": True,
+            "not_continuous_count": 5,
+            "not_keyboard_order": True,
+            "not_continuous_letter": True,
+            "not_continuous_digit": True,
+            "not_repeated_symbol": True,
+            "valid_time": 7,
+            "max_retries": 3,
+            "lock_time": 3600,
+        },
+        "password_initial": {
+            "force_change_at_first_login": True,
+            "cannot_use_previous_password": True,
+            "reserved_previous_password_count": 3,
+            "generate_method": PasswordGenerateMethod.RANDOM,
+            "fixed_password": None,
+            "notification": {
+                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
+                "templates": [
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.USER_INITIALIZE,
+                        "title": "您的账户已经成功创建",
+                        "sender": "蓝鲸智云",
+                        "content": "您的账户已经成功创建，请尽快修改密码",
+                        "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
+                    },
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.RESET_PASSWORD,
+                        "title": "登录密码重置",
+                        "sender": "蓝鲸智云",
+                        "content": "点击以下链接以重置代码",
+                        "content_html": "<p>点击以下链接以重置代码</p>",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.USER_INITIALIZE,
+                        "sender": "蓝鲸智云",
+                        "content": "您的账户已经成功创建，请尽快修改密码",
+                        "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.RESET_PASSWORD,
+                        "sender": "蓝鲸智云",
+                        "content": "点击以下链接以重置代码",
+                        "content_html": "<p>点击以下链接以重置代码</p>",
+                    },
+                ],
+            },
+        },
+        "password_expire": {
+            "remind_before_expire": [1, 7],
+            "notification": {
+                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
+                "templates": [
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.PASSWORD_EXPIRING,
+                        "title": "【蓝鲸智云】密码即将到期提醒！",
+                        "sender": "蓝鲸智云",
+                        "content": "您的密码即将到期！",
+                        "content_html": "<p>您的密码即将到期！</p>",
+                    },
+                    {
+                        "method": NotificationMethod.EMAIL,
+                        "scene": NotificationScene.PASSWORD_EXPIRED,
+                        "title": "【蓝鲸智云】密码到期提醒！",
+                        "sender": "蓝鲸智云",
+                        "content": "点击以下链接以重置代码",
+                        "content_html": "<p>您的密码已到期！</p>",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.PASSWORD_EXPIRING,
+                        "sender": "蓝鲸智云",
+                        "content": "您的密码即将到期！",
+                        "content_html": "<p>您的密码即将到期！</p>",
+                    },
+                    {
+                        "method": NotificationMethod.SMS,
+                        "scene": NotificationScene.PASSWORD_EXPIRED,
+                        "sender": "蓝鲸智云",
+                        "content": "您的密码已到期！",
+                        "content_html": "<p>您的密码已到期！</p>",
+                    },
+                ],
+            },
+        },
+    }
+
+
+@pytest.fixture()
+def local_ds_plugin() -> DataSourcePlugin:
+    return DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL)
+
+
+@pytest.fixture()
+def bare_local_data_source(local_ds_plugin_config, local_ds_plugin) -> DataSource:
     """裸本地数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
         name=generate_random_string(),
         owner_tenant_id=DEFAULT_TENANT,
-        plugin=DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL.value),
+        plugin=local_ds_plugin,
+        plugin_config=local_ds_plugin_config,
     )
 
 
 @pytest.fixture()
-def full_local_data_source() -> DataSource:
+def full_local_data_source(local_ds_plugin_config, local_ds_plugin) -> DataSource:
     """携带用户，部门信息的本地数据源"""
 
     # 数据源
     ds = DataSource.objects.create(
         name=generate_random_string(),
         owner_tenant_id=DEFAULT_TENANT,
-        plugin=DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL.value),
+        plugin=local_ds_plugin,
+        plugin_config=local_ds_plugin_config,
     )
 
     # 数据源用户

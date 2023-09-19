@@ -12,7 +12,12 @@ import pytest
 from bkuser.apps.tenant.models import Tenant
 from bkuser.auth.models import User
 
-from tests.fixtures.data_source import bare_local_data_source, full_local_data_source  # noqa: F401
+from tests.fixtures.data_source import (  # noqa: F401
+    bare_local_data_source,
+    full_local_data_source,
+    local_ds_plugin,
+    local_ds_plugin_config,
+)
 from tests.fixtures.tenant import tenant_user_custom_fields  # noqa: F401
 from tests.test_utils.auth import create_user
 from tests.test_utils.helpers import generate_random_string

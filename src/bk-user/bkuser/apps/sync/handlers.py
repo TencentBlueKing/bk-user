@@ -10,10 +10,17 @@ specific language governing permissions and limitations under the License.
 """
 from django.dispatch import receiver
 
+from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.data_models import TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.signals import post_sync_data_source
+
+
+@receiver(post_sync_data_source)
+def initialize_local_data_source_identity_info(sender, data_source: DataSource, **kwargs):
+    """在完成数据源同步后，需要对本地数据源的用户账密信息做初始化"""
+    LocalDataSourceIdentityInfoInitializer(data_source).initialize()
 
 
 @receiver(post_sync_data_source)

@@ -11,8 +11,10 @@ specific language governing permissions and limitations under the License.
 from typing import Any, Dict
 
 from django.db import transaction
+from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.constants import SyncTaskStatus
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.signals import post_sync_data_source
 from bkuser.apps.sync.syncers import (
@@ -32,7 +34,7 @@ class DataSourceSyncTaskRunner:
     """
     数据源同步任务执行器
 
-    FIXME (su) 1. 同步异常处理，2. Task 状态更新，3. 后续支持软删除后，需要重构同步逻辑
+    FIXME (su) 1. 细化同步异常处理，2. 后续支持软删除后，需要重构同步逻辑
     """
 
     def __init__(self, task: DataSourceSyncTask, context: Dict[str, Any]):
@@ -44,9 +46,15 @@ class DataSourceSyncTaskRunner:
 
     def run(self):
         with transaction.atomic():
-            self._sync_departments()
-            self._sync_users()
-            self._send_signal()
+            try:
+                self._sync_departments()
+                self._sync_users()
+                self._send_signal()
+            except Exception:
+                self._update_task_status(SyncTaskStatus.FAILED)
+                raise
+
+            self._update_task_status(SyncTaskStatus.SUCCESS)
 
     def _initial_plugin(self):
         """初始化数据源插件"""
@@ -72,12 +80,18 @@ class DataSourceSyncTaskRunner:
         """发送数据源同步完成信号，触发后续流程"""
         post_sync_data_source.send(sender=self.__class__, data_source=self.data_source)
 
+    def _update_task_status(self, status: SyncTaskStatus):
+        """任务正常完成后更新 task 状态"""
+        self.task.status = status
+        self.task.duration = timezone.now() - self.task.start_at
+        self.task.save(update_fields=["status", "duration", "updated_at"])
+
 
 class TenantSyncTaskRunner:
     """
     租户数据同步任务执行器
 
-    FIXME (su) 1. 同步异常处理，2. Task 状态更新，3. 后续支持软删除后，需要重构同步逻辑
+    FIXME (su) 1. 细化同步异常处理，2. 后续支持软删除后，需要重构同步逻辑
     """
 
     def __init__(self, task: TenantSyncTask):
@@ -87,8 +101,14 @@ class TenantSyncTaskRunner:
 
     def run(self):
         with transaction.atomic():
-            self._sync_departments()
-            self._sync_users()
+            try:
+                self._sync_departments()
+                self._sync_users()
+            except Exception:
+                self._update_task_status(SyncTaskStatus.FAILED)
+                raise
+
+            self._update_task_status(SyncTaskStatus.SUCCESS)
 
     def _sync_departments(self):
         """同步部门信息"""
@@ -97,3 +117,9 @@ class TenantSyncTaskRunner:
     def _sync_users(self):
         """同步用户信息"""
         TenantUserSyncer(self.task, self.data_source, self.tenant).sync()
+
+    def _update_task_status(self, status: SyncTaskStatus):
+        """任务正常完成后更新 task 状态"""
+        self.task.status = status
+        self.task.duration = timezone.now() - self.task.start_at
+        self.task.save(update_fields=["status", "duration", "updated_at"])

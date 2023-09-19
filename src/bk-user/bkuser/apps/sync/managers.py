@@ -36,7 +36,7 @@ class DataSourceSyncManager:
             status=SyncTaskStatus.PENDING,
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
-            start_time=timezone.now(),
+            start_at=timezone.now(),
             extra={
                 "overwrite": self.sync_options.overwrite,
                 "async_run": self.sync_options.async_run,
@@ -78,7 +78,7 @@ class TenantSyncManager:
             status=SyncTaskStatus.PENDING,
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
-            start_time=timezone.now(),
+            start_at=timezone.now(),
             extra={"async_run": self.sync_options.async_run},
         )
 

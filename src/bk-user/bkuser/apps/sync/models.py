@@ -32,14 +32,14 @@ class DataSourceSyncTask(TimestampedModel):
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
-    start_time = models.DateTimeField("任务开始时间", auto_now_add=True)
+    start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
     duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
     extra = models.JSONField("扩展信息", default=dict)
 
     @property
     def summary(self):
-        # TODO 支持获取任务总结
-        return "TODO"
+        # TODO (su) 支持获取任务总结
+        return "数据同步成功" if self.status == SyncTaskStatus.SUCCESS else "数据同步失败"
 
 
 class DataSourceSyncStep(TimestampedModel):
@@ -92,14 +92,14 @@ class TenantSyncTask(TimestampedModel):
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
-    start_time = models.DateTimeField("任务开始时间", auto_now_add=True)
+    start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
     duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
     extra = models.JSONField("扩展信息", default=dict)
 
     @property
     def summary(self):
-        # TODO 支持获取任务总结
-        return "TODO"
+        # TODO (su) 支持获取任务总结
+        return "数据同步成功" if self.status == SyncTaskStatus.SUCCESS else "数据同步失败"
 
 
 class TenantSyncStep(TimestampedModel):

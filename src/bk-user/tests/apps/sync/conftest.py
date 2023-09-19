@@ -15,6 +15,7 @@ from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from django.utils import timezone
+
 from tests.test_utils.helpers import generate_random_string
 
 
@@ -26,7 +27,7 @@ def data_source_sync_task(bare_local_data_source) -> DataSourceSyncTask:
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
-        start_time=timezone.now(),
+        start_at=timezone.now(),
         extra={"overwrite": True, "async_run": False},
     )
 
@@ -40,7 +41,7 @@ def tenant_sync_task(bare_local_data_source, default_tenant) -> TenantSyncTask:
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
-        start_time=timezone.now(),
+        start_at=timezone.now(),
         extra={"async_run": False},
     )
 
