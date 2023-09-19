@@ -14,7 +14,11 @@ from . import views
 
 urlpatterns = [
     # 关联用户列表
-    path("current-natural-user/", views.NaturalUserTenantUserListApi.as_view(), name="user_center.tenant_user.list"),
+    path(
+        "current-natural-user/",
+        views.NaturalUserTenantUserListApi.as_view(),
+        name="person_center.current_natural_user",
+    ),
     # 租户用户详情
-    path("tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="user_center.user.retrieve"),
+    path("tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="person_center.tenant_users.retrieve"),
 ]
