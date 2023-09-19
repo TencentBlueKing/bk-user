@@ -14,6 +14,7 @@ from typing import Dict, List
 from django.db import transaction
 from pydantic import BaseModel
 
+from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -81,6 +82,9 @@ class DataSourceOrganizationHandler:
             user = DataSourceUser.objects.create(
                 data_source=data_source, code=gen_code(base_user_info.username), **base_user_info.model_dump()
             )
+
+            # 为本地数据源用户初始化账密信息
+            LocalDataSourceIdentityInfoInitializer(data_source).initialize(user)
 
             # 批量创建数据源用户-部门关系
             department_user_relation_objs = [

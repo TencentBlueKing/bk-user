@@ -13,8 +13,12 @@ from bkuser.apps.tenant.models import Tenant
 from bkuser.auth.models import User
 
 from tests.fixtures.data_source import (  # noqa: F401
+    bare_general_data_source,
     bare_local_data_source,
+    full_general_data_source,
     full_local_data_source,
+    general_ds_plugin,
+    general_ds_plugin_config,
     local_ds_plugin,
     local_ds_plugin_config,
 )

@@ -18,9 +18,9 @@ from bkuser.apps.sync.signals import post_sync_data_source
 
 
 @receiver(post_sync_data_source)
-def initialize_local_data_source_identity_info(sender, data_source: DataSource, **kwargs):
+def sync_local_data_source_identity_infos(sender, data_source: DataSource, **kwargs):
     """在完成数据源同步后，需要对本地数据源的用户账密信息做初始化"""
-    LocalDataSourceIdentityInfoInitializer(data_source).initialize()
+    LocalDataSourceIdentityInfoInitializer(data_source).sync()
 
 
 @receiver(post_sync_data_source)

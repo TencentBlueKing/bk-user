@@ -27,5 +27,5 @@ from bkuser.plugins.local.utils import gen_code
 )
 def test_gen_code(raw, excepted):
     # 重要：如果该单元测试挂了，说明修改了本地数据源用户 & 部门的 Code 的生成规则
-    # 改行为会导致新同步的数据，无法与 DB 中的数据匹配上，将会触发数据重建！！！
+    # 该行为会导致新同步的数据，无法与 DB 中的数据匹配上，将会触发数据重建！！！
     assert gen_code(raw) == excepted

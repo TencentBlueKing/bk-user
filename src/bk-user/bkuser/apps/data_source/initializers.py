@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
+from typing import List
 
 from django.utils import timezone
 
@@ -44,16 +45,35 @@ class LocalDataSourceIdentityInfoInitializer:
 
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
+        if not data_source.is_local:
+            return
+
         self.plugin_cfg = LocalDataSourcePluginConfig(**data_source.plugin_config)
         self.password_provider = PasswordProvider(self.plugin_cfg)
 
-    def initialize(self) -> None:
-        if self._can_skip_initialize():
+    def sync(self) -> None:
+        """检查指定数据源的所有用户，对没有账密信息的，做初始化，适用于批量同步（导入）的情况"""
+        if self._can_skip():
             return
 
-        self._init_users_identity_info()
+        exists_info_user_ids = LocalDataSourceIdentityInfo.objects.filter(
+            data_source=self.data_source,
+        ).values_list("user_id", flat=True)
+        # NOTE：已经存在的账密信息，不会按照最新规则重新生成！不然用户密码就失效了！
+        waiting_init_users = DataSourceUser.objects.filter(
+            data_source=self.data_source,
+        ).exclude(id__in=exists_info_user_ids)
 
-    def _can_skip_initialize(self):
+        self._init_users_identity_info(waiting_init_users)
+
+    def initialize(self, user: DataSourceUser) -> None:
+        """初始化用户身份信息，适用于单个用户创建的情况"""
+        if self._can_skip():
+            return
+
+        self._init_users_identity_info([user])
+
+    def _can_skip(self):
         """预先判断能否直接跳过"""
 
         # 不是本地数据源的，不需要初始化
@@ -66,14 +86,8 @@ class LocalDataSourceIdentityInfoInitializer:
 
         return False
 
-    def _init_users_identity_info(self):
-        exists_infos = LocalDataSourceIdentityInfo.objects.filter(data_source=self.data_source)
-        exists_info_user_ids = exists_infos.objects.values_list("user_id", flat=True)
-        # NOTE：已经存在的账密信息，不会按照最新规则重新生成！
-        waiting_init_users = DataSourceUser.objects.filter(
-            data_source=self.data_source,
-        ).exclude(id__in=exists_info_user_ids)
-
+    def _init_users_identity_info(self, users: List[DataSourceUser]):
+        """初始化用户身份信息"""
         time_now = timezone.now()
         expired_at = self._get_password_expired_at(time_now)
 
@@ -88,7 +102,7 @@ class LocalDataSourceIdentityInfoInitializer:
                 created_at=time_now,
                 updated_at=time_now,
             )
-            for user in waiting_init_users
+            for user in users
         ]
         LocalDataSourceIdentityInfo.objects.bulk_create(waiting_create_infos, batch_size=self.BATCH_SIZE)
 

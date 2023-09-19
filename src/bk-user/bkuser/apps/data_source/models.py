@@ -92,11 +92,11 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
     """
 
     user = models.OneToOneField(DataSourceUser, on_delete=models.CASCADE)
-    password = EncryptField("用户密码", null=True, blank=True, default="", max_length=255)
+    password = EncryptField(verbose_name="用户密码", null=True, blank=True, default="", max_length=255)
     password_updated_at = models.DateTimeField("密码最后更新时间", null=True, blank=True)
     password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)
 
-    # data_source_id/username为冗余字段，便于认证时快速匹配
+    # data_source / username 为冗余字段，便于认证时快速匹配
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     username = models.CharField("用户名", max_length=128)
 
