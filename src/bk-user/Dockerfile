@@ -31,6 +31,7 @@ RUN poetry config virtualenvs.create false && poetry install --only main
 
 COPY src/bk-user/bkuser /app/bkuser
 COPY src/bk-user/bin /app/bin
+COPY src/bk-user/media /app/media
 COPY src/bk-user/manage.py /app
 
 COPY --from=StaticBuilding /dist /app/staticfiles
