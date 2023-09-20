@@ -2,16 +2,19 @@
   <bk-loading :loading="isLoading">
     <MainBreadcrumbsDetails :subtitle="subtitle">
       <template #tag>
-        <bk-tag v-if="typeText">
+        <bk-tag>
           <template #icon>
-            <i :class="typeIcon" />
+            <div class="datasource-type-icon" v-for="item in typeList" :key="item">
+              <img v-if="item.id === pluginId && item.logo" :src="item.logo">
+              <i v-else :class="dataSourceType[pluginId].icon" />
+              <span>{{ dataSourceType[pluginId].text }}</span>
+            </div>
           </template>
-          {{ typeText }}
         </bk-tag>
       </template>
       <template #right>
-        <bk-button v-if="statusText" class="w-[64px]" @click="handleClick">
-          {{ statusText }}
+        <bk-button class="w-[64px]" hover-theme="primary" @click="handleClick">
+          {{ statusText === 'disabled' ? '启用' : '停用' }}
         </bk-button>
       </template>
     </MainBreadcrumbsDetails>
@@ -26,7 +29,9 @@
         :name="item.name"
         :label="item.label"
       >
-        <UserInfo v-if="activeKey === 'user'" />
+        <UserInfo
+          v-if="activeKey === 'user'"
+          :data-source-id="currentId" />
         <PswInfo v-else />
       </bk-tab-panel>
     </bk-tab>
@@ -42,7 +47,7 @@ import PswInfo from './PswInfo.vue';
 import UserInfo from './UserInfo.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
-import { changeSwitchStatus, getDataSourceList } from '@/http/dataSourceFiles';
+import { changeSwitchStatus, getDataSourceList, getDataSourcePlugins } from '@/http/dataSourceFiles';
 import { dataSourceType } from '@/utils';
 
 const route = useRoute();
@@ -58,40 +63,34 @@ const panels = reactive([
 const isLoading = ref(false);
 
 const subtitle = ref('');
-const typeText = ref('');
-const typeIcon = ref('');
 const statusText = ref('');
-const switchStatus = ref('');
+const typeList = ref([]);
+const pluginId = ref('');
 
 onMounted(async () => {
   isLoading.value = true;
+  statusText.value = route.params.status;
   const res = await getDataSourceList('');
-  await getSwitchStatus();
   res.data.forEach((item) => {
     if (item.id === currentId.value) {
-      const { text, icon } = dataSourceType[item.plugin_id];
       subtitle.value = item.name;
-      typeText.value = text;
-      typeIcon.value = icon;
+      pluginId.value = item.plugin_id;
     }
   });
+  const pluginsRes = await getDataSourcePlugins();
+  typeList.value = pluginsRes.data;
   isLoading.value = false;
 });
 
-const getSwitchStatus = async () => {
-  const res = await changeSwitchStatus(route.params.id);
-  switchStatus.value = res.data?.status;
-  statusText.value = res.data?.status === 'disabled' ? '启用' : '停用';
-};
-
 const handleClick = async () => {
-  await getSwitchStatus();
-  const message = switchStatus.value === 'disabled' ? '停用成功' : '启用成功';
+  const res = await changeSwitchStatus(route.params.id);
+  statusText.value = res.data?.status;
+  const message = res.data?.status === 'disabled' ? '停用成功' : '启用成功';
   Message({ theme: 'success', message });
 };
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
 .main-breadcrumbs-details {
   box-shadow: none;
 }
