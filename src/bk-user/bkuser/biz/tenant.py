@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict, List, Optional
 
+from django.conf import settings
 from django.db import transaction
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -88,6 +89,17 @@ class TenantUserLeaderInfo(BaseModel):
     id: str
     username: str
     full_name: str
+
+
+class TenantUserUpdatePhoneInfo(BaseModel):
+    is_inherited_phone: bool
+    custom_phone: Optional[str] = ""
+    custom_phone_country_code: Optional[str] = settings.DEFAULT_PHONE_COUNTRY_CODE
+
+
+class TenantUserUpdateEmailInfo(BaseModel):
+    is_inherited_email: bool
+    custom_email: Optional[str] = ""
 
 
 class TenantUserHandler:
@@ -221,6 +233,21 @@ class TenantUserHandler:
         return TenantUser.objects.filter(data_source_id__in=data_source_ids, tenant_id=tenant_id).values_list(
             "id", flat=True
         )
+
+    @staticmethod
+    def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserUpdatePhoneInfo):
+        tenant_user.is_inherited_phone = phone_info.is_inherited_phone
+        if not phone_info.is_inherited_phone:
+            tenant_user.custom_phone = phone_info.custom_phone
+            tenant_user.custom_phone_country_code = phone_info.custom_phone_country_code
+        tenant_user.save()
+
+    @staticmethod
+    def update_tenant_user_email(tenant_user: TenantUser, email_info: TenantUserUpdateEmailInfo):
+        tenant_user.is_inherited_email = email_info.is_inherited_email
+        if not email_info.is_inherited_email:
+            tenant_user.custom_email = email_info.custom_email
+        tenant_user.save()
 
 
 class TenantHandler:

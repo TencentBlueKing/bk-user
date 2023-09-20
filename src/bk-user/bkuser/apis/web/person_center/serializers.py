@@ -17,6 +17,8 @@ from rest_framework import serializers
 from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.error_codes import error_codes
+from bkuser.common.validators import validate_phone_with_country_code
 
 
 class TenantBaseInfoOutputSLZ(serializers.Serializer):
@@ -97,3 +99,34 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
                 }
             )
         return data
+
+
+class TenantUserPhoneInputSLZ(serializers.Serializer):
+    is_inherited_phone = serializers.BooleanField(required=True, help_text="是否继承数据源手机号")
+    custom_phone = serializers.CharField(required=False, help_text="自定义用户手机号")
+    custom_phone_country_code = serializers.CharField(
+        required=False, help_text="自定义用户手机国际区号", default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
+
+    def validate(self, attrs):
+        # custom_phone_country_code 默认为：86
+        # 通过继承，custom_phone 必须存在
+        if not attrs["is_inherited_phone"] and not attrs.get("custom_phone"):
+            raise error_codes.VALIDATION_ERROR.f("缺少参数：custom_phone")
+
+        # 校验手机号
+        validate_phone_with_country_code(phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"])
+
+        return attrs
+
+
+class TenantUserEmailInputSLZ(serializers.Serializer):
+    is_inherited_email = serializers.BooleanField(required=True, help_text="是否继承数据源邮箱")
+    custom_email = serializers.EmailField(required=False, help_text="自定义用户邮箱")
+
+    def validate(self, attrs):
+        # 通过继承，custom_email 必须存在
+        if not attrs["is_inherited_email"] and not attrs.get("custom_email"):
+            raise error_codes.VALIDATION_ERROR.f("缺少参数：custom_email")
+
+        return attrs

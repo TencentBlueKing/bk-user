@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel
 
@@ -43,7 +43,7 @@ class NaturalUserWithTenantUsers(BaseModel):
 
 class NatureUserHandler:
     @staticmethod
-    def get_nature_user_by_tenant_user_id(tenant_user_id: str) -> Optional[NaturalUserInfo]:
+    def get_nature_user_by_tenant_user_id(tenant_user_id: str) -> NaturalUserInfo:
         """
         通过租户用户ID获取对应的自然人ID
         """
@@ -55,10 +55,15 @@ class NatureUserHandler:
             data_source_user_id=tenant_user.data_source_user_id
         ).first()
         if not natural_user_relation:
-            return None
+            # 未绑定自然人，则返回（伪）自然人=>租户用户对应信息
+            return NaturalUserInfo(
+                id=tenant_user.id,
+                full_name=tenant_user.data_source_user.full_name,
+                data_source_user_ids=[tenant_user.data_source_user_id],
+            )
 
+        # 未绑定自然人，则返回自然人信息
         natural_user = natural_user_relation.natural_user
-
         return NaturalUserInfo(
             id=natural_user.id,
             full_name=natural_user.full_name,
