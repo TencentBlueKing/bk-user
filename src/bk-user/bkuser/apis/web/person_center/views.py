@@ -21,6 +21,7 @@ from bkuser.apis.web.person_center.serializers import (
 )
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.natural_user import NaturalUserWithTenantUsers, NatureUserHandler, TenantBaseInfo, TenantUserBaseInfo
+from bkuser.common.error_codes import error_codes
 
 
 class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -70,7 +71,7 @@ class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView)
         return Response(NaturalUserWithTenantUserListOutputSLZ(data).data)
 
 
-class TenantUserRetrieveApi(generics.RetrieveAPIView):
+class TenantUserRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     serializer_class = TenantUserRetrieveOutputSLZ
@@ -81,4 +82,22 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        current_tenant_user = self.get_current_tenant_user()
+
+        # 获取当前登录的租户用户的自然人
+        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user.id)
+
+        data_source_user_ids: List[int] = []
+
+        # 当前租户用户的数据源用户绑定了自然人，返回自然人绑定数据源用户
+        if nature_user is not None:
+            data_source_user_ids += nature_user.data_source_user_ids
+        else:
+            # 未绑定自然人，则返回当用户所属数据源用户
+            data_source_user_ids.append(current_tenant_user.data_source_user.id)
+
+        instance: TenantUser = self.get_object()
+        if instance.data_source_user_id not in data_source_user_ids:
+            raise error_codes.NO_PERMISSION
+
+        return Response(TenantUserRetrieveOutputSLZ(instance).data)
