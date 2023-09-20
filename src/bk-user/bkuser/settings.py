@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "django_celery_beat",
+    "django_celery_results",
     "django_prometheus",
     "drf_yasg",
     "bkuser.auth",
@@ -241,8 +242,8 @@ CELERY_RESULT_SERIALIZER = "json"
 # CELERY_IMPORTS = []
 # 内置的周期任务
 # CELERYBEAT_SCHEDULE = {}
-# Celery消息队列
-BROKER_URL = env.str("BK_BROKER_URL", default="")
+# Celery 消息队列配置
+CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
 
 # ------------------------------------------ 缓存配置 ------------------------------------------
 
@@ -325,12 +326,14 @@ if REDIS_USE_SENTINEL:
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"
 
 # default celery broker
-if not BROKER_URL:
+if not CELERY_BROKER_URL:
     # use Redis as the default broker
-    BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
     # https://docs.celeryq.dev/en/v5.3.1/getting-started/backends-and-brokers/redis.html#broker-redis
     if REDIS_USE_SENTINEL:
-        BROKER_URL = ";".join([f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR])
+        CELERY_BROKER_URL = ";".join(
+            [f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR]
+        )
         BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
             "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},

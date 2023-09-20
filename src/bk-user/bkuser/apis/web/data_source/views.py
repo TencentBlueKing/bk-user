@@ -15,7 +15,6 @@ from django.conf import settings
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
-from openpyxl.utils.exceptions import InvalidFileException
 from rest_framework import generics, status
 from rest_framework.response import Response
 
@@ -251,6 +250,8 @@ class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIV
 class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """获取本地数据源数据导入模板"""
 
+    pagination_class = None
+
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="下载数据源导入模板",
@@ -269,6 +270,8 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
 
 class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """本地数据源用户导出"""
+
+    pagination_class = None
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -307,7 +310,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         # Request file 转换成 openpyxl.workbook
         try:
             workbook = openpyxl.load_workbook(data["file"])
-        except InvalidFileException:
+        except Exception:  # pylint: disable=broad-except
             logger.exception("本地数据源导入失败")
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(_("文件格式异常"))
 
@@ -318,7 +321,12 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             trigger=SyncTaskTrigger.MANUAL,
         )
 
-        task = DataSourceSyncManager(data_source, options).execute(context={"workbook": workbook})
+        try:
+            task = DataSourceSyncManager(data_source, options).execute(context={"workbook": workbook})
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception("本地数据源导入失败")
+            raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
+
         return Response(
             LocalDataSourceImportOutputSLZ(
                 instance={"task_id": task.id, "status": task.status, "summary": task.summary}

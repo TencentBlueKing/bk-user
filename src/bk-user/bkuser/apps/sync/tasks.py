@@ -10,20 +10,19 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Any, Dict
 
-from celery import shared_task
-
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
+from bkuser.celery import app
 
 
-@shared_task(ignore_result=True)
+@app.task(ignore_result=True)
 def sync_data_source(task_id: int, context: Dict[str, Any]):
     """同步数据源数据"""
     task = DataSourceSyncTask.objects.get(id=task_id)
     DataSourceSyncTaskRunner(task, context).run()
 
 
-@shared_task(ignore_result=True)
+@app.task(ignore_result=True)
 def sync_tenant(task_id: int):
     """同步数据源数据"""
     task = TenantSyncTask.objects.get(id=task_id)
