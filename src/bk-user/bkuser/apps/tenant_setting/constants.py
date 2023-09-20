@@ -8,15 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
 
-urlpatterns = [
-    # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
-    path("basic/", include("bkuser.apis.web.basic.urls")),
-    # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source_organization.urls")),
-    path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
-]
+from blue_krill.data_types.enum import EnumField, StructuredEnum
+from django.utils.translation import gettext_lazy as _
+
+
+class UserFieldDataType(str, StructuredEnum):
+    """租户用户自定义字段数据类型"""
+
+    STRING = EnumField("string", label=_("字符串"))
+    NUMBER = EnumField("number", label=_("数字"))
+    ENUM = EnumField("enum", label=_("枚举"))
+    MULTI_ENUM = EnumField("multi_enum", label=_("多选枚举"))
