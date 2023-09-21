@@ -101,7 +101,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         return data
 
 
-class TenantUserPhoneInputSLZ(serializers.Serializer):
+class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
     is_inherited_phone = serializers.BooleanField(required=True, help_text="是否继承数据源手机号")
     custom_phone = serializers.CharField(required=False, help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(
@@ -120,7 +120,7 @@ class TenantUserPhoneInputSLZ(serializers.Serializer):
         return attrs
 
 
-class TenantUserEmailInputSLZ(serializers.Serializer):
+class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
     is_inherited_email = serializers.BooleanField(required=True, help_text="是否继承数据源邮箱")
     custom_email = serializers.EmailField(required=False, help_text="自定义用户邮箱")
 

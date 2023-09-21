@@ -16,8 +16,8 @@ from rest_framework.response import Response
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.person_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
-    TenantUserEmailInputSLZ,
-    TenantUserPhoneInputSLZ,
+    TenantUserEmailUpdateInputSLZ,
+    TenantUserPhoneUpdateInputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.tenant.models import TenantUser
@@ -99,7 +99,7 @@ class TenantUserPhonePatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
     @swagger_auto_schema(
         tags=["person_center"],
         operation_description="租户用户更新手机号",
-        request_body=TenantUserPhoneInputSLZ,
+        request_body=TenantUserPhoneUpdateInputSLZ,
         responses={status.HTTP_200_OK: ""},
     )
     def patch(self, request, *args, **kwargs):
@@ -115,7 +115,7 @@ class TenantUserPhonePatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
         if instance.data_source_user_id not in nature_user.data_source_user_ids:
             raise error_codes.NO_PERMISSION
 
-        input_slz = TenantUserPhoneInputSLZ(data=request.data)
+        input_slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
         input_slz.is_valid(raise_exception=True)
 
         phone_info = TenantUserUpdatePhoneInfo(**input_slz.validated_data)
@@ -131,7 +131,7 @@ class TenantUserEmailPatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
     @swagger_auto_schema(
         tags=["person_center"],
         operation_description="租户用户更新手机号",
-        request_body=TenantUserEmailInputSLZ,
+        request_body=TenantUserEmailUpdateInputSLZ,
         responses={status.HTTP_200_OK: ""},
     )
     def patch(self, request, *args, **kwargs):
@@ -147,7 +147,7 @@ class TenantUserEmailPatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
         if instance.data_source_user_id not in nature_user.data_source_user_ids:
             raise error_codes.NO_PERMISSION
 
-        input_slz = TenantUserEmailInputSLZ(data=request.data)
+        input_slz = TenantUserEmailUpdateInputSLZ(data=request.data)
         input_slz.is_valid(raise_exception=True)
 
         email_info = TenantUserUpdateEmailInfo(**input_slz.validated_data)
