@@ -26,5 +26,5 @@ def sync_local_data_source_identity_infos(sender, data_source: DataSource, **kwa
 @receiver(post_sync_data_source)
 def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     """同步租户数据（部门 & 用户）"""
-    # TODO 目前没有跨租户协同，因此只要往数据源所属租户同步即可
+    # TODO (su) 目前没有跨租户协同，因此只要往数据源所属租户同步即可
     TenantSyncManager(data_source, data_source.owner_tenant_id, TenantSyncOptions()).execute()

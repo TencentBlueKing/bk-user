@@ -59,7 +59,7 @@ class DataSourceUserConverter:
         return field_mapping
 
     def convert(self, user: RawDataSourceUser) -> DataSourceUser:
-        # FIXME (su) 重构，支持复杂字段映射类型，如表达式，目前都当作直接映射处理（本地数据源只有直接映射）
+        # TODO (su) 重构，支持复杂字段映射类型，如表达式，目前都当作直接映射处理（本地数据源只有直接映射）
         mapping = {m.source_field: m.target_field for m in self.field_mapping}
         props = user.properties
         return DataSourceUser(

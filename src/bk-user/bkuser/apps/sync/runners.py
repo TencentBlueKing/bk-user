@@ -82,7 +82,7 @@ class DataSourceSyncTaskRunner:
 
     def _update_task_status(self, status: SyncTaskStatus):
         """任务正常完成后更新 task 状态"""
-        self.task.status = status
+        self.task.status = status.value
         self.task.duration = timezone.now() - self.task.start_at
         self.task.save(update_fields=["status", "duration", "updated_at"])
 
@@ -120,6 +120,6 @@ class TenantSyncTaskRunner:
 
     def _update_task_status(self, status: SyncTaskStatus):
         """任务正常完成后更新 task 状态"""
-        self.task.status = status
+        self.task.status = status.value
         self.task.duration = timezone.now() - self.task.start_at
         self.task.save(update_fields=["status", "duration", "updated_at"])
