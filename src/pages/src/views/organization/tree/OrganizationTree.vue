@@ -8,11 +8,9 @@
   - specific language governing permissions and limitations under the License.
   -->
 <template>
-  <div class="organization-tree-wrapper" ref="treeBox">
+  <div class="organization-tree-wrapper">
     <bk-tree
-      ref="topTree"
       ext-cls="top-tree"
-      :style="topTreeStyle"
       draggable
       drag-sort
       :data="availableDirectory"
@@ -23,7 +21,7 @@
       @on-drag-node="handleDragNode"
       @async-load-nodes="handleClickToggle">
     </bk-tree>
-    <div class="bottom-tree" @click="clickBottomTree" ref="bottomTree" style="bottomTreeStyle">
+    <div class="bottom-tree">
       <p :class="['bottom-tree-header', { 'show-header': isDirectory }]" @click="handleClickDirectory">
         <i :class="isDirectory ? 'bk-icon icon-angle-down' : 'bk-icon icon-angle-right'"></i>{{ $t('不可用目录') }}
       </p>
@@ -85,29 +83,19 @@ export default {
       availableDirectory: [],
       // 不可用目录
       unavailableDirectory: [],
-      treeBoxHeight: null,
-      topTreeHeight: null,
-      bottomTreeHeight: 40,
-      timer: false,
       treeScrollTop: 0,
     };
   },
   computed: {
     topTreeStyle() {
       return {
-        '--top-tree-height': `${this.topTreeHeight}px`,
         'overflow-y': 'auto',
-      };
-    },
-    bottomTreeStyle() {
-      return {
-        '--bottom-tree-height': `${this.bottomTreeHeight}px`,
       };
     },
   },
   watch: {
     treeDataList: {
-      immediate: true,
+      // immediate: true,
       deep: true,
       handler(val) {
         this.availableDirectory = [];
@@ -118,9 +106,6 @@ export default {
           } else {
             this.unavailableDirectory.push(item);
           }
-        });
-        this.$nextTick(() => {
-          this.topTreeHeight = this.$refs.treeBox.offsetHeight - this.$refs.bottomTree.offsetHeight;
         });
       },
     },
@@ -136,44 +121,15 @@ export default {
         });
       }
     },
-    treeBoxHeight(val) {
-      // 为了避免频繁触发resize函数导致页面卡顿，使用定时器
-      if (!this.timer) {
-        // 一旦监听到的screenWidth值改变，就将其重新赋给data里的screenWidth
-        this.screenHeight = val;
-        this.timer = true;
-        const that = this;
-        setTimeout(() => {
-          that.timer = false;
-        }, 400);
-      }
-    },
   },
   mounted() {
-    this.availableDirectoryHeight();
-    window.onresize = () => {
-      this.availableDirectoryHeight();
-    };
     const topTreeWrap = document.querySelector('.top-tree');
     topTreeWrap.addEventListener('scroll', this.scrollChange, true);
   },
   methods: {
-    // 可用目录高度
-    availableDirectoryHeight() {
-      window.screenHeight = document.body.clientHeight;
-      this.treeBoxHeight = window.screenHeight - 124;
-      this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
-    },
     scrollChange(e) {
       this.treeScrollTop = e.target.scrollTop;
       this.$emit('updateScroll');
-    },
-    clickBottomTree() {
-      this.bottomTreeHeight = this.$refs.bottomTree.offsetHeight;
-      this.topTreeHeight = this.treeBoxHeight - this.bottomTreeHeight;
-      const bottomTreeWrap = document.querySelector('.show-content');
-      if (!bottomTreeWrap) return;
-      bottomTreeWrap.addEventListener('scroll', this.scrollChange, true);
     },
     handleClickToggle(item) {
       this.$emit('handleClickToggle', item);
@@ -353,6 +309,9 @@ export default {
 .organization-tree-wrapper {
   position: relative;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+
   .icon {
     font-size: 18px;
     color: #C4C6CC;
@@ -377,16 +336,15 @@ export default {
     vertical-align: bottom;
   }
   .top-tree {
+    flex: 1;
     padding: 0 16px;
-    height: var(--top-tree-height);
     @include scroller($backgroundColor: #e6e9ea, $width: 4px);
     overflow-x: hidden;
   }
   .bottom-tree {
     font-size: 14px;
-    position: absolute;
     width: 100%;
-    height: var(--bottom-tree-height);
+    max-height: 440px;
     bottom: 0;
     background: #F5F7FA;
     .bottom-tree-header {
