@@ -8,7 +8,7 @@
   - specific language governing permissions and limitations under the License.
   -->
 <template>
-  <div class="organization-tree-wrapper" ref="treebox">
+  <div class="organization-tree-wrapper" ref="treeBox">
     <bk-tree
       ref="topTree"
       ext-cls="top-tree"
@@ -85,8 +85,8 @@ export default {
       availableDirectory: [],
       // 不可用目录
       unavailableDirectory: [],
-      treeBoxHeight: document.body.clientHeight - 124,
-      topTreeHeight: document.body.clientHeight - 164,
+      treeBoxHeight: null,
+      topTreeHeight: null,
       bottomTreeHeight: 40,
       timer: false,
       treeScrollTop: 0,
@@ -120,7 +120,7 @@ export default {
           }
         });
         this.$nextTick(() => {
-          this.topTreeHeight = this.$refs.treebox.offsetHeight - this.$refs.bottomTree.offsetHeight;
+          this.topTreeHeight = this.$refs.treeBox.offsetHeight - this.$refs.bottomTree.offsetHeight;
         });
       },
     },
@@ -150,9 +150,7 @@ export default {
     },
   },
   mounted() {
-    window.onload = () => {
-      this.availableDirectoryHeight();
-    };
+    this.availableDirectoryHeight();
     window.onresize = () => {
       this.availableDirectoryHeight();
     };

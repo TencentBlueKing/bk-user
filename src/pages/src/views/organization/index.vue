@@ -640,6 +640,7 @@ export default {
   methods: {
     async initData() {
       try {
+        this.treeLoading = true;
         const res = await this.$store.dispatch('organization/getOrganizationTree');
         if (!res.data || !res.data.length) return;
         this.treeDataList = res.data;
@@ -675,6 +676,8 @@ export default {
             });
           });
         }
+      } finally {
+        this.treeLoading = false;
       }
     },
 
@@ -897,7 +900,7 @@ export default {
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
       this.basicLoading = true;
-      if (!list.length) return this.handleTableData();
+      if (!list.length) return this.handleClickEmpty();
       const valueList = [`category_id=${this.currentCategoryId}&page=${this.paginationConfig.current}&page_size=${this.paginationConfig.limit}`];
       let key = '';
       list.forEach((item) => {
@@ -905,6 +908,7 @@ export default {
         if (Object.keys(this.enumList).includes(item.id)) {
           key = this.enumList[item.id];
         }
+        if (!item.values) return;
         item.values.forEach((v) => {
           value.push(v.id);
         });
