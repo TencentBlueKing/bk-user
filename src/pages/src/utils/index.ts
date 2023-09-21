@@ -5,6 +5,7 @@ import abnormalImg from '@/images/abnormal.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
 import warningImg from '@/images/warning.svg';
+export * from './countryCode';
 
 export const statusIcon = {
   normal: {
