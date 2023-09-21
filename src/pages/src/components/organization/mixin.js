@@ -136,9 +136,6 @@ export default {
         this.isDirectory = true;
         this.messageSuccess(msg);
         this.$emit('updateAcitveNode');
-        this.$nextTick(() => {
-          this.topTreeHeight = this.$refs.treebox.offsetHeight - this.$refs.bottomTree.offsetHeight;
-        });
       } catch (e) {
         console.warn(e);
       }
