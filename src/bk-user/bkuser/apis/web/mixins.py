@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 from rest_framework.request import Request
 
-from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.error_codes import error_codes
 
 
@@ -20,15 +19,17 @@ class CurrentUserTenantMixin:
     request: Request
 
     def get_current_tenant_id(self) -> str:
+        """
+        获取当前登录用户所属租户的ID
+        """
         tenant_id = self.request.user.get_property("tenant_id")
         if not tenant_id:
             raise error_codes.GET_CURRENT_TENANT_FAILED
 
         return tenant_id
 
-    def get_current_tenant_user(self) -> TenantUser:
-        bk_username = self.request.user.get_property("bk_username")
-        tenant_user = TenantUser.objects.filter(id=bk_username).first()
-        if not tenant_user:
-            raise error_codes.TENANT_USER_NOT_EXIST
-        return tenant_user
+    def get_current_tenant_user_id(self) -> str:
+        """
+        获取当前登录用户的租户用户ID
+        """
+        return self.request.user.get_property("bk_username")

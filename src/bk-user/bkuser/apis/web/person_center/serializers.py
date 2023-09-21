@@ -113,7 +113,7 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
         # custom_phone_country_code 默认为：86
         # 通过继承，custom_phone 必须存在
         if not attrs["is_inherited_phone"] and not attrs.get("custom_phone"):
-            raise error_codes.VALIDATION_ERROR.f(_("缺少参数：custom_phone"))
+            raise error_codes.VALIDATION_ERROR.f(_("缺少参数custom_phone"))
 
         # 不通过继承，则需校验手机号
         if not attrs["is_inherited_phone"]:
@@ -131,6 +131,6 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
     def validate(self, attrs):
         # 通过继承，custom_email 必须存在
         if not attrs["is_inherited_email"] and not attrs.get("custom_email"):
-            raise error_codes.VALIDATION_ERROR.f(_("缺少参数：custom_email"))
+            raise error_codes.VALIDATION_ERROR.f(_("缺少参数custom_email"))
 
         return attrs
