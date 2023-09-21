@@ -54,12 +54,12 @@ class UserFieldOutputSLZ(serializers.Serializer):
 
 
 class UserCustomFieldCreateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(max_length=128)
-    display_name = serializers.CharField(max_length=128)
-    data_type = serializers.ChoiceField(choices=UserFieldDataType.get_choices())
-    required = serializers.BooleanField()
-    default = serializers.JSONField(required=False)
-    options = serializers.JSONField(required=False)
+    name = serializers.CharField(help_text="字段名称", max_length=128)
+    display_name = serializers.CharField(help_text="展示用名称", max_length=128)
+    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
+    required = serializers.BooleanField(help_text="是否必填")
+    default = serializers.JSONField(help_text="默认值", required=False)
+    options = serializers.JSONField(help_text="选项", required=False)
 
     def validate_display_name(self, display_name):
         if UserCustomField.objects.filter(tenant=self.context["tenant"], display_name=display_name).exists():
@@ -91,7 +91,7 @@ class UserCustomFieldCreateOutputSLZ(serializers.Serializer):
 
 
 class UserCustomFieldUpdateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(max_length=128)
-    required = serializers.BooleanField()
-    default = serializers.JSONField(required=False, default="")
-    options = serializers.JSONField(required=False, default={})
+    name = serializers.CharField(help_text="字段名称", max_length=128, required=False)
+    required = serializers.BooleanField(help_text="是否必填", required=False)
+    default = serializers.JSONField(help_text="默认值", required=False)
+    options = serializers.JSONField(help_text="选项", required=False)

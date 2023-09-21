@@ -51,7 +51,7 @@ class UserFieldListApi(generics.ListAPIView):
 class UserCustomFieldCreateApi(generics.CreateAPIView):
     @swagger_auto_schema(
         tags=["tenant-setting"],
-        operation_description="新建自定义用户字段",
+        operation_description="新建用户自定义字段",
         request_body=UserCustomFieldCreateInputSLZ(),
         responses={status.HTTP_201_CREATED: UserCustomFieldCreateOutputSLZ()},
     )
@@ -77,26 +77,20 @@ class UserCustomFieldUpdateDeleteApi(ExcludePutAPIViewMixin, generics.UpdateAPIV
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
-        operation_description="修改自定义用户字段",
+        operation_description="修改用户自定义字段",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def patch(self, request, *args, **kwargs):
         custom_field = self.get_object()
-        slz = UserCustomFieldUpdateInputSLZ(data=request.data, context={"custom_field": custom_field})
+        slz = UserCustomFieldUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-        data = slz.validated_data
 
-        custom_field.name = data["name"]
-        custom_field.required = data["required"]
-        custom_field.default = data["default"]
-        custom_field.options = data["options"]
-        custom_field.save()
-
+        UserCustomField.objects.filter(id=custom_field.id).update(**slz.data)
         return Response()
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
-        operation_description="删除自定义用户字段",
+        operation_description="删除用户自定义字段",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
