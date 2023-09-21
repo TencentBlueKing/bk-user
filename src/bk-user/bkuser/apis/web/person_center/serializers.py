@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import Dict, List
 
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 
@@ -112,10 +113,13 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
         # custom_phone_country_code 默认为：86
         # 通过继承，custom_phone 必须存在
         if not attrs["is_inherited_phone"] and not attrs.get("custom_phone"):
-            raise error_codes.VALIDATION_ERROR.f("缺少参数：custom_phone")
+            raise error_codes.VALIDATION_ERROR.f(_("缺少参数：custom_phone"))
 
-        # 校验手机号
-        validate_phone_with_country_code(phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"])
+        # 不通过继承，则需校验手机号
+        if not attrs["is_inherited_phone"]:
+            validate_phone_with_country_code(
+                phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
+            )
 
         return attrs
 
@@ -127,6 +131,6 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
     def validate(self, attrs):
         # 通过继承，custom_email 必须存在
         if not attrs["is_inherited_email"] and not attrs.get("custom_email"):
-            raise error_codes.VALIDATION_ERROR.f("缺少参数：custom_email")
+            raise error_codes.VALIDATION_ERROR.f(_("缺少参数：custom_email"))
 
         return attrs

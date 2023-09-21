@@ -52,7 +52,7 @@ class NatureUserHandler:
             raise error_codes.TENANT_USER_NOT_EXIST
 
         natural_user_relation = DataSourceUserNaturalUserRelation.objects.filter(
-            data_source_user_id=tenant_user.data_source_user_id
+            data_source_user=tenant_user.data_source_user
         ).first()
         if not natural_user_relation:
             # 未绑定自然人，则返回（伪）自然人=>租户用户对应信息
