@@ -59,9 +59,6 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-organization-fill:before {
 	content: "\e10d";
 }
-.icon-personal-user:before {
-	content: "\e10c";
-}
 .icon-outline-list:before {
 	content: "\e10e";
 }
@@ -151,4 +148,19 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 }
 .icon-ladp:before {
 	content: "\e12d";
+}
+.icon-edit:before {
+	content: "\e130";
+}
+.icon-delete:before {
+	content: "\e131";
+}
+.icon-refresh:before {
+	content: "\e134";
+}
+.icon-check-line:before {
+	content: "\e133";
+}
+.icon-excel:before {
+	content: "\e132";
 }

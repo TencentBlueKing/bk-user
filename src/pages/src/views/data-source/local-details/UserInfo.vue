@@ -6,8 +6,8 @@
           <i class="user-icon icon-add-2 mr8" />
           新建用户
         </bk-button>
-        <bk-button class="mr8" style="width: 64px;">导入</bk-button>
-        <!-- <bk-button>导出</bk-button> -->
+        <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
+        <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
       </div>
       <bk-input
         class="header-right"
@@ -105,11 +105,51 @@
           @updateUsers="updateUsers" />
       </template>
     </bk-sideslider>
+    <!-- 导入 -->
+    <bk-dialog
+      :is-show="importDialog.isShow"
+      :title="importDialog.title"
+      :theme="'primary'"
+      :quick-close="false"
+      :width="640"
+      :is-loading="importDialog.loading"
+      @closed="closed"
+      @confirm="confirmImportUsers"
+    >
+      <bk-alert
+        class="mb-[10px]"
+        v-if="uploadInfo.overwrite"
+        theme="error"
+        title="勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。"
+      />
+      <div class="import-dialog-header">
+        <span>上传用户信息</span>
+        <bk-checkbox v-model="uploadInfo.overwrite">
+          允许对同名用户覆盖更新
+        </bk-checkbox>
+      </div>
+      <bk-upload
+        accept=".xlsx,.xls"
+        with-credentials
+        :limit="1"
+        :size="2"
+        :multiple="false"
+        :custom-request="customRequest">
+        <template #tip>
+          <div class="mt-[8px]">
+            <span>支持 Excel 文件，文件小于 2 M，下载</span>
+            <bk-button text theme="primary" @click="handleExportTemplate">模版文件</bk-button>
+          </div>
+        </template>
+      </bk-upload>
+    </bk-dialog>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
+import axios from 'axios';
 import { Message } from 'bkui-vue';
+import Cookies from 'js-cookie';
 import { computed, defineProps, inject, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -119,7 +159,7 @@ import ViewUser from './ViewUser.vue';
 import Empty from '@/components/Empty.vue';
 import { getDataSourceUserDetails, getDataSourceUsers } from '@/http/dataSourceFiles';
 
-defineProps({
+const props = defineProps({
   dataSourceId: {
     type: Number,
   },
@@ -296,6 +336,76 @@ const pageCurrentChange = (current) => {
   params.page = current;
   getUsers();
 };
+
+const importDialog = reactive({
+  isShow: false,
+  loading: false,
+  title: '批量新增用户',
+});
+
+const uploadInfo = reactive({
+  file: {},
+  overwrite: false,
+});
+
+const customRequest = (data) => {
+  uploadInfo.file = data.file;
+};
+
+// 导出指定的本地数据源用户数据
+const handleExport = () => {
+  const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.dataSourceId}/operations/export/`;
+  window.open(url);
+};
+
+// 数据源导出模板
+const handleExportTemplate = () => {
+  const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.dataSourceId}/operations/download_template/`;
+  window.open(url);
+};
+
+const confirmImportUsers = async () => {
+  try {
+    if (!uploadInfo.file.name) {
+      Message({ theme: 'warning', message: '请选择文件再上传' });
+      return;
+    }
+    importDialog.loading = true;
+    const formData = new FormData();
+    formData.append('file', uploadInfo.file);
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
+        'x-requested-with': 'XMLHttpRequest',
+      },
+    };
+    axios.defaults.withCredentials = true;
+    const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.dataSourceId}/operations/import/`;
+    const res = await axios.post(url, {
+      overwrite: uploadInfo.overwrite,
+      file: formData.get('file'),
+    }, config);
+    const theme = res.data.data.status === 'success' ? 'success' : 'error';
+    Message({ theme, message: res.data.data.summary });
+    importDialog.loading = false;
+    importDialog.isShow = false;
+    getUsers();
+  } catch (e) {
+    importDialog.loading = false;
+    const { message } = e.response.data.error;
+    Message({ theme: 'error', message });
+  } finally {
+    uploadInfo.file = {};
+    uploadInfo.overwrite = false;
+  }
+};
+
+const closed = () => {
+  importDialog.isShow = false;
+  uploadInfo.file = {};
+  uploadInfo.overwrite = false;
+};
 </script>
 
 <style lang="less" scoped>
@@ -370,6 +480,29 @@ const pageCurrentChange = (current) => {
         background-color: #979ba5;
       }
     }
+  }
+}
+
+.import-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+::v-deep .bk-modal-content {
+  &::-webkit-scrollbar {
+    width: 4px;
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #dcdee5;
+    border-radius: 4px;
+  }
+
+  .bk-upload-list {
+    margin-bottom: 24px;
   }
 }
 </style>
