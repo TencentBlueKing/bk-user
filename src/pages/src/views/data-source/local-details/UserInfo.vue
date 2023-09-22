@@ -12,7 +12,7 @@
       <bk-input
         class="header-right"
         v-model="searchVal"
-        placeholder="搜索公司名、姓名"
+        placeholder="搜索用户名"
         type="search"
         clearable
         @enter="handleEnter"

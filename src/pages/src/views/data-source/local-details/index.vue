@@ -22,17 +22,13 @@
       v-model:active="activeKey"
       type="unborder-card"
       ext-cls="tab-details"
+      @change="changeTab"
     >
-      <bk-tab-panel
-        v-for="item in panels"
-        :key="item.name"
-        :name="item.name"
-        :label="item.label"
-      >
-        <UserInfo
-          v-if="activeKey === 'user'"
-          :data-source-id="currentId" />
-        <PswInfo v-else />
+      <bk-tab-panel name="user" label="用户信息">
+        <UserInfo v-if="activeKey === 'user'" :data-source-id="currentId" />
+      </bk-tab-panel>
+      <bk-tab-panel name="account" label="账密信息">
+        <PswInfo v-if="activeKey === 'account'" />
       </bk-tab-panel>
     </bk-tab>
   </bk-loading>
@@ -40,7 +36,7 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import PswInfo from './PswInfo.vue';
@@ -55,11 +51,6 @@ const route = useRoute();
 const currentId = computed(() => Number(route.params.id));
 
 const activeKey = ref('user');
-const panels = reactive([
-  { name: 'user', label: '用户信息' },
-  { name: 'account', label: '账密信息' },
-]);
-
 const isLoading = ref(false);
 
 const subtitle = ref('');
@@ -87,6 +78,10 @@ const handleClick = async () => {
   statusText.value = res.data?.status;
   const message = res.data?.status === 'disabled' ? '停用成功' : '启用成功';
   Message({ theme: 'success', message });
+};
+
+const changeTab = (value) => {
+  activeKey.value = value;
 };
 </script>
 
