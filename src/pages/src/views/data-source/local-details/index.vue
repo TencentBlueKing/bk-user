@@ -12,7 +12,7 @@
           </template>
         </bk-tag>
       </template>
-      <template #right>
+      <template #right v-if="statusText">
         <bk-button class="w-[64px]" hover-theme="primary" @click="handleClick">
           {{ statusText === 'disabled' ? '启用' : '停用' }}
         </bk-button>
@@ -69,10 +69,10 @@ const pluginId = ref('');
 
 onMounted(async () => {
   isLoading.value = true;
-  statusText.value = route.params.status;
   const res = await getDataSourceList('');
   res.data.forEach((item) => {
     if (item.id === currentId.value) {
+      statusText.value = item.status;
       subtitle.value = item.name;
       pluginId.value = item.plugin_id;
     }
