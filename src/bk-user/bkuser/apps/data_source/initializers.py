@@ -49,6 +49,9 @@ class LocalDataSourceIdentityInfoInitializer:
             return
 
         self.plugin_cfg = LocalDataSourcePluginConfig(**data_source.plugin_config)
+        if not self.plugin_cfg.enable_account_password_login:
+            return
+
         self.password_provider = PasswordProvider(self.plugin_cfg)
 
     def sync(self) -> None:

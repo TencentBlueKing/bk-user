@@ -31,9 +31,9 @@ class DataSourceSyncManager:
         """执行同步任务"""
         context = context or {}
 
-        self.task = DataSourceSyncTask.objects.create(
+        task = DataSourceSyncTask.objects.create(
             data_source_id=self.data_source.id,
-            status=SyncTaskStatus.PENDING,
+            status=SyncTaskStatus.PENDING.value,
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
             start_at=timezone.now(),
@@ -45,12 +45,12 @@ class DataSourceSyncManager:
 
         if self.sync_options.async_run:
             self._ensure_only_basic_type_in_context(context)
-            sync_data_source.delay(self.task.id, context)
+            sync_data_source.delay(task.id, context)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
-            DataSourceSyncTaskRunner(self.task, context).run()
+            DataSourceSyncTaskRunner(task, context).run()
 
-        return self.task
+        return task
 
     @staticmethod
     def _ensure_only_basic_type_in_context(context: Dict[str, Any]):
@@ -59,8 +59,10 @@ class DataSourceSyncManager:
             return
 
         for v in context.values():
-            if not isinstance(v, (int, float, str, bytes, bool, dict, list)):
-                raise TypeError("only basic type allowed in context!")
+            if isinstance(v, (int, float, str, bytes, bool, dict, list)):
+                continue
+
+            raise TypeError("only basic type allowed in context!")
 
 
 class TenantSyncManager:
@@ -72,10 +74,10 @@ class TenantSyncManager:
         self.sync_options = sync_options
 
     def execute(self) -> TenantSyncTask:
-        self.task = TenantSyncTask.objects.create(
+        task = TenantSyncTask.objects.create(
             tenant_id=self.tenant_id,
             data_source_id=self.data_source.id,
-            status=SyncTaskStatus.PENDING,
+            status=SyncTaskStatus.PENDING.value,
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
             start_at=timezone.now(),
@@ -83,8 +85,8 @@ class TenantSyncManager:
         )
 
         if self.sync_options.async_run:
-            sync_tenant.delay(self.task.id)
+            sync_tenant.delay(task.id)
         else:
-            TenantSyncTaskRunner(self.task).run()
+            TenantSyncTaskRunner(task).run()
 
-        return self.task
+        return task

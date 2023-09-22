@@ -53,7 +53,6 @@ class DataSourceSyncTaskRunner:
             try:
                 self._sync_departments()
                 self._sync_users()
-                self._send_signal()
             except Exception:
                 logger.exception("data source sync failed! task_id: %s", self.task.id)
                 self._update_task_status(SyncTaskStatus.FAILED)
@@ -61,6 +60,8 @@ class DataSourceSyncTaskRunner:
 
             logger.info("data source sync success! task_id: %s", self.task.id)
             self._update_task_status(SyncTaskStatus.SUCCESS)
+
+        self._send_signal()
 
     def _initial_plugin(self):
         """初始化数据源插件"""
@@ -121,7 +122,7 @@ class TenantSyncTaskRunner:
                 self._update_task_status(SyncTaskStatus.FAILED)
                 raise
 
-            logger.info("data source sync success! task_id: %s", self.task.id)
+            logger.info("tenant sync success! task_id: %s", self.task.id)
             self._update_task_status(SyncTaskStatus.SUCCESS)
 
     def _sync_departments(self):
