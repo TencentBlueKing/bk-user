@@ -9,6 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+from bkuser.apps.data_source.constants import DataSourcePluginEnum
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.auth.models import User
 
 from tests.test_utils.auth import create_user
@@ -29,6 +31,26 @@ def random_tenant() -> str:
 
 
 @pytest.fixture()
-def bk_user(default_tenant) -> User:
+def default_data_source(default_tenant) -> DataSource:
+    # 支持检查是否使用 random_tenant fixture 以生成不属于默认租户的数据源
+    return DataSource.objects.create(
+        name=generate_random_string(),
+        owner_tenant_id=default_tenant,
+        plugin_id=DataSourcePluginEnum.LOCAL,
+    )
+
+
+@pytest.fixture()
+def bk_user(default_data_source) -> User:
     """生成随机用户"""
-    return create_user()
+    user = create_user()
+
+    # 补充数据源信息
+    data_source_user, _ = DataSourceUser.objects.get_or_create(
+        full_name=generate_random_string(),
+        username=user.username,
+        email=f"{generate_random_string()}@qq.com",
+        phone="13123456789",
+        data_source=default_data_source,
+    )
+    return user

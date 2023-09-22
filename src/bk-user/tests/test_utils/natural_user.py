@@ -8,16 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import pytest
-from rest_framework.test import APIClient
+from typing import List
 
-from tests.test_utils.auth import set_tenant_user
+from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation, NaturalUser
+from tests.test_utils.helpers import generate_random_string
 
 
-@pytest.fixture()
-def api_client(bk_user, default_tenant, default_data_source) -> APIClient:
-    """Return an authenticated client"""
-    client = APIClient()
-    set_tenant_user(bk_user, default_data_source.id, default_tenant)
-    client.force_authenticate(user=bk_user)
-    return client
+def create_natural_user_with_bind_data_source_users(data_source_users: List[DataSourceUser]) -> NaturalUser:
+    natural_user = NaturalUser.objects.create(full_name=generate_random_string())
+    relations = [
+        DataSourceUserNaturalUserRelation(natural_user=natural_user, data_source_user=user)
+        for user in data_source_users
+    ]
+    DataSourceUserNaturalUserRelation.objects.bulk_create(relations)
+    return natural_user
