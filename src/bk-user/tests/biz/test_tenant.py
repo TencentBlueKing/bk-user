@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
 
 import pytest
 from bkuser.apps.data_source.models import (
@@ -108,7 +107,7 @@ class TestTenantDepartmentHandler:
         ],
     )
     def test_not_exist_convert_data_source_department_to_tenant_department(
-        self, default_tenant, not_exist_data_source_department_ids: List[int]
+        self, default_tenant, not_exist_data_source_department_ids
     ):
         tenant_departments = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
             default_tenant, not_exist_data_source_department_ids

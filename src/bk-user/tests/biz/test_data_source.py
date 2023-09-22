@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
 
 import pytest
 from bkuser.apps.data_source.models import (
@@ -80,7 +79,7 @@ class TestDataSourceDepartmentHandler:
             [14, 24, 34],
         ],
     )
-    def test_not_exist_get_user_department_ids_map(self, not_exist_data_source_user_ids: List[int]):
+    def test_not_exist_get_user_department_ids_map(self, not_exist_data_source_user_ids):
         department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(not_exist_data_source_user_ids)
 
         if not not_exist_data_source_user_ids:
@@ -115,7 +114,7 @@ class TestDataSourceUserHandler:
             [14, 24, 34],
         ],
     )
-    def test_not_exist_get_user_leader_ids_map(self, not_exist_data_source_user_ids: List[int]):
+    def test_not_exist_get_user_leader_ids_map(self, not_exist_data_source_user_ids):
         user_leader_ids_map = DataSourceUserHandler.get_user_leader_ids_map(not_exist_data_source_user_ids)
         if not not_exist_data_source_user_ids:
             assert not user_leader_ids_map

@@ -39,6 +39,7 @@ class TestTenantListApi:
         # 至少会有一个当前用户所属的租户
         current_tenant_id = bk_user.get_property("tenant_id")
         assert len(resp.data) >= 1
+        # 当前用户的租户置顶
         assert current_tenant_id == resp.data[0]["id"]
 
         for tenant_info in resp.data:
@@ -62,13 +63,18 @@ class TestTenantRetrieveUpdateApi:
         assert tenant.updated_at_display == resp.data["updated_at"]
         assert tenant.logo == resp.data["logo"]
         assert tenant.feature_flags == resp.data["feature_flags"]
-        assert TenantManager.objects.filter(tenant=tenant).count() == len(resp.data["managers"])
+
+        tenant_manager_id_list = list(
+            TenantManager.objects.filter(tenant=tenant).values_list("tenant_user_id", flat=True)
+        )
+        assert len(tenant_manager_id_list) == len(resp.data["managers"])
 
         for item in resp.data["managers"]:
-            assert TenantManager.objects.filter(tenant=tenant, tenant_user_id=item["id"]).exists()
+            assert item["id"] in tenant_manager_id_list
 
     def test_retrieve_other_tenant(self, api_client, random_tenant):
         resp = api_client.get(reverse("organization.tenant.retrieve_update", kwargs={"id": random_tenant}))
+
         tenant = Tenant.objects.get(id=random_tenant)
 
         assert tenant.id == resp.data["id"]
@@ -124,16 +130,21 @@ class TestTenantUserListApi:
     def test_list_tenant_users(self, api_client, default_tenant, tenant_users):
         resp = api_client.get(reverse("organization.tenant.users.list", kwargs={"id": default_tenant}))
 
-        assert TenantUser.objects.filter(tenant_id=default_tenant).count() == resp.data["count"]
+        tenant_users_from_db = TenantUser.objects.filter(tenant_id=default_tenant)
+        assert tenant_users_from_db.count() == resp.data["count"]
+
+        tenant_user_map = {user.id: user for user in tenant_users_from_db}
         for item in resp.data["results"]:
-            tenant_user = TenantUser.objects.filter(id=item["id"]).first()
-            assert tenant_user is not None
-            assert tenant_user.data_source_user.username == item["username"]
-            assert tenant_user.data_source_user.full_name == item["full_name"]
-            assert tenant_user.data_source_user.email == item["email"]
-            assert tenant_user.data_source_user.phone == item["phone"]
-            assert tenant_user.data_source_user.phone_country_code == item["phone_country_code"]
-            assert tenant_user.data_source_user.logo == item["logo"]
+            assert item["id"] in tenant_user_map
+
+            tenant_user: TenantUser = tenant_user_map[item["id"]]
+            data_source_user = tenant_user.data_source_user
+            assert data_source_user.username == item["username"]
+            assert data_source_user.full_name == item["full_name"]
+            assert data_source_user.email == item["email"]
+            assert data_source_user.phone == item["phone"]
+            assert data_source_user.phone_country_code == item["phone_country_code"]
+            assert data_source_user.logo == item["logo"]
 
 
 class TestTenantDepartmentChildrenListApi:
@@ -162,18 +173,18 @@ class TestTenantDepartmentUserListApi:
     ):
         for tenant_department in tenant_departments:
             resp = api_client.get(reverse("departments.users.list", kwargs={"id": tenant_department.id}))
-            resp_data = resp.data
 
-            tenant_users = TenantUser.objects.filter(
+            tenant_users_from_db = TenantUser.objects.filter(
                 tenant_id=tenant_department.tenant_id,
                 data_source_user_id__in=DataSourceDepartmentUserRelation.objects.filter(
                     department=tenant_department.data_source_department
                 ).values_list("user_id", flat=True),
             )
-            result_tenant_user_ids = [item["id"] for item in resp_data["results"]]
 
-            assert tenant_users.count() == resp_data["count"]
-            for tenant_user in tenant_users:
+            assert tenant_users_from_db.count() == resp.data["count"]
+
+            result_tenant_user_ids = [item["id"] for item in resp.data["results"]]
+            for tenant_user in tenant_users_from_db:
                 assert tenant_user.id in result_tenant_user_ids
 
 
