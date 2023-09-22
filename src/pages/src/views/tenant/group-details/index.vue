@@ -9,7 +9,7 @@
         <bk-input
           class="content-search-input"
           v-model="searchName"
-          placeholder="搜索公司名、姓名"
+          placeholder="搜索公司名"
           type="search"
           clearable
           @enter="handleEnter"

@@ -4,7 +4,7 @@
     <bk-exception v-if="isSearchEmpty" type="search-empty" scene="part">
       搜索结果为空
       <p>
-        可以尝试_调整关键词_或&nbsp;
+        可以尝试&nbsp;调整关键词&nbsp;或&nbsp;
         <bk-button
           text
           theme="primary"
