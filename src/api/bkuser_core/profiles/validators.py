@@ -64,6 +64,14 @@ def validate_extras_value_unique(value: dict, category_id: int, profile_id: int 
         ):
             # 防御: 可能存在部分旧数据并未添加所有 extra key
             if f.name not in s.extras:
+                logging.info(
+                    "profile<%s@%s> has the same value<%s> of field<%s-%s>",
+                    s.username,
+                    s.domain,
+                    target_value,
+                    f.name,
+                    f.display_name,
+                )
                 continue
 
             if s.extras[f.name] == target_value:

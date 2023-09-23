@@ -199,7 +199,8 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         try:
             instance.save()
         except Exception as e:  # pylint: disable=broad-except
-            logger.exception("failed to update profile, exception: %s", e)
+            username = f"{instance.username}@{instance.domain}"
+            logger.exception(f"failed to update profile<{username}>")
             raise error_codes.SAVE_USER_INFO_FAILED.f(exception_message=e)
 
         post_profile_update.send(
