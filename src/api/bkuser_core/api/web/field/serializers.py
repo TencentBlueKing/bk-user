@@ -63,6 +63,9 @@ class DynamicFieldCreateInputSLZ(serializers.ModelSerializer):
         if DynamicFieldInfo.objects.filter(name=attrs["name"]).exists():
             raise ValidationError(_("英文标识为 {} 的自定义字段已存在").format(attrs["name"]))
 
+        if DynamicFieldInfo.objects.filter(display_name=attrs["display_name"]).exists():
+            raise ValidationError(_("名称为 {} 的自定义字段已存在").format(attrs["display_name"]))
+
         return super().validate(attrs)
 
 
