@@ -54,10 +54,10 @@ class LocalDataSourceIdentityInfoInitializer:
 
         self.password_provider = PasswordProvider(self.plugin_cfg)
 
-    def sync(self) -> None:
+    def sync(self) -> List[DataSourceUser]:
         """检查指定数据源的所有用户，对没有账密信息的，做初始化，适用于批量同步（导入）的情况"""
         if self._can_skip():
-            return
+            return []
 
         exists_info_user_ids = LocalDataSourceIdentityInfo.objects.filter(
             data_source=self.data_source,
@@ -68,6 +68,7 @@ class LocalDataSourceIdentityInfoInitializer:
         ).exclude(id__in=exists_info_user_ids)
 
         self._init_users_identity_info(waiting_init_users)
+        return waiting_init_users
 
     def initialize(self, user: DataSourceUser) -> None:
         """初始化用户身份信息，适用于单个用户创建的情况"""
