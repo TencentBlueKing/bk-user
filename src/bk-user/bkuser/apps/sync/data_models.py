@@ -20,6 +20,8 @@ class DataSourceSyncOptions(BaseModel):
     operator: str = ""
     # 是否对同名用户覆盖更新
     overwrite: bool = False
+    # 是否使用增量同步
+    incremental: bool = False
     # 是否异步执行同步任务
     async_run: bool = True
     # 同步任务触发方式

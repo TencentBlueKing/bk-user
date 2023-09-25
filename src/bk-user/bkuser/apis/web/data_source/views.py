@@ -317,6 +317,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         options = DataSourceSyncOptions(
             operator=request.user.username,
             overwrite=data["overwrite"],
+            incremental=data["incremental"],
             async_run=False,
             trigger=SyncTaskTrigger.MANUAL,
         )

@@ -155,14 +155,11 @@ type = "layers"
 layers = [
     "bkuser.apis | bkuser.auth | bkuser.monitoring",
     "bkuser.biz",
-    "bkuser.apps | bkuser.component",
+    "bkuser.apps",
     "bkuser.plugins",
+    "bkuser.component",
     "bkuser.common",
     "bkuser.utils",
-]
-# 待讨论
-ignore_imports = [
-    "bkuser.apps.data_source.notifier -> bkuser.component.cmsi",
 ]
 
 # apps 分层

@@ -43,7 +43,6 @@ class DataSourceSyncTaskRunner:
     def __init__(self, task: DataSourceSyncTask, context: Dict[str, Any]):
         self.task = task
         self.context = context
-        self.overwrite = bool(self.task.extra.get("overwrite", False))
         self.data_source = DataSource.objects.get(id=self.task.data_source_id)
         self._initial_plugin()
 
@@ -81,7 +80,7 @@ class DataSourceSyncTaskRunner:
     def _sync_users(self):
         """同步用户信息"""
         users = self.plugin.fetch_users()
-        DataSourceUserSyncer(self.task, self.data_source, users, self.overwrite).sync()
+        DataSourceUserSyncer(self.task, self.data_source, users).sync()
 
     def _send_signal(self):
         """发送数据源同步完成信号，触发后续流程"""

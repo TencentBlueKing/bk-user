@@ -92,7 +92,7 @@ class TestDataSourceUserSyncer:
     ):
         # 先同步部门数据，再同步用户数据
         DataSourceDepartmentSyncer(data_source_sync_task, bare_local_data_source, raw_departments).sync()
-        DataSourceUserSyncer(data_source_sync_task, bare_local_data_source, raw_users, overwrite=True).sync()
+        DataSourceUserSyncer(data_source_sync_task, bare_local_data_source, raw_users).sync()
 
         # 验证用户信息
         users = DataSourceUser.objects.filter(data_source=bare_local_data_source)
@@ -142,7 +142,7 @@ class TestDataSourceUserSyncer:
             for e in DataSourceUser.objects.filter(data_source=full_local_data_source).values_list("extras", flat=True)
         )
 
-        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users, overwrite=True).sync()
+        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users).sync()
 
         users = DataSourceUser.objects.filter(data_source=full_local_data_source)
         assert set(users.values_list("code", flat=True)) == {user.code for user in raw_users}
@@ -179,7 +179,8 @@ class TestDataSourceUserSyncer:
 
         raw_users.append(random_raw_user)
 
-        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users, overwrite=False).sync()
+        data_source_sync_task.extra["overwrite"] = False
+        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users).sync()
 
         users = DataSourceUser.objects.filter(data_source=full_local_data_source)
         assert set(users.values_list("code", flat=True)) == {user.code for user in raw_users}
@@ -203,10 +204,23 @@ class TestDataSourceUserSyncer:
         assert zhangsan.phone_country_code == "86"
         assert zhangsan.extras == {}
 
+    def test_update_with_incremental(self, data_source_sync_task, full_local_data_source, random_raw_user):
+        data_source_sync_task.extra["incremental"] = True
+        user_codes = set(
+            DataSourceUser.objects.filter(
+                data_source=full_local_data_source,
+            ).values_list("code", flat=True)
+        )
+        user_codes.add(random_raw_user.code)
+        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, [random_raw_user]).sync()
+
+        users = DataSourceUser.objects.filter(data_source=full_local_data_source)
+        assert set(users.values_list("code", flat=True)) == user_codes
+
     def destroy(self, data_source_sync_task, full_local_data_source):
         raw_users: List[RawDataSourceUser] = []
 
-        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users, overwrite=True).sync()
+        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users).sync()
         assert DataSourceUser.objects.filter(data_source=full_local_data_source).count() == 0
 
     @staticmethod

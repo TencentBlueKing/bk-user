@@ -161,13 +161,12 @@ class DataSourceDepartmentSyncer:
 class DataSourceUserSyncer:
     """数据源用户同步器，支持覆盖更新，日志记录等"""
 
-    def __init__(
-        self, task: DataSourceSyncTask, data_source: DataSource, raw_users: List[RawDataSourceUser], overwrite: bool
-    ):
+    def __init__(self, task: DataSourceSyncTask, data_source: DataSource, raw_users: List[RawDataSourceUser]):
         self.task = task
         self.data_source = data_source
         self.raw_users = raw_users
-        self.overwrite = overwrite
+        self.overwrite = bool(task.extra.get("overwrite", False))
+        self.incremental = bool(task.extra.get("incremental", False))
         self.converter = DataSourceUserConverter(data_source)
 
     def sync(self):
@@ -180,7 +179,7 @@ class DataSourceUserSyncer:
         raw_user_codes = {user.code for user in self.raw_users}
 
         waiting_create_user_codes = raw_user_codes - user_codes
-        waiting_delete_user_codes = user_codes - raw_user_codes
+        waiting_delete_user_codes = user_codes - raw_user_codes if not self.incremental else set()
         waiting_update_user_codes = user_codes & raw_user_codes if self.overwrite else set()
 
         if waiting_delete_user_codes:

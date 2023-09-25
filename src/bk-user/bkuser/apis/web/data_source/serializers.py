@@ -194,6 +194,7 @@ class LocalDataSourceImportInputSLZ(serializers.Serializer):
 
     file = serializers.FileField(help_text="数据源用户信息文件（Excel 格式）")
     overwrite = serializers.BooleanField(help_text="允许对同名用户覆盖更新", default=False)
+    incremental = serializers.BooleanField(help_text="是否使用增量同步", default=False)
 
 
 class LocalDataSourceImportOutputSLZ(serializers.Serializer):
