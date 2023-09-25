@@ -17,12 +17,13 @@ from bkuser.apps.data_source.notifier import LocalDataSourceUserNotifier
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.sync.runners import DataSourceSyncTaskRunner, TenantSyncTaskRunner
 from bkuser.celery import app
+from bkuser.common.task import BaseTask
 from bkuser.plugins.local.constants import NotificationScene
 
 logger = logging.getLogger(__name__)
 
 
-@app.task(ignore_result=True)
+@app.task(base=BaseTask, ignore_result=True)
 def sync_data_source(task_id: int, context: Dict[str, Any]):
     """同步数据源数据"""
     logger.info("[celery] receive data source sync task: %s", task_id)
@@ -30,7 +31,7 @@ def sync_data_source(task_id: int, context: Dict[str, Any]):
     DataSourceSyncTaskRunner(task, context).run()
 
 
-@app.task(ignore_result=True)
+@app.task(base=BaseTask, ignore_result=True)
 def initialize_data_source_user_identity_infos(data_source_id: int):
     """初始化数据源用户账密数据"""
     logger.info("[celery] receive data source %s user identity infos initialize task", data_source_id)
@@ -41,7 +42,7 @@ def initialize_data_source_user_identity_infos(data_source_id: int):
     LocalDataSourceUserNotifier(data_source, NotificationScene.USER_INITIALIZE).send(users)
 
 
-@app.task(ignore_result=True)
+@app.task(base=BaseTask, ignore_result=True)
 def sync_tenant(task_id: int):
     """同步数据源数据"""
     logger.info("[celery] receive tenant sync task: %s", task_id)
