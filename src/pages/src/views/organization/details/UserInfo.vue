@@ -86,7 +86,7 @@ import Empty from '@/components/Empty.vue';
 import {
   getTenantUsers,
 } from '@/http/organizationFiles';
-// import { statusIcon } from '@/utils';
+import { formatConvert } from '@/utils';
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -158,13 +158,10 @@ const handleEnter = (value: string) => {
   emit('searchUsers', value);
 };
 const handleClear = () => {
+  searchValue.value = '';
   emit('searchUsers', '');
 };
 
-const formatConvert = (data) => {
-  const departments = data?.map(item => item.name).join('/') || '--';
-  return departments;
-};
 const pageLimitChange = (limit) => {
   emit('updatePageLimit', limit);
 };
