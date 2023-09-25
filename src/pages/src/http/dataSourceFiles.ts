@@ -2,6 +2,8 @@ import http from './fetch';
 import type {
   DataSourceUsersParams,
   DataSourceUsersResult,
+  DepartmentsParams,
+  LeadersParams,
   NewDataSourceParams,
   NewDataSourceUserParams,
   PutDataSourceParams,
@@ -24,12 +26,18 @@ export const newDataSourceUser = (params: NewDataSourceUserParams) => http.post(
 /**
  * 数据源创建用户-下拉部门列表
  */
-export const getDataSourceDepartments = (id: string, name: string) => http.get(`/api/v1/web/data-sources/${id}/departments/?name=${name}`);
+export const getDataSourceDepartments = (params: DepartmentsParams) => {
+  const { id, name, page, pageSize } = params;
+  return http.get(`/api/v1/web/data-sources/${id}/departments/?name=${name}&page=${page}&page_size=${pageSize}`);
+};
 
 /**
  * 数据源创建用户-下拉上级列表
  */
-export const getDataSourceLeaders = (id: string, keyword: string) => http.get(`/api/v1/web/data-sources/${id}/leaders/?keyword=${keyword}`);
+export const getDataSourceLeaders = (params: LeadersParams) => {
+  const { id, keyword, page, pageSize } = params;
+  return http.get(`/api/v1/web/data-sources/${id}/leaders/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
+};
 
 /**
  * 数据源用户详情
