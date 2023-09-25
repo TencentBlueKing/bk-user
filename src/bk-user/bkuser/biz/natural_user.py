@@ -45,7 +45,7 @@ class NatureUserHandler:
     @staticmethod
     def get_nature_user_by_tenant_user_id(tenant_user_id: str) -> NaturalUserInfo:
         """
-        通过租户用户ID获取对应的自然人ID:
+        通过租户用户ID获取对应的自然人信息:
         存在两种情况:
         1. 未绑定自然人，则返回（伪）自然人=>租户用户的对应信息，及其对应的数据源用户id
         2. 绑定了自然人，返回自然人数据，及其绑定的数据用户id列表
