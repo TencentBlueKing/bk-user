@@ -7,7 +7,7 @@
             <div class="datasource-type-icon" v-for="item in typeList" :key="item">
               <img v-if="item.id === pluginId && item.logo" :src="item.logo">
               <i v-else :class="dataSourceType[pluginId].icon" />
-              <span>{{ dataSourceType[pluginId].text }}</span>
+              <span>{{ item.name }}</span>
             </div>
           </template>
         </bk-tag>

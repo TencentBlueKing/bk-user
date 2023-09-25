@@ -81,7 +81,7 @@ const handleCancel = () => {
   emit('searchUserList', '');
 };
 const handleScrollEnd = () => {
-  if (isSearch.value || props.state.count < (props.params.page * 10)) return;
+  if (isSearch.value || props.state.count <= (props.params.page * 10)) return;
   scrollLoading.value = true;
   setTimeout(() => {
     emit('scrollChange');
