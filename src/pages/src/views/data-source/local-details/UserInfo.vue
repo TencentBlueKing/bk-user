@@ -158,6 +158,7 @@ import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
 import { getDataSourceUserDetails, getDataSourceUsers } from '@/http/dataSourceFiles';
+import { formatConvert } from '@/utils';
 
 const props = defineProps({
   dataSourceId: {
@@ -300,11 +301,6 @@ const handleBeforeClose = async () => {
   }
 };
 
-const formatConvert = (data) => {
-  const departments = data?.map(item => item.name).join('/') || '--';
-  return departments;
-};
-
 const updateUsers = (value, text) => {
   detailsConfig.isShow = false;
   params.username = value;
@@ -317,6 +313,7 @@ const updateUsers = (value, text) => {
 
 const handleEnter = () => {
   params.username = searchVal.value;
+  params.page = 1;
   getUsers();
 };
 
@@ -329,6 +326,7 @@ const handleClear = () => {
 const pageLimitChange = (limit) => {
   pagination.limit = limit;
   params.pageSize = limit;
+  params.page = 1;
   getUsers();
 };
 const pageCurrentChange = (current) => {

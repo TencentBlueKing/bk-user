@@ -29,7 +29,7 @@
         </span>
       </div>
       <div class="main-navigation-right">
-        <bk-dropdown
+        <!-- <bk-dropdown
           @hide="() => (state.languageDropdown = false)"
           @show="() => (state.languageDropdown = true)"
         >
@@ -61,7 +61,7 @@
               </bk-dropdown-item>
             </bk-dropdown-menu>
           </template>
-        </bk-dropdown>
+        </bk-dropdown> -->
         <bk-dropdown
           @hide="() => (state.logoutDropdown = false)"
           @show="() => (state.logoutDropdown = true)"
@@ -72,8 +72,8 @@
           </div>
           <template #content>
             <bk-dropdown-menu>
-              <bk-dropdown-item @click="logout">退出登录</bk-dropdown-item>
               <bk-dropdown-item @click="toIndividualCenter">个人中心</bk-dropdown-item>
+              <bk-dropdown-item @click="logout">退出登录</bk-dropdown-item>
             </bk-dropdown-menu>
           </template>
         </bk-dropdown>
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { DownShape, HelpDocumentFill } from 'bkui-vue/lib/icon';
+// import { DownShape, HelpDocumentFill } from 'bkui-vue/lib/icon';
 import { computed, reactive } from 'vue';
 
 import { logout } from '@/common/auth';
@@ -124,33 +124,33 @@ const headerNav = reactive([
     path: 'setting',
   },
 ]);
-const languageNav = reactive([
-  {
-    name: '中文',
-    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-  },
-  {
-    name: 'English',
-    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-  },
-]);
-const helpNav = reactive([
-  {
-    name: '产品文档',
-    url: '',
-  },
-  {
-    name: '版本日志',
-    url: '',
-  },
-  {
-    name: '问题反馈',
-    url: '',
-  },
-]);
-const toLink = (item: any) => {
-  window.open(item.url, '_blank');
-};
+// const languageNav = reactive([
+//   {
+//     name: '中文',
+//     icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+//   },
+//   {
+//     name: 'English',
+//     icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+//   },
+// ]);
+// const helpNav = reactive([
+//   {
+//     name: '产品文档',
+//     url: '',
+//   },
+//   {
+//     name: '版本日志',
+//     url: '',
+//   },
+//   {
+//     name: '问题反馈',
+//     url: '',
+//   },
+// ]);
+// const toLink = (item: any) => {
+//   window.open(item.url, '_blank');
+// };
 const toIndividualCenter = () => {
   router.push({
     name: 'personalCenter',
