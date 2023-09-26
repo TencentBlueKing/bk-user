@@ -11,11 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Dict, List, Optional
 
+from django.template import Context, Template
 from django.utils.translation import gettext_lazy as _
-from jinja2 import Template
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.component.cmsi import send_mail, send_sms
+from bkuser.component import cmsi
 from bkuser.plugins.local.constants import NotificationMethod, NotificationScene
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, NotificationTemplate
 
@@ -55,7 +55,8 @@ class NotificationTmplContextGenerator:
     def _gen_user_initialize_ctx(self) -> Dict[str, str]:
         """用户初始化"""
         info = LocalDataSourceIdentityInfo.objects.get(user=self.user)
-        # TODO (su) 提供修改密码的 URL
+        # FIXME (su) 密码修改为对称加密后，无法通过该方式直接获取到
+        # FIXME (su) 提供修改密码的 URL（settings.BK_USER_URL + xxxx）
         return {"password": info.password, "reset_url": "https://example.com/reset-password", **self._gen_base_ctx()}
 
     def _gen_reset_passwd_ctx(self) -> Dict[str, str]:
@@ -74,16 +75,18 @@ class NotificationTmplContextGenerator:
 class LocalDataSourceUserNotifier:
     """本地数据源用户通知器，支持批量像用户发送某类信息"""
 
+    templates: List[NotificationTemplate] = []
+
     def __init__(self, data_source: DataSource, scene: NotificationScene):
         self.data_source = data_source
         self.scene = scene
 
-        if not self.data_source.is_local:
-            raise NotImplementedError(_("仅本地数据源支持发送通知"))
+        if not data_source.is_local:
+            return
 
-        plugin_cfg = LocalDataSourcePluginConfig(**self.data_source.plugin_config)
+        plugin_cfg = LocalDataSourcePluginConfig(**data_source.plugin_config)
         if not plugin_cfg.enable_account_password_login:
-            raise
+            return
 
         self.templates = self._get_tmpls_with_scene(plugin_cfg, scene)
 
@@ -116,6 +119,7 @@ class LocalDataSourceUserNotifier:
         else:
             raise ValueError(_("通知场景 {} 未被支持".format(scene)))
 
+        # 返回场景匹配，且被声明启用的模板列表
         return [tmpl for tmpl in cfg.templates if tmpl.scene == scene and tmpl.method in cfg.enabled_methods]
 
     def _send_notifications(self, user: DataSourceUser):
@@ -129,14 +133,15 @@ class LocalDataSourceUserNotifier:
     def _send_email(self, user: DataSourceUser, tmpl: NotificationTemplate):
         logger.info("send email to user %s, scene %s, title: %s", user.username, tmpl.scene, tmpl.title)
         content = self._render_tmpl(user, tmpl.content_html)
-        send_mail([user.email], tmpl.sender, tmpl.title, content)  # type: ignore
+        # FIXME (su) 修改为指定用户名
+        cmsi.send_mail([user.email], tmpl.sender, tmpl.title, content)  # type: ignore
 
     def _send_sms(self, user: DataSourceUser, tmpl: NotificationTemplate):
         logger.info("send sms to user %s, scene %s", user.username, tmpl.scene)
         content = self._render_tmpl(user, tmpl.content)
-        # TODO (su) 确认是否支持区号？
-        send_sms([user.phone], content)
+        # FIXME (su) 修改为指定用户名
+        cmsi.send_sms([user.phone], content)
 
     def _render_tmpl(self, user: DataSourceUser, content: str) -> str:
         ctx = NotificationTmplContextGenerator(user=user, scene=self.scene).gen()
-        return Template(content).render(**ctx)
+        return Template(content).render(Context(ctx))

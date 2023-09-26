@@ -128,18 +128,20 @@ class DataSourceUserExporter:
 
         dept_org_map = {}
 
-        def _build_by_recursive(rel: DataSourceDepartmentRelation, ancestors: List[int]):
+        def _build_by_recursive(rel: DataSourceDepartmentRelation, parent_org: str):
             dept_id = int(rel.department_id)
-            ancestors.append(dept_id)
-            dept_org_map[dept_id] = "/".join(dept_name_map[id] for id in ancestors)
+            dept_name = dept_name_map[dept_id]
+
+            current_org = "/".join([parent_org, dept_name]) if parent_org else dept_name
+            dept_org_map[dept_id] = current_org
 
             for child in rel.get_children():
-                _build_by_recursive(child, ancestors[:])
+                _build_by_recursive(child, current_org)
 
         # 使用 cached_tree 避免在后续使用 get_children 时候触发 DB 查询
         # 注：get_ascendants 无法使用 mptt 自带的缓存，暂不考虑在查询部门组织信息时使用
         for rel in relations.get_cached_trees():
-            _build_by_recursive(rel, [])
+            _build_by_recursive(rel, "")
 
         return dept_org_map
 

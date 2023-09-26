@@ -11,12 +11,6 @@ specific language governing permissions and limitations under the License.
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
-# 数据源同步单次批量创建/更新数量
-DATA_SOURCE_SYNC_BATCH_SIZE = 250
-
-# 租户数据同步单次批量创建/更新数量
-TENANT_SYNC_BATCH_SIZE = 250
-
 
 class SyncTaskTrigger(str, StructuredEnum):
     """同步任务触发器枚举"""

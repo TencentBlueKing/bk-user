@@ -48,7 +48,6 @@ zxcvbn = "4.4.28"
 phonenumbers = "8.13.18"
 jsonref = "1.1.0"
 openpyxl = "3.1.2"
-jinja2 = "3.1.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"

@@ -323,7 +323,8 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         )
 
         try:
-            task = DataSourceSyncManager(data_source, options).execute(context={"workbook": workbook})
+            plugin_init_extra_kwargs = {"workbook": workbook}
+            task = DataSourceSyncManager(data_source, options).execute(plugin_init_extra_kwargs)
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("本地数据源导入失败")
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))

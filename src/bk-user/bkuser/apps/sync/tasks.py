@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def sync_data_source(task_id: int, context: Dict[str, Any]):
+def sync_data_source(task_id: int, plugin_init_extra_kwargs: Dict[str, Any]):
     """同步数据源数据"""
     logger.info("[celery] receive data source sync task: %s", task_id)
     task = DataSourceSyncTask.objects.get(id=task_id)
-    DataSourceSyncTaskRunner(task, context).run()
+    DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -36,6 +36,11 @@ def initialize_data_source_user_identity_infos(data_source_id: int):
     """初始化数据源用户账密数据"""
     logger.info("[celery] receive data source %s user identity infos initialize task", data_source_id)
     data_source = DataSource.objects.get(id=data_source_id)
+    # 非本地数据源直接跳过
+    if not data_source.is_local:
+        logger.debug("not local data source, skip initialize user identity infos")
+        return
+
     # 为没有账密信息的用户进行初始化
     users = LocalDataSourceIdentityInfoInitializer(data_source).sync()
     # 逐一发送通知（邮件/短信）

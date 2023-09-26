@@ -40,11 +40,10 @@ class DataSourceSyncTaskRunner:
     FIXME (su) 1. 细化同步异常处理，2. 后续支持软删除后，需要重构同步逻辑
     """
 
-    def __init__(self, task: DataSourceSyncTask, context: Dict[str, Any]):
+    def __init__(self, task: DataSourceSyncTask, plugin_init_extra_kwargs: Dict[str, Any]):
         self.task = task
-        self.context = context
         self.data_source = DataSource.objects.get(id=self.task.data_source_id)
-        self._initial_plugin()
+        self._initial_plugin(plugin_init_extra_kwargs)
 
     def run(self):
         logger.info("start sync data source, task_id: %s, data_source_id: %s", self.task.id, self.task.data_source_id)
@@ -62,7 +61,7 @@ class DataSourceSyncTaskRunner:
 
         self._send_signal()
 
-    def _initial_plugin(self):
+    def _initial_plugin(self, plugin_init_extra_kwargs: Dict[str, Any]):
         """初始化数据源插件"""
         plugin_config = self.data_source.plugin_config
         PluginCfgCls = DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.get(self.data_source.plugin_id)  # noqa: N806
@@ -70,7 +69,7 @@ class DataSourceSyncTaskRunner:
             plugin_config = PluginCfgCls(**plugin_config)
 
         PluginCls = DATA_SOURCE_PLUGIN_CLASS_MAP[self.data_source.plugin_id]  # noqa: N806
-        self.plugin = PluginCls(plugin_config, **self.context)
+        self.plugin = PluginCls(plugin_config, **plugin_init_extra_kwargs)
 
     def _sync_departments(self):
         """同步部门信息"""

@@ -71,7 +71,7 @@ class TenantUser(TimestampedModel):
         default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
     is_inherited_email = models.BooleanField("是否继承数据源邮箱", default=True)
-    custom_email = models.EmailField("自定义邮箱", max_length=256, null=True, blank=True, default="")
+    custom_email = models.EmailField("自定义邮箱", null=True, blank=True, default="")
 
     class Meta:
         unique_together = [

@@ -21,7 +21,6 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.sync.constants import DATA_SOURCE_SYNC_BATCH_SIZE, TENANT_SYNC_BATCH_SIZE
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
@@ -33,6 +32,9 @@ from bkuser.utils.uuid import generate_uuid
 
 class DataSourceDepartmentSyncer:
     """数据源部门同步器"""
+
+    # 单次批量创建 / 更新数量
+    batch_size = 250
 
     def __init__(
         self, task: DataSourceSyncTask, data_source: DataSource, raw_departments: List[RawDataSourceDepartment]
@@ -77,7 +79,7 @@ class DataSourceDepartmentSyncer:
             DataSourceDepartment(data_source=self.data_source, code=dept.code, name=dept.name)
             for dept in raw_departments
         ]
-        DataSourceDepartment.objects.bulk_create(departments, batch_size=DATA_SOURCE_SYNC_BATCH_SIZE)
+        DataSourceDepartment.objects.bulk_create(departments, batch_size=self.batch_size)
 
     def _update_departments(self, raw_departments: List[RawDataSourceDepartment]):
         # FIXME (su) 记录更新日志
@@ -95,7 +97,7 @@ class DataSourceDepartmentSyncer:
             u.updated_at = timezone.now()
 
         DataSourceDepartment.objects.bulk_update(
-            waiting_update_departments, fields=["name", "updated_at"], batch_size=DATA_SOURCE_SYNC_BATCH_SIZE
+            waiting_update_departments, fields=["name", "updated_at"], batch_size=self.batch_size
         )
 
     def _sync_department_relations(self):
@@ -140,7 +142,7 @@ class DataSourceDepartmentSyncer:
 
             # 最后再全部批量创建
             DataSourceDepartmentRelation.objects.bulk_create(
-                list(dept_code_rel_map.values()), batch_size=DATA_SOURCE_SYNC_BATCH_SIZE
+                list(dept_code_rel_map.values()), batch_size=self.batch_size
             )
 
         # 逐棵对当前数据源的树进行重建
@@ -160,6 +162,9 @@ class DataSourceDepartmentSyncer:
 
 class DataSourceUserSyncer:
     """数据源用户同步器，支持覆盖更新，日志记录等"""
+
+    # 单次批量创建 / 更新数量
+    batch_size = 250
 
     def __init__(self, task: DataSourceSyncTask, data_source: DataSource, raw_users: List[RawDataSourceUser]):
         self.task = task
@@ -198,7 +203,7 @@ class DataSourceUserSyncer:
     def _create_users(self, raw_users: List[RawDataSourceUser]):
         # FIXME (su) 记录创建的日志
         users = [self.converter.convert(u) for u in raw_users]
-        DataSourceUser.objects.bulk_create(users, batch_size=DATA_SOURCE_SYNC_BATCH_SIZE)
+        DataSourceUser.objects.bulk_create(users, batch_size=self.batch_size)
 
     def _update_users(self, raw_users: List[RawDataSourceUser]):
         # FIXME (su) 记录更新日志
@@ -220,7 +225,7 @@ class DataSourceUserSyncer:
         DataSourceUser.objects.bulk_update(
             waiting_update_users,
             fields=["username", "full_name", "email", "phone", "phone_country_code", "extras", "updated_at"],
-            batch_size=DATA_SOURCE_SYNC_BATCH_SIZE,
+            batch_size=self.batch_size,
         )
 
     def _sync_user_leader_relations(self):
@@ -251,7 +256,7 @@ class DataSourceUserSyncer:
             for (user_id, leader_id) in waiting_create_user_leader_id_tuples
         ]
         DataSourceUserLeaderRelation.objects.bulk_create(
-            waiting_create_user_leader_relations, batch_size=DATA_SOURCE_SYNC_BATCH_SIZE
+            waiting_create_user_leader_relations, batch_size=self.batch_size
         )
 
         # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表
@@ -293,7 +298,7 @@ class DataSourceUserSyncer:
             for (user_id, dept_id) in waiting_create_user_dept_id_tuples
         ]
         DataSourceDepartmentUserRelation.objects.bulk_create(
-            waiting_create_user_dept_relations, batch_size=DATA_SOURCE_SYNC_BATCH_SIZE
+            waiting_create_user_dept_relations, batch_size=self.batch_size
         )
 
         # 集合做差，再转换成 relation ID，得到需要删除的 relation ID 列表
@@ -307,12 +312,15 @@ class DataSourceUserSyncer:
 class TenantDepartmentSyncer:
     """租户部门同步器"""
 
+    batch_size = 250
+
     def __init__(self, task: TenantSyncTask, data_source: DataSource, tenant: Tenant):
         self.task = task
         self.data_source = data_source
         self.tenant = tenant
 
     def sync(self):
+        """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
         exists_tenant_departments = TenantDepartment.objects.filter(tenant=self.tenant)
         data_source_departments = DataSourceDepartment.objects.filter(data_source=self.data_source)
 
@@ -336,11 +344,13 @@ class TenantDepartmentSyncer:
             for dept in waiting_sync_data_source_departments
         ]
         # FIXME (su) 记录创建的日志
-        TenantDepartment.objects.bulk_create(waiting_create_tenant_departments, batch_size=TENANT_SYNC_BATCH_SIZE)
+        TenantDepartment.objects.bulk_create(waiting_create_tenant_departments, batch_size=self.batch_size)
 
 
 class TenantUserSyncer:
     """租户部门同步器"""
+
+    batch_size = 250
 
     def __init__(self, task: TenantSyncTask, data_source: DataSource, tenant: Tenant):
         self.task = task
@@ -349,6 +359,7 @@ class TenantUserSyncer:
         self.user_account_expired_at = self._get_user_account_expired_at()
 
     def sync(self):
+        """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
         exists_tenant_users = TenantUser.objects.filter(tenant=self.tenant)
         data_source_users = DataSourceUser.objects.filter(data_source=self.data_source)
 
@@ -372,7 +383,7 @@ class TenantUserSyncer:
             for user in waiting_sync_data_source_users
         ]
         # FIXME (su) 记录创建的日志
-        TenantUser.objects.bulk_create(waiting_create_tenant_users, batch_size=TENANT_SYNC_BATCH_SIZE)
+        TenantUser.objects.bulk_create(waiting_create_tenant_users, batch_size=self.batch_size)
 
     def _get_user_account_expired_at(self) -> datetime.datetime:
         """FIXME (su) 支持读取账号有效期配置，然后累加到 timezone.now() 上，目前是直接返回 PERMANENT_TIME"""

@@ -9,33 +9,33 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import datetime
+import logging
 from typing import List
 
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
+from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.plugins.local.constants import PasswordGenerateMethod
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig, PasswordRuleConfig
+
+logger = logging.getLogger(__name__)
 
 
 class PasswordProvider:
     """本地数据源用户密码"""
 
-    def __init__(self, plugin_cfg: LocalDataSourcePluginConfig):
-        # assert for mypy type linter
-        assert plugin_cfg.password_rule is not None
-        assert plugin_cfg.password_initial is not None
-
-        self.generate_method = plugin_cfg.password_initial.generate_method
-        self.fixed_password = plugin_cfg.password_initial.fixed_password
-        self.password_generator = PasswordGenerator(plugin_cfg.password_rule.to_rule())
+    def __init__(self, passwd_rule_cfg: PasswordRuleConfig, passwd_initial_cfg: PasswordInitialConfig):
+        self.generate_method = passwd_initial_cfg.generate_method
+        self.fixed_password = passwd_initial_cfg.fixed_password
+        self.passwd_generator = PasswordGenerator(passwd_rule_cfg.to_rule())
 
     def generate(self) -> str:
         if self.generate_method == PasswordGenerateMethod.FIXED and self.fixed_password:
             return self.fixed_password
 
-        return self.password_generator.generate()
+        return self.passwd_generator.generate()
 
 
 class LocalDataSourceIdentityInfoInitializer:
@@ -52,7 +52,9 @@ class LocalDataSourceIdentityInfoInitializer:
         if not self.plugin_cfg.enable_account_password_login:
             return
 
-        self.password_provider = PasswordProvider(self.plugin_cfg)
+        self.password_provider = PasswordProvider(
+            self.plugin_cfg.password_rule, self.plugin_cfg.password_initial  # type: ignore
+        )
 
     def sync(self) -> List[DataSourceUser]:
         """检查指定数据源的所有用户，对没有账密信息的，做初始化，适用于批量同步（导入）的情况"""
@@ -75,6 +77,10 @@ class LocalDataSourceIdentityInfoInitializer:
         if self._can_skip():
             return
 
+        if LocalDataSourceIdentityInfo.objects.filter(user=user).exists():
+            logger.warning("local data source user %s identity info exists, skip initialize", user.id)
+            return
+
         self._init_users_identity_info([user])
 
     def _can_skip(self) -> bool:
@@ -93,7 +99,7 @@ class LocalDataSourceIdentityInfoInitializer:
     def _init_users_identity_info(self, users: List[DataSourceUser]):
         """初始化用户身份信息"""
         time_now = timezone.now()
-        expired_at = self._get_password_expired_at(time_now)
+        expired_at = self._get_password_expired_at()
 
         waiting_create_infos = [
             LocalDataSourceIdentityInfo(
@@ -103,12 +109,16 @@ class LocalDataSourceIdentityInfoInitializer:
                 password_expired_at=expired_at,
                 data_source=self.data_source,
                 username=user.username,
-                created_at=time_now,
-                updated_at=time_now,
             )
             for user in users
         ]
         LocalDataSourceIdentityInfo.objects.bulk_create(waiting_create_infos, batch_size=self.BATCH_SIZE)
 
-    def _get_password_expired_at(self, now: datetime.datetime) -> datetime.datetime:
-        return now + datetime.timedelta(days=self.plugin_cfg.password_rule.valid_time)  # type: ignore
+    def _get_password_expired_at(self) -> datetime.datetime:
+        """获取密码过期的具体时间"""
+        valid_time: int = self.plugin_cfg.password_rule.valid_time  # type: ignore
+        # 有效时间 -1 表示永远有效
+        if valid_time < 0:
+            return PERMANENT_TIME
+
+        return timezone.now() + datetime.timedelta(days=valid_time)

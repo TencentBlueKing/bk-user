@@ -26,6 +26,8 @@ class DataSourcePluginEnum(str, StructuredEnum):
     MAD = EnumField("mad", label=_("MicrosoftActiveDirectory"))
 
 
+# FIXME (su) 支持通过注册的方式添加插件，避免新增插件后，需要手动维护以下常量
+
 # 数据源插件类映射表
 DATA_SOURCE_PLUGIN_CLASS_MAP = {
     DataSourcePluginEnum.LOCAL: LocalDataSourcePlugin,

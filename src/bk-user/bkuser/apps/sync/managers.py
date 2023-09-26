@@ -27,9 +27,9 @@ class DataSourceSyncManager:
         self.data_source = data_source
         self.sync_options = sync_options
 
-    def execute(self, context: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
-        """执行同步任务"""
-        context = context or {}
+    def execute(self, plugin_init_extra_kwargs: Optional[Dict[str, Any]] = None) -> DataSourceSyncTask:
+        """同步数据源数据到数据库中，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
+        plugin_init_extra_kwargs = plugin_init_extra_kwargs or {}
 
         task = DataSourceSyncTask.objects.create(
             data_source_id=self.data_source.id,
@@ -44,25 +44,25 @@ class DataSourceSyncManager:
         )
 
         if self.sync_options.async_run:
-            self._ensure_only_basic_type_in_context(context)
-            sync_data_source.delay(task.id, context)
+            self._ensure_only_basic_type_in_kwargs(plugin_init_extra_kwargs)
+            sync_data_source.delay(task.id, plugin_init_extra_kwargs)
         else:
             # 同步的方式，不需要序列化/反序列化，因此不需要检查基础类型
-            DataSourceSyncTaskRunner(task, context).run()
+            DataSourceSyncTaskRunner(task, plugin_init_extra_kwargs).run()
 
         return task
 
     @staticmethod
-    def _ensure_only_basic_type_in_context(context: Dict[str, Any]):
-        """确保 context 中只有基础类型"""
-        if not context:
+    def _ensure_only_basic_type_in_kwargs(kwargs: Dict[str, Any]):
+        """确保 插件初始化额外参数 中只有基础类型"""
+        if not kwargs:
             return
 
-        for v in context.values():
+        for v in kwargs.values():
             if isinstance(v, (int, float, str, bytes, bool, dict, list)):
                 continue
 
-            raise TypeError("only basic type allowed in context!")
+            raise TypeError("only basic type allowed in plugin_init_extra_kwargs!")
 
 
 class TenantSyncManager:
@@ -74,6 +74,7 @@ class TenantSyncManager:
         self.sync_options = sync_options
 
     def execute(self) -> TenantSyncTask:
+        """同步数据源用户，部门信息到租户，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
         task = TenantSyncTask.objects.create(
             tenant_id=self.tenant_id,
             data_source_id=self.data_source.id,

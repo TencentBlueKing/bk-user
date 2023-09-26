@@ -12,11 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name='tenantuser',
-            name='custom_email',
-            field=models.EmailField(blank=True, default='', max_length=256, null=True, verbose_name='自定义邮箱'),
-        ),
-        migrations.AlterField(
-            model_name='tenantuser',
             name='custom_phone',
             field=models.CharField(blank=True, default='', max_length=32, null=True, verbose_name='自定义手机号'),
         ),
