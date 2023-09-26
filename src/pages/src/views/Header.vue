@@ -66,13 +66,18 @@
           @hide="() => (state.logoutDropdown = false)"
           @show="() => (state.logoutDropdown = true)"
         >
-          <div class="help-info" :class="state.logoutDropdown && 'active-username'">
+          <div
+            :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
             <span class="help-info-name">{{ userInfo.username }}</span>
             <DownShape class="help-info-icon" />
           </div>
           <template #content>
-            <bk-dropdown-menu>
-              <bk-dropdown-item @click="toIndividualCenter">个人中心</bk-dropdown-item>
+            <bk-dropdown-menu ext-cls="dropdown-menu-box">
+              <bk-dropdown-item
+                :class="{ 'active': isPersonalCenter }"
+                @click="toIndividualCenter">
+                个人中心
+              </bk-dropdown-item>
               <bk-dropdown-item @click="logout">退出登录</bk-dropdown-item>
             </bk-dropdown-menu>
           </template>
@@ -85,8 +90,9 @@
 </template>
 
 <script setup lang="ts">
-// import { DownShape, HelpDocumentFill } from 'bkui-vue/lib/icon';
+import { DownShape } from 'bkui-vue/lib/icon';
 import { computed, reactive } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { logout } from '@/common/auth';
 import Login from '@/components/layouts/Login.vue';
@@ -101,6 +107,9 @@ const state = reactive({
 
 const userStore = useUser();
 const userInfo = computed(() => userStore.user);
+
+const route = useRoute();
+const isPersonalCenter = computed(() => route.name === 'personalCenter');
 
 const headerNav = reactive([
   {
@@ -241,6 +250,10 @@ const toIndividualCenter = () => {
       }
     }
 
+    .active-route {
+      color: #3a84ff;
+    }
+
     .help-info-icon {
       vertical-align: middle;
     }
@@ -257,6 +270,17 @@ const toIndividualCenter = () => {
 
     .bk-sq-icon {
       font-size: 16px;
+    }
+  }
+}
+
+.dropdown-menu-box {
+  .active {
+    color: #3a84ff;
+    background-color: #E1ECFF;
+
+    &:hover {
+      background-color: #E1ECFF;
     }
   }
 }
