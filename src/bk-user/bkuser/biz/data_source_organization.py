@@ -35,6 +35,7 @@ class DataSourceUserBaseInfo(BaseModel):
     email: str
     phone: str
     phone_country_code: str
+    logo: str
 
 
 class DataSourceUserEditableBaseInfo(BaseModel):

@@ -67,6 +67,8 @@ class UserCreateInputSLZ(serializers.Serializer):
 
     def validate(self, data):
         validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+        if not data.get("logo"):
+            data["logo"] = settings.DEFAULT_DATA_SOURCE_USER_LOGO
         return data
 
     def validate_department_ids(self, department_ids):
