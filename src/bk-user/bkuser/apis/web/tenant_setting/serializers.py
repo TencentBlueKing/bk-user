@@ -10,11 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from drf_yasg.utils import swagger_serializer_method
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from pydantic import ValidationError as PDValidationError
 
 from bkuser.apps.tenant_setting.constants import UserFieldDataType
-from bkuser.apps.tenant_setting.models import UserCustomField
+from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.apps.tenant_setting.models import TenantUserCustomFieldOptions
+from rest_framework.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -40,17 +43,14 @@ class CustomFieldOutputSLZ(serializers.Serializer):
     options = serializers.JSONField(help_text="选项")
 
 
-class UserFieldOutputSLZ(serializers.Serializer):
-    builtin_fields = serializers.SerializerMethodField(help_text="内置字段")
-    custom_fields = serializers.SerializerMethodField(help_text="自定义字段")
+class TenantUserFieldOutputSLZ(serializers.Serializer):
+    builtin_fields = serializers.ListField(help_text="内置字段", child=BuiltinFieldOutputSLZ())
+    custom_fields = serializers.ListField(help_text="自定义字段", child=CustomFieldOutputSLZ())
 
-    @swagger_serializer_method(serializer_or_field=BuiltinFieldOutputSLZ(many=True))
-    def get_builtin_fields(self, obj):
-        return BuiltinFieldOutputSLZ(obj["builtin_fields"], many=True).data
 
-    @swagger_serializer_method(serializer_or_field=CustomFieldOutputSLZ(many=True))
-    def get_custom_fields(self, obj):
-        return CustomFieldOutputSLZ(obj["custom_fields"], many=True).data
+class UserCustomFieldOptionInputSLZ(serializers.Serializer):
+    id = serializers.IntegerField()
+    value = serializers.CharField()
 
 
 class UserCustomFieldCreateInputSLZ(serializers.Serializer):
@@ -62,28 +62,50 @@ class UserCustomFieldCreateInputSLZ(serializers.Serializer):
     options = serializers.JSONField(help_text="选项", required=False)
 
     def validate_display_name(self, display_name):
-        if UserCustomField.objects.filter(tenant=self.context["tenant"], display_name=display_name).exists():
-            raise serializers.ValidationError("display_name already exists")
+        if TenantUserCustomField.objects.filter(
+                tenant_id=self.context["tenant_id"], display_name=display_name).exists():
+            raise serializers.ValidationError(_("展示用名称 {} 已存在").format(display_name))
         return display_name
 
     def validate_name(self, name):
-        if UserCustomField.objects.filter(tenant=self.context["tenant"], name=name).exists():
-            raise serializers.ValidationError("name already exists")
+        if TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exists():
+            raise serializers.ValidationError(_("字段名称 {} 已存在").format(name))
         return name
 
-    def validate(self, data):
-        data_type = data.get("data_type")
-        default = data.get("default")
-        options = data.get("options")
+    def validate(self, attrs):
+        data_type = attrs.get("data_type")
+        options = attrs.get("options")
+        default = attrs.get("default")
 
-        if data_type in [UserFieldDataType.ENUM.value, UserFieldDataType.MULTI_ENUM.value] and (
-            default is None or options is None
-        ):
-            raise serializers.ValidationError(
-                "default and options fields are required for enum and multi_enum data types"
-            )
+        if data_type == UserFieldDataType.ENUM.value:
+            if not options:
+                raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
+            try:
+                # 校验options字段规则：
+                TenantUserCustomFieldOptions(options=options)
+            except PDValidationError as e:
+                raise ValidationError(_("<选项>字段不合法: {}".format(e)))
 
-        return data
+            if default is not None:
+                # 单枚举类型要求default的值为options其中一个对象的ID值
+                if default not in [option["id"] for option in attrs["options"]]:
+                    raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+
+        if data_type == UserFieldDataType.MULTI_ENUM.value:
+            if not options:
+                raise serializers.ValidationError(_("多选枚举类型的自定义字段需要传递非空的<选项>字段"))
+            try:
+                # 校验options字段规则：
+                TenantUserCustomFieldOptions(options=options)
+            except PDValidationError as e:
+                raise ValidationError(_("<选项>字段不合法：{}".format(e)))
+
+            if default is not None:
+                # 多选枚举类型要求default中的值都为options其中任一对象的ID值
+                if not set(default).issubset(set(option["id"] for option in attrs["options"])):
+                    raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+
+        return attrs
 
 
 class UserCustomFieldCreateOutputSLZ(serializers.Serializer):
@@ -91,7 +113,43 @@ class UserCustomFieldCreateOutputSLZ(serializers.Serializer):
 
 
 class UserCustomFieldUpdateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="字段名称", max_length=128, required=False)
-    required = serializers.BooleanField(help_text="是否必填", required=False)
-    default = serializers.JSONField(help_text="默认值", required=False)
-    options = serializers.JSONField(help_text="选项", required=False)
+    name = serializers.CharField(help_text="字段名称", max_length=128)
+    required = serializers.BooleanField(help_text="是否必填")
+    default = serializers.JSONField(help_text="默认值")
+    options = serializers.JSONField(help_text="选项")
+
+    def validate_name(self, name):
+        if TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exclude(
+                id=self.context["current_custom_field_id"]).exists():
+            raise serializers.ValidationError(_("字段名称 {} 已存在").format(name))
+        return name
+
+    def validate(self, attrs):
+        current_custom_field = TenantUserCustomField.objects.get(id=self.context["current_custom_field_id"])
+        data_type = current_custom_field.data_type
+        options = attrs.get("options")
+        default = attrs.get("default")
+
+        if data_type == UserFieldDataType.ENUM.value:
+            try:
+                # 校验options字段规则：
+                TenantUserCustomFieldOptions(options=options)
+            except PDValidationError as e:
+                raise ValidationError(_("<选项>字段不合法: {}".format(e)))
+
+            # 单枚举类型要求default的值为options其中一个对象的ID值
+            if default is not None and default not in [option["id"] for option in attrs["options"]]:
+                raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+
+        if data_type == UserFieldDataType.MULTI_ENUM.value:
+            try:
+                # 校验options字段规则：
+                TenantUserCustomFieldOptions(options=options)
+            except PDValidationError as e:
+                raise ValidationError(_("<选项>字段不合法：{}".format(e)))
+
+            # 多选枚举类型要求default中的值都为options其中任一对象的ID值
+            if default is not None and not set(default).issubset(set(option["id"] for option in attrs["options"])):
+                raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+
+        return attrs

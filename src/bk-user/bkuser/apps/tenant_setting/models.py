@@ -8,38 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.db import models
+from typing import List
 
-from bkuser.apps.tenant.models import Tenant
-from bkuser.apps.tenant_setting.constants import UserFieldDataType
-from bkuser.common.models import TimestampedModel
+from pydantic import BaseModel
 
 
-class UserBuiltinField(TimestampedModel):
-    """用户内置字段"""
-
-    name = models.CharField("字段名称", unique=True, max_length=128)
-    display_name = models.CharField("展示用名称", unique=True, max_length=128)
-    data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
-    required = models.BooleanField("是否必填")
-    unique = models.BooleanField("是否唯一")
-    default = models.JSONField("默认值", default="")
-    options = models.JSONField("配置项", default={})
+class Option(BaseModel):
+    id: int
+    value: str
 
 
-class UserCustomField(TimestampedModel):
-    """租户用户自定义字段"""
-
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_constraint=False)
-    name = models.CharField("字段名称", max_length=128)
-    display_name = models.CharField("展示用名称", max_length=128)
-    data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
-    required = models.BooleanField("是否必填")
-    default = models.JSONField("默认值", default="")
-    options = models.JSONField("配置项", default={})
-
-    class Meta:
-        unique_together = [
-            ("name", "tenant"),
-            ("display_name", "tenant"),
-        ]
+class TenantUserCustomFieldOptions(BaseModel):
+    """用户自定义字段-options字段"""
+    options: List[Option]

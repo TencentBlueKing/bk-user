@@ -13,15 +13,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("<str:tenant_id>/fields/", views.UserFieldListApi.as_view(), name="tenant_setting_fields.list"),
+    path("fields/", views.TenantUserFieldListApi.as_view(), name="tenant_setting_fields.list"),
     path(
-        "<str:tenant_id>/custom_fields/",
-        views.UserCustomFieldCreateApi.as_view(),
-        name="tenant_setting_custom_fields.create",
-    ),
+        "custom_fields/", views.TenantUserCustomFieldCreateApi.as_view(), name="tenant_setting_custom_fields.create"),
     path(
         "custom_fields/<int:id>/",
-        views.UserCustomFieldUpdateDeleteApi.as_view(),
+        views.TenantUserCustomFieldUpdateDeleteApi.as_view(),
         name="tenant_setting_custom_fields.update_delete",
     ),
 ]

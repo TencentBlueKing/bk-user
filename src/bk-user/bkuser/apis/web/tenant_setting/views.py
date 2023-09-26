@@ -12,43 +12,39 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.tenant_setting.serializers import (
     UserCustomFieldCreateInputSLZ,
     UserCustomFieldCreateOutputSLZ,
     UserCustomFieldUpdateInputSLZ,
-    UserFieldOutputSLZ,
+    TenantUserFieldOutputSLZ,
 )
-from bkuser.apps.tenant.models import Tenant
-from bkuser.apps.tenant_setting.models import UserBuiltinField, UserCustomField
-from bkuser.common.error_codes import error_codes
+from bkuser.apps.tenant.models import UserBuiltinField, TenantUserCustomField
 from bkuser.common.views import ExcludePutAPIViewMixin
 
 
-class UserFieldListApi(generics.ListAPIView):
+class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
-    serializer_class = UserFieldOutputSLZ
+    serializer_class = TenantUserFieldOutputSLZ
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="用户字段列表",
-        responses={status.HTTP_200_OK: UserFieldOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: TenantUserFieldOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        # 校验租户是否存在
-        tenant = Tenant.objects.filter(id=kwargs["tenant_id"]).first()
-        if not tenant:
-            raise error_codes.TENANT_NOT_EXIST
+        tenant_id = self.get_current_tenant_id()
 
-        slz = UserFieldOutputSLZ(
+        slz = TenantUserFieldOutputSLZ(
             instance={
-                "builtin_fields": UserBuiltinField.objects.all().values(),
-                "custom_fields": UserCustomField.objects.filter(tenant=tenant).values(),
+                "builtin_fields": UserBuiltinField.objects.all(),
+                "custom_fields": TenantUserCustomField.objects.filter(tenant__id=tenant_id).all(),
             }
         )
         return Response(slz.data)
 
 
-class UserCustomFieldCreateApi(generics.CreateAPIView):
+class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="新建用户自定义字段",
@@ -56,36 +52,45 @@ class UserCustomFieldCreateApi(generics.CreateAPIView):
         responses={status.HTTP_201_CREATED: UserCustomFieldCreateOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
-        # 校验租户是否存在
-        tenant = Tenant.objects.filter(id=kwargs["tenant_id"]).first()
-        if not tenant:
-            raise error_codes.TENANT_NOT_EXIST
-
-        slz = UserCustomFieldCreateInputSLZ(data=request.data, context={"tenant": tenant})
+        tenant_id = self.get_current_tenant_id()
+        slz = UserCustomFieldCreateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        user_custom_field = UserCustomField.objects.create(tenant=tenant, **data)
+        user_custom_field = TenantUserCustomField.objects.create(tenant_id=tenant_id, **data)
         return Response(
             UserCustomFieldCreateOutputSLZ(instance={"id": user_custom_field.id}).data, status=status.HTTP_201_CREATED
         )
 
 
-class UserCustomFieldUpdateDeleteApi(ExcludePutAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView):
-    queryset = UserCustomField.objects.all()
+class TenantUserCustomFieldUpdateDeleteApi(
+    CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = TenantUserCustomField.objects.all()
     lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return TenantUserCustomField.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="修改用户自定义字段",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def patch(self, request, *args, **kwargs):
-        custom_field = self.get_object()
-        slz = UserCustomFieldUpdateInputSLZ(data=request.data)
-        slz.is_valid(raise_exception=True)
+    def put(self, request, *args, **kwargs):
+        tenant_id = self.get_current_tenant_id()
 
-        UserCustomField.objects.filter(id=custom_field.id).update(**slz.data)
+        slz = UserCustomFieldUpdateInputSLZ(
+            data=request.data, context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        custom_field = self.get_object()
+
+        custom_field.name = data["name"]
+        custom_field.required = data["required"]
+        custom_field.default = data["default"]
+        custom_field.options = data["options"]
+        custom_field.save()
+
         return Response()
 
     @swagger_auto_schema(
