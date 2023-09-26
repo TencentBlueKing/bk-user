@@ -9,25 +9,37 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.apps.data_source.constants import DataSourcePluginEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.tenant.models import Tenant
 from bkuser.auth.models import User
+from bkuser.plugins.constants import DataSourcePluginEnum
 
+from tests.fixtures.data_source import (  # noqa: F401
+    bare_general_data_source,
+    bare_local_data_source,
+    full_general_data_source,
+    full_local_data_source,
+    general_ds_plugin,
+    general_ds_plugin_config,
+    local_ds_plugin,
+    local_ds_plugin_config,
+)
+from tests.fixtures.tenant import tenant_user_custom_fields  # noqa: F401
 from tests.test_utils.auth import create_user
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import create_tenant
 
 
 @pytest.fixture()
-def default_tenant() -> str:
+def default_tenant() -> Tenant:
     """初始化默认租户"""
-    return create_tenant().id
+    return create_tenant()
 
 
 @pytest.fixture()
-def random_tenant() -> str:
+def random_tenant() -> Tenant:
     """生成随机租户"""
-    return create_tenant(generate_random_string()).id
+    return create_tenant(generate_random_string())
 
 
 @pytest.fixture()

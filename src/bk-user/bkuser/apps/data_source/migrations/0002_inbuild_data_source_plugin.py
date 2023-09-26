@@ -2,14 +2,14 @@
 
 from django.db import migrations
 
-from bkuser.apps.data_source.constants import DataSourcePluginEnum
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 
 def forwards_func(apps, schema_editor):
     """初始化本地数据源插件"""
 
     DataSourcePlugin = apps.get_model("data_source", "DataSourcePlugin")
-    # FIXME: 待数据源插件确定后，重新初始化 & 国际化
+    # FIXME: 待数据源插件确定后，重新初始化 & 国际化，且需要考虑存储 base64 编码的 logo
     if not DataSourcePlugin.objects.filter(id=DataSourcePluginEnum.LOCAL).exists():
         DataSourcePlugin.objects.create(
             id=DataSourcePluginEnum.LOCAL,

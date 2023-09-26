@@ -107,6 +107,16 @@ export function dateConvert(value: string) {
   }
 }
 
+// logo转换
+export function logoConvert(value: string) {
+  return value?.charAt(0).toUpperCase();
+}
+
+// 组织上级转换
+export function formatConvert(value: any) {
+  return value?.map(item => item.name || item.username).join(' ; ') || '--';;
+}
+
 // 数据源启用状态
 export const dataSourceStatus = {
   enabled: {
@@ -176,5 +186,5 @@ export function passwordNotAllowedMap(value: any) {
   const list: string[] = Object.entries(value)
     .filter(([key, val]) => passwordNotAllowed[key] && val)
     .map(([key]) => passwordNotAllowed[key]);
-  return list.join('，') || '--';
+  return list.join('，');
 };

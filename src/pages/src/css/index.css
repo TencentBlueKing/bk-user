@@ -73,3 +73,17 @@
     visibility: hidden;
   }
 }
+
+.datasource-type-icon {
+  display: flex;
+  align-items: center;
+
+  img {
+    width: 14px;
+    height: 14px;
+  }
+
+  span {
+    margin-left: 8px;
+  }
+}

@@ -23,16 +23,6 @@ class DataSourceStatus(str, StructuredEnum):
     DISABLED = EnumField("disabled", label=_("未启用"))
 
 
-class DataSourcePluginEnum(str, StructuredEnum):
-    """数据源插件枚举"""
-
-    LOCAL = EnumField("local", label=_("本地数据源"))
-    GENERAL = EnumField("general", label=_("通用数据源"))
-    WECOM = EnumField("wecom", label=_("企业微信"))
-    LDAP = EnumField("ldap", label=_("OpenLDAP"))
-    MAD = EnumField("mad", label=_("MicrosoftActiveDirectory"))
-
-
 class FieldMappingOperation(str, StructuredEnum):
     """字段映射关系"""
 

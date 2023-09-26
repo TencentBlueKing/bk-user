@@ -8,16 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourcePluginEnum, DataSourceStatus
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source.plugins.local.constants import (
-    NotificationMethod,
-    NotificationScene,
-    PasswordGenerateMethod,
-)
+from bkuser.apps.data_source.constants import DataSourceStatus
+from bkuser.apps.data_source.models import DataSource
+from bkuser.plugins.constants import DataSourcePluginEnum
 from django.urls import reverse
 from rest_framework import status
 
@@ -28,118 +23,11 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture()
-def local_ds_plugin_config() -> Dict[str, Any]:
-    return {
-        "enable_account_password_login": True,
-        "password_rule": {
-            "min_length": 12,
-            "contain_lowercase": True,
-            "contain_uppercase": True,
-            "contain_digit": True,
-            "contain_punctuation": True,
-            "not_continuous_count": 5,
-            "not_keyboard_order": True,
-            "not_continuous_letter": True,
-            "not_continuous_digit": True,
-            "not_repeated_symbol": True,
-            "valid_time": 7,
-            "max_retries": 3,
-            "lock_time": 3600,
-        },
-        "password_initial": {
-            "force_change_at_first_login": True,
-            "cannot_use_previous_password": True,
-            "reserved_previous_password_count": 3,
-            "generate_method": PasswordGenerateMethod.RANDOM,
-            "fixed_password": None,
-            "notification": {
-                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
-                "templates": [
-                    {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.USER_INITIALIZE,
-                        "title": "您的账户已经成功创建",
-                        "sender": "蓝鲸智云",
-                        "content": "您的账户已经成功创建，请尽快修改密码",
-                        "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
-                    },
-                    {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.RESET_PASSWORD,
-                        "title": "登录密码重置",
-                        "sender": "蓝鲸智云",
-                        "content": "点击以下链接以重置代码",
-                        "content_html": "<p>点击以下链接以重置代码</p>",
-                    },
-                    {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.USER_INITIALIZE,
-                        "sender": "蓝鲸智云",
-                        "content": "您的账户已经成功创建，请尽快修改密码",
-                        "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
-                    },
-                    {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.RESET_PASSWORD,
-                        "sender": "蓝鲸智云",
-                        "content": "点击以下链接以重置代码",
-                        "content_html": "<p>点击以下链接以重置代码</p>",
-                    },
-                ],
-            },
-        },
-        "password_expire": {
-            "remind_before_expire": [1, 7],
-            "notification": {
-                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
-                "templates": [
-                    {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.PASSWORD_EXPIRING,
-                        "title": "【蓝鲸智云】密码即将到期提醒！",
-                        "sender": "蓝鲸智云",
-                        "content": "您的密码即将到期！",
-                        "content_html": "<p>您的密码即将到期！</p>",
-                    },
-                    {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.PASSWORD_EXPIRED,
-                        "title": "【蓝鲸智云】密码到期提醒！",
-                        "sender": "蓝鲸智云",
-                        "content": "点击以下链接以重置代码",
-                        "content_html": "<p>您的密码已到期！</p>",
-                    },
-                    {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.PASSWORD_EXPIRING,
-                        "sender": "蓝鲸智云",
-                        "content": "您的密码即将到期！",
-                        "content_html": "<p>您的密码即将到期！</p>",
-                    },
-                    {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.PASSWORD_EXPIRED,
-                        "sender": "蓝鲸智云",
-                        "content": "您的密码已到期！",
-                        "content_html": "<p>您的密码已到期！</p>",
-                    },
-                ],
-            },
-        },
-    }
-
-
-@pytest.fixture()
-def local_ds_plugin() -> DataSourcePlugin:
-    return DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL)
-
-
-@pytest.fixture()
 def data_source(request, local_ds_plugin, local_ds_plugin_config):
     # 支持检查是否使用 random_tenant fixture 以生成不属于默认租户的数据源
     tenant_id = DEFAULT_TENANT
     if "random_tenant" in request.fixturenames:
-        tenant_id = request.getfixturevalue("random_tenant")
+        tenant_id = request.getfixturevalue("random_tenant").id
 
     return DataSource.objects.create(
         name=generate_random_string(),

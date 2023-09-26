@@ -14,6 +14,7 @@ from typing import Dict, List
 from django.db import transaction
 from pydantic import BaseModel
 
+from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -22,6 +23,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.plugins.local.utils import gen_code
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -77,7 +79,12 @@ class DataSourceOrganizationHandler:
         # TODO：补充日志
         with transaction.atomic():
             # 创建数据源用户
-            user = DataSourceUser.objects.create(data_source=data_source, **base_user_info.model_dump())
+            user = DataSourceUser.objects.create(
+                data_source=data_source, code=gen_code(base_user_info.username), **base_user_info.model_dump()
+            )
+
+            # 为本地数据源用户初始化账密信息
+            LocalDataSourceIdentityInfoInitializer(data_source).initialize(user)
 
             # 批量创建数据源用户-部门关系
             department_user_relation_objs = [

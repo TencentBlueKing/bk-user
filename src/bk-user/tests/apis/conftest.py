@@ -18,6 +18,6 @@ from tests.test_utils.auth import set_tenant_user
 def api_client(bk_user, default_tenant, default_data_source) -> APIClient:
     """Return an authenticated client"""
     client = APIClient()
-    set_tenant_user(bk_user, default_data_source.id, default_tenant)
+    set_tenant_user(bk_user, default_data_source.id, default_tenant.id)
     client.force_authenticate(user=bk_user)
     return client

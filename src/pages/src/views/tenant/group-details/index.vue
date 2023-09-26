@@ -2,14 +2,22 @@
   <div class="group-details-wrapper user-scroll-y">
     <div class="main-content">
       <div class="content-search">
-        <bk-button theme="primary" @click="handleClick('add')">
-          <i class="user-icon icon-add-2 mr8" />
-          新建公司
-        </bk-button>
+        <div class="content-search-left">
+          <bk-button class="mr-[24px]" theme="primary" @click="handleClick('add')">
+            <i class="user-icon icon-add-2 mr8" />
+            新建公司
+          </bk-button>
+          <!-- <bk-switcher
+            v-model="demo"
+            theme="primary"
+            size="large"
+          />
+          <span class="switcher-text">公司名是否跨公司可见</span> -->
+        </div>
         <bk-input
           class="content-search-input"
           v-model="searchName"
-          placeholder="搜索公司名、姓名"
+          placeholder="搜索公司名"
           type="search"
           clearable
           @enter="handleEnter"
@@ -35,7 +43,7 @@
               <div class="item-name">
                 <img v-if="row.logo" :src="row.logo" />
                 <span v-else class="logo" :style="`background-color: ${LOGO_COLOR[index]}`">
-                  {{ convertLogo(row.name) }}
+                  {{ logoConvert(row.name) }}
                 </span>
                 <bk-button
                   text
@@ -55,7 +63,7 @@
           </bk-table-column>
           <bk-table-column prop="data_sources" label="已绑定数据源">
             <template #default="{ row }">
-              <span>{{ convertFormat(row.data_sources) }}</span>
+              <span>{{ formatConvert(row.data_sources) }}</span>
             </template>
           </bk-table-column>
           <bk-table-column prop="created_at" label="创建时间" />
@@ -115,13 +123,14 @@ import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import { getDefaultConfig } from '@/http/dataSourceFiles';
 import {
   getTenantDetails,
   getTenants,
   searchTenants,
 } from '@/http/tenantsFiles';
 import { useMainViewStore } from '@/store/mainView';
-import { LOGO_COLOR } from '@/utils';
+import { formatConvert, LOGO_COLOR, logoConvert } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
@@ -154,6 +163,7 @@ const state = reactive({
         phone_country_code: '86',
       },
     ],
+    password_initial_config: {},
   },
 });
 const detailsConfig = reactive({
@@ -196,13 +206,7 @@ watch(
             phone_country_code: '86',
           },
         ],
-        // password_settings: {
-        //   init_password: "",
-        //   init_password_method: "fixed_password",
-        //   init_notify_method: [],
-        //   init_sms_config: {},
-        //   init_mail_config: {},
-        // },
+        password_initial_config: {},
       };
     }
   },
@@ -210,14 +214,13 @@ watch(
 
 const isView = computed(() => detailsConfig.type === 'view');
 
-const convertLogo = name => name?.charAt(0).toUpperCase();
-const convertFormat = name => name?.map(item => item?.name).join(',') || '--';
-
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
-    await getTenantDetails(item.id).then((res: any) => {
-      state.tenantsData = res.data;
-    });
+    const res = await getTenantDetails(item.id);
+    state.tenantsData = res.data;
+  } else {
+    const res = await getDefaultConfig('local');
+    state.tenantsData.password_initial_config = res.data.config.password_initial;
   }
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
@@ -310,6 +313,17 @@ const handleBeforeClose = async () => {
       align-items: center;
       margin-bottom: 16px;
 
+      .content-search-left {
+        display: flex;
+        align-items: center;
+
+        .switcher-text {
+          margin-left: 12px;
+          font-size: 14px;
+          color: #313238;
+        }
+      }
+
       .content-search-input {
         width: 400px;
       }
@@ -366,6 +380,16 @@ const handleBeforeClose = async () => {
   :deep(.bk-modal-content) {
     height: calc(100vh - 106px);
     background: #f5f7fa;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #dcdee5;
+      border-radius: 4px;
+    }
   }
 }
 </style>

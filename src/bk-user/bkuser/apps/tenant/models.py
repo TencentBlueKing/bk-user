@@ -63,7 +63,7 @@ class TenantUser(TimestampedModel):
 
     # 手机&邮箱相关：手机号&邮箱都可以继承数据源或自定义
     is_inherited_phone = models.BooleanField("是否继承数据源手机号", default=True)
-    custom_phone = models.CharField("自定义手机号", max_length=32)
+    custom_phone = models.CharField("自定义手机号", max_length=32, null=True, blank=True, default="")
     custom_phone_country_code = models.CharField(
         "自定义手机号的国际区号",
         max_length=16,

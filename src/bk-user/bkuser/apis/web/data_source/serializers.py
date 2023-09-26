@@ -17,9 +17,9 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourcePluginEnum, FieldMappingOperation
+from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source.plugins.constants import DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP
+from bkuser.plugins.constants import DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP, DataSourcePluginEnum
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
 class DataSourceFieldMappingSLZ(serializers.Serializer):
     """
     单个数据源字段映射
-    FIXME (su) 动态字段实现后，需要检查：target_field 需是租户定义的，source_field 需是插件允许的
+    FIXME (su) 自定义字段实现后，需要检查：target_field 需是租户定义的，source_field 需是插件允许的
     """
 
     source_field = serializers.CharField(help_text="数据源原始字段")
@@ -185,5 +185,21 @@ class DataSourceTestConnectionOutputSLZ(serializers.Serializer):
     """数据源连通性测试"""
 
     error_message = serializers.CharField(help_text="错误信息")
-    user = serializers.CharField(help_text="用户")
-    department = serializers.CharField(help_text="部门")
+    user = RawDataSourceUserSLZ(help_text="用户")
+    department = RawDataSourceDepartmentSLZ(help_text="部门")
+
+
+class LocalDataSourceImportInputSLZ(serializers.Serializer):
+    """本地数据源导入"""
+
+    file = serializers.FileField(help_text="数据源用户信息文件（Excel 格式）")
+    overwrite = serializers.BooleanField(help_text="允许对同名用户覆盖更新", default=False)
+    incremental = serializers.BooleanField(help_text="是否使用增量同步", default=False)
+
+
+class LocalDataSourceImportOutputSLZ(serializers.Serializer):
+    """本地数据源导入结果"""
+
+    task_id = serializers.CharField(help_text="任务 ID")
+    status = serializers.CharField(help_text="任务状态")
+    summary = serializers.CharField(help_text="任务执行结果概述")

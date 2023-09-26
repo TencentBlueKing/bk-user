@@ -32,3 +32,5 @@ app.autodiscover_tasks()
 app.conf.task_queues = [
     Queue("bkuser", Exchange("bkuser"), routing_key="bkuser", queue_arguments={"x-ha-policy": "all"}),
 ]
+
+app.conf.task_default_queue = "bkuser"

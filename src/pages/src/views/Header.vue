@@ -29,7 +29,7 @@
         </span>
       </div>
       <div class="main-navigation-right">
-        <bk-dropdown
+        <!-- <bk-dropdown
           @hide="() => (state.languageDropdown = false)"
           @show="() => (state.languageDropdown = true)"
         >
@@ -61,19 +61,24 @@
               </bk-dropdown-item>
             </bk-dropdown-menu>
           </template>
-        </bk-dropdown>
+        </bk-dropdown> -->
         <bk-dropdown
           @hide="() => (state.logoutDropdown = false)"
           @show="() => (state.logoutDropdown = true)"
         >
-          <div class="help-info" :class="state.logoutDropdown && 'active-username'">
+          <div
+            :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
             <span class="help-info-name">{{ userInfo.username }}</span>
             <DownShape class="help-info-icon" />
           </div>
           <template #content>
-            <bk-dropdown-menu>
+            <bk-dropdown-menu ext-cls="dropdown-menu-box">
+              <bk-dropdown-item
+                :class="{ 'active': isPersonalCenter }"
+                @click="toIndividualCenter">
+                个人中心
+              </bk-dropdown-item>
               <bk-dropdown-item @click="logout">退出登录</bk-dropdown-item>
-              <bk-dropdown-item @click="toIndividualCenter">个人中心</bk-dropdown-item>
             </bk-dropdown-menu>
           </template>
         </bk-dropdown>
@@ -85,8 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { DownShape, HelpDocumentFill } from 'bkui-vue/lib/icon';
+import { DownShape } from 'bkui-vue/lib/icon';
 import { computed, reactive } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { logout } from '@/common/auth';
 import Login from '@/components/layouts/Login.vue';
@@ -101,6 +107,9 @@ const state = reactive({
 
 const userStore = useUser();
 const userInfo = computed(() => userStore.user);
+
+const route = useRoute();
+const isPersonalCenter = computed(() => route.name === 'personalCenter');
 
 const headerNav = reactive([
   {
@@ -124,33 +133,33 @@ const headerNav = reactive([
     path: 'setting',
   },
 ]);
-const languageNav = reactive([
-  {
-    name: '中文',
-    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-  },
-  {
-    name: 'English',
-    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-  },
-]);
-const helpNav = reactive([
-  {
-    name: '产品文档',
-    url: '',
-  },
-  {
-    name: '版本日志',
-    url: '',
-  },
-  {
-    name: '问题反馈',
-    url: '',
-  },
-]);
-const toLink = (item: any) => {
-  window.open(item.url, '_blank');
-};
+// const languageNav = reactive([
+//   {
+//     name: '中文',
+//     icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+//   },
+//   {
+//     name: 'English',
+//     icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+//   },
+// ]);
+// const helpNav = reactive([
+//   {
+//     name: '产品文档',
+//     url: '',
+//   },
+//   {
+//     name: '版本日志',
+//     url: '',
+//   },
+//   {
+//     name: '问题反馈',
+//     url: '',
+//   },
+// ]);
+// const toLink = (item: any) => {
+//   window.open(item.url, '_blank');
+// };
 const toIndividualCenter = () => {
   router.push({
     name: 'personalCenter',
@@ -160,6 +169,8 @@ const toIndividualCenter = () => {
 
 <style lang="less" scoped>
 .main-navigation {
+  min-width: 1200px;
+
   :deep(.bk-navigation-header) {
     background-color: #0e1525;
 
@@ -173,8 +184,13 @@ const toIndividualCenter = () => {
     }
   }
 
-  :deep(.container-content) {
-    padding: 0 !important;
+  :deep(.navigation-container) {
+    min-width: 1200px;
+
+    .container-content {
+      padding: 0 !important;
+      overflow: hidden;
+    }
   }
 
   :deep(.header-right) {
@@ -234,6 +250,10 @@ const toIndividualCenter = () => {
       }
     }
 
+    .active-route {
+      color: #3a84ff;
+    }
+
     .help-info-icon {
       vertical-align: middle;
     }
@@ -250,6 +270,17 @@ const toIndividualCenter = () => {
 
     .bk-sq-icon {
       font-size: 16px;
+    }
+  }
+}
+
+.dropdown-menu-box {
+  .active {
+    color: #3a84ff;
+    background-color: #E1ECFF;
+
+    &:hover {
+      background-color: #E1ECFF;
     }
   }
 }

@@ -17,8 +17,8 @@ class SyncTaskTrigger(str, StructuredEnum):
 
     CRONTAB = EnumField("crontab", label=_("定时任务"))
     MANUAL = EnumField("manual", label=_("手动"))
-    # TODO 补全所有触发场景
-    # OTHER = EnumField("other", label=_("其他"))
+    # 如：数据源同步完成信号触发租户数据同步
+    SIGNAL = EnumField("signal", label=_("信号触发"))
 
 
 class SyncTaskStatus(str, StructuredEnum):

@@ -59,7 +59,7 @@
     <div class="organization-main">
       <header>
         <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
-        <span v-else class="span-logo">{{ convertLogo(state.currentTenant.name) }}</span>
+        <span v-else class="span-logo">{{ logoConvert(state.currentTenant.name) }}</span>
         <span class="name">{{ state.currentTenant.name }}</span>
       </header>
       <bk-tab
@@ -82,7 +82,7 @@
               :is-data-empty="state.isDataEmpty"
               :is-empty-search="state.isEmptySearch"
               :is-data-error="state.isDataError"
-              :pagination="state.pagination"
+              :pagination="pagination"
               :keyword="params.keyword"
               :is-tenant="isTenant"
               @searchUsers="searchUsers"
@@ -115,7 +115,7 @@ import {
   getTenantOrganizationList,
   getTenantUsersList,
 } from '@/http/organizationFiles';
-import { copy } from '@/utils';
+import { copy, logoConvert } from '@/utils';
 
 const vOverflowTitle = overflowTitle;
 const editLeaveBefore = inject('editLeaveBefore');
@@ -133,11 +133,6 @@ const state = reactive({
   isDataEmpty: false,
   isEmptySearch: false,
   isDataError: false,
-  pagination: {
-    current: 1,
-    count: 0,
-    limit: 10,
-  },
 });
 const panels = reactive([
   { name: 'user_info', label: '人员信息', isVisible: true },
@@ -163,7 +158,11 @@ const params = reactive({
   recursive: false,
 });
 
-const convertLogo = name => name?.charAt(0).toUpperCase();
+const pagination = {
+  count: 0,
+  current: params.page,
+  limit: params.pageSize,
+};
 
 const isTenant = computed(() => (!!state.currentTenant.isRoot));
 
@@ -212,7 +211,6 @@ const changeNode = async (node) => {
   }
   state.tabLoading = true;
   params.page = 1;
-  state.pagination.current = 1;
   params.keyword = '';
   if (node.isRoot) {
     panels[1].isVisible = true;
@@ -251,7 +249,7 @@ const getTenantUsers = async (id) => {
     if (res.data.count === 0) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
-    state.pagination.count = res.data.count;
+    pagination.count = res.data.count;
     state.currentUsers = res.data.results;
     state.tabLoading = false;
   } catch (e) {
@@ -264,7 +262,7 @@ const getTenantUsers = async (id) => {
 
 const getTenantDetails = async (id: string) => {
   const res = await getTenantOrganizationDetails(id);
-  state.pagination.count = res.data.managers.length;
+  pagination.count = res.data.managers.length;
   state.currentTenant = res.data;
   state.currentTenant.isRoot = true;
 };
@@ -280,7 +278,7 @@ const getTenantDepartmentsUser = async (id) => {
     if (res.data.count === 0) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
-    state.pagination.count = res.data.count;
+    pagination.count = res.data.count;
     state.currentUsers = res.data.results;
     state.tabLoading = false;
   } catch (e) {
@@ -298,6 +296,7 @@ const getDepartmentsDetails = async (node) => {
 // 搜索人员信息
 const searchUsers = (value: string) => {
   params.keyword = value;
+  params.page = 1;
   getUserList();
 };
 // 仅显示本级用户
@@ -307,12 +306,11 @@ const changeUsers = async (value: boolean) => {
   await getTenantDepartmentsUser(state.currentItem.id);
 };
 const updatePageLimit = (limit) => {
-  state.pagination.limit = limit;
   params.pageSize = limit;
+  params.page = 1;
   getUserList();
 };
 const updatePageCurrent = (current) => {
-  state.pagination.current = current;
   params.page = current;
   getUserList();
 };
@@ -339,6 +337,7 @@ const updateTenantsList = () => {
   height: calc(100vh - 52px);
 
   .organization-main {
+    width: calc(100% - 280px);
     height: calc(100% - 52px);
 
     header {

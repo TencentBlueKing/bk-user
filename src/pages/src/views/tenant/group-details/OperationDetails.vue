@@ -59,33 +59,66 @@
           </bk-table>
         </bk-form>
       </div>
-      <!-- <div class="operation-card" v-if="!isEdit">
+      <div class="operation-card" v-if="!isEdit">
         <div class="operation-content-title">管理员初始密码</div>
         <bk-form
-          class="operation-content-form"
-          ref="passwordRef"
-          :model="formData.password_settings"
-          :rules="rulesPasswordInfo"
+          form-type="vertical"
+          :model="formData.password_initial_config"
         >
-          <bk-form-item
-            class="item-style"
-            label="密码生成"
-            required
-            property="init_password"
-          >
-            <bk-radio-group v-model="formData.password_settings.init_password_method">
-              <bk-radio label="random_password" :disabled="true">随机</bk-radio>
-              <bk-radio label="fixed_password">固定</bk-radio>
-              <bk-input
-                style="margin-left: 24px; width: 240px;"
-                v-if="formData.password_settings.init_password_method === 'fixed_password'"
-                type="password"
-                v-model="formData.password_settings.init_password"
-              />
+          <bk-form-item class="form-item-password" label="密码生成" required>
+            <bk-radio-group v-model="formData.password_initial_config.generate_method">
+              <bk-radio label="random">随机</bk-radio>
+              <bk-radio label="fixed">固定</bk-radio>
             </bk-radio-group>
+            <bk-input
+              class="input-password"
+              v-if="formData.password_initial_config.generate_method === 'fixed'"
+              type="password"
+              v-model="formData.password_initial_config.fixed_password"
+              @blur="handleBlur"
+              @focus="handleFocus"
+            />
+          </bk-form-item>
+          <bk-form-item label="通知方式" required>
+            <NotifyEditorTemplate
+              :active-methods="activeMethods"
+              :checkbox-info="checkboxInfo"
+              :data-list="formData.password_initial_config.notification.templates"
+              :is-template="isPasswordInitial"
+              :expiring-email-key="'user_initialize'"
+              :expired-email-key="'reset_password'"
+              :expiring-sms-key="'user_initialize'"
+              :expired-sms-key="'reset_password'"
+              :create-account-email="'创建账户邮件'"
+              :reset-password-email="'重设密码后的邮件'"
+              :create-account-sms="'创建账户短信'"
+              :reset-password-sms="'重设密码后的短信'"
+              @handleEditorText="handleEditorText">
+              <template #label>
+                <div class="password-header">
+                  <bk-checkbox-group
+                    class="checkbox-zh"
+                    v-model="formData.password_initial_config.notification.enabled_methods">
+                    <bk-checkbox
+                      v-for="(item, index) in checkboxInfo" :key="index"
+                      :class="['password-tab', item.status ? 'active-tab' : '']"
+                      style="margin-left: 5px;"
+                      :label="item.value">
+                      <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+                    </bk-checkbox>
+                  </bk-checkbox-group>
+                  <div class="edit-info" @click="passwordInitialTemplate">
+                    <span style="font-size:14px">编辑通知模板</span>
+                    <AngleUp v-if="isDropdownPasswordInitial" />
+                    <AngleDown v-else />
+                  </div>
+                </div>
+              </template>
+            </NotifyEditorTemplate>
+            <p class="error" v-show="enabledMethodsError">通知方式不能为空</p>
           </bk-form-item>
         </bk-form>
-      </div> -->
+      </div>
     </div>
     <div class="footer">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
@@ -99,12 +132,14 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, computed, nextTick, defineProps, defineEmits } from "vue";
+import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
+import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
 import { getBase64 } from "@/utils";
 import Empty from "@/components/Empty.vue";
 import MemberSelector from "./MemberSelector.vue";
 import useValidate from "@/hooks/use-validate";
+import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 
 interface TableItem {
   username: string;
@@ -135,7 +170,6 @@ const validate = useValidate();
 
 const basicRef = ref();
 const userRef = ref();
-const passwordRef = ref();
 const formData = reactive({
   ...props.tenantsData
 });
@@ -167,8 +201,44 @@ const rulesUserInfo = {
   phone: [validate.required, validate.phone],
 };
 
-const rulesPasswordInfo = {
-  init_password: [validate.required],
+const enabledMethodsError = ref(false);
+const activeMethods = ref('email');
+// 初始密码
+const isPasswordInitial = ref(false);
+const isDropdownPasswordInitial = ref(false);
+const checkboxInfo = [
+  { value: 'email', label: '邮箱', status: true },
+  { value: 'sms', label: '短信', status: false },
+];
+
+watch(() => formData.password_initial_config?.generate_method, (value) => {
+  if (value === 'random') {
+    formData.password_initial_config.fixed_password = null;
+  }
+});
+
+watch(() => formData.password_initial_config?.notification?.enabled_methods, (value) => {
+  enabledMethodsError.value = !value.length;
+});
+
+const handleClickLabel = (item) => {
+  checkboxInfo.forEach((element) => {
+    element.status = element.value === item.value;
+  });
+};
+
+const passwordInitialTemplate = () => {
+  isPasswordInitial.value = !isPasswordInitial.value;
+  isDropdownPasswordInitial.value = !isDropdownPasswordInitial.value;
+};
+
+const handleEditorText = (html, text, key, type) => {
+  formData.password_initial_config.notification.templates.forEach((item) => {
+    if (item.method === type && item.scene === key) {
+      item.content = text;
+      item.content_html = html;
+    }
+  });
 };
 
 const files = computed(() => {
@@ -301,12 +371,10 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 }
 // 校验表单
 async function handleSubmit() {
-  const validationPromises = [
-    basicRef.value.validate(),
-    userRef.value.validate(),
-  ];
+  if (enabledMethodsError.value) return;
 
-  await Promise.all(validationPromises);
+  await Promise.all([basicRef.value.validate(), userRef.value.validate()]);
+
   state.isLoading = true;
   props.type === "add" ? createTenantsFn() : putTenantsFn();
 }
@@ -401,4 +469,27 @@ const handleChange = () => {
 
 <style lang="less" scoped>
 @import url("@/css/tenantEditStyle.less");
+@import url('@/components/notify-editor/NotifyEditor.less');
+
+.form-item-password {
+  ::v-deep .bk-form-content {
+    display: flex;
+
+    .input-password {
+      width: 240px;
+      margin-left: 24px;
+    }
+  }
+}
+
+.error {
+  position: absolute;
+  left: 0;
+  padding-top: 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: #ea3636;
+  text-align: left;
+  animation: form-error-appear-animation 0.15s;
+}
 </style>
