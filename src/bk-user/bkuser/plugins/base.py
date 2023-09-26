@@ -9,13 +9,17 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Type
 
-from bkuser.apps.data_source.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
+from pydantic import BaseModel
+
+from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 
 
 class BaseDataSourcePlugin(ABC):
     """数据源插件基类"""
+
+    config_class: Type[BaseModel] | None
 
     @abstractmethod
     def fetch_departments(self) -> List[RawDataSourceDepartment]:

@@ -8,14 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import uuid
 
+from blue_krill.models.fields import EncryptField
 from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourcePluginEnum, DataSourceStatus
+from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.common.models import AuditedModel, TimestampedModel
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.utils.uuid import generate_uuid
 
 
 class DataSourcePlugin(models.Model):
@@ -58,7 +60,7 @@ class DataSource(AuditedModel):
 
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
-    code = models.CharField("用户标识", max_length=128, default=uuid.uuid4)
+    code = models.CharField("用户标识", max_length=128, default=generate_uuid)
 
     # ----------------------- 内置字段相关 -----------------------
     username = models.CharField("用户名", max_length=128)
@@ -90,11 +92,12 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
     """
 
     user = models.OneToOneField(DataSourceUser, on_delete=models.CASCADE)
-    password = models.CharField("用户密码", null=True, blank=True, default="", max_length=255)
+    # FIXME (su) 使用加盐的非对称加密方式来存储密码
+    password = EncryptField(verbose_name="用户密码", null=True, blank=True, default="", max_length=255)
     password_updated_at = models.DateTimeField("密码最后更新时间", null=True, blank=True)
     password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)
 
-    # data_source_id/username为冗余字段，便于认证时快速匹配
+    # data_source / username 为冗余字段，便于认证时快速匹配
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     username = models.CharField("用户名", max_length=128)
 
@@ -111,14 +114,14 @@ class DataSourceDepartment(TimestampedModel):
 
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
 
-    # 部门标识，不同于自增 id，多数情况存储各个公司组织架构系统的id, 非必须
-    code = models.CharField("部门标识", null=True, blank=True, max_length=128)
+    code = models.CharField("部门标识", max_length=128, default=generate_uuid)
     name = models.CharField("部门名称", max_length=255)
     # 额外信息
     extras = models.JSONField("自定义字段", default=dict)
 
     class Meta:
         ordering = ["id"]
+        unique_together = [("code", "data_source")]
 
 
 class DataSourceDepartmentRelation(MPTTModel, TimestampedModel):

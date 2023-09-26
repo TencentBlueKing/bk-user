@@ -47,6 +47,7 @@ pydantic = "2.1.1"
 zxcvbn = "4.4.28"
 phonenumbers = "8.13.18"
 jsonref = "1.1.0"
+openpyxl = "3.1.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.277"
@@ -100,6 +101,8 @@ ignore = [
     "PLR0913",
     # Avoid too many return statements
     "PLR0911",
+    # Exception should be named with `Error` suffix
+    "N818",
     # raise-without-from-inside-except
     "B904"
 ]
@@ -151,7 +154,9 @@ type = "layers"
 layers = [
     "bkuser.apis | bkuser.auth | bkuser.monitoring",
     "bkuser.biz",
-    "bkuser.apps | bkuser.component",
+    "bkuser.apps",
+    "bkuser.plugins",
+    "bkuser.component",
     "bkuser.common",
     "bkuser.utils",
 ]
@@ -161,6 +166,7 @@ layers = [
 name = "Apps Layers contract"
 type = "layers"
 layers = [
+    "bkuser.apps.sync",
     "bkuser.apps.tenant",
     "bkuser.apps.data_source | bkuser.apps.idp",
 ]
@@ -171,7 +177,7 @@ name = "Biz Layers contract"
 type = "layers"
 layers = [
     "bkuser.biz.tenant",
-    "bkuser.biz.data_source | bkuser.biz.data_source_organization",
+    "bkuser.biz.data_source | bkuser.biz.data_source_organization | bkuser.biz.exporters",
     "bkuser.biz.validators",
 ]
 

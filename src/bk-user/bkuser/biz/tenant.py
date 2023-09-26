@@ -12,12 +12,12 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 
 from django.db import transaction
-from django.utils.timezone import now
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
+from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceUser
-from bkuser.apps.data_source.plugins.local.models import PasswordInitialConfig
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
 from bkuser.biz.data_source import (
     DataSourceDepartmentHandler,
@@ -25,6 +25,8 @@ from bkuser.biz.data_source import (
     DataSourceSimpleInfo,
     DataSourceUserHandler,
 )
+from bkuser.plugins.local.models import PasswordInitialConfig
+from bkuser.plugins.local.utils import gen_code
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -273,7 +275,9 @@ class TenantHandler:
             tenant_manager_objs = []
             for i in managers:
                 # 创建数据源用户
-                data_source_user = DataSourceUser.objects.create(data_source=data_source, **i.model_dump())
+                data_source_user = DataSourceUser.objects.create(
+                    data_source=data_source, code=gen_code(i.username), **i.model_dump()
+                )
                 # 创建对应的租户用户
                 tenant_user = TenantUser.objects.create(
                     data_source_user=data_source_user,
@@ -286,6 +290,9 @@ class TenantHandler:
 
             if tenant_manager_objs:
                 TenantManager.objects.bulk_create(tenant_manager_objs)
+
+            # 批量为租户管理员创建账密信息
+            LocalDataSourceIdentityInfoInitializer(data_source).sync()
 
         return tenant_info.id
 
@@ -302,7 +309,7 @@ class TenantHandler:
 
         with transaction.atomic():
             # 更新基本信息
-            Tenant.objects.filter(id=tenant_id).update(updated_at=now(), **tenant_info.model_dump())
+            Tenant.objects.filter(id=tenant_id).update(updated_at=timezone.now(), **tenant_info.model_dump())
 
             if should_deleted_manager_ids:
                 TenantManager.objects.filter(
@@ -311,8 +318,7 @@ class TenantHandler:
 
             if should_add_manager_ids:
                 TenantManager.objects.bulk_create(
-                    [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in should_add_manager_ids],
-                    batch_size=100,
+                    [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in should_add_manager_ids]
                 )
 
     @staticmethod

@@ -10,26 +10,42 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
+from openpyxl.workbook import Workbook
 
-from bkuser.apps.data_source.plugins.base import BaseDataSourcePlugin
-from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig
-from bkuser.apps.data_source.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
+from bkuser.plugins.base import BaseDataSourcePlugin
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.plugins.local.parser import LocalDataSourceDataParser
+from bkuser.plugins.models import (
+    RawDataSourceDepartment,
+    RawDataSourceUser,
+    TestConnectionResult,
+)
 
 
 class LocalDataSourcePlugin(BaseDataSourcePlugin):
     """本地数据源插件"""
 
-    def __init__(self, plugin_config: LocalDataSourcePluginConfig):
+    config_class = LocalDataSourcePluginConfig
+
+    def __init__(self, plugin_config: LocalDataSourcePluginConfig, workbook: Workbook):
         self.plugin_config = plugin_config
+        self.workbook = workbook
+        self.parser = LocalDataSourceDataParser(self.workbook)
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
         """获取部门信息"""
-        return []
+        if not self.parser.is_parsed:
+            self.parser.parse()
+
+        return self.parser.get_departments()
 
     def fetch_users(self) -> List[RawDataSourceUser]:
         """获取用户信息"""
-        return []
+        if not self.parser.is_parsed:
+            self.parser.parse()
+
+        return self.parser.get_users()
 
     def test_connection(self) -> TestConnectionResult:
         raise NotImplementedError(_("本地数据源不支持连通性测试"))

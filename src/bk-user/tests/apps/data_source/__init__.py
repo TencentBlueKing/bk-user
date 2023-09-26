@@ -8,17 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
-# TODO (su) Poller 会基于 blue-krill 的能力，提供各类同步任务
-
-
-class DataSourceSyncTaskPoller:
-    """数据源同步任务上下文管理器"""
-
-    ...
-
-
-class TenantSyncTaskPoller:
-    """租户同步任务上下文管理器"""
-
-    ...

@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import uuid
+from datetime import timedelta
 
 from django.db import models
 
@@ -31,8 +32,14 @@ class DataSourceSyncTask(TimestampedModel):
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
-    start_time = models.DateTimeField("任务开始时间")
-    duration = models.DurationField("任务持续时间")
+    start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
+    duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
+    extra = models.JSONField("扩展信息", default=dict)
+
+    @property
+    def summary(self):
+        # TODO (su) 支持获取任务总结
+        return "数据同步成功" if self.status == SyncTaskStatus.SUCCESS else "数据同步失败"
 
 
 class DataSourceSyncStep(TimestampedModel):
@@ -80,13 +87,19 @@ class DataSourceDepartmentChangeLog(TimestampedModel):
 class TenantSyncTask(TimestampedModel):
     """租户同步任务"""
 
-    tenant_id = models.IntegerField("租户 ID")
+    tenant_id = models.CharField("租户 ID", max_length=128)
     data_source_id = models.IntegerField("数据源 ID")
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
-    start_time = models.DateTimeField("任务开始时间")
-    duration = models.DurationField("任务持续时间")
+    start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
+    duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
+    extra = models.JSONField("扩展信息", default=dict)
+
+    @property
+    def summary(self):
+        # TODO (su) 支持获取任务总结
+        return "数据同步成功" if self.status == SyncTaskStatus.SUCCESS else "数据同步失败"
 
 
 class TenantSyncStep(TimestampedModel):

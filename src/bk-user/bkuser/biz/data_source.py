@@ -13,7 +13,6 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.constants import DataSourcePluginEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -22,8 +21,9 @@ from bkuser.apps.data_source.models import (
     DataSourcePlugin,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
 from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
 
 
 class DataSourceDepartmentInfoWithChildren(BaseModel):

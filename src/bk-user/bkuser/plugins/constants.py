@@ -8,10 +8,30 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from blue_krill.data_types.enum import EnumField, StructuredEnum
+from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.data_source.constants import DataSourcePluginEnum
-from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.plugins.local.plugin import LocalDataSourcePlugin
 from bkuser.utils.pydantic import gen_openapi_schema
+
+
+class DataSourcePluginEnum(str, StructuredEnum):
+    """数据源插件枚举"""
+
+    LOCAL = EnumField("local", label=_("本地数据源"))
+    GENERAL = EnumField("general", label=_("通用数据源"))
+    WECOM = EnumField("wecom", label=_("企业微信"))
+    LDAP = EnumField("ldap", label=_("OpenLDAP"))
+    MAD = EnumField("mad", label=_("MicrosoftActiveDirectory"))
+
+
+# FIXME (su) 支持通过注册的方式添加插件，避免新增插件后，需要手动维护以下常量
+
+# 数据源插件类映射表
+DATA_SOURCE_PLUGIN_CLASS_MAP = {
+    DataSourcePluginEnum.LOCAL: LocalDataSourcePlugin,
+}
 
 # 数据源插件配置类映射表
 DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP = {

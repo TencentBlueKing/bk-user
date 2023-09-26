@@ -8,11 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
-
-class LocalDataSourceDataParser:
-    """本地数据源数据解析器"""
-
-    # TODO (su) 从 excel 中读取用户，部门，leader 等信息，转换成需要的格式
-
-    ...

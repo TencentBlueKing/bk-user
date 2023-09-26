@@ -8,38 +8,32 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict, List
-
 from pydantic import BaseModel
 
-
-class RawDataSourceUser(BaseModel):
-    """原始数据源用户信息"""
-
-    # 用户唯一标识
-    id: str
-    # 用户名，邮箱，手机号等个人信息
-    properties: Dict[str, str]
-    # 直接上级信息
-    leaders: List[str]
-    # 所属部门信息
-    departments: List[str]
+from bkuser.apps.sync.constants import SyncTaskTrigger
 
 
-class RawDataSourceDepartment(BaseModel):
-    """原始数据源部门信息"""
+class DataSourceSyncOptions(BaseModel):
+    """数据源同步选项"""
 
-    # 部门唯一标识（如：IEG）
-    id: str
-    # 部门名称
-    name: str
-    # 上级部门
-    parent: str
+    # 同步操作人，定时触发时为空
+    operator: str = ""
+    # 是否对同名用户覆盖更新
+    overwrite: bool = False
+    # 是否使用增量同步
+    incremental: bool = False
+    # 是否异步执行同步任务
+    async_run: bool = True
+    # 同步任务触发方式
+    trigger: SyncTaskTrigger = SyncTaskTrigger.CRONTAB
 
 
-class TestConnectionResult(BaseModel):
-    """连通性测试结果，包含示例数据"""
+class TenantSyncOptions(BaseModel):
+    """租户同步选项"""
 
-    error_message: str
-    user: RawDataSourceUser
-    department: RawDataSourceDepartment
+    # 同步操作人，定时触发时为空
+    operator: str = ""
+    # 是否异步执行同步任务
+    async_run: bool = True
+    # 同步任务触发方式
+    trigger: SyncTaskTrigger = SyncTaskTrigger.SIGNAL

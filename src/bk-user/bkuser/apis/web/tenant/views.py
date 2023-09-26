@@ -25,7 +25,6 @@ from bkuser.apis.web.tenant.serializers import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
-from bkuser.apps.data_source.plugins.local.models import PasswordInitialConfig
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.tenant import (
@@ -36,6 +35,7 @@ from bkuser.biz.tenant import (
     TenantManagerWithoutID,
 )
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.plugins.local.models import PasswordInitialConfig
 
 logger = logging.getLogger(__name__)
 

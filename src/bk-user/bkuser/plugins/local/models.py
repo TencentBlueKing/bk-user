@@ -13,7 +13,8 @@ from typing import List, Optional
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from bkuser.apps.data_source.plugins.local.constants import (
+from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
+from bkuser.plugins.local.constants import (
     MAX_LOCK_TIME,
     MAX_NOT_CONTINUOUS_COUNT,
     MAX_PASSWORD_LENGTH,
@@ -25,7 +26,6 @@ from bkuser.apps.data_source.plugins.local.constants import (
     NotificationScene,
     PasswordGenerateMethod,
 )
-from bkuser.common.passwd import PasswordGenerateError, PasswordGenerator, PasswordRule, PasswordValidator
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 
