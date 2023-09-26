@@ -74,6 +74,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="修改用户自定义字段",
+        request_body=UserCustomFieldUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
