@@ -27,9 +27,3 @@ class CurrentUserTenantMixin:
             raise error_codes.GET_CURRENT_TENANT_FAILED
 
         return tenant_id
-
-    def get_current_tenant_user_id(self) -> str:
-        """
-        获取当前登录用户的租户用户ID
-        """
-        return self.request.user.get_property("bk_username")

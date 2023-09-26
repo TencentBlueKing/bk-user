@@ -14,7 +14,6 @@ from typing import Optional
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.auth.models import User
-from bkuser.utils.uuid import generate_uuid
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import DEFAULT_TENANT
 
@@ -33,9 +32,7 @@ def set_tenant_user(user: User, data_source_id: int, tenant: Optional[str] = DEF
     data_source_user = DataSourceUser.objects.get(username=user.username, data_source_id=data_source_id)
 
     tenant_user = TenantUser.objects.create(
-        data_source_user=data_source_user, tenant_id=tenant, data_source_id=data_source_id, id=generate_uuid()
+        data_source_user=data_source_user, tenant_id=tenant, data_source_id=data_source_id, id=user.username
     )
-    user.set_property("bk_username", tenant_user.id)
     user.set_property("tenant_id", tenant)
-
     return tenant_user.id

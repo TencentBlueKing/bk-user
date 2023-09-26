@@ -13,7 +13,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.person_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
@@ -24,9 +23,10 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.natural_user import NaturalUserWithTenantUsers, NatureUserHandler, TenantBaseInfo, TenantUserBaseInfo
 from bkuser.biz.tenant import TenantUserHandler, TenantUserUpdateEmailInfo, TenantUserUpdatePhoneInfo
 from bkuser.common.error_codes import error_codes
+from bkuser.common.views import ExcludePutAPIViewMixin
 
 
-class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class NaturalUserTenantUserListApi(generics.ListAPIView):
     pagination_class = None
 
     @swagger_auto_schema(
@@ -35,7 +35,7 @@ class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView)
         responses={status.HTTP_200_OK: NaturalUserWithTenantUserListOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        current_tenant_user_id = self.get_current_tenant_user_id()
+        current_tenant_user_id = request.user.username
 
         # 获取当前登录的租户用户的自然人:两种情况绑定、未绑定，在函数中做处理
         nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user_id)
@@ -67,7 +67,7 @@ class NaturalUserTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView)
         return Response(NaturalUserWithTenantUserListOutputSLZ(nature_user_with_tenant_users).data)
 
 
-class TenantUserRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
+class TenantUserRetrieveApi(generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     serializer_class = TenantUserRetrieveOutputSLZ
@@ -81,8 +81,7 @@ class TenantUserRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
         instance: TenantUser = self.get_object()
 
         # 获取当前登录的租户用户的自然人
-        current_tenant_user_id = self.get_current_tenant_user_id()
-        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user_id)
+        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(request.user.username)
 
         # 边界限制
         # 该租户用户的数据源用户，不属于当前自然人
@@ -92,7 +91,7 @@ class TenantUserRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
         return Response(TenantUserRetrieveOutputSLZ(instance).data)
 
 
-class TenantUserPhonePatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
+class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
 
@@ -106,8 +105,7 @@ class TenantUserPhonePatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
         instance: TenantUser = self.get_object()
 
         # 获取当前登录的租户用户的自然人
-        current_tenant_user_id = self.get_current_tenant_user_id()
-        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user_id)
+        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(request.user.username)
 
         # 边界限制
         # 该租户用户的数据源用户，不属于当前自然人
@@ -123,7 +121,7 @@ class TenantUserPhonePatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
         return Response()
 
 
-class TenantUserEmailPatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
+class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
 
@@ -137,8 +135,7 @@ class TenantUserEmailPatchApi(CurrentUserTenantMixin, generics.UpdateAPIView):
         instance: TenantUser = self.get_object()
 
         # 获取当前登录的租户用户的自然人
-        current_tenant_user_id = self.get_current_tenant_user_id()
-        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user_id)
+        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(request.user.username)
 
         # 边界限制
         # 该租户用户的数据源用户，不属于当前自然人下的

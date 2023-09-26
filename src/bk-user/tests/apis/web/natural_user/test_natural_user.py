@@ -43,7 +43,7 @@ class TestNaturalUserTenantUserListApi:
         assert tenant_users_from_db.count() == len(resp.data["tenant_users"])
 
         # 当前的登录账号，置顶
-        assert bk_user.get_property("bk_username") == resp.data["tenant_users"][0]["id"]
+        assert bk_user.username == resp.data["tenant_users"][0]["id"]
 
         tenant_user_map = {user.id: user for user in tenant_users_from_db}
         for item in resp.data["tenant_users"]:
@@ -68,7 +68,7 @@ class TestNaturalUserTenantUserListApi:
         assert resp.status_code == status.HTTP_200_OK
 
         # 未绑定自然人，返回的自然人信息为当前登录租户用户的ID和full_name
-        current_tenant_user = TenantUser.objects.get(id=bk_user.get_property("bk_username"))
+        current_tenant_user = TenantUser.objects.get(id=bk_user.username)
         assert current_tenant_user.id == resp.data["id"]
         assert current_tenant_user.data_source_user.full_name == resp.data["full_name"]
 
@@ -114,6 +114,7 @@ class TestNaturalUserTenantUserRetrieveApi:
             data_source_user_id__in=data_source_leader_ids, tenant_id=tenant_user.tenant_id
         ).values("id", "data_source_user__username", "data_source_user__full_name")
         tenant_leader_map = {leader["id"]: leader for leader in tenant_leaders_from_db}
+
         for user in checked_leaders:
             assert user["id"] in tenant_leader_map
             leader_info = tenant_leader_map[user["id"]]
@@ -213,7 +214,7 @@ class TestTenantUserChangeEmail:
     def test_tenant_user_change_email_with_invalidated_email_data(
         self, api_client, bk_user, invalidated_update_email_data
     ):
-        current_tenant_user_id = bk_user.get_property("bk_username")
+        current_tenant_user_id = bk_user.username
         resp = self._call_update_email_api(api_client, current_tenant_user_id, invalidated_update_email_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -224,7 +225,7 @@ class TestTenantUserChangeEmail:
             {"is_inherited_email": True},
         ],
     )
-    def test_tenant_user_change_email_with_no_bound_natural_user(
+    def test_tenant_user_change_email(
         self,
         api_client,
         bk_user,
@@ -236,15 +237,15 @@ class TestTenantUserChangeEmail:
         default_data_source,
         update_email_data,
     ):
-        current_tenant_user_id = bk_user.get_property("bk_username")
+        current_tenant_user = TenantUser.objects.get(id=bk_user.username)
         # 当前租户用户修改
-        resp = self._call_update_email_api(api_client, current_tenant_user_id, update_email_data)
+        resp = self._call_update_email_api(api_client, current_tenant_user.id, update_email_data)
         assert resp.status_code == status.HTTP_200_OK
-        self._check_email_data(current_tenant_user_id, update_email_data)
+        self._check_email_data(current_tenant_user.id, update_email_data)
 
         # 同一数据源用户下的其他租户用户
         random_tenant_user = TenantUser.objects.get(
-            data_source=default_data_source, data_source_user__username=bk_user.username, tenant_id=random_tenant
+            data_source_user=current_tenant_user.data_source_user, tenant_id=random_tenant
         )
         resp = self._call_update_email_api(api_client, random_tenant_user.id, update_email_data)
         assert resp.status_code == status.HTTP_200_OK
@@ -282,8 +283,9 @@ class TestTenantUserChangeEmail:
     def test_tenant_user_change_email_without_natural_user(
         self, api_client, bk_user, default_data_source, tenant_users, random_tenant_users, update_email_data
     ):
+        current_tenant_user = TenantUser.objects.get(id=bk_user.username)
         tenant_users = TenantUser.objects.exclude(
-            data_source_user__username=bk_user.username,
+            data_source_user__username=current_tenant_user.data_source_user.username,
             data_source=default_data_source,
         )
         for user in tenant_users:
@@ -335,7 +337,7 @@ class TestTenantUserChangePhone:
     def test_tenant_user_change_phone_with_invalidated_email_data(
         self, api_client, bk_user, invalidated_update_phone_data
     ):
-        current_tenant_user_id = bk_user.get_property("bk_username")
+        current_tenant_user_id = bk_user.username
         resp = self._call_update_tenant_user_phone_api(
             api_client, current_tenant_user_id, invalidated_update_phone_data
         )
@@ -360,15 +362,16 @@ class TestTenantUserChangePhone:
         default_data_source,
         update_phone_data,
     ):
-        current_tenant_user_id = bk_user.get_property("bk_username")
+        current_tenant_user = TenantUser.objects.get(id=bk_user.username)
+
         # 当前租户用户修改
-        resp = self._call_update_tenant_user_phone_api(api_client, current_tenant_user_id, update_phone_data)
+        resp = self._call_update_tenant_user_phone_api(api_client, current_tenant_user.id, update_phone_data)
         assert resp.status_code == status.HTTP_200_OK
-        self._check_tenant_user_phone_data(current_tenant_user_id, update_phone_data)
+        self._check_tenant_user_phone_data(current_tenant_user.id, update_phone_data)
 
         # 同一数据源用户下的其他租户用户
         random_tenant_user = TenantUser.objects.get(
-            data_source=default_data_source, data_source_user__username=bk_user.username, tenant_id=random_tenant
+            data_source_user=current_tenant_user.data_source_user, tenant_id=random_tenant
         )
         resp = self._call_update_tenant_user_phone_api(api_client, random_tenant_user.id, update_phone_data)
         assert resp.status_code == status.HTTP_200_OK
@@ -400,15 +403,15 @@ class TestTenantUserChangePhone:
         "update_phone_data",
         [
             {"is_inherited_phone": False, "custom_phone": 13123456789},
-            {"is_inherited_email": True},
+            {"is_inherited_phone": True},
         ],
     )
     def test_tenant_user_change_phone_without_natural_user(
         self, api_client, bk_user, default_data_source, tenant_users, random_tenant_users, update_phone_data
     ):
+        current_tenant_user = TenantUser.objects.get(id=bk_user.username)
         tenant_users = TenantUser.objects.exclude(
-            data_source_user__username=bk_user.username,
-            data_source=default_data_source,
+            data_source_user=current_tenant_user.data_source_user,
         )
         for user in tenant_users:
             resp = self._call_update_tenant_user_phone_api(api_client, user.id, update_phone_data)
