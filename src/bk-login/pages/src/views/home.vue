@@ -96,10 +96,6 @@
           @click="activeIdp = item">
           {{ item.name }}登录
         </div>
-
-        <!-- <span class="tab-item active">
-          帐密登录
-        </span> -->
       </div>
 
       <Password v-if="activeIdp?.plugin.id === 'local'" :idp-id="activeIdp.id" />
@@ -187,13 +183,8 @@ const confirmTenant = async () => {
   } else {
     hasStorage.value = true;
   }
-  await signIn({ tenant_id: tenantId.value });
-  idps.value = await getIdpList();
-  [activeIdp.value] = idps.value;
+  signInAndFetchIdp();
 };
-
-const tenantVisible = ref(false);
-const hasStorage = ref(!!localStorage.getItem('tenantId'));
 
 // 存在登录过的租户，要先signIn，再获取idp列表
 const signInAndFetchIdp = async () => {
@@ -202,6 +193,9 @@ const signInAndFetchIdp = async () => {
   idps.value = res;
   [activeIdp.value] = res;
 };
+
+const tenantVisible = ref(false);
+const hasStorage = ref(!!localStorage.getItem('tenantId'));
 
 // 存在登录过的租户
 if (hasStorage.value) {
