@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 
 import environ
 import urllib3
+from django.utils.encoding import force_bytes
 
 # environ
 env = environ.Env()
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "django_celery_beat",
+    "django_celery_results",
     "django_prometheus",
     "drf_yasg",
     "bkuser.auth",
@@ -129,6 +131,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_STATIC_PREFIX = "/staticfiles/"
 # STATIC_URL 也可以是CDN地址
 STATIC_URL = env.str("STATIC_URL", SITE_URL + "staticfiles/")
+# Media files (excel, pdf, ...)
+MEDIA_ROOT = BASE_DIR / "media"
 
 # cookie
 SESSION_COOKIE_NAME = "bkuser_sessionid"
@@ -158,6 +162,15 @@ BK_APP_CODE = env.str("BK_APP_CODE", default="bkuser")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
+
+# 蓝鲸数据库内容加密私钥
+# 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
+# 详情查看：https://cryptography.io/en/latest/fernet/
+BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
+
+# 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
+BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
+ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
 
 # bk_language domain
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
@@ -230,8 +243,8 @@ CELERY_RESULT_SERIALIZER = "json"
 # CELERY_IMPORTS = []
 # 内置的周期任务
 # CELERYBEAT_SCHEDULE = {}
-# Celery消息队列
-BROKER_URL = env.str("BK_BROKER_URL", default="")
+# Celery 消息队列配置
+CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
 
 # ------------------------------------------ 缓存配置 ------------------------------------------
 
@@ -314,12 +327,14 @@ if REDIS_USE_SENTINEL:
     CACHES["redis"]["OPTIONS"]["CONNECTION_POOL_CLASS"] = "redis.sentinel.SentinelConnectionPool"
 
 # default celery broker
-if not BROKER_URL:
+if not CELERY_BROKER_URL:
     # use Redis as the default broker
-    BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
     # https://docs.celeryq.dev/en/v5.3.1/getting-started/backends-and-brokers/redis.html#broker-redis
     if REDIS_USE_SENTINEL:
-        BROKER_URL = ";".join([f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR])
+        CELERY_BROKER_URL = ";".join(
+            [f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR]
+        )
         BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
             "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
@@ -491,3 +506,9 @@ MAX_WEAK_PASSWD_COMBINATION_THRESHOLD = env.float("MAX_WEAK_PASSWD_COMBINATION_T
 GENERATE_RANDOM_PASSWORD_MAX_RETRIES = env.int("GENERATE_RANDOM_PASSWORD_MAX_RETRIES", 10)
 # zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
 MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
+
+# 数据导出配置
+# 导出文件名称前缀
+EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
+# 成员，组织信息导出模板
+EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"

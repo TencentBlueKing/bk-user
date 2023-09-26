@@ -2,14 +2,22 @@
   <div class="group-details-wrapper user-scroll-y">
     <div class="main-content">
       <div class="content-search">
-        <bk-button theme="primary" @click="handleClick('add')">
-          <i class="user-icon icon-add-2 mr8" />
-          新建公司
-        </bk-button>
+        <div class="content-search-left">
+          <bk-button class="mr-[24px]" theme="primary" @click="handleClick('add')">
+            <i class="user-icon icon-add-2 mr8" />
+            新建公司
+          </bk-button>
+          <!-- <bk-switcher
+            v-model="demo"
+            theme="primary"
+            size="large"
+          />
+          <span class="switcher-text">公司名是否跨公司可见</span> -->
+        </div>
         <bk-input
           class="content-search-input"
           v-model="searchName"
-          placeholder="搜索公司名、姓名"
+          placeholder="搜索公司名"
           type="search"
           clearable
           @enter="handleEnter"
@@ -35,7 +43,7 @@
               <div class="item-name">
                 <img v-if="row.logo" :src="row.logo" />
                 <span v-else class="logo" :style="`background-color: ${LOGO_COLOR[index]}`">
-                  {{ convertLogo(row.name) }}
+                  {{ logoConvert(row.name) }}
                 </span>
                 <bk-button
                   text
@@ -55,7 +63,7 @@
           </bk-table-column>
           <bk-table-column prop="data_sources" label="已绑定数据源">
             <template #default="{ row }">
-              <span>{{ convertFormat(row.data_sources) }}</span>
+              <span>{{ formatConvert(row.data_sources) }}</span>
             </template>
           </bk-table-column>
           <bk-table-column prop="created_at" label="创建时间" />
@@ -122,7 +130,7 @@ import {
   searchTenants,
 } from '@/http/tenantsFiles';
 import { useMainViewStore } from '@/store/mainView';
-import { LOGO_COLOR } from '@/utils';
+import { formatConvert, LOGO_COLOR, logoConvert } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
@@ -205,9 +213,6 @@ watch(
 );
 
 const isView = computed(() => detailsConfig.type === 'view');
-
-const convertLogo = name => name?.charAt(0).toUpperCase();
-const convertFormat = name => name?.map(item => item?.name).join(',') || '--';
 
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
@@ -307,6 +312,17 @@ const handleBeforeClose = async () => {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+
+      .content-search-left {
+        display: flex;
+        align-items: center;
+
+        .switcher-text {
+          margin-left: 12px;
+          font-size: 14px;
+          color: #313238;
+        }
+      }
 
       .content-search-input {
         width: 400px;

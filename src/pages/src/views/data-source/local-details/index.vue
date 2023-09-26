@@ -7,12 +7,12 @@
             <div class="datasource-type-icon" v-for="item in typeList" :key="item">
               <img v-if="item.id === pluginId && item.logo" :src="item.logo">
               <i v-else :class="dataSourceType[pluginId].icon" />
-              <span>{{ dataSourceType[pluginId].text }}</span>
+              <span>{{ item.name }}</span>
             </div>
           </template>
         </bk-tag>
       </template>
-      <template #right>
+      <template #right v-if="statusText">
         <bk-button class="w-[64px]" hover-theme="primary" @click="handleClick">
           {{ statusText === 'disabled' ? '启用' : '停用' }}
         </bk-button>
@@ -22,17 +22,13 @@
       v-model:active="activeKey"
       type="unborder-card"
       ext-cls="tab-details"
+      @change="changeTab"
     >
-      <bk-tab-panel
-        v-for="item in panels"
-        :key="item.name"
-        :name="item.name"
-        :label="item.label"
-      >
-        <UserInfo
-          v-if="activeKey === 'user'"
-          :data-source-id="currentId" />
-        <PswInfo v-else />
+      <bk-tab-panel name="user" label="用户信息">
+        <UserInfo v-if="activeKey === 'user'" :data-source-id="currentId" />
+      </bk-tab-panel>
+      <bk-tab-panel name="account" label="账密信息">
+        <PswInfo v-if="activeKey === 'account'" />
       </bk-tab-panel>
     </bk-tab>
   </bk-loading>
@@ -40,7 +36,7 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import PswInfo from './PswInfo.vue';
@@ -55,11 +51,6 @@ const route = useRoute();
 const currentId = computed(() => Number(route.params.id));
 
 const activeKey = ref('user');
-const panels = reactive([
-  { name: 'user', label: '用户信息' },
-  { name: 'account', label: '账密信息' },
-]);
-
 const isLoading = ref(false);
 
 const subtitle = ref('');
@@ -69,10 +60,10 @@ const pluginId = ref('');
 
 onMounted(async () => {
   isLoading.value = true;
-  statusText.value = route.params.status;
   const res = await getDataSourceList('');
   res.data.forEach((item) => {
     if (item.id === currentId.value) {
+      statusText.value = item.status;
       subtitle.value = item.name;
       pluginId.value = item.plugin_id;
     }
@@ -87,6 +78,10 @@ const handleClick = async () => {
   statusText.value = res.data?.status;
   const message = res.data?.status === 'disabled' ? '停用成功' : '启用成功';
   Message({ theme: 'success', message });
+};
+
+const changeTab = (value) => {
+  activeKey.value = value;
 };
 </script>
 

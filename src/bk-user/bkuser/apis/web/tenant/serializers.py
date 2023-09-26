@@ -18,10 +18,7 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourcePluginEnum
 from bkuser.apps.data_source.models import DataSourceUser
-from bkuser.apps.data_source.plugins.local.constants import PasswordGenerateMethod
-from bkuser.apps.data_source.plugins.local.models import LocalDataSourcePluginConfig, NotificationConfig
 from bkuser.apps.tenant.constants import TENANT_ID_REGEX
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceSimpleInfo
@@ -29,6 +26,9 @@ from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.biz.tenant import TenantUserWithInheritedInfo
 from bkuser.biz.validators import validate_data_source_user_username
 from bkuser.common.passwd import PasswordValidator
+from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.constants import PasswordGenerateMethod
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig, NotificationConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 

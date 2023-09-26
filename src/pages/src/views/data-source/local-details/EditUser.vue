@@ -62,6 +62,8 @@
             multiple
             :input-search="false"
             :remote-method="searchDepartments"
+            :scroll-loading="scrollLoading"
+            @scroll-end="departmentsScrollEnd"
             @change="handleChange">
             <bk-option
               v-for="item in state.departments"
@@ -77,6 +79,8 @@
             multiple
             :input-search="false"
             :remote-method="searchLeaders"
+            :scroll-loading="scrollLoading"
+            @scroll-end="leadersScrollEnd"
             @change="handleChange">
             <bk-option
               v-for="item in state.leaders"
@@ -218,13 +222,61 @@ const customRequest = (event) => {
   handleChange();
 };
 
+const scrollLoading = ref(false);
+const departmentsCount = ref(0);
+const leadersCount = ref(0);
+
+const departmentsParams = reactive({
+  id: props.dataSourceId,
+  name: '',
+  page: 1,
+  pageSize: 10,
+});
+
+const leadersParams = reactive({
+  id: props.dataSourceId,
+  keyword: '',
+  page: 1,
+  pageSize: 10,
+});
+
 const initData = async () => {
-  const departments = await getDataSourceDepartments(props.dataSourceId, '');
-  const leaders = await getDataSourceLeaders(props.dataSourceId, '');
+  const departments = await getDataSourceDepartments(departmentsParams);
+  const leaders = await getDataSourceLeaders(leadersParams);
   state.departments = departments.data.results;
+  departmentsCount.value = departments.data.count;
   state.leaders = leaders.data.results;
+  leadersCount.value = leaders.data.count;
 };
 initData();
+
+const departmentsScrollEnd = () => {
+  if (departmentsParams.name || departmentsCount.value <= (departmentsParams.page * 10)) return;
+  scrollLoading.value = true;
+  departmentsParams.page += 1;
+  getDataSourceDepartments(departmentsParams).then((res) => {
+    state.departments.push(...res.data.results.filter(item => item));
+    scrollLoading.value = false;
+  })
+    .catch((e) => {
+      console.warn(e);
+      scrollLoading.value = false;
+    });
+};
+
+const leadersScrollEnd = () => {
+  if (leadersParams.keyword || leadersCount.value <= (leadersParams.page * 10)) return;
+  scrollLoading.value = true;
+  leadersParams.page += 1;
+  getDataSourceLeaders(leadersParams).then((res) => {
+    state.leaders.push(...res.data.results.filter(item => item));
+    scrollLoading.value = false;
+  })
+    .catch((e) => {
+      console.warn(e);
+      scrollLoading.value = false;
+    });
+};
 
 const handleDelete = () => {
   formData.logo = '';
@@ -252,12 +304,16 @@ const handleSubmit = async () => {
 };
 
 const searchDepartments = async (value: string) => {
-  const departments = await getDataSourceDepartments(props.dataSourceId, value);
+  departmentsParams.name = value;
+  departmentsParams.page = 1;
+  const departments = await getDataSourceDepartments(departmentsParams);
   state.departments = departments.data.results;
 };
 
 const searchLeaders = async (value: string) => {
-  const leaders = await getDataSourceLeaders(props.dataSourceId, value);
+  leadersParams.keyword = value;
+  leadersParams.page = 1;
+  const leaders = await getDataSourceLeaders(leadersParams);
   state.leaders = leaders.data.results;
 };
 

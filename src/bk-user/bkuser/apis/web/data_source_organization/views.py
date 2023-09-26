@@ -96,6 +96,7 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
             email=data["email"],
             phone=data["phone"],
             phone_country_code=data["phone_country_code"],
+            logo=data["logo"],
         )
 
         relation_info = DataSourceUserRelationInfo(

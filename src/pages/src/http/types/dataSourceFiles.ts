@@ -70,3 +70,23 @@ export interface PutDataSourceParams {
   plugin_config: {},
   field_mapping: [],
 }
+
+/**
+ * 部门列表参数
+ */
+export interface DepartmentsParams {
+  id: string,
+  name: string,
+  page: number,
+  pageSize: number,
+}
+
+/**
+ * 上级列表参数
+ */
+export interface LeadersParams {
+  id: string,
+  keyword: string,
+  page: number,
+  pageSize: number,
+}

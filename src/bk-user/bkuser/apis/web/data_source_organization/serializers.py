@@ -61,7 +61,7 @@ class UserCreateInputSLZ(serializers.Serializer):
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
     phone = serializers.CharField(help_text="手机号")
-    logo = serializers.CharField(help_text="用户 Logo", required=False)
+    logo = serializers.CharField(help_text="用户 Logo", required=False, default=settings.DEFAULT_DATA_SOURCE_USER_LOGO)
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField(), default=[])
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField(), default=[])
 
