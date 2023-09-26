@@ -154,9 +154,14 @@ class DataSourceDepartmentSyncer:
         """
         在 MPTT 中，单个 tree_id 只能用于一棵树，因此需要为不同的树分配不同的 ID
 
-        # FIXME (su) 抽象成 TreeIdProvider，利用 Redis 锁，提供在并发情况下，安全获取最大 tree_id + 1 的能力
-        分配规则：data_source_id * 1000 + root_node_idx
+        FIXME (su) 抽象成 TreeIdProvider，利用 Redis 锁，提供在并发
+        情况下，安全获取最大 tree_id + 1 的能力，需要考虑事务提交顺序的问题
+
+        分配规则：data_source_id * 10000 + root_node_idx
         """
+        if root_node_idx >= 10**4:
+            raise ValueError(f"data source {data_source_id} has too many root department!")
+
         return data_source_id * 10**4 + root_node_idx
 
 
