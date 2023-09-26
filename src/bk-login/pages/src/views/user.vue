@@ -46,7 +46,6 @@ const userList: Ref<User[]> = ref([]);
 const userId = ref('');
 
 const handleLogin = () => {
-  console.log('login');
   signInByUser({
     user_id: userId.value,
   }).then((res) => {

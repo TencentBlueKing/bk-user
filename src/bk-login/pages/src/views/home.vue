@@ -1,30 +1,44 @@
 <template>
   <bk-form form-type="vertical">
-    <section v-if="!tenantVisible && !hasStorage">
+    <section v-if="!hasStorage">
       <h1 class="login-header">请选择登录公司</h1>
 
       <bk-form-item>
         <bk-input
+          v-if="!tenantVisible"
           size="large"
           placeholder="填写公司ID"
           v-model="tenantId"
           @blur="handleGetTenant"
           @enter="handleGetTenant">
         </bk-input>
+
+        <bk-select v-else size="large" filterable @change="handleTenantChange">
+          <bk-option
+            v-for="item in allTenantList"
+            class="tenant-option"
+            :id="item.id"
+            :key="item.id"
+            :value="item.id">
+            {{ item.name }}
+          </bk-option>
+        </bk-select>
       </bk-form-item>
 
-      <div v-if="tenant">
-        <h2 class="tenant-content">我们为您在平台找到了以下公司</h2>
-        <div class="tenant-list">
-          <img v-if="tenant.logo" :src="tenant.logo" />
-          <span v-else class="logo">
-            {{ tenant.name.charAt(0).toUpperCase() }}
-          </span>
-          {{ tenant.name }}
-          <Done class="tenant-check" />
+      <template v-if="!tenantVisible">
+        <div v-if="tenant">
+          <h2 class="tenant-content">我们为您在平台找到了以下公司</h2>
+          <div class="tenant-list">
+            <img v-if="tenant.logo" :src="tenant.logo" />
+            <span v-else class="logo">
+              {{ tenant.name.charAt(0).toUpperCase() }}
+            </span>
+            {{ tenant.name }}
+            <Done class="tenant-check" />
+          </div>
         </div>
-      </div>
-      <h2 class="tenant-content" v-else-if="tenant !== null">暂无匹配公司</h2>
+        <h2 class="tenant-content" v-else-if="tenant !== null">暂无匹配公司</h2>
+      </template>
 
       <bk-form-item style="margin: 42px 0 0;">
         <bk-checkbox v-model="trust">信任该电脑并保存公司ID</bk-checkbox>
@@ -74,35 +88,38 @@
       </div>
 
       <div class="tenant-tab">
-        <!-- <span class="tab-item active" v-for="item in tenant?.idps" :key="item.id">
+        <div
+          class="tab-item"
+          v-for="item in idps.slice(0, 1)"
+          :class="activeIdp.id === item.id ? 'active' : ''"
+          :key="item.id"
+          @click="activeIdp = item">
           {{ item.name }}登录
-        </span> -->
-
-        <span class="tab-item active">
-          帐密登录
-        </span>
+        </div>
       </div>
 
-      <Password :idp-id="tenant?.idps[0].id" />
+      <Password v-if="activeIdp?.plugin.id === 'local'" :idp-id="activeIdp.id" />
 
       <div>
-        <span class="cursor-pointer">用户协议 ></span>
+        <span class="cursor-pointer" @click="protocolVisible = true">用户协议 ></span>
       </div>
+
+      <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
     </section>
   </bk-form>
 </template>
 
 <script setup lang="ts">
-import { getTenant, getTenantList, getVisible, signIn } from '@/http/api';
+import { getAllTenantList, getIdpList, getTenant, getTenantList, getVisible, signIn } from '@/http/api';
 import { Done, Transfer } from 'bkui-vue/lib/icon';
 import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
 import Password from './components/password.vue';
+import Protocol from './components/protocol.vue';
 
 interface Tenant {
   id: string;
   logo: string;
   name: string;
-  idps: Idp[];
 }
 
 interface Idp {
@@ -119,29 +136,43 @@ interface Plugin {
 
 type Category = 'enterprise' | 'social';
 
+const allTenantList: Ref<Tenant[]> = ref([]);
 const tenantId = ref('');
 const tenantIdList: Ref<string[]> = ref([]);
 const tenantList = ref<Tenant[]>([]);
+
+// 选择公司
+const handleTenantChange = (id: string) => {
+  tenant.value = allTenantList.value.find(item => item.id === id);
+  tenantId.value = id;
+};
 try {
   tenantIdList.value = JSON.parse(localStorage.getItem('tenantIdList') || '[]');
 } catch (error) {
   console.log(error);
 }
 const tenant: Ref<Tenant> = ref(null);
+
+// 通过公司ID获取公司信息
 const handleGetTenant = () => {
   if (tenantId.value) {
     getTenant(tenantId.value).then((res) => {
       tenant.value = res;
-    });
+    })
+      .catch((error) => {
+        tenant.value = error.data;
+      });
   } else {
     tenant.value = null;
   }
 };
 
 const trust = ref(true);
+const idps: Ref<Idp[]> = ref([]);
+const activeIdp: Ref<Idp> = ref();
 
 // 确认登录公司
-const confirmTenant = () => {
+const confirmTenant = async () => {
   if (trust.value) {
     localStorage.setItem('tenantId', tenantId.value);
     if (!tenantIdList.value.includes(tenantId.value)) {
@@ -152,16 +183,27 @@ const confirmTenant = () => {
   } else {
     hasStorage.value = true;
   }
-  signIn({ tenant_id: tenantId.value });
+  signInAndFetchIdp();
+};
+
+// 存在登录过的租户，要先signIn，再获取idp列表
+const signInAndFetchIdp = async () => {
+  await signIn({ tenant_id: tenantId.value });
+  const res = await getIdpList();
+  idps.value = res;
+  [activeIdp.value] = res;
 };
 
 const tenantVisible = ref(false);
 const hasStorage = ref(!!localStorage.getItem('tenantId'));
+
+// 存在登录过的租户
 if (hasStorage.value) {
   tenantId.value = localStorage.getItem('tenantId');
   getTenant(tenantId.value).then((res) => {
     tenant.value = res;
   });
+  signInAndFetchIdp();
 }
 
 // 新增公司
@@ -172,11 +214,14 @@ const addTenant = () => {
 };
 
 const changList = computed(() => tenantList.value.filter(item => item.id !== tenantId.value));
+// 切换已登录过公司
 const handleChange = (item: Tenant) => {
   tenantId.value = item.id;
   tenant.value = item;
   confirmTenant();
 };
+
+const protocolVisible = ref(false);
 
 watch(
   () => tenantIdList.value,
@@ -191,6 +236,11 @@ watch(
 onBeforeMount(() => {
   getVisible().then((res) => {
     tenantVisible.value = res.tenant_visible;
+    if (res.tenant_visible) {
+      getAllTenantList().then((res) => {
+        allTenantList.value = res;
+      });
+    }
   });
 });
 
@@ -284,13 +334,16 @@ onBeforeMount(() => {
   font-size: 14px;
   color: #63656E;
   line-height: 22px;
-  height: 32px;
   margin-bottom: 24px;
+  width: 400px;
+  overflow-x: auto;
+  white-space: nowrap;
 
   .tab-item {
     margin-right: 24px;
     cursor: pointer;
     padding-bottom: 10px;
+    display: inline-block;
 
     &.active {
       color: #3A84FF;
@@ -330,6 +383,10 @@ onBeforeMount(() => {
     cursor: pointer;
     margin: 0 -14px -7px;
   }
+}
+.tenant-option {
+  height: 36px;
+  font-size: 14px;
 }
 </style>
 
