@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List, Optional
 
-from bkuser.apps.data_source.models import DataSourceDepartment
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.utils.uuid import generate_uuid
 
@@ -33,7 +33,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     return tenant
 
 
-def create_tenant_users(tenant, data_source_users) -> List[TenantUser]:
+def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser]) -> List[TenantUser]:
     """
     创建租户用户
     """
@@ -41,7 +41,7 @@ def create_tenant_users(tenant, data_source_users) -> List[TenantUser]:
         TenantUser(
             data_source_user=user,
             data_source=user.data_source,
-            tenant_id=tenant,
+            tenant=tenant,
             id=generate_uuid(),
         )
         for user in data_source_users
@@ -53,7 +53,7 @@ def create_tenant_users(tenant, data_source_users) -> List[TenantUser]:
     return list(TenantUser.objects.filter(tenant_id=tenant))
 
 
-def create_tenant_departments(tenant, data_source) -> List[TenantDepartment]:
+def create_tenant_departments(tenant: Tenant, data_source: DataSource) -> List[TenantDepartment]:
     """
     创建租户部门
     """
@@ -63,7 +63,7 @@ def create_tenant_departments(tenant, data_source) -> List[TenantDepartment]:
         TenantDepartment(
             data_source_department=department,
             data_source=department.data_source,
-            tenant_id=tenant,
+            tenant=tenant,
         )
         for department in data_source_departments
     ]
