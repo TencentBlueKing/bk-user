@@ -60,7 +60,7 @@ onBeforeMount(() => {
 });
 </script>
 
-<style lang="less" scoped>
+<style lang="postcss" scoped>
 .cursor-pointer {
   cursor: pointer;
 }

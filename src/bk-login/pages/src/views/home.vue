@@ -246,7 +246,7 @@ onBeforeMount(() => {
 
 </script>
 
-<style lang="less" scoped>
+<style lang="postcss" scoped>
 .login-header {
   height: 42px;
   font-weight: 700;
