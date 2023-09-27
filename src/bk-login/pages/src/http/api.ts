@@ -21,7 +21,7 @@ interface UserParams {
 export const getVisible = () => fetch.get(`${apiPrefix}/tenant-global-settings/`);
 
 // 查询单个租户信息
-export const getTenant = (id: string) => fetch.get(`${apiPrefix}/tenants/${id}`);
+export const getTenant = (id: string) => fetch.get(`${apiPrefix}/tenants/${id}/`);
 
 // 查询多个租户信息
 export const getTenantList = (ids: string) => fetch.get(`${apiPrefix}/tenants/?tenant_ids=${ids}`);
