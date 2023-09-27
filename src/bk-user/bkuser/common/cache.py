@@ -103,7 +103,7 @@ class Cache:
     Django Cache 的 BaseCache ，只封装了项目所需方法
     """
 
-    def __init__(self, type_: CacheEnum, key_prefix: CacheKeyPrefixEnum):
+    def __init__(self, type_, key_prefix):
         self.cache = caches[type_]
         self.type = type_
         self.key_prefix = key_prefix
