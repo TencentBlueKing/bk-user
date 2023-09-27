@@ -11,13 +11,12 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from django.utils.translation import gettext_lazy as _
-from rest_framework import serializers
 from pydantic import ValidationError as PDValidationError
+from rest_framework import serializers
 
-from bkuser.apps.tenant_setting.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.apps.tenant_setting.constants import UserFieldDataType
 from bkuser.apps.tenant_setting.models import TenantUserCustomFieldOptions
-from rest_framework.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +62,8 @@ class UserCustomFieldCreateInputSLZ(serializers.Serializer):
 
     def validate_display_name(self, display_name):
         if TenantUserCustomField.objects.filter(
-                tenant_id=self.context["tenant_id"], display_name=display_name).exists():
+            tenant_id=self.context["tenant_id"], display_name=display_name
+        ).exists():
             raise serializers.ValidationError(_("展示用名称 {} 已存在").format(display_name))
         return display_name
 
@@ -78,34 +78,32 @@ class UserCustomFieldCreateInputSLZ(serializers.Serializer):
         default = attrs.get("default")
 
         if data_type == UserFieldDataType.ENUM.value:
-            if not options:
-                raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
-            try:
-                # 校验options字段规则：
-                TenantUserCustomFieldOptions(options=options)
-            except PDValidationError as e:
-                raise ValidationError(_("<选项>字段不合法: {}".format(e)))
-
-            if default is not None:
-                # 单枚举类型要求default的值为options其中一个对象的ID值
-                if default not in [option["id"] for option in attrs["options"]]:
-                    raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            self._validate_options(options=options)
+            self._validate_enum_default(default=default, options=options)
 
         if data_type == UserFieldDataType.MULTI_ENUM.value:
-            if not options:
-                raise serializers.ValidationError(_("多选枚举类型的自定义字段需要传递非空的<选项>字段"))
-            try:
-                # 校验options字段规则：
-                TenantUserCustomFieldOptions(options=options)
-            except PDValidationError as e:
-                raise ValidationError(_("<选项>字段不合法：{}".format(e)))
-
-            if default is not None:
-                # 多选枚举类型要求default中的值都为options其中任一对象的ID值
-                if not set(default).issubset(set(option["id"] for option in attrs["options"])):
-                    raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            self._validate_options(options=options)
+            self._validate_multi_enum_default(default=default, options=options)
 
         return attrs
+
+    def _validate_options(self, options):
+        if not options:
+            raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
+        try:
+            TenantUserCustomFieldOptions(options=options)
+        except PDValidationError as e:
+            raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
+
+    def _validate_enum_default(self, default, options):
+        # 单枚举类型要求default的值为options其中一个对象的ID值
+        if default is not None and default not in [option["id"] for option in options]:
+            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+
+    def _validate_multi_enum_default(self, default, options):
+        # 多选枚举类型要求default中的值都为options其中任一对象的ID值
+        if default is not None and not set(default).issubset({option["id"] for option in options}):
+            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
 
 
 class UserCustomFieldCreateOutputSLZ(serializers.Serializer):
@@ -119,8 +117,11 @@ class UserCustomFieldUpdateInputSLZ(serializers.Serializer):
     options = serializers.JSONField(help_text="选项")
 
     def validate_name(self, name):
-        if TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exclude(
-                id=self.context["current_custom_field_id"]).exists():
+        if (
+            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name)
+            .exclude(id=self.context["current_custom_field_id"])
+            .exists()
+        ):
             raise serializers.ValidationError(_("字段名称 {} 已存在").format(name))
         return name
 
@@ -131,25 +132,29 @@ class UserCustomFieldUpdateInputSLZ(serializers.Serializer):
         default = attrs.get("default")
 
         if data_type == UserFieldDataType.ENUM.value:
-            try:
-                # 校验options字段规则：
-                TenantUserCustomFieldOptions(options=options)
-            except PDValidationError as e:
-                raise ValidationError(_("<选项>字段不合法: {}".format(e)))
-
-            # 单枚举类型要求default的值为options其中一个对象的ID值
-            if default is not None and default not in [option["id"] for option in attrs["options"]]:
-                raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            self._validate_options(options=options)
+            self._validate_enum_default(default=default, options=options)
 
         if data_type == UserFieldDataType.MULTI_ENUM.value:
-            try:
-                # 校验options字段规则：
-                TenantUserCustomFieldOptions(options=options)
-            except PDValidationError as e:
-                raise ValidationError(_("<选项>字段不合法：{}".format(e)))
-
-            # 多选枚举类型要求default中的值都为options其中任一对象的ID值
-            if default is not None and not set(default).issubset(set(option["id"] for option in attrs["options"])):
-                raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            self._validate_options(options=options)
+            self._validate_multi_enum_default(default=default, options=options)
 
         return attrs
+
+    def _validate_options(self, options):
+        if not options:
+            raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
+        try:
+            TenantUserCustomFieldOptions(options=options)
+        except PDValidationError as e:
+            raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
+
+    def _validate_enum_default(self, default, options):
+        # 单枚举类型要求default的值为options其中一个对象的ID值
+        if default is not None and default not in [option["id"] for option in options]:
+            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+
+    def _validate_multi_enum_default(self, default, options):
+        # 多选枚举类型要求default中的值都为options其中任一对象的ID值
+        if default is not None and not set(default).issubset({option["id"] for option in options}):
+            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
