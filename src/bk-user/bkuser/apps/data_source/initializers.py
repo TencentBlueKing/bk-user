@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 import logging
-from typing import List
+from typing import Dict, List, Optional, Tuple
 
 from django.utils import timezone
 
@@ -56,32 +56,27 @@ class LocalDataSourceIdentityInfoInitializer:
             self.plugin_cfg.password_rule, self.plugin_cfg.password_initial  # type: ignore
         )
 
-    def sync(self) -> List[DataSourceUser]:
-        """检查指定数据源的所有用户，对没有账密信息的，做初始化，适用于批量同步（导入）的情况"""
+    def initialize(self, users: Optional[List[DataSourceUser]] = None) -> Tuple[List[DataSourceUser], Dict[int, str]]:
+        """初始化指定用户的身份信息，若没有指定，则初始化该数据源所有没有初始化过的"""
         if self._can_skip():
-            return []
+            return [], {}
 
         exists_info_user_ids = LocalDataSourceIdentityInfo.objects.filter(
             data_source=self.data_source,
         ).values_list("user_id", flat=True)
-        # NOTE：已经存在的账密信息，不会按照最新规则重新生成！不然用户密码就失效了！
-        waiting_init_users = DataSourceUser.objects.filter(
-            data_source=self.data_source,
-        ).exclude(id__in=exists_info_user_ids)
 
-        self._init_users_identity_info(waiting_init_users)
-        return waiting_init_users
+        if users:
+            waiting_init_users = [u for u in users if u.id not in exists_info_user_ids]
+        else:
+            waiting_init_users = DataSourceUser.objects.filter(
+                data_source=self.data_source,
+            ).exclude(id__in=exists_info_user_ids)
 
-    def initialize(self, user: DataSourceUser) -> None:
-        """初始化用户身份信息，适用于单个用户创建的情况"""
-        if self._can_skip():
-            return
+        if not waiting_init_users:
+            logger.warning("not users need initialize, skip...")
+            return [], {}
 
-        if LocalDataSourceIdentityInfo.objects.filter(user=user).exists():
-            logger.warning("local data source user %s identity info exists, skip initialize", user.id)
-            return
-
-        self._init_users_identity_info([user])
+        return waiting_init_users, self._init_users_identity_info(waiting_init_users)
 
     def _can_skip(self) -> bool:
         """预先判断能否直接跳过"""
@@ -96,8 +91,8 @@ class LocalDataSourceIdentityInfoInitializer:
 
         return False
 
-    def _init_users_identity_info(self, users: List[DataSourceUser]):
-        """初始化用户身份信息"""
+    def _init_users_identity_info(self, users: List[DataSourceUser]) -> Dict[int, str]:
+        """初始化用户身份信息，返回 {user_id: password} 映射表"""
         time_now = timezone.now()
         expired_at = self._get_password_expired_at()
 
@@ -113,6 +108,9 @@ class LocalDataSourceIdentityInfoInitializer:
             for user in users
         ]
         LocalDataSourceIdentityInfo.objects.bulk_create(waiting_create_infos, batch_size=self.BATCH_SIZE)
+
+        # 由于用户密码采用 HASH 加密，因此只有在初始化的时候才能获取到明文密码
+        return {info.user.id: info.password for info in waiting_create_infos}
 
     def _get_password_expired_at(self) -> datetime.datetime:
         """获取密码过期的具体时间"""

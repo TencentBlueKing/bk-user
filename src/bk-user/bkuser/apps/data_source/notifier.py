@@ -11,10 +11,11 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Dict, List, Optional
 
+from django.conf import settings
 from django.template import Context, Template
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.component import cmsi
 from bkuser.plugins.local.constants import NotificationMethod, NotificationScene
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, NotificationTemplate
@@ -25,9 +26,10 @@ logger = logging.getLogger(__name__)
 class NotificationTmplContextGenerator:
     """生成通知模板使用的上下文"""
 
-    def __init__(self, user: DataSourceUser, scene: NotificationScene):
+    def __init__(self, user: DataSourceUser, scene: NotificationScene, passwd: str):
         self.user = user
         self.scene = scene
+        self.passwd = passwd
 
     def gen(self) -> Dict[str, str]:
         """生成通知模板使用的上下文
@@ -54,10 +56,8 @@ class NotificationTmplContextGenerator:
 
     def _gen_user_initialize_ctx(self) -> Dict[str, str]:
         """用户初始化"""
-        info = LocalDataSourceIdentityInfo.objects.get(user=self.user)
-        # FIXME (su) 密码修改为对称加密后，无法通过该方式直接获取到
         # FIXME (su) 提供修改密码的 URL（settings.BK_USER_URL + xxxx）
-        return {"password": info.password, "reset_url": "https://example.com/reset-password", **self._gen_base_ctx()}
+        return {"password": self.passwd, "reset_url": settings.BK_USER_URL + "/reset-password", **self._gen_base_ctx()}
 
     def _gen_reset_passwd_ctx(self) -> Dict[str, str]:
         """重置密码"""
@@ -77,9 +77,15 @@ class LocalDataSourceUserNotifier:
 
     templates: List[NotificationTemplate] = []
 
-    def __init__(self, data_source: DataSource, scene: NotificationScene):
+    def __init__(
+        self,
+        data_source: DataSource,
+        scene: NotificationScene,
+        user_passwd_map: Optional[Dict[int, str]] = None,
+    ):
         self.data_source = data_source
         self.scene = scene
+        self.user_passwd_map = user_passwd_map or {}
 
         if not data_source.is_local:
             return
@@ -90,11 +96,8 @@ class LocalDataSourceUserNotifier:
 
         self.templates = self._get_tmpls_with_scene(plugin_cfg, scene)
 
-    def send(self, users: Optional[List[DataSourceUser]] = None):
+    def send(self, users: List[DataSourceUser]) -> None:
         """根据数据源插件配置，发送对应的通知信息"""
-        if users is None:
-            users = DataSourceUser.objects.filter(data_source=self.data_source)
-
         try:
             for u in users:
                 self._send_notifications(u)
@@ -143,5 +146,7 @@ class LocalDataSourceUserNotifier:
         cmsi.send_sms([user.phone], content)
 
     def _render_tmpl(self, user: DataSourceUser, content: str) -> str:
-        ctx = NotificationTmplContextGenerator(user=user, scene=self.scene).gen()
+        ctx = NotificationTmplContextGenerator(
+            user=user, scene=self.scene, passwd=self.user_passwd_map.get(user.id, "<notset>")
+        ).gen()
         return Template(content).render(Context(ctx))

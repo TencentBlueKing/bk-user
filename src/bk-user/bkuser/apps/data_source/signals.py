@@ -13,3 +13,7 @@ import django.dispatch
 post_create_data_source = django.dispatch.Signal(providing_args=["data_source"])
 
 post_update_data_source = django.dispatch.Signal(providing_args=["data_source"])
+
+post_batch_create_data_source_user = django.dispatch.Signal(providing_args=["data_source"])
+
+post_create_data_source_user = django.dispatch.Signal(providing_args=["data_source", "user"])
