@@ -19,7 +19,9 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.plugins.constants import DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP, DataSourcePluginEnum
+from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.plugins.base import get_plugin_cfg_cls
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
@@ -59,10 +61,7 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
-    """
-    单个数据源字段映射
-    FIXME (su) 自定义字段实现后，需要检查：target_field 需是租户定义的，source_field 需是插件允许的
-    """
+    """单个数据源字段映射"""
 
     source_field = serializers.CharField(help_text="数据源原始字段")
     mapping_operation = serializers.ChoiceField(help_text="映射关系", choices=FieldMappingOperation.get_choices())
@@ -90,12 +89,24 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         return plugin_id
 
+    def validate_field_mapping(self, field_mapping: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        target_fields = {m.get("target_field") for m in field_mapping}
+        allowed_target_fields = [f.name for f in UserBuiltinField.objects.all()] + [
+            f.name for f in TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        ]
+        if not_allowed_fields := target_fields - set(allowed_target_fields):
+            raise ValidationError(
+                _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
+            )
+
+        return field_mapping
+
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 除本地数据源类型外，都需要配置字段映射
         if attrs["plugin_id"] != DataSourcePluginEnum.LOCAL and not attrs["field_mapping"]:
             raise ValidationError(_("当前数据源类型必须配置字段映射"))
 
-        PluginConfigCls = DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.get(attrs["plugin_id"])  # noqa: N806
+        PluginConfigCls = get_plugin_cfg_cls(attrs["plugin_id"])  # noqa: N806
         # 自定义插件，可能没有对应的配置类，不需要做格式检查
         if not PluginConfigCls:
             return attrs
@@ -141,7 +152,7 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
     )
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
-        PluginConfigCls = DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.get(self.context["plugin_id"])  # noqa: N806
+        PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806
         # 自定义插件，可能没有对应的配置类，不需要做格式检查
         if not PluginConfigCls:
             return plugin_config
@@ -160,6 +171,15 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
 
         if not field_mapping:
             raise ValidationError(_("当前数据源类型必须配置字段映射"))
+
+        target_fields = {m.get("target_field") for m in field_mapping}
+        allowed_target_fields = [f.name for f in UserBuiltinField.objects.all()] + [
+            f.name for f in TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        ]
+        if not_allowed_fields := target_fields - set(allowed_target_fields):
+            raise ValidationError(
+                _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
+            )
 
         return field_mapping
 

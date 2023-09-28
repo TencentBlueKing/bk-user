@@ -25,10 +25,7 @@ from bkuser.apps.sync.syncers import (
     TenantUserSyncer,
 )
 from bkuser.apps.tenant.models import Tenant
-from bkuser.plugins.constants import (
-    DATA_SOURCE_PLUGIN_CLASS_MAP,
-    DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP,
-)
+from bkuser.plugins.base import get_plugin_cfg_cls, get_plugin_cls
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +61,11 @@ class DataSourceSyncTaskRunner:
     def _initial_plugin(self, plugin_init_extra_kwargs: Dict[str, Any]):
         """初始化数据源插件"""
         plugin_config = self.data_source.plugin_config
-        PluginCfgCls = DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.get(self.data_source.plugin_id)  # noqa: N806
+        PluginCfgCls = get_plugin_cfg_cls(self.data_source.plugin_id)  # noqa: N806
         if PluginCfgCls is not None:
             plugin_config = PluginCfgCls(**plugin_config)
 
-        PluginCls = DATA_SOURCE_PLUGIN_CLASS_MAP[self.data_source.plugin_id]  # noqa: N806
+        PluginCls = get_plugin_cls(self.data_source.plugin_id)  # noqa: N806
         self.plugin = PluginCls(plugin_config, **plugin_init_extra_kwargs)
 
     def _sync_departments(self):

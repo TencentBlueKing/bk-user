@@ -21,6 +21,7 @@ from bkuser.apps.data_source.models import (
     DataSourcePlugin,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.data_source.signals import post_create_data_source
 from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
@@ -66,12 +67,14 @@ class DataSourceHandler:
         plugin_config: LocalDataSourcePluginConfig = DefaultPluginConfigProvider().get(plugin_id)  # type: ignore
         plugin_config.password_initial = password_initial_config
 
-        return DataSource.objects.create(
+        data_source = DataSource.objects.create(
             name=data_source_name,
             owner_tenant_id=owner_tenant_id,
             plugin=DataSourcePlugin.objects.get(id=plugin_id),
             plugin_config=plugin_config.model_dump(),
         )
+        post_create_data_source.send(sender=DataSourceHandler, data_source=data_source)
+        return data_source
 
 
 class DataSourceDepartmentHandler:
