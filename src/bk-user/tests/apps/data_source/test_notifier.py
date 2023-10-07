@@ -48,7 +48,7 @@ class TestLocalDataSourceUserNotifier:
 
     @mock.patch("bkuser.component.cmsi.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.send_sms", return_value=None)
-    def test_send(self, full_local_data_source):
+    def test_send(self, mocked_send_sms, mocked_send_mail, full_local_data_source):
         notifier = LocalDataSourceUserNotifier(
             data_source=full_local_data_source, scene=NotificationScene.USER_INITIALIZE
         )
