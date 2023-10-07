@@ -107,19 +107,19 @@ class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
 
 
 class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="字段名称", max_length=128)
+    display_name = serializers.CharField(help_text="展示用名称", max_length=128)
     required = serializers.BooleanField(help_text="是否必填")
     default = serializers.JSONField(help_text="默认值")
     options = serializers.JSONField(help_text="选项")
 
-    def validate_name(self, name):
+    def validate_display_name(self, display_name):
         if (
-            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name)
+            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], display_name=display_name)
             .exclude(id=self.context["current_custom_field_id"])
             .exists()
         ):
-            raise serializers.ValidationError(_("字段名称 {} 已存在").format(name))
-        return name
+            raise serializers.ValidationError(_("展示用名称 {} 已存在").format(display_name))
+        return display_name
 
     def validate(self, attrs):
         current_custom_field = TenantUserCustomField.objects.get(id=self.context["current_custom_field_id"])
