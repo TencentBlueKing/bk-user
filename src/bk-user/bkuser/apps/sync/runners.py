@@ -47,17 +47,17 @@ class DataSourceSyncTaskRunner:
 
     def run(self):
         logger.info("start sync data source, task_id: %s, data_source_id: %s", self.task.id, self.task.data_source_id)
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 self._sync_departments()
                 self._sync_users()
-            except Exception:
-                logger.exception("data source sync failed! task_id: %s", self.task.id)
-                self._update_task_status(SyncTaskStatus.FAILED)
-                raise
+        except Exception:
+            logger.exception("data source sync failed! task_id: %s", self.task.id)
+            self._update_task_status(SyncTaskStatus.FAILED)
+            raise
 
-            logger.info("data source sync success! task_id: %s", self.task.id)
-            self._update_task_status(SyncTaskStatus.SUCCESS)
+        logger.info("data source sync success! task_id: %s", self.task.id)
+        self._update_task_status(SyncTaskStatus.SUCCESS)
 
         self._send_signal()
 
@@ -111,17 +111,17 @@ class TenantSyncTaskRunner:
             self.data_source.id,
             self.tenant.id,
         )
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 self._sync_departments()
                 self._sync_users()
-            except Exception:
-                logger.exception("tenant sync failed! task_id: %s", self.task.id)
-                self._update_task_status(SyncTaskStatus.FAILED)
-                raise
+        except Exception:
+            logger.exception("tenant sync failed! task_id: %s", self.task.id)
+            self._update_task_status(SyncTaskStatus.FAILED)
+            raise
 
-            logger.info("tenant sync success! task_id: %s", self.task.id)
-            self._update_task_status(SyncTaskStatus.SUCCESS)
+        logger.info("tenant sync success! task_id: %s", self.task.id)
+        self._update_task_status(SyncTaskStatus.SUCCESS)
 
     def _sync_departments(self):
         """同步部门信息"""
