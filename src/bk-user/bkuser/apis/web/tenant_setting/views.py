@@ -38,7 +38,7 @@ class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz = TenantUserFieldOutputSLZ(
             instance={
                 "builtin_fields": UserBuiltinField.objects.all(),
-                "custom_fields": TenantUserCustomField.objects.filter(tenant_id=tenant_id).all(),
+                "custom_fields": TenantUserCustomField.objects.filter(tenant_id=tenant_id),
             }
         )
         return Response(slz.data)
@@ -94,7 +94,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
         custom_field.options = data["options"]
         custom_field.save()
 
-        return Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
         tags=["tenant-setting"],

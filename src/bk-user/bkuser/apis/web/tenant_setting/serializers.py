@@ -16,8 +16,8 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 
 from bkuser.apps.tenant.models import TenantUserCustomField
-from bkuser.apps.tenant_setting.constants import UserFieldDataType
-from bkuser.apps.tenant_setting.models import TenantUserCustomFieldOptions
+from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
 
 logger = logging.getLogger(__name__)
 
