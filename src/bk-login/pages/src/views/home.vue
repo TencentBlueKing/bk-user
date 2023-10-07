@@ -235,7 +235,7 @@ watch(
 );
 onBeforeMount(() => {
   getVisible().then((res) => {
-    tenantVisible.value = !res.tenant_visible;
+    tenantVisible.value = res.tenant_visible;
     if (res.tenant_visible) {
       getAllTenantList().then((res) => {
         allTenantList.value = res;
