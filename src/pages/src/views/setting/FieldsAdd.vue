@@ -1,20 +1,20 @@
 <template>
   <div class="fields-add-wrapper user-scroll-y">
     <bk-form ref="fieldsRef" form-type="vertical" :model="fieldsInfor" :rules="rulesFields">
-      <bk-form-item label="字段名称" property="display_name" required>
+      <bk-form-item :label="$t('字段名称')" property="display_name" required>
         <bk-input
           :placeholder="validate.fieldsDisplayName.message"
           v-model="fieldsInfor.display_name"
           @focus="handleChange" />
       </bk-form-item>
-      <bk-form-item label="英文标识" property="name" required>
+      <bk-form-item :label="$t('英文标识')" property="name" required>
         <bk-input
           :placeholder="validate.fieldsName.message"
           :disabled="isEdit"
           v-model="fieldsInfor.name"
           @focus="handleChange" />
       </bk-form-item>
-      <bk-form-item label="字段类型" required>
+      <bk-form-item :label="$t('字段类型')" required>
         <bk-select
           v-model="state.defaultSelected"
           :clearable="false"
@@ -28,14 +28,14 @@
           />
         </bk-select>
       </bk-form-item>
-      <bk-form-item label="默认值" v-if="fieldsInfor.data_type === 'string'">
+      <bk-form-item :label="$t('默认值')" v-if="fieldsInfor.data_type === 'string'">
         <bk-input
           v-model="fieldsInfor.default"
           :maxlength="64"
           @focus="handleChange"
         />
       </bk-form-item>
-      <bk-form-item label="默认值" v-else-if="fieldsInfor.data_type === 'number'">
+      <bk-form-item :label="$t('默认值')" v-else-if="fieldsInfor.data_type === 'number'">
         <bk-input
           type="number"
           v-model="fieldsInfor.default"
@@ -48,26 +48,26 @@
         :loading="enumLoading"
         class="enumerate-wrapper"
         v-if="state.isShowEg || fieldsInfor.data_type.indexOf('enum') !== -1">
-        <bk-form-item style="margin-bottom: 10px;" label="枚举类型" required>
+        <bk-form-item style="margin-bottom: 10px;" :label="$t('枚举类型')" required>
           <bk-radio-group class="king-radio-group" v-model="fieldsInfor.data_type">
             <bk-radio
               label="enum"
               name="egRadio"
               :disabled="isEdit"
-            >单选</bk-radio
+            >{{ $t('单选') }}</bk-radio
             >
             <bk-radio
               label="multi_enum"
               name="egRadio"
               :disabled="isEdit"
-            >多选</bk-radio
+            >{{ $t('多选') }}</bk-radio
             >
           </bk-radio-group>
         </bk-form-item>
         <div class="enum-title">
-          <bk-form-item class="w-[200px]" label="选项ID" required />
-          <bk-form-item class="w-[184px]" label="选项值" required />
-          <bk-form-item class="w-[60px] ml-[12px]" label="为默认值" />
+          <bk-form-item class="w-[200px]" :label="$t('选项ID')" required />
+          <bk-form-item class="w-[184px]" :label="$t('选项值')" required />
+          <bk-form-item class="w-[60px] ml-[12px]" :label="$t('为默认值')" />
         </div>
         <div
           class="enum-list"
@@ -78,13 +78,13 @@
             <bk-form-item class="w-[200px]" property="id" required error-display-type="tooltips">
               <bk-input
                 v-model="item.id"
-                placeholder="请输入ID"
+                :placeholder="$t('请输入ID')"
                 @change="handleChange" />
             </bk-form-item>
             <bk-form-item class="w-[184px]" property="value" required error-display-type="tooltips">
               <bk-input
                 v-model="item.value"
-                placeholder="请输入值"
+                :placeholder="$t('请输入值')"
                 @change="handleChange"
               />
             </bk-form-item>
@@ -109,7 +109,7 @@
         </div>
         <bk-button class="add-enum" text theme="primary" @click="addEg">
           <i class="user-icon icon-add-2 mr8" />
-          添加选项
+          {{ $t('添加选项') }}
         </bk-button>
       </bk-loading>
     </bk-form>
@@ -119,23 +119,23 @@
         :disabled="isEdit"
         v-model="fieldsInfor.required"
         @change="handleChange">
-        <span v-bk-tooltips="{ content: '该字段在用户信息里必须填写' }">必填</span>
+        <span v-bk-tooltips="{ content: $t('该字段在用户信息里必须填写') }">{{ $t('必填') }}</span>
       </bk-checkbox>
       <bk-checkbox
         :value="fieldsInfor.unique"
         :disabled="uniqueDisabled"
         v-model="fieldsInfor.unique">
-        <span v-bk-tooltips="{ content: uniqueText }">唯一</span>
+        <span v-bk-tooltips="{ content: uniqueText }">{{ $t('唯一') }}</span>
       </bk-checkbox>
       <bk-checkbox
         :value="fieldsInfor.manager_editable"
         v-model="fieldsInfor.manager_editable"
         :disabled="isEdit">
-        <span v-bk-tooltips="{ content: '该字段在用户信息里可编辑' }">管理员可编辑</span>
+        <span v-bk-tooltips="{ content: $t('该字段在用户信息里可编辑') }">{{ $t('管理员可编辑') }}</span>
       </bk-checkbox>
     </div>
     <bk-form form-type="vertical">
-      <bk-form-item label="在个人中心展示">
+      <bk-form-item :label="$t('在个人中心展示')">
         <div style="display: flex; align-items: center;">
           <bk-switcher
             size="large"
@@ -148,14 +148,14 @@
             class="ml-[40px]"
             v-model="fieldsInfor.personal_center_editable"
             :disabled="isEdit">
-            个人中心可编辑
+            {{ $t('个人中心可编辑') }}
           </bk-checkbox>
         </div>
       </bk-form-item>
     </bk-form>
     <div class="submit-btn">
-      <bk-button theme="primary" @click="submitInfor" :loading="state.btnLoading">保存</bk-button>
-      <bk-button theme="default" @click="$emit('handleCancel')">取消</bk-button>
+      <bk-button theme="primary" @click="submitInfor" :loading="state.btnLoading">{{ $t('保存') }}</bk-button>
+      <bk-button theme="default" @click="$emit('handleCancel')">{{ $t('取消') }}</bk-button>
     </div>
     <!-- 枚举值删除确认弹框 -->
     <bk-dialog
@@ -170,13 +170,13 @@
     >
       <div class="enum-dialog-content">
         <div class="header">
-          <p class="title">是否删除该枚举值？</p>
+          <p class="title">{{ $t('是否删除该枚举值？') }}</p>
           <p class="subtitle">
-            <span class="name">枚举值：</span>
+            <span class="name">{{ $t('枚举值：') }}</span>
             <span class="value">{{ enumDialog.item.id }}：{{ enumDialog.item.value }}</span>
           </p>
         </div>
-        <p class="content-text">该枚举值删除后，请为已引用的记录指定其他值：</p>
+        <p class="content-text">{{ $t('该枚举值删除后，请为已引用的记录指定其他值：') }}</p>
         <ul class="content-list">
           <li
             :class="['content-list-item', { 'active-item': enumDialog.activeId === item.id }]"
@@ -196,11 +196,11 @@
             :disabled="!enumDialog.activeId"
             :loading="btnLoading"
             @click="changeEnumValue"
-          >确定</bk-button>
+          >{{ $t('确定') }}</bk-button>
           <bk-button
             theme="default"
             @click="enumDialog.isShow = false"
-          >取消</bk-button>
+          >{{ $t('取消') }}</bk-button>
         </div>
       </div>
     </bk-dialog>
@@ -213,6 +213,7 @@ import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } f
 
 import useValidate from '@/hooks/use-validate';
 import { getFields, newCustomFields, putCustomFields } from '@/http/settingFiles';
+import { t } from '@/language/index';
 
 const props = defineProps({
   currentEditorData: {
@@ -242,19 +243,19 @@ const state = reactive({
 const typeList = [
   {
     id: 'string',
-    name: '字符串',
+    name: t('字符串'),
   },
   {
     id: 'enum',
-    name: '枚举',
+    name: t('枚举'),
   },
   {
     id: 'number',
-    name: '数值',
+    name: t('数值'),
   },
   // {
   //   id: 'timer',
-  //   name: '日期',
+  //   name: t('日期'),
   // },
 ];
 
@@ -272,7 +273,7 @@ const rulesEnum = {
         const result = blurId();
         return value !== result;
       },
-      message: 'id不能重复',
+      message: t('id不能重复'),
       trigger: 'blur',
     },
   ],
@@ -284,7 +285,7 @@ const rulesEnum = {
         const result = blurValue();
         return value !== result;
       },
-      message: 'value不能重复',
+      message: t('value不能重复'),
       trigger: 'blur',
     },
   ],
@@ -292,13 +293,13 @@ const rulesEnum = {
 
 const isEdit = computed(() => props?.setType === 'edit');
 const uniqueDisabled = ref(false);
-const uniqueText = ref('该字段在不同用户信息里不能相同');
+const uniqueText = ref(t('该字段在不同用户信息里不能相同'));
 
 watch(() => fieldsInfor.data_type, (val) => {
   uniqueDisabled.value = val === 'enum' || val === 'multi_enum' || props?.currentEditorData?.id;
   uniqueText.value = (val === 'enum' || val === 'multi_enum')
-    ? '枚举类型字段不允许设置唯一性'
-    : '该字段在不同用户信息里不能相同';
+    ? t('枚举类型字段不允许设置唯一性')
+    : t('该字段在不同用户信息里不能相同');
 
   if (!props?.currentEditorData?.id) {
     if (val === 'multi_enum') {
@@ -505,7 +506,7 @@ const submitInfor = async () => {
     }
 
     const action = isEdit.value ? putCustomFields : newCustomFields;
-    const successMessage = isEdit.value ? '修改字段成功' : '添加字段成功';
+    const successMessage = isEdit.value ? t('修改字段成功') : t('添加字段成功');
 
     await action(newFieldData);
     emit('submitData', successMessage);

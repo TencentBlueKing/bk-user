@@ -1364,6 +1364,27 @@
   resolved "https://mirrors.tencent.com/npm/@humanwhocodes/object-schema/-/object-schema-2.0.1.tgz"
   integrity sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==
 
+"@intlify/core-base@9.9.0":
+  version "9.9.0"
+  resolved "https://mirrors.tencent.com/npm/@intlify/core-base/-/core-base-9.9.0.tgz"
+  integrity sha512-C7UXPymDIOlMGSNjAhNLtKgzITc/8BjINK5gNKXg8GiWCTwL6n3MWr55czksxn8RM5wTMz0qcLOFT+adtaVQaA==
+  dependencies:
+    "@intlify/message-compiler" "9.9.0"
+    "@intlify/shared" "9.9.0"
+
+"@intlify/message-compiler@9.9.0":
+  version "9.9.0"
+  resolved "https://mirrors.tencent.com/npm/@intlify/message-compiler/-/message-compiler-9.9.0.tgz"
+  integrity sha512-yDU/jdUm9KuhEzYfS+wuyja209yXgdl1XFhMlKtXEgSFTxz4COZQCRXXbbH8JrAjMsaJ7bdoPSLsKlY6mXG2iA==
+  dependencies:
+    "@intlify/shared" "9.9.0"
+    source-map-js "^1.0.2"
+
+"@intlify/shared@9.9.0":
+  version "9.9.0"
+  resolved "https://mirrors.tencent.com/npm/@intlify/shared/-/shared-9.9.0.tgz"
+  integrity sha512-1ECUyAHRrzOJbOizyGufYP2yukqGrWXtkmTu4PcswVnWbkcjzk3YQGmJ0bLkM7JZ0ZYAaohLGdYvBYnTOGYJ9g==
+
 "@jest/schemas@^29.6.3":
   version "29.6.3"
   resolved "https://mirrors.tencent.com/npm/@jest/schemas/-/schemas-29.6.3.tgz"
@@ -8944,6 +8965,15 @@ vue-hot-reload-api@^2.3.0:
   resolved "https://mirrors.tencent.com/npm/vue-hot-reload-api/-/vue-hot-reload-api-2.3.4.tgz"
   integrity sha512-BXq3jwIagosjgNVae6tkHzzIk6a8MHFtzAdwhnV5VlvPTFxDCvIttgSiHWjdGoTJvXtmRu5HacExfdarRcFhog==
 
+vue-i18n@^9.9.0:
+  version "9.9.0"
+  resolved "https://mirrors.tencent.com/npm/vue-i18n/-/vue-i18n-9.9.0.tgz"
+  integrity sha512-xQ5SxszUAqK5n84N+uUyHH/PiQl9xZ24FOxyAaNonmOQgXeN+rD9z/6DStOpOxNFQn4Cgcquot05gZc+CdOujA==
+  dependencies:
+    "@intlify/core-base" "9.9.0"
+    "@intlify/shared" "9.9.0"
+    "@vue/devtools-api" "^6.5.0"
+
 vue-loader-bk@^15.10.0:
   version "15.10.0"
   resolved "https://mirrors.tencent.com/npm/vue-loader-bk/-/vue-loader-bk-15.10.0.tgz"
@@ -8998,7 +9028,7 @@ vue-types@~4.1.1:
   dependencies:
     is-plain-object "5.0.0"
 
-vue@*, "vue@^2.0.0 || ^3.0.0", "vue@^2.6.14 || ^3.3.0", "vue@^3.0.0-0 || ^2.6.0", vue@^3.0.5, vue@^3.2.0, vue@^3.2.41, vue@3.3.12:
+vue@*, "vue@^2.0.0 || ^3.0.0", "vue@^2.6.14 || ^3.3.0", vue@^3.0.0, "vue@^3.0.0-0 || ^2.6.0", vue@^3.0.5, vue@^3.2.0, vue@^3.2.41, vue@3.3.12:
   version "3.3.12"
   resolved "https://mirrors.tencent.com/npm/vue/-/vue-3.3.12.tgz"
   integrity sha512-jYNv2QmET2OTHsFzfWHMnqgCfqL4zfo97QwofdET+GBRCHhSCHuMTTvNIgeSn0/xF3JRT5OGah6MDwUFN7MPlg==

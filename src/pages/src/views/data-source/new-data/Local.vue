@@ -7,8 +7,8 @@
     :rules="rulesInfo"
     v-bkloading="{ loading: isLoading }">
     <div class="content-item">
-      <p class="item-title">基础信息</p>
-      <bk-form-item label="数据源名称" property="name" required>
+      <p class="item-title">{{ $t('基本信息') }}</p>
+      <bk-form-item :label="$t('数据源名称')" property="name" required>
         <bk-input
           style="width: 560px;"
           v-model="formData.name"
@@ -17,50 +17,58 @@
       </bk-form-item>
       <bk-form-item label="" required>
         <bk-checkbox v-model="formData.config.enable_account_password_login" @change="changeAccountPassword">
-          开启账密登录
+          {{ $t('开启账密登录') }}
         </bk-checkbox>
       </bk-form-item>
     </div>
     <template v-if="formData.config.enable_account_password_login">
       <div class="content-item">
-        <p class="item-title">密码规则</p>
-        <bk-form-item label="密码长度" property="config.password_rule.min_length" required>
+        <p class="item-title">{{ $t('密码规则') }}</p>
+        <bk-form-item :label="$t('密码长度')" property="config.password_rule.min_length" required>
           <bk-input
             style="width: 200px;"
             type="number"
-            suffix="至32位"
+            :suffix="$t('至32位')"
             :min="10"
             :max="32"
             v-model="formData.config.password_rule.min_length"
             @change="handleChange"
           />
         </bk-form-item>
-        <bk-form-item label="密码必须包含" required>
-          <bk-checkbox v-model="formData.config.password_rule.contain_lowercase">小写字母</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.contain_uppercase">大写字母</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.contain_digit">数字</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.contain_punctuation">特殊字符（除空格）</bk-checkbox>
-          <p class="error-text" v-show="passwordRuleError">至少包含一类字符</p>
+        <bk-form-item :label="$t('密码必须包含')" required>
+          <bk-checkbox v-model="formData.config.password_rule.contain_lowercase">{{ $t('小写字母') }}</bk-checkbox>
+          <bk-checkbox v-model="formData.config.password_rule.contain_uppercase">{{ $t('大写字母') }}</bk-checkbox>
+          <bk-checkbox v-model="formData.config.password_rule.contain_digit">{{ $t('数字') }}</bk-checkbox>
+          <bk-checkbox v-model="formData.config.password_rule.contain_punctuation">{{ $t('特殊字符（除空格）') }}</bk-checkbox>
+          <p class="error-text" v-show="passwordRuleError">{{ $t('至少包含一类字符') }}</p>
         </bk-form-item>
         <bk-form-item label="" required>
           <div>
-            <span>密码不允许连续</span>
+            <span>{{ $t('密码不允许连续') }}</span>
             <bk-input
               style="width: 85px;"
               type="number"
               behavior="simplicity"
               v-model="formData.config.password_rule.not_continuous_count"
             />
-            <span>位 出现</span>
+            <span>{{ $t('位 出现') }}</span>
           </div>
-          <p class="error-text" v-show="passwordCountError">可选值范围：5-10</p>
-          <bk-checkbox v-model="formData.config.password_rule.not_keyboard_order">键盘序</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.not_continuous_letter">连续字母序</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.not_continuous_digit">连续数字序</bk-checkbox>
-          <bk-checkbox v-model="formData.config.password_rule.not_repeated_symbol">重复字母、数字、特殊符号</bk-checkbox>
-          <p class="error-text" v-show="passwordConfigError">至少包含一类连续性场景</p>
+          <p class="error-text" v-show="passwordCountError">{{ $t('可选值范围：5-10') }}</p>
+          <bk-checkbox v-model="formData.config.password_rule.not_keyboard_order">
+            {{ $t('键盘序') }}
+          </bk-checkbox>
+          <bk-checkbox v-model="formData.config.password_rule.not_continuous_letter">
+            {{ $t('连续字母序') }}
+          </bk-checkbox>
+          <bk-checkbox v-model="formData.config.password_rule.not_continuous_digit">
+            {{ $t('连续数字序') }}
+          </bk-checkbox>
+          <bk-checkbox v-model="formData.config.password_rule.not_repeated_symbol">
+            {{ $t('重复字母、数字、特殊符号') }}
+          </bk-checkbox>
+          <p class="error-text" v-show="passwordConfigError">{{ $t('至少包含一类连续性场景') }}</p>
         </bk-form-item>
-        <bk-form-item label="密码有效期" required>
+        <bk-form-item :label="$t('密码有效期')" required>
           <bk-radio-group v-model="formData.config.password_rule.valid_time" @change="handleChange">
             <bk-radio-button
               v-for="(item, index) in VALID_TIME"
@@ -71,7 +79,7 @@
             </bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
-        <bk-form-item label="密码试错次数" required>
+        <bk-form-item :label="$t('密码试错次数')" required>
           <bk-radio-group v-model="formData.config.password_rule.max_retries" @change="handleChange">
             <bk-radio-button
               v-for="(item, index) in maxTrailTimesList"
@@ -82,11 +90,11 @@
             </bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
-        <bk-form-item label="锁定时间" property="config.password_rule.lock_time" required>
+        <bk-form-item :label="$t('锁定时间')" property="config.password_rule.lock_time" required>
           <bk-input
             style="width: 200px;"
             type="number"
-            suffix="秒"
+            :suffix="$t('秒')"
             :min="0"
             v-model="formData.config.password_rule.lock_time"
             @change="handleChange"
@@ -94,12 +102,12 @@
         </bk-form-item>
       </div>
       <div class="content-item">
-        <p class="item-title">初始密码设置</p>
+        <p class="item-title">{{ $t('初始密码设置') }}</p>
         <bk-form-item label="" required>
           <bk-checkbox
             v-model="formData.config.password_initial.force_change_at_first_login"
             @change="handleChange">
-            首次登录强制修改密码
+            {{ $t('首次登录强制修改密码') }}
           </bk-checkbox>
         </bk-form-item>
         <bk-form-item label="" required>
@@ -107,7 +115,7 @@
             <bk-checkbox
               v-model="formData.config.password_initial.cannot_use_previous_password"
               @change="handleChange">
-              修改密码时不能重复前
+              {{ $t('修改密码时不能重复前') }}
             </bk-checkbox>
             <bk-input
               style="width: 85px;"
@@ -118,23 +126,29 @@
               v-model="formData.config.password_initial.reserved_previous_password_count"
               @change="handleChange"
             />
-            <span>次 用过的密码</span>
+            <span>{{ $t('次 用过的密码') }}</span>
           </div>
         </bk-form-item>
-        <bk-form-item class="form-item-flex" label="密码生成方式" required>
+        <bk-form-item class="form-item-flex" :label="$t('密码生成方式')" required>
           <bk-radio-group v-model="formData.config.password_initial.generate_method" @change="handleChange">
-            <bk-radio label="random">随机</bk-radio>
-            <bk-radio label="fixed">固定</bk-radio>
+            <bk-radio label="random">{{ $t('随机') }}</bk-radio>
+            <bk-radio label="fixed">{{ $t('固定') }}</bk-radio>
           </bk-radio-group>
           <div v-if="formData.config.password_initial.generate_method === 'fixed'">
             <bk-input
               class="input-password"
               v-model="formData.config.password_initial.fixed_password"
               type="password" />
-            <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">随机生成</bk-button>
+            <bk-button
+              outline
+              theme="primary"
+              class="ml-[8px]"
+              @click="handleRandomPassword">{{ $t('随机生成') }}</bk-button>
           </div>
         </bk-form-item>
-        <bk-form-item label="通知方式" :required="formData.config.password_initial.generate_method === 'random'">
+        <bk-form-item
+          :label="$t('通知方式')"
+          :required="formData.config.password_initial.generate_method === 'random'">
           <NotifyEditorTemplate
             :active-methods="formData.config.password_initial.notification.enabled_methods"
             :checkbox-info="NOTIFICATION_METHODS"
@@ -144,15 +158,14 @@
             :expired-email-key="'reset_password'"
             :expiring-sms-key="'user_initialize'"
             :expired-sms-key="'reset_password'"
-            :create-account-email="'创建账户邮件'"
-            :reset-password-email="'重设密码后的邮件'"
-            :create-account-sms="'创建账户短信'"
-            :reset-password-sms="'重设密码后的短信'"
+            :create-account-email="$t('创建账户邮件')"
+            :reset-password-email="$t('重设密码后的邮件')"
+            :create-account-sms="$t('创建账户短信')"
+            :reset-password-sms="$t('重设密码后的短信')"
             @handleEditorText="handleEditorText">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
-                  class="checkbox-zh"
                   v-model="formData.config.password_initial.notification.enabled_methods"
                   @change="handleChange">
                   <bk-checkbox
@@ -164,19 +177,19 @@
                   </bk-checkbox>
                 </bk-checkbox-group>
                 <div class="edit-info" @click="passwordInitialTemplate">
-                  <span style="font-size:14px">编辑通知模板</span>
+                  <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
                   <AngleUp v-if="isDropdownPasswordInitial" />
                   <AngleDown v-else />
                 </div>
               </div>
             </template>
           </NotifyEditorTemplate>
-          <p class="error" v-show="enabledMethodsError">通知方式不能为空</p>
+          <p class="error" v-show="enabledMethodsError">{{ $t('通知方式不能为空') }}</p>
         </bk-form-item>
       </div>
       <div class="content-item">
-        <p class="item-title">密码到期提醒</p>
-        <bk-form-item label="提醒时间" property="config.password_expire.remind_before_expire" required>
+        <p class="item-title">{{ $t('密码到期提醒') }}</p>
+        <bk-form-item :label="$t('提醒时间')" property="config.password_expire.remind_before_expire" required>
           <bk-checkbox-group v-model="formData.config.password_expire.remind_before_expire" @change="handleChange">
             <bk-checkbox
               v-for="(item, index) in REMIND_DAYS"
@@ -186,7 +199,7 @@
             >
           </bk-checkbox-group>
         </bk-form-item>
-        <bk-form-item label="通知方式" property="config.password_expire.notification.enabled_methods" required>
+        <bk-form-item :label="$t('通知方式')" property="config.password_expire.notification.enabled_methods" required>
           <NotifyEditorTemplate
             :active-methods="formData.config.password_expire.notification.enabled_methods"
             :checkbox-info="NOTIFICATION_METHODS"
@@ -200,7 +213,6 @@
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
-                  class="checkbox-zh"
                   v-model="formData.config.password_expire.notification.enabled_methods"
                   @change="handleChange">
                   <bk-checkbox
@@ -212,7 +224,7 @@
                   </bk-checkbox>
                 </bk-checkbox-group>
                 <div class="edit-info" @click="passwordExpireTemplate">
-                  <span style="font-size:14px">编辑通知模板</span>
+                  <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
                   <AngleUp v-if="isDropdownPasswordExpire" />
                   <AngleDown v-else />
                 </div>
@@ -223,8 +235,8 @@
       </div>
     </template>
     <div class="btn">
-      <bk-button theme="primary" class="mr8" @click="handleSubmit" :loading="btnLoading">提交</bk-button>
-      <bk-button @click="handleClickCancel">取消</bk-button>
+      <bk-button theme="primary" class="mr8" @click="handleSubmit" :loading="btnLoading">{{ $t('提交') }}</bk-button>
+      <bk-button @click="handleClickCancel">{{ $t('取消') }}</bk-button>
     </div>
   </bk-form>
 </template>
@@ -244,6 +256,7 @@ import {
   putDataSourceDetails,
   randomPasswords,
 } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router';
 import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
@@ -356,9 +369,9 @@ watch(() => formData.config?.password_initial?.notification?.enabled_methods, (v
 });
 
 const maxTrailTimesList = reactive([
-  { times: 3, text: '3次' },
-  { times: 5, text: '5次' },
-  { times: 10, text: '10次' },
+  { times: 3, text: `3 ${t('次')}` },
+  { times: 5, text: `5 ${t('次')}` },
+  { times: 10, text: `10 ${t('次')}` },
 ]);
 
 const handleEditorText = (html, text, key, type) => {
@@ -439,7 +452,7 @@ const updateDataSource = async (params) => {
   router.push({ name: 'local' });
   Message({
     theme: 'success',
-    message: '数据源更新成功',
+    message: t('数据源更新成功'),
   });
 };
 
@@ -449,7 +462,7 @@ const getDataSource = async (params) => {
   router.push({ name: 'local' });
   Message({
     theme: 'success',
-    message: '数据源创建成功',
+    message: t('数据源创建成功'),
   });
 };
 
@@ -460,15 +473,15 @@ const handleChange = () => {
 const changeAccountPassword = (value) => {
   if (!value) {
     InfoBox({
-      title: '确认要关闭账密登录吗？',
+      title: t('确认要关闭账密登录吗？'),
       subTitle: h('div', {
         style: {
           textAlign: 'left',
           lineHeight: '24px',
         },
       }, [
-        h('p', '1.关闭后该数据的用户将无法通过账密登录'),
-        h('p', '2.关闭后，再次开启时，账密规则信息会重置'),
+        h('p', t('1.关闭后该数据的用户将无法通过账密登录')),
+        h('p', t('2.关闭后，再次开启时，账密规则信息会重置')),
       ]),
       onClosed() {
         formData.config.enable_account_password_login = !value;

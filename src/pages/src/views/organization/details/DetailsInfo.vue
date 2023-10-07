@@ -4,30 +4,30 @@
       <ul class="details-info-content">
         <li class="content-item">
           <div class="item-header">
-            <p class="item-title">基本信息</p>
+            <p class="item-title">{{ $t('基本信息') }}</p>
             <bk-button
               outline
               theme="primary"
               :disabled="!isCurrentTenant"
               @click="handleClickEdit">
-              编辑
+              {{ $t('编辑') }}
             </bk-button>
           </div>
           <ul class="item-content flex" style="width: 72%">
             <li>
-              <span class="key">租户名称：</span>
+              <span class="key">{{ $t('租户名称') }}：</span>
               <span class="value">{{ state.name }}</span>
             </li>
             <li>
-              <span class="key">人员数量：</span>
+              <span class="key">{{ $t('人员数量') }}：</span>
               <span class="value">{{ userNumberVisible }}</span>
             </li>
             <li>
-              <span class="key">租户ID：</span>
+              <span class="key">{{ $t('租户ID') }}：</span>
               <span class="value">{{ state.id }}</span>
             </li>
             <li>
-              <span class="key">更新时间：</span>
+              <span class="key">{{ $t('更新时间') }}：</span>
               <span class="value">{{ state.updated_at }}</span>
             </li>
             <img v-if="state.logo" :src="state.logo" />
@@ -35,7 +35,7 @@
           </ul>
         </li>
         <li class="content-item">
-          <div class="item-title">管理员</div>
+          <div class="item-title">{{ $t('管理员') }}</div>
           <bk-table
             class="user-info-table"
             :data="state.managers"
@@ -44,14 +44,14 @@
             <template #empty>
               <Empty :is-data-empty="state.isDataEmpty" />
             </template>
-            <bk-table-column prop="username" label="用户名" />
-            <bk-table-column prop="full_name" label="全名" />
-            <bk-table-column prop="email" label="邮箱">
+            <bk-table-column prop="username" :label="$t('用户名')" />
+            <bk-table-column prop="full_name" :label="$t('全名')" />
+            <bk-table-column prop="email" :label="$t('邮箱')">
               <template #default="{ row }">
                 <span>{{ row.email || '--' }}</span>
               </template>
             </bk-table-column>
-            <bk-table-column prop="phone" label="手机号">
+            <bk-table-column prop="phone" :label="$t('手机号')">
               <template #default="{ row }">
                 <span>{{ row.phone || '--' }}</span>
               </template>
@@ -75,13 +75,14 @@ import { computed, defineEmits, defineProps, reactive, watch } from 'vue';
 import EditInfo from './EditDetailsInfo.vue';
 
 import Empty from '@/components/Empty.vue';
+import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 
 const userStore = useUser();
 const props = defineProps({
   userData: {
     type: Object,
-    default: {},
+    default: () => ({}),
   },
   isEdit: {
     type: Boolean,
@@ -92,11 +93,11 @@ const props = defineProps({
 const emit = defineEmits(['updateTenantsList', 'handleCancel', 'changeEdit']);
 
 const state = reactive({
-  ...props.userData || {},
+  ...props?.userData,
   isDataEmpty: false,
 });
 
-const userNumberVisible = computed(() => (props?.userData?.feature_flags?.user_number_visible ? '显示' : '隐藏'));
+const userNumberVisible = computed(() => (props?.userData?.feature_flags?.user_number_visible ? t('显示') : t('隐藏')));
 const isCurrentTenant = computed(() => props?.userData?.id && props?.userData?.id === userStore.user.tenant_id);
 
 watch(() => props.userData.managers, (value) => {

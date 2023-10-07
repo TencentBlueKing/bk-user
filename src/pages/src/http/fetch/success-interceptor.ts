@@ -1,6 +1,8 @@
 import type { IFetchConfig } from './index';
 import RequestError from './request-error';
 
+import { t } from '@/language/index';
+
 // 请求成功执行拦截器
 export default async (response: any, config: IFetchConfig) => {
   const {
@@ -17,10 +19,10 @@ export default async (response: any, config: IFetchConfig) => {
         return Promise.resolve(data);
       // 后端业务处理报错
       default:
-        throw new RequestError(code, message || '系统错误', data);
+        throw new RequestError(code, message || t('系统错误'), data);
     }
   } else {
     // 处理 http 非 200 异常
-    throw new RequestError(code || -1, message || '系统错误', data);
+    throw new RequestError(code || -1, message || t('系统错误'), data);
   }
 };

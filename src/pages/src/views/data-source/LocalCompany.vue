@@ -19,11 +19,12 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 
+import { t } from '@/language/index';
 import router from '@/router/index';
 
 const active = ref('local');
 const panels = reactive([
-  { name: 'local', label: '本租户' },
+  { name: 'local', label: t('本租户') },
   // { name: 'other', label: '其他租户' },
 ]);
 

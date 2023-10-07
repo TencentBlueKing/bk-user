@@ -2,7 +2,7 @@
   <div ref="boxRef" class="operation-wrapper pt-[8px]">
     <div ref="cardRef" class="operation-content">
       <div class="operation-card">
-        <div class="operation-content-title">基本信息</div>
+        <div class="operation-content-title">{{ $t('基本信息') }}</div>
         <div class="operation-content-info">
           <bk-form
             class="operation-content-form"
@@ -11,22 +11,22 @@
             :model="formData"
             :rules="rulesBasicInfo"
           >
-            <bk-form-item label="租户名称" property="name" required>
+            <bk-form-item :label="$t('租户名称')" property="name" required>
               <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
             </bk-form-item>
-            <bk-form-item label="租户ID" property="id" required>
+            <bk-form-item :label="$t('租户ID')" property="id" required>
               <bk-input
                 v-model="formData.id"
                 disabled
               />
             </bk-form-item>
-            <bk-form-item label="人员数量">
+            <bk-form-item :label="$t('人员数量')">
               <bk-radio-group
                 :model-value="formData.feature_flags?.user_number_visible"
                 @change="changeVisible"
               >
-                <bk-radio-button :label="true">显示</bk-radio-button>
-                <bk-radio-button :label="false">隐藏</bk-radio-button>
+                <bk-radio-button :label="true">{{ $t('显示') }}</bk-radio-button>
+                <bk-radio-button :label="false">{{ $t('隐藏') }}</bk-radio-button>
               </bk-radio-group>
             </bk-form-item>
           </bk-form>
@@ -45,7 +45,7 @@
         </div>
       </div>
       <div class="operation-card">
-        <div class="operation-content-title">管理员</div>
+        <div class="operation-content-title">{{ $t('管理员') }}</div>
         <bk-form ref="userRef" :model="formData">
           <bk-table
             class="operation-content-table"
@@ -59,10 +59,10 @@
     </div>
     <div class="footer" :class="{ 'fixed': isScroll}">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
-        提交
+        {{ $t('提交') }}
       </bk-button>
       <bk-button @click="() => $emit('handleCancel')">
-        取消
+        {{ $t('取消') }}
       </bk-button>
     </div>
   </div>
@@ -77,6 +77,7 @@ import { getTenantUsersList, putTenantOrganizationDetails } from '@/http/organiz
 import useValidate from '@/hooks/use-validate';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useButtonFixed } from '@/hooks/useButtonFixed';
+import { t } from '@/language/index';
 
 interface TableItem {
   username: string;
@@ -165,7 +166,7 @@ const handleDelete = () => {
 
 const handleError = (file) => {
   if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
   }
 };
 
@@ -227,27 +228,27 @@ const changeTelError = (value: boolean, index: number) => {
 
 const columns = [
   {
-    label: "用户名",
+    label: t('用户名'),
     field: "username",
     render: fieldItemFn,
   },
   {
-    label: "姓名",
+    label: t('全名'),
     field: "full_name",
     render: fieldItemFn,
   },
   {
-    label: "邮箱",
+    label: t('邮箱'),
     field: "email",
     render: fieldItemFn,
   },
   {
-    label: "手机号",
+    label: t('手机号'),
     field: "phone",
     render: fieldItemFn,
   },
   {
-    label: "操作",
+    label: t('操作'),
     field: "",
     width: 65,
     render: ({ data, index }: TableColumnData) => {

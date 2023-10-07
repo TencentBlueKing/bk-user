@@ -14,10 +14,10 @@
       ref="formRef"
       :model="formData"
       :rules="rules">
-      <bk-form-item label="新密码" property="password" required>
+      <bk-form-item :label="$t('新密码')" property="password" required>
         <div style="display: flex;">
-          <bk-input v-model="formData.password" />
-          <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">随机生成</bk-button>
+          <bk-input type="password" v-model="formData.password" />
+          <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">{{ $t('随机生成') }}</bk-button>
         </div>
       </bk-form-item>
     </bk-form>
@@ -30,6 +30,7 @@ import { reactive, ref, watch } from 'vue';
 
 import useValidate from '@/hooks/use-validate';
 import { putUsersPassword, randomPasswords } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 
 const validate = useValidate();
 const emit = defineEmits(['closed', 'changePassword']);
@@ -78,7 +79,7 @@ const confirm = async () => {
       password: formData.password,
     });
     emit('changePassword');
-    Message({ theme: 'success', message: '重置密码成功' });
+    Message({ theme: 'success', message: t('重置密码成功') });
   } catch (e) {
     isLoading.value = false;
   } finally {

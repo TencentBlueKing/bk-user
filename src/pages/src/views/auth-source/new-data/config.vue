@@ -2,7 +2,7 @@
   <bk-loading class="config-wrapper" :loading="isLoading">
     <div class="config-content">
       <div class="config-type">
-        <P class="title">认证源选择</P>
+        <P class="title">{{ $t('认证源选择') }}</P>
         <ul>
           <li
             v-for="(item, index) in dataList"
@@ -24,7 +24,7 @@
     </div>
     <div class="footer-wrapper">
       <span v-bk-tooltips="{
-        content: '请选择认证源',
+        content: $t('请选择认证源'),
         distance: 20,
         disabled: !isDisabled,
       }">
@@ -33,9 +33,9 @@
           class="mr8"
           @click="handleNext"
           :disabled="isDisabled"
-        >下一步</bk-button>
+        >{{ $t('下一步') }}</bk-button>
       </span>
-      <bk-button @click="handleClickCancel">取消</bk-button>
+      <bk-button @click="handleClickCancel">{{ $t('取消') }}</bk-button>
     </div>
   </bk-loading>
 </template>
@@ -45,11 +45,12 @@ import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { computed, onMounted, ref } from 'vue';
 
 import { getIdpsPlugins } from '@/http/authSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { useMainViewStore } from '@/store/mainView';
 
 const store = useMainViewStore();
-store.breadCrumbsTitle = '新建认证源';
+store.breadCrumbsTitle = t('新建认证源');
 
 const emit = defineEmits(['next']);
 

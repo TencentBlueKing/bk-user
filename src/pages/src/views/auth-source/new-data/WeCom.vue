@@ -15,14 +15,14 @@
         :model="formData"
         :rules="rules">
         <div class="content-item">
-          <p class="item-title">基础信息</p>
-          <bk-form-item class="w-[600px]" label="名称" property="name" required>
+          <p class="item-title">{{ $t('基本信息') }}</p>
+          <bk-form-item class="w-[600px]" :label="$t('名称')" property="name" required>
             <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
           </bk-form-item>
         </div>
         <div class="content-item">
-          <p class="item-title">基础配置</p>
-          <bk-form-item class="w-[600px]" label="企业 ID" property="plugin_config.corp_id" required>
+          <p class="item-title">{{ $t('基础配置') }}</p>
+          <bk-form-item class="w-[600px]" :label="$t('企业 ID')" property="plugin_config.corp_id" required>
             <bk-input v-model="formData.plugin_config.corp_id" @focus="handleChange" />
           </bk-form-item>
           <bk-form-item class="w-[600px]" label="Agent ID" property="plugin_config.agent_id" required>
@@ -33,16 +33,16 @@
           </bk-form-item>
         </div>
         <div class="content-item">
-          <p class="item-title">登录模式</p>
+          <p class="item-title">{{ $t('登录模式') }}</p>
           <bk-form-item>
             <bk-radio-group v-model="LoginMethod">
-              <bk-radio-button label="a">仅用于登录</bk-radio-button>
-              <bk-radio-button label="b" :disabled="true">可用于登录注册</bk-radio-button>
+              <bk-radio-button label="a">{{ $t('仅用于登录') }}</bk-radio-button>
+              <bk-radio-button label="b" :disabled="true">{{ $t('可用于登录注册') }}</bk-radio-button>
             </bk-radio-group>
           </bk-form-item>
         </div>
         <div class="content-item pb-[24px]">
-          <p class="item-title">数据源匹配</p>
+          <p class="item-title">{{ $t('数据源匹配') }}</p>
           <div class="data-source-matching">
             <div
               :class="['matching-item', {
@@ -54,7 +54,7 @@
               @mouseleave="mouseleave">
               <bk-form-item
                 class="w-[518px]"
-                label="数据源"
+                :label="$t('数据源')"
                 :property="`data_source_match_rules.${index}.data_source_id`"
                 :rules="rulesData.data_source_id"
                 required>
@@ -70,8 +70,8 @@
                 </bk-select>
               </bk-form-item>
               <div class="item-flex-header">
-                <bk-form-item class="w-[250px]" label="数据源字段" required />
-                <bk-form-item class="w-[250px] auth-source-fields" label="认证源字段" required />
+                <bk-form-item class="w-[250px]" :label="$t('数据源字段')" required />
+                <bk-form-item class="w-[250px] auth-source-fields" :label="$t('认证源字段')" required />
               </div>
               <div class="item-flex" v-for="(field, i) in item.field_compare_rules" :key="i">
                 <bk-form-item
@@ -129,7 +129,7 @@
                }]"
                @click="handleAdd">
             <i class="user-icon icon-add-2"></i>
-            <span>新增数据源匹配</span>
+            <span>{{ $t('新增数据源匹配') }}</span>
           </div>
         </div>
       </bk-form>
@@ -137,13 +137,13 @@
     <div class="footer-wrapper" :class="{ 'fixed': isScroll }">
       <div class="footer-div">
         <bk-button @click="emit('prev')">
-          上一步
+          {{ $t('上一步') }}
         </bk-button>
         <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
-          提交
+          {{ $t('提交') }}
         </bk-button>
         <bk-button @click="handleCancel">
-          取消
+          {{ $t('取消') }}
         </bk-button>
       </div>
     </div>
@@ -159,6 +159,7 @@ import useValidate from '@/hooks/use-validate';
 import { useCustomPlugin } from '@/hooks/useCustomPlugin';
 import { getDataSourceList } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
+import { t } from '@/language/index';
 
 const validate = useValidate();
 
@@ -238,10 +239,10 @@ onMounted(async () => {
     customFields.value = fieldRes.data?.custom_fields || [];
     formData.value.data_source_match_rules[0].targetFields.push(
       ...fieldRes.data?.builtin_fields?.map(item => ({
-        key: item.id, name: item.name, disabled: false, type: '内置',
+        key: item.id, name: item.name, disabled: false, type: t('内置'),
       })) || [],
       ...fieldRes.data?.custom_fields?.map(item => ({
-        key: item.id, name: item.name, disabled: false, type: '自定义',
+        key: item.id, name: item.name, disabled: false, type: t('自定义'),
       })) || [],
     );
   } catch (error) {
