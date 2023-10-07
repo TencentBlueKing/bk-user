@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import List, Dict
 
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
@@ -32,7 +33,7 @@ class BuiltinFieldOutputSLZ(serializers.Serializer):
     options = serializers.JSONField(help_text="选项")
 
 
-class CustomFieldOutputSLZ(serializers.Serializer):
+class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段ID", read_only=True)
     name = serializers.CharField(help_text="字段名称")
     display_name = serializers.CharField(help_text="展示用名称")
@@ -44,15 +45,10 @@ class CustomFieldOutputSLZ(serializers.Serializer):
 
 class TenantUserFieldOutputSLZ(serializers.Serializer):
     builtin_fields = serializers.ListField(help_text="内置字段", child=BuiltinFieldOutputSLZ())
-    custom_fields = serializers.ListField(help_text="自定义字段", child=CustomFieldOutputSLZ())
+    custom_fields = serializers.ListField(help_text="自定义字段", child=TenantUserCustomFieldOutputSLZ())
 
 
-class UserCustomFieldOptionInputSLZ(serializers.Serializer):
-    id = serializers.IntegerField()
-    value = serializers.CharField()
-
-
-class UserCustomFieldCreateInputSLZ(serializers.Serializer):
+class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="字段名称", max_length=128)
     display_name = serializers.CharField(help_text="展示用名称", max_length=128)
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
@@ -81,7 +77,7 @@ class UserCustomFieldCreateInputSLZ(serializers.Serializer):
             self._validate_options(options=options)
             self._validate_enum_default(default=default, options=options)
 
-        if data_type == UserFieldDataType.MULTI_ENUM.value:
+        elif data_type == UserFieldDataType.MULTI_ENUM.value:
             self._validate_options(options=options)
             self._validate_multi_enum_default(default=default, options=options)
 
@@ -95,22 +91,22 @@ class UserCustomFieldCreateInputSLZ(serializers.Serializer):
         except PDValidationError as e:
             raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
 
-    def _validate_enum_default(self, default, options):
+    def _validate_enum_default(self, default: int, options: List[Dict]):
         # 单枚举类型要求default的值为options其中一个对象的ID值
         if default is not None and default not in [option["id"] for option in options]:
-            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
-    def _validate_multi_enum_default(self, default, options):
+    def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
         # 多选枚举类型要求default中的值都为options其中任一对象的ID值
         if default is not None and not set(default).issubset({option["id"] for option in options}):
-            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
 
 
-class UserCustomFieldCreateOutputSLZ(serializers.Serializer):
+class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField()
 
 
-class UserCustomFieldUpdateInputSLZ(serializers.Serializer):
+class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="字段名称", max_length=128)
     required = serializers.BooleanField(help_text="是否必填")
     default = serializers.JSONField(help_text="默认值")
@@ -135,7 +131,7 @@ class UserCustomFieldUpdateInputSLZ(serializers.Serializer):
             self._validate_options(options=options)
             self._validate_enum_default(default=default, options=options)
 
-        if data_type == UserFieldDataType.MULTI_ENUM.value:
+        elif data_type == UserFieldDataType.MULTI_ENUM.value:
             self._validate_options(options=options)
             self._validate_multi_enum_default(default=default, options=options)
 
@@ -149,12 +145,12 @@ class UserCustomFieldUpdateInputSLZ(serializers.Serializer):
         except PDValidationError as e:
             raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
 
-    def _validate_enum_default(self, default, options):
+    def _validate_enum_default(self, default: int, options: List[Dict]):
         # 单枚举类型要求default的值为options其中一个对象的ID值
         if default is not None and default not in [option["id"] for option in options]:
-            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
-    def _validate_multi_enum_default(self, default, options):
+    def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
         # 多选枚举类型要求default中的值都为options其中任一对象的ID值
         if default is not None and not set(default).issubset({option["id"] for option in options}):
-            raise serializers.ValidationError(_("默认值必须属于options中对象的id值"))
+            raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))

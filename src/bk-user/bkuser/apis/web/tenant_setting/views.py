@@ -14,9 +14,9 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.tenant_setting.serializers import (
-    UserCustomFieldCreateInputSLZ,
-    UserCustomFieldCreateOutputSLZ,
-    UserCustomFieldUpdateInputSLZ,
+    TenantUserCustomFieldCreateInputSLZ,
+    TenantUserCustomFieldCreateOutputSLZ,
+    TenantUserCustomFieldUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
 )
 from bkuser.apps.tenant.models import UserBuiltinField, TenantUserCustomField
@@ -38,7 +38,7 @@ class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz = TenantUserFieldOutputSLZ(
             instance={
                 "builtin_fields": UserBuiltinField.objects.all(),
-                "custom_fields": TenantUserCustomField.objects.filter(tenant__id=tenant_id).all(),
+                "custom_fields": TenantUserCustomField.objects.filter(tenant_id=tenant_id).all(),
             }
         )
         return Response(slz.data)
@@ -48,24 +48,24 @@ class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIV
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="新建用户自定义字段",
-        request_body=UserCustomFieldCreateInputSLZ(),
-        responses={status.HTTP_201_CREATED: UserCustomFieldCreateOutputSLZ()},
+        request_body=TenantUserCustomFieldCreateInputSLZ(),
+        responses={status.HTTP_201_CREATED: TenantUserCustomFieldCreateOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
-        slz = UserCustomFieldCreateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
+        slz = TenantUserCustomFieldCreateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         user_custom_field = TenantUserCustomField.objects.create(tenant_id=tenant_id, **data)
         return Response(
-            UserCustomFieldCreateOutputSLZ(instance={"id": user_custom_field.id}).data, status=status.HTTP_201_CREATED
+            TenantUserCustomFieldCreateOutputSLZ(instance={"id": user_custom_field.id}).data, status=status.HTTP_201_CREATED
         )
 
 
 class TenantUserCustomFieldUpdateDeleteApi(
-    CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView):
-    queryset = TenantUserCustomField.objects.all()
+    CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView
+):
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
@@ -74,14 +74,16 @@ class TenantUserCustomFieldUpdateDeleteApi(
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="修改用户自定义字段",
-        request_body=UserCustomFieldUpdateInputSLZ(),
+        request_body=TenantUserCustomFieldUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
 
-        slz = UserCustomFieldUpdateInputSLZ(
-            data=request.data, context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]})
+        slz = TenantUserCustomFieldUpdateInputSLZ(
+            data=request.data,
+            context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]}
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
         custom_field = self.get_object()
