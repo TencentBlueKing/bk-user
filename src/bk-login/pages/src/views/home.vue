@@ -29,7 +29,7 @@
         <div v-if="tenant">
           <h2 class="tenant-content">我们为您在平台找到了以下公司</h2>
           <div class="tenant-list">
-            <img v-if="tenant.logo" :src="tenant.logo" />
+            <img v-if="tenant.logo" class="logo-img" :src="tenant.logo" />
             <span v-else class="logo">
               {{ tenant.name.charAt(0).toUpperCase() }}
             </span>
@@ -62,7 +62,7 @@
       </div>
 
       <div class="tenant-header">
-        <img v-if="tenant?.logo" :src="tenant?.logo" />
+        <img v-if="tenant?.logo" class="logo-img" :src="tenant?.logo" />
         <span v-else class="logo">
           {{ tenant?.name.charAt(0).toUpperCase() }}
         </span>
@@ -235,7 +235,7 @@ watch(
 );
 onBeforeMount(() => {
   getVisible().then((res) => {
-    tenantVisible.value = res.tenant_visible;
+    tenantVisible.value = !res.tenant_visible;
     if (res.tenant_visible) {
       getAllTenantList().then((res) => {
         allTenantList.value = res;
@@ -246,7 +246,7 @@ onBeforeMount(() => {
 
 </script>
 
-<style lang="less" scoped>
+<style lang="postcss" scoped>
 .login-header {
   height: 42px;
   font-weight: 700;
@@ -291,6 +291,13 @@ onBeforeMount(() => {
   background-color: #3A84FF;
   border-radius: 4px;
   flex-shrink: 0;
+}
+
+.logo-img {
+  width: 24px;
+  margin-right: 4px;
+  vertical-align: middle;
+  padding-bottom: 4px;
 }
 
 .tenant-logo {

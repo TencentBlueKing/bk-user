@@ -78,7 +78,7 @@ const handleLogin = () => {
 
 </script>
 
-<style scoped lang="less">
+<style scoped lang="postcss">
 .login-btn {
   width: 100%;
   margin-top: 10px;

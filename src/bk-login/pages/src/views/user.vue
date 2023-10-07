@@ -8,8 +8,7 @@
       :class="userId === item.id ? 'active' : ''"
       :key="item.id"
       @click="userId = item.id">
-      <img src="" />
-      {{ item.full_name }}
+      {{ `${item.username}(${item.full_name})` }}
       <Done v-if="userId === item.id" class="check-icon" />
     </div>
   </div>
@@ -56,11 +55,15 @@ const handleLogin = () => {
 onBeforeMount(() => {
   getUserList().then((res) => {
     userList.value = res;
+    // 如果只有一个账号，默认选中
+    if (res.length === 1) {
+      userId.value = res[0].id;
+    }
   });
 });
 </script>
 
-<style lang="less" scoped>
+<style lang="postcss" scoped>
 .cursor-pointer {
   cursor: pointer;
 }

@@ -135,7 +135,7 @@ const handleClose = () => {
 
 </script>
 
-<style scoped lang="less">
+<style scoped lang="postcss">
 .protocol-pop {
   position: fixed;
   top: 0;
