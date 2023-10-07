@@ -10,14 +10,26 @@ specific language governing permissions and limitations under the License.
 """
 from django.dispatch import receiver
 
-from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.data_source.signals import post_update_data_source
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.signals import (
+    post_batch_create_data_source_user,
+    post_create_data_source_user,
+    post_update_data_source,
+)
+from bkuser.apps.data_source.tasks import initialize_identity_info_and_send_notification
 
 
 @receiver(post_update_data_source)
-def initial_local_data_source_user_identity_info(sender, data_source: DataSource, **kwargs):
+@receiver(post_batch_create_data_source_user)
+def sync_identity_infos_and_notify(sender, data_source: DataSource, **kwargs):
     """
-    TODO (su) 数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用账密登录，
-    则需要对没有账密信息的用户，进行密码的初始化 & 发送通知
+    数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用账密登录，
+    则需要对没有账密信息的用户，进行密码的初始化 & 发送通知，批量创建数据源用户同理
     """
-    ...
+    initialize_identity_info_and_send_notification.delay(data_source.id)
+
+
+@receiver(post_create_data_source_user)
+def initialize_identity_info_and_notify(sender, data_source: DataSource, user: DataSourceUser, **kwargs):
+    """在创建完数据源用户后，需要初始化账密信息，并发送通知"""
+    initialize_identity_info_and_send_notification.delay(data_source.id, user.id)

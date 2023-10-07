@@ -138,9 +138,58 @@ class TestDataSourceCreateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
 
-    def test_create_without_required_field_mapping(self, api_client):
-        """非本地数据源，需要字段映射配置"""
-        # TODO 需要内置非本地的数据源插件后补全测试用例
+    # TODO (su) 支持通用 HTTP 数据源后启用
+    # def test_create_with_field_mappings(self, api_client, general_ds_plugin_config, tenant_user_custom_fields):
+    #     """非本地数据源，需要提供字段映射"""
+    #     resp = api_client.post(
+    #         reverse("data_source.list_create"),
+    #         data={
+    #             "name": generate_random_string(),
+    #             "plugin_id": DataSourcePluginEnum.GENERAL,
+    #             "plugin_config": general_ds_plugin_config,
+    #             "field_mappings": [
+    #                 {
+    #                     "source_field": "uname",
+    #                     "mapping_operation": FieldMappingOperation.DIRECT,
+    #                     "target_field": "username",
+    #                 }
+    #             ],
+    #         },
+    #     )
+    #     assert resp.status_code == status.HTTP_201_CREATED
+    #
+    # def test_create_without_required_field_mapping(self, api_client, general_ds_plugin_config):
+    #     """非本地数据源，需要字段映射配置"""
+    #     resp = api_client.post(
+    #         reverse("data_source.list_create"),
+    #         data={
+    #             "name": generate_random_string(),
+    #             "plugin_id": DataSourcePluginEnum.GENERAL,
+    #             "plugin_config": general_ds_plugin_config,
+    #             "field_mappings": [],
+    #         },
+    #     )
+    #     assert resp.status_code == status.HTTP_400_BAD_REQUEST
+    #     assert "当前数据源类型必须配置字段映射" in resp.data["message"]
+    #
+    # def test_create_with_invalid_field_mappings(self, api_client, general_ds_plugin_config):
+    #     resp = api_client.post(
+    #         reverse("data_source.list_create"),
+    #         data={
+    #             "name": generate_random_string(),
+    #             "plugin_id": DataSourcePluginEnum.GENERAL,
+    #             "plugin_config": general_ds_plugin_config,
+    #             "field_mappings": [
+    #                 {
+    #                     "source_field": "uname",
+    #                     "mapping_operation": FieldMappingOperation.DIRECT,
+    #                     "target_field": "xxx_username",
+    #                 }
+    #             ],
+    #         },
+    #     )
+    #     assert resp.status_code == status.HTTP_400_BAD_REQUEST
+    #     assert "字段映射中的目标字段 xxx_username 不属于用户自定义字段或内置字段" in resp.data["message"]
 
 
 class TestDataSourceListApi:
