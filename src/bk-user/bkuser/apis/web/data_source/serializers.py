@@ -91,9 +91,9 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
     def validate_field_mapping(self, field_mapping: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         target_fields = {m.get("target_field") for m in field_mapping}
-        allowed_target_fields = [f.name for f in UserBuiltinField.objects.all()] + [
-            f.name for f in TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        ]
+        allowed_target_fields = list(UserBuiltinField.objects.all().values_list("name", flat=True)) + list(
+            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"]).values_list("name", flat=True)
+        )
         if not_allowed_fields := target_fields - set(allowed_target_fields):
             raise ValidationError(
                 _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
@@ -173,9 +173,9 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
             raise ValidationError(_("当前数据源类型必须配置字段映射"))
 
         target_fields = {m.get("target_field") for m in field_mapping}
-        allowed_target_fields = [f.name for f in UserBuiltinField.objects.all()] + [
-            f.name for f in TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        ]
+        allowed_target_fields = list(UserBuiltinField.objects.all().values_list("name", flat=True)) + list(
+            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"]).values_list("name", flat=True)
+        )
         if not_allowed_fields := target_fields - set(allowed_target_fields):
             raise ValidationError(
                 _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),

@@ -134,8 +134,9 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 creator=current_user,
                 updater=current_user,
             )
-            # 数据源创建后，发送信号用于登录认证，用户初始化等相关工作
-            post_create_data_source.send(sender=self.__class__, data_source=ds)
+
+        # 数据源创建后，发送信号用于登录认证，用户初始化等相关工作
+        post_create_data_source.send(sender=self.__class__, data_source=ds)
 
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
@@ -187,7 +188,7 @@ class DataSourceRetrieveUpdateApi(
             data_source.updater = request.user.username
             data_source.save()
 
-            post_update_data_source.send(sender=self.__class__, data_source=data_source)
+        post_update_data_source.send(sender=self.__class__, data_source=data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

@@ -84,9 +84,6 @@ class DataSourceOrganizationHandler:
                 data_source=data_source, code=gen_code(base_user_info.username), **base_user_info.model_dump()
             )
 
-            # 执行用户初始化账密信息等操作
-            post_create_data_source_user.send(sender=DataSourceOrganizationHandler, data_source=data_source, user=user)
-
             # 批量创建数据源用户-部门关系
             department_user_relation_objs = [
                 DataSourceDepartmentUserRelation(department_id=dept_id, user_id=user.id)
@@ -114,6 +111,9 @@ class DataSourceOrganizationHandler:
                 data_source=data_source,
                 id=generate_uuid(),
             )
+
+        # 执行用户初始化账密信息等操作
+        post_create_data_source_user.send(sender=DataSourceOrganizationHandler, data_source=data_source, user=user)
 
         return user.id
 

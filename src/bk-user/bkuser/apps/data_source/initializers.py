@@ -57,7 +57,11 @@ class LocalDataSourceIdentityInfoInitializer:
         )
 
     def initialize(self, users: Optional[List[DataSourceUser]] = None) -> Tuple[List[DataSourceUser], Dict[int, str]]:
-        """初始化指定用户的身份信息，若没有指定，则初始化该数据源所有没有初始化过的"""
+        """
+        初始化指定用户的身份信息，若没有指定，则初始化该数据源所有没有初始化过的
+
+        :returns: (数据源用户列表, {user_id: password})
+        """
         if self._can_skip():
             return [], {}
 

@@ -41,4 +41,4 @@ def initialize_identity_info_and_send_notification(data_source_id: int, user_id:
         users, user_passwd_map = initializer.initialize()
 
     # 逐一发送通知（邮件/短信）
-    LocalDataSourceUserNotifier(data_source, NotificationScene.USER_INITIALIZE, user_passwd_map).send(users)
+    LocalDataSourceUserNotifier(data_source, NotificationScene.USER_INITIALIZE).send(users, user_passwd_map)
