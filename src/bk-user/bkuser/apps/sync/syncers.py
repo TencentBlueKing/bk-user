@@ -321,7 +321,7 @@ class TenantDepartmentSyncer:
 
     def sync(self):
         """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
-        exists_tenant_departments = TenantDepartment.objects.filter(tenant=self.tenant)
+        exists_tenant_departments = TenantDepartment.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_departments = DataSourceDepartment.objects.filter(data_source=self.data_source)
 
         # 删除掉租户中存在的，但是数据源中不存在的
@@ -360,7 +360,7 @@ class TenantUserSyncer:
 
     def sync(self):
         """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
-        exists_tenant_users = TenantUser.objects.filter(tenant=self.tenant)
+        exists_tenant_users = TenantUser.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_users = DataSourceUser.objects.filter(data_source=self.data_source)
 
         # 删除掉租户中存在的，但是数据源中不存在的
