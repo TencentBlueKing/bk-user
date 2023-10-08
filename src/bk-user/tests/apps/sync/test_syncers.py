@@ -27,7 +27,9 @@ from bkuser.apps.sync.syncers import (
     TenantUserSyncer,
 )
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.common.constants import PERMANENT_TIME
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
+from bkuser.utils.uuid import generate_uuid
 
 pytestmark = pytest.mark.django_db
 
@@ -257,12 +259,20 @@ class TestDataSourceUserSyncer:
 
 
 class TestTenantDepartmentSyncer:
-    def test_cud(self, tenant_sync_task, full_local_data_source, default_tenant):
+    def test_cud(self, tenant_sync_task, full_local_data_source, bare_general_data_source, default_tenant):
+        # 另外的数据源同步到租户的数据
+        other_ds_dept = DataSourceDepartment.objects.create(
+            data_source=bare_general_data_source, code="company_x", name="公司X"
+        )
+        TenantDepartment.objects.create(
+            tenant=default_tenant, data_source=bare_general_data_source, data_source_department=other_ds_dept
+        )
+
         # 初始化场景
         TenantDepartmentSyncer(tenant_sync_task, full_local_data_source, default_tenant).sync()
         assert self._gen_ds_dept_ids_with_data_source(
             data_source=full_local_data_source
-        ) == self._gen_ds_dept_ids_with_tenant(default_tenant)
+        ) == self._gen_ds_dept_ids_with_tenant(default_tenant, full_local_data_source)
 
         # 更新场景
         DataSourceDepartment.objects.filter(
@@ -273,17 +283,21 @@ class TestTenantDepartmentSyncer:
         TenantDepartmentSyncer(tenant_sync_task, full_local_data_source, default_tenant).sync()
         assert self._gen_ds_dept_ids_with_data_source(
             data_source=full_local_data_source
-        ) == self._gen_ds_dept_ids_with_tenant(default_tenant)
+        ) == self._gen_ds_dept_ids_with_tenant(default_tenant, full_local_data_source)
 
-        # 删除场景
+        # 删除场景，只会删除当前数据源关联的租户部门
         DataSourceDepartment.objects.filter(data_source=full_local_data_source).delete()
         TenantDepartmentSyncer(tenant_sync_task, full_local_data_source, default_tenant).sync()
-        assert not TenantDepartment.objects.filter(tenant=default_tenant).exists()
 
-    def _gen_ds_dept_ids_with_tenant(self, tenant: Tenant) -> Set[int]:
+        tenant_depts = TenantDepartment.objects.filter(tenant=default_tenant)
+        assert tenant_depts.exists()
+        assert not tenant_depts.filter(data_source=full_local_data_source).exists()
+
+    def _gen_ds_dept_ids_with_tenant(self, tenant: Tenant, data_source: DataSource) -> Set[int]:
         return set(
             TenantDepartment.objects.filter(
                 tenant=tenant,
+                data_source=data_source,
             ).values_list("data_source_department_id", flat=True)
         )
 
@@ -296,12 +310,29 @@ class TestTenantDepartmentSyncer:
 
 
 class TestTenantUserSyncer:
-    def test_cud(self, tenant_sync_task, full_local_data_source, default_tenant):
+    def test_cud(self, tenant_sync_task, full_local_data_source, bare_general_data_source, default_tenant):
+        # 另外的数据源同步到租户的数据
+        other_ds_user = DataSourceUser.objects.create(
+            data_source=bare_general_data_source,
+            code="Employee-201",
+            username="libai",
+            full_name="李白",
+            email="libai@m.com",
+            phone="13512345991",
+        )
+        TenantUser.objects.create(
+            id=generate_uuid(),
+            tenant=default_tenant,
+            data_source_user=other_ds_user,
+            data_source=bare_general_data_source,
+            account_expired_at=PERMANENT_TIME,
+        )
+
         # 初始化场景
         TenantUserSyncer(tenant_sync_task, full_local_data_source, default_tenant).sync()
         assert self._gen_ds_user_ids_with_data_source(
             data_source=full_local_data_source
-        ) == self._gen_ds_user_ids_with_tenant(default_tenant)
+        ) == self._gen_ds_user_ids_with_tenant(default_tenant, full_local_data_source)
 
         # 更新场景
         DataSourceUser.objects.filter(
@@ -319,17 +350,21 @@ class TestTenantUserSyncer:
         TenantUserSyncer(tenant_sync_task, full_local_data_source, default_tenant).sync()
         assert self._gen_ds_user_ids_with_data_source(
             data_source=full_local_data_source
-        ) == self._gen_ds_user_ids_with_tenant(default_tenant)
+        ) == self._gen_ds_user_ids_with_tenant(default_tenant, full_local_data_source)
 
-        # 删除场景
+        # 删除场景，只会删除当前数据源关联的租户用户
         DataSourceUser.objects.filter(data_source=full_local_data_source).delete()
         TenantUserSyncer(tenant_sync_task, full_local_data_source, default_tenant).sync()
-        assert not TenantUser.objects.filter(tenant=default_tenant).exists()
 
-    def _gen_ds_user_ids_with_tenant(self, tenant: Tenant) -> Set[int]:
+        tenant_users = TenantUser.objects.filter(tenant=default_tenant)
+        assert tenant_users.exists()
+        assert not tenant_users.filter(data_source=full_local_data_source).exists()
+
+    def _gen_ds_user_ids_with_tenant(self, tenant: Tenant, data_source: DataSource) -> Set[int]:
         return set(
             TenantUser.objects.filter(
                 tenant=tenant,
+                data_source=data_source,
             ).values_list("data_source_user_id", flat=True)
         )
 
