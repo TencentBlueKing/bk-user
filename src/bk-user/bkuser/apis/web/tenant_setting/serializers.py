@@ -74,12 +74,12 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         default = attrs.get("default")
 
         if data_type == UserFieldDataType.ENUM.value:
-            self._validate_options(options=options)
-            self._validate_enum_default(default=default, options=options)
+            self._validate_options(options)
+            self._validate_enum_default(default, options)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
-            self._validate_options(options=options)
-            self._validate_multi_enum_default(default=default, options=options)
+            self._validate_options(options)
+            self._validate_multi_enum_default(default, options)
 
         return attrs
 
@@ -95,16 +95,16 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         if not isinstance(default, int):
             raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
 
-        # 单枚举类型要求default的值为options其中一个对象的ID值
-        if default is not None and default not in [option["id"] for option in options]:
+        # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
+        if not (default or default in [opt["id"] for opt in options]):
             raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
     def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
         if not isinstance(default, List):
             raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
 
-        # 多选枚举类型要求default中的值都为options其中任一对象的ID值
-        if default is not None and not set(default).issubset({option["id"] for option in options}):
+        # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
+        if not (default or set(default).issubset({opt["id"] for opt in options})):
             raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
 
 
@@ -155,14 +155,14 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         if not isinstance(default, int):
             raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
 
-        # 单枚举类型要求default的值为options其中一个对象的ID值
-        if default is not None and default not in [option["id"] for option in options]:
+        # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
+        if not (default or default in [opt["id"] for opt in options]):
             raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
     def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
         if not isinstance(default, List):
             raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
 
-        # 多选枚举类型要求default中的值都为options其中任一对象的ID值
-        if default is not None and not set(default).issubset({option["id"] for option in options}):
+        # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
+        if not (default or set(default).issubset({opt["id"] for opt in options})):
             raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
