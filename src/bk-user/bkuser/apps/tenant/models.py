@@ -81,7 +81,7 @@ class TenantUser(TimestampedModel):
 
     @property
     def account_expired_at_display(self) -> str:
-        local_time = timezone.localtime(self.updated_at)
+        local_time = timezone.localtime(self.account_expired_at)
         return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
