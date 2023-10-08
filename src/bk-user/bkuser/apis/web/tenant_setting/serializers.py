@@ -134,12 +134,12 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         default = attrs.get("default")
 
         if data_type == UserFieldDataType.ENUM.value:
-            self._validate_options(options=options)
-            self._validate_enum_default(default=default, options=options)
+            self._validate_options(options)
+            self._validate_enum_default(default, options)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
-            self._validate_options(options=options)
-            self._validate_multi_enum_default(default=default, options=options)
+            self._validate_options(options)
+            self._validate_multi_enum_default(default, options)
 
         return attrs
 
