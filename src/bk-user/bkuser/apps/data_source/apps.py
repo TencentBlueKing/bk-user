@@ -14,3 +14,6 @@ from django.apps import AppConfig
 class DataSourceConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "bkuser.apps.data_source"
+
+    def ready(self):
+        from . import handlers  # noqa
