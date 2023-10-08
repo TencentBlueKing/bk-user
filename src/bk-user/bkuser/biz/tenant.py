@@ -16,8 +16,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceUser
+from bkuser.apps.data_source.signals import post_batch_create_data_source_user, post_create_data_source
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
 from bkuser.biz.data_source import (
     DataSourceDepartmentHandler,
@@ -272,7 +272,7 @@ class TenantHandler:
 
             # 添加数据源用户和租户用户
             # Note: 批量创建无法返回ID，这里使用循环创建
-            tenant_manager_objs = []
+            tenant_managers = []
             for i in managers:
                 # 创建数据源用户
                 data_source_user = DataSourceUser.objects.create(
@@ -286,13 +286,16 @@ class TenantHandler:
                     id=generate_uuid(),
                 )
 
-                tenant_manager_objs.append(TenantManager(tenant=tenant, tenant_user=tenant_user))
+                tenant_managers.append(TenantManager(tenant=tenant, tenant_user=tenant_user))
 
-            if tenant_manager_objs:
-                TenantManager.objects.bulk_create(tenant_manager_objs)
+            if tenant_managers:
+                TenantManager.objects.bulk_create(tenant_managers)
 
-            # 批量为租户管理员创建账密信息
-            LocalDataSourceIdentityInfoInitializer(data_source).sync()
+        post_create_data_source.send(sender=DataSourceHandler, data_source=data_source)
+        # 触发信号以完成账密信息初始化，通知等后续步骤
+        post_batch_create_data_source_user.send(
+            sender=TenantHandler, data_source=data_source, usernames=[m.username for m in managers]
+        )
 
         return tenant_info.id
 

@@ -45,7 +45,7 @@ from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.common.error_codes import error_codes
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
-from bkuser.plugins.constants import DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP
+from bkuser.plugins.base import get_plugin_cfg_schema_map
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
         operation_description="数据源插件默认配置",
         responses={
             status.HTTP_200_OK: DataSourcePluginDefaultConfigOutputSLZ(),
-            **DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP,
+            **get_plugin_cfg_schema_map(),
         },
     )
     def get(self, request, *args, **kwargs):
@@ -114,11 +114,12 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         request_body=DataSourceCreateInputSLZ(),
         responses={
             status.HTTP_201_CREATED: DataSourceCreateOutputSLZ(),
-            **DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP,
+            **get_plugin_cfg_schema_map(),
         },
     )
     def post(self, request, *args, **kwargs):
-        slz = DataSourceCreateInputSLZ(data=request.data)
+        current_tenant_id = self.get_current_tenant_id()
+        slz = DataSourceCreateInputSLZ(data=request.data, context={"tenant_id": current_tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -126,15 +127,16 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
             current_user = request.user.username
             ds = DataSource.objects.create(
                 name=data["name"],
-                owner_tenant_id=self.get_current_tenant_id(),
+                owner_tenant_id=current_tenant_id,
                 plugin=DataSourcePlugin.objects.get(id=data["plugin_id"]),
                 plugin_config=data["plugin_config"],
                 field_mapping=data["field_mapping"],
                 creator=current_user,
                 updater=current_user,
             )
-            # 数据源创建后，发送信号用于登录认证，用户初始化等相关工作
-            post_create_data_source.send(sender=self.__class__, data_source=ds)
+
+        # 数据源创建后，发送信号用于登录认证，用户初始化等相关工作
+        post_create_data_source.send(sender=self.__class__, data_source=ds)
 
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
@@ -153,7 +155,7 @@ class DataSourceRetrieveUpdateApi(
         operation_description="数据源详情",
         responses={
             status.HTTP_200_OK: DataSourceRetrieveOutputSLZ(),
-            **DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP,
+            **get_plugin_cfg_schema_map(),
         },
     )
     def get(self, request, *args, **kwargs):
@@ -165,14 +167,17 @@ class DataSourceRetrieveUpdateApi(
         request_body=DataSourceUpdateInputSLZ(),
         responses={
             status.HTTP_204_NO_CONTENT: "",
-            **DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP,
+            **get_plugin_cfg_schema_map(),
         },
     )
     def put(self, request, *args, **kwargs):
         data_source = self.get_object()
         slz = DataSourceUpdateInputSLZ(
             data=request.data,
-            context={"plugin_id": data_source.plugin_id},
+            context={
+                "plugin_id": data_source.plugin_id,
+                "tenant_id": self.get_current_tenant_id(),
+            },
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -183,7 +188,7 @@ class DataSourceRetrieveUpdateApi(
             data_source.updater = request.user.username
             data_source.save()
 
-            post_update_data_source.send(sender=self.__class__, data_source=data_source)
+        post_update_data_source.send(sender=self.__class__, data_source=data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

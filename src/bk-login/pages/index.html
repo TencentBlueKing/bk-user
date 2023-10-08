@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="icon" href="<%= process.env.BK_STATIC_URL %>/static/images/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="<%= process.env.BK_STATIC_URL %>/static/images/favicon.png" type="image/x-icon" />
+    <link rel="icon" href="<%= process.env.BK_STATIC_URL %>/images/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="<%= process.env.BK_STATIC_URL %>/images/favicon.png" type="image/x-icon" />
     <meta charset="utf-8">
     <title> {{ TITLE }} </title>
   </head>
@@ -16,6 +16,6 @@
         var BK_AJAX_URL_PREFIX = '<%= process.env.BK_AJAX_URL_PREFIX %>';
         var CSRF_COOKIE_NAME = '<%= process.env.BK_CSRF_COOKIE_NAME %>';
       </script>
-      <script src="<%= process.env.BK_STATIC_URL %>/static/js/particles.js"></script>
+      <script src="<%= process.env.BK_STATIC_URL %>/js/particles.js"></script>
     </body>
 </html>
