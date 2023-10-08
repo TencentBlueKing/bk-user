@@ -92,11 +92,17 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
             raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
 
     def _validate_enum_default(self, default: int, options: List[Dict]):
+        if not isinstance(default, int):
+            raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
+
         # 单枚举类型要求default的值为options其中一个对象的ID值
         if default is not None and default not in [option["id"] for option in options]:
             raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
     def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
+        if not isinstance(default, List):
+            raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
+
         # 多选枚举类型要求default中的值都为options其中任一对象的ID值
         if default is not None and not set(default).issubset({option["id"] for option in options}):
             raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
@@ -146,11 +152,17 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
             raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
 
     def _validate_enum_default(self, default: int, options: List[Dict]):
+        if not isinstance(default, int):
+            raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
+
         # 单枚举类型要求default的值为options其中一个对象的ID值
         if default is not None and default not in [option["id"] for option in options]:
             raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
     def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
+        if not isinstance(default, List):
+            raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
+
         # 多选枚举类型要求default中的值都为options其中任一对象的ID值
         if default is not None and not set(default).issubset({option["id"] for option in options}):
             raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
