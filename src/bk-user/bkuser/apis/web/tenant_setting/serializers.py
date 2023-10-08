@@ -22,6 +22,36 @@ from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
 logger = logging.getLogger(__name__)
 
 
+def _validate_options(options):
+    """用户自定义字段：<选项> 字段校验"""
+    if not options:
+        raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
+    try:
+        TenantUserCustomFieldOptions(options=options)
+    except PDValidationError as e:
+        raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
+
+
+def _validate_enum_default(default: int, options: List[Dict]):
+    """用户自定义字段：单枚举类型的 <默认值> 字段校验"""
+    if not isinstance(default, int):
+        raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
+
+    # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
+    if not (default and default in [opt["id"] for opt in options]):
+        raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
+
+
+def _validate_multi_enum_default(default: List[int], options: List[Dict]):
+    """用户自定义字段：多选枚举类型的 <默认值> 字段校验"""
+    if not isinstance(default, List):
+        raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
+
+    # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
+    if not (default and set(default).issubset({opt["id"] for opt in options})):
+        raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
+
+
 class BuiltinFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段ID", read_only=True)
     name = serializers.CharField(help_text="字段名称")
@@ -74,38 +104,14 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         default = attrs.get("default")
 
         if data_type == UserFieldDataType.ENUM.value:
-            self._validate_options(options)
-            self._validate_enum_default(default, options)
+            _validate_options(options)
+            _validate_enum_default(default, options)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
-            self._validate_options(options)
-            self._validate_multi_enum_default(default, options)
+            _validate_options(options)
+            _validate_multi_enum_default(default, options)
 
         return attrs
-
-    def _validate_options(self, options):
-        if not options:
-            raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
-        try:
-            TenantUserCustomFieldOptions(options=options)
-        except PDValidationError as e:
-            raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
-
-    def _validate_enum_default(self, default: int, options: List[Dict]):
-        if not isinstance(default, int):
-            raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
-
-        # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
-        if not (default or default in [opt["id"] for opt in options]):
-            raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
-
-    def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
-        if not isinstance(default, List):
-            raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
-
-        # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
-        if not (default or set(default).issubset({opt["id"] for opt in options})):
-            raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
 
 
 class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
@@ -134,35 +140,11 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         default = attrs.get("default")
 
         if data_type == UserFieldDataType.ENUM.value:
-            self._validate_options(options)
-            self._validate_enum_default(default, options)
+            _validate_options(options)
+            _validate_enum_default(default, options)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
-            self._validate_options(options)
-            self._validate_multi_enum_default(default, options)
+            _validate_options(options)
+            _validate_multi_enum_default(default, options)
 
         return attrs
-
-    def _validate_options(self, options):
-        if not options:
-            raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
-        try:
-            TenantUserCustomFieldOptions(options=options)
-        except PDValidationError as e:
-            raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
-
-    def _validate_enum_default(self, default: int, options: List[Dict]):
-        if not isinstance(default, int):
-            raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
-
-        # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
-        if not (default or default in [opt["id"] for opt in options]):
-            raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
-
-    def _validate_multi_enum_default(self, default: List[int], options: List[Dict]):
-        if not isinstance(default, List):
-            raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
-
-        # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
-        if not (default or set(default).issubset({opt["id"] for opt in options})):
-            raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
