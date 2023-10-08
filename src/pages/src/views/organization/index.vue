@@ -158,11 +158,11 @@ const params = reactive({
   recursive: false,
 });
 
-const pagination = {
+const pagination = reactive({
   count: 0,
   current: params.page,
   limit: params.pageSize,
-};
+});
 
 const isTenant = computed(() => (!!state.currentTenant.isRoot));
 
