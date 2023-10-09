@@ -33,8 +33,8 @@ def create_user(username: Optional[str] = None) -> User:
     random_string = generate_random_string()
     data_source_user, _ = DataSourceUser.objects.get_or_create(
         username=username,
-        data_source_id=data_source.id,
         defaults={
+            "data_source_id": data_source.id,
             "full_name": random_string,
             "email": f"{random_string}@qq.com",
             "phone": "13123456789",
