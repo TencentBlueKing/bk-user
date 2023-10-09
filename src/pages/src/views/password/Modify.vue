@@ -99,7 +99,7 @@ export default {
   methods: {
     async initRsa() {
       try {
-        const res = await this.$store.dispatch('password/getRsa', this.$route.query.token);
+        const res = await this.$store.dispatch('password/getRsa', this.$route.query.token || '');
         if (res.data) {
           res.data.forEach((item) => {
             switch (item.key) {
