@@ -63,6 +63,7 @@
           </template>
         </bk-dropdown> -->
         <bk-dropdown
+          placement="bottom-end"
           @hide="() => (state.logoutDropdown = false)"
           @show="() => (state.logoutDropdown = true)"
         >

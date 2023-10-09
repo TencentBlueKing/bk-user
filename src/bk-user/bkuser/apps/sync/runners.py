@@ -25,10 +25,7 @@ from bkuser.apps.sync.syncers import (
     TenantUserSyncer,
 )
 from bkuser.apps.tenant.models import Tenant
-from bkuser.plugins.constants import (
-    DATA_SOURCE_PLUGIN_CLASS_MAP,
-    DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP,
-)
+from bkuser.plugins.base import get_plugin_cfg_cls, get_plugin_cls
 
 logger = logging.getLogger(__name__)
 
@@ -47,28 +44,28 @@ class DataSourceSyncTaskRunner:
 
     def run(self):
         logger.info("start sync data source, task_id: %s, data_source_id: %s", self.task.id, self.task.data_source_id)
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 self._sync_departments()
                 self._sync_users()
-            except Exception:
-                logger.exception("data source sync failed! task_id: %s", self.task.id)
-                self._update_task_status(SyncTaskStatus.FAILED)
-                raise
+        except Exception:
+            logger.exception("data source sync failed! task_id: %s", self.task.id)
+            self._update_task_status(SyncTaskStatus.FAILED)
+            raise
 
-            logger.info("data source sync success! task_id: %s", self.task.id)
-            self._update_task_status(SyncTaskStatus.SUCCESS)
+        logger.info("data source sync success! task_id: %s", self.task.id)
+        self._update_task_status(SyncTaskStatus.SUCCESS)
 
         self._send_signal()
 
     def _initial_plugin(self, plugin_init_extra_kwargs: Dict[str, Any]):
         """初始化数据源插件"""
         plugin_config = self.data_source.plugin_config
-        PluginCfgCls = DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.get(self.data_source.plugin_id)  # noqa: N806
+        PluginCfgCls = get_plugin_cfg_cls(self.data_source.plugin_id)  # noqa: N806
         if PluginCfgCls is not None:
             plugin_config = PluginCfgCls(**plugin_config)
 
-        PluginCls = DATA_SOURCE_PLUGIN_CLASS_MAP[self.data_source.plugin_id]  # noqa: N806
+        PluginCls = get_plugin_cls(self.data_source.plugin_id)  # noqa: N806
         self.plugin = PluginCls(plugin_config, **plugin_init_extra_kwargs)
 
     def _sync_departments(self):
@@ -111,17 +108,17 @@ class TenantSyncTaskRunner:
             self.data_source.id,
             self.tenant.id,
         )
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 self._sync_departments()
                 self._sync_users()
-            except Exception:
-                logger.exception("tenant sync failed! task_id: %s", self.task.id)
-                self._update_task_status(SyncTaskStatus.FAILED)
-                raise
+        except Exception:
+            logger.exception("tenant sync failed! task_id: %s", self.task.id)
+            self._update_task_status(SyncTaskStatus.FAILED)
+            raise
 
-            logger.info("tenant sync success! task_id: %s", self.task.id)
-            self._update_task_status(SyncTaskStatus.SUCCESS)
+        logger.info("tenant sync success! task_id: %s", self.task.id)
+        self._update_task_status(SyncTaskStatus.SUCCESS)
 
     def _sync_departments(self):
         """同步部门信息"""

@@ -163,7 +163,6 @@ onMounted(() => {
 </script>
 
 <style lang="postcss" scoped>
-
 .login-model {
   width: 480px;
   background: #FFFFFF;
@@ -225,7 +224,7 @@ onMounted(() => {
   color: #bfcbd7;
   font-size: 12px;
   text-align: center;
-  background: url(../static/images/footer.png) no-repeat center;
+  background: url(./images/footer.png) no-repeat center;
   background-size: 100% 100%;
 }
 

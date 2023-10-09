@@ -129,12 +129,36 @@
         </bk-checkbox>
       </div>
       <bk-upload
+        ref="uploadRef"
         accept=".xlsx,.xls"
         with-credentials
         :limit="1"
         :size="2"
         :multiple="false"
         :custom-request="customRequest">
+        <template #file="{ file }">
+          <div
+            class="excel-file"
+            @mousemove="isHover = true"
+            @mouseleave="isHover = false">
+            <i class="user-icon icon-excel" />
+            <div class="file-text">
+              <div
+                v-overflow-tips
+                class="text-overflow">
+                {{ file.name }}
+              </div>
+              <p class="text-overflow file-status">
+                <i class="user-icon icon-check-line" />
+                上传成功
+              </p>
+            </div>
+            <div class="file-operations">
+              <span v-if="!isHover">{{ getSize(file.size) }}</span>
+              <i v-else class="user-icon icon-delete" @click="handleUploadRemove(file)" />
+            </div>
+          </div>
+        </template>
         <template #tip>
           <div class="mt-[8px]">
             <span>支持 Excel 文件，文件小于 2 M，下载</span>
@@ -346,8 +370,21 @@ const uploadInfo = reactive({
   overwrite: false,
 });
 
+const uploadRef = ref();
+const isHover = ref(false);
+
 const customRequest = (data) => {
   uploadInfo.file = data.file;
+};
+
+const getSize = (value) => {
+  const size = value / 1024;
+  return `${parseFloat(size.toFixed(2))}KB`;
+};
+
+const handleUploadRemove = (file) => {
+  uploadRef.value?.handleRemove(file);
+  uploadInfo.file = {};
 };
 
 // 导出指定的本地数据源用户数据
@@ -386,16 +423,13 @@ const confirmImportUsers = async () => {
     }, config);
     const theme = res.data.data.status === 'success' ? 'success' : 'error';
     Message({ theme, message: res.data.data.summary });
-    importDialog.loading = false;
     importDialog.isShow = false;
     getUsers();
   } catch (e) {
-    importDialog.loading = false;
     const { message } = e.response.data.error;
     Message({ theme: 'error', message });
   } finally {
-    uploadInfo.file = {};
-    uploadInfo.overwrite = false;
+    importDialog.loading = false;
   }
 };
 
@@ -501,6 +535,41 @@ const closed = () => {
 
   .bk-upload-list {
     margin-bottom: 24px;
+  }
+}
+
+.excel-file {
+  display: flex;
+  overflow: hidden;
+  font-size: 12px;
+  flex: 1;
+  align-items: center;
+
+  .icon-excel {
+    margin-right: 14px;
+    font-size: 26px;
+    color: #2dcb56;
+  }
+
+  .file-text {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .file-status {
+    color: #2dcb56;
+  }
+
+  .file-operations {
+    span {
+      font-weight: 700;
+    }
+
+    .icon-delete {
+      margin-left: 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   }
 }
 </style>

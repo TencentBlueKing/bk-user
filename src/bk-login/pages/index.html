@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="icon" href="<%= process.env.BK_STATIC_URL %>/static/images/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="<%= process.env.BK_STATIC_URL %>/static/images/favicon.png" type="image/x-icon" />
+    <link rel="icon" href="<%= process.env.BK_STATIC_URL %>/images/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="<%= process.env.BK_STATIC_URL %>/images/favicon.png" type="image/x-icon" />
     <meta charset="utf-8">
     <title> {{ TITLE }} </title>
   </head>
     <body>
       <div class="app"></div>
       <script>
-        var SITE_URL = '<%= process.env.BK_SITE_URL %>'
-        var BK_STATIC_URL = '<%= process.env.BK_STATIC_URL %>'
+        var SITE_URL = '<%= process.env.BK_SITE_URL %>';
+        var BK_STATIC_URL = '<%= process.env.BK_STATIC_URL %>';
         // 当前应用的环境，预发布环境为 stag，正式环境为 prod
-        var BKPAAS_ENVIRONMENT = '<%= process.env.BK_PAAS_ENVIRONMENT %>'
-        var BK_AJAX_URL_PREFIX = '<%= process.env.BK_AJAX_URL_PREFIX %>'
+        var BKPAAS_ENVIRONMENT = '<%= process.env.BK_PAAS_ENVIRONMENT %>';
+        var BK_AJAX_URL_PREFIX = '<%= process.env.BK_AJAX_URL_PREFIX %>';
         var CSRF_COOKIE_NAME = '<%= process.env.BK_CSRF_COOKIE_NAME %>';
       </script>
-      <script src="<%= process.env.BK_STATIC_URL %>/static/js/particles.js"></script>
+      <script src="<%= process.env.BK_STATIC_URL %>/js/particles.js"></script>
     </body>
 </html>

@@ -20,6 +20,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    DepartmentRelationMPTTTree,
 )
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
@@ -117,8 +118,8 @@ class DataSourceDepartmentSyncer:
             # 根据部门父子关系，构建森林
             forest_roots = build_forest_with_parent_relations(parent_relations)
             # 逐棵树进行便利，因为需要保证一棵树的节点拥有相同的 tree_id
-            for idx, root in enumerate(forest_roots):
-                tree_id = self._generate_tree_id(self.data_source.id, idx)
+            for root in forest_roots:
+                tree_id = self._generate_tree_id(self.data_source)
                 mptt_tree_ids.add(tree_id)
 
                 # 通过 bfs 遍历的方式，确保父节点会先被创建
@@ -150,14 +151,13 @@ class DataSourceDepartmentSyncer:
             DataSourceDepartmentRelation.objects.partial_rebuild(tree_id)
 
     @staticmethod
-    def _generate_tree_id(data_source_id: int, root_node_idx: int) -> int:
+    def _generate_tree_id(data_source: DataSource) -> int:
         """
         在 MPTT 中，单个 tree_id 只能用于一棵树，因此需要为不同的树分配不同的 ID
 
-        # FIXME (su) 抽象成 TreeIdProvider，利用 Redis 锁，提供在并发情况下，安全获取最大 tree_id + 1 的能力
-        分配规则：data_source_id * 1000 + root_node_idx
+        分配实现：利用 MySQL 自增 ID 分配 tree_id
         """
-        return data_source_id * 10**4 + root_node_idx
+        return DepartmentRelationMPTTTree.objects.create(data_source=data_source).id
 
 
 class DataSourceUserSyncer:
@@ -321,7 +321,7 @@ class TenantDepartmentSyncer:
 
     def sync(self):
         """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
-        exists_tenant_departments = TenantDepartment.objects.filter(tenant=self.tenant)
+        exists_tenant_departments = TenantDepartment.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_departments = DataSourceDepartment.objects.filter(data_source=self.data_source)
 
         # 删除掉租户中存在的，但是数据源中不存在的
@@ -360,7 +360,7 @@ class TenantUserSyncer:
 
     def sync(self):
         """TODO (su) 支持协同后，同步到租户的数据有范围限制"""
-        exists_tenant_users = TenantUser.objects.filter(tenant=self.tenant)
+        exists_tenant_users = TenantUser.objects.filter(tenant=self.tenant, data_source=self.data_source)
         data_source_users = DataSourceUser.objects.filter(data_source=self.data_source)
 
         # 删除掉租户中存在的，但是数据源中不存在的

@@ -171,3 +171,9 @@ class DataSourceUserLeaderRelation(TimestampedModel):
         unique_together = [
             ("user", "leader"),
         ]
+
+
+class DepartmentRelationMPTTTree(models.Model):
+    """部门关系树记录表，用于自增 tree_id 的分配"""
+
+    data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)

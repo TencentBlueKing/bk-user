@@ -20,7 +20,7 @@ class TestLocalDataSourceIdentityInfoInitializer:
 
     def test_sync(self, full_local_data_source):
         """批量同步的情况"""
-        LocalDataSourceIdentityInfoInitializer(full_local_data_source).sync()
+        LocalDataSourceIdentityInfoInitializer(full_local_data_source).initialize()
         assert (
             LocalDataSourceIdentityInfo.objects.filter(data_source=full_local_data_source).count()
             == DataSourceUser.objects.filter(data_source=full_local_data_source).count()
@@ -28,13 +28,13 @@ class TestLocalDataSourceIdentityInfoInitializer:
 
     def test_initialize(self, full_local_data_source):
         """单个初始化的情况"""
-        user = DataSourceUser.objects.filter(data_source=full_local_data_source).first()
-        LocalDataSourceIdentityInfoInitializer(full_local_data_source).initialize(user)
+        users = DataSourceUser.objects.filter(data_source=full_local_data_source, username__in=["zhangsan", "cck"])
+        LocalDataSourceIdentityInfoInitializer(full_local_data_source).initialize(users)
         assert LocalDataSourceIdentityInfo.objects.filter(data_source=full_local_data_source).count() == 1
 
     def test_skip_not_local_data_source(self, full_general_data_source):
         """不是本地数据源的，同步不会生效"""
-        LocalDataSourceIdentityInfoInitializer(full_general_data_source).sync()
+        LocalDataSourceIdentityInfoInitializer(full_general_data_source).initialize()
         assert not LocalDataSourceIdentityInfo.objects.filter(data_source=full_general_data_source).exists()
 
     def test_skip_not_account_password_login_data_source(self, full_local_data_source):
@@ -42,5 +42,5 @@ class TestLocalDataSourceIdentityInfoInitializer:
         full_local_data_source.plugin_config["enable_account_password_login"] = False
         full_local_data_source.save()
 
-        LocalDataSourceIdentityInfoInitializer(full_local_data_source).sync()
+        LocalDataSourceIdentityInfoInitializer(full_local_data_source).initialize()
         assert not LocalDataSourceIdentityInfo.objects.filter(data_source=full_local_data_source).exists()

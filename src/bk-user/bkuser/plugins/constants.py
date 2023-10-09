@@ -11,10 +11,6 @@ specific language governing permissions and limitations under the License.
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig
-from bkuser.plugins.local.plugin import LocalDataSourcePlugin
-from bkuser.utils.pydantic import gen_openapi_schema
-
 
 class DataSourcePluginEnum(str, StructuredEnum):
     """数据源插件枚举"""
@@ -24,22 +20,3 @@ class DataSourcePluginEnum(str, StructuredEnum):
     WECOM = EnumField("wecom", label=_("企业微信"))
     LDAP = EnumField("ldap", label=_("OpenLDAP"))
     MAD = EnumField("mad", label=_("MicrosoftActiveDirectory"))
-
-
-# FIXME (su) 支持通过注册的方式添加插件，避免新增插件后，需要手动维护以下常量
-
-# 数据源插件类映射表
-DATA_SOURCE_PLUGIN_CLASS_MAP = {
-    DataSourcePluginEnum.LOCAL: LocalDataSourcePlugin,
-}
-
-# 数据源插件配置类映射表
-DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP = {
-    DataSourcePluginEnum.LOCAL: LocalDataSourcePluginConfig,
-}
-
-# 数据源插件配置类 JsonSchema 映射表
-DATA_SOURCE_PLUGIN_CONFIG_SCHEMA_MAP = {
-    f"plugin_config:{plugin_id}": gen_openapi_schema(model)
-    for plugin_id, model in DATA_SOURCE_PLUGIN_CONFIG_CLASS_MAP.items()
-}

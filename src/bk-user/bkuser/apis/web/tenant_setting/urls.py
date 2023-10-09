@@ -8,10 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.urls import path
 
-from bkuser.plugins.base import register_plugin
-from bkuser.plugins.constants import DataSourcePluginEnum
+from . import views
 
-from .plugin import LocalDataSourcePlugin
-
-register_plugin(DataSourcePluginEnum.LOCAL, LocalDataSourcePlugin)
+urlpatterns = [
+    path("fields/", views.TenantUserFieldListApi.as_view(), name="tenant_setting_fields.list"),
+    path("custom-fields/", views.TenantUserCustomFieldCreateApi.as_view(), name="tenant_setting_custom_fields.create"),
+    path(
+        "custom-fields/<int:id>/",
+        views.TenantUserCustomFieldUpdateDeleteApi.as_view(),
+        name="tenant_setting_custom_fields.update_delete",
+    ),
+]

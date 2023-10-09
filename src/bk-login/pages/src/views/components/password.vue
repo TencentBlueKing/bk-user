@@ -1,5 +1,5 @@
 <template>
-  <bk-form ref="formRef" form-type="vertical" :rules="rules" :model="formData">
+  <bk-form ref="formRef" form-type="vertical" :model="formData" :rules="rules">
     <bk-form-item property="username">
       <bk-input size="large" v-model="formData.username" placeholder="请输入用户名"></bk-input>
     </bk-form-item>
@@ -7,6 +7,8 @@
     <bk-form-item property="password">
       <bk-input size="large" v-model="formData.password" type="password" placeholder="请输入密码"></bk-input>
     </bk-form-item>
+
+    <p class="error-text" v-if="errorMessage">{{ errorMessage }}</p>
 
     <bk-form-item>
       <bk-button
@@ -49,9 +51,10 @@ const rules = ref({
     { required: true, message: '请输入密码', trigger: 'blur' },
   ],
 });
+const errorMessage = ref('');
 
 const handleLogin = () => {
-  console.log('login');
+  errorMessage.value = '';
   formRef.value.validate().then(() => {
     loading.value = true;
     signInByPassword(
@@ -63,16 +66,26 @@ const handleLogin = () => {
     ).then(() => {
       loading.value = false;
       router.push('/users');
-    });
+    })
+      .catch((error) => {
+        errorMessage.value = error?.message || '登录失败';
+      })
+      .finally(() => {
+        loading.value = false;
+      });
   });
 };
 
 </script>
 
-<style scoped lang="less">
+<style scoped lang="postcss">
 .login-btn {
   width: 100%;
   margin-top: 10px;
+}
+.error-text {
+  text-align: center;
+  color: #ea3636;
 }
 
 </style>
