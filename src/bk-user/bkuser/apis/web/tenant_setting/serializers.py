@@ -9,15 +9,16 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from typing import List, Dict
+from typing import Dict, List
 
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
+from bkuser.apps.tenant.models import TenantUserCustomField
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ def _validate_options(options):
 def _validate_enum_default(default: int, options: List[Dict]):
     """用户自定义字段：单枚举类型的 <默认值> 字段校验"""
     if not isinstance(default, int):
-        raise TypeError("枚举类型自定义字段的 default 值要传递整数类型")
+        raise ValidationError(_("枚举类型自定义字段的 default 值要传递整数类型"))
 
     # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
     if not (default and default in [opt["id"] for opt in options]):
@@ -45,7 +46,7 @@ def _validate_enum_default(default: int, options: List[Dict]):
 def _validate_multi_enum_default(default: List[int], options: List[Dict]):
     """用户自定义字段：多选枚举类型的 <默认值> 字段校验"""
     if not isinstance(default, List):
-        raise TypeError("多选枚举类型自定义字段的 default 值需要传递列表类型")
+        raise ValidationError(_("多选枚举类型自定义字段的 default 值需要传递列表类型"))
 
     # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
     if not (default and set(default).issubset({opt["id"] for opt in options})):

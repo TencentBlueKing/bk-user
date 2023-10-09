@@ -19,7 +19,7 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserCustomFieldUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
 )
-from bkuser.apps.tenant.models import UserBuiltinField, TenantUserCustomField
+from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.views import ExcludePutAPIViewMixin
 
 
