@@ -11,13 +11,10 @@ specific language governing permissions and limitations under the License.
 import pytest
 from rest_framework.test import APIClient
 
-from tests.test_utils.auth import set_tenant_user
-
 
 @pytest.fixture()
-def api_client(bk_user, default_tenant, default_data_source) -> APIClient:
+def api_client(bk_user) -> APIClient:
     """Return an authenticated client"""
     client = APIClient()
-    set_tenant_user(bk_user, default_data_source.id, default_tenant.id)
     client.force_authenticate(user=bk_user)
     return client

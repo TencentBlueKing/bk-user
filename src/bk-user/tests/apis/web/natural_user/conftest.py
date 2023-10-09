@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 from typing import List
 
 import pytest
-from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.natural_user.models import NaturalUser
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.utils.uuid import generate_uuid
@@ -29,19 +29,25 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture()
-def data_source_departments(default_data_source) -> List[DataSourceDepartment]:
+def data_source_departments(default_tenant) -> List[DataSourceDepartment]:
     """
     根据测试数据源，创建测试数据源部门
     """
-    return create_data_source_departments_with_relations(default_data_source)
+    data_source = DataSource.objects.filter(
+        owner_tenant_id=default_tenant.id,
+    ).first()
+    return create_data_source_departments_with_relations(data_source)
 
 
 @pytest.fixture()
-def data_source_users(default_data_source, data_source_departments) -> List[DataSourceUser]:
+def data_source_users(default_tenant, data_source_departments) -> List[DataSourceUser]:
     """
     根据测试数据源，创建测试数据源用户
     """
-    return create_data_source_users_with_relations(default_data_source, data_source_departments)
+    data_source = DataSource.objects.filter(
+        owner_tenant_id=default_tenant.id,
+    ).first()
+    return create_data_source_users_with_relations(data_source, data_source_departments)
 
 
 @pytest.fixture()
@@ -69,43 +75,46 @@ def random_tenant_users(random_tenant, data_source_users) -> List[TenantUser]:
 
 
 @pytest.fixture()
-def tenant_departments(default_tenant, default_data_source) -> List[TenantDepartment]:
+def tenant_departments(default_tenant, data_source_departments) -> List[TenantDepartment]:
     """
     根据测试数据源部门，创建租户部门
     """
-    return create_tenant_departments(default_tenant, default_data_source)
+    return create_tenant_departments(default_tenant, data_source_departments)
 
 
 @pytest.fixture()
-def random_tenant_departments(random_tenant, default_data_source) -> List[TenantDepartment]:
+def random_tenant_departments(random_tenant, data_source_departments) -> List[TenantDepartment]:
     """
     根据测试数据源部门，创建随机租户-部门
     """
-    return create_tenant_departments(random_tenant, default_data_source)
+    return create_tenant_departments(random_tenant, data_source_departments)
 
 
 @pytest.fixture()
-def additional_data_source_user(default_data_source) -> DataSourceUser:
+def additional_data_source_user(default_tenant) -> DataSourceUser:
     """
     根据测试数据源，创建额外的数据源用户
     """
+    data_source = DataSource.objects.filter(
+        owner_tenant_id=default_tenant.id,
+    ).first()
     return DataSourceUser.objects.create(
         full_name=generate_random_string(),
         username=generate_random_string,
         email=f"{generate_random_string()}@qq.com",
         phone="13123456789",
-        data_source=default_data_source,
+        data_source_id=data_source.id,
     )
 
 
 @pytest.fixture()
-def additional_tenant_user(random_tenant, additional_data_source_user, default_data_source) -> TenantUser:
+def additional_tenant_user(random_tenant, additional_data_source_user) -> TenantUser:
     """
     根据独立数据源用户，创建额外的租户用户
     """
     return TenantUser.objects.create(
         data_source_user=additional_data_source_user,
-        data_source=default_data_source,
+        data_source=additional_data_source_user.data_source,
         tenant_id=random_tenant,
         id=generate_uuid(),
     )

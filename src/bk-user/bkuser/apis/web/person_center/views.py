@@ -21,7 +21,7 @@ from bkuser.apis.web.person_center.serializers import (
 )
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.natural_user import NaturalUserWithTenantUsers, NatureUserHandler, TenantBaseInfo, TenantUserBaseInfo
-from bkuser.biz.tenant import TenantUserHandler, TenantUserUpdateEmailInfo, TenantUserUpdatePhoneInfo
+from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePutAPIViewMixin
 
@@ -115,7 +115,7 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         input_slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
         input_slz.is_valid(raise_exception=True)
 
-        phone_info = TenantUserUpdatePhoneInfo(**input_slz.validated_data)
+        phone_info = TenantUserPhoneInfo(**input_slz.validated_data)
         TenantUserHandler.update_tenant_user_phone(instance, phone_info)
 
         return Response()
@@ -145,7 +145,7 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         input_slz = TenantUserEmailUpdateInputSLZ(data=request.data)
         input_slz.is_valid(raise_exception=True)
 
-        email_info = TenantUserUpdateEmailInfo(**input_slz.validated_data)
+        email_info = TenantUserEmailInfo(**input_slz.validated_data)
         TenantUserHandler.update_tenant_user_email(instance, email_info)
 
         return Response()

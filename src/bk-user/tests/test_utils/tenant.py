@@ -12,7 +12,9 @@ from typing import List, Optional
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.utils.uuid import generate_uuid
+from tests.test_utils.helpers import generate_random_string
 
 # 默认租户 ID & 名称
 DEFAULT_TENANT = "default"
@@ -30,6 +32,12 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
             "feature_flags": {"user_number_visible": True},
         },
     )
+    # 补充默认数据源
+    DataSource.objects.create(
+        name=generate_random_string(),
+        owner_tenant_id=tenant_id,
+        plugin_id=DataSourcePluginEnum.LOCAL,
+    )
     return tenant
 
 
@@ -37,6 +45,8 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
     """
     创建租户用户
     """
+    existed_tenant_users = TenantUser.objects.filter(tenant_id=tenant).values_list("data_source_user_id", flat=True)
+
     tenant_users = [
         TenantUser(
             data_source_user=user,
@@ -45,24 +55,23 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
             id=generate_uuid(),
         )
         for user in data_source_users
-        if not TenantUser.objects.filter(
-            data_source_user=user, data_source=user.data_source, tenant_id=tenant
-        ).exists()
+        if user.id not in existed_tenant_users
     ]
     TenantUser.objects.bulk_create(tenant_users)
     return list(TenantUser.objects.filter(tenant_id=tenant))
 
 
-def create_tenant_departments(tenant: Tenant, data_source: DataSource) -> List[TenantDepartment]:
+def create_tenant_departments(
+    tenant: Tenant, data_source_departments: List[DataSourceDepartment]
+) -> List[TenantDepartment]:
     """
     创建租户部门
     """
-    data_source_departments = DataSourceDepartment.objects.filter(data_source=data_source)
 
     tenant_departments = [
         TenantDepartment(
             data_source_department=department,
-            data_source=department.data_source,
+            data_source_id=department.data_source.id,
             tenant=tenant,
         )
         for department in data_source_departments

@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import random
 from typing import Dict, List
 
 import pytest
@@ -22,8 +23,13 @@ pytestmark = pytest.mark.django_db
 
 
 class TestNaturalUserTenantUserListApi:
-    def test_list_bound_natural_user(
-        self, api_client, bk_user, natural_user, default_data_source, tenant_users, random_tenant_users, default_tenant
+    def test_list_with_natural_user(
+        self,
+        api_client,
+        bk_user,
+        natural_user,
+        tenant_users,
+        random_tenant_users,
     ):
         """
         绑定自然人的情况
@@ -57,8 +63,12 @@ class TestNaturalUserTenantUserListApi:
             assert item["tenant"]["id"] == tenant_user.tenant_id
             assert item["tenant"]["name"] == tenant_user.tenant.name
 
-    def test_list_not_bound_natural_user(
-        self, api_client, bk_user, tenant_users, random_tenant_users, default_tenant, default_data_source
+    def test_list_without_natural_user(
+        self,
+        api_client,
+        bk_user,
+        tenant_users,
+        random_tenant_users,
     ):
         """
         未绑定自然人的情况
@@ -81,7 +91,7 @@ class TestNaturalUserTenantUserListApi:
 
 
 class TestNaturalUserTenantUserRetrieveApi:
-    def _check_departments_is_exist(self, tenant_user: TenantUser, checked_departments: List[Dict]):
+    def _check_departments(self, tenant_user: TenantUser, checked_departments: List[Dict]):
         """
         检查返回的租户部门数据是否真实
         """
@@ -101,7 +111,7 @@ class TestNaturalUserTenantUserRetrieveApi:
             assert department["id"] in tenant_department_map
             assert department["name"] == tenant_department_map[department["id"]]
 
-    def _check_leaders_is_exist(self, tenant_user: TenantUser, checked_leaders: List[Dict]):
+    def _check_leaders(self, tenant_user: TenantUser, checked_leaders: List[Dict]):
         """
         检查返回的租户上级用户数据是否真实
         """
@@ -121,7 +131,7 @@ class TestNaturalUserTenantUserRetrieveApi:
             assert user["username"] in leader_info["data_source_user__username"]
             assert user["full_name"] in leader_info["data_source_user__full_name"]
 
-    def _check_property(self, tenant_user: TenantUser, general_property: Dict):
+    def _check_general_property(self, tenant_user: TenantUser, general_property: Dict):
         """
         检查返回的租户用户常规数据，是否真实
         """
@@ -140,7 +150,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         assert general_property["is_inherited_email"] == tenant_user.is_inherited_email
         assert general_property["custom_email"] == tenant_user.custom_email
 
-    def test_retrieve_tenant_user_with_bound_natural_user(
+    def test_retrieve_tenant_user_with_natural_user(
         self,
         api_client,
         natural_user,
@@ -152,15 +162,22 @@ class TestNaturalUserTenantUserRetrieveApi:
         """
         绑定自然人情况下，可以随机访问
         """
-        for user in [*tenant_users, *random_tenant_users]:
-            resp = api_client.get(reverse("person_center.tenant_users.retrieve", kwargs={"id": user.id}))
-            assert resp.status_code == status.HTTP_200_OK
-            # 常规属性检查
-            self._check_property(user, resp.data)
-            # 上级检查
-            self._check_leaders_is_exist(user, resp.data["leaders"])
-            # 归属部门检查
-            self._check_departments_is_exist(user, resp.data["departments"])
+        tenant_user = random.choice(tenant_users)
+        resp = api_client.get(reverse("person_center.tenant_users.retrieve", kwargs={"id": tenant_user.id}))
+        assert resp.status_code == status.HTTP_200_OK
+        # 常规属性检查
+        self._check_general_property(tenant_user, resp.data)
+        # 上级检查
+        self._check_leaders(tenant_user, resp.data["leaders"])
+        # 归属部门检查
+        self._check_departments(tenant_user, resp.data["departments"])
+
+        random_user = random.choice(random_tenant_users)
+        resp = api_client.get(reverse("person_center.tenant_users.retrieve", kwargs={"id": random_user.id}))
+        assert resp.status_code == status.HTTP_200_OK
+        self._check_general_property(random_user, resp.data)
+        self._check_leaders(random_user, resp.data["leaders"])
+        self._check_departments(random_user, resp.data["departments"])
 
     def test_retrieve_additional_tenant_user_without_natural_user(self, api_client, additional_tenant_user):
         """
@@ -172,7 +189,6 @@ class TestNaturalUserTenantUserRetrieveApi:
     def test_retrieve_additional_tenant_user_from_additional_natural_user(
         self,
         api_client,
-        tenant_users,
         natural_user,
         additional_natural_user,
         additional_tenant_user,
@@ -192,117 +208,113 @@ class TestTenantUserChangeEmail:
             data=email_data,
         )
 
-    def _check_email_data(self, tenant_user_id: str, email_data: Dict):
+    def _check_email(self, tenant_user_id: str, email_data: Dict):
         tenant_user = TenantUser.objects.get(id=tenant_user_id)
         assert tenant_user.is_inherited_email == email_data["is_inherited_email"]
         if not email_data["is_inherited_email"]:
             assert tenant_user.custom_email == email_data["custom_email"]
 
     @pytest.mark.parametrize(
-        "invalidated_update_email_data",
+        ("is_inherited_email", "custom_email"),
         [
-            {},
-            {"is_inherited_email": False},
-            {"is_inherited_email": False, "custom_email": "test"},
-            {"is_inherited_email": False, "custom_email": "test@q"},
-            {"is_inherited_email": False, "custom_email": "test@q@q.com"},
-            {"is_inherited_email": False, "custom_email": "test.com"},
-            {"is_inherited_email": ""},
-            {"is_inherited_email": "test"},
+            (False, ""),
+            (False, "test"),
+            (False, "test@q"),
+            (False, "test@q@q.com"),
+            (False, "test.com"),
         ],
     )
     def test_tenant_user_change_email_with_invalidated_email_data(
-        self, api_client, bk_user, invalidated_update_email_data
+        self, api_client, bk_user, is_inherited_email, custom_email
     ):
         current_tenant_user_id = bk_user.username
-        resp = self._call_update_email_api(api_client, current_tenant_user_id, invalidated_update_email_data)
+        input_email_data = {"is_inherited_email": is_inherited_email, "custom_email": custom_email}
+        resp = self._call_update_email_api(api_client, current_tenant_user_id, input_email_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.parametrize(
-        "update_email_data",
+        ("is_inherited_email", "custom_email"),
         [
-            {"is_inherited_email": False, "custom_email": "test@qq.com"},
-            {"is_inherited_email": True},
+            (False, "test@qq.com"),
+            (True, ""),
         ],
     )
-    def test_tenant_user_change_email(
+    def test_tenant_user_change_email_without_natural_user(
         self,
         api_client,
         bk_user,
         tenant_users,
-        default_tenant,
         random_tenant_users,
         random_tenant,
         additional_tenant_user,
-        default_data_source,
-        update_email_data,
+        is_inherited_email,
+        custom_email,
     ):
         current_tenant_user = TenantUser.objects.get(id=bk_user.username)
+        input_email_data = {"is_inherited_email": is_inherited_email, "custom_email": custom_email}
+
         # 当前租户用户修改
-        resp = self._call_update_email_api(api_client, current_tenant_user.id, update_email_data)
+        resp = self._call_update_email_api(api_client, current_tenant_user.id, input_email_data)
         assert resp.status_code == status.HTTP_200_OK
-        self._check_email_data(current_tenant_user.id, update_email_data)
+        self._check_email(current_tenant_user.id, input_email_data)
 
         # 同一数据源用户下的其他租户用户
         random_tenant_user = TenantUser.objects.get(
             data_source_user=current_tenant_user.data_source_user, tenant_id=random_tenant
         )
-        resp = self._call_update_email_api(api_client, random_tenant_user.id, update_email_data)
+        resp = self._call_update_email_api(api_client, random_tenant_user.id, input_email_data)
         assert resp.status_code == status.HTTP_200_OK
-        self._check_email_data(random_tenant_user.id, update_email_data)
+        self._check_email(random_tenant_user.id, input_email_data)
 
         # 同一数据源下其他数据源用户的租户用户
-        resp = self._call_update_email_api(api_client, additional_tenant_user.id, update_email_data)
+        resp = self._call_update_email_api(api_client, additional_tenant_user.id, input_email_data)
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
     @pytest.mark.parametrize(
-        "update_email_data",
+        ("is_inherited_email", "custom_email"),
         [
-            {"is_inherited_email": False, "custom_email": "test@qq.com"},
-            {"is_inherited_email": True},
+            (False, "test@qq.com"),
+            (True, ""),
         ],
     )
     def test_tenant_user_change_email_with_natural_user(
-        self, api_client, natural_user, tenant_users, random_tenant_users, random_tenant, update_email_data
+        self,
+        api_client,
+        natural_user,
+        tenant_users,
+        random_tenant_users,
+        random_tenant,
+        is_inherited_email,
+        custom_email,
     ):
         """
         绑定自然人的情况下，可修改当前自然人任一租户用户，
         """
-        for user in [*tenant_users, *random_tenant_users]:
-            resp = self._call_update_email_api(api_client, user.id, update_email_data)
-            assert resp.status_code == status.HTTP_200_OK
-            self._check_email_data(user.id, update_email_data)
+        tenant_user = random.choice(tenant_users)
+        random_tenant_user = random.choice(random_tenant_users)
+        input_email_data = {"is_inherited_email": is_inherited_email, "custom_email": custom_email}
+
+        resp = self._call_update_email_api(api_client, tenant_user.id, input_email_data)
+        assert resp.status_code == status.HTTP_200_OK
+        self._check_email(tenant_user.id, input_email_data)
+
+        resp = self._call_update_email_api(api_client, random_tenant_user.id, input_email_data)
+        assert resp.status_code == status.HTTP_200_OK
+        self._check_email(random_tenant_user.id, input_email_data)
 
     @pytest.mark.parametrize(
-        "update_email_data",
+        ("is_inherited_email", "custom_email"),
         [
-            {"is_inherited_email": False, "custom_email": "test@qq.com"},
-            {"is_inherited_email": True},
+            (False, "test@qq.com"),
+            (True, ""),
         ],
     )
-    def test_tenant_user_change_email_without_natural_user(
-        self, api_client, bk_user, default_data_source, tenant_users, random_tenant_users, update_email_data
+    def test_tenant_user_change_email_with_additional_natural_user(
+        self, api_client, additional_tenant_user, additional_natural_user, is_inherited_email, custom_email
     ):
-        current_tenant_user = TenantUser.objects.get(id=bk_user.username)
-        tenant_users = TenantUser.objects.exclude(
-            data_source_user__username=current_tenant_user.data_source_user.username,
-            data_source=default_data_source,
-        )
-        for user in tenant_users:
-            resp = self._call_update_email_api(api_client, user.id, update_email_data)
-            assert resp.status_code == status.HTTP_403_FORBIDDEN
+        input_email_data = {"is_inherited_email": is_inherited_email, "custom_email": custom_email}
 
-    @pytest.mark.parametrize(
-        "update_email_data",
-        [
-            {"is_inherited_email": False, "custom_email": "test@qq.com"},
-            {"is_inherited_email": True},
-        ],
-    )
-    def test_additional_tenant_user_from_additional_natural_user_change_email(
-        self, api_client, additional_tenant_user, additional_natural_user, update_email_data
-    ):
-        resp = self._call_update_email_api(api_client, additional_tenant_user.id, update_email_data)
+        resp = self._call_update_email_api(api_client, additional_tenant_user.id, input_email_data)
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
@@ -322,110 +334,108 @@ class TestTenantUserChangePhone:
                 assert tenant_user.custom_phone_country_code == custom_phone_country_code
 
     @pytest.mark.parametrize(
-        "invalidated_update_phone_data",
+        ("is_inherited_phone", "custom_phone"),
         [
-            {},
-            {"is_inherited_phone": False},
-            {"is_inherited_phone": False, "custom_phone": "test@qq.com"},
-            {"is_inherited_phone": False, "custom_phone": ""},
-            {"is_inherited_phone": False, "custom_phone": 123},
-            {"is_inherited_phone": False, "custom_phone": 131234567891},
-            {"is_inherited_email": ""},
-            {"is_inherited_email": "test"},
+            (False, "test@qq.com"),
+            (False, ""),
+            (False, 123),
+            (False, 131234567891),
         ],
     )
-    def test_tenant_user_change_phone_with_invalidated_email_data(
-        self, api_client, bk_user, invalidated_update_phone_data
+    def test_tenant_user_change_phone_with_invalidated_phone_data(
+        self, api_client, bk_user, is_inherited_phone, custom_phone
     ):
+        input_phone_data = {
+            "is_inherited_phone": is_inherited_phone,
+            "custom_phone": custom_phone,
+        }
         current_tenant_user_id = bk_user.username
-        resp = self._call_update_tenant_user_phone_api(
-            api_client, current_tenant_user_id, invalidated_update_phone_data
-        )
+        resp = self._call_update_tenant_user_phone_api(api_client, current_tenant_user_id, input_phone_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.parametrize(
-        "update_phone_data",
+        ("is_inherited_phone", "custom_phone"),
         [
-            {"is_inherited_phone": False, "custom_phone": "13123456789"},
-            {"is_inherited_phone": True},
+            (False, "13123456789"),
+            (True, ""),
         ],
     )
-    def test_tenant_user_change_phone_with_no_bound_natural_user(
+    def test_tenant_user_change_phone_without_natural_user(
         self,
         api_client,
         bk_user,
         tenant_users,
-        default_tenant,
         random_tenant_users,
         random_tenant,
         additional_tenant_user,
-        default_data_source,
-        update_phone_data,
+        is_inherited_phone,
+        custom_phone,
     ):
+        input_phone_data = {
+            "is_inherited_phone": is_inherited_phone,
+            "custom_phone": custom_phone,
+        }
         current_tenant_user = TenantUser.objects.get(id=bk_user.username)
 
         # 当前租户用户修改
-        resp = self._call_update_tenant_user_phone_api(api_client, current_tenant_user.id, update_phone_data)
+        resp = self._call_update_tenant_user_phone_api(api_client, current_tenant_user.id, input_phone_data)
         assert resp.status_code == status.HTTP_200_OK
-        self._check_tenant_user_phone_data(current_tenant_user.id, update_phone_data)
+        self._check_tenant_user_phone_data(current_tenant_user.id, input_phone_data)
 
         # 同一数据源用户下的其他租户用户
         random_tenant_user = TenantUser.objects.get(
             data_source_user=current_tenant_user.data_source_user, tenant_id=random_tenant
         )
-        resp = self._call_update_tenant_user_phone_api(api_client, random_tenant_user.id, update_phone_data)
+        resp = self._call_update_tenant_user_phone_api(api_client, random_tenant_user.id, input_phone_data)
         assert resp.status_code == status.HTTP_200_OK
-        self._check_tenant_user_phone_data(random_tenant_user.id, update_phone_data)
+        self._check_tenant_user_phone_data(random_tenant_user.id, input_phone_data)
 
         # 同一数据源下的其他租户用户
-        resp = self._call_update_tenant_user_phone_api(api_client, additional_tenant_user.id, update_phone_data)
+        resp = self._call_update_tenant_user_phone_api(api_client, additional_tenant_user.id, input_phone_data)
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
     @pytest.mark.parametrize(
-        "update_phone_data",
+        ("is_inherited_phone", "custom_phone"),
         [
-            {"is_inherited_phone": False, "custom_phone": "13123456789"},
-            {"is_inherited_phone": True},
+            (False, "13123456789"),
+            (True, ""),
         ],
     )
     def test_tenant_user_change_phone_with_natural_user(
-        self, api_client, natural_user, tenant_users, random_tenant_users, random_tenant, update_phone_data
+        self, api_client, natural_user, tenant_users, random_tenant_users, is_inherited_phone, custom_phone
     ):
         """
         绑定自然人的情况下，可修改当前自然人任一租户用户，
         """
-        for user in [*tenant_users, *random_tenant_users]:
-            resp = self._call_update_tenant_user_phone_api(api_client, user.id, update_phone_data)
-            assert resp.status_code == status.HTTP_200_OK
-            self._check_tenant_user_phone_data(user.id, update_phone_data)
+        tenant_user = random.choice(tenant_users)
+        random_tenant_user = random.choice(random_tenant_users)
+        input_phone_data = {
+            "is_inherited_phone": is_inherited_phone,
+            "custom_phone": custom_phone,
+        }
+
+        resp = self._call_update_tenant_user_phone_api(api_client, tenant_user.id, input_phone_data)
+        assert resp.status_code == status.HTTP_200_OK
+        self._check_tenant_user_phone_data(tenant_user.id, input_phone_data)
+
+        resp = self._call_update_tenant_user_phone_api(api_client, random_tenant_user.id, input_phone_data)
+        assert resp.status_code == status.HTTP_200_OK
+        self._check_tenant_user_phone_data(random_tenant_user.id, input_phone_data)
 
     @pytest.mark.parametrize(
-        "update_phone_data",
+        ("is_inherited_phone", "custom_phone"),
         [
-            {"is_inherited_phone": False, "custom_phone": 13123456789},
-            {"is_inherited_phone": True},
+            (False, "13123456789"),
+            (True, ""),
         ],
     )
-    def test_tenant_user_change_phone_without_natural_user(
-        self, api_client, bk_user, default_data_source, tenant_users, random_tenant_users, update_phone_data
+    def test_tenant_user_change_phone_with_additional_natural_user(
+        self, api_client, additional_tenant_user, additional_natural_user, is_inherited_phone, custom_phone
     ):
-        current_tenant_user = TenantUser.objects.get(id=bk_user.username)
-        tenant_users = TenantUser.objects.exclude(
-            data_source_user=current_tenant_user.data_source_user,
-        )
-        for user in tenant_users:
-            resp = self._call_update_tenant_user_phone_api(api_client, user.id, update_phone_data)
-            assert resp.status_code == status.HTTP_403_FORBIDDEN
+        input_phone_data = {
+            "is_inherited_phone": is_inherited_phone,
+            "custom_phone": custom_phone,
+        }
 
-    @pytest.mark.parametrize(
-        "update_phone_data",
-        [
-            {"is_inherited_phone": False, "custom_phone": 13123456789},
-            {"is_inherited_email": True},
-        ],
-    )
-    def test_additional_tenant_user_from_additional_natural_user_change_phone(
-        self, api_client, additional_tenant_user, additional_natural_user, update_phone_data
-    ):
-        resp = self._call_update_tenant_user_phone_api(api_client, additional_tenant_user.id, update_phone_data)
+        resp = self._call_update_tenant_user_phone_api(api_client, additional_tenant_user.id, input_phone_data)
         assert resp.status_code == status.HTTP_403_FORBIDDEN

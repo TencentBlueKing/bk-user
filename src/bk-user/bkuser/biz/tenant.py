@@ -93,13 +93,13 @@ class TenantUserLeaderInfo(BaseModel):
     full_name: str
 
 
-class TenantUserUpdatePhoneInfo(BaseModel):
+class TenantUserPhoneInfo(BaseModel):
     is_inherited_phone: bool
     custom_phone: Optional[str] = ""
     custom_phone_country_code: Optional[str] = settings.DEFAULT_PHONE_COUNTRY_CODE
 
 
-class TenantUserUpdateEmailInfo(BaseModel):
+class TenantUserEmailInfo(BaseModel):
     is_inherited_email: bool
     custom_email: Optional[str] = ""
 
@@ -237,7 +237,7 @@ class TenantUserHandler:
         )
 
     @staticmethod
-    def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserUpdatePhoneInfo):
+    def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserPhoneInfo):
         tenant_user.is_inherited_phone = phone_info.is_inherited_phone
         if not phone_info.is_inherited_phone:
             tenant_user.custom_phone = phone_info.custom_phone
@@ -245,7 +245,7 @@ class TenantUserHandler:
         tenant_user.save()
 
     @staticmethod
-    def update_tenant_user_email(tenant_user: TenantUser, email_info: TenantUserUpdateEmailInfo):
+    def update_tenant_user_email(tenant_user: TenantUser, email_info: TenantUserEmailInfo):
         tenant_user.is_inherited_email = email_info.is_inherited_email
         if not email_info.is_inherited_email:
             tenant_user.custom_email = email_info.custom_email

@@ -104,7 +104,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
 class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
     is_inherited_phone = serializers.BooleanField(required=True, help_text="是否继承数据源手机号")
-    custom_phone = serializers.CharField(required=False, help_text="自定义用户手机号")
+    custom_phone = serializers.CharField(required=False, allow_blank=True, help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(
         required=False, help_text="自定义用户手机国际区号", default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
@@ -125,7 +125,7 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
 
 class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
     is_inherited_email = serializers.BooleanField(required=True, help_text="是否继承数据源邮箱")
-    custom_email = serializers.EmailField(required=False, help_text="自定义用户邮箱")
+    custom_email = serializers.EmailField(required=False, help_text="自定义用户邮箱", allow_blank=True)
 
     def validate(self, attrs):
         # 不通过继承，custom_email 必须存在
