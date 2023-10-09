@@ -116,6 +116,19 @@ export default createRouter({
       ],
     },
     {
+      path: '/auth-source',
+      name: 'authSource',
+      component: () => import('@/views/auth-source/index.vue'),
+    },
+    {
+      path: '/auth-source/new',
+      name: 'newAuthSource',
+      meta: {
+        navName: '新建认证源',
+      },
+      component: () => import('@/views/auth-source/new-data/NewConfig.vue'),
+    },
+    {
       path: '/audit',
       name: 'audit',
       component: () => import('@/views/audit/index.vue'),
