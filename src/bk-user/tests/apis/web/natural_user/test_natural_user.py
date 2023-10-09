@@ -189,7 +189,6 @@ class TestNaturalUserTenantUserRetrieveApi:
     def test_retrieve_additional_tenant_user_from_additional_natural_user(
         self,
         api_client,
-        natural_user,
         additional_natural_user,
         additional_tenant_user,
     ):
@@ -283,7 +282,6 @@ class TestTenantUserChangeEmail:
         natural_user,
         tenant_users,
         random_tenant_users,
-        random_tenant,
         is_inherited_email,
         custom_email,
     ):
