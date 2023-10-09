@@ -72,7 +72,7 @@ class PasswordResetSendEmailApi(generics.CreateAPIView):
         # 用户状态校验
         if not profile.is_normal:
             error_msg = (
-                "failed to send password via sms."
+                "failed to send password via email."
                 "profile is abnormal [profile.id=%s, profile.username=%s, profile.enabled=%s, profile.status=%s]"
             )
             logger.error(

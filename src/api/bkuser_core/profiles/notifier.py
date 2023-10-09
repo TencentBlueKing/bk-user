@@ -17,7 +17,7 @@ from bkuser_core.audit.models import LogIn
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.common.notifier import send_mail, send_sms
-from bkuser_core.profiles.constants import NOTICE_METHOD_EMAIL, NOTICE_METHOD_SMS, TypeOfExpiration
+from bkuser_core.profiles.constants import NOTICE_METHOD_EMAIL, NOTICE_METHOD_SMS, ProfileStatus, TypeOfExpiration
 from bkuser_core.profiles.models import Profile
 from bkuser_core.user_settings.constants import (
     ACCOUNT_EXPIRATION_NOTICE_INTERVAL_META_KEY,
@@ -181,12 +181,15 @@ def get_profiles_for_account_expiration():
         expiration_dates = get_expiration_dates(notice_interval)
         logined_profiles = get_logined_profiles()
 
-        expiring_profiles = logined_profiles.filter(
+        # 限定为正常状态用户
+        normal_status_profiles = logined_profiles.filter(status=ProfileStatus.NORMAL.value, enabled=True)
+
+        expiring_profiles = normal_status_profiles.filter(
             account_expiration_date__in=expiration_dates, category_id=category_id
         ).values("id", "username", "category_id", "email", "telephone", "account_expiration_date")
         expiring_profile_list.extend(expiring_profiles)
 
-        expired_profiles = logined_profiles.filter(
+        expired_profiles = normal_status_profiles.filter(
             account_expiration_date__lt=datetime.date.today(), category_id=category_id
         ).values("id", "username", "category_id", "email", "telephone", "account_expiration_date")
         expired_profile_list.extend(expired_profiles)
@@ -204,6 +207,9 @@ def get_profiles_for_password_expiration():
     category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
     logined_profiles = get_logined_profiles()
 
+    # 限定为正常状态用户
+    normal_status_profiles = logined_profiles.filter(status=ProfileStatus.NORMAL.value, enabled=True)
+
     for category_id in category_ids:
         notice_interval = (
             Setting.objects.filter(
@@ -216,7 +222,7 @@ def get_profiles_for_password_expiration():
         )
 
         expiration_dates = get_expiration_dates(notice_interval)
-        profiles = logined_profiles.filter(category_id=category_id, password_valid_days__gt=0).values(
+        profiles = normal_status_profiles.filter(category_id=category_id, password_valid_days__gt=0).values(
             "id",
             "username",
             "category_id",

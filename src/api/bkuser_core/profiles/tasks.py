@@ -205,7 +205,7 @@ def change_profile_status_for_account_expiration():
     """
     对账号过期的用户进行状态变更
     """
-    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id")
+    category_ids = ProfileCategory.objects.filter(type=CategoryType.LOCAL.value).values_list("id", flat=True)
     expired_profiles = Profile.objects.filter(
         category_id__in=category_ids,
         account_expiration_date__lt=datetime.date.today(),
