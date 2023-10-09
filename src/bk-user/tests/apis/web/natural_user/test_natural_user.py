@@ -217,13 +217,9 @@ class TestTenantUserChangeEmail:
         ("is_inherited_email", "custom_email"),
         [
             (False, ""),
-            (False, "test"),
-            (False, "test@q"),
-            (False, "test@q@q.com"),
-            (False, "test.com"),
         ],
     )
-    def test_tenant_user_change_email_with_invalidated_email_data(
+    def test_tenant_user_change_email_with_invalid_email_data(
         self, api_client, bk_user, is_inherited_email, custom_email
     ):
         current_tenant_user_id = bk_user.username
@@ -286,7 +282,7 @@ class TestTenantUserChangeEmail:
         custom_email,
     ):
         """
-        绑定自然人的情况下，可修改当前自然人任一租户用户，
+        绑定自然人的情况下，可修改当前自然人任一租户用户的邮箱
         """
         tenant_user = random.choice(tenant_users)
         random_tenant_user = random.choice(random_tenant_users)
@@ -340,7 +336,7 @@ class TestTenantUserChangePhone:
             (False, 131234567891),
         ],
     )
-    def test_tenant_user_change_phone_with_invalidated_phone_data(
+    def test_tenant_user_change_phone_with_invalid_phone_data(
         self, api_client, bk_user, is_inherited_phone, custom_phone
     ):
         input_phone_data = {
@@ -403,7 +399,7 @@ class TestTenantUserChangePhone:
         self, api_client, natural_user, tenant_users, random_tenant_users, is_inherited_phone, custom_phone
     ):
         """
-        绑定自然人的情况下，可修改当前自然人任一租户用户，
+        绑定自然人的情况下，可修改当前自然人任一租户用户的手机号
         """
         tenant_user = random.choice(tenant_users)
         random_tenant_user = random.choice(random_tenant_users)

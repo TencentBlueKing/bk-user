@@ -42,6 +42,6 @@ def random_tenant() -> Tenant:
 
 
 @pytest.fixture()
-def bk_user(default_tenant) -> User:
+def bk_user() -> User:
     """生成随机用户"""
-    return create_user(default_tenant.id)
+    return create_user()

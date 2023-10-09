@@ -15,6 +15,7 @@ import pytest
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.natural_user.models import NaturalUser
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.utils.uuid import generate_uuid
 
 from tests.test_utils.data_source import (
@@ -34,7 +35,7 @@ def data_source_departments(default_tenant) -> List[DataSourceDepartment]:
     根据测试数据源，创建测试数据源部门
     """
     data_source = DataSource.objects.filter(
-        owner_tenant_id=default_tenant.id,
+        owner_tenant_id=default_tenant.id, plugin_id=DataSourcePluginEnum.LOCAL
     ).first()
     return create_data_source_departments_with_relations(data_source)
 
@@ -45,7 +46,7 @@ def data_source_users(default_tenant, data_source_departments) -> List[DataSourc
     根据测试数据源，创建测试数据源用户
     """
     data_source = DataSource.objects.filter(
-        owner_tenant_id=default_tenant.id,
+        owner_tenant_id=default_tenant.id, plugin_id=DataSourcePluginEnum.LOCAL
     ).first()
     return create_data_source_users_with_relations(data_source, data_source_departments)
 
