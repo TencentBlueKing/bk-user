@@ -92,7 +92,7 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
     """
 
     user = models.OneToOneField(DataSourceUser, on_delete=models.CASCADE)
-    # FIXME (su) 使用加盐的非对称加密方式来存储密码
+    # FIXME (su) 使用加盐的方式来存储密码
     password = EncryptField(verbose_name="用户密码", null=True, blank=True, default="", max_length=255)
     password_updated_at = models.DateTimeField("密码最后更新时间", null=True, blank=True)
     password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)

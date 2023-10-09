@@ -11,29 +11,13 @@ specific language governing permissions and limitations under the License.
 from bkuser.plugins.exceptions import BaseDataSourcePluginError
 
 
-class LocalDataSourcePluginError(BaseDataSourcePluginError):
-    """本地数据源插件基础异常"""
+class GeneralDataSourcePluginError(BaseDataSourcePluginError):
+    """通用 HTTP 数据源插件基础异常"""
 
 
-class UserSheetNotExists(LocalDataSourcePluginError):
-    """待导入文件中不存在用户表"""
+class RequestApiError(GeneralDataSourcePluginError):
+    """请求数据源 API 异常"""
 
 
-class SheetColumnsNotMatch(LocalDataSourcePluginError):
-    """待导入文件中用户表列不匹配"""
-
-
-class CustomColumnNameInvalid(LocalDataSourcePluginError):
-    """待导入文件中自定义字段列名不合法"""
-
-
-class DuplicateColumnName(LocalDataSourcePluginError):
-    """待导入文件中存在重复列名"""
-
-
-class RequiredFieldIsEmpty(LocalDataSourcePluginError):
-    """待导入文件中必填字段为空"""
-
-
-class DuplicateUsername(LocalDataSourcePluginError):
-    """待导入文件中存在重复用户"""
+class RespDataFormatError(GeneralDataSourcePluginError):
+    """数据源 API 响应格式错误"""

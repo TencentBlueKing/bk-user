@@ -22,11 +22,10 @@ from bkuser.plugins.local.exceptions import (
     DuplicateUsername,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
-    UserLeaderInvalid,
     UserSheetNotExists,
 )
 from bkuser.plugins.local.utils import gen_code
-from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
+from bkuser.plugins.models import Department, Leader, RawDataSourceDepartment, RawDataSourceUser
 
 
 class LocalDataSourceDataParser:
@@ -120,7 +119,7 @@ class LocalDataSourceDataParser:
         if duplicate_col_names := [n for n, cnt in Counter(sheet_col_names).items() if cnt > 1]:
             raise DuplicateColumnName(_("待导入文件中存在重复列名：{}").format(", ".join(duplicate_col_names)))
 
-        usernames, leaders = [], []
+        usernames = []
         # 5. 检查所有必填字段是否有值
         for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
             info = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
@@ -129,16 +128,10 @@ class LocalDataSourceDataParser:
                     raise RequiredFieldIsEmpty(_("待导入文件中必填字段 {} 存在空值").format(field_name))
 
             usernames.append(info["username"])
-            if user_leaders := info["leaders"]:
-                leaders.extend([ld.strip() for ld in user_leaders.split(",") if ld])
 
         # 6. 检查用户名是否有重复的
         if duplicate_usernames := [n for n, cnt in Counter(usernames).items() if cnt > 1]:
             raise DuplicateUsername(_("待导入文件中存在重复用户名：{}").format(", ".join(duplicate_usernames)))
-
-        # 7. 检查 leaders 是不是都存在
-        if not_exists_leaders := set(leaders) - set(usernames):
-            raise UserLeaderInvalid(_("待导入文件中不存在用户上级信息：{}").format(", ".join(not_exists_leaders)))
 
     def _parse_departments(self):
         organizations = set()
@@ -164,12 +157,16 @@ class LocalDataSourceDataParser:
         for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
             properties = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
 
-            department_codes, leader_codes = [], []
+            departments, leaders = [], []
             if organizations := properties.pop("organizations"):
-                department_codes = [gen_code(org.strip()) for org in organizations.split(",") if org]
+                for org in organizations.split(","):
+                    if org := org.strip():
+                        departments.append(Department(code=gen_code(org), name=org))  # noqa: PERF401
 
-            if leaders := properties.pop("leaders"):
-                leader_codes = [gen_code(ld.strip()) for ld in leaders.split(",") if ld]
+            if leader_names := properties.pop("leaders"):
+                for ld in leader_names.split(","):
+                    if ld := ld.strip():
+                        leaders.append(Leader(code=gen_code(ld), name=ld))  # noqa: PERF401
 
             phone_number = str(properties.pop("phone_number"))
             # 默认认为是不带国际代码的
@@ -186,7 +183,7 @@ class LocalDataSourceDataParser:
                 RawDataSourceUser(
                     code=gen_code(properties["username"]),
                     properties=properties,
-                    leaders=leader_codes,
-                    departments=department_codes,
+                    leaders=leaders,
+                    departments=departments,
                 )
             )

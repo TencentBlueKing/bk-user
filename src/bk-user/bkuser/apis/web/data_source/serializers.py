@@ -22,6 +22,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.plugins.base import get_plugin_cfg_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.models import DataSourceSyncConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
@@ -76,6 +77,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
+    sync_config = serializers.JSONField(help_text="数据源同步配置", default=dict)
 
     def validate_name(self, name: str) -> str:
         if DataSource.objects.filter(name=name).exists():
@@ -100,6 +102,17 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
             )
 
         return field_mapping
+
+    def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
+        if not sync_config:
+            return sync_config
+
+        try:
+            DataSourceSyncConfig(**sync_config)
+        except PDValidationError as e:
+            raise ValidationError(_("同步配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        return sync_config
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 除本地数据源类型外，都需要配置字段映射
@@ -150,6 +163,7 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
+    sync_config = serializers.JSONField(help_text="数据源同步配置", default=dict)
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
         PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806
@@ -182,6 +196,17 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
             )
 
         return field_mapping
+
+    def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
+        if not sync_config:
+            return sync_config
+
+        try:
+            DataSourceSyncConfig(**sync_config)
+        except PDValidationError as e:
+            raise ValidationError(_("同步配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        return sync_config
 
 
 class DataSourceSwitchStatusOutputSLZ(serializers.Serializer):

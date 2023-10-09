@@ -20,6 +20,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.sync.exceptions import UserLeaderNotExists
 from bkuser.apps.sync.syncers import (
     DataSourceDepartmentSyncer,
     DataSourceUserSyncer,
@@ -28,7 +29,7 @@ from bkuser.apps.sync.syncers import (
 )
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
-from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
+from bkuser.plugins.models import Leader, RawDataSourceDepartment, RawDataSourceUser
 from bkuser.utils.uuid import generate_uuid
 
 pytestmark = pytest.mark.django_db
@@ -132,9 +133,9 @@ class TestDataSourceUserSyncer:
         raw_users[1].code = lisi_new_code
         # 需要更新其他用户的信息，避免 leader 还是用旧的 Code
         for u in raw_users:
-            if lisi_old_code in u.leaders:
-                u.leaders.remove(lisi_old_code)
-                u.leaders.append(lisi_new_code)
+            if Leader(lisi_old_code, "lisi") in u.leaders:
+                u.leaders.remove(Leader(lisi_old_code, "lisi"))
+                u.leaders.append(Leader(lisi_new_code, "lisi"))
         # 3. 再添加一个随机用户
         raw_users.append(random_raw_user)
 
@@ -219,7 +220,21 @@ class TestDataSourceUserSyncer:
         users = DataSourceUser.objects.filter(data_source=full_local_data_source)
         assert set(users.values_list("code", flat=True)) == user_codes
 
-    def destroy(self, data_source_sync_task, full_local_data_source):
+    def test_update_with_invalid_leader(self, data_source_sync_task, full_local_data_source, random_raw_user):
+        """全量同步模式，要求用户的 leader 必须也在数据中"""
+        random_raw_user.leaders.append(Leader("Employee-4", "lisi"))
+        with pytest.raises(UserLeaderNotExists):
+            DataSourceUserSyncer(data_source_sync_task, full_local_data_source, [random_raw_user]).sync()
+
+    def test_update_with_leader_in_db(self, data_source_sync_task, full_local_data_source, random_raw_user):
+        """增量同步模式，用户的 leader 在 db 中存在也是可以的"""
+        data_source_sync_task.extra["incremental"] = True
+        random_raw_user.leaders.append(Leader("Employee-4", "lisi"))
+
+        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, [random_raw_user]).sync()
+        assert DataSourceUser.objects.filter(code=random_raw_user.code).count() == 1
+
+    def test_destroy(self, data_source_sync_task, full_local_data_source):
         raw_users: List[RawDataSourceUser] = []
 
         DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users).sync()
@@ -227,7 +242,7 @@ class TestDataSourceUserSyncer:
 
     @staticmethod
     def _gen_user_leaders_from_raw_users(raw_users: List[RawDataSourceUser]) -> Dict[str, Set[str]]:
-        return {u.code: set(u.leaders) for u in raw_users if u.leaders}
+        return {u.code: {ld.code for ld in u.leaders} for u in raw_users if u.leaders}
 
     @staticmethod
     def _gen_user_leaders_from_db(data_source_users: List[DataSourceUser]) -> Dict[str, Set[str]]:
@@ -243,7 +258,7 @@ class TestDataSourceUserSyncer:
 
     @staticmethod
     def _gen_user_depts_from_raw_users(raw_users: List[RawDataSourceUser]) -> Dict[str, Set[str]]:
-        return {u.code: set(u.departments) for u in raw_users if u.departments}
+        return {u.code: {dept.code for dept in u.departments} for u in raw_users if u.departments}
 
     @staticmethod
     def _gen_user_depts_from_db(data_source_users: List[DataSourceUser]) -> Dict[str, Set[str]]:

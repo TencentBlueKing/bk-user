@@ -20,7 +20,7 @@ from tests.test_utils.tenant import DEFAULT_TENANT
 
 
 @pytest.fixture()
-def local_ds_plugin_config() -> Dict[str, Any]:
+def local_ds_plugin_cfg() -> Dict[str, Any]:
     return {
         "enable_account_password_login": True,
         "password_rule": {
@@ -127,13 +127,13 @@ def local_ds_plugin() -> DataSourcePlugin:
 
 
 @pytest.fixture()
-def bare_local_data_source(local_ds_plugin_config, local_ds_plugin) -> DataSource:
+def bare_local_data_source(local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸本地数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
         name=generate_random_string(),
         owner_tenant_id=DEFAULT_TENANT,
         plugin=local_ds_plugin,
-        plugin_config=local_ds_plugin_config,
+        plugin_config=local_ds_plugin_cfg,
     )
 
 
@@ -145,7 +145,7 @@ def full_local_data_source(bare_local_data_source) -> DataSource:
 
 
 @pytest.fixture()
-def general_ds_plugin_config() -> Dict[str, Any]:
+def general_ds_plugin_cfg() -> Dict[str, Any]:
     # TODO (su) 预设通用 HTTP 数据源的插件配置
     return {"TODO": "TODO"}
 
@@ -160,13 +160,13 @@ def general_ds_plugin() -> DataSourcePlugin:
 
 
 @pytest.fixture()
-def bare_general_data_source(general_ds_plugin_config, general_ds_plugin) -> DataSource:
+def bare_general_data_source(general_ds_plugin_cfg, general_ds_plugin) -> DataSource:
     """裸通用 HTTP 数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
         name=generate_random_string(),
         owner_tenant_id=DEFAULT_TENANT,
         plugin=general_ds_plugin,
-        plugin_config=general_ds_plugin_config,
+        plugin_config=general_ds_plugin_cfg,
     )
 
 

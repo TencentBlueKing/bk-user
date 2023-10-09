@@ -12,7 +12,7 @@ import pytest
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
 from bkuser.apps.sync.converters import DataSourceUserConverter
-from bkuser.plugins.models import RawDataSourceUser
+from bkuser.plugins.models import Department, Leader, RawDataSourceUser
 
 pytestmark = pytest.mark.django_db
 
@@ -66,7 +66,9 @@ class TestDataSourceUserConverter:
                 "region": "beijing",
             },
             leaders=[],
-            departments=["company"],
+            departments=[
+                Department("company", "公司"),
+            ],
         )
 
         zhangsan = DataSourceUserConverter(bare_local_data_source).convert(raw_zhangsan)
@@ -90,8 +92,13 @@ class TestDataSourceUserConverter:
                 "age": "28",
                 "gender": "female",
             },
-            leaders=["Employee-3"],
-            departments=["dept_a", "center_aa"],
+            leaders=[
+                Leader("Employee-3", "zhangsan"),
+            ],
+            departments=[
+                Department("dept_a", "公司/部门A"),
+                Department("center_aa", "公司/部门A/中心AA"),
+            ],
         )
 
         lisi = DataSourceUserConverter(bare_local_data_source).convert(raw_lisi)

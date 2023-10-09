@@ -12,6 +12,7 @@ import datetime
 from typing import Dict, List, Set
 
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -23,6 +24,7 @@ from bkuser.apps.data_source.models import (
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.sync.converters import DataSourceUserConverter
+from bkuser.apps.sync.exceptions import UserLeaderNotExists
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
@@ -175,9 +177,31 @@ class DataSourceUserSyncer:
         self.converter = DataSourceUserConverter(data_source)
 
     def sync(self):
+        self._validate_users()
         self._sync_users()
         self._sync_user_leader_relations()
         self._sync_user_department_relations()
+
+    def _validate_users(self):
+        """对用户数据进行校验（插件提供的数据不一定是合法的）"""
+        exists_user_codes = set(
+            DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True)
+        )
+
+        # 检查本次同步的用户数据中，所有的 leader 是否已经存在
+        raw_leader_code_name_map = {ld.code: ld.name for user in self.raw_users for ld in user.leaders}
+
+        user_codes = {user.code for user in self.raw_users}
+        # 如果是增量同步，则 DB 中已经存在的用户，也可以作为 leader
+        if self.incremental:
+            user_codes |= exists_user_codes
+
+        if not_exists_leaders := set(raw_leader_code_name_map.keys()) - user_codes:
+            raise UserLeaderNotExists(
+                _("缺少用户上级：{} 信息").format(
+                    ", ".join([raw_leader_code_name_map[ld] for ld in not_exists_leaders]),
+                )
+            )
 
     def _sync_users(self):
         user_codes = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True))
@@ -234,7 +258,7 @@ class DataSourceUserSyncer:
         # 此时已经完成了用户数据的同步，可以认为 DB 中 DataSourceUser 的数据是最新的，准确的
         user_code_id_map = {u.code: u.id for u in exists_users}
         # 最终需要的 [(user_code, leader_code)] 集合
-        user_leader_code_tuples = {(u.code, leader_code) for u in self.raw_users for leader_code in u.leaders}
+        user_leader_code_tuples = {(u.code, leader.code) for u in self.raw_users for leader in u.leaders}
         # 最终需要的 [(user_id, leader_id)] 集合
         user_leader_id_tuples = {
             (user_code_id_map[user_code], user_code_id_map[leader_code])
@@ -276,7 +300,7 @@ class DataSourceUserSyncer:
         }
 
         # 最终需要的 [(user_code, dept_code)] 集合
-        user_dept_code_tuples = {(u.code, dept_code) for u in self.raw_users for dept_code in u.departments}
+        user_dept_code_tuples = {(u.code, dept.code) for u in self.raw_users for dept in u.departments}
         # 最终需要的 [(user_id, dept_id)] 集合
         user_dept_id_tuples = {
             (user_code_id_map[user_code], department_code_id_map[dept_code])

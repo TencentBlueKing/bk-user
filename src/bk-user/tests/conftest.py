@@ -18,9 +18,9 @@ from tests.fixtures.data_source import (  # noqa: F401
     full_general_data_source,
     full_local_data_source,
     general_ds_plugin,
-    general_ds_plugin_config,
+    general_ds_plugin_cfg,
     local_ds_plugin,
-    local_ds_plugin_config,
+    local_ds_plugin_cfg,
 )
 from tests.fixtures.tenant import tenant_user_custom_fields  # noqa: F401
 from tests.test_utils.auth import create_user

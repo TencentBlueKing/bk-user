@@ -8,9 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict, List
+from collections import namedtuple
+from typing import Any, Dict, List
 
 from pydantic import BaseModel
+
+from bkuser.plugins.constants import DataSourceSyncPeriod
+
+# 用户 leader 信息
+Leader = namedtuple("Leader", ["code", "name"])
+# 用户所属部门信息
+Department = namedtuple("Department", ["code", "name"])
 
 
 class RawDataSourceUser(BaseModel):
@@ -21,9 +29,9 @@ class RawDataSourceUser(BaseModel):
     # 用户名，邮箱，手机号等个人信息
     properties: Dict[str, str]
     # 直接上级信息
-    leaders: List[str]
+    leaders: List[Leader]
     # 所属部门信息
-    departments: List[str]
+    departments: List[Department]
 
 
 class RawDataSourceDepartment(BaseModel):
@@ -40,6 +48,17 @@ class RawDataSourceDepartment(BaseModel):
 class TestConnectionResult(BaseModel):
     """连通性测试结果，包含示例数据"""
 
+    # 连通性测试错误信息，空则表示正常
     error_message: str
-    user: RawDataSourceUser
-    department: RawDataSourceDepartment
+    # 获取到的首个数据源用户
+    user: RawDataSourceUser | None
+    # 获取到的首个数据源部门
+    department: RawDataSourceDepartment | None
+    # 可能便于排查问题的额外数据
+    extras: Dict[str, Any] | None = None
+
+
+class DataSourceSyncConfig(BaseModel):
+    """数据源同步配置"""
+
+    sync_period: DataSourceSyncPeriod = DataSourceSyncPeriod.PER_1_DAY

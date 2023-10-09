@@ -131,6 +131,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 plugin=DataSourcePlugin.objects.get(id=data["plugin_id"]),
                 plugin_config=data["plugin_config"],
                 field_mapping=data["field_mapping"],
+                sync_config=data["sync_config"],
                 creator=current_user,
                 updater=current_user,
             )
@@ -185,6 +186,7 @@ class DataSourceRetrieveUpdateApi(
         with transaction.atomic():
             data_source.plugin_config = data["plugin_config"]
             data_source.field_mapping = data["field_mapping"]
+            data_source.sync_config = data["sync_config"]
             data_source.updater = request.user.username
             data_source.save()
 

@@ -20,13 +20,6 @@ logger = logging.getLogger("component")
 # 定义慢请求耗时，单位毫秒
 SLOW_REQUEST_LATENCY = 100
 
-
-def _gen_header():
-    return {
-        "Content-Type": "application/json",
-    }
-
-
 session = requests.Session()
 adapter = HTTPAdapter(pool_connections=settings.REQUESTS_POOL_CONNECTIONS, pool_maxsize=settings.REQUESTS_POOL_MAXSIZE)
 session.mount("https://", adapter)

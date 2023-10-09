@@ -23,7 +23,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture()
-def data_source(request, local_ds_plugin, local_ds_plugin_config):
+def data_source(request, local_ds_plugin, local_ds_plugin_cfg):
     # 支持检查是否使用 random_tenant fixture 以生成不属于默认租户的数据源
     tenant_id = DEFAULT_TENANT
     if "random_tenant" in request.fixturenames:
@@ -33,7 +33,7 @@ def data_source(request, local_ds_plugin, local_ds_plugin_config):
         name=generate_random_string(),
         owner_tenant_id=tenant_id,
         plugin=local_ds_plugin,
-        plugin_config=local_ds_plugin_config,
+        plugin_config=local_ds_plugin_cfg,
     )
 
 
@@ -56,13 +56,13 @@ class TestDataSourcePluginDefaultConfigApi:
 
 
 class TestDataSourceCreateApi:
-    def test_create_local_data_source(self, api_client, local_ds_plugin_config):
+    def test_create_local_data_source(self, api_client, local_ds_plugin_cfg):
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
                 "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
-                "plugin_config": local_ds_plugin_config,
+                "plugin_config": local_ds_plugin_cfg,
                 # 本地数据源不需要字段映射配置
             },
         )
@@ -99,40 +99,40 @@ class TestDataSourceCreateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "plugin_config: 该字段是必填项。" in resp.data["message"]
 
-    def test_create_with_broken_plugin_config(self, api_client, local_ds_plugin_config):
-        local_ds_plugin_config["password_initial"] = None
+    def test_create_with_broken_plugin_config(self, api_client, local_ds_plugin_cfg):
+        local_ds_plugin_cfg["password_initial"] = None
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
                 "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
-                "plugin_config": local_ds_plugin_config,
+                "plugin_config": local_ds_plugin_cfg,
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "密码生成规则、初始密码设置、密码到期设置均不能为空" in resp.data["message"]
 
-    def test_create_with_invalid_notification_template(self, api_client, local_ds_plugin_config):
-        local_ds_plugin_config["password_expire"]["notification"]["templates"][0]["title"] = None
+    def test_create_with_invalid_notification_template(self, api_client, local_ds_plugin_cfg):
+        local_ds_plugin_cfg["password_expire"]["notification"]["templates"][0]["title"] = None
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
                 "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
-                "plugin_config": local_ds_plugin_config,
+                "plugin_config": local_ds_plugin_cfg,
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "邮件通知模板需要提供标题" in resp.data["message"]
 
-    def test_create_with_invalid_plugin_config(self, api_client, local_ds_plugin_config):
-        local_ds_plugin_config.pop("enable_account_password_login")
+    def test_create_with_invalid_plugin_config(self, api_client, local_ds_plugin_cfg):
+        local_ds_plugin_cfg.pop("enable_account_password_login")
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
                 "name": generate_random_string(),
                 "plugin_id": DataSourcePluginEnum.LOCAL,
-                "plugin_config": local_ds_plugin_config,
+                "plugin_config": local_ds_plugin_cfg,
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -216,22 +216,22 @@ class TestDataSourceListApi:
 
 
 class TestDataSourceUpdateApi:
-    def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_config):
-        local_ds_plugin_config["enable_account_password_login"] = False
+    def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_cfg):
+        local_ds_plugin_cfg["enable_account_password_login"] = False
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"plugin_config": local_ds_plugin_config},
+            data={"plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
         assert resp.data["plugin_config"]["enable_account_password_login"] is False
 
-    def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_config):
-        local_ds_plugin_config.pop("enable_account_password_login")
+    def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
+        local_ds_plugin_cfg.pop("enable_account_password_login")
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"plugin_config": local_ds_plugin_config},
+            data={"plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
