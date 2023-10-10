@@ -25,7 +25,7 @@ def create_user(username: Optional[str] = None) -> User:
     user.set_property("tenant_id", DEFAULT_TENANT)
 
     # 获取租户默认的本地数据源
-    data_source = DataSource.objects.get(owner_tenant_id=DEFAULT_TENANT, name="default-local")
+    data_source = DataSource.objects.get(owner_tenant_id=DEFAULT_TENANT, name=f"{DEFAULT_TENANT}-default-local")
 
     data_source_user, _ = DataSourceUser.objects.get_or_create(
         username=username,
