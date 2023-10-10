@@ -50,7 +50,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         sorted_tenant_users = sorted(tenant_users, key=lambda t: t.id != current_tenant_user_id)
 
         # 响应数据组装
-        response_data: Dict = {
+        nature_user_with_tenant_users_info: Dict = {
             "id": nature_user.id,
             "full_name": nature_user.full_name,
             "tenant_users": [
@@ -64,7 +64,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
             ],
         }
 
-        return Response(NaturalUserWithTenantUserListOutputSLZ(response_data).data)
+        return Response(NaturalUserWithTenantUserListOutputSLZ(nature_user_with_tenant_users_info).data)
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
