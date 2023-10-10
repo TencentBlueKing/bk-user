@@ -20,7 +20,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.plugins.base import get_plugin_cfg_cls
+from bkuser.plugins.base import get_plugin_cfg_cls, is_plugin_exists
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.models import DataSourceSyncConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -116,14 +116,14 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 除本地数据源类型外，都需要配置字段映射
-        if attrs["plugin_id"] != DataSourcePluginEnum.LOCAL and not attrs["field_mapping"]:
+        plugin_id = attrs["plugin_id"]
+        if plugin_id != DataSourcePluginEnum.LOCAL and not attrs["field_mapping"]:
             raise ValidationError(_("当前数据源类型必须配置字段映射"))
 
-        PluginConfigCls = get_plugin_cfg_cls(attrs["plugin_id"])  # noqa: N806
-        # 自定义插件，可能没有对应的配置类，不需要做格式检查
-        if not PluginConfigCls:
-            return attrs
+        if not is_plugin_exists(plugin_id):
+            raise ValidationError(_("数据源插件 {} 不存在").format(plugin_id))
 
+        PluginConfigCls = get_plugin_cfg_cls(plugin_id)  # noqa: N806
         try:
             PluginConfigCls(**attrs["plugin_config"])
         except PDValidationError as e:
@@ -167,10 +167,6 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
         PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806
-        # 自定义插件，可能没有对应的配置类，不需要做格式检查
-        if not PluginConfigCls:
-            return plugin_config
-
         try:
             PluginConfigCls(**plugin_config)
         except PDValidationError as e:
@@ -214,24 +210,45 @@ class DataSourceSwitchStatusOutputSLZ(serializers.Serializer):
 
 
 class RawDataSourceUserSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="用户 ID")
+    code = serializers.CharField(help_text="用户 ID")
     properties = serializers.JSONField(help_text="用户属性")
     leaders = serializers.ListField(help_text="用户 leader ID 列表", child=serializers.CharField())
     departments = serializers.ListField(help_text="用户部门 ID 列表", child=serializers.CharField())
 
 
 class RawDataSourceDepartmentSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="部门 ID")
+    code = serializers.CharField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称")
     parent = serializers.CharField(help_text="父部门 ID")
 
 
-class DataSourceTestConnectionOutputSLZ(serializers.Serializer):
-    """数据源连通性测试"""
+class DataSourceTestConnectionInputSLZ(serializers.Serializer):
+    plugin_id = serializers.CharField(help_text="数据源插件 ID")
+    plugin_config = serializers.JSONField(help_text="数据源插件配置")
 
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        plugin_id = attrs["plugin_id"]
+
+        if plugin_id == DataSourcePluginEnum.LOCAL:
+            raise ValidationError(_("本地数据源不支持连通性测试"))
+
+        if not is_plugin_exists(plugin_id):
+            raise ValidationError(_("数据源插件 {} 不存在").format(plugin_id))
+
+        PluginConfigCls = get_plugin_cfg_cls(plugin_id)  # noqa: N806
+        try:
+            attrs["plugin_config"] = PluginConfigCls(**attrs["plugin_config"])
+        except PDValidationError as e:
+            raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+        return attrs
+
+
+class DataSourceTestConnectionOutputSLZ(serializers.Serializer):
     error_message = serializers.CharField(help_text="错误信息")
     user = RawDataSourceUserSLZ(help_text="用户")
     department = RawDataSourceDepartmentSLZ(help_text="部门")
+    extras = serializers.JSONField(help_text="额外信息")
 
 
 class LocalDataSourceImportInputSLZ(serializers.Serializer):

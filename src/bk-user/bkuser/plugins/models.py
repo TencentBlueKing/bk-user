@@ -8,17 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from collections import namedtuple
 from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
 from bkuser.plugins.constants import DataSourceSyncPeriod
-
-# 用户 leader 信息
-Leader = namedtuple("Leader", ["code", "name"])
-# 用户所属部门信息
-Department = namedtuple("Department", ["code", "name"])
 
 
 class RawDataSourceUser(BaseModel):
@@ -28,10 +22,10 @@ class RawDataSourceUser(BaseModel):
     code: str
     # 用户名，邮箱，手机号等个人信息
     properties: Dict[str, str]
-    # 直接上级信息
-    leaders: List[Leader]
-    # 所属部门信息
-    departments: List[Department]
+    # 直接上级信息（code）
+    leaders: List[str]
+    # 所属部门信息（code）
+    departments: List[str]
 
 
 class RawDataSourceDepartment(BaseModel):

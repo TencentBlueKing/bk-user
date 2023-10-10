@@ -28,6 +28,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
     DataSourceSwitchStatusOutputSLZ,
+    DataSourceTestConnectionInputSLZ,
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
     LocalDataSourceImportInputSLZ,
@@ -45,7 +46,8 @@ from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.common.error_codes import error_codes
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
-from bkuser.plugins.base import get_plugin_cfg_schema_map
+from bkuser.plugins.base import get_plugin_cfg_schema_map, get_plugin_cls
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +197,7 @@ class DataSourceRetrieveUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceTestConnectionApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
+class DataSourceTestConnectionApi(generics.CreateAPIView):
     """数据源连通性测试"""
 
     serializer_class = DataSourceTestConnectionOutputSLZ
@@ -203,32 +205,22 @@ class DataSourceTestConnectionApi(CurrentUserTenantDataSourceMixin, generics.Ret
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源连通性测试",
+        request_body=DataSourceTestConnectionInputSLZ(),
         responses={status.HTTP_200_OK: DataSourceTestConnectionOutputSLZ()},
     )
-    def get(self, request, *args, **kwargs):
-        data_source = self.get_object()
-        if data_source.is_local:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED
+    def post(self, request, *args, **kwargs):
+        slz = DataSourceTestConnectionInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
-        # TODO (su) 实现代码逻辑，需调用数据源插件以确认连通性
-        mock_data = {
-            "error_message": "",
-            "user": {
-                "id": "uid_2",
-                "properties": {
-                    "username": "zhangSan",
-                },
-                "leaders": ["uid_0", "uid_1"],
-                "departments": ["dept_id_1"],
-            },
-            "department": {
-                "id": "dept_id_1",
-                "name": "dept_name",
-                "parent": "dept_id_0",
-            },
-        }
+        plugin_id = data["plugin_id"]
+        if plugin_id == DataSourcePluginEnum.LOCAL:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f("本地数据源插件不支持连通性测试")
 
-        return Response(DataSourceTestConnectionOutputSLZ(instance=mock_data).data)
+        PluginCls = get_plugin_cls(plugin_id)  # noqa: N806
+        result = PluginCls(data["plugin_config"]).test_connection()
+
+        return Response(DataSourceTestConnectionOutputSLZ(instance=result).data)
 
 
 class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):

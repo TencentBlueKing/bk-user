@@ -189,19 +189,15 @@ class DataSourceUserSyncer:
         )
 
         # 检查本次同步的用户数据中，所有的 leader 是否已经存在
-        raw_leader_code_name_map = {ld.code: ld.name for user in self.raw_users for ld in user.leaders}
+        raw_leader_codes = {leader_code for user in self.raw_users for leader_code in user.leaders}
 
         user_codes = {user.code for user in self.raw_users}
         # 如果是增量同步，则 DB 中已经存在的用户，也可以作为 leader
         if self.incremental:
             user_codes |= exists_user_codes
 
-        if not_exists_leaders := set(raw_leader_code_name_map.keys()) - user_codes:
-            raise UserLeaderNotExists(
-                _("缺少用户上级：{} 信息").format(
-                    ", ".join([raw_leader_code_name_map[ld] for ld in not_exists_leaders]),
-                )
-            )
+        if not_exists_leaders := raw_leader_codes - user_codes:
+            raise UserLeaderNotExists(_("缺少用户上级：{} 信息").format(", ".join(not_exists_leaders)))
 
     def _sync_users(self):
         user_codes = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True))
@@ -258,7 +254,7 @@ class DataSourceUserSyncer:
         # 此时已经完成了用户数据的同步，可以认为 DB 中 DataSourceUser 的数据是最新的，准确的
         user_code_id_map = {u.code: u.id for u in exists_users}
         # 最终需要的 [(user_code, leader_code)] 集合
-        user_leader_code_tuples = {(u.code, leader.code) for u in self.raw_users for leader in u.leaders}
+        user_leader_code_tuples = {(u.code, leader_code) for u in self.raw_users for leader_code in u.leaders}
         # 最终需要的 [(user_id, leader_id)] 集合
         user_leader_id_tuples = {
             (user_code_id_map[user_code], user_code_id_map[leader_code])
@@ -300,7 +296,7 @@ class DataSourceUserSyncer:
         }
 
         # 最终需要的 [(user_code, dept_code)] 集合
-        user_dept_code_tuples = {(u.code, dept.code) for u in self.raw_users for dept in u.departments}
+        user_dept_code_tuples = {(u.code, dept_code) for u in self.raw_users for dept_code in u.departments}
         # 最终需要的 [(user_id, dept_id)] 集合
         user_dept_id_tuples = {
             (user_code_id_map[user_code], department_code_id_map[dept_code])

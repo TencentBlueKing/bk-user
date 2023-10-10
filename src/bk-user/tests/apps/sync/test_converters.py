@@ -12,7 +12,7 @@ import pytest
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
 from bkuser.apps.sync.converters import DataSourceUserConverter
-from bkuser.plugins.models import Department, Leader, RawDataSourceUser
+from bkuser.plugins.models import RawDataSourceUser
 
 pytestmark = pytest.mark.django_db
 
@@ -56,7 +56,7 @@ class TestDataSourceUserConverter:
 
     def test_convert_case_1(self, bare_local_data_source, tenant_user_custom_fields):
         raw_zhangsan = RawDataSourceUser(
-            code="Employee-3",
+            code="zhangsan",
             properties={
                 "username": "zhangsan",
                 "full_name": "张三",
@@ -66,13 +66,11 @@ class TestDataSourceUserConverter:
                 "region": "beijing",
             },
             leaders=[],
-            departments=[
-                Department("company", "公司"),
-            ],
+            departments=["company"],
         )
 
         zhangsan = DataSourceUserConverter(bare_local_data_source).convert(raw_zhangsan)
-        assert zhangsan.code == "Employee-3"
+        assert zhangsan.code == "zhangsan"
         assert zhangsan.username == "zhangsan"
         assert zhangsan.full_name == "张三"
         assert zhangsan.email == "zhangsan@m.com"
@@ -82,7 +80,7 @@ class TestDataSourceUserConverter:
 
     def test_convert_case_2(self, bare_local_data_source, tenant_user_custom_fields):
         raw_lisi = RawDataSourceUser(
-            code="Employee-4",
+            code="lisi",
             properties={
                 "username": "lisi",
                 "full_name": "李四",
@@ -92,17 +90,12 @@ class TestDataSourceUserConverter:
                 "age": "28",
                 "gender": "female",
             },
-            leaders=[
-                Leader("Employee-3", "zhangsan"),
-            ],
-            departments=[
-                Department("dept_a", "公司/部门A"),
-                Department("center_aa", "公司/部门A/中心AA"),
-            ],
+            leaders=["zhangsan"],
+            departments=["dept_a", "center_aa"],
         )
 
         lisi = DataSourceUserConverter(bare_local_data_source).convert(raw_lisi)
-        assert lisi.code == "Employee-4"
+        assert lisi.code == "lisi"
         assert lisi.username == "lisi"
         assert lisi.full_name == "李四"
         assert lisi.email == "lisi@m.com"

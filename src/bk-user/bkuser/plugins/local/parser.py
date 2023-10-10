@@ -25,7 +25,7 @@ from bkuser.plugins.local.exceptions import (
     UserSheetNotExists,
 )
 from bkuser.plugins.local.utils import gen_code
-from bkuser.plugins.models import Department, Leader, RawDataSourceDepartment, RawDataSourceUser
+from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
 class LocalDataSourceDataParser:
@@ -161,12 +161,13 @@ class LocalDataSourceDataParser:
             if organizations := properties.pop("organizations"):
                 for org in organizations.split(","):
                     if org := org.strip():
-                        departments.append(Department(code=gen_code(org), name=org))  # noqa: PERF401
+                        departments.append(gen_code(org))  # noqa: PERF401
 
             if leader_names := properties.pop("leaders"):
                 for ld in leader_names.split(","):
                     if ld := ld.strip():
-                        leaders.append(Leader(code=gen_code(ld), name=ld))  # noqa: PERF401
+                        # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
+                        leaders.append(ld)  # noqa: PERF401
 
             phone_number = str(properties.pop("phone_number"))
             # 默认认为是不带国际代码的
@@ -181,7 +182,8 @@ class LocalDataSourceDataParser:
             properties = {k: str(v) for k, v in properties.items() if v is not None}
             self.users.append(
                 RawDataSourceUser(
-                    code=gen_code(properties["username"]),
+                    # 本地数据源用户，code 就是 username
+                    code=properties["username"],
                     properties=properties,
                     leaders=leaders,
                     departments=departments,

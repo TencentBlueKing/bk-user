@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 ('operation', models.CharField(choices=[('create', '创建'), ('update', '更新'), ('delete', '删除')], max_length=32, verbose_name='操作类型')),
                 ('user_id', models.CharField(max_length=64, verbose_name='用户 ID')),
                 ('username', models.CharField(max_length=128, verbose_name='用户名')),
-                ('full_name', models.CharField(max_length=128, verbose_name='用户全名')),
+                ('full_name', models.CharField(max_length=128, verbose_name='用户姓名')),
                 ('task', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.CASCADE, related_name='user_change_logs', to='sync.tenantsynctask')),
             ],
             options={
@@ -121,7 +121,7 @@ class Migration(migrations.Migration):
                 ('operation', models.CharField(choices=[('create', '创建'), ('update', '更新'), ('delete', '删除')], max_length=32, verbose_name='操作类型')),
                 ('user_code', models.CharField(max_length=128, verbose_name='用户唯一标识')),
                 ('username', models.CharField(max_length=128, verbose_name='用户名')),
-                ('full_name', models.CharField(max_length=128, verbose_name='用户全名')),
+                ('full_name', models.CharField(max_length=128, verbose_name='用户姓名')),
                 ('task', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.CASCADE, related_name='user_change_logs', to='sync.datasourcesynctask')),
             ],
             options={

@@ -21,7 +21,7 @@ from bkuser.plugins.local.exceptions import (
 )
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
 from bkuser.plugins.local.utils import gen_code
-from bkuser.plugins.models import Department, Leader, RawDataSourceDepartment, RawDataSourceUser
+from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 
 
 class TestLocalDataSourceDataParser:
@@ -97,15 +97,12 @@ class TestLocalDataSourceDataParser:
         parser = LocalDataSourceDataParser(user_wk)
         parser.parse()
 
-        def gen_leaders(usernames: List[str]) -> List[Leader]:
-            return [Leader(code=gen_code(n), name=n) for n in usernames]
-
-        def gen_depts(orgs: List[str]) -> List[Department]:
-            return [Department(code=gen_code(o), name=o) for o in orgs]
+        def gen_depts(orgs: List[str]) -> List[str]:
+            return [gen_code(o) for o in orgs]
 
         assert sorted(parser.get_users(), key=lambda u: u.properties["age"]) == [
             RawDataSourceUser(
-                code=gen_code("zhangsan"),
+                code="zhangsan",
                 properties={
                     "username": "zhangsan",
                     "full_name": "张三",
@@ -120,7 +117,7 @@ class TestLocalDataSourceDataParser:
                 departments=gen_depts(["公司"]),
             ),
             RawDataSourceUser(
-                code=gen_code("lisi"),
+                code="lisi",
                 properties={
                     "username": "lisi",
                     "full_name": "李四",
@@ -131,11 +128,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345672",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["zhangsan"]),
+                leaders=["zhangsan"],
                 departments=gen_depts(["公司/部门A", "公司/部门A/中心AA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("wangwu"),
+                code="wangwu",
                 properties={
                     "username": "wangwu",
                     "full_name": "王五",
@@ -146,11 +143,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345673",
                     "phone_country_code": "63",
                 },
-                leaders=gen_leaders(["zhangsan"]),
+                leaders=["zhangsan"],
                 departments=gen_depts(["公司/部门A", "公司/部门B"]),
             ),
             RawDataSourceUser(
-                code=gen_code("zhaoliu"),
+                code="zhaoliu",
                 properties={
                     "username": "zhaoliu",
                     "full_name": "赵六",
@@ -161,11 +158,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345674",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["lisi"]),
+                leaders=["lisi"],
                 departments=gen_depts(["公司/部门A/中心AA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("liuqi"),
+                code="liuqi",
                 properties={
                     "username": "liuqi",
                     "full_name": "柳七",
@@ -176,11 +173,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345675",
                     "phone_country_code": "63",
                 },
-                leaders=gen_leaders(["zhaoliu"]),
+                leaders=["zhaoliu"],
                 departments=gen_depts(["公司/部门A/中心AA/小组AAA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("maiba"),
+                code="maiba",
                 properties={
                     "username": "maiba",
                     "full_name": "麦八",
@@ -191,11 +188,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345676",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["lisi", "wangwu"]),
+                leaders=["lisi", "wangwu"],
                 departments=gen_depts(["公司/部门A/中心AB"]),
             ),
             RawDataSourceUser(
-                code=gen_code("yangjiu"),
+                code="yangjiu",
                 properties={
                     "username": "yangjiu",
                     "full_name": "杨九",
@@ -206,11 +203,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345677",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["wangwu"]),
+                leaders=["wangwu"],
                 departments=gen_depts(["公司/部门A/中心AB"]),
             ),
             RawDataSourceUser(
-                code=gen_code("lushi"),
+                code="lushi",
                 properties={
                     "username": "lushi",
                     "full_name": "鲁十",
@@ -221,11 +218,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345678",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["wangwu", "maiba"]),
+                leaders=["wangwu", "maiba"],
                 departments=gen_depts(["公司/部门B/中心BA", "公司/部门A/中心AB/小组ABA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("linshiyi"),
+                code="linshiyi",
                 properties={
                     "username": "linshiyi",
                     "full_name": "林十一",
@@ -236,11 +233,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345679",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["lushi"]),
+                leaders=["lushi"],
                 departments=gen_depts(["公司/部门A/中心AB/小组ABA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("baishier"),
+                code="baishier",
                 properties={
                     "username": "baishier",
                     "full_name": "白十二",
@@ -251,11 +248,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345670",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["lushi"]),
+                leaders=["lushi"],
                 departments=gen_depts(["公司/部门B/中心BA/小组BAA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("qinshisan"),
+                code="qinshisan",
                 properties={
                     "username": "qinshisan",
                     "full_name": "秦十三",
@@ -266,11 +263,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512245671",
                     "phone_country_code": "86",
                 },
-                leaders=gen_leaders(["lisi"]),
+                leaders=["lisi"],
                 departments=gen_depts(["公司/部门C/中心CA/小组CAA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("freedom"),
+                code="freedom",
                 properties={
                     "username": "freedom",
                     "full_name": "自由人",

@@ -13,7 +13,7 @@ from typing import List
 import pytest
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
-from bkuser.plugins.models import Department, Leader, RawDataSourceDepartment, RawDataSourceUser
+from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from django.utils import timezone
 
 from tests.test_utils.helpers import generate_random_string
@@ -68,7 +68,7 @@ def raw_users() -> List[RawDataSourceUser]:
     """数据源插件提供的原始用户信息"""
     return [
         RawDataSourceUser(
-            code="Employee-3",
+            code="zhangsan",
             properties={
                 "username": "zhangsan",
                 "full_name": "张三",
@@ -79,10 +79,10 @@ def raw_users() -> List[RawDataSourceUser]:
                 "region": "beijing",
             },
             leaders=[],
-            departments=[Department("company", "公司")],
+            departments=["company"],
         ),
         RawDataSourceUser(
-            code="Employee-4",
+            code="lisi",
             properties={
                 "username": "lisi",
                 "full_name": "李四",
@@ -92,16 +92,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "female",
                 "region": "shanghai",
             },
-            leaders=[
-                Leader("Employee-3", "zhangsan"),
-            ],
-            departments=[
-                Department("dept_a", "公司/部门A"),
-                Department("center_aa", "公司/部门A/中心AA"),
-            ],
+            leaders=["zhangsan"],
+            departments=["dept_a", "center_aa"],
         ),
         RawDataSourceUser(
-            code="Employee-5",
+            code="wangwu",
             properties={
                 "username": "wangwu",
                 "full_name": "王五",
@@ -111,16 +106,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "male",
                 "region": "shenzhen",
             },
-            leaders=[
-                Leader("Employee-3", "zhangsan"),
-            ],
-            departments=[
-                Department("dept_a", "公司/部门A"),
-                Department("dept_b", "公司/部门B"),
-            ],
+            leaders=["zhangsan"],
+            departments=["dept_a", "dept_b"],
         ),
         RawDataSourceUser(
-            code="Employee-6",
+            code="zhaoliu",
             properties={
                 "username": "zhaoliu",
                 "full_name": "赵六",
@@ -130,15 +120,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "female",
                 "region": "tianjin",
             },
-            leaders=[
-                Leader("Employee-4", "lisi"),
-            ],
-            departments=[
-                Department("center_aa", "公司/部门A/中心AA"),
-            ],
+            leaders=["lisi"],
+            departments=["center_aa"],
         ),
         RawDataSourceUser(
-            code="Employee-7",
+            code="liuqi",
             properties={
                 "username": "liuqi",
                 "full_name": "柳七",
@@ -148,15 +134,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "female",
                 "region": "jiangxi",
             },
-            leaders=[
-                Leader("Employee-6", "zhaoliu"),
-            ],
-            departments=[
-                Department("group_aaa", "公司/部门A/中心AA/小组AAA"),
-            ],
+            leaders=["zhaoliu"],
+            departments=["group_aaa"],
         ),
         RawDataSourceUser(
-            code="Employee-8",
+            code="maiba",
             properties={
                 "username": "maiba",
                 "full_name": "麦八",
@@ -166,16 +148,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "male",
                 "region": "xinjiang",
             },
-            leaders=[
-                Leader("Employee-4", "lisi"),
-                Leader("Employee-5", "wangwu"),
-            ],
-            departments=[
-                Department("center_ab", "公司/部门A/中心AB"),
-            ],
+            leaders=["lisi", "wangwu"],
+            departments=["center_ab"],
         ),
         RawDataSourceUser(
-            code="Employee-9",
+            code="yangjiu",
             properties={
                 "username": "yangjiu",
                 "full_name": "杨九",
@@ -185,15 +162,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "male",
                 "region": "guangdong",
             },
-            leaders=[
-                Leader("Employee-5", "wangwu"),
-            ],
-            departments=[
-                Department("center_ab", "公司/部门A/中心AB"),
-            ],
+            leaders=["wangwu"],
+            departments=["center_ab"],
         ),
         RawDataSourceUser(
-            code="Employee-10",
+            code="lushi",
             properties={
                 "username": "lushi",
                 "full_name": "鲁十",
@@ -203,17 +176,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "male",
                 "region": "jiangsu",
             },
-            leaders=[
-                Leader("Employee-5", "wangwu"),
-                Leader("Employee-8", "maiba"),
-            ],
-            departments=[
-                Department("group_aba", "公司/部门A/中心AB/小组ABA"),
-                Department("center_ba", "公司/部门A/中心BA"),
-            ],
+            leaders=["wangwu", "maiba"],
+            departments=["group_aba", "center_ba"],
         ),
         RawDataSourceUser(
-            code="Employee-11",
+            code="linshiyi",
             properties={
                 "username": "linshiyi",
                 "full_name": "林十一",
@@ -223,15 +190,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "male",
                 "region": "hunan",
             },
-            leaders=[
-                Leader("Employee-10", "lushi"),
-            ],
-            departments=[
-                Department("group_aba", "公司/部门A/中心AB/小组ABA"),
-            ],
+            leaders=["lushi"],
+            departments=["group_aba"],
         ),
         RawDataSourceUser(
-            code="Employee-12",
+            code="baishier",
             properties={
                 "username": "baishier",
                 "full_name": "白十二",
@@ -241,15 +204,11 @@ def raw_users() -> List[RawDataSourceUser]:
                 "gender": "female",
                 "region": "guangdong",
             },
-            leaders=[
-                Leader("Employee-10", "lushi"),
-            ],
-            departments=[
-                Department("group_baa", "公司/部门B/中心BA/小组BAA"),
-            ],
+            leaders=["lushi"],
+            departments=["group_baa"],
         ),
         RawDataSourceUser(
-            code="Employee-666",
+            code="freedom",
             properties={
                 "username": "freedom",
                 "full_name": "自由人",

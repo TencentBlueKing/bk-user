@@ -12,6 +12,8 @@ import base64
 import logging
 from typing import Any, Dict, List
 
+from django.utils.translation import gettext_lazy as _
+
 from bkuser.plugins.base import BaseDataSourcePlugin
 from bkuser.plugins.general.constants import AuthMethod
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
@@ -59,7 +61,8 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
     def test_connection(self) -> TestConnectionResult:
         """连通性测试"""
         cfg = self.plugin_config.server_config
-        err_msg, user_data, user, dept_data, dept = "", None, None, None, None
+        err_msg, user, dept = "", None, None
+        user_data, dept_data = None, None
         try:
             user_data = fetch_first_item(
                 cfg.server_base_url + cfg.user_api_path,
@@ -72,19 +75,27 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
                 self._gen_headers(),
                 cfg.request_timeout,
             )
-
         except (RequestApiError, RespDataFormatError) as e:
             err_msg = str(e)
         except Exception as e:
             logger.exception("general data source plugin test connection error")
             err_msg = str(e)
 
-        if user_data and dept_data:
-            # FIXME (su) 捕获并进行异常处理，提示错误信息给到用户
-            user = self._gen_raw_user(user_data)
-            dept = self._gen_raw_dept(dept_data)
+        if not (user_data and dept_data):
+            err_msg = _("获取到的用户/部门数据为空，请检查数据源 API 服务")
+        else:
+            try:
+                user = self._gen_raw_user(user_data)
+                dept = self._gen_raw_dept(dept_data)
+            except Exception:
+                err_msg = _("解析用户/部门数据失败，请确保 API 返回数据符合协议规范")
 
-        return TestConnectionResult(error_message=err_msg, user=user, department=dept)
+        return TestConnectionResult(
+            error_message=str(err_msg),
+            user=user,
+            department=dept,
+            extras={"user_data": user_data, "department_data": dept_data},
+        )
 
     def _gen_headers(self) -> dict:
         headers = {"Content-Type": "application/json"}

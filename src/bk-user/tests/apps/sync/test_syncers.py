@@ -29,7 +29,7 @@ from bkuser.apps.sync.syncers import (
 )
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
-from bkuser.plugins.models import Leader, RawDataSourceDepartment, RawDataSourceUser
+from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from bkuser.utils.uuid import generate_uuid
 
 pytestmark = pytest.mark.django_db
@@ -129,13 +129,13 @@ class TestDataSourceUserSyncer:
         raw_users[0].properties["phone_country_code"] = "63"
         raw_users[0].properties["age"] = "30"
         # 2. 修改用户的 code，会导致用户被重建
-        lisi_old_code, lisi_new_code = "Employee-4", "Employee-4-1"
+        lisi_old_code, lisi_new_code = "lisi", "lisi-1"
         raw_users[1].code = lisi_new_code
         # 需要更新其他用户的信息，避免 leader 还是用旧的 Code
         for u in raw_users:
-            if Leader(lisi_old_code, "lisi") in u.leaders:
-                u.leaders.remove(Leader(lisi_old_code, "lisi"))
-                u.leaders.append(Leader(lisi_new_code, "lisi"))
+            if lisi_old_code in u.leaders:
+                u.leaders.remove(lisi_old_code)
+                u.leaders.append(lisi_new_code)
         # 3. 再添加一个随机用户
         raw_users.append(random_raw_user)
 
@@ -154,7 +154,7 @@ class TestDataSourceUserSyncer:
         assert all(bool(e) for e in users.values_list("extras", flat=True))
 
         # 验证内置/自定义字段被更新
-        zhangsan = users.filter(code="Employee-3").first()
+        zhangsan = users.filter(code="zhangsan").first()
         assert zhangsan.username == "zhangsan_rename"
         assert zhangsan.full_name == "张三的另一个名字"
         assert zhangsan.email == "zhangsan_rename@m.com"
@@ -166,7 +166,7 @@ class TestDataSourceUserSyncer:
         lisi = users.filter(username="lisi").first()
         assert lisi.full_name == "李四"
         assert lisi.email == "lisi@m.com"
-        assert lisi.code == "Employee-4-1"
+        assert lisi.code == "lisi-1"
 
         # 验证用户部门信息
         assert self._gen_user_depts_from_db(users) == self._gen_user_depts_from_raw_users(raw_users)
@@ -199,7 +199,7 @@ class TestDataSourceUserSyncer:
         assert not any(bool(e) for e in users.values_list("extras", flat=True))
 
         # 验证内置/自定义字段都不会被更新，因为没有选择 overwrite
-        zhangsan = users.filter(code="Employee-3").first()
+        zhangsan = users.filter(code="zhangsan").first()
         assert zhangsan.username == "zhangsan"
         assert zhangsan.full_name == "张三"
         assert zhangsan.email == "zhangsan@m.com"
@@ -222,14 +222,14 @@ class TestDataSourceUserSyncer:
 
     def test_update_with_invalid_leader(self, data_source_sync_task, full_local_data_source, random_raw_user):
         """全量同步模式，要求用户的 leader 必须也在数据中"""
-        random_raw_user.leaders.append(Leader("Employee-4", "lisi"))
+        random_raw_user.leaders.append("lisi")
         with pytest.raises(UserLeaderNotExists):
             DataSourceUserSyncer(data_source_sync_task, full_local_data_source, [random_raw_user]).sync()
 
     def test_update_with_leader_in_db(self, data_source_sync_task, full_local_data_source, random_raw_user):
         """增量同步模式，用户的 leader 在 db 中存在也是可以的"""
         data_source_sync_task.extra["incremental"] = True
-        random_raw_user.leaders.append(Leader("Employee-4", "lisi"))
+        random_raw_user.leaders.append("lisi")
 
         DataSourceUserSyncer(data_source_sync_task, full_local_data_source, [random_raw_user]).sync()
         assert DataSourceUser.objects.filter(code=random_raw_user.code).count() == 1
@@ -242,7 +242,7 @@ class TestDataSourceUserSyncer:
 
     @staticmethod
     def _gen_user_leaders_from_raw_users(raw_users: List[RawDataSourceUser]) -> Dict[str, Set[str]]:
-        return {u.code: {ld.code for ld in u.leaders} for u in raw_users if u.leaders}
+        return {u.code: set(u.leaders) for u in raw_users if u.leaders}
 
     @staticmethod
     def _gen_user_leaders_from_db(data_source_users: List[DataSourceUser]) -> Dict[str, Set[str]]:
@@ -258,7 +258,7 @@ class TestDataSourceUserSyncer:
 
     @staticmethod
     def _gen_user_depts_from_raw_users(raw_users: List[RawDataSourceUser]) -> Dict[str, Set[str]]:
-        return {u.code: {dept.code for dept in u.departments} for u in raw_users if u.departments}
+        return {u.code: set(u.departments) for u in raw_users if u.departments}
 
     @staticmethod
     def _gen_user_depts_from_db(data_source_users: List[DataSourceUser]) -> Dict[str, Set[str]]:
@@ -329,7 +329,7 @@ class TestTenantUserSyncer:
         # 另外的数据源同步到租户的数据
         other_ds_user = DataSourceUser.objects.create(
             data_source=bare_general_data_source,
-            code="Employee-201",
+            code="libai",
             username="libai",
             full_name="李白",
             email="libai@m.com",
@@ -351,11 +351,12 @@ class TestTenantUserSyncer:
 
         # 更新场景
         DataSourceUser.objects.filter(
-            data_source=full_local_data_source, code__in=["Employee-9", "Employee-10"]
+            data_source=full_local_data_source,
+            code__in=["yangjiu", "lushi"],
         ).delete()
         DataSourceUser.objects.create(
             data_source=full_local_data_source,
-            code="Employee-20",
+            code="xiaoershi",
             username="xiaoershi",
             full_name="萧二十",
             email="xiaoershi@m.com",
