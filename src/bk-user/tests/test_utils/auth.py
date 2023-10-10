@@ -14,7 +14,6 @@ from typing import Optional
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.auth.models import User
-from bkuser.plugins.constants import DataSourcePluginEnum
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import DEFAULT_TENANT
 
@@ -25,24 +24,21 @@ def create_user(username: Optional[str] = None) -> User:
     user, _ = User.objects.get_or_create(username=username)
     user.set_property("tenant_id", DEFAULT_TENANT)
 
-    # 补充数据源用户/租户用户信息
-    data_source, _ = DataSource.objects.get_or_create(
-        owner_tenant_id=DEFAULT_TENANT, plugin_id=DataSourcePluginEnum.LOCAL, name=generate_random_string()
-    )
+    # 获取租户默认的本地数据源
+    data_source = DataSource.objects.get(owner_tenant_id=DEFAULT_TENANT, name="default-local")
 
-    random_string = generate_random_string()
     data_source_user, _ = DataSourceUser.objects.get_or_create(
         username=username,
+        data_source=data_source,
         defaults={
-            "data_source_id": data_source.id,
-            "full_name": random_string,
-            "email": f"{random_string}@qq.com",
+            "full_name": username,
+            "email": f"{username}@qq.com",
             "phone": "13123456789",
         },
     )
 
     TenantUser.objects.get_or_create(
-        data_source_user=data_source_user, tenant_id=DEFAULT_TENANT, data_source_id=data_source.id, id=username
+        tenant_id=DEFAULT_TENANT, id=username, data_source=data_source, data_source_user=data_source_user,
     )
 
     return user
