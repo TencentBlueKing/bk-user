@@ -26,9 +26,7 @@ def create_data_source_departments_with_relations(data_source: DataSource) -> Li
     """
     创建数据源部门，并以首个对象为其余对象的父部门
     """
-    departments = [
-        DataSourceDepartment(data_source_id=data_source.id, name=generate_random_string()) for _ in range(10)
-    ]
+    departments = [DataSourceDepartment(data_source=data_source, name=generate_random_string()) for _ in range(10)]
     DataSourceDepartment.objects.bulk_create(departments)
 
     data_source_departments = list(DataSourceDepartment.objects.filter(data_source=data_source))

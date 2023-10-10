@@ -40,7 +40,7 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
     """
     创建租户用户
     """
-    existed_tenant_users = TenantUser.objects.filter(tenant_id=tenant).values_list("data_source_user_id", flat=True)
+    existed_tenant_users = TenantUser.objects.filter(tenant=tenant).values_list("data_source_user_id", flat=True)
 
     tenant_users = [
         TenantUser(
@@ -53,7 +53,7 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
         if user.id not in existed_tenant_users
     ]
     TenantUser.objects.bulk_create(tenant_users)
-    return list(TenantUser.objects.filter(tenant_id=tenant))
+    return list(TenantUser.objects.filter(tenant=tenant))
 
 
 def create_tenant_departments(
@@ -66,10 +66,10 @@ def create_tenant_departments(
     tenant_departments = [
         TenantDepartment(
             data_source_department=department,
-            data_source_id=department.data_source.id,
+            data_source=department.data_source,
             tenant=tenant,
         )
         for department in data_source_departments
     ]
     TenantDepartment.objects.bulk_create(tenant_departments)
-    return list(TenantDepartment.objects.filter(tenant_id=tenant))
+    return list(TenantDepartment.objects.filter(tenant=tenant))
