@@ -10,8 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List, Optional
 
-from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.utils.uuid import generate_uuid
 
 # 默认租户 ID & 名称
@@ -19,9 +20,7 @@ DEFAULT_TENANT = "default"
 
 
 def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
-    """
-    创建租户
-    """
+    """创建租户 & 初始化默认本地数据源"""
     tenant, _ = Tenant.objects.get_or_create(
         id=tenant_id,
         defaults={
@@ -29,6 +28,11 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
             "is_default": bool(tenant_id == DEFAULT_TENANT),
             "feature_flags": {"user_number_visible": True},
         },
+    )
+
+     # 补充数据源用户/租户用户信息
+    DataSource.objects.get_or_create(
+        owner_tenant_id=tenant_id, plugin_id=DataSourcePluginEnum.LOCAL, name="default-local"
     )
     return tenant
 
