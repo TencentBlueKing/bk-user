@@ -37,11 +37,10 @@ def default_tenant() -> Tenant:
 @pytest.fixture()
 def random_tenant() -> Tenant:
     """生成随机租户"""
-    tenant_id = generate_random_string()
-    return create_tenant(tenant_id)
+    return create_tenant(generate_random_string())
 
 
 @pytest.fixture()
-def bk_user() -> User:
+def bk_user(default_tenant) -> User:
     """生成随机用户"""
     return create_user()
