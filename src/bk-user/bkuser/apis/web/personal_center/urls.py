@@ -17,18 +17,20 @@ urlpatterns = [
     path(
         "current-natural-user/",
         views.NaturalUserTenantUserListApi.as_view(),
-        name="person_center.current_natural_user",
+        name="personal_center.current_natural_user",
     ),
     # 租户用户详情
-    path("tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="person_center.tenant_users.retrieve"),
+    path(
+        "tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="personal_center.tenant_users.retrieve"
+    ),
     path(
         "tenant-users/<str:id>/phone/",
         views.TenantUserPhoneUpdateApi.as_view(),
-        name="person_center.tenant_users.phone.patch",
+        name="personal_center.tenant_users.phone.update",
     ),
     path(
         "tenant-users/<str:id>/email/",
         views.TenantUserEmailUpdateApi.as_view(),
-        name="person_center.tenant_users.email.patch",
+        name="personal_center.tenant_users.email.update",
     ),
 ]

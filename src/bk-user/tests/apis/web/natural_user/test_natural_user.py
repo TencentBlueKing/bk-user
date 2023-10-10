@@ -35,7 +35,7 @@ class TestNaturalUserTenantUserListApi:
         绑定自然人的情况
         """
 
-        resp = api_client.get(reverse("person_center.current_natural_user"))
+        resp = api_client.get(reverse("personal_center.current_natural_user"))
         assert resp.status_code == status.HTTP_200_OK
 
         assert natural_user.id == resp.data["id"]
@@ -74,7 +74,7 @@ class TestNaturalUserTenantUserListApi:
         未绑定自然人的情况
         """
 
-        resp = api_client.get(reverse("person_center.current_natural_user"))
+        resp = api_client.get(reverse("personal_center.current_natural_user"))
         assert resp.status_code == status.HTTP_200_OK
 
         # 未绑定自然人，返回的自然人信息为当前登录租户用户的ID和full_name
@@ -163,7 +163,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         绑定自然人情况下，可以随机访问
         """
         tenant_user = random.choice(tenant_users)
-        resp = api_client.get(reverse("person_center.tenant_users.retrieve", kwargs={"id": tenant_user.id}))
+        resp = api_client.get(reverse("personal_center.tenant_users.retrieve", kwargs={"id": tenant_user.id}))
         assert resp.status_code == status.HTTP_200_OK
         # 常规属性检查
         self._check_general_property(tenant_user, resp.data)
@@ -173,7 +173,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         self._check_departments(tenant_user, resp.data["departments"])
 
         random_user = random.choice(random_tenant_users)
-        resp = api_client.get(reverse("person_center.tenant_users.retrieve", kwargs={"id": random_user.id}))
+        resp = api_client.get(reverse("personal_center.tenant_users.retrieve", kwargs={"id": random_user.id}))
         assert resp.status_code == status.HTTP_200_OK
         self._check_general_property(random_user, resp.data)
         self._check_leaders(random_user, resp.data["leaders"])
@@ -183,7 +183,9 @@ class TestNaturalUserTenantUserRetrieveApi:
         """
         未捆绑自然人情况下，测试和当前用户非同一数据源用户的租户详情
         """
-        resp = api_client.get(reverse("person_center.tenant_users.retrieve", kwargs={"id": additional_tenant_user.id}))
+        resp = api_client.get(
+            reverse("personal_center.tenant_users.retrieve", kwargs={"id": additional_tenant_user.id})
+        )
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
     def test_retrieve_additional_tenant_user_from_additional_natural_user(
@@ -196,14 +198,16 @@ class TestNaturalUserTenantUserRetrieveApi:
         绑定自然人情况下，测试和当前用户非同一自然人用户的租户详情
         """
 
-        resp = api_client.get(reverse("person_center.tenant_users.retrieve", kwargs={"id": additional_tenant_user.id}))
+        resp = api_client.get(
+            reverse("personal_center.tenant_users.retrieve", kwargs={"id": additional_tenant_user.id})
+        )
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
 class TestTenantUserChangeEmail:
     def _call_update_email_api(self, api_client: APIClient, tenant_user_id: str, email_data: Dict):
         return api_client.patch(
-            reverse("person_center.tenant_users.email.patch", kwargs={"id": tenant_user_id}),
+            reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user_id}),
             data=email_data,
         )
 
@@ -315,7 +319,7 @@ class TestTenantUserChangeEmail:
 class TestTenantUserChangePhone:
     def _call_update_tenant_user_phone_api(self, api_client: APIClient, tenant_user_id: str, phone_data: Dict):
         return api_client.patch(
-            reverse("person_center.tenant_users.phone.patch", kwargs={"id": tenant_user_id}),
+            reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user_id}),
             data=phone_data,
         )
 

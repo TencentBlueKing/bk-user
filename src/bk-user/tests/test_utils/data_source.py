@@ -59,7 +59,7 @@ def create_data_source_users_with_relations(
             username=generate_random_string(),
             email=f"{generate_random_string()}@qq.com",
             phone="13123456789",
-            data_source_id=data_source.id,
+            data_source=data_source,
         )
         for _ in range(10)
     ]

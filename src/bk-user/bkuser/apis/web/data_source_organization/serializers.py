@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserSearchInputSLZ(serializers.Serializer):
-    username = serializers.CharField(required=False, help_text="用户名", allow_blank=True)
+    username = serializers.CharField(help_text="用户名", required=False, allow_blank=True)
 
 
 class DataSourceSearchDepartmentsOutputSLZ(serializers.Serializer):
@@ -39,7 +39,7 @@ class DataSourceSearchDepartmentsOutputSLZ(serializers.Serializer):
 class UserSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户ID")
     username = serializers.CharField(help_text="用户名")
-    full_name = serializers.CharField(help_text="全名")
+    full_name = serializers.CharField(help_text="姓名")
     phone = serializers.CharField(help_text="手机号")
     email = serializers.CharField(help_text="邮箱")
     departments = serializers.SerializerMethodField(help_text="用户部门")
@@ -105,7 +105,7 @@ class LeaderSearchOutputSLZ(serializers.Serializer):
 
 
 class DepartmentSearchInputSLZ(serializers.Serializer):
-    name = serializers.CharField(required=False, help_text="部门名称", allow_blank=True)
+    name = serializers.CharField(help_text="部门名称", required=False, allow_blank=True)
 
 
 class DepartmentSearchOutputSLZ(serializers.Serializer):
@@ -125,7 +125,7 @@ class UserLeaderOutputSLZ(serializers.Serializer):
 
 class UserRetrieveOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")
-    full_name = serializers.CharField(help_text="全名")
+    full_name = serializers.CharField(help_text="姓名")
     email = serializers.CharField(help_text="邮箱")
     phone_country_code = serializers.CharField(help_text="手机区号")
     phone = serializers.CharField(help_text="手机号")

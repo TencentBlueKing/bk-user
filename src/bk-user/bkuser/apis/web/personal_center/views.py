@@ -8,19 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Dict
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.web.person_center.serializers import (
+from bkuser.apis.web.personal_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.natural_user import NaturalUserWithTenantUsers, NatureUserHandler, TenantBaseInfo, TenantUserBaseInfo
+from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePutAPIViewMixin
@@ -30,7 +31,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
     pagination_class = None
 
     @swagger_auto_schema(
-        tags=["person_center"],
+        tags=["personal_center"],
         operation_description="个人中心-关联账户列表",
         responses={status.HTTP_200_OK: NaturalUserWithTenantUserListOutputSLZ()},
     )
@@ -40,31 +41,30 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         # 获取当前登录的租户用户的自然人:两种情况绑定、未绑定，在函数中做处理
         nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(current_tenant_user_id)
 
-        # 将当前登录置顶
-        # 通过比对租户用户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
         tenant_users = TenantUser.objects.select_related("data_source_user").filter(
             data_source_user_id__in=nature_user.data_source_user_ids
         )
 
-        # FIXME:这里后续数据量可能会很大，需要更优的处理方式 / 或者接口增加一个返回字段is_login 做当前登录用户的标识
+        # 将当前登录置顶
+        # 通过比对租户用户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
         sorted_tenant_users = sorted(tenant_users, key=lambda t: t.id != current_tenant_user_id)
 
         # 响应数据组装
-        nature_user_with_tenant_users = NaturalUserWithTenantUsers(
-            id=nature_user.id,
-            full_name=nature_user.full_name,
-            tenant_users=[
-                TenantUserBaseInfo(
-                    id=user.id,
-                    username=user.data_source_user.username,
-                    full_name=user.data_source_user.full_name,
-                    tenant=TenantBaseInfo(id=user.tenant_id, name=user.tenant.name),
-                )
+        response_data: Dict = {
+            "id": nature_user.id,
+            "full_name": nature_user.full_name,
+            "tenant_users": [
+                {
+                    "id": user.id,
+                    "username": user.data_source_user.username,
+                    "full_name": user.data_source_user.full_name,
+                    "tenant": {"id": user.tenant_id, "name": user.tenant.name},
+                }
                 for user in sorted_tenant_users
             ],
-        )
+        }
 
-        return Response(NaturalUserWithTenantUserListOutputSLZ(nature_user_with_tenant_users).data)
+        return Response(NaturalUserWithTenantUserListOutputSLZ(response_data).data)
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
@@ -73,7 +73,7 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
-        tags=["person_center"],
+        tags=["personal_center"],
         operation_description="个人中心-关联账户详情",
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
@@ -96,7 +96,7 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     lookup_url_kwarg = "id"
 
     @swagger_auto_schema(
-        tags=["person_center"],
+        tags=["personal_center"],
         operation_description="租户用户更新手机号",
         request_body=TenantUserPhoneUpdateInputSLZ,
         responses={status.HTTP_200_OK: ""},
@@ -112,10 +112,15 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         if instance.data_source_user_id not in nature_user.data_source_user_ids:
             raise error_codes.NO_PERMISSION
 
-        input_slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
-        input_slz.is_valid(raise_exception=True)
+        slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
-        phone_info = TenantUserPhoneInfo(**input_slz.validated_data)
+        data = slz.validated_data
+        phone_info = TenantUserPhoneInfo(
+            is_inherited_phone=data["is_inherited_phone"],
+            custom_phone=data.get("custom_phone", ""),
+            custom_phone_country_code=data["custom_phone_country_code"],
+        )
         TenantUserHandler.update_tenant_user_phone(instance, phone_info)
 
         return Response()
@@ -126,7 +131,7 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     lookup_url_kwarg = "id"
 
     @swagger_auto_schema(
-        tags=["person_center"],
+        tags=["personal_center"],
         operation_description="租户用户更新手机号",
         request_body=TenantUserEmailUpdateInputSLZ,
         responses={status.HTTP_200_OK: ""},
@@ -142,10 +147,13 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         if instance.data_source_user_id not in nature_user.data_source_user_ids:
             raise error_codes.NO_PERMISSION
 
-        input_slz = TenantUserEmailUpdateInputSLZ(data=request.data)
-        input_slz.is_valid(raise_exception=True)
+        slz = TenantUserEmailUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
-        email_info = TenantUserEmailInfo(**input_slz.validated_data)
+        data = slz.validated_data
+        email_info = TenantUserEmailInfo(
+            is_inherited_email=data["is_inherited_email"], custom_email=data.get("custom_email", "")
+        )
         TenantUserHandler.update_tenant_user_email(instance, email_info)
 
         return Response()

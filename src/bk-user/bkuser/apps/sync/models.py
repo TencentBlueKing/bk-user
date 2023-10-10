@@ -66,7 +66,7 @@ class DataSourceUserChangeLog(TimestampedModel):
     # 数据源原始数据
     user_code = models.CharField("用户唯一标识", max_length=128)
     username = models.CharField("用户名", max_length=128)
-    full_name = models.CharField("用户全名", max_length=128)
+    full_name = models.CharField("用户姓名", max_length=128)
 
 
 class DataSourceDepartmentChangeLog(TimestampedModel):
@@ -125,7 +125,7 @@ class TenantUserChangeLog(TimestampedModel):
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     user_id = models.CharField("用户 ID", max_length=64)
     username = models.CharField("用户名", max_length=128)
-    full_name = models.CharField("用户全名", max_length=128)
+    full_name = models.CharField("用户姓名", max_length=128)
 
 
 class TenantDepartmentChangeLog(TimestampedModel):

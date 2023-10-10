@@ -17,28 +17,10 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.error_codes import error_codes
 
 
-class TenantBaseInfo(BaseModel):
-    id: str
-    name: str
-
-
-class TenantUserBaseInfo(BaseModel):
-    id: str
-    username: str
-    full_name: str
-    tenant: TenantBaseInfo
-
-
 class NaturalUserInfo(BaseModel):
     id: str
     full_name: str
     data_source_user_ids: List[int]
-
-
-class NaturalUserWithTenantUsers(BaseModel):
-    id: str
-    full_name: str
-    tenant_users: List[TenantUserBaseInfo]
 
 
 class NatureUserHandler:

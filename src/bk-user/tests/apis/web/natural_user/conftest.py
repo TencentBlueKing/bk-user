@@ -34,9 +34,11 @@ def data_source_departments(default_tenant) -> List[DataSourceDepartment]:
     """
     根据测试数据源，创建测试数据源部门
     """
-    data_source = DataSource.objects.filter(
-        owner_tenant_id=default_tenant.id, plugin_id=DataSourcePluginEnum.LOCAL
-    ).first()
+    data_source = DataSource.objects.get(
+        owner_tenant_id=default_tenant.id,
+        name=f"{default_tenant.id}-default-local",
+        plugin_id=DataSourcePluginEnum.LOCAL,
+    )
     return create_data_source_departments_with_relations(data_source)
 
 
@@ -45,9 +47,11 @@ def data_source_users(default_tenant, data_source_departments) -> List[DataSourc
     """
     根据测试数据源，创建测试数据源用户
     """
-    data_source = DataSource.objects.filter(
-        owner_tenant_id=default_tenant.id, plugin_id=DataSourcePluginEnum.LOCAL
-    ).first()
+    data_source = DataSource.objects.get(
+        owner_tenant_id=default_tenant.id,
+        name=f"{default_tenant.id}-default-local",
+        plugin_id=DataSourcePluginEnum.LOCAL,
+    )
     return create_data_source_users_with_relations(data_source, data_source_departments)
 
 
@@ -96,15 +100,17 @@ def additional_data_source_user(default_tenant) -> DataSourceUser:
     """
     根据测试数据源，创建额外的数据源用户
     """
-    data_source = DataSource.objects.filter(
+    data_source = DataSource.objects.get(
         owner_tenant_id=default_tenant.id,
-    ).first()
+        name=f"{default_tenant.id}-default-local",
+        plugin_id=DataSourcePluginEnum.LOCAL,
+    )
     return DataSourceUser.objects.create(
         full_name=generate_random_string(),
         username=generate_random_string,
         email=f"{generate_random_string()}@qq.com",
         phone="13123456789",
-        data_source_id=data_source.id,
+        data_source=data_source,
     )
 
 
@@ -116,7 +122,7 @@ def additional_tenant_user(random_tenant, additional_data_source_user) -> Tenant
     return TenantUser.objects.create(
         data_source_user=additional_data_source_user,
         data_source=additional_data_source_user.data_source,
-        tenant_id=random_tenant,
+        tenant=random_tenant,
         id=generate_uuid(),
     )
 

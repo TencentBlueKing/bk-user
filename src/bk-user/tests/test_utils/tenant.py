@@ -30,7 +30,6 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         },
     )
 
-     # 补充数据源用户/租户用户信息
     DataSource.objects.get_or_create(
         owner_tenant_id=tenant_id, plugin_id=DataSourcePluginEnum.LOCAL, name=f"{tenant_id}-default-local"
     )

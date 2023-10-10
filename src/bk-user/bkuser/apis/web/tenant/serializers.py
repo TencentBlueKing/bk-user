@@ -111,7 +111,7 @@ class TenantCreateOutputSLZ(serializers.Serializer):
 
 
 class TenantSearchInputSLZ(serializers.Serializer):
-    name = serializers.CharField(required=False, help_text="租户名", allow_blank=True)
+    name = serializers.CharField(help_text="租户名", required=False, allow_blank=True)
 
 
 class TenantSearchManagerOutputSLZ(serializers.Serializer):
