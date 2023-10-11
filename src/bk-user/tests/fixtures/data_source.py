@@ -146,8 +146,19 @@ def full_local_data_source(bare_local_data_source) -> DataSource:
 
 @pytest.fixture()
 def general_ds_plugin_cfg() -> Dict[str, Any]:
-    # TODO (su) 预设通用 HTTP 数据源的插件配置
-    return {"TODO": "TODO"}
+    return {
+        "server_config": {
+            "server_base_url": "http://bk.example.com:8090",
+            "user_api_path": "/api/v1/users",
+            "department_api_path": "/api/v1/departments",
+            "request_timeout": 5,
+            "retries": 3,
+        },
+        "auth_config": {
+            "method": "bearer_token",
+            "bearer_token": "123456",
+        },
+    }
 
 
 @pytest.fixture()

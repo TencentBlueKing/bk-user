@@ -8,15 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
+from pathlib import Path
 
 
-class DataSourceSyncError(Exception):
-    """数据源同步失败"""
+def load_image_as_base64(image_path: Path) -> str:
+    """加载指定的 PNG 图片文件，并转换成 base64 字符串"""
+    if not image_path.suffix == ".png":
+        raise ValueError("only PNG image supported")
 
+    with open(image_path, "rb") as f:
+        content = base64.b64encode(f.read()).decode("utf-8")
 
-class UserLeaderNotExists(DataSourceSyncError):
-    """直接上级数据不存在"""
-
-
-class UserDepartmentNotExists(DataSourceSyncError):
-    """部门数据不存在"""
+    return "data:image/png;base64," + content

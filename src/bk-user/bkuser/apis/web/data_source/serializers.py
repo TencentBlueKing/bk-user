@@ -259,8 +259,8 @@ class LocalDataSourceImportInputSLZ(serializers.Serializer):
     incremental = serializers.BooleanField(help_text="是否使用增量同步", default=False)
 
 
-class LocalDataSourceImportOutputSLZ(serializers.Serializer):
-    """本地数据源导入结果"""
+class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
+    """数据源导入/同步结果"""
 
     task_id = serializers.CharField(help_text="任务 ID")
     status = serializers.CharField(help_text="任务状态")

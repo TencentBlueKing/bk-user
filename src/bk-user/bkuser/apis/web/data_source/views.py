@@ -22,6 +22,7 @@ from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apis.web.data_source.serializers import (
     DataSourceCreateInputSLZ,
     DataSourceCreateOutputSLZ,
+    DataSourceImportOrSyncOutputSLZ,
     DataSourcePluginDefaultConfigOutputSLZ,
     DataSourcePluginOutputSLZ,
     DataSourceRetrieveOutputSLZ,
@@ -32,7 +33,6 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
     LocalDataSourceImportInputSLZ,
-    LocalDataSourceImportOutputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
@@ -294,7 +294,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         tags=["data_source"],
         operation_description="本地数据源用户数据导入",
         request_body=LocalDataSourceImportInputSLZ(),
-        responses={status.HTTP_200_OK: LocalDataSourceImportOutputSLZ()},
+        responses={status.HTTP_200_OK: DataSourceImportOrSyncOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
         """从 Excel 导入数据源用户数据"""
@@ -310,13 +310,14 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         try:
             workbook = openpyxl.load_workbook(data["file"])
         except Exception:  # pylint: disable=broad-except
-            logger.exception("本地数据源导入失败")
+            logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(_("文件格式异常"))
 
         options = DataSourceSyncOptions(
             operator=request.user.username,
             overwrite=data["overwrite"],
             incremental=data["incremental"],
+            # FIXME (su) 本地数据源导入也要改成异步行为，但是要解决 excel 如何传递的问题
             async_run=False,
             trigger=SyncTaskTrigger.MANUAL,
         )
@@ -329,16 +330,43 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
         return Response(
-            LocalDataSourceImportOutputSLZ(
+            DataSourceImportOrSyncOutputSLZ(
                 instance={"task_id": task.id, "status": task.status, "summary": task.summary}
             ).data
         )
 
 
-class DataSourceSyncApi(generics.CreateAPIView):
+class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
     """数据源同步"""
 
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源数据同步",
+        responses={status.HTTP_200_OK: DataSourceImportOrSyncOutputSLZ()},
+    )
     def post(self, request, *args, **kwargs):
         """触发数据源同步任务"""
-        # TODO (su) 实现代码逻辑，注意：本地数据源应该使用导入，而不是同步
-        return Response()
+        data_source = self.get_object()
+        if data_source.is_local:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("本地数据源不支持同步，请使用导入功能"))
+
+        # 同步策略：手动点击页面按钮，会触发全量覆盖的同步，且该同步是异步行为
+        options = DataSourceSyncOptions(
+            operator=request.user.username,
+            overwrite=True,
+            incremental=False,
+            async_run=True,
+            trigger=SyncTaskTrigger.MANUAL,
+        )
+
+        try:
+            task = DataSourceSyncManager(data_source, options).execute()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception("数据源 %s 同步失败", data_source.id)
+            raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
+
+        return Response(
+            DataSourceImportOrSyncOutputSLZ(
+                instance={"task_id": task.id, "status": task.status, "summary": task.summary}
+            ).data
+        )

@@ -16,25 +16,25 @@ from bkuser.utils.base64 import load_image_as_base64
 
 
 def forwards_func(apps, schema_editor):
-    """初始化本地数据源插件"""
+    """初始化通用数据源插件"""
 
     DataSourcePlugin = apps.get_model("data_source", "DataSourcePlugin")
-    if DataSourcePlugin.objects.filter(id=DataSourcePluginEnum.LOCAL).exists():
+    if DataSourcePlugin.objects.filter(id=DataSourcePluginEnum.GENERAL).exists():
         return
 
     # TODO 插件名称，描述国际化
     DataSourcePlugin.objects.create(
-        id=DataSourcePluginEnum.LOCAL,
-        name=DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL),
-        description="支持用户和部门的增删改查，以及用户的登录认证",
-        logo=load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/local/logo.png"),
+        id=DataSourcePluginEnum.GENERAL,
+        name=DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.GENERAL),
+        description="支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据` API",
+        logo=load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/general/logo.png"),
     )
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_source', '0001_initial'),
+        ('data_source', '0006_departmentrelationmptttree'),
     ]
 
     operations = [

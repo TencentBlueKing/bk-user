@@ -24,7 +24,7 @@ from bkuser.apps.data_source.models import (
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.sync.converters import DataSourceUserConverter
-from bkuser.apps.sync.exceptions import UserLeaderNotExists
+from bkuser.apps.sync.exceptions import UserDepartmentNotExists, UserLeaderNotExists
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
@@ -198,6 +198,15 @@ class DataSourceUserSyncer:
 
         if not_exists_leaders := raw_leader_codes - user_codes:
             raise UserLeaderNotExists(_("缺少用户上级：{} 信息").format(", ".join(not_exists_leaders)))
+
+        # 数据源部门会先于用户同步，因此这里取到的就是所有可用的数据源部门 code
+        exists_dept_codes = set(
+            DataSourceDepartment.objects.filter(data_source=self.data_source).values_list("code", flat=True)
+        )
+        raw_user_dept_codes = {dept_code for user in self.raw_users for dept_code in user.departments}
+        # 需要确保带同步的 用户-部门 关系中的部门都是存在的
+        if not_exists_depts := raw_user_dept_codes - exists_dept_codes:
+            raise UserDepartmentNotExists(_("缺少用户部门：{} 信息").format(", ".join(not_exists_depts)))
 
     def _sync_users(self):
         user_codes = set(DataSourceUser.objects.filter(data_source=self.data_source).values_list("code", flat=True))
