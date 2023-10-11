@@ -89,12 +89,12 @@
               <div class="input-container">
                 <label v-if="fieldsInfor.type === 'one_enum'" class="king-radio">
                   <input
-                    name="eg" type="radio" :value="index"
-                    v-model="fieldsInfor.default" :class="{ 'is-checked': fieldsInfor.default === index }"
+                    name="eg" type="radio" :value="item.id"
+                    v-model="fieldsInfor.default" :class="{ 'is-checked': fieldsInfor.default === item.id }"
                     @input="handleInput">
                 </label>
                 <label v-else class="king-checkbox king-checkbox-small">
-                  <input name="egCheckbox" type="checkbox" :value="index" v-model="fieldsInfor.default">
+                  <input name="egCheckbox" type="checkbox" :value="item.id" v-model="fieldsInfor.default">
                 </label>
               </div>
             </div>
@@ -342,7 +342,7 @@ export default {
         return;
       }
       const param = {
-        id: this.fieldsInfor.options.length,
+        id: this.fieldsInfor.options[this.fieldsInfor.options.length - 1].id + 1,
         value: '',
         isErrorValue: false,
       };
