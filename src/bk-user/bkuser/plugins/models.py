@@ -15,6 +15,14 @@ from pydantic import BaseModel
 from bkuser.plugins.constants import DataSourceSyncPeriod
 
 
+class PluginMetadata(BaseModel):
+    """插件基本信息"""
+
+    id: str
+    name: str
+    description: str
+
+
 class RawDataSourceUser(BaseModel):
     """原始数据源用户信息"""
 

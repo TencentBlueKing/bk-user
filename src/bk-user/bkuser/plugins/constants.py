@@ -11,6 +11,9 @@ specific language governing permissions and limitations under the License.
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
+# 非内置插件，必须以指定前缀开头
+CUSTOM_PLUGIN_ID_PREFIX = "custom_"
+
 
 class DataSourcePluginEnum(str, StructuredEnum):
     """数据源插件枚举"""

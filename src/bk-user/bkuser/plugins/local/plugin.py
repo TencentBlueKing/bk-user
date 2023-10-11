@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from openpyxl.workbook import Workbook
 
 from bkuser.plugins.base import BaseDataSourcePlugin
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
 from bkuser.plugins.models import (
@@ -26,6 +27,7 @@ from bkuser.plugins.models import (
 class LocalDataSourcePlugin(BaseDataSourcePlugin):
     """本地数据源插件"""
 
+    id = DataSourcePluginEnum.LOCAL
     config_class = LocalDataSourcePluginConfig
 
     def __init__(self, plugin_config: LocalDataSourcePluginConfig, workbook: Workbook):

@@ -34,3 +34,5 @@ app.conf.task_queues = [
 ]
 
 app.conf.task_default_queue = "bkuser"
+
+app.conf.beat_scheduler = "django_celery_beat.schedulers:DatabaseScheduler"

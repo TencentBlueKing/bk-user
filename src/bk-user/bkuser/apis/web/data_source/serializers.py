@@ -104,9 +104,6 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         return field_mapping
 
     def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
-        if not sync_config:
-            return sync_config
-
         try:
             DataSourceSyncConfig(**sync_config)
         except PDValidationError as e:
@@ -194,9 +191,6 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         return field_mapping
 
     def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
-        if not sync_config:
-            return sync_config
-
         try:
             DataSourceSyncConfig(**sync_config)
         except PDValidationError as e:

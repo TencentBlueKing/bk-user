@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 from django.utils.translation import gettext_lazy as _
 
 from bkuser.plugins.base import BaseDataSourcePlugin
+from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.constants import AuthMethod
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
 from bkuser.plugins.general.http import fetch_all_data, fetch_first_item
@@ -31,6 +32,7 @@ logger = logging.getLogger(__name__)
 class GeneralDataSourcePlugin(BaseDataSourcePlugin):
     """通用 HTTP 数据源插件"""
 
+    id = DataSourcePluginEnum.GENERAL
     config_class = GeneralDataSourcePluginConfig
 
     def __init__(self, plugin_config: GeneralDataSourcePluginConfig):

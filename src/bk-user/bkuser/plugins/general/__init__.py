@@ -10,8 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 from bkuser.plugins.base import register_plugin
-from bkuser.plugins.constants import DataSourcePluginEnum
 
 from .plugin import GeneralDataSourcePlugin
 
-register_plugin(DataSourcePluginEnum.GENERAL, GeneralDataSourcePlugin)
+register_plugin(GeneralDataSourcePlugin)
