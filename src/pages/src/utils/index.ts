@@ -189,3 +189,42 @@ export function passwordNotAllowedMap(value: any) {
     .map(([key]) => passwordNotAllowed[key]);
   return list.join('，');
 };
+
+// DOM 距离顶部的高度
+export const getOffset = (target: HTMLElement) => {
+  let totalLeft = 0;
+  let totalTop = 0;
+  let par = target.offsetParent as HTMLElement;
+  totalLeft += target.offsetLeft;
+  totalTop += target.offsetTop;
+  while (par) {
+    if (navigator.userAgent.indexOf('MSIE 8.0') === -1) {
+      // 不是IE8我们才进行累加父级参照物的边框
+      totalTop += par.clientTop;
+      totalLeft += par.clientLeft;
+    }
+    totalTop += par.offsetTop;
+    totalLeft += par.offsetLeft;
+    par = par.offsetParent as HTMLElement;
+  }
+  return { left: totalLeft, top: totalTop };
+};
+
+// 表格根据页面高度自适应每页显示数量
+export const currentLimit = (top: number, pagination: any, rowHeight?: number) => {
+  const windowInnerHeight = window.innerHeight;
+  const tableHeaderHeight = 42;
+  const paginationHeight = 60;
+  const pageOffsetBottom = 24;
+  const tableRowHeight = rowHeight ? rowHeight : 42;
+
+  const tableRowTotalHeight = windowInnerHeight - top - tableHeaderHeight - paginationHeight - pageOffsetBottom;
+
+  const rowNum = Math.max(Math.floor(tableRowTotalHeight / tableRowHeight), 2);
+  const pageLimit = new Set([
+    ...pagination.limitList,
+    rowNum,
+  ]);
+  const list = [...pageLimit].sort((a, b) => a - b);
+  return { list, rowNum };
+};
