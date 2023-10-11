@@ -22,7 +22,7 @@
       <div class="content-item">
         <p class="item-title">基础信息</p>
         <bk-form-item label="数据源名称" property="name" required>
-          <bk-input style="width: 560px;" v-model="formData.name" :disabled="isDisabled" @change="handleChange" />
+          <bk-input style="width: 560px;" v-model="formData.name" :disabled="isDisabled" @focus="handleChange" />
         </bk-form-item>
         <bk-form-item label="" required>
           <bk-checkbox v-model="formData.config.enable_account_password_login" @change="handleChange">

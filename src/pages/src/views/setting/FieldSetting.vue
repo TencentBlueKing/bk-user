@@ -148,8 +148,8 @@ const getFieldsList = async () => {
     isLoading.value = true;
     tableData.value = [];
     const res = await getFields();
-    const { builtin_fields, custom_fields } = res.data || {};
-    [builtin_fields, custom_fields].forEach((fields, index) => {
+    const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
+    [builtinFields, customFields].forEach((fields, index) => {
       fields.forEach((item) => {
         item.builtin = index === 0;
         tableData.value.push(item);
