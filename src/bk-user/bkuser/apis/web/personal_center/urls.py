@@ -8,17 +8,29 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
+from django.urls import path
+
+from . import views
 
 urlpatterns = [
-    # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
-    path("basic/", include("bkuser.apis.web.basic.urls")),
-    # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source_organization.urls")),
-    # 个人中心
-    path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
-    path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
+    # 关联用户列表
+    path(
+        "current-natural-user/",
+        views.NaturalUserTenantUserListApi.as_view(),
+        name="personal_center.current_natural_user",
+    ),
+    # 租户用户详情
+    path(
+        "tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="personal_center.tenant_users.retrieve"
+    ),
+    path(
+        "tenant-users/<str:id>/phone/",
+        views.TenantUserPhoneUpdateApi.as_view(),
+        name="personal_center.tenant_users.phone.update",
+    ),
+    path(
+        "tenant-users/<str:id>/email/",
+        views.TenantUserEmailUpdateApi.as_view(),
+        name="personal_center.tenant_users.email.update",
+    ),
 ]

@@ -8,17 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import include, path
+from typing import List
 
-urlpatterns = [
-    # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
-    path("basic/", include("bkuser.apis.web.basic.urls")),
-    # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
-    path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source_organization.urls")),
-    # 个人中心
-    path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
-    path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
-]
+from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation, NaturalUser
+from tests.test_utils.helpers import generate_random_string
+
+
+def create_natural_user_with_bind_data_source_users(data_source_users: List[DataSourceUser]) -> NaturalUser:
+    natural_user = NaturalUser.objects.create(full_name=generate_random_string())
+    relations = [
+        DataSourceUserNaturalUserRelation(natural_user=natural_user, data_source_user=user)
+        for user in data_source_users
+    ]
+    DataSourceUserNaturalUserRelation.objects.bulk_create(relations)
+    return natural_user
