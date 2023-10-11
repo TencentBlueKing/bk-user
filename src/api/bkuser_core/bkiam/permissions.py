@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import regex
 from django.conf import settings
@@ -41,7 +41,6 @@ def _parse_department_path(data):
     return field_map[the_last_of_path[0]], int(the_last_of_path[1])
 
 
-# NOTE: not used, only in unittest
 CATEGORY_KEY_MAPPING = {"category.id": "id"}
 
 PROFILE_KEY_MAPPING = {"department._bk_iam_path_": _parse_department_path}
@@ -65,7 +64,7 @@ class Permission:
         self.helper = IAMHelper()
 
     # FIXME: 重构, 写注释, 写测试
-    def make_filter_of_category(self, operator: str, action_id: IAMAction):
+    def _make_filter(self, operator: str, action_id: IAMAction, key_mapping: Optional[Dict] = None):
         if not self.iam_enabled:
             return None
 
@@ -74,49 +73,30 @@ class Permission:
         fs = Permission().helper.iam.make_filter(
             iam_request,
             converter_class=PathIgnoreDjangoQSConverter,
-            key_mapping={"category.id": "category_id"},
+            key_mapping=key_mapping,
         )
         if not fs:
             raise IAMPermissionDenied(
                 detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
+                extra_info=IAMPermissionExtraInfo.from_action(operator, action_id.value).to_dict(),
             )
         return fs
+
+    def make_filter_of_category(self, operator: str, action_id: IAMAction, category_id_key: str = "category_id"):
+        # NOTE: 这里不是给category自己用的, 而是给外检关联表用的, 所以category.id -> category_id
+        return self._make_filter(operator, action_id, {"category.id": category_id_key})
+
+    def make_category_filter(self, operator: str, action_id: IAMAction):
+        # NOTE: 这里是给category自己用的, 所以category.id -> id
+        return self._make_filter(operator, action_id, CATEGORY_KEY_MAPPING)
 
     def make_filter_of_department(self, operator: str, action_id: IAMAction):
-        if not self.iam_enabled:
-            return None
-
-        iam_request = self.helper.make_request_without_resources(username=operator, action_id=action_id)
         # NOTE: 这里给多对多的profile-department用的, 所以解析出来是department.id
-        fs = Permission().helper.iam.make_filter(
-            iam_request,
-            converter_class=PathIgnoreDjangoQSConverter,
-            key_mapping=PROFILE_KEY_MAPPING,
-        )
-        if not fs:
-            raise IAMPermissionDenied(
-                detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
-            )
-        return fs
+        return self._make_filter(operator, action_id, PROFILE_KEY_MAPPING)
 
     def make_department_filter(self, operator: str, action_id: IAMAction):
-        if not self.iam_enabled:
-            return None
-
-        iam_request = self.helper.make_request_without_resources(username=operator, action_id=action_id)
-        fs = Permission().helper.iam.make_filter(
-            iam_request,
-            converter_class=PathIgnoreDjangoQSConverter,
-            key_mapping=DEPARTMENT_KEY_MAPPING,
-        )
-        if not fs:
-            raise IAMPermissionDenied(
-                detail=_("您没有权限进行该操作，请在权限中心申请。"),
-                extra_info=IAMPermissionExtraInfo.from_action(operator, action_id).to_dict(),
-            )
-        return fs
+        # Note: 过滤Department自身
+        return self._make_filter(operator, action_id, DEPARTMENT_KEY_MAPPING)
 
     def allow_category_action(
         self, operator: str, action_id: IAMAction, category, raise_exception: bool = True
@@ -197,7 +177,6 @@ class Permission:
 # TODO: use with_cache to speed up
 
 
-# pylint: disable=function-name-too-long
 def new_action_without_resource_permission(action_id: IAMAction):
     class ActionWithoutResourcePermission(BasePermission):
         def has_permission(self, request, view):
@@ -229,7 +208,6 @@ def new_department_permission(action_id: IAMAction):
     return DepartmentIdInURLPermission
 
 
-# pylint: disable=function-name-too-long
 def new_department_permission_via_profile(action_id: IAMAction):
     class ProfileIdInURLPermission(BasePermission):
         def has_permission(self, request, view):
