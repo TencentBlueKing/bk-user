@@ -26,6 +26,7 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
+app.autodiscover_tasks(related_name="periodic_tasks")
 
 # set queue ha policy if use rabbitmq
 # default queue name is bkuser

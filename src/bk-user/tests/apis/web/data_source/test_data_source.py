@@ -8,9 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Any, Dict, List
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourceStatus
+from bkuser.apps.data_source.constants import DataSourceStatus, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource
 from bkuser.plugins.constants import DataSourcePluginEnum
 from django.urls import reverse
@@ -23,7 +24,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture()
-def data_source(request, local_ds_plugin, local_ds_plugin_cfg):
+def data_source(request, local_ds_plugin, local_ds_plugin_cfg) -> DataSource:
     # 支持检查是否使用 random_tenant fixture 以生成不属于默认租户的数据源
     tenant_id = DEFAULT_TENANT
     if "random_tenant" in request.fixturenames:
@@ -35,6 +36,22 @@ def data_source(request, local_ds_plugin, local_ds_plugin_cfg):
         plugin=local_ds_plugin,
         plugin_config=local_ds_plugin_cfg,
     )
+
+
+@pytest.fixture()
+def field_mapping(request) -> List[Dict]:
+    """字段映射，不含自定义字段"""
+    fields = ["username", "full_name", "phone_country_code", "phone", "email"]
+    if "tenant_user_custom_fields" in request.fixturenames:
+        fields += [f.name for f in request.getfixturevalue("tenant_user_custom_fields")]
+
+    return [{"source_field": f, "mapping_operation": "direct", "target_field": f} for f in fields]
+
+
+@pytest.fixture()
+def sync_config() -> Dict[str, Any]:
+    """数据源同步配置"""
+    return {"sync_period": 30}
 
 
 class TestDataSourcePluginListApi:
@@ -138,58 +155,101 @@ class TestDataSourceCreateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
 
-    # TODO (su) 支持通用 HTTP 数据源后启用
-    # def test_create_with_field_mappings(self, api_client, general_ds_plugin_config, tenant_user_custom_fields):
-    #     """非本地数据源，需要提供字段映射"""
-    #     resp = api_client.post(
-    #         reverse("data_source.list_create"),
-    #         data={
-    #             "name": generate_random_string(),
-    #             "plugin_id": DataSourcePluginEnum.GENERAL,
-    #             "plugin_config": general_ds_plugin_config,
-    #             "field_mappings": [
-    #                 {
-    #                     "source_field": "uname",
-    #                     "mapping_operation": FieldMappingOperation.DIRECT,
-    #                     "target_field": "username",
-    #                 }
-    #             ],
-    #         },
-    #     )
-    #     assert resp.status_code == status.HTTP_201_CREATED
-    #
-    # def test_create_without_required_field_mapping(self, api_client, general_ds_plugin_config):
-    #     """非本地数据源，需要字段映射配置"""
-    #     resp = api_client.post(
-    #         reverse("data_source.list_create"),
-    #         data={
-    #             "name": generate_random_string(),
-    #             "plugin_id": DataSourcePluginEnum.GENERAL,
-    #             "plugin_config": general_ds_plugin_config,
-    #             "field_mappings": [],
-    #         },
-    #     )
-    #     assert resp.status_code == status.HTTP_400_BAD_REQUEST
-    #     assert "当前数据源类型必须配置字段映射" in resp.data["message"]
-    #
-    # def test_create_with_invalid_field_mappings(self, api_client, general_ds_plugin_config):
-    #     resp = api_client.post(
-    #         reverse("data_source.list_create"),
-    #         data={
-    #             "name": generate_random_string(),
-    #             "plugin_id": DataSourcePluginEnum.GENERAL,
-    #             "plugin_config": general_ds_plugin_config,
-    #             "field_mappings": [
-    #                 {
-    #                     "source_field": "uname",
-    #                     "mapping_operation": FieldMappingOperation.DIRECT,
-    #                     "target_field": "xxx_username",
-    #                 }
-    #             ],
-    #         },
-    #     )
-    #     assert resp.status_code == status.HTTP_400_BAD_REQUEST
-    #     assert "字段映射中的目标字段 xxx_username 不属于用户自定义字段或内置字段" in resp.data["message"]
+    def test_create_general_data_source(
+        self, api_client, general_ds_plugin_cfg, tenant_user_custom_fields, field_mapping, sync_config
+    ):
+        """非本地数据源，需要提供字段映射"""
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.GENERAL,
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+                "sync_config": sync_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
+    def test_create_without_required_field_mapping(self, api_client, general_ds_plugin_cfg, sync_config):
+        """非本地数据源，需要字段映射配置"""
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.GENERAL,
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": [],
+                "sync_config": sync_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "当前数据源类型必须配置字段映射" in resp.data["message"]
+
+    def test_create_with_invalid_field_mapping_case_not_allowed_field(self, api_client, general_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.GENERAL,
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": [
+                    {
+                        "source_field": "uname",
+                        "mapping_operation": FieldMappingOperation.DIRECT,
+                        "target_field": "xxx_username",
+                    }
+                ],
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "字段映射中的目标字段 {'xxx_username'} 不属于用户自定义字段或内置字段" in resp.data["message"]
+
+    def test_create_with_invalid_field_mapping_case_missed_field(self, api_client, general_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.GENERAL,
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": [
+                    {
+                        "source_field": "uname",
+                        "mapping_operation": FieldMappingOperation.DIRECT,
+                        "target_field": "username",
+                    }
+                ],
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "缺少字段映射" in resp.data["message"]
+
+    def test_create_without_sync_config(self, api_client, general_ds_plugin_cfg, field_mapping):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.GENERAL,
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "当前数据源类型必须提供同步配置" in resp.data["message"]
+
+    def test_create_with_invalid_sync_config(self, api_client, general_ds_plugin_cfg, field_mapping):
+        resp = api_client.post(
+            reverse("data_source.list_create"),
+            data={
+                "name": generate_random_string(),
+                "plugin_id": DataSourcePluginEnum.GENERAL,
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+                "sync_config": {"sync_period": -1},
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "同步配置不合法：sync_period: Input should be" in resp.data["message"]
 
 
 class TestDataSourceListApi:
@@ -217,28 +277,70 @@ class TestDataSourceListApi:
 
 class TestDataSourceUpdateApi:
     def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_cfg):
+        new_data_source_name = generate_random_string()
         local_ds_plugin_cfg["enable_account_password_login"] = False
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"plugin_config": local_ds_plugin_cfg},
+            data={"name": new_data_source_name, "plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        assert resp.data["name"] == new_data_source_name
         assert resp.data["plugin_config"]["enable_account_password_login"] is False
 
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
         local_ds_plugin_cfg.pop("enable_account_password_login")
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"plugin_config": local_ds_plugin_cfg},
+            data={"name": generate_random_string(), "plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
 
-    def test_update_without_required_field_mapping(self, api_client):
+    def test_update_general_data_source(
+        self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping, sync_config
+    ):
+        resp = api_client.put(
+            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            data={
+                "name": generate_random_string(),
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+                "sync_config": sync_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_update_without_required_field_mapping(
+        self, api_client, bare_general_data_source, general_ds_plugin_cfg, sync_config
+    ):
         """非本地数据源，需要字段映射配置"""
-        # TODO 需要内置非本地的数据源插件后补全测试用例
+        resp = api_client.put(
+            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            data={
+                "name": generate_random_string(),
+                "plugin_config": general_ds_plugin_cfg,
+                "sync_config": sync_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.data["message"] == "参数校验不通过: field_mapping: 当前数据源类型必须配置字段映射"
+
+    def test_update_without_required_sync_config(
+        self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping
+    ):
+        """非本地数据源，需要同步配置"""
+        resp = api_client.put(
+            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            data={
+                "name": generate_random_string(),
+                "plugin_config": general_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.data["message"] == "参数校验不通过: sync_config: 当前数据源类型必须提供同步配置"
 
 
 class TestDataSourceRetrieveApi:

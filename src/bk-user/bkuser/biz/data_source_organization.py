@@ -21,7 +21,6 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.data_source.signals import post_create_data_source_user
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.utils.uuid import generate_uuid
 
@@ -110,9 +109,6 @@ class DataSourceOrganizationHandler:
                 data_source=data_source,
                 id=generate_uuid(),
             )
-
-        # 执行用户初始化账密信息等操作
-        post_create_data_source_user.send(sender=DataSourceOrganizationHandler, data_source=data_source, user=user)
 
         return user.id
 

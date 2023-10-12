@@ -37,7 +37,6 @@ from bkuser.apis.web.data_source.serializers import (
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source.signals import post_create_data_source, post_update_data_source
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
@@ -138,9 +137,6 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
-        # 数据源创建后，发送信号用于登录认证，用户初始化等相关工作
-        post_create_data_source.send(sender=self.__class__, data_source=ds)
-
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
             status=status.HTTP_201_CREATED,
@@ -186,13 +182,12 @@ class DataSourceRetrieveUpdateApi(
         data = slz.validated_data
 
         with transaction.atomic():
+            data_source.name = data["name"]
             data_source.plugin_config = data["plugin_config"]
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data["sync_config"]
             data_source.updater = request.user.username
             data_source.save()
-
-        post_update_data_source.send(sender=self.__class__, data_source=data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -359,12 +354,7 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             trigger=SyncTaskTrigger.MANUAL,
         )
 
-        try:
-            task = DataSourceSyncManager(data_source, options).execute()
-        except Exception as e:  # pylint: disable=broad-except
-            logger.exception("数据源 %s 同步失败", data_source.id)
-            raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
-
+        task = DataSourceSyncManager(data_source, options).execute()
         return Response(
             DataSourceImportOrSyncOutputSLZ(
                 instance={"task_id": task.id, "status": task.status, "summary": task.summary}

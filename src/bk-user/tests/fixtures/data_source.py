@@ -178,6 +178,7 @@ def bare_general_data_source(general_ds_plugin_cfg, general_ds_plugin) -> DataSo
         owner_tenant_id=DEFAULT_TENANT,
         plugin=general_ds_plugin,
         plugin_config=general_ds_plugin_cfg,
+        sync_config={"sync_period": 60},
     )
 
 

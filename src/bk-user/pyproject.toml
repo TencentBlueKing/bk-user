@@ -171,6 +171,19 @@ layers = [
     "bkuser.apps.data_source | bkuser.apps.idp",
 ]
 
+# apos.sync 分层
+[[tool.importlinter.contracts]]
+name = "Apps sync Layers contract"
+type = "layers"
+layers = [
+    "bkuser.apps.sync.periodic_tasks",
+    "bkuser.apps.sync.managers",
+    "bkuser.apps.sync.tasks",
+    "bkuser.apps.sync.runners",
+    "bkuser.apps.sync.syncers",
+    "bkuser.apps.sync.models",
+]
+
 # biz 分层
 [[tool.importlinter.contracts]]
 name = "Biz Layers contract"

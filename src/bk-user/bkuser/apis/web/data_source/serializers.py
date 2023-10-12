@@ -70,6 +70,25 @@ class DataSourceFieldMappingSLZ(serializers.Serializer):
     expression = serializers.CharField(help_text="表达式", required=False)
 
 
+def _validate_field_mapping_with_tenant_user_fields(
+    field_mapping: List[Dict[str, str]], tenant_id: str
+) -> List[Dict[str, str]]:
+    target_fields = {m.get("target_field") for m in field_mapping}
+    allowed_target_fields = set(
+        list(UserBuiltinField.objects.all().values_list("name", flat=True))
+        + list(TenantUserCustomField.objects.filter(tenant_id=tenant_id).values_list("name", flat=True))
+    )
+
+    if not_allowed_fields := target_fields - allowed_target_fields:
+        raise ValidationError(
+            _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
+        )
+    if not_mapping_fields := allowed_target_fields - target_fields:
+        raise ValidationError(_("目标字段 {} 缺少字段映射").format(not_mapping_fields))
+
+    return field_mapping
+
+
 class DataSourceCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="数据源名称", max_length=128)
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
@@ -77,7 +96,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
-    sync_config = serializers.JSONField(help_text="数据源同步配置", default=dict)
+    sync_config = serializers.JSONField(help_text="数据源同步配置", required=False, default=dict)
 
     def validate_name(self, name: str) -> str:
         if DataSource.objects.filter(name=name).exists():
@@ -91,17 +110,12 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         return plugin_id
 
-    def validate_field_mapping(self, field_mapping: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        target_fields = {m.get("target_field") for m in field_mapping}
-        allowed_target_fields = list(UserBuiltinField.objects.all().values_list("name", flat=True)) + list(
-            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"]).values_list("name", flat=True)
-        )
-        if not_allowed_fields := target_fields - set(allowed_target_fields):
-            raise ValidationError(
-                _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
-            )
+    def validate_field_mapping(self, field_mapping: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        # 遇到空的字段映射，直接返回即可，validate() 中会根据插件类型校验是否必须提供字段映射
+        if not field_mapping:
+            return field_mapping
 
-        return field_mapping
+        return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
     def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -114,8 +128,12 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 除本地数据源类型外，都需要配置字段映射
         plugin_id = attrs["plugin_id"]
-        if plugin_id != DataSourcePluginEnum.LOCAL and not attrs["field_mapping"]:
-            raise ValidationError(_("当前数据源类型必须配置字段映射"))
+        if plugin_id != DataSourcePluginEnum.LOCAL:
+            if not attrs["field_mapping"]:
+                raise ValidationError(_("当前数据源类型必须配置字段映射"))
+
+            if not attrs["sync_config"]:
+                raise ValidationError(_("当前数据源类型必须提供同步配置"))
 
         if not is_plugin_exists(plugin_id):
             raise ValidationError(_("数据源插件 {} 不存在").format(plugin_id))
@@ -156,11 +174,18 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="数据源名称")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
-    sync_config = serializers.JSONField(help_text="数据源同步配置", default=dict)
+    sync_config = serializers.JSONField(help_text="数据源同步配置", required=False, default=dict)
+
+    def validate_name(self, name: str) -> str:
+        if DataSource.objects.filter(name=name).exists():
+            raise ValidationError(_("同名数据源已存在"))
+
+        return name
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
         PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806
@@ -171,7 +196,7 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
 
         return plugin_config
 
-    def validate_field_mapping(self, field_mapping: List[Dict]) -> List[Dict]:
+    def validate_field_mapping(self, field_mapping: List[Dict[str, str]]) -> List[Dict[str, str]]:
         # 除本地数据源类型外，都需要配置字段映射
         if self.context["plugin_id"] == DataSourcePluginEnum.LOCAL:
             return field_mapping
@@ -179,18 +204,15 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         if not field_mapping:
             raise ValidationError(_("当前数据源类型必须配置字段映射"))
 
-        target_fields = {m.get("target_field") for m in field_mapping}
-        allowed_target_fields = list(UserBuiltinField.objects.all().values_list("name", flat=True)) + list(
-            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"]).values_list("name", flat=True)
-        )
-        if not_allowed_fields := target_fields - set(allowed_target_fields):
-            raise ValidationError(
-                _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
-            )
-
-        return field_mapping
+        return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
     def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
+        if self.context["plugin_id"] == DataSourcePluginEnum.LOCAL:
+            return sync_config
+
+        if not sync_config:
+            raise ValidationError(_("当前数据源类型必须提供同步配置"))
+
         try:
             DataSourceSyncConfig(**sync_config)
         except PDValidationError as e:
