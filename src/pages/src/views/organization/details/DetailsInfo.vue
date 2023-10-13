@@ -93,13 +93,6 @@ watch(() => props.userData.managers, (value) => {
     state.managers = props.userData.managers;
     state.isDataEmpty = false;
   } else {
-    state.managers = [{
-      username: '',
-      full_name: '',
-      email: '',
-      phone: '',
-      phone_country_code: '86',
-    }];
     state.isDataEmpty = true;
   }
 });

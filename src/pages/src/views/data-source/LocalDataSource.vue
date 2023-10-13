@@ -8,7 +8,8 @@
         </bk-button>
         <template #content>
           <bk-dropdown-menu ext-cls="dropdown-menu-ul">
-            <p class="dropdown-title">数据源类型选择</p>
+            <p class="dropdown-title" v-if="state.typeList.length > 0">数据源类型选择</p>
+            <p class="dropdown-title" v-else>暂无数据源类型</p>
             <bk-dropdown-item
               v-for="item in state.typeList"
               :key="item"
@@ -40,6 +41,7 @@
         :border="['outer']"
         :max-height="tableMaxHeight"
         show-overflow-tooltip
+        @column-filter="handleFilter"
       >
         <template #empty>
           <Empty
@@ -151,6 +153,11 @@ const handleEnter = (value: string) => {
 const handleClear = () => {
   searchVal.value = '';
   fetchDataSourceList();
+};
+
+const handleFilter = ({ checked }) => {
+  if (!checked[0]) return state.isDataEmpty = false;
+  state.isDataEmpty = !state.list.some(item => item.status === checked[0]);
 };
 
 function handleClick(item) {

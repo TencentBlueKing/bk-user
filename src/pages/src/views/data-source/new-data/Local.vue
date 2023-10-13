@@ -12,7 +12,7 @@
         <bk-input style="width: 560px;" v-model="formData.name" :disabled="isDisabled" @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="" required>
-        <bk-checkbox v-model="formData.config.enable_account_password_login" @change="handleChange">
+        <bk-checkbox v-model="formData.config.enable_account_password_login" @change="changeAccountPassword">
           开启账密登录
         </bk-checkbox>
       </bk-form-item>
@@ -224,9 +224,9 @@
 </template>
 
 <script setup lang="ts">
-import { Message } from 'bkui-vue';
+import { InfoBox, Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, h, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
@@ -458,6 +458,27 @@ const getDataSource = async (params) => {
 };
 
 const handleChange = () => {
+  window.changeInput = true;
+};
+
+const changeAccountPassword = (value) => {
+  if (!value) {
+    InfoBox({
+      title: '确认要关闭账密登录吗？',
+      subTitle: h('div', {
+        style: {
+          textAlign: 'left',
+          lineHeight: '24px',
+        },
+      }, [
+        h('p', '1.关闭后该数据的用户将无法通过账密登录'),
+        h('p', '2.关闭后，再次开启时，账密规则信息会重置'),
+      ]),
+      onClosed() {
+        formData.config.enable_account_password_login = !value;
+      },
+    });
+  }
   window.changeInput = true;
 };
 </script>

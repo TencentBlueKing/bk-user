@@ -9,6 +9,7 @@
       </bk-form-item>
       <bk-form-item label="英文标识" property="name" required>
         <bk-input
+          placeholder="由英文字母组成"
           :disabled="isEdit"
           v-model="fieldsInfor.name"
           @focus="handleChange" />
