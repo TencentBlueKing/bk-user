@@ -10,7 +10,6 @@ const path = require('path');
 const artTemplate = require('express-art-template');
 const cookieParser = require('cookie-parser');
 const history = require('connect-history-api-fallback');
-const user = require('./middleware/user');
 
 const mockTable = require('./api/table');
 
@@ -22,7 +21,6 @@ const PORT = process.env.PORT || 5000;
 mockTable(app);
 
 app.use(cookieParser());
-app.use(user);
 
 // 注入全局变量
 const GLOBAL_VAR = {
