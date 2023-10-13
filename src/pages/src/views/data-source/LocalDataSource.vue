@@ -1,7 +1,7 @@
 <template>
   <div class="user-info-wrapper user-scroll-y">
     <header>
-      <bk-dropdown trigger="click" placement="bottom-start">
+      <bk-dropdown placement="bottom-start">
         <bk-button theme="primary">
           <i class="user-icon icon-add-2 mr8" />
           新建数据源
@@ -41,6 +41,7 @@
         :border="['outer']"
         :max-height="tableMaxHeight"
         show-overflow-tooltip
+        @column-filter="handleFilter"
       >
         <template #empty>
           <Empty
@@ -153,6 +154,11 @@ const handleEnter = (value: string) => {
 const handleClear = () => {
   searchVal.value = '';
   fetchDataSourceList();
+};
+
+const handleFilter = ({ checked }) => {
+  if (!checked[0]) return state.isDataEmpty = false;
+  state.isDataEmpty = !state.list.some(item => item.status === checked[0]);
 };
 
 function handleClick(item) {

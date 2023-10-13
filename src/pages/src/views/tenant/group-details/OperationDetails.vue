@@ -37,13 +37,6 @@
       </div>
       <div class="operation-card">
         <div class="operation-content-title">管理员</div>
-        <bk-input
-          type="search"
-          placeholder="搜索用户名"
-          v-model="state.username"
-          clearable
-          @enter="handleEnter"
-          @clear="handleClear" />
         <bk-form ref="userRef" :model="formData">
           <bk-table
             class="operation-content-table"
@@ -51,11 +44,6 @@
             :data="formData.managers"
             :columns="columns"
           >
-            <template #empty>
-              <Empty
-                :is-search-empty="state.isEmptySearch"
-                @handleEmpty="handleClear" />
-            </template>
           </bk-table>
         </bk-form>
       </div>
@@ -67,8 +55,12 @@
         >
           <bk-form-item class="form-item-password" label="密码生成" required>
             <bk-radio-group v-model="formData.password_initial_config.generate_method">
-              <bk-radio label="random">随机</bk-radio>
-              <bk-radio label="fixed">固定</bk-radio>
+              <bk-radio label="random">
+                <span v-bk-tooltips="{ content: '所有管理员的密码都随机生成，互不相同' }">随机</span>
+              </bk-radio>
+              <bk-radio label="fixed">
+                <span v-bk-tooltips="{ content: '所有管理员的密码都一致' }">固定</span>
+              </bk-radio>
             </bk-radio-group>
             <bk-input
               class="input-password"
@@ -136,10 +128,10 @@ import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
 import { getBase64 } from "@/utils";
-import Empty from "@/components/Empty.vue";
 import MemberSelector from "./MemberSelector.vue";
 import useValidate from "@/hooks/use-validate";
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
+import { bkTooltips as vBkTooltips } from 'bkui-vue';
 
 interface TableItem {
   username: string;
@@ -174,9 +166,6 @@ const formData = reactive({
   ...props.tenantsData
 });
 const state = reactive({
-  username: "",
-  // 搜索结果为空
-  isEmptySearch: false,
   count: 0,
   list: [],
   isLoading: false,
@@ -195,8 +184,8 @@ const rulesBasicInfo = {
 };
 
 const rulesUserInfo = {
-  username: [validate.required, validate.userName],
-  full_name: [validate.required, validate.name],
+  username: [validate.userName],
+  full_name: [validate.name],
   email: [validate.required, validate.email],
   phone: [validate.required, validate.phone],
 };
@@ -252,6 +241,17 @@ const files = computed(() => {
   return [];
 });
 const isEdit = computed(() => props.type === "edit");
+
+watch(() => props.type, () => {
+  if (props.tenantsData.managers.length > 0) {
+    formData.managers = props.tenantsData.managers;
+  } else {
+    formData.managers.splice(1, 0, getTableItem());
+  }
+}, {
+  deep: true,
+  immediate: true,
+})
 
 const handleRes = (response: any) => {
   if (response.id) {
@@ -410,17 +410,6 @@ function putTenantsFn() {
     state.isLoading = false;
   });
 }
-
-// 搜索管理员
-const handleEnter = (value: string) => {
-  formData.managers = props.tenantsData.managers.filter(item => item.username.includes(value));
-  state.isEmptySearch = !formData.managers.length;
-}
-// 清除搜索管理员
-const handleClear = () => {
-  state.username = "";
-  formData.managers = [...props.tenantsData.managers];
-}
 // 获取管理员列表
 const fetchUserList = (value: string) => {
   params.keyword = value;
@@ -475,6 +464,10 @@ const handleChange = () => {
   ::v-deep .bk-form-content {
     display: flex;
 
+    .bk-radio-label span {
+      border-bottom: 1px dashed #979ba5;
+    }
+
     .input-password {
       width: 240px;
       margin-left: 24px;
@@ -491,5 +484,9 @@ const handleChange = () => {
   color: #ea3636;
   text-align: left;
   animation: form-error-appear-animation 0.15s;
+}
+
+::v-deep .bk-form-error-tips {
+  top: 12px;
 }
 </style>

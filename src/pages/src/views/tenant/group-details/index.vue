@@ -39,11 +39,15 @@
               @handleUpdate="fetchTenantsList"
             />
           </template>
-          <bk-table-column prop="name" label="公司名">
+          <bk-table-column
+            prop="name"
+            label="公司名"
+            :sort="{
+              sortFn: (a, b) => a.name.toLowerCase().charCodeAt(0) - b.name.toLowerCase().charCodeAt(0) }">
             <template #default="{ row, index }">
               <div class="item-name">
-                <img v-if="row.logo" :src="row.logo" />
-                <span v-else class="logo" :style="`background-color: ${LOGO_COLOR[index]}`">
+                <img v-if="row.logo" class="img-logo" :src="row.logo" />
+                <span v-else class="span-logo" :style="`background-color: ${LOGO_COLOR[index]}`">
                   {{ logoConvert(row.name) }}
                 </span>
                 <bk-button
@@ -53,6 +57,7 @@
                 >
                   {{ row.name }}
                 </bk-button>
+                <img v-if="row.new" class="icon-new" src="@/images/new.svg" alt="">
               </div>
             </template>
           </bk-table-column>
@@ -67,7 +72,7 @@
               <span>{{ formatConvert(row.data_sources) }}</span>
             </template>
           </bk-table-column>
-          <bk-table-column prop="created_at" label="创建时间" />
+          <bk-table-column prop="created_at" label="创建时间" :sort="true" />
           <bk-table-column label="操作">
             <template #default="{ row }">
               <bk-button
@@ -216,11 +221,13 @@ watch(
 );
 
 const isView = computed(() => detailsConfig.type === 'view');
+const currentTenantId = ref('');
 
 const handleClick = async (type: string, item?: any) => {
   if (type !== 'add') {
     const res = await getTenantDetails(item.id);
     state.tenantsData = res.data;
+    currentTenantId.value = item.id;
   } else {
     const res = await getDefaultConfig('local');
     state.tenantsData.password_initial_config = res.data.config.password_initial;
@@ -235,6 +242,8 @@ const handleCancelEdit = async () => {
   if (detailsConfig.type === 'add') {
     detailsConfig.isShow = false;
   } else {
+    const res = await getTenantDetails(currentTenantId.value);
+    state.tenantsData = res.data;
     detailsConfig.type = 'view';
     detailsConfig.title = '公司详情';
     window.changeInput = false;
@@ -252,6 +261,14 @@ const fetchTenantsList = () => {
       if (res.data.length === 0) {
         state.isTableDataEmpty = true;
       }
+
+      const newDate = new Date().getTime(); // 当前时间
+      res.data.forEach((item) => {
+        const createdDate = new Date(item.created_at).getTime();
+        // 相差天数
+        item.new = Math.floor((newDate - createdDate) / (24 * 3600 * 1000)) <= 1;
+      });
+
       state.list = res.data;
       state.tableLoading = false;
     })
@@ -339,27 +356,9 @@ const handleBeforeClose = async () => {
         height: 42px;
         line-height: 42px;
 
-        img {
-          width: 16px;
-          height: 16px;
-          margin-right: 8px;
-          border: 1px solid #C4C6CC;
-          border-radius: 50%;
-          object-fit: contain;
-        }
-
-        .logo {
-          display: inline-block;
-          width: 16px;
-          margin-right: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          line-height: 16px;
-          color: #fff;
-          text-align: center;
-          background-color: #C4C6CC;
-          border-radius: 4px;
-          flex-shrink: 0;
+        .icon-new {
+          width: 26px;
+          margin-left: 8px;
         }
       }
     }
