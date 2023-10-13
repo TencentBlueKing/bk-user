@@ -1,6 +1,6 @@
 <template>
   <div class="login-setting-content user-scroll-y">
-    <div class="setting-item">
+    <!-- <div class="setting-item">
       <p class="item-title">登录方式设置</p>
       <bk-form class="setting-form" form-type="vertical">
         <bk-form-item label="基本登录" description="至少选择一种默认方式">
@@ -28,9 +28,9 @@
           </bk-checkbox-group>
         </bk-form-item>
       </bk-form>
-    </div>
+    </div> -->
     <div class="setting-item">
-      <p class="item-title">MFA设置</p>
+      <p class="item-title">MFA认证方式</p>
       <bk-form class="setting-form" form-type="vertical">
         <bk-form-item label="MFA认证方式">
           <bk-checkbox-group>
@@ -43,7 +43,31 @@
             <bk-switcher v-model="state.openMFA" theme="primary" size="large" />
           </bk-form-item>
           <bk-form-item label="启用范围">
-            <i class="user-icon icon-plus-fill"> 添加范围</i>
+            <div class="add-wrapper">
+              <bk-button theme="primary" text v-if="!isShow" @click="handleClickAdd">
+                <i class="user-icon icon-plus-fill mr8" />
+                添加范围
+              </bk-button>
+              <template v-else>
+                <bk-button theme="primary" text class="add-text">
+                  已添加 <span>1</span> 个租户，<span>1</span>个组织，<span>2</span>个用户
+                </bk-button>
+                <ul class="add-list">
+                  <li>
+                    <i class="user-icon icon-homepage mr8"></i>
+                    <span>租户</span>
+                  </li>
+                  <li>
+                    <i class="bk-sq-icon icon-file-close mr8"></i>
+                    <span>组织</span>
+                  </li>
+                  <li>
+                    <i class="bk-sq-icon icon-personal-user mr8"></i>
+                    <span>用户</span>
+                  </li>
+                </ul>
+              </template>
+            </div>
           </bk-form-item>
         </div>
         <div class="item-flex">
@@ -60,18 +84,54 @@
             </bk-radio-group>
           </bk-form-item>
         </div>
+        <bk-form-item label="" required>
+          <div class="item-flex">
+            <bk-checkbox>
+              连续
+            </bk-checkbox>
+            <bk-input
+              style="width: 85px;"
+              type="number"
+              behavior="simplicity"
+              :min="0"
+              :max="5"
+            />
+            <span class="text-sm/[32px]">天 未登录自动冻结（冻结后用户无法登录）</span>
+          </div>
+        </bk-form-item>
       </bk-form>
     </div>
     <div class="setting-btn">
       <bk-button theme="primary" class="mr8">保存</bk-button>
       <bk-button>重置</bk-button>
     </div>
+    <!-- 添加范围 -->
+    <bk-dialog
+      width="640"
+      height="520"
+      class="department-dialog"
+      :auto-close="false"
+      :title="'添加启用范围'"
+      :is-show="isShowSetDepartments"
+      @confirm="selectDeConfirmFn"
+      @closed="isShowSetDepartments = false">
+      <div class="select-department-wrapper">
+        <SetDepartment
+          :initial-departments="[]" />
+      </div>
+    </bk-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { Message } from 'bkui-vue';
+import { reactive, ref } from 'vue';
 
+import SetDepartment from '@/components/set-department/SetDepartment.vue';
+
+const isShow = ref(false);
+const isShowSetDepartments = ref(false);
+const getSelectedDepartments = ref([]);
 const state = reactive({
   basicLogin: [
     { name: '账密登录（本地）', value: '1', default: false },
@@ -96,6 +156,20 @@ const state = reactive({
     { name: '60天', value: 60 },
   ],
 });
+
+const handleClickAdd = () => {
+  isShowSetDepartments.value = true;
+};
+
+const selectDeConfirmFn = () => {
+  if (!getSelectedDepartments.value.length) {
+    Message({
+      message: this.$t('请选择组织'),
+      theme: 'warning',
+    });
+    return;
+  }
+};
 </script>
 
 <style lang="less" scoped>
@@ -128,6 +202,51 @@ const state = reactive({
             font-size: 14px;
             color: #3a84ff;
           }
+
+          &:first-child {
+            width: 145px;
+          }
+
+          &:last-child {
+            width: calc(100% - 145px);
+          }
+        }
+      }
+
+      ::v-deep .bk-form-item {
+        &:last-child {
+          padding-bottom: 24px;
+          margin-bottom: 0;
+        }
+      }
+
+      .add-wrapper {
+        .bk-button {
+          display: block;
+          font-size: 14px;
+          color: #3A84FF;
+        }
+
+        .add-text span {
+          font-weight: 700;
+        }
+
+        .add-list {
+          width: 320px;
+          padding: 16px;
+          background: #F5F7FA;
+          border-radius: 2px;
+
+          li {
+            i {
+              font-size: 16px;
+              color: #A3C5FD;
+            }
+
+            span {
+              font-size: 14px;
+            }
+          }
         }
       }
     }
@@ -137,6 +256,17 @@ const state = reactive({
     button {
       width: 88px;
     }
+  }
+}
+
+.department-dialog {
+  .select-department-wrapper {
+    height: calc(100% - 7px);
+  }
+
+  .set-department-wrapper {
+    width: 590px;
+    height: 100%;
   }
 }
 </style>

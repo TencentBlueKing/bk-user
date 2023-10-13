@@ -35,6 +35,18 @@ export default () => {
     trigger: 'blur',
   };
 
+  const fieldsDisplayName = {
+    validator: (value: string) => value.length <= 12,
+    message: '最多不得超过12个字符（6个汉字）',
+    trigger: 'blur',
+  };
+
+  const fieldsName = {
+    validator: (value: string) => /^[a-zA-Z]+$/.test(value),
+    message: '由英文字母组成',
+    trigger: 'blur',
+  };
+
   return {
     required,
     name,
@@ -42,5 +54,7 @@ export default () => {
     userName,
     email,
     phone,
+    fieldsDisplayName,
+    fieldsName,
   };
 };

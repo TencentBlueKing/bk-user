@@ -28,4 +28,4 @@ def sync_identity_infos_and_notify(sender, instance: DataSource, **kwargs):
 def initialize_identity_info_and_notify(sender, instance: DataSourceUser, created: bool, **kwargs):
     """在创建完数据源用户后，需要初始化账密信息，并发送通知"""
     if created:
-        initialize_identity_info_and_send_notification.delay(instance.data_source.id, instance.id)
+        initialize_identity_info_and_send_notification.delay(instance.data_source_id, instance.id)

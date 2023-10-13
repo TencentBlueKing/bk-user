@@ -39,6 +39,7 @@
         class="user-info-table"
         :data="state.list"
         :border="['outer']"
+        :max-height="tableMaxHeight"
         show-overflow-tooltip
       >
         <template #empty>
@@ -89,6 +90,7 @@
 import { onMounted, reactive, ref } from 'vue';
 
 import Empty from '@/components/Empty.vue';
+import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
 import { getDataSourceList, getDataSourcePlugins } from '@/http/dataSourceFiles';
 import router from '@/router/index';
 import { useMainViewStore } from '@/store/mainView';
@@ -97,6 +99,7 @@ import { dataSourceStatus, dataSourceType } from '@/utils';
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 
+const tableMaxHeight = useTableMaxHeight(238);
 const searchVal = ref('');
 const state = reactive({
   isLoading: false,

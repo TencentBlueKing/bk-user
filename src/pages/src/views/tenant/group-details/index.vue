@@ -28,6 +28,7 @@
         <bk-table
           class="content-table"
           :data="state.list"
+          :max-height="tableMaxHeight"
           show-overflow-tooltip>
           <template #empty>
             <Empty
@@ -123,6 +124,7 @@ import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
 import { getDefaultConfig } from '@/http/dataSourceFiles';
 import {
   getTenantDetails,
@@ -135,6 +137,7 @@ import { formatConvert, LOGO_COLOR, logoConvert } from '@/utils';
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 
+const tableMaxHeight = useTableMaxHeight(202);
 const editLeaveBefore = inject('editLeaveBefore');
 const searchName = ref('');
 const state = reactive({

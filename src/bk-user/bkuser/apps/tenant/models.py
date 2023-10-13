@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TenantFeatureFlag, UserFieldDataType
@@ -77,6 +78,11 @@ class TenantUser(TimestampedModel):
         unique_together = [
             ("data_source_user", "tenant"),
         ]
+
+    @property
+    def account_expired_at_display(self) -> str:
+        local_time = timezone.localtime(self.account_expired_at)
+        return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
 class TenantDepartment(TimestampedModel):
