@@ -36,7 +36,6 @@ from bkuser.apis.web.data_source.serializers import (
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.data_source.signals import post_create_data_source, post_update_data_source
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
@@ -135,9 +134,6 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 updater=current_user,
             )
 
-        # 数据源创建后，发送信号用于登录认证，用户初始化等相关工作
-        post_create_data_source.send(sender=self.__class__, data_source=ds)
-
         return Response(
             DataSourceCreateOutputSLZ(instance={"id": ds.id}).data,
             status=status.HTTP_201_CREATED,
@@ -187,8 +183,6 @@ class DataSourceRetrieveUpdateApi(
             data_source.field_mapping = data["field_mapping"]
             data_source.updater = request.user.username
             data_source.save()
-
-        post_update_data_source.send(sender=self.__class__, data_source=data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
