@@ -16,9 +16,9 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.personal_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
+    PersonalCenterTenantUserRetrieveOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
-    TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.natural_user import NatureUserHandler
@@ -70,12 +70,12 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
-    serializer_class = TenantUserRetrieveOutputSLZ
+    serializer_class = PersonalCenterTenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="个人中心-关联账户详情",
-        responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: PersonalCenterTenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         instance: TenantUser = self.get_object()
@@ -88,7 +88,7 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
         if instance.data_source_user_id not in nature_user.data_source_user_ids:
             raise error_codes.NO_PERMISSION
 
-        return Response(TenantUserRetrieveOutputSLZ(instance).data)
+        return Response(PersonalCenterTenantUserRetrieveOutputSLZ(instance).data)
 
 
 class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
