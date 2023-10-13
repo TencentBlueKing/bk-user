@@ -226,16 +226,16 @@ class DataSourceSwitchStatusOutputSLZ(serializers.Serializer):
 
 
 class RawDataSourceUserSLZ(serializers.Serializer):
-    code = serializers.CharField(help_text="用户 ID")
+    code = serializers.CharField(help_text="用户 Code")
     properties = serializers.JSONField(help_text="用户属性")
-    leaders = serializers.ListField(help_text="用户 leader ID 列表", child=serializers.CharField())
-    departments = serializers.ListField(help_text="用户部门 ID 列表", child=serializers.CharField())
+    leaders = serializers.ListField(help_text="用户 leader code 列表", child=serializers.CharField())
+    departments = serializers.ListField(help_text="用户部门 code 列表", child=serializers.CharField())
 
 
 class RawDataSourceDepartmentSLZ(serializers.Serializer):
-    code = serializers.CharField(help_text="部门 ID")
+    code = serializers.CharField(help_text="部门 Code")
     name = serializers.CharField(help_text="部门名称")
-    parent = serializers.CharField(help_text="父部门 ID")
+    parent = serializers.CharField(help_text="父部门 Code")
 
 
 class DataSourceTestConnectionInputSLZ(serializers.Serializer):

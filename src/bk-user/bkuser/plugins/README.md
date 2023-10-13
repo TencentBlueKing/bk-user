@@ -2,7 +2,7 @@
 
 ## 目录 & 文件说明
 
-假设你要开发 Fox 插件，则需要在 `bkuser/plugins` 下新建 fox 文件夹，目录示例如下：
+假设你要开发名为 Fox 的数据源插件，则需要在 `bkuser/plugins` 下新建 fox 文件夹，目录示例如下：
 
 ```
 fox
@@ -28,7 +28,7 @@ class FoxDataSourcePluginError(BaseDataSourcePluginError):
 
 
 class XXXError(FoxDataSourcePluginError):
-    """Fox xxx 异常"""
+    """Fox 数据源插件 xxx 异常"""
 ```
 
 ### models.py

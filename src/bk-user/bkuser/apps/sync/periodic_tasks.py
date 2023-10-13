@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @app.task(base=BaseTask, ignore_result=True)
 def build_and_run_data_source_sync_task(data_source_id: int):
     """同步数据源数据"""
-    logger.info("[celery] receive build and run data source %s sync task", data_source_id)
+    logger.info("[celery-beat] receive build and run data source %s sync task", data_source_id)
 
     data_source = DataSource.objects.get(id=data_source_id)
     if data_source.is_local:

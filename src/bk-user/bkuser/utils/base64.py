@@ -14,7 +14,7 @@ from pathlib import Path
 
 def load_image_as_base64(image_path: Path) -> str:
     """加载指定的 PNG 图片文件，并转换成 base64 字符串"""
-    if not image_path.suffix == ".png":
+    if image_path.suffix != ".png":
         raise ValueError("only PNG image supported")
 
     with open(image_path, "rb") as f:

@@ -8,20 +8,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import Any, Dict, List
 
 import requests
 from django.utils.translation import gettext_lazy as _
-from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import JSONDecodeError
 
 from bkuser.plugins.general.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, PAGE_SIZE_FOR_FETCH_FIRST
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
 
+logger = logging.getLogger(__name__)
+
 
 def fetch_all_data(url: str, headers: Dict[str, str], timeout: int, retries: int) -> List[Dict[str, Any]]:
     """
-    根据指定配置，请求数据源 APi 以获取用户 / 部门数据
+    根据指定配置，请求数据源 API 以获取用户 / 部门数据
 
     :param url: 数据源 URL，如 https://bk.example.com/apis/v1/users
     :param headers: 请求头，包含认证信息等
@@ -30,7 +33,13 @@ def fetch_all_data(url: str, headers: Dict[str, str], timeout: int, retries: int
     :returns: API 返回结果，应符合通用 HTTP 数据源 API 协议
     """
     with requests.Session() as session:
-        adapter = HTTPAdapter(max_retries=retries)
+        adapter = HTTPAdapter(
+            max_retries=Retry(
+                total=retries,
+                backoff_factor=1,
+                status_forcelist=[429, 500, 502, 503, 504],
+            )
+        )
         session.mount("https://", adapter)
         session.mount("http://", adapter)
 
@@ -60,7 +69,7 @@ def fetch_all_data(url: str, headers: Dict[str, str], timeout: int, retries: int
 
 def fetch_first_item(url: str, headers: Dict[str, str], timeout: int) -> Dict[str, Any] | None:
     """
-    根据指定配置，请求数据源 APi 以获取用户 / 部门第一条数据（测试连通性用）
+    根据指定配置，请求数据源 API 以获取用户 / 部门第一条数据（测试连通性用）
 
     :param url: 数据源 URL，如 https://bk.example.com/apis/v1/users
     :param headers: 请求头，包含认证信息等
