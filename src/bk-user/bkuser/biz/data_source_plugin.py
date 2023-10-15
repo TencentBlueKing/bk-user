@@ -52,7 +52,7 @@ class DefaultPluginConfigProvider:
                 not_continuous_letter=False,
                 not_continuous_digit=False,
                 not_repeated_symbol=False,
-                valid_time=30,
+                valid_time=90,
                 max_retries=3,
                 lock_time=60 * 60,
             ),

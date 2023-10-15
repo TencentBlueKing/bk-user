@@ -179,6 +179,7 @@ class DataSourceRetrieveUpdateApi(
         data = slz.validated_data
 
         with transaction.atomic():
+            data_source.name = data["name"]
             data_source.plugin_config = data["plugin_config"]
             data_source.field_mapping = data["field_mapping"]
             data_source.updater = request.user.username

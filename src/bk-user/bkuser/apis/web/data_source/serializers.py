@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict, List
 
+from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
@@ -146,10 +148,17 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="数据源名称", max_length=128)
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
+
+    def validate_name(self, name: str) -> str:
+        if DataSource.objects.filter(name=name).exists():
+            raise ValidationError(_("同名数据源已存在"))
+
+        return name
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
         PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806
@@ -215,6 +224,15 @@ class LocalDataSourceImportInputSLZ(serializers.Serializer):
     file = serializers.FileField(help_text="数据源用户信息文件（Excel 格式）")
     overwrite = serializers.BooleanField(help_text="允许对同名用户覆盖更新", default=False)
     incremental = serializers.BooleanField(help_text="是否使用增量同步", default=False)
+
+    def validated_file(self, file: UploadedFile) -> UploadedFile:
+        if not file.name.endswith(".xlsx"):
+            raise ValidationError(_("待导入文件必须为 Excel 格式"))
+
+        if file.size / 1024 / 1024 > settings.MAX_USER_DATA_FILE_SIZE:
+            raise ValidationError(_("待导入文件大小不得超过 {} M").format(settings.MAX_USER_DATA_FILE_SIZE))
+
+        return file
 
 
 class LocalDataSourceImportOutputSLZ(serializers.Serializer):
