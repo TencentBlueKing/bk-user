@@ -12,8 +12,6 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
-from .constants import AllowBindScopeObjectType
-
 
 class DataSourceMatchRule(BaseModel):
     """认证源与数据源匹配规则"""
@@ -28,12 +26,3 @@ class DataSourceMatchRule(BaseModel):
     @classmethod
     def to_rules(cls, rules: List[Dict[str, Any]]) -> List["DataSourceMatchRule"]:
         return [cls(**r) for r in rules] if rules else []
-
-
-class AllowBindScope(BaseModel):
-    """允许关联社会化认证源的租户组织架构范围"""
-
-    # 范围对象的类型
-    type: AllowBindScopeObjectType
-    # 范围对象的ID
-    id: str

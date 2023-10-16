@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+## -*- coding: utf-8 -*-
 """
 TencentBlueKing is pleased to support the open source community by making 蓝鲸智云-用户管理(Bk-User) available.
 Copyright (C) 2017-2021 THL A29 Limited, a Tencent company. All rights reserved.
@@ -8,17 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
-
-from pydantic import BaseModel
+from django.apps import AppConfig
 
 
-class Option(BaseModel):
-    id: int
-    value: str
-
-
-class TenantUserCustomFieldOptions(BaseModel):
-    """用户自定义字段-options字段"""
-
-    options: List[Option]
+class BkUserConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "bklogin.bkuser"

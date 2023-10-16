@@ -8,32 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
+REDIRECT_FIELD_NAME = "c_url"
 
-from pydantic import BaseModel
+SIGN_IN_TENANT_ID_SESSION_KEY = "sign_in_tenant_id"
 
-from .constants import AllowBindScopeObjectType
-
-
-class DataSourceMatchRule(BaseModel):
-    """认证源与数据源匹配规则"""
-
-    # 认证源原始字段
-    source_field: str
-    # 匹配的数据源 ID
-    data_source_id: int
-    # 匹配的数据源字段
-    target_field: str
-
-    @classmethod
-    def to_rules(cls, rules: List[Dict[str, Any]]) -> List["DataSourceMatchRule"]:
-        return [cls(**r) for r in rules] if rules else []
-
-
-class AllowBindScope(BaseModel):
-    """允许关联社会化认证源的租户组织架构范围"""
-
-    # 范围对象的类型
-    type: AllowBindScopeObjectType
-    # 范围对象的ID
-    id: str
+SUPPORT_SIGN_IN_TENANT_USER_IDS_SESSION_KEY = "support_sign_in_tenant_user_ids"

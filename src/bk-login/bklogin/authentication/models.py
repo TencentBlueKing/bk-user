@@ -8,32 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
-
-from pydantic import BaseModel
-
-from .constants import AllowBindScopeObjectType
+from django.db import models
 
 
-class DataSourceMatchRule(BaseModel):
-    """认证源与数据源匹配规则"""
+class BkToken(models.Model):
+    """
+    登录票据
+    """
 
-    # 认证源原始字段
-    source_field: str
-    # 匹配的数据源 ID
-    data_source_id: int
-    # 匹配的数据源字段
-    target_field: str
-
-    @classmethod
-    def to_rules(cls, rules: List[Dict[str, Any]]) -> List["DataSourceMatchRule"]:
-        return [cls(**r) for r in rules] if rules else []
-
-
-class AllowBindScope(BaseModel):
-    """允许关联社会化认证源的租户组织架构范围"""
-
-    # 范围对象的类型
-    type: AllowBindScopeObjectType
-    # 范围对象的ID
-    id: str
+    token = models.CharField("登录票据", max_length=255, unique=True, db_index=True)
+    # 是否已经退出登录
+    is_logout = models.BooleanField("票据是否已经执行过退出登录操作", default=False)
+    # 无操作过期时间戳
+    inactive_expire_time = models.IntegerField("无操作失效时间戳", default=0)

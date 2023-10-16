@@ -8,32 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
-
-from pydantic import BaseModel
-
-from .constants import AllowBindScopeObjectType
+from ..base import register_plugin
+from .implement import LocalIdpPlugin
 
 
-class DataSourceMatchRule(BaseModel):
-    """认证源与数据源匹配规则"""
-
-    # 认证源原始字段
-    source_field: str
-    # 匹配的数据源 ID
-    data_source_id: int
-    # 匹配的数据源字段
-    target_field: str
-
-    @classmethod
-    def to_rules(cls, rules: List[Dict[str, Any]]) -> List["DataSourceMatchRule"]:
-        return [cls(**r) for r in rules] if rules else []
-
-
-class AllowBindScope(BaseModel):
-    """允许关联社会化认证源的租户组织架构范围"""
-
-    # 范围对象的类型
-    type: AllowBindScopeObjectType
-    # 范围对象的ID
-    id: str
+register_plugin(LocalIdpPlugin.id, LocalIdpPlugin)

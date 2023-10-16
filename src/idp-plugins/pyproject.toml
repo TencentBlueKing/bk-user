@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "idp-plugins"
+version = "0.1.0"
+description = ""
+authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
+readme = "README.md"
+
+[[tool.poetry.source]]
+name = "tencent"
+url = "https://mirrors.tencent.com/pypi/simple/"
+priority = "default"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+django = "3.2.21"
+pydantic = "2.3.0"
+blue-krill = "2.0.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

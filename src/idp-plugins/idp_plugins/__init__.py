@@ -8,32 +8,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
-
-from pydantic import BaseModel
-
-from .constants import AllowBindScopeObjectType
+import os
+from importlib import import_module
+from pathlib import Path
 
 
-class DataSourceMatchRule(BaseModel):
-    """认证源与数据源匹配规则"""
+def load_plugins():
+    """加载插件"""
+    # 插件目录(即当前目录)
+    plugin_base_dir = Path(__file__).resolve().parent
+    # 当前包
+    package = f"{plugin_base_dir.parent.name}.{plugin_base_dir.name}"
 
-    # 认证源原始字段
-    source_field: str
-    # 匹配的数据源 ID
-    data_source_id: int
-    # 匹配的数据源字段
-    target_field: str
-
-    @classmethod
-    def to_rules(cls, rules: List[Dict[str, Any]]) -> List["DataSourceMatchRule"]:
-        return [cls(**r) for r in rules] if rules else []
+    # 子目录列表（即各个插件目录名）
+    sub_dirs = [name for name in os.listdir(plugin_base_dir) if os.path.isdir(plugin_base_dir / name)]
+    # 遍历加载各个插件
+    for name in sub_dirs:
+        # NOTE: 各个插件需要在插件的 __init__.py 文件中调用 register_plugin 注册插件
+        import_module(f".{name}", package)
 
 
-class AllowBindScope(BaseModel):
-    """允许关联社会化认证源的租户组织架构范围"""
-
-    # 范围对象的类型
-    type: AllowBindScopeObjectType
-    # 范围对象的ID
-    id: str
+load_plugins()

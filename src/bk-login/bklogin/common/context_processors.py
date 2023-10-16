@@ -8,32 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
-
-from pydantic import BaseModel
-
-from .constants import AllowBindScopeObjectType
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 
-class DataSourceMatchRule(BaseModel):
-    """认证源与数据源匹配规则"""
-
-    # 认证源原始字段
-    source_field: str
-    # 匹配的数据源 ID
-    data_source_id: int
-    # 匹配的数据源字段
-    target_field: str
-
-    @classmethod
-    def to_rules(cls, rules: List[Dict[str, Any]]) -> List["DataSourceMatchRule"]:
-        return [cls(**r) for r in rules] if rules else []
-
-
-class AllowBindScope(BaseModel):
-    """允许关联社会化认证源的租户组织架构范围"""
-
-    # 范围对象的类型
-    type: AllowBindScopeObjectType
-    # 范围对象的ID
-    id: str
+def basic_settings(request):
+    """
+    项目的基础配置，比如SITE_URL/STATIC_URL等
+    """
+    return {
+        "TITLE": _("蓝鲸登录 | 腾讯蓝鲸智云"),
+        "AJAX_BASE_URL": settings.AJAX_BASE_URL.rstrip("/"),
+        "SITE_URL": settings.SITE_URL.rstrip("/"),
+        "BK_STATIC_URL": settings.STATIC_URL.rstrip("/"),
+        "BK_DOMAIN": settings.BK_DOMAIN,
+        # CSRF TOKEN COOKIE NAME
+        "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
+    }

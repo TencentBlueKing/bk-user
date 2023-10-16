@@ -18,6 +18,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.10"
+      - name: create idp plugin symbolic link
+        run: |
+          ln -s $(pwd)/src/idp-plugins/idp_plugin $(pwd)/src/bk-login/bklogin
+          ln -s $(pwd)/src/idp-plugins/idp_plugin $(pwd)/src/bk-user/bkuser
       - name: Format with black
         run: |
           pip install black==23.7.0 click==8.1.6
@@ -52,6 +56,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+      - name: create idp plugin symbolic link
+        run: |
+          ln -s $(pwd)/src/idp-plugins/idp_plugin $(pwd)/src/bk-login/bklogin
+          ln -s $(pwd)/src/idp-plugins/idp_plugin $(pwd)/src/bk-user/bkuser
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2.3.0
         with:
