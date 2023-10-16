@@ -23,6 +23,8 @@ urlpatterns = [
     ),
     # 数据源创建/获取列表
     path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
+    # 数据源随机密码获取
+    path("random-password/", views.DataSourceRandomPasswordApi.as_view(), name="data_source.random_password"),
     # 数据源更新/获取
     path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),
     # 数据源启/停

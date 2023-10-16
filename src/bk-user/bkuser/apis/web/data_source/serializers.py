@@ -22,8 +22,10 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.plugins.base import get_plugin_cfg_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import PasswordRuleConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
@@ -216,6 +218,32 @@ class DataSourceTestConnectionOutputSLZ(serializers.Serializer):
     error_message = serializers.CharField(help_text="错误信息")
     user = RawDataSourceUserSLZ(help_text="用户")
     department = RawDataSourceDepartmentSLZ(help_text="部门")
+
+
+class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
+    """生成随机密码"""
+
+    password_rule_config = serializers.JSONField(help_text="密码规则配置", required=False)
+
+    def validate(self, attrs):
+        passwd_rule_cfg = attrs.get("password_rule_config")
+        if passwd_rule_cfg:
+            try:
+                attrs["password_rule"] = PasswordRuleConfig(**passwd_rule_cfg).to_rule()
+            except PDValidationError as e:
+                raise ValidationError(_("密码规则配置不合法: {}").format(stringify_pydantic_error(e)))
+        else:
+            attrs["password_rule"] = (
+                DefaultPluginConfigProvider().get(DataSourcePluginEnum.LOCAL).password_rule.to_rule()  # type: ignore
+            )
+
+        return attrs
+
+
+class DataSourceRandomPasswordOutputSLZ(serializers.Serializer):
+    """生成随机密码结果"""
+
+    password = serializers.CharField(help_text="密码")
 
 
 class LocalDataSourceImportInputSLZ(serializers.Serializer):
