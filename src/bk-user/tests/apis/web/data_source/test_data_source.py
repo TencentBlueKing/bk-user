@@ -217,21 +217,23 @@ class TestDataSourceListApi:
 
 class TestDataSourceUpdateApi:
     def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_config):
+        new_data_source_name = generate_random_string()
         local_ds_plugin_config["enable_account_password_login"] = False
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"plugin_config": local_ds_plugin_config},
+            data={"name": new_data_source_name, "plugin_config": local_ds_plugin_config},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        assert resp.data["name"] == new_data_source_name
         assert resp.data["plugin_config"]["enable_account_password_login"] is False
 
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_config):
         local_ds_plugin_config.pop("enable_account_password_login")
         resp = api_client.put(
             reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"plugin_config": local_ds_plugin_config},
+            data={"name": generate_random_string(), "plugin_config": local_ds_plugin_config},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
