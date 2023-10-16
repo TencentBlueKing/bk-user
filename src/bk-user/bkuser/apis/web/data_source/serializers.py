@@ -253,11 +253,11 @@ class LocalDataSourceImportInputSLZ(serializers.Serializer):
     overwrite = serializers.BooleanField(help_text="允许对同名用户覆盖更新", default=False)
     incremental = serializers.BooleanField(help_text="是否使用增量同步", default=False)
 
-    def validated_file(self, file: UploadedFile) -> UploadedFile:
+    def validate_file(self, file: UploadedFile) -> UploadedFile:
         if not file.name.endswith(".xlsx"):
             raise ValidationError(_("待导入文件必须为 Excel 格式"))
 
-        if file.size / 1024 / 1024 > settings.MAX_USER_DATA_FILE_SIZE:
+        if file.size > settings.MAX_USER_DATA_FILE_SIZE * 1024 * 1024:
             raise ValidationError(_("待导入文件大小不得超过 {} M").format(settings.MAX_USER_DATA_FILE_SIZE))
 
         return file
