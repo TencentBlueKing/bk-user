@@ -16,10 +16,13 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from openpyxl.workbook import Workbook
 
+from bkuser.plugins.local.constants import USERNAME_REGEX
 from bkuser.plugins.local.exceptions import (
     CustomColumnNameInvalid,
     DuplicateColumnName,
     DuplicateUsername,
+    InvalidLeader,
+    InvalidUsername,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
     UserSheetNotExists,
@@ -119,18 +122,29 @@ class LocalDataSourceDataParser:
         if duplicate_col_names := [n for n, cnt in Counter(sheet_col_names).items() if cnt > 1]:
             raise DuplicateColumnName(_("待导入文件中存在重复列名：{}").format(", ".join(duplicate_col_names)))
 
-        usernames = []
-        # 5. 检查所有必填字段是否有值
+        all_usernames = []
         for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
             info = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
+            # 5. 检查所有必填字段是否有值
             for field_name in self.required_field_names:
                 if not info.get(field_name):
                     raise RequiredFieldIsEmpty(_("待导入文件中必填字段 {} 存在空值").format(field_name))
 
-            usernames.append(info["username"])
+            username = info["username"]
+            # 6. 检查用户名是否合法
+            if not USERNAME_REGEX.fullmatch(username):
+                raise InvalidUsername(
+                    _("用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头").format(username)  # noqa: E501
+                )
 
-        # 6. 检查用户名是否有重复的
-        if duplicate_usernames := [n for n, cnt in Counter(usernames).items() if cnt > 1]:
+            # 7. 检查用户不能是自己的 leader
+            if (leaders := info.get("leaders")) and username in [ld.strip() for ld in leaders.split(",")]:
+                raise InvalidLeader(_("待导入文件中用户 {} 不能是自己的直接上级").format(username))
+
+            all_usernames.append(username)
+
+        # 8. 检查用户名是否有重复的
+        if duplicate_usernames := [n for n, cnt in Counter(all_usernames).items() if cnt > 1]:
             raise DuplicateUsername(_("待导入文件中存在重复用户名：{}").format(", ".join(duplicate_usernames)))
 
     def _parse_departments(self):

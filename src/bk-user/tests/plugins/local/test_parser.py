@@ -15,6 +15,8 @@ from bkuser.plugins.local.exceptions import (
     CustomColumnNameInvalid,
     DuplicateColumnName,
     DuplicateUsername,
+    InvalidLeader,
+    InvalidUsername,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
     UserSheetNotExists,
@@ -55,9 +57,27 @@ class TestLocalDataSourceDataParser:
         with pytest.raises(RequiredFieldIsEmpty):
             LocalDataSourceDataParser(user_wk).parse()
 
+    def test_validate_case_invalid_username_chinese(self, user_wk):
+        # 修改表格数据，导致用户名非法
+        user_wk["users"]["A4"].value = "张三"
+        with pytest.raises(InvalidUsername):
+            LocalDataSourceDataParser(user_wk).parse()
+
+    def test_validate_case_invalid_username_punctuation(self, user_wk):
+        # 修改表格数据，导致用户名非法
+        user_wk["users"]["A4"].value = "zhangsan@m.com"
+        with pytest.raises(InvalidUsername):
+            LocalDataSourceDataParser(user_wk).parse()
+
+    def test_validate_case_invalid_leader(self, user_wk):
+        # 修改表格数据，导致用户是自己的 leader
+        user_wk["users"]["F4"].value = "zhangsan, lisi,wangwu"
+        with pytest.raises(InvalidLeader):
+            LocalDataSourceDataParser(user_wk).parse()
+
     def test_validate_case_duplicate_username(self, user_wk):
         # 修改表格数据，导致用户名重复
-        user_wk["users"]["A4"].value = "zhangsan"
+        user_wk["users"]["A6"].value = "zhangsan"
         with pytest.raises(DuplicateUsername):
             LocalDataSourceDataParser(user_wk).parse()
 
