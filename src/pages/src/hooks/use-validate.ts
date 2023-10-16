@@ -2,7 +2,7 @@ export default () => {
   const required = {
     required: true,
     message: '必填项',
-    trigger: 'blur',
+    trigger: ['blur', 'change'],
   };
 
   const name = {
@@ -47,6 +47,18 @@ export default () => {
     trigger: 'blur',
   };
 
+  const serverBaseUrl = {
+    validator: (value: string) => /^https?:\/\/[a-zA-Z0-9-\\.]+(:\d+)?$/.test(value),
+    message: '请输入正确的地址',
+    trigger: 'blur',
+  };
+
+  const apiPath = {
+    validator: (value: string) => /^\/[\w-]+(\/[\w-]+)*\/?$/.test(value),
+    message: '请输入正确的地址',
+    trigger: 'blur',
+  };
+
   return {
     required,
     name,
@@ -56,5 +68,7 @@ export default () => {
     phone,
     fieldsDisplayName,
     fieldsName,
+    serverBaseUrl,
+    apiPath,
   };
 };
