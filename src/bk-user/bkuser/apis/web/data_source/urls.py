@@ -23,7 +23,9 @@ urlpatterns = [
     ),
     # 数据源创建/获取列表
     path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
-    # 连通性测试
+    # 数据源随机密码获取
+    path("random-passwords/", views.DataSourceRandomPasswordApi.as_view(), name="data_source.random_passwords"),
+    # 数据源连通性测试
     path(
         "test-connection/",
         views.DataSourceTestConnectionApi.as_view(),

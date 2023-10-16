@@ -11,6 +11,8 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict, List
 
+from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
@@ -20,8 +22,10 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.plugins.base import get_plugin_cfg_cls, is_plugin_exists
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import PasswordRuleConfig
 from bkuser.plugins.models import DataSourceSyncConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
 
@@ -174,7 +178,7 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="数据源名称")
+    name = serializers.CharField(help_text="数据源名称", max_length=128)
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
@@ -267,12 +271,47 @@ class DataSourceTestConnectionOutputSLZ(serializers.Serializer):
     extras = serializers.JSONField(help_text="额外信息")
 
 
+class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
+    """生成随机密码"""
+
+    password_rule_config = serializers.JSONField(help_text="密码规则配置", required=False)
+
+    def validate(self, attrs):
+        passwd_rule_cfg = attrs.get("password_rule_config")
+        if passwd_rule_cfg:
+            try:
+                attrs["password_rule"] = PasswordRuleConfig(**passwd_rule_cfg).to_rule()
+            except PDValidationError as e:
+                raise ValidationError(_("密码规则配置不合法: {}").format(stringify_pydantic_error(e)))
+        else:
+            attrs["password_rule"] = (
+                DefaultPluginConfigProvider().get(DataSourcePluginEnum.LOCAL).password_rule.to_rule()  # type: ignore
+            )
+
+        return attrs
+
+
+class DataSourceRandomPasswordOutputSLZ(serializers.Serializer):
+    """生成随机密码结果"""
+
+    password = serializers.CharField(help_text="密码")
+
+
 class LocalDataSourceImportInputSLZ(serializers.Serializer):
     """本地数据源导入"""
 
     file = serializers.FileField(help_text="数据源用户信息文件（Excel 格式）")
     overwrite = serializers.BooleanField(help_text="允许对同名用户覆盖更新", default=False)
     incremental = serializers.BooleanField(help_text="是否使用增量同步", default=False)
+
+    def validate_file(self, file: UploadedFile) -> UploadedFile:
+        if not file.name.endswith(".xlsx"):
+            raise ValidationError(_("待导入文件必须为 Excel 格式"))
+
+        if file.size > settings.MAX_USER_DATA_FILE_SIZE * 1024 * 1024:
+            raise ValidationError(_("待导入文件大小不得超过 {} M").format(settings.MAX_USER_DATA_FILE_SIZE))
+
+        return file
 
 
 class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):

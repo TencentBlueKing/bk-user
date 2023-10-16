@@ -506,7 +506,9 @@ GENERATE_RANDOM_PASSWORD_MAX_RETRIES = env.int("GENERATE_RANDOM_PASSWORD_MAX_RET
 # zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
 MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
 
-# 数据导出配置
+# 数据导入/导出配置
+# 导入文件大小限制，单位为 MB
+MAX_USER_DATA_FILE_SIZE = env.int("MAX_USER_DATA_FILE_SIZE", 10)
 # 导出文件名称前缀
 EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
 # 成员，组织信息导出模板

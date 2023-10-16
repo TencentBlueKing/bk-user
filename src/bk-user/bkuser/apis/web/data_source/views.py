@@ -25,6 +25,8 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceImportOrSyncOutputSLZ,
     DataSourcePluginDefaultConfigOutputSLZ,
     DataSourcePluginOutputSLZ,
+    DataSourceRandomPasswordInputSLZ,
+    DataSourceRandomPasswordOutputSLZ,
     DataSourceRetrieveOutputSLZ,
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
@@ -43,6 +45,7 @@ from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.common.error_codes import error_codes
+from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 from bkuser.plugins.base import get_plugin_cfg_schema_map, get_plugin_cls
@@ -190,6 +193,22 @@ class DataSourceRetrieveUpdateApi(
             data_source.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceRandomPasswordApi(generics.CreateAPIView):
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="生成数据源用户随机密码",
+        request_body=DataSourceRandomPasswordInputSLZ(),
+        responses={status.HTTP_200_OK: DataSourceRandomPasswordOutputSLZ()},
+    )
+    def post(self, request, *args, **kwargs):
+        slz = DataSourceRandomPasswordInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        passwd = PasswordGenerator(data["password_rule"]).generate()
+        return Response(DataSourceRandomPasswordOutputSLZ(instance={"password": passwd}).data)
 
 
 class DataSourceTestConnectionApi(generics.CreateAPIView):
