@@ -47,11 +47,13 @@ class XXXError(FoxDataSourcePluginError):
 ```python
 from bkuser.plugins.base import BaseDataSourcePlugin
 
+
 class FoxDataSourcePlugin(BaseDataSourcePlugin):
     """Fox 数据源插件"""
 
     # 注：非内置插件请使用字符串作为 ID，且需要以 `custom_` 为前缀
     id = "custom_fox"
+    # 插件配置类建模
     config_class = FoxDataSourcePluginConfig
 
     def __init__(self, plugin_config: FoxDataSourcePluginConfig):
@@ -85,8 +87,11 @@ register_plugin(FoxDataSourcePlugin)
 from bkuser.plugins.models import PluginMetadata
 
 METADATA = PluginMetadata(
+    # 插件唯一 ID
     id=FoxDataSourcePlugin.id,
+    # 插件展示用名称
     name="FoxIsNotDonkey",
+    # 插件展示用描述
     description="The fox is a nimble, smart creature known for its unique red-brown fur and bushy tail."
 )
 ```
@@ -100,5 +105,5 @@ METADATA = PluginMetadata(
 在将数据源插件实现的源代码目录挂载到 `bkuser/plugins` 目录下后，还需要在服务运行起来后，执行以下命令以在 DB 中添加插件信息：
 
 ```shell
-python manage.py register_data_source_plugin --name custom_fox
+python manage.py register_data_source_plugin --dir_name=fox
 ```

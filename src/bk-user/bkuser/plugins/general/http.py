@@ -49,15 +49,24 @@ def fetch_all_data(url: str, headers: Dict[str, str], timeout: int, retries: int
             params = {"page": page, "page_size": page_size}
             resp = session.get(url, headers=headers, params=params, timeout=timeout)
             if not resp.ok:
-                raise RequestApiError(_("请求数据源 API {} 异常").format(url))
+                raise RequestApiError(_("请求数据源 API {} 异常，参数：{}").format(url, params))
 
             try:
                 resp_data = resp.json()
             except JSONDecodeError:  # noqa: PERF203
-                raise RespDataFormatError(_("数据源 API {} 返回非 Json 格式").format(url))
+                raise RespDataFormatError(_("数据源 API {} 返回非 Json 格式，参数：{}").format(url, params))
 
             total_cnt = resp_data.get("count", 0)
-            items.extend(resp_data.get("results", []))
+            cur_req_results = resp_data.get("results", [])
+            items.extend(cur_req_results)
+
+            logger.info(
+                "request data source api %s, params %s, get %d items, total count is %d",
+                url,
+                params,
+                len(cur_req_results),
+                total_cnt,
+            )
 
             if page * page_size >= total_cnt:
                 break

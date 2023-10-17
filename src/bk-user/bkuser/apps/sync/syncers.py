@@ -196,6 +196,9 @@ class DataSourceUserSyncer:
         if self.incremental:
             user_codes |= exists_user_codes
 
+        # Q: 提示信息使用 user_code 是否影响可读性
+        # A：本地数据源用户 code 即为用户名，因此不会有可读性问题
+        #  非本地数据源，因为本身插件提供的用户 Leader 信息即 code 列表，因此是可映射回实际数据的
         if not_exists_leaders := raw_leader_codes - user_codes:
             raise UserLeaderNotExists(_("缺少用户上级：{} 信息").format(", ".join(not_exists_leaders)))
 
@@ -204,7 +207,10 @@ class DataSourceUserSyncer:
             DataSourceDepartment.objects.filter(data_source=self.data_source).values_list("code", flat=True)
         )
         raw_user_dept_codes = {dept_code for user in self.raw_users for dept_code in user.departments}
-        # 需要确保带同步的 用户-部门 关系中的部门都是存在的
+        # 需要确保待同步的 用户-部门 关系中的部门都是存在的
+        # Q: 提示信息使用 dept_code 是否影响可读性
+        # A：尽管本地数据源使用 Hash 值作为部门 code，但是组织路径中的部门都会被创建，理论上不会触发该处异常
+        #  非本地数据源，因为本身插件提供的用户部门信息即 code 列表，因此是可映射回实际的部门数据的
         if not_exists_depts := raw_user_dept_codes - exists_dept_codes:
             raise UserDepartmentNotExists(_("缺少用户部门：{} 信息").format(", ".join(not_exists_depts)))
 
