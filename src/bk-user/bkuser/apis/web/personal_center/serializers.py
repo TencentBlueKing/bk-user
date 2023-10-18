@@ -40,7 +40,7 @@ class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
     tenant_users = serializers.ListField(help_text="自然人关联的租户账号列表", child=TenantUserBaseInfoOutputSLZ())
 
 
-class TenantUserRetrieveOutputSLZ(serializers.Serializer):
+class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户ID")
     username = serializers.CharField(help_text="用户名", required=False)
     full_name = serializers.CharField(help_text="用户姓名", required=False)
