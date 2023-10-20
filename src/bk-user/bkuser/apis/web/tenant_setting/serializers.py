@@ -18,7 +18,7 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
-from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def _validate_enum_default(default: int, options: List[Dict]):
         raise ValidationError(_("枚举类型自定义字段的 default 值要传递整数类型"))
 
     # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
-    if not (default and default in [opt["id"] for opt in options]):
+    if default is not None and default not in [opt["id"] for opt in options]:
         raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
 
@@ -49,7 +49,7 @@ def _validate_multi_enum_default(default: List[int], options: List[Dict]):
         raise ValidationError(_("多选枚举类型自定义字段的 default 值需要传递列表类型"))
 
     # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
-    if not (default and set(default).issubset({opt["id"] for opt in options})):
+    if default is not None and not set(default).issubset({opt["id"] for opt in options}):
         raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
 
 
@@ -88,14 +88,20 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
     options = serializers.JSONField(help_text="选项", required=False)
 
     def validate_display_name(self, display_name):
-        if TenantUserCustomField.objects.filter(
-            tenant_id=self.context["tenant_id"], display_name=display_name
-        ).exists():
+        if (
+            TenantUserCustomField.objects.filter(
+                tenant_id=self.context["tenant_id"], display_name=display_name
+            ).exists()
+            or UserBuiltinField.objects.filter(display_name=display_name).exists()
+        ):
             raise serializers.ValidationError(_("展示用名称 {} 已存在").format(display_name))
         return display_name
 
     def validate_name(self, name):
-        if TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exists():
+        if (
+            TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exists()
+            or UserBuiltinField.objects.filter(name=name).exists()
+        ):
             raise serializers.ValidationError(_("字段名称 {} 已存在").format(name))
         return name
 
