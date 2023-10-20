@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from typing import Dict, List
+from typing import List
 
 from django.utils.translation import gettext_lazy as _
 from pydantic import ValidationError as PDValidationError
@@ -18,7 +18,7 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
-from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 
 logger = logging.getLogger(__name__)
 
@@ -33,23 +33,23 @@ def _validate_options(options):
         raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
 
 
-def _validate_enum_default(default: int, options: List[Dict]):
+def _validate_enum_default(default: int, opt_ids: List[int]):
     """用户自定义字段：单枚举类型的 <默认值> 字段校验"""
     if not isinstance(default, int):
         raise ValidationError(_("枚举类型自定义字段的 default 值要传递整数类型"))
 
     # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
-    if not (default and default in [opt["id"] for opt in options]):
+    if not (default is None or default in opt_ids):
         raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
 
-def _validate_multi_enum_default(default: List[int], options: List[Dict]):
+def _validate_multi_enum_default(default: List[int], opt_ids: List[int]):
     """用户自定义字段：多选枚举类型的 <默认值> 字段校验"""
     if not isinstance(default, List):
         raise ValidationError(_("多选枚举类型自定义字段的 default 值需要传递列表类型"))
 
     # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
-    if not (default and set(default).issubset({opt["id"] for opt in options})):
+    if not (default is None or set(default).issubset(opt_ids)):
         raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
 
 
@@ -92,11 +92,19 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
             tenant_id=self.context["tenant_id"], display_name=display_name
         ).exists():
             raise serializers.ValidationError(_("展示用名称 {} 已存在").format(display_name))
+
+        if UserBuiltinField.objects.filter(display_name=display_name).exists():
+            raise serializers.ValidationError(_("展示用名称 {} 与内置字段冲突").format(display_name))
+
         return display_name
 
     def validate_name(self, name):
         if TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exists():
             raise serializers.ValidationError(_("字段名称 {} 已存在").format(name))
+
+        if UserBuiltinField.objects.filter(name=name).exists():
+            raise serializers.ValidationError(_("字段名称 {} 与内置字段冲突").format(name))
+
         return name
 
     def validate(self, attrs):
@@ -104,13 +112,14 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         options = attrs.get("options")
         default = attrs.get("default")
 
+        opt_ids = [opt["id"] for opt in options]
         if data_type == UserFieldDataType.ENUM.value:
             _validate_options(options)
-            _validate_enum_default(default, options)
+            _validate_enum_default(default, opt_ids)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
             _validate_options(options)
-            _validate_multi_enum_default(default, options)
+            _validate_multi_enum_default(default, opt_ids)
 
         return attrs
 
@@ -132,6 +141,10 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
             .exists()
         ):
             raise serializers.ValidationError(_("展示用名称 {} 已存在").format(display_name))
+
+        if UserBuiltinField.objects.filter(display_name=display_name).exists():
+            raise serializers.ValidationError(_("展示用名称 {} 与内置字段冲突").format(display_name))
+
         return display_name
 
     def validate(self, attrs):
@@ -140,12 +153,13 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         options = attrs.get("options")
         default = attrs.get("default")
 
+        opt_ids = [opt["id"] for opt in options]
         if data_type == UserFieldDataType.ENUM.value:
             _validate_options(options)
-            _validate_enum_default(default, options)
+            _validate_enum_default(default, opt_ids)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
             _validate_options(options)
-            _validate_multi_enum_default(default, options)
+            _validate_multi_enum_default(default, opt_ids)
 
         return attrs
