@@ -15,7 +15,7 @@ from django.core.management.base import BaseCommand
 from django.utils.module_loading import import_string
 
 from bkuser.apps.data_source.models import DataSourcePlugin
-from bkuser.plugins.constants import CUSTOM_PLUGIN_ID_PREFIX
+from bkuser.plugins.constants import CUSTOM_PLUGIN_ID_PREFIX, MAX_LOGO_SIZE
 from bkuser.utils.base64 import load_image_as_base64
 
 
@@ -41,23 +41,28 @@ class Command(BaseCommand):
         if not metadata.id.startswith(CUSTOM_PLUGIN_ID_PREFIX):
             raise RuntimeError(f"custom plugin's id must start with `{CUSTOM_PLUGIN_ID_PREFIX}`")
 
-        # 4. 尝试获取下 logo，取不到就用默认的
+        logo_path = plugin_base_dir / f"{dir_name}/logo.png"
+
+        # 4. 如果发现有 logo，还需要检查下尺寸大小，避免有性能问题
+        if os.path.exists(logo_path) and os.path.getsize(logo_path) > MAX_LOGO_SIZE:
+            raise RuntimeError(f"plugin logo size must be less than {MAX_LOGO_SIZE/1024}KB!")
+
+        # 5. 尝试获取下 logo，取不到就用默认的
         try:
-            logo = load_image_as_base64(plugin_base_dir / f"{dir_name}/logo.png")
+            logo = load_image_as_base64(logo_path)
         except Exception:
             self.stdout.write("failed to load plugin logo, use default logo...")
             logo = ""
 
-        # 5. 如果同名插件已存在，更新，否则创建
-        if plugin := DataSourcePlugin.objects.filter(id=metadata.id).first():
-            plugin.name = metadata.name
-            plugin.description = metadata.description
-            plugin.logo = logo
-            plugin.save()
-        else:
-            DataSourcePlugin.objects.create(
-                id=metadata.id, name=metadata.name, description=metadata.description, logo=logo
-            )
+        # 6. 如果同名插件已存在，更新，否则创建
+        DataSourcePlugin.objects.update_or_create(
+            id=metadata.id,
+            defaults={
+                "name": metadata.name,
+                "description": metadata.description,
+                "logo": logo,
+            },
+        )
 
-        # 6. 注册到 DB 成功要给提示
+        # 7. 注册到 DB 成功要给提示
         self.stdout.write(f"register data source plugin [{metadata.id}] into database successfully.")

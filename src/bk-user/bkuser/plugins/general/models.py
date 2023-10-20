@@ -20,6 +20,7 @@ from bkuser.plugins.general.constants import (
     MIN_REQ_TIMEOUT,
     MIN_RETRIES,
     AuthMethod,
+    PageSize,
 )
 
 
@@ -32,6 +33,8 @@ class ServerConfig(BaseModel):
     user_api_path: str = Field(pattern=API_URL_PATH_REGEX)
     # 部门数据 API 路径
     department_api_path: str = Field(pattern=API_URL_PATH_REGEX)
+    # 单次分页请求数量
+    page_size: PageSize = PageSize.CNT_100
     # 单次请求超时时间
     request_timeout: int = Field(ge=MIN_REQ_TIMEOUT, le=MAX_REQ_TIMEOUT, default=DEFAULT_REQ_TIMEOUT)
     # 请求失败重试次数
@@ -39,7 +42,7 @@ class ServerConfig(BaseModel):
 
 
 class AuthConfig(BaseModel):
-    """鉴权配置"""
+    """认证配置"""
 
     method: AuthMethod
     # bearer token 配置
@@ -54,5 +57,5 @@ class GeneralDataSourcePluginConfig(BaseModel):
 
     # 服务配置
     server_config: ServerConfig
-    # 鉴权配置
+    # 认证配置
     auth_config: AuthConfig

@@ -38,7 +38,7 @@ PASSWORD_MAX_RETRIES = 10
 MAX_RESERVED_PREVIOUS_PASSWORD_COUNT = 5
 
 # 数据源用户名规则
-USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{2,31}")
+USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{1,30}[a-zA-Z0-9]$")
 
 
 class PasswordGenerateMethod(str, StructuredEnum):

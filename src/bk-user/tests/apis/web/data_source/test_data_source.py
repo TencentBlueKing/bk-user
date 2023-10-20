@@ -249,7 +249,7 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "同步配置不合法：sync_period: Input should be" in resp.data["message"]
+        assert "sync_config.sync_period: “-1” 不是合法选项。" in resp.data["message"]
 
 
 class TestDataSourceListApi:
@@ -325,7 +325,7 @@ class TestDataSourceUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert resp.data["message"] == "参数校验不通过: field_mapping: 当前数据源类型必须配置字段映射"
+        assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须配置字段映射"
 
     def test_update_without_required_sync_config(
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping
@@ -340,7 +340,7 @@ class TestDataSourceUpdateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert resp.data["message"] == "参数校验不通过: sync_config: 当前数据源类型必须提供同步配置"
+        assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须提供同步配置"
 
 
 class TestDataSourceRetrieveApi:

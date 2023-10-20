@@ -21,12 +21,12 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.sync.constants import DataSourceSyncPeriod
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.plugins.base import get_plugin_cfg_cls, is_plugin_exists
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import PasswordRuleConfig
-from bkuser.plugins.models import DataSourceSyncConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
@@ -78,19 +78,29 @@ def _validate_field_mapping_with_tenant_user_fields(
     field_mapping: List[Dict[str, str]], tenant_id: str
 ) -> List[Dict[str, str]]:
     target_fields = {m.get("target_field") for m in field_mapping}
-    allowed_target_fields = set(
-        list(UserBuiltinField.objects.all().values_list("name", flat=True))
-        + list(TenantUserCustomField.objects.filter(tenant_id=tenant_id).values_list("name", flat=True))
+
+    builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
+    tenant_user_custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
+
+    allowed_target_fields = builtin_fields | set(tenant_user_custom_fields.values_list("name", flat=True))
+    required_target_fields = builtin_fields | set(
+        tenant_user_custom_fields.filter(required=True).values_list("name", flat=True)
     )
 
     if not_allowed_fields := target_fields - allowed_target_fields:
         raise ValidationError(
             _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
         )
-    if not_mapping_fields := allowed_target_fields - target_fields:
-        raise ValidationError(_("目标字段 {} 缺少字段映射").format(not_mapping_fields))
+    if missed_required_fields := required_target_fields - target_fields:
+        raise ValidationError(_("必填目标字段 {} 缺少字段映射").format(missed_required_fields))
 
     return field_mapping
+
+
+class DataSourceSyncConfigSLZ(serializers.Serializer):
+    """数据源同步配置"""
+
+    sync_period = serializers.ChoiceField(help_text="同步周期", choices=DataSourceSyncPeriod.get_choices())
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):
@@ -100,7 +110,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
-    sync_config = serializers.JSONField(help_text="数据源同步配置", required=False, default=dict)
+    sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
 
     def validate_name(self, name: str) -> str:
         if DataSource.objects.filter(name=name).exists():
@@ -121,14 +131,6 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
-    def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            DataSourceSyncConfig(**sync_config)
-        except PDValidationError as e:
-            raise ValidationError(_("同步配置不合法：{}").format(stringify_pydantic_error(e)))
-
-        return sync_config
-
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 除本地数据源类型外，都需要配置字段映射
         plugin_id = attrs["plugin_id"]
@@ -136,7 +138,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
             if not attrs["field_mapping"]:
                 raise ValidationError(_("当前数据源类型必须配置字段映射"))
 
-            if not attrs["sync_config"]:
+            if not attrs.get("sync_config"):
                 raise ValidationError(_("当前数据源类型必须提供同步配置"))
 
         if not is_plugin_exists(plugin_id):
@@ -183,7 +185,7 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
-    sync_config = serializers.JSONField(help_text="数据源同步配置", required=False, default=dict)
+    sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
 
     def validate_name(self, name: str) -> str:
         if DataSource.objects.filter(name=name).exists():
@@ -201,28 +203,21 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         return plugin_config
 
     def validate_field_mapping(self, field_mapping: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        # 除本地数据源类型外，都需要配置字段映射
-        if self.context["plugin_id"] == DataSourcePluginEnum.LOCAL:
-            return field_mapping
-
+        # 遇到空的字段映射，直接返回即可，validate() 中会根据插件类型校验是否必须提供字段映射
         if not field_mapping:
-            raise ValidationError(_("当前数据源类型必须配置字段映射"))
+            return field_mapping
 
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
-    def validate_sync_config(self, sync_config: Dict[str, Any]) -> Dict[str, Any]:
-        if self.context["plugin_id"] == DataSourcePluginEnum.LOCAL:
-            return sync_config
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        if self.context["plugin_id"] != DataSourcePluginEnum.LOCAL:
+            if not attrs["field_mapping"]:
+                raise ValidationError(_("当前数据源类型必须配置字段映射"))
 
-        if not sync_config:
-            raise ValidationError(_("当前数据源类型必须提供同步配置"))
+            if not attrs.get("sync_config"):
+                raise ValidationError(_("当前数据源类型必须提供同步配置"))
 
-        try:
-            DataSourceSyncConfig(**sync_config)
-        except PDValidationError as e:
-            raise ValidationError(_("同步配置不合法：{}").format(stringify_pydantic_error(e)))
-
-        return sync_config
+        return attrs
 
 
 class DataSourceSwitchStatusOutputSLZ(serializers.Serializer):

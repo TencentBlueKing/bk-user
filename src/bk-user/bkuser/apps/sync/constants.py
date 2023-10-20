@@ -12,6 +12,19 @@ from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
+class DataSourceSyncPeriod(int, StructuredEnum):
+    """数据源自动同步周期"""
+
+    PER_30_MIN = EnumField(30, label=_("每 30 分钟"))
+    PER_1_HOUR = EnumField(60, label=_("每 1 小时"))
+    PER_3_HOUR = EnumField(3 * 60, label=_("每 3 小时"))
+    PER_6_HOUR = EnumField(6 * 60, label=_("每 6 小时"))
+    PER_12_HOUR = EnumField(12 * 60, label=_("每 12 小时"))
+    PER_1_DAY = EnumField(24 * 60, label=_("每 1 天"))
+    PER_7_DAY = EnumField(7 * 24 * 60, label=_("每 7 天"))
+    PER_30_DAY = EnumField(30 * 24 * 60, label=_("每 30 天"))
+
+
 class SyncTaskTrigger(str, StructuredEnum):
     """同步任务触发器枚举"""
 

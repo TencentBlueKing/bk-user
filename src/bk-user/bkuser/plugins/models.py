@@ -12,8 +12,6 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
-from bkuser.plugins.constants import DataSourceSyncPeriod
-
 
 class PluginMetadata(BaseModel):
     """插件基本信息"""
@@ -58,9 +56,3 @@ class TestConnectionResult(BaseModel):
     department: RawDataSourceDepartment | None
     # 可能便于排查问题的额外数据
     extras: Dict[str, Any] | None = None
-
-
-class DataSourceSyncConfig(BaseModel):
-    """数据源同步配置"""
-
-    sync_period: DataSourceSyncPeriod = DataSourceSyncPeriod.PER_1_DAY

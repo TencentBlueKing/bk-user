@@ -98,7 +98,7 @@ METADATA = PluginMetadata(
 
 ### logo.png
 
-数据源插件 Logo，仅支持 PNG 格式；如果未提供则会使用默认 Logo。
+数据源插件 Logo，仅支持 PNG 格式（推荐尺寸 1024 * 1024）；如果未提供则会使用默认 Logo。
 
 ## 注意事项
 

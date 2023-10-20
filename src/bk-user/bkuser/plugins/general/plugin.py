@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import base64
 import logging
 from typing import Any, Dict, List
 
@@ -16,9 +15,8 @@ from django.utils.translation import gettext_lazy as _
 
 from bkuser.plugins.base import BaseDataSourcePlugin
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.general.constants import AuthMethod
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
-from bkuser.plugins.general.http import fetch_all_data, fetch_first_item
+from bkuser.plugins.general.http import fetch_all_data, fetch_first_item, gen_headers
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.models import (
     RawDataSourceDepartment,
@@ -43,7 +41,8 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         cfg = self.plugin_config.server_config
         depts = fetch_all_data(
             cfg.server_base_url + cfg.department_api_path,
-            self._gen_headers(),
+            gen_headers(self.plugin_config.auth_config),
+            cfg.page_size,
             cfg.request_timeout,
             cfg.retries,
         )
@@ -54,7 +53,8 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         cfg = self.plugin_config.server_config
         users = fetch_all_data(
             cfg.server_base_url + cfg.user_api_path,
-            self._gen_headers(),
+            gen_headers(self.plugin_config.auth_config),
+            cfg.page_size,
             cfg.request_timeout,
             cfg.retries,
         )
@@ -68,13 +68,13 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
         try:
             user_data = fetch_first_item(
                 cfg.server_base_url + cfg.user_api_path,
-                self._gen_headers(),
+                gen_headers(self.plugin_config.auth_config),
                 cfg.request_timeout,
             )
 
             dept_data = fetch_first_item(
                 cfg.server_base_url + cfg.department_api_path,
-                self._gen_headers(),
+                gen_headers(self.plugin_config.auth_config),
                 cfg.request_timeout,
             )
         except (RequestApiError, RespDataFormatError) as e:
@@ -98,20 +98,6 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             department=dept,
             extras={"user_data": user_data, "department_data": dept_data},
         )
-
-    def _gen_headers(self) -> dict:
-        headers = {"Content-Type": "application/json"}
-
-        cfg = self.plugin_config.auth_config
-        if cfg.method == AuthMethod.BEARER_TOKEN:
-            # BearerToken
-            headers["Authorization"] = f"Bearer {cfg.bearer_token}"
-        elif cfg.method == AuthMethod.BASIC_AUTH:
-            # BasicAuth
-            credentials = base64.b64encode(f"{cfg.username}:{cfg.password}".encode("utf-8")).decode("utf-8")
-            headers["Authorization"] = f"Basic {credentials}"
-
-        return headers
 
     @staticmethod
     def _gen_raw_user(user: Dict[str, Any]) -> RawDataSourceUser:

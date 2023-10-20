@@ -17,11 +17,10 @@ from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.data_source.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.sync.data_models import TenantSyncOptions
+from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
 from bkuser.apps.sync.signals import post_sync_data_source
-from bkuser.plugins.models import DataSourceSyncConfig
 
 logger = logging.getLogger(__name__)
 
