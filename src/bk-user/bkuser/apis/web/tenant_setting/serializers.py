@@ -112,13 +112,14 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         options = attrs.get("options")
         default = attrs.get("default")
 
+        opt_ids = [opt["id"] for opt in options]
         if data_type == UserFieldDataType.ENUM.value:
             _validate_options(options)
-            _validate_enum_default(default, [opt["id"] for opt in options])
+            _validate_enum_default(default, opt_ids)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
             _validate_options(options)
-            _validate_multi_enum_default(default, [opt["id"] for opt in options])
+            _validate_multi_enum_default(default, opt_ids)
 
         return attrs
 
@@ -152,12 +153,13 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         options = attrs.get("options")
         default = attrs.get("default")
 
+        opt_ids = [opt["id"] for opt in options]
         if data_type == UserFieldDataType.ENUM.value:
             _validate_options(options)
-            _validate_enum_default(default, [opt["id"] for opt in options])
+            _validate_enum_default(default, opt_ids)
 
         elif data_type == UserFieldDataType.MULTI_ENUM.value:
             _validate_options(options)
-            _validate_multi_enum_default(default, [opt["id"] for opt in options])
+            _validate_multi_enum_default(default, opt_ids)
 
         return attrs
