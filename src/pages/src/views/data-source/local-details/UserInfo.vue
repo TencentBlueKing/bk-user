@@ -135,12 +135,13 @@
         accept=".xlsx,.xls"
         with-credentials
         :limit="1"
-        :size="2"
+        :size="10"
         :multiple="false"
-        :custom-request="customRequest">
+        :custom-request="customRequest"
+        @exceed="exceed">
         <template #file="{ file }">
           <div
-            class="excel-file"
+            :class="['excel-file', { 'excel-file-error': isError }]"
             @mousemove="isHover = true"
             @mouseleave="isHover = false">
             <i class="user-icon icon-excel" />
@@ -151,8 +152,8 @@
                 {{ file.name }}
               </div>
               <p class="text-overflow file-status">
-                <i class="user-icon icon-check-line" />
-                上传成功
+                <i v-if="!isError" class="user-icon icon-check-line" />
+                {{ textTips }}
               </p>
             </div>
             <div class="file-operations">
@@ -163,7 +164,7 @@
         </template>
         <template #tip>
           <div class="mt-[8px]">
-            <span>支持 Excel 文件，文件小于 2 M，下载</span>
+            <span>支持 Excel 文件，文件小于 10 M，下载</span>
             <bk-button text theme="primary" @click="handleExportTemplate">模版文件</bk-button>
           </div>
         </template>
@@ -374,9 +375,22 @@ const uploadInfo = reactive({
 
 const uploadRef = ref();
 const isHover = ref(false);
+const textTips = ref('');
+const isError = ref(false);
 
 const customRequest = (data) => {
+  if (data.file.size > (10 * 1024 * 1024)) {
+    isError.value = true;
+    textTips.value = '文件大小超出限制';
+  } else {
+    isError.value = false;
+    textTips.value = '上传成功';
+  }
   uploadInfo.file = data.file;
+};
+
+const exceed = () => {
+  Message({ theme: 'error', message: '最多上传1个文件' });
 };
 
 const getSize = (value) => {
@@ -404,9 +418,11 @@ const handleExportTemplate = () => {
 const confirmImportUsers = async () => {
   try {
     if (!uploadInfo.file.name) {
-      Message({ theme: 'warning', message: '请选择文件再上传' });
-      return;
+      return Message({ theme: 'warning', message: '请选择文件再上传' });
     }
+    if (isError.value) {
+      return Message({ theme: 'warning', message: '文件大小超出限制,请重新上传' });
+    };
     importDialog.loading = true;
     const formData = new FormData();
     formData.append('file', uploadInfo.file);
@@ -540,10 +556,26 @@ const closed = () => {
   }
 }
 
+::v-deep .bk-upload-list__item {
+  padding: 0;
+  border: none;
+}
+
+.excel-file-error {
+  background: rgb(254 221 220 / 40%);
+  border-color: #ff5656 !important;
+
+  .file-status {
+    color: #ff5656 !important;
+  }
+}
+
 .excel-file {
   display: flex;
+  padding: 10px;
   overflow: hidden;
   font-size: 12px;
+  border: 1px solid #c4c6cc;
   flex: 1;
   align-items: center;
 
