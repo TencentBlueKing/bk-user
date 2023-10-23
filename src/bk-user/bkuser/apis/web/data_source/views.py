@@ -22,6 +22,7 @@ from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apis.web.data_source.serializers import (
     DataSourceCreateInputSLZ,
     DataSourceCreateOutputSLZ,
+    DataSourceImportOrSyncOutputSLZ,
     DataSourcePluginDefaultConfigOutputSLZ,
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
@@ -30,10 +31,10 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
     DataSourceSwitchStatusOutputSLZ,
+    DataSourceTestConnectionInputSLZ,
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
     LocalDataSourceImportInputSLZ,
-    LocalDataSourceImportOutputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
@@ -47,7 +48,8 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
-from bkuser.plugins.base import get_plugin_cfg_schema_map
+from bkuser.plugins.base import get_plugin_cfg_schema_map, get_plugin_cls
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +135,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
                 plugin=DataSourcePlugin.objects.get(id=data["plugin_id"]),
                 plugin_config=data["plugin_config"],
                 field_mapping=data["field_mapping"],
+                sync_config=data.get("sync_config") or {},
                 creator=current_user,
                 updater=current_user,
             )
@@ -185,6 +188,7 @@ class DataSourceRetrieveUpdateApi(
             data_source.name = data["name"]
             data_source.plugin_config = data["plugin_config"]
             data_source.field_mapping = data["field_mapping"]
+            data_source.sync_config = data.get("sync_config") or {}
             data_source.updater = request.user.username
             data_source.save()
 
@@ -207,7 +211,7 @@ class DataSourceRandomPasswordApi(generics.CreateAPIView):
         return Response(DataSourceRandomPasswordOutputSLZ(instance={"password": passwd}).data)
 
 
-class DataSourceTestConnectionApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
+class DataSourceTestConnectionApi(generics.CreateAPIView):
     """数据源连通性测试"""
 
     serializer_class = DataSourceTestConnectionOutputSLZ
@@ -215,32 +219,22 @@ class DataSourceTestConnectionApi(CurrentUserTenantDataSourceMixin, generics.Ret
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源连通性测试",
+        request_body=DataSourceTestConnectionInputSLZ(),
         responses={status.HTTP_200_OK: DataSourceTestConnectionOutputSLZ()},
     )
-    def get(self, request, *args, **kwargs):
-        data_source = self.get_object()
-        if data_source.is_local:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED
+    def post(self, request, *args, **kwargs):
+        slz = DataSourceTestConnectionInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
 
-        # TODO (su) 实现代码逻辑，需调用数据源插件以确认连通性
-        mock_data = {
-            "error_message": "",
-            "user": {
-                "id": "uid_2",
-                "properties": {
-                    "username": "zhangSan",
-                },
-                "leaders": ["uid_0", "uid_1"],
-                "departments": ["dept_id_1"],
-            },
-            "department": {
-                "id": "dept_id_1",
-                "name": "dept_name",
-                "parent": "dept_id_0",
-            },
-        }
+        plugin_id = data["plugin_id"]
+        if plugin_id == DataSourcePluginEnum.LOCAL:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f("本地数据源插件不支持连通性测试")
 
-        return Response(DataSourceTestConnectionOutputSLZ(instance=mock_data).data)
+        PluginCls = get_plugin_cls(plugin_id)  # noqa: N806
+        result = PluginCls(data["plugin_config"]).test_connection()
+
+        return Response(DataSourceTestConnectionOutputSLZ(instance=result).data)
 
 
 class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
@@ -314,7 +308,7 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         tags=["data_source"],
         operation_description="本地数据源用户数据导入",
         request_body=LocalDataSourceImportInputSLZ(),
-        responses={status.HTTP_200_OK: LocalDataSourceImportOutputSLZ()},
+        responses={status.HTTP_200_OK: DataSourceImportOrSyncOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
         """从 Excel 导入数据源用户数据"""
@@ -330,13 +324,14 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         try:
             workbook = openpyxl.load_workbook(data["file"])
         except Exception:  # pylint: disable=broad-except
-            logger.exception("本地数据源导入失败")
+            logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(_("文件格式异常"))
 
         options = DataSourceSyncOptions(
             operator=request.user.username,
             overwrite=data["overwrite"],
             incremental=data["incremental"],
+            # FIXME (su) 本地数据源导入也要改成异步行为，但是要解决 excel 如何传递的问题
             async_run=False,
             trigger=SyncTaskTrigger.MANUAL,
         )
@@ -349,16 +344,38 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
         return Response(
-            LocalDataSourceImportOutputSLZ(
+            DataSourceImportOrSyncOutputSLZ(
                 instance={"task_id": task.id, "status": task.status, "summary": task.summary}
             ).data
         )
 
 
-class DataSourceSyncApi(generics.CreateAPIView):
+class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
     """数据源同步"""
 
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源数据同步",
+        responses={status.HTTP_200_OK: DataSourceImportOrSyncOutputSLZ()},
+    )
     def post(self, request, *args, **kwargs):
         """触发数据源同步任务"""
-        # TODO (su) 实现代码逻辑，注意：本地数据源应该使用导入，而不是同步
-        return Response()
+        data_source = self.get_object()
+        if data_source.is_local:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("本地数据源不支持同步，请使用导入功能"))
+
+        # 同步策略：手动点击页面按钮，会触发全量覆盖的同步，且该同步是异步行为
+        options = DataSourceSyncOptions(
+            operator=request.user.username,
+            overwrite=True,
+            incremental=False,
+            async_run=True,
+            trigger=SyncTaskTrigger.MANUAL,
+        )
+
+        task = DataSourceSyncManager(data_source, options).execute()
+        return Response(
+            DataSourceImportOrSyncOutputSLZ(
+                instance={"task_id": task.id, "status": task.status, "summary": task.summary}
+            ).data
+        )

@@ -25,6 +25,12 @@ urlpatterns = [
     path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
     # 数据源随机密码获取
     path("random-passwords/", views.DataSourceRandomPasswordApi.as_view(), name="data_source.random_passwords"),
+    # 数据源连通性测试
+    path(
+        "test-connection/",
+        views.DataSourceTestConnectionApi.as_view(),
+        name="data_source.test_connection",
+    ),
     # 数据源更新/获取
     path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),
     # 数据源启/停
@@ -32,12 +38,6 @@ urlpatterns = [
         "<int:id>/operations/switch_status/",
         views.DataSourceSwitchStatusApi.as_view(),
         name="data_source.switch_status",
-    ),
-    # 连通性测试
-    path(
-        "<int:id>/operations/test_connection/",
-        views.DataSourceTestConnectionApi.as_view(),
-        name="data_source.test_connection",
     ),
     # 获取用户信息导入模板
     path(

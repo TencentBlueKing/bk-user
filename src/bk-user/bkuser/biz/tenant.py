@@ -26,7 +26,6 @@ from bkuser.biz.data_source import (
     DataSourceUserHandler,
 )
 from bkuser.plugins.local.models import PasswordInitialConfig
-from bkuser.plugins.local.utils import gen_code
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -302,7 +301,7 @@ class TenantHandler:
             for i in managers:
                 # 创建数据源用户
                 data_source_user = DataSourceUser.objects.create(
-                    data_source=data_source, code=gen_code(i.username), **i.model_dump()
+                    data_source=data_source, code=i.username, **i.model_dump()
                 )
                 # 创建对应的租户用户
                 tenant_user = TenantUser.objects.create(

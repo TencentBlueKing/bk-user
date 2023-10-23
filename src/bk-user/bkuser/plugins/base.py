@@ -8,21 +8,25 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Type
 
 from drf_yasg import openapi
 from pydantic import BaseModel
 
-from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.constants import CUSTOM_PLUGIN_ID_PREFIX, DataSourcePluginEnum
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 from bkuser.utils.pydantic import gen_openapi_schema
+
+logger = logging.getLogger(__name__)
 
 
 class BaseDataSourcePlugin(ABC):
     """数据源插件基类"""
 
-    config_class: Type[BaseModel] | None
+    id: str | DataSourcePluginEnum
+    config_class: Type[BaseModel]
 
     @abstractmethod
     def __init__(self, *args, **kwargs):
@@ -47,9 +51,27 @@ class BaseDataSourcePlugin(ABC):
 _plugin_cls_map: Dict[str | DataSourcePluginEnum, Type[BaseDataSourcePlugin]] = {}
 
 
-def register_plugin(plugin_id: str | DataSourcePluginEnum, plugin_cls: Type[BaseDataSourcePlugin]):
-    """注册插件"""
+def register_plugin(plugin_cls: Type[BaseDataSourcePlugin]):
+    """注册数据源插件"""
+    plugin_id = plugin_cls.id
+
+    if not plugin_id:
+        raise RuntimeError(f"plugin {plugin_cls} not provide id")
+
+    if not plugin_cls.config_class:
+        raise RuntimeError(f"plugin {plugin_cls} not provide config_class")
+
+    if not (isinstance(plugin_id, DataSourcePluginEnum) or plugin_id.startswith(CUSTOM_PLUGIN_ID_PREFIX)):
+        raise RuntimeError(f"custom plugin's id must start with `{CUSTOM_PLUGIN_ID_PREFIX}`")
+
+    logger.info("register data source plugin: %s", plugin_id)
+
     _plugin_cls_map[plugin_id] = plugin_cls
+
+
+def is_plugin_exists(plugin_id: str | DataSourcePluginEnum) -> bool:
+    """判断插件是否存在"""
+    return plugin_id in _plugin_cls_map
 
 
 def get_plugin_cls(plugin_id: str | DataSourcePluginEnum) -> Type[BaseDataSourcePlugin]:
@@ -60,7 +82,7 @@ def get_plugin_cls(plugin_id: str | DataSourcePluginEnum) -> Type[BaseDataSource
     return _plugin_cls_map[plugin_id]
 
 
-def get_plugin_cfg_cls(plugin_id: str | DataSourcePluginEnum) -> Type[BaseModel] | None:
+def get_plugin_cfg_cls(plugin_id: str | DataSourcePluginEnum) -> Type[BaseModel]:
     """获取指定插件的配置类"""
     return get_plugin_cls(plugin_id).config_class
 
@@ -70,5 +92,4 @@ def get_plugin_cfg_schema_map() -> Dict[str, openapi.Schema]:
     return {
         f"plugin_config:{plugin_id}": gen_openapi_schema(model.config_class)
         for plugin_id, model in _plugin_cls_map.items()
-        if model.config_class is not None
     }

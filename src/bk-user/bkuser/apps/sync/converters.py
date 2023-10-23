@@ -67,8 +67,8 @@ class DataSourceUserConverter:
             code=user.code,
             username=props[mapping["username"]],
             full_name=props[mapping["full_name"]],
-            email=props[mapping["email"]],
-            phone=props[mapping["phone"]],
+            email=props.get(mapping["email"]) or "",
+            phone=props.get(mapping["phone"]) or "",
             phone_country_code=props.get(mapping["phone_country_code"], settings.DEFAULT_PHONE_COUNTRY_CODE),
             extras={f.name: props.get(f.name, f.default) for f in self.custom_fields},
         )

@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from pydantic import BaseModel
 
-from bkuser.apps.sync.constants import SyncTaskTrigger
+from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskTrigger
 
 
 class DataSourceSyncOptions(BaseModel):
@@ -37,3 +37,9 @@ class TenantSyncOptions(BaseModel):
     async_run: bool = True
     # 同步任务触发方式
     trigger: SyncTaskTrigger = SyncTaskTrigger.SIGNAL
+
+
+class DataSourceSyncConfig(BaseModel):
+    """数据源同步配置"""
+
+    sync_period: DataSourceSyncPeriod = DataSourceSyncPeriod.PER_1_DAY

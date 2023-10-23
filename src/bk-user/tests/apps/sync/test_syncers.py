@@ -20,6 +20,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.sync.exceptions import UserLeaderNotExists
 from bkuser.apps.sync.syncers import (
     DataSourceDepartmentSyncer,
     DataSourceUserSyncer,
@@ -128,7 +129,7 @@ class TestDataSourceUserSyncer:
         raw_users[0].properties["phone_country_code"] = "63"
         raw_users[0].properties["age"] = "30"
         # 2. 修改用户的 code，会导致用户被重建
-        lisi_old_code, lisi_new_code = "Employee-4", "Employee-4-1"
+        lisi_old_code, lisi_new_code = "lisi", "lisi-1"
         raw_users[1].code = lisi_new_code
         # 需要更新其他用户的信息，避免 leader 还是用旧的 Code
         for u in raw_users:
@@ -153,7 +154,7 @@ class TestDataSourceUserSyncer:
         assert all(bool(e) for e in users.values_list("extras", flat=True))
 
         # 验证内置/自定义字段被更新
-        zhangsan = users.filter(code="Employee-3").first()
+        zhangsan = users.filter(code="zhangsan").first()
         assert zhangsan.username == "zhangsan_rename"
         assert zhangsan.full_name == "张三的另一个名字"
         assert zhangsan.email == "zhangsan_rename@m.com"
@@ -165,7 +166,7 @@ class TestDataSourceUserSyncer:
         lisi = users.filter(username="lisi").first()
         assert lisi.full_name == "李四"
         assert lisi.email == "lisi@m.com"
-        assert lisi.code == "Employee-4-1"
+        assert lisi.code == "lisi-1"
 
         # 验证用户部门信息
         assert self._gen_user_depts_from_db(users) == self._gen_user_depts_from_raw_users(raw_users)
@@ -198,7 +199,7 @@ class TestDataSourceUserSyncer:
         assert not any(bool(e) for e in users.values_list("extras", flat=True))
 
         # 验证内置/自定义字段都不会被更新，因为没有选择 overwrite
-        zhangsan = users.filter(code="Employee-3").first()
+        zhangsan = users.filter(code="zhangsan").first()
         assert zhangsan.username == "zhangsan"
         assert zhangsan.full_name == "张三"
         assert zhangsan.email == "zhangsan@m.com"
@@ -219,7 +220,21 @@ class TestDataSourceUserSyncer:
         users = DataSourceUser.objects.filter(data_source=full_local_data_source)
         assert set(users.values_list("code", flat=True)) == user_codes
 
-    def destroy(self, data_source_sync_task, full_local_data_source):
+    def test_update_with_invalid_leader(self, data_source_sync_task, full_local_data_source, random_raw_user):
+        """全量同步模式，要求用户的 leader 必须也在数据中"""
+        random_raw_user.leaders.append("lisi")
+        with pytest.raises(UserLeaderNotExists):
+            DataSourceUserSyncer(data_source_sync_task, full_local_data_source, [random_raw_user]).sync()
+
+    def test_update_with_leader_in_db(self, data_source_sync_task, full_local_data_source, random_raw_user):
+        """增量同步模式，用户的 leader 在 db 中存在也是可以的"""
+        data_source_sync_task.extra["incremental"] = True
+        random_raw_user.leaders.append("lisi")
+
+        DataSourceUserSyncer(data_source_sync_task, full_local_data_source, [random_raw_user]).sync()
+        assert DataSourceUser.objects.filter(code=random_raw_user.code).count() == 1
+
+    def test_destroy(self, data_source_sync_task, full_local_data_source):
         raw_users: List[RawDataSourceUser] = []
 
         DataSourceUserSyncer(data_source_sync_task, full_local_data_source, raw_users).sync()
@@ -314,7 +329,7 @@ class TestTenantUserSyncer:
         # 另外的数据源同步到租户的数据
         other_ds_user = DataSourceUser.objects.create(
             data_source=bare_general_data_source,
-            code="Employee-201",
+            code="libai",
             username="libai",
             full_name="李白",
             email="libai@m.com",
@@ -336,11 +351,12 @@ class TestTenantUserSyncer:
 
         # 更新场景
         DataSourceUser.objects.filter(
-            data_source=full_local_data_source, code__in=["Employee-9", "Employee-10"]
+            data_source=full_local_data_source,
+            code__in=["yangjiu", "lushi"],
         ).delete()
         DataSourceUser.objects.create(
             data_source=full_local_data_source,
-            code="Employee-20",
+            code="xiaoershi",
             username="xiaoershi",
             full_name="萧二十",
             email="xiaoershi@m.com",

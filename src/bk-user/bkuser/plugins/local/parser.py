@@ -16,13 +16,15 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from openpyxl.workbook import Workbook
 
+from bkuser.plugins.local.constants import USERNAME_REGEX
 from bkuser.plugins.local.exceptions import (
     CustomColumnNameInvalid,
     DuplicateColumnName,
     DuplicateUsername,
+    InvalidLeader,
+    InvalidUsername,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
-    UserLeaderInvalid,
     UserSheetNotExists,
 )
 from bkuser.plugins.local.utils import gen_code
@@ -120,25 +122,30 @@ class LocalDataSourceDataParser:
         if duplicate_col_names := [n for n, cnt in Counter(sheet_col_names).items() if cnt > 1]:
             raise DuplicateColumnName(_("待导入文件中存在重复列名：{}").format(", ".join(duplicate_col_names)))
 
-        usernames, leaders = [], []
-        # 5. 检查所有必填字段是否有值
+        all_usernames = []
         for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
             info = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
+            # 5. 检查所有必填字段是否有值
             for field_name in self.required_field_names:
                 if not info.get(field_name):
                     raise RequiredFieldIsEmpty(_("待导入文件中必填字段 {} 存在空值").format(field_name))
 
-            usernames.append(info["username"])
-            if user_leaders := info["leaders"]:
-                leaders.extend([ld.strip() for ld in user_leaders.split(",") if ld])
+            username = info["username"]
+            # 6. 检查用户名是否合法
+            if not USERNAME_REGEX.fullmatch(username):
+                raise InvalidUsername(
+                    _("用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头").format(username)  # noqa: E501
+                )
 
-        # 6. 检查用户名是否有重复的
-        if duplicate_usernames := [n for n, cnt in Counter(usernames).items() if cnt > 1]:
+            # 7. 检查用户不能是自己的 leader
+            if (leaders := info.get("leaders")) and username in [ld.strip() for ld in leaders.split(",")]:
+                raise InvalidLeader(_("待导入文件中用户 {} 不能是自己的直接上级").format(username))
+
+            all_usernames.append(username)
+
+        # 8. 检查用户名是否有重复的
+        if duplicate_usernames := [n for n, cnt in Counter(all_usernames).items() if cnt > 1]:
             raise DuplicateUsername(_("待导入文件中存在重复用户名：{}").format(", ".join(duplicate_usernames)))
-
-        # 7. 检查 leaders 是不是都存在
-        if not_exists_leaders := set(leaders) - set(usernames):
-            raise UserLeaderInvalid(_("待导入文件中不存在用户上级信息：{}").format(", ".join(not_exists_leaders)))
 
     def _parse_departments(self):
         organizations = set()
@@ -164,12 +171,17 @@ class LocalDataSourceDataParser:
         for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
             properties = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
 
-            department_codes, leader_codes = [], []
+            departments, leaders = [], []
             if organizations := properties.pop("organizations"):
-                department_codes = [gen_code(org.strip()) for org in organizations.split(",") if org]
+                for org in organizations.split(","):
+                    if org := org.strip():
+                        departments.append(gen_code(org))  # noqa: PERF401
 
-            if leaders := properties.pop("leaders"):
-                leader_codes = [gen_code(ld.strip()) for ld in leaders.split(",") if ld]
+            if leader_names := properties.pop("leaders"):
+                for ld in leader_names.split(","):
+                    if ld := ld.strip():
+                        # xlsx 中填写的是 leader 的 username，但在本地数据源中，username 就是 code
+                        leaders.append(ld)  # noqa: PERF401
 
             phone_number = str(properties.pop("phone_number"))
             # 默认认为是不带国际代码的
@@ -184,9 +196,10 @@ class LocalDataSourceDataParser:
             properties = {k: str(v) for k, v in properties.items() if v is not None}
             self.users.append(
                 RawDataSourceUser(
-                    code=gen_code(properties["username"]),
+                    # 本地数据源用户，code 就是 username
+                    code=properties["username"],
                     properties=properties,
-                    leaders=leader_codes,
-                    departments=department_codes,
+                    leaders=leaders,
+                    departments=departments,
                 )
             )

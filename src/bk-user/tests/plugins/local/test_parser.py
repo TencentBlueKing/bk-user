@@ -8,27 +8,22 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import List
+
 import pytest
 from bkuser.plugins.local.exceptions import (
     CustomColumnNameInvalid,
     DuplicateColumnName,
     DuplicateUsername,
+    InvalidLeader,
+    InvalidUsername,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
-    UserLeaderInvalid,
     UserSheetNotExists,
 )
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
 from bkuser.plugins.local.utils import gen_code
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
-from django.conf import settings
-from openpyxl.reader.excel import load_workbook
-from openpyxl.workbook import Workbook
-
-
-@pytest.fixture()
-def user_wk() -> Workbook:
-    return load_workbook(settings.BASE_DIR / "tests/assets/fake_users.xlsx")
 
 
 class TestLocalDataSourceDataParser:
@@ -62,16 +57,28 @@ class TestLocalDataSourceDataParser:
         with pytest.raises(RequiredFieldIsEmpty):
             LocalDataSourceDataParser(user_wk).parse()
 
-    def test_validate_case_duplicate_username(self, user_wk):
-        # 修改表格数据，导致用户名重复
-        user_wk["users"]["A4"].value = "zhangsan"
-        with pytest.raises(DuplicateUsername):
+    def test_validate_case_invalid_username_chinese(self, user_wk):
+        # 修改表格数据，导致用户名非法
+        user_wk["users"]["A4"].value = "张三"
+        with pytest.raises(InvalidUsername):
             LocalDataSourceDataParser(user_wk).parse()
 
-    def test_validate_case_invalid_leaders(self, user_wk):
-        # 修改表格数据，导致直接上级不合法
-        user_wk["users"]["F3"].value = "not_exists"
-        with pytest.raises(UserLeaderInvalid):
+    def test_validate_case_invalid_username_punctuation(self, user_wk):
+        # 修改表格数据，导致用户名非法
+        user_wk["users"]["A4"].value = "zhangsan@m.com"
+        with pytest.raises(InvalidUsername):
+            LocalDataSourceDataParser(user_wk).parse()
+
+    def test_validate_case_invalid_leader(self, user_wk):
+        # 修改表格数据，导致用户是自己的 leader
+        user_wk["users"]["F4"].value = "zhangsan, lisi,wangwu"
+        with pytest.raises(InvalidLeader):
+            LocalDataSourceDataParser(user_wk).parse()
+
+    def test_validate_case_duplicate_username(self, user_wk):
+        # 修改表格数据，导致用户名重复
+        user_wk["users"]["A6"].value = "zhangsan"
+        with pytest.raises(DuplicateUsername):
             LocalDataSourceDataParser(user_wk).parse()
 
     def test_get_departments(self, user_wk):
@@ -110,9 +117,12 @@ class TestLocalDataSourceDataParser:
         parser = LocalDataSourceDataParser(user_wk)
         parser.parse()
 
+        def gen_depts(orgs: List[str]) -> List[str]:
+            return [gen_code(o) for o in orgs]
+
         assert sorted(parser.get_users(), key=lambda u: u.properties["age"]) == [
             RawDataSourceUser(
-                code=gen_code("zhangsan"),
+                code="zhangsan",
                 properties={
                     "username": "zhangsan",
                     "full_name": "张三",
@@ -124,10 +134,10 @@ class TestLocalDataSourceDataParser:
                     "phone_country_code": "86",
                 },
                 leaders=[],
-                departments=[gen_code("公司")],
+                departments=gen_depts(["公司"]),
             ),
             RawDataSourceUser(
-                code=gen_code("lisi"),
+                code="lisi",
                 properties={
                     "username": "lisi",
                     "full_name": "李四",
@@ -138,11 +148,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345672",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("zhangsan")],
-                departments=[gen_code("公司/部门A"), gen_code("公司/部门A/中心AA")],
+                leaders=["zhangsan"],
+                departments=gen_depts(["公司/部门A", "公司/部门A/中心AA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("wangwu"),
+                code="wangwu",
                 properties={
                     "username": "wangwu",
                     "full_name": "王五",
@@ -153,11 +163,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345673",
                     "phone_country_code": "63",
                 },
-                leaders=[gen_code("zhangsan")],
-                departments=[gen_code("公司/部门A"), gen_code("公司/部门B")],
+                leaders=["zhangsan"],
+                departments=gen_depts(["公司/部门A", "公司/部门B"]),
             ),
             RawDataSourceUser(
-                code=gen_code("zhaoliu"),
+                code="zhaoliu",
                 properties={
                     "username": "zhaoliu",
                     "full_name": "赵六",
@@ -168,11 +178,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345674",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("lisi")],
-                departments=[gen_code("公司/部门A/中心AA")],
+                leaders=["lisi"],
+                departments=gen_depts(["公司/部门A/中心AA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("liuqi"),
+                code="liuqi",
                 properties={
                     "username": "liuqi",
                     "full_name": "柳七",
@@ -183,11 +193,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345675",
                     "phone_country_code": "63",
                 },
-                leaders=[gen_code("zhaoliu")],
-                departments=[gen_code("公司/部门A/中心AA/小组AAA")],
+                leaders=["zhaoliu"],
+                departments=gen_depts(["公司/部门A/中心AA/小组AAA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("maiba"),
+                code="maiba",
                 properties={
                     "username": "maiba",
                     "full_name": "麦八",
@@ -198,11 +208,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345676",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("lisi"), gen_code("wangwu")],
-                departments=[gen_code("公司/部门A/中心AB")],
+                leaders=["lisi", "wangwu"],
+                departments=gen_depts(["公司/部门A/中心AB"]),
             ),
             RawDataSourceUser(
-                code=gen_code("yangjiu"),
+                code="yangjiu",
                 properties={
                     "username": "yangjiu",
                     "full_name": "杨九",
@@ -213,11 +223,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345677",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("wangwu")],
-                departments=[gen_code("公司/部门A/中心AB")],
+                leaders=["wangwu"],
+                departments=gen_depts(["公司/部门A/中心AB"]),
             ),
             RawDataSourceUser(
-                code=gen_code("lushi"),
+                code="lushi",
                 properties={
                     "username": "lushi",
                     "full_name": "鲁十",
@@ -228,11 +238,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345678",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("wangwu"), gen_code("maiba")],
-                departments=[gen_code("公司/部门B/中心BA"), gen_code("公司/部门A/中心AB/小组ABA")],
+                leaders=["wangwu", "maiba"],
+                departments=gen_depts(["公司/部门B/中心BA", "公司/部门A/中心AB/小组ABA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("linshiyi"),
+                code="linshiyi",
                 properties={
                     "username": "linshiyi",
                     "full_name": "林十一",
@@ -243,11 +253,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345679",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("lushi")],
-                departments=[gen_code("公司/部门A/中心AB/小组ABA")],
+                leaders=["lushi"],
+                departments=gen_depts(["公司/部门A/中心AB/小组ABA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("baishier"),
+                code="baishier",
                 properties={
                     "username": "baishier",
                     "full_name": "白十二",
@@ -258,11 +268,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512345670",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("lushi")],
-                departments=[gen_code("公司/部门B/中心BA/小组BAA")],
+                leaders=["lushi"],
+                departments=gen_depts(["公司/部门B/中心BA/小组BAA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("qinshisan"),
+                code="qinshisan",
                 properties={
                     "username": "qinshisan",
                     "full_name": "秦十三",
@@ -273,11 +283,11 @@ class TestLocalDataSourceDataParser:
                     "phone": "13512245671",
                     "phone_country_code": "86",
                 },
-                leaders=[gen_code("lisi")],
-                departments=[gen_code("公司/部门C/中心CA/小组CAA")],
+                leaders=["lisi"],
+                departments=gen_depts(["公司/部门C/中心CA/小组CAA"]),
             ),
             RawDataSourceUser(
-                code=gen_code("freedom"),
+                code="freedom",
                 properties={
                     "username": "freedom",
                     "full_name": "自由人",

@@ -8,9 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from pydantic import BaseModel
+
+
+class PluginMetadata(BaseModel):
+    """插件基本信息"""
+
+    id: str
+    name: str
+    description: str
 
 
 class RawDataSourceUser(BaseModel):
@@ -20,9 +28,9 @@ class RawDataSourceUser(BaseModel):
     code: str
     # 用户名，邮箱，手机号等个人信息
     properties: Dict[str, str]
-    # 直接上级信息
+    # 直接上级信息（code）
     leaders: List[str]
-    # 所属部门信息
+    # 所属部门信息（code）
     departments: List[str]
 
 
@@ -40,6 +48,11 @@ class RawDataSourceDepartment(BaseModel):
 class TestConnectionResult(BaseModel):
     """连通性测试结果，包含示例数据"""
 
+    # 连通性测试错误信息，空则表示正常
     error_message: str
-    user: RawDataSourceUser
-    department: RawDataSourceDepartment
+    # 获取到的首个数据源用户
+    user: RawDataSourceUser | None
+    # 获取到的首个数据源部门
+    department: RawDataSourceDepartment | None
+    # 可能便于排查问题的额外数据
+    extras: Dict[str, Any] | None = None

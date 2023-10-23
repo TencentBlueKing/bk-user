@@ -26,6 +26,7 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
+app.autodiscover_tasks(related_name="periodic_tasks")
 
 # set queue ha policy if use rabbitmq
 # default queue name is bkuser
@@ -34,3 +35,5 @@ app.conf.task_queues = [
 ]
 
 app.conf.task_default_queue = "bkuser"
+
+app.conf.beat_scheduler = "django_celery_beat.schedulers:DatabaseScheduler"

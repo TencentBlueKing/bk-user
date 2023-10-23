@@ -11,7 +11,8 @@ specific language governing permissions and limitations under the License.
 from hashlib import sha256
 
 
-def gen_code(username_or_org: str) -> str:
-    # 本地数据源数据没有提供用户及部门 code 的方式，
+def gen_code(org: str) -> str:
+    # 本地数据源数据没有提供部门 code 的方式，
     # 因此使用 sha256 计算以避免冲突，也便于后续插入 DB 时进行比较
-    return sha256(username_or_org.encode("utf-8")).hexdigest()
+    # 注意：本地数据源用户 code 就是 username，不需要额外计算 code
+    return sha256(org.encode("utf-8")).hexdigest()
