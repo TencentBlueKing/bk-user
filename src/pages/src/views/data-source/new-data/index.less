@@ -1,0 +1,77 @@
+.data-source-content {
+  height: calc(100vh - 104px);
+  padding: 24px;
+
+  .content-item {
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px 0 #1919290d;
+
+    .item-title {
+      padding: 16px 0 16px 24px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    ::v-deep .bk-form-item {
+      padding-bottom: 24px;
+      margin-bottom: 0;
+      margin-left: 64px;
+      font-size: 14px;
+
+      &:last-child {
+        margin-bottom: 24px;
+      }
+
+      .bk-radio-button {
+        width: 80px;
+
+        .bk-radio-button-label {
+          font-size: 14px !important;
+        }
+      }
+
+      .bk-radio-label {
+        font-size: 14px !important;
+      }
+
+      .error-text {
+        font-size: 12px;
+        line-height: 1;
+        color: #ea3636;
+        animation: form-error-appear-animation .15s;
+      }
+    }
+
+    .form-item-flex {
+      ::v-deep .bk-form-content {
+        display: flex;
+
+        .input-password {
+          width: 240px;
+          margin-left: 24px;
+        }
+      }
+    }
+  }
+
+  .btn {
+    button {
+      width: 88px;
+    }
+
+    .connection-tips {
+      margin-top: 8px;
+    }
+
+    .icon-close-fill {
+      font-size: 14px;
+      color: #EA3636;
+    }
+
+    .icon-duihao-2 {
+      font-size: 14px;
+      color: #2DCB56;
+    }
+  }
+}

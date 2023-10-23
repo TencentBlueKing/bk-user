@@ -60,6 +60,7 @@ export interface NewDataSourceParams {
   plugin_id: string,
   plugin_config: {},
   field_mapping: [],
+  sync_config: {},
 }
 
 /**
@@ -89,4 +90,12 @@ export interface LeadersParams {
   keyword: string,
   page: number,
   pageSize: number,
+}
+
+/**
+ * 数据源连通性测试参数
+ */
+export interface TestConnectionParams {
+  plugin_id: string,
+  plugin_config: {},
 }

@@ -6,8 +6,10 @@
           <i class="user-icon icon-add-2 mr8" />
           新建用户
         </bk-button>
-        <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
-        <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
+        <template v-if="pluginId === 'local'">
+          <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
+          <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
+        </template>
       </div>
       <bk-input
         class="header-right"
@@ -175,7 +177,6 @@ import axios from 'axios';
 import { Message } from 'bkui-vue';
 import Cookies from 'js-cookie';
 import { computed, defineProps, inject, onMounted, reactive, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 
 import EditUser from './EditUser.vue';
 import ViewUser from './ViewUser.vue';
@@ -188,10 +189,11 @@ const props = defineProps({
   dataSourceId: {
     type: Number,
   },
+  pluginId: {
+    type: String,
+    default: '',
+  },
 });
-const route = useRoute();
-
-const currentId = computed(() => Number(route.params.id));
 
 const editLeaveBefore = inject('editLeaveBefore');
 const searchVal = ref('');
@@ -257,7 +259,7 @@ const isEmptySearch = ref(false);
 const isDataError = ref(false);
 
 const params = reactive({
-  id: currentId.value,
+  id: props.dataSourceId,
   username: '',
   page: 1,
   pageSize: 10,
