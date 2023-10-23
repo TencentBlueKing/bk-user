@@ -164,6 +164,7 @@ onMounted(() => {
 
 <style lang="postcss" scoped>
 .login-model {
+  z-index: 2;
   width: 480px;
   background: #FFFFFF;
   box-shadow: 0 4px 12px 0 #00000033;
