@@ -32,6 +32,7 @@ RUN poetry config virtualenvs.create false && poetry install --only main
 COPY src/bk-login/bklogin /app/bklogin
 COPY src/bk-login/bin /app/bin
 COPY src/bk-login/manage.py /app
+COPY src/idp-plugins/idp_plugins /app/bklogin/idp_plugins
 
 COPY --from=StaticBuilding /dist /app/staticfiles
 COPY --from=StaticBuilding /dist/index.html /app/templates/index.html
