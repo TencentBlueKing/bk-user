@@ -38,11 +38,12 @@ from .constants import SIGN_IN_TENANT_ID_SESSION_KEY, SUPPORT_SIGN_IN_TENANT_USE
 from .helper import BkTokenManager
 
 
+# 确保无论何时，响应必然有CSRFToken Cookie
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class LoginView(View):
     redirect_field_name = "c_url"
     # 登录成功后默认重定向到蓝鲸桌面
-    default_redirect_to = "/index/"
+    default_redirect_to = "/console/"
     template_name = "index.html"
 
     def _get_success_url_allowed_hosts(self, request):
@@ -77,7 +78,6 @@ class LoginView(View):
         return render(request, self.template_name)
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class TenantGlobalSettingRetrieveApi(View):
     def get(self, request, *args, **kwargs):
         """
@@ -86,7 +86,6 @@ class TenantGlobalSettingRetrieveApi(View):
         return APISuccessResponse(data={"tenant_visible": settings.TENANT_VISIBLE})
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class TenantListApi(View):
     def get(self, request, *args, **kwargs):
         """
@@ -110,7 +109,6 @@ class TenantListApi(View):
         return APISuccessResponse(data=data)
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class TenantRetrieveApi(View):
     def get(self, request, *args, **kwargs):
         tenant_id = kwargs["tenant_id"]
@@ -121,7 +119,6 @@ class TenantRetrieveApi(View):
         return APISuccessResponse(data={"id": tenant.id, "name": tenant.name, "logo": tenant.logo})
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class SignInTenantCreateApi(View):
     def post(self, request, *args, **kwargs):
         request_body = parse_request_body(request.body)
@@ -141,7 +138,6 @@ class SignInTenantCreateApi(View):
         return APISuccessResponse()
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class TenantIdpListApi(View):
     def get(self, request, *args, **kwargs):
         # Session里获取当前登录的租户
@@ -175,8 +171,6 @@ class TenantIdpListApi(View):
 
 # 先对所有请求豁免CSRF校验，由dispatch里根据需要手动执行CSRF校验
 @method_decorator(csrf_exempt, name="dispatch")
-# 确保无论何时，响应必然有CSRFToken Cookie
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class IdpPluginDispatchView(View):
     def dispatch(self, request, *args, **kwargs):
         # Session里获取当前登录的租户
@@ -321,7 +315,6 @@ class IdpPluginDispatchView(View):
         return APISuccessResponse()
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class TenantUserListApi(View):
     def get(self, request, *args, **kwargs):
         # Session里获取当前登录的租户
@@ -349,7 +342,6 @@ class TenantUserListApi(View):
         return APISuccessResponse(data=data)
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
 class SignInTenantUserCreateApi(View):
     def post(self, request, *args, **kwargs):
         request_body = parse_request_body(request.body)
@@ -362,6 +354,9 @@ class SignInTenantUserCreateApi(View):
         tenant_user_ids = request.session.get(SUPPORT_SIGN_IN_TENANT_USER_IDS_SESSION_KEY) or []
         if user_id not in tenant_user_ids:
             raise error_codes.NO_PERMISSION.f(_("非法，不可登录该用户"))
+
+        # TODO：支持MFA、首次登录强制修改密码登录操作
+        # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态g，比如bk_token_for
 
         response = APISuccessResponse(
             {

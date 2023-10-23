@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "bklogin.authentication",
+    "bklogin.bkuser",
 ]
 
 MIDDLEWARE = [
