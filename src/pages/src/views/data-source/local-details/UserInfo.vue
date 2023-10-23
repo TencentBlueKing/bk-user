@@ -6,8 +6,10 @@
           <i class="user-icon icon-add-2 mr8" />
           新建用户
         </bk-button>
-        <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
-        <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
+        <template v-if="pluginId === 'local'">
+          <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
+          <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
+        </template>
       </div>
       <bk-input
         class="header-right"
@@ -133,12 +135,13 @@
         accept=".xlsx,.xls"
         with-credentials
         :limit="1"
-        :size="2"
+        :size="10"
         :multiple="false"
-        :custom-request="customRequest">
+        :custom-request="customRequest"
+        @exceed="exceed">
         <template #file="{ file }">
           <div
-            class="excel-file"
+            :class="['excel-file', { 'excel-file-error': isError }]"
             @mousemove="isHover = true"
             @mouseleave="isHover = false">
             <i class="user-icon icon-excel" />
@@ -149,8 +152,8 @@
                 {{ file.name }}
               </div>
               <p class="text-overflow file-status">
-                <i class="user-icon icon-check-line" />
-                上传成功
+                <i v-if="!isError" class="user-icon icon-check-line" />
+                {{ textTips }}
               </p>
             </div>
             <div class="file-operations">
@@ -161,7 +164,7 @@
         </template>
         <template #tip>
           <div class="mt-[8px]">
-            <span>支持 Excel 文件，文件小于 2 M，下载</span>
+            <span>支持 Excel 文件，文件小于 10 M，下载</span>
             <bk-button text theme="primary" @click="handleExportTemplate">模版文件</bk-button>
           </div>
         </template>
@@ -175,7 +178,6 @@ import axios from 'axios';
 import { Message } from 'bkui-vue';
 import Cookies from 'js-cookie';
 import { computed, defineProps, inject, onMounted, reactive, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 
 import EditUser from './EditUser.vue';
 import ViewUser from './ViewUser.vue';
@@ -188,10 +190,11 @@ const props = defineProps({
   dataSourceId: {
     type: Number,
   },
+  pluginId: {
+    type: String,
+    default: '',
+  },
 });
-const route = useRoute();
-
-const currentId = computed(() => Number(route.params.id));
 
 const editLeaveBefore = inject('editLeaveBefore');
 const searchVal = ref('');
@@ -257,7 +260,7 @@ const isEmptySearch = ref(false);
 const isDataError = ref(false);
 
 const params = reactive({
-  id: currentId.value,
+  id: props.dataSourceId,
   username: '',
   page: 1,
   pageSize: 10,
@@ -372,9 +375,22 @@ const uploadInfo = reactive({
 
 const uploadRef = ref();
 const isHover = ref(false);
+const textTips = ref('');
+const isError = ref(false);
 
 const customRequest = (data) => {
+  if (data.file.size > (10 * 1024 * 1024)) {
+    isError.value = true;
+    textTips.value = '文件大小超出限制';
+  } else {
+    isError.value = false;
+    textTips.value = '上传成功';
+  }
   uploadInfo.file = data.file;
+};
+
+const exceed = () => {
+  Message({ theme: 'error', message: '最多上传1个文件' });
 };
 
 const getSize = (value) => {
@@ -402,9 +418,11 @@ const handleExportTemplate = () => {
 const confirmImportUsers = async () => {
   try {
     if (!uploadInfo.file.name) {
-      Message({ theme: 'warning', message: '请选择文件再上传' });
-      return;
+      return Message({ theme: 'warning', message: '请选择文件再上传' });
     }
+    if (isError.value) {
+      return Message({ theme: 'warning', message: '文件大小超出限制,请重新上传' });
+    };
     importDialog.loading = true;
     const formData = new FormData();
     formData.append('file', uploadInfo.file);
@@ -538,10 +556,26 @@ const closed = () => {
   }
 }
 
+::v-deep .bk-upload-list__item {
+  padding: 0;
+  border: none;
+}
+
+.excel-file-error {
+  background: rgb(254 221 220 / 40%);
+  border-color: #ff5656 !important;
+
+  .file-status {
+    color: #ff5656 !important;
+  }
+}
+
 .excel-file {
   display: flex;
+  padding: 10px;
   overflow: hidden;
   font-size: 12px;
+  border: 1px solid #c4c6cc;
   flex: 1;
   align-items: center;
 

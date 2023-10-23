@@ -101,7 +101,7 @@ export default createRouter({
             navName: '新建数据源',
             activeMenu: 'local',
           },
-          component: () => import('@/views/data-source/new-data/NewLocalData.vue'),
+          component: () => import('@/views/data-source/new-data/index.vue'),
         },
       ],
     },

@@ -2,12 +2,12 @@ export default () => {
   const required = {
     required: true,
     message: '必填项',
-    trigger: 'blur',
+    trigger: ['blur', 'change'],
   };
 
   const name = {
-    validator: (value: string) => value.length <= 32,
-    message: '不能多于32个字符',
+    validator: (value: string) => value.length && value.length <= 32,
+    message: '由1-32位字符组成',
     trigger: 'blur',
   };
 
@@ -36,7 +36,10 @@ export default () => {
   };
 
   const fieldsDisplayName = {
-    validator: (value: string) => value.length <= 12,
+    validator: (value: string) => {
+      const nameLength = getByteLen(value);
+      return nameLength <= 12;
+    },
     message: '最多不得超过12个字符（6个汉字）',
     trigger: 'blur',
   };
@@ -45,6 +48,28 @@ export default () => {
     validator: (value: string) => /^[a-zA-Z]+$/.test(value),
     message: '由英文字母组成',
     trigger: 'blur',
+  };
+
+  const serverBaseUrl = {
+    validator: (value: string) => /^https?:\/\/[a-zA-Z0-9-\\.]+(:\d+)?$/.test(value),
+    message: '请输入正确的地址',
+    trigger: 'blur',
+  };
+
+  const apiPath = {
+    validator: (value: string) => /^\/[\w-]+(\/[\w-]+)*\/?$/.test(value),
+    message: '请输入正确的地址',
+    trigger: 'blur',
+  };
+
+  const getByteLen = (str: string) => {
+    // 匹配所有的中文
+    const reg = /[\u4E00-\u9FA5]/;
+    let len = 0;
+    // 去掉前后空格
+    str = str.replace(/(^\s+)|(\s+$)/g, '').replace(/\s/g, '');
+    len += Array.from(str).reduce((total, char) => total + (reg.test(char) ? 2 : 1), 0);
+    return len;
   };
 
   return {
@@ -56,5 +81,7 @@ export default () => {
     phone,
     fieldsDisplayName,
     fieldsName,
+    serverBaseUrl,
+    apiPath,
   };
 };

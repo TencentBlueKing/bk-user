@@ -1,21 +1,21 @@
 <template>
   <div class="user-info-wrapper user-scroll-y">
     <header>
-      <bk-dropdown trigger="click" placement="bottom-start">
+      <bk-dropdown placement="bottom-start">
         <bk-button theme="primary">
           <i class="user-icon icon-add-2 mr8" />
           新建数据源
         </bk-button>
         <template #content>
           <bk-dropdown-menu ext-cls="dropdown-menu-ul">
-            <p class="dropdown-title">数据源类型选择</p>
+            <p class="dropdown-title" v-if="state.typeList.length > 0">数据源类型选择</p>
+            <p class="dropdown-title" v-else>暂无数据源类型</p>
             <bk-dropdown-item
               v-for="item in state.typeList"
               :key="item"
               @click="newDataSource(item)"
             >
               <img v-if="item.logo" :src="item.logo">
-              <i v-else :class="dataSourceType[item.id].icon"></i>
               <div class="dropdown-item">
                 <span class="dropdown-item-title">{{ item.name }}</span>
                 <span class="dropdown-item-subtitle">{{ item.description }}</span>
@@ -41,6 +41,7 @@
         :border="['outer']"
         :max-height="tableMaxHeight"
         show-overflow-tooltip
+        @column-filter="handleFilter"
       >
         <template #empty>
           <Empty
@@ -60,10 +61,9 @@
         </bk-table-column>
         <bk-table-column prop="plugin_id" label="数据源类型">
           <template #default="{ row }">
-            <div class="datasource-type-icon" v-for="item in state.typeList" :key="item">
+            <div class="data-source-type" v-for="item in state.typeList" :key="item">
               <img v-if="item.id === row.plugin_id && item.logo" :src="item.logo">
-              <i v-else :class="[dataSourceType[row.plugin_id]?.icon, 'type-icon']" />
-              <span>{{ row.plugin_name }}</span>
+              <span v-if="item.id === row.plugin_id">{{ row.plugin_name }}</span>
             </div>
           </template>
         </bk-table-column>
@@ -94,7 +94,7 @@ import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
 import { getDataSourceList, getDataSourcePlugins } from '@/http/dataSourceFiles';
 import router from '@/router/index';
 import { useMainViewStore } from '@/store/mainView';
-import { dataSourceStatus, dataSourceType } from '@/utils';
+import { dataSourceStatus } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
@@ -153,6 +153,11 @@ const handleEnter = (value: string) => {
 const handleClear = () => {
   searchVal.value = '';
   fetchDataSourceList();
+};
+
+const handleFilter = ({ checked }) => {
+  if (!checked[0]) return state.isDataEmpty = false;
+  state.isDataEmpty = !state.list.some(item => item.status === checked[0]);
 };
 
 function handleClick(item) {
@@ -219,6 +224,20 @@ function newDataSource(item) {
       height: 16px;
       margin-right: 5px;
       vertical-align: middle;
+    }
+
+    .data-source-type {
+      display: flex;
+      align-items: center;
+
+      img {
+        width: 14px;
+        height: 14px;
+      }
+
+      span {
+        margin-left: 8px;
+      }
     }
   }
 }

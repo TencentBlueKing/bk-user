@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="tsx">
-import { ref, reactive, computed, nextTick, defineProps, defineEmits } from "vue";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
 import { getBase64 } from "@/utils";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
 import { getTenantUsersList } from "@/http/tenantsFiles";
@@ -247,6 +247,17 @@ const columns = [
     },
   },
 ];
+
+watch(() => props.managers, (value) => {
+  if (value.length > 0) {
+    formData.managers = props.managers;
+  } else {
+    formData.managers.splice(1, 0, getTableItem());
+  }
+}, {
+  deep: true,
+  immediate: true,
+});
 
 /**
  * 获取表格数据

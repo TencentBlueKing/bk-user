@@ -17,7 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "art-template": "^4.13.2",
-    "bkui-vue": "^0.0.2-beta.41",
+    "bkui-vue": "0.0.2-beta.46",
     "connect-history-api-fallback": "^2.0.0",
     "cookie-parser": "^1.4.5",
     "dayjs": "^1.11.2",

@@ -76,25 +76,6 @@ export const LOGO_COLOR = [
   '#3762B8', '#3E96C2', '#61B2C2', '#85CCA8', '#FFC685', '#FFA66B', '#F5876C', '#D66F6B',
 ];
 
-export const dataSourceType = {
-  local: {
-    icon: 'user-icon icon-shujuku',
-    text: '本地',
-  },
-  mad: {
-    icon: 'user-icon icon-win',
-    text: 'MAD',
-  },
-  ldap: {
-    icon: 'user-icon icon-ladp',
-    text: 'OpenLDAP',
-  },
-  wechat: {
-    icon: 'user-icon icon-qiyeweixin',
-    text: '企业微信',
-  },
-};
-
 // 日期转换
 export function dateConvert(value: string) {
   value = moment.utc(value).format('YYYY-MM-DD');
@@ -228,3 +209,39 @@ export const currentLimit = (top: number, pagination: any, rowHeight?: number) =
   const list = [...pageLimit].sort((a, b) => a - b);
   return { list, rowNum };
 };
+
+// 同步周期
+export const SYNC_CONFIG_LIST = [
+  {
+    value: 30,
+    label: '每 30 分钟',
+  },
+  {
+    value: 60,
+    label: '每 1 小时',
+  },
+  {
+    value: 3 * 60,
+    label: '每 3 小时',
+  },
+  {
+    value: 6 * 60,
+    label: '每 6 小时',
+  },
+  {
+    value: 12 * 60,
+    label: '每 12 小时',
+  },
+  {
+    value: 24 * 60,
+    label: '每 1 天',
+  },
+  {
+    value: 7 * 24 * 60,
+    label: '每 7 天',
+  },
+  {
+    value: 30 * 24 * 60,
+    label: '每 30 天',
+  },
+];

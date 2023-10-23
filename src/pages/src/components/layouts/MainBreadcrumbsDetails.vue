@@ -45,20 +45,7 @@ const current = computed(() => store.breadCrumbsTitle || route.meta.navName);
  * back control
  */
 const handleBack = () => {
-  const { back } = window.history.state;
-  if (back) {
-    router.go(-1);
-    if (!window.changeInput) {
-      store.customBreadcrumbs = false;
-    }
-  } else {
-    const { matched } = route;
-    const count = matched.length;
-    if (count > 1) {
-      const backRoute = matched[count - 1];
-      router.push({ name: backRoute.meta.activeMenu });
-    }
-  }
+  router.push({ name: 'dataSource' });
 };
 </script>
 
@@ -95,6 +82,12 @@ const handleBack = () => {
 
   .bk-tag {
     margin-right: 4px;
+    vertical-align: middle;
   }
+}
+
+.main-breadcrumbs__left {
+  display: flex;
+  align-content: center;
 }
 </style>
