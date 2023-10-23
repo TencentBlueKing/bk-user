@@ -20,4 +20,5 @@ class Option(BaseModel):
 
 class TenantUserCustomFieldOptions(BaseModel):
     """用户自定义字段-options字段"""
+
     options: List[Option]

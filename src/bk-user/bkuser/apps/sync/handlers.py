@@ -8,13 +8,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import json
+import logging
+
+from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.data_source.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.sync.data_models import TenantSyncOptions
+from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
+from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
 from bkuser.apps.sync.signals import post_sync_data_source
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_sync_data_source)
@@ -28,3 +36,41 @@ def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     """同步租户数据（部门 & 用户）"""
     # TODO (su) 目前没有跨租户协同，因此只要往数据源所属租户同步即可
     TenantSyncManager(data_source, data_source.owner_tenant_id, TenantSyncOptions()).execute()
+
+
+@receiver(post_save, sender=DataSource)
+def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
+    """在创建/修改数据源后，需要设置定时同步的任务"""
+    data_source = instance
+    if data_source.is_local:
+        logger.info("skip set sync periodic task for local data source %s", data_source.id)
+        return
+
+    periodic_task_name = gen_data_source_sync_periodic_task_name(data_source.id)
+    # 没有同步配置，抛出 warning 并且跳过
+    if not data_source.sync_config:
+        logger.warning("data source %s hasn't sync_config, remove sync periodic task...", data_source.id)
+        PeriodicTask.objects.filter(name=periodic_task_name).delete()
+        return
+
+    cfg = DataSourceSyncConfig(**data_source.sync_config)
+    interval_schedule, _ = IntervalSchedule.objects.get_or_create(
+        every=cfg.sync_period,
+        period=IntervalSchedule.MINUTES,
+    )
+    periodic_task, task_created = PeriodicTask.objects.get_or_create(
+        name=periodic_task_name,
+        defaults={
+            "interval": interval_schedule,
+            "task": "bkuser.apps.sync.periodic_tasks.build_and_run_data_source_sync_task",
+            "kwargs": json.dumps({"data_source_id": data_source.id}),
+        },
+    )
+    if not task_created:
+        logger.info(
+            "update data source %s sync periodic task's period as %s",
+            data_source.id,
+            cfg.sync_period,
+        )
+        periodic_task.interval = interval_schedule
+        periodic_task.save()
