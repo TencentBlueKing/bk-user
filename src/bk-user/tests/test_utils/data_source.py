@@ -66,16 +66,14 @@ def create_data_source_users_with_relations(
     data_source_users = list(DataSourceUser.objects.filter(data_source=data_source))
     # 添加上下级关系
     user_relations = [
-        DataSourceUserLeaderRelation(user=data_source_user, leader=data_source_users[0], data_source=data_source)
+        DataSourceUserLeaderRelation(user=data_source_user, leader=data_source_users[0])
         for data_source_user in data_source_users[1:]
     ]
     DataSourceUserLeaderRelation.objects.bulk_create(user_relations)
 
     # 添加部门-人员关系
     user_department_relations = [
-        DataSourceDepartmentUserRelation(
-            user=data_source_user, department=random.choice(departments), data_source=data_source
-        )
+        DataSourceDepartmentUserRelation(user=data_source_user, department=random.choice(departments))
         for data_source_user in data_source_users
     ]
     DataSourceDepartmentUserRelation.objects.bulk_create(user_department_relations)
