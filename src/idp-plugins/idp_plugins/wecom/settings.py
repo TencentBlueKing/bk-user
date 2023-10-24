@@ -8,15 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
-
-class IdpPluginBaseError(Exception):
-    pass
-
-
-class ParseRequestBodyError(IdpPluginBaseError):
-    """解析请求里Body异常"""
-
-
-class RemoteRequestError(IdpPluginBaseError):
-    """请求第三方接口失败"""
+# 企业微信Web登录OAuth地址
+WECOM_OAUTH_URL = "https://login.work.weixin.qq.com/wwlogin/sso/login"
+# 企业微信API基础URL
+WECOM_API_BASE_URL = "https://qyapi.weixin.qq.com/cgi-bin"

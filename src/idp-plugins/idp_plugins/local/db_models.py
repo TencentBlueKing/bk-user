@@ -12,8 +12,6 @@ from blue_krill.models.fields import EncryptField
 from django.db import models
 
 
-# Note: 由于idp_plugins模块会被不同项目引入，model为了被Django App 加载，需要添加app_label,
-#  同时由于不同项目自定义app不一样，所以这里直接使用公共的django.contrib.auth
 class DataSourceUser(models.Model):
     data_source_id = models.BigIntegerField("数据源")
     code = models.CharField("用户标识", max_length=128)
@@ -26,7 +24,6 @@ class DataSourceUser(models.Model):
     phone_country_code = models.CharField("手机国际区号", max_length=16, null=True, blank=True)
 
     class Meta:
-        app_label = "django.contrib.auth"
         db_table = "data_source_datasourceuser"
         ordering = ["id"]
 
@@ -46,5 +43,4 @@ class LocalDataSourceIdentityInfo(models.Model):
     username = models.CharField("用户名", max_length=128)
 
     class Meta:
-        app_label = "django.contrib.auth"
         db_table = "data_source_localdatasourceidentityinfo"

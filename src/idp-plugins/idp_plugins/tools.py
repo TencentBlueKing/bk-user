@@ -10,6 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict, Any
 import json
+import string
+import random
 
 from django.utils.translation import gettext_lazy as _
 
@@ -18,9 +20,23 @@ from .exceptions import ParseRequestBodyError
 
 
 def parse_request_body_json(body: bytes) -> Dict[str, Any]:
+    """解析请求Body Json数据"""
     try:
         request_body = json.loads(body.decode("utf-8"))
     except Exception as error:
         raise ParseRequestBodyError(_("解析异常，Body参数非Json格式数据, {}").format(error))
 
     return request_body
+
+
+def generate_random_str(length: int = 8, allowed_chars: str | None = None) -> str:
+    """
+    生成指定长度的随机字符串
+    @param length: 指定的长度，默认8位
+    @param allowed_chars: 随机串里允许出现字符，默认是a-zA-Z0-9
+    """
+    if allowed_chars is None:
+        # a-zA-Z0-9
+        allowed_chars = string.ascii_letters + string.digits
+
+    return "".join([random.choice(allowed_chars) for _ in range(length)])

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "bklogin.authentication",
     "bklogin.bkuser",
+    "bklogin.idp_plugins.local",
 ]
 
 MIDDLEWARE = [

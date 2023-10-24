@@ -41,7 +41,9 @@ from .helper import BkTokenManager
 # 确保无论何时，响应必然有CSRFToken Cookie
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class LoginView(View):
-    """登录页面"""
+    """
+    登录页面
+    """
 
     # 登录成功后默认重定向到蓝鲸桌面
     default_redirect_to = "/console/"
@@ -81,14 +83,18 @@ class LoginView(View):
 
 class TenantGlobalSettingRetrieveApi(View):
     def get(self, request, *args, **kwargs):
-        """租户的全局配置，即所有租户的公共配置"""
+        """
+        租户的全局配置，即所有租户的公共配置
+        """
         # FIXME: 支持全局配置后调整从DB读取配置
         return APISuccessResponse(data={"tenant_visible": settings.TENANT_VISIBLE})
 
 
 class TenantListApi(View):
     def get(self, request, *args, **kwargs):
-        """查询租户列表"""
+        """
+        查询租户列表
+        """
         # 过滤参数
         tenant_ids_str = request.GET.get("tenant_ids", "")
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
@@ -107,7 +113,9 @@ class TenantListApi(View):
 
 class TenantRetrieveApi(View):
     def get(self, request, *args, **kwargs):
-        """通过租户ID，查询单个租户信息"""
+        """
+        通过租户ID，查询单个租户信息
+        """
         tenant_id = kwargs["tenant_id"]
         tenant = Tenant.objects.filter(id=tenant_id).first()
         if tenant is None:
@@ -118,7 +126,9 @@ class TenantRetrieveApi(View):
 
 class SignInTenantCreateApi(View):
     def post(self, request, *args, **kwargs):
-        """确认选择要登录的租户"""
+        """
+        确认选择要登录的租户
+        """
         request_body = parse_request_body_json(request.body)
         tenant_id = request_body.get("tenant_id")
 
@@ -138,7 +148,9 @@ class SignInTenantCreateApi(View):
 
 class TenantIdpListApi(View):
     def get(self, request, *args, **kwargs):
-        """获取需要登录租户的认证方式列表"""
+        """
+        获取需要登录租户的认证方式列表
+        """
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         if not sign_in_tenant_id:
@@ -317,7 +329,9 @@ class IdpPluginDispatchView(View):
 
 class TenantUserListApi(View):
     def get(self, request, *args, **kwargs):
-        """用户认证后，获取认证成功后的租户用户列表"""
+        """
+        用户认证后，获取认证成功后的租户用户列表
+        """
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         if not sign_in_tenant_id:
@@ -331,20 +345,22 @@ class TenantUserListApi(View):
         tenant_users = TenantUser.objects.filter(tenant_id=sign_in_tenant_id, id__in=tenant_user_ids).select_related(
             "data_source_user"
         )
-        data = [
-            {
-                "id": i.id,
-                "username": i.data_source_user.username,
-                "full_name": i.data_source_user.full_name,
-            }
-            for i in tenant_users
-        ]
 
-        return APISuccessResponse(data=data)
+        # TODO: 查询每个租户用户的状态
+
+        return APISuccessResponse(
+            data=[
+                {"id": i.id, "username": i.data_source_user.username, "full_name": i.data_source_user.full_name}
+                for i in tenant_users
+            ]
+        )
 
 
 class SignInTenantUserCreateApi(View):
     def post(self, request, *args, **kwargs):
+        """
+        确认登录的用户，生成bk_token Cookie, 返回重定向业务系统的地址
+        """
         request_body = parse_request_body_json(request.body)
         user_id = request_body.get("user_id")
 
@@ -357,13 +373,9 @@ class SignInTenantUserCreateApi(View):
             raise error_codes.NO_PERMISSION.f(_("非法，不可登录该用户"))
 
         # TODO：支持MFA、首次登录强制修改密码登录操作
-        # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态g，比如bk_token_for
+        # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如bk_token_for_force_change_password
 
-        response = APISuccessResponse(
-            {
-                "redirect_uri": request.session.get("redirect_uri"),
-            }
-        )
+        response = APISuccessResponse({"redirect_uri": request.session.get("redirect_uri")})
         # 生成Cookie
         bk_token, expired_at = BkTokenManager().get_bk_token(user_id)
         # 设置Cookie
