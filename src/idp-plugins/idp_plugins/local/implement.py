@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from ..base import BaseCredentialIdpPlugin
 from ..models import TestConnectionResult
-from ..tools import parse_request_body
+from ..tools import parse_request_body_json
 from .db_models import LocalDataSourceIdentityInfo
 
 
@@ -42,7 +42,7 @@ class LocalIdpPlugin(BaseCredentialIdpPlugin):
 
     def authenticate_credentials(self, request: HttpRequest) -> List[Dict[str, Any]] | Dict[str, Any]:
         """验证账号密码"""
-        request_body = parse_request_body(request.body)
+        request_body = parse_request_body_json(request.body)
 
         username = request_body.get("username")
         if not username:

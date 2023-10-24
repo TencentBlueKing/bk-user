@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 from urllib.parse import quote_plus, urljoin
 
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -24,7 +24,7 @@ from bklogin.bkuser.constants import IdpStatus
 from bklogin.bkuser.data_models import DataSourceMatchRule
 from bklogin.bkuser.models import DataSourceUser, Idp, Tenant, TenantUser
 from bklogin.common.error_codes import error_codes
-from bklogin.common.request import parse_request_body
+from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.idp_plugins.base import (
     BaseCredentialIdpPlugin,
@@ -34,64 +34,62 @@ from bklogin.idp_plugins.base import (
 )
 from bklogin.idp_plugins.constants import BuiltinActionEnum, PluginTypeEnum, SupportedHttpMethodEnum
 
-from .constants import SIGN_IN_TENANT_ID_SESSION_KEY, SUPPORT_SIGN_IN_TENANT_USER_IDS_SESSION_KEY
+from .constants import ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .helper import BkTokenManager
 
 
 # 确保无论何时，响应必然有CSRFToken Cookie
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class LoginView(View):
-    redirect_field_name = "c_url"
+    """登录页面"""
+
     # 登录成功后默认重定向到蓝鲸桌面
     default_redirect_to = "/console/"
     template_name = "index.html"
 
     def _get_success_url_allowed_hosts(self, request):
         # FIXME: request.get_host()会从header获取，可能存在伪造的情况，是否修改为直接从settings读取更加安全呢？
+        #  ALLOWED_REDIRECT_HOSTS 需要支持正则，参考Django Settings ALLOWED_HOST配置
+        #  https://github.com/django/django/blob/main/django/http/request.py#L715
         return {request.get_host(), *settings.ALLOWED_REDIRECT_HOSTS}
 
     def _get_redirect_url(self, request):
         """如果安全的话，返回用户发起的重定向URL"""
-        redirect_to = request.GET.get(self.redirect_field_name, "")
-        if not redirect_to:
-            return self.default_redirect_to
+        # 重定向URL
+        redirect_to = request.GET.get(REDIRECT_FIELD_NAME) or self.default_redirect_to
 
         # 检查回调URL是否安全，防钓鱼
         url_is_safe = url_has_allowed_host_and_scheme(
             url=redirect_to,
             allowed_hosts=self._get_success_url_allowed_hosts(request),
-            # FIXME: 如果需要考虑兼容https和http，则不能与请求是否https来决定
+            # FIXME: 如果需要考虑兼容https和http，则不能由请求是否https来决定
             require_https=request.is_secure(),
         )
         return redirect_to if url_is_safe else self.default_redirect_to
 
     def get(self, request, *args, **kwargs):
-        """
-        登录页面
-        """
+        """登录页面"""
         # 回调到业务系统的地址
         redirect_url = self._get_redirect_url(request)
         # 存储到当前session里，待认证成功后取出后重定向
         request.session["redirect_uri"] = redirect_url
 
+        # TODO: 【优化】当只有一个租户且该租户有且仅有一种登录方式，且该登录方式为联邦登录，则直接重定向到第三方登录
         # 返回登录页面
         return render(request, self.template_name)
 
 
 class TenantGlobalSettingRetrieveApi(View):
     def get(self, request, *args, **kwargs):
-        """
-        租户的全局配置，即所有租户的公共配置
-        """
+        """租户的全局配置，即所有租户的公共配置"""
+        # FIXME: 支持全局配置后调整从DB读取配置
         return APISuccessResponse(data={"tenant_visible": settings.TENANT_VISIBLE})
 
 
 class TenantListApi(View):
     def get(self, request, *args, **kwargs):
-        """
-        查询租户列表
-        """
-        # 参数
+        """查询租户列表"""
+        # 过滤参数
         tenant_ids_str = request.GET.get("tenant_ids", "")
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
 
@@ -104,13 +102,12 @@ class TenantListApi(View):
         if tenant_ids:
             tenants = tenants.filter(id__in=tenant_ids)
 
-        data = [{"id": t.id, "name": t.name, "logo": t.logo} for t in tenants]
-
-        return APISuccessResponse(data=data)
+        return APISuccessResponse(data=[{"id": t.id, "name": t.name, "logo": t.logo} for t in tenants])
 
 
 class TenantRetrieveApi(View):
     def get(self, request, *args, **kwargs):
+        """通过租户ID，查询单个租户信息"""
         tenant_id = kwargs["tenant_id"]
         tenant = Tenant.objects.filter(id=tenant_id).first()
         if tenant is None:
@@ -121,7 +118,8 @@ class TenantRetrieveApi(View):
 
 class SignInTenantCreateApi(View):
     def post(self, request, *args, **kwargs):
-        request_body = parse_request_body(request.body)
+        """确认选择要登录的租户"""
+        request_body = parse_request_body_json(request.body)
         tenant_id = request_body.get("tenant_id")
 
         # 校验参数
@@ -140,6 +138,7 @@ class SignInTenantCreateApi(View):
 
 class TenantIdpListApi(View):
     def get(self, request, *args, **kwargs):
+        """获取需要登录租户的认证方式列表"""
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         if not sign_in_tenant_id:
@@ -310,20 +309,22 @@ class IdpPluginDispatchView(View):
             )
 
         # 记录支持登录的租户用户
-        request.session[SUPPORT_SIGN_IN_TENANT_USER_IDS_SESSION_KEY] = tenant_user_ids
+        request.session[ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY] = tenant_user_ids
 
+        # FIXME: 不同登录方式返回不一样（1）身份认证则正常响应（2）联邦认证则重定向到前端选择账号页面
         return APISuccessResponse()
 
 
 class TenantUserListApi(View):
     def get(self, request, *args, **kwargs):
+        """用户认证后，获取认证成功后的租户用户列表"""
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         if not sign_in_tenant_id:
             raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
 
         # Session里获取已认证过的租户用户
-        tenant_user_ids = request.session.get(SUPPORT_SIGN_IN_TENANT_USER_IDS_SESSION_KEY)
+        tenant_user_ids = request.session.get(ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY)
         if not tenant_user_ids:
             raise error_codes.NO_PERMISSION.f(_("未经过用户认证步骤"))
 
@@ -344,14 +345,14 @@ class TenantUserListApi(View):
 
 class SignInTenantUserCreateApi(View):
     def post(self, request, *args, **kwargs):
-        request_body = parse_request_body(request.body)
+        request_body = parse_request_body_json(request.body)
         user_id = request_body.get("user_id")
 
         # 校验参数
         if not user_id:
             raise error_codes.VALIDATION_ERROR.f(_("user_id 参数必填"))
 
-        tenant_user_ids = request.session.get(SUPPORT_SIGN_IN_TENANT_USER_IDS_SESSION_KEY) or []
+        tenant_user_ids = request.session.get(ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY) or []
         if user_id not in tenant_user_ids:
             raise error_codes.NO_PERMISSION.f(_("非法，不可登录该用户"))
 
@@ -379,44 +380,3 @@ class SignInTenantUserCreateApi(View):
         request.session.clear()
 
         return response
-
-
-class IndexView(View):
-    def get(self, request, *args, **kwargs):
-        bk_token = request.COOKIES.get("bk_token")
-        return HttpResponse(f"测试登录成功， bk_token={bk_token}")
-
-
-class CheckTokenApi(View):
-    def get(self, request, *args, **kwargs):
-        bk_token = request.GET.get(settings.BK_TOKEN_COOKIE_NAME)
-
-        ok, username, msg = BkTokenManager().is_bk_token_valid(bk_token)
-        if not ok:
-            raise error_codes.VALIDATION_ERROR.f(msg)
-
-        return APISuccessResponse({"bk_username": username})
-
-
-class GetUserApi(View):
-    def get(self, request, *args, **kwargs):
-        bk_token = request.GET.get(settings.BK_TOKEN_COOKIE_NAME)
-
-        ok, username, msg = BkTokenManager().is_bk_token_valid(bk_token)
-        if not ok:
-            raise error_codes.VALIDATION_ERROR.f(msg)
-
-        user = TenantUser.objects.filter(id=username).first()
-        if not user:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("用户({})查询不到").format(username))
-
-        return APISuccessResponse(
-            {
-                "bk_username": username,
-                "tenant_id": user.tenant_id,
-                "full_name": user.data_source_user.full_name,
-                "source_username": user.data_source_user.username,
-                "language": user.language,
-                "time_zone": user.time_zone,
-            }
-        )

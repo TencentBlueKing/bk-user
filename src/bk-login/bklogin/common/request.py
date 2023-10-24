@@ -16,10 +16,10 @@ from django.utils.translation import gettext_lazy as _
 from .error_codes import error_codes
 
 
-def parse_request_body(body: bytes) -> Dict[str, Any]:
+def parse_request_body_json(body: bytes) -> Dict[str, Any]:
     try:
         request_body = json.loads(body.decode("utf-8"))
     except Exception as error:
-        raise error_codes.INVALID_ARGUMENT.f(_("解析异常，Body参数非Json格式数据, {}").format(error))
+        raise error_codes.INVALID_ARGUMENT.f(_("解析异常，Body 非 Json 格式数据, {}").format(error))
 
     return request_body

@@ -17,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from .exceptions import ParseRequestBodyError
 
 
-def parse_request_body(body: bytes) -> Dict[str, Any]:
+def parse_request_body_json(body: bytes) -> Dict[str, Any]:
     try:
         request_body = json.loads(body.decode("utf-8"))
     except Exception as error:
