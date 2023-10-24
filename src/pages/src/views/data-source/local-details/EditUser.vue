@@ -283,7 +283,7 @@ const handleDelete = () => {
 };
 const telError = ref(false);
 
-const changeTelError = (value) => {
+const changeTelError = (value: boolean) => {
   telError.value = value;
 };
 

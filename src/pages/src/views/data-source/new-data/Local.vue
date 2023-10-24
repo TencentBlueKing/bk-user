@@ -9,7 +9,7 @@
     <div class="content-item">
       <p class="item-title">基础信息</p>
       <bk-form-item label="数据源名称" property="name" required>
-        <bk-input style="width: 560px;" v-model="formData.name" :disabled="isDisabled" @focus="handleChange" />
+        <bk-input style="width: 560px;" v-model="formData.name" @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="" required>
         <bk-checkbox v-model="formData.config.enable_account_password_login" @change="changeAccountPassword">
@@ -127,7 +127,11 @@
             v-if="formData.config.password_initial.generate_method === 'fixed'"
             v-model="formData.config.password_initial.fixed_password"
             type="password"
-          />
+          >
+            <template #prefix>
+              <span class="prefix-slot" @click="handleRandomPassword">随机生成</span>
+            </template>
+          </bk-input>
         </bk-form-item>
         <bk-form-item label="通知方式" property="config.password_initial.notification.enabled_methods" required>
           <NotifyEditorTemplate
@@ -231,17 +235,22 @@ import { useRoute } from 'vue-router';
 
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import useValidate from '@/hooks/use-validate';
-import { getDataSourceDetails, getDefaultConfig, newDataSource, putDataSourceDetails } from '@/http/dataSourceFiles';
+import {
+  getDataSourceDetails,
+  getDataSourcePlugins,
+  getDefaultConfig,
+  newDataSource,
+  putDataSourceDetails,
+  randomPasswords,
+} from '@/http/dataSourceFiles';
 import router from '@/router';
 import { passwordMustIncludes, passwordNotAllowed } from '@/utils';
 
 const route = useRoute();
 const validate = useValidate();
 
-const isDisabled = ref(false);
 const currentId = computed(() => {
   const { id } = route.params;
-  isDisabled.value = !!id;
   return id;
 });
 
@@ -435,6 +444,7 @@ const handleSubmit = async () => {
 const updateDataSource = async (params) => {
   const data = {
     id: currentId.value,
+    name: params.name,
     field_mapping: params.field_mapping,
     plugin_config: params.plugin_config,
   };
@@ -481,9 +491,31 @@ const changeAccountPassword = (value) => {
   }
   window.changeInput = true;
 };
+
+const handleRandomPassword = async () => {
+  try {
+    const [currentPlugin] = (await getDataSourcePlugins()).data?.filter(item => item.id === 'local') || [];
+    if (currentPlugin) {
+      const passwordRes = await randomPasswords(currentPlugin);
+      formData.config.password_initial.fixed_password = passwordRes.data.password;
+      window.changeInput = true;
+    }
+  } catch (e) {
+    console.warn(e);
+  }
+};
 </script>
 
 <style lang="less" scoped>
 @import url('@/components/notify-editor/NotifyEditor.less');
 @import url('./index.less');
+
+.prefix-slot {
+  display: flex;
+  width: 80px;
+  cursor: pointer;
+  background: #e1ecff;
+  align-items: center;
+  justify-content: center;
+}
 </style>

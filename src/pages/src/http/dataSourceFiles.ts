@@ -94,3 +94,8 @@ export const postTestConnection = (params: TestConnectionParams) => http.post('/
  * 数据源同步
  */
 export const postOperationsSync = (id: string) => http.post(`/api/v1/web/data-sources/${id}/operations/sync/`);
+
+/**
+ * 生成数据源用户随机密码
+ */
+export const randomPasswords = (params: any) => http.post('/api/v1/web/data-sources/random-passwords/', params);

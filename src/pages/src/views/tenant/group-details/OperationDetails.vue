@@ -67,9 +67,11 @@
               v-if="formData.password_initial_config.generate_method === 'fixed'"
               type="password"
               v-model="formData.password_initial_config.fixed_password"
-              @blur="handleBlur"
-              @focus="handleFocus"
-            />
+            >
+              <template #prefix>
+                <span class="prefix-slot" @click="handleRandomPassword">随机生成</span>
+              </template>
+            </bk-input>
           </bk-form-item>
           <bk-form-item label="通知方式" required>
             <NotifyEditorTemplate
@@ -132,6 +134,8 @@ import MemberSelector from "./MemberSelector.vue";
 import useValidate from "@/hooks/use-validate";
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { getDataSourcePlugins, randomPasswords } from '@/http/dataSourceFiles';
+import PhoneInput from '@/components/phoneInput.vue';
 
 interface TableItem {
   username: string;
@@ -184,10 +188,13 @@ const rulesBasicInfo = {
 };
 
 const rulesUserInfo = {
-  username: [validate.userName],
-  full_name: [validate.name],
+  username: [validate.required, validate.userName],
+  full_name: [validate.required, validate.name],
   email: [validate.required, validate.email],
-  phone: [validate.required, validate.phone],
+};
+
+const rulesUserName = {
+  username: [validate.required],
 };
 
 const enabledMethodsError = ref(false);
@@ -279,7 +286,7 @@ const fieldItemFn = (row: any) => {
     <bk-form-item
       error-display-type="tooltips"
       property={`managers.${index}.${column.field}`}
-      rules={rulesUserInfo[column.field]}
+      rules={props.type === 'add' ? rulesUserInfo[column.field] :  rulesUserName[column.field]}
     >
       {
         (props.type === 'edit' && !data.id)
@@ -291,12 +298,37 @@ const fieldItemFn = (row: any) => {
                 onSelectList={selectList}
                 onScrollChange={scrollChange}
                 onSearchUserList={fetchUserList} />
-            : <bk-input v-model={formData.managers[index][column.field]} disabled={column.field !== 'username'} />
-          : <bk-input v-model={formData.managers[index][column.field]} disabled={data.id} onFocus={handleChange} />
+            : (
+              column.field === 'phone'
+                ? <PhoneInput
+                    form-data={formData.managers[index]}
+                    disabled={props.type === 'edit'} />
+                : <bk-input v-model={formData.managers[index][column.field]} disabled={column.field !== 'username'} />
+            )
+          : (
+            column.field === 'phone'
+              ? <PhoneInput
+                  form-data={formData.managers[index]}
+                  telError={formData.managers[index].error}
+                  disabled={props.type === 'edit'}
+                  tooltips={true}
+                  onChangeCountryCode={(code: string) => changeCountryCode(code, index)}
+                  onChangeTelError={(value: boolean) => changeTelError(value, index)} />
+              : <bk-input v-model={formData.managers[index][column.field]} disabled={data.id} onFocus={handleChange} />
+          )
       }
     </bk-form-item>
   );
 };
+
+const changeCountryCode = (code: string, index: number) => {
+  formData.managers[index].phone_country_code = code;
+};
+
+const changeTelError = (value: boolean, index: number) => {
+  formData.managers[index].error = value;
+};
+
 const columns = [
   {
     label: "用户名",
@@ -316,7 +348,7 @@ const columns = [
   {
     label: "手机号",
     field: "phone",
-    width: 150,
+    width: 200,
     render: fieldItemFn,
   },
   {
@@ -369,11 +401,23 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
   window.changeInput = true;
   fetchUserList("");
 }
+
+const phoneError = ref(false);
 // 校验表单
 async function handleSubmit() {
   if (enabledMethodsError.value) return;
 
+  formData.managers?.forEach((item) => {
+    item.error = item.phone === '' || item.error;
+    phoneError.value = item.error;
+    if (!item.error) {
+      delete item.error;
+      delete item.disabled;
+    };
+  });
+  
   await Promise.all([basicRef.value.validate(), userRef.value.validate()]);
+  if (phoneError.value) return;
 
   state.isLoading = true;
   props.type === "add" ? createTenantsFn() : putTenantsFn();
@@ -416,44 +460,63 @@ const fetchUserList = (value: string) => {
   params.page = 1;
   if (params.tenantId) {
     getTenantUsersList(params).then((res) => {
-      const list = formData.managers.map((item) => item.username);
+      const list = formData.managers.map((item) => item.id);
       state.count = res.data.count;
-      state.list = res.data.results.filter(
-        (item) => !list.includes(item.username)
-      );
+      state.list = res.data.results.map(item => ({
+        ...item,
+        disabled: list.includes(item.id),
+      }));
     });
   }
 }
 
 const selectList = (list) => {
   formData.managers = formData.managers.filter(item => item.id);
-  nextTick(() => {
-    const managers = list && list.length ? list : [{
-      username: "",
-      full_name: "",
-      email: "",
-      phone: "",
-      phone_country_code: "86",
-    }];
+  if (list?.length) {
+    formData.managers.push(...list);
+  } else {
+    nextTick(() => {
+      const managers = [{
+        username: "",
+        full_name: "",
+        email: "",
+        phone: "",
+        phone_country_code: "86",
+      }];
 
-    formData.managers.push(...managers);
-  });
-}
+      formData.managers.push(...managers);
+    });
+  }
+};
 
 const scrollChange = () => {
   params.page += 1;
   getTenantUsersList(params).then((res) => {
-    const list = formData.managers.map((item) => item.username);
+    const list = formData.managers.map((item) => item.id);
     state.count = res.data.count;
-    state.list.push(...res.data.results.filter(
-      (item) => !list.includes(item.username)
-    ));
+    state.list.push(...res.data.results.map(item => ({
+      ...item,
+      disabled: list.includes(item.id),
+    })));
   });
 }
 
 const handleChange = () => {
   window.changeInput = true;
 }
+
+const handleRandomPassword = async () => {
+  try {
+    const [currentPlugin] = (await getDataSourcePlugins()).data?.filter(item => item.id === 'local') || [];
+    if (currentPlugin) {
+      const passwordRes = await randomPasswords(currentPlugin);
+      formData.password_initial_config.fixed_password = passwordRes.data.password;
+      window.changeInput = true;
+    }
+  } catch (e) {
+    console.warn(e);
+  }
+};
 </script>
 
 <style lang="less" scoped>
@@ -486,7 +549,13 @@ const handleChange = () => {
   animation: form-error-appear-animation 0.15s;
 }
 
-::v-deep .bk-form-error-tips {
-  top: 12px;
+.prefix-slot {
+  display: flex;
+  width: 80px;
+  color: #63656e;
+  cursor: pointer;
+  background: #e1ecff;
+  align-items: center;
+  justify-content: center;
 }
 </style>

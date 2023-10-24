@@ -92,7 +92,8 @@
             <DetailsInfo
               v-if="index === 1"
               :user-data="state.currentTenant"
-              @updateTenantsList="updateTenantsList" />
+              @updateTenantsList="updateTenantsList"
+              @handleCancel="handleCancel" />
           </bk-loading>
         </bk-tab-panel>
       </bk-tab>
@@ -326,6 +327,10 @@ const updateTenantsList = async () => {
     theme: 'success',
     message: '租户信息更新成功',
   });
+};
+
+const handleCancel = () => {
+  state.currentTenant.managers = state.currentTenant.managers.filter(item => item.id);
 };
 </script>
 
