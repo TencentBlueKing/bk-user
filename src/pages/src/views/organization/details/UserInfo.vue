@@ -20,7 +20,7 @@
     <bk-table
       class="user-info-table"
       remote-pagination
-      :data="userList"
+      :data="userData"
       :pagination="props.pagination"
       :border="['outer']"
       show-overflow-tooltip
@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, defineProps, inject, reactive, ref } from 'vue';
+import { defineEmits, defineProps, inject, reactive, ref } from 'vue';
 
 import ViewUser from './ViewUser.vue';
 
@@ -131,8 +131,6 @@ const searchValue = ref(props.keyword);
 const state = reactive({
   userInfo: {},
 });
-
-const userList = computed(() => props?.userData || []);
 
 const handleClick = async (item: any) => {
   const res = await getTenantUsers(item.id);

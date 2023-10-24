@@ -4,18 +4,27 @@
       <template #tag>
         <bk-tag>
           <template #icon>
-            <div class="datasource-type-icon" v-for="item in typeList" :key="item">
+            <div class="data-source-type" v-for="item in typeList" :key="item">
               <img v-if="item.id === pluginId && item.logo" :src="item.logo">
-              <i v-else :class="dataSourceType[pluginId].icon" />
-              <span>{{ item.name }}</span>
+              <span v-if="item.id === pluginId">{{ item.name }}</span>
             </div>
           </template>
         </bk-tag>
       </template>
-      <template #right v-if="statusText">
-        <bk-button class="w-[64px]" hover-theme="primary" @click="handleClick">
-          {{ statusText === 'disabled' ? '启用' : '停用' }}
-        </bk-button>
+      <template #right>
+        <div>
+          <bk-button
+            v-if="pluginId !== 'local'"
+            class="w-[88px] mr-[8px]"
+            outline
+            theme="primary"
+            @click="handleSync">
+            一键同步
+          </bk-button>
+          <bk-button v-if="statusText" class="w-[64px]" hover-theme="primary" @click="handleClick">
+            {{ statusText === 'disabled' ? '启用' : '停用' }}
+          </bk-button>
+        </div>
       </template>
     </MainBreadcrumbsDetails>
     <bk-tab
@@ -25,10 +34,13 @@
       @change="changeTab"
     >
       <bk-tab-panel name="user" label="用户信息">
-        <UserInfo v-if="activeKey === 'user'" :data-source-id="currentId" />
+        <UserInfo v-if="activeKey === 'user'" :data-source-id="currentId" :plugin-id="pluginId" />
       </bk-tab-panel>
-      <bk-tab-panel name="account" label="账密信息">
+      <bk-tab-panel :visible="pluginId === 'local'" name="account" label="账密信息">
         <PswInfo v-if="activeKey === 'account'" />
+      </bk-tab-panel>
+      <bk-tab-panel :visible="pluginId !== 'local'" name="config" label="配置信息">
+        <ConfigInfo v-if="activeKey === 'config'" />
       </bk-tab-panel>
     </bk-tab>
   </bk-loading>
@@ -39,12 +51,12 @@ import { Message } from 'bkui-vue';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import ConfigInfo from './ConfigInfo.vue';
 import PswInfo from './PswInfo.vue';
 import UserInfo from './UserInfo.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
-import { changeSwitchStatus, getDataSourceList, getDataSourcePlugins } from '@/http/dataSourceFiles';
-import { dataSourceType } from '@/utils';
+import { changeSwitchStatus, getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http/dataSourceFiles';
 
 const route = useRoute();
 
@@ -83,10 +95,30 @@ const handleClick = async () => {
 const changeTab = (value) => {
   activeKey.value = value;
 };
+
+const handleSync = async () => {
+  const res = await postOperationsSync(currentId.value);
+  const status = res.data?.status === 'failed' ? 'error' : 'success';
+  Message({ theme: status, message: res.data.summary });
+};
 </script>
 
 <style lang="less" scoped>
 .main-breadcrumbs-details {
   box-shadow: none;
+}
+
+.data-source-type {
+  display: flex;
+  align-items: center;
+
+  img {
+    width: 14px;
+    height: 14px;
+  }
+
+  span {
+    margin-left: 8px;
+  }
 }
 </style>

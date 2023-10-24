@@ -150,6 +150,8 @@ class DataSourceDepartmentUserRelation(TimestampedModel):
 
     department = models.ForeignKey(DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False)
     user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
+    # 冗余字段
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
         ordering = ["id"]
@@ -165,6 +167,8 @@ class DataSourceUserLeaderRelation(TimestampedModel):
 
     user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
     leader = models.ForeignKey(DataSourceUser, related_name="leader", on_delete=models.DO_NOTHING, db_constraint=False)
+    # 冗余字段
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
         ordering = ["id"]

@@ -35,5 +35,13 @@ class RequiredFieldIsEmpty(LocalDataSourcePluginError):
     """待导入文件中必填字段为空"""
 
 
+class InvalidLeader(LocalDataSourcePluginError):
+    """待导入的用不上级信息不合法"""
+
+
+class InvalidUsername(LocalDataSourcePluginError):
+    """待导入的用户名非法"""
+
+
 class DuplicateUsername(LocalDataSourcePluginError):
     """待导入文件中存在重复用户"""

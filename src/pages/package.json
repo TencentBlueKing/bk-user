@@ -23,7 +23,7 @@
     "@wangeditor/editor-for-vue": "^5.1.12",
     "art-template": "^4.13.2",
     "axios": "^1.4.0",
-    "bkui-vue": "^0.0.2-beta.46",
+    "bkui-vue": "0.0.2-beta.46",
     "connect-history-api-fallback": "^2.0.0",
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.5",

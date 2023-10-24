@@ -158,11 +158,11 @@ const params = reactive({
   recursive: false,
 });
 
-const pagination = {
+const pagination = reactive({
   count: 0,
   current: params.page,
   limit: params.pageSize,
-};
+});
 
 const isTenant = computed(() => (!!state.currentTenant.isRoot));
 
@@ -187,7 +187,8 @@ const initData = async () => {
       });
     });
   } catch (e) {
-    console.log(e);
+    console.warn(e);
+    state.isDataError = true;
   } finally {
     state.isLoading = false;
     state.treeLoading = false;
@@ -319,8 +320,8 @@ const getUserList = () => {
   state.currentTenant.isRoot ? getTenantUsers(state.currentItem.id) : getTenantDepartmentsUser(state.currentItem.id);
 };
 
-const updateTenantsList = () => {
-  getTenantDetails(state.currentTenant.id);
+const updateTenantsList = async () => {
+  await getTenantDetails(state.currentTenant.id);
   Message({
     theme: 'success',
     message: '租户信息更新成功',

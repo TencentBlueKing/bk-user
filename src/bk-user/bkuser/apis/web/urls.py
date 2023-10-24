@@ -18,4 +18,7 @@ urlpatterns = [
     path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
     path("data-sources/", include("bkuser.apis.web.data_source.urls")),
     path("data-sources/", include("bkuser.apis.web.data_source_organization.urls")),
+    # 个人中心
+    path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
+    path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
 ]

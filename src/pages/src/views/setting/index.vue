@@ -46,10 +46,10 @@ const menuData = reactive([
     name: '用户字段设置',
     key: 'userFields',
   },
-  {
-    name: '登录设置',
-    key: 'login',
-  },
+  // {
+  //   name: '登录设置',
+  //   key: 'login',
+  // },
   {
     name: '账号设置',
     key: 'account',

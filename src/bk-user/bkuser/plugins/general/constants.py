@@ -32,10 +32,10 @@ DEFAULT_RETRIES = 1
 
 # 默认页码
 DEFAULT_PAGE = 1
-# 默认每页数量
-DEFAULT_PAGE_SIZE = 100
 # 获取首条数据用的每页数量
 PAGE_SIZE_FOR_FETCH_FIRST = 1
+# 最大拉取总数量 100w
+MAX_TOTAL_COUNT = 10**6
 
 
 class AuthMethod(str, StructuredEnum):
@@ -43,3 +43,14 @@ class AuthMethod(str, StructuredEnum):
 
     BEARER_TOKEN = EnumField("bearer_token", label="BearerToken")
     BASIC_AUTH = EnumField("basic_auth", label="BasicAuth")
+
+
+class PageSize(int, StructuredEnum):
+    """每页数量"""
+
+    CNT_100 = EnumField(100, label="100")
+    CNT_200 = EnumField(200, label="200")
+    CNT_500 = EnumField(500, label="500")
+    CNT_1000 = EnumField(1000, label="1000")
+    CNT_2000 = EnumField(2000, label="2000")
+    CNT_5000 = EnumField(5000, label="5000")

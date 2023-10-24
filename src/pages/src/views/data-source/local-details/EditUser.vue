@@ -46,23 +46,11 @@
         <bk-input v-model="formData.email" placeholder="请输入" @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="手机号" required>
-        <div class="input-text">
-          <input
-            type="text"
-            ref="telRef"
-            :class="['select-text', { 'input-error': telError }]"
-            v-model="formData.phone"
-            placeholder="请输入"
-            @blur="verifyInput"
-            @focus="hiddenVerify"
-          />
-          <p class="error-text" v-show="telError && formData.phone">
-            请填写正确的手机号
-          </p>
-          <p class="error-text" v-show="telError && !formData.phone">
-            必填项
-          </p>
-        </div>
+        <phoneInput
+          :form-data="formData"
+          :tel-error="telError"
+          @changeCountryCode="changeCountryCode"
+          @changeTelError="changeTelError" />
       </bk-form-item>
       <div class="form-item-flex">
         <bk-form-item label="所属组织">
@@ -152,13 +140,12 @@
 </template>
 
 <script setup lang="ts">
-import intlTelInput from 'intl-tel-input/build/js/intlTelInput.min';
-import telUtils from 'intl-tel-input/build/js/utils';
-import { computed, defineEmits, defineProps, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
 
+import phoneInput from '@/components/phoneInput.vue';
 import useValidate from '@/hooks/use-validate';
 import { getDataSourceDepartments, getDataSourceLeaders, newDataSourceUser, putDataSourceUserDetails } from '@/http/dataSourceFiles';
-import { COUNTRY_CODE, getBase64 } from '@/utils';
+import { getBase64 } from '@/utils';
 
 const props = defineProps({
   type: {
@@ -252,83 +239,14 @@ const leadersParams = reactive({
   pageSize: 10,
 });
 
-const telRef = ref();
-const area = ref('cn');
-const iti = ref(null);
-const telError = ref(false);
-
-onMounted(async () => {
-  if (formData?.phone_country_code) {
-    COUNTRY_CODE.forEach((item) => {
-      const tel = item.short.toLowerCase();
-      if (tel === formData.phone_country_code) {
-        area.value = item.tel;
-      }
-    });
-  }
-  initIntlTel();
+const changeCountryCode = async (code: string) => {
+  formData.phone_country_code = code;
   const departments = await getDataSourceDepartments(departmentsParams);
   const leaders = await getDataSourceLeaders(leadersParams);
   state.departments = departments.data.results;
   departmentsCount.value = departments.data.count;
   state.leaders = leaders.data.results;
   leadersCount.value = leaders.data.count;
-});
-
-onBeforeUnmount(() => {
-  iti?.value.destroy();
-});
-
-const initIntlTel = () => {
-  const input = telRef.value;
-  try {
-    iti.value = intlTelInput(input, {
-      allowDropdown: true,
-      separateDialCode: true, // 国旗右边显示区号
-      formatOnDisplay: false, // 不自动加空格或横线
-      placeholderNumberType: 'MOBILE', // 手机号码
-      initialCountry: area.value, // 初始国家
-      preferredCountries: ['cn', 'us', 'gb'], // 偏好国家 中美英
-      utilsScript: telUtils,
-    });
-  } catch (e) {
-    console.warn('手机号国际化初始化失败，默认改为中国', e);
-    handleInitError();
-  }
-  input.addEventListener('countrychange', () => {
-    const countryData = iti.value.getSelectedCountryData(); // iso2(eg: cn) dialCode(eg: 86)
-    area.value = countryData.iso2;
-    formData.phone_country_code = `+${countryData.dialCode}`;
-  });
-};
-
-const handleInitError = () => {
-  const input = telRef.value;
-  area.value = 'cn';
-  iti.value = intlTelInput(input, {
-    allowDropdown: true,
-    separateDialCode: true, // 国旗右边显示区号
-    formatOnDisplay: false, // 不自动加空格或横线
-    placeholderNumberType: 'MOBILE', // 手机号码
-    initialCountry: 'cn', // 初始国家
-    preferredCountries: ['cn', 'us', 'gb'], // 偏好国家 中美英
-    utilsScript: telUtils,
-  });
-};
-
-const verifyInput = () => {
-  if (formData.phone === '') {
-    return telError.value = true;
-  }
-  const validation = area.value === 'cn'
-    ? /^1[3-9]\d{9}$/.test(formData.phone)
-    : iti.value.isValidNumber();
-  !validation && (telError.value = true);
-};
-
-const hiddenVerify = () => {
-  telError.value = false;
-  window.changeInput = true;
 };
 
 const departmentsScrollEnd = () => {
@@ -363,9 +281,16 @@ const handleDelete = () => {
   formData.logo = '';
   handleChange();
 };
+const telError = ref(false);
+
+const changeTelError = (value) => {
+  telError.value = value;
+};
 
 const handleSubmit = async () => {
-  await formRef.value.validate();
+  const phoneDom = document.getElementsByClassName('select-text')[0];
+  await Promise.all([formRef.value.validate(), phoneDom?.focus(), phoneDom?.blur()]);
+  if (telError.value) return;
   state.isLoading = true;
   const data = { ...formData };
   if (!data.logo) delete data.logo;
@@ -402,14 +327,6 @@ const handleChange = () => {
   window.changeInput = true;
 };
 </script>
-
-<style lang="less">
-@import url("@/css/intlTelInput.less");
-
-.iti.iti--allow-dropdown {
-  width: 100%;
-}
-</style>
 
 <style lang="less" scoped>
 .edit-user-wrapper {
@@ -451,35 +368,5 @@ const handleChange = () => {
       margin-right: 8px;
     }
   }
-}
-
-.input-text {
-  position: relative;
-}
-
-input::placeholder {
-  color: #c4c6cc;
-}
-
-.select-text {
-  width: 100%;
-  height: 32px;
-  line-height: 32px;
-  color: #63656e;
-  border: 1px solid #c4c6cc;
-  border-radius: 2px;
-  outline: none;
-  resize: none;
-}
-
-.error-text {
-  margin: 2px 0 0;
-  font-size: 12px;
-  line-height: 18px;
-  color: #ea3636;
-}
-
-.input-error {
-  border: 1px solid #ff5656;
 }
 </style>

@@ -15,7 +15,7 @@ from typing import Dict, List, Type
 from drf_yasg import openapi
 from pydantic import BaseModel
 
-from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.constants import CUSTOM_PLUGIN_ID_PREFIX, DataSourcePluginEnum
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 from bkuser.utils.pydantic import gen_openapi_schema
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 class BaseDataSourcePlugin(ABC):
     """数据源插件基类"""
 
+    id: str | DataSourcePluginEnum
     config_class: Type[BaseModel]
 
     @abstractmethod
@@ -50,12 +51,20 @@ class BaseDataSourcePlugin(ABC):
 _plugin_cls_map: Dict[str | DataSourcePluginEnum, Type[BaseDataSourcePlugin]] = {}
 
 
-def register_plugin(plugin_id: str | DataSourcePluginEnum, plugin_cls: Type[BaseDataSourcePlugin]):
-    """注册插件"""
-    logger.info("register data source plugin: %s", plugin_id)
+def register_plugin(plugin_cls: Type[BaseDataSourcePlugin]):
+    """注册数据源插件"""
+    plugin_id = plugin_cls.id
+
+    if not plugin_id:
+        raise RuntimeError(f"plugin {plugin_cls} not provide id")
 
     if not plugin_cls.config_class:
-        raise NotImplementedError(f"plugin {plugin_id} not provide config_class")
+        raise RuntimeError(f"plugin {plugin_cls} not provide config_class")
+
+    if not (isinstance(plugin_id, DataSourcePluginEnum) or plugin_id.startswith(CUSTOM_PLUGIN_ID_PREFIX)):
+        raise RuntimeError(f"custom plugin's id must start with `{CUSTOM_PLUGIN_ID_PREFIX}`")
+
+    logger.info("register data source plugin: %s", plugin_id)
 
     _plugin_cls_map[plugin_id] = plugin_cls
 

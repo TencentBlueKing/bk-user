@@ -27,7 +27,7 @@
 
       <template v-if="!tenantVisible">
         <div v-if="tenant">
-          <h2 class="tenant-content">我们为您在平台找到了以下公司</h2>
+          <h2 class="tenant-content">我们为你在平台找到了以下公司</h2>
           <div class="tenant-list">
             <img v-if="tenant.logo" class="logo-img" :src="tenant.logo" />
             <span v-else class="logo">

@@ -13,6 +13,8 @@ from typing import Optional
 from pydantic import BaseModel
 
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.general.constants import AuthMethod, PageSize
+from bkuser.plugins.general.models import AuthConfig, GeneralDataSourcePluginConfig, ServerConfig
 from bkuser.plugins.local.constants import (
     NotificationMethod,
     NotificationScene,
@@ -33,8 +35,13 @@ class DefaultPluginConfigProvider:
 
     def get(self, plugin_id: str) -> Optional[BaseModel]:
         """获取指定插件类型的默认插件配置"""
+        # 本地数据源
         if plugin_id == DataSourcePluginEnum.LOCAL:
             return self._get_default_local_plugin_config()
+
+        # 通用 HTTP 数据源
+        if plugin_id == DataSourcePluginEnum.GENERAL:
+            return self._get_default_general_plugin_config()
 
         return None
 
@@ -52,7 +59,7 @@ class DefaultPluginConfigProvider:
                 not_continuous_letter=False,
                 not_continuous_digit=False,
                 not_repeated_symbol=False,
-                valid_time=30,
+                valid_time=90,
                 max_retries=3,
                 lock_time=60 * 60,
             ),
@@ -215,5 +222,20 @@ class DefaultPluginConfigProvider:
                         ),
                     ],
                 ),
+            ),
+        )
+
+    def _get_default_general_plugin_config(self) -> BaseModel:
+        return GeneralDataSourcePluginConfig(
+            server_config=ServerConfig(
+                server_base_url="https://bk.example.com",
+                user_api_path="/api/v1/users",
+                department_api_path="/api/v1/departments",
+                page_size=PageSize.CNT_100,
+                request_timeout=30,
+                retries=3,
+            ),
+            auth_config=AuthConfig(
+                method=AuthMethod.BASIC_AUTH,
             ),
         )

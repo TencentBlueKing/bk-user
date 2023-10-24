@@ -11,13 +11,13 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict, List, Optional
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceUser
-from bkuser.apps.data_source.signals import post_batch_create_data_source_user, post_create_data_source
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
 from bkuser.biz.data_source import (
     DataSourceDepartmentHandler,
@@ -89,6 +89,17 @@ class TenantUserLeaderInfo(BaseModel):
     id: str
     username: str
     full_name: str
+
+
+class TenantUserPhoneInfo(BaseModel):
+    is_inherited_phone: bool
+    custom_phone: Optional[str] = ""
+    custom_phone_country_code: Optional[str] = settings.DEFAULT_PHONE_COUNTRY_CODE
+
+
+class TenantUserEmailInfo(BaseModel):
+    is_inherited_email: bool
+    custom_email: Optional[str] = ""
 
 
 class TenantUserHandler:
@@ -223,6 +234,21 @@ class TenantUserHandler:
             "id", flat=True
         )
 
+    @staticmethod
+    def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserPhoneInfo):
+        tenant_user.is_inherited_phone = phone_info.is_inherited_phone
+        if not phone_info.is_inherited_phone:
+            tenant_user.custom_phone = phone_info.custom_phone
+            tenant_user.custom_phone_country_code = phone_info.custom_phone_country_code
+        tenant_user.save()
+
+    @staticmethod
+    def update_tenant_user_email(tenant_user: TenantUser, email_info: TenantUserEmailInfo):
+        tenant_user.is_inherited_email = email_info.is_inherited_email
+        if not email_info.is_inherited_email:
+            tenant_user.custom_email = email_info.custom_email
+        tenant_user.save()
+
 
 class TenantHandler:
     @staticmethod
@@ -289,12 +315,6 @@ class TenantHandler:
 
             if tenant_managers:
                 TenantManager.objects.bulk_create(tenant_managers)
-
-        post_create_data_source.send(sender=DataSourceHandler, data_source=data_source)
-        # 触发信号以完成账密信息初始化，通知等后续步骤
-        post_batch_create_data_source_user.send(
-            sender=TenantHandler, data_source=data_source, usernames=[m.username for m in managers]
-        )
 
         return tenant_info.id
 

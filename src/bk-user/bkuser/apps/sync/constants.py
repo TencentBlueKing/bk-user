@@ -12,6 +12,19 @@ from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
+class DataSourceSyncPeriod(int, StructuredEnum):
+    """数据源自动同步周期"""
+
+    PER_30_MIN = EnumField(30, label=_("每 30 分钟"))
+    PER_1_HOUR = EnumField(60, label=_("每 1 小时"))
+    PER_3_HOUR = EnumField(3 * 60, label=_("每 3 小时"))
+    PER_6_HOUR = EnumField(6 * 60, label=_("每 6 小时"))
+    PER_12_HOUR = EnumField(12 * 60, label=_("每 12 小时"))
+    PER_1_DAY = EnumField(24 * 60, label=_("每 1 天"))
+    PER_7_DAY = EnumField(7 * 24 * 60, label=_("每 7 天"))
+    PER_30_DAY = EnumField(30 * 24 * 60, label=_("每 30 天"))
+
+
 class SyncTaskTrigger(str, StructuredEnum):
     """同步任务触发器枚举"""
 
@@ -19,6 +32,14 @@ class SyncTaskTrigger(str, StructuredEnum):
     MANUAL = EnumField("manual", label=_("手动"))
     # 如：数据源同步完成信号触发租户数据同步
     SIGNAL = EnumField("signal", label=_("信号触发"))
+
+
+class SyncLogLevel(str, StructuredEnum):
+    """同步日志等级"""
+
+    INFO = EnumField("INFO", label="INFO")
+    WARNING = EnumField("WARNING", label="WARNING")
+    ERROR = EnumField("ERROR", label="ERROR")
 
 
 class SyncTaskStatus(str, StructuredEnum):
@@ -47,23 +68,8 @@ class DataSourceSyncObjectType(str, StructuredEnum):
     DEPARTMENT_RELATION = EnumField("department_relation", label=_("部门关系"))
 
 
-class DataSourceSyncStepName(str, StructuredEnum):
-    """数据源同步步骤枚举"""
-
-    FETCH_DATA = EnumField("fetch_data", label=_("获取数据"))
-    DATA_FORMAT = EnumField("data_format", label=_("数据格式化"))
-    FIELD_MAPPING = EnumField("field_mapping", label=_("字段映射"))
-    SAVE_DATA = EnumField("save_data", label=_("数据入库"))
-
-
 class TenantSyncObjectType(str, StructuredEnum):
     """租户同步数据类型枚举"""
 
     USER = EnumField("user", label=_("用户"))
     DEPARTMENT = EnumField("department", label=_("部门"))
-
-
-class TenantSyncStepName(str, StructuredEnum):
-    """租户同步步骤枚举"""
-
-    SAVE_DATA = EnumField("save_data", label=_("数据入库"))

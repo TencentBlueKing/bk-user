@@ -8,6 +8,7 @@ import type {
   NewDataSourceUserParams,
   PutDataSourceParams,
   PutDataSourceUserParams,
+  TestConnectionParams,
 } from './types/dataSourceFiles';
 
 /**
@@ -83,3 +84,13 @@ export const putDataSourceDetails = (params: PutDataSourceParams) => http.put(`/
  * 变更数据源状态
  */
 export const changeSwitchStatus = (id: string) => http.patch(`/api/v1/web/data-sources/${id}/operations/switch_status/`);
+
+/**
+ * 数据源连通性测试
+ */
+export const postTestConnection = (params: TestConnectionParams) => http.post('/api/v1/web/data-sources/test-connection/', params);
+
+/**
+ * 数据源同步
+ */
+export const postOperationsSync = (id: string) => http.post(`/api/v1/web/data-sources/${id}/operations/sync/`);

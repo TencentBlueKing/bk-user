@@ -10,7 +10,6 @@ const path = require('path');
 const artTemplate = require('express-art-template');
 const cookieParser = require('cookie-parser');
 const history = require('connect-history-api-fallback');
-const user = require('./middleware/user');
 
 const mockTable = require('./api/table');
 
@@ -22,7 +21,6 @@ const PORT = process.env.PORT || 5000;
 mockTable(app);
 
 app.use(cookieParser());
-app.use(user);
 
 // 注入全局变量
 const GLOBAL_VAR = {
@@ -48,7 +46,7 @@ app.use(history({
   rewrites: [
     {
       // connect-history-api-fallback 默认会对 url 中有 . 的 url 当成静态资源处理而不是当成页面地址来处理
-      // 兼容 /cs/28aa9eda67644a6eb254d694d944307e/cluster/BCS-MESOS-10001/node/10.121.23.12 这样以 IP 结尾的 url
+      // 兼容 /cs/28aa9eda67644a6eb254d694d944307e/cluster/BCS-MESOS-10001/node/127.0.0.1 这样以 IP 结尾的 url
       // from: /\d+\.\d+\.\d+\.\d+$/,
       from: /\/(\d+\.)*\d+$/,
       to: '/',
@@ -94,5 +92,3 @@ app.set('view engine', 'html');
 app.listen(PORT, () => {
   console.log(`App is running in port ${PORT}`);
 });
-
-

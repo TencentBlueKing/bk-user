@@ -21,7 +21,6 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.data_source.signals import post_create_data_source_user
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.utils.uuid import generate_uuid
 
@@ -85,7 +84,7 @@ class DataSourceOrganizationHandler:
 
             # 批量创建数据源用户-部门关系
             department_user_relation_objs = [
-                DataSourceDepartmentUserRelation(department_id=dept_id, user_id=user.id)
+                DataSourceDepartmentUserRelation(department_id=dept_id, user_id=user.id, data_source=data_source)
                 for dept_id in relation_info.department_ids
             ]
 
@@ -94,7 +93,7 @@ class DataSourceOrganizationHandler:
 
             # 批量创建数据源用户-上级关系
             user_leader_relation_objs = [
-                DataSourceUserLeaderRelation(leader_id=leader_id, user_id=user.id)
+                DataSourceUserLeaderRelation(leader_id=leader_id, user_id=user.id, data_source=data_source)
                 for leader_id in relation_info.leader_ids
             ]
 
@@ -110,9 +109,6 @@ class DataSourceOrganizationHandler:
                 data_source=data_source,
                 id=generate_uuid(),
             )
-
-        # 执行用户初始化账密信息等操作
-        post_create_data_source_user.send(sender=DataSourceOrganizationHandler, data_source=data_source, user=user)
 
         return user.id
 
@@ -134,7 +130,7 @@ class DataSourceOrganizationHandler:
         # DB新增
         if should_created_department_ids:
             should_created_relations = [
-                DataSourceDepartmentUserRelation(department_id=department_id, user=user)
+                DataSourceDepartmentUserRelation(department_id=department_id, user=user, data_source=user.data_source)
                 for department_id in should_created_department_ids
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(should_created_relations)
@@ -159,7 +155,8 @@ class DataSourceOrganizationHandler:
         # DB新增
         if should_created_leader_ids:
             should_created_relations = [
-                DataSourceUserLeaderRelation(leader_id=leader_id, user=user) for leader_id in should_created_leader_ids
+                DataSourceUserLeaderRelation(leader_id=leader_id, user=user, data_source=user.data_source)
+                for leader_id in should_created_leader_ids
             ]
             DataSourceUserLeaderRelation.objects.bulk_create(should_created_relations)
 

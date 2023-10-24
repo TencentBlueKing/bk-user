@@ -8,6 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import random
+from typing import List
+
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -16,6 +19,68 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from tests.test_utils.helpers import generate_random_string
+
+
+def create_data_source_departments_with_relations(data_source: DataSource) -> List[DataSourceDepartment]:
+    """
+    创建数据源部门，并以首个对象为其余对象的父部门
+    """
+    departments = [DataSourceDepartment(data_source=data_source, name=generate_random_string()) for _ in range(10)]
+    DataSourceDepartment.objects.bulk_create(departments)
+
+    data_source_departments = list(DataSourceDepartment.objects.filter(data_source=data_source))
+    # 添加部门关系
+    root = DataSourceDepartmentRelation.objects.create(
+        department=data_source_departments[0], data_source=data_source, parent=None
+    )
+
+    for data_source_department in data_source_departments[1:]:
+        DataSourceDepartmentRelation.objects.create(
+            department=data_source_department, data_source=data_source, parent=root
+        )
+
+    # 组织树重建
+    DataSourceDepartmentRelation.objects.rebuild()
+    return data_source_departments
+
+
+def create_data_source_users_with_relations(
+    data_source: DataSource, departments: List[DataSourceDepartment]
+) -> List[DataSourceUser]:
+    """
+    创建数据源用户，并以首个对象为其余对象的上级, 随机关联部门
+    """
+    users = [
+        DataSourceUser(
+            full_name=generate_random_string(),
+            username=generate_random_string(),
+            email=f"{generate_random_string()}@qq.com",
+            phone="13123456789",
+            data_source=data_source,
+        )
+        for _ in range(10)
+    ]
+    DataSourceUser.objects.bulk_create(users)
+
+    data_source_users = list(DataSourceUser.objects.filter(data_source=data_source))
+    # 添加上下级关系
+    user_relations = [
+        DataSourceUserLeaderRelation(user=data_source_user, leader=data_source_users[0], data_source=data_source)
+        for data_source_user in data_source_users[1:]
+    ]
+    DataSourceUserLeaderRelation.objects.bulk_create(user_relations)
+
+    # 添加部门-人员关系
+    user_department_relations = [
+        DataSourceDepartmentUserRelation(
+            user=data_source_user, department=random.choice(departments), data_source=data_source
+        )
+        for data_source_user in data_source_users
+    ]
+    DataSourceDepartmentUserRelation.objects.bulk_create(user_department_relations)
+
+    return data_source_users
 
 
 def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
@@ -142,34 +207,34 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
 
     # 数据源部门用户关联
     dept_user_relations = [
-        DataSourceDepartmentUserRelation(department=company, user=zhangsan),
-        DataSourceDepartmentUserRelation(department=dept_a, user=lisi),
-        DataSourceDepartmentUserRelation(department=dept_a, user=wangwu),
-        DataSourceDepartmentUserRelation(department=center_aa, user=lisi),
-        DataSourceDepartmentUserRelation(department=center_aa, user=zhaoliu),
-        DataSourceDepartmentUserRelation(department=group_aaa, user=liuqi),
-        DataSourceDepartmentUserRelation(department=center_ab, user=maiba),
-        DataSourceDepartmentUserRelation(department=center_ab, user=yangjiu),
-        DataSourceDepartmentUserRelation(department=group_aba, user=lushi),
-        DataSourceDepartmentUserRelation(department=group_aba, user=linshiyi),
-        DataSourceDepartmentUserRelation(department=dept_b, user=wangwu),
-        DataSourceDepartmentUserRelation(department=center_ba, user=lushi),
-        DataSourceDepartmentUserRelation(department=group_baa, user=baishier),
+        DataSourceDepartmentUserRelation(department=company, user=zhangsan, data_source=ds),
+        DataSourceDepartmentUserRelation(department=dept_a, user=lisi, data_source=ds),
+        DataSourceDepartmentUserRelation(department=dept_a, user=wangwu, data_source=ds),
+        DataSourceDepartmentUserRelation(department=center_aa, user=lisi, data_source=ds),
+        DataSourceDepartmentUserRelation(department=center_aa, user=zhaoliu, data_source=ds),
+        DataSourceDepartmentUserRelation(department=group_aaa, user=liuqi, data_source=ds),
+        DataSourceDepartmentUserRelation(department=center_ab, user=maiba, data_source=ds),
+        DataSourceDepartmentUserRelation(department=center_ab, user=yangjiu, data_source=ds),
+        DataSourceDepartmentUserRelation(department=group_aba, user=lushi, data_source=ds),
+        DataSourceDepartmentUserRelation(department=group_aba, user=linshiyi, data_source=ds),
+        DataSourceDepartmentUserRelation(department=dept_b, user=wangwu, data_source=ds),
+        DataSourceDepartmentUserRelation(department=center_ba, user=lushi, data_source=ds),
+        DataSourceDepartmentUserRelation(department=group_baa, user=baishier, data_source=ds),
     ]
     DataSourceDepartmentUserRelation.objects.bulk_create(dept_user_relations)
 
     # 数据源用户 Leader 关联
     user_leader_relations = [
-        DataSourceUserLeaderRelation(user=lisi, leader=zhangsan),
-        DataSourceUserLeaderRelation(user=wangwu, leader=zhangsan),
-        DataSourceUserLeaderRelation(user=zhaoliu, leader=lisi),
-        DataSourceUserLeaderRelation(user=liuqi, leader=zhaoliu),
-        DataSourceUserLeaderRelation(user=maiba, leader=wangwu),
-        DataSourceUserLeaderRelation(user=maiba, leader=lisi),
-        DataSourceUserLeaderRelation(user=yangjiu, leader=wangwu),
-        DataSourceUserLeaderRelation(user=lushi, leader=maiba),
-        DataSourceUserLeaderRelation(user=linshiyi, leader=lushi),
-        DataSourceUserLeaderRelation(user=lushi, leader=wangwu),
-        DataSourceUserLeaderRelation(user=baishier, leader=lushi),
+        DataSourceUserLeaderRelation(user=lisi, leader=zhangsan, data_source=ds),
+        DataSourceUserLeaderRelation(user=wangwu, leader=zhangsan, data_source=ds),
+        DataSourceUserLeaderRelation(user=zhaoliu, leader=lisi, data_source=ds),
+        DataSourceUserLeaderRelation(user=liuqi, leader=zhaoliu, data_source=ds),
+        DataSourceUserLeaderRelation(user=maiba, leader=wangwu, data_source=ds),
+        DataSourceUserLeaderRelation(user=maiba, leader=lisi, data_source=ds),
+        DataSourceUserLeaderRelation(user=yangjiu, leader=wangwu, data_source=ds),
+        DataSourceUserLeaderRelation(user=lushi, leader=maiba, data_source=ds),
+        DataSourceUserLeaderRelation(user=linshiyi, leader=lushi, data_source=ds),
+        DataSourceUserLeaderRelation(user=lushi, leader=wangwu, data_source=ds),
+        DataSourceUserLeaderRelation(user=baishier, leader=lushi, data_source=ds),
     ]
     DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relations)

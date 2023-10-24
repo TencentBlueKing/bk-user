@@ -12,6 +12,7 @@ from typing import List
 
 import pytest
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from django.utils import timezone
@@ -33,9 +34,14 @@ def data_source_sync_task(bare_local_data_source) -> DataSourceSyncTask:
 
 
 @pytest.fixture()
+def data_source_sync_task_ctx(data_source_sync_task) -> DataSourceSyncTaskContext:
+    return DataSourceSyncTaskContext(data_source_sync_task)
+
+
+@pytest.fixture()
 def tenant_sync_task(bare_local_data_source, default_tenant) -> TenantSyncTask:
     """租户数据同步任务"""
-    return TenantSyncTask(
+    return TenantSyncTask.objects.create(
         tenant_id=default_tenant.id,
         data_source_id=bare_local_data_source.id,
         status=SyncTaskStatus.PENDING,
@@ -44,6 +50,11 @@ def tenant_sync_task(bare_local_data_source, default_tenant) -> TenantSyncTask:
         start_at=timezone.now(),
         extra={"async_run": False},
     )
+
+
+@pytest.fixture()
+def tenant_sync_task_ctx(tenant_sync_task) -> TenantSyncTaskContext:
+    return TenantSyncTaskContext(tenant_sync_task)
 
 
 @pytest.fixture()

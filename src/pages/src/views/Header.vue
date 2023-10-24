@@ -63,6 +63,7 @@
           </template>
         </bk-dropdown> -->
         <bk-dropdown
+          placement="bottom-end"
           @hide="() => (state.logoutDropdown = false)"
           @show="() => (state.logoutDropdown = true)"
         >
@@ -189,7 +190,6 @@ const toIndividualCenter = () => {
 
     .container-content {
       padding: 0 !important;
-      overflow: hidden;
     }
   }
 

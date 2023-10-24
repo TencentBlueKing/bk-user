@@ -85,22 +85,14 @@ const state = reactive({
 });
 
 const userNumberVisible = computed(() => (props?.userData?.feature_flags?.user_number_visible ? '显示' : '隐藏'));
-const isCurrentTenant = computed(() => props?.userData?.id === userStore.user.tenant_id);
+const isCurrentTenant = computed(() => props?.userData?.id && props?.userData?.id === userStore.user.tenant_id);
 
-watch(() => props.userData.id, () => handleCancel());
 watch(() => props.userData.managers, (value) => {
   state.userData = props.userData;
   if (value.length > 0) {
     state.managers = props.userData.managers;
     state.isDataEmpty = false;
   } else {
-    state.managers = [{
-      username: '',
-      full_name: '',
-      email: '',
-      phone: '',
-      phone_country_code: '86',
-    }];
     state.isDataEmpty = true;
   }
 });

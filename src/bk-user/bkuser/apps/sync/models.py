@@ -8,21 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import uuid
 from datetime import timedelta
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.sync.constants import (
-    DataSourceSyncObjectType,
-    DataSourceSyncStepName,
-    SyncOperation,
-    SyncTaskStatus,
-    SyncTaskTrigger,
-    TenantSyncObjectType,
-    TenantSyncStepName,
-)
+from bkuser.apps.sync.constants import SyncOperation, SyncTaskStatus, SyncTaskTrigger
 from bkuser.common.models import TimestampedModel
+from bkuser.utils.uuid import generate_uuid
 
 
 class DataSourceSyncTask(TimestampedModel):
@@ -30,33 +23,33 @@ class DataSourceSyncTask(TimestampedModel):
 
     data_source_id = models.IntegerField("数据源 ID")
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
+    has_warning = models.BooleanField("任务执行是否有警告", default=False)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
     start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
     duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
+    logs = models.TextField("任务日志", default="")
     extra = models.JSONField("扩展信息", default=dict)
 
     @property
     def summary(self):
-        # TODO (su) 支持获取任务总结
-        return "数据同步成功" if self.status == SyncTaskStatus.SUCCESS else "数据同步失败"
+        # 异步模式
+        if self.extra.get("async_run", False):
+            if self.status in [SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING]:
+                return _("数据源同步任务执行中")
+            if self.status == SyncTaskStatus.SUCCESS:
+                return _("数据源同步成功")
 
+            return _("数据源同步失败，请前往 `数据更新记录` 查看日志详情")
 
-class DataSourceSyncStep(TimestampedModel):
-    """数据源同步步骤"""
-
-    task = models.ForeignKey(DataSourceSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="steps")
-    object_type = models.CharField("对象类型", choices=DataSourceSyncObjectType.get_choices(), max_length=32)
-    step_name = models.CharField("步骤名称", choices=DataSourceSyncStepName.get_choices(), max_length=32)
-    status = models.CharField("当前步骤状态", choices=SyncTaskStatus.get_choices(), max_length=32)
-    details = models.JSONField("详细信息", default=dict)
-    logs = models.TextField("日志", default="")
+        # 同步模式
+        return _("数据源导入成功") if self.status == SyncTaskStatus.SUCCESS else _("数据源导入失败")
 
 
 class DataSourceUserChangeLog(TimestampedModel):
     """数据源用户变更日志"""
 
-    id = models.UUIDField("变更日志 ID", default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField("变更日志 ID", default=generate_uuid, primary_key=True)
     task = models.ForeignKey(
         DataSourceSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="user_change_logs"
     )
@@ -72,7 +65,7 @@ class DataSourceUserChangeLog(TimestampedModel):
 class DataSourceDepartmentChangeLog(TimestampedModel):
     """数据源部门变更日志"""
 
-    id = models.UUIDField("变更日志 ID", default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField("变更日志 ID", default=generate_uuid, primary_key=True)
     task = models.ForeignKey(
         DataSourceSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="department_change_logs"
     )
@@ -90,53 +83,50 @@ class TenantSyncTask(TimestampedModel):
     tenant_id = models.CharField("租户 ID", max_length=128)
     data_source_id = models.IntegerField("数据源 ID")
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
+    has_warning = models.BooleanField("任务执行是否有警告", default=False)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
     operator = models.CharField("操作人", null=True, blank=True, default="", max_length=128)
     start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
     duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
+    logs = models.TextField("任务日志", default="")
     extra = models.JSONField("扩展信息", default=dict)
 
     @property
     def summary(self):
-        # TODO (su) 支持获取任务总结
-        return "数据同步成功" if self.status == SyncTaskStatus.SUCCESS else "数据同步失败"
+        # 异步模式
+        if self.extra.get("async_run", False):
+            if self.status in [SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING]:
+                return _("租户数据同步任务执行中")
+            if self.status == SyncTaskStatus.SUCCESS:
+                return _("租户数据同步成功")
 
+            return _("租户数据同步失败")
 
-class TenantSyncStep(TimestampedModel):
-    """租户同步任务步骤"""
-
-    task = models.ForeignKey(TenantSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="steps")
-    object_type = models.CharField("对象类型", choices=TenantSyncObjectType.get_choices(), max_length=32)
-    step_name = models.CharField("步骤名称", choices=TenantSyncStepName.get_choices(), max_length=32)
-    status = models.CharField("当前步骤状态", choices=SyncTaskStatus.get_choices(), max_length=32)
-    details = models.JSONField("详细信息", default=dict)
-    logs = models.TextField("日志", default="")
+        # 租户数据同步不应该有同步模式，都是异步行为
+        return f"Why tenant sync task {self.id} can run in sync mode? Please report this to the administrator."
 
 
 class TenantUserChangeLog(TimestampedModel):
     """租户用户变更日志"""
 
-    id = models.UUIDField("变更日志 ID", default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField("变更日志 ID", default=generate_uuid, primary_key=True)
     task = models.ForeignKey(
         TenantSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="user_change_logs"
     )
-    tenant_id = models.IntegerField("租户 ID")
+    tenant_id = models.CharField("租户 ID", max_length=128)
     data_source_id = models.IntegerField("数据源 ID")
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     user_id = models.CharField("用户 ID", max_length=64)
-    username = models.CharField("用户名", max_length=128)
-    full_name = models.CharField("用户姓名", max_length=128)
 
 
 class TenantDepartmentChangeLog(TimestampedModel):
     """租户部门变更日志"""
 
-    id = models.UUIDField("变更日志 ID", default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField("变更日志 ID", default=generate_uuid, primary_key=True)
     task = models.ForeignKey(
         TenantSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="department_change_logs"
     )
-    tenant_id = models.IntegerField("租户 ID")
+    tenant_id = models.CharField("租户 ID", max_length=128)
     data_source_id = models.IntegerField("数据源 ID")
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     department_id = models.CharField("部门 ID", max_length=128)
-    department_name = models.CharField("部门名称", max_length=255)

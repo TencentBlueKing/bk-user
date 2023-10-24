@@ -1,13 +1,14 @@
-# 数据源插件开发指南
+# 自定义数据源插件开发指南
 
 ## 目录 & 文件说明
 
-以 LDAP 为例，需要在 `bkuser/plugins` 下新建 ldap 文件夹，目录示例如下：
+假设你要开发名为 Fox 的数据源插件，则需要在 `bkuser/plugins` 下新建 fox 文件夹，目录示例如下：
 
 ```
-ldap
+fox
 ├── __init__.py
 ├── exceptions.py
+├── logo.png
 ├── models.py
 └── plugin.py
 ```
@@ -22,12 +23,12 @@ ldap
 from bkuser.plugins.exceptions import BaseDataSourcePluginError
 
 
-class LDAPDataSourcePluginError(BaseDataSourcePluginError):
-    """LDAP 数据源插件基础异常"""
+class FoxDataSourcePluginError(BaseDataSourcePluginError):
+    """Fox 数据源插件基础异常"""
 
 
-class XXXError(LDAPDataSourcePluginError):
-    """LDAP xxx 异常"""
+class XXXError(FoxDataSourcePluginError):
+    """Fox 数据源插件 xxx 异常"""
 ```
 
 ### models.py
@@ -46,12 +47,16 @@ class XXXError(LDAPDataSourcePluginError):
 ```python
 from bkuser.plugins.base import BaseDataSourcePlugin
 
-class LDAPDataSourcePlugin(BaseDataSourcePlugin):
-    """LDAP 数据源插件"""
 
-    config_class = LDAPDataSourcePluginConfig
+class FoxDataSourcePlugin(BaseDataSourcePlugin):
+    """Fox 数据源插件"""
 
-    def __init__(self, plugin_config: LDAPDataSourcePluginConfig):
+    # 注：非内置插件请使用字符串作为 ID，且需要以 `custom_` 为前缀
+    id = "custom_fox"
+    # 插件配置类建模
+    config_class = FoxDataSourcePluginConfig
+
+    def __init__(self, plugin_config: FoxDataSourcePluginConfig):
         self.plugin_config = plugin_config
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
@@ -73,13 +78,32 @@ class LDAPDataSourcePlugin(BaseDataSourcePlugin):
 
 ```python
 from bkuser.plugins.base import register_plugin
-from bkuser.plugins.constants import DataSourcePluginEnum
 
-from .plugin import LDAPDataSourcePlugin
+from .plugin import FoxDataSourcePlugin
 
-register_plugin(DataSourcePluginEnum.LDAP, LDAPDataSourcePlugin)
+register_plugin(FoxDataSourcePlugin)
+
+# 注意：如果这是一个自定义插件（非蓝鲸官方内置），还需要设置插件 Metadata 信息
+from bkuser.plugins.models import PluginMetadata
+
+METADATA = PluginMetadata(
+    # 插件唯一 ID
+    id=FoxDataSourcePlugin.id,
+    # 插件展示用名称
+    name="FoxIsNotDonkey",
+    # 插件展示用描述
+    description="The fox is a nimble, smart creature known for its unique red-brown fur and bushy tail."
+)
 ```
+
+### logo.png
+
+数据源插件 Logo，仅支持 PNG 格式（推荐尺寸 1024 * 1024）；如果未提供则会使用默认 Logo。
 
 ## 注意事项
 
-TODO 待补充
+在将数据源插件实现的源代码目录挂载到 `bkuser/plugins` 目录下后，还需要在服务运行起来后，执行以下命令以在 DB 中添加插件信息：
+
+```shell
+python manage.py register_data_source_plugin --dir_name=fox
+```

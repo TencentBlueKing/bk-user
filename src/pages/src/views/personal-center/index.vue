@@ -5,37 +5,45 @@
     :min="320"
     :max="500"
     :initial-divide="320"
+    v-bkloading="{ loading: isLoading }"
   >
     <template #aside>
       <div class="personal-center-left">
-        <div class="left-search">
-          <bk-input />
+        <div class="left-natural-user">
+          <div class="natural-user">
+            <i class="bk-sq-icon icon-personal-user" />
+            <span class="name">{{ currentNaturalUser.full_name }}</span>
+            <bk-overflow-title type="tips" class="id">
+              （{{ currentNaturalUser.id }}）
+            </bk-overflow-title>
+            <!-- <i class="user-icon icon-edit" /> -->
+          </div>
         </div>
         <div class="left-add">
           <p>
             <span class="account">已关联账号</span>
-            <span class="number">2</span>
+            <span class="number">{{ currentNaturalUser.tenant_users?.length }}</span>
           </p>
-          <bk-button theme="primary" text>
+          <!-- <bk-button theme="primary" text>
             <i class="user-icon icon-add-2 mr8" />
             新增关联
-          </bk-button>
+          </bk-button> -->
         </div>
         <ul class="left-list">
           <li
-            :class="{ isActive: state.activeIndex === index }"
-            v-for="(item, index) in accountList"
+            v-for="(item, index) in currentNaturalUser.tenant_users"
             :key="index"
-            @click="handleClickItem(item, index)"
+            :class="{ isActive: currentUserInfo.id === item.id }"
+            @click="handleClickItem(item)"
           >
             <div class="account-item">
               <div>
                 <img v-if="item.logo" :src="item.logo" />
                 <img v-else src="@/images/avatar.png" />
-                <span class="name">{{ item.name }}</span>
-                <span class="tenant">{{ item.tenant }}</span>
+                <span class="name text-overflow">{{ item.full_name }}</span>
+                <span class="tenant text-overflow">@ {{ item.tenant.name }}</span>
               </div>
-              <bk-tag type="filled" theme="success" v-if="item.state">
+              <bk-tag type="filled" theme="success" v-if="currentNaturalUser.full_name === item.full_name">
                 当前登录
               </bk-tag>
             </div>
@@ -44,70 +52,150 @@
       </div>
     </template>
     <template #main>
-      <div class="personal-center-main">
+      <div class="personal-center-main" v-bkloading="{ loading: infoLoading }">
         <header>
           <div class="header-left">
-            <img v-if="state.item.logo" :src="state.item.logo" />
+            <img v-if="currentUserInfo.logo" :src="currentUserInfo.logo" />
             <img v-else src="@/images/avatar.png" />
             <div>
               <p class="name">
-                {{ state.item.name }}
+                {{ currentTenantInfo.username }}
                 <bk-tag>
-                  local-test
+                  {{ currentTenantInfo.tenant?.id }}
                 </bk-tag>
               </p>
-              <p class="login-time">最近登录时间：2023-03-05 21:09:35</p>
+              <p class="login-time">最近登录时间：{{ '--' }}</p>
             </div>
           </div>
           <div class="header-right">
-            <bk-popover
-              content="该账号已登录"
-              placement="top"
-              :disabled="!state.item.state"
-            >
-              <bk-button :disabled="state.item.state">
+            <span v-bk-tooltips="{
+              content: '该账号已登录',
+              distance: 20,
+              disabled: !isCurrentTenant,
+            }">
+              <bk-button :disabled="isCurrentTenant">
                 切换为该账号登录
               </bk-button>
-            </bk-popover>
+            </span>
             <bk-button>
               取消关联
             </bk-button>
           </div>
         </header>
-        <div class="details-info-wrapper">
-          <ul class="details-info-content">
-            <li class="content-item">
+        <div class="personal-center-details">
+          <ul class="details-info">
+            <li class="details-info-item">
               <div class="item-header">
                 <p class="item-title">身份信息</p>
-                <bk-button outline theme="primary" @click="handleClickEdit">
-                  编辑
-                </bk-button>
               </div>
-              <ul class="item-content flex">
-                <li v-for="(item, index) in state.idInfo" :key="index">
-                  <span class="key">{{ dataMap[item.key] }}：</span>
-                  <span class="value">{{ item.value }}</span>
-                </li>
-              </ul>
-            </li>
-            <li class="content-item">
-              <div class="item-header">
-                <p class="item-title">个人社交账号</p>
-              </div>
-              <ul class="item-content ">
-                <li></li>
-              </ul>
-            </li>
-            <li class="content-item">
-              <div class="item-header">
-                <p class="item-title">MFA设置</p>
-              </div>
-              <ul class="item-content">
-                <li>
-                  <span class="key"></span>
-                  <span class="value"></span>
-                </li>
-              </ul>
+              <bk-form
+                ref="formRef"
+                class="item-content"
+                :model="currentUserInfo"
+                :rules="rules">
+                <div class="item-div">
+                  <li>
+                    <span class="key">用户名：</span>
+                    <span class="value">{{ currentUserInfo.username }}</span>
+                  </li>
+                  <li>
+                    <span class="key">全名：</span>
+                    <span class="value">{{ currentUserInfo.full_name }}</span>
+                  </li>
+                  <li>
+                    <span class="key">邮箱：</span>
+                    <div class="value-content">
+                      <div class="value-edit" v-if="isEditEmail">
+                        <bk-radio-group
+                          class="mr8"
+                          v-model="currentUserInfo.is_inherited_email"
+                          @change="toggleEmail"
+                        >
+                          <bk-radio-button :label="true">基础数据源</bk-radio-button>
+                          <bk-radio-button :label="false">自定义</bk-radio-button>
+                        </bk-radio-group>
+                        <bk-input
+                          v-if="currentUserInfo.is_inherited_email"
+                          v-model="currentUserInfo.email"
+                          :disabled="currentUserInfo.is_inherited_email" />
+                        <bk-form-item v-else class="email-input" property="custom_email">
+                          <bk-input v-model="currentUserInfo.custom_email" />
+                        </bk-form-item>
+                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeEmail">
+                          确定
+                        </bk-button>
+                        <bk-button text theme="primary" @click="cancelEditEmail">
+                          取消
+                        </bk-button>
+                      </div>
+                      <div v-else>
+                        <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_email)">
+                          {{ tagText(currentUserInfo.is_inherited_email) }}
+                        </bk-tag>
+                        <span class="value">
+                          {{ currentUserInfo.is_inherited_email
+                            ? currentUserInfo.email
+                            : currentUserInfo.custom_email }}
+                        </span>
+                        <i class="user-icon icon-edit" @click="isEditEmail = true" />
+                      </div>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="key">手机号：</span>
+                    <div class="value-content">
+                      <div class="value-edit" v-if="isEditPhone">
+                        <bk-radio-group
+                          class="mr8"
+                          v-model="currentUserInfo.is_inherited_phone"
+                          @change="togglePhone"
+                        >
+                          <bk-radio-button :label="true">基础数据源</bk-radio-button>
+                          <bk-radio-button :label="false">自定义</bk-radio-button>
+                        </bk-radio-group>
+                        <bk-input
+                          v-if="currentUserInfo.is_inherited_phone"
+                          v-model="currentUserInfo.phone"
+                          :disabled="currentUserInfo.is_inherited_phone" />
+                        <bk-form-item v-else class="phone-input" property="custom_phone">
+                          <bk-input v-model="currentUserInfo.custom_phone" />
+                        </bk-form-item>
+                        <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changePhone">
+                          确定
+                        </bk-button>
+                        <bk-button text theme="primary" @click="cancelEditPhone">
+                          取消
+                        </bk-button>
+                      </div>
+                      <div v-else>
+                        <bk-tag :theme="tagTheme(currentUserInfo.is_inherited_phone)">
+                          {{ tagText(currentUserInfo.is_inherited_phone) }}
+                        </bk-tag>
+                        <span class="value">
+                          {{ currentUserInfo.is_inherited_phone
+                            ? currentUserInfo.phone
+                            : currentUserInfo.custom_phone }}
+                        </span>
+                        <i class="user-icon icon-edit" @click="isEditPhone = true" />
+                      </div>
+                    </div>
+                  </li>
+                </div>
+                <div class="item-div">
+                  <li>
+                    <span class="key">所属租户ID：</span>
+                    <span class="value">{{ currentUserInfo.id }}</span>
+                  </li>
+                  <li>
+                    <span class="key">所属组织：</span>
+                    <span class="value">{{ formatConvert(currentUserInfo.departments) }}</span>
+                  </li>
+                  <li>
+                    <span class="key">直属上级：</span>
+                    <span class="value">{{ formatConvert(currentUserInfo.leaders) }}</span>
+                  </li>
+                </div>
+              </bk-form>
             </li>
           </ul>
         </div>
@@ -117,112 +205,198 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 
-const accountList = reactive([
-  {
-    logo: '',
-    name: 'Eric Lee',
-    tenant: '@ 默认租户',
-    state: true,
-  },
-  {
-    logo: '',
-    name: 'Eric Li',
-    tenant: '@ loca-test',
-    state: false,
-  },
-  {
-    logo: '',
-    name: 'Eric',
-    tenant: '@ 移动分公司',
-    state: false,
-  },
-  {
-    logo: '',
-    name: 'Eric Lee',
-    tenant: '@ 苏州研究所',
-    state: false,
-  },
-]);
+import useValidate from '@/hooks/use-validate';
+import {
+  getCurrentNaturalUser,
+  getPersonalCenterUsers,
+  patchUsersEmail,
+  patchUsersPhone,
+} from '@/http/personalCenterFiles';
+import { formatConvert } from '@/utils';
 
-const dataMap = {
-  username: '用户名',
-  tenant_id: '所属租户ID',
-  full_name: '全名',
-  department: '所属组织',
-  email: '邮箱',
-  leader: '直属上级',
-  phone: '手机号',
-  job: '职务',
+const validate = useValidate();
+const editLeaveBefore = inject('editLeaveBefore');
+const currentNaturalUser = ref({});
+// 当前用户信息
+const currentUserInfo = ref({});
+// 当前租户信息
+const currentTenantInfo = ref({});
+
+const isLoading = ref(false);
+const infoLoading = ref(false);
+const isInheritedEmail = ref(true);
+const isInheritedPhone = ref(true);
+const rules = {
+  custom_email: [validate.required, validate.email],
+  custom_phone: [validate.required, validate.phone],
 };
-const state = reactive({
-  activeIndex: 0,
-  item: {},
-  idInfo: [
-    {
-      key: 'username',
-      value: '张三',
-    },
-    {
-      key: 'tenant_id',
-      value: 'test',
-    },
-    {
-      key: 'full_name',
-      value: '张三',
-    },
-    {
-      key: 'department',
-      value: '总公司',
-    },
-    {
-      key: 'email',
-      value: '123@qq.com',
-    },
-    {
-      key: 'leader',
-      value: '李四',
-    },
-    {
-      key: 'phone',
-      value: '13122334455',
-    },
-    {
-      key: 'job',
-      value: '产品经理',
-    },
-  ],
+
+onMounted(() => {
+  getNaturalUser();
 });
 
-const handleClickItem = (item, index) => {
-  state.item = item;
-  state.activeIndex = index;
+const getNaturalUser = () => {
+  isLoading.value = true;
+  // 关联账户列表
+  getCurrentNaturalUser().then((res) => {
+    currentNaturalUser.value = res.data;
+    isLoading.value = false;
+    getCurrentUser(currentNaturalUser.value.tenant_users[0].id);
+  });
 };
-handleClickItem(accountList[0], 0);
+
+const getCurrentUser = (id) => {
+  infoLoading.value = true;
+  isEditEmail.value = false;
+  isEditPhone.value = false;
+  currentNaturalUser.value?.tenant_users.forEach((item) => {
+    if (item.id === id) {
+      currentTenantInfo.value = item;
+    }
+  });
+  // 关联账户详情
+  getPersonalCenterUsers(id).then((res) => {
+    currentUserInfo.value = res.data;
+    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+    infoLoading.value = false;
+  });
+};
+
+const tagTheme = value => (value ? 'info' : 'warning');
+const tagText = value => (value ? '数据源' : '自定义');
+
+const isEditEmail = ref(false);
+
+watch(() => isEditEmail.value, (val) => {
+  if (val) {
+    window.changeInput = true;
+  }
+});
+
+const isCurrentTenant = computed(() => currentNaturalUser.value.full_name === currentTenantInfo.value.full_name);
+
+// 切换邮箱
+const toggleEmail = (value) => {
+  nextTick(() => {
+    if (!value) {
+      const emailInput = document.querySelectorAll('.email-input input');
+      emailInput[0].focus();
+    }
+  });
+};
+// 修改邮箱
+const changeEmail = () => {
+  isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+  patchUsersEmail({
+    id: currentUserInfo.value.id,
+    is_inherited_email: currentUserInfo.value.is_inherited_email,
+    custom_email: currentUserInfo.value.custom_email,
+  }).then(() => {
+    isEditEmail.value = false;
+    window.changeInput = false;
+  });
+};
+// 取消编辑邮箱
+const cancelEditEmail = () => {
+  currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
+  isEditEmail.value = false;
+  window.changeInput = false;
+};
+
+const isEditPhone = ref(false);
+
+watch(() => isEditPhone.value, (val) => {
+  if (val) {
+    window.changeInput = true;
+  }
+});
+
+// 切换手机号
+const togglePhone = (value) => {
+  nextTick(() => {
+    if (!value) {
+      const phoneInput = document.querySelectorAll('.phone-input input');
+      phoneInput[0].focus();
+    }
+  });
+};
+// 修改手机号
+const changePhone = () => {
+  isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+  patchUsersPhone({
+    id: currentUserInfo.value.id,
+    is_inherited_phone: currentUserInfo.value.is_inherited_phone,
+    custom_phone: currentUserInfo.value.custom_phone,
+    custom_phone_country_code: '86',
+  }).then(() => {
+    isEditPhone.value = false;
+  });
+};
+// 取消编辑手机号
+const cancelEditPhone = () => {
+  currentUserInfo.value.is_inherited_phone = isInheritedPhone.value;
+  isEditPhone.value = false;
+};
+// 切换关联账号
+const handleClickItem = async (item) => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
+  getCurrentUser(item.id);
+};
 </script>
 
 <style lang="less" scoped>
-@import url("@/css/tenantViewStyle.less");
-
 .personal-center-wrapper {
-  width: 100%;
   height: calc(100vh - 52px);
+  min-width: 1600px;
+
+  ::v-deep .bk-resize-layout-aside {
+    min-width: 320px;
+  }
+
+  ::v-deep .bk-resize-layout-main {
+    min-width: calc(1600px - 320px);
+  }
 
   .personal-center-left {
     height: 100%;
     background-color: #fff;
 
-    .left-search {
+    .left-natural-user {
       padding: 16px;
 
-      :deep(.bk-input) {
+      .natural-user {
+        display: flex;
         height: 40px;
+        padding: 0 10px;
         line-height: 40px;
-        border: none;
+        background: #F0F1F5;
+        border-radius: 2px;
+        align-items: center;
 
-        .bk-input--text {
-          background-color: #f0f1f5;
+        i {
+          font-size: 16px;
+          color: #979BA5;
+        }
+
+        .name {
+          margin-left: 8px;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .id {
+          max-width: 200px;
+          color: #979BA5;
         }
       }
     }
@@ -270,6 +444,11 @@ handleClickItem(accountList[0], 0);
           line-height: 40px;
           cursor: pointer;
 
+          div {
+            display: flex;
+            align-items: center;
+          }
+
           img {
             display: inline-block;
             width: 22px;
@@ -280,6 +459,7 @@ handleClickItem(accountList[0], 0);
 
           .name {
             display: inline-block;
+            max-width: 100px;
             margin: 0 8px;
             font-family: MicrosoftYaHei;
             font-size: 14px;
@@ -287,6 +467,8 @@ handleClickItem(accountList[0], 0);
           }
 
           .tenant {
+            display: inline-block;
+            max-width: 100px;
             color: #ff9c01;
           }
         }
@@ -294,6 +476,10 @@ handleClickItem(accountList[0], 0);
 
       .isActive {
         background-color: #e1ecff;
+
+        &:hover {
+          background-color: #e1ecff;
+        }
       }
     }
   }
@@ -328,6 +514,93 @@ handleClickItem(accountList[0], 0);
 
         .login-time {
           font-size: 14px;
+        }
+      }
+    }
+
+    .personal-center-details {
+      height: calc(100vh - 196px);
+      margin-top: 24px;
+
+      .details-info {
+        .details-info-item {
+          padding: 16px 24px;
+          margin-bottom: 16px;
+          background: #fff;
+          border-radius: 2px;
+          box-shadow: 0 2px 4px 0 #1919290d;
+
+          .item-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+          }
+
+          .item-title {
+            font-size: 14px;
+            font-weight: 700;
+          }
+
+          .item-content {
+            display: flex;
+            margin-top: 16px;
+
+            .item-div {
+              width: 50%;
+              min-width: 600px;
+
+              li {
+                display: flex;
+                width: 100%;
+                min-width: 600px;
+                font-size: 14px;
+                line-height: 50px;
+
+                .key {
+                  display: inline-block;
+                  min-width: 100px;
+                  text-align: right;
+                }
+
+                .value {
+                  max-width: 500px;
+                  overflow: hidden;
+                  color: #313238;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                }
+
+                .value-content {
+                  .value-edit {
+                    display: flex;
+                    align-items: center;
+                    height: 50px;
+
+                    .bk-input {
+                      width: 240px;
+                    }
+                  }
+
+                  .icon-edit {
+                    font-size: 16px;
+                    cursor: pointer;
+
+                    &:hover {
+                      color: #3A84FF;
+                    }
+                  }
+
+                  ::v-deep .bk-form-item {
+                    margin-bottom: 0;
+
+                    .bk-form-content {
+                      margin-left: 0 !important;
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
