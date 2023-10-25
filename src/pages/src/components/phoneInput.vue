@@ -9,6 +9,7 @@
       :disabled="disabled"
       @blur="verifyInput"
       @focus="hiddenVerify"
+      @input="handleInput"
     />
     <template v-if="tooltips">
       <bk-popover
@@ -147,8 +148,11 @@ const verifyInput = () => {
 };
 
 const hiddenVerify = () => {
-  emit('changeTelError', false);
   window.changeInput = true;
+};
+
+const handleInput = () => {
+  emit('changeTelError', false);
 };
 </script>
 
@@ -193,6 +197,6 @@ input::placeholder {
 }
 
 .input-error {
-  border: 1px solid #ff5656;
+  border: 1px solid #ea3636 !important;
 }
 </style>
