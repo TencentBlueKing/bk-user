@@ -75,7 +75,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['updateTenantsList']);
+const emit = defineEmits(['updateTenantsList', 'handleCancel']);
 
 const state = reactive({
   isEdit: false,
@@ -102,7 +102,7 @@ const handleClickEdit = () => {
 };
 
 const handleCancel = () => {
-  state.managers = props.userData.managers.filter(item => item.username);
+  emit('handleCancel');
   state.isEdit = false;
   window.changeInput = false;
 };

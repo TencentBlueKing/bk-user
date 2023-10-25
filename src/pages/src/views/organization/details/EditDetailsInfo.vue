@@ -72,6 +72,7 @@ import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
 import { getTenantUsersList } from "@/http/tenantsFiles";
 import { putTenantOrganizationDetails } from "@/http/organizationFiles";
 import useValidate from "@/hooks/use-validate";
+import PhoneInput from '@/components/phoneInput.vue';
 
 interface TableItem {
   username: string;
@@ -131,7 +132,10 @@ const rulesUserInfo = {
   username: [validate.required, validate.name],
   full_name: [validate.required, validate.name],
   email: [validate.required, validate.email],
-  phone: [validate.required, validate.phone],
+};
+
+const rulesUserName = {
+  username: [validate.required],
 };
 
 const files = computed(() => {
@@ -173,7 +177,7 @@ const fieldItemFn = (row: any) => {
     <bk-form-item
       error-display-type="tooltips"
       property={`managers.${index}.${column.field}`}
-      rules={rulesUserInfo[column.field]}
+      rules={data.id ? rulesUserInfo[column.field] : rulesUserName[column.field]}
     >
       {!data.id ? (
         column.field === "username" ? (
@@ -186,20 +190,41 @@ const fieldItemFn = (row: any) => {
             onSearchUserList={fetchUserList}
           />
         ) : (
-          <bk-input
-            v-model={formData.managers[index][column.field]}
-            disabled={column.field !== "username"}
-          />
+          column.field === 'phone'
+            ? <PhoneInput
+                form-data={formData.managers[index]}
+                disabled />
+            : <bk-input
+                v-model={formData.managers[index][column.field]}
+                disabled={column.field !== "username"}
+              />
         )
       ) : (
-        <bk-input
-          v-model={formData.managers[index][column.field]}
-          disabled={data.id}
-        />
+        column.field === 'phone'
+          ? <PhoneInput
+              form-data={formData.managers[index]}
+              telError={formData.managers[index].error}
+              disabled={data.id}
+              tooltips={true}
+              onChangeCountryCode={(code: string) => changeCountryCode(code, index)}
+              onChangeTelError={(value: boolean) => changeTelError(value, index)} />
+          : <bk-input
+              v-model={formData.managers[index][column.field]}
+              disabled={data.id}
+            />
       )}
     </bk-form-item>
   );
 };
+
+const changeCountryCode = (code: string, index: number) => {
+  formData.managers[index].phone_country_code = code;
+};
+
+const changeTelError = (value: boolean, index: number) => {
+  formData.managers[index].error = value;
+};
+
 const columns = [
   {
     label: "用户名",
@@ -249,9 +274,7 @@ const columns = [
 ];
 
 watch(() => props.managers, (value) => {
-  if (value.length > 0) {
-    formData.managers = props.managers;
-  } else {
+  if (value.length === 0) {
     formData.managers.splice(1, 0, getTableItem());
   }
 }, {
@@ -289,11 +312,12 @@ const fetchUserList = (value: string) => {
   params.page = 1;
   if (params.tenantId) {
     getTenantUsersList(params).then((res) => {
-      const list = formData.managers.map((item) => item.username);
+      const list = formData.managers.map((item) => item.id);
       state.count = res.data.count;
-      state.list = res.data.results.filter(
-        (item) => !list.includes(item.username)
-      );
+      state.list = res.data.results.map(item => ({
+        ...item,
+        disabled: list.includes(item.id),
+      }));
     });
   }
 }
@@ -301,27 +325,32 @@ fetchUserList('');
 
 const selectList = (list) => {
   formData.managers = formData.managers.filter(item => item.id);
-  nextTick(() => {
-    const managers = list?.length ? list : [{
-      username: "",
-      full_name: "",
-      email: "",
-      phone: "",
-      phone_country_code: "86",
-    }];
+  if (list?.length) {
+    formData.managers.push(...list);
+  } else {
+    nextTick(() => {
+      const managers = [{
+        username: "",
+        full_name: "",
+        email: "",
+        phone: "",
+        phone_country_code: "86",
+      }];
 
-    formData.managers.push(...managers);
-  });
-}
+      formData.managers.push(...managers);
+    });
+  }
+};
 
 const scrollChange = () => {
   params.page += 1;
   getTenantUsersList(params).then((res) => {
-    const list = formData.managers.map((item) => item.username);
+    const list = formData.managers.map((item) => item.id);
     state.count = res.data.count;
-    state.list.push(...res.data.results.filter(
-      (item) => !list.includes(item.username)
-    ));
+    state.list.push(...res.data.results.map(item => ({
+      ...item,
+      disabled: list.includes(item.id),
+    })));
   });
 }
 

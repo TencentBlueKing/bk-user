@@ -20,9 +20,11 @@
         v-for="item of state.list"
         :key="item.id"
         :label="item.username"
-        :value="item.username"
+        :value="item.id"
+        :disabled="item.disabled"
       >
         <img v-if="item.logo" class="logo-style" :src="item.logo" />
+        <i v-else class="user-icon icon-yonghu"></i>
         <span>{{ item.username }}</span>
       </bk-option>
       <template #extension>
@@ -70,7 +72,7 @@ const handleFocus = () => {
 const handleClick = () => {
   const list = [];
   props.state.list.forEach((item) => {
-    if (props.modelValue.includes(item.username)) {
+    if (props.modelValue.includes(item.id)) {
       list.push(item);
     }
   });
@@ -81,12 +83,13 @@ const handleCancel = () => {
   emit('searchUserList', '');
 };
 const handleScrollEnd = () => {
-  if (isSearch.value || props.state.count <= (props.params.page * 10)) return;
-  scrollLoading.value = true;
-  setTimeout(() => {
-    emit('scrollChange');
-    scrollLoading.value = false;
-  }, 1000);
+  if (!scrollLoading.value && props.state.count > (props.params.page * 10)) {
+    scrollLoading.value = true;
+    setTimeout(() => {
+      emit('scrollChange');
+      scrollLoading.value = false;
+    }, 1000);
+  }
 };
 </script>
 
@@ -147,5 +150,10 @@ const handleScrollEnd = () => {
       border-right: 1px solid #dcdee5;
     }
   }
+}
+
+.icon-yonghu {
+  margin-right: 5px;
+  font-size: 22px;
 }
 </style>
