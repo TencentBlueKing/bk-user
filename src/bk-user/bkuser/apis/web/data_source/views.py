@@ -32,7 +32,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceSearchOutputSLZ,
     DataSourceSwitchStatusOutputSLZ,
     DataSourceSyncRecordListOutputSLZ,
-    DataSourceSyncRecordLogRetrieveOutputSLZ,
+    DataSourceSyncRecordRetrieveOutputSLZ,
     DataSourceTestConnectionInputSLZ,
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
@@ -414,21 +414,21 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: DataSourceSyncRecordListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        """获取数据源同步记录"""
         return self.list(request, *args, **kwargs)
 
 
-class DataSourceSyncRecordLogRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
+class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
     """数据源同步记录详情"""
 
     lookup_url_kwarg = "id"
 
+    def get_queryset(self):
+        return DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源更新日志",
-        responses={status.HTTP_200_OK: DataSourceSyncRecordLogRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: DataSourceSyncRecordRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        """获取数据源同步记录"""
-        task = DataSourceSyncTask.objects.get(id=self.kwargs["id"])
-        return Response(DataSourceSyncRecordLogRetrieveOutputSLZ(instance=task).data)
+        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)

@@ -35,11 +35,13 @@ urlpatterns = [
     path(
         "sync-records/",
         views.DataSourceSyncRecordListApi.as_view(),
+        name="data_source.sync_record.list",
     ),
     # 数据源同步记录日志详情
     path(
         "sync-records/<int:id>/",
-        views.DataSourceSyncRecordLogRetrieveApi.as_view(),
+        views.DataSourceSyncRecordRetrieveApi.as_view(),
+        name="data_source.sync_record.retrieve",
     ),
     # 数据源更新/获取
     path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),

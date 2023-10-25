@@ -8,11 +8,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceStatus, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
 from django.urls import reverse
 from rest_framework import status
@@ -52,6 +55,38 @@ def field_mapping(request) -> List[Dict]:
 def sync_config() -> Dict[str, Any]:
     """数据源同步配置"""
     return {"sync_period": 30}
+
+
+@pytest.fixture()
+def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
+    success_task = DataSourceSyncTask.objects.create(
+        data_source=data_source,
+        status=SyncTaskStatus.SUCCESS,
+        has_warning=True,
+        trigger=SyncTaskTrigger.CRONTAB,
+        duration=datetime.timedelta(seconds=5),
+        logs="sync task success!",
+        extras={"async_run": True, "overwrite": True},
+    )
+    failed_task = DataSourceSyncTask.objects.create(
+        data_source=data_source,
+        status=SyncTaskStatus.FAILED,
+        has_warning=False,
+        trigger=SyncTaskTrigger.MANUAL,
+        duration=datetime.timedelta(minutes=5),
+        logs="sync task failed!",
+        extras={"async_run": True, "overwrite": True},
+    )
+    other_tenant_task = DataSourceSyncTask.objects.create(
+        data_source_id=1,
+        status=SyncTaskStatus.SUCCESS,
+        has_warning=False,
+        trigger=SyncTaskTrigger.SIGNAL,
+        duration=datetime.timedelta(seconds=15),
+        logs="sync task success!",
+        extras={"async_run": True, "overwrite": True},
+    )
+    return [success_task, failed_task, other_tenant_task]
 
 
 class TestDataSourcePluginListApi:
@@ -373,4 +408,34 @@ class TestDataSourceSwitchStatusApi:
     def test_patch_other_tenant_data_source(self, api_client, random_tenant, data_source):
         resp = api_client.patch(reverse("data_source.switch_status", kwargs={"id": data_source.id}))
         # 无法操作其他租户的数据源信息
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+class TestDataSourceSyncRecordApi:
+    def test_list(self, api_client, data_source_sync_tasks):
+        resp = api_client.get(reverse("data_source.sync_record.list"))
+        # 不属于当前租户的数据源同步记录是看不到的
+        tasks = resp.data["results"]
+        assert len(tasks) == 2  # noqa: PLR2004
+        assert set(tasks[0].keys()) == {
+            "id",
+            "data_source_id",
+            "data_source_name",
+            "status",
+            "has_warning",
+            "trigger",
+            "operator",
+            "start_at",
+            "duration",
+            "extras",
+        }
+
+    def test_retrieve(self, api_client, data_source_sync_tasks):
+        success_task = data_source_sync_tasks[0]
+        resp = api_client.get(reverse("data_source.sync_record.retrieve", kwargs={"id": success_task.id}))
+        assert set(resp.data.keys()) == {"id", "status", "has_warning", "logs"}
+
+    def test_retrieve_other_tenant_data_source_sync_record(self, api_client, data_source_sync_tasks):
+        other_tenant_task = data_source_sync_tasks[2]
+        resp = api_client.get(reverse("data_source.sync_record.retrieve", kwargs={"id": other_tenant_task.id}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND

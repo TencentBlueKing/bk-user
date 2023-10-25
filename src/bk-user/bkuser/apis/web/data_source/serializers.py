@@ -328,6 +328,7 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     operator = serializers.CharField(help_text="操作人")
     start_at = serializers.SerializerMethodField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
+    extras = serializers.JSONField(help_text="额外信息")
 
     def get_data_source_name(self, obj):
         return self.context["data_source_name_map"].get(obj.data_source_id)
@@ -337,8 +338,8 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
         return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-class DataSourceSyncRecordLogRetrieveOutputSLZ(serializers.Serializer):
+class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="同步记录 ID")
     status = serializers.CharField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
     logs = serializers.CharField(help_text="同步日志")
-    extras = serializers.JSONField(help_text="额外信息")
