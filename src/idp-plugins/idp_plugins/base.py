@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from typing import Dict, Any, List, Type
 from abc import ABC, abstractmethod
 
@@ -15,7 +16,9 @@ from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from pydantic import BaseModel
 
 from .models import DispatchConfigItem, TestConnectionResult
-from .constants import PluginTypeEnum, BuiltinIdpPluginEnum, CUSTOM_PLUGIN_ID_PREFIX
+from .constants import PluginTypeEnum, BuiltinIdpPluginIDs, CUSTOM_PLUGIN_ID_PREFIX
+
+logger = logging.getLogger(__name__)
 
 
 class BaseIdpPlugin(ABC):
@@ -109,12 +112,21 @@ class BaseFederationIdpPlugin(BaseIdpPlugin):
 _plugin_cls_map: Dict[str, Type[BaseCredentialIdpPlugin] | Type[BaseFederationIdpPlugin]] = {}
 
 
-def register_plugin(plugin_id: str, plugin_cls: Type[BaseCredentialIdpPlugin] | Type[BaseFederationIdpPlugin]):
+def register_plugin(plugin_cls: Type[BaseCredentialIdpPlugin] | Type[BaseFederationIdpPlugin]):
     """注册插件"""
+    plugin_id = plugin_cls.id
+
+    if not plugin_id:
+        raise RuntimeError(f"plugin {plugin_cls} not provide id")
+
+    if not plugin_cls.config_class:
+        raise RuntimeError(f"plugin {plugin_cls} not provide config_class")
+
     # 非内建插件，id 必须以 custom_ 为前缀
-    is_builtin = plugin_id in BuiltinIdpPluginEnum._member_map_.values()
-    if not is_builtin and not plugin_id.startswith(CUSTOM_PLUGIN_ID_PREFIX):
-        raise RuntimeError(f"plugin_id must start with `{CUSTOM_PLUGIN_ID_PREFIX}`")
+    if plugin_id not in BuiltinIdpPluginIDs and plugin_id.startswith(CUSTOM_PLUGIN_ID_PREFIX):
+        raise RuntimeError(f"custom plugin's id must start with `{CUSTOM_PLUGIN_ID_PREFIX}`")
+
+    logger.info("register idp plugin: %s", plugin_id)
 
     _plugin_cls_map[plugin_id] = plugin_cls
 
