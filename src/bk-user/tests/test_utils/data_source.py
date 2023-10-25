@@ -63,18 +63,22 @@ def create_data_source_users_with_relations(
     ]
     DataSourceUser.objects.bulk_create(users)
 
-    data_source_users = list(DataSourceUser.objects.filter(data_source=data_source))
-    # 添加上下级关系
+    # FIXME (su) 去除隐藏逻辑：len(users) == 10, len(data_source_users) == 11,
+    #  因为 data_source 其实是默认的本地数据源，至少已经有 bk_user 这个用户
+    data_source_users = DataSourceUser.objects.filter(data_source=data_source)
+
+    # 添加上下级关系，设置首个用户为 leader
+    leader = data_source_users[0]
     user_relations = [
-        DataSourceUserLeaderRelation(user=data_source_user, leader=data_source_users[0])
-        for data_source_user in data_source_users[1:]
+        DataSourceUserLeaderRelation(user=user, leader=leader, data_source=data_source)
+        for user in data_source_users[1:]
     ]
     DataSourceUserLeaderRelation.objects.bulk_create(user_relations)
 
-    # 添加部门-人员关系
+    # 添加部门-人员关系，随机为用户分配部门
     user_department_relations = [
-        DataSourceDepartmentUserRelation(user=data_source_user, department=random.choice(departments))
-        for data_source_user in data_source_users
+        DataSourceDepartmentUserRelation(user=user, department=random.choice(departments), data_source=data_source)
+        for user in data_source_users
     ]
     DataSourceDepartmentUserRelation.objects.bulk_create(user_department_relations)
 

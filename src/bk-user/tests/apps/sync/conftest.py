@@ -24,12 +24,12 @@ from tests.test_utils.helpers import generate_random_string
 def data_source_sync_task(bare_local_data_source) -> DataSourceSyncTask:
     """数据源同步任务"""
     return DataSourceSyncTask.objects.create(
-        data_source_id=bare_local_data_source.id,
+        data_source=bare_local_data_source,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
         start_at=timezone.now(),
-        extra={"overwrite": True, "async_run": False},
+        extras={"overwrite": True, "async_run": False},
     )
 
 
@@ -42,13 +42,13 @@ def data_source_sync_task_ctx(data_source_sync_task) -> DataSourceSyncTaskContex
 def tenant_sync_task(bare_local_data_source, default_tenant) -> TenantSyncTask:
     """租户数据同步任务"""
     return TenantSyncTask.objects.create(
-        tenant_id=default_tenant.id,
-        data_source_id=bare_local_data_source.id,
+        tenant=default_tenant,
+        data_source=bare_local_data_source,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
         start_at=timezone.now(),
-        extra={"async_run": False},
+        extras={"async_run": False},
     )
 
 

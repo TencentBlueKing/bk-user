@@ -122,9 +122,9 @@ class TestDataSourceUserSyncer:
         }
         assert set(users.values_list("email", flat=True)) == {user.properties.get("email") for user in raw_users}
         assert set(users.values_list("phone", flat=True)) == {user.properties.get("phone") for user in raw_users}
-        # 每个的 extra 都是有值的
+        # 每个的 extras 都是有值的
         assert all(bool(e) for e in users.values_list("extras", flat=True))
-        # extra 的 key 应该是和 tenant_user_custom_fields 匹配的
+        # extras 的 key 应该是和 tenant_user_custom_fields 匹配的
         assert set(users.first().extras.keys()) == {f.name for f in tenant_user_custom_fields}
 
         # 验证用户部门信息
@@ -160,7 +160,7 @@ class TestDataSourceUserSyncer:
         # 3. 再添加一个随机用户
         raw_users.append(random_raw_user)
 
-        # NOTE: full_local_data_source 中的数据，extra 都是空的，raw_users 中的都非空
+        # NOTE: full_local_data_source 中的数据，extras 都是空的，raw_users 中的都非空
         assert not any(
             bool(e)
             for e in DataSourceUser.objects.filter(data_source=full_local_data_source).values_list("extras", flat=True)
@@ -207,7 +207,7 @@ class TestDataSourceUserSyncer:
 
         raw_users.append(random_raw_user)
 
-        data_source_sync_task.extra["overwrite"] = False
+        data_source_sync_task.extras["overwrite"] = False
         DataSourceUserSyncer(
             data_source_sync_task_ctx, data_source_sync_task, full_local_data_source, raw_users
         ).sync()
@@ -237,7 +237,7 @@ class TestDataSourceUserSyncer:
     def test_update_with_incremental(
         self, data_source_sync_task, data_source_sync_task_ctx, full_local_data_source, random_raw_user
     ):
-        data_source_sync_task.extra["incremental"] = True
+        data_source_sync_task.extras["incremental"] = True
         user_codes = set(
             DataSourceUser.objects.filter(
                 data_source=full_local_data_source,
@@ -266,7 +266,7 @@ class TestDataSourceUserSyncer:
         self, data_source_sync_task, data_source_sync_task_ctx, full_local_data_source, random_raw_user
     ):
         """增量同步模式，用户的 leader 在 db 中存在也是可以的"""
-        data_source_sync_task.extra["incremental"] = True
+        data_source_sync_task.extras["incremental"] = True
         random_raw_user.leaders.append("lisi")
 
         DataSourceUserSyncer(

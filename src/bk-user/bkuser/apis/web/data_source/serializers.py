@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
@@ -315,3 +316,29 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
     task_id = serializers.CharField(help_text="任务 ID")
     status = serializers.CharField(help_text="任务状态")
     summary = serializers.CharField(help_text="任务执行结果概述")
+
+
+class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="同步记录 ID")
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
+    data_source_name = serializers.SerializerMethodField(help_text="数据源名称")
+    status = serializers.CharField(help_text="数据源同步状态")
+    has_warning = serializers.BooleanField(help_text="是否有警告")
+    trigger = serializers.CharField(help_text="同步触发方式")
+    operator = serializers.CharField(help_text="操作人")
+    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    duration = serializers.DurationField(help_text="持续时间")
+
+    def get_data_source_name(self, obj):
+        return self.context["data_source_name_map"].get(obj.data_source_id)
+
+    def get_start_at(self, obj):
+        local_time = timezone.localtime(obj.start_at)
+        return local_time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+class DataSourceSyncRecordLogRetrieveOutputSLZ(serializers.Serializer):
+    status = serializers.CharField(help_text="数据源同步状态")
+    has_warning = serializers.BooleanField(help_text="是否有警告")
+    logs = serializers.CharField(help_text="同步日志")
+    extras = serializers.JSONField(help_text="额外信息")

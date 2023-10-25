@@ -208,8 +208,8 @@ class DataSourceUserSyncer:
         self.task = task
         self.data_source = data_source
         self.raw_users = raw_users
-        self.overwrite = bool(task.extra.get("overwrite", False))
-        self.incremental = bool(task.extra.get("incremental", False))
+        self.overwrite = bool(task.extras.get("overwrite", False))
+        self.incremental = bool(task.extras.get("incremental", False))
         self.converter = DataSourceUserConverter(data_source)
 
     def sync(self):

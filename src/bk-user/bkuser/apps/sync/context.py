@@ -173,14 +173,12 @@ class DataSourceSyncTaskContext:
     ) -> List[DataSourceUserChangeLog]:
         if operation == SyncOperation.CREATE:
             # 由于 bulk_create 不会返回 id，因此当 operation 为 create 时候，需要通过查询获取真实的 ID
-            users = DataSourceUser.objects.filter(
-                code__in=[u.code for u in users], data_source_id=self.task.data_source_id
-            )
+            users = DataSourceUser.objects.filter(code__in=[u.code for u in users], data_source=self.task.data_source)
 
         return [
             DataSourceUserChangeLog(
                 task=self.task,
-                data_source_id=self.task.data_source_id,
+                data_source=self.task.data_source,
                 operation=operation,
                 # 注意：由于 Django + mysql bulk_create 不会返回 id，
                 # 因此当 operation 为 create 时候，user_id 为 None
@@ -198,13 +196,13 @@ class DataSourceSyncTaskContext:
         if operation == SyncOperation.CREATE:
             # 由于 bulk_create 不会返回 id，因此当 operation 为 create 时候，需要通过查询获取真实的 ID
             depts = DataSourceDepartment.objects.filter(
-                code__in=[d.code for d in depts], data_source_id=self.task.data_source_id
+                code__in=[d.code for d in depts], data_source=self.task.data_source
             )
 
         return [
             DataSourceDepartmentChangeLog(
                 task=self.task,
-                data_source_id=self.task.data_source_id,
+                data_source=self.task.data_source,
                 operation=operation,
                 department_id=d.id,
                 department_code=d.code,
@@ -307,8 +305,8 @@ class TenantSyncTaskContext:
         return [
             TenantUserChangeLog(
                 task=self.task,
-                tenant_id=self.task.tenant_id,
-                data_source_id=self.task.data_source_id,
+                tenant=self.task.tenant,
+                data_source=self.task.data_source,
                 operation=operation,
                 user_id=u.id,
             )
@@ -327,8 +325,8 @@ class TenantSyncTaskContext:
         return [
             TenantDepartmentChangeLog(
                 task=self.task,
-                tenant_id=self.task.tenant_id,
-                data_source_id=self.task.data_source_id,
+                tenant=self.task.tenant,
+                data_source=self.task.data_source,
                 operation=operation,
                 department_id=d.id,
             )

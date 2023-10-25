@@ -95,14 +95,14 @@ class TestDataSourceSyncTaskContext:
         assert "this is warning log" in data_source_sync_task.logs
 
     def test_with_records(self, data_source_sync_task):
-        data_source_id = data_source_sync_task.data_source_id
+        ds = data_source_sync_task.data_source
         zhangsan = DataSourceUser(
             code="zhangsan",
             username="zhangsan",
             full_name="张三",
             email="zhangsan@m.com",
             phone="13512345671",
-            data_source_id=data_source_id,
+            data_source=ds,
         )
         lisi = DataSourceUser(
             id=2,
@@ -111,14 +111,14 @@ class TestDataSourceSyncTaskContext:
             full_name="李四",
             email="lisi@m.com",
             phone="13512345672",
-            data_source_id=data_source_id,
+            data_source=ds,
         )
         zhangsan.save()
 
         depts = [
-            DataSourceDepartment(id=1, data_source_id=data_source_id, code="company", name="公司"),
-            DataSourceDepartment(id=2, data_source_id=data_source_id, code="dept_a", name="部门A"),
-            DataSourceDepartment(id=3, data_source_id=data_source_id, code="dept_b", name="部门B"),
+            DataSourceDepartment(id=1, data_source=ds, code="company", name="公司"),
+            DataSourceDepartment(id=2, data_source=ds, code="dept_a", name="部门A"),
+            DataSourceDepartment(id=3, data_source=ds, code="dept_b", name="部门B"),
         ]
         with DataSourceSyncTaskContext(data_source_sync_task) as ctx:
             ctx.recorder.add(

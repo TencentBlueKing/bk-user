@@ -13,7 +13,9 @@ from datetime import timedelta
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncOperation, SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.tenant.models import Tenant
 from bkuser.common.models import TimestampedModel
 from bkuser.utils.uuid import generate_uuid
 
@@ -21,7 +23,7 @@ from bkuser.utils.uuid import generate_uuid
 class DataSourceSyncTask(TimestampedModel):
     """数据源同步任务"""
 
-    data_source_id = models.IntegerField("数据源 ID")
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     has_warning = models.BooleanField("任务执行是否有警告", default=False)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
@@ -29,12 +31,15 @@ class DataSourceSyncTask(TimestampedModel):
     start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
     duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
     logs = models.TextField("任务日志", default="")
-    extra = models.JSONField("扩展信息", default=dict)
+    extras = models.JSONField("扩展信息", default=dict)
+
+    class Meta:
+        ordering = ["-id"]
 
     @property
     def summary(self):
         # 异步模式
-        if self.extra.get("async_run", False):
+        if self.extras.get("async_run", False):
             if self.status in [SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING]:
                 return _("数据源同步任务执行中")
             if self.status == SyncTaskStatus.SUCCESS:
@@ -53,7 +58,7 @@ class DataSourceUserChangeLog(TimestampedModel):
     task = models.ForeignKey(
         DataSourceSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="user_change_logs"
     )
-    data_source_id = models.IntegerField("数据源 ID")
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     user_id = models.CharField("数据源用户 ID", max_length=64)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     # 数据源原始数据
@@ -69,7 +74,7 @@ class DataSourceDepartmentChangeLog(TimestampedModel):
     task = models.ForeignKey(
         DataSourceSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="department_change_logs"
     )
-    data_source_id = models.IntegerField("数据源 ID")
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     department_id = models.CharField("数据源部门 ID", max_length=128)
     # 数据源原始数据
@@ -80,8 +85,8 @@ class DataSourceDepartmentChangeLog(TimestampedModel):
 class TenantSyncTask(TimestampedModel):
     """租户同步任务"""
 
-    tenant_id = models.CharField("租户 ID", max_length=128)
-    data_source_id = models.IntegerField("数据源 ID")
+    tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     status = models.CharField("任务总状态", choices=SyncTaskStatus.get_choices(), max_length=32)
     has_warning = models.BooleanField("任务执行是否有警告", default=False)
     trigger = models.CharField("触发方式", choices=SyncTaskTrigger.get_choices(), max_length=32)
@@ -89,12 +94,15 @@ class TenantSyncTask(TimestampedModel):
     start_at = models.DateTimeField("任务开始时间", auto_now_add=True)
     duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
     logs = models.TextField("任务日志", default="")
-    extra = models.JSONField("扩展信息", default=dict)
+    extras = models.JSONField("扩展信息", default=dict)
+
+    class Meta:
+        ordering = ["-id"]
 
     @property
     def summary(self):
         # 异步模式
-        if self.extra.get("async_run", False):
+        if self.extras.get("async_run", False):
             if self.status in [SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING]:
                 return _("租户数据同步任务执行中")
             if self.status == SyncTaskStatus.SUCCESS:
@@ -113,8 +121,8 @@ class TenantUserChangeLog(TimestampedModel):
     task = models.ForeignKey(
         TenantSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="user_change_logs"
     )
-    tenant_id = models.CharField("租户 ID", max_length=128)
-    data_source_id = models.IntegerField("数据源 ID")
+    tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     user_id = models.CharField("用户 ID", max_length=64)
 
@@ -126,7 +134,7 @@ class TenantDepartmentChangeLog(TimestampedModel):
     task = models.ForeignKey(
         TenantSyncTask, on_delete=models.CASCADE, db_constraint=False, related_name="department_change_logs"
     )
-    tenant_id = models.CharField("租户 ID", max_length=128)
-    data_source_id = models.IntegerField("数据源 ID")
+    tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
     operation = models.CharField("操作类型", choices=SyncOperation.get_choices(), max_length=32)
     department_id = models.CharField("部门 ID", max_length=128)

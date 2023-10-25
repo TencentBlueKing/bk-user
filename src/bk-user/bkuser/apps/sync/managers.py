@@ -32,12 +32,12 @@ class DataSourceSyncManager:
         plugin_init_extra_kwargs = plugin_init_extra_kwargs or {}
 
         task = DataSourceSyncTask.objects.create(
-            data_source_id=self.data_source.id,
+            data_source=self.data_source,
             status=SyncTaskStatus.PENDING.value,
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
             start_at=timezone.now(),
-            extra={
+            extras={
                 "overwrite": self.sync_options.overwrite,
                 "async_run": self.sync_options.async_run,
             },
@@ -77,12 +77,12 @@ class TenantSyncManager:
         """同步数据源用户，部门信息到租户，注意该方法不可用于 DB 事务中，可能导致异步任务获取 Task 失败"""
         task = TenantSyncTask.objects.create(
             tenant_id=self.tenant_id,
-            data_source_id=self.data_source.id,
+            data_source=self.data_source,
             status=SyncTaskStatus.PENDING.value,
             trigger=self.sync_options.trigger,
             operator=self.sync_options.operator,
             start_at=timezone.now(),
-            extra={"async_run": self.sync_options.async_run},
+            extras={"async_run": self.sync_options.async_run},
         )
 
         if self.sync_options.async_run:
