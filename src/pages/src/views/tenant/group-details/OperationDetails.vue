@@ -474,6 +474,7 @@ const selectList = (list) => {
   formData.managers = formData.managers.filter(item => item.id);
   if (list?.length) {
     formData.managers.push(...list);
+    userRef.value.validate();
   } else {
     nextTick(() => {
       const managers = [{
