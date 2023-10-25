@@ -36,6 +36,9 @@ class BuiltinIdpPluginEnum(str, Enum):
     WECOM = "wecom"
 
 
+BuiltinIdpPluginIDs = [i for i in BuiltinIdpPluginEnum]
+
+
 class SupportedHttpMethodEnum(str, Enum):
     GET = "get"
     POST = "post"

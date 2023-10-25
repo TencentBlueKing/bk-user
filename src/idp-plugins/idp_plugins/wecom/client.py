@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Dict, Any, Tuple
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 from django.utils.translation import gettext_lazy as _
 
@@ -36,10 +36,16 @@ class WeComAPIClient:
         ok, resp_data = http_func(url, **kwargs)
         if not ok:
             logger.error(
-                "wecom api failed! %s %s, kwargs: %s, error: %s", http_func.__name__, url, kwargs, resp_data["error"]
+                "wecom api failed, [corp_id=%s, agent_id=%s]! %s %s, kwargs: %s, error: %s",
+                http_func.__name__,
+                self.corp_id,
+                self.agent_id,
+                url,
+                kwargs,
+                resp_data["error"],
             )
             raise RemoteRequestError(
-                f"request wecom api fail! Request=[{http_func.__name__} {urlparse(url).path} error={resp_data['error']}"
+                f"request wecom api fail! Request=[{http_func.__name__} {url} error={resp_data['error']}"
             )
 
         errcode = resp_data.get("errcode") or 0
@@ -49,8 +55,10 @@ class WeComAPIClient:
             return resp_data
 
         logger.error(
-            "wecom api error! %s %s, data: %s, errcode: %s, errmsg: %s",
+            "wecom api error, [corp_id=%s, agent_id=%s]! %s %s, data: %s, errcode: %s, errmsg: %s",
             http_func.__name__,
+            self.corp_id,
+            self.agent_id,
             url,
             kwargs,
             errcode,
@@ -58,7 +66,7 @@ class WeComAPIClient:
         )
         raise RemoteRequestError(
             f"request wecom api error! "
-            f"Request=[{http_func.__name__} {urlparse(url).path} Response[code={errcode}, message={errmsg}]"
+            f"Request=[{http_func.__name__} {url} Response[code={errcode}, message={errmsg}]"
         )
 
     def _get_access_token(self) -> Tuple[str, int]:
@@ -79,7 +87,10 @@ class WeComAPIClient:
         return access_token
 
     def get_user_id_by_code(self, code: str) -> str:
-        """通过OAuth授权码获取用户ID"""
+        """
+        通过OAuth授权码获取用户ID
+        docs: https://developer.work.weixin.qq.com/document/path/98176
+        """
         params = {"access_token": self.access_token, "code": code}
         resp_data = self._call(http_get, "/auth/getuserinfo", params=params)
         userid = resp_data.get("userid")

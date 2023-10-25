@@ -12,4 +12,4 @@ from ..base import register_plugin
 from .implement import LocalIdpPlugin
 
 
-register_plugin(LocalIdpPlugin.id, LocalIdpPlugin)
+register_plugin(LocalIdpPlugin)

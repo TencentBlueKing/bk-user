@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 from urllib.parse import quote_plus, urljoin
 
 from django.conf import settings
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -26,13 +26,8 @@ from bklogin.bkuser.models import DataSourceUser, Idp, Tenant, TenantUser
 from bklogin.common.error_codes import error_codes
 from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
-from bklogin.idp_plugins.base import (
-    BaseCredentialIdpPlugin,
-    BaseFederationIdpPlugin,
-    get_plugin_cfg_cls,
-    get_plugin_cls,
-)
-from bklogin.idp_plugins.constants import BuiltinActionEnum, PluginTypeEnum, SupportedHttpMethodEnum
+from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
+from bklogin.idp_plugins.constants import BuiltinActionEnum, SupportedHttpMethodEnum
 
 from .constants import ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .helper import BkTokenManager
@@ -184,6 +179,9 @@ class TenantIdpListApi(View):
 @method_decorator(csrf_exempt, name="dispatch")
 class IdpPluginDispatchView(View):
     def dispatch(self, request, *args, **kwargs):
+        """
+        根据路径参数 idp_id 和 action 将请求路由调度到各个插件
+        """
         # Session里获取当前登录的租户
         sign_in_tenant_id = request.session.get(SIGN_IN_TENANT_ID_SESSION_KEY)
         if not sign_in_tenant_id:
@@ -202,15 +200,14 @@ class IdpPluginDispatchView(View):
         #  (1) 获取插件
         try:
             plugin_cls = get_plugin_cls(idp.plugin_id)
-            plugin_cfg_cls = get_plugin_cfg_cls(idp.plugin_id)
         except Exception as error:
             raise error_codes.SYSTEM_ERROR.f(
                 _("认证源[{}]获取插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
             )
 
-        # （2）如何初始化插件配置
+        # （2）初始化插件
         try:
-            plugin_cfg = plugin_cfg_cls(**idp.plugin_config)
+            plugin_cfg = plugin_cls.config_class(**idp.plugin_config)
             plugin = plugin_cls(cfg=plugin_cfg)
         except Exception as error:
             raise error_codes.SYSTEM_ERROR.f(
@@ -221,18 +218,20 @@ class IdpPluginDispatchView(View):
         # FIXME: 如何对身份凭证类的认证进行手动csrf校验，或者如何添加csrf_protect装饰器
         # 身份凭证类型
         if isinstance(plugin, BaseCredentialIdpPlugin):
-            return self._exec_credential_idp_plugin(plugin, request, sign_in_tenant_id, idp, action, http_method)
+            return self._dispatch_credential_idp_plugin(plugin, request, sign_in_tenant_id, idp, action, http_method)
 
         # 联邦身份类型
         if isinstance(plugin, BaseFederationIdpPlugin):
-            return self._exec_federation_idp_plugin(plugin, request, sign_in_tenant_id, idp, action, http_method)
+            return self._dispatch_federation_idp_plugin(plugin, request, sign_in_tenant_id, idp, action, http_method)
 
-        # （4）根据插件dispatch配置，进行调用
-        return plugin.dispatch_extension(action, http_method, request)
+        return HttpResponseNotFound()
 
-    def _exec_credential_idp_plugin(
+    def _dispatch_credential_idp_plugin(
         self, plugin: BaseCredentialIdpPlugin, request, sign_in_tenant_id: str, idp: Idp, action: str, http_method: str
     ):
+        """
+        身份凭证类的插件执行请求分配
+        """
         dispatch_cfs = (action, http_method)
         # 对凭证进行认证
         if dispatch_cfs == (BuiltinActionEnum.AUTHENTICATE, SupportedHttpMethodEnum.POST):
@@ -243,16 +242,24 @@ class IdpPluginDispatchView(View):
                 # FIXME: 应该定义插件类的异常，某些异常是参数错误，某些异常是系统问题, 下同
                 raise error_codes.VALIDATION_ERROR.f(str(error))
 
-            return self._auth_success(request, sign_in_tenant_id, idp, user_infos)
+            # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
+            tenant_user_ids = self._auth_backend(request, sign_in_tenant_id, idp, user_infos)
+            # 记录支持登录的租户用户
+            request.session[ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY] = tenant_user_ids
+            # 身份凭证认证直接返回成功即可，由前端重定向路由到用户列表选择页面
+            return APISuccessResponse()
 
         return plugin.dispatch_extension(action, http_method, request)
 
-    def _exec_federation_idp_plugin(
+    def _dispatch_federation_idp_plugin(
         self, plugin: BaseFederationIdpPlugin, request, sign_in_tenant_id: str, idp: Idp, action: str, http_method: str
     ):
+        """
+        联邦认证类的插件执行请求分配
+        """
         dispatch_cfs = (action, http_method)
         # 跳转到第三方登录
-        if dispatch_cfs == (PluginTypeEnum.FEDERATION, BuiltinActionEnum.LOGIN, SupportedHttpMethodEnum.GET):
+        if dispatch_cfs == (BuiltinActionEnum.LOGIN, SupportedHttpMethodEnum.GET):
             try:
                 callback_uri = self._get_complete_action_url(idp.id, BuiltinActionEnum.CALLBACK)
                 redirect_uri = plugin.build_login_uri(request, callback_uri)
@@ -265,38 +272,50 @@ class IdpPluginDispatchView(View):
         # Note: 大部分都是GET重定向，对于某些第三方登录，可能存在POST请求，
         #  比如SAML的传输绑定有3种: HTTP Artifact、HTTP POST、和 HTTP Redirect
         if dispatch_cfs in [
-            (PluginTypeEnum.CREDENTIAL, BuiltinActionEnum.CALLBACK, SupportedHttpMethodEnum.GET),
-            (PluginTypeEnum.FEDERATION, BuiltinActionEnum.CALLBACK, SupportedHttpMethodEnum.POST),
+            (BuiltinActionEnum.CALLBACK, SupportedHttpMethodEnum.GET),
+            (BuiltinActionEnum.CALLBACK, SupportedHttpMethodEnum.POST),
         ]:
             # 认证
             try:
-                user_infos = plugin.handle_callback(request)
+                user_info = plugin.handle_callback(request)
             except ValueError as error:
                 raise error_codes.VALIDATION_ERROR.f(str(error))
 
-            return self._auth_success(request, sign_in_tenant_id, idp, user_infos)
+            # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
+            tenant_user_ids = self._auth_backend(request, sign_in_tenant_id, idp, user_info)
+            # 记录支持登录的租户用户
+            request.session[ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY] = tenant_user_ids
+            # 联邦认证则重定向到前端选择账号页面
+            return HttpResponseRedirect(redirect_to="pages/users")
 
         return plugin.dispatch_extension(action, http_method, request)
 
     def _get_complete_action_url(self, idp_id: str, action: str) -> str:
+        """获取完整"""
         return urljoin(settings.BK_LOGIN_URL, f"auth/idps/{idp_id}/actions/{action}/")
 
-    def _auth_success(
+    def _auth_backend(
         self, request, sign_in_tenant_id: str, idp: Idp, user_infos: Dict[str, Any] | List[Dict[str, Any]]
-    ):
-        """认证成功"""
+    ) -> List[str]:
+        """认证：认证源数据与数据源匹配"""
         if isinstance(user_infos, dict):
             user_infos = [user_infos]
 
-        # FIXME: 查询是绑定匹配还是直接匹配，一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
+        # FIXME: 查询是绑定匹配还是直接匹配，
+        #  一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
         #  直接匹配，一般是企业身份登录方式，
         #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
+        # 认证源配置里的与数据源的匹配规则
         data_source_match_rules = DataSourceMatchRule.to_rules(idp.data_source_match_rules)
         # 逐规则匹配，查询用户
         matched_data_source_user_ids = []
         for rule in data_source_match_rules:
-            # 构造过滤条件
-            target_field_values = [u.get(rule.source_field) for u in user_infos]
+            # 规则里target_field为数据源的用户字段名，source_field为认证源的用户字段名
+            # 构造过滤条件，从user_infos里获取字段，并映射为数据源目标字段值
+            target_field_values = [u.get(rule.source_field) for u in user_infos if u.get(rule.source_field)]
+            if not target_field_values:
+                continue
+            # 转换为Django Queryset可使用的过滤条件：{"target_filed_in": [...]} 或 {"target_field": xxx}
             filter_content: Dict[str, Any | List[Any]] = (
                 {f"{rule.target_field}__in": target_field_values}
                 if len(target_field_values) > 1
@@ -320,11 +339,7 @@ class IdpPluginDispatchView(View):
                 _("认证成功，但用户在租户({})下未有对应账号").format(sign_in_tenant_id),
             )
 
-        # 记录支持登录的租户用户
-        request.session[ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY] = tenant_user_ids
-
-        # FIXME: 不同登录方式返回不一样（1）身份认证则正常响应（2）联邦认证则重定向到前端选择账号页面
-        return APISuccessResponse()
+        return tenant_user_ids
 
 
 class TenantUserListApi(View):

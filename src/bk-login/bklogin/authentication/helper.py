@@ -28,6 +28,11 @@ logger = logging.getLogger(__name__)
 
 
 class BkTokenProcessor:
+    """
+    BKToken处理
+    生成并加密Token & 解密Token
+    """
+
     def __init__(self, encrypt_secret_key: bytes):
         # Token加密密钥
         self.encrypt_secret_key = encrypt_secret_key
