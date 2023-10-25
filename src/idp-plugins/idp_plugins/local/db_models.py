@@ -24,6 +24,10 @@ class DataSourceUser(models.Model):
     phone_country_code = models.CharField("手机国际区号", max_length=16, null=True, blank=True)
 
     class Meta:
+        # FIXME: 由于idp_plugins模块会被不同项目引入，model为了被Django App 加载，需要添加app_label,
+        #  同时由于不同项目自定义app不一样，所以这里临时使用公共的django.contrib.auth
+        app_label = "django.contrib.auth"
+        managed = False
         db_table = "data_source_datasourceuser"
         ordering = ["id"]
 
@@ -43,4 +47,8 @@ class LocalDataSourceIdentityInfo(models.Model):
     username = models.CharField("用户名", max_length=128)
 
     class Meta:
+        # FIXME: 由于idp_plugins模块会被不同项目引入，model为了被Django App 加载，需要添加app_label,
+        #  同时由于不同项目自定义app不一样，所以这里临时使用公共的django.contrib.auth
+        app_label = "django.contrib.auth"
+        managed = False
         db_table = "data_source_localdatasourceidentityinfo"

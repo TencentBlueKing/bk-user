@@ -19,13 +19,6 @@ class DataSourceStatus(str, StructuredEnum):
     DISABLED = EnumField("disabled", label=_("未启用"))
 
 
-class IdpCategory(str, StructuredEnum):
-    """认证源分类"""
-
-    ENTERPRISE = EnumField("enterprise", label=_("企业"))
-    SOCIAL = EnumField("social", label=_("社交"))
-
-
 class IdpStatus(str, StructuredEnum):
     """认证源状态"""
 

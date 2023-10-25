@@ -8,15 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from ..exceptions import IdpPluginBaseError
 
 
-class IdpPluginBaseError(Exception):
-    """认证源插件异常基类"""
+class LocalIdpPluginBaseError(IdpPluginBaseError):
+    """本地认证源异常基类"""
 
 
-class ParseRequestBodyError(IdpPluginBaseError):
-    """解析请求里Body异常"""
+class UserCredentialRequiredError(LocalIdpPluginBaseError):
+    """用户凭证-用户名或密码为空"""
 
 
-class RequestAPIError(IdpPluginBaseError):
-    """请求第三方接口失败"""
+class NotEnabledPasswordLoginError(LocalIdpPluginBaseError):
+    """没有数据源启用账密登录"""
+
+
+class UserCredentialIncorrectError(LocalIdpPluginBaseError):
+    """用户凭证 - 用户名或命名不正确"""

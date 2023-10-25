@@ -23,7 +23,7 @@ def parse_request_body_json(body: bytes) -> Dict[str, Any]:
     """解析请求Body Json数据"""
     try:
         request_body = json.loads(body.decode("utf-8"))
-    except Exception as error:
+    except json.JSONDecodeError as error:
         raise ParseRequestBodyError(_("解析异常，Body参数非Json格式数据, {}").format(error))
 
     return request_body

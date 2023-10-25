@@ -8,15 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from ..exceptions import IdpPluginBaseError
 
 
-class IdpPluginBaseError(Exception):
-    """认证源插件异常基类"""
+class WecomIdpPluginBaseError(IdpPluginBaseError):
+    """企业微信认证源插件异常基类"""
 
 
-class ParseRequestBodyError(IdpPluginBaseError):
-    """解析请求里Body异常"""
+class InvalidParamError(WecomIdpPluginBaseError):
+    """参数非合法"""
 
 
-class RequestAPIError(IdpPluginBaseError):
-    """请求第三方接口失败"""
+class NotCorpMemberError(WecomIdpPluginBaseError):
+    """非企业成员"""

@@ -15,8 +15,9 @@ from urllib.parse import urljoin
 from django.utils.translation import gettext_lazy as _
 
 from ..http import http_get
-from ..exceptions import RemoteRequestError
+from ..exceptions import RequestAPIError
 from .settings import WECOM_API_BASE_URL
+from .exceptions import NotCorpMemberError
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class WeComAPIClient:
                 kwargs,
                 resp_data["error"],
             )
-            raise RemoteRequestError(
+            raise RequestAPIError(
                 f"request wecom api fail! Request=[{http_func.__name__} {url} error={resp_data['error']}"
             )
 
@@ -64,7 +65,7 @@ class WeComAPIClient:
             errcode,
             errmsg,
         )
-        raise RemoteRequestError(
+        raise RequestAPIError(
             f"request wecom api error! "
             f"Request=[{http_func.__name__} {url} Response[code={errcode}, message={errmsg}]"
         )
@@ -97,4 +98,4 @@ class WeComAPIClient:
         if userid:
             return userid
 
-        raise ValueError(_("非企业成员，登录认证失败"))
+        raise NotCorpMemberError(_("非企业成员，登录认证失败"))

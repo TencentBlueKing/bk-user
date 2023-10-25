@@ -27,7 +27,7 @@ from bklogin.common.error_codes import error_codes
 from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
-from bklogin.idp_plugins.constants import BuiltinActionEnum, SupportedHttpMethodEnum
+from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum
 
 from .constants import ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .helper import BkTokenManager
@@ -234,7 +234,7 @@ class IdpPluginDispatchView(View):
         """
         dispatch_cfs = (action, http_method)
         # 对凭证进行认证
-        if dispatch_cfs == (BuiltinActionEnum.AUTHENTICATE, SupportedHttpMethodEnum.POST):
+        if dispatch_cfs == (BuiltinActionEnum.AUTHENTICATE, AllowedHttpMethodEnum.POST):
             # 认证
             try:
                 user_infos = plugin.authenticate_credentials(request)
@@ -259,7 +259,7 @@ class IdpPluginDispatchView(View):
         """
         dispatch_cfs = (action, http_method)
         # 跳转到第三方登录
-        if dispatch_cfs == (BuiltinActionEnum.LOGIN, SupportedHttpMethodEnum.GET):
+        if dispatch_cfs == (BuiltinActionEnum.LOGIN, AllowedHttpMethodEnum.GET):
             try:
                 callback_uri = self._get_complete_action_url(idp.id, BuiltinActionEnum.CALLBACK)
                 redirect_uri = plugin.build_login_uri(request, callback_uri)
@@ -272,8 +272,8 @@ class IdpPluginDispatchView(View):
         # Note: 大部分都是GET重定向，对于某些第三方登录，可能存在POST请求，
         #  比如SAML的传输绑定有3种: HTTP Artifact、HTTP POST、和 HTTP Redirect
         if dispatch_cfs in [
-            (BuiltinActionEnum.CALLBACK, SupportedHttpMethodEnum.GET),
-            (BuiltinActionEnum.CALLBACK, SupportedHttpMethodEnum.POST),
+            (BuiltinActionEnum.CALLBACK, AllowedHttpMethodEnum.GET),
+            (BuiltinActionEnum.CALLBACK, AllowedHttpMethodEnum.POST),
         ]:
             # 认证
             try:

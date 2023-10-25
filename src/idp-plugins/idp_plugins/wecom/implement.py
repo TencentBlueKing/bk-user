@@ -21,6 +21,7 @@ from ..models import TestConnectionResult
 from ..tools import generate_random_str
 from .settings import WECOM_OAUTH_URL
 from .client import WeComAPIClient
+from .exceptions import InvalidParamError
 
 
 class WecomIdpPluginConfig(BaseModel):
@@ -72,11 +73,11 @@ class WecomIdpPlugin(BaseFederationIdpPlugin):
         state_in_session = request.session.get(self.state_session_key)
         state = request.GET.get("state")
         if not state or state != state_in_session:
-            raise ValueError(_("state 参数校验不通过"))
+            raise InvalidParamError(_("state 参数校验不通过"))
 
         code = request.GET.get("code")
         if not code:
-            raise ValueError(_("code 参数不能为空"))
+            raise InvalidParamError(_("code 参数不能为空"))
 
         # 通过code获取用户信息
         client = WeComAPIClient(self.cfg.corp_id, self.cfg.agent_id, self.cfg.secret)

@@ -12,7 +12,7 @@ import re
 
 from pydantic import BaseModel, field_validator
 
-from .constants import SUPPORTED_HTTP_METHODS, ACTION_REGEX
+from .constants import ALLOWED_HTTP_METHODS, ACTION_REGEX
 
 
 class DispatchConfigItem(BaseModel):
@@ -23,10 +23,8 @@ class DispatchConfigItem(BaseModel):
     @field_validator("http_method")
     @classmethod
     def validate_http_method(cls, v: str) -> str:
-        if v not in SUPPORTED_HTTP_METHODS:
-            raise ValueError(
-                f"the http_method of `{v}` not allowed, only support http_method: {SUPPORTED_HTTP_METHODS}"
-            )
+        if v not in ALLOWED_HTTP_METHODS:
+            raise ValueError(f"the http_method of `{v}` not allowed, only support http_method: {ALLOWED_HTTP_METHODS}")
         return v
 
     @field_validator("action")

@@ -13,13 +13,12 @@ from django.db import models
 from bkuser.common.models import AuditedModel
 from bkuser.utils.uuid import generate_uuid
 
-from .constants import IdpCategory, IdpStatus
+from .constants import IdpStatus
 
 
 class IdpPlugin(models.Model):
     """认证源插件"""
 
-    category = models.CharField("分类", max_length=32, choices=IdpCategory.get_choices())
     id = models.CharField("认证源插件唯一标识", primary_key=True, max_length=128)
     name = models.CharField("认证源插件名称", max_length=128, unique=True)
     description = models.TextField("描述", default="", blank=True)

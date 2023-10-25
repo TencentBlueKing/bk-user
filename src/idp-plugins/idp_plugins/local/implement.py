@@ -19,6 +19,7 @@ from ..base import BaseCredentialIdpPlugin
 from ..models import TestConnectionResult
 from ..tools import parse_request_body_json
 from .db_models import LocalDataSourceIdentityInfo
+from .exceptions import UserCredentialRequiredError, NotEnabledPasswordLoginError, UserCredentialIncorrectError
 
 
 class LocalIdpPluginConfig(BaseModel):
@@ -46,14 +47,14 @@ class LocalIdpPlugin(BaseCredentialIdpPlugin):
 
         username = request_body.get("username")
         if not username:
-            raise ValueError(_("用户名不允许为空"))
+            raise UserCredentialRequiredError(_("用户名不允许为空"))
 
         password = request_body.get("password")
         if not password:
-            raise ValueError(_("密码不允许为空"))
+            raise UserCredentialRequiredError(_("密码不允许为空"))
 
         if not self.cfg.data_source_ids:
-            raise ValueError(_("当前租户没有数据源允许账密登录"))
+            raise NotEnabledPasswordLoginError(_("当前租户没有数据源允许账密登录"))
 
         # FIXME (nan): 待用户密码功能改造完成后重新调整校验密码方式
         users = LocalDataSourceIdentityInfo.objects.filter(
@@ -65,6 +66,6 @@ class LocalIdpPlugin(BaseCredentialIdpPlugin):
 
         # 判断是否有用户匹配
         if len(matched_users) == 0:
-            raise ValueError(_("用户名或密码不正确"))
+            raise UserCredentialIncorrectError(_("用户名或密码不正确"))
 
         return [{"id": i.user.id} for i in matched_users]
