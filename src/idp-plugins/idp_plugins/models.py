@@ -43,4 +43,4 @@ class TestConnectionResult(BaseModel):
     """连通性测试结果，包含示例数据"""
 
     ok: bool
-    error_message: str
+    message: str

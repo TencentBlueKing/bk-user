@@ -48,7 +48,7 @@ def initial_local_idp_of_tenant(sender, instance: DataSource, **kwargs):
         data_source_match_rules.append(
             DataSourceMatchRule(source_field="id", data_source_id=instance.id, target_field="id")
         )
-    # 对于不启动登录，则需要删除配置
+    # 对于不启用登录，则需要删除配置
     if not enable_login and instance.id in idp_plugin_cfg.data_source_ids:
         idp_plugin_cfg.data_source_ids = [i for i in idp_plugin_cfg.data_source_ids if i != instance.id]
         data_source_match_rules = [i for i in data_source_match_rules if i.data_source_id != instance.id]

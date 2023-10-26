@@ -20,7 +20,7 @@ from ..exceptions import InvalidParamError
 from .settings import WECOM_OAUTH_URL
 from ..base import BaseFederationIdpPlugin
 from ..models import TestConnectionResult
-from ..tools import generate_random_str
+from ..utils import generate_random_str
 
 
 class WecomIdpPluginConfig(BaseModel):

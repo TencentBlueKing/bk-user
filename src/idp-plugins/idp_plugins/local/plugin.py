@@ -18,7 +18,7 @@ from .db_models import LocalDataSourceIdentityInfo
 from ..exceptions import InvalidParamError, UnexpectedDataError
 from ..base import BaseCredentialIdpPlugin
 from ..models import TestConnectionResult
-from ..tools import parse_request_body_json
+from ..utils import parse_request_body_json
 
 
 class LocalIdpPluginConfig(BaseModel):

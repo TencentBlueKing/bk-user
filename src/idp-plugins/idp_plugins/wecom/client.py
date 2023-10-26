@@ -48,11 +48,11 @@ class WeComAPIClient:
             )
 
         errcode = resp_data.get("errcode") or 0
-        errmsg = resp_data.get("errmsg", "unknown")
         # 出错返回码，为0表示成功，非0表示调用失败
         if not errcode:
             return resp_data
 
+        errmsg = resp_data.get("errmsg", "unknown")
         logger.error(
             "wecom api error, [corp_id=%s, agent_id=%s]! %s %s, data: %s, errcode: %s, errmsg: %s",
             http_func.__name__,
