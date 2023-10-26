@@ -15,7 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
-from bkuser.idp_plugins.local.implement import LocalIdpPluginConfig
+from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from .constants import IdpStatus
