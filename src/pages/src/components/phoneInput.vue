@@ -1,5 +1,5 @@
 <template>
-  <div class="input-text">
+  <div :class="['input-text', { 'input-disabled': disabled }]">
     <input
       type="text"
       ref="telRef"
@@ -158,6 +158,16 @@ const handleInput = () => {
 
 <style lang="less">
 @import url("@/css/intlTelInput.less");
+
+.input-disabled .iti--separate-dial-code {
+  .iti__selected-flag {
+    cursor: no-drop;
+  }
+
+  &:hover .select-text {
+    border-color: #979BA5;
+  }
+}
 </style>
 
 <style lang="less" scoped>
@@ -171,21 +181,35 @@ const handleInput = () => {
     font-size: 16px;
     color: #ea3636;
   }
-}
 
-input::placeholder {
-  color: #c4c6cc;
-}
+  input::placeholder {
+    color: #c4c6cc;
+  }
 
-.select-text {
-  width: 100%;
-  height: 32px;
-  line-height: 32px;
-  color: #63656e;
-  border: 1px solid #c4c6cc;
-  border-radius: 2px;
-  outline: none;
-  resize: none;
+  .iti--separate-dial-code {
+    &:hover .select-text {
+      border-color: #979BA5;
+    }
+
+    .select-text {
+      width: 100%;
+      height: 32px;
+      line-height: 32px;
+      color: #63656e;
+      border: 1px solid #c4c6cc;
+      border-radius: 2px;
+      outline: none;
+      resize: none;
+
+      &:hover {
+        border-color: #979BA5;
+      }
+
+      &:focus {
+        border-color: #3a84ff;
+      }
+    }
+  }
 }
 
 .error-text {
@@ -198,5 +222,11 @@ input::placeholder {
 
 .input-error {
   border: 1px solid #ea3636 !important;
+}
+
+.input-disabled {
+  .select-text {
+    cursor: no-drop;
+  }
 }
 </style>

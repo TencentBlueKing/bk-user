@@ -301,6 +301,7 @@ const fieldItemFn = (row: any) => {
             : (
               column.field === 'phone'
                 ? <PhoneInput
+                    id="phone-id"
                     form-data={formData.managers[index]}
                     disabled={props.type === 'edit'} />
                 : <bk-input v-model={formData.managers[index][column.field]} disabled={column.field !== 'username'} />
@@ -308,6 +309,7 @@ const fieldItemFn = (row: any) => {
           : (
             column.field === 'phone'
               ? <PhoneInput
+                  id="phone-id"
                   form-data={formData.managers[index]}
                   telError={formData.managers[index].error}
                   disabled={props.type === 'edit'}
