@@ -192,6 +192,7 @@ const fieldItemFn = (row: any) => {
         ) : (
           column.field === 'phone'
             ? <PhoneInput
+                id="phone-id"
                 form-data={formData.managers[index]}
                 disabled />
             : <bk-input
@@ -202,6 +203,7 @@ const fieldItemFn = (row: any) => {
       ) : (
         column.field === 'phone'
           ? <PhoneInput
+              id="phone-id"
               form-data={formData.managers[index]}
               telError={formData.managers[index].error}
               disabled={data.id}
