@@ -11,9 +11,11 @@ specific language governing permissions and limitations under the License.
 import json
 import logging
 
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from pydantic import ValidationError
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.data_source.tasks import initialize_identity_info_and_send_notification
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 @receiver(post_sync_data_source)
 def sync_identity_infos_and_notify(sender, data_source: DataSource, **kwargs):
     """在完成数据源同步后，需要对本地数据源的用户账密信息做初始化"""
-    initialize_identity_info_and_send_notification.delay(data_source.id)
+    transaction.on_commit(lambda: initialize_identity_info_and_send_notification.delay(data_source.id))
 
 
 @receiver(post_sync_data_source)
@@ -53,7 +55,12 @@ def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
         PeriodicTask.objects.filter(name=periodic_task_name).delete()
         return
 
-    cfg = DataSourceSyncConfig(**data_source.sync_config)
+    try:
+        cfg = DataSourceSyncConfig(**data_source.sync_config)
+    except ValidationError:
+        logger.exception("data source %s sync_config invalid, skip set sync periodic task", data_source.id)
+        return
+
     interval_schedule, _ = IntervalSchedule.objects.get_or_create(
         every=cfg.sync_period,
         period=IntervalSchedule.MINUTES,
