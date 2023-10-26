@@ -469,6 +469,7 @@ const confirmImportUsers = async () => {
     const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.dataSourceId}/operations/import/`;
     const res = await axios.post(url, {
       overwrite: uploadInfo.overwrite,
+      incremental: uploadInfo.incremental,
       file: formData.get('file'),
     }, config);
     const theme = res.data.data.status === 'success' ? 'success' : 'error';
@@ -487,6 +488,7 @@ const closed = () => {
   importDialog.isShow = false;
   uploadInfo.file = {};
   uploadInfo.overwrite = false;
+  uploadInfo.incremental = true;
 };
 </script>
 
