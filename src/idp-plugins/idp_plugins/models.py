@@ -12,7 +12,7 @@ import re
 
 from pydantic import BaseModel, field_validator
 
-from .constants import ALLOWED_HTTP_METHODS, ACTION_REGEX
+from .constants import ACTION_REGEX, ALLOWED_HTTP_METHODS
 
 
 class DispatchConfigItem(BaseModel):
@@ -32,8 +32,8 @@ class DispatchConfigItem(BaseModel):
     def validate_action(cls, v: str) -> str:
         if not re.fullmatch(ACTION_REGEX, v):
             raise ValueError(
-                f"action should 3-32 characters including letters, numbers, underscores (_), and hyphens (-), "
-                f"and must start with a letter or number"
+                "action should 3-32 characters including letters, numbers, underscores (_), and hyphens (-), "
+                "and must start with a letter or number"
             )
 
         return v

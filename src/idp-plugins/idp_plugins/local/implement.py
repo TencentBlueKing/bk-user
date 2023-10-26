@@ -8,18 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from django.utils.translation import gettext_lazy as _
 from django.http import HttpRequest
+from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
-
+from .db_models import LocalDataSourceIdentityInfo
+from .exceptions import NotEnabledPasswordLoginError, UserCredentialIncorrectError, UserCredentialRequiredError
 from ..base import BaseCredentialIdpPlugin
 from ..models import TestConnectionResult
 from ..tools import parse_request_body_json
-from .db_models import LocalDataSourceIdentityInfo
-from .exceptions import UserCredentialRequiredError, NotEnabledPasswordLoginError, UserCredentialIncorrectError
 
 
 class LocalIdpPluginConfig(BaseModel):

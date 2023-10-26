@@ -9,14 +9,14 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from typing import Dict, Any, List, Type
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Type
 
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from pydantic import BaseModel
 
+from .constants import CUSTOM_PLUGIN_ID_PREFIX, BuiltinIdpPluginIDs, PluginTypeEnum
 from .models import DispatchConfigItem, TestConnectionResult
-from .constants import PluginTypeEnum, BuiltinIdpPluginIDs, CUSTOM_PLUGIN_ID_PREFIX
 
 logger = logging.getLogger(__name__)
 

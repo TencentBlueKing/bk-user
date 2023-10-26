@@ -33,6 +33,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
 
     plugin_config = DefaultPluginConfigProvider().get(DataSourcePluginEnum.LOCAL)
     assert plugin_config is not None
+
     DataSource.objects.get_or_create(
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,

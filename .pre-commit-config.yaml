@@ -97,3 +97,23 @@ repos:
         require_serial: true
         language: system
         entry: bash -c "cd src/bk-login && lint-imports"
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        language: python
+        types: [python]
+        entry: black --config=src/idp-plugins/pyproject.toml
+        files: src/idp-plugins/
+      - id: ruff
+        name: ruff
+        language: python
+        types: [python]
+        entry: ruff --config=src/idp-plugins/pyproject.toml --force-exclude --fix
+        files: src/bk-login/
+      - id: mypy
+        name: mypy
+        language: python
+        types: [python]
+        entry: mypy --config-file=src/idp-plugins/pyproject.toml
+        files: src/idp-plugins/
