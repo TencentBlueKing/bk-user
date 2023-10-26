@@ -56,6 +56,12 @@ class ErrorCodes:
         status_code=HTTPStatus.NOT_FOUND,
     )
     VALIDATION_ERROR = ErrorCode(_("参数校验不通过"))
+    UNEXPECTED_DATA_ERROR = ErrorCode(_("非预期数据"))
+    PLUGIN_SYSTEM_ERROR = ErrorCode(
+        _("插件执行异常"),
+        code_category=ErrorCodeCategoryEnum.INTERNAL,
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
     SYSTEM_ERROR = ErrorCode(
         _("系统异常"),
         code_category=ErrorCodeCategoryEnum.INTERNAL,

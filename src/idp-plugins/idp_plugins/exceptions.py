@@ -20,3 +20,11 @@ class ParseRequestBodyError(IdpPluginBaseError):
 
 class RequestAPIError(IdpPluginBaseError):
     """请求第三方接口失败"""
+
+
+class InvalidParamError(IdpPluginBaseError):
+    """参数非合法"""
+
+
+class UnexpectedDataError(IdpPluginBaseError):
+    """数据非预期"""

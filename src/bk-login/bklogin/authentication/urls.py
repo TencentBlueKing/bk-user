@@ -40,6 +40,7 @@ urlpatterns = [
 
 # OpenAPI
 urlpatterns += [
+    # FIXME: 临时兼容，OpenAPI后面接入APIGateway, 还要考虑兼容原有通过ESB和直接调用的
     path("api/v1/is_login/", api_views.CheckTokenApi.as_view()),
     path("api/v1/get_user/", api_views.GetUserApi.as_view()),
 ]

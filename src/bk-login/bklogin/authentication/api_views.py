@@ -16,7 +16,7 @@ from bklogin.bkuser.models import TenantUser
 from bklogin.common.error_codes import error_codes
 from bklogin.common.response import APISuccessResponse
 
-from .helper import BkTokenManager
+from .manager import BkTokenManager
 
 
 class CheckTokenApi(View):

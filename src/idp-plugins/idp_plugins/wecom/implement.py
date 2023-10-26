@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from .client import WeComAPIClient
-from .exceptions import InvalidParamError
+from ..exceptions import InvalidParamError
 from .settings import WECOM_OAUTH_URL
 from ..base import BaseFederationIdpPlugin
 from ..models import TestConnectionResult

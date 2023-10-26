@@ -14,9 +14,8 @@ from urllib.parse import urljoin
 
 from django.utils.translation import gettext_lazy as _
 
-from .exceptions import NotCorpMemberError
 from .settings import WECOM_API_BASE_URL
-from ..exceptions import RequestAPIError
+from ..exceptions import RequestAPIError, UnexpectedDataError
 from ..http import http_get
 
 logger = logging.getLogger(__name__)
@@ -97,4 +96,4 @@ class WeComAPIClient:
         if userid:
             return userid
 
-        raise NotCorpMemberError(_("非企业成员，登录认证失败"))
+        raise UnexpectedDataError(_("非企业成员，登录认证失败"))

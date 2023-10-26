@@ -8,9 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
+import logging
+from typing import Any, Callable, Dict, List
 from urllib.parse import quote_plus, urljoin
 
+import pydantic
 from django.conf import settings
 from django.http import HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render
@@ -28,9 +30,10 @@ from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
 from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum
+from bklogin.idp_plugins.exceptions import InvalidParamError, ParseRequestBodyError, UnexpectedDataError
 
 from .constants import ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
-from .helper import BkTokenManager
+from .manager import BkTokenManager
 
 
 # 确保无论何时，响应必然有CSRFToken Cookie
@@ -175,6 +178,14 @@ class TenantIdpListApi(View):
         return APISuccessResponse(data=data)
 
 
+class PluginErrorContext(pydantic.BaseModel):
+    """插件异常上下文，用于打印日志时所需的上下文信息"""
+
+    idp: Idp
+    action: str
+    http_method: str
+
+
 # 先对所有请求豁免CSRF校验，由dispatch里根据需要手动执行CSRF校验
 @method_decorator(csrf_exempt, name="dispatch")
 class IdpPluginDispatchView(View):
@@ -200,8 +211,8 @@ class IdpPluginDispatchView(View):
         #  (1) 获取插件
         try:
             plugin_cls = get_plugin_cls(idp.plugin_id)
-        except Exception as error:
-            raise error_codes.SYSTEM_ERROR.f(
+        except NotImplementedError as error:
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
                 _("认证源[{}]获取插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
             )
 
@@ -209,8 +220,15 @@ class IdpPluginDispatchView(View):
         try:
             plugin_cfg = plugin_cls.config_class(**idp.plugin_config)
             plugin = plugin_cls(cfg=plugin_cfg)
+        except pydantic.ValidationError:
+            logging.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
+            # Note: 不可将error对外，因为配置信息比较敏感
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源[{}]初始化插件配置[{}]失败").format(idp.name, idp.plugin.name),
+            )
         except Exception as error:
-            raise error_codes.SYSTEM_ERROR.f(
+            logging.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
                 _("认证源[{}]加载插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
             )
 
@@ -226,6 +244,28 @@ class IdpPluginDispatchView(View):
 
         return HttpResponseNotFound()
 
+    def wrap_plugin_error(self, context: PluginErrorContext, func: Callable, *func_args, **func_kwargs):
+        """统一捕获插件异常"""
+        try:
+            return func(*func_args, **func_kwargs)
+        except ParseRequestBodyError as e:
+            raise error_codes.INVALID_ARGUMENT.f(str(e))
+        except InvalidParamError as e:
+            raise error_codes.VALIDATION_ERROR.f(str(e))
+        except UnexpectedDataError as e:
+            raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e))
+        except Exception:
+            logging.exception(
+                "idp(%s) request failed, when dispatch (%s, %s) to credential idp plugin(%s)",
+                context.idp.id,
+                context.action,
+                context.http_method,
+                context.idp.plugin.id,
+            )
+            raise error_codes.PLUGIN_SYSTEM_ERROR.f(
+                _("认证源[{}]执行插件[{}]失败, {}").format(context.idp.name, context.idp.plugin.name),
+            )
+
     def _dispatch_credential_idp_plugin(
         self, plugin: BaseCredentialIdpPlugin, request, sign_in_tenant_id: str, idp: Idp, action: str, http_method: str
     ):
@@ -233,14 +273,11 @@ class IdpPluginDispatchView(View):
         身份凭证类的插件执行请求分配
         """
         dispatch_cfs = (action, http_method)
+        plugin_error_context = PluginErrorContext(idp=idp, action=action, http_method=http_method)
         # 对凭证进行认证
         if dispatch_cfs == (BuiltinActionEnum.AUTHENTICATE, AllowedHttpMethodEnum.POST):
             # 认证
-            try:
-                user_infos = plugin.authenticate_credentials(request)
-            except ValueError as error:
-                # FIXME: 应该定义插件类的异常，某些异常是参数错误，某些异常是系统问题, 下同
-                raise error_codes.VALIDATION_ERROR.f(str(error))
+            user_infos = self.wrap_plugin_error(plugin_error_context, plugin.authenticate_credentials, request=request)
 
             # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
             tenant_user_ids = self._auth_backend(request, sign_in_tenant_id, idp, user_infos)
@@ -249,7 +286,9 @@ class IdpPluginDispatchView(View):
             # 身份凭证认证直接返回成功即可，由前端重定向路由到用户列表选择页面
             return APISuccessResponse()
 
-        return plugin.dispatch_extension(action, http_method, request)
+        return self.wrap_plugin_error(
+            plugin_error_context, plugin.dispatch_extension, action=action, http_method=http_method, request=request
+        )
 
     def _dispatch_federation_idp_plugin(
         self, plugin: BaseFederationIdpPlugin, request, sign_in_tenant_id: str, idp: Idp, action: str, http_method: str
@@ -258,13 +297,13 @@ class IdpPluginDispatchView(View):
         联邦认证类的插件执行请求分配
         """
         dispatch_cfs = (action, http_method)
+        plugin_error_context = PluginErrorContext(idp=idp, action=action, http_method=http_method)
         # 跳转到第三方登录
         if dispatch_cfs == (BuiltinActionEnum.LOGIN, AllowedHttpMethodEnum.GET):
-            try:
-                callback_uri = self._get_complete_action_url(idp.id, BuiltinActionEnum.CALLBACK)
-                redirect_uri = plugin.build_login_uri(request, callback_uri)
-            except ValueError as error:
-                raise error_codes.VALIDATION_ERROR.f(str(error))
+            callback_uri = self._get_complete_action_url(idp.id, BuiltinActionEnum.CALLBACK)
+            redirect_uri = self.wrap_plugin_error(
+                plugin_error_context, plugin.build_login_uri, request=request, callback_uri=callback_uri
+            )
 
             return HttpResponseRedirect(redirect_uri)
 
@@ -276,10 +315,7 @@ class IdpPluginDispatchView(View):
             (BuiltinActionEnum.CALLBACK, AllowedHttpMethodEnum.POST),
         ]:
             # 认证
-            try:
-                user_info = plugin.handle_callback(request)
-            except ValueError as error:
-                raise error_codes.VALIDATION_ERROR.f(str(error))
+            user_info = self.wrap_plugin_error(plugin_error_context, plugin.handle_callback, request=request)
 
             # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
             tenant_user_ids = self._auth_backend(request, sign_in_tenant_id, idp, user_info)
@@ -288,7 +324,9 @@ class IdpPluginDispatchView(View):
             # 联邦认证则重定向到前端选择账号页面
             return HttpResponseRedirect(redirect_to="pages/users")
 
-        return plugin.dispatch_extension(action, http_method, request)
+        return self.wrap_plugin_error(
+            plugin_error_context, plugin.dispatch_extension, action=action, http_method=http_method, request=request
+        )
 
     def _get_complete_action_url(self, idp_id: str, action: str) -> str:
         """获取完整"""
