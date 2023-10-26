@@ -320,6 +320,7 @@ class DataSourceUserSyncer:
             ):
                 continue
 
+            # TODO (su) 评估 username 更新策略 https://github.com/TencentBlueKing/bk-user/issues/1325
             u.username = target_user.username
             u.full_name = target_user.full_name
             u.email = target_user.email
