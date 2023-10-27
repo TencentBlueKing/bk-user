@@ -85,7 +85,7 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     default = serializers.JSONField(help_text="默认值", required=False)
-    options = serializers.JSONField(help_text="选项", required=False)
+    options = serializers.JSONField(help_text="选项", required=False, default=list)
 
     def validate_display_name(self, display_name):
         if TenantUserCustomField.objects.filter(
@@ -131,8 +131,8 @@ class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
 class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称", max_length=128)
     required = serializers.BooleanField(help_text="是否必填")
-    default = serializers.JSONField(help_text="默认值")
-    options = serializers.JSONField(help_text="选项")
+    default = serializers.JSONField(help_text="默认值", required=False)
+    options = serializers.JSONField(help_text="选项", required=False, default=list)
 
     def validate_display_name(self, display_name):
         if (
