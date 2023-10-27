@@ -153,12 +153,20 @@
                           <bk-radio-button :label="true">基础数据源</bk-radio-button>
                           <bk-radio-button :label="false">自定义</bk-radio-button>
                         </bk-radio-group>
-                        <bk-input
+                        <bk-form-item
                           v-if="currentUserInfo.is_inherited_phone"
-                          v-model="currentUserInfo.phone"
-                          :disabled="currentUserInfo.is_inherited_phone" />
-                        <bk-form-item v-else class="phone-input" property="custom_phone">
-                          <bk-input v-model="currentUserInfo.custom_phone" />
+                          class="phone-input">
+                          <phoneInput
+                            :form-data="currentUserInfo"
+                            :disabled="currentUserInfo.is_inherited_phone" />
+                        </bk-form-item>
+                        <bk-form-item v-else class="phone-input">
+                          <phoneInput
+                            :form-data="currentUserInfo"
+                            :tel-error="telError"
+                            :custom="true"
+                            @changeCountryCode="changeCountryCode"
+                            @changeTelError="changeTelError" />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changePhone">
                           确定
@@ -208,6 +216,7 @@
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 
+import phoneInput from '@/components/phoneInput.vue';
 import useValidate from '@/hooks/use-validate';
 import {
   getCurrentNaturalUser,
@@ -231,7 +240,6 @@ const isInheritedEmail = ref(true);
 const isInheritedPhone = ref(true);
 const rules = {
   custom_email: [validate.required, validate.email],
-  custom_phone: [validate.required, validate.phone],
 };
 
 onMounted(() => {
@@ -331,7 +339,7 @@ const changePhone = () => {
     id: currentUserInfo.value.id,
     is_inherited_phone: currentUserInfo.value.is_inherited_phone,
     custom_phone: currentUserInfo.value.custom_phone,
-    custom_phone_country_code: '86',
+    custom_phone_country_code: currentUserInfo.value.custom_phone_country_code,
   }).then(() => {
     isEditPhone.value = false;
   });
@@ -340,6 +348,8 @@ const changePhone = () => {
 const cancelEditPhone = () => {
   currentUserInfo.value.is_inherited_phone = isInheritedPhone.value;
   isEditPhone.value = false;
+  telError.value = false;
+  window.changeInput = false;
 };
 // 切换关联账号
 const handleClickItem = async (item) => {
@@ -351,6 +361,16 @@ const handleClickItem = async (item) => {
     return Promise.resolve(enableLeave);
   }
   getCurrentUser(item.id);
+};
+
+const telError = ref(false);
+
+const changeTelError = (value: boolean) => {
+  telError.value = value;
+};
+
+const changeCountryCode = (code: string) => {
+  currentUserInfo.value.custom_phone_country_code = code;
 };
 </script>
 
