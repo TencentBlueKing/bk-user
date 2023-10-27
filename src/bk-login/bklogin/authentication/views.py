@@ -249,11 +249,11 @@ class IdpPluginDispatchView(View):
         try:
             return func(*func_args, **func_kwargs)
         except ParseRequestBodyError as e:
-            raise error_codes.INVALID_ARGUMENT.f(str(e))
+            raise error_codes.INVALID_ARGUMENT.f(str(e), replace=True)
         except InvalidParamError as e:
-            raise error_codes.VALIDATION_ERROR.f(str(e))
+            raise error_codes.VALIDATION_ERROR.f(str(e), replace=True)
         except UnexpectedDataError as e:
-            raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e))
+            raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e), replace=True)
         except Exception:
             logging.exception(
                 "idp(%s) request failed, when dispatch (%s, %s) to credential idp plugin(%s)",
