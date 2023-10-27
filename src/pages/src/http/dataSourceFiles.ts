@@ -98,4 +98,4 @@ export const postOperationsSync = (id: string) => http.post(`/api/v1/web/data-so
 /**
  * 生成数据源用户随机密码
  */
-export const randomPasswords = (params: any) => http.post('/api/v1/web/data-sources/random-passwords/', params);
+export const randomPasswords = () => http.post('/api/v1/web/data-sources/random-passwords/');

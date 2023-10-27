@@ -422,7 +422,7 @@ const customRequest = (data) => {
 };
 
 const exceed = () => {
-  Message({ theme: 'error', message: '最多上传1个文件' });
+  Message({ theme: 'error', message: '最多上传1个文件，如需更新，请先删除已上传文件' });
 };
 
 const getSize = (value) => {
