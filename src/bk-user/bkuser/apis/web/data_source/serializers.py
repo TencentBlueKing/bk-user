@@ -189,6 +189,10 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
 
     def validate_name(self, name: str) -> str:
+        # 自己目前在用的名字是可以的，不然每次更新都要修改名字
+        if name == self.context["current_name"]:
+            return name
+
         if DataSource.objects.filter(name=name).exists():
             raise ValidationError(_("同名数据源已存在"))
 

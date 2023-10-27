@@ -21,6 +21,7 @@
   "dependencies": {
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
+    "acorn": "8.10.0",
     "art-template": "^4.13.2",
     "axios": "^1.4.0",
     "bkui-vue": "0.0.2-beta.46",

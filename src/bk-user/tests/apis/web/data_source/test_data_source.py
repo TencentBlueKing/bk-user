@@ -324,6 +324,13 @@ class TestDataSourceUpdateApi:
         assert resp.data["name"] == new_data_source_name
         assert resp.data["plugin_config"]["enable_account_password_login"] is False
 
+    def test_update_without_change_name(self, api_client, data_source, local_ds_plugin_cfg):
+        resp = api_client.put(
+            reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
+            data={"name": data_source.name, "plugin_config": local_ds_plugin_cfg},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
         local_ds_plugin_cfg.pop("enable_account_password_login")
         resp = api_client.put(

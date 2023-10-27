@@ -1,27 +1,48 @@
 <template>
-  <div class="input-text">
+  <div :class="['input-text', { 'input-disabled': disabled }]">
     <input
       type="text"
       ref="telRef"
       :class="['select-text', { 'input-error': telError }]"
       v-model="data.phone"
       placeholder="请输入"
+      :disabled="disabled"
       @blur="verifyInput"
       @focus="hiddenVerify"
+      @input="handleInput"
     />
-    <p class="error-text" v-show="telError && data.phone">
-      请填写正确的手机号
-    </p>
-    <p class="error-text" v-show="telError && !data.phone">
-      必填项
-    </p>
+    <template v-if="tooltips">
+      <bk-popover
+        v-if="telError && data.phone"
+        content="请填写正确的手机号"
+        placement="top"
+      >
+        <ExclamationCircleShape class="error-icon" />
+      </bk-popover>
+      <bk-popover
+        v-if="telError && !data.phone"
+        content="必填项"
+        placement="top"
+      >
+        <ExclamationCircleShape class="error-icon" />
+      </bk-popover>
+    </template>
+    <template v-else>
+      <p class="error-text" v-show="telError && data.phone">
+        请填写正确的手机号
+      </p>
+      <p class="error-text" v-show="telError && !data.phone">
+        必填项
+      </p>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
 import intlTelInput from 'intl-tel-input/build/js/intlTelInput.min';
 import telUtils from 'intl-tel-input/build/js/utils';
-import { defineProps, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, defineProps, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { COUNTRY_CODE } from '@/utils';
 
@@ -34,19 +55,40 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  custom: {
+    type: Boolean,
+    default: false,
+  },
+  tooltips: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['changeCountryCode', 'changeTelError']);
 
-const data = ref(props.formData);
+const data = computed(() => {
+  if (props.custom) {
+    return {
+      phone: props.formData.custom_phone,
+      phone_country_code: props.formData.custom_phone_country_code,
+    };
+  }
+  return props.formData;
+});
+
 const telRef = ref();
 const area = ref('cn');
 const iti = ref(null);
 
 onMounted(async () => {
-  if (props.formData?.phone_country_code) {
+  if (data.value.phone_country_code) {
     COUNTRY_CODE.forEach((item) => {
-      if (item.tel === props.formData.phone_country_code) {
+      if (item.tel === data.value.phone_country_code) {
         area.value = item.short.toLowerCase();;
       }
     });
@@ -106,36 +148,72 @@ const verifyInput = () => {
 };
 
 const hiddenVerify = () => {
-  emit('changeTelError', false);
   window.changeInput = true;
+};
+
+const handleInput = () => {
+  emit('changeTelError', false);
 };
 </script>
 
 <style lang="less">
 @import url("@/css/intlTelInput.less");
+
+.input-disabled .iti--separate-dial-code {
+  .iti__selected-flag {
+    cursor: no-drop;
+  }
+
+  &:hover .select-text {
+    border-color: #979BA5;
+  }
+}
 </style>
 
 <style lang="less" scoped>
 .input-text {
   position: relative;
-}
 
-input::placeholder {
-  color: #c4c6cc;
-}
+  .error-icon {
+    position: absolute;
+    top: 12px;
+    right: 8px;
+    font-size: 16px;
+    color: #ea3636;
+  }
 
-.select-text {
-  width: 100%;
-  height: 32px;
-  line-height: 32px;
-  color: #63656e;
-  border: 1px solid #c4c6cc;
-  border-radius: 2px;
-  outline: none;
-  resize: none;
+  input::placeholder {
+    color: #c4c6cc;
+  }
+
+  .iti--separate-dial-code {
+    &:hover .select-text {
+      border-color: #979BA5;
+    }
+
+    .select-text {
+      width: 100%;
+      height: 32px;
+      line-height: 32px;
+      color: #63656e;
+      border: 1px solid #c4c6cc;
+      border-radius: 2px;
+      outline: none;
+      resize: none;
+
+      &:hover {
+        border-color: #979BA5;
+      }
+
+      &:focus {
+        border-color: #3a84ff;
+      }
+    }
+  }
 }
 
 .error-text {
+  position: absolute;
   margin: 2px 0 0;
   font-size: 12px;
   line-height: 18px;
@@ -143,6 +221,12 @@ input::placeholder {
 }
 
 .input-error {
-  border: 1px solid #ff5656;
+  border: 1px solid #ea3636 !important;
+}
+
+.input-disabled {
+  .select-text {
+    cursor: no-drop;
+  }
 }
 </style>

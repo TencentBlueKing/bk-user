@@ -111,24 +111,23 @@
     <bk-dialog
       :is-show="importDialog.isShow"
       :title="importDialog.title"
-      :theme="'primary'"
       :quick-close="false"
       :width="640"
       :is-loading="importDialog.loading"
       @closed="closed"
-      @confirm="confirmImportUsers"
     >
-      <bk-alert
-        class="mb-[10px]"
-        v-if="uploadInfo.overwrite"
-        theme="error"
-        title="勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。"
-      />
       <div class="import-dialog-header">
+        <div class="mb-[24px]">
+          <span>更新方式</span>
+          <bk-radio-group
+            v-model="uploadInfo.incremental"
+            type="card"
+          >
+            <bk-radio-button :label="true">增量更新</bk-radio-button>
+            <bk-radio-button :label="false">全量更新</bk-radio-button>
+          </bk-radio-group>
+        </div>
         <span>上传用户信息</span>
-        <bk-checkbox v-model="uploadInfo.overwrite">
-          允许对同名用户覆盖更新
-        </bk-checkbox>
       </div>
       <bk-upload
         ref="uploadRef"
@@ -169,6 +168,37 @@
           </div>
         </template>
       </bk-upload>
+      <template #footer>
+        <div class="footer-wrapper">
+          <div>
+            <bk-checkbox v-model="uploadInfo.overwrite">
+              允许对同名用户覆盖更新
+            </bk-checkbox>
+            <bk-popover
+              ext-cls="popover-wrapper"
+              content="勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。"
+              placement="top"
+              theme="light"
+              width="280"
+            >
+              <InfoLine class="info" />
+            </bk-popover>
+          </div>
+          <div>
+            <bk-button
+              theme="primary"
+              class="w-[64px] mr-[8px]"
+              @click="confirmImportUsers">
+              确定
+            </bk-button>
+            <bk-button
+              class="w-[64px]"
+              @click="closed">
+              取消
+            </bk-button>
+          </div>
+        </div>
+      </template>
     </bk-dialog>
   </bk-loading>
 </template>
@@ -176,6 +206,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { Message } from 'bkui-vue';
+import { InfoLine } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
 import { computed, defineProps, inject, onMounted, reactive, ref, watch } from 'vue';
 
@@ -371,6 +402,7 @@ const importDialog = reactive({
 const uploadInfo = reactive({
   file: {},
   overwrite: false,
+  incremental: true,
 });
 
 const uploadRef = ref();
@@ -437,6 +469,7 @@ const confirmImportUsers = async () => {
     const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.dataSourceId}/operations/import/`;
     const res = await axios.post(url, {
       overwrite: uploadInfo.overwrite,
+      incremental: uploadInfo.incremental,
       file: formData.get('file'),
     }, config);
     const theme = res.data.data.status === 'success' ? 'success' : 'error';
@@ -455,8 +488,15 @@ const closed = () => {
   importDialog.isShow = false;
   uploadInfo.file = {};
   uploadInfo.overwrite = false;
+  uploadInfo.incremental = true;
 };
 </script>
+
+<style lang="less">
+.popover-wrapper {
+  color: #63656E !important;
+}
+</style>
 
 <style lang="less" scoped>
 .user-info-wrapper {
@@ -533,13 +573,6 @@ const closed = () => {
   }
 }
 
-.import-dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-}
-
 ::v-deep .bk-modal-content {
   &::-webkit-scrollbar {
     width: 4px;
@@ -604,6 +637,19 @@ const closed = () => {
       font-size: 16px;
       cursor: pointer;
     }
+  }
+}
+
+.footer-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .info {
+    margin-left: 5px;
+    font-size: 14px;
+    color: #63656E;
+    cursor: pointer;
   }
 }
 </style>

@@ -77,19 +77,16 @@ def fetch_all_data(
             resp = session.get(url, headers=headers, params=params, timeout=timeout)
             if not resp.ok:
                 raise RequestApiError(
-                    _("请求数据源 API {} 参数 {} 异常，状态码：{} 响应内容 {}").format(
-                        url,
-                        params,
-                        resp.status_code,
-                        resp.content,
-                    )
+                    _("请求数据源 API {} 参数 {} 异常，状态码 {} 响应内容 {}").format(
+                        url, params, resp.status_code, resp.content
+                    )  # noqa: E501
                 )
 
             try:
                 resp_data = resp.json()
             except JSONDecodeError:  # noqa: PERF203
                 raise RespDataFormatError(
-                    _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容").format(url, params, resp.content)
+                    _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(url, params, resp.content)
                 )  # noqa: E501
 
             total_cnt = resp_data.get("count", 0)
@@ -129,12 +126,16 @@ def fetch_first_item(url: str, headers: Dict[str, str], timeout: int) -> Dict[st
     params = {"page": DEFAULT_PAGE, "page_size": PAGE_SIZE_FOR_FETCH_FIRST}
     resp = requests.get(url, headers=headers, params=params, timeout=timeout)
     if not resp.ok:
-        raise RequestApiError(_("请求数据源 API {} 异常：{}").format(url, resp.content))
+        raise RequestApiError(
+            _("请求数据源 API {} 参数 {} 异常，状态码 {} 响应内容 {}").format(url, params, resp.status_code, resp.content)  # noqa: E501
+        )
 
     try:
         resp_data = resp.json()
-    except JSONDecodeError:
-        raise RespDataFormatError(_("数据源 API {} 返回非 Json 格式").format(url))
+    except JSONDecodeError:  # noqa: PERF203
+        raise RespDataFormatError(
+            _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(url, params, resp.content)
+        )  # noqa: E501
 
     results = resp_data.get("results", [])
     if not results:

@@ -38,6 +38,7 @@ class DataSourceSyncManager:
             operator=self.sync_options.operator,
             start_at=timezone.now(),
             extras={
+                "incremental": self.sync_options.incremental,
                 "overwrite": self.sync_options.overwrite,
                 "async_run": self.sync_options.async_run,
             },

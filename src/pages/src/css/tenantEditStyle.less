@@ -45,10 +45,14 @@
 
       .operation-content-table {
         margin-top: 16px;
+        overflow: initial;
 
         :deep(.bk-table-body) {
+          overflow: initial;
+
           .cell {
             padding: 0 !important;
+            overflow: initial !important;
 
             .bk-form-item {
               margin-bottom: 0;
@@ -58,12 +62,53 @@
 
                 .bk-input {
                   height: 42px;
-                  border-color: transparent;
+                  border: 1px solid transparent;
+
+                  &:hover {
+                    border-color: #979BA5;
+                  }
                 }
 
-                .bk-input:hover:not(.is-disabled) {
+                .is-focused:not(.is-disabled) {
                   border-color: #3a84ff;
                 }
+
+                .bk-form-error-tips {
+                  top: 12px;
+                  z-index: 1;
+                }
+          
+                .iti__country-list {
+                  width: 325px;
+                  overflow-x: hidden;
+                }
+
+                #phone-id {
+                  .iti--separate-dial-code {
+                    &:hover .select-text {
+                      border-color: #979BA5;
+                    }
+
+                    .select-text {
+                      height: 42px;
+                      border: 1px solid transparent;
+
+                      &:hover {
+                        border-color: #979BA5;
+                      }
+
+                      &:focus {
+                        border-color: #3a84ff;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            .is-error {
+              .bk-input, .bk-select-tag {
+                border-color: #ea3636 !important;
               }
             }
 

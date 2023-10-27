@@ -182,6 +182,7 @@ class DataSourceRetrieveUpdateApi(
             context={
                 "plugin_id": data_source.plugin_id,
                 "tenant_id": self.get_current_tenant_id(),
+                "current_name": data_source.name,
             },
         )
         slz.is_valid(raise_exception=True)
