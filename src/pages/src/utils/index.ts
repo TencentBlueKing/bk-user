@@ -2,6 +2,7 @@ import { Message } from 'bkui-vue';
 import moment from 'moment';
 
 import abnormalImg from '@/images/abnormal.svg';
+import loadingImg from '@/images/loading.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
 import warningImg from '@/images/warning.svg';
@@ -249,3 +250,27 @@ export const SYNC_CONFIG_LIST = [
     label: '从不',
   },
 ];
+
+// 数据更新记录状态
+export const dataRecordStatus = {
+  pending: {
+    icon: loadingImg,
+    text: '待执行',
+    theme: 'warning',
+  },
+  running: {
+    icon: loadingImg,
+    text: '同步中',
+    theme: 'warning',
+  },
+  success: {
+    icon: normalImg,
+    text: '成功',
+    theme: 'success',
+  },
+  failed: {
+    icon: abnormalImg,
+    text: '失败',
+    theme: 'danger',
+  },
+};

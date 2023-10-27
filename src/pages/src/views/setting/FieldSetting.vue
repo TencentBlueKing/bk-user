@@ -9,7 +9,6 @@
         class="field-setting-table"
         :data="tableData"
         :border="['outer']"
-        :settings="tableSetting"
         :max-height="tableMaxHeight"
         show-overflow-tooltip>
         <template #empty>
@@ -83,7 +82,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import InfoBox from 'bkui-vue/lib/info-box';
-import { inject, onMounted, reactive, ref, shallowRef } from 'vue';
+import { inject, onMounted, reactive, ref } from 'vue';
 
 import FieldsAdd from './FieldsAdd.vue';
 
@@ -109,35 +108,6 @@ const fieldData = reactive({
 const rootRef = ref();
 const isLoading = ref(false);
 const tableData = ref([]);
-const tableSetting = shallowRef({
-  fields: [
-    {
-      label: '字段名称',
-      field: 'display_name',
-      disabled: true,
-    },
-    {
-      label: '英文标识',
-      field: 'name',
-      disabled: true,
-    },
-    {
-      label: '字段类型',
-      field: 'data_type',
-      disabled: true,
-    },
-    {
-      label: '是否必填',
-      field: 'required',
-    },
-    {
-      label: '是否可编辑',
-      field: 'builtin',
-    },
-  ],
-  checked: ['display_name', 'name', 'data_type', 'required', 'builtin'],
-  size: 'small',
-});
 
 onMounted(() => {
   getFieldsList();
