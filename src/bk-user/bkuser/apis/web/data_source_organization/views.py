@@ -122,7 +122,7 @@ class DataSourceLeadersListApi(generics.ListAPIView):
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
-        queryset = DataSourceUser.objects.filter(data_source=data_source)
+        queryset = DataSourceUser.objects.filter(data_source=data_source).exclude(username=self.request.user.username)
         if keyword := data.get("keyword"):
             queryset = queryset.filter(Q(username__icontains=keyword) | Q(full_name__icontains=keyword))
 
