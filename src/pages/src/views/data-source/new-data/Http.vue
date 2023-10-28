@@ -9,7 +9,7 @@
       <div class="content-item">
         <p class="item-title">基础信息</p>
         <bk-form-item class="w-[560px]" label="数据源名称" property="name" required>
-          <bk-input v-model="serverConfigData.name" @focus="handleChange" />
+          <bk-input v-model="serverConfigData.name" @focus="handleFocus" @input="handleChange" />
         </bk-form-item>
       </div>
       <div class="content-item">
@@ -18,32 +18,38 @@
           <bk-input
             v-model="serverConfigData.server_config.server_base_url"
             placeholder="请输入服务地址，需以 https/http 开头，不得以 / 结尾"
-            @focus="handleChange" />
+            @focus="handleFocus"
+            @input="handleChange" />
         </bk-form-item>
-        <bk-form-item class="w-[560px]" label="用户数据API路径" property="server_config.user_api_path" required>
+        <bk-form-item class="w-[560px]" label="用户数据 API 路径" property="server_config.user_api_path" required>
           <bk-input
             v-model="serverConfigData.server_config.user_api_path"
             placeholder="请输入路径，需以 / 开头"
-            @focus="handleChange" />
+            @focus="handleFocus"
+            @input="handleChange" />
         </bk-form-item>
-        <bk-form-item class="w-[560px]" label="部门数据API路径" property="server_config.department_api_path" required>
+        <bk-form-item class="w-[560px]" label="部门数据 API 路径" property="server_config.department_api_path" required>
           <bk-input
             v-model="serverConfigData.server_config.department_api_path"
             placeholder="请输入路径，需以 / 开头"
-            @focus="handleChange" />
+            @focus="handleFocus"
+            @input="handleChange" />
         </bk-form-item>
-        <bk-form-item class="w-[560px]" label="分页请求每页数量" property="server_config.page_size" required>
-          <bk-select :clearable="false" v-model="serverConfigData.server_config.page_size">
-            <bk-option
-              v-for="item in pageSizeList"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
-            />
-          </bk-select>
-        </bk-form-item>
-        <div class="item-flex">
-          <bk-form-item label="请求超时时间" property="server_config.request_timeout" required>
+        <div class="item-flex3">
+          <bk-form-item label="分页请求每页数量" property="server_config.page_size" required>
+            <bk-select
+              :clearable="false"
+              v-model="serverConfigData.server_config.page_size"
+              @change="handleChange">
+              <bk-option
+                v-for="item in pageSizeList"
+                :key="item.value"
+                :value="item.value"
+                :label="item.label"
+              />
+            </bk-select>
+          </bk-form-item>
+          <bk-form-item class="ml-[24px]" label="请求超时时间" property="server_config.request_timeout" required>
             <bk-input
               type="number"
               suffix="秒"
@@ -53,7 +59,7 @@
               @change="handleChange"
             />
           </bk-form-item>
-          <bk-form-item label="重试次数" property="server_config.retries" required>
+          <bk-form-item class="ml-[24px]" label="重试次数" property="server_config.retries" required>
             <bk-input
               type="number"
               suffix="次"
@@ -85,20 +91,23 @@
           <bk-input
             type="password"
             v-model="serverConfigData.auth_config.bearer_token"
-            @focus="handleChange" />
+            @focus="handleFocus"
+            @input="handleChange" />
         </bk-form-item>
         <div v-else class="item-flex">
           <bk-form-item label="用户名" property="auth_config.username" required>
             <bk-input
               v-model="serverConfigData.auth_config.username"
-              @focus="handleChange"
+              @focus="handleFocus"
+              @input="handleChange"
             />
           </bk-form-item>
           <bk-form-item label="密码" property="auth_config.password" required>
             <bk-input
               type="password"
               v-model="serverConfigData.auth_config.password"
-              @focus="handleChange"
+              @focus="handleFocus"
+              @input="handleChange"
             />
           </bk-form-item>
         </div>
@@ -140,7 +149,11 @@
       <div class="content-item">
         <p class="item-title">同步配置</p>
         <bk-form-item label="同步周期" required>
-          <bk-select class="w-[560px]" :clearable="false" v-model="fieldSettingData.sync_config.sync_period">
+          <bk-select
+            class="w-[560px]"
+            :clearable="false"
+            v-model="fieldSettingData.sync_config.sync_period"
+            @change="handleChange">
             <bk-option
               v-for="item in SYNC_CONFIG_LIST"
               :key="item.value"
@@ -163,7 +176,7 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, inject, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
@@ -187,10 +200,11 @@ const route = useRoute();
 const currentId = computed(() => route.params.id);
 const isLoading = ref(false);
 const formRef1 = ref();
+const editLeaveBefore = inject('editLeaveBefore');
 
 const serverConfigData = reactive({
   name: '',
-  plugin_id: '',
+  plugin_id: 'general',
   // 服务配置
   server_config: {
     server_base_url: '',
@@ -295,40 +309,35 @@ const handleNext = async () => {
     isLoading.value = true;
     const res = await getFields();
     if (currentId.value) {
-      const processFields = (fields, isCustom = false) => {
-        fieldMappingList.value.forEach((item) => {
-          if (fields.name === item.target_field) {
-            Object.assign(fields, {
-              mapping_operation: item.mapping_operation,
-              source_field: item.source_field,
-              disabled: isCustom,
-              target_field: isCustom ? item.target_field : fields.name,
-            });
-
-            if (isCustom) {
-              fieldSettingData.field_mapping.custom_fields.push(fields);
-              fieldSettingData.addFieldList.push(item);
-            } else {
-              fieldSettingData.field_mapping.builtin_fields.push(fields);
-              apiFields.value.push({ key: fields.name, disabled: true });
-            }
+      const mapFields = (fields, item, isDisabled, fieldMappingType) => {
+        if (fields.name === item.target_field) {
+          Object.assign(fields, {
+            mapping_operation: item.mapping_operation,
+            source_field: item.source_field,
+            disabled: isDisabled,
+            target_field: fields.name,
+          });
+          fieldSettingData.field_mapping[fieldMappingType].push(fields);
+          apiFields.value.push({ key: fields.name, disabled: isDisabled });
+          if (fieldMappingType === 'custom_fields') {
+            fieldSettingData.addFieldList.push(item);
           }
-        });
+        }
       };
-      res.data?.builtin_fields?.forEach(fields => processFields(fields));
-      res.data?.custom_fields?.forEach(fields => processFields(fields, true));
+
+      fieldMappingList.value.forEach((item) => {
+        res.data?.builtin_fields?.forEach(fields => mapFields(fields, item, true, 'builtin_fields'));
+        res.data?.custom_fields?.forEach(fields => mapFields(fields, item, true, 'custom_fields'));
+      });
     } else {
       fieldSettingData.field_mapping.builtin_fields = res.data?.builtin_fields;
       fieldSettingData.field_mapping.custom_fields = res.data?.custom_fields;
-      fieldSettingData.addFieldList = [{ target_field: '', mapping_operation: 'direct', source_field: '' }];
       [fieldSettingData.field_mapping.builtin_fields, fieldSettingData.field_mapping.custom_fields]
-        .forEach((fields, index) => {
+        .forEach((fields) => {
           fields.forEach((item) => {
             item.mapping_operation = 'direct';
             item.source_field = '';
-            if (index === 0) {
-              apiFields.value.push({ key: item.name, disabled: false });
-            }
+            apiFields.value.push({ key: item.name, disabled: false });
           });
         });
     }
@@ -339,11 +348,29 @@ const handleNext = async () => {
   }
 };
 
-const handleLastStep = () => {
+const handleLastStep = async () => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
+
+  nextDisabled.value = true;
+  connectionStatus.value = null;
   emit('updateCurStep', 1);
+
   fieldSettingData.field_mapping.builtin_fields = [];
   fieldSettingData.field_mapping.custom_fields = [];
   apiFields.value = [];
+  fieldSettingData.addFieldList = [];
+  if (currentId.value) {
+    const res = await getDataSourceDetails(currentId.value);
+    fieldSettingData.sync_config = res.data?.sync_config;
+  } else {
+    fieldSettingData.sync_config.sync_period = 60;
+  }
 };
 
 const nextDisabled = ref(true);
@@ -399,9 +426,6 @@ const handleAddField = () => {
 
 // 删除自定义字段
 const handleDeleteField = (item, index) => {
-  if (fieldSettingData.addFieldList.length === 1) {
-    fieldSettingData.addFieldList.push({ target_field: '', mapping_operation: 'direct', source_field: ''  });
-  }
   fieldSettingData.addFieldList.splice(index, 1);
   fieldSettingData.field_mapping.custom_fields.forEach((element) => {
     if (element.name === item.target_field) {
@@ -469,6 +493,12 @@ const handleSubmit = async () => {
 
 const handleChange = () => {
   window.changeInput = true;
+  nextDisabled.value = true;
+  connectionStatus.value = null;
+};
+
+const handleFocus = () => {
+  window.changeInput = true;
 };
 
 const handleCancel = () => {
@@ -490,6 +520,18 @@ const handleCancel = () => {
     &:last-child {
       margin-left: 24px;
     }
+  }
+}
+
+.item-flex3 {
+  display: flex;
+  margin-bottom: 24px;
+  margin-left: 40px;
+
+  ::v-deep .bk-form-item {
+    width: 170px;
+    padding-bottom: 0 !important;
+    margin-left: 24px !important;
   }
 }
 </style>
