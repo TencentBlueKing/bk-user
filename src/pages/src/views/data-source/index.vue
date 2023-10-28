@@ -53,13 +53,12 @@ const menuData = reactive([
 ]);
 </script>
 
-<style lang="less">
-.main-breadcrumbs {
-  box-shadow: none;
-}
-</style>
 <style lang="less" scoped>
 @import url("../../css/menuStyle.less");
+
+:deep(.main-breadcrumbs) {
+  box-shadow: none;
+}
 
 :deep(.tab-details) {
   height: calc(100vh - 104px);
