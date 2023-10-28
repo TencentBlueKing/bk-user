@@ -36,9 +36,9 @@ class WeComAPIClient:
         if not ok:
             logger.error(
                 "wecom api failed, [corp_id=%s, agent_id=%s]! %s %s, kwargs: %s, error: %s",
-                http_func.__name__,
                 self.corp_id,
                 self.agent_id,
+                http_func.__name__,
                 url,
                 kwargs,
                 resp_data["error"],
@@ -55,9 +55,9 @@ class WeComAPIClient:
         errmsg = resp_data.get("errmsg", "unknown")
         logger.error(
             "wecom api error, [corp_id=%s, agent_id=%s]! %s %s, data: %s, errcode: %s, errmsg: %s",
-            http_func.__name__,
             self.corp_id,
             self.agent_id,
+            http_func.__name__,
             url,
             kwargs,
             errcode,
@@ -80,7 +80,7 @@ class WeComAPIClient:
 
     @property
     def access_token(self) -> str:
-        # 先从缓存获取，获取不到再调用接口查询
+        # TODO: 先从缓存获取，获取不到再调用接口查询
         # FIXME: 如何引入外部存储共享缓存呢？比如Redis如何支持多种部署方式(单实例、集群、Sentinel)
         access_token, expires_in = self._get_access_token()
         return access_token

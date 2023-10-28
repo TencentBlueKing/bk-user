@@ -32,16 +32,13 @@ session.mount("http://", adapter)
 def _http_request(method, url, **kwargs):
     # 添加JSON Header
     headers = kwargs.get("headers") or {}
-    headers.update({"Content-Type": "application/json"})
+    headers.setdefault("Content-Type", "application/json")
     kwargs["headers"] = headers
 
     # 默认30秒超时
-    if "timeout" not in kwargs:
-        kwargs["timeout"] = 30
-
+    kwargs.setdefault("timeout", 30)
     # 默认不校验证书
-    if "verify" not in kwargs:
-        kwargs["verify"] = False
+    kwargs.setdefault("verify", False)
 
     st = time.time()
 

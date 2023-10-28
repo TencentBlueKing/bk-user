@@ -25,11 +25,10 @@ class DataSourceUser(models.Model):
 
     class Meta:
         # FIXME: 由于idp_plugins模块会被不同项目引入，model为了被Django App 加载，需要添加app_label,
-        #  同时由于不同项目自定义app不一样，所以这里临时使用公共的django.contrib.auth
-        app_label = "django.contrib.auth"
+        #  同时由于不同项目自定义app不一样，所以这里临时使用公共且没有实际models&migrations的django.contrib.messages
+        app_label = "django.contrib.messages"
         managed = False
         db_table = "data_source_datasourceuser"
-        ordering = ["id"]
 
 
 class LocalDataSourceIdentityInfo(models.Model):
@@ -48,7 +47,7 @@ class LocalDataSourceIdentityInfo(models.Model):
 
     class Meta:
         # FIXME: 由于idp_plugins模块会被不同项目引入，model为了被Django App 加载，需要添加app_label,
-        #  同时由于不同项目自定义app不一样，所以这里临时使用公共的django.contrib.auth
-        app_label = "django.contrib.auth"
+        #  同时由于不同项目自定义app不一样，所以这里临时使用公共且没有实际models&migrations的django.contrib.messages
+        app_label = "django.contrib.messages"
         managed = False
         db_table = "data_source_localdatasourceidentityinfo"

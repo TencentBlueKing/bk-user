@@ -28,13 +28,13 @@ def parse_request_body_json(body: bytes) -> Dict[str, Any]:
     return request_body
 
 
-def generate_random_str(length: int = 8, allowed_chars: str | None = None) -> str:
+def generate_random_str(length: int = 8, allowed_chars: str = "") -> str:
     """
     生成指定长度的随机字符串
-    @param length: 指定的长度，默认8位
-    @param allowed_chars: 随机串里允许出现字符，默认是a-zA-Z0-9
+    :param length: 指定的长度，默认8位
+    :param allowed_chars: 随机串里允许出现字符，默认是a-zA-Z0-9
     """
-    if allowed_chars is None:
+    if not allowed_chars:
         # a-zA-Z0-9
         allowed_chars = string.ascii_letters + string.digits
 

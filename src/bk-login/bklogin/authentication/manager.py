@@ -43,20 +43,23 @@ class BkTokenProcessor:
         allow_chars = string.ascii_letters + string.digits
         return "".join([random.choice(allow_chars) for __ in range(length)])
 
-    def generate(self, username: str, expires: int) -> str:
+    def generate(self, username: str, expires_at: int) -> str:
         """token生成"""
         # 加盐
-        plain_token = "%s|%s|%s" % (expires, username, self._salt())
+        plain_token = "%s|%s|%s" % (expires_at, username, self._salt())
 
         # 加密
         return EncryptHandler(secret_key=self.encrypt_secret_key).encrypt(plain_token)
 
     def parse(self, bk_token: str) -> Tuple[str, int]:
-        """token解析"""
+        """
+        token解析
+        :return: username, expires_at
+        """
         try:
             plain_bk_token = EncryptHandler(secret_key=self.encrypt_secret_key).decrypt(bk_token)
         except Exception:
-            logger.exception("参数[%s] 解析失败", bk_token)
+            logger.exception("参数 bk_token [%s] 解析失败", bk_token)
             plain_bk_token = ""
 
         error_msg = _("参数 bk_token 非法")
@@ -66,13 +69,16 @@ class BkTokenProcessor:
         try:
             token_info = plain_bk_token.split("|")
         except Exception:
-            logger.exception("分割 bk_token[%s] 失败", bk_token)
+            logger.exception("分割 bk_token [%s] 失败", bk_token)
             raise ValueError(error_msg)
 
         if not token_info or len(token_info) < 3:  # noqa: PLR2004
             raise ValueError(error_msg)
 
-        return token_info[1], int(token_info[0])
+        # 按照加密时的顺序取出
+        username, expires_at = token_info[1], int(token_info[0])
+
+        return username, expires_at
 
 
 class BkTokenManager:
@@ -92,33 +98,35 @@ class BkTokenManager:
     def get_bk_token(self, username: str) -> Tuple[str, datetime.datetime]:
         """
         生成用户的登录态
+        : return: bk_token, expires_at
         """
         bk_token = ""
-        expire_time = int(time.time())
+        expires_at = int(time.time())
         # 重试5次
         retry_count = 0
         while not bk_token and retry_count < self.allowed_retry_count:
             now_time = int(time.time())
             # Token过期时间
-            expire_time = now_time + self.cookie_age
+            expires_at = now_time + self.cookie_age
             # Token 无操作失效时间
-            inactive_expire_time = now_time + self.inactive_age
+            inactive_expires_at = now_time + self.inactive_age
             # 生成bk_token
-            bk_token = self.bk_token_processor.generate(username, expire_time)
+            bk_token = self.bk_token_processor.generate(username, expires_at)
             # DB记录
             try:
-                BkToken.objects.create(token=bk_token, inactive_expire_time=inactive_expire_time)
+                BkToken.objects.create(token=bk_token, inactive_expire_time=inactive_expires_at)
             except Exception:  # noqa: PERF203
                 logger.exception("Login ticket failed to be saved during ticket generation")
                 # 循环结束前将bk_token置空后重新生成
                 bk_token = "" if retry_count + 1 < self.allowed_retry_count else bk_token
             retry_count += 1
 
-        return bk_token, datetime.datetime.fromtimestamp(expire_time, timezone.get_current_timezone())
+        return bk_token, datetime.datetime.fromtimestamp(expires_at, timezone.get_current_timezone())
 
     def is_bk_token_valid(self, bk_token: str) -> Tuple[bool, str, str]:
         """
         验证用户登录态
+        : return: ok, username, msg
         """
         if not bk_token:
             return False, "", _("参数 bk_token 缺失")
@@ -126,7 +134,7 @@ class BkTokenManager:
         bk_token = unquote(bk_token)
         # 解析bk_token获取username和过期时间
         try:
-            username, expire_time = self.bk_token_processor.parse(bk_token)
+            username, expires_at = self.bk_token_processor.parse(bk_token)
         except ValueError as error:
             return False, "", str(error)
 
@@ -134,7 +142,7 @@ class BkTokenManager:
         try:
             bk_token_obj = BkToken.objects.get(token=bk_token)
             is_logout = bk_token_obj.is_logout
-            inactive_expire_time = bk_token_obj.inactive_expire_time
+            inactive_expires_at = bk_token_obj.inactive_expires_at
         except Exception:
             return False, "", _("不存在 bk_token[%s] 的记录").format(bk_token)
 
@@ -142,22 +150,22 @@ class BkTokenManager:
         if is_logout:
             return False, "", _("登录态已注销")
 
-        now_time = int(time.time())
+        now = int(time.time())
         # token有效期已过
-        if now_time > expire_time + self.offset_error_age:
+        if now > expires_at + self.offset_error_age:
             return False, "", _("登录态已过期")
 
         # token有效期大于当前时间的有效期
-        if expire_time - now_time > self.cookie_age + self.offset_error_age:
+        if expires_at - now > self.cookie_age + self.offset_error_age:
             return False, "", _("登录态有效期不合法")
 
         # token 无操作有效期已过
-        if now_time > inactive_expire_time + self.inactive_age:
+        if now > inactive_expires_at + self.inactive_age:
             return False, "", _("长时间无操作，登录态已过期")
 
         # 更新 无操作有效期
         try:
-            BkToken.objects.filter(token=bk_token).update(inactive_expire_time=now_time + self.inactive_age)
+            BkToken.objects.filter(token=bk_token).update(inactive_expires_at=now + self.inactive_age)
         except Exception:
             logger.exception("update inactive_expire_time fail")
 

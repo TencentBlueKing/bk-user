@@ -8,12 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import re
-
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
-# 自定义插件，
+# 非内置插件，必须以指定前缀开头
 CUSTOM_PLUGIN_ID_PREFIX = "custom_"
 
 
@@ -45,11 +43,6 @@ BuiltinIdpPluginIDs = [i for i in BuiltinIdpPluginEnum]  # type: ignore[attr-def
 class AllowedHttpMethodEnum(str, StructuredEnum):
     GET = EnumField("get")
     POST = EnumField("post")
-
-
-# IDP dispatch配置相关
-ALLOWED_HTTP_METHODS = [AllowedHttpMethodEnum.GET, AllowedHttpMethodEnum.POST]
-ACTION_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{2,31}")
 
 
 class BuiltinActionEnum(str, StructuredEnum):

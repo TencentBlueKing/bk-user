@@ -8,35 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import re
+from pydantic import BaseModel, Field
 
-from pydantic import BaseModel, field_validator
-
-from .constants import ACTION_REGEX, ALLOWED_HTTP_METHODS
+from .constants import AllowedHttpMethodEnum
 
 
 class DispatchConfigItem(BaseModel):
-    action: str
-    http_method: str
+    action: str = Field(pattern="^[a-zA-Z0-9][a-zA-Z0-9_-]{1,30}[a-zA-Z0-9]$")
+    http_method: AllowedHttpMethodEnum
     handler_func_name: str
-
-    @field_validator("http_method")
-    @classmethod
-    def validate_http_method(cls, v: str) -> str:
-        if v not in ALLOWED_HTTP_METHODS:
-            raise ValueError(f"the http_method of `{v}` not allowed, only support http_method: {ALLOWED_HTTP_METHODS}")
-        return v
-
-    @field_validator("action")
-    @classmethod
-    def validate_action(cls, v: str) -> str:
-        if not re.fullmatch(ACTION_REGEX, v):
-            raise ValueError(
-                "action should 3-32 characters including letters, numbers, underscores (_), and hyphens (-), "
-                "and must start with a letter or number"
-            )
-
-        return v
 
 
 class TestConnectionResult(BaseModel):

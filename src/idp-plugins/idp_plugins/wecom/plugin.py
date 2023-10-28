@@ -36,7 +36,8 @@ class WecomIdpPlugin(BaseFederationIdpPlugin):
 
     config_class = WecomIdpPluginConfig
 
-    cfg: WecomIdpPluginConfig
+    def __init__(self, cfg: WecomIdpPluginConfig):
+        self.cfg = cfg
 
     def test_connection(self) -> TestConnectionResult:
         # TODO: 测试调用企业微信网络是否OK
@@ -57,11 +58,13 @@ class WecomIdpPlugin(BaseFederationIdpPlugin):
             "appid": self.cfg.corp_id,
             "agentid": self.cfg.agent_id,
             "state": state,
+            "redirect_uri": callback_uri,
         }
 
         # 设置state到Session里，用于回调时校验
         # FIXME: 不同认证源插件、相同认证源插件不同认证源是否会出现SessionKey冲突问题？？
         #  是否不应该直接提供Django HttpRequest呢？session set放到外层，session key统一前缀等等
+        #  以文档方式告知插件开发者，必须自行保证长且唯一的前缀，比如可以以 {plugin_id}_xxx为前缀
         request.session[self.state_session_key] = state
 
         return f"{WECOM_OAUTH_URL}?{urlencode(params)}"

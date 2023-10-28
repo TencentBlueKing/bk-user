@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('token', models.CharField(db_index=True, max_length=255, unique=True, verbose_name='登录票据')),
                 ('is_logout', models.BooleanField(default=False, verbose_name='票据是否已经执行过退出登录操作')),
-                ('inactive_expire_time', models.IntegerField(default=0, verbose_name='无操作失效时间戳')),
+                ('inactive_expires_at', models.IntegerField(default=0, verbose_name='无操作失效时间戳')),
             ],
         ),
     ]

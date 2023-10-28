@@ -24,9 +24,8 @@ logger = logging.getLogger("component")
 # FIXME: 后续登录OpenAPI接入APIGateway需重新调整
 def _call_login_api(http_func, url_path, **kwargs):
     request_id = local.request_id
-    if "headers" not in kwargs:
-        kwargs["headers"] = {}
 
+    kwargs.setdefault("headers", {})
     # 添加默认请求头
     kwargs["headers"].update(
         {

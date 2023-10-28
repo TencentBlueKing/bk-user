@@ -8,9 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
+from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 
 class DataSourceMatchRule(BaseModel):
@@ -23,6 +23,5 @@ class DataSourceMatchRule(BaseModel):
     # 匹配的数据源字段
     target_field: str
 
-    @classmethod
-    def to_rules(cls, rules: List[Dict[str, Any]]) -> List["DataSourceMatchRule"]:
-        return [cls(**r) for r in rules] if rules else []
+
+DataSourceMatchRuleList = TypeAdapter(List[DataSourceMatchRule])

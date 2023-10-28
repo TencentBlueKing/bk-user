@@ -35,7 +35,8 @@ class LocalIdpPlugin(BaseCredentialIdpPlugin):
 
     config_class = LocalIdpPluginConfig
 
-    cfg: LocalIdpPluginConfig
+    def __init__(self, cfg: LocalIdpPluginConfig):
+        self.cfg = cfg
 
     def test_connection(self) -> TestConnectionResult:
         raise NotImplementedError(_("本地认证源不支持连通性测试"))

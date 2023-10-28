@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Type
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from pydantic import BaseModel
 
-from .constants import CUSTOM_PLUGIN_ID_PREFIX, BuiltinIdpPluginIDs, PluginTypeEnum
+from .constants import CUSTOM_PLUGIN_ID_PREFIX, BuiltinIdpPluginIDs, PluginTypeEnum, AllowedHttpMethodEnum
 from .models import DispatchConfigItem, TestConnectionResult
 
 logger = logging.getLogger(__name__)
@@ -32,8 +32,9 @@ class BaseIdpPlugin(ABC):
     # 扩展请求的配置
     dispatch_configs: List[DispatchConfigItem]
 
-    def __init__(self, cfg: BaseModel):
-        self.cfg = cfg
+    @abstractmethod
+    def __init__(self, *args, **kwargs):
+        ...
 
     def _not_found(self, request: HttpRequest) -> HttpResponse:
         allowed_dispatch_config_message = " | ".join(
@@ -41,7 +42,9 @@ class BaseIdpPlugin(ABC):
         )
         return HttpResponseNotFound(f"Current Idp plugin only support: {allowed_dispatch_config_message}")
 
-    def dispatch_extension(self, action: str, http_method: str, request: HttpRequest) -> HttpResponse:
+    def dispatch_extension(
+        self, action: str, http_method: AllowedHttpMethodEnum, request: HttpRequest
+    ) -> HttpResponse:
         """
         对于某些认证源，其需要增加扩展的请求，该方法会自动分发请求到子类实现的处理方法
         """
@@ -75,7 +78,7 @@ class BaseCredentialIdpPlugin(BaseIdpPlugin):
         对身份凭证进行认证，并获得用户
         凭证可能是账号&密码、账号&验证码等等，根据不同认证插件，所需要提供的凭证不一样
 
-        return: 根据需要，可以返回认证成功后的单个用户的信息，也可以返回多个用户的信息
+        :return: 根据需要，可以返回认证成功后的单个用户的信息，也可以返回多个用户的信息
           用户字段Key后续将按照插件配置的匹配数据源用户
         """
         ...
@@ -91,10 +94,9 @@ class BaseFederationIdpPlugin(BaseIdpPlugin):
     def build_login_uri(self, request: HttpRequest, callback_uri: str) -> str:
         """
         构建跳转到第三方登录的URL
-        param callback_uri: 一般跳转到第三方登录成功后需要回跳回来，callback_uri即为回跳回来的完整地址（包括http(s)协议和url路径）
-        param request: Django View的Request, 可获取Cookie/Body/QueryParam/FormParam/Header/Session 也可以设置Session
-
-        return: 处理后的参数后重定向到第三方登录的URI
+        :param request: Django View的Request, 可获取Cookie/Body/QueryParam/FormParam/Header/Session 也可以设置Session
+        :param callback_uri: 一般跳转到第三方登录成功后需要回跳回来，callback_uri即为回跳回来的完整地址（包括http(s)协议和url路径）
+        :return: 处理后的参数后重定向到第三方登录的URI
         """
         ...
 
@@ -102,9 +104,8 @@ class BaseFederationIdpPlugin(BaseIdpPlugin):
     def handle_callback(self, request: HttpRequest) -> Dict[str, Any]:
         """
         处理第三方登录后的回调，返回登录后的用户信息
-        param request: Django View的Request, 可获取Cookie/Body/QueryParam/FormParam/Header/Session 也可以设置Session
-
-        return:
+        :param request: Django View的Request, 可获取Cookie/Body/QueryParam/FormParam/Header/Session 也可以设置Session
+        :return: 返回认证成功后的单个用户的信息
         """
         ...
 

@@ -20,4 +20,4 @@ class BkToken(models.Model):
     # 是否已经退出登录
     is_logout = models.BooleanField("票据是否已经执行过退出登录操作", default=False)
     # 无操作过期时间戳
-    inactive_expire_time = models.IntegerField("无操作失效时间戳", default=0)
+    inactive_expires_at = models.IntegerField("无操作失效时间戳", default=0)

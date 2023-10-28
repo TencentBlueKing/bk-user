@@ -23,7 +23,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.generic import View
 
 from bklogin.bkuser.constants import IdpStatus
-from bklogin.bkuser.data_models import DataSourceMatchRule
+from bklogin.bkuser.data_models import DataSourceMatchRuleList
 from bklogin.bkuser.models import DataSourceUser, Idp, Tenant, TenantUser
 from bklogin.common.error_codes import error_codes
 from bklogin.common.request import parse_request_body_json
@@ -344,7 +344,7 @@ class IdpPluginDispatchView(View):
         #  直接匹配，一般是企业身份登录方式，
         #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
         # 认证源配置里的与数据源的匹配规则
-        data_source_match_rules = DataSourceMatchRule.to_rules(idp.data_source_match_rules)
+        data_source_match_rules = DataSourceMatchRuleList.validate_python(idp.data_source_match_rules)
         # 逐规则匹配，查询用户
         matched_data_source_user_ids = []
         for rule in data_source_match_rules:
@@ -423,7 +423,7 @@ class SignInTenantUserCreateApi(View):
 
         tenant_user_ids = request.session.get(ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY) or []
         if user_id not in tenant_user_ids:
-            raise error_codes.NO_PERMISSION.f(_("非法，不可登录该用户"))
+            raise error_codes.NO_PERMISSION.f(_("该用户不可登录"))
 
         # TODO：支持MFA、首次登录强制修改密码登录操作
         # TODO: 首次登录强制修改密码登录 => 设置临时场景票据，类似登录态，比如bk_token_for_force_change_password
