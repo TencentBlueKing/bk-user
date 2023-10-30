@@ -1,11 +1,11 @@
 <template>
   <div class="main-breadcrumbs-details">
     <slot>
-      <div class="main-breadcrumbs__left">
+      <div class="main-breadcrumbs-left">
         <i
-          class="user-icon icon-arrow-left main-breadcrumbs__back"
+          class="user-icon icon-arrow-left main-breadcrumbs-back"
           @click="handleBack" />
-        <span class="main-breadcrumbs__current">
+        <span class="main-breadcrumbs-current">
           <span class="tittle">{{ current }}</span>
           <span class="subtitle" v-if="subtitle">
             &nbsp;-&nbsp;
@@ -62,14 +62,19 @@ const handleBack = () => {
   align-items: center;
   justify-content: space-between;
 
-  &__back {
+  .main-breadcrumbs-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .main-breadcrumbs-back {
     margin-right: 10px;
     font-size: 18px;
     color: #3a84ff;
     cursor: pointer;
   }
 
-  &__current {
+  .main-breadcrumbs-current {
     margin-right: 8px;
     font-size: 16px;
     color: #313238;
@@ -84,10 +89,5 @@ const handleBack = () => {
     margin-right: 4px;
     vertical-align: middle;
   }
-}
-
-.main-breadcrumbs__left {
-  display: flex;
-  align-content: center;
 }
 </style>

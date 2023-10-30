@@ -113,7 +113,6 @@
       :title="importDialog.title"
       :quick-close="false"
       :width="640"
-      :is-loading="importDialog.loading"
       @closed="closed"
     >
       <div class="import-dialog-header">
@@ -188,6 +187,7 @@
             <bk-button
               theme="primary"
               class="w-[64px] mr-[8px]"
+              :loading="importDialog.loading"
               @click="confirmImportUsers">
               确定
             </bk-button>
