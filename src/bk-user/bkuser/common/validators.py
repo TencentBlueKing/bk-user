@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 
 import phonenumbers
-from phonenumbers import NumberParseException, region_code_for_country_code
+from phonenumbers import UNKNOWN_REGION, NumberParseException, region_code_for_country_code
 
 from bkuser.common.constants import CHINESE_PHONE_LENGTH, CHINESE_REGION
 from bkuser.common.error_codes import error_codes
@@ -23,6 +23,9 @@ def validate_phone_with_country_code(phone: str, country_code: str):
     try:
         region = region_code_for_country_code(int(country_code))
 
+        if region == UNKNOWN_REGION:
+            raise error_codes.PHONE_PARSE_ERROR.f("手机地区码 {} : 未知地区码".format(country_code))  # noqa: TRY301
+
     except ValueError:
         logger.debug("failed to parse phone_country_code: %s, ", country_code)
         raise error_codes.PHONE_PARSE_ERROR.f("手机地区码 {} 解析异常".format(country_code))
@@ -31,10 +34,11 @@ def validate_phone_with_country_code(phone: str, country_code: str):
     # =》所以这里需要显式做中国号码的长度校验
     if region == CHINESE_REGION and len(phone) != CHINESE_PHONE_LENGTH:
         raise error_codes.PHONE_PARSE_ERROR.f("手机号 {} 长度异常".format(phone))
+
     try:
         # 按照指定地区码解析手机号
         phonenumbers.parse(phone, region)
 
     except NumberParseException:  # pylint: disable=broad-except
         logger.debug("failed to parse phone number: %s", phone)
-        raise error_codes.PHONE_PARSE_ERROR.f("手机号 {} 解析异常".format(phone))
+        raise error_codes.PHONE_PARSE_ERROR.f("手机号{}-{} 解析异常".format(country_code, phone))
