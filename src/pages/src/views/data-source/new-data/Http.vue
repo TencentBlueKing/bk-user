@@ -90,6 +90,7 @@
           required>
           <bk-input
             type="password"
+            autocomplete="new-password"
             v-model="serverConfigData.auth_config.bearer_token"
             @focus="handleFocus"
             @input="handleChange" />
