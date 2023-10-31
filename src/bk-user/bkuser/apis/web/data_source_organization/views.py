@@ -122,7 +122,7 @@ class DataSourceLeadersListApi(generics.ListAPIView):
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
-        queryset = DataSourceUser.objects.filter(data_source=data_source).exclude(username=self.request.user.username)
+        queryset = DataSourceUser.objects.filter(data_source=data_source)
         if keyword := data.get("keyword"):
             queryset = queryset.filter(Q(username__icontains=keyword) | Q(full_name__icontains=keyword))
 
@@ -199,7 +199,7 @@ class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.Retriev
         if not user.data_source.is_local:
             raise error_codes.CANNOT_UPDATE_DATA_SOURCE_USER
 
-        slz = UserUpdateInputSLZ(data=request.data, context={"data_source": user.data_source})
+        slz = UserUpdateInputSLZ(data=request.data, context={"data_source": user.data_source, "user_id": user.id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
