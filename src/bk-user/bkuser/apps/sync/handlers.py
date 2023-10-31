@@ -19,6 +19,7 @@ from pydantic import ValidationError
 
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.data_source.tasks import initialize_identity_info_and_send_notification
+from bkuser.apps.sync.constants import DataSourceSyncPeriod
 from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
@@ -61,10 +62,10 @@ def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
         logger.exception("data source %s sync_config invalid, skip set sync periodic task", data_source.id)
         return
 
-    # sync_period 为 0 的话，表示当前数据源数据不会定时同步，只能通过手动同步
-    if not cfg.sync_period:
+    # sync_period 为 Never 时，表示当前数据源数据不会定时同步，只能通过手动同步
+    if cfg.sync_period == DataSourceSyncPeriod.NEVER:
         logger.info(
-            "data source %s has a sync_period set to never (0). Any existing periodic tasks will be removed.",
+            "data source %s has sync_period -> never (0). Any existing periodic tasks will be removed.",
             data_source.id,
         )
         PeriodicTask.objects.filter(name=periodic_task_name).delete()
