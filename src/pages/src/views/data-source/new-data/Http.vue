@@ -235,7 +235,7 @@ const fieldSettingData = reactive({
   },
   // 同步配置
   sync_config: {
-    sync_period: 60,
+    sync_period: 24 * 60,
   },
   addFieldList: [],
 });
