@@ -61,6 +61,15 @@ def set_data_source_sync_periodic_task(sender, instance: DataSource, **kwargs):
         logger.exception("data source %s sync_config invalid, skip set sync periodic task", data_source.id)
         return
 
+    # sync_period 为 0 的话，表示当前数据源数据不会定时同步，只能通过手动同步
+    if not cfg.sync_period:
+        logger.info(
+            "data source %s has a sync_period set to never (0). Any existing periodic tasks will be removed.",
+            data_source.id,
+        )
+        PeriodicTask.objects.filter(name=periodic_task_name).delete()
+        return
+
     interval_schedule, _ = IntervalSchedule.objects.get_or_create(
         every=cfg.sync_period,
         period=IntervalSchedule.MINUTES,

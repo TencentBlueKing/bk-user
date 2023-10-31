@@ -38,7 +38,7 @@ from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 logger = logging.getLogger(__name__)
 
 # 二元组对象，用于以何种方式，操作某类对象
-SyncOperationObjType = Tuple[SyncOperation, DataSourceSyncObjectType | TenantSyncObjectType]
+SyncOperationObjectType = Tuple[SyncOperation, DataSourceSyncObjectType | TenantSyncObjectType]
 
 
 class TaskLogger:
@@ -70,7 +70,7 @@ class TaskLogger:
 class ChangeLogRecorder:
     """变更日志记录器"""
 
-    records: Dict[SyncOperationObjType, List]
+    records: Dict[SyncOperationObjectType, List]
 
     def __init__(self):
         self.records = defaultdict(list)
@@ -180,8 +180,6 @@ class DataSourceSyncTaskContext:
                 task=self.task,
                 data_source=self.task.data_source,
                 operation=operation,
-                # 注意：由于 Django + mysql bulk_create 不会返回 id，
-                # 因此当 operation 为 create 时候，user_id 为 None
                 user_id=u.id,
                 user_code=u.code,
                 username=u.username,
@@ -300,7 +298,9 @@ class TenantSyncTaskContext:
     def _build_user_change_logs(self, operation: SyncOperation, users: List[TenantUser]) -> List[TenantUserChangeLog]:
         if operation == SyncOperation.CREATE:
             # 由于 bulk_create 不会返回 id，因此当 operation 为 create 时候，需要通过查询获取真实的 ID
-            users = TenantUser.objects.filter(data_source_user_id__in=[u.data_source_user_id for u in users])
+            users = TenantUser.objects.filter(
+                data_source_user_id__in=[u.data_source_user_id for u in users], tenant=self.task.tenant
+            )
 
         return [
             TenantUserChangeLog(
@@ -319,7 +319,7 @@ class TenantSyncTaskContext:
         if operation == SyncOperation.CREATE:
             # 由于 bulk_create 不会返回 id，因此当 operation 为 create 时候，需要通过查询获取真实的 ID
             depts = TenantDepartment.objects.filter(
-                data_source_department_id__in=[d.data_source_department_id for d in depts]
+                data_source_department_id__in=[d.data_source_department_id for d in depts], tenant=self.task.tenant
             )
 
         return [

@@ -440,7 +440,7 @@ class TestDataSourceSyncRecordApi:
     def test_retrieve(self, api_client, data_source_sync_tasks):
         success_task = data_source_sync_tasks[0]
         resp = api_client.get(reverse("data_source.sync_record.retrieve", kwargs={"id": success_task.id}))
-        assert set(resp.data.keys()) == {"id", "status", "has_warning", "logs"}
+        assert set(resp.data.keys()) == {"id", "status", "has_warning", "start_at", "duration", "logs"}
 
     def test_retrieve_other_tenant_data_source_sync_record(self, api_client, data_source_sync_tasks):
         other_tenant_task = data_source_sync_tasks[2]

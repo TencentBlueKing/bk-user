@@ -298,6 +298,9 @@ class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView
     def get(self, request, *args, **kwargs):
         """导出指定的本地数据源用户数据（Excel 格式）"""
         data_source = self.get_object()
+        if data_source.status != DataSourceStatus.ENABLED:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
+
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅能导出本地数据源数据"))
 
@@ -321,6 +324,9 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         data = slz.validated_data
 
         data_source = self.get_object()
+        if data_source.status != DataSourceStatus.ENABLED:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
+
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源支持导入功能"))
 
@@ -367,6 +373,9 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
     def post(self, request, *args, **kwargs):
         """触发数据源同步任务"""
         data_source = self.get_object()
+        if data_source.status != DataSourceStatus.ENABLED:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
+
         if data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("本地数据源不支持同步，请使用导入功能"))
 

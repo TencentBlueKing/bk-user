@@ -13,7 +13,6 @@ from typing import Any, Dict, List
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
@@ -22,7 +21,8 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.sync.constants import DataSourceSyncPeriod
+from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.plugins.base import get_plugin_cfg_cls, is_plugin_exists
@@ -326,24 +326,28 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
     data_source_id = serializers.IntegerField(help_text="数据源 ID")
     data_source_name = serializers.SerializerMethodField(help_text="数据源名称")
-    status = serializers.CharField(help_text="数据源同步状态")
+    status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
     has_warning = serializers.BooleanField(help_text="是否有警告")
-    trigger = serializers.CharField(help_text="同步触发方式")
+    trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
     operator = serializers.CharField(help_text="操作人")
     start_at = serializers.SerializerMethodField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
 
-    def get_data_source_name(self, obj):
+    def get_data_source_name(self, obj: DataSourceSyncTask) -> str:
         return self.context["data_source_name_map"].get(obj.data_source_id)
 
-    def get_start_at(self, obj):
-        local_time = timezone.localtime(obj.start_at)
-        return local_time.strftime("%Y-%m-%d %H:%M:%S")
+    def get_start_at(self, obj: DataSourceSyncTask) -> str:
+        return obj.start_at_display
 
 
 class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
     status = serializers.CharField(help_text="数据源同步状态")
     has_warning = serializers.BooleanField(help_text="是否有警告")
+    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    duration = serializers.DurationField(help_text="持续时间")
     logs = serializers.CharField(help_text="同步日志")
+
+    def get_start_at(self, obj: DataSourceSyncTask) -> str:
+        return obj.start_at_display

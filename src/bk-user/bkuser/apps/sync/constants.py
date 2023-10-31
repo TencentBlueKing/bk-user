@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy as _
 class DataSourceSyncPeriod(int, StructuredEnum):
     """数据源自动同步周期"""
 
+    NEVER = EnumField(0, label=_("从不"))
     PER_30_MIN = EnumField(30, label=_("每 30 分钟"))
     PER_1_HOUR = EnumField(60, label=_("每 1 小时"))
     PER_3_HOUR = EnumField(3 * 60, label=_("每 3 小时"))

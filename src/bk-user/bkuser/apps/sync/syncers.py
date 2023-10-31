@@ -311,8 +311,8 @@ class DataSourceUserSyncer:
             # 先进行 diff，不是所有的用户都要被更新，只有有字段不一致的，才需要更新
             target_user = user_map[u.code]
             if (
-                u.username == target_user.username
-                and u.full_name == target_user.full_name
+                # u.username == target_user.username
+                u.full_name == target_user.full_name
                 and u.email == target_user.email
                 and u.phone == target_user.phone
                 and u.phone_country_code == target_user.phone_country_code
@@ -320,8 +320,8 @@ class DataSourceUserSyncer:
             ):
                 continue
 
-            # TODO (su) 评估 username 更新策略 https://github.com/TencentBlueKing/bk-user/issues/1325
-            u.username = target_user.username
+            # FIXME (su) 评估 username 更新策略 https://github.com/TencentBlueKing/bk-user/issues/1325
+            # u.username = target_user.username
             u.full_name = target_user.full_name
             u.email = target_user.email
             u.phone = target_user.phone

@@ -17,6 +17,7 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncOperation, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.tenant.models import Tenant
 from bkuser.common.models import TimestampedModel
+from bkuser.common.time import datetime_to_display
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -49,6 +50,10 @@ class DataSourceSyncTask(TimestampedModel):
 
         # 同步模式
         return _("数据源导入成功") if self.status == SyncTaskStatus.SUCCESS else _("数据源导入失败")
+
+    @property
+    def start_at_display(self) -> str:
+        return datetime_to_display(self.start_at)
 
 
 class DataSourceUserChangeLog(TimestampedModel):
@@ -112,6 +117,10 @@ class TenantSyncTask(TimestampedModel):
 
         # 租户数据同步不应该有同步模式，都是异步行为
         return f"Why tenant sync task {self.id} can run in sync mode? Please report this to the administrator."
+
+    @property
+    def start_at_display(self) -> str:
+        return datetime_to_display(self.start_at)
 
 
 class TenantUserChangeLog(TimestampedModel):

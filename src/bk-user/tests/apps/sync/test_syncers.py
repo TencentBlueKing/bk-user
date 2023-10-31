@@ -143,7 +143,8 @@ class TestDataSourceUserSyncer:
         random_raw_user,
     ):
         # 1. 修改用户姓名，电话，邮箱，年龄等信息
-        raw_users[0].properties["username"] = "zhangsan_rename"
+        # su 注：用户名更新暂时被禁用，需要进一步讨论策略
+        # raw_users[0].properties["username"] = "zhangsan_rename"
         raw_users[0].properties["full_name"] = "张三的另一个名字"
         raw_users[0].properties["email"] = "zhangsan_rename@m.com"
         raw_users[0].properties["phone"] = "13512345655"
@@ -178,7 +179,8 @@ class TestDataSourceUserSyncer:
 
         # 验证内置/自定义字段被更新
         zhangsan = users.filter(code="zhangsan").first()
-        assert zhangsan.username == "zhangsan_rename"
+        # su 注：用户名更新暂时被禁用，需要进一步讨论策略
+        # assert zhangsan.username == "zhangsan_rename"
         assert zhangsan.full_name == "张三的另一个名字"
         assert zhangsan.email == "zhangsan_rename@m.com"
         assert zhangsan.phone == "13512345655"
