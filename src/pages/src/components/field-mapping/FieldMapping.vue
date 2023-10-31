@@ -181,8 +181,12 @@ const customConditions = ref([
   .icon-minus-fill {
     margin-left: 16px;
     font-size: 16px;
-    color: #EA3636;
+    color: #dcdee5;
     cursor: pointer;
+
+    &:hover {
+      color: #c4c6cc;
+    }
   }
 }
 
