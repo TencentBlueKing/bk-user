@@ -59,7 +59,8 @@ class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIV
 
         user_custom_field = TenantUserCustomField.objects.create(tenant_id=tenant_id, **data)
         return Response(
-            TenantUserCustomFieldCreateOutputSLZ(instance={"id": user_custom_field.id}).data, status=status.HTTP_201_CREATED
+            TenantUserCustomFieldCreateOutputSLZ(instance={"id": user_custom_field.id}).data,
+            status=status.HTTP_201_CREATED,
         )
 
 
@@ -82,7 +83,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
 
         slz = TenantUserCustomFieldUpdateInputSLZ(
             data=request.data,
-            context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]}
+            context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data

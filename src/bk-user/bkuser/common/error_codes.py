@@ -76,12 +76,13 @@ class ErrorCodes:
     DATA_SOURCE_PLUGIN_NOT_DEFAULT_CONFIG = ErrorCode(_("当前数据源插件未提供默认配置"))
 
     # 数据源
-    DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("当前数据源类型不支持该操作"))
+    DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("当前数据源不支持该操作"))
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     CANNOT_CREATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持新增用户"))
     CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))
     DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
     DATA_SOURCE_IMPORT_FAILED = ErrorCode(_("数据源导入失败"))
+    CREATE_DATA_SOURCE_SYNC_TASK_FAILED = ErrorCode(_("创建数据源同步任务失败"))
 
     # 租户
     CREATE_TENANT_FAILED = ErrorCode(_("租户创建失败"))

@@ -81,6 +81,12 @@ class TestLocalDataSourceDataParser:
         with pytest.raises(DuplicateUsername):
             LocalDataSourceDataParser(user_wk).parse()
 
+    def test_validate_case_duplicate_username_case_insensitive(self, user_wk):
+        # 修改表格数据，导致用户名重复（大小写不敏感的检查）
+        user_wk["users"]["A6"].value = "ZhangSan"
+        with pytest.raises(DuplicateUsername):
+            LocalDataSourceDataParser(user_wk).parse()
+
     def test_get_departments(self, user_wk):
         parser = LocalDataSourceDataParser(user_wk)
         parser.parse()

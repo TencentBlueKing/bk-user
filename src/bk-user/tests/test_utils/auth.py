@@ -38,7 +38,10 @@ def create_user(username: Optional[str] = None) -> User:
     )
 
     TenantUser.objects.get_or_create(
-        tenant_id=DEFAULT_TENANT, id=username, data_source=data_source, data_source_user=data_source_user,
+        tenant_id=DEFAULT_TENANT,
+        id=username,
+        data_source=data_source,
+        data_source_user=data_source_user,
     )
 
     return user

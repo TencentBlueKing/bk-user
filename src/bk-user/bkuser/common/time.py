@@ -9,14 +9,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from datetime import datetime
 
-class DataSourceSyncError(Exception):
-    """数据源同步失败"""
-
-
-class UserLeaderNotExists(DataSourceSyncError):
-    """直接上级数据不存在"""
+from django.utils import timezone
 
 
-class UserDepartmentNotExists(DataSourceSyncError):
-    """部门数据不存在"""
+def datetime_to_display(date_time: datetime) -> str:
+    """将 datetime 格式化为展示用字符串"""
+    local_time = timezone.localtime(date_time)
+    return local_time.strftime("%Y-%m-%d %H:%M:%S")
