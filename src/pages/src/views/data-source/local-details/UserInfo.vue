@@ -113,7 +113,6 @@
       :title="importDialog.title"
       :quick-close="false"
       :width="640"
-      :is-loading="importDialog.loading"
       @closed="closed"
     >
       <div class="import-dialog-header">
@@ -188,6 +187,7 @@
             <bk-button
               theme="primary"
               class="w-[64px] mr-[8px]"
+              :loading="importDialog.loading"
               @click="confirmImportUsers">
               确定
             </bk-button>
@@ -422,7 +422,7 @@ const customRequest = (data) => {
 };
 
 const exceed = () => {
-  Message({ theme: 'error', message: '最多上传1个文件' });
+  Message({ theme: 'error', message: '最多上传1个文件，如需更新，请先删除已上传文件' });
 };
 
 const getSize = (value) => {

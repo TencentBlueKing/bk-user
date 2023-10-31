@@ -58,7 +58,7 @@ export default () => {
 
   const apiPath = {
     validator: (value: string) => /^\/[\w-]+(\/[\w-]+)*\/?$/.test(value),
-    message: '请输入正确的地址',
+    message: '请输入正确的 API 路径',
     trigger: 'blur',
   };
 

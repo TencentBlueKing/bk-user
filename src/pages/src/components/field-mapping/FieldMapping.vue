@@ -54,9 +54,9 @@
             v-for="option in fieldSettingData.field_mapping.custom_fields"
             :key="option.name"
             :id="option.name"
-            :name="option.name"
+            :name="`${option.display_name}（${option.name}）`"
             :disabled="option.disabled">
-            <span>{{option.name}}</span>
+            <span>{{option.display_name}}（{{option.name}}）</span>
           </bk-option>
         </bk-select>
       </bk-form-item>
@@ -72,7 +72,19 @@
       <bk-form-item
         :property="`addFieldList.${index}.source_field`"
         :rules="rules.source_field">
-        <bk-input class="field-value" v-model="item.source_field" @focus="handleChange" />
+        <bk-select
+          class="field-name"
+          v-model="item.source_field"
+          @change="(val, oldVal) => emit('changeApiFields', val, oldVal)">
+          <bk-option
+            v-for="option in apiFields"
+            :key="option.key"
+            :id="option.key"
+            :name="option.key"
+            :disabled="option.disabled">
+            <span>{{option.key}}</span>
+          </bk-option>
+        </bk-select>
       </bk-form-item>
       <i class="user-icon icon-minus-fill" @click="() => emit('handleDeleteField', item, index)" />
     </div>
@@ -107,10 +119,6 @@ const customConditions = ref([
   { name: '直接', key: 'direct' },
   { name: '表达式', key: 'expression' },
 ]);
-
-const handleChange = () => {
-  window.changeInput = true;
-};
 </script>
 
 <style lang="less" scoped>

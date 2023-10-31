@@ -83,6 +83,11 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             logger.exception("general data source plugin test connection error")
             err_msg = str(e)
 
+        # 请求 API 有异常，直接返回
+        if err_msg:
+            return TestConnectionResult(error_message=err_msg)
+
+        # 检查获取到的数据情况，若都没有数据，也是异常
         if not (user_data and dept_data):
             err_msg = _("获取到的用户/部门数据为空，请检查数据源 API 服务")
         else:

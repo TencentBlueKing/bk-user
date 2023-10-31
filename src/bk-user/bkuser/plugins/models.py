@@ -51,8 +51,8 @@ class TestConnectionResult(BaseModel):
     # 连通性测试错误信息，空则表示正常
     error_message: str
     # 获取到的首个数据源用户
-    user: RawDataSourceUser | None
+    user: RawDataSourceUser | None = None
     # 获取到的首个数据源部门
-    department: RawDataSourceDepartment | None
+    department: RawDataSourceDepartment | None = None
     # 可能便于排查问题的额外数据
     extras: Dict[str, Any] | None = None
