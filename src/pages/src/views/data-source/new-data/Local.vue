@@ -237,7 +237,6 @@ import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplat
 import useValidate from '@/hooks/use-validate';
 import {
   getDataSourceDetails,
-  getDataSourcePlugins,
   getDefaultConfig,
   newDataSource,
   putDataSourceDetails,
@@ -494,12 +493,9 @@ const changeAccountPassword = (value) => {
 
 const handleRandomPassword = async () => {
   try {
-    const [currentPlugin] = (await getDataSourcePlugins()).data?.filter(item => item.id === 'local') || [];
-    if (currentPlugin) {
-      const passwordRes = await randomPasswords(currentPlugin);
-      formData.config.password_initial.fixed_password = passwordRes.data.password;
-      window.changeInput = true;
-    }
+    const passwordRes = await randomPasswords();
+    formData.config.password_initial.fixed_password = passwordRes.data.password;
+    window.changeInput = true;
   } catch (e) {
     console.warn(e);
   }

@@ -7,6 +7,7 @@
           <bk-form
             class="operation-content-form"
             ref="basicRef"
+            form-type="vertical"
             :model="formData"
             :rules="rulesBasicInfo"
           >

@@ -42,8 +42,7 @@
           <bk-table-column
             prop="name"
             label="公司名"
-            :sort="{
-              sortFn: (a, b) => a.name.toLowerCase().charCodeAt(0) - b.name.toLowerCase().charCodeAt(0) }">
+            :sort="{ value: 'asc' }">
             <template #default="{ row, index }">
               <div class="item-name">
                 <img v-if="row.logo" class="img-logo" :src="row.logo" />
@@ -271,7 +270,7 @@ const fetchTenantsList = () => {
         item.new = Math.floor((newDate - createdDate) / (24 * 3600 * 1000)) <= 1;
       });
 
-      state.list = res.data;
+      state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
       state.tableLoading = false;
     })
     .catch(() => {

@@ -244,4 +244,8 @@ export const SYNC_CONFIG_LIST = [
     value: 30 * 24 * 60,
     label: '每 30 天',
   },
+  {
+    value: 0,
+    label: '从不',
+  },
 ];
