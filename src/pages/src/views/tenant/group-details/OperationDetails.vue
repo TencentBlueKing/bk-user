@@ -533,7 +533,7 @@ const handleRandomPassword = async () => {
     }
 
     .input-password {
-      width: 240px;
+      width: 380px;
       margin-left: 24px;
     }
   }
