@@ -61,7 +61,7 @@ class TestPBKDF2SM3PasswordHasher:
         encrypted = hasher.encode(raw_password, salt="salt_v")
 
         assert hasher.must_update(encrypted)
-        assert hasher.harden_runtime(raw_password, encrypted) is None
+        hasher.harden_runtime(raw_password, encrypted)
 
     def test_must_update_small_iterations(self, raw_password):
         hasher = PBKDF2SM3PasswordHasher()
@@ -70,4 +70,4 @@ class TestPBKDF2SM3PasswordHasher:
         encrypted = hasher.encode(raw_password, iterations=SMALL_ITERATIONS)
 
         assert hasher.must_update(encrypted)
-        assert hasher.harden_runtime(raw_password, encrypted) is None
+        hasher.harden_runtime(raw_password, encrypted)

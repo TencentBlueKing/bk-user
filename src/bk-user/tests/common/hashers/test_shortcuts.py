@@ -39,7 +39,7 @@ def test_make_and_check_password_pbkdf2_sm3_with_special_salt(raw_password):
         assert check_password(raw_password, encrypted)
 
 
-def test_check_password_encrypt_by_other_algo(raw_password):
+def test_check_password_encrypt_by_other_algo_case_1(raw_password):
     """被 pbkdf2_sm3 加密的密码，即使配置指定的 pbkdf2_sha256，也可以验证通过，反之亦然"""
     with override_settings(PASSWORD_ENCRYPT_ALGORITHM="pbkdf2_sm3"):
         encrypted = make_password(raw_password)
@@ -47,3 +47,13 @@ def test_check_password_encrypt_by_other_algo(raw_password):
 
     assert settings.PASSWORD_ENCRYPT_ALGORITHM == "pbkdf2_sha256"
     assert check_password(raw_password, encrypted)
+
+
+def test_check_password_encrypt_by_other_algo_case_2(raw_password):
+    """被 pbkdf2_sm3 加密的密码，即使配置指定的 pbkdf2_sha256，也可以验证通过，反之亦然"""
+    encrypted = make_password(raw_password)
+    assert encrypted.startswith("pbkdf2_sha256$")
+
+    with override_settings(PASSWORD_ENCRYPT_ALGORITHM="pbkdf2_sm3"):
+        assert settings.PASSWORD_ENCRYPT_ALGORITHM == "pbkdf2_sm3"
+        assert check_password(raw_password, encrypted)
