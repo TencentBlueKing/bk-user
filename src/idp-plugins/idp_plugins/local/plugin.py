@@ -56,6 +56,8 @@ class LocalIdpPlugin(BaseCredentialIdpPlugin):
         if not self.cfg.data_source_ids:
             raise UnexpectedDataError(_("当前租户没有数据源允许账密登录"))
 
+        # TODO: 密码错误次数检测
+
         # FIXME (nan): 待用户密码功能改造完成后重新调整校验密码方式
         users = LocalDataSourceIdentityInfo.objects.filter(
             data_source_id__in=self.cfg.data_source_ids, username=username
