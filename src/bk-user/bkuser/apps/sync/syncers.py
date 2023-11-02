@@ -26,7 +26,7 @@ from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, 
 from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from bkuser.utils.tree import bfs_traversal_tree, build_forest_with_parent_relations
@@ -520,6 +520,7 @@ class TenantUserSyncer:
         waiting_sync_data_source_users = data_source_users.exclude(
             id__in=[u.data_source_user_id for u in exists_tenant_users]
         )
+
         waiting_create_tenant_users = [
             TenantUser(
                 id=generate_uuid(),
@@ -538,4 +539,10 @@ class TenantUserSyncer:
 
     def _get_user_account_expired_at(self) -> datetime.datetime:
         """FIXME (su) 支持读取账号有效期配置，然后累加到 timezone.now() 上，目前是直接返回 PERMANENT_TIME"""
-        return PERMANENT_TIME
+        # 根据配置初始化账号有效期
+        valid_time = PERMANENT_TIME
+        validity_period_config = TenantUserValidityPeriodConfig.objects.get(tenant_id=self.tenant.id)
+        if validity_period_config.enabled_validity_period and validity_period_config.valid_time > 0:
+            valid_time = timezone.now() + datetime.timedelta(days=validity_period_config.valid_time)
+
+        return valid_time

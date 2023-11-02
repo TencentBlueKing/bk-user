@@ -8,10 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 from collections import defaultdict
 from typing import Dict, List
 
 from django.db import transaction
+from django.utils import timezone
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
@@ -22,6 +24,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.biz.tenant_setting import TenantUserValidityPeriodConfigHandler
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -101,15 +104,27 @@ class DataSourceOrganizationHandler:
                 DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relation_objs)
 
             # 查询关联的租户
-            tenant = Tenant.objects.get(id=data_source.owner_tenant_id)
+            tenant_id = data_source.owner_tenant_id
+            tenant = Tenant.objects.get(id=tenant_id)
+
             # 创建租户用户
-            TenantUser.objects.create(
+            validity_period_config = TenantUserValidityPeriodConfigHandler.get_tenant_user_validity_period_config(
+                tenant_id=tenant_id
+            )
+            tenant_user = TenantUser(
                 data_source_user=user,
                 tenant=tenant,
                 data_source=data_source,
                 id=generate_uuid(),
             )
 
+            # 根据配置初始化账号有效期
+            if validity_period_config.enabled_validity_period and validity_period_config.valid_time > 0:
+                tenant_user.account_expired_at = timezone.now() + datetime.timedelta(
+                    days=validity_period_config.valid_time
+                )
+            # 入库
+            tenant_user.save()
         return user.id
 
     @staticmethod
