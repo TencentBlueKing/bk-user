@@ -26,3 +26,9 @@ class DataSourceUserFieldMapping(BaseModel):
     target_field: str
     # 表达式内容，仅映射关系为表达式时有效
     expression: Optional[str] = None
+
+    def __str__(self):
+        if self.mapping_operation == FieldMappingOperation.DIRECT:
+            return f"{self.source_field} --> {self.target_field}"
+
+        return f"{self.source_field} --{self.expression}--> {self.target_field}"
