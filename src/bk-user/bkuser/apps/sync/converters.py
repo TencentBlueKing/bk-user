@@ -14,6 +14,7 @@ from typing import List
 import phonenumbers
 import pydantic
 from django.conf import settings
+from phonenumbers.phonenumberutil import NumberParseException
 
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
@@ -37,7 +38,7 @@ class DataSourceUserConverter:
     def _get_field_mapping(self) -> List[DataSourceUserFieldMapping]:
         """获取字段映射配置"""
         if self.data_source.is_local:
-            self.logger.info("local data source field mapping can only generated from field settings.")
+            self.logger.info("local data source field mapping can only generated from field settings")
             field_mapping = self._get_field_mapping_from_tenant_user_fields()
         else:
             # 1. 尝试从数据源配置中获取
@@ -81,35 +82,44 @@ class DataSourceUserConverter:
 
     def convert(self, user: RawDataSourceUser) -> DataSourceUser:
         # TODO (su) 支持复杂字段映射类型，如表达式，目前都当作直接映射处理（目前只支持直接映射）
-        mapping = {m.source_field: m.target_field for m in self.field_mapping}
+        mapping = {m.target_field: m.source_field for m in self.field_mapping}
         props = user.properties
 
         username = props.get(mapping["username"])
+        # 1. 用户名是必须提供的，而且需要满足正则校验规则
         if not username:
             raise ValueError("username is required")
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
-            raise ValueError(f"username {username} not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
+            raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
+
+        # 2. 全名也是必须提供的
+        full_name = props.get(mapping["full_name"])
+        if not full_name:
+            raise ValueError("full_name is required")
 
         email = props.get(mapping["email"]) or ""
+        # 3. 如果提供了邮箱，则必须满足正则校验规则
         if email and not re.fullmatch(EMAIL_REGEX, email):
-            raise ValueError(f"email {email} provided but not match pattern {EMAIL_REGEX.pattern}")
+            raise ValueError(f"email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}")
 
         phone = props.get(mapping["phone"]) or ""
-        phone_country_code = props.get(mapping["phone_country_code"], settings.DEFAULT_PHONE_COUNTRY_CODE)
+        phone_country_code = props.get(mapping["phone_country_code"]) or settings.DEFAULT_PHONE_COUNTRY_CODE
 
-        phone_number = f"+{phone_country_code}{phone}"
-        try:
-            phonenumbers.parse(phone_number, None)
-        except phonenumbers.phonenumberutil.NumberParseException:
-            raise ValueError(f"phone number {phone_number} is invalid (country_code: {phone_country_code})")
+        # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
+        if phone:
+            phone_number = f"+{phone_country_code}{phone}"
+            try:
+                phonenumbers.parse(phone_number, None)
+            except NumberParseException:
+                raise ValueError(f"phone number [{phone_number}] is invalid (country_code: {phone_country_code})")
 
         return DataSourceUser(
             data_source=self.data_source,
             code=user.code,
             username=username,
-            full_name=props[mapping["full_name"]],
+            full_name=full_name,
             email=email,
             phone=phone,
             phone_country_code=phone_country_code,
-            extras={mapping[f.name]: props.get(f.name, f.default) for f in self.custom_fields},
+            extras={f.name: props.get(mapping[f.name], f.default) for f in self.custom_fields},
         )

@@ -61,7 +61,7 @@ class TestDataSourceUserConverter:
             for f in ["username", "full_name", "email", "phone", "phone_country_code", "age", "gender", "region"]
         ]
 
-    def test_convert_case_1(self, bare_local_data_source, tenant_user_custom_fields, logger):
+    def test_convert_user_enum_field_default(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_zhangsan = RawDataSourceUser(
             code="zhangsan",
             properties={
@@ -85,7 +85,7 @@ class TestDataSourceUserConverter:
         assert zhangsan.phone_country_code == "86"
         assert zhangsan.extras == {"age": "18", "gender": "male", "region": "beijing"}
 
-    def test_convert_case_2(self, bare_local_data_source, tenant_user_custom_fields, logger):
+    def test_convert_use_string_field_default(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
             code="lisi",
             properties={
@@ -110,7 +110,7 @@ class TestDataSourceUserConverter:
         assert lisi.phone_country_code == "63"
         assert lisi.extras == {"age": "28", "gender": "female", "region": ""}
 
-    def test_convert_case_not_same_field_name_mapping(self, bare_local_data_source, tenant_user_custom_fields, logger):
+    def test_convert_with_not_same_field_name_mapping(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
             code="lisi",
             properties={
@@ -121,7 +121,7 @@ class TestDataSourceUserConverter:
                 "phone_country_code": "63",
                 "age": "28",
                 "gender": "female",
-                "region": "shanghai",
+                "custom_region": "shanghai",
             },
             leaders=["zhangsan"],
             departments=["dept_a", "center_aa"],
@@ -129,7 +129,43 @@ class TestDataSourceUserConverter:
 
         converter = DataSourceUserConverter(bare_local_data_source, logger)
         # 修改数据以生成不同字段名映射的比较麻烦，这里采用的是直接修改 Converter 的 field_mapping 属性
-        converter.field_mapping[-1].target_field = "custom_region"
+        converter.field_mapping[-1].source_field = "custom_region"
 
         lisi = converter.convert(raw_lisi)
-        assert lisi.extras == {"age": "28", "gender": "female", "custom_region": "shanghai"}
+        assert lisi.extras == {"age": "28", "gender": "female", "region": "shanghai"}
+
+    def test_convert_with_invalid_username(self, bare_local_data_source, logger):
+        raw_user = RawDataSourceUser(code="test", properties={}, leaders=[], departments=[])
+        with pytest.raises(ValueError, match="username is required"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_user)
+
+        raw_user.properties["username"] = "李四"
+        with pytest.raises(ValueError, match="not match pattern"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_user)
+
+    def test_convert_without_full_nane(self, bare_local_data_source, logger):
+        raw_user = RawDataSourceUser(
+            code="test", properties={"username": "test", "full_name": ""}, leaders=[], departments=[]
+        )
+        with pytest.raises(ValueError, match="full_name is required"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_user)
+
+    def test_convert_with_invalid_email(self, bare_local_data_source, logger):
+        raw_user = RawDataSourceUser(
+            code="test",
+            properties={"username": "test", "full_name": "test", "email": "test"},
+            leaders=[],
+            departments=[],
+        )
+        with pytest.raises(ValueError, match="provided but not match pattern"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_user)
+
+    def test_convert_with_invalid_phone_number(self, bare_local_data_source, logger):
+        raw_user = RawDataSourceUser(
+            code="test",
+            properties={"username": "test", "full_name": "test", "phone": "1", "phone_country_code": "44"},
+            leaders=[],
+            departments=[],
+        )
+        with pytest.raises(ValueError, match="phone number"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_user)

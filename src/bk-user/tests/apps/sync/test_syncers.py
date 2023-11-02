@@ -175,7 +175,6 @@ class TestDataSourceUserSyncer:
         assert set(users.values_list("code", flat=True)) == {user.code for user in raw_users}
         assert set(users.values_list("username", flat=True)) == {user.properties.get("username") for user in raw_users}
         # 验证 extras 都被更新
-        print("aaaa ==== ", users.values("username", "extras"))
         assert all(bool(e) for e in users.values_list("extras", flat=True))
 
         # 验证内置/自定义字段被更新
