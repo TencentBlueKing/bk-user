@@ -12,6 +12,7 @@ from typing import List
 
 import pytest
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from django.utils import timezone
@@ -23,27 +24,37 @@ from tests.test_utils.helpers import generate_random_string
 def data_source_sync_task(bare_local_data_source) -> DataSourceSyncTask:
     """数据源同步任务"""
     return DataSourceSyncTask.objects.create(
-        data_source_id=bare_local_data_source.id,
+        data_source=bare_local_data_source,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
         start_at=timezone.now(),
-        extra={"overwrite": True, "async_run": False},
+        extras={"overwrite": True, "async_run": False},
     )
+
+
+@pytest.fixture()
+def data_source_sync_task_ctx(data_source_sync_task) -> DataSourceSyncTaskContext:
+    return DataSourceSyncTaskContext(data_source_sync_task)
 
 
 @pytest.fixture()
 def tenant_sync_task(bare_local_data_source, default_tenant) -> TenantSyncTask:
     """租户数据同步任务"""
-    return TenantSyncTask(
-        tenant_id=default_tenant.id,
-        data_source_id=bare_local_data_source.id,
+    return TenantSyncTask.objects.create(
+        tenant=default_tenant,
+        data_source=bare_local_data_source,
         status=SyncTaskStatus.PENDING,
         trigger=SyncTaskTrigger.MANUAL,
         operator="admin",
         start_at=timezone.now(),
-        extra={"async_run": False},
+        extras={"async_run": False},
     )
+
+
+@pytest.fixture()
+def tenant_sync_task_ctx(tenant_sync_task) -> TenantSyncTaskContext:
+    return TenantSyncTaskContext(tenant_sync_task)
 
 
 @pytest.fixture()

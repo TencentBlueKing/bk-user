@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from blue_krill.models.fields import EncryptField
 from django.conf import settings
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
@@ -92,8 +91,7 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
     """
 
     user = models.OneToOneField(DataSourceUser, on_delete=models.CASCADE)
-    # FIXME (su) 使用加盐的方式来存储密码
-    password = EncryptField(verbose_name="用户密码", null=True, blank=True, default="", max_length=255)
+    password = models.CharField("用户密码", null=True, blank=True, default="", max_length=128)
     password_updated_at = models.DateTimeField("密码最后更新时间", null=True, blank=True)
     password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)
 
@@ -150,6 +148,8 @@ class DataSourceDepartmentUserRelation(TimestampedModel):
 
     department = models.ForeignKey(DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False)
     user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
+    # 冗余字段
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
         ordering = ["id"]
@@ -165,6 +165,8 @@ class DataSourceUserLeaderRelation(TimestampedModel):
 
     user = models.ForeignKey(DataSourceUser, on_delete=models.DO_NOTHING, db_constraint=False)
     leader = models.ForeignKey(DataSourceUser, related_name="leader", on_delete=models.DO_NOTHING, db_constraint=False)
+    # 冗余字段
+    data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)
 
     class Meta:
         ordering = ["id"]

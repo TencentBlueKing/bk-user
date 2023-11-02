@@ -23,21 +23,28 @@
       .operation-content-info {
         display: flex;
         justify-content: space-between;
-        padding-right: 60px;
 
         .operation-content-form {
           .bk-input {
-            width: 420px;
+            width: 580px;
           }
 
           :deep(.bk-form-error) {
             position: initial !important;
-            width: 420px;
+            width: 580px;
           }
+        }
+
+        :deep(.bk-upload-trigger--picture) {
+          margin: 0;
         }
       }
 
       :deep(.bk-form-item) {
+        .bk-radio-button {
+          width: 100px;
+        }
+
         &:last-child {
           margin-bottom: 0;
         }

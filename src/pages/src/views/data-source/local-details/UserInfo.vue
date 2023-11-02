@@ -113,7 +113,6 @@
       :title="importDialog.title"
       :quick-close="false"
       :width="640"
-      :is-loading="importDialog.loading"
       @closed="closed"
     >
       <div class="import-dialog-header">
@@ -170,7 +169,7 @@
       </bk-upload>
       <template #footer>
         <div class="footer-wrapper">
-          <div>
+          <div class="footer-left">
             <bk-checkbox v-model="uploadInfo.overwrite">
               允许对同名用户覆盖更新
             </bk-checkbox>
@@ -178,7 +177,6 @@
               ext-cls="popover-wrapper"
               content="勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。"
               placement="top"
-              theme="light"
               width="280"
             >
               <InfoLine class="info" />
@@ -188,6 +186,7 @@
             <bk-button
               theme="primary"
               class="w-[64px] mr-[8px]"
+              :loading="importDialog.loading"
               @click="confirmImportUsers">
               确定
             </bk-button>
@@ -422,7 +421,7 @@ const customRequest = (data) => {
 };
 
 const exceed = () => {
-  Message({ theme: 'error', message: '最多上传1个文件' });
+  Message({ theme: 'error', message: '最多上传1个文件，如需更新，请先删除已上传文件' });
 };
 
 const getSize = (value) => {
@@ -491,12 +490,6 @@ const closed = () => {
   uploadInfo.incremental = true;
 };
 </script>
-
-<style lang="less">
-.popover-wrapper {
-  color: #63656E !important;
-}
-</style>
 
 <style lang="less" scoped>
 .user-info-wrapper {
@@ -645,10 +638,15 @@ const closed = () => {
   align-items: center;
   justify-content: space-between;
 
+  .footer-left {
+    display: flex;
+    align-items: center;
+  }
+
   .info {
     margin-left: 5px;
-    font-size: 14px;
-    color: #63656E;
+    font-size: 16px;
+    color: #979BA5;
     cursor: pointer;
   }
 }

@@ -16,6 +16,7 @@ from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.common.constants import PERMANENT_TIME
+from bkuser.common.hashers import make_password
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig, PasswordRuleConfig
@@ -100,10 +101,13 @@ class LocalDataSourceIdentityInfoInitializer:
         time_now = timezone.now()
         expired_at = self._get_password_expired_at()
 
+        # 由于用户密码将采用 HASH 加密，因此只有在初始化的时候才能获取到明文密码，用于后续通知
+        user_password_map = {user.id: self.password_provider.generate() for user in users}
+
         waiting_create_infos = [
             LocalDataSourceIdentityInfo(
                 user=user,
-                password=self.password_provider.generate(),
+                password=make_password(user_password_map[user.id]),
                 password_updated_at=time_now,
                 password_expired_at=expired_at,
                 data_source=self.data_source,
@@ -113,8 +117,7 @@ class LocalDataSourceIdentityInfoInitializer:
         ]
         LocalDataSourceIdentityInfo.objects.bulk_create(waiting_create_infos, batch_size=self.BATCH_SIZE)
 
-        # 由于用户密码采用 HASH 加密，因此只有在初始化的时候才能获取到明文密码
-        return {info.user.id: info.password for info in waiting_create_infos}
+        return user_password_map
 
     def _get_password_expired_at(self) -> datetime.datetime:
         """获取密码过期的具体时间"""

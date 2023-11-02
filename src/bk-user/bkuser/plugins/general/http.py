@@ -17,7 +17,13 @@ from django.utils.translation import gettext_lazy as _
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import JSONDecodeError
 
-from bkuser.plugins.general.constants import DEFAULT_PAGE, MAX_TOTAL_COUNT, PAGE_SIZE_FOR_FETCH_FIRST, AuthMethod
+from bkuser.plugins.general.constants import (
+    DEFAULT_PAGE,
+    MAX_TOTAL_COUNT,
+    PAGE_SIZE_FOR_FETCH_FIRST,
+    AuthMethod,
+    PageSize,
+)
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
 from bkuser.plugins.general.models import AuthConfig
 
@@ -39,7 +45,7 @@ def gen_headers(cfg: AuthConfig) -> Dict[str, str]:
 
 
 def fetch_all_data(
-    url: str, headers: Dict[str, str], page_size: int, timeout: int, retries: int
+    url: str, headers: Dict[str, str], page_size: PageSize, timeout: int, retries: int
 ) -> List[Dict[str, Any]]:
     """
     根据指定配置，请求数据源 API 以获取用户 / 部门数据
@@ -50,6 +56,9 @@ def fetch_all_data(
     :param retries: 请求失败重试次数
     :returns: API 返回结果，应符合通用 HTTP 数据源 API 协议
     """
+    # 做强制类型转换，避免在序列化等场景中无法自动转换成 int
+    page_size = int(page_size)  # type: ignore
+
     with requests.Session() as session:
         adapter = HTTPAdapter(
             max_retries=Retry(

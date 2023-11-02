@@ -10,12 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TenantFeatureFlag, UserFieldDataType
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import TimestampedModel
+from bkuser.common.time import datetime_to_display
 
 from .constants import TIME_ZONE_CHOICES
 
@@ -81,8 +81,7 @@ class TenantUser(TimestampedModel):
 
     @property
     def account_expired_at_display(self) -> str:
-        local_time = timezone.localtime(self.account_expired_at)
-        return local_time.strftime("%Y-%m-%d %H:%M:%S")
+        return datetime_to_display(self.account_expired_at)
 
 
 class TenantDepartment(TimestampedModel):
