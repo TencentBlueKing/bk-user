@@ -33,6 +33,7 @@ COPY src/bk-user/bkuser /app/bkuser
 COPY src/bk-user/bin /app/bin
 COPY src/bk-user/media /app/media
 COPY src/bk-user/manage.py /app
+COPY src/idp-plugins/idp_plugins /app/bkuser/idp_plugins
 
 COPY --from=StaticBuilding /dist /app/staticfiles
 COPY --from=StaticBuilding /dist/index.html /app/templates/index.html

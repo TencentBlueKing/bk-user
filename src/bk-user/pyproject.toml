@@ -169,7 +169,8 @@ type = "layers"
 layers = [
     "bkuser.apps.sync",
     "bkuser.apps.tenant",
-    "bkuser.apps.data_source | bkuser.apps.idp",
+    "bkuser.apps.idp",
+    "bkuser.apps.data_source",
 ]
 
 # apos.sync 分层

@@ -8,7 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from pydantic import BaseModel
+from typing import List
+
+from pydantic import BaseModel, TypeAdapter
 
 from .constants import AllowBindScopeObjectType
 
@@ -22,6 +24,9 @@ class DataSourceMatchRule(BaseModel):
     data_source_id: int
     # 匹配的数据源字段
     target_field: str
+
+
+DataSourceMatchRuleList = TypeAdapter(List[DataSourceMatchRule])
 
 
 class AllowBindScope(BaseModel):

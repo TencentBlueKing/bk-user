@@ -141,7 +141,7 @@ class DataSourceDepartmentSyncer:
         mptt_tree_ids = set()
         with DataSourceDepartmentRelation.objects.disable_mptt_updates():
             DataSourceDepartmentRelation.objects.filter(data_source=self.data_source).delete()
-            parent_relations = [(k, v) for k, v in dept_parent_code_map.items()]
+            parent_relations = list(dept_parent_code_map.items())
             # 根据部门父子关系，构建森林
             forest_roots = build_forest_with_parent_relations(parent_relations)
             # 逐棵树进行便利，因为需要保证一棵树的节点拥有相同的 tree_id
