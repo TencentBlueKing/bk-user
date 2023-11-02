@@ -85,7 +85,7 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     default = serializers.JSONField(help_text="默认值", required=False)
-    options = serializers.JSONField(help_text="选项", required=False, default=list)
+    options = serializers.JSONField(help_text="选项", required=False)
 
     def validate_display_name(self, display_name):
         if TenantUserCustomField.objects.filter(
@@ -131,8 +131,8 @@ class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
 class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称", max_length=128)
     required = serializers.BooleanField(help_text="是否必填")
-    default = serializers.JSONField(help_text="默认值", required=False)
-    options = serializers.JSONField(help_text="选项", required=False, default=list)
+    default = serializers.JSONField(help_text="默认值")
+    options = serializers.JSONField(help_text="选项")
 
     def validate_display_name(self, display_name):
         if (
@@ -163,3 +163,26 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
             _validate_multi_enum_default(default, opt_ids)
 
         return attrs
+
+
+class NotificationTemplatesInputSLZ(serializers.Serializer):
+    method = serializers.CharField(help_text="信息传递方式")
+    scene = serializers.CharField(help_text="通知类型")
+    title = serializers.CharField(help_text="通知标题", allow_null=True)
+    sender = serializers.CharField(help_text="发送人")
+    content = serializers.CharField(help_text="通知内容")
+    content_html = serializers.CharField(help_text="通知内容，页面展示使用")
+
+
+class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
+    enabled_validity_period = serializers.BooleanField(help_text="账户有效期使能值")
+    valid_time = serializers.IntegerField(help_text="账户有效期")
+    remind_before_expire = serializers.ListField(help_text="临过期提醒时间")
+    enabled_notification_methods = serializers.ListField(help_text="通知方式")
+    notification_templates = serializers.ListField(
+        help_text="通知模板", child=NotificationTemplatesInputSLZ(), allow_empty=False
+    )
+
+
+class TenantUserValidityPeriodConfigOutputSLZ(TenantUserValidityPeriodConfigInputSLZ):
+    pass

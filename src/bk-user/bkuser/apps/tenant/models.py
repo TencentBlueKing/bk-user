@@ -10,12 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TenantFeatureFlag, UserFieldDataType
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
-from bkuser.common.models import TimestampedModel
-from bkuser.common.time import datetime_to_display
+from bkuser.common.models import AuditedModel, TimestampedModel
 
 from .constants import TIME_ZONE_CHOICES
 
@@ -81,7 +81,8 @@ class TenantUser(TimestampedModel):
 
     @property
     def account_expired_at_display(self) -> str:
-        return datetime_to_display(self.account_expired_at)
+        local_time = timezone.localtime(self.account_expired_at)
+        return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
 class TenantDepartment(TimestampedModel):
@@ -143,21 +144,16 @@ class TenantUserCustomField(TimestampedModel):
         ]
 
 
-# # TODO: 是否直接定义 TenantCommonConfig 表，AccountValidityPeriod是一个JSON字段？
-# class AccountValidityPeriodConfig:
-#     """账号时效配置"""
-#
-#     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
-#
-#     enabled = models.BooleanField("是否启用", default=True)
-#     # TODO: 定义枚举，设置默认值为永久
-#     validity_period_seconds = models.IntegerField("有效期(单位：秒)", default=-1)
-#     # TODO: 定义枚举，设置默认值为7天
-#     reminder_period_days = models.IntegerField("提醒周期(单位：天)", default=7)
-#     # TODO: 定义枚举，同时需要考虑到与企业ESB配置的支持的通知方式有关，是否定义字段？
-#     notification_method = models.CharField("通知方式", max_length=32, default="email")
-#     # TODO: 需要考虑不同通知方式，可能无法使用相同模板，或者其他设计方式
-#     notification_content_template = models.TextField("通知模板", default="")
+class TenantUserValidityPeriodConfig(AuditedModel):
+    """账号有效期-配置"""
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
+
+    enabled_validity_period = models.BooleanField("是否启用", default=True)
+    valid_time = models.IntegerField("有效期(单位：天)", default=-1)
+    remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
+    enabled_notification_methods = models.JSONField("通知方式", default=dict)
+    notification_templates = models.JSONField("通知模板", default=dict)
 
 
 # class TenantUserSocialAccountRelation(TimestampedModel):
