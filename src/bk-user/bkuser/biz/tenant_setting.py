@@ -104,9 +104,9 @@ class TenantUserValidityPeriodConfigHandler:
                 "title": "蓝鲸智云 - 账号到期提醒!",
                 "sender": "蓝鲸智云",
                 "content": (
-                    "{{ username }}，您好：\n" 
-                    + "您的蓝鲸智云平台账号已过期。为避免影响使用，请尽快联系平台管理员进行续期。\n"
-                    + " 该短信为系统自动发送，请勿回复。"
+                    "{{ username }}，您好：\n"
+                    + "您的蓝鲸智云平台账号已过期。为避免影响使用，请尽快联系平台管理员进行续期。\n"  # noqa: E501
+                    + "该短信为系统自动发送，请勿回复。"
                 ),
                 "content_html": (
                     "<p>{{ username }}，您好：</p>"
@@ -138,9 +138,9 @@ class TenantUserValidityPeriodConfigHandler:
                 "title": None,
                 "sender": "蓝鲸智云",
                 "content": (
-                    "{{ username }}您好：\n"
-                    + "您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。\n"
-                    + "该短信为系统自动发送，请勿回复。"
+                    "{{ username }}您好：\n"  # noqa: E501
+                    + "您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。\n"  # noqa: E501
+                    + "该短信为系统自动发送，请勿回复。"  # noqa: E501
                 ),
                 "content_html": (
                     "<p>{{ username }}您好：</p>"
