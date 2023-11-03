@@ -11,10 +11,8 @@ specific language governing permissions and limitations under the License.
 import re
 from typing import List
 
-import phonenumbers
 import pydantic
 from django.conf import settings
-from phonenumbers.phonenumberutil import NumberParseException
 
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
@@ -22,6 +20,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
 from bkuser.apps.sync.context import TaskLogger
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.models import RawDataSourceUser
 from bkuser.utils.pydantic import stringify_pydantic_error
 
@@ -89,6 +88,7 @@ class DataSourceUserConverter:
         # 1. 用户名是必须提供的，而且需要满足正则校验规则
         if not username:
             raise ValueError("username is required")
+
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
             raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
 
@@ -103,15 +103,10 @@ class DataSourceUserConverter:
             raise ValueError(f"email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}")
 
         phone = props.get(mapping["phone"]) or ""
-        phone_country_code = props.get(mapping["phone_country_code"]) or settings.DEFAULT_PHONE_COUNTRY_CODE
-
+        country_code = props.get(mapping["phone_country_code"]) or settings.DEFAULT_PHONE_COUNTRY_CODE
         # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
         if phone:
-            phone_number = f"+{phone_country_code}{phone}"
-            try:
-                phonenumbers.parse(phone_number, None)
-            except NumberParseException:
-                raise ValueError(f"phone number [{phone_number}] is invalid (country_code: {phone_country_code})")
+            validate_phone_with_country_code(phone, country_code)
 
         return DataSourceUser(
             data_source=self.data_source,
@@ -120,6 +115,7 @@ class DataSourceUserConverter:
             full_name=full_name,
             email=email,
             phone=phone,
-            phone_country_code=phone_country_code,
+            phone_country_code=country_code,
+            # TODO (su) 自定义字段应该也需要校验下（比如说枚举值？） & 根据配置的类型 format 下？
             extras={f.name: props.get(mapping[f.name], f.default) for f in self.custom_fields},
         )
