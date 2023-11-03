@@ -310,25 +310,51 @@ const handleNext = async () => {
     isLoading.value = true;
     const res = await getFields();
     if (currentId.value) {
+      const list = [];
       const mapFields = (fields, item, isDisabled, fieldMappingType) => {
-        if (fields.name === item.target_field) {
-          Object.assign(fields, {
-            mapping_operation: item.mapping_operation,
-            source_field: item.source_field,
-            disabled: isDisabled,
-            target_field: fields.name,
-          });
-          fieldSettingData.field_mapping[fieldMappingType].push(fields);
-          apiFields.value.push({ key: fields.name, disabled: isDisabled });
-          if (fieldMappingType === 'custom_fields') {
-            fieldSettingData.addFieldList.push(item);
-          }
+        if (fields.name !== item.target_field) return;
+
+        list.push(fields.name);
+        Object.assign(fields, {
+          mapping_operation: item.mapping_operation,
+          source_field: item.source_field,
+          disabled: isDisabled,
+          target_field: fields.name,
+        });
+        fieldSettingData.field_mapping[fieldMappingType].push(fields);
+        apiFields.value.push({ key: item.source_field, disabled: isDisabled });
+
+        if (fieldMappingType === 'custom_fields') {
+          fieldSettingData.addFieldList.push(item);
         }
       };
 
       fieldMappingList.value.forEach((item) => {
         res.data?.builtin_fields?.forEach(fields => mapFields(fields, item, true, 'builtin_fields'));
         res.data?.custom_fields?.forEach(fields => mapFields(fields, item, true, 'custom_fields'));
+      });
+
+      const filterKeys = apiFields.value.map(item => item.key);
+
+      res.data?.builtin_fields?.forEach((fields) => {
+        if (filterKeys.includes(fields.name)) return;
+        apiFields.value.push({ key: fields.name, disabled: false });
+      });
+
+      res.data?.custom_fields?.forEach((fields) => {
+        if (list.includes(fields.name)) return;
+
+        Object.assign(fields, {
+          mapping_operation: 'direct',
+          source_field: '',
+          disabled: false,
+          target_field: fields.name,
+        });
+        fieldSettingData.field_mapping.custom_fields.push(fields);
+
+        if (!fieldSettingData.addFieldList.length) {
+          apiFields.value.push({ key: fields.name, disabled: false });
+        }
       });
     } else {
       fieldSettingData.field_mapping.builtin_fields = res.data?.builtin_fields;
@@ -370,7 +396,7 @@ const handleLastStep = async () => {
     const res = await getDataSourceDetails(currentId.value);
     fieldSettingData.sync_config = res.data?.sync_config;
   } else {
-    fieldSettingData.sync_config.sync_period = 60;
+    fieldSettingData.sync_config.sync_period = 24 * 60;
   }
 };
 
@@ -385,7 +411,7 @@ const handleTestConnection = async () => {
     await formRef1.value.validate();
     connectionLoading.value = true;
     const params = {
-      plugin_id: 'general',
+      plugin_id: serverConfigData.plugin_id,
       plugin_config: {
         server_config: serverConfigData.server_config,
         auth_config: serverConfigData.auth_config,
@@ -428,11 +454,14 @@ const handleAddField = () => {
 // 删除自定义字段
 const handleDeleteField = (item, index) => {
   fieldSettingData.addFieldList.splice(index, 1);
-  fieldSettingData.field_mapping.custom_fields.forEach((element) => {
-    if (element.name === item.target_field) {
-      element.disabled = false;
-    }
-  });
+
+  const enableField = (fields, fieldKey, fieldName) => {
+    const field = fields.find(element => element[fieldKey] === fieldName);
+    if (field) field.disabled = false;
+  };
+
+  enableField(fieldSettingData.field_mapping.custom_fields, 'name', item.target_field);
+  enableField(apiFields.value, 'key', item.source_field);
   handleChange();
 };
 
