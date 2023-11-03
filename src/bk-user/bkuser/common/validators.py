@@ -13,8 +13,6 @@ import logging
 import phonenumbers
 from phonenumbers import NumberParseException, region_code_for_country_code
 
-from bkuser.common.constants import CHINESE_PHONE_LENGTH, CHINESE_REGION
-
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +27,7 @@ def validate_phone_with_country_code(phone: str, country_code: str) -> None:
         raise ValueError(f"parse phone country code [{country_code}] to region failed!")
 
     # 特殊检查：中国手机号强制要求必须是 11 位
-    if region == CHINESE_REGION and len(phone) != CHINESE_PHONE_LENGTH:
+    if region == "CN" and len(phone) != 11:  # noqa: PLR2004
         raise ValueError(f"chinese phone number must be 11 digits, {phone} is invalid")
 
     try:
