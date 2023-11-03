@@ -538,7 +538,6 @@ class TenantUserSyncer:
         self.ctx.recorder.add(SyncOperation.CREATE, TenantSyncObjectType.USER, waiting_create_tenant_users)
 
     def _get_user_account_expired_at(self) -> datetime.datetime:
-        """FIXME (su) 支持读取账号有效期配置，然后累加到 timezone.now() 上，目前是直接返回 PERMANENT_TIME"""
         # 根据配置初始化账号有效期
         valid_time = PERMANENT_TIME
         validity_period_config = TenantUserValidityPeriodConfig.objects.get(tenant_id=self.tenant.id)
