@@ -15,6 +15,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from zxcvbn import zxcvbn
 
+from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.passwd import PasswordStrengthError
 from bkuser.common.passwd.constants import ZxcvbnPattern
 from bkuser.common.passwd.models import PasswordRule, ValidateResult, ZxcvbnMatch
@@ -29,6 +30,10 @@ class PasswordValidator:
     def validate(self, password: str, raise_exception=False) -> ValidateResult:
         """根据指定规则，校验密码中存在的问题"""
         ret = ValidateResult(ok=True, errors=[])
+
+        # 若密码值为掩码常量，则不做强度校验
+        if password == SENSITIVE_MASK:
+            return ret
 
         for func in [
             # 密码长度检查

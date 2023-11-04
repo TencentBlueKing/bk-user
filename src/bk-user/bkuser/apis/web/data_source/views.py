@@ -190,11 +190,12 @@ class DataSourceRetrieveUpdateApi(
 
         with transaction.atomic():
             data_source.name = data["name"]
-            data_source.plugin_config = data["plugin_config"]
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
             data_source.updater = request.user.username
-            data_source.save()
+            data_source.save(update_fields=["name", "field_mapping", "sync_config", "updater", "updated_at"])
+            # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
+            data_source.set_plugin_cfg(data["plugin_config"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

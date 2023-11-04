@@ -8,15 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
 from blue_krill.models.fields import EncryptField
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.apps.data_source.constants import DataSourceStatus
+from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.models import AuditedModel, TimestampedModel
+from bkuser.plugins.base import get_plugin_cfg_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.models import BasePluginConfig
+from bkuser.utils.dictx import get_items, set_items
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -30,6 +33,22 @@ class DataSourcePlugin(models.Model):
     name = models.CharField("数据源插件名称", max_length=128, unique=True)
     description = models.TextField("描述", default="", blank=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
+
+
+class DataSourceManager(models.Manager):
+    """数据源管理器类"""
+
+    @transaction.atomic()
+    def create(self, *args, **kwargs):
+        if "plugin_config" not in kwargs:
+            return super().create(*args, **kwargs)
+
+        plugin_cfg = kwargs.pop("plugin_config")
+        assert isinstance(plugin_cfg, BasePluginConfig)
+
+        data_source: DataSource = super().create(*args, **kwargs)
+        data_source.set_plugin_cfg(plugin_cfg)
+        return data_source
 
 
 class DataSource(AuditedModel):
@@ -49,6 +68,8 @@ class DataSource(AuditedModel):
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
 
+    objects = DataSourceManager()
+
     class Meta:
         ordering = ["id"]
 
@@ -56,6 +77,35 @@ class DataSource(AuditedModel):
     def is_local(self) -> bool:
         """检查类型是否为本地数据源"""
         return self.plugin.id == DataSourcePluginEnum.LOCAL
+
+    def get_plugin_cfg(self, with_sensitive: bool = False) -> BasePluginConfig:
+        """获取插件配置"""
+        plugin_cfg = self.plugin_config
+        if with_sensitive:
+            for info in DataSourceSensitiveInfo.objects.filter(data_source=self):
+                set_items(plugin_cfg, info.key, info.value)
+
+        PluginCfgCls = get_plugin_cfg_cls(self.plugin.id)  # noqa: N806
+        return PluginCfgCls(**plugin_cfg)
+
+    def set_plugin_cfg(self, cfg: BasePluginConfig) -> None:
+        """设置插件配置，注意：该方法包含 DB 数据更新，需要在事务中执行"""
+        plugin_cfg = cfg.model_dump()
+
+        # 由于单个插件的敏感字段不会很多，这里不采用批量创建/更新的方式
+        for field in cfg.sensitive_fields:
+            sensitive_val = get_items(plugin_cfg, field)
+            # 若敏感字段无值，或者已经被替换为掩码，则不需要二次替换
+            if not (sensitive_val and sensitive_val != SENSITIVE_MASK):
+                continue
+
+            DataSourceSensitiveInfo.objects.update_or_create(
+                data_source=self, key=field, defaults={"value": sensitive_val}
+            )
+            set_items(plugin_cfg, field, SENSITIVE_MASK)
+
+        self.plugin_config = plugin_cfg
+        self.save(update_fields=["plugin_config", "updated_at"])
 
 
 class DataSourceUser(TimestampedModel):
@@ -181,3 +231,14 @@ class DepartmentRelationMPTTTree(models.Model):
     """部门关系树记录表，用于自增 tree_id 的分配"""
 
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
+
+
+class DataSourceSensitiveInfo(TimestampedModel):
+    """数据源敏感配置信息"""
+
+    data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
+    key = models.CharField("配置字段路径", max_length=255)
+    value = EncryptField(verbose_name="敏感配置数据", max_length=255)
+
+    class Meta:
+        unique_together = [("data_source", "key")]

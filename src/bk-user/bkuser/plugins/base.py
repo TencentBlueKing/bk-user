@@ -13,10 +13,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Type
 
 from drf_yasg import openapi
-from pydantic import BaseModel
 
 from bkuser.plugins.constants import CUSTOM_PLUGIN_ID_PREFIX, DataSourcePluginEnum
-from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
+from bkuser.plugins.models import BasePluginConfig, RawDataSourceDepartment, RawDataSourceUser, TestConnectionResult
 from bkuser.utils.pydantic import gen_openapi_schema
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,7 @@ class BaseDataSourcePlugin(ABC):
     """数据源插件基类"""
 
     id: str | DataSourcePluginEnum
-    config_class: Type[BaseModel]
+    config_class: Type[BasePluginConfig]
 
     @abstractmethod
     def __init__(self, *args, **kwargs):
@@ -82,7 +81,7 @@ def get_plugin_cls(plugin_id: str | DataSourcePluginEnum) -> Type[BaseDataSource
     return _plugin_cls_map[plugin_id]
 
 
-def get_plugin_cfg_cls(plugin_id: str | DataSourcePluginEnum) -> Type[BaseModel]:
+def get_plugin_cfg_cls(plugin_id: str | DataSourcePluginEnum) -> Type[BasePluginConfig]:
     """获取指定插件的配置类"""
     return get_plugin_cls(plugin_id).config_class
 

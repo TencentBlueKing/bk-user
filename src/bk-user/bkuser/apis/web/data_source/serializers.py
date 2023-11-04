@@ -28,6 +28,7 @@ from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.plugins.base import get_plugin_cfg_cls, is_plugin_exists
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import PasswordRuleConfig
+from bkuser.plugins.models import BasePluginConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 logger = logging.getLogger(__name__)
@@ -147,7 +148,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
 
         PluginConfigCls = get_plugin_cfg_cls(plugin_id)  # noqa: N806
         try:
-            PluginConfigCls(**attrs["plugin_config"])
+            attrs["plugin_config"] = PluginConfigCls(**attrs["plugin_config"])
         except PDValidationError as e:
             raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
 
@@ -198,14 +199,12 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
 
         return name
 
-    def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> BasePluginConfig:
         PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806
         try:
-            PluginConfigCls(**plugin_config)
+            return PluginConfigCls(**plugin_config)
         except PDValidationError as e:
             raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
-
-        return plugin_config
 
     def validate_field_mapping(self, field_mapping: List[Dict[str, str]]) -> List[Dict[str, str]]:
         # 遇到空的字段映射，直接返回即可，validate() 中会根据插件类型校验是否必须提供字段映射

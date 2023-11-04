@@ -17,6 +17,7 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from django.urls import reverse
 from rest_framework import status
 
@@ -37,7 +38,7 @@ def data_source(request, local_ds_plugin, local_ds_plugin_cfg) -> DataSource:
         name=generate_random_string(),
         owner_tenant_id=tenant_id,
         plugin=local_ds_plugin,
-        plugin_config=local_ds_plugin_cfg,
+        plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
     )
 
 
