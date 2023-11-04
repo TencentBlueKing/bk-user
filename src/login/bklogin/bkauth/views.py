@@ -132,7 +132,7 @@ def _bk_login(request):
         "is_plain": request.path_info == "/plain/",
     }
 
-    # NOTE: account/login.html 为支持自适应大小的模板
+    # NOTE: login.html 为支持自适应大小的模板
     response = TemplateResponse(request, "login.html", context)
     response = set_bk_token_invalid(request, response)
     return response

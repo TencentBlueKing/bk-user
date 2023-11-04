@@ -42,8 +42,8 @@ VERSION_FILE = "RELEASE.yaml"
 ###################
 # Footer & Header #
 ###################
-BK_DOC_URL = "https://bk.tencent.com/docs/markdown/用户管理/产品白皮书/产品简介/README.md"
-
+BK_DOCS_URL_PREFIX = env("BK_DOCS_URL_PREFIX", 'https://bk.tencent.com/docs')
+BK_DOC_URL = f"{BK_DOCS_URL_PREFIX}/markdown/ZH/UserManage/2.5/UserGuide/Introduce/README.md"
 
 # ==============================================================================
 # Proxy http connections
