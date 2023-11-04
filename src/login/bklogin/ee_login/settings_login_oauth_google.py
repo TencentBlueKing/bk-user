@@ -20,7 +20,7 @@ LOGIN_TYPE = "custom_login"
 ###########################
 # 自定义登录 custom_login   #
 ###########################
-# 配置自定义登录请求和登录回调的响应函数, 如：CUSTOM_LOGIN_VIEW = 'ee_official_login.oauth.google.views.login'
-CUSTOM_LOGIN_VIEW = "ee_official_login.oauth.google.views.login"
-# 配置自定义验证是否登录的认证函数, 如：CUSTOM_AUTHENTICATION_BACKEND = 'ee_official_login.oauth.google.backends.OauthBackend'
-CUSTOM_AUTHENTICATION_BACKEND = "ee_official_login.oauth.google.backends.OauthBackend"
+# 配置自定义登录请求和登录回调的响应函数, 如：CUSTOM_LOGIN_VIEW = 'bklogin.ee_official_login.oauth.google.views.login'
+CUSTOM_LOGIN_VIEW = "bklogin.ee_official_login.oauth.google.views.login"
+# 配置自定义验证是否登录的认证函数, 如：CUSTOM_AUTHENTICATION_BACKEND = 'bklogin.ee_official_login.oauth.google.backends.OauthBackend'
+CUSTOM_AUTHENTICATION_BACKEND = "bklogin.ee_official_login.oauth.google.backends.OauthBackend"

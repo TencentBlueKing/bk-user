@@ -61,7 +61,7 @@ def login(request):
             "login_redirect_to": "",
         }
 
-        template_name = "account/login.html"
+        template_name = "login.html"
         response = TemplateResponse(request, template_name, context)
         response = set_bk_token_invalid(request, response)
         return response
