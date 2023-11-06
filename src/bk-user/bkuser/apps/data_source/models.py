@@ -19,7 +19,7 @@ from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.plugins.base import get_plugin_cfg_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.models import BasePluginConfig
-from bkuser.utils.dictx import get_items, set_items
+from bkuser.utils import dictx
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -83,7 +83,7 @@ class DataSource(AuditedModel):
         plugin_cfg = self.plugin_config
         if with_sensitive:
             for info in DataSourceSensitiveInfo.objects.filter(data_source=self):
-                set_items(plugin_cfg, info.key, info.value)
+                dictx.set_items(plugin_cfg, info.key, info.value)
 
         PluginCfgCls = get_plugin_cfg_cls(self.plugin.id)  # noqa: N806
         return PluginCfgCls(**plugin_cfg)
@@ -94,15 +94,15 @@ class DataSource(AuditedModel):
 
         # 由于单个插件的敏感字段不会很多，这里不采用批量创建/更新的方式
         for field in cfg.sensitive_fields:
-            sensitive_val = get_items(plugin_cfg, field)
+            sensitive_val = dictx.get_items(plugin_cfg, field)
             # 若敏感字段无值，或者已经被替换为掩码，则不需要二次替换
-            if not (sensitive_val and sensitive_val != SENSITIVE_MASK):
+            if not sensitive_val or sensitive_val == SENSITIVE_MASK:
                 continue
 
             DataSourceSensitiveInfo.objects.update_or_create(
                 data_source=self, key=field, defaults={"value": sensitive_val}
             )
-            set_items(plugin_cfg, field, SENSITIVE_MASK)
+            dictx.set_items(plugin_cfg, field, SENSITIVE_MASK)
 
         self.plugin_config = plugin_cfg
         self.save(update_fields=["plugin_config", "updated_at"])

@@ -47,4 +47,6 @@ def set_items(obj: Dict[str, Any], paths: List[str] | str, value: Any) -> None:
     if isinstance(paths, str):
         paths = paths.strip(".").split(".")
 
-    reduce(lambda d, k: d[k], paths[:-1], obj)[paths[-1]] = value
+    # 最深层一个 dict 对象
+    leaf_obj = reduce(lambda d, k: d[k], paths[:-1], obj)
+    leaf_obj[paths[-1]] = value
