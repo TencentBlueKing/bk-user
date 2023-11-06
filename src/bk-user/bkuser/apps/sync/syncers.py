@@ -25,7 +25,6 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, TenantSyncObjectType
 from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
-from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
@@ -42,12 +41,10 @@ class DataSourceDepartmentSyncer:
     def __init__(
         self,
         ctx: DataSourceSyncTaskContext,
-        task: DataSourceSyncTask,
         data_source: DataSource,
         raw_departments: List[RawDataSourceDepartment],
     ):
         self.ctx = ctx
-        self.task = task
         self.data_source = data_source
         self.raw_departments = raw_departments
 
@@ -200,17 +197,17 @@ class DataSourceUserSyncer:
     def __init__(
         self,
         ctx: DataSourceSyncTaskContext,
-        task: DataSourceSyncTask,
         data_source: DataSource,
         raw_users: List[RawDataSourceUser],
+        overwrite: bool = False,
+        incremental: bool = False,
     ):
         self.ctx = ctx
-        self.task = task
         self.data_source = data_source
         self.raw_users = raw_users
-        self.overwrite = bool(task.extras.get("overwrite", False))
-        self.incremental = bool(task.extras.get("incremental", False))
-        self.converter = DataSourceUserConverter(data_source)
+        self.overwrite = overwrite
+        self.incremental = incremental
+        self.converter = DataSourceUserConverter(data_source, ctx.logger)
 
     def sync(self):
         self.ctx.logger.info(f"receive {len(self.raw_users)} users from data source plugin")  # noqa: G004
@@ -448,9 +445,8 @@ class TenantDepartmentSyncer:
 
     batch_size = 250
 
-    def __init__(self, ctx: TenantSyncTaskContext, task: TenantSyncTask, data_source: DataSource, tenant: Tenant):
+    def __init__(self, ctx: TenantSyncTaskContext, data_source: DataSource, tenant: Tenant):
         self.ctx = ctx
-        self.task = task
         self.data_source = data_source
         self.tenant = tenant
 
@@ -495,9 +491,8 @@ class TenantUserSyncer:
 
     batch_size = 250
 
-    def __init__(self, ctx: TenantSyncTaskContext, task: TenantSyncTask, data_source: DataSource, tenant: Tenant):
+    def __init__(self, ctx: TenantSyncTaskContext, data_source: DataSource, tenant: Tenant):
         self.ctx = ctx
-        self.task = task
         self.data_source = data_source
         self.tenant = tenant
         self.user_account_expired_at = self._get_user_account_expired_at()

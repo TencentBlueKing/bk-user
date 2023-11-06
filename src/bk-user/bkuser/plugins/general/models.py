@@ -25,6 +25,13 @@ from bkuser.plugins.general.constants import (
 from bkuser.plugins.models import BasePluginConfig
 
 
+class QueryParam(BaseModel):
+    """查询参数"""
+
+    key: str
+    value: str
+
+
 class ServerConfig(BaseModel):
     """数据服务相关配置"""
 
@@ -32,8 +39,12 @@ class ServerConfig(BaseModel):
     server_base_url: str = Field(pattern=BASE_URL_REGEX)
     # 用户数据 API 路径
     user_api_path: str = Field(pattern=API_URL_PATH_REGEX)
+    # 用户数据 API 请求参数
+    user_api_query_params: list[QueryParam] = []
     # 部门数据 API 路径
     department_api_path: str = Field(pattern=API_URL_PATH_REGEX)
+    # 部门数据 API 请求参数
+    department_api_query_params: list[QueryParam] = []
     # 单次分页请求数量
     page_size: PageSize = PageSize.CNT_100
     # 单次请求超时时间

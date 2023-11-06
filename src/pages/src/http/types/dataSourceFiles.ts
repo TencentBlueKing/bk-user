@@ -99,3 +99,11 @@ export interface TestConnectionParams {
   plugin_id: string,
   plugin_config: {},
 }
+
+/**
+ * 数据源更新记录参数
+ */
+export interface SyncRecordsParams {
+  page: number,
+  pageSize: number,
+}

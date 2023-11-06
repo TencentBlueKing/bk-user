@@ -152,7 +152,9 @@ def general_ds_plugin_cfg() -> Dict[str, Any]:
         "server_config": {
             "server_base_url": "http://bk.example.com:8090",
             "user_api_path": "/api/v1/users",
+            "user_api_query_params": [{"key": "scope", "value": "company"}],
             "department_api_path": "/api/v1/departments",
+            "department_api_query_params": [],
             "request_timeout": 5,
             "retries": 3,
         },
