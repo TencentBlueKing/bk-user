@@ -322,6 +322,11 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
     summary = serializers.CharField(help_text="任务执行结果概述")
 
 
+class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
+    data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
+    status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices(), required=False)
+
+
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
     data_source_id = serializers.IntegerField(help_text="数据源 ID")
