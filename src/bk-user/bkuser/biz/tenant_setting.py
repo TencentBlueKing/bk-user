@@ -29,8 +29,8 @@ class NotificationMethod(str, StructuredEnum):
 class NotificationScene(str, StructuredEnum):
     """通知场景"""
 
-    ACCOUNT_EXPIRING = EnumField("account_expiring", label=_("临过期提醒"))
-    ACCOUNT_EXPIRED = EnumField("account_expired", label=_("过期提醒"))
+    TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("临过期提醒"))
+    TENANT_USER_EXPIRED = EnumField("tenant_user_expired", label=_("过期提醒"))
 
 
 class NotificationTemplate(BaseModel):
@@ -82,7 +82,7 @@ class TenantUserValidityPeriodConfigHandler:
         "notification_templates": [
             {
                 "method": NotificationMethod.EMAIL,
-                "scene": NotificationScene.ACCOUNT_EXPIRING,
+                "scene": NotificationScene.TENANT_USER_EXPIRING,
                 "title": "蓝鲸智云 - 账号即将到期提醒!",
                 "sender": "蓝鲸智云",
                 "content": (
@@ -100,13 +100,13 @@ class TenantUserValidityPeriodConfigHandler:
             },
             {
                 "method": NotificationMethod.EMAIL,
-                "scene": NotificationScene.ACCOUNT_EXPIRED,
+                "scene": NotificationScene.TENANT_USER_EXPIRED,
                 "title": "蓝鲸智云 - 账号到期提醒!",
                 "sender": "蓝鲸智云",
                 "content": (
                     "{{ username }}，您好：\n"
                     + "您的蓝鲸智云平台账号已过期。为避免影响使用，请尽快联系平台管理员进行续期。\n"  # noqa: E501
-                    + "该短信为系统自动发送，请勿回复。"
+                    + "该邮件为系统自动发送，请勿回复。"
                 ),
                 "content_html": (
                     "<p>{{ username }}，您好：</p>"
@@ -116,7 +116,7 @@ class TenantUserValidityPeriodConfigHandler:
             },
             {
                 "method": NotificationMethod.SMS,
-                "scene": NotificationScene.ACCOUNT_EXPIRING,
+                "scene": NotificationScene.TENANT_USER_EXPIRING,
                 "title": None,
                 "sender": "蓝鲸智云",
                 "content": (
@@ -134,11 +134,11 @@ class TenantUserValidityPeriodConfigHandler:
             },
             {
                 "method": NotificationMethod.SMS,
-                "scene": NotificationScene.ACCOUNT_EXPIRED,
+                "scene": NotificationScene.TENANT_USER_EXPIRED,
                 "title": None,
                 "sender": "蓝鲸智云",
                 "content": (
-                    "{{ username }}您好：\n"  # noqa: E501
+                    "{{ username }}您好：\n"
                     + "您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。\n"  # noqa: E501
                     + "该短信为系统自动发送，请勿回复。"  # noqa: E501
                 ),

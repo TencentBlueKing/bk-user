@@ -59,7 +59,7 @@ class TenantUser(TimestampedModel):
     wx_openid = models.CharField("微信公众号OpenID", null=True, blank=True, default="", max_length=64)
 
     # 账号有效期相关
-    account_expired_at = models.DateTimeField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
+    account_expired_at = models.DateField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
 
     # 手机&邮箱相关：手机号&邮箱都可以继承数据源或自定义
     is_inherited_phone = models.BooleanField("是否继承数据源手机号", default=True)

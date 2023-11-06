@@ -32,3 +32,17 @@ class UserFieldDataType(str, StructuredEnum):
     NUMBER = EnumField("number", label=_("数字"))
     ENUM = EnumField("enum", label=_("枚举"))
     MULTI_ENUM = EnumField("multi_enum", label=_("多选枚举"))
+
+
+class NotificationMethod(str, StructuredEnum):
+    """通知方式"""
+
+    EMAIL = EnumField("email", label=_("邮件通知"))
+    SMS = EnumField("sms", label=_("短信通知"))
+
+
+class NotificationScene(str, StructuredEnum):
+    """通知场景"""
+
+    TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("临过期提醒"))
+    TENANT_USER_EXPIRED = EnumField("tenant_user_expired", label=_("过期提醒"))
