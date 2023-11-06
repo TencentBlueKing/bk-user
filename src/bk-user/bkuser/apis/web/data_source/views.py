@@ -433,7 +433,7 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源更新记录",
-        request_body=DataSourceSyncRecordSearchInputSLZ(),
+        query_serializer=DataSourceSyncRecordSearchInputSLZ(),
         responses={status.HTTP_200_OK: DataSourceSyncRecordListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
