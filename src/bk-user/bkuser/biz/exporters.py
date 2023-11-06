@@ -74,7 +74,7 @@ class DataSourceUserExporter:
                 )
             )
 
-        self._set_all_cells_to_text_format()
+        self._set_all_columns_to_text_format()
         return self.workbook
 
     def _load_template(self):
@@ -85,7 +85,7 @@ class DataSourceUserExporter:
         # 补充租户用户自定义字段
         self._update_sheet_custom_field_columns()
         # 将所有单元格设置为文本格式
-        self._set_all_cells_to_text_format()
+        self._set_all_columns_to_text_format()
 
     def _update_sheet_custom_field_columns(self):
         """在模版中补充自定义字段"""
@@ -105,11 +105,11 @@ class DataSourceUserExporter:
             # 设置默认列宽
             self.sheet.column_dimensions[self._gen_sheet_col_idx(col_idx)].width = self.default_column_width
 
-    def _set_all_cells_to_text_format(self):
+    def _set_all_columns_to_text_format(self):
         # 将单元格设置为纯文本模式，防止出现类型转换
-        for columns in self.sheet.columns:
-            for cell in columns:
-                cell.number_format = FORMAT_TEXT
+        # ref: https://stackoverflow.com/questions/57492559
+        for idx, _ in enumerate(self.sheet.columns):
+            self.sheet.column_dimensions[self._gen_sheet_col_idx(idx)].number_format = FORMAT_TEXT
 
     @staticmethod
     def _gen_sheet_col_idx(idx: int) -> str:

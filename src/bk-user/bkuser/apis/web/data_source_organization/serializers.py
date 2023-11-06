@@ -15,6 +15,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
@@ -66,7 +67,11 @@ class UserCreateInputSLZ(serializers.Serializer):
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField(), default=[])
 
     def validate(self, data):
-        validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+        try:
+            validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(e)
+
         return data
 
     def validate_department_ids(self, department_ids):
@@ -161,7 +166,11 @@ class UserUpdateInputSLZ(serializers.Serializer):
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField())
 
     def validate(self, data):
-        validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+        try:
+            validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(e)
+
         return data
 
     def validate_department_ids(self, department_ids):

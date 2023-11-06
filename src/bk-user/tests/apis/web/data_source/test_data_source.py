@@ -437,6 +437,10 @@ class TestDataSourceSyncRecordApi:
             "extras",
         }
 
+    def test_list_with_filter(self, api_client, data_source_sync_tasks):
+        resp = api_client.get(reverse("data_source.sync_record.list"), data={"status": "success"})
+        assert len(resp.data["results"]) == 1  # noqa: PLR2004
+
     def test_retrieve(self, api_client, data_source_sync_tasks):
         success_task = data_source_sync_tasks[0]
         resp = api_client.get(reverse("data_source.sync_record.retrieve", kwargs={"id": success_task.id}))

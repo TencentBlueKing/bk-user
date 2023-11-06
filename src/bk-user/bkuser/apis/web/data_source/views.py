@@ -33,6 +33,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceSwitchStatusOutputSLZ,
     DataSourceSyncRecordListOutputSLZ,
     DataSourceSyncRecordRetrieveOutputSLZ,
+    DataSourceSyncRecordSearchInputSLZ,
     DataSourceTestConnectionInputSLZ,
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
@@ -409,7 +410,18 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     serializer_class = DataSourceSyncRecordListOutputSLZ
 
     def get_queryset(self):
-        return DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        slz = DataSourceSyncRecordSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        queryset = DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        if data_source_id := data.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
+        if status := data.get("status"):
+            queryset = queryset.filter(status=status)
+
+        return queryset
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -421,6 +433,7 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源更新记录",
+        query_serializer=DataSourceSyncRecordSearchInputSLZ(),
         responses={status.HTTP_200_OK: DataSourceSyncRecordListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):

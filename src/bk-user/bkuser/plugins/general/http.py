@@ -25,9 +25,13 @@ from bkuser.plugins.general.constants import (
     PageSize,
 )
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
-from bkuser.plugins.general.models import AuthConfig
+from bkuser.plugins.general.models import AuthConfig, QueryParam
 
 logger = logging.getLogger(__name__)
+
+
+def gen_query_params(params: List[QueryParam]) -> Dict[str, str]:
+    return {p.key: p.value for p in params}
 
 
 def gen_headers(cfg: AuthConfig) -> Dict[str, str]:
@@ -44,14 +48,20 @@ def gen_headers(cfg: AuthConfig) -> Dict[str, str]:
     return headers
 
 
+def stringify_params(params: Dict[str, Any]) -> str:
+    """字符串化查询参数，仅用于错误信息提示"""
+    return "&".join([f"{k}={v}" for k, v in params.items()])
+
+
 def fetch_all_data(
-    url: str, headers: Dict[str, str], page_size: PageSize, timeout: int, retries: int
+    url: str, headers: Dict[str, str], params: Dict[str, Any], page_size: PageSize, timeout: int, retries: int
 ) -> List[Dict[str, Any]]:
     """
     根据指定配置，请求数据源 API 以获取用户 / 部门数据
 
     :param url: 数据源 URL，如 https://bk.example.com/apis/v1/users
     :param headers: 请求头，包含认证信息等
+    :param params: 查询参数，即 url 中 ?scope=company 部分
     :param timeout: 单次请求超时时间
     :param retries: 请求失败重试次数
     :returns: API 返回结果，应符合通用 HTTP 数据源 API 协议
@@ -73,12 +83,12 @@ def fetch_all_data(
         cur_page, max_page = DEFAULT_PAGE, MAX_TOTAL_COUNT / page_size
         total_cnt, items = 0, []
         while True:
-            params = {"page": cur_page, "page_size": page_size}
+            params.update({"page": cur_page, "page_size": page_size})
             resp = session.get(url, headers=headers, params=params, timeout=timeout)
             if not resp.ok:
                 raise RequestApiError(
                     _("请求数据源 API {} 参数 {} 异常，状态码 {} 响应内容 {}").format(
-                        url, params, resp.status_code, resp.content
+                        url, stringify_params(params), resp.status_code, resp.content
                     )  # noqa: E501
                 )
 
@@ -86,8 +96,10 @@ def fetch_all_data(
                 resp_data = resp.json()
             except JSONDecodeError:  # noqa: PERF203
                 raise RespDataFormatError(
-                    _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(url, params, resp.content)
-                )  # noqa: E501
+                    _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(
+                        url, stringify_params(params), resp.content
+                    )  # noqa: E501
+                )
 
             total_cnt = resp_data.get("count", 0)
             cur_req_results = resp_data.get("results", [])
@@ -114,28 +126,31 @@ def fetch_all_data(
     return items
 
 
-def fetch_first_item(url: str, headers: Dict[str, str], timeout: int) -> Dict[str, Any] | None:
+def fetch_first_item(url: str, headers: Dict[str, str], params: Dict[str, Any], timeout: int) -> Dict[str, Any] | None:
     """
     根据指定配置，请求数据源 API 以获取用户 / 部门第一条数据（测试连通性用）
 
     :param url: 数据源 URL，如 https://bk.example.com/apis/v1/users
     :param headers: 请求头，包含认证信息等
+    :param params: 查询参数，即 url 中 ?scope=company 部分
     :param timeout: 单次请求超时时间
     :returns: API 返回结果，应符合通用 HTTP 数据源 API 协议
     """
-    params = {"page": DEFAULT_PAGE, "page_size": PAGE_SIZE_FOR_FETCH_FIRST}
+    params.update({"page": DEFAULT_PAGE, "page_size": PAGE_SIZE_FOR_FETCH_FIRST})
     resp = requests.get(url, headers=headers, params=params, timeout=timeout)
     if not resp.ok:
         raise RequestApiError(
-            _("请求数据源 API {} 参数 {} 异常，状态码 {} 响应内容 {}").format(url, params, resp.status_code, resp.content)  # noqa: E501
+            _("请求数据源 API {} 参数 {} 异常，状态码 {} 响应内容 {}").format(
+                url, stringify_params(params), resp.status_code, resp.content
+            )  # noqa: E501
         )
 
     try:
         resp_data = resp.json()
     except JSONDecodeError:  # noqa: PERF203
         raise RespDataFormatError(
-            _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(url, params, resp.content)
-        )  # noqa: E501
+            _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(url, stringify_params(params), resp.content)  # noqa: E501
+        )
 
     results = resp_data.get("results", [])
     if not results:
