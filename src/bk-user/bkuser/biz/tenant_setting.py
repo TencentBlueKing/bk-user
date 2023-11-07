@@ -29,8 +29,8 @@ class NotificationMethod(str, StructuredEnum):
 class NotificationScene(str, StructuredEnum):
     """通知场景"""
 
-    TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("临过期提醒"))
-    TENANT_USER_EXPIRED = EnumField("tenant_user_expired", label=_("过期提醒"))
+    TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("租户用户-临过期提醒"))
+    TENANT_USER_EXPIRED = EnumField("tenant_user_expired", label=_("租户用户-过期提醒"))
 
 
 class NotificationTemplate(BaseModel):
