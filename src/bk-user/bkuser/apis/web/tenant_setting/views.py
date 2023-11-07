@@ -122,11 +122,11 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
 
     def get_object(self) -> TenantUserValidityPeriodConfig:
         tenant_id = self.get_current_tenant_id()
-        account_validity_period_config = self.queryset.filter(tenant_id=tenant_id).first()
-        if not account_validity_period_config:
+        tenant_user_validity_period_config = self.queryset.filter(tenant_id=tenant_id).first()
+        if not tenant_user_validity_period_config:
             raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
 
-        return account_validity_period_config
+        return tenant_user_validity_period_config
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
@@ -165,7 +165,17 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
             valid_time=data["valid_time"],
             remind_before_expire=data["remind_before_expire"],
             enabled_notification_methods=data["enabled_notification_methods"],
-            notification_templates=[NotificationTemplate(**item) for item in data["notification_templates"]],
+            notification_templates=[
+                NotificationTemplate(
+                    method=template["method"],
+                    scene=template["scene"],
+                    title=template.get("title", None),
+                    sender=template["sender"],
+                    content=template["content"],
+                    content_html=template["content_html"],
+                )
+                for template in data["notification_templates"]
+            ],
         )
 
         TenantUserValidityPeriodConfigHandler.update_tenant_user_validity_period_config(
