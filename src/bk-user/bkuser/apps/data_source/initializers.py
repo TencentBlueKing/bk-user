@@ -48,7 +48,7 @@ class LocalDataSourceIdentityInfoInitializer:
         if not data_source.is_local:
             return
 
-        self.plugin_cfg = data_source.get_plugin_cfg(with_sensitive=True)
+        self.plugin_cfg = data_source.get_plugin_cfg()
         assert isinstance(self.plugin_cfg, LocalDataSourcePluginConfig)
 
         if not self.plugin_cfg.enable_account_password_login:

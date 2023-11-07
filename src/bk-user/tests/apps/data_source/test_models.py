@@ -35,13 +35,6 @@ def test_get_plugin_config(local_ds_with_sensitive):
     plugin_cfg = local_ds_with_sensitive.get_plugin_cfg()
 
     assert isinstance(plugin_cfg, LocalDataSourcePluginConfig)
-    assert plugin_cfg.password_initial.fixed_password == SENSITIVE_MASK  # type: ignore
-
-
-def test_get_plugin_config_with_sensitive(local_ds_with_sensitive):
-    plugin_cfg = local_ds_with_sensitive.get_plugin_cfg(with_sensitive=True)
-
-    assert isinstance(plugin_cfg, LocalDataSourcePluginConfig)
     assert plugin_cfg.password_initial.fixed_password == FAKE_PASSWORD  # type: ignore
 
 
@@ -56,8 +49,8 @@ def test_set_plugin_config(local_ds_plugin_cfg, bare_local_data_source):
     bare_local_data_source.set_plugin_cfg(plugin_cfg)
     assert get_items(bare_local_data_source.plugin_config, "password_initial.fixed_password") == SENSITIVE_MASK
 
-    plugin_cfg_with_sensitive = bare_local_data_source.get_plugin_cfg(with_sensitive=True)
-    assert plugin_cfg_with_sensitive.password_initial.fixed_password == FAKE_PASSWORD
+    plugin_cfg = bare_local_data_source.get_plugin_cfg()
+    assert plugin_cfg.password_initial.fixed_password == FAKE_PASSWORD  # type: ignore
 
     sensitive_info = DataSourceSensitiveInfo.objects.get(
         data_source=bare_local_data_source, key="password_initial.fixed_password"
@@ -73,8 +66,8 @@ def test_set_plugin_config_with_replace(local_ds_with_sensitive):
     local_ds_with_sensitive.set_plugin_cfg(plugin_cfg)
     assert get_items(local_ds_with_sensitive.plugin_config, "password_initial.fixed_password") == SENSITIVE_MASK
 
-    plugin_cfg_with_sensitive = local_ds_with_sensitive.get_plugin_cfg(with_sensitive=True)
-    assert plugin_cfg_with_sensitive.password_initial.fixed_password == FAKE_PASSWORD[::-1]
+    plugin_cfg = local_ds_with_sensitive.get_plugin_cfg()
+    assert plugin_cfg.password_initial.fixed_password == FAKE_PASSWORD[::-1]
 
     sensitive_info = DataSourceSensitiveInfo.objects.get(
         data_source=local_ds_with_sensitive, key="password_initial.fixed_password"
@@ -97,14 +90,3 @@ def test_set_plugin_config_empty_value(local_ds_plugin_cfg, bare_local_data_sour
     bare_local_data_source.set_plugin_cfg(plugin_cfg)
     assert get_items(bare_local_data_source.plugin_config, "password_initial.fixed_password") is None
     assert get_items(bare_local_data_source.plugin_config, "password_initial.force_change_at_first_login") is False
-
-
-def test_set_plugin_config_with_masked_cfg(local_ds_with_sensitive):
-    # 拿到的是有掩码的插件配置
-    plugin_cfg = local_ds_with_sensitive.get_plugin_cfg()
-    assert plugin_cfg.password_initial.fixed_password == SENSITIVE_MASK
-
-    # 那有掩码的插件配置去更新，不应该干掉数据库中已经存在的密码配置
-    local_ds_with_sensitive.set_plugin_cfg(plugin_cfg)
-    plugin_cfg_with_sensitive = local_ds_with_sensitive.get_plugin_cfg(with_sensitive=True)
-    assert plugin_cfg_with_sensitive.password_initial.fixed_password == FAKE_PASSWORD

@@ -50,7 +50,7 @@ class DataSourceSyncTaskRunner:
 
     def _initial_plugin(self, plugin_init_extra_kwargs: Dict[str, Any]):
         """初始化数据源插件"""
-        plugin_cfg = self.data_source.get_plugin_cfg(with_sensitive=True)
+        plugin_cfg = self.data_source.get_plugin_cfg()
 
         PluginCls = get_plugin_cls(self.data_source.plugin_id)  # noqa: N806
         self.plugin = PluginCls(plugin_cfg, **plugin_init_extra_kwargs)

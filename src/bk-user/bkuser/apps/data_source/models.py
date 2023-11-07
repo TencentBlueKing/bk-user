@@ -78,12 +78,11 @@ class DataSource(AuditedModel):
         """检查类型是否为本地数据源"""
         return self.plugin.id == DataSourcePluginEnum.LOCAL
 
-    def get_plugin_cfg(self, with_sensitive: bool = False) -> BasePluginConfig:
+    def get_plugin_cfg(self) -> BasePluginConfig:
         """获取插件配置"""
         plugin_cfg = self.plugin_config
-        if with_sensitive:
-            for info in DataSourceSensitiveInfo.objects.filter(data_source=self):
-                dictx.set_items(plugin_cfg, info.key, info.value)
+        for info in DataSourceSensitiveInfo.objects.filter(data_source=self):
+            dictx.set_items(plugin_cfg, info.key, info.value)
 
         PluginCfgCls = get_plugin_cfg_cls(self.plugin.id)  # noqa: N806
         return PluginCfgCls(**plugin_cfg)

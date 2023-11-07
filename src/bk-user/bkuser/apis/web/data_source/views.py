@@ -41,7 +41,7 @@ from bkuser.apis.web.data_source.serializers import (
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
@@ -184,6 +184,7 @@ class DataSourceRetrieveUpdateApi(
                 "plugin_id": data_source.plugin_id,
                 "tenant_id": self.get_current_tenant_id(),
                 "current_name": data_source.name,
+                "exists_sensitive_infos": DataSourceSensitiveInfo.objects.filter(data_source=data_source),
             },
         )
         slz.is_valid(raise_exception=True)
