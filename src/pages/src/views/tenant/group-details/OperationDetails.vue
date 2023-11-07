@@ -7,6 +7,7 @@
           <bk-form
             class="operation-content-form"
             ref="basicRef"
+            form-type="vertical"
             :model="formData"
             :rules="rulesBasicInfo"
           >
@@ -134,7 +135,7 @@ import MemberSelector from "./MemberSelector.vue";
 import useValidate from "@/hooks/use-validate";
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
-import { getDataSourcePlugins, randomPasswords } from '@/http/dataSourceFiles';
+import { randomPasswords } from '@/http/dataSourceFiles';
 import PhoneInput from '@/components/phoneInput.vue';
 
 interface TableItem {
@@ -510,12 +511,9 @@ const handleChange = () => {
 
 const handleRandomPassword = async () => {
   try {
-    const [currentPlugin] = (await getDataSourcePlugins()).data?.filter(item => item.id === 'local') || [];
-    if (currentPlugin) {
-      const passwordRes = await randomPasswords(currentPlugin);
-      formData.password_initial_config.fixed_password = passwordRes.data.password;
-      window.changeInput = true;
-    }
+    const passwordRes = await randomPasswords();
+    formData.password_initial_config.fixed_password = passwordRes.data.password;
+    window.changeInput = true;
   } catch (e) {
     console.warn(e);
   }
@@ -535,7 +533,7 @@ const handleRandomPassword = async () => {
     }
 
     .input-password {
-      width: 240px;
+      width: 380px;
       margin-left: 24px;
     }
   }

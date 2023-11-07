@@ -31,6 +31,18 @@ urlpatterns = [
         views.DataSourceTestConnectionApi.as_view(),
         name="data_source.test_connection",
     ),
+    # 数据源同步记录
+    path(
+        "sync-records/",
+        views.DataSourceSyncRecordListApi.as_view(),
+        name="data_source.sync_record.list",
+    ),
+    # 数据源同步记录日志详情
+    path(
+        "sync-records/<int:id>/",
+        views.DataSourceSyncRecordRetrieveApi.as_view(),
+        name="data_source.sync_record.retrieve",
+    ),
     # 数据源更新/获取
     path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),
     # 数据源启/停

@@ -46,7 +46,7 @@ const handleBack = () => {
 };
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
   .main-breadcrumbs {
     position: relative;
     z-index: 11;

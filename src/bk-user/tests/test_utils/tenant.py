@@ -37,9 +37,9 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
 
 
 def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser]) -> List[TenantUser]:
-    """
-    创建租户用户
-    """
+    """创建租户用户"""
+
+    # FIXME (su) existed_tenant_users 变量名不准确，且 data_source_users 数据不应该有冲突
     existed_tenant_users = TenantUser.objects.filter(tenant=tenant).values_list("data_source_user_id", flat=True)
 
     tenant_users = [
@@ -53,15 +53,13 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
         if user.id not in existed_tenant_users
     ]
     TenantUser.objects.bulk_create(tenant_users)
-    return list(TenantUser.objects.filter(tenant=tenant))
+    return TenantUser.objects.filter(tenant=tenant)
 
 
 def create_tenant_departments(
     tenant: Tenant, data_source_departments: List[DataSourceDepartment]
 ) -> List[TenantDepartment]:
-    """
-    创建租户部门
-    """
+    """创建租户部门"""
 
     tenant_departments = [
         TenantDepartment(
@@ -72,4 +70,4 @@ def create_tenant_departments(
         for department in data_source_departments
     ]
     TenantDepartment.objects.bulk_create(tenant_departments)
-    return list(TenantDepartment.objects.filter(tenant=tenant))
+    return TenantDepartment.objects.filter(tenant=tenant)

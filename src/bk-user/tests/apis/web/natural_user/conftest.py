@@ -34,6 +34,7 @@ def data_source_departments(default_tenant) -> List[DataSourceDepartment]:
     """
     根据测试数据源，创建测试数据源部门
     """
+    # FIXME (su) 数据源尽量随机，不要使用默认数据源，本文件有多处需要修改
     data_source = DataSource.objects.get(
         owner_tenant_id=default_tenant.id,
         name=f"{default_tenant.id}-default-local",

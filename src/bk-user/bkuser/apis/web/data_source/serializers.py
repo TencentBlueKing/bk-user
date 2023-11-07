@@ -21,7 +21,8 @@ from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
-from bkuser.apps.sync.constants import DataSourceSyncPeriod
+from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
+from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.plugins.base import get_plugin_cfg_cls, is_plugin_exists
@@ -188,6 +189,10 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
 
     def validate_name(self, name: str) -> str:
+        # 自己目前在用的名字是可以的，不然每次更新都要修改名字
+        if name == self.context["current_name"]:
+            return name
+
         if DataSource.objects.filter(name=name).exists():
             raise ValidationError(_("同名数据源已存在"))
 
@@ -297,7 +302,7 @@ class LocalDataSourceImportInputSLZ(serializers.Serializer):
 
     file = serializers.FileField(help_text="数据源用户信息文件（Excel 格式）")
     overwrite = serializers.BooleanField(help_text="允许对同名用户覆盖更新", default=False)
-    incremental = serializers.BooleanField(help_text="是否使用增量同步", default=False)
+    incremental = serializers.BooleanField(help_text="是否使用增量同步", default=True)
 
     def validate_file(self, file: UploadedFile) -> UploadedFile:
         if not file.name.endswith(".xlsx"):
@@ -315,3 +320,39 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
     task_id = serializers.CharField(help_text="任务 ID")
     status = serializers.CharField(help_text="任务状态")
     summary = serializers.CharField(help_text="任务执行结果概述")
+
+
+class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
+    data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
+    status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices(), required=False)
+
+
+class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="同步记录 ID")
+    data_source_id = serializers.IntegerField(help_text="数据源 ID")
+    data_source_name = serializers.SerializerMethodField(help_text="数据源名称")
+    status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
+    has_warning = serializers.BooleanField(help_text="是否有警告")
+    trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
+    operator = serializers.CharField(help_text="操作人")
+    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    duration = serializers.DurationField(help_text="持续时间")
+    extras = serializers.JSONField(help_text="额外信息")
+
+    def get_data_source_name(self, obj: DataSourceSyncTask) -> str:
+        return self.context["data_source_name_map"].get(obj.data_source_id)
+
+    def get_start_at(self, obj: DataSourceSyncTask) -> str:
+        return obj.start_at_display
+
+
+class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="同步记录 ID")
+    status = serializers.CharField(help_text="数据源同步状态")
+    has_warning = serializers.BooleanField(help_text="是否有警告")
+    start_at = serializers.SerializerMethodField(help_text="开始时间")
+    duration = serializers.DurationField(help_text="持续时间")
+    logs = serializers.CharField(help_text="同步日志")
+
+    def get_start_at(self, obj: DataSourceSyncTask) -> str:
+        return obj.start_at_display

@@ -141,11 +141,13 @@ class LocalDataSourceDataParser:
             if (leaders := info.get("leaders")) and username in [ld.strip() for ld in leaders.split(",")]:
                 raise InvalidLeader(_("待导入文件中用户 {} 不能是自己的直接上级").format(username))
 
-            all_usernames.append(username)
+            all_usernames.append(username.lower())
 
-        # 8. 检查用户名是否有重复的
+        # 8. 检查用户名是否有重复的（以大小写不敏感的方式检查）
         if duplicate_usernames := [n for n, cnt in Counter(all_usernames).items() if cnt > 1]:
-            raise DuplicateUsername(_("待导入文件中存在重复用户名：{}").format(", ".join(duplicate_usernames)))
+            raise DuplicateUsername(
+                _("待导入文件中存在重复用户名：{}（该检查大小写不敏感）").format(", ".join(duplicate_usernames))
+            )  # noqa: E501
 
     def _parse_departments(self):
         organizations = set()

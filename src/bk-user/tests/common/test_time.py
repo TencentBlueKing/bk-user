@@ -8,27 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Optional
+import datetime
 
-from pydantic import BaseModel
+from bkuser.common.time import datetime_to_display
+from django.utils import timezone
 
-from bkuser.apps.data_source.constants import FieldMappingOperation
 
-
-class DataSourceUserFieldMapping(BaseModel):
-    """数据源用户字段映射"""
-
-    # 数据源原始字段
-    source_field: str
-    # 映射关系
-    mapping_operation: FieldMappingOperation
-    # 用户管理用户字段
-    target_field: str
-    # 表达式内容，仅映射关系为表达式时有效
-    expression: Optional[str] = None
-
-    def __str__(self):
-        if self.mapping_operation == FieldMappingOperation.DIRECT:
-            return f"{self.source_field} --> {self.target_field}"
-
-        return f"{self.source_field} --{self.expression}--> {self.target_field}"
+def test_format_datetime_for_display():
+    dt = datetime.datetime(2023, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+    assert datetime_to_display(dt) == "2023-10-01 08:00:00"

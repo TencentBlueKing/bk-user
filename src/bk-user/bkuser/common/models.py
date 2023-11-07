@@ -9,7 +9,8 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.db import models
-from django.utils import timezone
+
+from bkuser.common.time import datetime_to_display
 
 
 class TimestampedModel(models.Model):
@@ -21,14 +22,12 @@ class TimestampedModel(models.Model):
     @property
     def created_at_display(self):
         # 转换成本地时间
-        local_time = timezone.localtime(self.created_at)
-        return local_time.strftime("%Y-%m-%d %H:%M:%S")
+        return datetime_to_display(self.created_at)
 
     @property
     def updated_at_display(self):
         # 转换成本地时间
-        local_time = timezone.localtime(self.updated_at)
-        return local_time.strftime("%Y-%m-%d %H:%M:%S")
+        return datetime_to_display(self.updated_at)
 
     class Meta:
         abstract = True

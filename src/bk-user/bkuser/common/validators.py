@@ -13,32 +13,31 @@ import logging
 import phonenumbers
 from phonenumbers import UNKNOWN_REGION, NumberParseException, region_code_for_country_code
 
-from bkuser.common.constants import CHINESE_PHONE_LENGTH, CHINESE_REGION
-from bkuser.common.error_codes import error_codes
-
 logger = logging.getLogger(__name__)
 
 
-def validate_phone_with_country_code(phone: str, country_code: str):
+def validate_phone_with_country_code(phone: str, country_code: str) -> None:
+    """校验 phone 与 country_code 是否匹配且合法
+
+    :raise ValueError: country_code 或 phone 不合法
+    """
     try:
         region = region_code_for_country_code(int(country_code))
 
-        if region == UNKNOWN_REGION:
-            raise error_codes.PHONE_PARSE_ERROR.f("手机地区码 {} : 未知地区码".format(country_code))  # noqa: TRY301
+    except Exception:
+        raise ValueError(f"parse phone country code [{country_code}] to region failed!")
 
-    except ValueError:
-        logger.debug("failed to parse phone_country_code: %s, ", country_code)
-        raise error_codes.PHONE_PARSE_ERROR.f("手机地区码 {} 解析异常".format(country_code))
+    # 解析出未知区号
+    if region == UNKNOWN_REGION:
+        raise ValueError("unknown phone country code: {}".format(country_code))
 
     # phonenumbers库在验证号码的时：过短会解析为有效号码，超过250的字节才算超长
     # =》所以这里需要显式做中国号码的长度校验
-    if region == CHINESE_REGION and len(phone) != CHINESE_PHONE_LENGTH:
-        raise error_codes.PHONE_PARSE_ERROR.f("手机号 {} 长度异常".format(phone))
+    # 特殊检查：中国手机号强制要求必须是 11 位
+    if region == "CN" and len(phone) != 11:  # noqa: PLR2004
+        raise ValueError(f"chinese phone number must be 11 digits, {phone} is invalid")
 
     try:
-        # 按照指定地区码解析手机号
         phonenumbers.parse(phone, region)
-
-    except NumberParseException:  # pylint: disable=broad-except
-        logger.debug("failed to parse phone number: %s", phone)
-        raise error_codes.PHONE_PARSE_ERROR.f("手机号{}-{} 解析异常".format(country_code, phone))
+    except NumberParseException:
+        raise ValueError(f"parse phone number [{phone}] with country code [{country_code}] region [{region}] failed!")

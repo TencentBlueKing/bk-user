@@ -31,6 +31,9 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
     DataSourceSwitchStatusOutputSLZ,
+    DataSourceSyncRecordListOutputSLZ,
+    DataSourceSyncRecordRetrieveOutputSLZ,
+    DataSourceSyncRecordSearchInputSLZ,
     DataSourceTestConnectionInputSLZ,
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
@@ -42,6 +45,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
+from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.common.error_codes import error_codes
@@ -179,6 +183,7 @@ class DataSourceRetrieveUpdateApi(
             context={
                 "plugin_id": data_source.plugin_id,
                 "tenant_id": self.get_current_tenant_id(),
+                "current_name": data_source.name,
             },
         )
         slz.is_valid(raise_exception=True)
@@ -294,6 +299,9 @@ class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView
     def get(self, request, *args, **kwargs):
         """导出指定的本地数据源用户数据（Excel 格式）"""
         data_source = self.get_object()
+        if data_source.status != DataSourceStatus.ENABLED:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
+
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅能导出本地数据源数据"))
 
@@ -317,6 +325,9 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         data = slz.validated_data
 
         data_source = self.get_object()
+        if data_source.status != DataSourceStatus.ENABLED:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
+
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源支持导入功能"))
 
@@ -340,7 +351,9 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
             plugin_init_extra_kwargs = {"workbook": workbook}
             task = DataSourceSyncManager(data_source, options).execute(plugin_init_extra_kwargs)
         except Exception as e:  # pylint: disable=broad-except
-            logger.exception("本地数据源导入失败")
+            # Q: 为什么不包装一层 DataSourceSyncError 而是捕获 Exception？
+            # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
+            logger.exception("本地数据源 %s 导入失败", data_source.id)
             raise error_codes.DATA_SOURCE_IMPORT_FAILED.f(str(e))
 
         return Response(
@@ -361,6 +374,9 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
     def post(self, request, *args, **kwargs):
         """触发数据源同步任务"""
         data_source = self.get_object()
+        if data_source.status != DataSourceStatus.ENABLED:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
+
         if data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("本地数据源不支持同步，请使用导入功能"))
 
@@ -373,9 +389,69 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             trigger=SyncTaskTrigger.MANUAL,
         )
 
-        task = DataSourceSyncManager(data_source, options).execute()
+        try:
+            task = DataSourceSyncManager(data_source, options).execute()
+        except Exception as e:  # pylint: disable=broad-except
+            # Q: 为什么不包装一层 DataSourceSyncError 而是捕获 Exception？
+            # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
+            logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
+            raise error_codes.CREATE_DATA_SOURCE_SYNC_TASK_FAILED.f(str(e))
+
         return Response(
             DataSourceImportOrSyncOutputSLZ(
                 instance={"task_id": task.id, "status": task.status, "summary": task.summary}
             ).data
         )
+
+
+class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """数据源同步记录列表"""
+
+    serializer_class = DataSourceSyncRecordListOutputSLZ
+
+    def get_queryset(self):
+        slz = DataSourceSyncRecordSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        queryset = DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        if data_source_id := data.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
+        if status := data.get("status"):
+            queryset = queryset.filter(status=status)
+
+        return queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["data_source_name_map"] = {
+            ds.id: ds.name for ds in DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
+        }
+        return context
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源更新记录",
+        query_serializer=DataSourceSyncRecordSearchInputSLZ(),
+        responses={status.HTTP_200_OK: DataSourceSyncRecordListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
+    """数据源同步记录详情"""
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源更新日志",
+        responses={status.HTTP_200_OK: DataSourceSyncRecordRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return Response(DataSourceSyncRecordRetrieveOutputSLZ(instance=self.get_object()).data)

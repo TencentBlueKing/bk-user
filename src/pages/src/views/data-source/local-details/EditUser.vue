@@ -140,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, defineProps, reactive, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import phoneInput from '@/components/phoneInput.vue';
 import useValidate from '@/hooks/use-validate';
@@ -239,42 +239,49 @@ const leadersParams = reactive({
   pageSize: 10,
 });
 
-const changeCountryCode = async (code: string) => {
-  formData.phone_country_code = code;
+onMounted(async () => {
   const departments = await getDataSourceDepartments(departmentsParams);
   const leaders = await getDataSourceLeaders(leadersParams);
   state.departments = departments.data.results;
   departmentsCount.value = departments.data.count;
-  state.leaders = leaders.data.results;
+  state.leaders = leaders.data.results.filter(item => item.id !== props.currentId);
   leadersCount.value = leaders.data.count;
+});
+
+const changeCountryCode = (code: string) => {
+  formData.phone_country_code = code;
 };
 
 const departmentsScrollEnd = () => {
-  if (departmentsParams.name || departmentsCount.value <= (departmentsParams.page * 10)) return;
-  scrollLoading.value = true;
-  departmentsParams.page += 1;
-  getDataSourceDepartments(departmentsParams).then((res) => {
-    state.departments.push(...res.data.results.filter(item => item));
-    scrollLoading.value = false;
-  })
-    .catch((e) => {
-      console.warn(e);
+  if (departmentsCount.value > (departmentsParams.page * 10)) {
+    scrollLoading.value = true;
+    departmentsParams.page += 1;
+    getDataSourceDepartments(departmentsParams).then((res) => {
+      state.departments.push(...res.data.results.filter(item => item));
+      departmentsCount.value = res.data.count;
       scrollLoading.value = false;
-    });
+    })
+      .catch((e) => {
+        console.warn(e);
+        scrollLoading.value = false;
+      });
+  }
 };
 
 const leadersScrollEnd = () => {
-  if (leadersParams.keyword || leadersCount.value <= (leadersParams.page * 10)) return;
-  scrollLoading.value = true;
-  leadersParams.page += 1;
-  getDataSourceLeaders(leadersParams).then((res) => {
-    state.leaders.push(...res.data.results.filter(item => item));
-    scrollLoading.value = false;
-  })
-    .catch((e) => {
-      console.warn(e);
+  if (leadersCount.value > (leadersParams.page * 10)) {
+    scrollLoading.value = true;
+    leadersParams.page += 1;
+    getDataSourceLeaders(leadersParams).then((res) => {
+      state.leaders.push(...res.data.results.filter(item => item.id !== props.currentId));
+      leadersCount.value = res.data.count;
       scrollLoading.value = false;
-    });
+    })
+      .catch((e) => {
+        console.warn(e);
+        scrollLoading.value = false;
+      });
+  }
 };
 
 const handleDelete = () => {
@@ -309,18 +316,28 @@ const handleSubmit = async () => {
   window.changeInput = false;
 };
 
-const searchDepartments = async (value: string) => {
+const searchDepartments = (value: string) => {
   departmentsParams.name = value;
   departmentsParams.page = 1;
-  const departments = await getDataSourceDepartments(departmentsParams);
-  state.departments = departments.data.results;
+  getDataSourceDepartments(departmentsParams).then((res) => {
+    state.departments = res.data.results;
+    departmentsCount.value = res.data.count;
+  })
+    .catch((e) => {
+      console.warn(e);
+    });
 };
 
-const searchLeaders = async (value: string) => {
+const searchLeaders = (value: string) => {
   leadersParams.keyword = value;
   leadersParams.page = 1;
-  const leaders = await getDataSourceLeaders(leadersParams);
-  state.leaders = leaders.data.results;
+  getDataSourceLeaders(leadersParams).then((res) => {
+    state.leaders = res.data.results.filter(item => item.id !== props.currentId);
+    leadersCount.value = res.data.count;
+  })
+    .catch((e) => {
+      console.warn(e);
+    });
 };
 
 const handleChange = () => {
