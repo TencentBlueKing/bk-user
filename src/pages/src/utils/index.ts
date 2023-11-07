@@ -214,6 +214,10 @@ export const currentLimit = (top: number, pagination: any, rowHeight?: number) =
 // 同步周期
 export const SYNC_CONFIG_LIST = [
   {
+    value: 0,
+    label: '从不',
+  },
+  {
     value: 30,
     label: '每 30 分钟',
   },
@@ -244,10 +248,6 @@ export const SYNC_CONFIG_LIST = [
   {
     value: 30 * 24 * 60,
     label: '每 30 天',
-  },
-  {
-    value: 0,
-    label: '从不',
   },
 ];
 

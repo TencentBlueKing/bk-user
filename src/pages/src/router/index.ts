@@ -72,6 +72,16 @@ export default createRouter({
               component: () => import('@/views/data-source/LocalDataSource.vue'),
             },
             {
+              path: 'sync-records',
+              name: 'syncRecords',
+              meta: {
+                routeParentName: 'dataSource',
+                navName: '数据源管理',
+                activeMenu: 'local',
+              },
+              component: () => import('@/views/data-source/SyncRecords.vue'),
+            },
+            {
               path: 'other',
               name: 'other',
               meta: {
@@ -84,7 +94,7 @@ export default createRouter({
           ],
         },
         {
-          path: 'local-details/:id',
+          path: 'details/:id',
           name: 'dataConfDetails',
           meta: {
             routeParentName: 'dataSource',
@@ -94,7 +104,7 @@ export default createRouter({
           component: () => import('@/views/data-source/local-details/index.vue'),
         },
         {
-          path: 'new-local/:type/:id?',
+          path: 'config/:type/:id?',
           name: 'newLocal',
           meta: {
             routeParentName: 'dataSource',

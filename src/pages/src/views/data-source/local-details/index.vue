@@ -57,6 +57,7 @@ import UserInfo from './UserInfo.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import { changeSwitchStatus, getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http/dataSourceFiles';
+import router from '@/router/index';
 
 const route = useRoute();
 
@@ -98,6 +99,7 @@ const changeTab = (value) => {
 
 const handleSync = async () => {
   const res = await postOperationsSync(currentId.value);
+  router.push({ name: 'syncRecords' });
   const status = res.data?.status === 'failed' ? 'error' : 'success';
   Message({ theme: status, message: res.data.summary });
 };

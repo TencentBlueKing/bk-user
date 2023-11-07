@@ -105,8 +105,8 @@ export const randomPasswords = () => http.post('/api/v1/web/data-sources/random-
  * 数据源更新记录
  */
 export const getSyncRecords = (params: SyncRecordsParams) => {
-  const { page, pageSize } = params;
-  return http.get(`/api/v1/web/data-sources/sync-records/?page=${page}&page_size=${pageSize}`);
+  const { page, pageSize, status } = params;
+  return http.get(`/api/v1/web/data-sources/sync-records/?page=${page}&page_size=${pageSize}&status=${status}`);
 };
 
 /**
