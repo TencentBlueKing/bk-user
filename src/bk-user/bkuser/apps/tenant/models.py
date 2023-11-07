@@ -145,13 +145,13 @@ class TenantUserCustomField(TimestampedModel):
 class TenantUserValidityPeriodConfig(AuditedModel):
     """账号有效期-配置"""
 
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
+    tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
 
-    enabled_validity_period = models.BooleanField("是否启用", default=True)
+    enabled_validity_period = models.BooleanField("是否启用账户有效期", default=True)
     valid_time = models.IntegerField("有效期(单位：天)", default=-1)
     remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
-    enabled_notification_methods = models.JSONField("通知方式", default=dict)
-    notification_templates = models.JSONField("通知模板", default=dict)
+    enabled_notification_methods = models.JSONField("通知方式", default=list)
+    notification_templates = models.JSONField("通知模板", default=list)
 
 
 # class TenantUserSocialAccountRelation(TimestampedModel):

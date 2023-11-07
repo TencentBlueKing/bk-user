@@ -70,7 +70,6 @@ class ValidityPeriodNotificationTmplContextGenerator:
 
     def _gen_tenant_user_expiring_ctx(self) -> Dict[str, str]:
         """账号有效期-临期通知渲染参数"""
-        # FIXME (su) 提供修改密码的 URL（settings.BK_USER_URL + xxxx）
         return {
             "expired_at": self.user.account_expired_at_display,
             **self._gen_base_ctx(),
@@ -132,7 +131,6 @@ class TenantUserValidityPeriodNotifier:
             "send email to user %s, scene %s, title: %s", user.data_source_user.username, tmpl.scene, tmpl.title
         )
         content = self._render_tmpl(user, tmpl.content_html)
-        # FIXME (su) 修改为指定用户名
         # 根据继承与否，获取真实邮箱
         email = user.data_source_user.email if user.is_inherited_email else user.custom_email
         cmsi.send_mail([email], tmpl.sender, tmpl.title, content)  # type: ignore
@@ -140,7 +138,6 @@ class TenantUserValidityPeriodNotifier:
     def _send_sms(self, user: TenantUser, tmpl: NotificationTemplate):
         logger.info("send sms to user %s, scene %s", user.data_source_user.username, tmpl.scene)
         content = self._render_tmpl(user, tmpl.content)
-        # FIXME (su) 修改为指定用户名
         # 根据继承与否，获取真实手机号
         phone = user.data_source_user.phone if user.is_inherited_phone else user.custom_phone
         cmsi.send_sms([phone], content)

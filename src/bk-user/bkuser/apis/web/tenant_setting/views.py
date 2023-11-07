@@ -118,15 +118,8 @@ class TenantUserCustomFieldUpdateDeleteApi(
 class TenantUserValidityPeriodConfigRetrieveUpdateApi(
     ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView
 ):
-    queryset = TenantUserValidityPeriodConfig.objects.all()
-
-    def get_object(self) -> TenantUserValidityPeriodConfig:
-        tenant_id = self.get_current_tenant_id()
-        tenant_user_validity_period_config = self.queryset.filter(tenant_id=tenant_id).first()
-        if not tenant_user_validity_period_config:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
-
-        return tenant_user_validity_period_config
+    def get_queryset(self):
+        return TenantUserValidityPeriodConfig.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
@@ -136,7 +129,11 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         },
     )
     def get(self, request, *args, **kwargs):
-        instance = self.get_object()
+        instance = self.get_queryset().first()
+
+        if not instance:
+            raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
+
         slz = TenantUserValidityPeriodConfigOutputSLZ(instance)
         return Response(slz.data)
 
@@ -145,7 +142,7 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         operation_description="更新当前租户的账户有效期配置",
         request_body=TenantUserValidityPeriodConfigInputSLZ(),
         responses={
-            status.HTTP_200_OK: "",
+            status.HTTP_204_NO_CONTENT: "",
         },
     )
     def put(self, request, *args, **kwargs):
@@ -182,4 +179,4 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
             tenant_id, operator, tenant_user_validity_period_config
         )
 
-        return Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)

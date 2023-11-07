@@ -29,7 +29,7 @@ def send_tenant_user_expiring_notification():
     now = timezone.now()
 
     # 获取 租户-未过期用户 映射
-    tenant_ids = Tenant.objects.filter().values_list("id", flat=True)
+    tenant_ids = Tenant.objects.all().values_list("id", flat=True)
     tenant_users_map = {
         tenant_id: TenantUser.objects.filter(account_expired_at__gt=now.date(), tenant_id=tenant_id)
         for tenant_id in tenant_ids
@@ -51,6 +51,9 @@ def send_tenant_user_expiring_notification():
         should_notify_users = list(tenant_users.filter(account_expired_at__in=account_expired_at_conditions))
         # 发送通知
         logger.info("going to notify expiring users in tenant-%s, count: %s", tenant_id, len(should_notify_users))
+
+        if not should_notify_users:
+            return
 
         TenantUserValidityPeriodNotifier(tenant_id=tenant_id, scene=NotificationScene.TENANT_USER_EXPIRING).send(
             should_notify_users
@@ -76,6 +79,10 @@ def send_tenant_user_expired_notification():
         # 发送通知 过期
         logger.info("going to notify expired users in tenant-%s, count: %s", tenant_id, len(tenant_users))
 
+        should_notify_users = list(tenant_users)
+        if not should_notify_users:
+            return
+
         TenantUserValidityPeriodNotifier(tenant_id=tenant_id, scene=NotificationScene.TENANT_USER_EXPIRED).send(
-            list(tenant_users)
+            should_notify_users
         )
