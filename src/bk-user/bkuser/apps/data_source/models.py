@@ -79,7 +79,11 @@ class DataSource(AuditedModel):
         return self.plugin.id == DataSourcePluginEnum.LOCAL
 
     def get_plugin_cfg(self) -> BasePluginConfig:
-        """获取插件配置"""
+        """获取插件配置
+
+        注意：使用该方法获取到的配置将会包含敏感信息，不适合通过 API 暴露出去，仅可用于内部逻辑流转
+        API 要获取插件配置请使用 data_source.plugin_config，其中的敏感信息将会被 ******* 取代
+        """
         plugin_cfg = self.plugin_config
         for info in DataSourceSensitiveInfo.objects.filter(data_source=self):
             dictx.set_items(plugin_cfg, info.key, info.value)
