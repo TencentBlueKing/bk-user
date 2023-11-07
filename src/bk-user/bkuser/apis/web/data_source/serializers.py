@@ -20,7 +20,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import FieldMappingOperation
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
@@ -250,6 +250,7 @@ class RawDataSourceDepartmentSLZ(serializers.Serializer):
 
 
 class DataSourceTestConnectionInputSLZ(serializers.Serializer):
+    data_source_id = serializers.IntegerField(help_text="数据源 ID（仅更新时候需要）", required=False)
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
 
@@ -262,9 +263,23 @@ class DataSourceTestConnectionInputSLZ(serializers.Serializer):
         if not is_plugin_exists(plugin_id):
             raise ValidationError(_("数据源插件 {} 不存在").format(plugin_id))
 
+        plugin_config = attrs["plugin_config"]
+
+        if data_source_id := attrs.get("data_source_id"):
+            # 若是更新场景，前端可以通过提供数据源 ID，这里将检查提供的数据源是否属于当前用户所在租户
+            if not DataSource.objects.filter(id=data_source_id, owner_tenant_id=self.context["tenant_id"]).exists():
+                raise ValidationError(
+                    _("当前用户租户 {} 不存在 ID 为 {} 的数据源").format(self.context["tenant_id"], data_source_id),
+                )
+
+            # 若通过了数据源租户检查，则允许将 DB 中存在的敏感信息填充到配置中，并进行校验
+            for info in DataSourceSensitiveInfo.objects.filter(data_source_id=data_source_id):
+                if dictx.get_items(plugin_config, info.key) == SENSITIVE_MASK:
+                    dictx.set_items(plugin_config, info.key, info.value)
+
         PluginConfigCls = get_plugin_cfg_cls(plugin_id)  # noqa: N806
         try:
-            attrs["plugin_config"] = PluginConfigCls(**attrs["plugin_config"])
+            attrs["plugin_config"] = PluginConfigCls(**plugin_config)
         except PDValidationError as e:
             raise ValidationError(_("插件配置不合法：{}").format(stringify_pydantic_error(e)))
 

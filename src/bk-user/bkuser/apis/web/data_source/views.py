@@ -218,7 +218,7 @@ class DataSourceRandomPasswordApi(generics.CreateAPIView):
         return Response(DataSourceRandomPasswordOutputSLZ(instance={"password": passwd}).data)
 
 
-class DataSourceTestConnectionApi(generics.CreateAPIView):
+class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView):
     """数据源连通性测试"""
 
     serializer_class = DataSourceTestConnectionOutputSLZ
@@ -230,7 +230,10 @@ class DataSourceTestConnectionApi(generics.CreateAPIView):
         responses={status.HTTP_200_OK: DataSourceTestConnectionOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
-        slz = DataSourceTestConnectionInputSLZ(data=request.data)
+        slz = DataSourceTestConnectionInputSLZ(
+            data=request.data,
+            context={"tenant_id": self.get_current_tenant_id()},
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
