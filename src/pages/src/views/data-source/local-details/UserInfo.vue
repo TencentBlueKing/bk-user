@@ -2,11 +2,11 @@
   <bk-loading :loading="isLoading" class="user-info-wrapper user-scroll-y">
     <header>
       <div>
-        <bk-button theme="primary" class="mr8" @click="handleClick('add')">
-          <i class="user-icon icon-add-2 mr8" />
-          新建用户
-        </bk-button>
         <template v-if="pluginId === 'local'">
+          <bk-button theme="primary" class="mr8" @click="handleClick('add')">
+            <i class="user-icon icon-add-2 mr8" />
+            新建用户
+          </bk-button>
           <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
           <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
         </template>
@@ -54,7 +54,7 @@
           <span>{{ formatConvert(row.departments) }}</span>
         </template>
       </bk-table-column>
-      <bk-table-column label="操作">
+      <bk-table-column label="操作" v-if="pluginId === 'local'">
         <template #default="{ row }">
           <bk-button
             theme="primary"

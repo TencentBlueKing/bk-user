@@ -98,6 +98,7 @@ export interface LeadersParams {
 export interface TestConnectionParams {
   plugin_id: string,
   plugin_config: {},
+  data_source_id?: string,
 }
 
 /**
@@ -106,4 +107,5 @@ export interface TestConnectionParams {
 export interface SyncRecordsParams {
   page: number,
   pageSize: number,
+  status: string,
 }

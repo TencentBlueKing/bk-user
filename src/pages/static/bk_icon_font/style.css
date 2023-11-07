@@ -185,3 +185,6 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-import:before {
 	content: "\e13d";
 }
+.icon-canshu:before {
+	content: "\e13e";
+}
