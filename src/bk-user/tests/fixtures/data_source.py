@@ -13,7 +13,9 @@ from typing import Any, Dict
 import pytest
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.constants import NotificationMethod, NotificationScene, PasswordGenerateMethod
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 from tests.test_utils.helpers import generate_random_string
 from tests.test_utils.tenant import DEFAULT_TENANT
@@ -133,7 +135,7 @@ def bare_local_data_source(local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
         name=generate_random_string(),
         owner_tenant_id=DEFAULT_TENANT,
         plugin=local_ds_plugin,
-        plugin_config=local_ds_plugin_cfg,
+        plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
     )
 
 
@@ -179,7 +181,7 @@ def bare_general_data_source(general_ds_plugin_cfg, general_ds_plugin) -> DataSo
         name=generate_random_string(),
         owner_tenant_id=DEFAULT_TENANT,
         plugin=general_ds_plugin,
-        plugin_config=general_ds_plugin_cfg,
+        plugin_config=GeneralDataSourcePluginConfig(**general_ds_plugin_cfg),
         sync_config={"sync_period": 60},
     )
 

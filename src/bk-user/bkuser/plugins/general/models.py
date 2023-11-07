@@ -22,6 +22,7 @@ from bkuser.plugins.general.constants import (
     AuthMethod,
     PageSize,
 )
+from bkuser.plugins.models import BasePluginConfig
 
 
 class QueryParam(BaseModel):
@@ -63,8 +64,13 @@ class AuthConfig(BaseModel):
     password: str | None = None
 
 
-class GeneralDataSourcePluginConfig(BaseModel):
+class GeneralDataSourcePluginConfig(BasePluginConfig):
     """通用 HTTP 数据源插件配置"""
+
+    sensitive_fields = [
+        "auth_config.bearer_token",
+        "auth_config.password",
+    ]
 
     # 服务配置
     server_config: ServerConfig

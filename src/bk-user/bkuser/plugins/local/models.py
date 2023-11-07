@@ -26,6 +26,7 @@ from bkuser.plugins.local.constants import (
     NotificationScene,
     PasswordGenerateMethod,
 )
+from bkuser.plugins.models import BasePluginConfig
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 
@@ -143,8 +144,13 @@ class PasswordExpireConfig(BaseModel):
     notification: NotificationConfig
 
 
-class LocalDataSourcePluginConfig(BaseModel):
+class LocalDataSourcePluginConfig(BasePluginConfig):
     """本地数据源插件配置"""
+
+    # 敏感字段
+    sensitive_fields = [
+        "password_initial.fixed_password",
+    ]
 
     # 是否允许使用账密登录
     enable_account_password_login: bool
