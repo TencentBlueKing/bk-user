@@ -34,7 +34,6 @@ from bkuser.biz.tenant import (
     TenantHandler,
     TenantManagerWithoutID,
 )
-from bkuser.biz.tenant_setting import TenantUserValidityPeriodConfigHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.local.models import PasswordInitialConfig
 
@@ -103,11 +102,6 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         # 创建租户和租户管理员
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers, config)
-
-        # 创建租户完成后，初始化账号有效期设置
-        TenantUserValidityPeriodConfigHandler().init_tenant_user_validity_period_config(
-            tenant_id, request.user.username
-        )
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data)
 

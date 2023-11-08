@@ -14,6 +14,7 @@ from typing import Dict, List
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
@@ -23,8 +24,8 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.tenant.models import Tenant, TenantUser
-from bkuser.biz.tenant_setting import TenantUserValidityPeriodConfigHandler
+from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
+from bkuser.common.error_codes import error_codes
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -108,9 +109,10 @@ class DataSourceOrganizationHandler:
             tenant = Tenant.objects.get(id=tenant_id)
 
             # 创建租户用户
-            validity_period_config = TenantUserValidityPeriodConfigHandler.get_tenant_user_validity_period_config(
-                tenant_id=tenant_id
-            )
+            validity_period_config = TenantUserValidityPeriodConfig.objects.filter(tenant_id=tenant_id).first()
+            if not validity_period_config:
+                raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
+
             tenant_user = TenantUser(
                 data_source_user=user,
                 tenant=tenant,
@@ -119,9 +121,9 @@ class DataSourceOrganizationHandler:
             )
 
             # 根据配置初始化账号有效期
-            if validity_period_config.enabled_validity_period and validity_period_config.valid_time > 0:
+            if validity_period_config.enabled and validity_period_config.validity_period > 0:
                 tenant_user.account_expired_at = timezone.now() + datetime.timedelta(
-                    days=validity_period_config.valid_time
+                    days=validity_period_config.validity_period
                 )
             # 入库
             tenant_user.save()

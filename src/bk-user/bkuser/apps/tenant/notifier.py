@@ -115,7 +115,7 @@ class TenantUserValidityPeriodNotifier:
         return [
             NotificationTemplate(**tmpl)
             for tmpl in templates
-            if validity_period_config["scene"] == scene and tmpl["method"] in enabled_methods
+            if tmpl["scene"] == scene and tmpl["method"] in enabled_methods
         ]
 
     def _send_notifications(self, user: TenantUser):
@@ -127,7 +127,7 @@ class TenantUserValidityPeriodNotifier:
                 self._send_sms(user, tmpl)
 
     def _send_email(self, user: TenantUser, tmpl: NotificationTemplate):
-        logger.info(
+        logger.debug(
             "send email to user %s, scene %s, title: %s", user.data_source_user.username, tmpl.scene, tmpl.title
         )
         content = self._render_tmpl(user, tmpl.content_html)
@@ -136,7 +136,7 @@ class TenantUserValidityPeriodNotifier:
         cmsi.send_mail([email], tmpl.sender, tmpl.title, content)  # type: ignore
 
     def _send_sms(self, user: TenantUser, tmpl: NotificationTemplate):
-        logger.info("send sms to user %s, scene %s", user.data_source_user.username, tmpl.scene)
+        logger.debug("send sms to user %s, scene %s", user.data_source_user.username, tmpl.scene)
         content = self._render_tmpl(user, tmpl.content)
         # 根据继承与否，获取真实手机号
         phone = user.data_source_user.phone if user.is_inherited_phone else user.custom_phone

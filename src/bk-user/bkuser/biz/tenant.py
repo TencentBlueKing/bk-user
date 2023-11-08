@@ -18,7 +18,14 @@ from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceUser
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
+from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
+from bkuser.apps.tenant.models import (
+    Tenant,
+    TenantDepartment,
+    TenantManager,
+    TenantUser,
+    TenantUserValidityPeriodConfig,
+)
 from bkuser.biz.data_source import (
     DataSourceDepartmentHandler,
     DataSourceHandler,
@@ -289,6 +296,9 @@ class TenantHandler:
         with transaction.atomic():
             # 创建租户本身
             tenant = Tenant.objects.create(**tenant_info.model_dump())
+
+            # 创建租户完成后，初始化账号有效期设置
+            TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
 
             # 创建本地数据源
             data_source = DataSourceHandler.create_local_data_source_with_merge_config(

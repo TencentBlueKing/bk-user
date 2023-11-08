@@ -28,7 +28,7 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
     UserBuiltinField,
 )
-from bkuser.biz.tenant_setting import NotificationTemplate, TenantUserValidityPeriodConfigHandler, ValidityPeriodConfig
+from bkuser.biz.tenant_setting import NotificationTemplate
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
@@ -146,37 +146,37 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         },
     )
     def put(self, request, *args, **kwargs):
-        tenant_id = self.get_current_tenant_id()
+        instance = self.get_queryset().first()
 
         # 边界限制: 当前租户的管理才可做更新操作
         operator = request.user.username
-        if not TenantManager.objects.filter(tenant_id=tenant_id, tenant_user_id=operator).exists():
+        if not TenantManager.objects.filter(tenant_id=instance.tenant_id, tenant_user_id=operator).exists():
             raise error_codes.NO_PERMISSION
 
-        input_slz = TenantUserValidityPeriodConfigInputSLZ(data=request.data)
-        input_slz.is_valid(raise_exception=True)
+        slz = TenantUserValidityPeriodConfigInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
 
-        data = input_slz.validated_data
-        tenant_user_validity_period_config = ValidityPeriodConfig(
-            enabled_validity_period=data["enabled_validity_period"],
-            valid_time=data["valid_time"],
-            remind_before_expire=data["remind_before_expire"],
-            enabled_notification_methods=data["enabled_notification_methods"],
-            notification_templates=[
-                NotificationTemplate(
-                    method=template["method"],
-                    scene=template["scene"],
-                    title=template.get("title", None),
-                    sender=template["sender"],
-                    content=template["content"],
-                    content_html=template["content_html"],
-                )
-                for template in data["notification_templates"]
-            ],
-        )
+        data = slz.validated_data
+        # 校验模板
+        [
+            NotificationTemplate(
+                method=template["method"],
+                scene=template["scene"],
+                title=template.get("title"),
+                sender=template["sender"],
+                content=template["content"],
+                content_html=template["content_html"],
+            )
+            for template in data["notification_templates"]
+        ]
 
-        TenantUserValidityPeriodConfigHandler.update_tenant_user_validity_period_config(
-            tenant_id, operator, tenant_user_validity_period_config
-        )
+        instance.enabled = data["enabled"]
+        instance.valid_time = data["validity_period"]
+        instance.remind_before_expire = data["remind_before_expire"]
+        instance.enabled_notification_methods = data["enabled_notification_methods"]
+        instance.notification_templates = data["notification_templates"]
+        instance.updater = operator
+
+        instance.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

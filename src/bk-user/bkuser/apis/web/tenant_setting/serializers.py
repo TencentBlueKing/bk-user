@@ -176,8 +176,8 @@ class NotificationTemplatesInputSLZ(serializers.Serializer):
 
 
 class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
-    enabled_validity_period = serializers.BooleanField(help_text="是否启用账户有效期")
-    valid_time = serializers.IntegerField(help_text="账户有效期")
+    enabled = serializers.BooleanField(help_text="是否启用账户有效期")
+    validity_period = serializers.IntegerField(help_text="账户有效期")
     remind_before_expire = serializers.ListField(help_text="临过期提醒时间")
     enabled_notification_methods = serializers.ListField(help_text="通知方式")
     notification_templates = serializers.ListField(

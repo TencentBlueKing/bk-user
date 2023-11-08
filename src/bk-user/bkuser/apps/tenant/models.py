@@ -55,10 +55,10 @@ class TenantUser(TimestampedModel):
 
     # wx_userid/wx_openid 兼容旧版本迁移
     wx_userid = models.CharField("微信ID", null=True, blank=True, default="", max_length=64)
-    wx_openid = models.CharField("微信公众号OpenID", null=True, blank=True, default="", max_length=64)
+    wx_openid = models.CharField("微信公众号 用户OpenID", null=True, blank=True, default="", max_length=64)
 
     # 账号有效期相关
-    account_expired_at = models.DateField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
+    account_expired_at = models.DateTimeField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
 
     # 手机&邮箱相关：手机号&邮箱都可以继承数据源或自定义
     is_inherited_phone = models.BooleanField("是否继承数据源手机号", default=True)
@@ -147,8 +147,8 @@ class TenantUserValidityPeriodConfig(AuditedModel):
 
     tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
 
-    enabled_validity_period = models.BooleanField("是否启用账户有效期", default=True)
-    valid_time = models.IntegerField("有效期(单位：天)", default=-1)
+    enabled = models.BooleanField("是否启用账户有效期", default=True)
+    validity_period = models.IntegerField("有效期(单位：天)", default=-1)
     remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
     enabled_notification_methods = models.JSONField("通知方式", default=list)
     notification_templates = models.JSONField("通知模板", default=list)
