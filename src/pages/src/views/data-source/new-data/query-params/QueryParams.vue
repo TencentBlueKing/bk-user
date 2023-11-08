@@ -70,17 +70,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import useValidate from '@/hooks/use-validate';
 
 const validate = useValidate();
 
-const emit = defineEmits(['addParams', 'deleteParams', 'cancelParams', 'saveParams']);
+const emit = defineEmits(['saveParams']);
 const props = defineProps({
   paramsList: {
     type: Array,
     default: () => ([]),
+  },
+  currentId: {
+    type: Number,
   },
 });
 
@@ -93,6 +96,15 @@ const rules = {
   key: [validate.required],
   value: [validate.required],
 };
+
+onMounted(() => {
+  if (props.currentId) {
+    setTimeout(() => {
+      dataList.value = props.paramsList;
+      count.value = props.paramsList.length;
+    }, 500);
+  }
+});
 
 const handleShow = () => {
   isShow.value = true;
