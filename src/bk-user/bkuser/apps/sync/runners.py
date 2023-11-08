@@ -24,7 +24,7 @@ from bkuser.apps.sync.syncers import (
     TenantUserSyncer,
 )
 from bkuser.apps.tenant.models import Tenant
-from bkuser.plugins.base import get_plugin_cfg_cls, get_plugin_cls
+from bkuser.plugins.base import get_plugin_cls
 
 logger = logging.getLogger(__name__)
 
@@ -50,21 +50,25 @@ class DataSourceSyncTaskRunner:
 
     def _initial_plugin(self, plugin_init_extra_kwargs: Dict[str, Any]):
         """初始化数据源插件"""
-        PluginCfgCls = get_plugin_cfg_cls(self.data_source.plugin_id)  # noqa: N806
-        plugin_config = PluginCfgCls(**self.data_source.plugin_config)
+        plugin_cfg = self.data_source.get_plugin_cfg()
 
         PluginCls = get_plugin_cls(self.data_source.plugin_id)  # noqa: N806
-        self.plugin = PluginCls(plugin_config, **plugin_init_extra_kwargs)
+        self.plugin = PluginCls(plugin_cfg, **plugin_init_extra_kwargs)
 
     def _sync_departments(self, ctx: DataSourceSyncTaskContext):
         """同步部门信息"""
         departments = self.plugin.fetch_departments()
-        DataSourceDepartmentSyncer(ctx, self.task, self.data_source, departments).sync()
+        DataSourceDepartmentSyncer(ctx, self.data_source, departments).sync()
 
     def _sync_users(self, ctx: DataSourceSyncTaskContext):
         """同步用户信息"""
-        users = self.plugin.fetch_users()
-        DataSourceUserSyncer(ctx, self.task, self.data_source, users).sync()
+        DataSourceUserSyncer(
+            ctx=ctx,
+            data_source=self.data_source,
+            raw_users=self.plugin.fetch_users(),
+            overwrite=bool(self.task.extras.get("overwrite", False)),
+            incremental=bool(self.task.extras.get("incremental", False)),
+        ).sync()
 
     def _send_signal(self):
         """发送数据源同步完成信号，触发后续流程"""
@@ -90,8 +94,8 @@ class TenantSyncTaskRunner:
 
     def _sync_departments(self, ctx: TenantSyncTaskContext):
         """同步部门信息"""
-        TenantDepartmentSyncer(ctx, self.task, self.data_source, self.tenant).sync()
+        TenantDepartmentSyncer(ctx, self.data_source, self.tenant).sync()
 
     def _sync_users(self, ctx: TenantSyncTaskContext):
         """同步用户信息"""
-        TenantUserSyncer(ctx, self.task, self.data_source, self.tenant).sync()
+        TenantUserSyncer(ctx, self.data_source, self.tenant).sync()

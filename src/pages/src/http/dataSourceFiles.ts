@@ -8,6 +8,7 @@ import type {
   NewDataSourceUserParams,
   PutDataSourceParams,
   PutDataSourceUserParams,
+  SyncRecordsParams,
   TestConnectionParams,
 } from './types/dataSourceFiles';
 
@@ -99,3 +100,16 @@ export const postOperationsSync = (id: string) => http.post(`/api/v1/web/data-so
  * 生成数据源用户随机密码
  */
 export const randomPasswords = () => http.post('/api/v1/web/data-sources/random-passwords/');
+
+/**
+ * 数据源更新记录
+ */
+export const getSyncRecords = (params: SyncRecordsParams) => {
+  const { page, pageSize, status } = params;
+  return http.get(`/api/v1/web/data-sources/sync-records/?page=${page}&page_size=${pageSize}&status=${status}`);
+};
+
+/**
+ * 数据源更新日志
+ */
+export const getSyncLogs = (id: string) => http.get(`/api/v1/web/data-sources/sync-records/${id}/`);

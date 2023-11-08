@@ -14,11 +14,11 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
-from bkuser.common.error_codes import error_codes
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -114,11 +114,14 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
         # 不通过继承，则需校验手机号，custom_phone 必须存在
         if not attrs["is_inherited_phone"]:
             if not attrs.get("custom_phone"):
-                raise error_codes.VALIDATION_ERROR.f(_("自定义手机号码为必填项"))
+                raise ValidationError(_("自定义手机号码为必填项"))
 
-            validate_phone_with_country_code(
-                phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
-            )
+            try:
+                validate_phone_with_country_code(
+                    phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
+                )
+            except ValueError as e:
+                raise ValidationError(e)
 
         return attrs
 
@@ -130,6 +133,6 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
     def validate(self, attrs):
         # 不通过继承，custom_email 必须存在
         if not attrs["is_inherited_email"] and not attrs.get("custom_email"):
-            raise error_codes.VALIDATION_ERROR.f(_("自定义邮箱为必填项"))
+            raise ValidationError(_("自定义邮箱为必填项"))
 
         return attrs

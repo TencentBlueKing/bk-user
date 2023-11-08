@@ -70,7 +70,7 @@ class DataSourceHandler:
             name=data_source_name,
             owner_tenant_id=owner_tenant_id,
             plugin=DataSourcePlugin.objects.get(id=plugin_id),
-            plugin_config=plugin_config.model_dump(),
+            plugin_config=plugin_config,
         )
 
 

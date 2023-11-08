@@ -98,4 +98,14 @@ export interface LeadersParams {
 export interface TestConnectionParams {
   plugin_id: string,
   plugin_config: {},
+  data_source_id?: string,
+}
+
+/**
+ * 数据源更新记录参数
+ */
+export interface SyncRecordsParams {
+  page: number,
+  pageSize: number,
+  status: string,
 }

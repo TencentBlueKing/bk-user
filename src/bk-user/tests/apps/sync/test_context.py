@@ -172,8 +172,8 @@ class TestTenantSyncTaskContext:
 
     def test_with_records(self, default_tenant, tenant_sync_task, full_local_data_source):
         with TenantSyncTaskContext(tenant_sync_task) as ctx:
-            TenantDepartmentSyncer(ctx, tenant_sync_task, full_local_data_source, default_tenant).sync()
-            TenantUserSyncer(ctx, tenant_sync_task, full_local_data_source, default_tenant).sync()
+            TenantDepartmentSyncer(ctx, full_local_data_source, default_tenant).sync()
+            TenantUserSyncer(ctx, full_local_data_source, default_tenant).sync()
 
         assert tenant_sync_task.logs != ""
         assert tenant_sync_task.status == SyncTaskStatus.SUCCESS

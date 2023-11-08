@@ -24,15 +24,20 @@
           </bk-dropdown-menu>
         </template>
       </bk-dropdown>
-      <bk-input
-        class="header-right"
-        v-model="searchVal"
-        placeholder="搜索数据源名称"
-        type="search"
-        clearable
-        @enter="handleEnter"
-        @clear="handleClear"
-      />
+      <div class="header-right">
+        <bk-input
+          v-model="searchVal"
+          placeholder="搜索数据源名称"
+          type="search"
+          clearable
+          @enter="handleEnter"
+          @clear="handleClear"
+        />
+        <bk-button text theme="primary" @click="handleUpdateRecord">
+          <i class="user-icon icon-lishijilu" />
+          数据更新记录
+        </bk-button>
+      </div>
     </header>
     <bk-loading :loading="state.isLoading">
       <bk-table
@@ -49,7 +54,7 @@
             :is-search-empty="state.isEmptySearch"
             :is-data-error="state.isDataError"
             @handleEmpty="handleClear"
-            @handleUpdate="fetchDataSourceList"
+            @handleUpdate="handleUpdateRecord"
           />
         </template>
         <bk-table-column prop="name" label="数据源名称">
@@ -81,17 +86,37 @@
           </template>
         </bk-table-column>
         <bk-table-column prop="updated_at" label="更新时间"></bk-table-column>
+        <bk-table-column label="操作">
+          <template #default="{ row }">
+            <span v-bk-tooltips="{
+              content: '本地数据源不支持同步，请到详情页使用导入功能',
+              distance: 20,
+              disabled: row.plugin_id !== 'local',
+            }">
+              <bk-button
+                text
+                theme="primary"
+                style="margin-right: 8px;"
+                :disabled="row.plugin_id === 'local'"
+                @click="handleSync(row)"
+              >
+                一键同步
+              </bk-button>
+            </span>
+          </template>
+        </bk-table-column>
       </bk-table>
     </bk-loading>
   </div>
 </template>
 
 <script setup lang="ts">
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { onMounted, reactive, ref } from 'vue';
 
 import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
-import { getDataSourceList, getDataSourcePlugins } from '@/http/dataSourceFiles';
+import { getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http/dataSourceFiles';
 import router from '@/router/index';
 import { useMainViewStore } from '@/store/mainView';
 import { dataSourceStatus } from '@/utils';
@@ -156,8 +181,8 @@ const handleClear = () => {
 };
 
 const handleFilter = ({ checked }) => {
-  if (!checked[0]) return state.isDataEmpty = false;
-  state.isDataEmpty = !state.list.some(item => item.status === checked[0]);
+  if (checked.length === 0) return state.isDataEmpty = false;
+  state.isDataEmpty = !state.list.some(item => checked.includes(item.status));
 };
 
 function handleClick(item) {
@@ -177,13 +202,24 @@ function newDataSource(item) {
     },
   });
 }
+
+const handleUpdateRecord = async () => {
+  router.push({ name: 'syncRecords' });
+};
+
+const handleSync = async (row) => {
+  const res = await postOperationsSync(row.id);
+  router.push({ name: 'syncRecords' });
+  const status = res.data?.status === 'failed' ? 'error' : 'success';
+  Message({ theme: status, message: res.data.summary });
+};
 </script>
 
 <style lang="less" scoped>
 .user-info-wrapper {
   width: 100%;
   height: calc(100vh - 140px);
-  padding: 24px;
+  padding: 16px 24px;
 
   header {
     display: flex;
@@ -192,7 +228,21 @@ function newDataSource(item) {
     margin-bottom: 16px;
 
     .header-right {
-      width: 400px;
+      display: flex;
+      align-items: center;
+
+      .bk-input {
+        width: 400px;
+      }
+
+      .bk-button {
+        margin-left: 20px;
+        font-size: 14px;
+
+        .icon-lishijilu {
+          margin-right: 8px;
+        }
+      }
     }
   }
 

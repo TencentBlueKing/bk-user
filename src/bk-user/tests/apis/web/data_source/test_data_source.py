@@ -13,10 +13,12 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import DataSourceStatus, FieldMappingOperation
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.constants import PasswordGenerateMethod
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from django.urls import reverse
 from rest_framework import status
 
@@ -37,7 +39,7 @@ def data_source(request, local_ds_plugin, local_ds_plugin_cfg) -> DataSource:
         name=generate_random_string(),
         owner_tenant_id=tenant_id,
         plugin=local_ds_plugin,
-        plugin_config=local_ds_plugin_cfg,
+        plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
     )
 
 
@@ -384,6 +386,43 @@ class TestDataSourceUpdateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert resp.data["message"] == "参数校验不通过: 当前数据源类型必须提供同步配置"
 
+    def test_update_with_sensitive_mask(
+        self, api_client, bare_local_data_source, local_ds_plugin_cfg, field_mapping, sync_config
+    ):
+        """更新时候带上值为 ******* 的敏感字段，且之前已经在 DB 中有初始化过"""
+        local_ds_plugin_cfg["password_initial"]["generate_method"] = PasswordGenerateMethod.FIXED
+        local_ds_plugin_cfg["password_initial"]["fixed_password"] = "*******"
+        DataSourceSensitiveInfo.objects.create(
+            data_source=bare_local_data_source, key="password_initial.fixed_password", value="Pa-@-114514-2887"
+        )
+        resp = api_client.put(
+            reverse("data_source.retrieve_update", kwargs={"id": bare_local_data_source.id}),
+            data={
+                "name": generate_random_string(),
+                "plugin_config": local_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+                "sync_config": sync_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_update_with_sensitive_mask_but_not_init(
+        self, api_client, bare_local_data_source, local_ds_plugin_cfg, field_mapping, sync_config
+    ):
+        """更新时候带上值为 ******* 的敏感字段，但是之前没有在 DB 中有初始化过"""
+        local_ds_plugin_cfg["password_initial"]["generate_method"] = PasswordGenerateMethod.FIXED
+        local_ds_plugin_cfg["password_initial"]["fixed_password"] = "*******"
+        resp = api_client.put(
+            reverse("data_source.retrieve_update", kwargs={"id": bare_local_data_source.id}),
+            data={
+                "name": generate_random_string(),
+                "plugin_config": local_ds_plugin_cfg,
+                "field_mapping": field_mapping,
+                "sync_config": sync_config,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
 
 class TestDataSourceRetrieveApi:
     def test_retrieve(self, api_client, data_source):
@@ -436,6 +475,10 @@ class TestDataSourceSyncRecordApi:
             "duration",
             "extras",
         }
+
+    def test_list_with_filter(self, api_client, data_source_sync_tasks):
+        resp = api_client.get(reverse("data_source.sync_record.list"), data={"status": "success"})
+        assert len(resp.data["results"]) == 1  # noqa: PLR2004
 
     def test_retrieve(self, api_client, data_source_sync_tasks):
         success_task = data_source_sync_tasks[0]

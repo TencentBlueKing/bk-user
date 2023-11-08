@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict, List
+from typing import Any, ClassVar, Dict, List
 
 from pydantic import BaseModel
 
@@ -19,6 +19,16 @@ class PluginMetadata(BaseModel):
     id: str
     name: str
     description: str
+
+
+class BasePluginConfig(BaseModel):
+    """插件配置基类"""
+
+    # 注：敏感字段声明有以下规范
+    # 字段形式如: auth_config.password，
+    # 字段类型为 str 或 (str | None)
+    # 字段路径中不支持列表下标，只能是字典 key
+    sensitive_fields: ClassVar[List[str]] = []
 
 
 class RawDataSourceUser(BaseModel):

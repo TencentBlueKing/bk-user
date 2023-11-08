@@ -33,6 +33,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceSwitchStatusOutputSLZ,
     DataSourceSyncRecordListOutputSLZ,
     DataSourceSyncRecordRetrieveOutputSLZ,
+    DataSourceSyncRecordSearchInputSLZ,
     DataSourceTestConnectionInputSLZ,
     DataSourceTestConnectionOutputSLZ,
     DataSourceUpdateInputSLZ,
@@ -40,7 +41,7 @@ from bkuser.apis.web.data_source.serializers import (
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
@@ -183,6 +184,7 @@ class DataSourceRetrieveUpdateApi(
                 "plugin_id": data_source.plugin_id,
                 "tenant_id": self.get_current_tenant_id(),
                 "current_name": data_source.name,
+                "exists_sensitive_infos": DataSourceSensitiveInfo.objects.filter(data_source=data_source),
             },
         )
         slz.is_valid(raise_exception=True)
@@ -190,11 +192,12 @@ class DataSourceRetrieveUpdateApi(
 
         with transaction.atomic():
             data_source.name = data["name"]
-            data_source.plugin_config = data["plugin_config"]
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
             data_source.updater = request.user.username
-            data_source.save()
+            data_source.save(update_fields=["name", "field_mapping", "sync_config", "updater", "updated_at"])
+            # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
+            data_source.set_plugin_cfg(data["plugin_config"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -215,7 +218,7 @@ class DataSourceRandomPasswordApi(generics.CreateAPIView):
         return Response(DataSourceRandomPasswordOutputSLZ(instance={"password": passwd}).data)
 
 
-class DataSourceTestConnectionApi(generics.CreateAPIView):
+class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView):
     """数据源连通性测试"""
 
     serializer_class = DataSourceTestConnectionOutputSLZ
@@ -227,7 +230,10 @@ class DataSourceTestConnectionApi(generics.CreateAPIView):
         responses={status.HTTP_200_OK: DataSourceTestConnectionOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
-        slz = DataSourceTestConnectionInputSLZ(data=request.data)
+        slz = DataSourceTestConnectionInputSLZ(
+            data=request.data,
+            context={"tenant_id": self.get_current_tenant_id()},
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -409,7 +415,18 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     serializer_class = DataSourceSyncRecordListOutputSLZ
 
     def get_queryset(self):
-        return DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        slz = DataSourceSyncRecordSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        queryset = DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        if data_source_id := data.get("data_source_id"):
+            queryset = queryset.filter(data_source_id=data_source_id)
+
+        if status := data.get("status"):
+            queryset = queryset.filter(status=status)
+
+        return queryset
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -421,6 +438,7 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源更新记录",
+        query_serializer=DataSourceSyncRecordSearchInputSLZ(),
         responses={status.HTTP_200_OK: DataSourceSyncRecordListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):

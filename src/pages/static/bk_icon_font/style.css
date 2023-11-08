@@ -164,3 +164,27 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-excel:before {
 	content: "\e132";
 }
+.icon-http:before {
+	content: "\e135";
+}
+.icon-xinzeng-qianse:before {
+	content: "\e138";
+}
+.icon-full-screen:before {
+	content: "\e139";
+}
+.icon-un-full-screen:before {
+	content: "\e13b";
+}
+.icon-arrow-down:before {
+	content: "\e13a";
+}
+.icon-copy:before {
+	content: "\e13c";
+}
+.icon-import:before {
+	content: "\e13d";
+}
+.icon-canshu:before {
+	content: "\e13e";
+}

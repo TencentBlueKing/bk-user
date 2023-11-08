@@ -49,7 +49,9 @@ class LocalDataSourceIdentityInfoInitializer:
         if not data_source.is_local:
             return
 
-        self.plugin_cfg = LocalDataSourcePluginConfig(**data_source.plugin_config)
+        self.plugin_cfg = data_source.get_plugin_cfg()
+        assert isinstance(self.plugin_cfg, LocalDataSourcePluginConfig)
+
         if not self.plugin_cfg.enable_account_password_login:
             return
 
@@ -91,7 +93,7 @@ class LocalDataSourceIdentityInfoInitializer:
             return True
 
         # 是本地数据源，但是没开启账密登录的，不需要初始化
-        if not self.plugin_cfg.enable_account_password_login:
+        if not self.plugin_cfg.enable_account_password_login:  # type: ignore
             return True
 
         return False

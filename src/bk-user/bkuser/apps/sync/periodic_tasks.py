@@ -36,6 +36,8 @@ def build_and_run_data_source_sync_task(data_source_id: int):
         return
 
     sync_opts = DataSourceSyncOptions(
+        # 定时执行的任务，执行者为最后修改数据源配置的人
+        operator=data_source.updater,
         overwrite=True,
         incremental=False,
         # 注：现在就在异步任务中，不需要 async_run=True
