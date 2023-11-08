@@ -12,11 +12,10 @@ from django.conf import settings
 from django.db import models
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TenantFeatureFlag, UserFieldDataType
+from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantFeatureFlag, UserFieldDataType
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
-
-from .constants import TIME_ZONE_CHOICES
+from bkuser.common.time import datetime_to_display
 
 
 class Tenant(TimestampedModel):
@@ -80,7 +79,7 @@ class TenantUser(TimestampedModel):
 
     @property
     def account_expired_at_display(self) -> str:
-        return self.account_expired_at.strftime("%Y-%m-%d")
+        return datetime_to_display(self.account_expired_at)
 
 
 class TenantDepartment(TimestampedModel):

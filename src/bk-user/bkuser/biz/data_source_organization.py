@@ -109,8 +109,8 @@ class DataSourceOrganizationHandler:
             tenant = Tenant.objects.get(id=tenant_id)
 
             # 创建租户用户
-            validity_period_config = TenantUserValidityPeriodConfig.objects.filter(tenant_id=tenant_id).first()
-            if not validity_period_config:
+            cfg = TenantUserValidityPeriodConfig.objects.filter(tenant_id=tenant_id).first()
+            if not cfg:
                 raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
 
             tenant_user = TenantUser(
@@ -121,10 +121,8 @@ class DataSourceOrganizationHandler:
             )
 
             # 根据配置初始化账号有效期
-            if validity_period_config.enabled and validity_period_config.validity_period > 0:
-                tenant_user.account_expired_at = timezone.now() + datetime.timedelta(
-                    days=validity_period_config.validity_period
-                )
+            if cfg.enabled and cfg.validity_period > 0:
+                tenant_user.account_expired_at = timezone.now() + datetime.timedelta(days=cfg.validity_period)
             # 入库
             tenant_user.save()
         return user.id

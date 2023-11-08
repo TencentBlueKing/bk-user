@@ -96,7 +96,7 @@ class TenantUserValidityPeriodNotifier:
         try:
             for u in users:
                 self._send_notifications(u)
-        # TODO (su) 细化异常处理
+        # TODO 细化异常处理
         except Exception:
             logger.exception("send notification failed")
 
@@ -107,15 +107,13 @@ class TenantUserValidityPeriodNotifier:
             raise ValueError(_("通知场景 {} 未被支持".format(scene)))
 
         # 获取通知配置
-        validity_period_config = TenantUserValidityPeriodConfig.objects.get(tenant_id=self.tenant_id)
-        templates = validity_period_config.notification_templates
-        enabled_methods = validity_period_config.enabled_notification_methods
+        cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=self.tenant_id)
 
         # 返回场景匹配，且被声明启用的模板列表
         return [
             NotificationTemplate(**tmpl)
-            for tmpl in templates
-            if tmpl["scene"] == scene and tmpl["method"] in enabled_methods
+            for tmpl in cfg.notification_templates
+            if tmpl["scene"] == scene and tmpl["method"] in cfg.enabled_notification_methods
         ]
 
     def _send_notifications(self, user: TenantUser):

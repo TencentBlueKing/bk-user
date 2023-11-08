@@ -171,7 +171,7 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         ]
 
         instance.enabled = data["enabled"]
-        instance.valid_time = data["validity_period"]
+        instance.validity_period = data["validity_period"]
         instance.remind_before_expire = data["remind_before_expire"]
         instance.enabled_notification_methods = data["enabled_notification_methods"]
         instance.notification_templates = data["notification_templates"]
