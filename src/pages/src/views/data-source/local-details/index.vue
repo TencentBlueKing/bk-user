@@ -2,14 +2,10 @@
   <bk-loading :loading="isLoading">
     <MainBreadcrumbsDetails :subtitle="subtitle">
       <template #tag>
-        <bk-tag>
-          <template #icon>
-            <div class="data-source-type" v-for="item in typeList" :key="item">
-              <img v-if="item.id === pluginId && item.logo" :src="item.logo">
-              <span v-if="item.id === pluginId">{{ item.name }}</span>
-            </div>
-          </template>
-        </bk-tag>
+        <div class="data-source-type" v-for="item in typeList" :key="item">
+          <img v-if="item.id === pluginId && item.logo" :src="item.logo">
+          <span v-if="item.id === pluginId">{{ item.name }}</span>
+        </div>
       </template>
       <template #right>
         <div>
@@ -112,15 +108,20 @@ const handleSync = async () => {
 
 .data-source-type {
   display: flex;
+  height: 24px;
+  line-height: 24px;
+  background: #f0f1f5;
+  border-radius: 2px;
   align-items: center;
 
   img {
     width: 14px;
     height: 14px;
+    margin: 0 8px 0 10px;
   }
 
   span {
-    margin-left: 8px;
+    padding-right: 10px;
   }
 }
 </style>

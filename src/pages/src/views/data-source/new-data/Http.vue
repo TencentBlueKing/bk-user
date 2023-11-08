@@ -30,6 +30,7 @@
               @input="handleChange" />
           </bk-form-item>
           <QueryParams
+            :current-id="currentId"
             :params-list="serverConfigData.server_config.user_api_query_params"
             @saveParams="(list) => saveParams(list, 'user')" />
         </div>
@@ -42,6 +43,7 @@
               @input="handleChange" />
           </bk-form-item>
           <QueryParams
+            :current-id="currentId"
             :params-list="serverConfigData.server_config.department_api_query_params"
             @saveParams="(list) => saveParams(list, 'department')" />
         </div>
