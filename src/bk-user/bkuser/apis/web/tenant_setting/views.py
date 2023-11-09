@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
@@ -19,12 +20,15 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserCustomFieldUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
 )
+from bkuser.apps.permission.constants import PermAction
+from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.views import ExcludePutAPIViewMixin
 
 
 class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserFieldOutputSLZ
 
     @swagger_auto_schema(
@@ -45,6 +49,8 @@ class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
 
 class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="新建用户自定义字段",
@@ -68,6 +74,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
     CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView
 ):
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self):
         return TenantUserCustomField.objects.filter(tenant_id=self.get_current_tenant_id())

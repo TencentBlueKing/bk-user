@@ -166,7 +166,7 @@ layers = [
 name = "Apps Layers contract"
 type = "layers"
 layers = [
-    "bkuser.apps.sync",
+    "bkuser.apps.sync | bkuser.apps.permission",
     "bkuser.apps.tenant",
     "bkuser.apps.data_source | bkuser.apps.idp",
 ]

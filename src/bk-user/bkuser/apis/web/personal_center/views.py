@@ -12,6 +12,7 @@ from typing import Dict
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.personal_center.serializers import (
@@ -20,15 +21,17 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserEmailUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
 )
+from bkuser.apps.permission.constants import PermAction
+from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
-from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePutAPIViewMixin
 
 
 class NaturalUserTenantUserListApi(generics.ListAPIView):
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -70,6 +73,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     serializer_class = PersonalCenterTenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
@@ -78,22 +82,13 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: PersonalCenterTenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        instance: TenantUser = self.get_object()
-
-        # 获取当前登录的租户用户的自然人
-        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(request.user.username)
-
-        # 边界限制
-        # 该租户用户的数据源用户，不属于当前自然人
-        if instance.data_source_user_id not in nature_user.data_source_user_ids:
-            raise error_codes.NO_PERMISSION
-
-        return Response(PersonalCenterTenantUserRetrieveOutputSLZ(instance).data)
+        return Response(PersonalCenterTenantUserRetrieveOutputSLZ(self.get_object()).data)
 
 
 class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -102,33 +97,23 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         responses={status.HTTP_200_OK: ""},
     )
     def patch(self, request, *args, **kwargs):
-        instance: TenantUser = self.get_object()
-
-        # 获取当前登录的租户用户的自然人
-        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(request.user.username)
-
-        # 边界限制
-        # 该租户用户的数据源用户，不属于当前自然人
-        if instance.data_source_user_id not in nature_user.data_source_user_ids:
-            raise error_codes.NO_PERMISSION
-
         slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-
         data = slz.validated_data
+
         phone_info = TenantUserPhoneInfo(
             is_inherited_phone=data["is_inherited_phone"],
             custom_phone=data.get("custom_phone", ""),
             custom_phone_country_code=data["custom_phone_country_code"],
         )
-        TenantUserHandler.update_tenant_user_phone(instance, phone_info)
-
+        TenantUserHandler.update_tenant_user_phone(self.get_object(), phone_info)
         return Response()
 
 
 class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
@@ -137,23 +122,13 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         responses={status.HTTP_200_OK: ""},
     )
     def patch(self, request, *args, **kwargs):
-        instance: TenantUser = self.get_object()
-
-        # 获取当前登录的租户用户的自然人
-        nature_user = NatureUserHandler.get_nature_user_by_tenant_user_id(request.user.username)
-
-        # 边界限制
-        # 该租户用户的数据源用户，不属于当前自然人下的
-        if instance.data_source_user_id not in nature_user.data_source_user_ids:
-            raise error_codes.NO_PERMISSION
-
         slz = TenantUserEmailUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-
         data = slz.validated_data
-        email_info = TenantUserEmailInfo(
-            is_inherited_email=data["is_inherited_email"], custom_email=data.get("custom_email", "")
-        )
-        TenantUserHandler.update_tenant_user_email(instance, email_info)
 
+        email_info = TenantUserEmailInfo(
+            is_inherited_email=data["is_inherited_email"],
+            custom_email=data.get("custom_email", ""),
+        )
+        TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
         return Response()
