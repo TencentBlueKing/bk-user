@@ -16,8 +16,10 @@ from . import api_views, views
 urlpatterns = [
     # 登录入口
     path("", views.LoginView.as_view()),
+    # 登录小窗入口
+    path("plain/", views.LoginView.as_view()),
     # 前端页面（选择登录的用户）
-    path("pages/users", TemplateView.as_view(template_name="index.html")),
+    path("page/users/", TemplateView.as_view(template_name="index.html")),
     # ------------------------------------------ 租户 & 登录方式选择 ------------------------------------------
     # 租户配置
     path("tenant-global-settings/", views.TenantGlobalSettingRetrieveApi.as_view()),

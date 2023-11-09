@@ -201,6 +201,8 @@ BK_LOGIN_PLAIN_WINDOW_WIDTH = env.int("BK_LOGIN_PLAIN_WINDOW_WIDTH", default=415
 BK_LOGIN_PLAIN_WINDOW_HEIGHT = env.int("BK_LOGIN_PLAIN_WINDOW_HEIGHT", default=415)
 # 登录回调地址参数Key
 BK_LOGIN_CALLBACK_URL_PARAM_KEY = env.str("BK_LOGIN_CALLBACK_URL_PARAM_KEY", default="c_url")
+# 登录API URL
+BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login")
 
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")

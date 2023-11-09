@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 import time
-from functools import partial
 from typing import Dict, Tuple
 from urllib.parse import urlparse
 
@@ -161,15 +160,42 @@ def _http_request_only_20x(method: str, url: str, **kwargs) -> Tuple[bool, Dict]
 
 
 # 标准的 API 请求, JSON 响应
-http_get = partial(_http_request, "GET")
-http_post = partial(_http_request, "POST")
-http_put = partial(_http_request, "PUT")
-http_patch = partial(_http_request, "PATCH")
-http_delete = partial(_http_request, "DELETE")
+def http_get(url, **kwargs):
+    return _http_request(method="GET", url=url, **kwargs)
+
+
+def http_post(url, **kwargs):
+    return _http_request(method="POST", url=url, **kwargs)
+
+
+def http_put(url, **kwargs):
+    return _http_request(method="PUT", url=url, **kwargs)
+
+
+def http_patch(url, **kwargs):
+    return _http_request(method="PATCH", url=url, **kwargs)
+
+
+def http_delete(url, **kwargs):
+    return _http_request(method="DELETE", url=url, **kwargs)
+
 
 # 只允许 20x 的 API 请求，JSON响应
-http_get_20x = partial(_http_request_only_20x, "GET")
-http_post_20x = partial(_http_request_only_20x, "POST")
-http_put_20x = partial(_http_request_only_20x, "PUT")
-http_patch_20x = partial(_http_request_only_20x, "PATCH")
-http_delete_20x = partial(_http_request_only_20x, "DELETE")
+def http_get_20x(url, **kwargs):
+    return _http_request_only_20x(method="GET", url=url, **kwargs)
+
+
+def http_post_20x(url, **kwargs):
+    return _http_request_only_20x(method="POST", url=url, **kwargs)
+
+
+def http_put_20x(url, **kwargs):
+    return _http_request_only_20x(method="PUT", url=url, **kwargs)
+
+
+def http_patch_20x(url, **kwargs):
+    return _http_request_only_20x(method="PATCH", url=url, **kwargs)
+
+
+def http_delete_20x(url, **kwargs):
+    return _http_request_only_20x(method="DELETE", url=url, **kwargs)

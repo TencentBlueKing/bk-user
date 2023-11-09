@@ -10,8 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 from django.db import models
 
+from bklogin.common.models import TimestampedModel
 
-class BkToken(models.Model):
+
+class BkToken(TimestampedModel):
     """
     登录票据
     """

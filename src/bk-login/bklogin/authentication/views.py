@@ -117,6 +117,8 @@ class TenantRetrieveApi(View):
         """
         tenant_id = kwargs["tenant_id"]
         data = bk_user_api.get_tenant(tenant_id)
+        if data is None:
+            raise error_codes.OBJECT_NOT_FOUND.f(f"租户 {tenant_id} 不存在", replace=True)
 
         return APISuccessResponse(data={"id": data["id"], "name": data["name"], "logo": data["logo"]})
 
@@ -331,7 +333,7 @@ class IdpPluginDispatchView(View):
             # 记录支持登录的租户用户
             request.session[ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY] = tenant_users
             # 联邦认证则重定向到前端选择账号页面
-            return HttpResponseRedirect(redirect_to="pages/users")
+            return HttpResponseRedirect(redirect_to="page/users/")
 
         return self.wrap_plugin_error(
             plugin_error_context, plugin.dispatch_extension, action=action, http_method=http_method, request=request

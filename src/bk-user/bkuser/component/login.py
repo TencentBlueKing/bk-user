@@ -34,7 +34,7 @@ def _call_login_api(http_func, url_path, **kwargs):
         }
     )
 
-    url = urljoin(settings.BK_LOGIN_URL, url_path)
+    url = urljoin(settings.BK_LOGIN_API_URL, url_path)
 
     ok, resp_data = http_func(url, **kwargs)
     if not ok:
