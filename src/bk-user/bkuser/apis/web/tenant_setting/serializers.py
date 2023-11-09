@@ -16,10 +16,9 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.apps.tenant.constants import NotificationMethod, NotificationScene, UserFieldDataType
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.biz.tenant_setting import NotificationMethod
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +167,7 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
 
 class NotificationTemplatesInputSLZ(serializers.Serializer):
     method = serializers.ChoiceField(help_text="信息传递方式", choices=NotificationMethod.get_choices())
-    scene = serializers.CharField(help_text="通知类型")
+    scene = serializers.ChoiceField(help_text="通知类型", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
     sender = serializers.CharField(help_text="发送人")
     content = serializers.CharField(help_text="通知内容")

@@ -61,13 +61,13 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
             "sender": "蓝鲸智云",
             "content": (
                 "{{ username }}, 您好：\n "
-                + "您的蓝鲸智云平台账号将于 {{ expired_at }} 天后到期。"
+                + "您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。\n "
                 + "此邮件为系统自动发送，请勿回复。\n "
             ),
             "content_html": (
                 "<p>{{ username }}, 您好：</p>"
-                + "<p>您的蓝鲸智云平台账号将于 {{ expired_at }} 天后到期。"
+                + "<p>您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。</p>"
                 + "<p>此邮件为系统自动发送，请勿回复。</p>"
             ),
@@ -95,13 +95,13 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
             "sender": "蓝鲸智云",
             "content": (
                 "{{ username }}，您好：\n "
-                + "您的蓝鲸智云平台账号将于 {{ expired_at }} 天后到期。"
+                + "您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。\n "
                 + "该短信为系统自动发送，请勿回复。"
             ),
             "content_html": (
                 "<p>{{ username }}，您好：</p>"
-                + "<p>您的蓝鲸智云平台账号将于 {{ expired_at }} 天后到期。"
+                + "<p>您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
                 + "为避免影响使用，请尽快联系平台管理员进行续期。</p>"
                 + "<p>该短信为系统自动发送，请勿回复。</p>"
             ),

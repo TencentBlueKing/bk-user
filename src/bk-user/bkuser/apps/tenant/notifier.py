@@ -12,6 +12,7 @@ import logging
 from typing import Dict, List, Optional
 
 from django.template import Context, Template
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel, model_validator
 
@@ -70,8 +71,9 @@ class ValidityPeriodNotificationTmplContextGenerator:
 
     def _gen_tenant_user_expiring_ctx(self) -> Dict[str, str]:
         """账号有效期-临期通知渲染参数"""
+        remind_before_expire_day = self.user.account_expired_at - timezone.now()
         return {
-            "expired_at": self.user.account_expired_at_display,
+            "remind_before_expire_days": str(remind_before_expire_day.days),
             **self._gen_base_ctx(),
         }
 
@@ -125,7 +127,7 @@ class TenantUserValidityPeriodNotifier:
                 self._send_sms(user, tmpl)
 
     def _send_email(self, user: TenantUser, tmpl: NotificationTemplate):
-        logger.debug(
+        logger.info(
             "send email to user %s, scene %s, title: %s", user.data_source_user.username, tmpl.scene, tmpl.title
         )
         content = self._render_tmpl(user, tmpl.content_html)
@@ -134,7 +136,7 @@ class TenantUserValidityPeriodNotifier:
         cmsi.send_mail([email], tmpl.sender, tmpl.title, content)  # type: ignore
 
     def _send_sms(self, user: TenantUser, tmpl: NotificationTemplate):
-        logger.debug("send sms to user %s, scene %s", user.data_source_user.username, tmpl.scene)
+        logger.info("send sms to user %s, scene %s", user.data_source_user.username, tmpl.scene)
         content = self._render_tmpl(user, tmpl.content)
         # 根据继承与否，获取真实手机号
         phone = user.data_source_user.phone if user.is_inherited_phone else user.custom_phone
