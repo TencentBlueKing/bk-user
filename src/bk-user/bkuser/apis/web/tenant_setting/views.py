@@ -28,9 +28,12 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
     UserBuiltinField,
 )
+from bkuser.apps.tenant.periodic_tasks import send_tenant_user_expiring_notification
 from bkuser.biz.tenant_setting import NotificationTemplate
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
+
+send_tenant_user_expiring_notification()
 
 
 class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -147,6 +150,9 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         instance = self.get_queryset().first()
+
+        if not instance:
+            raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
 
         # 边界限制: 当前租户的管理才可做更新操作
         operator = request.user.username
