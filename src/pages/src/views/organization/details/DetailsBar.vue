@@ -311,7 +311,7 @@ export default {
           return false;
         }
         fieldInfo.holder = this.$t('请输入');
-        fieldInfo.value = fieldInfo.default;
+        fieldInfo.value = fieldInfo.type === 'multi_enum' ? JSON.parse(fieldInfo.default) : fieldInfo.default;
         fieldInfo.isError = false;
         return true;
       });
@@ -366,13 +366,18 @@ export default {
       this.profileInfoList = fieldsList.filter((fieldInfo) => {
         if (this.hiddenFields.includes(fieldInfo.key)) {
           return false;
-        } if (fieldInfo.key === 'telephone') {
+        }
+        if (fieldInfo.key === 'telephone') {
           fieldInfo.iso_code = this.currentProfile.iso_code || 'cn';
         }
         if (fieldInfo.editable) {
           fieldInfo.holder = this.$t('请输入');
         }
-        fieldInfo.value = this.currentProfile[fieldInfo.key];
+        if (fieldInfo.value === '--') {
+          fieldInfo.value = '';
+        } else {
+          fieldInfo.value = this.currentProfile[fieldInfo.key];
+        }
         fieldInfo.isError = false;
         return true;
       });
