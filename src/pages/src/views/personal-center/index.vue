@@ -12,7 +12,9 @@
         <div class="left-natural-user">
           <div class="natural-user">
             <i class="bk-sq-icon icon-personal-user" />
-            <span class="name">{{ currentNaturalUser.full_name }}</span>
+            <bk-overflow-title type="tips" class="name">
+              {{ currentNaturalUser.full_name }}
+            </bk-overflow-title>
             <bk-overflow-title type="tips" class="id">
               （{{ currentNaturalUser.id }}）
             </bk-overflow-title>
@@ -409,13 +411,14 @@ const changeCountryCode = (code: string) => {
         }
 
         .name {
+          max-width: 120px;
           margin-left: 8px;
           font-size: 14px;
           font-weight: 700;
         }
 
         .id {
-          max-width: 200px;
+          min-width: 120px;
           color: #979BA5;
         }
       }
