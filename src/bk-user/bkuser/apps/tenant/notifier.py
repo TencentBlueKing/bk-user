@@ -73,7 +73,7 @@ class ValidityPeriodNotificationTmplContextGenerator:
         """账号有效期-临期通知渲染参数"""
         remind_before_expire_day = self.user.account_expired_at - timezone.now()
         return {
-            "remind_before_expire_days": str(remind_before_expire_day.days),
+            "remind_before_expire_days": str(remind_before_expire_day.days + 1),
             **self._gen_base_ctx(),
         }
 
