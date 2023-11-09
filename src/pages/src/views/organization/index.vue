@@ -28,7 +28,7 @@
               @handleConfigDirectory="handleClickConfig"
               @addOrganization="addOrganization"
               @updateScroll="updateScroll"
-              @updateAcitveNode="updateAcitveNode" />
+              @updateActiveNode="updateActiveNode" />
           </div>
         </div>
       </div>
@@ -769,7 +769,7 @@ export default {
     getNodeColor() {
       this.currentNode = document.getElementsByClassName('tree-drag-node')[0];
     },
-    updateAcitveNode() {
+    updateActiveNode() {
       this.$nextTick(() => {
         const activeNode = document.getElementsByClassName('show-background')[0];
         if (!activeNode) return;
@@ -876,6 +876,7 @@ export default {
     },
     handlePageLimitChange(limit) {
       this.paginationConfig.limit = limit;
+      this.paginationConfig.current = 1;
       this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.handleTableData();
     },
     // 选中的用户列表
@@ -899,11 +900,21 @@ export default {
     // 搜索table
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
-      this.basicLoading = true;
       if (!list.length) return this.handleClickEmpty();
+      if (!this.searchFilterList.length) return;
+
+      this.basicLoading = true;
       const valueList = [`category_id=${this.currentCategoryId}&page=${this.paginationConfig.current}&page_size=${this.paginationConfig.limit}`];
-      let key = '';
+
       list.forEach((item) => {
+        if (!Array.isArray(item.values)) {
+          const { id, name } = item;
+          Object.assign(item, { values: [{ id, name }] });
+          // 默认搜索第一个
+          item.id = this.searchFilterList[0].id;
+          item.name = this.searchFilterList[0].name;
+        }
+        let key = '';
         const value = [];
         if (Object.keys(this.enumList).includes(item.id)) {
           key = this.enumList[item.id];
@@ -914,7 +925,9 @@ export default {
         });
         valueList.push(`${key}=${value}`);
       });
+
       const params = valueList.join('&');
+
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
         if (res.result) {
           this.basicLoading = false;
@@ -1027,7 +1040,7 @@ export default {
           });
         }
       });
-      this.updateAcitveNode();
+      this.updateActiveNode();
     },
 
     // 重命名，添加下级组织，设置表字段弹窗操作
@@ -1631,7 +1644,7 @@ export default {
             this.treeDataList[0].showBackground = true;
             this.currentParam.item = this.treeDataList[0];
           }
-          this.updateAcitveNode();
+          this.updateActiveNode();
         } else {
           await this.$store.dispatch('organization/deleteDepartment', { id: deleteItem.id });
           this.messageSuccess(this.$t('组织删除成功'));
@@ -1649,7 +1662,7 @@ export default {
             deleteItem.directParent.showBackground = true;
             this.currentParam.item = deleteItem.directParent;
           }
-          this.updateAcitveNode();
+          this.updateActiveNode();
         }
       } catch (e) {
         console.warn(e);
@@ -1846,7 +1859,7 @@ export default {
           this.filterTreeData(newDepartment, this.currentParam.item, this.currentParam.item.type === 'local');
           this.currentParam.item.children.push(newDepartment);
           this.handleClickTreeNode(newDepartment);
-          this.updateAcitveNode();
+          this.updateActiveNode();
         } else {
           const params = {
             name: this.addOrganizationName,

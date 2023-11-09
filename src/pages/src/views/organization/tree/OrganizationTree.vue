@@ -21,7 +21,7 @@
       @on-drag-node="handleDragNode"
       @async-load-nodes="handleClickToggle">
     </bk-tree>
-    <div class="bottom-tree">
+    <div class="bottom-tree" @click="clickBottomTree">
       <p :class="['bottom-tree-header', { 'show-header': isDirectory }]" @click="handleClickDirectory">
         <i :class="isDirectory ? 'bk-icon icon-angle-down' : 'bk-icon icon-angle-right'"></i>{{ $t('不可用目录') }}
       </p>
@@ -131,13 +131,18 @@ export default {
       this.treeScrollTop = e.target.scrollTop;
       this.$emit('updateScroll');
     },
+    clickBottomTree() {
+      const bottomTreeWrap = document.querySelector('.show-content');
+      if (!bottomTreeWrap) return;
+      bottomTreeWrap.addEventListener('scroll', this.scrollChange, true);
+    },
     handleClickToggle(item) {
       this.$emit('handleClickToggle', item);
     },
     tpl(node) {
       return <div class={[
         'node-content',
-        `${node.showBackground ? 'show-background' : 'directory-warpper'}`,
+        `${node.showBackground ? 'show-background' : 'directory-wrapper'}`,
         { nodeTag: (node.configured && !node.activated && node.type) || (!node.configured && node.type) },
       ]}>
         {node.type && !node.children.length ? <i class={'hide-icon'} /> : ''}
@@ -401,7 +406,7 @@ export default {
               }
             }
           }
-          .directory-warpper {
+          .directory-wrapper {
             .option {
               display: flex;
               .icon-more {
@@ -415,7 +420,7 @@ export default {
           }
         }
         &:hover {
-          & > .tree-node > .directory-warpper {
+          & > .tree-node > .directory-wrapper {
             .icon-more {
               visibility: visible;
             }
@@ -434,7 +439,7 @@ export default {
   }
   .tree-drag-node {
     position: relative;
-    .directory-warpper {
+    .directory-wrapper {
       position: relative;
       line-height: 32px;
       height: 32px;
@@ -505,7 +510,7 @@ export default {
       }
     }
     &:hover {
-      & > .tree-node > .directory-warpper {
+      & > .tree-node > .directory-wrapper {
         .option {
           display: block;
           align-items: center;

@@ -135,7 +135,7 @@ export default {
         const msg = node.activated ? this.$t('启用成功') : this.$t('停用成功');
         this.isDirectory = true;
         this.messageSuccess(msg);
-        this.$emit('updateAcitveNode');
+        this.$emit('updateActiveNode');
       } catch (e) {
         console.warn(e);
       }
