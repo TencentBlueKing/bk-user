@@ -22,17 +22,20 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.generic import View
 
-from bklogin.bkuser.constants import IdpStatus
-from bklogin.bkuser.data_models import DataSourceMatchRuleList
-from bklogin.bkuser.models import DataSourceUser, Idp, Tenant, TenantUser
 from bklogin.common.error_codes import error_codes
 from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
+from bklogin.component import bk_user as bk_user_api
 from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
 from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum
-from bklogin.idp_plugins.exceptions import InvalidParamError, ParseRequestBodyError, UnexpectedDataError
+from bklogin.idp_plugins.exceptions import (
+    InvalidParamError,
+    ParseRequestBodyError,
+    UnexpectedDataError,
+    ValidationError,
+)
 
-from .constants import ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
+from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .manager import BkTokenManager
 
 
@@ -84,8 +87,8 @@ class TenantGlobalSettingRetrieveApi(View):
         """
         租户的全局配置，即所有租户的公共配置
         """
-        # FIXME: 支持全局配置后调整从DB读取配置
-        return APISuccessResponse(data={"tenant_visible": settings.TENANT_VISIBLE})
+        global_settings = bk_user_api.get_global_setting()
+        return APISuccessResponse(data={"tenant_visible": global_settings["tenant_visible"]})
 
 
 class TenantListApi(View):
@@ -97,16 +100,14 @@ class TenantListApi(View):
         tenant_ids_str = request.GET.get("tenant_ids", "")
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
 
-        # 检查租户是否可见
-        if not tenant_ids and not settings.TENANT_VISIBLE:
+        # 无tenant_ids表示需要获取全部租户，这时候需要检查租户是否可见
+        global_settings = bk_user_api.get_global_setting()
+        if not tenant_ids and not global_settings["tenant_visible"]:
             raise error_codes.NO_PERMISSION.f(_("租户信息不可见"))
 
-        tenants = Tenant.objects.all()
-        # 过滤
-        if tenant_ids:
-            tenants = tenants.filter(id__in=tenant_ids)
+        tenants = bk_user_api.list_tenant(tenant_ids)
 
-        return APISuccessResponse(data=[{"id": t.id, "name": t.name, "logo": t.logo} for t in tenants])
+        return APISuccessResponse(data=[{"id": t["id"], "name": t["name"], "logo": t["logo"]} for t in tenants])
 
 
 class TenantRetrieveApi(View):
@@ -115,11 +116,9 @@ class TenantRetrieveApi(View):
         通过租户ID，查询单个租户信息
         """
         tenant_id = kwargs["tenant_id"]
-        tenant = Tenant.objects.filter(id=tenant_id).first()
-        if tenant is None:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("租户({})未找到").format(tenant_id))
+        data = bk_user_api.get_tenant(tenant_id)
 
-        return APISuccessResponse(data={"id": tenant.id, "name": tenant.name, "logo": tenant.logo})
+        return APISuccessResponse(data={"id": data["id"], "name": data["name"], "logo": data["logo"]})
 
 
 class SignInTenantCreateApi(View):
@@ -135,7 +134,9 @@ class SignInTenantCreateApi(View):
             raise error_codes.VALIDATION_ERROR.f(_("tenant_id参数必填"))
 
         # 校验租户是否存在
-        if not Tenant.objects.filter(id=tenant_id).exists():
+        tenants = bk_user_api.list_tenant()
+        tenant_id_set = {i["id"] for i in tenants}
+        if tenant_id not in tenant_id_set:
             raise error_codes.OBJECT_NOT_FOUND.f(_("租户({})未找到").format(tenant_id))
 
         # session记录登录的租户
@@ -154,25 +155,16 @@ class TenantIdpListApi(View):
         if not sign_in_tenant_id:
             raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
 
-        # 查询租户是否存在
-        if not Tenant.objects.filter(id=sign_in_tenant_id).exists():
-            raise error_codes.OBJECT_NOT_FOUND.f(_("租户({})未找到").format(sign_in_tenant_id))
-
         # 查询本租户配置的认证源
-        idps = Idp.objects.filter(owner_tenant_id=sign_in_tenant_id, status=IdpStatus.ENABLED)
-        # TODO: 考虑是否过滤掉，没有配置匹配数据源的认证源？
-        # TODO: 查询租户协同其他租户数据源对应的认证源
+        idps = bk_user_api.list_idp(sign_in_tenant_id)
         data = [
             {
-                "id": i.id,
-                "name": i.name,
-                "plugin": {
-                    "id": i.plugin.id,
-                    "name": i.plugin.name,
-                    "category": i.plugin.category,
-                },
+                "id": i["id"],
+                "name": i["name"],
+                "plugin": {"id": i["plugin"]["id"], "name": i["plugin"]["name"]},
             }
             for i in idps
+            if i["status"] == "enabled"
         ]
 
         return APISuccessResponse(data=data)
@@ -181,7 +173,7 @@ class TenantIdpListApi(View):
 class PluginErrorContext(pydantic.BaseModel):
     """插件异常上下文，用于打印日志时所需的上下文信息"""
 
-    idp: Idp
+    idp: Dict[str, Any]
     action: str
     http_method: str
 
@@ -203,33 +195,38 @@ class IdpPluginDispatchView(View):
         action = kwargs["action"]
         http_method = request.method.lower()
 
-        # 查询插件
-        idp = Idp.objects.filter(id=idp_id, owner_tenant_id=sign_in_tenant_id).first()
-        if idp is None:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("租户({})不存在该认证源({})").format(sign_in_tenant_id, idp_id))
+        # 获取认证源信息
+        idp = bk_user_api.get_idp(idp_id)
+        # 判断是否当前登录租户所属数据源
+        # TODO: 后续协同租户的数据源，需要调整判断关系
+        if idp["owner_tenant_id"] != sign_in_tenant_id:
+            raise error_codes.NO_PERMISSION.f(_("非当前登录租户所配置的认证源"))
+
+        if idp["status"] != "enable":
+            raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
 
         #  (1) 获取插件
         try:
-            plugin_cls = get_plugin_cls(idp.plugin_id)
+            plugin_cls = get_plugin_cls(idp["plugin"]["id"])
         except NotImplementedError as error:
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]获取插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
+                _("认证源[{}]获取插件[{}]失败, {}").format(idp["name"], idp["plugin"]["name"], error),
             )
 
         # （2）初始化插件
         try:
-            plugin_cfg = plugin_cls.config_class(**idp.plugin_config)
+            plugin_cfg = plugin_cls.config_class(**idp["plugin_config"])
             plugin = plugin_cls(cfg=plugin_cfg)
         except pydantic.ValidationError:
-            logging.exception("idp(%s) init plugin(%s) config failed", idp.id, idp.plugin.id)
+            logging.exception("idp(%s) init plugin(%s) config failed", idp["id"], idp["plugin"]["id"])
             # Note: 不可将error对外，因为配置信息比较敏感
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]初始化插件配置[{}]失败").format(idp.name, idp.plugin.name),
+                _("认证源[{}]初始化插件配置[{}]失败").format(idp["name"], idp["plugin"]["name"]),
             )
         except Exception as error:
-            logging.exception("idp(%s) load plugin(%s) failed", idp.id, idp.plugin.id)
+            logging.exception("idp(%s) load plugin(%s) failed", idp["id"], idp["plugin"]["id"])
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]加载插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
+                _("认证源[{}]加载插件[{}]失败, {}").format(idp["name"], idp["plugin"]["name"], error),
             )
 
         # （3）dispatch
@@ -250,24 +247,30 @@ class IdpPluginDispatchView(View):
             return func(*func_args, **func_kwargs)
         except ParseRequestBodyError as e:
             raise error_codes.INVALID_ARGUMENT.f(str(e), replace=True)
-        except InvalidParamError as e:
+        except (InvalidParamError, ValidationError) as e:
             raise error_codes.VALIDATION_ERROR.f(str(e), replace=True)
         except UnexpectedDataError as e:
             raise error_codes.UNEXPECTED_DATA_ERROR.f(str(e), replace=True)
         except Exception:
             logging.exception(
                 "idp(%s) request failed, when dispatch (%s, %s) to credential idp plugin(%s)",
-                context.idp.id,
+                context.idp["id"],
                 context.action,
                 context.http_method,
-                context.idp.plugin.id,
+                context.idp["plugin"]["id"],
             )
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]执行插件[{}]失败, {}").format(context.idp.name, context.idp.plugin.name),
+                _("认证源[{}]执行插件[{}]失败, {}").format(context.idp["name"], context.idp["plugin"]["name"]),
             )
 
     def _dispatch_credential_idp_plugin(
-        self, plugin: BaseCredentialIdpPlugin, request, sign_in_tenant_id: str, idp: Idp, action: str, http_method: str
+        self,
+        plugin: BaseCredentialIdpPlugin,
+        request,
+        sign_in_tenant_id: str,
+        idp: Dict[str, Any],
+        action: str,
+        http_method: str,
     ):
         """
         身份凭证类的插件执行请求分配
@@ -280,9 +283,9 @@ class IdpPluginDispatchView(View):
             user_infos = self.wrap_plugin_error(plugin_error_context, plugin.authenticate_credentials, request=request)
 
             # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
-            tenant_user_ids = self._auth_backend(request, sign_in_tenant_id, idp, user_infos)
+            tenant_users = self._auth_backend(request, sign_in_tenant_id, idp, user_infos)
             # 记录支持登录的租户用户
-            request.session[ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY] = tenant_user_ids
+            request.session[ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY] = tenant_users
             # 身份凭证认证直接返回成功即可，由前端重定向路由到用户列表选择页面
             return APISuccessResponse()
 
@@ -291,7 +294,13 @@ class IdpPluginDispatchView(View):
         )
 
     def _dispatch_federation_idp_plugin(
-        self, plugin: BaseFederationIdpPlugin, request, sign_in_tenant_id: str, idp: Idp, action: str, http_method: str
+        self,
+        plugin: BaseFederationIdpPlugin,
+        request,
+        sign_in_tenant_id: str,
+        idp: Dict[str, Any],
+        action: str,
+        http_method: str,
     ):
         """
         联邦认证类的插件执行请求分配
@@ -300,7 +309,7 @@ class IdpPluginDispatchView(View):
         plugin_error_context = PluginErrorContext(idp=idp, action=action, http_method=http_method)
         # 跳转到第三方登录
         if dispatch_cfs == (BuiltinActionEnum.LOGIN, AllowedHttpMethodEnum.GET):
-            callback_uri = self._get_complete_action_url(idp.id, BuiltinActionEnum.CALLBACK)
+            callback_uri = self._get_complete_action_url(idp["id"], BuiltinActionEnum.CALLBACK)
             redirect_uri = self.wrap_plugin_error(
                 plugin_error_context, plugin.build_login_uri, request=request, callback_uri=callback_uri
             )
@@ -318,9 +327,9 @@ class IdpPluginDispatchView(View):
             user_info = self.wrap_plugin_error(plugin_error_context, plugin.handle_callback, request=request)
 
             # 使用认证源获得的用户信息，匹配认证出对应的租户用户列表
-            tenant_user_ids = self._auth_backend(request, sign_in_tenant_id, idp, user_info)
+            tenant_users = self._auth_backend(request, sign_in_tenant_id, idp, user_info)
             # 记录支持登录的租户用户
-            request.session[ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY] = tenant_user_ids
+            request.session[ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY] = tenant_users
             # 联邦认证则重定向到前端选择账号页面
             return HttpResponseRedirect(redirect_to="pages/users")
 
@@ -333,51 +342,19 @@ class IdpPluginDispatchView(View):
         return urljoin(settings.BK_LOGIN_URL, f"auth/idps/{idp_id}/actions/{action}/")
 
     def _auth_backend(
-        self, request, sign_in_tenant_id: str, idp: Idp, user_infos: Dict[str, Any] | List[Dict[str, Any]]
-    ) -> List[str]:
+        self, request, sign_in_tenant_id: str, idp: Dict[str, Any], user_infos: Dict[str, Any] | List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """认证：认证源数据与数据源匹配"""
         if isinstance(user_infos, dict):
             user_infos = [user_infos]
 
-        # FIXME: 查询是绑定匹配还是直接匹配，
-        #  一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
-        #  直接匹配，一般是企业身份登录方式，
-        #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
-        # 认证源配置里的与数据源的匹配规则
-        data_source_match_rules = DataSourceMatchRuleList.validate_python(idp.data_source_match_rules)
-        # 逐规则匹配，查询用户
-        matched_data_source_user_ids = []
-        for rule in data_source_match_rules:
-            # 规则里target_field为数据源的用户字段名，source_field为认证源的用户字段名
-            # 构造过滤条件，从user_infos里获取字段，并映射为数据源目标字段值
-            target_field_values = [u.get(rule.source_field) for u in user_infos if u.get(rule.source_field)]
-            if not target_field_values:
-                continue
-            # 转换为Django Queryset可使用的过滤条件：{"target_filed_in": [...]} 或 {"target_field": xxx}
-            filter_content: Dict[str, Any | List[Any]] = (
-                {f"{rule.target_field}__in": target_field_values}
-                if len(target_field_values) > 1
-                else {rule.target_field: target_field_values[0]}
-            )
-            # 查询匹配的数据源用户
-            data_source_user_ids = DataSourceUser.objects.filter(
-                data_source_id=rule.data_source_id, **filter_content
-            ).values_list("id", flat=True)
-            if data_source_user_ids:
-                matched_data_source_user_ids.extend(data_source_user_ids)
-
-        # 根据数据源用户匹配对应租户用户
-        tenant_user_ids = list(
-            TenantUser.objects.filter(
-                tenant_id=sign_in_tenant_id, data_source_user_id__in=matched_data_source_user_ids
-            ).values_list("id", flat=True)
-        )
-        if not tenant_user_ids:
+        tenant_users = bk_user_api.list_matched_tencent_user(sign_in_tenant_id, idp["id"], user_infos)
+        if not tenant_users:
             raise error_codes.OBJECT_NOT_FOUND.f(
                 _("认证成功，但用户在租户({})下未有对应账号").format(sign_in_tenant_id),
             )
 
-        return tenant_user_ids
+        return tenant_users
 
 
 class TenantUserListApi(View):
@@ -391,22 +368,13 @@ class TenantUserListApi(View):
             raise error_codes.NO_PERMISSION.f(_("未选择需要登录的租户"))
 
         # Session里获取已认证过的租户用户
-        tenant_user_ids = request.session.get(ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY)
-        if not tenant_user_ids:
+        tenant_users = request.session.get(ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY)
+        if not tenant_users:
             raise error_codes.NO_PERMISSION.f(_("未经过用户认证步骤"))
-
-        tenant_users = TenantUser.objects.filter(tenant_id=sign_in_tenant_id, id__in=tenant_user_ids).select_related(
-            "data_source_user"
-        )
 
         # TODO: 查询每个租户用户的状态
 
-        return APISuccessResponse(
-            data=[
-                {"id": i.id, "username": i.data_source_user.username, "full_name": i.data_source_user.full_name}
-                for i in tenant_users
-            ]
-        )
+        return APISuccessResponse(data=tenant_users)
 
 
 class SignInTenantUserCreateApi(View):
@@ -421,7 +389,8 @@ class SignInTenantUserCreateApi(View):
         if not user_id:
             raise error_codes.VALIDATION_ERROR.f(_("user_id 参数必填"))
 
-        tenant_user_ids = request.session.get(ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY) or []
+        tenant_users = request.session.get(ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY) or []
+        tenant_user_ids = {i["id"] for i in tenant_users}
         if user_id not in tenant_user_ids:
             raise error_codes.NO_PERMISSION.f(_("该用户不可登录"))
 

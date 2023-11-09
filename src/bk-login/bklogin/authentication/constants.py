@@ -12,4 +12,4 @@ REDIRECT_FIELD_NAME = "c_url"
 
 SIGN_IN_TENANT_ID_SESSION_KEY = "sign_in_tenant_id"
 
-ALLOWED_SIGN_IN_TENANT_USER_IDS_SESSION_KEY = "allowed_sign_in_tenant_user_ids"
+ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY = "allowed_sign_in_tenant_users"

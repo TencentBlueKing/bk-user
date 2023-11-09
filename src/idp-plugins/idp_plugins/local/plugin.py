@@ -14,7 +14,7 @@ from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
-from .db_models import LocalDataSourceIdentityInfo
+from .client import BkUserAPIClient
 from ..exceptions import InvalidParamError, UnexpectedDataError
 from ..base import BaseCredentialIdpPlugin
 from ..models import TestConnectionResult
@@ -37,6 +37,7 @@ class LocalIdpPlugin(BaseCredentialIdpPlugin):
 
     def __init__(self, cfg: LocalIdpPluginConfig):
         self.cfg = cfg
+        self.client = BkUserAPIClient()
 
     def test_connection(self) -> TestConnectionResult:
         raise NotImplementedError(_("本地认证源不支持连通性测试"))
@@ -56,18 +57,5 @@ class LocalIdpPlugin(BaseCredentialIdpPlugin):
         if not self.cfg.data_source_ids:
             raise UnexpectedDataError(_("当前租户没有数据源允许账密登录"))
 
-        # TODO: 密码错误次数检测
-
-        # FIXME (nan): 待用户密码功能改造完成后重新调整校验密码方式
-        users = LocalDataSourceIdentityInfo.objects.filter(
-            data_source_id__in=self.cfg.data_source_ids, username=username
-        )
-        matched_users = [i for i in users if i.password == password]
-
-        # TODO：是否需要判断密码过期呢？
-
-        # 判断是否有用户匹配
-        if len(matched_users) == 0:
-            raise InvalidParamError(_("用户名或密码不正确"))
-
-        return [{"id": i.user.id} for i in matched_users]
+        # 调用用户管理接口校验
+        return self.client.auth_credentials_of_local_user(self.cfg.data_source_ids, username, password)

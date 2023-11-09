@@ -19,7 +19,6 @@ from urllib.parse import unquote
 from blue_krill.encrypt.handler import EncryptHandler
 from django.conf import settings
 from django.utils import timezone
-from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
 
 from .models import BkToken
@@ -33,9 +32,9 @@ class BkTokenProcessor:
     生成并加密Token & 解密Token
     """
 
-    def __init__(self, encrypt_secret_key: bytes):
-        # Token加密密钥
-        self.encrypt_secret_key = encrypt_secret_key
+    def __init__(self):
+        # 加密器，默认读取django settings里配置的加密密钥和加密类
+        self.crypter = EncryptHandler()
 
     @staticmethod
     def _salt(length: int = 8) -> str:
@@ -49,7 +48,7 @@ class BkTokenProcessor:
         plain_token = "%s|%s|%s" % (expires_at, username, self._salt())
 
         # 加密
-        return EncryptHandler(secret_key=self.encrypt_secret_key).encrypt(plain_token)
+        return self.crypter.encrypt(plain_token)
 
     def parse(self, bk_token: str) -> Tuple[str, int]:
         """
@@ -57,7 +56,7 @@ class BkTokenProcessor:
         :return: username, expires_at
         """
         try:
-            plain_bk_token = EncryptHandler(secret_key=self.encrypt_secret_key).decrypt(bk_token)
+            plain_bk_token = self.crypter.decrypt(bk_token)
         except Exception:
             logger.exception("参数 bk_token [%s] 解析失败", bk_token)
             plain_bk_token = ""
@@ -84,7 +83,7 @@ class BkTokenProcessor:
 class BkTokenManager:
     def __init__(self):
         # Token加密密钥
-        self.bk_token_processor = BkTokenProcessor(encrypt_secret_key=force_bytes(settings.ENCRYPT_SECRET_KEY))
+        self.bk_token_processor = BkTokenProcessor()
         # Token 过期间隔
         self.cookie_age = settings.BK_TOKEN_COOKIE_AGE
         # Token 无操作失效间隔

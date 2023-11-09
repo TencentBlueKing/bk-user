@@ -8,9 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+import os
 
-
-class BkUserConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bklogin.bkuser"
+BK_USER_APP_CODE = os.environ.get("BK_USER_APP_CODE", default="bk_user")
+BK_USER_APP_SECRET = os.environ.get("BK_USER_APP_SECRET", "")
+BK_USER_API_URL = os.environ.get("BK_USER_API_URL", "http://bk-user")
