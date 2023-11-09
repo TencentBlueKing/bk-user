@@ -34,6 +34,7 @@ from .serializers import (
     TenantRetrieveOutputSLZ,
     TenantUserMatchInputSLZ,
     TenantUserMatchOutputSLZ,
+    TenantUserRetrieveOutputSLZ,
 )
 
 
@@ -184,3 +185,12 @@ class TenantUserMatchApi(generics.CreateAPIView):
                 many=True,
             )
         )
+
+
+class TenantUserRetrieveApi(generics.RetrieveAPIView):
+    authentication_classes = [BkUserAppAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    serializer_class = TenantUserRetrieveOutputSLZ
+    queryset = Tenant.objects.all()
+    lookup_field = "id"

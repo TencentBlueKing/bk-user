@@ -64,7 +64,7 @@ def list_tenant(tenant_ids: List[str] | None = None) -> List[Dict]:
 
 def get_tenant(tenant_id: str) -> Dict:
     """通过租户 ID 获取租户信息"""
-    return _call_bk_user_api(http_get, f"/api/v1/login/tenants/{tenant_id}")
+    return _call_bk_user_api(http_get, f"/api/v1/login/tenants/{tenant_id}/")
 
 
 def list_idp(tenant_id: str) -> List[Dict]:
@@ -84,3 +84,8 @@ def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[
         f"/api/v1/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
         json={"idp_users": idp_users},
     )
+
+
+def get_tenant_user(tenant_user_id: str) -> Dict[str, Any]:
+    """通过租户用户ID获取租户用户信息"""
+    return _call_bk_user_api(http_get, f"/api/v1/login/tenant-users/{tenant_user_id}/")

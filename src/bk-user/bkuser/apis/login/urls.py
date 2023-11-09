@@ -35,4 +35,5 @@ urlpatterns = [
         views.TenantUserMatchApi.as_view(),
         name="login.matched_tenant_user.match",
     ),
+    path("tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="login.tenant_user.retrieve"),
 ]
