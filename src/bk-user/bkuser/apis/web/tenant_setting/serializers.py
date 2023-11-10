@@ -166,8 +166,8 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
 
 
 class NotificationTemplatesInputSLZ(serializers.Serializer):
-    method = serializers.ChoiceField(help_text="信息传递方式", choices=NotificationMethod.get_choices())
-    scene = serializers.ChoiceField(help_text="通知类型", choices=NotificationScene.get_choices())
+    method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
+    scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
     title = serializers.CharField(help_text="通知标题", allow_null=True)
     sender = serializers.CharField(help_text="发送人")
     content = serializers.CharField(help_text="通知内容")

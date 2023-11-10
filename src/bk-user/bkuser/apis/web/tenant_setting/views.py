@@ -29,7 +29,6 @@ from bkuser.apps.tenant.models import (
     UserBuiltinField,
 )
 from bkuser.apps.tenant.periodic_tasks import send_tenant_user_expiring_notification
-from bkuser.biz.tenant_setting import NotificationTemplate
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
@@ -154,27 +153,14 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         if not instance:
             raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
 
-        # 边界限制: 当前租户的管理才可做更新操作
+        # TODO (su) 权限调整为 perm_class 当前租户的管理才可做更新操作
         operator = request.user.username
         if not TenantManager.objects.filter(tenant_id=instance.tenant_id, tenant_user_id=operator).exists():
             raise error_codes.NO_PERMISSION
 
         slz = TenantUserValidityPeriodConfigInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
-
         data = slz.validated_data
-        # 校验模板
-        [
-            NotificationTemplate(
-                method=template["method"],
-                scene=template["scene"],
-                title=template.get("title"),
-                sender=template["sender"],
-                content=template["content"],
-                content_html=template["content_html"],
-            )
-            for template in data["notification_templates"]
-        ]
 
         instance.enabled = data["enabled"]
         instance.validity_period = data["validity_period"]

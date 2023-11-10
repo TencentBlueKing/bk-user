@@ -515,7 +515,6 @@ class TenantUserSyncer:
         waiting_sync_data_source_users = data_source_users.exclude(
             id__in=[u.data_source_user_id for u in exists_tenant_users]
         )
-
         waiting_create_tenant_users = [
             TenantUser(
                 id=generate_uuid(),
