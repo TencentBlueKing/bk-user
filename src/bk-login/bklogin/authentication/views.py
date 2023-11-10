@@ -204,7 +204,7 @@ class IdpPluginDispatchView(View):
         if idp["owner_tenant_id"] != sign_in_tenant_id:
             raise error_codes.NO_PERMISSION.f(_("非当前登录租户所配置的认证源"))
 
-        if idp["status"] != "enable":
+        if idp["status"] != "enabled":
             raise error_codes.NO_PERMISSION.f(_("当前认证源未启用，无法通过该认证源登录"))
 
         #  (1) 获取插件

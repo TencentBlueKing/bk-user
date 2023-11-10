@@ -84,9 +84,9 @@ class TenantUserMatchInputSLZ(serializers.Serializer):
 
 
 class TenantUserMatchOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户 ID")
-    username = serializers.CharField(help_text="租户用户名")
-    full_name = serializers.CharField(help_text="租户用户姓名")
+    id = serializers.CharField(help_text="用户 ID")
+    username = serializers.ReadOnlyField(help_text="用户名", source="data_source_user.username")
+    full_name = serializers.ReadOnlyField(help_text="用户姓名", source="data_source_user.full_name")
 
 
 class TenantUserRetrieveOutputSLZ(serializers.Serializer):

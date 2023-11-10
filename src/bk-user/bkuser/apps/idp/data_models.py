@@ -57,7 +57,7 @@ class DataSourceMatchRule(BaseModel):
         """
         conditions = [{"data_source_id": self.data_source_id}]
         # 无字段比较，相当于无法匹配，直接返回
-        if self.field_compare_rules:
+        if not self.field_compare_rules:
             return None
 
         # 每个认证源字段与数据源字段的比较规则

@@ -95,7 +95,7 @@ class TenantListApi(generics.ListAPIView):
 
         queryset = Tenant.objects.all()
         if data["tenant_ids"]:
-            queryset = queryset.filter(id__in=data["tenant_id"])
+            queryset = queryset.filter(id__in=data["tenant_ids"])
 
         return queryset
 
@@ -171,20 +171,13 @@ class TenantUserMatchApi(generics.CreateAPIView):
             if conditions
             else []
         )
+
         # 查询租户用户
-        tenant_user = TenantUser.objects.filter(
+        tenant_users = TenantUser.objects.filter(
             tenant_id=tenant_id, data_source_user_id__in=list(data_source_user_ids)
         ).select_related("data_source_user")
 
-        return Response(
-            TenantUserMatchOutputSLZ(
-                data=[
-                    {"id": i.id, "username": i.data_source_user.username, "full_name": i.data_source_user.full_name}
-                    for i in tenant_user
-                ],
-                many=True,
-            )
-        )
+        return Response(TenantUserMatchOutputSLZ(instance=tenant_users, many=True).data)
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
