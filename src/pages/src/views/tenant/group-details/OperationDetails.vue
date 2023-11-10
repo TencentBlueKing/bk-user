@@ -250,11 +250,14 @@ const files = computed(() => {
 });
 const isEdit = computed(() => props.type === "edit");
 
-watch(() => props.type, () => {
-  if (props.tenantsData.managers.length > 0) {
-    formData.managers = props.tenantsData.managers;
+watch(() => props.tenantsData.managers, (value) => {
+  if (value.length > 0) {
+    formData.managers = value;
   } else {
     formData.managers.splice(1, 0, getTableItem());
+    nextTick(() => {
+      fetchUserList('');
+    });
   }
 }, {
   deep: true,
