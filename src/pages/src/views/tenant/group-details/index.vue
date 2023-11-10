@@ -5,19 +5,19 @@
         <div class="content-search-left">
           <bk-button class="mr-[24px]" theme="primary" @click="handleClick('add')">
             <i class="user-icon icon-add-2 mr8" />
-            新建公司
+            新建租户
           </bk-button>
           <!-- <bk-switcher
             v-model="demo"
             theme="primary"
             size="large"
           />
-          <span class="switcher-text">公司名是否跨公司可见</span> -->
+          <span class="switcher-text">租户名是否跨租户可见</span> -->
         </div>
         <bk-input
           class="content-search-input"
           v-model="searchName"
-          placeholder="搜索公司名"
+          placeholder="搜索租户名"
           type="search"
           clearable
           @enter="handleEnter"
@@ -41,7 +41,7 @@
           </template>
           <bk-table-column
             prop="name"
-            label="公司名"
+            label="租户名"
             :sort="{ value: 'asc' }">
             <template #default="{ row, index }">
               <div class="item-name">
@@ -60,8 +60,8 @@
               </div>
             </template>
           </bk-table-column>
-          <bk-table-column prop="id" label="公司ID"></bk-table-column>
-          <bk-table-column prop="managers" label="公司管理员">
+          <bk-table-column prop="id" label="租户ID"></bk-table-column>
+          <bk-table-column prop="managers" label="租户管理员">
             <template #default="{ row }">
               <bk-tag v-for="(item, index) in row.managers" :key="index">{{ item.username }}</bk-tag>
             </template>
@@ -181,15 +181,15 @@ const detailsConfig = reactive({
 });
 const enumData = {
   view: {
-    title: '公司详情',
+    title: '租户详情',
     type: 'view',
   },
   add: {
-    title: '新建公司',
+    title: '新建租户',
     type: 'add',
   },
   edit: {
-    title: '编辑公司',
+    title: '编辑租户',
     type: 'edit',
   },
 };
@@ -246,7 +246,7 @@ const handleCancelEdit = async () => {
     const res = await getTenantDetails(currentTenantId.value);
     state.tenantsData = res.data;
     detailsConfig.type = 'view';
-    detailsConfig.title = '公司详情';
+    detailsConfig.title = '租户详情';
     window.changeInput = false;
   }
 };

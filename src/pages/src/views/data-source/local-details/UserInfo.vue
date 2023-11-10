@@ -339,7 +339,7 @@ const handleCancelEdit = () => {
     detailsConfig.isShow = false;
   } else {
     detailsConfig.type = 'view';
-    detailsConfig.title = '公司详情';
+    detailsConfig.title = '用户详情';
     window.changeInput = false;
   }
 };

@@ -11,10 +11,10 @@
             :model="formData"
             :rules="rulesBasicInfo"
           >
-            <bk-form-item label="公司名称" property="name" required>
+            <bk-form-item label="租户名称" property="name" required>
               <bk-input v-model="formData.name" @focus="handleChange" />
             </bk-form-item>
-            <bk-form-item label="公司ID" property="id" required>
+            <bk-form-item label="租户ID" property="id" required>
               <bk-input v-model="formData.id" :disabled="isEdit" @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="人员数量">
@@ -435,7 +435,7 @@ function createTenantsFn() {
   if (!data.logo) delete data.logo;
 
   createTenants(data).then(() => {
-    emit('updateTenantsList', '公司创建成功');
+    emit('updateTenantsList', '租户创建成功');
   }).finally(() => {
     state.isLoading = false;
   });
@@ -455,7 +455,7 @@ function putTenantsFn() {
   if (!params.logo) delete params.logo;
 
   putTenants(formData.id, params).then(() => {
-    emit('updateTenantsList', '公司更新成功');
+    emit('updateTenantsList', '租户更新成功');
   }).finally(() => {
     state.isLoading = false;
   });

@@ -11,10 +11,10 @@
             :model="formData"
             :rules="rulesBasicInfo"
           >
-            <bk-form-item label="公司名称" property="name" required>
+            <bk-form-item label="租户名称" property="name" required>
               <bk-input v-model="formData.name" @focus="handleChange" />
             </bk-form-item>
-            <bk-form-item label="公司ID" property="id" required>
+            <bk-form-item label="租户ID" property="id" required>
               <bk-input
                 v-model="formData.id"
                 disabled

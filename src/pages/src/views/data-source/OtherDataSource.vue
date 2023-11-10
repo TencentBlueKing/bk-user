@@ -1,6 +1,6 @@
 <template>
   <div>
-    其他公司
+    其他租户
   </div>
 </template>
 
