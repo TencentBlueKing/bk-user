@@ -113,7 +113,7 @@ class BkTokenManager:
             bk_token = self.bk_token_processor.generate(username, expires_at)
             # DB记录
             try:
-                BkToken.objects.create(token=bk_token, inactive_expire_time=inactive_expires_at)
+                BkToken.objects.create(token=bk_token, inactive_expires_at=inactive_expires_at)
             except Exception:  # noqa: PERF203
                 logger.exception("Login ticket failed to be saved during ticket generation")
                 # 循环结束前将bk_token置空后重新生成
@@ -166,6 +166,6 @@ class BkTokenManager:
         try:
             BkToken.objects.filter(token=bk_token).update(inactive_expires_at=now + self.inactive_age)
         except Exception:
-            logger.exception("update inactive_expire_time fail")
+            logger.exception("update inactive_expires_at fail")
 
         return True, username, ""

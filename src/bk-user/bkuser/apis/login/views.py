@@ -185,5 +185,5 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     serializer_class = TenantUserRetrieveOutputSLZ
-    queryset = Tenant.objects.all()
+    queryset = TenantUser.objects.all()
     lookup_field = "id"
