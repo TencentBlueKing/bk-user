@@ -13,7 +13,7 @@ from django.views.generic import View
 
 from bklogin.common.error_codes import error_codes
 from bklogin.common.response import APISuccessResponse
-from bklogin.component import bk_user as bk_user_api
+from bklogin.component.bk_user import api as bk_user_api
 
 from .manager import BkTokenManager
 
@@ -41,11 +41,11 @@ class GetUserApi(View):
 
         return APISuccessResponse(
             {
-                "bk_username": user["id"],
-                "tenant_id": user["tenant_id"],
-                "full_name": user["full_name"],
-                "source_username": user["username"],
-                "language": user["language"],
-                "time_zone": user["time_zone"],
+                "bk_username": user.id,
+                "tenant_id": user.tenant_id,
+                "full_name": user.full_name,
+                "source_username": user.username,
+                "language": user.language,
+                "time_zone": user.time_zone,
             }
         )

@@ -16,8 +16,9 @@ from django.conf import settings
 from requests.auth import HTTPBasicAuth
 
 from bklogin.common.error_codes import error_codes
+from bklogin.component.http import HttpStatusCode, http_get, http_post
 
-from .http import HttpStatusCode, http_get, http_post
+from .models import GlobalSetting, IdpDetailInfo, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
 
 logger = logging.getLogger(__name__)
 
@@ -53,21 +54,23 @@ def _call_bk_user_api_20x(http_func, url_path: str, **kwargs):
     return _call_bk_user_api(http_func, url_path, allow_error_status_func=lambda s: False, **kwargs)["data"]
 
 
-def get_global_setting() -> Dict[str, Any]:
+def get_global_setting() -> GlobalSetting:
     """获取全局配置"""
-    return _call_bk_user_api_20x(http_get, "/api/v1/login/global-settings/")
+    data = _call_bk_user_api_20x(http_get, "/api/v1/login/global-settings/")
+    return GlobalSetting(**data)
 
 
-def list_tenant(tenant_ids: List[str] | None = None) -> List[Dict]:
+def list_tenant(tenant_ids: List[str] | None = None) -> List[TenantInfo]:
     """查询租户列表，支持过滤"""
     params = {}
     if tenant_ids:
         params["tenant_ids"] = ",".join(tenant_ids)
 
-    return _call_bk_user_api_20x(http_get, "/api/v1/login/tenants/", params=params)
+    data = _call_bk_user_api_20x(http_get, "/api/v1/login/tenants/", params=params)
+    return [TenantInfo(**i) for i in data]
 
 
-def get_tenant(tenant_id: str) -> Dict | None:
+def get_tenant(tenant_id: str) -> TenantInfo | None:
     """通过租户 ID 获取租户信息"""
     resp = _call_bk_user_api(
         http_get,
@@ -77,28 +80,32 @@ def get_tenant(tenant_id: str) -> Dict | None:
     if resp.get("error"):
         return None
 
-    return resp["data"]
+    return TenantInfo(**resp["data"])
 
 
-def list_idp(tenant_id: str) -> List[Dict]:
+def list_idp(tenant_id: str) -> List[IdpInfo]:
     """获取租户关联的认证源"""
-    return _call_bk_user_api_20x(http_get, f"/api/v1/login/tenants/{tenant_id}/idps/")
+    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/tenants/{tenant_id}/idps/")
+    return [IdpInfo(**i) for i in data]
 
 
-def get_idp(idp_id: str) -> Dict:
+def get_idp(idp_id: str) -> IdpDetailInfo:
     """获取IDP信息"""
-    return _call_bk_user_api_20x(http_get, f"/api/v1/login/idps/{idp_id}/")
+    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/idps/{idp_id}/")
+    return IdpDetailInfo(**data)
 
 
-def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def list_matched_tencent_user(tenant_id: str, idp_id: str, idp_users: List[Dict[str, Any]]) -> List[TenantUserInfo]:
     """根据IDP用户查询匹配的租户用户"""
-    return _call_bk_user_api_20x(
+    data = _call_bk_user_api_20x(
         http_post,
         f"/api/v1/login/tenants/{tenant_id}/idps/{idp_id}/matched-tenant-users/",
         json={"idp_users": idp_users},
     )
+    return [TenantUserInfo(**i) for i in data]
 
 
-def get_tenant_user(tenant_user_id: str) -> Dict[str, Any]:
+def get_tenant_user(tenant_user_id: str) -> TenantUserDetailInfo:
     """通过租户用户ID获取租户用户信息"""
-    return _call_bk_user_api_20x(http_get, f"/api/v1/login/tenant-users/{tenant_user_id}/")
+    data = _call_bk_user_api_20x(http_get, f"/api/v1/login/tenant-users/{tenant_user_id}/")
+    return TenantUserDetailInfo(**data)
