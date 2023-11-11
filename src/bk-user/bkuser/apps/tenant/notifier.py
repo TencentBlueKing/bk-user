@@ -85,8 +85,6 @@ class ValidityPeriodNotificationTmplContextGenerator:
 class TenantUserValidityPeriodNotifier:
     """租户用户用户通知器，支持批量像用户发送某类信息"""
 
-    templates: List[NotificationTemplate] = []
-
     def __init__(self, tenant_id: str, scene: NotificationScene):
         self.tenant_id = tenant_id
         self.scene = scene
@@ -127,19 +125,33 @@ class TenantUserValidityPeriodNotifier:
                 self._send_sms(user, tmpl)
 
     def _send_email(self, user: TenantUser, tmpl: NotificationTemplate):
-        logger.info(
-            "send email to user %s, scene %s, title: %s", user.data_source_user.username, tmpl.scene, tmpl.title
-        )
-        content = self._render_tmpl(user, tmpl.content_html)
         # 根据继承与否，获取真实邮箱
-        email = user.data_source_user.email if user.is_inherited_email else user.custom_email
+        logger.info(
+            "send email to user %s, email %s, scene %s, title: %s",
+            user.data_source_user.username,
+            user.real_email,
+            tmpl.scene,
+            tmpl.title,
+        )
+        email = user.real_email
+        if not email:
+            logger.info("user<%s> have no email, not to send_email", user.data_source_user.username)
+            return
+
+        content = self._render_tmpl(user, tmpl.content_html)
         cmsi.send_mail([email], tmpl.sender, tmpl.title, content)  # type: ignore
 
     def _send_sms(self, user: TenantUser, tmpl: NotificationTemplate):
-        logger.info("send sms to user %s, scene %s", user.data_source_user.username, tmpl.scene)
-        content = self._render_tmpl(user, tmpl.content)
+        logger.info(
+            "send sms to user %s, phone %s, scene %s", user.data_source_user.username, user.real_phone, tmpl.scene
+        )
         # 根据继承与否，获取真实手机号
-        phone = user.data_source_user.phone if user.is_inherited_phone else user.custom_phone
+        phone = user.real_phone
+        if not phone:
+            logger.info("user<%s> have no phone number, not to send_sms", user.data_source_user.username)
+            return
+
+        content = self._render_tmpl(user, tmpl.content)
         cmsi.send_sms([phone], content)
 
     def _render_tmpl(self, user: TenantUser, content: str) -> str:

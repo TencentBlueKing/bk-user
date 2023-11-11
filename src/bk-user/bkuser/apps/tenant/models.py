@@ -81,6 +81,14 @@ class TenantUser(TimestampedModel):
     def account_expired_at_display(self) -> str:
         return datetime_to_display(self.account_expired_at)
 
+    @property
+    def real_phone(self) -> str:
+        return self.data_source_user.phone if self.is_inherited_phone else self.custom_phone
+
+    @property
+    def real_email(self) -> str:
+        return self.data_source_user.email if self.is_inherited_email else self.custom_email
+
 
 class TenantDepartment(TimestampedModel):
     """

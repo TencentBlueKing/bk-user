@@ -14,7 +14,6 @@ from typing import Dict, List
 
 from django.db import transaction
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
@@ -25,7 +24,6 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
-from bkuser.common.error_codes import error_codes
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -105,14 +103,9 @@ class DataSourceOrganizationHandler:
                 DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relation_objs)
 
             # 查询关联的租户
-            tenant_id = data_source.owner_tenant_id
-            tenant = Tenant.objects.get(id=tenant_id)
+            tenant = Tenant.objects.get(id=data_source.owner_tenant_id)
 
             # 创建租户用户
-            cfg = TenantUserValidityPeriodConfig.objects.filter(tenant_id=tenant_id).first()
-            if not cfg:
-                raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
-
             tenant_user = TenantUser(
                 data_source_user=user,
                 tenant=tenant,
@@ -121,6 +114,7 @@ class DataSourceOrganizationHandler:
             )
 
             # 根据配置初始化账号有效期
+            cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=tenant.id)
             if cfg.enabled and cfg.validity_period > 0:
                 tenant_user.account_expired_at = timezone.now() + datetime.timedelta(days=cfg.validity_period)
             # 入库

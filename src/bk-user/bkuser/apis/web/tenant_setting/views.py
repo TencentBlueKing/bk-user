@@ -8,9 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
@@ -28,11 +28,8 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
     UserBuiltinField,
 )
-from bkuser.apps.tenant.periodic_tasks import send_tenant_user_expiring_notification
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
-
-send_tenant_user_expiring_notification()
 
 
 class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -120,8 +117,12 @@ class TenantUserCustomFieldUpdateDeleteApi(
 class TenantUserValidityPeriodConfigRetrieveUpdateApi(
     ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView
 ):
-    def get_queryset(self):
-        return TenantUserValidityPeriodConfig.objects.filter(tenant_id=self.get_current_tenant_id())
+    queryset = TenantUserValidityPeriodConfig.objects.all()
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        filter_kwargs = {"tenant_id": self.get_current_tenant_id()}
+        return get_object_or_404(queryset, **filter_kwargs)
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
@@ -131,13 +132,8 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         },
     )
     def get(self, request, *args, **kwargs):
-        instance = self.get_queryset().first()
-
-        if not instance:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
-
-        slz = TenantUserValidityPeriodConfigOutputSLZ(instance)
-        return Response(slz.data)
+        instance = self.get_object()
+        return Response(TenantUserValidityPeriodConfigOutputSLZ(instance).data)
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
@@ -148,10 +144,7 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         },
     )
     def put(self, request, *args, **kwargs):
-        instance = self.get_queryset().first()
-
-        if not instance:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("账户有效期配置丢失，请联系系统管理员"))
+        instance = self.get_object()
 
         # TODO (su) 权限调整为 perm_class 当前租户的管理才可做更新操作
         operator = request.user.username
