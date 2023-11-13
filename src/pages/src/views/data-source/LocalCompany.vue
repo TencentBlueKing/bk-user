@@ -23,8 +23,8 @@ import router from '@/router/index';
 
 const active = ref('local');
 const panels = reactive([
-  { name: 'local', label: '本公司' },
-  // { name: 'other', label: '其他公司' },
+  { name: 'local', label: '本租户' },
+  // { name: 'other', label: '其他租户' },
 ]);
 
 const handleChange = (name) => {
