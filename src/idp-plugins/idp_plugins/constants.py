@@ -37,7 +37,7 @@ class BuiltinIdpPluginEnum(str, StructuredEnum):
     WECOM = EnumField("wecom", label=_("企业微信"))
 
 
-BuiltinIdpPluginIDs = list(BuiltinIdpPluginEnum)
+BuiltinIdpPluginIDs = list(BuiltinIdpPluginEnum)  # type: ignore
 
 
 class AllowedHttpMethodEnum(str, StructuredEnum):
