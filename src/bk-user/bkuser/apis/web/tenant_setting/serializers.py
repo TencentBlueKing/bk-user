@@ -16,7 +16,7 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.apps.tenant.constants import NotificationMethod, NotificationScene, UserFieldDataType
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 
@@ -163,3 +163,33 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
             _validate_multi_enum_default(default, opt_ids)
 
         return attrs
+
+
+class NotificationTemplatesInputSLZ(serializers.Serializer):
+    method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
+    scene = serializers.ChoiceField(help_text="通知场景", choices=NotificationScene.get_choices())
+    title = serializers.CharField(help_text="通知标题", allow_null=True)
+    sender = serializers.CharField(help_text="发送人")
+    content = serializers.CharField(help_text="通知内容")
+    content_html = serializers.CharField(help_text="通知内容，页面展示使用")
+
+
+class TenantUserValidityPeriodConfigInputSLZ(serializers.Serializer):
+    enabled = serializers.BooleanField(help_text="是否启用账户有效期")
+    validity_period = serializers.IntegerField(help_text="账户有效期，单位：天")
+    remind_before_expire = serializers.ListField(
+        help_text="临过期提醒时间",
+        child=serializers.IntegerField(min_value=1),
+    )
+    enabled_notification_methods = serializers.ListField(
+        help_text="通知方式",
+        child=serializers.ChoiceField(choices=NotificationMethod.get_choices()),
+        allow_empty=False,
+    )
+    notification_templates = serializers.ListField(
+        help_text="通知模板", child=NotificationTemplatesInputSLZ(), allow_empty=False
+    )
+
+
+class TenantUserValidityPeriodConfigOutputSLZ(TenantUserValidityPeriodConfigInputSLZ):
+    pass

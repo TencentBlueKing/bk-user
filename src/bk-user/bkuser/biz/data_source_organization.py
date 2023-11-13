@@ -8,10 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import datetime
 from collections import defaultdict
 from typing import Dict, List
 
 from django.db import transaction
+from django.utils import timezone
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
@@ -21,7 +23,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.utils.uuid import generate_uuid
 
 
@@ -102,14 +104,21 @@ class DataSourceOrganizationHandler:
 
             # 查询关联的租户
             tenant = Tenant.objects.get(id=data_source.owner_tenant_id)
+
             # 创建租户用户
-            TenantUser.objects.create(
+            tenant_user = TenantUser(
                 data_source_user=user,
                 tenant=tenant,
                 data_source=data_source,
                 id=generate_uuid(),
             )
 
+            # 根据配置初始化账号有效期
+            cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=tenant.id)
+            if cfg.enabled and cfg.validity_period > 0:
+                tenant_user.account_expired_at = timezone.now() + datetime.timedelta(days=cfg.validity_period)
+            # 入库
+            tenant_user.save()
         return user.id
 
     @staticmethod

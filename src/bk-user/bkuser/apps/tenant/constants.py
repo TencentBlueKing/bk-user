@@ -32,3 +32,95 @@ class UserFieldDataType(str, StructuredEnum):
     NUMBER = EnumField("number", label=_("数字"))
     ENUM = EnumField("enum", label=_("枚举"))
     MULTI_ENUM = EnumField("multi_enum", label=_("多选枚举"))
+
+
+class NotificationMethod(str, StructuredEnum):
+    """通知方式"""
+
+    EMAIL = EnumField("email", label=_("邮件通知"))
+    SMS = EnumField("sms", label=_("短信通知"))
+
+
+class NotificationScene(str, StructuredEnum):
+    """通知场景"""
+
+    TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("租户用户即将过期"))
+    TENANT_USER_EXPIRED = EnumField("tenant_user_expired", label=_("租户用户已过期"))
+
+
+DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
+    "enabled": True,
+    "validity_period": 365,
+    "remind_before_expire": [7],
+    "enabled_notification_methods": [NotificationMethod.EMAIL],
+    "notification_templates": [
+        {
+            "method": NotificationMethod.EMAIL,
+            "scene": NotificationScene.TENANT_USER_EXPIRING,
+            "title": "蓝鲸智云 - 账号即将到期提醒!",
+            "sender": "蓝鲸智云",
+            "content": (
+                "{{ username }}, 您好：\n "
+                + "您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
+                + "为避免影响使用，请尽快联系平台管理员进行续期。\n "
+                + "此邮件为系统自动发送，请勿回复。\n "
+            ),
+            "content_html": (
+                "<p>{{ username }}, 您好：</p>"
+                + "<p>您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
+                + "为避免影响使用，请尽快联系平台管理员进行续期。</p>"
+                + "<p>此邮件为系统自动发送，请勿回复。</p>"
+            ),
+        },
+        {
+            "method": NotificationMethod.EMAIL,
+            "scene": NotificationScene.TENANT_USER_EXPIRED,
+            "title": "蓝鲸智云 - 账号到期提醒!",
+            "sender": "蓝鲸智云",
+            "content": (
+                "{{ username }}，您好：\n "
+                + "您的蓝鲸智云平台账号已过期。为避免影响使用，请尽快联系平台管理员进行续期。\n "  # noqa: E501
+                + "该邮件为系统自动发送，请勿回复。"  # noqa: E501
+            ),
+            "content_html": (
+                "<p>{{ username }}，您好：</p>"
+                + "<p>您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。</p>"  # noqa: E501
+                + "<p>此邮件为系统自动发送，请勿回复。</p>"
+            ),
+        },
+        {
+            "method": NotificationMethod.SMS,
+            "scene": NotificationScene.TENANT_USER_EXPIRING,
+            "title": None,
+            "sender": "蓝鲸智云",
+            "content": (
+                "{{ username }}，您好：\n "
+                + "您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
+                + "为避免影响使用，请尽快联系平台管理员进行续期。\n "
+                + "该短信为系统自动发送，请勿回复。"
+            ),
+            "content_html": (
+                "<p>{{ username }}，您好：</p>"
+                + "<p>您的蓝鲸智云平台账号将于 {{ remind_before_expire_days }} 天后到期。"
+                + "为避免影响使用，请尽快联系平台管理员进行续期。</p>"
+                + "<p>该短信为系统自动发送，请勿回复。</p>"
+            ),
+        },
+        {
+            "method": NotificationMethod.SMS,
+            "scene": NotificationScene.TENANT_USER_EXPIRED,
+            "title": None,
+            "sender": "蓝鲸智云",
+            "content": (
+                "{{ username }}您好：\n "
+                + "您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。\n "  # noqa: E501
+                + "该短信为系统自动发送，请勿回复。"  # noqa: E501
+            ),
+            "content_html": (
+                "<p>{{ username }}您好：</p>"
+                + "<p>您的蓝鲸智云平台账号已过期，如需继续使用，请尽快联系平台管理员进行续期。</p>"  # noqa: E501
+                + "<p>该短信为系统自动发送，请勿回复。</p>"
+            ),
+        },
+    ],
+}

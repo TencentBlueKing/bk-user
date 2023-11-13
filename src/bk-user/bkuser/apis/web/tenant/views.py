@@ -99,6 +99,8 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         ]
         # 本地数据源密码初始化配置
         config = PasswordInitialConfig(**data["password_initial_config"])
+
+        # 创建租户和租户管理员
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers, config)
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data)

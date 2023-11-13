@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 
 import environ
 import urllib3
+from celery.schedules import crontab
 from django.utils.encoding import force_bytes
 
 # environ
@@ -234,7 +235,16 @@ CELERY_RESULT_SERIALIZER = "json"
 # CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
 # CELERY_IMPORTS = []
 # 内置的周期任务
-# CELERYBEAT_SCHEDULE = {}
+CELERYBEAT_SCHEDULE = {
+    "periodic_notify_expiring_tenant_users": {
+        "task": "bkuser.apps.tenant.tasks.notify_expiring_tenant_user",
+        "schedule": crontab(minute="0", hour="10"),  # 每天10时执行
+    },
+    "periodic_notify_expired_tenant_users": {
+        "task": "bkuser.apps.tenant.tasks.notify_expired_tenant_user",
+        "schedule": crontab(minute="0", hour="10"),  # 每天10时执行
+    },
+}
 # Celery 消息队列配置
 CELERY_BROKER_URL = env.str("BK_BROKER_URL", default="")
 
