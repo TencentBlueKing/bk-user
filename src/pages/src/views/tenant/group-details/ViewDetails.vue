@@ -45,11 +45,11 @@ const managersList = computed(() => props.tenantsData.managers.filter(item => it
 
 const basicData = reactive([
   {
-    name: '公司名称',
+    name: '租户名称',
     value: props.tenantsData.name,
   },
   {
-    name: '公司ID',
+    name: '租户ID',
     value: props.tenantsData.id,
   },
   {

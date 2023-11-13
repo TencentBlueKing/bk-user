@@ -15,11 +15,11 @@ export default createRouter({
       component: Home,
     },
     {
-      path: '/index',
+      path: '/plain/',
       component: Home,
     },
     {
-      path: '/users',
+      path: '/page/users/',
       component: User,
     },
   ],

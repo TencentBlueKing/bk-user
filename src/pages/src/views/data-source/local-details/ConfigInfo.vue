@@ -18,10 +18,26 @@
               <span class="key">用户数据API路径：</span>
               <span class="value">{{ serverConfig.user_api_path }}</span>
             </li>
+            <div class="query-params" v-if="serverConfig?.user_api_query_params?.length > 0">
+              <span class="key">查询参数：</span>
+              <div class="value">
+                <bk-tag v-for="(item, index) in serverConfig.user_api_query_params" :key="index">
+                  {{item.key}}：{{item.value}}
+                </bk-tag>
+              </div>
+            </div>
             <li>
               <span class="key">部门数据API路径：</span>
               <span class="value">{{ serverConfig.department_api_path }}</span>
             </li>
+            <div class="query-params" v-if="serverConfig?.department_api_query_params?.length > 0">
+              <span class="key">查询参数：</span>
+              <div class="value">
+                <bk-tag v-for="(item, index) in serverConfig.department_api_query_params" :key="index">
+                  {{item.key}}：{{item.value}}
+                </bk-tag>
+              </div>
+            </div>
           </div>
           <div class="w-[50%]">
             <li>
@@ -163,4 +179,47 @@ const handleClickEdit = () => {
 
 <style lang="less" scoped>
 @import url("@/css/tenantViewStyle.less");
+
+.query-params {
+  position: relative;
+  display: flex;
+  max-width: 650px;
+  min-width: 325px;
+  padding: 10px 0;
+  margin-left: 90px;
+  background: #FAFBFD;
+  border: 1px solid #EAEBF0;
+  border-radius: 2px;
+
+  &::after {
+    position: absolute;
+    top: -14px;
+    left: 27px;
+    z-index: 1;
+    width: 0;
+    height: 0;
+    border: 7px solid transparent;
+    border-bottom-color: #EAEBF0;
+    content: '';
+  }
+
+  &::before{
+    position: absolute;
+    top: -13px;
+    left: 27px;
+    z-index: 2;
+    width: 0;
+    height: 0;
+    border: 7px solid transparent;
+    border-bottom: 7px solid #FAFBFD;
+    content: '';
+  }
+
+  .key {
+    min-width: 90px;
+    font-size: 14px;
+    line-height: 26px;
+    text-align: right;
+  }
+}
 </style>

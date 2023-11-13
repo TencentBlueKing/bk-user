@@ -59,7 +59,7 @@
         <bk-form-item label="密码有效期" required>
           <bk-radio-group v-model="formData.config.password_rule.valid_time" @change="handleChange">
             <bk-radio-button
-              v-for="(item, index) in passwordValidDaysList"
+              v-for="(item, index) in VALID_TIME"
               :key="index"
               :label="item.days"
             >
@@ -135,8 +135,8 @@
         </bk-form-item>
         <bk-form-item label="通知方式" property="config.password_initial.notification.enabled_methods" required>
           <NotifyEditorTemplate
-            :active-methods="activeMethods"
-            :checkbox-info="checkboxInfo"
+            :active-methods="formData.config.password_initial.notification.enabled_methods"
+            :checkbox-info="NOTIFICATION_METHODS"
             :data-list="formData.config.password_initial.notification.templates"
             :is-template="isPasswordInitial"
             :expiring-email-key="'user_initialize'"
@@ -155,7 +155,7 @@
                   v-model="formData.config.password_initial.notification.enabled_methods"
                   @change="handleChange">
                   <bk-checkbox
-                    v-for="(item, index) in checkboxInfo" :key="index"
+                    v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
                     :class="['password-tab', item.status ? 'active-tab' : '']"
                     style="margin-left: 5px;"
                     :label="item.value">
@@ -177,7 +177,7 @@
         <bk-form-item label="提醒时间" property="config.password_expire.remind_before_expire" required>
           <bk-checkbox-group v-model="formData.config.password_expire.remind_before_expire" @change="handleChange">
             <bk-checkbox
-              v-for="(item, index) in noticeTimeList"
+              v-for="(item, index) in REMIND_DAYS"
               :key="index"
               :label="item.value"
             >{{ item.label }}</bk-checkbox
@@ -186,8 +186,8 @@
         </bk-form-item>
         <bk-form-item label="通知方式" property="config.password_expire.notification.enabled_methods" required>
           <NotifyEditorTemplate
-            :active-methods="activeMethods"
-            :checkbox-info="checkboxInfo"
+            :active-methods="formData.config.password_expire.notification.enabled_methods"
+            :checkbox-info="NOTIFICATION_METHODS"
             :data-list="formData.config.password_expire.notification.templates"
             :is-template="isPasswordExpire"
             :expiring-email-key="'password_expiring'"
@@ -202,7 +202,7 @@
                   v-model="formData.config.password_expire.notification.enabled_methods"
                   @change="handleChange">
                   <bk-checkbox
-                    v-for="(item, index) in checkboxInfo" :key="index"
+                    v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
                     :class="['password-tab', item.status ? 'active-tab' : '']"
                     style="margin-left: 5px;"
                     :label="item.value">
@@ -243,7 +243,7 @@ import {
   randomPasswords,
 } from '@/http/dataSourceFiles';
 import router from '@/router';
-import { passwordMustIncludes, passwordNotAllowed } from '@/utils';
+import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
 const route = useRoute();
 const validate = useValidate();
@@ -260,7 +260,6 @@ const isDropdownPasswordInitial = ref(false);
 // 密码到期
 const isPasswordExpire = ref(false);
 const isDropdownPasswordExpire = ref(false);
-const activeMethods = ref('email');
 const isLoading = ref(false);
 const passwordRuleError = ref(false);
 const passwordCountError = ref(false);
@@ -347,30 +346,11 @@ watch(() => formData.config?.password_initial?.generate_method, (value) => {
   }
 });
 
-const passwordValidDaysList = reactive([
-  { days: 30, text: '一个月' },
-  { days: 90, text: '三个月' },
-  { days: 180, text: '六个月' },
-  { days: 365, text: '一年' },
-  { days: -1, text: '永久' },
-]);
-
 const maxTrailTimesList = reactive([
   { times: 3, text: '3次' },
   { times: 5, text: '5次' },
   { times: 10, text: '10次' },
 ]);
-
-const noticeTimeList = reactive([
-  { value: 1, label: '1天' },
-  { value: 7, label: '7天' },
-  { value: 15, label: '15天' },
-]);
-
-const checkboxInfo = [
-  { value: 'email', label: '邮箱', status: true },
-  { value: 'sms', label: '短信', status: false },
-];
 
 const handleEditorText = (html, text, key, type) => {
   formData.config.password_expire.notification.templates.forEach((item) => {
@@ -382,7 +362,7 @@ const handleEditorText = (html, text, key, type) => {
 };
 
 const handleClickLabel = (item) => {
-  checkboxInfo.forEach((element) => {
+  NOTIFICATION_METHODS.forEach((element) => {
     element.status = element.value === item.value;
   });
 };

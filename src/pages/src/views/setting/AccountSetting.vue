@@ -1,14 +1,14 @@
 <template>
   <bk-loading :loading="isLoading" :z-index="9" class="account-setting-wrapper user-scroll-y">
-    <bk-form class="account-setting-content" form-type="vertical">
+    <bk-form class="account-setting-content" form-type="vertical" v-model="formData">
       <bk-form-item label="账号有效期开启">
-        <bk-switcher v-model="state.accountValidOpen" theme="primary" size="large" />
+        <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="handleChange" />
       </bk-form-item>
-      <div v-if="state.accountValidOpen">
+      <div v-if="formData.enabled">
         <bk-form-item label="账号有效期">
-          <bk-radio-group v-model="state.accountValidDays">
+          <bk-radio-group v-model="formData.valid_time" @change="handleChange">
             <bk-radio-button
-              v-for="(item, index) in accountCof.accountValidDays"
+              v-for="(item, index) in VALID_TIME"
               :key="index"
               :label="item.days"
             >
@@ -17,35 +17,35 @@
           </bk-radio-group>
         </bk-form-item>
         <bk-form-item label="提醒时间" required>
-          <bk-checkbox-group v-model="state.accountExpirationNoticeInterval">
+          <bk-checkbox-group v-model="formData.remind_before_expire" @change="handleChange">
             <bk-checkbox
-              v-for="(item, index) in accountCof.accountExpirationNoticeInterval"
+              v-for="(item, index) in REMIND_DAYS"
               :key="index"
               :label="item.value"
             >{{ item.label }}</bk-checkbox
             >
           </bk-checkbox-group>
         </bk-form-item>
-        <bk-form-item label="通知方式" property="config.notification.enabled_methods" required>
+        <bk-form-item label="通知方式" property="enabled_notification_methods" required>
           <NotifyEditorTemplate
-            v-if="formData.config.notification"
-            :active-methods="activeMethods"
-            :checkbox-info="checkboxInfo"
-            :data-list="formData.config.notification.templates"
+            v-if="formData.enabled_notification_methods"
+            :active-methods="formData.enabled_notification_methods"
+            :checkbox-info="NOTIFICATION_METHODS"
+            :data-list="formData.notification_templates"
             :is-template="isAccountExpire"
-            :expiring-email-key="'password_expiring'"
-            :expired-email-key="'password_expired'"
-            :expiring-sms-key="'password_expiring'"
-            :expired-sms-key="'password_expired'"
+            :expiring-email-key="'account_expiring'"
+            :expired-email-key="'account_expired'"
+            :expiring-sms-key="'account_expiring'"
+            :expired-sms-key="'account_expired'"
             @handleEditorText="handleEditorText">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
                   class="checkbox-zh"
-                  v-model="formData.config.notification.enabled_methods"
+                  v-model="formData.enabled_notification_methods"
                   @change="handleChange">
                   <bk-checkbox
-                    v-for="(item, index) in checkboxInfo" :key="index"
+                    v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
                     :class="['password-tab', item.status ? 'active-tab' : '']"
                     style="margin-left: 5px;"
                     :label="item.value">
@@ -64,41 +64,38 @@
       </div>
     </bk-form>
     <div class="account-setting-footer">
-      <bk-button theme="primary" class="mr8">应用</bk-button>
-      <bk-button>重置</bk-button>
+      <bk-button theme="primary">应用</bk-button>
     </div>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
-import { getDefaultConfig } from '@/http/dataSourceFiles';
+import { NOTIFICATION_METHODS, REMIND_DAYS, VALID_TIME } from '@/utils';
+// import { getTenantSetting } from '@/http/settingFiles'
 
 const isLoading = ref(false);
-const formData = reactive({
-  config: {},
-});
-const activeMethods = ref('email');
+const formData = ref({});
 const isAccountExpire = ref(false);
 const isDropdownAccountExpire = ref(false);
 
-const checkboxInfo = [
-  { value: 'email', label: '邮箱', status: true },
-  { value: 'sms', label: '短信', status: false },
-];
-
 onMounted(async () => {
-  isLoading.value = true;
-  const res = await getDefaultConfig('local');
-  formData.config = res?.data?.config?.password_expire;
-  isLoading.value = false;
+  try {
+    isLoading.value = true;
+    // const res = await getTenantSetting();
+    // formData.value = res.data;
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    isLoading.value = false;
+  }
 });
 
 const handleEditorText = (html, text, key, type) => {
-  formData.config.notification.templates.forEach((item) => {
+  formData.value.notification_templates.forEach((item) => {
     if (item.method === type && item.scene === key) {
       item.content = text;
       item.content_html = html;
@@ -106,9 +103,8 @@ const handleEditorText = (html, text, key, type) => {
   });
 };
 
-
 const handleClickLabel = (item) => {
-  checkboxInfo.forEach((element) => {
+  NOTIFICATION_METHODS.forEach((element) => {
     element.status = element.value === item.value;
   });
 };
@@ -121,28 +117,6 @@ const accountExpireTemplate = () => {
 const handleChange = () => {
   window.changeInput = true;
 };
-
-const state = reactive({
-  accountValidOpen: true,
-  accountValidDays: 30,
-  accountExpirationNoticeInterval: [1, 7],
-  accountExpirationNoticeMethods: ['email', 'SMS'],
-});
-
-const accountCof = reactive({
-  accountValidDays: [
-    { days: 30, text: '一个月' },
-    { days: 90, text: '三个月' },
-    { days: 180, text: '六个月' },
-    { days: 365, text: '一年' },
-    { days: -1, text: '永久' },
-  ],
-  accountExpirationNoticeInterval: [
-    { value: 1, label: '1天' },
-    { value: 7, label: '7天' },
-    { value: 15, label: '15天' },
-  ],
-});
 </script>
 
 <style lang="less" scoped>

@@ -9,7 +9,7 @@
           placement="bottom-start"
           @hide="() => (isDropdown = false)"
           @show="() => (isDropdown = true)">
-          <div :class="['type-title', { 'hover-title': isDropdown }]" v-if="item.id === currentType">
+          <div :class="['type-title', { 'hover-title': isDropdown && !currentId }]" v-if="item.id === currentType">
             <img v-if="item.logo" :src="item.logo">
             <span class="pr-[10px]">{{ item.name }}</span>
             <DownShape v-if="!currentId" class="down-shape-icon" />
@@ -117,7 +117,6 @@ const toggleType = (item) => {
     display: flex;
     height: 24px;
     line-height: 24px;
-    cursor: pointer;
     background-color: #f0f1f5;
     align-items: center;
     border-radius: 2px;
@@ -135,6 +134,7 @@ const toggleType = (item) => {
   }
 
   .hover-title {
+    cursor: pointer;
     background-color: #DCDEE5;
 
     .down-shape-icon {

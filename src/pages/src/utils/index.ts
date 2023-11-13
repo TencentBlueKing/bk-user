@@ -274,3 +274,25 @@ export const dataRecordStatus = {
     theme: 'danger',
   },
 };
+
+// 有效期
+export const VALID_TIME = [
+  { days: 30, text: '一个月' },
+  { days: 90, text: '三个月' },
+  { days: 180, text: '六个月' },
+  { days: 365, text: '一年' },
+  { days: -1, text: '永久' },
+];
+
+// 提醒时间
+export const REMIND_DAYS = [
+  { value: 1, label: '1天' },
+  { value: 7, label: '7天' },
+  { value: 15, label: '15天' },
+];
+
+// 通知方式
+export const NOTIFICATION_METHODS = [
+  { value: 'email', label: '邮箱', status: true },
+  { value: 'sms', label: '短信', status: false },
+];

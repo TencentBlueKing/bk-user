@@ -13,13 +13,12 @@ from django.db import models
 from bkuser.common.models import AuditedModel
 from bkuser.utils.uuid import generate_uuid
 
-from .constants import IdpCategory, IdpStatus
+from .constants import IdpStatus
 
 
 class IdpPlugin(models.Model):
     """认证源插件"""
 
-    category = models.CharField("分类", max_length=32, choices=IdpCategory.get_choices())
     id = models.CharField("认证源插件唯一标识", primary_key=True, max_length=128)
     name = models.CharField("认证源插件名称", max_length=128, unique=True)
     description = models.TextField("描述", default="", blank=True)
@@ -31,7 +30,7 @@ class Idp(AuditedModel):
 
     # 登录回调场景下，该 ID 是 URL Path 的一部分
     id = models.CharField("认证源标识", primary_key=True, max_length=128, default=generate_uuid)
-    name = models.CharField("认证源名称", max_length=128, unique=True)
+    name = models.CharField("认证源名称", max_length=128)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
     status = models.CharField("认证源状态", max_length=32, choices=IdpStatus.get_choices(), default=IdpStatus.ENABLED)
     # Note: 认证源插件被删除的前提是，插件没有被任何认证源使用
@@ -41,3 +40,8 @@ class Idp(AuditedModel):
     data_source_match_rules = models.JSONField("匹配规则", default=list)
     # 允许关联社会化认证源的租户组织架构范围
     allow_bind_scopes = models.JSONField("允许范围", default=list)
+
+    class Meta:
+        unique_together = [
+            ("name", "owner_tenant_id"),
+        ]

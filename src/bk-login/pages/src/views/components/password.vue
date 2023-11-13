@@ -65,7 +65,7 @@ const handleLogin = () => {
       },
     ).then(() => {
       loading.value = false;
-      router.push('/users');
+      router.push('/page/users/');
     })
       .catch((error) => {
         errorMessage.value = error?.message || '登录失败';

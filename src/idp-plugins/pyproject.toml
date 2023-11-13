@@ -1,0 +1,107 @@
+[tool.poetry]
+name = "idp-plugins"
+version = "0.1.0"
+description = ""
+authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
+readme = "README.md"
+
+[[tool.poetry.source]]
+name = "tencent"
+url = "https://mirrors.tencent.com/pypi/simple/"
+priority = "default"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+django = "3.2.21"
+pydantic = "2.3.0"
+blue-krill = "2.0.2"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.4"
+mypy = "^1.6.1"
+types-requests = "^2.31.0.10"
+pytest = "^7.4.3"
+pytest-django = "^4.5.2"
+import-linter = "^1.12.0"
+
+[tool.mypy]
+ignore_missing_imports = true
+show_error_codes = true
+strict_optional=true
+pretty=true
+check_untyped_defs = true
+namespace_packages = true
+
+[[tool.mypy.overrides]]
+module = [
+    "*.migrations.*",
+]
+ignore_errors = true
+
+[tool.ruff]
+# Enable Pyflakes `E` and `F` codes by default.
+select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
+# All Rule: https://beta.ruff.rs/docs/rules/
+# Add `noqa: E501` manually when necessary until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
+ignore = [
+    # Consider moving this statement to an else block
+    "TRY300",
+    # Use raise from to specify exception cause
+    "TRY200",
+    # Avoid specifying long messages outside the exception class
+    "TRY003",
+    # Use contextlib.suppress({exception}) instead of try-except-pass
+    "SIM105",
+    # Use ternary operator {contents} instead of if-else-block
+    "SIM108",
+    # Avoid too many arguments
+    "PLR0913",
+    # Avoid too many return statements
+    "PLR0911",
+    # raise-without-from-inside-except
+    "B904"
+]
+# Same as Black.
+line-length = 119
+# show an enumeration of all autofixed lint violations
+# show-fixes = true
+# show source code snippets when reporting lint violations
+# show-source = true
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "*/migrations/*",
+]
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
+
+[tool.ruff.isort]
+relative-imports-order = "closest-to-furthest"
+
+[tool.importlinter]
+root_package = "bklogin"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

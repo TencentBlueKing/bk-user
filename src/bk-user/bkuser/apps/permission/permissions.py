@@ -119,7 +119,7 @@ def is_nature_user(tenant_id: str, cur_tenant_id: str, username: str) -> bool:
 
 
 def get_user_role(tenant_id: str, username: str) -> UserRole:
-    """获取用户角色，因目前超级管理员必定是租户管理员，租户管理员必定是租户用户，因此返回最高级的角色即可"""
+    """获取用户角色，因目前超级管理员必定是租户管理员，租户管理员必定是普通用户，因此返回最高级的角色即可"""
     tenant = Tenant.objects.get(id=tenant_id)
 
     if TenantManager.objects.filter(tenant=tenant, tenant_user_id=username).exists():
