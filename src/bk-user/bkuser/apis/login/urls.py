@@ -27,7 +27,7 @@ urlpatterns = [
     path("tenants/<str:id>/", views.TenantRetrieveApi.as_view(), name="login.tenant.retrieve"),
     # 获取租户的认证源列表
     path("tenants/<str:tenant_id>/idps/", views.IdpListApi.as_view(), name="login.idp.list"),
-    # 单个数据源
+    # 单个认证源
     path("idps/<str:id>/", views.IdpRetrieveApi.as_view(), name="login.idp.retrieve"),
     # 认证源匹配用户
     path(
@@ -35,5 +35,6 @@ urlpatterns = [
         views.TenantUserMatchApi.as_view(),
         name="login.matched_tenant_user.match",
     ),
+    # 查询租户用户
     path("tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="login.tenant_user.retrieve"),
 ]

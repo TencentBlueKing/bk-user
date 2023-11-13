@@ -159,7 +159,7 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
             ("username", "data_source"),
         ]
 
-    def check_password(self, raw_password) -> bool:
+    def check_password(self, raw_password: str) -> bool:
         return check_password(raw_password, self.password)
 
 

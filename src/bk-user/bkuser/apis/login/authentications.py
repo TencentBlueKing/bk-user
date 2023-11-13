@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import BasicAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 
 
 class BkUserAppAuthentication(BasicAuthentication):
@@ -21,7 +22,8 @@ class BkUserAppAuthentication(BasicAuthentication):
 
     def authenticate_credentials(self, userid, password, request=None):
         if userid != settings.BK_APP_CODE or password != settings.BK_APP_SECRET:
-            return None
+            raise AuthenticationFailed("Invalid app_code/app_secret.")
+
         user_model = get_user_model()
         user, _ = user_model.objects.get_or_create(
             username="admin", defaults={"is_active": True, "is_staff": False, "is_superuser": False}

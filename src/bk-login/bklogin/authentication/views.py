@@ -166,7 +166,7 @@ class TenantIdpListApi(View):
         )
 
 
-class IdpInfo(pydantic.BaseModel):
+class IdpBasicInfo(pydantic.BaseModel):
     """认证源基础信息"""
 
     id: str
@@ -179,7 +179,7 @@ class PluginErrorContext(pydantic.BaseModel):
     """插件异常上下文，用于打印日志时所需的上下文信息"""
 
     # 插件信息
-    idp: IdpInfo
+    idp: IdpBasicInfo
 
     action: str
     http_method: str
@@ -236,7 +236,7 @@ class IdpPluginDispatchView(View):
                 _("认证源[{}]加载插件[{}]失败, {}").format(idp.name, idp.plugin.name, error),
             )
 
-        idp_info = IdpInfo(id=idp.id, name=idp.name, plugin_id=idp.plugin.id, plugin_name=idp.plugin.name)
+        idp_info = IdpBasicInfo(id=idp.id, name=idp.name, plugin_id=idp.plugin.id, plugin_name=idp.plugin.name)
         # （3）dispatch
         # FIXME: 如何对身份凭证类的认证进行手动csrf校验，或者如何添加csrf_protect装饰器
         # 身份凭证类型
@@ -280,7 +280,7 @@ class IdpPluginDispatchView(View):
         plugin: BaseCredentialIdpPlugin,
         request,
         sign_in_tenant_id: str,
-        idp: IdpInfo,
+        idp: IdpBasicInfo,
         action: str,
         http_method: str,
     ):
@@ -310,7 +310,7 @@ class IdpPluginDispatchView(View):
         plugin: BaseFederationIdpPlugin,
         request,
         sign_in_tenant_id: str,
-        idp: IdpInfo,
+        idp: IdpBasicInfo,
         action: str,
         http_method: str,
     ):

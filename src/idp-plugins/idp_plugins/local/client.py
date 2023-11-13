@@ -67,8 +67,7 @@ class BkUserAPIClient:
             json={"data_source_ids": data_source_ids, "username": username, "password": password},
         )
 
-        # FIXME: 后续支持调用点判断，不能直接返回ValidationError，比如密码过期，获取error.data里的url进行重置密码
-        # 异常
+        # FIXME: 后续支持调用点判断，不直接返回ValidationError，比如密码过期，获取error.data里的url进行重置密码
         if error := resp_data.get("error", {}):
             raise ValidationError(error["message"])
 

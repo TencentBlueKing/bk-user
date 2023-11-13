@@ -13,16 +13,15 @@ from functools import reduce
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.models import DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.apps.idp.data_models import DataSourceMatchRuleList, convert_match_rules_to_queryset
+from bkuser.apps.idp.data_models import DataSourceMatchRuleList, convert_match_rules_to_queryset_filter
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.common.error_codes import error_codes
 
-from .authentications import BkUserAppAuthentication
+from .mixins import LoginApiAccessControlMixin
 from .serializers import (
     GlobalSettingRetrieveOutputSLZ,
     IdpListOutputSLZ,
@@ -38,11 +37,8 @@ from .serializers import (
 )
 
 
-class LocalUserCredentialAuthenticateApi(generics.CreateAPIView):
+class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.CreateAPIView):
     """本地数据源用户的凭据认证"""
-
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         slz = LocalUserCredentialAuthenticateInputSLZ(data=request.data)
@@ -67,24 +63,18 @@ class LocalUserCredentialAuthenticateApi(generics.CreateAPIView):
         #  多租户下，认证后的数据源用户，
         #  还需要根据匹配规则和租户信息等最终匹配到租户用户(即对外的蓝鲸用户)，这些是在登录流程里的
 
-        # TODO: 密码过期检测，过期需要返回重置URI
+        # FIXME (nan): 密码过期检测，过期需要返回重置URI
 
         return Response(LocalUserCredentialAuthenticateOutputSLZ(instance=matched_users, many=True).data)
 
 
-class GlobalSettingRetrieveApi(generics.RetrieveAPIView):
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
-
+class GlobalSettingRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         # TODO: 待实现全局配置管理功能后调整
         return Response(GlobalSettingRetrieveOutputSLZ(instance={"tenant_visible": False}).data)
 
 
-class TenantListApi(generics.ListAPIView):
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
-
+class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     pagination_class = None
     serializer_class = TenantListOutputSLZ
 
@@ -100,19 +90,13 @@ class TenantListApi(generics.ListAPIView):
         return queryset
 
 
-class TenantRetrieveApi(generics.RetrieveAPIView):
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
-
+class TenantRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     serializer_class = TenantRetrieveOutputSLZ
     queryset = Tenant.objects.all()
     lookup_field = "id"
 
 
-class IdpListApi(generics.ListAPIView):
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
-
+class IdpListApi(generics.ListAPIView, LoginApiAccessControlMixin):
     pagination_class = None
     serializer_class = IdpListOutputSLZ
 
@@ -120,20 +104,14 @@ class IdpListApi(generics.ListAPIView):
         return Idp.objects.filter(owner_tenant_id=self.kwargs["tenant_id"]).select_related("plugin")
 
 
-class IdpRetrieveApi(generics.RetrieveAPIView):
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
-
+class IdpRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     serializer_class = IdpRetrieveOutputSLZ
     queryset = Idp.objects.all()
     lookup_field = "id"
 
 
-class TenantUserMatchApi(generics.CreateAPIView):
+class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
     """通过IDP的用户信息匹配到蓝鲸用户"""
-
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         slz = TenantUserMatchInputSLZ(data=request.data)
@@ -162,7 +140,7 @@ class TenantUserMatchApi(generics.CreateAPIView):
         conditions = [
             condition
             for userinfo in data["idp_users"]
-            if (condition := convert_match_rules_to_queryset(data_source_match_rules, userinfo))
+            if (condition := convert_match_rules_to_queryset_filter(data_source_match_rules, userinfo))
         ]
 
         # 查询数据源用户
@@ -180,10 +158,7 @@ class TenantUserMatchApi(generics.CreateAPIView):
         return Response(TenantUserMatchOutputSLZ(instance=tenant_users, many=True).data)
 
 
-class TenantUserRetrieveApi(generics.RetrieveAPIView):
-    authentication_classes = [BkUserAppAuthentication]
-    permission_classes = [IsAuthenticated]
-
+class TenantUserRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     serializer_class = TenantUserRetrieveOutputSLZ
     queryset = TenantUser.objects.all()
     lookup_field = "id"

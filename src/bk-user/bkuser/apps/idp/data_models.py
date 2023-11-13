@@ -38,7 +38,7 @@ class DataSourceMatchRule(BaseModel):
     # 字段匹配规则
     field_compare_rules: List[FieldCompareRule]
 
-    def convert_to_queryset(self, source_data: Dict[str, Any]) -> Q | None:
+    def convert_to_queryset_filter(self, source_data: Dict[str, Any]) -> Q | None:
         """
         将匹配规则转换为Django QuerySet过滤条件
         :param source_data: 认证源数据
@@ -80,12 +80,14 @@ class DataSourceMatchRule(BaseModel):
 DataSourceMatchRuleList = TypeAdapter(List[DataSourceMatchRule])
 
 
-def convert_match_rules_to_queryset(match_rules: List[DataSourceMatchRule], source_data: Dict[str, Any]) -> Q | None:
+def convert_match_rules_to_queryset_filter(
+    match_rules: List[DataSourceMatchRule], source_data: Dict[str, Any]
+) -> Q | None:
     """
     将规则列表转换为Queryset查询条件
     不同匹配规则之间的关系是OR, 匹配规则里不同字段的关系是AND
     """
-    q_list = [q for rule in match_rules if (q := rule.convert_to_queryset(source_data))]
+    q_list = [q for rule in match_rules if (q := rule.convert_to_queryset_filter(source_data))]
     return reduce(operator.or_, q_list) if q_list else None
 
 

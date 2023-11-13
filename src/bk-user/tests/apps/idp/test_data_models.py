@@ -34,7 +34,7 @@ pytestmark = pytest.mark.django_db
         ),
     ],
 )
-def test_convert_to_queryset_for_source_data(source_data, excepted_queryset):
+def test_convert_to_queryset_filter_for_source_data(source_data, excepted_queryset):
     data_source_match_rule = DataSourceMatchRule(
         data_source_id=1,
         field_compare_rules=[
@@ -42,7 +42,7 @@ def test_convert_to_queryset_for_source_data(source_data, excepted_queryset):
             FieldCompareRule(source_field="phone", target_field="phone"),
         ],
     )
-    queryset = data_source_match_rule.convert_to_queryset(source_data)
+    queryset = data_source_match_rule.convert_to_queryset_filter(source_data)
 
     assert queryset == excepted_queryset
 
@@ -82,9 +82,9 @@ def test_convert_to_queryset_for_source_data(source_data, excepted_queryset):
         ),
     ],
 )
-def test_convert_to_queryset_for_rule(rule, excepted_queryset):
+def test_convert_to_queryset_filter_for_rule(rule, excepted_queryset):
     source_data = {"user_id": "test_username", "phone": "1234567890123", "email": "111@qq.com"}
 
-    queryset = rule.convert_to_queryset(source_data)
+    queryset = rule.convert_to_queryset_filter(source_data)
 
     assert queryset == excepted_queryset
