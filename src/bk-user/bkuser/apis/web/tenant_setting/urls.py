@@ -20,4 +20,9 @@ urlpatterns = [
         views.TenantUserCustomFieldUpdateDeleteApi.as_view(),
         name="tenant_setting_custom_fields.update_delete",
     ),
+    path(
+        "settings/tenant-user-validity-period/",
+        views.TenantUserValidityPeriodConfigRetrieveUpdateApi.as_view(),
+        name="tenant_user_validity_period_config.retrieve_update",
+    ),
 ]

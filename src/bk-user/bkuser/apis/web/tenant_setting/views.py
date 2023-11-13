@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -19,11 +20,17 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserCustomFieldCreateOutputSLZ,
     TenantUserCustomFieldUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
+    TenantUserValidityPeriodConfigInputSLZ,
+    TenantUserValidityPeriodConfigOutputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.common.views import ExcludePutAPIViewMixin
+from bkuser.apps.tenant.models import (
+    TenantUserCustomField,
+    TenantUserValidityPeriodConfig,
+    UserBuiltinField,
+)
+from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
 class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -89,8 +96,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
         tenant_id = self.get_current_tenant_id()
 
         slz = TenantUserCustomFieldUpdateInputSLZ(
-            data=request.data,
-            context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]},
+            data=request.data, context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -111,3 +117,49 @@ class TenantUserCustomFieldUpdateDeleteApi(
     )
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
+
+class TenantUserValidityPeriodConfigRetrieveUpdateApi(
+    ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView
+):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    def get_object(self):
+        queryset = TenantUserValidityPeriodConfig.objects.all()
+        filter_kwargs = {"tenant_id": self.get_current_tenant_id()}
+        return get_object_or_404(queryset, **filter_kwargs)
+
+    @swagger_auto_schema(
+        tags=["tenant-setting"],
+        operation_description="当前租户的账户有效期配置",
+        responses={
+            status.HTTP_200_OK: TenantUserValidityPeriodConfigOutputSLZ(),
+        },
+    )
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        return Response(TenantUserValidityPeriodConfigOutputSLZ(instance=instance).data)
+
+    @swagger_auto_schema(
+        tags=["tenant-setting"],
+        operation_description="更新当前租户的账户有效期配置",
+        request_body=TenantUserValidityPeriodConfigInputSLZ(),
+        responses={
+            status.HTTP_204_NO_CONTENT: "",
+        },
+    )
+    def put(self, request, *args, **kwargs):
+        slz = TenantUserValidityPeriodConfigInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        cfg = self.get_object()
+        cfg.enabled = data["enabled"]
+        cfg.validity_period = data["validity_period"]
+        cfg.remind_before_expire = data["remind_before_expire"]
+        cfg.enabled_notification_methods = data["enabled_notification_methods"]
+        cfg.notification_templates = data["notification_templates"]
+        cfg.updater = request.user.username
+        cfg.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
