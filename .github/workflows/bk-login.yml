@@ -1,14 +1,14 @@
-name: bkuser_ci_check
+name: bklogin_ci_check
 on:
   push:
     branches: [ main, pre_*, ft_*, release/* ]
     paths:
-      - "src/bk-user/**"
+      - "src/bk-login/**"
       - "src/idp-plugins/**"
   pull_request:
     branches: [ main, pre_*, ft_*, release/* ]
     paths:
-      - "src/bk-user/**"
+      - "src/bk-login/**"
       - "src/idp-plugins/**"
 jobs:
   check:
@@ -22,16 +22,16 @@ jobs:
           python-version: "3.10"
       - name: create idp plugin symbolic link
         run: |
-          ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-user/bkuser
+          ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-login/bklogin
       - name: Format & Lint with ruff
         run: |
           pip install ruff==0.1.4
-          ruff format src/bk-user --config=src/bk-user/pyproject.toml
-          ruff src/bk-user --config=src/bk-user/pyproject.toml
+          ruff format src/bk-login --config=src/bk-login/pyproject.toml
+          ruff src/bk-login --config=src/bk-login/pyproject.toml
       - name: Lint with mypy
         run: |
           pip install mypy==1.6.1 types-requests==2.31.0.2 types-setuptools==57.4.18 types-dataclasses==0.1.7 types-redis==3.5.18 types-PyMySQL==1.1.0.1 types-six==0.1.9 types-toml==0.1.5 types-pytz==2023.3.0.0 types-urllib3==1.26.25.14
-          mypy src/bk-user --config-file=src/bk-user/pyproject.toml
+          mypy src/bk-login --config-file=src/bk-login/pyproject.toml
   test:
     strategy:
       fail-fast: false
@@ -41,7 +41,7 @@ jobs:
         uses: samin/mysql-action@v1.3
         with:
           mysql version: "8.0"
-          mysql database: bk-user
+          mysql database: bk-login
           mysql user: root
           mysql password: root_pwd
           mysql root password: root_pwd
@@ -56,24 +56,25 @@ jobs:
           python-version: "3.10"
       - name: create idp plugin symbolic link
         run: |
-          ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-user/bkuser
+          ln -s $(pwd)/src/idp-plugins/idp_plugins $(pwd)/src/bk-login/bklogin
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2.3.0
         with:
-          poetry-version: "1.5.1"
+          poetry-version: "1.6.1"
       - name: Install dependencies
-        working-directory: src/bk-user
+        working-directory: src/bk-login
         run: poetry install
       - name: Run unittest
-        working-directory: src/bk-user
+        working-directory: src/bk-login
         run: |
           # random secret
           export BK_APP_SECRET="fod6MKVTVi_3M5HgGoj-qI7b3l0dgCzTBwGypnDz4vg="
+          export BK_USER_APP_SECRET="Vi_3M5HgGogCzTBwGypnDz4vgfod6MKVTj-qI7b3l0d="
           # random secret key
           export BKKRILL_ENCRYPT_SECRET_KEY="tttHSBLiVdQPItrfy7n9dV7AxAUMZpYVkD6IHMbL0VE="
-          export BK_USER_URL=""
+          export BK_DOMAIN="example.com"
           export BK_COMPONENT_API_URL=""
           export MYSQL_PASSWORD=root_pwd
           export MYSQL_HOST="127.0.0.1"
-          export DJANGO_SETTINGS_MODULE=bkuser.settings
+          export DJANGO_SETTINGS_MODULE=bklogin.settings
           poetry run pytest ./tests

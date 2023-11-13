@@ -81,7 +81,7 @@ WSGI_APPLICATION = "bklogin.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": env.str("MYSQL_NAME", "bk-user"),
+        "NAME": env.str("MYSQL_NAME", "bk-login"),
         "USER": env.str("MYSQL_USER", "root"),
         "PASSWORD": env.str("MYSQL_PASSWORD", ""),
         "HOST": env.str("MYSQL_HOST", "localhost"),

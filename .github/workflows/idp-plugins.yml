@@ -1,0 +1,29 @@
+name: idp_plugin_ci_check
+on:
+  push:
+    branches: [ main, pre_*, ft_*, release/* ]
+    paths:
+      - "src/idp-plugins/**"
+  pull_request:
+    branches: [ main, pre_*, ft_*, release/* ]
+    paths:
+      - "src/idp-plugins/**"
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: Format & Lint with ruff
+        run: |
+          pip install ruff==0.1.4
+          ruff format src/idp-plugins --config=src/idp-plugins/pyproject.toml
+          ruff src/idp-plugins --config=src/idp-plugins/pyproject.toml
+      - name: Lint with mypy
+        run: |
+          pip install mypy==1.6.1 types-requests==2.31.0.2 types-setuptools==57.4.18 types-dataclasses==0.1.7 types-redis==3.5.18 types-PyMySQL==1.1.0.1 types-six==0.1.9 types-toml==0.1.5 types-pytz==2023.3.0.0 types-urllib3==1.26.25.14
+          mypy src/idp-plugins --config-file=src/idp-plugins/pyproject.toml
