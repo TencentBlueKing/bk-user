@@ -23,7 +23,6 @@ def validate_phone_with_country_code(phone: str, country_code: str) -> None:
     """
     try:
         region = region_code_for_country_code(int(country_code))
-
     except Exception:
         raise ValueError(f"parse phone country code [{country_code}] to region failed!")
 
@@ -31,8 +30,6 @@ def validate_phone_with_country_code(phone: str, country_code: str) -> None:
     if region == UNKNOWN_REGION:
         raise ValueError("unknown phone country code: {}".format(country_code))
 
-    # phonenumbers库在验证号码的时：过短会解析为有效号码，超过250的字节才算超长
-    # =》所以这里需要显式做中国号码的长度校验
     # 特殊检查：中国手机号强制要求必须是 11 位
     if region == "CN" and len(phone) != 11:  # noqa: PLR2004
         raise ValueError(f"chinese phone number must be 11 digits, {phone} is invalid")
