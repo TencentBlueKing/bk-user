@@ -51,7 +51,8 @@ def notify_expiring_tenant_user():
         tenant_id, remind_before_expire = item["tenant_id"], item["remind_before_expire"]
 
         # DateTimeField 使用__date__xx的orm查询，orm会将相应字段的进行转换时区.
-        # mysql 数据库需要加载系统的时区表
+        # mysql 数据库需要加载系统的时区表, 可以通过下面的sql，来确认是否加载了
+        # SELECT CONVERT_TZ("2023-11-18 06:38:32.000000", 'UTC', 'Asia/Shanghai')
         # https://docs.djangoproject.com/en/3.2/ref/models/querysets/#database-time-zone-definitions
         # https://dev.mysql.com/doc/refman/8.2/en/mysql-tzinfo-to-sql.html
         tenant_users = TenantUser.objects.filter(account_expired_at__date__gt=now.date(), tenant_id=tenant_id)
