@@ -39,6 +39,8 @@ repos:
             .*/poetry\.lock|
             .*/pyproject\.toml|
             \.github/workflows/bk-user.yml|
+            \.github/workflows/bk-login.yml|
+            \.github/workflows/idp-plugins.yml|
             src/bk-user/logs|src/pages/node_modules/|
             src/bk-login/pages/src/views/components/protocol.vue|
             src/pages/static/bk_icon_font/iconcool.json|
