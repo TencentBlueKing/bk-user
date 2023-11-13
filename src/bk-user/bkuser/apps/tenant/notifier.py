@@ -93,16 +93,17 @@ class TenantUserValidityPeriodNotifier:
 
     def send(self, users: List[TenantUser]) -> None:
         """根据配置，发送对应的通知信息"""
-        try:
-            for u in users:
+        for u in users:
+            try:
                 self._send_notifications(u)
-        # TODO 细化异常处理
-        except Exception:
-            logger.exception(
-                "send notification failed, tenant: %s, scene: %s",
-                self.tenant_id,
-                self.scene,
-            )
+                # TODO 细化异常处理
+            except Exception:  # noqa: PERF203
+                logger.exception(
+                    "send notification failed, tenant: %s, scene: %s, tenant_user: %s",
+                    self.tenant_id,
+                    self.scene,
+                    u.id,
+                )
 
     def _get_templates_with_scene(self, scene: NotificationScene) -> List[NotificationTemplate]:
         """根据场景以及插件配置中设置的通知方式，获取需要发送通知的模板"""
