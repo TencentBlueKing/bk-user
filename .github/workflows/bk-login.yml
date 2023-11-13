@@ -69,9 +69,10 @@ jobs:
         run: |
           # random secret
           export BK_APP_SECRET="fod6MKVTVi_3M5HgGoj-qI7b3l0dgCzTBwGypnDz4vg="
+          export BK_USER_APP_SECRET="Vi_3M5HgGogCzTBwGypnDz4vgfod6MKVTj-qI7b3l0d="
           # random secret key
           export BKKRILL_ENCRYPT_SECRET_KEY="tttHSBLiVdQPItrfy7n9dV7AxAUMZpYVkD6IHMbL0VE="
-          export BK_USER_URL=""
+          export BK_DOMAIN="example.com"
           export BK_COMPONENT_API_URL=""
           export MYSQL_PASSWORD=root_pwd
           export MYSQL_HOST="127.0.0.1"
