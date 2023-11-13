@@ -8,12 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework import serializers
-
-from bkuser.apps.permission.constants import UserRole
+from django.apps import AppConfig
 
 
-class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
-    username = serializers.CharField(help_text="用户名")
-    tenant_id = serializers.CharField(help_text="租户 ID")
-    role = serializers.ChoiceField(help_text="用户角色", choices=UserRole.get_choices())
+class PermissionConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "bkuser.apps.permission"

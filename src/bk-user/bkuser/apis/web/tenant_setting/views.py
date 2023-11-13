@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
@@ -22,18 +23,19 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserValidityPeriodConfigInputSLZ,
     TenantUserValidityPeriodConfigOutputSLZ,
 )
+from bkuser.apps.permission.constants import PermAction
+from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import (
-    TenantManager,
     TenantUserCustomField,
     TenantUserValidityPeriodConfig,
     UserBuiltinField,
 )
-from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
 class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserFieldOutputSLZ
 
     @swagger_auto_schema(
@@ -54,6 +56,8 @@ class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
 
 class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     @swagger_auto_schema(
         tags=["tenant-setting"],
         operation_description="新建用户自定义字段",
@@ -77,6 +81,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
     CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView
 ):
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self):
         return TenantUserCustomField.objects.filter(tenant_id=self.get_current_tenant_id())
@@ -117,6 +122,8 @@ class TenantUserCustomFieldUpdateDeleteApi(
 class TenantUserValidityPeriodConfigRetrieveUpdateApi(
     ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView
 ):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     def get_object(self):
         queryset = TenantUserValidityPeriodConfig.objects.all()
         filter_kwargs = {"tenant_id": self.get_current_tenant_id()}
@@ -142,24 +149,17 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
         },
     )
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        # TODO (su) 权限调整为 perm_class 当前租户的管理才可做更新操作
-        operator = request.user.username
-        if not TenantManager.objects.filter(tenant_id=instance.tenant_id, tenant_user_id=operator).exists():
-            raise error_codes.NO_PERMISSION
-
         slz = TenantUserValidityPeriodConfigInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        instance.enabled = data["enabled"]
-        instance.validity_period = data["validity_period"]
-        instance.remind_before_expire = data["remind_before_expire"]
-        instance.enabled_notification_methods = data["enabled_notification_methods"]
-        instance.notification_templates = data["notification_templates"]
-        instance.updater = operator
-
-        instance.save()
+        cfg = self.get_object()
+        cfg.enabled = data["enabled"]
+        cfg.validity_period = data["validity_period"]
+        cfg.remind_before_expire = data["remind_before_expire"]
+        cfg.enabled_notification_methods = data["enabled_notification_methods"]
+        cfg.notification_templates = data["notification_templates"]
+        cfg.updater = request.user.username
+        cfg.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

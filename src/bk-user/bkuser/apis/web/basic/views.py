@@ -12,6 +12,8 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apps.permission.permissions import get_user_role
+
 from .serializers import CurrentUserRetrieveOutputSLZ
 
 
@@ -24,9 +26,12 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         # FIXME: 待新版登录后重构，return更多信息
         current_user = request.user
+        current_tenant_id = current_user.get_property("tenant_id")
+
         info = {
             "username": current_user.username,
-            "tenant_id": current_user.get_property("tenant_id"),
+            "tenant_id": current_tenant_id,
+            "role": get_user_role(current_tenant_id, current_user.username),
         }
 
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
