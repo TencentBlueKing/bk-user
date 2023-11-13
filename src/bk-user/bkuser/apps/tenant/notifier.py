@@ -96,7 +96,7 @@ class TenantUserValidityPeriodNotifier:
         for u in users:
             try:
                 self._send_notifications(u)
-                # TODO 细化异常处理
+            # TODO 细化异常处理
             except Exception:  # noqa: PERF203
                 logger.exception(
                     "send notification failed, tenant: %s, scene: %s, tenant_user: %s",
