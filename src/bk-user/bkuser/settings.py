@@ -163,15 +163,6 @@ BK_APP_SECRET = env.str("BK_APP_SECRET")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
 
-# 蓝鲸数据库内容加密私钥
-# 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
-# 详情查看：https://cryptography.io/en/latest/fernet/
-BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
-
-# 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
-BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
-ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
-
 # bk_language domain
 BK_DOMAIN = env.str("BK_DOMAIN", default="")
 # BK USER URL
@@ -211,6 +202,8 @@ BK_LOGIN_PLAIN_WINDOW_WIDTH = env.int("BK_LOGIN_PLAIN_WINDOW_WIDTH", default=415
 BK_LOGIN_PLAIN_WINDOW_HEIGHT = env.int("BK_LOGIN_PLAIN_WINDOW_HEIGHT", default=415)
 # 登录回调地址参数Key
 BK_LOGIN_CALLBACK_URL_PARAM_KEY = env.str("BK_LOGIN_CALLBACK_URL_PARAM_KEY", default="c_url")
+# 登录API URL
+BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login")
 
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
@@ -489,6 +482,33 @@ OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", False)
 if ENABLE_OTEL_TRACE or SENTRY_DSN:
     INSTALLED_APPS += ("bkuser.monitoring.tracing",)
 
+# ------------------------------------------ 加密算法配置 ------------------------------------------
+
+# 密码加密算法（可选值：pbkdf2_sha256，pbkdf2_sm3）
+# 重要：一旦用户数据写入后该值不能修改，否则可能导致现有 DB 数据不可用
+# 注：pbkdf2_sm3 性能较差，单次加密约 360ms，pbkdf2_sha256 单次加密约为 60ms
+# 注：尽管 Django 默认支持 argon2, scrypt 等加密算法，但是并发加密时候会对内存有明显压力，更安全但不推荐使用
+PASSWORD_ENCRYPT_ALGORITHM = env.str("PASSWORD_ENCRYPT_ALGORITHM", "pbkdf2_sha256")
+
+# Django 密码框架配置：https://docs.djangoproject.com/en/3.2/topics/auth/passwords/#auth-password-storage
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    # 自定义 pbkdf2_sm3 算法实现
+    "bkuser.common.hashers.PBKDF2SM3PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+]
+
+# 蓝鲸数据库内容加密私钥
+# 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
+# 详情查看：https://cryptography.io/en/latest/fernet/
+BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
+
+# 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
+BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
+ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
+
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 
 # 数据源插件默认Logo，值为base64格式图片数据
@@ -499,9 +519,6 @@ DEFAULT_TENANT_LOGO = ""
 DEFAULT_DATA_SOURCE_USER_LOGO = ""
 # 默认手机国际区号
 DEFAULT_PHONE_COUNTRY_CODE = env.str("DEFAULT_PHONE_COUNTRY_CODE", default="86")
-# FIXME:  待新版登录完成后删除Mock用户租户数据，格式：key1=value1;key2=value2
-MOCK_USER_TENANTS = env.dict("MOCK_USER_TENANTS", default={})
-MOCK_USER_DEFAULT_TENANT = env.str("MOCK_USER_DEFAULT_TENANT", default="")
 
 # 密码强度相关限制
 # 最小密码长度，过小的下限会导致在选择严格的规则后，难以生成/设置合法的密码（建议最低值 9）

@@ -1,13 +1,13 @@
 <template>
   <bk-form form-type="vertical">
     <section v-if="!hasStorage">
-      <h1 class="login-header">请选择登录公司</h1>
+      <h1 class="login-header">请选择登录租户</h1>
 
       <bk-form-item>
         <bk-input
           v-if="!tenantVisible"
           size="large"
-          placeholder="填写公司ID"
+          placeholder="填写租户ID"
           v-model="tenantId"
           @blur="handleGetTenant"
           @enter="handleGetTenant">
@@ -27,7 +27,7 @@
 
       <template v-if="!tenantVisible">
         <div v-if="tenant">
-          <h2 class="tenant-content">我们为你在平台找到了以下公司</h2>
+          <h2 class="tenant-content">我们为你在平台找到了以下租户</h2>
           <div class="tenant-list">
             <img v-if="tenant.logo" class="logo-img" :src="tenant.logo" />
             <span v-else class="logo">
@@ -37,11 +37,11 @@
             <Done class="tenant-check" />
           </div>
         </div>
-        <h2 class="tenant-content" v-else-if="tenant !== null">暂无匹配公司</h2>
+        <h2 class="tenant-content" v-else-if="tenant !== null">暂无匹配租户</h2>
       </template>
 
       <bk-form-item style="margin: 42px 0 0;">
-        <bk-checkbox v-model="trust">信任该电脑并保存公司ID</bk-checkbox>
+        <bk-checkbox v-model="trust">信任该电脑并保存租户ID</bk-checkbox>
       </bk-form-item>
 
       <bk-form-item>
@@ -70,20 +70,20 @@
         <bk-popover v-if="changList.length" trigger="click" theme="light" placement="bottom" ext-cls="tenant-popover">
           <div class="tenant-change">
             <Transfer class="bk-icon" />
-            <span>切换公司</span>
+            <span>切换租户</span>
           </div>
           <template #content>
             <section class="content-list cursor-pointer">
               <div class="item" v-for="item in changList" :key="item.id" @click="handleChange(item)">
                 {{ item.name }}
               </div>
-              <div class="add" @click="addTenant">新增公司</div>
+              <div class="add" @click="addTenant">新增租户</div>
             </section>
           </template>
         </bk-popover>
         <div v-else class="tenant-change" @click="addTenant">
           <Transfer class="bk-icon" />
-          <span>切换公司</span>
+          <span>切换租户</span>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ const tenantId = ref('');
 const tenantIdList: Ref<string[]> = ref([]);
 const tenantList = ref<Tenant[]>([]);
 
-// 选择公司
+// 选择租户
 const handleTenantChange = (id: string) => {
   tenant.value = allTenantList.value.find(item => item.id === id);
   tenantId.value = id;
@@ -153,7 +153,7 @@ try {
 }
 const tenant: Ref<Tenant> = ref(null);
 
-// 通过公司ID获取公司信息
+// 通过租户ID获取租户信息
 const handleGetTenant = () => {
   if (tenantId.value) {
     getTenant(tenantId.value).then((res) => {
@@ -171,7 +171,7 @@ const trust = ref(true);
 const idps: Ref<Idp[]> = ref([]);
 const activeIdp: Ref<Idp> = ref();
 
-// 确认登录公司
+// 确认登录租户
 const confirmTenant = async () => {
   if (trust.value) {
     localStorage.setItem('tenantId', tenantId.value);
@@ -206,7 +206,7 @@ if (hasStorage.value) {
   signInAndFetchIdp();
 }
 
-// 新增公司
+// 新增租户
 const addTenant = () => {
   hasStorage.value = false;
   tenantId.value = '';
@@ -214,7 +214,7 @@ const addTenant = () => {
 };
 
 const changList = computed(() => tenantList.value.filter(item => item.id !== tenantId.value));
-// 切换已登录过公司
+// 切换已登录过租户
 const handleChange = (item: Tenant) => {
   tenantId.value = item.id;
   tenant.value = item;

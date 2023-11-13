@@ -2,14 +2,10 @@
   <bk-loading :loading="isLoading">
     <MainBreadcrumbsDetails :subtitle="subtitle">
       <template #tag>
-        <bk-tag>
-          <template #icon>
-            <div class="data-source-type" v-for="item in typeList" :key="item">
-              <img v-if="item.id === pluginId && item.logo" :src="item.logo">
-              <span v-if="item.id === pluginId">{{ item.name }}</span>
-            </div>
-          </template>
-        </bk-tag>
+        <div class="data-source-type" v-for="item in typeList" :key="item">
+          <img v-if="item.id === pluginId && item.logo" :src="item.logo">
+          <span v-if="item.id === pluginId">{{ item.name }}</span>
+        </div>
       </template>
       <template #right>
         <div>
@@ -57,6 +53,7 @@ import UserInfo from './UserInfo.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import { changeSwitchStatus, getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http/dataSourceFiles';
+import router from '@/router/index';
 
 const route = useRoute();
 
@@ -98,6 +95,7 @@ const changeTab = (value) => {
 
 const handleSync = async () => {
   const res = await postOperationsSync(currentId.value);
+  router.push({ name: 'syncRecords' });
   const status = res.data?.status === 'failed' ? 'error' : 'success';
   Message({ theme: status, message: res.data.summary });
 };
@@ -110,15 +108,20 @@ const handleSync = async () => {
 
 .data-source-type {
   display: flex;
+  height: 24px;
+  line-height: 24px;
+  background: #f0f1f5;
+  border-radius: 2px;
   align-items: center;
 
   img {
     width: 14px;
     height: 14px;
+    margin: 0 8px 0 10px;
   }
 
   span {
-    margin-left: 8px;
+    padding-right: 10px;
   }
 }
 </style>

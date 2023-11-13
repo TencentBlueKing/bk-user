@@ -88,7 +88,9 @@ class LocalDataSourceUserNotifier:
         if not data_source.is_local:
             return
 
-        plugin_cfg = LocalDataSourcePluginConfig(**data_source.plugin_config)
+        plugin_cfg = data_source.get_plugin_cfg()
+        assert isinstance(plugin_cfg, LocalDataSourcePluginConfig)
+
         if not plugin_cfg.enable_account_password_login:
             return
 

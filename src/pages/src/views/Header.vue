@@ -122,6 +122,10 @@ const headerNav = reactive([
     path: 'dataSource',
   },
   {
+    name: '认证源管理',
+    path: 'authSource',
+  },
+  {
     name: '租户管理',
     path: 'tenant',
   },

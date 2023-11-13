@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 import logging
 import traceback
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
 from django.db import IntegrityError
@@ -43,10 +42,7 @@ class TokenBackend(BaseBackend):
                 return None
             user.set_property(key="language", value=user_info.get("language", ""))
             user.set_property(key="time_zone", value=user_info.get("time_zone", ""))
-
-            # FIXME: 新版登录后删除该MOCK逻辑
-            tenant_id = settings.MOCK_USER_TENANTS.get(username) or settings.MOCK_USER_DEFAULT_TENANT
-            user.set_property(key="tenant_id", value=tenant_id)
+            user.set_property(key="tenant_id", value=user_info.get("tenant_id", ""))
 
             return user
 
@@ -82,6 +78,7 @@ class TokenBackend(BaseBackend):
             "username": data.get("bk_username", ""),
             "language": data.get("language", ""),
             "time_zone": data.get("time_zone", ""),
+            "tenant_id": data.get("tenant_id", ""),
         }
         return True, user_info
 

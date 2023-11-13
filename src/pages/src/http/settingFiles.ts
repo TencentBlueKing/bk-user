@@ -23,3 +23,13 @@ export const putCustomFields = (params: PutCustomFieldsParams) => http.put(`/api
  * 删除用户自定义字段
  */
 export const deleteCustomFields = (id: string) => http.delete(`/api/v1/web/tenant-setting/custom-fields/${id}/`);
+
+/**
+ * 获取当前租户的账户有效期设置
+ */
+export const getTenantSetting = () => http.get('/api/v1/web/tenant-setting/settings/tenant-user-validity-period/');
+
+/**
+ * 更新当前租户的账户有效期设置
+ */
+export const putTenantSetting = () => http.put('/api/v1/web/tenant-setting/settings/tenant-user-validity-period/');

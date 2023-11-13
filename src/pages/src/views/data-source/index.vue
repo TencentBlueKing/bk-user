@@ -47,7 +47,7 @@ const menuData = reactive([
     key: 'local',
   },
   // {
-  //   name: '跨公司协同',
+  //   name: '跨租户协同',
   //   key: 'crossCompany',
   // },
 ]);

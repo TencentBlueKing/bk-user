@@ -149,7 +149,9 @@ def fetch_first_item(url: str, headers: Dict[str, str], params: Dict[str, Any], 
         resp_data = resp.json()
     except JSONDecodeError:  # noqa: PERF203
         raise RespDataFormatError(
-            _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(url, stringify_params(params), resp.content)  # noqa: E501
+            _("数据源 API {} 参数 {} 返回非 Json 格式，响应内容 {}").format(
+                url, stringify_params(params), resp.content
+            )  # noqa: E501
         )
 
     results = resp_data.get("results", [])

@@ -199,7 +199,7 @@ class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.Retriev
         if not user.data_source.is_local:
             raise error_codes.CANNOT_UPDATE_DATA_SOURCE_USER
 
-        slz = UserUpdateInputSLZ(data=request.data, context={"data_source": user.data_source})
+        slz = UserUpdateInputSLZ(data=request.data, context={"data_source": user.data_source, "user_id": user.id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 

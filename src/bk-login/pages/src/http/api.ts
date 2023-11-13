@@ -29,7 +29,7 @@ export const getTenantList = (ids: string) => fetch.get(`${apiPrefix}/tenants/?t
 // 查询所有租户信息
 export const getAllTenantList = () => fetch.get(`${apiPrefix}/tenants/`);
 
-// 选择公司后要调用此接口确认登录
+// 选择租户后要调用此接口确认登录
 export const signIn = (params: SignInParams) => fetch.post(`${apiPrefix}/sign-in-tenants/`, params);
 
 // 通过租户ID查询对应的登录方式

@@ -11,10 +11,10 @@
             :model="formData"
             :rules="rulesBasicInfo"
           >
-            <bk-form-item label="公司名称" property="name" required>
+            <bk-form-item label="租户名称" property="name" required>
               <bk-input v-model="formData.name" @focus="handleChange" />
             </bk-form-item>
-            <bk-form-item label="公司ID" property="id" required>
+            <bk-form-item label="租户ID" property="id" required>
               <bk-input v-model="formData.id" :disabled="isEdit" @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="人员数量">
@@ -76,8 +76,8 @@
           </bk-form-item>
           <bk-form-item label="通知方式" required>
             <NotifyEditorTemplate
-              :active-methods="activeMethods"
-              :checkbox-info="checkboxInfo"
+              :active-methods="formData.password_initial_config.notification.enabled_methods"
+              :checkbox-info="NOTIFICATION_METHODS"
               :data-list="formData.password_initial_config.notification.templates"
               :is-template="isPasswordInitial"
               :expiring-email-key="'user_initialize'"
@@ -95,7 +95,7 @@
                     class="checkbox-zh"
                     v-model="formData.password_initial_config.notification.enabled_methods">
                     <bk-checkbox
-                      v-for="(item, index) in checkboxInfo" :key="index"
+                      v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
                       :class="['password-tab', item.status ? 'active-tab' : '']"
                       style="margin-left: 5px;"
                       :label="item.value">
@@ -130,7 +130,7 @@
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
-import { getBase64 } from "@/utils";
+import { getBase64, NOTIFICATION_METHODS } from "@/utils";
 import MemberSelector from "./MemberSelector.vue";
 import useValidate from "@/hooks/use-validate";
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
@@ -199,14 +199,9 @@ const rulesUserName = {
 };
 
 const enabledMethodsError = ref(false);
-const activeMethods = ref('email');
 // 初始密码
 const isPasswordInitial = ref(false);
 const isDropdownPasswordInitial = ref(false);
-const checkboxInfo = [
-  { value: 'email', label: '邮箱', status: true },
-  { value: 'sms', label: '短信', status: false },
-];
 
 watch(() => formData.password_initial_config?.generate_method, (value) => {
   if (value === 'random') {
@@ -219,7 +214,7 @@ watch(() => formData.password_initial_config?.notification?.enabled_methods, (va
 });
 
 const handleClickLabel = (item) => {
-  checkboxInfo.forEach((element) => {
+  NOTIFICATION_METHODS.forEach((element) => {
     element.status = element.value === item.value;
   });
 };
@@ -250,11 +245,14 @@ const files = computed(() => {
 });
 const isEdit = computed(() => props.type === "edit");
 
-watch(() => props.type, () => {
-  if (props.tenantsData.managers.length > 0) {
-    formData.managers = props.tenantsData.managers;
+watch(() => props.tenantsData.managers, (value) => {
+  if (value.length > 0) {
+    formData.managers = value;
   } else {
     formData.managers.splice(1, 0, getTableItem());
+    nextTick(() => {
+      fetchUserList('');
+    });
   }
 }, {
   deep: true,
@@ -432,7 +430,7 @@ function createTenantsFn() {
   if (!data.logo) delete data.logo;
 
   createTenants(data).then(() => {
-    emit('updateTenantsList', '公司创建成功');
+    emit('updateTenantsList', '租户创建成功');
   }).finally(() => {
     state.isLoading = false;
   });
@@ -452,7 +450,7 @@ function putTenantsFn() {
   if (!params.logo) delete params.logo;
 
   putTenants(formData.id, params).then(() => {
-    emit('updateTenantsList', '公司更新成功');
+    emit('updateTenantsList', '租户更新成功');
   }).finally(() => {
     state.isLoading = false;
   });

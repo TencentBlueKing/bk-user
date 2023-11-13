@@ -192,4 +192,8 @@ class UserUpdateInputSLZ(serializers.Serializer):
         )
         if diff_leader_ids:
             raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
+
+        if self.context["user_id"] in leader_ids:
+            raise serializers.ValidationError(_("上级不可传递自身"))
+
         return leader_ids

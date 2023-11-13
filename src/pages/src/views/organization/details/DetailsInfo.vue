@@ -14,7 +14,7 @@
         </div>
         <ul class="item-content flex" style="width: 72%">
           <li>
-            <span class="key">公司名称：</span>
+            <span class="key">租户名称：</span>
             <span class="value">{{ state.userData.name }}</span>
           </li>
           <li>
@@ -22,7 +22,7 @@
             <span class="value">{{ userNumberVisible }}</span>
           </li>
           <li>
-            <span class="key">公司ID：</span>
+            <span class="key">租户ID：</span>
             <span class="value">{{ state.userData.id }}</span>
           </li>
           <li>

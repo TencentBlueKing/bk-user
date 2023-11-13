@@ -12,7 +12,9 @@
         <div class="left-natural-user">
           <div class="natural-user">
             <i class="bk-sq-icon icon-personal-user" />
-            <span class="name">{{ currentNaturalUser.full_name }}</span>
+            <bk-overflow-title type="tips" class="name">
+              {{ currentNaturalUser.full_name }}
+            </bk-overflow-title>
             <bk-overflow-title type="tips" class="id">
               （{{ currentNaturalUser.id }}）
             </bk-overflow-title>
@@ -238,6 +240,7 @@ const isLoading = ref(false);
 const infoLoading = ref(false);
 const isInheritedEmail = ref(true);
 const isInheritedPhone = ref(true);
+const customEmail = ref('');
 const rules = {
   custom_email: [validate.required, validate.email],
 };
@@ -268,6 +271,7 @@ const getCurrentUser = (id) => {
   // 关联账户详情
   getPersonalCenterUsers(id).then((res) => {
     currentUserInfo.value = res.data;
+    customEmail.value = res.data.custom_email;
     isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
     isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
     infoLoading.value = false;
@@ -291,6 +295,7 @@ const isCurrentTenant = computed(() => currentNaturalUser.value.full_name === cu
 const toggleEmail = (value) => {
   nextTick(() => {
     if (!value) {
+      currentUserInfo.value.custom_email = customEmail.value;
       const emailInput = document.querySelectorAll('.email-input input');
       emailInput[0].focus();
     }
@@ -299,6 +304,7 @@ const toggleEmail = (value) => {
 // 修改邮箱
 const changeEmail = () => {
   isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+  customEmail.value = currentUserInfo.value.custom_email;
   patchUsersEmail({
     id: currentUserInfo.value.id,
     is_inherited_email: currentUserInfo.value.is_inherited_email,
@@ -311,6 +317,7 @@ const changeEmail = () => {
 // 取消编辑邮箱
 const cancelEditEmail = () => {
   currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
+  currentUserInfo.value.custom_email = customEmail.value;
   isEditEmail.value = false;
   window.changeInput = false;
 };
@@ -409,13 +416,14 @@ const changeCountryCode = (code: string) => {
         }
 
         .name {
+          max-width: 120px;
           margin-left: 8px;
           font-size: 14px;
           font-weight: 700;
         }
 
         .id {
-          max-width: 200px;
+          min-width: 120px;
           color: #979BA5;
         }
       }

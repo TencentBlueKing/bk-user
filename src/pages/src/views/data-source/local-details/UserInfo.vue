@@ -2,11 +2,11 @@
   <bk-loading :loading="isLoading" class="user-info-wrapper user-scroll-y">
     <header>
       <div>
-        <bk-button theme="primary" class="mr8" @click="handleClick('add')">
-          <i class="user-icon icon-add-2 mr8" />
-          新建用户
-        </bk-button>
         <template v-if="pluginId === 'local'">
+          <bk-button theme="primary" class="mr8" @click="handleClick('add')">
+            <i class="user-icon icon-add-2 mr8" />
+            新建用户
+          </bk-button>
           <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
           <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
         </template>
@@ -54,7 +54,7 @@
           <span>{{ formatConvert(row.departments) }}</span>
         </template>
       </bk-table-column>
-      <bk-table-column label="操作">
+      <bk-table-column label="操作" v-if="pluginId === 'local'">
         <template #default="{ row }">
           <bk-button
             theme="primary"
@@ -289,13 +289,6 @@ const isDataEmpty = ref(false);
 const isEmptySearch = ref(false);
 const isDataError = ref(false);
 
-const params = reactive({
-  id: props.dataSourceId,
-  username: '',
-  page: 1,
-  pageSize: 10,
-});
-
 const pagination = reactive({
   current: 1,
   count: 0,
@@ -310,9 +303,15 @@ const getUsers = async () => {
     isDataEmpty.value = false;
     isEmptySearch.value = false;
     isDataError.value = false;
+    const params = {
+      id: props.dataSourceId,
+      username: searchVal.value,
+      page: pagination.current,
+      pageSize: pagination.limit,
+    };
     const res = await getDataSourceUsers(params);
     if (res.data.count === 0) {
-      params.username === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
+      searchVal.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
     }
     pagination.count = res.data.count;
     users.value = res.data.results;
@@ -340,7 +339,7 @@ const handleCancelEdit = () => {
     detailsConfig.isShow = false;
   } else {
     detailsConfig.type = 'view';
-    detailsConfig.title = '公司详情';
+    detailsConfig.title = '用户详情';
     window.changeInput = false;
   }
 };
@@ -360,7 +359,7 @@ const handleBeforeClose = async () => {
 
 const updateUsers = (value, text) => {
   detailsConfig.isShow = false;
-  params.username = value;
+  searchVal.value = value;
   getUsers();
   Message({
     theme: 'success',
@@ -369,26 +368,23 @@ const updateUsers = (value, text) => {
 };
 
 const handleEnter = () => {
-  params.username = searchVal.value;
-  params.page = 1;
+  pagination.current = 1;
   getUsers();
 };
 
 const handleClear = () => {
   searchVal.value = '';
-  params.username = '';
+  pagination.current = 1;
   getUsers();
 };
 
 const pageLimitChange = (limit) => {
   pagination.limit = limit;
-  params.pageSize = limit;
-  params.page = 1;
+  pagination.current = 1;
   getUsers();
 };
 const pageCurrentChange = (current) => {
   pagination.current = current;
-  params.page = current;
   getUsers();
 };
 

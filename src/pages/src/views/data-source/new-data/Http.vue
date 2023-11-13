@@ -21,20 +21,32 @@
             @focus="handleFocus"
             @input="handleChange" />
         </bk-form-item>
-        <bk-form-item class="w-[560px]" label="用户数据 API 路径" property="server_config.user_api_path" required>
-          <bk-input
-            v-model="serverConfigData.server_config.user_api_path"
-            placeholder="请输入路径，需以 / 开头"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[560px]" label="部门数据 API 路径" property="server_config.department_api_path" required>
-          <bk-input
-            v-model="serverConfigData.server_config.department_api_path"
-            placeholder="请输入路径，需以 / 开头"
-            @focus="handleFocus"
-            @input="handleChange" />
-        </bk-form-item>
+        <div class="api-url-style">
+          <bk-form-item class="w-[560px]" label="用户数据 API 路径" property="server_config.user_api_path" required>
+            <bk-input
+              v-model="serverConfigData.server_config.user_api_path"
+              placeholder="请输入路径，需以 / 开头"
+              @focus="handleFocus"
+              @input="handleChange" />
+          </bk-form-item>
+          <QueryParams
+            :current-id="currentId"
+            :params-list="serverConfigData.server_config.user_api_query_params"
+            @saveParams="(list) => saveParams(list, 'user')" />
+        </div>
+        <div class="api-url-style">
+          <bk-form-item class="w-[560px]" label="部门数据 API 路径" property="server_config.department_api_path" required>
+            <bk-input
+              v-model="serverConfigData.server_config.department_api_path"
+              placeholder="请输入路径，需以 / 开头"
+              @focus="handleFocus"
+              @input="handleChange" />
+          </bk-form-item>
+          <QueryParams
+            :current-id="currentId"
+            :params-list="serverConfigData.server_config.department_api_query_params"
+            @saveParams="(list) => saveParams(list, 'department')" />
+        </div>
         <div class="item-flex3">
           <bk-form-item label="分页请求每页数量" property="server_config.page_size" required>
             <bk-select
@@ -180,6 +192,8 @@ import { Message } from 'bkui-vue';
 import { computed, inject, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import QueryParams from './query-params/QueryParams.vue';
+
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import useValidate from '@/hooks/use-validate';
 import { getDataSourceDetails, newDataSource, postTestConnection, putDataSourceDetails } from '@/http/dataSourceFiles';
@@ -210,7 +224,9 @@ const serverConfigData = reactive({
   server_config: {
     server_base_url: '',
     user_api_path: '',
+    user_api_query_params: [],
     department_api_path: '',
+    department_api_query_params: [],
     request_timeout: '',
     retries: '',
     page_size: 100,
@@ -304,6 +320,10 @@ onMounted(async () => {
   }
 });
 
+const saveParams = (list, type) => {
+  serverConfigData.server_config[`${type === 'user' ? 'user' : 'department'}_api_query_params`] = list;
+};
+
 const handleNext = async () => {
   try {
     emit('updateCurStep', 2);
@@ -311,10 +331,11 @@ const handleNext = async () => {
     const res = await getFields();
     if (currentId.value) {
       const list = [];
+      const customList = [];
       const mapFields = (fields, item, isDisabled, fieldMappingType) => {
         if (fields.name !== item.target_field) return;
 
-        list.push(fields.name);
+        list.push(item.source_field);
         Object.assign(fields, {
           mapping_operation: item.mapping_operation,
           source_field: item.source_field,
@@ -326,6 +347,7 @@ const handleNext = async () => {
 
         if (fieldMappingType === 'custom_fields') {
           fieldSettingData.addFieldList.push(item);
+          customList.push(fields.name);
         }
       };
 
@@ -342,6 +364,9 @@ const handleNext = async () => {
       });
 
       res.data?.custom_fields?.forEach((fields) => {
+        if (!customList.includes(fields.name)) {
+          fieldSettingData.field_mapping.custom_fields.push(fields);
+        }
         if (list.includes(fields.name)) return;
 
         Object.assign(fields, {
@@ -350,11 +375,8 @@ const handleNext = async () => {
           disabled: false,
           target_field: fields.name,
         });
-        fieldSettingData.field_mapping.custom_fields.push(fields);
 
-        if (!fieldSettingData.addFieldList.length) {
-          apiFields.value.push({ key: fields.name, disabled: false });
-        }
+        apiFields.value.push({ key: fields.name, disabled: false });
       });
     } else {
       fieldSettingData.field_mapping.builtin_fields = res.data?.builtin_fields;
@@ -417,6 +439,9 @@ const handleTestConnection = async () => {
         auth_config: serverConfigData.auth_config,
       },
     };
+    if (currentId.value) {
+      params.data_source_id = currentId.value;
+    }
     const res = await postTestConnection(params);
     if (res.data.error_message === '') {
       connectionStatus.value = true;
