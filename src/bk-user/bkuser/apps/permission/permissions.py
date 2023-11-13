@@ -41,7 +41,8 @@ def perm_class(action: PermAction):  # noqa: C901
             if action == PermAction.MANAGE_TENANT:
                 return is_tenant_manager(cur_tenant_id, username)
             if action == PermAction.USE_PLATFORM:
-                return is_nature_user(cur_tenant_id, cur_tenant_id, username)
+                # 平台使用的情况，需要用具体的 object 来判断权限
+                return True
 
             return False
 
@@ -67,7 +68,11 @@ def perm_class(action: PermAction):  # noqa: C901
             if action == PermAction.MANAGE_TENANT:
                 return is_tenant_manager(tenant_id, username)
             if action == PermAction.USE_PLATFORM:
-                return is_nature_user(tenant_id, cur_tenant_id, username)
+                # 当前平台使用（普通用户）能编辑的资源只有 TenantUser
+                if not isinstance(obj, TenantUser):
+                    return False
+
+                return is_same_nature_user(obj.id, cur_tenant_id, username)
 
             return False
 
@@ -89,10 +94,10 @@ def is_tenant_manager(tenant_id: str, username: str) -> bool:
     return TenantManager.objects.filter(tenant=tenant, tenant_user_id=username).exists()
 
 
-def is_nature_user(tenant_id: str, cur_tenant_id: str, username: str) -> bool:
-    """自然人（可以跨租户访问属于同一自然人/数据源用户的数据）
+def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) -> bool:
+    """判断是否同一自然人（可以跨租户访问属于同一自然人/数据源用户的数据）
 
-    :param tenant_id: 待访问租户资源的租户 ID
+    :param req_username: 待访问租户用户名
     :param cur_tenant_id: 当前用户的租户 ID
     :param username: 当前用户的用户名
     """
@@ -108,14 +113,12 @@ def is_nature_user(tenant_id: str, cur_tenant_id: str, username: str) -> bool:
 
     # 如果没有绑定自然人，则将同一数据源用户关联的租户用户，都视作一个自然人
     if not relation:
-        return TenantUser.objects.filter(
-            tenant_id=tenant_id, data_source_user=cur_tenant_user.data_source_user
-        ).exists()
+        return TenantUser.objects.filter(id=req_username, data_source_user=cur_tenant_user.data_source_user).exists()
 
     data_source_user_ids = DataSourceUserNaturalUserRelation.objects.filter(
         natural_user=relation.natural_user
     ).values_list("data_source_user_id", flat=True)
-    return TenantUser.objects.filter(tenant_id=tenant_id, data_source_user__in=data_source_user_ids).exists()
+    return TenantUser.objects.filter(id=req_username, data_source_user__in=data_source_user_ids).exists()
 
 
 def get_user_role(tenant_id: str, username: str) -> UserRole:
