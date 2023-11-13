@@ -2,14 +2,14 @@ name: bklogin_ci_check
 on:
   push:
     branches: [ main, pre_*, ft_*, release/* ]
-#    paths:
-#      - "src/bk-login/**"
-#      - "src/idp-plugins/**"
+    paths:
+      - "src/bk-login/**"
+      - "src/idp-plugins/**"
   pull_request:
     branches: [ main, pre_*, ft_*, release/* ]
-#    paths:
-#      - "src/bk-login/**"
-#      - "src/idp-plugins/**"
+    paths:
+      - "src/bk-login/**"
+      - "src/idp-plugins/**"
 jobs:
   check:
     runs-on: ubuntu-latest
