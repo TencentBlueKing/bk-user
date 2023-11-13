@@ -70,7 +70,7 @@ def forwards_func(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("tenant", "0002_init_builtin_user_fields"),
+        ("tenant", "0003_auto_20231113_2017"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]
