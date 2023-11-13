@@ -48,9 +48,10 @@ class BaseDataSourcePlugin(ABC):
 
 
 _plugin_cls_map: Dict[str | DataSourcePluginEnum, Type[BaseDataSourcePlugin]] = {}
+_plugin_default_cfg_map: Dict[str | DataSourcePluginEnum, BasePluginConfig] = {}
 
 
-def register_plugin(plugin_cls: Type[BaseDataSourcePlugin]):
+def register_plugin(plugin_cls: Type[BaseDataSourcePlugin], default_plugin_cfg: BasePluginConfig):
     """注册数据源插件"""
     plugin_id = plugin_cls.id
 
@@ -66,6 +67,7 @@ def register_plugin(plugin_cls: Type[BaseDataSourcePlugin]):
     logger.info("register data source plugin: %s", plugin_id)
 
     _plugin_cls_map[plugin_id] = plugin_cls
+    _plugin_default_cfg_map[plugin_id] = default_plugin_cfg
 
 
 def is_plugin_exists(plugin_id: str | DataSourcePluginEnum) -> bool:
@@ -92,3 +94,12 @@ def get_plugin_cfg_schema_map() -> Dict[str, openapi.Schema]:
         f"plugin_config:{plugin_id}": gen_openapi_schema(model.config_class)
         for plugin_id, model in _plugin_cls_map.items()
     }
+
+
+def get_default_plugin_cfg(plugin_id: str | DataSourcePluginEnum) -> BasePluginConfig:
+    """获取指定插件的默认配置"""
+    if plugin_id not in _plugin_default_cfg_map:
+        raise NotImplementedError(f"plugin {plugin_id} not provide default config")
+
+    # 深复制以避免在其他逻辑中修改到默认的配置
+    return _plugin_default_cfg_map[plugin_id].model_copy(deep=True)

@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 
 from bkuser.plugins.base import register_plugin
 
+from .defaults import DEFAULT_PLUGIN_CONFIG
 from .plugin import LocalDataSourcePlugin
 
-register_plugin(LocalDataSourcePlugin)
+register_plugin(LocalDataSourcePlugin, DEFAULT_PLUGIN_CONFIG)

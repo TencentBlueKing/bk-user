@@ -22,10 +22,10 @@ from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.constants import TENANT_ID_REGEX
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceSimpleInfo
-from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.biz.tenant import TenantUserWithInheritedInfo
 from bkuser.biz.validators import validate_data_source_user_username
 from bkuser.common.passwd import PasswordValidator
+from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, NotificationConfig
@@ -64,9 +64,7 @@ class TenantManagerPasswordInitialConfigSLZ(serializers.Serializer):
         if not fixed_password:
             return fixed_password
 
-        cfg: LocalDataSourcePluginConfig = DefaultPluginConfigProvider().get(  # type: ignore
-            DataSourcePluginEnum.LOCAL,
-        )
+        cfg: LocalDataSourcePluginConfig = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)  # type: ignore
         ret = PasswordValidator(cfg.password_rule.to_rule()).validate(fixed_password)  # type: ignore
         if not ret.ok:
             raise ValidationError(_("固定密码的值不符合密码规则：{}").format(ret.exception_message))

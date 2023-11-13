@@ -8,10 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from bkuser.plugins.general.constants import AuthMethod, PageSize
+from bkuser.plugins.general.models import AuthConfig, GeneralDataSourcePluginConfig, ServerConfig
 
-from bkuser.plugins.base import register_plugin
-
-from .defaults import DEFAULT_PLUGIN_CONFIG
-from .plugin import GeneralDataSourcePlugin
-
-register_plugin(GeneralDataSourcePlugin, DEFAULT_PLUGIN_CONFIG)
+# 通用 HTTP 数据源插件默认配置
+DEFAULT_PLUGIN_CONFIG = GeneralDataSourcePluginConfig(
+    server_config=ServerConfig(
+        server_base_url="https://bk.example.com",
+        user_api_path="/api/v1/users",
+        department_api_path="/api/v1/departments",
+        page_size=PageSize.CNT_100,
+        request_timeout=30,
+        retries=3,
+    ),
+    auth_config=AuthConfig(
+        method=AuthMethod.BASIC_AUTH,
+    ),
+)

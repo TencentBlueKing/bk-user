@@ -23,7 +23,7 @@ def _pbkdf2_hmac_sm3(password: bytes, salt: bytes, iterations: int, dk_len: int 
     Password based key derivation function 2 (PKCS #5 v2.0)
     实现参考自：lib/python3.10/hashlib.py L188 pbkdf2_hmac
 
-    TODO 性能优化，目前相同迭代次数条件下，pbkdf2_sm3_hmac 性能仅为 pbkdf2_hmac + sha256 的 1/70
+    TODO 性能优化，目前相同迭代次数条件下，pbkdf2_hmac_sm3 性能仅为 pbkdf2_hmac + sha256 的 1/70
     原因有二：1. tongsuopy.SM3 性能约为 hashlib.sha256 的 1/15
             2. 本函数 pbkdf2_hmac 实现性能约为标准库 pbkdf2_hmac 的 1/4
             注：标准库 pbkdf2_hmac 为 C 实现且带缓存，但仅支持 hashlib 内置的算法（如 sha1, sha256）

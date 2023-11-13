@@ -46,13 +46,12 @@ from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask
-from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
 from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
-from bkuser.plugins.base import get_plugin_cfg_schema_map, get_plugin_cls
+from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
 
 logger = logging.getLogger(__name__)
@@ -82,8 +81,9 @@ class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
         },
     )
     def get(self, request, *args, **kwargs):
-        config = DefaultPluginConfigProvider().get(kwargs["id"])
-        if not config:
+        try:
+            config = get_default_plugin_cfg(kwargs["id"])
+        except NotImplementedError:
             raise error_codes.DATA_SOURCE_PLUGIN_NOT_DEFAULT_CONFIG
 
         return Response(DataSourcePluginDefaultConfigOutputSLZ(instance={"config": config.model_dump()}).data)

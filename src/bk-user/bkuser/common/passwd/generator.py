@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import random
+import secrets
 import string
 
 from django.conf import settings
@@ -56,7 +57,7 @@ class PasswordGenerator:
     def _gen_random_password(self) -> str:
         """根据字符集 + 密码长度范围，生成随机密码"""
         length = random.randint(self.rule.min_length, self.rule.max_length)
-        return "".join([random.choice(self.charsets) for _ in range(length)])
+        return "".join([secrets.choice(self.charsets) for _ in range(length)])
 
     def _validate(self, password: str) -> ValidateResult:
         return self.validator.validate(password)
