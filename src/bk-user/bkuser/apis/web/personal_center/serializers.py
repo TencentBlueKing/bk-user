@@ -116,6 +116,9 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
             if not attrs.get("custom_phone"):
                 raise ValidationError(_("自定义手机号码为必填项"))
 
+            if "+" in attrs["custom_phone_country_code"]:
+                raise ValidationError(_("区号设置无需携带标识:'+'"))
+
             try:
                 validate_phone_with_country_code(
                     phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
