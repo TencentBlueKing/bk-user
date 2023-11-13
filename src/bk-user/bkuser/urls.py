@@ -21,6 +21,8 @@ from bkuser.common.views import VueTemplateView
 urlpatterns = [
     # 产品功能API
     path("api/v1/web/", include("bkuser.apis.web.urls")),
+    # 提供给登录服务使用的内部API
+    path("api/v1/login/", include("bkuser.apis.login.urls")),
     # 用于监控相关的，比如ping/healthz/sentry/metrics/otel等等
     path("", include("bkuser.monitoring.urls")),
 ]

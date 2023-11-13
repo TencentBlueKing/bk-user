@@ -95,7 +95,9 @@ class TenantCreateInputSLZ(serializers.Serializer):
             raise ValidationError(_("租户 ID {} 已被使用").format(id))
 
         if not re.fullmatch(TENANT_ID_REGEX, id):
-            raise ValidationError(_("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(id))  # noqa: E501
+            raise ValidationError(
+                _("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(id)
+            )  # noqa: E501
 
         return id
 

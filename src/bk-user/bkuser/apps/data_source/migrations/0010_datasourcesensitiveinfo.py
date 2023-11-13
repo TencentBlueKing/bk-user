@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_source', '0008_auto_20231024_0940'),
+        ('data_source', '0009_alter_localdatasourceidentityinfo_password'),
     ]
 
     operations = [

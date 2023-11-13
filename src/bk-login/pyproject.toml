@@ -4,11 +4,121 @@ version = "0.1.0"
 description = ""
 authors = ["TencentBlueKing <contactus_bk@tencent.com>"]
 readme = "README.md"
-packages = [{include = "bk_login"}]
+
+[[tool.poetry.source]]
+name = "tencent"
+url = "https://mirrors.tencent.com/pypi/simple/"
+priority = "default"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
+django = "3.2.21"
+mysqlclient = "2.2.0"
+requests = "2.31.0"
+gunicorn = "21.2.0"
+gevent = "23.9.1"
+django-environ = "0.8.1"
+whitenoise = "6.5.0"
+werkzeug = "2.3.7"
+python-json-logger = "2.0.7"
+sentry-sdk = "1.31.0"
+django-prometheus = "2.3.1"
+opentelemetry-api = "1.20.0"
+opentelemetry-sdk = "1.20.0"
+opentelemetry-exporter-otlp = "1.20.0"
+opentelemetry-exporter-jaeger = "1.20.0"
+opentelemetry-instrumentation-django = "0.41b0"
+opentelemetry-instrumentation-dbapi = "0.41b0"
+opentelemetry-instrumentation-requests = "0.41b0"
+opentelemetry-instrumentation-logging = "0.41b0"
+pydantic = "2.3.0"
+blue-krill = "2.0.2"
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.4"
+mypy = "^1.5.1"
+types-requests = "^2.31.0.2"
+pytest = "^7.4.2"
+pytest-django = "^4.5.2"
+import-linter = "^1.11.1"
+
+[tool.mypy]
+ignore_missing_imports = true
+show_error_codes = true
+strict_optional=true
+pretty=true
+check_untyped_defs = true
+namespace_packages = true
+
+[[tool.mypy.overrides]]
+module = [
+    "*.migrations.*",
+]
+ignore_errors = true
+
+[tool.ruff]
+# Enable Pyflakes `E` and `F` codes by default.
+select = ["E", "F", "W", "I", "C90", "PL", "RET", "N", "C4", "PT", "PERF", "G", "TRY", "SIM", "B", "PIE"]
+# All Rule: https://beta.ruff.rs/docs/rules/
+# Add `noqa: E501` manually when necessary until this issue is fixed: https://github.com/astral-sh/ruff/issues/3825
+ignore = [
+    # Consider moving this statement to an else block
+    "TRY300",
+    # Use raise from to specify exception cause
+    "TRY200",
+    # Avoid specifying long messages outside the exception class
+    "TRY003",
+    # Use contextlib.suppress({exception}) instead of try-except-pass
+    "SIM105",
+    # Use ternary operator {contents} instead of if-else-block
+    "SIM108",
+    # Avoid too many arguments
+    "PLR0913",
+    # Avoid too many return statements
+    "PLR0911",
+    # raise-without-from-inside-except
+    "B904"
+]
+# Same as Black.
+line-length = 119
+# show an enumeration of all autofixed lint violations
+# show-fixes = true
+# show source code snippets when reporting lint violations
+# show-source = true
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "*/migrations/*",
+]
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
+
+[tool.ruff.isort]
+relative-imports-order = "closest-to-furthest"
+
+[tool.importlinter]
+root_package = "bklogin"
 
 [build-system]
 requires = ["poetry-core"]

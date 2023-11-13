@@ -69,6 +69,9 @@ class ErrorCodes:
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
 
+    # 用户账密
+    USERNAME_OR_PASSWORD_WRONG_ERROR = ErrorCode(_("用户名或密码错误"))
+
     # 数据源插件
     DATA_SOURCE_PLUGIN_NOT_DEFAULT_CONFIG = ErrorCode(_("当前数据源插件未提供默认配置"))
 

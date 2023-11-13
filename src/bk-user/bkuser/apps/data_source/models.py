@@ -15,6 +15,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.common.constants import SENSITIVE_MASK
+from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.plugins.base import get_plugin_cfg_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -145,8 +146,7 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
     """
 
     user = models.OneToOneField(DataSourceUser, on_delete=models.CASCADE)
-    # FIXME (su) 使用加盐的方式来存储密码
-    password = EncryptField(verbose_name="用户密码", null=True, blank=True, default="", max_length=255)
+    password = models.CharField("用户密码", null=True, blank=True, default="", max_length=128)
     password_updated_at = models.DateTimeField("密码最后更新时间", null=True, blank=True)
     password_expired_at = models.DateTimeField("密码过期时间", null=True, blank=True)
 
@@ -158,6 +158,9 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
         unique_together = [
             ("username", "data_source"),
         ]
+
+    def check_password(self, raw_password: str) -> bool:
+        return check_password(raw_password, self.password)
 
 
 class DataSourceDepartment(TimestampedModel):

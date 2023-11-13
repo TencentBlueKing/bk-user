@@ -48,24 +48,16 @@ zxcvbn = "4.4.28"
 phonenumbers = "8.13.18"
 jsonref = "1.1.0"
 openpyxl = "3.1.2"
+tongsuopy-crayon = "1.0.2b6"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.277"
-black = "^23.7.0"
+ruff = "^0.1.4"
 mypy = "^1.4.1"
 types-requests = "^2.31.0.1"
 pytest = "^7.4.0"
 pytest-django = "^4.5.2"
 types-pytz = "^2023.3.0.0"
 import-linter = "^1.11.1"
-
-[tool.black]
-line-length = 119
-force-exclude = '''
-/(
-  migrations
-)/
-'''
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -168,7 +160,8 @@ type = "layers"
 layers = [
     "bkuser.apps.sync",
     "bkuser.apps.tenant",
-    "bkuser.apps.data_source | bkuser.apps.idp",
+    "bkuser.apps.idp",
+    "bkuser.apps.data_source",
 ]
 
 # apos.sync 分层
