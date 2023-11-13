@@ -99,10 +99,9 @@ class TenantUserValidityPeriodNotifier:
         # TODO 细化异常处理
         except Exception:
             logger.exception(
-                "send notification failed, tenant: %s, scene:%s, tenant_user_id: %s",
+                "send notification failed, tenant: %s, scene: %s",
                 self.tenant_id,
                 self.scene,
-                u.id,
             )
 
     def _get_templates_with_scene(self, scene: NotificationScene) -> List[NotificationTemplate]:
