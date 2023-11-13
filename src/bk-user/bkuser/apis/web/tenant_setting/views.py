@@ -117,10 +117,8 @@ class TenantUserCustomFieldUpdateDeleteApi(
 class TenantUserValidityPeriodConfigRetrieveUpdateApi(
     ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView
 ):
-    queryset = TenantUserValidityPeriodConfig.objects.all()
-
     def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = TenantUserValidityPeriodConfig.objects.all()
         filter_kwargs = {"tenant_id": self.get_current_tenant_id()}
         return get_object_or_404(queryset, **filter_kwargs)
 
@@ -133,7 +131,7 @@ class TenantUserValidityPeriodConfigRetrieveUpdateApi(
     )
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
-        return Response(TenantUserValidityPeriodConfigOutputSLZ(instance).data)
+        return Response(TenantUserValidityPeriodConfigOutputSLZ(instance=instance).data)
 
     @swagger_auto_schema(
         tags=["tenant-setting"],
