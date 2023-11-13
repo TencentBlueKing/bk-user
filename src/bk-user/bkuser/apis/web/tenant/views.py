@@ -13,6 +13,7 @@ import logging
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.tenant.serializers import (
@@ -25,6 +26,8 @@ from bkuser.apis.web.tenant.serializers import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
+from bkuser.apps.permission.constants import PermAction
+from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.tenant import (
@@ -42,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 class TenantListCreateApi(generics.ListCreateAPIView):
     pagination_class = None
-
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
     serializer_class = TenantSearchOutputSLZ
 
     def get_serializer_context(self):
@@ -99,6 +102,8 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         ]
         # 本地数据源密码初始化配置
         config = PasswordInitialConfig(**data["password_initial_config"])
+
+        # 创建租户和租户管理员
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers, config)
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data)
@@ -107,6 +112,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
     serializer_class = TenantRetrieveOutputSLZ
 
     def get_serializer_context(self):
@@ -148,6 +154,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
 
 class TenantUsersListApi(generics.ListAPIView):
     serializer_class = TenantUserSearchOutputSLZ
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
 
     def get_queryset(self):
         tenant_id = self.kwargs["tenant_id"]

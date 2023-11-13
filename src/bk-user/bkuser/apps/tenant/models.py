@@ -12,12 +12,10 @@ from django.conf import settings
 from django.db import models
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TenantFeatureFlag, UserFieldDataType
+from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantFeatureFlag, UserFieldDataType
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
-from bkuser.common.models import TimestampedModel
+from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.common.time import datetime_to_display
-
-from .constants import TIME_ZONE_CHOICES
 
 
 class Tenant(TimestampedModel):
@@ -56,7 +54,7 @@ class TenantUser(TimestampedModel):
 
     # wx_userid/wx_openid 兼容旧版本迁移
     wx_userid = models.CharField("微信ID", null=True, blank=True, default="", max_length=64)
-    wx_openid = models.CharField("微信公众号OpenID", null=True, blank=True, default="", max_length=64)
+    wx_openid = models.CharField("微信公众号 用户OpenID", null=True, blank=True, default="", max_length=64)
 
     # 账号有效期相关
     account_expired_at = models.DateTimeField("账号过期时间", null=True, blank=True, default=PERMANENT_TIME)
@@ -82,6 +80,14 @@ class TenantUser(TimestampedModel):
     @property
     def account_expired_at_display(self) -> str:
         return datetime_to_display(self.account_expired_at)
+
+    @property
+    def real_phone(self) -> str:
+        return self.data_source_user.phone if self.is_inherited_phone else self.custom_phone
+
+    @property
+    def real_email(self) -> str:
+        return self.data_source_user.email if self.is_inherited_email else self.custom_email
 
 
 class TenantDepartment(TimestampedModel):
@@ -143,21 +149,16 @@ class TenantUserCustomField(TimestampedModel):
         ]
 
 
-# # TODO: 是否直接定义 TenantCommonConfig 表，AccountValidityPeriod是一个JSON字段？
-# class AccountValidityPeriodConfig:
-#     """账号时效配置"""
-#
-#     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
-#
-#     enabled = models.BooleanField("是否启用", default=True)
-#     # TODO: 定义枚举，设置默认值为永久
-#     validity_period_seconds = models.IntegerField("有效期(单位：秒)", default=-1)
-#     # TODO: 定义枚举，设置默认值为7天
-#     reminder_period_days = models.IntegerField("提醒周期(单位：天)", default=7)
-#     # TODO: 定义枚举，同时需要考虑到与企业ESB配置的支持的通知方式有关，是否定义字段？
-#     notification_method = models.CharField("通知方式", max_length=32, default="email")
-#     # TODO: 需要考虑不同通知方式，可能无法使用相同模板，或者其他设计方式
-#     notification_content_template = models.TextField("通知模板", default="")
+class TenantUserValidityPeriodConfig(AuditedModel):
+    """账号有效期-配置"""
+
+    tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, db_index=True, unique=True)
+
+    enabled = models.BooleanField("是否启用账户有效期", default=True)
+    validity_period = models.IntegerField("有效期(单位：天)", default=-1)
+    remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
+    enabled_notification_methods = models.JSONField("通知方式", default=list)
+    notification_templates = models.JSONField("通知模板", default=list)
 
 
 # class TenantUserSocialAccountRelation(TimestampedModel):

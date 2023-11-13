@@ -12,20 +12,19 @@ specific language governing permissions and limitations under the License.
 from typing import Optional
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.auth.models import User
 from tests.test_utils.helpers import generate_random_string
-from tests.test_utils.tenant import DEFAULT_TENANT
 
 
-def create_user(username: Optional[str] = None) -> User:
+def create_user(tenant: Tenant, username: Optional[str] = None) -> User:
     """创建测试用用户"""
     username = username or generate_random_string(length=8)
     user, _ = User.objects.get_or_create(username=username)
-    user.set_property("tenant_id", DEFAULT_TENANT)
+    user.set_property("tenant_id", tenant.id)
 
     # 获取租户默认的本地数据源
-    data_source = DataSource.objects.get(owner_tenant_id=DEFAULT_TENANT, name=f"{DEFAULT_TENANT}-default-local")
+    data_source = DataSource.objects.get(owner_tenant_id=tenant.id, name=f"{tenant.id}-default-local")
 
     data_source_user, _ = DataSourceUser.objects.get_or_create(
         username=username,
@@ -37,8 +36,13 @@ def create_user(username: Optional[str] = None) -> User:
         },
     )
 
-    TenantUser.objects.get_or_create(
-        tenant_id=DEFAULT_TENANT, id=username, data_source=data_source, data_source_user=data_source_user
+    tenant_user, _ = TenantUser.objects.get_or_create(
+        tenant=tenant,
+        id=username,
+        data_source=data_source,
+        data_source_user=data_source_user,
     )
+
+    TenantManager.objects.get_or_create(tenant=tenant, tenant_user=tenant_user)
 
     return user

@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.data_source_organization.serializers import (
@@ -26,6 +27,8 @@ from bkuser.apis.web.data_source_organization.serializers import (
     UserUpdateInputSLZ,
 )
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
+from bkuser.apps.permission.constants import PermAction
+from bkuser.apps.permission.permissions import perm_class
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
@@ -39,6 +42,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 class DataSourceUserListCreateApi(generics.ListCreateAPIView):
     serializer_class = UserSearchOutputSLZ
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self):
         slz = UserSearchInputSLZ(data=self.request.query_params)
@@ -111,6 +115,7 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
 
 class DataSourceLeadersListApi(generics.ListAPIView):
     serializer_class = LeaderSearchOutputSLZ
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self):
         slz = LeaderSearchInputSLZ(data=self.request.query_params)
@@ -139,6 +144,7 @@ class DataSourceLeadersListApi(generics.ListAPIView):
 
 
 class DataSourceDepartmentsListApi(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DepartmentSearchOutputSLZ
 
     def get_queryset(self):
@@ -171,6 +177,7 @@ class DataSourceDepartmentsListApi(generics.ListAPIView):
 class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = DataSourceUser.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = UserRetrieveOutputSLZ
 
     def get_serializer_context(self):

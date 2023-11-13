@@ -16,6 +16,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.data_source.mixins import CurrentUserTenantDataSourceMixin
@@ -42,6 +43,8 @@ from bkuser.apis.web.data_source.serializers import (
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
+from bkuser.apps.permission.constants import PermAction
+from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
@@ -91,6 +94,7 @@ class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
 
 class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DataSourceSearchOutputSLZ
 
     def get_serializer_context(self):
@@ -154,6 +158,7 @@ class DataSourceRetrieveUpdateApi(
     CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
 ):
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DataSourceRetrieveOutputSLZ
 
     @swagger_auto_schema(
@@ -250,6 +255,7 @@ class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView
 class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
     """切换数据源状态（启/停）"""
 
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DataSourceSwitchStatusOutputSLZ
 
     @swagger_auto_schema(
@@ -274,6 +280,7 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
     """获取本地数据源数据导入模板"""
 
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -295,6 +302,7 @@ class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView
     """本地数据源用户导出"""
 
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -316,6 +324,8 @@ class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView
 
 class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
     """从 Excel 导入数据源用户数据"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -371,6 +381,8 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
 class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
     """数据源同步"""
 
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源数据同步",
@@ -412,6 +424,7 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
 class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """数据源同步记录列表"""
 
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DataSourceSyncRecordListOutputSLZ
 
     def get_queryset(self):
@@ -449,6 +462,7 @@ class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveA
     """数据源同步记录详情"""
 
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self):
         return DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())

@@ -13,6 +13,7 @@ import logging
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
@@ -25,6 +26,8 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserSearchInputSLZ,
 )
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
+from bkuser.apps.permission.constants import PermAction
+from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.tenant import (
     TenantDepartmentHandler,
@@ -33,7 +36,6 @@ from bkuser.biz.tenant import (
     TenantHandler,
     TenantUserHandler,
 )
-from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,7 @@ logger = logging.getLogger(__name__)
 class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserListOutputSLZ
 
     def get_serializer_context(self):
@@ -100,6 +103,7 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
@@ -113,6 +117,7 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
 
 class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["tenant-organization"],
@@ -145,6 +150,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView):
     queryset = Tenant.objects.all()
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantRetrieveOutputSLZ
     lookup_url_kwarg = "id"
 
@@ -164,28 +170,25 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
         tags=["tenant-organization"],
         operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
-        responses={status.HTTP_200_OK: ""},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         slz = TenantUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        instance = self.get_object()
-        # NOTE 非当前租户, 无权限做更新操作
-        if self.get_current_tenant_id() != instance.id:
-            raise error_codes.NO_PERMISSION
-
-        should_updated_info = TenantEditableBaseInfo(
+        tenant = self.get_object()
+        tenant_info = TenantEditableBaseInfo(
             name=data["name"], logo=data["logo"] or "", feature_flags=TenantFeatureFlag(**data["feature_flags"])
         )
 
-        TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
-        return Response()
+        TenantHandler.update_with_managers(tenant.id, tenant_info, data["manager_ids"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantDepartmentChildrenListApi(generics.ListAPIView):
     pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantDepartmentChildrenListOutputSLZ
 
     @swagger_auto_schema(
@@ -204,6 +207,7 @@ class TenantDepartmentChildrenListApi(generics.ListAPIView):
 class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserListOutputSLZ
 
     def get_tenant_user_ids(self, tenant_id):
