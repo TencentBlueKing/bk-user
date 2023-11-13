@@ -1,13 +1,17 @@
 name: bkuser_ci_check
 on:
   push:
-    branches: [master, ft_tenant]
+    branches: [ main, pre_*, ft_*, release/* ]
     paths:
       - "src/bk-user/**"
+      - "src/bk-login/**"
+      - "src/idp-plugins/**"
   pull_request:
-    branches: [master, ft_tenant]
+    branches: [ main, pre_*, ft_*, release/* ]
     paths:
       - "src/bk-user/**"
+      - "src/bk-login/**"
+      - "src/idp-plugins/**"
 jobs:
   check:
     runs-on: ubuntu-latest
