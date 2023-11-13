@@ -8,9 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Tuple, Dict
 import logging
 import time
+from typing import Dict, Tuple
 from urllib.parse import urlparse
 
 import requests
@@ -36,35 +36,35 @@ class HttpStatusCode:
 
     @property
     def is_invalid(self) -> bool:
-        return self.code < 0
+        return self.code < 0  # noqa: PLR2004
 
     @property
     def is_success(self) -> bool:
-        return 200 <= self.code <= 299
+        return 200 <= self.code <= 299  # noqa: PLR2004
 
     @property
     def is_redirect(self) -> bool:
-        return 300 <= self.code <= 399
+        return 300 <= self.code <= 399  # noqa: PLR2004
 
     @property
     def is_client_error(self) -> bool:
-        return 400 <= self.code <= 499
+        return 400 <= self.code <= 499  # noqa: PLR2004
 
     @property
     def is_server_error(self) -> bool:
-        return 500 <= self.code <= 599
+        return 500 <= self.code <= 599  # noqa: PLR2004
 
     @property
     def is_unauthorized(self) -> bool:
-        return self.code == 401
+        return self.code == 401  # noqa: PLR2004
 
     @property
     def is_forbidden(self) -> bool:
-        return self.code == 403
+        return self.code == 403  # noqa: PLR2004
 
     @property
     def is_not_found(self) -> bool:
-        return self.code == 404
+        return self.code == 404  # noqa: PLR2004
 
 
 # 定义无效请求的Http状态码
@@ -83,7 +83,9 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
         只要是Response Body为json格式数据，都会返回有效的Http状态码，表示请求发送和接收成功，不关注业务逻辑
         - status_code < 0: 表示非预期请求，无效请求
         - status_code > 0: 表示正常请求且Response Body为JSON格式的状态码
-        - data: status_code < 0时，包含error字段，描述非预期请求的原因，status_code > 0时，则为经JSON解析后的Response Body数据
+        - data:
+            status_code < 0时，包含error字段，描述非预期请求的原因
+            status_code > 0时，则为经JSON解析后的Response Body数据
     """
     # 添加JSON Header
     headers = kwargs.get("headers") or {}
@@ -117,8 +119,9 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
         return HttpStatusCode(resp.status_code), resp.json()
     except Exception as e:
         content = resp.content[:256] if resp.content else ""
-        logger.error(
-            "http request fail, response.body not json! %s %s, kwargs: %s, response.status_code: %s, response.body: %s",
+        logging.exception(
+            "http request fail, response.body not json! "
+            "%s %s, kwargs: %s, response.status_code: %s, response.body: %s",
             method,
             url,
             str(kwargs),
@@ -145,7 +148,7 @@ def _http_request_only_20x(method: str, url: str, **kwargs) -> Tuple[bool, Dict]
 
     # 非 20x 请求
     logger.error(
-        "http response status code is {}, not 20x! %s %s, kwargs: %s, response.body: %s",
+        "http response status code is %s, not 20x! %s %s, kwargs: %s, response.body: %s",
         status.code,
         method,
         url,

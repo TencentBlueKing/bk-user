@@ -15,8 +15,8 @@ from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from .client import BkUserAPIClient
-from ..exceptions import InvalidParamError, UnexpectedDataError
 from ..base import BaseCredentialIdpPlugin
+from ..exceptions import InvalidParamError, UnexpectedDataError
 from ..models import TestConnectionResult
 from ..utils import parse_request_body_json
 

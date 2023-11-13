@@ -49,11 +49,11 @@ repos:
         entry: bash -c "if [[ -d pre_commit_hooks ]]; then pre_commit_hooks/ip.sh $@; fi"
   - repo: local
     hooks:
-      - id: black
-        name: black
+      - id: format
+        name: ruff-formatter
         language: python
         types: [python]
-        entry: black --config=src/bk-user/pyproject.toml
+        entry: ruff format --config=src/bk-user/pyproject.toml --force-exclude
         files: src/bk-user/
       - id: ruff
         name: ruff
@@ -74,11 +74,11 @@ repos:
         entry: bash -c "cd src/bk-user && lint-imports"
   - repo: local
     hooks:
-      - id: black
-        name: black
+      - id: format
+        name: ruff-formatter
         language: python
         types: [python]
-        entry: black --config=src/bk-login/pyproject.toml
+        entry: ruff format --config=src/bk-login/pyproject.toml --force-exclude
         files: src/bk-login/
       - id: ruff
         name: ruff
@@ -99,18 +99,18 @@ repos:
         entry: bash -c "cd src/bk-login && lint-imports"
   - repo: local
     hooks:
-      - id: black
-        name: black
+      - id: format
+        name: ruff-formatter
         language: python
         types: [python]
-        entry: black --config=src/idp-plugins/pyproject.toml
-        files: src/idp-plugins/
+        entry: ruff format --config=src/bk-plugins/pyproject.toml --force-exclude
+        files: src/bk-plugins/
       - id: ruff
         name: ruff
         language: python
         types: [python]
         entry: ruff --config=src/idp-plugins/pyproject.toml --force-exclude --fix
-        files: src/bk-login/
+        files: src/idp-plugins/
       - id: mypy
         name: mypy
         language: python

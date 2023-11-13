@@ -56,7 +56,8 @@ class LocalDataSourceIdentityInfoInitializer:
             return
 
         self.password_provider = PasswordProvider(
-            self.plugin_cfg.password_rule, self.plugin_cfg.password_initial  # type: ignore
+            self.plugin_cfg.password_rule,  # type: ignore
+            self.plugin_cfg.password_initial,  # type: ignore
         )
 
     def initialize(self, users: Optional[List[DataSourceUser]] = None) -> Tuple[List[DataSourceUser], Dict[int, str]]:
