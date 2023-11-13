@@ -28,7 +28,7 @@ def validate_phone_with_country_code(phone: str, country_code: str) -> None:
 
     # 解析出未知区号
     if region == UNKNOWN_REGION:
-        raise ValueError("unknown phone country code: {}".format(country_code))
+        raise ValueError(f"unknown phone country code: {country_code}")
 
     # 特殊检查：中国手机号强制要求必须是 11 位
     if region == "CN" and len(phone) != 11:  # noqa: PLR2004
