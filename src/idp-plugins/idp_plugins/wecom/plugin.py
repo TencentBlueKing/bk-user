@@ -16,9 +16,9 @@ from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from .client import WeComAPIClient
-from ..exceptions import InvalidParamError
 from .settings import WECOM_OAUTH_URL
 from ..base import BaseFederationIdpPlugin
+from ..exceptions import InvalidParamError
 from ..models import TestConnectionResult
 from ..utils import generate_random_str
 
@@ -38,6 +38,7 @@ class WecomIdpPlugin(BaseFederationIdpPlugin):
 
     def __init__(self, cfg: WecomIdpPluginConfig):
         self.cfg = cfg
+        self.client = WeComAPIClient(self.cfg.corp_id, self.cfg.agent_id, self.cfg.secret)
 
     def test_connection(self) -> TestConnectionResult:
         # TODO: 测试调用企业微信网络是否OK
@@ -82,7 +83,6 @@ class WecomIdpPlugin(BaseFederationIdpPlugin):
             raise InvalidParamError(_("code 参数不能为空"))
 
         # 通过code获取用户信息
-        client = WeComAPIClient(self.cfg.corp_id, self.cfg.agent_id, self.cfg.secret)
-        user_id = client.get_user_id_by_code(code)
+        user_id = self.client.get_user_id_by_code(code)
 
         return {"user_id": user_id}

@@ -26,5 +26,9 @@ class InvalidParamError(IdpPluginBaseError):
     """参数非合法"""
 
 
+class ValidationError(IdpPluginBaseError):
+    """校验不通过"""
+
+
 class UnexpectedDataError(IdpPluginBaseError):
     """数据非预期"""

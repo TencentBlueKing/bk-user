@@ -9,12 +9,11 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
-from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 
-from bklogin.bkuser.models import TenantUser
 from bklogin.common.error_codes import error_codes
 from bklogin.common.response import APISuccessResponse
+from bklogin.component.bk_user import api as bk_user_api
 
 from .manager import BkTokenManager
 
@@ -38,16 +37,14 @@ class GetUserApi(View):
         if not ok:
             raise error_codes.VALIDATION_ERROR.f(msg)
 
-        user = TenantUser.objects.filter(id=username).first()
-        if not user:
-            raise error_codes.OBJECT_NOT_FOUND.f(_("用户({})查询不到").format(username))
+        user = bk_user_api.get_tenant_user(username)
 
         return APISuccessResponse(
             {
-                "bk_username": username,
+                "bk_username": user.id,
                 "tenant_id": user.tenant_id,
-                "full_name": user.data_source_user.full_name,
-                "source_username": user.data_source_user.username,
+                "full_name": user.full_name,
+                "source_username": user.username,
                 "language": user.language,
                 "time_zone": user.time_zone,
             }

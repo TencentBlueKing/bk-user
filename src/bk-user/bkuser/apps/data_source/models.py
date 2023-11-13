@@ -15,6 +15,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.common.constants import SENSITIVE_MASK
+from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.plugins.base import get_plugin_cfg_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -157,6 +158,9 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
         unique_together = [
             ("username", "data_source"),
         ]
+
+    def check_password(self, raw_password: str) -> bool:
+        return check_password(raw_password, self.password)
 
 
 class DataSourceDepartment(TimestampedModel):

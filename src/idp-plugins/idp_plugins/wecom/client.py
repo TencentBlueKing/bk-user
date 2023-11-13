@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .settings import WECOM_API_BASE_URL
 from ..exceptions import RequestAPIError, UnexpectedDataError
-from ..http import http_get
+from ..http import http_get_20x
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class WeComAPIClient:
         """
         params = {"corpid": self.corp_id, "corpsecret": self.secret}
 
-        resp_data = self._call(http_get, "/gettoken", params=params)
+        resp_data = self._call(http_get_20x, "/gettoken", params=params)
         return resp_data["access_token"], resp_data["expires_in"]
 
     @property
@@ -91,7 +91,7 @@ class WeComAPIClient:
         docs: https://developer.work.weixin.qq.com/document/path/98176
         """
         params = {"access_token": self.access_token, "code": code}
-        resp_data = self._call(http_get, "/auth/getuserinfo", params=params)
+        resp_data = self._call(http_get_20x, "/auth/getuserinfo", params=params)
         userid = resp_data.get("userid")
         if userid:
             return userid

@@ -12,29 +12,8 @@ from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 
-class DataSourceStatus(str, StructuredEnum):
-    """数据源状态"""
-
-    ENABLED = EnumField("enabled", label=_("启用"))
-    DISABLED = EnumField("disabled", label=_("未启用"))
-
-
 class IdpStatus(str, StructuredEnum):
     """认证源状态"""
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("未启用"))
-
-
-class AllowBindScopeObjectType(str, StructuredEnum):
-    """社会化认证源，允许绑定的范围对象类型"""
-
-    USER = EnumField("user", label=_("用户"))
-    DEPARTMENT = EnumField("department", label=_("部门"))
-    DATA_SOURCE = EnumField("data_source", label=_("数据源"))
-    TENANT = EnumField("tenant", label=_("租户"))
-    ANY = EnumField("*", label=_("任意"))
-
-
-# 社会化认证源，允许绑定的范围为任意对象ID
-ANY_ALLOW_BIND_SCOPE_OBJECT_ID = "*"

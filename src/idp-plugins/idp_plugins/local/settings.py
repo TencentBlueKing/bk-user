@@ -8,18 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.db import models
+import os
 
-from bklogin.common.models import TimestampedModel
-
-
-class BkToken(TimestampedModel):
-    """
-    登录票据
-    """
-
-    token = models.CharField("登录票据", max_length=255, unique=True, db_index=True)
-    # 是否已经退出登录
-    is_logout = models.BooleanField("票据是否已经执行过退出登录操作", default=False)
-    # 无操作过期时间戳
-    inactive_expires_at = models.IntegerField("无操作失效时间戳", default=0)
+BK_USER_APP_CODE = os.environ.get("BK_USER_APP_CODE", default="bk_user")
+BK_USER_APP_SECRET = os.environ.get("BK_USER_APP_SECRET", "")
+BK_USER_API_URL = os.environ.get("BK_USER_API_URL", "http://bk-user")

@@ -83,8 +83,7 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
         只要是Response Body为json格式数据，都会返回有效的Http状态码，表示请求发送和接收成功，不关注业务逻辑
         - status_code < 0: 表示非预期请求，无效请求
         - status_code > 0: 表示正常请求且Response Body为JSON格式的状态码
-        - data:
-            status_code < 0时，包含error字段，描述非预期请求的原因
+        - data: status_code < 0时，包含error字段，描述非预期请求的原因，
             status_code > 0时，则为经JSON解析后的Response Body数据
     """
     # 添加JSON Header
@@ -119,9 +118,9 @@ def _http_request(method: str, url: str, **kwargs) -> Tuple[HttpStatusCode, Dict
         return HttpStatusCode(resp.status_code), resp.json()
     except Exception as e:
         content = resp.content[:256] if resp.content else ""
-        logging.exception(
-            "http request fail, response.body not json! "
-            "%s %s, kwargs: %s, response.status_code: %s, response.body: %s",
+        logger.exception(
+            "http request fail, response.body not json!"
+            " %s %s, kwargs: %s, response.status_code: %s, response.body: %s",
             method,
             url,
             str(kwargs),

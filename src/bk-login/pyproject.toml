@@ -35,21 +35,12 @@ pydantic = "2.3.0"
 blue-krill = "2.0.2"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.290"
-black = "^23.9.1"
+ruff = "^0.1.4"
 mypy = "^1.5.1"
 types-requests = "^2.31.0.2"
 pytest = "^7.4.2"
 pytest-django = "^4.5.2"
 import-linter = "^1.11.1"
-
-[tool.black]
-line-length = 119
-force-exclude = '''
-/(
-  migrations
-)/
-'''
 
 [tool.mypy]
 ignore_missing_imports = true

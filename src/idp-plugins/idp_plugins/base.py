@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Type
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from pydantic import BaseModel
 
-from .constants import CUSTOM_PLUGIN_ID_PREFIX, BuiltinIdpPluginIDs, PluginTypeEnum, AllowedHttpMethodEnum
+from .constants import CUSTOM_PLUGIN_ID_PREFIX, AllowedHttpMethodEnum, BuiltinIdpPluginIDs, PluginTypeEnum
 from .models import DispatchConfigItem, TestConnectionResult
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,8 @@ class BaseFederationIdpPlugin(BaseIdpPlugin):
         """
         构建跳转到第三方登录的URL
         :param request: Django View的Request, 可获取Cookie/Body/QueryParam/FormParam/Header/Session 也可以设置Session
-        :param callback_uri: 一般跳转到第三方登录成功后需要回跳回来，callback_uri即为回跳回来的完整地址（包括http(s)协议和url路径）
+        :param callback_uri: 一般跳转到第三方登录成功后需要回跳回来，
+                            callback_uri即为回跳回来的完整地址（包括http(s)协议和url路径）
         :return: 处理后的参数后重定向到第三方登录的URI
         """
         ...

@@ -8,9 +8,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+from rest_framework.permissions import IsAuthenticated
+
+from .authentications import BkUserAppAuthentication
 
 
-class BkUserConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bklogin.bkuser"
+class LoginApiAccessControlMixin:
+    """
+    登录API的访问权限控制
+    Note: 继承时，必须添加到第一个父类，否则可能会被其他父类的覆盖
+    """
+
+    authentication_classes = [BkUserAppAuthentication]
+    permission_classes = [IsAuthenticated]

@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "bklogin.authentication",
-    "bklogin.bkuser",
 ]
 
 MIDDLEWARE = [
@@ -117,8 +116,7 @@ BK_APP_CODE = env.str("BK_APP_CODE", default="bk_login")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # Django SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
-# BKToken等DB加密所需要的Key（32位随机字符串）
-ENCRYPT_SECRET_KEY = env.str("ENCRYPT_SECRET_KEY")
+
 # 蓝鲸数据库内容加密私钥
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
 # 详情查看：https://cryptography.io/en/latest/fernet/
@@ -154,6 +152,11 @@ BK_TOKEN_COOKIE_AGE = env.int("BK_LOGIN_COOKIE_AGE", default=60 * 60 * 24)
 BK_TOKEN_OFFSET_ERROR_AGE = env.int("BK_LOGIN_COOKIE_OFFSET_ERROR_AGE", default=60)
 # 无操作的失效期，默认2个小时. 长时间无操作, BkToken自动过期（Note: 调整为）
 BK_TOKEN_INACTIVE_AGE = env.int("BK_TOKEN_INACTIVE_AGE", default=60 * 60 * 2)
+
+# 用户管理相关信息
+BK_USER_APP_CODE = env.str("BK_USER_APP_CODE", default="bk_user")
+BK_USER_APP_SECRET = env.str("BK_USER_APP_SECRET")
+BK_USER_API_URL = os.environ.get("BK_USER_API_URL", "http://bk-user")
 
 # ------------------------------------------ 日志配置 ------------------------------------------
 
@@ -233,6 +236,3 @@ LOGGING = {
         },
     },
 }
-
-# ------------------------------------------ FIXME: 临时配置 ------------------------------------------
-TENANT_VISIBLE = env.bool("TENANT_VISIBLE", default=False)
