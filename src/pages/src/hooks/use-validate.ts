@@ -72,6 +72,12 @@ export default () => {
     return len;
   };
 
+  const sourceField = {
+    validator: (value: string) => /^[a-zA-Z][a-zA-Z0-9_-]{1,30}[a-zA-Z0-9]$/.test(value),
+    message: '由3-32位字母、数字、下划线(_)、减号(-)字符组成，以字母开头，字母或数字结尾',
+    trigger: 'blur',
+  };
+
   return {
     required,
     name,
@@ -83,5 +89,6 @@ export default () => {
     fieldsName,
     serverBaseUrl,
     apiPath,
+    sourceField,
   };
 };
