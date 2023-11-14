@@ -96,7 +96,7 @@ class TenantRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     lookup_field = "id"
 
 
-class IdpListApi(generics.ListAPIView, LoginApiAccessControlMixin):
+class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     pagination_class = None
     serializer_class = IdpListOutputSLZ
 

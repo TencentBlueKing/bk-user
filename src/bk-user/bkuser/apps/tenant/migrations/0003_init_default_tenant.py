@@ -37,6 +37,7 @@ def forwards_func(apps, schema_editor):
         admin_username,
     )
 
+    # TODO: 国际化时需要考虑如何实现
     Tenant = apps.get_model("tenant", "Tenant")
     TenantUser = apps.get_model("tenant", "TenantUser")
     TenantManager = apps.get_model("tenant", "TenantManager")
@@ -76,7 +77,7 @@ def forwards_func(apps, schema_editor):
     TenantManager.objects.create(tenant=default_tenant, tenant_user=tenant_user)
 
     Idp.objects.create(
-        name="default",
+        name="本地账密",
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         owner_tenant_id=default_tenant.id,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]).model_dump(),
