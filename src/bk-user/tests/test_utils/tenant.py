@@ -12,7 +12,7 @@ from typing import List, Optional
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
-from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
+from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.utils.uuid import generate_uuid
 
@@ -31,7 +31,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         },
     )
 
-    plugin_config = DefaultPluginConfigProvider().get(DataSourcePluginEnum.LOCAL)
+    plugin_config = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)
     assert plugin_config is not None
 
     DataSource.objects.get_or_create(
@@ -60,7 +60,7 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
         if user.id not in existed_tenant_users
     ]
     TenantUser.objects.bulk_create(tenant_users)
-    return TenantUser.objects.filter(tenant=tenant)
+    return TenantUser.objects.filter(tenant=tenant, data_source_user__in=data_source_users)
 
 
 def create_tenant_departments(

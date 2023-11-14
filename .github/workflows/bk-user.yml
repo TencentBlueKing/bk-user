@@ -75,5 +75,7 @@ jobs:
           export BK_COMPONENT_API_URL=""
           export MYSQL_PASSWORD=root_pwd
           export MYSQL_HOST="127.0.0.1"
+          export INITIAL_ADMIN_USERNAME=admin
+          export INITIAL_ADMIN_PASSWORD=admin_pwd
           export DJANGO_SETTINGS_MODULE=bkuser.settings
           poetry run pytest ./tests

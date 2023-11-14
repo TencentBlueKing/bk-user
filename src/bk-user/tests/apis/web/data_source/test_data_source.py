@@ -80,7 +80,7 @@ def data_source_sync_tasks(data_source) -> List[DataSourceSyncTask]:
         extras={"async_run": True, "overwrite": True},
     )
     other_tenant_task = DataSourceSyncTask.objects.create(
-        data_source_id=1,
+        data_source_id=999,
         status=SyncTaskStatus.SUCCESS,
         has_warning=False,
         trigger=SyncTaskTrigger.SIGNAL,

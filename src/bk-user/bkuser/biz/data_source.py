@@ -21,7 +21,7 @@ from bkuser.apps.data_source.models import (
     DataSourcePlugin,
     DataSourceUserLeaderRelation,
 )
-from bkuser.biz.data_source_plugin import DefaultPluginConfigProvider
+from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
 
@@ -63,7 +63,7 @@ class DataSourceHandler:
     ) -> DataSource:
         """使用与默认配置合并后的插件配置，创建本地数据源"""
         plugin_id = DataSourcePluginEnum.LOCAL
-        plugin_config: LocalDataSourcePluginConfig = DefaultPluginConfigProvider().get(plugin_id)  # type: ignore
+        plugin_config: LocalDataSourcePluginConfig = get_default_plugin_cfg(plugin_id)  # type: ignore
         plugin_config.password_initial = password_initial_config
 
         return DataSource.objects.create(

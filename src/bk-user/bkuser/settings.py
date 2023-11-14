@@ -454,6 +454,7 @@ HEALTHZ_PROBES = env.list(
     "HEALTHZ_PROBES",
     default=[
         "bkuser.monitoring.healthz.probes.MysqlProbe",
+        "bkuser.monitoring.healthz.probes.RedisProbe",
     ],
 )
 

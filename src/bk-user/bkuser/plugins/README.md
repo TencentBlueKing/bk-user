@@ -79,9 +79,10 @@ class FoxDataSourcePlugin(BaseDataSourcePlugin):
 ```python
 from bkuser.plugins.base import register_plugin
 
+from .defaults import DEFAULT_PLUGIN_CONFIG
 from .plugin import FoxDataSourcePlugin
 
-register_plugin(FoxDataSourcePlugin)
+register_plugin(FoxDataSourcePlugin, DEFAULT_PLUGIN_CONFIG)
 
 # 注意：如果这是一个自定义插件（非蓝鲸官方内置），还需要设置插件 Metadata 信息
 from bkuser.plugins.models import PluginMetadata
