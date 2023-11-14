@@ -71,6 +71,8 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("tenant", "0003_auto_20231113_2017"),
+        ("data_source", "0002_init_builtin_data_source_plugin"),
+        ("idp", "0002_init_builtin_idp_plugin"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]
