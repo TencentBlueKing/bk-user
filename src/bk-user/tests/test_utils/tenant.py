@@ -60,7 +60,7 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
         if user.id not in existed_tenant_users
     ]
     TenantUser.objects.bulk_create(tenant_users)
-    return TenantUser.objects.filter(tenant=tenant)
+    return TenantUser.objects.filter(tenant=tenant, data_source_user__in=data_source_users)
 
 
 def create_tenant_departments(
