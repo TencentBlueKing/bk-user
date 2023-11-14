@@ -18,6 +18,9 @@ from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import make_password
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
+from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +32,10 @@ def forwards_func(apps, schema_editor):
     if not (admin_username and admin_password):
         raise RuntimeError("INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD must be set in environment variables")
 
-    logger.info("start initialize default tenant & data source with admin user [%s]...", admin_username)
+    logger.info(
+        "start initialize default tenant & data source with admin user [%s]...",
+        admin_username,
+    )
 
     Tenant = apps.get_model("tenant", "Tenant")
     TenantUser = apps.get_model("tenant", "TenantUser")
@@ -37,6 +43,7 @@ def forwards_func(apps, schema_editor):
     DataSource = apps.get_model("data_source", "DataSource")
     DataSourceUser = apps.get_model("data_source", "DataSourceUser")
     LocalDataSourceIdentityInfo = apps.get_model("data_source", "LocalDataSourceIdentityInfo")
+    Idp = apps.get_model("idp", "Idp")
 
     default_tenant = Tenant.objects.create(id="default", name="默认租户", is_default=True)
     data_source = DataSource.objects.create(
@@ -47,7 +54,10 @@ def forwards_func(apps, schema_editor):
     )
 
     data_source_user = DataSourceUser.objects.create(
-        data_source=data_source, code=admin_username, username=admin_username, full_name=admin_username
+        data_source=data_source,
+        code=admin_username,
+        username=admin_username,
+        full_name=admin_username,
     )
     LocalDataSourceIdentityInfo.objects.create(
         user=data_source_user,
@@ -65,12 +75,23 @@ def forwards_func(apps, schema_editor):
     )
     TenantManager.objects.create(tenant=default_tenant, tenant_user=tenant_user)
 
-    logger.info("initialize default tenant & data source with admin user [%s] success", admin_username)
+    Idp.objects.create(
+        name="default",
+        plugin_id=BuiltinIdpPluginEnum.LOCAL,
+        owner_tenant_id=default_tenant.id,
+        plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]).model_dump(),
+        data_source_match_rules=[gen_data_source_match_rule_of_local(data_source.id).model_dump()],
+    )
+
+    logger.info(
+        "initialize default tenant & data source with admin user [%s] success",
+        admin_username,
+    )
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("tenant", "0003_auto_20231113_2017"),
+        ("tenant", "0002_init_builtin_user_fields"),
         ("data_source", "0002_init_builtin_data_source_plugin"),
         ("idp", "0002_init_builtin_idp_plugin"),
     ]

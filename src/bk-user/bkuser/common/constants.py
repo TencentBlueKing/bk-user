@@ -18,8 +18,10 @@ class BkLanguageEnum(str, StructuredEnum):
     EN = EnumField("en", label="英文")
 
 
-# 永久：2100-01-01 00:00:00
-PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, second=0)
+# 永久：2100-01-01 00:00:00 UTC
+PERMANENT_TIME = datetime.datetime(
+    year=2100, month=1, day=1, hour=0, minute=0, second=0, tzinfo=datetime.timezone.utc
+)
 
 # 敏感信息掩码（7 位 * 是故意的，避免遇到用户输入 6/8 位 * 的情况）
 SENSITIVE_MASK = "*******"
