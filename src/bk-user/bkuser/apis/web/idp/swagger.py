@@ -9,9 +9,11 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from typing import Dict
+
 from drf_yasg import openapi
-from bkuser.utils.pydantic import gen_openapi_schema
+
 from bkuser.idp_plugins.base import list_plugin_cls
+from bkuser.utils.pydantic import gen_openapi_schema
 
 
 def get_idp_plugin_cfg_schema_map() -> Dict[str, openapi.Schema]:

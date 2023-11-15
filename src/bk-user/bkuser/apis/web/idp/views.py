@@ -21,7 +21,6 @@ from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.common.error_codes import error_codes
-from .swagger import get_idp_plugin_cfg_schema_map
 
 from .serializers import (
     IdpCreateInputSLZ,
@@ -33,6 +32,7 @@ from .serializers import (
     IdpSearchOutputSLZ,
     IdpUpdateInputSLZ,
 )
+from .swagger import get_idp_plugin_cfg_schema_map
 
 
 class IdpPluginListApi(generics.ListAPIView):
