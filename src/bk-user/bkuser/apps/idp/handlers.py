@@ -20,7 +20,7 @@ from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from .constants import IdpStatus
-from .data_models import DataSourceMatchRuleList, gen_data_source_match_rule_of_local
+from .data_models import gen_data_source_match_rule_of_local
 from .models import Idp, IdpPlugin
 
 
@@ -54,7 +54,7 @@ def _update_local_idp_of_tenant(data_source: DataSource):
 
     # 根据数据源是否使用账密登录，修改认证源配置
     idp_plugin_cfg = LocalIdpPluginConfig(**idp.plugin_config)
-    data_source_match_rules = DataSourceMatchRuleList.validate_python(idp.data_source_match_rules)
+    data_source_match_rules = idp.data_source_match_rule_objs
 
     # 对于启用登录，则需要添加进配置
     if enable_login and data_source.id not in idp_plugin_cfg.data_source_ids:

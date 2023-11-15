@@ -16,7 +16,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.models import DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.apps.idp.data_models import DataSourceMatchRuleList, convert_match_rules_to_queryset_filter
+from bkuser.apps.idp.data_models import convert_match_rules_to_queryset_filter
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.common.error_codes import error_codes
@@ -134,13 +134,11 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
         #  一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
         #  直接匹配，一般是企业身份登录方式，
         #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
-        # 认证源与数据源的匹配规则
-        data_source_match_rules = DataSourceMatchRuleList.validate_python(idp.data_source_match_rules)
         # 将规则转换为Django Queryset 过滤条件, 不同用户之间过滤逻辑是OR
         conditions = [
             condition
             for userinfo in data["idp_users"]
-            if (condition := convert_match_rules_to_queryset_filter(data_source_match_rules, userinfo))
+            if (condition := convert_match_rules_to_queryset_filter(idp.data_source_match_rule_objs, userinfo))
         ]
 
         # 查询数据源用户

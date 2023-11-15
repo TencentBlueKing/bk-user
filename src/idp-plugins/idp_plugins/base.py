@@ -12,7 +12,9 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Type
 
+from bkuser.utils.pydantic import gen_openapi_schema
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
+from drf_yasg import openapi
 from pydantic import BaseModel
 
 from .constants import CUSTOM_PLUGIN_ID_PREFIX, AllowedHttpMethodEnum, BuiltinIdpPluginIDs, PluginTypeEnum
@@ -163,3 +165,11 @@ def get_plugin_type(plugin_id: str) -> PluginTypeEnum:
         f"plugin class({plugin_cls.__name__}) must is a subclass of "
         f"{BaseCredentialIdpPlugin.__name__} or {BaseFederationIdpPlugin.__name__}"
     )
+
+
+def get_plugin_cfg_schema_map() -> Dict[str, openapi.Schema]:
+    """获取插件配置类 JsonSchema 映射表"""
+    return {
+        f"plugin_config:{plugin_id}": gen_openapi_schema(plugin_cls.config_class)
+        for plugin_id, plugin_cls in _plugin_cls_map.items()
+    }
