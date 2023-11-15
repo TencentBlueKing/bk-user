@@ -48,6 +48,9 @@ class TenantListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="租户名称")
     logo = serializers.CharField(help_text="租户 Logo")
 
+    class Meta:
+        ref_name = "login.TenantListOutputSLZ"
+
 
 class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
     ...
@@ -56,6 +59,9 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
 class IdpPluginOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源插件 ID")
     name = serializers.CharField(help_text="认证源插件名称")
+
+    class Meta:
+        ref_name = "login.IdpPluginOutputSLZ"
 
 
 class IdpListOutputSLZ(serializers.Serializer):
@@ -68,6 +74,9 @@ class IdpListOutputSLZ(serializers.Serializer):
 class IdpRetrieveOutputSLZ(IdpListOutputSLZ):
     owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")
     plugin_config = serializers.JSONField(help_text="认证源插件配置")
+
+    class Meta:
+        ref_name = "login.IdpRetrieveOutputSLZ"
 
 
 class TenantUserMatchInputSLZ(serializers.Serializer):
@@ -92,3 +101,6 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     time_zone = serializers.CharField(help_text="时区")
 
     tenant_id = serializers.CharField(help_text="用户所在租户 ID")
+
+    class Meta:
+        ref_name = "login.TenantUserRetrieveOutputSLZ"
