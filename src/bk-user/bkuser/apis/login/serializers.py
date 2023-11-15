@@ -24,7 +24,7 @@ class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
 
 class LocalUserCredentialAuthenticateOutputSLZ(serializers.Serializer):
     data_source_id = serializers.IntegerField(help_text="数据源ID")
-    id = serializers.IntegerField(help_text="用户ID")
+    id = serializers.IntegerField(help_text="用户 ID", source="user_id")
     username = serializers.CharField(help_text="用户名")
 
 
