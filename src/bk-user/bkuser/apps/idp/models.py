@@ -11,16 +11,16 @@ specific language governing permissions and limitations under the License.
 from typing import List
 from urllib.parse import urljoin
 
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 from bkuser.common.models import AuditedModel
+from bkuser.idp_plugins.base import get_plugin_type
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum, PluginTypeEnum
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import IdpStatus
-from .data_models import DataSourceMatchRuleList, DataSourceMatchRule
-from bkuser.idp_plugins.base import get_plugin_type
-from bkuser.idp_plugins.constants import PluginTypeEnum, BuiltinIdpPluginEnum
+from .data_models import DataSourceMatchRule, DataSourceMatchRuleList
 
 
 class IdpPlugin(models.Model):

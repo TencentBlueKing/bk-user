@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
@@ -16,12 +16,12 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
-from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.base import get_plugin_cfg_cls
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 

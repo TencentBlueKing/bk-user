@@ -15,21 +15,22 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from bkuser.apps.idp.models import Idp, IdpPlugin
-from bkuser.apps.data_source.models import DataSource
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
+from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.idp_plugins.base import get_plugin_cfg_schema_map
 from bkuser.common.error_codes import error_codes
+from bkuser.idp_plugins.base import get_plugin_cfg_schema_map
+
 from .serializers import (
-    IdpPluginOutputSLZ,
-    IdpSearchInputSLZ,
-    IdpSearchOutputSLZ,
     IdpCreateInputSLZ,
     IdpCreateOutputSLZ,
-    IdpRetrieveOutputSLZ,
     IdpPartialUpdateInputSLZ,
+    IdpPluginOutputSLZ,
+    IdpRetrieveOutputSLZ,
+    IdpSearchInputSLZ,
+    IdpSearchOutputSLZ,
     IdpUpdateInputSLZ,
 )
 
