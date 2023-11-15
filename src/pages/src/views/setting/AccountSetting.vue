@@ -1,12 +1,12 @@
 <template>
   <bk-loading :loading="isLoading" :z-index="9" class="account-setting-wrapper user-scroll-y">
-    <bk-form class="account-setting-content" form-type="vertical" v-model="formData">
+    <bk-form class="account-setting-content" form-type="vertical" :model="formData" ref="formRef">
       <bk-form-item label="账号有效期开启">
         <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="handleChange" />
       </bk-form-item>
       <div v-if="formData.enabled">
         <bk-form-item label="账号有效期">
-          <bk-radio-group v-model="formData.valid_time" @change="handleChange">
+          <bk-radio-group v-model="formData.validity_period" @change="handleChange">
             <bk-radio-button
               v-for="(item, index) in VALID_TIME"
               :key="index"
@@ -16,7 +16,7 @@
             </bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
-        <bk-form-item label="提醒时间" required>
+        <bk-form-item label="提醒时间" property="remind_before_expire" required>
           <bk-checkbox-group v-model="formData.remind_before_expire" @change="handleChange">
             <bk-checkbox
               v-for="(item, index) in REMIND_DAYS"
@@ -33,10 +33,10 @@
             :checkbox-info="NOTIFICATION_METHODS"
             :data-list="formData.notification_templates"
             :is-template="isAccountExpire"
-            :expiring-email-key="'account_expiring'"
-            :expired-email-key="'account_expired'"
-            :expiring-sms-key="'account_expiring'"
-            :expired-sms-key="'account_expired'"
+            :expiring-email-key="'tenant_user_expiring'"
+            :expired-email-key="'tenant_user_expired'"
+            :expiring-sms-key="'tenant_user_expiring'"
+            :expired-sms-key="'tenant_user_expired'"
             @handleEditorText="handleEditorText">
             <template #label>
               <div class="password-header">
@@ -64,35 +64,41 @@
       </div>
     </bk-form>
     <div class="account-setting-footer">
-      <bk-button theme="primary">应用</bk-button>
+      <bk-button theme="primary" @click="changeApplication">应用</bk-button>
     </div>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
+import { Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { onMounted, ref } from 'vue';
 
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
+import { getTenantUserValidityPeriod, putTenantUserValidityPeriod } from '@/http/settingFiles';
 import { NOTIFICATION_METHODS, REMIND_DAYS, VALID_TIME } from '@/utils';
-// import { getTenantSetting } from '@/http/settingFiles'
 
 const isLoading = ref(false);
 const formData = ref({});
 const isAccountExpire = ref(false);
 const isDropdownAccountExpire = ref(false);
+const formRef = ref();
 
-onMounted(async () => {
+onMounted(() => {
+  getAccountCongif();
+});
+
+const getAccountCongif = async () => {
   try {
     isLoading.value = true;
-    // const res = await getTenantSetting();
-    // formData.value = res.data;
+    const res = await getTenantUserValidityPeriod();
+    formData.value = res.data;
   } catch (e) {
     console.warn(e);
   } finally {
     isLoading.value = false;
   }
-});
+};
 
 const handleEditorText = (html, text, key, type) => {
   formData.value.notification_templates.forEach((item) => {
@@ -116,6 +122,18 @@ const accountExpireTemplate = () => {
 
 const handleChange = () => {
   window.changeInput = true;
+};
+
+const changeApplication = async () => {
+  try {
+    await formRef.value.validate();
+    await putTenantUserValidityPeriod(formData.value);
+    Message({ theme: 'success', message: '更新成功' });
+    getAccountCongif();
+    window.changeInput = false;
+  } catch (e) {
+    console.warn(e);
+  }
 };
 </script>
 

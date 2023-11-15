@@ -20,3 +20,14 @@ export interface PutCustomFieldsParams {
   default: {},
   options: {},
 }
+
+/**
+ * 更新当前租户账户有效期设置字段
+ */
+export interface PutUserValidityParams {
+  enabled: boolean
+  validity_period: number,
+  remind_before_expire: number[],
+  enabled_notification_methods: string[],
+  notification_templates: [],
+}

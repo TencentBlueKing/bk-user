@@ -2,6 +2,7 @@ import http from './fetch';
 import type {
   NewCustomFieldsParams,
   PutCustomFieldsParams,
+  PutUserValidityParams,
 } from './types/settingFiles';
 
 /**
@@ -27,9 +28,9 @@ export const deleteCustomFields = (id: string) => http.delete(`/api/v1/web/tenan
 /**
  * 获取当前租户的账户有效期设置
  */
-export const getTenantSetting = () => http.get('/api/v1/web/tenant-setting/settings/tenant-user-validity-period/');
+export const getTenantUserValidityPeriod = () => http.get('/api/v1/web/tenant-setting/settings/tenant-user-validity-period/');
 
 /**
  * 更新当前租户的账户有效期设置
  */
-export const putTenantSetting = () => http.put('/api/v1/web/tenant-setting/settings/tenant-user-validity-period/');
+export const putTenantUserValidityPeriod = (params: PutUserValidityParams) => http.put('/api/v1/web/tenant-setting/settings/tenant-user-validity-period/', params);
