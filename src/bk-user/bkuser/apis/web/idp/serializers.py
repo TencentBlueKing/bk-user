@@ -67,7 +67,7 @@ def _validate_duplicate_idp_name(name: str, tenant_id: str, idp_id: str = "") ->
     queryset = Idp.objects.filter(name=name, owner_tenant_id=tenant_id)
     # 过滤掉自身名称
     if idp_id:
-        queryset.exclude(id=idp_id)
+        queryset = queryset.exclude(id=idp_id)
 
     if queryset.exists():
         raise ValidationError(_("同名认证源已存在"))

@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from django.urls import reverse
 from rest_framework import status
@@ -24,8 +25,15 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture()
 def default_data_source(default_tenant) -> DataSource:
     default_data_source = DataSource.objects.filter(owner_tenant_id=default_tenant.id).first()
-    assert default_tenant is not None
+    assert default_data_source is not None
     return default_data_source
+
+
+@pytest.fixture()
+def default_idp(default_tenant) -> Idp:
+    default_idp = Idp.objects.filter(owner_tenant_id=default_tenant.id).first()
+    assert default_idp is not None
+    return default_idp
 
 
 @pytest.fixture()
@@ -48,6 +56,19 @@ def data_source_match_rules(default_data_source) -> List[Dict[str, Any]]:
             "field_compare_rules": [{"source_field": "user_id", "target_field": "username"}],
         }
     ]
+
+
+@pytest.fixture()
+def wecom_idp(bk_user, default_tenant, wecom_plugin_cfg, data_source_match_rules) -> Idp:
+    return Idp.objects.create(
+        name=generate_random_string(),
+        owner_tenant_id=default_tenant.id,
+        plugin=IdpPlugin.objects.get(id=BuiltinIdpPluginEnum.WECOM),
+        plugin_config=wecom_plugin_cfg,
+        data_source_match_rules=data_source_match_rules,
+        creator=bk_user.username,
+        updater=bk_user.username,
+    )
 
 
 class TestIdpPluginListApi:
@@ -113,7 +134,7 @@ class TestIdpCreateApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "认证源插件配置不合法" in resp.data["message"]
 
-    def test_create_with_invalid_data_source_match_rule(self, api_client, wecom_plugin_cfg, default_data_source):
+    def test_create_with_invalid_data_source_match_rules(self, api_client, wecom_plugin_cfg, default_data_source):
         request_data = {
             "name": generate_random_string(),
             "plugin_id": BuiltinIdpPluginEnum.WECOM,
@@ -139,3 +160,109 @@ class TestIdpCreateApi:
         resp = api_client.post(reverse("idp.list_create"), data=request_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert "当前仅支持匹配内置字段" in resp.data["message"]
+
+    def test_create_with_empty_data_source_match_rules(self, api_client, wecom_plugin_cfg, default_data_source):
+        request_data = {
+            "name": generate_random_string(),
+            "plugin_id": BuiltinIdpPluginEnum.WECOM,
+            "plugin_config": wecom_plugin_cfg,
+            "data_source_match_rules": [],
+        }
+        resp = api_client.post(reverse("idp.list_create"), data=request_data)
+        assert resp.status_code == status.HTTP_201_CREATED
+
+
+class TestIdpListApi:
+    def test_list(self, api_client, default_idp):
+        resp = api_client.get(reverse("idp.list_create"))
+        assert len(resp.data) != 0
+
+        resp = api_client.get(reverse("idp.list_create"), data={"keyword": default_idp.name})
+        assert len(resp.data) == 1
+
+        idp = resp.data[0]
+        assert idp["id"] == default_idp.id
+
+
+class TestIdpUpdateApi:
+    def test_update_with_wecom_idp(self, api_client, wecom_idp):
+        new_name = generate_random_string()
+        new_plugin_config = {
+            "corp_id": generate_random_string(),
+            "agent_id": generate_random_string(),
+            "secret": generate_random_string(),
+        }
+        resp = api_client.put(
+            reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
+            data={"name": new_name, "plugin_config": new_plugin_config, "data_source_match_rules": []},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        idp = Idp.objects.get(id=wecom_idp.id)
+        assert idp.name == new_name
+        assert len(idp.data_source_match_rules) == 0
+        assert idp.plugin_config == new_plugin_config
+
+    def test_update_with_invalid_plugin_config(self, api_client, wecom_idp):
+        resp = api_client.put(
+            reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
+            data={
+                "name": wecom_idp.name,
+                "plugin_config": {},
+                "data_source_match_rules": wecom_idp.data_source_match_rules,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "认证源插件配置不合法" in resp.data["message"]
+
+        resp = api_client.put(
+            reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
+            data={
+                "name": wecom_idp.name,
+                "plugin_config": {"corp_id": generate_random_string()},
+                "data_source_match_rules": wecom_idp.data_source_match_rules,
+            },
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "认证源插件配置不合法" in resp.data["message"]
+
+    def test_partial_update_with_name(self, api_client, wecom_idp):
+        new_name = generate_random_string()
+        resp = api_client.patch(
+            reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
+            data={"name": new_name, "data_source_match_rules": []},
+        )
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        idp = Idp.objects.get(id=wecom_idp.id)
+        assert idp.name == new_name
+        assert len(idp.data_source_match_rules) == len(wecom_idp.data_source_match_rules)
+
+    def test_partial_update_with_duplicate_name(self, bk_user, api_client, wecom_idp):
+        new_name = generate_random_string()
+        Idp.objects.create(
+            name=new_name,
+            owner_tenant_id=wecom_idp.owner_tenant_id,
+            plugin=wecom_idp.plugin,
+            plugin_config=wecom_idp.plugin_config,
+            data_source_match_rules=wecom_idp.data_source_match_rules,
+            creator=bk_user.username,
+            updater=bk_user.username,
+        )
+        resp = api_client.patch(reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}), data={"name": new_name})
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "同名认证源已存在" in resp.data["message"]
+
+
+class TestIdpRetrieveApi:
+    def test_retrieve(self, api_client, wecom_idp):
+        resp = api_client.get(reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}))
+        assert resp.data["id"] == wecom_idp.id
+        assert resp.data["name"] == wecom_idp.name
+        assert resp.data["owner_tenant_id"] == wecom_idp.owner_tenant_id
+        assert resp.data["status"] == wecom_idp.status
+        assert resp.data["plugin"]["id"] == wecom_idp.plugin.id
+        assert resp.data["plugin"]["name"] == wecom_idp.plugin.name
+        assert resp.data["plugin_config"] == wecom_idp.plugin_config
+        assert resp.data["data_source_match_rules"] == wecom_idp.data_source_match_rules
+        assert resp.data["callback_uri"] == wecom_idp.callback_uri
