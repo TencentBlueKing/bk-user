@@ -2,7 +2,7 @@
   <bk-loading :loading="isLoading" :z-index="9" class="account-setting-wrapper user-scroll-y">
     <bk-form class="account-setting-content" form-type="vertical" :model="formData" ref="formRef">
       <bk-form-item label="账号有效期开启">
-        <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="handleChange" />
+        <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="changeEnabled" />
       </bk-form-item>
       <div v-if="formData.enabled">
         <bk-form-item label="账号有效期">
@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { Message } from 'bkui-vue';
+import { InfoBox, Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { onMounted, ref } from 'vue';
 
@@ -134,6 +134,19 @@ const changeApplication = async () => {
   } catch (e) {
     console.warn(e);
   }
+};
+
+const changeEnabled = (value) => {
+  if (!value) {
+    InfoBox({
+      title: '确认要关闭账号有效期吗？',
+      subTitle: '关闭后，存量账号有效期不变，新账号有效期永久。',
+      onClosed() {
+        formData.value.enabled = !value;
+      },
+    });
+  }
+  window.changeInput = true;
 };
 </script>
 
