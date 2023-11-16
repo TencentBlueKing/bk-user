@@ -135,8 +135,8 @@ class TenantUserCustomField(TimestampedModel):
     """租户用户自定义字段"""
 
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, db_constraint=False)
-    name = models.CharField("字段名称", max_length=128)
-    display_name = models.CharField("展示用名称", max_length=128)
+    name = models.CharField("英文标识", max_length=128)
+    display_name = models.CharField("字段名称", max_length=128)
     data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
     required = models.BooleanField("是否必填")
     default = models.JSONField("默认值", default="")

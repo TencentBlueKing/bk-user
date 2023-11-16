@@ -19,6 +19,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.tenant.constants import NotificationMethod, NotificationScene, UserFieldDataType
 from bkuser.apps.tenant.data_models import TenantUserCustomFieldOptions
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.biz.validators import validate_tenant_custom_field_name
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ def _validate_multi_enum_default(default: List[int], opt_ids: List[int]):
 
 class BuiltinFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段ID", read_only=True)
-    name = serializers.CharField(help_text="字段名称")
+    name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.CharField(help_text="字段类型")
     required = serializers.BooleanField(help_text="是否必填")
@@ -66,7 +67,7 @@ class BuiltinFieldOutputSLZ(serializers.Serializer):
 
 class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段ID", read_only=True)
-    name = serializers.CharField(help_text="字段名称")
+    name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.CharField(help_text="字段类型")
     required = serializers.BooleanField(help_text="是否必填")
@@ -80,8 +81,8 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
 
 class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="字段名称", max_length=128)
-    display_name = serializers.CharField(help_text="展示用名称", max_length=128)
+    name = serializers.CharField(help_text="英文标识", max_length=128, validators=[validate_tenant_custom_field_name])
+    display_name = serializers.CharField(help_text="字段名称", max_length=128)
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     default = serializers.JSONField(help_text="默认值", required=False)
@@ -91,19 +92,19 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         if TenantUserCustomField.objects.filter(
             tenant_id=self.context["tenant_id"], display_name=display_name
         ).exists():
-            raise serializers.ValidationError(_("展示用名称 {} 已存在").format(display_name))
+            raise serializers.ValidationError(_("字段名称 {} 已存在").format(display_name))
 
         if UserBuiltinField.objects.filter(display_name=display_name).exists():
-            raise serializers.ValidationError(_("展示用名称 {} 与内置字段冲突").format(display_name))
+            raise serializers.ValidationError(_("字段名称 {} 与内置字段冲突").format(display_name))
 
         return display_name
 
     def validate_name(self, name):
         if TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], name=name).exists():
-            raise serializers.ValidationError(_("字段名称 {} 已存在").format(name))
+            raise serializers.ValidationError(_("英文标识 {} 已存在").format(name))
 
         if UserBuiltinField.objects.filter(name=name).exists():
-            raise serializers.ValidationError(_("字段名称 {} 与内置字段冲突").format(name))
+            raise serializers.ValidationError(_("英文标识 {} 与内置字段冲突").format(name))
 
         return name
 
