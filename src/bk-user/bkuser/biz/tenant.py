@@ -46,6 +46,7 @@ class DataSourceUserInfo(BaseModel):
     phone: str
     phone_country_code: str
     logo: str
+    extras: Dict[str, str]
 
 
 class TenantUserWithInheritedInfo(BaseModel):
@@ -138,6 +139,7 @@ class TenantUserHandler:
                         phone=data_source_user.phone,
                         phone_country_code=data_source_user.phone_country_code,
                         logo=data_source_user.logo,
+                        extras=data_source_user.extras,
                     ),
                 )
             )

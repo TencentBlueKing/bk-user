@@ -63,6 +63,7 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     account_expired_at = serializers.SerializerMethodField(help_text="账号过期时间")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
+    extras = serializers.JSONField(help_text="自定义字段", required=False)
 
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, instance: TenantUser) -> List[Dict]:
@@ -97,6 +98,7 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
                     "phone": user.phone,
                     "phone_country_code": user.phone_country_code,
                     "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
+                    "extras": user.extras,
                 }
             )
         return data
