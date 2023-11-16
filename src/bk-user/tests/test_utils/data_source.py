@@ -19,6 +19,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+
 from tests.test_utils.helpers import generate_random_string
 
 
