@@ -10,12 +10,20 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
-from pydantic import BaseModel
+from django.utils.translation import gettext_lazy as _
+from pydantic import BaseModel, model_validator
 
 
 class Option(BaseModel):
-    id: int
+    id: str
     value: str
+
+    @model_validator(mode="after")
+    def validate_attrs(self) -> "Option":
+        if not self.id or not self.value:
+            raise ValueError(_("枚举ID或枚举不可为空"))
+
+        return self
 
 
 class TenantUserCustomFieldOptions(BaseModel):

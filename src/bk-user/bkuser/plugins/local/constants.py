@@ -41,7 +41,7 @@ MAX_RESERVED_PREVIOUS_PASSWORD_COUNT = 5
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{1,30}[a-zA-Z0-9]$")
 
 # 自定义字段英文标识命名规则
-CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-z][a-z0-9_]{1,30}[a-z0-9]$")
+CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
 
 
 class PasswordGenerateMethod(str, StructuredEnum):
