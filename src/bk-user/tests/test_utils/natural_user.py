@@ -12,6 +12,7 @@ from typing import List
 
 from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation, NaturalUser
+
 from tests.test_utils.helpers import generate_random_string
 
 
