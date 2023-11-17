@@ -33,6 +33,6 @@ def validate_tenant_custom_field_name(value):
     if not re.fullmatch(CUSTOM_FIELD_NAME_REGEX, value):
         raise ValidationError(
             _(
-                "{} 不符合 自定义字段 的命名规范: 由字母、数字、下划线(_)字符组成，以字母或数字开头及结尾"  # noqa: E501
+                "{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字母开头，字母或数字结尾"  # noqa: E501
             ).format(value),
         )
