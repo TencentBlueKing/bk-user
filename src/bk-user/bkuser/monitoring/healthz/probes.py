@@ -27,7 +27,7 @@ class MysqlProbe(MySQLProbe):
 
 class _RedisProbe(RedisProbe):
     name = "bkuser-redis"
-    redis_url = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+    redis_url = f"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
 
 
 class _RedisSentinelProbe(RedisSentinelProbe):
@@ -46,4 +46,4 @@ def _get_redis_probe_cls() -> Type[_RedisSentinelProbe] | Type[_RedisProbe]:
     return _RedisProbe
 
 
-RedisProbe = _get_redis_probe_cls()
+RedisProbe = _get_redis_probe_cls()  # type: ignore
