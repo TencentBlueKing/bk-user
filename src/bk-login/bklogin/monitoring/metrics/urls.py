@@ -8,15 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework import serializers
+from django.conf.urls import url
 
+from . import views
 
-class IssueSerializer(serializers.Serializer):
-    fatal = serializers.BooleanField(help_text="是否致命", default=False)
-    description = serializers.CharField(help_text="问题描述", default="")
-
-
-class DiagnosisSerializer(serializers.Serializer):
-    system_name = serializers.CharField(help_text="探测的系统名称")
-    alive = serializers.BooleanField(help_text="探测的系统是否存活", default=True)
-    issues = IssueSerializer(help_text="检查到的问题", many=True)
+urlpatterns = [url(r"^metrics$", views.metric_view, name="prometheus-django-metrics")]
