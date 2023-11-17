@@ -12,4 +12,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path("", include("bklogin.authentication.urls")),
+    path("", include("bklogin.monitoring.urls")),
 ]
