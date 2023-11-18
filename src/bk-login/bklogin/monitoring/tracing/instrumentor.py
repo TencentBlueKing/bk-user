@@ -13,11 +13,9 @@ from typing import Collection
 
 from django.conf import settings
 from opentelemetry.instrumentation import dbapi
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
 from opentelemetry.instrumentation.django import DjangoInstrumentor
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor  # type: ignore
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 from .hooks import django_request_hook, django_response_hook, requests_response_hook
@@ -36,10 +34,6 @@ class BKLoginInstrumentor(BaseInstrumentor):
         logger.info("otel instructment: requests")
         DjangoInstrumentor().instrument(request_hook=django_request_hook, response_hook=django_response_hook)
         logger.info("otel instructment: django")
-        RedisInstrumentor().instrument()
-        logger.info("otel instructment: redis")
-        CeleryInstrumentor().instrument()
-        logger.info("otel instructment: celery")
 
         if getattr(settings, "OTEL_INSTRUMENT_DB_API", False):
             import MySQLdb  # noqa
