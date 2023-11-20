@@ -30,3 +30,22 @@ class TenantUserCustomFieldOptions(BaseModel):
     """用户自定义字段-options字段"""
 
     options: List[Option]
+
+    @model_validator(mode="after")
+    def validate_attrs(self) -> "TenantUserCustomFieldOptions":
+        option_ids = [obj.id for obj in self.options]
+
+        limit_count = 2
+
+        def determine_duplicate_values(values: List[str]) -> bool:
+            # 判断重复值
+            return any(values.count(item) >= limit_count for item in values)
+
+        if determine_duplicate_values(option_ids):
+            raise ValueError(_("枚举ID设置有重复值"))
+
+        option_values = [obj.value for obj in self.options]
+        if determine_duplicate_values(option_values):
+            raise ValueError(_("枚举ID设置有重复值"))
+
+        return self
