@@ -27,8 +27,8 @@ class AuthenticationMatcher:
     def __init__(self, tenant_id: str, idp_id: str):
         # TODO: 后续支持协同租户的数据源用户匹配
         self.idp = Idp.objects.get(id=idp_id, owner_tenant_id=tenant_id)
-        self.builtin_fields = dict(UserBuiltinField.objects.all().values_list("name", "data_type"))
-        self.custom_fields = dict(
+        self.builtin_field_data_type_map = dict(UserBuiltinField.objects.all().values_list("name", "data_type"))
+        self.custom_field_data_type_map = dict(
             TenantUserCustomField.objects.filter(tenant_id=tenant_id).values_list("name", "data_type")
         )
 
@@ -38,12 +38,11 @@ class AuthenticationMatcher:
         conditions = [
             condition for userinfo in idp_users if (condition := self._convert_rules_to_queryset_filter(userinfo))
         ]
+
+        if not conditions:
+            return []
         # 查询数据源用户
-        return (
-            DataSourceUser.objects.filter(reduce(operator.or_, conditions)).values_list("id", flat=True)
-            if conditions
-            else []
-        )
+        return DataSourceUser.objects.filter(reduce(operator.or_, conditions)).values_list("id", flat=True)
 
     def _convert_rules_to_queryset_filter(self, source_data: Dict[str, Any]) -> Q | None:
         """
@@ -112,12 +111,12 @@ class AuthenticationMatcher:
           CREATE INDEX idx_field_col ON my_table (field_col); 最好与data_source_id字段一起联合索引
         """
         # 内建字段
-        if field in self.builtin_fields:
+        if field in self.builtin_field_data_type_map:
             return field
 
         # 自定义字段，且data_type=string/number/enum
-        if field in self.custom_fields:
-            data_type = self.custom_fields[field]
+        if field in self.custom_field_data_type_map:
+            data_type = self.custom_field_data_type_map[field]
             # string/number/enum
             if data_type in [UserFieldDataType.STRING, UserFieldDataType.NUMBER, UserFieldDataType.ENUM]:
                 return f"extras__{field}"

@@ -18,9 +18,7 @@ from django.db.models import Q
 @pytest.mark.django_db()
 class TestAuthenticationMatcher:
     @pytest.fixture(autouse=True)
-    def _initialize(self, request, default_tenant):
-        # 初始化自定义字段
-        request.getfixturevalue("tenant_user_custom_fields")
+    def _initialize(self, default_tenant, tenant_user_custom_fields):
         # 初始化IDP
         default_idp = Idp.objects.filter(owner_tenant_id=default_tenant.id).first()
         assert default_idp is not None
