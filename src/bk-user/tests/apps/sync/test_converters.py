@@ -58,7 +58,17 @@ class TestDataSourceUserConverter:
     ):
         assert DataSourceUserConverter(bare_local_data_source, logger).field_mapping == [
             DataSourceUserFieldMapping(source_field=f, mapping_operation=FieldMappingOperation.DIRECT, target_field=f)
-            for f in ["username", "full_name", "email", "phone", "phone_country_code", "age", "gender", "region"]
+            for f in [
+                "username",
+                "full_name",
+                "email",
+                "phone",
+                "phone_country_code",
+                "age",
+                "gender",
+                "region",
+                "sport_hobby",
+            ]
         ]
 
     def test_convert_user_enum_field_default(self, bare_local_data_source, tenant_user_custom_fields, logger):
@@ -71,6 +81,7 @@ class TestDataSourceUserConverter:
                 "phone": "13512345671",
                 "age": "18",
                 "region": "beijing",
+                "sport_hobby": "golf",
             },
             leaders=[],
             departments=["company"],
@@ -83,7 +94,7 @@ class TestDataSourceUserConverter:
         assert zhangsan.email == "zhangsan@m.com"
         assert zhangsan.phone == "13512345671"
         assert zhangsan.phone_country_code == "86"
-        assert zhangsan.extras == {"age": "18", "gender": "male", "region": "beijing"}
+        assert zhangsan.extras == {"age": "18", "gender": "male", "region": "beijing", "sport_hobby": "golf"}
 
     def test_convert_use_string_field_default(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
@@ -96,6 +107,7 @@ class TestDataSourceUserConverter:
                 "phone_country_code": "63",
                 "age": "28",
                 "gender": "female",
+                "sport_hobby": "golf",
             },
             leaders=["zhangsan"],
             departments=["dept_a", "center_aa"],
@@ -108,7 +120,7 @@ class TestDataSourceUserConverter:
         assert lisi.email == "lisi@m.com"
         assert lisi.phone == "13512345672"
         assert lisi.phone_country_code == "63"
-        assert lisi.extras == {"age": "28", "gender": "female", "region": ""}
+        assert lisi.extras == {"age": "28", "gender": "female", "region": "", "sport_hobby": "golf"}
 
     def test_convert_with_not_same_field_name_mapping(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
@@ -121,6 +133,7 @@ class TestDataSourceUserConverter:
                 "phone_country_code": "63",
                 "age": "28",
                 "gender": "female",
+                "sport_hobby": "golf",
                 "custom_region": "shanghai",
             },
             leaders=["zhangsan"],
@@ -129,10 +142,10 @@ class TestDataSourceUserConverter:
 
         converter = DataSourceUserConverter(bare_local_data_source, logger)
         # 修改数据以生成不同字段名映射的比较麻烦，这里采用的是直接修改 Converter 的 field_mapping 属性
-        converter.field_mapping[-1].source_field = "custom_region"
+        converter.field_mapping[-2].source_field = "custom_region"
 
         lisi = converter.convert(raw_lisi)
-        assert lisi.extras == {"age": "28", "gender": "female", "region": "shanghai"}
+        assert lisi.extras == {"age": "28", "gender": "female", "sport_hobby": "golf", "region": "shanghai"}
 
     def test_convert_with_invalid_username(self, bare_local_data_source, logger):
         raw_user = RawDataSourceUser(code="test", properties={}, leaders=[], departments=[])
