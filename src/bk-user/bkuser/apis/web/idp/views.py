@@ -21,11 +21,13 @@ from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.common.error_codes import error_codes
+from bkuser.idp_plugins.base import get_plugin_cfg_cls
 
 from .serializers import (
     IdpCreateInputSLZ,
     IdpCreateOutputSLZ,
     IdpPartialUpdateInputSLZ,
+    IdpPluginConfigMetaRetrieveOutputSLZ,
     IdpPluginOutputSLZ,
     IdpRetrieveOutputSLZ,
     IdpSearchInputSLZ,
@@ -47,6 +49,30 @@ class IdpPluginListApi(generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class IdpPluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    queryset = IdpPlugin.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["idp_plugin"],
+        operation_description="认证源插件默认配置",
+        responses={status.HTTP_200_OK: IdpPluginConfigMetaRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        try:
+            json_schema = get_plugin_cfg_cls(instance.id).model_json_schema()
+        except NotImplementedError:
+            raise error_codes.IDP_PLUGIN_NOT_LOAD
+
+        return Response(
+            IdpPluginConfigMetaRetrieveOutputSLZ(instance={"id": instance.id, "json_schema": json_schema}).data
+        )
 
 
 class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
