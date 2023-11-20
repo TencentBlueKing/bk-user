@@ -73,13 +73,13 @@
                 <dl>
                   <dt>数据源字段：</dt>
                   <dd v-for="(val, i) in item.field_compare_rules" :key="i">
-                    {{ val.source_field }}
+                    {{ val.target_field }}
                   </dd>
                 </dl>
                 <dl>
                   <dt>认证源字段：</dt>
                   <dd v-for="(val, i) in item.field_compare_rules" :key="i">
-                    {{ val.target_field }}
+                    {{ val.source_field }}
                   </dd>
                 </dl>
               </div>
@@ -141,7 +141,7 @@ const processMatchRules = (list) => {
         .find(item => item.data_source_id === val.id).field_compare_rules,
     }));
   notDataSources.value = list
-    .filter(val => !dataSourceIds.includes(val.id))
+    .filter(val => !dataSourceIds.includes(val.id) && val.plugin_id === 'local')
     .map(val => ({
       data_source_id: val.id,
       data_source_name: val.name,

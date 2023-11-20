@@ -133,11 +133,21 @@ const processMatchRules = (list) => {
         .find(item => item.data_source_id === val.id).field_compare_rules,
     }));
   notDataSources.value = list
-    .filter(val => !dataSourceIds.includes(val.id))
+    .filter(val => !dataSourceIds.includes(val.id) && val.plugin_id === 'local')
     .map(val => ({
       data_source_id: val.id,
       data_source_name: val.name,
     }));
+};
+
+const handleOpen = (item) => {
+  router.push({
+    name: 'newLocal',
+    params: {
+      type: 'local',
+      id: item.data_source_id,
+    },
+  });
 };
 
 const handleChange = () => {
