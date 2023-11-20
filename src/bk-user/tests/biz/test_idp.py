@@ -28,6 +28,7 @@ class TestAuthenticationMatcher:
     @pytest.mark.parametrize(
         ("field", "excepted_filter_key"),
         [
+            ("id", "id"),
             ("username", "username"),
             ("full_name", "full_name"),
             ("phone_country_code", "phone_country_code"),
@@ -107,10 +108,25 @@ class TestAuthenticationMatcher:
                     & Q(extras__region="111@qq.com")
                 ),
             ),
+            # ID Field Compare rule
+            (
+                DataSourceMatchRule(
+                    data_source_id=1,
+                    field_compare_rules=[FieldCompareRule(source_field="id", target_field="id")],
+                ),
+                (Q(data_source_id=1) & Q(id=100)),
+            ),
+            (
+                DataSourceMatchRule(
+                    data_source_id=1,
+                    field_compare_rules=[FieldCompareRule(source_field="user_id", target_field="id")],
+                ),
+                (Q(data_source_id=1) & Q(id="test_username")),
+            ),
         ],
     )
     def test_convert_one_rule_to_queryset_filter_for_rule(self, rule, excepted_queryset):
-        source_data = {"user_id": "test_username", "phone": "1234567890123", "email": "111@qq.com"}
+        source_data = {"id": 100, "user_id": "test_username", "phone": "1234567890123", "email": "111@qq.com"}
 
         queryset = self.matcher._convert_one_rule_to_queryset_filter(rule, source_data)
 
