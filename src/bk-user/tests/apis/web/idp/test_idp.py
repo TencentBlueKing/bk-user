@@ -154,12 +154,12 @@ class TestIdpCreateApi:
         request_data["data_source_match_rules"] = [
             {
                 "data_source_id": default_data_source.id,
-                "field_compare_rules": [{"source_field": "user_id", "target_field": "not_builtin_field"}],
+                "field_compare_rules": [{"source_field": "user_id", "target_field": generate_random_string()}],
             }
         ]
         resp = api_client.post(reverse("idp.list_create"), data=request_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "当前仅支持匹配内置字段" in resp.data["message"]
+        assert "不属于用户自定义字段或内置字段" in resp.data["message"]
 
     def test_create_with_empty_data_source_match_rules(self, api_client, wecom_plugin_cfg, default_data_source):
         request_data = {

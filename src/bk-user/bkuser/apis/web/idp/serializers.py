@@ -19,7 +19,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
-from bkuser.apps.tenant.models import UserBuiltinField
+from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.idp_plugins.base import get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -92,18 +92,14 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
         if not DataSource.objects.filter(id=attrs["data_source_id"], owner_tenant_id=tenant_id).exists():
             raise ValidationError(_("数据源必须是当前租户下的，{} 并不符合").format(attrs["data_source_id"]))
 
-        # # 匹配的数据源字段必须是当前租户的用户字段，包括内建字段和自定义字段
+        # 匹配的数据源字段必须是当前租户的用户字段，包括内建字段和自定义字段
         builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
-        # custom_fields = set(TenantUserCustomField.objects.filter(tenant_id=tenant_id).values_list("name", flat=True))
-        # allowed_target_fields = builtin_fields | custom_fields
-        #
+        custom_fields = set(TenantUserCustomField.objects.filter(tenant_id=tenant_id).values_list("name", flat=True))
+        allowed_target_fields = builtin_fields | custom_fields
+
         target_fields = {r.get("target_field") for r in attrs["field_compare_rules"]}
-        # if not_found_fields := target_fields - allowed_target_fields:
-        #     raise ValidationError(_("匹配的数据源字段 {} 不属于用户自定义字段或内置字段").format(not_found_fields))
-        if not_found_fields := target_fields - builtin_fields:
-            raise ValidationError(
-                _("匹配的数据源字段 {} 不属于用户内置字段，当前仅支持匹配内置字段").format(not_found_fields)
-            )
+        if not_found_fields := target_fields - allowed_target_fields:
+            raise ValidationError(_("匹配的数据源字段 {} 不属于用户自定义字段或内置字段").format(not_found_fields))
 
         return attrs
 
