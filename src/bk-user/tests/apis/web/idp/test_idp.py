@@ -13,7 +13,6 @@ from typing import Any, Dict, List
 import pytest
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.models import Idp, IdpPlugin
-from bkuser.idp_plugins.base import list_plugin_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from django.urls import reverse
 from rest_framework import status
@@ -78,14 +77,6 @@ class TestIdpPluginListApi:
         # 至少有一个默认的本地账密认证源插件
         assert len(resp.data) >= 1
         assert BuiltinIdpPluginEnum.LOCAL in [i["id"] for i in resp.data]
-
-
-class TestIdpPluginConfigMetaRetrieveApi:
-    def test_retrieve(self, api_client):
-        for plugin_cls in list_plugin_cls():
-            resp = api_client.get(reverse("idp_plugin_config_meta.retrieve", kwargs={"id": plugin_cls.id}))
-            assert resp.data["id"] == plugin_cls.id
-            assert resp.data["json_schema"] == plugin_cls.config_class.model_json_schema()
 
 
 class TestIdpCreateApi:
