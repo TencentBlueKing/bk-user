@@ -31,6 +31,9 @@ class IdpPlugin(models.Model):
     description = models.TextField("描述", default="", blank=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
 
+    class Meta:
+        ordering = ["created_at"]
+
 
 class Idp(AuditedModel):
     """认证源"""
@@ -49,6 +52,7 @@ class Idp(AuditedModel):
     allow_bind_scopes = models.JSONField("允许范围", default=list)
 
     class Meta:
+        ordering = ["created_at"]
         unique_together = [
             ("name", "owner_tenant_id"),
         ]
