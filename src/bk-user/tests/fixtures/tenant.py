@@ -51,4 +51,22 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "required": True,
         },
     )
-    return [age_field, gender_field, region_field]
+    sport_hobby_field, _ = TenantUserCustomField.objects.get_or_create(
+        tenant=default_tenant,
+        name="sport_hobby",
+        defaults={
+            "display_name": "运动爱好",
+            "data_type": UserFieldDataType.MULTI_ENUM,
+            "required": True,
+            "default": "running",
+            "options": {
+                "running": "跑步",
+                "swimming": "游泳",
+                "Basketball": "篮球",
+                "football": "足球",
+                "golf": "高尔夫",
+                "cycling": "骑行",
+            },
+        },
+    )
+    return [age_field, gender_field, region_field, sport_hobby_field]

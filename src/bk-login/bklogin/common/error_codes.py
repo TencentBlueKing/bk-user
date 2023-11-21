@@ -45,6 +45,11 @@ class ErrorCodeCategoryEnum(str, StructuredEnum):
 class ErrorCodes:
     # 通用
     INVALID_ARGUMENT = ErrorCode(_("参数非法"))
+    UNAUTHENTICATED = ErrorCode(
+        _("未认证"),
+        code_category=ErrorCodeCategoryEnum.UNAUTHENTICATED,
+        status_code=HTTPStatus.UNAUTHORIZED,
+    )
     NO_PERMISSION = ErrorCode(
         _("无权限"),
         code_category=ErrorCodeCategoryEnum.NO_PERMISSION,

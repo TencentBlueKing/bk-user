@@ -21,6 +21,7 @@ import logging
 from rest_framework.permissions import BasePermission
 
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.models import Idp
 from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation
 from bkuser.apps.permission.constants import PermAction, UserRole
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
@@ -57,6 +58,8 @@ def perm_class(action: PermAction):  # noqa: C901
             elif hasattr(obj, "data_source"):
                 # TODO (su) 考虑数据源协同的情况
                 tenant_id = obj.data_source.owner_tenant_id
+            elif isinstance(obj, Idp):
+                tenant_id = obj.owner_tenant_id
             else:
                 logger.exception("failed to get tenant id, obj: %s", obj)
                 return False

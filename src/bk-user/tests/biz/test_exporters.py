@@ -33,6 +33,7 @@ class TestDataSourceExporter:
             "年龄/age",
             "性别/gender",
             "籍贯/region",
+            "运动爱好/sport_hobby",
         ]
 
     def test_export(self, full_local_data_source, tenant_user_custom_fields):

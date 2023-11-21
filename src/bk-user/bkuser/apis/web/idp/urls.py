@@ -8,18 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import datetime
+from django.urls import path
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from . import views
 
-
-class BkLanguageEnum(str, StructuredEnum):
-    ZH_CN = EnumField("zh-cn", label="中文")
-    EN = EnumField("en", label="英文")
-
-
-# 永久：2100-01-01 00:00:00 UTC
-PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, second=0, tzinfo=datetime.timezone.utc)
-
-# 敏感信息掩码（7 位 * 是故意的，避免遇到用户输入 6/8 位 * 的情况）
-SENSITIVE_MASK = "*******"
+urlpatterns = [
+    # 认证源插件列表
+    path("plugins/", views.IdpPluginListApi.as_view(), name="idp_plugin.list"),
+    # 认证源创建/获取列表
+    path("", views.IdpListCreateApi.as_view(), name="idp.list_create"),
+    # 认证源获取/更新
+    path("<str:id>/", views.IdpRetrieveUpdateApi.as_view(), name="idp.retrieve_update"),
+]

@@ -8,12 +8,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import List
+from urllib.parse import urljoin
+
+from django.conf import settings
 from django.db import models
 
 from bkuser.common.models import AuditedModel
+from bkuser.idp_plugins.base import get_plugin_type
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum, PluginTypeEnum
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import IdpStatus
+from .data_models import DataSourceMatchRule, DataSourceMatchRuleList
 
 
 class IdpPlugin(models.Model):
@@ -42,6 +49,26 @@ class Idp(AuditedModel):
     allow_bind_scopes = models.JSONField("允许范围", default=list)
 
     class Meta:
+        ordering = ["created_at"]
         unique_together = [
             ("name", "owner_tenant_id"),
         ]
+
+    @property
+    def is_local(self) -> bool:
+        """检查类型是否为本地账密认证源"""
+        return self.plugin.id == BuiltinIdpPluginEnum.LOCAL
+
+    @property
+    def data_source_match_rule_objs(self) -> List[DataSourceMatchRule]:
+        """转换为规则对象列表"""
+        return DataSourceMatchRuleList.validate_python(self.data_source_match_rules)
+
+    @property
+    def callback_uri(self) -> str:
+        plugin_type = get_plugin_type(self.plugin.id)
+        # 联邦登录才有回调地址
+        if plugin_type == PluginTypeEnum.FEDERATION:
+            return urljoin(settings.BK_LOGIN_URL, f"auth/idps/{self.id}/actions/callback/")
+
+        return ""

@@ -11,34 +11,32 @@ specific language governing permissions and limitations under the License.
 from blue_krill.monitoring.probe.base import ProbeSet
 from django.conf import settings
 from django.http import HttpResponse
-from rest_framework import status, viewsets
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
+from django.views.generic import View
 
-from bkuser.monitoring.healthz.probes import get_default_probes
-from bkuser.monitoring.healthz.serializers import DiagnosisSerializer
+from bklogin.common.error_codes import error_codes
+from bklogin.common.response import APISuccessResponse
+
+from .probes import get_default_probes
 
 
-class HealthzApi(viewsets.ViewSet):
-    """就绪 / 健康探测相关 API"""
+class PingApi(View):
+    """就绪&存活探测 API"""
 
-    permission_classes = [AllowAny]
-
-    def ping(self, request):
+    def get(self, request, *args, **kwargs):
         return HttpResponse("pong")
 
-    def healthz(self, request):
-        token = request.query_params.get("token", "")
+
+class HealthzApi(View):
+    """健康探测 API"""
+
+    def get(self, request, *args, **kwargs):
+        token = request.GET.get("token", "")
         if not settings.HEALTHZ_TOKEN:
-            return Response(
-                data={"errors": "Healthz token was not configured in settings, request denied"},
-                status=status.HTTP_400_BAD_REQUEST,
+            raise error_codes.UNAUTHENTICATED.f(
+                "Healthz token was not configured in settings, request denied", replace=True
             )
         if not (token and token == settings.HEALTHZ_TOKEN):
-            return Response(
-                data={"errors": "Please provide valid token"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            raise error_codes.UNAUTHENTICATED.f("Please provide valid token", replace=True)
 
         probe_set = ProbeSet(get_default_probes())
         diagnosis_list = probe_set.examination()
@@ -46,6 +44,17 @@ class HealthzApi(viewsets.ViewSet):
         if diagnosis_list.is_death:
             # if something deadly exist, we have to make response non-200 which is easier to be found
             # by monitor system and make response as a plain text
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=diagnosis_list.get_fatal_report())
+            raise error_codes.SYSTEM_ERROR.f("internal server error", replace=True).set_data(
+                diagnosis_list.get_fatal_report()
+            )
 
-        return Response(data={"results": DiagnosisSerializer(diagnosis_list.items, many=True).data})
+        results = [
+            {
+                "system_name": i.system_name,
+                "alive": i.alive,
+                "issues": [{"fatal": j.fatal, "description": j.description} for j in i.issues],
+            }
+            for i in diagnosis_list.items
+        ]
+
+        return APISuccessResponse(data={"results": results})

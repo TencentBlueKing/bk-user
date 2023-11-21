@@ -55,13 +55,13 @@ repos:
         name: ruff-formatter
         language: python
         types: [python]
-        entry: ruff format --config=src/bk-user/pyproject.toml --force-exclude
+        entry: ruff format --config=src/bk-user/pyproject.toml --no-cache
         files: src/bk-user/
       - id: ruff
         name: ruff
         language: python
         types: [python]
-        entry: ruff --config=src/bk-user/pyproject.toml --force-exclude --fix
+        entry: ruff --config=src/bk-user/pyproject.toml --fix --no-cache
         files: src/bk-user/
       - id: mypy
         name: mypy
@@ -80,13 +80,13 @@ repos:
         name: ruff-formatter
         language: python
         types: [python]
-        entry: ruff format --config=src/bk-login/pyproject.toml --force-exclude
+        entry: ruff format --config=src/bk-login/pyproject.toml --no-cache
         files: src/bk-login/
       - id: ruff
         name: ruff
         language: python
         types: [python]
-        entry: ruff --config=src/bk-login/pyproject.toml --force-exclude --fix
+        entry: ruff --config=src/bk-login/pyproject.toml --fix --no-cache
         files: src/bk-login/
       - id: mypy
         name: mypy
@@ -105,13 +105,13 @@ repos:
         name: ruff-formatter
         language: python
         types: [python]
-        entry: ruff format --config=src/bk-plugins/pyproject.toml --force-exclude
+        entry: ruff format --config=src/bk-plugins/pyproject.toml --no-cache
         files: src/bk-plugins/
       - id: ruff
         name: ruff
         language: python
         types: [python]
-        entry: ruff --config=src/idp-plugins/pyproject.toml --force-exclude --fix
+        entry: ruff --config=src/idp-plugins/pyproject.toml --fix --no-cache
         files: src/idp-plugins/
       - id: mypy
         name: mypy

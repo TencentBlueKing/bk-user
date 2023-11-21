@@ -163,3 +163,8 @@ def get_plugin_type(plugin_id: str) -> PluginTypeEnum:
         f"plugin class({plugin_cls.__name__}) must is a subclass of "
         f"{BaseCredentialIdpPlugin.__name__} or {BaseFederationIdpPlugin.__name__}"
     )
+
+
+def list_plugin_cls() -> List[Type[BaseCredentialIdpPlugin] | Type[BaseFederationIdpPlugin]]:
+    """获取插件类列表"""
+    return list(_plugin_cls_map.values())

@@ -16,7 +16,7 @@ class IssueSerializer(serializers.Serializer):
     description = serializers.CharField(help_text="问题描述", default="")
 
 
-class DianosisSerializer(serializers.Serializer):
+class DiagnosisSerializer(serializers.Serializer):
     system_name = serializers.CharField(help_text="探测的系统名称")
     alive = serializers.BooleanField(help_text="探测的系统是否存活", default=True)
     issues = IssueSerializer(help_text="检查到的问题", many=True)

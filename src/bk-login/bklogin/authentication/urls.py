@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.urls import path
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import TemplateView
 
 from . import api_views, views
@@ -17,7 +18,7 @@ urlpatterns = [
     # 登录入口
     path("", views.LoginView.as_view()),
     # 登录小窗入口
-    path("plain/", views.LoginView.as_view()),
+    path("plain/", xframe_options_exempt(views.LoginView.as_view())),
     # 前端页面（选择登录的用户）
     path("page/users/", TemplateView.as_view(template_name="index.html")),
     # ------------------------------------------ 租户 & 登录方式选择 ------------------------------------------

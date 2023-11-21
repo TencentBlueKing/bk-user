@@ -8,18 +8,17 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import datetime
+from typing import Dict
 
-from blue_krill.data_types.enum import EnumField, StructuredEnum
+from drf_yasg import openapi
 
-
-class BkLanguageEnum(str, StructuredEnum):
-    ZH_CN = EnumField("zh-cn", label="中文")
-    EN = EnumField("en", label="英文")
+from bkuser.idp_plugins.base import list_plugin_cls
+from bkuser.utils.pydantic import gen_openapi_schema
 
 
-# 永久：2100-01-01 00:00:00 UTC
-PERMANENT_TIME = datetime.datetime(year=2100, month=1, day=1, hour=0, minute=0, second=0, tzinfo=datetime.timezone.utc)
-
-# 敏感信息掩码（7 位 * 是故意的，避免遇到用户输入 6/8 位 * 的情况）
-SENSITIVE_MASK = "*******"
+def get_idp_plugin_cfg_schema_map() -> Dict[str, openapi.Schema]:
+    """获取认证插件配置类 JsonSchema 映射表"""
+    return {
+        f"plugin_config:{plugin_cls.id}": gen_openapi_schema(plugin_cls.config_class)
+        for plugin_cls in list_plugin_cls()
+    }

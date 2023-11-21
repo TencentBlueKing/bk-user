@@ -92,7 +92,7 @@
 
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { logout } from '@/common/auth';
@@ -107,37 +107,28 @@ const state = reactive({
 });
 
 const userStore = useUser();
-const userInfo = computed(() => userStore.user);
+const headerNav = ref([]);
+
+const userInfo = computed(() => {
+  const { role } = userStore.user;
+  const baseNav = [
+    { name: '组织架构', path: 'organization' },
+    { name: '数据源管理', path: 'dataSource' },
+    { name: '认证源管理', path: 'authSource' },
+  ];
+  if (role === 'super_manager') {
+    headerNav.value = [...baseNav, { name: '租户管理', path: 'tenant' }, { name: '设置', path: 'setting' }];
+  } else if (role === 'tenant_manager') {
+    headerNav.value = [...baseNav, { name: '设置', path: 'setting' }];
+  } else if (role === 'natural_user') {
+    router.push({ name: 'personalCenter' });
+  }
+  return userStore.user;
+});
 
 const route = useRoute();
 const isPersonalCenter = computed(() => route.name === 'personalCenter');
 
-const headerNav = reactive([
-  {
-    name: '组织架构',
-    path: 'organization',
-  },
-  {
-    name: '数据源管理',
-    path: 'dataSource',
-  },
-  {
-    name: '认证源管理',
-    path: 'authSource',
-  },
-  {
-    name: '租户管理',
-    path: 'tenant',
-  },
-  // {
-  //   name: "审计",
-  //   path: "audit",
-  // },
-  {
-    name: '设置',
-    path: 'setting',
-  },
-]);
 // const languageNav = reactive([
 //   {
 //     name: '中文',

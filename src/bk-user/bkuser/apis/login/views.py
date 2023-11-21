@@ -8,17 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import operator
-from functools import reduce
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apps.data_source.models import DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.apps.idp.data_models import DataSourceMatchRuleList, convert_match_rules_to_queryset_filter
+from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.biz.idp import AuthenticationMatcher
 from bkuser.common.error_codes import error_codes
 
 from .mixins import LoginApiAccessControlMixin
@@ -126,29 +124,14 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
 
         # 认证源
         idp_id = kwargs["idp_id"]
-        idp = Idp.objects.filter(owner_tenant_id=tenant_id, id=idp_id).first()
-        if not idp:
+        if not Idp.objects.filter(owner_tenant_id=tenant_id, id=idp_id).exists():
             raise error_codes.OBJECT_NOT_FOUND.f(_("认证源 {} 不存在").format(idp_id))
 
         # FIXME: 查询是绑定匹配还是直接匹配，
         #  一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
         #  直接匹配，一般是企业身份登录方式，
         #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
-        # 认证源与数据源的匹配规则
-        data_source_match_rules = DataSourceMatchRuleList.validate_python(idp.data_source_match_rules)
-        # 将规则转换为Django Queryset 过滤条件, 不同用户之间过滤逻辑是OR
-        conditions = [
-            condition
-            for userinfo in data["idp_users"]
-            if (condition := convert_match_rules_to_queryset_filter(data_source_match_rules, userinfo))
-        ]
-
-        # 查询数据源用户
-        data_source_user_ids = (
-            DataSourceUser.objects.filter(reduce(operator.or_, conditions)).values_list("id", flat=True)
-            if conditions
-            else []
-        )
+        data_source_user_ids = AuthenticationMatcher(tenant_id, idp_id).match(data["idp_users"])
 
         # 查询租户用户
         tenant_users = TenantUser.objects.filter(
