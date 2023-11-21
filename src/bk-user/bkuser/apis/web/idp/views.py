@@ -22,17 +22,18 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.common.error_codes import error_codes
 
+from .schema import get_idp_plugin_cfg_json_schema, get_idp_plugin_cfg_openapi_schema_map
 from .serializers import (
     IdpCreateInputSLZ,
     IdpCreateOutputSLZ,
     IdpPartialUpdateInputSLZ,
+    IdpPluginConfigMetaRetrieveOutputSLZ,
     IdpPluginOutputSLZ,
     IdpRetrieveOutputSLZ,
     IdpSearchInputSLZ,
     IdpSearchOutputSLZ,
     IdpUpdateInputSLZ,
 )
-from .swagger import get_idp_plugin_cfg_schema_map
 
 
 class IdpPluginListApi(generics.ListAPIView):
@@ -47,6 +48,30 @@ class IdpPluginListApi(generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class IdpPluginConfigMetaRetrieveApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    queryset = IdpPlugin.objects.all()
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["idp_plugin"],
+        operation_description="认证源插件默认配置",
+        responses={status.HTTP_200_OK: IdpPluginConfigMetaRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        try:
+            json_schema = get_idp_plugin_cfg_json_schema(instance.id)
+        except NotImplementedError:
+            raise error_codes.IDP_PLUGIN_NOT_LOAD
+
+        return Response(
+            IdpPluginConfigMetaRetrieveOutputSLZ(instance={"id": instance.id, "json_schema": json_schema}).data
+        )
 
 
 class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
@@ -89,7 +114,7 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
         tags=["idp"],
         operation_description="新建认证源",
         request_body=IdpCreateInputSLZ(),
-        responses={status.HTTP_201_CREATED: IdpCreateOutputSLZ(), **get_idp_plugin_cfg_schema_map()},
+        responses={status.HTTP_201_CREATED: IdpCreateOutputSLZ(), **get_idp_plugin_cfg_openapi_schema_map()},
     )
     def post(self, request, *args, **kwargs):
         current_tenant_id = self.get_current_tenant_id()
@@ -128,7 +153,7 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         operation_description="认证源详情",
         responses={
             status.HTTP_200_OK: IdpRetrieveOutputSLZ(),
-            **get_idp_plugin_cfg_schema_map(),
+            **get_idp_plugin_cfg_openapi_schema_map(),
         },
     )
     def get(self, request, *args, **kwargs):
@@ -157,7 +182,7 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         tags=["idp"],
         operation_description="更新认证源",
         request_body=IdpUpdateInputSLZ(),
-        responses={status.HTTP_204_NO_CONTENT: "", **get_idp_plugin_cfg_schema_map()},
+        responses={status.HTTP_204_NO_CONTENT: "", **get_idp_plugin_cfg_openapi_schema_map()},
     )
     def put(self, request, *args, **kwargs):
         idp = self.get_object()

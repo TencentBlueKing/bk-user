@@ -75,6 +75,11 @@ class DataSourcePluginListApi(generics.ListAPIView):
 
 
 class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    queryset = DataSourcePlugin.objects.all()
+    lookup_url_kwarg = "id"
+
     @swagger_auto_schema(
         tags=["data_source_plugin"],
         operation_description="数据源插件默认配置",
@@ -84,8 +89,9 @@ class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
         },
     )
     def get(self, request, *args, **kwargs):
+        instance = self.get_object()
         try:
-            config = get_default_plugin_cfg(kwargs["id"])
+            config = get_default_plugin_cfg(instance.id)
         except NotImplementedError:
             raise error_codes.DATA_SOURCE_PLUGIN_NOT_DEFAULT_CONFIG
 

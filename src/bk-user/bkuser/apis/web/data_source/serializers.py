@@ -305,7 +305,7 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
             except PDValidationError as e:
                 raise ValidationError(_("密码规则配置不合法: {}").format(stringify_pydantic_error(e)))
         else:
-            attrs["password_rule"] = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL).password_rule.to_rule()
+            attrs["password_rule"] = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL).password_rule.to_rule()  # type: ignore
 
         return attrs
 

@@ -15,6 +15,12 @@ from . import views
 urlpatterns = [
     # 认证源插件列表
     path("plugins/", views.IdpPluginListApi.as_view(), name="idp_plugin.list"),
+    # 认证源插件配置元数据
+    path(
+        "plugins/<str:id>/config-meta/",
+        views.IdpPluginConfigMetaRetrieveApi.as_view(),
+        name="idp_plugin_config_meta.retrieve",
+    ),
     # 认证源创建/获取列表
     path("", views.IdpListCreateApi.as_view(), name="idp.list_create"),
     # 认证源获取/更新
