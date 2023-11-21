@@ -99,7 +99,11 @@ class IdpListApi(LoginApiAccessControlMixin, generics.ListAPIView):
     serializer_class = IdpListOutputSLZ
 
     def get_queryset(self):
-        return Idp.objects.filter(owner_tenant_id=self.kwargs["tenant_id"]).select_related("plugin")
+        return (
+            Idp.objects.filter(owner_tenant_id=self.kwargs["tenant_id"])
+            .select_related("plugin")
+            .order_by("created_at")
+        )
 
 
 class IdpRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
