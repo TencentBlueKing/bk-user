@@ -35,9 +35,6 @@ class DataSourcePlugin(models.Model):
     description = models.TextField("描述", default="", blank=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
 
-    class Meta:
-        ordering = ["created_at"]
-
 
 class DataSourceManager(models.Manager):
     """数据源管理器类"""
