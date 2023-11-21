@@ -22,7 +22,13 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
 )
-from bkuser.biz.validators import validate_data_source_user_username
+from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.biz.validators import (
+    validate_custom_enum_field_value,
+    validate_custom_field_exist,
+    validate_custom_field_required,
+    validate_data_source_user_username,
+)
 from bkuser.common.validators import validate_phone_with_country_code
 
 logger = logging.getLogger(__name__)
@@ -44,6 +50,7 @@ class UserSearchOutputSLZ(serializers.Serializer):
     phone = serializers.CharField(help_text="手机号")
     email = serializers.CharField(help_text="邮箱")
     departments = serializers.SerializerMethodField(help_text="用户部门")
+    extras = serializers.JSONField(help_text="自定义字段")
 
     # FIXME:考虑抽象一个函数 获取数据后传递到context
     @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
@@ -65,6 +72,7 @@ class UserCreateInputSLZ(serializers.Serializer):
     logo = serializers.CharField(help_text="用户 Logo", required=False, default=settings.DEFAULT_DATA_SOURCE_USER_LOGO)
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField(), default=[])
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField(), default=[])
+    extras = serializers.JSONField(help_text="自定义字段", default=dict)
 
     def validate(self, data):
         try:
@@ -94,6 +102,16 @@ class UserCreateInputSLZ(serializers.Serializer):
         if diff_leader_ids:
             raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
         return leader_ids
+
+    def validate_extras(self, extras):
+        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        # 检测非法字段
+        validate_custom_field_exist(extras, custom_fields)
+        # 必填字段检测
+        validate_custom_field_required(extras, custom_fields)
+        # 枚举字段，非法枚举值检测
+        validate_custom_enum_field_value(extras, custom_fields)
+        return extras
 
 
 class UserCreateOutputSLZ(serializers.Serializer):
@@ -139,6 +157,8 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="部门信息")
     leaders = serializers.SerializerMethodField(help_text="上级信息")
 
+    extras = serializers.JSONField(help_text="自定义字段")
+
     def get_logo(self, obj: DataSourceUser) -> str:
         return obj.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
 
@@ -164,6 +184,8 @@ class UserUpdateInputSLZ(serializers.Serializer):
 
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField())
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField())
+
+    extras = serializers.JSONField(help_text="自定义字段")
 
     def validate(self, data):
         try:
@@ -197,3 +219,15 @@ class UserUpdateInputSLZ(serializers.Serializer):
             raise serializers.ValidationError(_("上级不可传递自身"))
 
         return leader_ids
+
+    def validate_extras(self, extras):
+        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        # 检测非法字段
+        validate_custom_field_exist(extras, custom_fields)
+        # 必填字段检测
+        validate_custom_field_required(extras, custom_fields)
+        # TODO 可编辑性检测
+        # TODO 唯一性检测
+        # 枚举字段，非法枚举值检测
+        validate_custom_enum_field_value(extras, custom_fields)
+        return extras

@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 from collections import defaultdict
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from django.db import transaction
 from django.utils import timezone
@@ -36,6 +36,7 @@ class DataSourceUserBaseInfo(BaseModel):
     phone: str
     phone_country_code: str
     logo: str
+    extras: Dict[str, Any]
 
 
 class DataSourceUserEditableBaseInfo(BaseModel):
@@ -46,6 +47,7 @@ class DataSourceUserEditableBaseInfo(BaseModel):
     phone: str
     phone_country_code: str
     logo: str
+    extras: Dict[str, Any]
 
 
 class DataSourceUserDepartmentInfo(BaseModel):
@@ -186,6 +188,8 @@ class DataSourceOrganizationHandler:
             user.phone = base_user_info.phone
             user.phone_country_code = base_user_info.phone_country_code
             user.logo = base_user_info.logo
+
+            user.extras = base_user_info.extras
 
             user.save()
 
