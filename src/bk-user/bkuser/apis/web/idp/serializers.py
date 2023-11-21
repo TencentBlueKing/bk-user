@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import re
 from typing import Any, Dict, List
 
 from django.utils.translation import gettext_lazy as _
@@ -75,8 +76,21 @@ def _validate_duplicate_idp_name(name: str, tenant_id: str, idp_id: str = "") ->
     return name
 
 
+SOURCE_FIELD_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{1,30}[a-zA-Z0-9]$")
+
+
+def _validate_source_field(value):
+    """校验认证源字段命名规则"""
+    if not re.fullmatch(SOURCE_FIELD_REGEX, value):
+        raise ValidationError(
+            _(
+                "{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组成，以字母开头并以字母或数字结尾"  # noqa: E501
+            ).format(value),
+        )
+
+
 class FieldCompareRuleSLZ(serializers.Serializer):
-    source_field = serializers.CharField(help_text="认证源原始字段")
+    source_field = serializers.CharField(help_text="认证源原始字段", validators=[_validate_source_field])
     target_field = serializers.CharField(help_text="匹配的数据源字段")
 
 

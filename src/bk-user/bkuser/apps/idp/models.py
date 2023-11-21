@@ -49,6 +49,7 @@ class Idp(AuditedModel):
     allow_bind_scopes = models.JSONField("允许范围", default=list)
 
     class Meta:
+        ordering = ["created_at"]
         unique_together = [
             ("name", "owner_tenant_id"),
         ]
