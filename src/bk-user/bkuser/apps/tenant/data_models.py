@@ -21,7 +21,7 @@ class Option(BaseModel):
     @model_validator(mode="after")
     def validate_attrs(self) -> "Option":
         if not self.id or not self.value:
-            raise ValueError(_("枚举ID或枚举不可为空"))
+            raise ValueError(_("枚举ID或枚举值不可为空"))
 
         return self
 

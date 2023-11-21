@@ -28,22 +28,19 @@ def _validate_options(options):
     """用户自定义字段：<选项> 字段校验"""
     if not options:
         raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
+
     try:
-        option_objs = TenantUserCustomFieldOptions(options=options)
+        options_obj = TenantUserCustomFieldOptions(options=options)
 
-        limit_count = 2
+        options_map = {obj.id: obj.value for obj in options_obj.options}
 
-        def determine_duplicate_values(values: List[str]) -> bool:
-            # 判断重复值
-            return any(values.count(item) >= limit_count for item in values)
-
-        option_ids = [obj.id for obj in option_objs.options]
-        if determine_duplicate_values(option_ids):
+        # 判断重复值
+        if len(options_map.keys()) != len(set(options_map.keys())):
             raise ValueError(_("枚举ID设置有重复值"))
 
-        option_values = [obj.value for obj in option_objs.options]
-        if determine_duplicate_values(option_values):
-            raise ValueError(_("枚举ID设置有重复值"))
+        # 判断重复值
+        if len(options_map.values()) != len(set(options_map.values())):
+            raise ValueError(_("枚举值设置有重复值"))
 
     except PDValidationError as e:
         raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
