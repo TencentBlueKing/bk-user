@@ -22,13 +22,13 @@
       <div class="content-item" v-if="formData.plugin_config">
         <p class="item-title">基础配置</p>
         <bk-form-item class="w-[600px]" label="企业 ID" property="plugin_config.corp_id" required>
-          <bk-input v-model="formData.plugin_config.corp_id" @focus="handleChange" />
+          <bk-input v-model="formData.plugin_config.corp_id" @change="handleChange" />
         </bk-form-item>
         <bk-form-item class="w-[600px]" label="Agent ID" property="plugin_config.agent_id" required>
-          <bk-input v-model="formData.plugin_config.agent_id" @focus="handleChange" />
+          <bk-input v-model="formData.plugin_config.agent_id" @change="handleChange" />
         </bk-form-item>
         <bk-form-item class="w-[600px]" label="Secret" property="plugin_config.secret" required>
-          <bk-input type="password" v-model="formData.plugin_config.secret" @focus="handleChange" />
+          <bk-input type="password" v-model="formData.plugin_config.secret" @change="handleChange" />
         </bk-form-item>
       </div>
       <div class="content-item">
@@ -269,6 +269,7 @@ const changeSourceField = (val, oldVal) => {
       item.disabled = false;
     }
   });
+  handleChange();
 };
 
 const handleToggle = (index) => {
@@ -282,6 +283,7 @@ const getFieldItem = () => ({
 
 const handleAddItem = (fields, i) => {
   fields.splice(i + 1, 0, getFieldItem());
+  handleChange();
 };
 
 const handleDeleteItem = (val, index, fields, i) => {
@@ -291,6 +293,7 @@ const handleDeleteItem = (val, index, fields, i) => {
       item.disabled = false;
     }
   });
+  handleChange();
 };
 
 // 新增数据源匹配
@@ -316,6 +319,7 @@ const handleAdd = () => {
 // 删除数据源匹配
 const handleDelete = (index) => {
   formData.value.data_source_match_rules.splice(index, 1);
+  handleChange();
 };
 
 const hoverItem = ref(null);
@@ -349,6 +353,7 @@ const handleSubmit = async () => {
 
     await putIdps(data);
     Message({ theme: 'success', message: '认证源更新成功' });
+    window.changeInput = false;
     router.push({ name: 'authSourceList' });
   } catch (e) {
     console.warn(e);

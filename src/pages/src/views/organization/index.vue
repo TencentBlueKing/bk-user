@@ -116,10 +116,12 @@ import {
   getTenantOrganizationList,
   getTenantUsersList,
 } from '@/http/organizationFiles';
+import { useUser } from '@/store/user';
 import { copy, logoConvert } from '@/utils';
 
 const vOverflowTitle = overflowTitle;
 const editLeaveBefore = inject('editLeaveBefore');
+const userStore = useUser();
 
 const treeRef = ref();
 const state = reactive({
@@ -168,6 +170,7 @@ const pagination = reactive({
 const isTenant = computed(() => (!!state.currentTenant.isRoot));
 
 const initData = async () => {
+  if (userStore.user.role === 'natural_user') return;
   try {
     state.isLoading = true;
     state.treeLoading = true;

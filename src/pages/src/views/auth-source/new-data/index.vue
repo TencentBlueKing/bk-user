@@ -71,7 +71,7 @@ const getStatus = async () => {
 };
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
 .main-breadcrumbs-details {
   .icon-arrow-left {
     margin-right: 10px;

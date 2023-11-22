@@ -247,6 +247,7 @@ const changeSourceField = (val, oldVal) => {
       item.disabled = false;
     }
   });
+  handleChange();
 };
 
 const handleToggle = (index) => {
@@ -260,6 +261,7 @@ const getFieldItem = () => ({
 
 const handleAddItem = (fields, i) => {
   fields.splice(i + 1, 0, getFieldItem());
+  handleChange();
 };
 
 const handleDeleteItem = (val, index, fields, i) => {
@@ -269,6 +271,7 @@ const handleDeleteItem = (val, index, fields, i) => {
       item.disabled = false;
     }
   });
+  handleChange();
 };
 
 // 新增数据源匹配
@@ -294,6 +297,7 @@ const handleAdd = () => {
 // 删除数据源匹配
 const handleDelete = (index) => {
   formData.value.data_source_match_rules.splice(index, 1);
+  handleChange();
 };
 
 const hoverItem = ref(null);
@@ -352,6 +356,7 @@ const handleSubmit = async () => {
       infoType: 'success',
       quickClose: false,
       onConfirm() {
+        window.changeInput = false;
         router.push({
           name: 'authSourceList',
         });
