@@ -13,7 +13,9 @@ from typing import Any, Dict, List
 import pytest
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.models import Idp, IdpPlugin
+from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.idp_plugins.wecom.plugin import WecomIdpPluginConfig
 from django.urls import reverse
 from rest_framework import status
 
@@ -64,7 +66,7 @@ def wecom_idp(bk_user, default_tenant, wecom_plugin_cfg, data_source_match_rules
         name=generate_random_string(),
         owner_tenant_id=default_tenant.id,
         plugin=IdpPlugin.objects.get(id=BuiltinIdpPluginEnum.WECOM),
-        plugin_config=wecom_plugin_cfg,
+        plugin_config=WecomIdpPluginConfig(**wecom_plugin_cfg),
         data_source_match_rules=data_source_match_rules,
         creator=bk_user.username,
         updater=bk_user.username,
@@ -194,14 +196,21 @@ class TestIdpUpdateApi:
         }
         resp = api_client.put(
             reverse("idp.retrieve_update", kwargs={"id": wecom_idp.id}),
-            data={"name": new_name, "plugin_config": new_plugin_config, "data_source_match_rules": []},
+            data={
+                "name": new_name,
+                "plugin_config": new_plugin_config,
+                "data_source_match_rules": [],
+            },
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         idp = Idp.objects.get(id=wecom_idp.id)
         assert idp.name == new_name
         assert len(idp.data_source_match_rules) == 0
-        assert idp.plugin_config == new_plugin_config
+        assert idp.plugin_config["corp_id"] == new_plugin_config["corp_id"]
+        assert idp.plugin_config["agent_id"] == new_plugin_config["agent_id"]
+        assert idp.plugin_config["secret"] == SENSITIVE_MASK
+        assert idp.get_plugin_cfg().model_dump() == new_plugin_config
 
     def test_update_with_invalid_plugin_config(self, api_client, wecom_idp):
         resp = api_client.put(
@@ -244,7 +253,7 @@ class TestIdpUpdateApi:
             name=new_name,
             owner_tenant_id=wecom_idp.owner_tenant_id,
             plugin=wecom_idp.plugin,
-            plugin_config=wecom_idp.plugin_config,
+            plugin_config=WecomIdpPluginConfig(**wecom_idp.plugin_config),
             data_source_match_rules=wecom_idp.data_source_match_rules,
             creator=bk_user.username,
             updater=bk_user.username,

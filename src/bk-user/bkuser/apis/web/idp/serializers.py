@@ -21,7 +21,7 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
-from bkuser.idp_plugins.base import get_plugin_cfg_cls
+from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.utils.pydantic import stringify_pydantic_error
 
@@ -152,7 +152,7 @@ class IdpCreateInputSLZ(serializers.Serializer):
             raise ValidationError(_("认证源插件 {} 不存在").format(plugin_id))
 
         try:
-            attrs["plugin_config"] = cfg_cls(**attrs["plugin_config"]).model_dump()
+            attrs["plugin_config"] = cfg_cls(**attrs["plugin_config"])
         except PDValidationError as e:
             raise ValidationError(_("认证源插件配置不合法：{}").format(stringify_pydantic_error(e)))
 
@@ -192,10 +192,10 @@ class IdpUpdateInputSLZ(serializers.Serializer):
     def validate_name(self, name: str) -> str:
         return _validate_duplicate_idp_name(name, self.context["tenant_id"], self.context["idp_id"])
 
-    def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> BasePluginConfig:
         cfg_cls = get_plugin_cfg_cls(self.context["plugin_id"])
 
         try:
-            return cfg_cls(**plugin_config).model_dump()
+            return cfg_cls(**plugin_config)
         except PDValidationError as e:
             raise ValidationError(_("认证源插件配置不合法：{}").format(stringify_pydantic_error(e)))

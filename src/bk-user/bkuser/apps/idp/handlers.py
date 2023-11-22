@@ -53,7 +53,7 @@ def _update_local_idp_of_tenant(data_source: DataSource):
     enable_login = bool(data_source.status == DataSourceStatus.ENABLED and plugin_cfg.enable_account_password_login)
 
     # 根据数据源是否使用账密登录，修改认证源配置
-    idp_plugin_cfg = LocalIdpPluginConfig(**idp.plugin_config)
+    idp_plugin_cfg: LocalIdpPluginConfig = idp.get_plugin_cfg()
     data_source_match_rules = idp.data_source_match_rule_objs
 
     # 对于启用登录，则需要添加进配置
@@ -68,7 +68,8 @@ def _update_local_idp_of_tenant(data_source: DataSource):
         data_source_match_rules = [i for i in data_source_match_rules if i.data_source_id != data_source.id]
 
     # 保存
-    idp.plugin_config = idp_plugin_cfg.model_dump()
-    idp.data_source_match_rules = [i.model_dump() for i in data_source_match_rules]
-    idp.status = IdpStatus.ENABLED if idp_plugin_cfg.data_source_ids else IdpStatus.DISABLED
-    idp.save(update_fields=["plugin_config", "data_source_match_rules", "status", "updated_at"])
+    with transaction.atomic():
+        idp.data_source_match_rules = [i.model_dump() for i in data_source_match_rules]
+        idp.status = IdpStatus.ENABLED if idp_plugin_cfg.data_source_ids else IdpStatus.DISABLED
+        idp.save(update_fields=["data_source_match_rules", "status", "updated_at"])
+        idp.set_plugin_cfg(idp_plugin_cfg)

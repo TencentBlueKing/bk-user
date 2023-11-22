@@ -25,7 +25,7 @@ class BasePluginConfig(BaseModel):
     """插件配置基类"""
 
     # 注：敏感字段声明有以下规范
-    # 字段形式如: auth_config.password，
+    # 字段形式如: auth_config.password
     # 字段类型为 str 或 (str | None)
     # 字段路径中不支持列表下标，只能是字典 key
     sensitive_fields: ClassVar[List[str]] = []

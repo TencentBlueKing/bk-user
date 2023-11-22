@@ -8,11 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
+from typing import Any, Dict, List
 
 from rest_framework import serializers
 
 from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.models import Idp
 from bkuser.biz.validators import validate_data_source_user_username
 
 
@@ -73,10 +74,13 @@ class IdpListOutputSLZ(serializers.Serializer):
 
 class IdpRetrieveOutputSLZ(IdpListOutputSLZ):
     owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")
-    plugin_config = serializers.JSONField(help_text="认证源插件配置")
+    plugin_config = serializers.SerializerMethodField(help_text="认证源插件配置")
 
     class Meta:
         ref_name = "login.IdpRetrieveOutputSLZ"
+
+    def get_plugin_config(self, obj: Idp) -> Dict[str, Any]:
+        return obj.get_plugin_cfg().model_dump()
 
 
 class TenantUserMatchInputSLZ(serializers.Serializer):
