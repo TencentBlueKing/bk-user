@@ -10,12 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 import json
 import logging
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 from django.conf import settings
 
 from bkuser.common.error_codes import error_codes
 from bkuser.common.local import local
+from bkuser.utils.url import urljoin
 
 logger = logging.getLogger("component")
 

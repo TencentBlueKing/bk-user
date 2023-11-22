@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Any, Callable, Dict, List
-from urllib.parse import quote_plus, urljoin
+from urllib.parse import quote_plus
 
 import pydantic
 from django.conf import settings
@@ -35,6 +35,7 @@ from bklogin.idp_plugins.exceptions import (
     UnexpectedDataError,
     ValidationError,
 )
+from bklogin.utils.url import urljoin
 
 from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .manager import BkTokenManager

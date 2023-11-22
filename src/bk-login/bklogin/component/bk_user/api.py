@@ -10,13 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Any, Callable, Dict, List
-from urllib.parse import urljoin
 
 from django.conf import settings
 from requests.auth import HTTPBasicAuth
 
 from bklogin.common.error_codes import error_codes
 from bklogin.component.http import HttpStatusCode, http_get, http_post
+from bklogin.utils.url import urljoin
 
 from .models import GlobalSetting, IdpDetailInfo, IdpInfo, TenantInfo, TenantUserDetailInfo, TenantUserInfo
 
