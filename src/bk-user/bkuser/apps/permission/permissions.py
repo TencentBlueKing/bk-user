@@ -20,8 +20,8 @@ import logging
 
 from rest_framework.permissions import BasePermission
 
-from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.idp.models import Idp
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
+from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation
 from bkuser.apps.permission.constants import PermAction, UserRole
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
@@ -47,7 +47,10 @@ def perm_class(action: PermAction):  # noqa: C901
 
             return False
 
-        def has_object_permission(self, request, view, obj):
+        def has_object_permission(self, request, view, obj):  # noqa: C901
+            username = request.user.username
+            cur_tenant_id = request.user.get_property("tenant_id")
+
             if isinstance(obj, Tenant):
                 tenant_id = obj.id
             elif hasattr(obj, "tenant_id"):
@@ -60,14 +63,16 @@ def perm_class(action: PermAction):  # noqa: C901
                 tenant_id = obj.data_source.owner_tenant_id
             elif isinstance(obj, Idp):
                 tenant_id = obj.owner_tenant_id
+            elif isinstance(obj, (DataSourcePlugin, IdpPlugin)):
+                # 认证源插件和数据源插件的配置信息、默认配置等可能包含一些低敏感级别的信息，
+                # 所以需要确保用户可管理租户才可看到
+                tenant_id = cur_tenant_id
             else:
                 logger.exception("failed to get tenant id, obj: %s", obj)
                 return False
 
-            username = request.user.username
-            cur_tenant_id = request.user.get_property("tenant_id")
             if action == PermAction.MANAGE_PLATFORM:
-                return is_super_manager(tenant_id, username)
+                return is_super_manager(cur_tenant_id, username)
             if action == PermAction.MANAGE_TENANT:
                 return is_tenant_manager(tenant_id, username)
             if action == PermAction.USE_PLATFORM:

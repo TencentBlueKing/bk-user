@@ -1,6 +1,6 @@
 <template>
   <bk-loading :loading="isLoading">
-    <MainBreadcrumbsDetails :subtitle="subtitle">
+    <MainBreadcrumbsDetails :subtitle="subtitle" @toBack="toBack">
       <template #tag>
         <div class="data-source-type" v-for="item in typeList" :key="item">
           <img v-if="item.id === pluginId && item.logo" :src="item.logo">
@@ -98,6 +98,10 @@ const handleSync = async () => {
   router.push({ name: 'syncRecords' });
   const status = res.data?.status === 'failed' ? 'error' : 'success';
   Message({ theme: status, message: res.data.summary });
+};
+
+const toBack = () => {
+  router.push({ name: 'dataSource' });
 };
 </script>
 

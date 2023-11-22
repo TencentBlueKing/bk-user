@@ -33,6 +33,11 @@ class IdpPluginOutputSLZ(serializers.Serializer):
     logo = serializers.CharField(help_text="认证源插件 Logo")
 
 
+class IdpPluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="认证源插件唯一标识")
+    json_schema = serializers.JSONField(help_text="配置的JSON Schema")
+
+
 class IdpSearchInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", required=False)
 

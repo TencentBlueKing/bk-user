@@ -106,7 +106,7 @@ class TestDataSourcePluginDefaultConfigApi:
 
     def test_retrieve_not_exists(self, api_client):
         resp = api_client.get(reverse("data_source_plugin.default_config", args=["not_exists"]))
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestDataSourceCreateApi:

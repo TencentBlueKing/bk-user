@@ -538,4 +538,5 @@ class TenantUserSyncer:
         if not (cfg and cfg.enabled and cfg.validity_period > 0):
             return PERMANENT_TIME
 
-        return timezone.now() + datetime.timedelta(days=cfg.validity_period)
+        expired_at = timezone.now() + datetime.timedelta(days=cfg.validity_period)
+        return expired_at if expired_at < PERMANENT_TIME else PERMANENT_TIME

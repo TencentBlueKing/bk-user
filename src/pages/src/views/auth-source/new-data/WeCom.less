@@ -1,0 +1,269 @@
+.details-wrapper {
+  width: 1000px;
+  margin: 0 auto;
+
+  .details-type {
+    display: flex;
+    padding: 10px 16px;
+    margin: 16px 0;
+    background: #FFF;
+    border-radius: 2px;
+    align-items: center;
+
+    .title {
+      font-size: 14px;
+      color: #313238;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #979BA5;
+    }
+  }
+
+  .auth-source-form {
+    .content-item {
+      background: #fff;
+      border-radius: 2px;
+      box-shadow: 0 2px 4px 0 #1919290d;
+
+      .item-title {
+        padding: 16px 0 16px 24px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      ::v-deep .bk-form-item {
+        padding-bottom: 24px;
+        margin-bottom: 0;
+        margin-left: 64px;
+        font-size: 14px;
+
+        &:last-child {
+          margin-bottom: 16px;
+        }
+
+        .bk-radio-button {
+          .bk-radio-button-label {
+            font-size: 14px !important;
+          }
+        }
+
+        .bk-radio-label {
+          font-size: 14px !important;
+        }
+
+        .error-text {
+          font-size: 12px;
+          line-height: 1;
+          color: #ea3636;
+          animation: form-error-appear-animation .15s;
+        }
+      }
+
+      .data-source-matching {
+        width: 622px;
+        margin-left: 59px;
+        border-radius: 2px;
+
+        .hover-item {
+          cursor: pointer;
+        }
+
+        .matching-item {
+          position: relative;
+          padding: 16px 16px 16px 24px;
+          margin-bottom: 16px;
+          background: #F5F7FA;
+
+          .bk-sq-icon {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 20px;
+            color: #EA3636;
+          }
+
+          .or {
+            position: absolute;
+            top: -16px;
+            left: -22px;
+            display: inline-block;
+            width: 19px;
+            height: 16px;
+            line-height: 16px;
+            color: #FE9C00;
+            text-align: center;
+            background: #FFF3E1;
+            border-radius: 2px;
+
+            &::before {
+              position: absolute;
+              top: -27px;
+              left: 10px;
+              width: 12px;
+              height: 27px;
+              border: 1px solid #DCDEE5;
+              border-right: transparent;
+              border-bottom: transparent;
+              border-top-left-radius: 2px;
+              content: '';
+            }
+
+            &::after {
+              position: absolute;
+              top: 16px;
+              left: 10px;
+              width: 12px;
+              height: 27px;
+              border: 1px solid #DCDEE5;
+              border-top: transparent;
+              border-right: transparent;
+              border-bottom-left-radius: 2px;
+              content: '';
+            }
+          }
+
+          ::v-deep .bk-form-item {
+            padding-bottom: 24px;
+            margin-bottom: 0;
+            margin-left: 0;
+            font-size: 14px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+
+          .item-flex-header {
+            display: flex;
+            align-items: center;
+
+            ::v-deep .bk-form-item {
+              padding-bottom: 0;
+              margin-bottom: 0;
+              margin-left: 0;
+              font-size: 14px;
+
+              &:last-child {
+                margin-left: 16px;
+              }
+            }
+          }
+
+          .item-flex {
+            position: relative;
+            display: flex;
+            padding-bottom: 8px;
+            align-items: center;
+
+            ::v-deep .bk-form-item {
+              padding-bottom: 0;
+              margin-bottom: 0;
+              margin-left: 0;
+              font-size: 14px;
+            }
+
+            .auth-source-fields {
+              margin-left: 16px;
+            }
+
+            .user-icon {
+              font-size: 16px;
+              color: #dcdee5;
+
+              &:hover {
+                color: #c4c6cc;
+              }
+            }
+
+            .icon-plus-fill {
+              position: absolute;
+              top: 9px;
+              right: 35px;
+            }
+
+            .icon-minus-fill {
+              position: absolute;
+              top: 9px;
+              right: 5px;
+            }
+
+            .and {
+              position: absolute;
+              top: -12px;
+              left: -24px;
+              display: inline-block;
+              width: 24px;
+              height: 16px;
+              line-height: 16px;
+              color: #14A568;
+              text-align: center;
+              background: #E4FAF0;
+              border-radius: 2px;
+
+              &::before {
+                position: absolute;
+                top: -12px;
+                left: 12px;
+                width: 12px;
+                height: 12px;
+                border: 1px solid #DCDEE5;
+                border-right: transparent;
+                border-bottom: transparent;
+                border-top-left-radius: 2px;
+                content: '';
+              }
+
+              &::after {
+                position: absolute;
+                top: 16px;
+                left: 12px;
+                width: 12px;
+                height: 12px;
+                border: 1px solid #DCDEE5;
+                border-top: transparent;
+                border-right: transparent;
+                border-bottom-left-radius: 2px;
+                content: '';
+              }
+            }
+          }
+        }
+      }
+
+      .add-data-source {
+        display: flex;
+        width: 622px;
+        height: 32px;
+        margin-left: 59px;
+        font-size: 14px;
+        color: #3A84FF;
+        cursor: pointer;
+        background: #F0F5FF;
+        border: 1px dashed #A3C5FD;
+        border-radius: 2px;
+        align-items: center;
+        justify-content: center;
+
+        span {
+          margin-left: 5px;
+        }
+      }
+    }
+  }
+
+  .footer-wrapper {
+    margin: 24px 0;
+
+    .bk-button {
+      width: 88px;
+      margin-right: 8px;
+    }
+  }
+}
+
+.option-select {
+  display: flex !important;
+  justify-content: space-between;
+}

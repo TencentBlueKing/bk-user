@@ -33,6 +33,7 @@ opentelemetry-instrumentation-requests = "0.41b0"
 opentelemetry-instrumentation-logging = "0.41b0"
 pydantic = "2.3.0"
 blue-krill = "2.0.2"
+django-cors-headers = "4.3.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.4"
