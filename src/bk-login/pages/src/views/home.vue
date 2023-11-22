@@ -90,10 +90,10 @@
       <div class="tenant-tab">
         <div
           class="tab-item"
-          v-for="item in idps.slice(0, 1)"
+          v-for="item in idps"
           :class="activeIdp.id === item.id ? 'active' : ''"
           :key="item.id"
-          @click="activeIdp = item">
+          @click="handleChangeIdp(item)">
           {{ item.name }}登录
         </div>
       </div>
@@ -220,6 +220,14 @@ const handleChange = (item: Tenant) => {
   tenant.value = item;
   confirmTenant();
 };
+
+const handleChangeIdp = (idp: Idp) => {
+  const customPlugins = ['local'];
+  activeIdp.value = idp;
+  if (!customPlugins.includes(idp.plugin.id)) {
+    window.location.href = `/auth/idps/${idp.id}/actions/login/`;
+  }
+}
 
 const protocolVisible = ref(false);
 

@@ -18,6 +18,7 @@ module.exports = {
         client: {
           overlay: false,
         },
+        https: true,
       },
     };
   },
