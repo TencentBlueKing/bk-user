@@ -167,9 +167,11 @@ class TestDataSourceUserWithCustomField:
             plugin_id=DataSourcePluginEnum.LOCAL,
         )
 
+        update_user_list = []
         for user in data_source_users:
             user.extras = extras_data
-            user.save()
+            update_user_list.append(user)
+        DataSourceUser.objects.bulk_update(update_user_list, fields=["extras"])
 
         response = api_client.get(reverse("data_source_user.list_create", kwargs={"id": data_source.id}))
         assert response.status_code == status.HTTP_200_OK
