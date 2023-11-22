@@ -21,7 +21,7 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
-def check_extras(extras: Dict[str, Any], original_extras: Dict[str, Any]):
+def _check_extras(extras: Dict[str, Any], original_extras: Dict[str, Any]):
     for key, value in extras.items():
         assert key in original_extras
         assert value == original_extras[key]
@@ -155,7 +155,7 @@ class TestDataSourceUserWithCustomField:
         assert response.status_code == status.HTTP_201_CREATED
 
         created_user = DataSourceUser.objects.get(username=user_data["username"], data_source=data_source)
-        check_extras(created_user.extras, default_extras)
+        _check_extras(created_user.extras, default_extras)
 
     def test_list_data_source_user_with_custom_field(
         self, bk_user, api_client, data_source_users, default_tenant, custom_fields
@@ -174,7 +174,7 @@ class TestDataSourceUserWithCustomField:
         response = api_client.get(reverse("data_source_user.list_create", kwargs={"id": data_source.id}))
         assert response.status_code == status.HTTP_200_OK
         for item in response.data["results"]:
-            check_extras(item["extras"], extras_data)
+            _check_extras(item["extras"], extras_data)
 
     def test_retrieve_data_source_user_with_custom_field(self, bk_user, custom_fields, api_client, data_source_users):
         extras = {field.name: field.default for field in custom_fields}
@@ -184,7 +184,7 @@ class TestDataSourceUserWithCustomField:
 
         response = api_client.get(reverse("data_source_user.retrieve_update", kwargs={"id": data_source_user.id}))
         assert response.status_code == status.HTTP_200_OK
-        check_extras(response.data["extras"], extras)
+        _check_extras(response.data["extras"], extras)
 
     @pytest.mark.parametrize(
         "invalid_extras",
@@ -214,7 +214,6 @@ class TestDataSourceUserWithCustomField:
             "phone": "13123456789",
             "extras": invalid_extras,
         }
-        print(111111111111111111, user_data)
         data_source = DataSource.objects.get(
             owner_tenant_id=default_tenant.id,
             name=f"{default_tenant.id}-default-local",
@@ -274,11 +273,11 @@ class TestTenantUserWithCustomField:
         user = random.choice(list(tenant_users))
         response = api_client.get(reverse("department.users.retrieve", kwargs={"id": user.id}))
         assert response.status_code == status.HTTP_200_OK
-        check_extras(response.data["extras"], extras)
+        _check_extras(response.data["extras"], extras)
 
         response = api_client.get(reverse("department.users.retrieve", kwargs={"id": bk_user.username}))
         assert response.status_code == status.HTTP_200_OK
-        check_extras(response.data["extras"], extras)
+        _check_extras(response.data["extras"], extras)
 
     def test_list_tenant_user_with_custom_field(
         self, bk_user, custom_fields, api_client, tenant_users, default_tenant, tenant_departments
@@ -290,11 +289,11 @@ class TestTenantUserWithCustomField:
         response = api_client.get(reverse("organization.tenant.users.list", kwargs={"id": default_tenant.id}))
         assert response.status_code == status.HTTP_200_OK
         for user in response.data["results"]:
-            check_extras(user["extras"], extras)
+            _check_extras(user["extras"], extras)
 
         # 部门下用户
         tenant_department = random.choice(list(tenant_departments))
         response = api_client.get(reverse("departments.users.list", kwargs={"id": tenant_department.id}))
         assert response.status_code == status.HTTP_200_OK
         for user in response.data["results"]:
-            check_extras(user["extras"], extras)
+            _check_extras(user["extras"], extras)

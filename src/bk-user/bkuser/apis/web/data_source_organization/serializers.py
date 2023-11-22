@@ -24,10 +24,10 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.biz.validators import (
-    validate_custom_enum_field_value,
-    validate_custom_field_exist,
-    validate_custom_field_required,
     validate_data_source_user_username,
+    validate_enum_field_value_is_legal,
+    validate_fields_is_existed,
+    validate_required_fields_is_filled,
 )
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -105,13 +105,14 @@ class UserCreateInputSLZ(serializers.Serializer):
 
     def validate_extras(self, extras):
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        # 检测非法字段
-        validate_custom_field_exist(extras, custom_fields)
-        # 必填字段检测
-        validate_custom_field_required(extras, custom_fields)
-        # 枚举字段，非法枚举值检测
-        validate_custom_enum_field_value(extras, custom_fields)
-        # TODO 唯一性检测
+        if custom_fields.exists():
+            # 检测非法字段
+            validate_fields_is_existed(extras, custom_fields)
+            # 必填字段检测
+            validate_required_fields_is_filled(extras, custom_fields)
+            # 枚举字段，非法枚举值检测
+            validate_enum_field_value_is_legal(extras, custom_fields)
+            # TODO 唯一性检测
         return extras
 
 
@@ -223,13 +224,13 @@ class UserUpdateInputSLZ(serializers.Serializer):
 
     def validate_extras(self, extras):
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        if custom_fields:
+        if custom_fields.exists():
             # 检测非法字段
-            validate_custom_field_exist(extras, custom_fields)
+            validate_fields_is_existed(extras, custom_fields)
             # 必填字段检测
-            validate_custom_field_required(extras, custom_fields)
+            validate_required_fields_is_filled(extras, custom_fields)
             # 枚举字段，非法枚举值检测
-            validate_custom_enum_field_value(extras, custom_fields)
+            validate_enum_field_value_is_legal(extras, custom_fields)
             # TODO 可编辑性检测
             # TODO 唯一性检测
         return extras

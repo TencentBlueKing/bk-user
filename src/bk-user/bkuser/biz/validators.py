@@ -32,14 +32,14 @@ def validate_data_source_user_username(value):
         )
 
 
-def validate_custom_field_exist(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
+def validate_fields_is_existed(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
     # 非法自定义字段
     not_existed_fields = set(extras.keys()) - set(custom_fields.values_list("name", flat=True))
     if not_existed_fields:
         raise ValidationError(_(f"不存在自定义字段：{not_existed_fields}"))
 
 
-def validate_custom_field_required(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
+def validate_required_fields_is_filled(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
     # 必填检查
     required_fields = custom_fields.filter(required=True).values_list("name", flat=True)
     not_filled_fields = set(required_fields) - set(extras.keys())
@@ -47,7 +47,7 @@ def validate_custom_field_required(extras: Dict[str, Any], custom_fields: Tenant
         raise ValidationError(_(f"必填字段未填写: {not_filled_fields}"))
 
 
-def validate_custom_enum_field_value(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
+def validate_enum_field_value_is_legal(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
     # 枚举类型，非法枚举值
     type_enum_fields = custom_fields.filter(data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM])
     for field in type_enum_fields:
