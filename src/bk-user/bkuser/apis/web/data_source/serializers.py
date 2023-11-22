@@ -48,7 +48,7 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
     cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
     status = serializers.CharField(help_text="数据源状态")
     updater = serializers.CharField(help_text="更新者")
-    updated_at = serializers.SerializerMethodField(help_text="更新时间")
+    updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
 
     def get_plugin_name(self, obj: DataSource) -> str:
         return self.context["data_source_plugin_map"].get(obj.plugin_id, "")
@@ -63,9 +63,6 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
     def get_cooperation_tenants(self, obj: DataSource) -> List[str]:
         # TODO 目前未支持数据源跨租户协作，因此该数据均为空
         return []
-
-    def get_updated_at(self, obj: DataSource) -> str:
-        return obj.updated_at_display
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
@@ -116,7 +113,7 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
 
     def validate_name(self, name: str) -> str:
-        if DataSource.objects.filter(name=name).exists():
+        if DataSource.objects.filter(name=name, owner_tenant_id=self.context["tenant_id"]).exists():
             raise ValidationError(_("同名数据源已存在"))
 
         return name
@@ -195,7 +192,7 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         if name == self.context["current_name"]:
             return name
 
-        if DataSource.objects.filter(name=name).exists():
+        if DataSource.objects.filter(name=name, owner_tenant_id=self.context["tenant_id"]).exists():
             raise ValidationError(_("同名数据源已存在"))
 
         return name
@@ -305,7 +302,9 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
             except PDValidationError as e:
                 raise ValidationError(_("密码规则配置不合法: {}").format(stringify_pydantic_error(e)))
         else:
-            attrs["password_rule"] = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL).password_rule.to_rule()  # type: ignore
+            attrs["password_rule"] = get_default_plugin_cfg(  # type: ignore
+                DataSourcePluginEnum.LOCAL,
+            ).password_rule.to_rule()
 
         return attrs
 

@@ -72,7 +72,7 @@ def perm_class(action: PermAction):  # noqa: C901
                 return False
 
             if action == PermAction.MANAGE_PLATFORM:
-                return is_super_manager(tenant_id, username)
+                return is_super_manager(cur_tenant_id, username)
             if action == PermAction.MANAGE_TENANT:
                 return is_tenant_manager(tenant_id, username)
             if action == PermAction.USE_PLATFORM:

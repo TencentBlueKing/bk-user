@@ -24,3 +24,9 @@ i18n-mo: ## 将 django.po 文件编译成 django.mo 文件
 	python manage.py compilemessages
 
 i18n-all: i18n-po i18n-mo  ## 执行 i18n-po & i18n-mo
+
+package-plugin: ## 打包自定义数据源插件
+	kubectl create configmap bk-user-plugin-${name} --from-file=bkuser/plugins/${name} --dry-run=client -o yaml > bk-user-plugin-${name}.yaml
+
+package-idp-plugin: ## 打包自定义 IDP 插件
+	kubectl create configmap bk-user-idp-plugin-${name} --from-file=bkuser/idp_plugins/${name} --dry-run=client -o yaml > bk-user-idp-plugin-${name}.yaml
