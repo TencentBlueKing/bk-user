@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from typing import List
-from urllib.parse import urljoin
 
 from blue_krill.models.fields import EncryptField
 from django.conf import settings
@@ -20,6 +19,7 @@ from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls, get_plugin_type
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum, PluginTypeEnum
 from bkuser.utils import dictx
+from bkuser.utils.url import urljoin
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import IdpStatus

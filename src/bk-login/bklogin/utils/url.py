@@ -8,14 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import json
-import random
-import string
-from typing import Any, Dict
-
-from django.utils.translation import gettext_lazy as _
-
-from .exceptions import ParseRequestBodyError
 
 
 def urljoin(host: str, path: str) -> str:
@@ -26,26 +18,3 @@ def urljoin(host: str, path: str) -> str:
        urllib.parse.urljoin("https://example.com/abc", "/efg/index.html") => "https://example.com/efg/index.html"
     """
     return "{}/{}".format(host.rstrip("/"), path.lstrip("/"))
-
-
-def parse_request_body_json(body: bytes) -> Dict[str, Any]:
-    """解析请求Body Json数据"""
-    try:
-        request_body = json.loads(body.decode("utf-8"))
-    except json.JSONDecodeError as error:
-        raise ParseRequestBodyError(_("解析异常，Body参数非Json格式数据, {}").format(error))
-
-    return request_body
-
-
-def generate_random_str(length: int = 8, allowed_chars: str = "") -> str:
-    """
-    生成指定长度的随机字符串
-    :param length: 指定的长度，默认8位
-    :param allowed_chars: 随机串里允许出现字符，默认是a-zA-Z0-9
-    """
-    if not allowed_chars:
-        # a-zA-Z0-9
-        allowed_chars = string.ascii_letters + string.digits
-
-    return "".join([random.choice(allowed_chars) for _ in range(length)])
