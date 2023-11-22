@@ -36,7 +36,7 @@ def validate_fields_is_existed(extras: Dict[str, Any], custom_fields: TenantUser
     # 非法自定义字段
     not_existed_fields = set(extras.keys()) - set(custom_fields.values_list("name", flat=True))
     if not_existed_fields:
-        raise ValidationError(_(f"不存在自定义字段：{not_existed_fields}"))
+        raise ValidationError(_("不存在自定义字段：{}").format(not_existed_fields))
 
 
 def validate_required_fields_is_filled(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
@@ -44,7 +44,7 @@ def validate_required_fields_is_filled(extras: Dict[str, Any], custom_fields: Te
     required_fields = custom_fields.filter(required=True).values_list("name", flat=True)
     not_filled_fields = set(required_fields) - set(extras.keys())
     if not_filled_fields:
-        raise ValidationError(_(f"必填字段未填写: {not_filled_fields}"))
+        raise ValidationError(_("必填字段未填写: {}").format(not_filled_fields))
 
 
 def validate_enum_field_value_is_legal(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
@@ -57,7 +57,7 @@ def validate_enum_field_value_is_legal(extras: Dict[str, Any], custom_fields: Te
         value = extras[field.name]
         option_ids_list = [option["id"] for option in field.options]
         if field.data_type == UserFieldDataType.ENUM and value not in option_ids_list:
-            raise ValidationError(_(f"不存在单选: {value}"))
+            raise ValidationError(_("不存在单选: {}").format(value))
 
         if field.data_type == UserFieldDataType.MULTI_ENUM:
             if not isinstance(value, list):
@@ -65,7 +65,7 @@ def validate_enum_field_value_is_legal(extras: Dict[str, Any], custom_fields: Te
 
             not_exist_option_id = set(value) - set(option_ids_list)
             if not_exist_option_id:
-                raise ValidationError(_(f"不存在多选值: {not_exist_option_id}"))
+                raise ValidationError(_("不存在多选值: {}").format(not_exist_option_id))
 
 
 def validate_tenant_custom_field_name(value):
