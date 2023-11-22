@@ -111,6 +111,7 @@ class UserCreateInputSLZ(serializers.Serializer):
         validate_custom_field_required(extras, custom_fields)
         # 枚举字段，非法枚举值检测
         validate_custom_enum_field_value(extras, custom_fields)
+        # TODO 唯一性检测
         return extras
 
 
@@ -222,12 +223,13 @@ class UserUpdateInputSLZ(serializers.Serializer):
 
     def validate_extras(self, extras):
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        # 检测非法字段
-        validate_custom_field_exist(extras, custom_fields)
-        # 必填字段检测
-        validate_custom_field_required(extras, custom_fields)
-        # TODO 可编辑性检测
-        # TODO 唯一性检测
-        # 枚举字段，非法枚举值检测
-        validate_custom_enum_field_value(extras, custom_fields)
+        if custom_fields:
+            # 检测非法字段
+            validate_custom_field_exist(extras, custom_fields)
+            # 必填字段检测
+            validate_custom_field_required(extras, custom_fields)
+            # 枚举字段，非法枚举值检测
+            validate_custom_enum_field_value(extras, custom_fields)
+            # TODO 可编辑性检测
+            # TODO 唯一性检测
         return extras

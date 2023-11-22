@@ -114,7 +114,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         user_id = DataSourceOrganizationHandler.create_user(
             data_source=data_source, base_user_info=base_user_info, relation_info=relation_info
         )
-        return Response(UserCreateOutputSLZ(instance={"id": user_id}).data)
+        return Response(UserCreateOutputSLZ(instance={"id": user_id}).data, status=status.HTTP_201_CREATED)
 
 
 class DataSourceLeadersListApi(generics.ListAPIView):

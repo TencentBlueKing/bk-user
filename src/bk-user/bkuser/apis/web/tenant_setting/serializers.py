@@ -36,11 +36,11 @@ def _validate_options(options):
 
         # 判断重复值
         if len(options_map.keys()) != len(set(options_map.keys())):
-            raise ValueError(_("枚举ID设置有重复值"))
+            raise serializers.ValidationError(_("枚举ID设置有重复值"))
 
         # 判断重复值
         if len(options_map.values()) != len(set(options_map.values())):
-            raise ValueError(_("枚举值设置有重复值"))
+            raise serializers.ValidationError(_("枚举值设置有重复值"))
 
     except PDValidationError as e:
         raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))

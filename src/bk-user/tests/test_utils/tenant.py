@@ -11,7 +11,8 @@ specific language governing permissions and limitations under the License.
 from typing import List, Optional
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.utils.uuid import generate_uuid
@@ -30,6 +31,9 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
             "feature_flags": {"user_number_visible": True},
         },
     )
+
+    # 创建租户完成后，初始化账号有效期设置
+    TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
 
     plugin_config = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)
     assert plugin_config is not None
