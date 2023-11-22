@@ -1,6 +1,6 @@
 <template>
   <bk-loading :loading="isLoading" class="data-source-wrapper">
-    <MainBreadcrumbsDetails>
+    <MainBreadcrumbsDetails @toBack="toBack">
       <template #tag>
         <bk-dropdown
           class="data-source-type"
@@ -108,6 +108,10 @@ const toggleType = (item) => {
       type: item.id,
     },
   });
+};
+
+const toBack = () => {
+  router.push({ name: 'dataSource' });
 };
 </script>
 

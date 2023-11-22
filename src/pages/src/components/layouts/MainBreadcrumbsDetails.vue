@@ -21,8 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, defineEmits, defineProps } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { useMainViewStore } from '@/store/mainView';
 
@@ -33,9 +33,10 @@ defineProps({
   },
 });
 
+const emit = defineEmits(['toBack']);
+
 const store = useMainViewStore();
 const route = useRoute();
-const router = useRouter();
 store.customBreadcrumbs = true;
 /**
  * 当前面包屑展示文案
@@ -45,7 +46,7 @@ const current = computed(() => store.breadCrumbsTitle || route.meta.navName);
  * back control
  */
 const handleBack = () => {
-  router.push({ name: 'dataSource' });
+  emit('toBack');
 };
 </script>
 

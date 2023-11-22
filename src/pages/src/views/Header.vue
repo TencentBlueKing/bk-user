@@ -114,7 +114,7 @@ const userInfo = computed(() => {
   const baseNav = [
     { name: '组织架构', path: 'organization' },
     { name: '数据源管理', path: 'dataSource' },
-    { name: '认证源管理', path: 'authSource' },
+    { name: '认证源管理', path: 'authSourceList' },
   ];
   if (role === 'super_manager') {
     headerNav.value = [...baseNav, { name: '租户管理', path: 'tenant' }, { name: '设置', path: 'setting' }];
