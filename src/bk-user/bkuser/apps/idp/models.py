@@ -11,12 +11,15 @@ specific language governing permissions and limitations under the License.
 from typing import List
 from urllib.parse import urljoin
 
+from blue_krill.models.fields import EncryptField
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 
-from bkuser.common.models import AuditedModel
-from bkuser.idp_plugins.base import get_plugin_type
+from bkuser.common.constants import SENSITIVE_MASK
+from bkuser.common.models import AuditedModel, TimestampedModel
+from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls, get_plugin_type
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum, PluginTypeEnum
+from bkuser.utils import dictx
 from bkuser.utils.uuid import generate_uuid
 
 from .constants import IdpStatus
@@ -30,6 +33,22 @@ class IdpPlugin(models.Model):
     name = models.CharField("认证源插件名称", max_length=128, unique=True)
     description = models.TextField("描述", default="", blank=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
+
+
+class IdpManager(models.Manager):
+    """认证源管理器类"""
+
+    @transaction.atomic()
+    def create(self, *args, **kwargs):
+        if "plugin_config" not in kwargs:
+            return super().create(*args, **kwargs)
+
+        plugin_cfg = kwargs.pop("plugin_config")
+        assert isinstance(plugin_cfg, BasePluginConfig)
+
+        idp: Idp = super().create(*args, **kwargs)
+        idp.set_plugin_cfg(plugin_cfg)
+        return idp
 
 
 class Idp(AuditedModel):
@@ -47,6 +66,8 @@ class Idp(AuditedModel):
     data_source_match_rules = models.JSONField("匹配规则", default=list)
     # 允许关联社会化认证源的租户组织架构范围
     allow_bind_scopes = models.JSONField("允许范围", default=list)
+
+    objects = IdpManager()
 
     class Meta:
         ordering = ["created_at"]
@@ -72,3 +93,44 @@ class Idp(AuditedModel):
             return urljoin(settings.BK_LOGIN_URL, f"auth/idps/{self.id}/actions/callback/")
 
         return ""
+
+    def get_plugin_cfg(self) -> BasePluginConfig:
+        """获取插件配置
+
+        注意：使用该方法获取到的配置将会包含敏感信息，不适合通过 API 暴露出去，仅可用于内部逻辑流转
+        API 要获取插件配置请使用 idp.plugin_config，其中的敏感信息将会被 ******* 取代
+        """
+        plugin_cfg = self.plugin_config
+        for info in IdpSensitiveInfo.objects.filter(idp=self):
+            dictx.set_items(plugin_cfg, info.key, info.value)
+
+        PluginCfgCls = get_plugin_cfg_cls(self.plugin.id)  # noqa: N806
+        return PluginCfgCls(**plugin_cfg)
+
+    def set_plugin_cfg(self, cfg: BasePluginConfig) -> None:
+        """设置插件配置，注意：该方法包含 DB 数据更新，需要在事务中执行"""
+        plugin_cfg = cfg.model_dump()
+
+        # 由于单个插件的敏感字段不会很多，这里不采用批量创建/更新的方式
+        for field in cfg.sensitive_fields:
+            sensitive_val = dictx.get_items(plugin_cfg, field)
+            # 若敏感字段无值，或者已经被替换为掩码，则不需要二次替换
+            if not sensitive_val or sensitive_val == SENSITIVE_MASK:
+                continue
+
+            IdpSensitiveInfo.objects.update_or_create(idp=self, key=field, defaults={"value": sensitive_val})
+            dictx.set_items(plugin_cfg, field, SENSITIVE_MASK)
+
+        self.plugin_config = plugin_cfg
+        self.save(update_fields=["plugin_config", "updated_at"])
+
+
+class IdpSensitiveInfo(TimestampedModel):
+    """认证源敏感配置信息"""
+
+    idp = models.ForeignKey(Idp, on_delete=models.PROTECT, db_constraint=False)
+    key = models.CharField("配置字段路径", max_length=255)
+    value = EncryptField(verbose_name="敏感配置数据", max_length=255)
+
+    class Meta:
+        unique_together = [("idp", "key")]

@@ -13,17 +13,18 @@ from urllib.parse import urlencode
 
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel
 
 from .client import WeComAPIClient
 from .settings import WECOM_OAUTH_URL
-from ..base import BaseFederationIdpPlugin
+from ..base import BaseFederationIdpPlugin, BasePluginConfig
 from ..exceptions import InvalidParamError
 from ..models import TestConnectionResult
 from ..utils import generate_random_str
 
 
-class WecomIdpPluginConfig(BaseModel):
+class WecomIdpPluginConfig(BasePluginConfig):
+    sensitive_fields = ["secret"]
+
     corp_id: str
     agent_id: str
     secret: str

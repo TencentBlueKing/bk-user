@@ -68,7 +68,8 @@ def _update_local_idp_of_tenant(data_source: DataSource):
         data_source_match_rules = [i for i in data_source_match_rules if i.data_source_id != data_source.id]
 
     # 保存
-    idp.plugin_config = idp_plugin_cfg.model_dump()
-    idp.data_source_match_rules = [i.model_dump() for i in data_source_match_rules]
-    idp.status = IdpStatus.ENABLED if idp_plugin_cfg.data_source_ids else IdpStatus.DISABLED
-    idp.save(update_fields=["plugin_config", "data_source_match_rules", "status", "updated_at"])
+    with transaction.atomic():
+        idp.data_source_match_rules = [i.model_dump() for i in data_source_match_rules]
+        idp.status = IdpStatus.ENABLED if idp_plugin_cfg.data_source_ids else IdpStatus.DISABLED
+        idp.save(update_fields=["data_source_match_rules", "status", "updated_at"])
+        idp.set_plugin_cfg(idp_plugin_cfg)

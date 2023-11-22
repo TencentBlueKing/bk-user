@@ -125,16 +125,15 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
         current_user = request.user.username
         plugin = IdpPlugin.objects.get(id=data["plugin_id"])
 
-        with transaction.atomic():
-            idp = Idp.objects.create(
-                name=data["name"],
-                owner_tenant_id=current_tenant_id,
-                plugin=plugin,
-                plugin_config=data["plugin_config"],
-                data_source_match_rules=data["data_source_match_rules"],
-                creator=current_user,
-                updater=current_user,
-            )
+        idp = Idp.objects.create(
+            name=data["name"],
+            owner_tenant_id=current_tenant_id,
+            plugin=plugin,
+            plugin_config=data["plugin_config"],
+            data_source_match_rules=data["data_source_match_rules"],
+            creator=current_user,
+            updater=current_user,
+        )
 
         return Response(IdpCreateOutputSLZ(instance=idp).data, status=status.HTTP_201_CREATED)
 
@@ -197,10 +196,11 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        idp.name = data["name"]
-        idp.plugin_config = data["plugin_config"]
-        idp.data_source_match_rules = data["data_source_match_rules"]
-        idp.updater = request.user.username
-        idp.save(update_fields=["name", "plugin_config", "data_source_match_rules", "updater", "updated_at"])
+        with transaction.atomic():
+            idp.name = data["name"]
+            idp.data_source_match_rules = data["data_source_match_rules"]
+            idp.updater = request.user.username
+            idp.save(update_fields=["name", "data_source_match_rules", "updater", "updated_at"])
+            idp.set_plugin_cfg(data["plugin_config"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
