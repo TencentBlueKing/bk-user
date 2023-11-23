@@ -50,7 +50,7 @@ def _validate_enum_default(default: str, opt_ids: List[str]):
     """用户自定义字段：单枚举类型的 <默认值> 字段校验"""
 
     # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
-    if not (default is None or default in opt_ids):
+    if not default or default not in opt_ids:
         raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
 
@@ -60,7 +60,7 @@ def _validate_multi_enum_default(default: List[str], opt_ids: List[str]):
         raise ValidationError(_("多选枚举类型自定义字段的 default 值需要传递列表类型"))
 
     # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
-    if not (default is None or set(default).issubset(opt_ids)):
+    if not default or not set(default).issubset(opt_ids):
         raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
 
 
@@ -120,17 +120,17 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs):
         data_type = attrs.get("data_type")
-        options = attrs.get("options")
-        default = attrs.get("default")
 
-        opt_ids = [opt["id"] for opt in options]
-        if data_type == UserFieldDataType.ENUM.value:
+        if data_type in [UserFieldDataType.ENUM.value, UserFieldDataType.MULTI_ENUM.value]:
+            options = attrs.get("options")
             _validate_options(options)
-            _validate_enum_default(default, opt_ids)
 
-        elif data_type == UserFieldDataType.MULTI_ENUM.value:
-            _validate_options(options)
-            _validate_multi_enum_default(default, opt_ids)
+            default = attrs.get("default")
+            opt_ids = [opt["id"] for opt in options]
+            if data_type == UserFieldDataType.ENUM.value:
+                _validate_enum_default(default, opt_ids)
+            else:
+                _validate_multi_enum_default(default, opt_ids)
 
         return attrs
 
@@ -161,17 +161,17 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     def validate(self, attrs):
         current_custom_field = TenantUserCustomField.objects.get(id=self.context["current_custom_field_id"])
         data_type = current_custom_field.data_type
-        options = attrs.get("options")
-        default = attrs.get("default")
 
-        opt_ids = [opt["id"] for opt in options]
-        if data_type == UserFieldDataType.ENUM.value:
+        if data_type in [UserFieldDataType.ENUM.value, UserFieldDataType.MULTI_ENUM.value]:
+            options = attrs.get("options")
             _validate_options(options)
-            _validate_enum_default(default, opt_ids)
 
-        elif data_type == UserFieldDataType.MULTI_ENUM.value:
-            _validate_options(options)
-            _validate_multi_enum_default(default, opt_ids)
+            default = attrs.get("default")
+            opt_ids = [opt["id"] for opt in options]
+            if data_type == UserFieldDataType.ENUM.value:
+                _validate_enum_default(default, opt_ids)
+            else:
+                _validate_multi_enum_default(default, opt_ids)
 
         return attrs
 
