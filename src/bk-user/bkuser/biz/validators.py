@@ -10,15 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
-from bkuser.apps.tenant.constants import UserFieldDataType
-from bkuser.apps.tenant.models import TenantUserCustomField
-from bkuser.plugins.local.constants import CUSTOM_FIELD_NAME_REGEX
+from bkuser.apps.tenant.constants import CUSTOM_FIELD_NAME_REGEX, UserFieldDataType
 
 logger = logging.getLogger(__name__)
 
@@ -32,34 +30,32 @@ def validate_data_source_user_username(value):
         )
 
 
-def validate_fields_is_existed(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
+def validate_fields_existed(extras: Dict[str, Any], custom_fields: List[str]):
     # 非法自定义字段
-    not_existed_fields = set(extras.keys()) - set(custom_fields.values_list("name", flat=True))
+    not_existed_fields = set(extras.keys()) - set(custom_fields)
     if not_existed_fields:
         raise ValidationError(_("不存在自定义字段：{}").format(not_existed_fields))
 
 
-def validate_required_fields_is_filled(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
+def validate_required_fields_filled(extras: Dict[str, Any], required_custom_fields: List[str]):
     # 必填检查
-    required_fields = custom_fields.filter(required=True).values_list("name", flat=True)
-    not_filled_fields = set(required_fields) - set(extras.keys())
+    not_filled_fields = set(required_custom_fields) - set(extras.keys())
     if not_filled_fields:
         raise ValidationError(_("必填字段未填写: {}").format(not_filled_fields))
 
 
-def validate_enum_field_value_is_legal(extras: Dict[str, Any], custom_fields: TenantUserCustomField):
+def validate_enum_field_value_is_legal(extras: Dict[str, Any], enum_kinds_custom_fields: List[Dict[str, Any]]):
     # 枚举类型，非法枚举值
-    type_enum_fields = custom_fields.filter(data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM])
-    for field in type_enum_fields:
-        if field.name not in extras:
+    for field in enum_kinds_custom_fields:
+        if field["name"] not in extras:
             continue
 
-        value = extras[field.name]
-        option_ids_list = [option["id"] for option in field.options]
-        if field.data_type == UserFieldDataType.ENUM and value not in option_ids_list:
+        value = extras[field["name"]]
+        option_ids_list = [option["id"] for option in field["options"]]
+        if field["data_type"] == UserFieldDataType.ENUM and value not in option_ids_list:
             raise ValidationError(_("不存在单选: {}").format(value))
 
-        if field.data_type == UserFieldDataType.MULTI_ENUM:
+        if field["data_type"] == UserFieldDataType.MULTI_ENUM:
             if not isinstance(value, list):
                 raise ValidationError(_("非法多选枚举值: 需要传递列表类型"))
 

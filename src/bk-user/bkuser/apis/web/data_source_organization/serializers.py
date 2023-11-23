@@ -22,12 +22,13 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
 )
+from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_enum_field_value_is_legal,
-    validate_fields_is_existed,
-    validate_required_fields_is_filled,
+    validate_fields_existed,
+    validate_required_fields_filled,
 )
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -107,11 +108,18 @@ class UserCreateInputSLZ(serializers.Serializer):
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
         if custom_fields.exists():
             # 检测非法字段
-            validate_fields_is_existed(extras, custom_fields)
+            custom_field_name_list = custom_fields.values_list("name", flat=True)
+            validate_fields_existed(extras, custom_field_name_list)
+
             # 必填字段检测
-            validate_required_fields_is_filled(extras, custom_fields)
+            required_custom_fields = custom_fields.filter(required=True).values_list("name", flat=True)
+            validate_required_fields_filled(extras, required_custom_fields)
+
             # 枚举字段，非法枚举值检测
-            validate_enum_field_value_is_legal(extras, custom_fields)
+            enum_kinds_fields = custom_fields.filter(
+                data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
+            )
+            validate_enum_field_value_is_legal(extras, enum_kinds_fields.values("name", "options", "data_type"))
             # TODO 唯一性检测
         return extras
 
@@ -226,11 +234,18 @@ class UserUpdateInputSLZ(serializers.Serializer):
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
         if custom_fields.exists():
             # 检测非法字段
-            validate_fields_is_existed(extras, custom_fields)
+            custom_field_name_list = custom_fields.values_list("name", flat=True)
+            validate_fields_existed(extras, custom_field_name_list)
+
             # 必填字段检测
-            validate_required_fields_is_filled(extras, custom_fields)
+            required_custom_fields = custom_fields.filter(required=True).values_list("name", flat=True)
+            validate_required_fields_filled(extras, required_custom_fields)
+
             # 枚举字段，非法枚举值检测
-            validate_enum_field_value_is_legal(extras, custom_fields)
+            enum_kinds_fields = custom_fields.filter(
+                data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
+            )
+            validate_enum_field_value_is_legal(extras, enum_kinds_fields.values("name", "options", "data_type"))
             # TODO 可编辑性检测
             # TODO 唯一性检测
         return extras
