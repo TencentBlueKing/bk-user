@@ -21,15 +21,7 @@
       </div>
       <div class="content-item">
         <p class="item-title">基础配置</p>
-        <bk-form-item class="w-[600px]" label="企业 ID" property="plugin_config.corp_id" required>
-          <bk-input v-model="formData.plugin_config.corp_id" @focus="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[600px]" label="Agent ID" property="plugin_config.agent_id" required>
-          <bk-input v-model="formData.plugin_config.agent_id" @focus="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[600px]" label="Secret" property="plugin_config.secret" required>
-          <bk-input type="password" v-model="formData.plugin_config.secret" @focus="handleChange" />
-        </bk-form-item>
+        <SchemaForm :plugins-config="pluginsConfig" :form-data="formData" />
       </div>
       <div class="content-item">
         <p class="item-title">登录模式</p>
@@ -144,8 +136,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
+import SchemaForm from '@/components/schema-form/SchemaForm.vue';
 import useValidate from '@/hooks/use-validate';
 import { useCustomPlugin } from '@/hooks/useCustomPlugin';
+import { getIdpsPluginsConfig } from '@/http/authSourceFiles';
 import { getDataSourceList } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
 
@@ -166,11 +160,7 @@ const formRef = ref();
 const formData = ref({
   name: '',
   plugin_id: props.plugin.id,
-  plugin_config: {
-    corp_id: '',
-    agent_id: '',
-    secret: '',
-  },
+  plugin_config: {},
   data_source_match_rules: [
     {
       data_source_id: '',
@@ -189,9 +179,6 @@ const LoginMethod = ref('a');
 
 const rules = {
   name: [validate.required],
-  'plugin_config.corp_id': [validate.required],
-  'plugin_config.agent_id': [validate.required],
-  'plugin_config.secret': [validate.required],
 };
 
 const rulesData = {
@@ -203,13 +190,19 @@ const rulesData = {
 const dataSourceList = ref([]);
 const builtinFields = ref([]);
 const customFields = ref([]);
+const pluginsConfig = ref({});
 
 onMounted(async () => {
   isLoading.value = true;
   dataSourceList.value = [];
   builtinFields.value = [];
   customFields.value = [];
-  const [res, fieldRes] = await Promise.all([getDataSourceList(''), getFields()]);
+  const [res, fieldRes, configRes] = await Promise.all([
+    getDataSourceList(''),
+    getFields(),
+    getIdpsPluginsConfig(props.plugin.id),
+  ]);
+  pluginsConfig.value = configRes.data.json_schema;
   dataSourceList.value = res.data?.map(item => ({ key: item.id, name: item.name, disabled: false })) || [];
   builtinFields.value = fieldRes.data?.builtin_fields || [];
   customFields.value = fieldRes.data?.custom_fields || [];

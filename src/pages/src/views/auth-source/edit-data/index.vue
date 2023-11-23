@@ -3,7 +3,8 @@
     <MainBreadcrumbs />
     <div class="edit-data-wrapper user-scroll-y">
       <Local v-if="pluginId === 'local'" />
-      <WeCom v-if="pluginId === 'wecom'" />
+      <WeCom v-else-if="pluginId === 'wecom'" />
+      <CustomPlugin v-else />
     </div>
   </div>
 </template>
@@ -12,6 +13,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 
+import CustomPlugin from './CustomPlugin.vue';
 import Local from './Local.vue';
 import WeCom from './WeCom.vue';
 

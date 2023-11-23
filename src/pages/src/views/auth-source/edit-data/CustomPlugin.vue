@@ -1,10 +1,10 @@
 <template>
   <bk-loading class="details-wrapper" :loading="isLoading">
     <div class="details-type">
-      <img :src="plugin.logo" class="w-[24px] h-[24px] mr-[15px]">
+      <img :src="authSourceData.plugin?.logo" class="w-[24px] h-[24px] mr-[15px]">
       <div>
-        <p class="title">{{ plugin.name }}</p>
-        <p class="subtitle">{{ plugin.description }}</p>
+        <p class="title">{{ authSourceData.plugin?.name }}</p>
+        <p class="subtitle">{{ authSourceData.plugin?.description }}</p>
       </div>
     </div>
     <bk-form
@@ -16,19 +16,19 @@
       <div class="content-item">
         <p class="item-title">基础信息</p>
         <bk-form-item class="w-[600px]" label="名称" property="name" required>
-          <bk-input v-model="formData.name" @focus="handleChange" />
+          <bk-input v-model="formData.name" @change="handleChange" />
         </bk-form-item>
       </div>
-      <div class="content-item">
+      <div class="content-item" v-if="formData.plugin_config">
         <p class="item-title">基础配置</p>
-        <bk-form-item class="w-[600px]" label="企业 ID" property="plugin_config.corp_id" required>
-          <bk-input v-model="formData.plugin_config.corp_id" @focus="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[600px]" label="Agent ID" property="plugin_config.agent_id" required>
-          <bk-input v-model="formData.plugin_config.agent_id" @focus="handleChange" />
-        </bk-form-item>
-        <bk-form-item class="w-[600px]" label="Secret" property="plugin_config.secret" required>
-          <bk-input type="password" v-model="formData.plugin_config.secret" @focus="handleChange" />
+        <bk-form-item
+          v-for="(item, key, index) in formData.plugin_config"
+          :key="index"
+          class="w-[600px]"
+          :label="key"
+          :property="`plugin_config.${key}`"
+          required>
+          <bk-input v-model="formData.plugin_config[key]" @change="handleChange" />
         </bk-form-item>
       </div>
       <div class="content-item">
@@ -128,9 +128,6 @@
       </div>
     </bk-form>
     <div class="footer-wrapper">
-      <bk-button @click="emit('prev')">
-        上一步
-      </bk-button>
       <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
         提交
       </bk-button>
@@ -143,34 +140,28 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 import useValidate from '@/hooks/use-validate';
 import { useCustomPlugin } from '@/hooks/useCustomPlugin';
+import { getIdpsDetails } from '@/http/authSourceFiles';
 import { getDataSourceList } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
+import { useMainViewStore } from '@/store/mainView';
 
+const route = useRoute();
 const validate = useValidate();
+const store = useMainViewStore();
 
-const emit = defineEmits(['prev']);
-
-const props = defineProps({
-  plugin: {
-    type: Object,
-    default: () => ({}),
-  },
-});
-
-const isLoading = ref(false);
-const btnLoading = ref(false);
 const formRef = ref();
+const isLoading = ref(false);
+const authSourceData = ref({});
+const btnLoading = ref(false);
+
 const formData = ref({
   name: '',
-  plugin_id: props.plugin.id,
-  plugin_config: {
-    corp_id: '',
-    agent_id: '',
-    secret: '',
-  },
+  id: route.params.id,
+  plugin_config: {},
   data_source_match_rules: [
     {
       data_source_id: '',
@@ -189,9 +180,6 @@ const LoginMethod = ref('a');
 
 const rules = {
   name: [validate.required],
-  'plugin_config.corp_id': [validate.required],
-  'plugin_config.agent_id': [validate.required],
-  'plugin_config.secret': [validate.required],
 };
 
 const rulesData = {
@@ -205,23 +193,52 @@ const builtinFields = ref([]);
 const customFields = ref([]);
 
 onMounted(async () => {
-  isLoading.value = true;
-  dataSourceList.value = [];
-  builtinFields.value = [];
-  customFields.value = [];
-  const [res, fieldRes] = await Promise.all([getDataSourceList(''), getFields()]);
-  dataSourceList.value = res.data?.map(item => ({ key: item.id, name: item.name, disabled: false })) || [];
-  builtinFields.value = fieldRes.data?.builtin_fields || [];
-  customFields.value = fieldRes.data?.custom_fields || [];
-  formData.value.data_source_match_rules[0].targetFields.push(
-    ...fieldRes.data?.builtin_fields?.map(item => ({
-      key: item.id, name: item.name, disabled: false, type: '内置',
-    })) || [],
-    ...fieldRes.data?.custom_fields?.map(item => ({
-      key: item.id, name: item.name, disabled: false, type: '自定义',
-    })) || [],
-  );
-  isLoading.value = false;
+  try {
+    isLoading.value = true;
+    const [authRes, sourceRes, fieldRes] = await Promise.all([
+      getIdpsDetails(route.params.id),
+      getDataSourceList(''),
+      getFields(),
+    ]);
+
+    authSourceData.value = authRes.data;
+    store.breadCrumbsTitle = `编辑${authSourceData.value.plugin.name}认证源`;
+    formData.value = {
+      ...formData.value,
+      name: authRes.data.name,
+      plugin_config: authRes.data?.plugin_config,
+      data_source_match_rules: authRes.data?.data_source_match_rules,
+    };
+
+    const sourceIds = new Set(formData.value.data_source_match_rules.map(item => item.data_source_id));
+
+    dataSourceList.value = sourceRes.data?.map(item => ({
+      key: item.id,
+      name: item.name,
+      disabled: sourceIds.has(item.id),
+    })) || [];
+
+    const allFields = [
+      ...(fieldRes.data?.builtin_fields?.map(item => ({ ...item, type: '内置' })) || []),
+      ...(fieldRes.data?.custom_fields?.map(item => ({ ...item, type: '自定义' })) || []),
+    ];
+
+    builtinFields.value = fieldRes.data?.builtin_fields || [];
+    customFields.value = fieldRes.data?.custom_fields || [];
+
+    formData.value.data_source_match_rules?.forEach((rule) => {
+      rule.targetFields = allFields.map(field => ({
+        key: field.id,
+        name: field.name,
+        disabled: rule.field_compare_rules.some(compareRule => compareRule.target_field === field.name),
+        type: field.type,
+      }));
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    isLoading.value = false;
+  }
 });
 
 const {
@@ -245,51 +262,10 @@ const {
   customFields,
   btnLoading,
   formRef,
-  'add',
+  'edit',
 );
 </script>
 
-<style lang="less">
-.info-wrapper {
-  .details-url {
-    .title {
-      font-size: 14px;
-      color: #63656E;
-      text-align: left;
-    }
-
-    .content {
-      display: flex;
-      padding: 8px 12px;
-      margin-top: 12px;
-      background: #F5F7FA;
-      align-items: center;
-      justify-content: space-between;
-
-      p {
-        display: -webkit-box;
-        width: 290px;
-        overflow: hidden;
-        text-align: left;
-        text-overflow: ellipsis;
-        word-break: break-all;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 3;
-      }
-
-      .icon-copy {
-        font-size: 14px;
-        color: #3A84FF;
-        cursor: pointer;
-      }
-    }
-  }
-
-  .bk-modal-close {
-    display: none;
-  }
-}
-</style>
 <style lang="less" scoped>
-@import url('./WeCom.less');
+@import url('../new-data/WeCom.less');
 </style>
