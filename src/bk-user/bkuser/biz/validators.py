@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
-from bkuser.apps.tenant.constants import CUSTOM_FIELD_NAME_REGEX, UserFieldDataType
+from bkuser.apps.tenant.constants import TENANT_CUSTOM_FIELD_NAME_REGEX, UserFieldDataType
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def validate_enum_field_value_is_legal(extras: Dict[str, Any], enum_kinds_custom
 
 
 def validate_tenant_custom_field_name(value):
-    if not re.fullmatch(CUSTOM_FIELD_NAME_REGEX, value):
+    if not re.fullmatch(TENANT_CUSTOM_FIELD_NAME_REGEX, value):
         raise ValidationError(
             _(
                 "{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字母开头，字母或数字结尾"  # noqa: E501

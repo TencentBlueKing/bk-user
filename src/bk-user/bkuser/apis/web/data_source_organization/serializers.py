@@ -120,7 +120,7 @@ class UserCreateInputSLZ(serializers.Serializer):
                 data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
             )
             validate_enum_field_value_is_legal(extras, enum_kinds_fields.values("name", "options", "data_type"))
-            # TODO 唯一性检测
+            # FIXME (su) 唯一性检测
         return extras
 
 
@@ -246,6 +246,5 @@ class UserUpdateInputSLZ(serializers.Serializer):
                 data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
             )
             validate_enum_field_value_is_legal(extras, enum_kinds_fields.values("name", "options", "data_type"))
-            # TODO 可编辑性检测
-            # TODO 唯一性检测
+            # FIXME (su) 唯一性检测
         return extras
