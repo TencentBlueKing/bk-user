@@ -214,13 +214,16 @@ class TenantUserHandler:
         return data
 
     @staticmethod
-    def get_tenant_user_ids_by_tenant_department(tenant_department_id: int, recursive: bool = True) -> List[str]:
+    def get_tenant_user_ids_by_tenant_department(
+        tenant_id: str, tenant_department_id: int, recursive: bool = True
+    ) -> List[str]:
         """
         获取租户部门下租户用户
         """
-        tenant_department = TenantDepartment.objects.filter(id=tenant_department_id).first()
+        tenant_department = TenantDepartment.objects.filter(tenant_id=tenant_id, id=tenant_department_id).first()
         if not tenant_department:
             return []
+
         data_source_user_ids = DataSourceDepartmentHandler.list_department_user_ids(
             department_id=tenant_department.data_source_department_id, recursive=recursive
         )
@@ -237,9 +240,11 @@ class TenantUserHandler:
         data_source_ids: List[int] = []
         for data_sources in data_source_ids_map.values():
             data_source_ids += data_sources
-        return TenantUser.objects.filter(data_source_id__in=data_source_ids, tenant_id=tenant_id).values_list(
-            "id", flat=True
-        )
+
+        return TenantUser.objects.filter(
+            data_source_id__in=data_source_ids,
+            tenant_id=tenant_id,
+        ).values_list("id", flat=True)
 
     @staticmethod
     def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserPhoneInfo):
@@ -439,16 +444,3 @@ class TenantDepartmentHandler:
             )
             tenant_root_department_map[tenant_id] = tenant_root_department
         return tenant_root_department_map
-
-    @staticmethod
-    def get_tenant_department_children_by_id(tenant_department_id: int) -> List[TenantDepartmentBaseInfo]:
-        tenant_department = TenantDepartment.objects.filter(id=tenant_department_id).first()
-        if not tenant_department:
-            return []
-        # 获取二级组织
-        children = DataSourceDepartmentRelation.objects.get(
-            department=tenant_department.data_source_department
-        ).get_children()
-        return TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
-            tenant_department.tenant_id, children.values_list("department_id", flat=True)
-        )

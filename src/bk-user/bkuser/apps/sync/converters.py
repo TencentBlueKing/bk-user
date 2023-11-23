@@ -117,5 +117,5 @@ class DataSourceUserConverter:
             phone=phone,
             phone_country_code=country_code,
             # TODO (su) 自定义字段应该也需要校验下（比如说枚举值？） & 根据配置的类型 format 下？
-            extras={f.name: props.get(mapping[f.name], f.default) for f in self.custom_fields},
+            extras={f.name: props.get(mapping[f.name], f.default) for f in self.custom_fields if f.name in mapping},
         )
