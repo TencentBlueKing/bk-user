@@ -77,7 +77,6 @@ class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
                     "email": user.email,
                     "phone": user.phone,
                     "phone_country_code": user.phone_country_code,
-                    "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
                 }
             )
         return data

@@ -75,10 +75,9 @@ class DataSourcePluginListApi(generics.ListAPIView):
 
 
 class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
     queryset = DataSourcePlugin.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["data_source_plugin"],

@@ -26,6 +26,7 @@ from bkuser.apis.web.data_source_organization.serializers import (
     UserSearchOutputSLZ,
     UserUpdateInputSLZ,
 )
+from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -39,7 +40,7 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
-class DataSourceUserListCreateApi(generics.ListCreateAPIView):
+class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
     serializer_class = UserSearchOutputSLZ
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -51,7 +52,9 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         data_source_id = self.kwargs["id"]
 
         # 校验数据源是否存在
-        data_source = DataSource.objects.filter(id=data_source_id).first()
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(), id=data_source_id
+        ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
@@ -113,7 +116,7 @@ class DataSourceUserListCreateApi(generics.ListCreateAPIView):
         return Response(UserCreateOutputSLZ(instance={"id": user_id}).data)
 
 
-class DataSourceLeadersListApi(generics.ListAPIView):
+class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
     serializer_class = LeaderSearchOutputSLZ
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -123,7 +126,9 @@ class DataSourceLeadersListApi(generics.ListAPIView):
         data = slz.validated_data
 
         # 校验数据源是否存在
-        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
+        ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
@@ -143,7 +148,7 @@ class DataSourceLeadersListApi(generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class DataSourceDepartmentsListApi(generics.ListAPIView):
+class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DepartmentSearchOutputSLZ
 
@@ -153,7 +158,9 @@ class DataSourceDepartmentsListApi(generics.ListAPIView):
         data = slz.validated_data
 
         # 校验数据源是否存在
-        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
+        ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
