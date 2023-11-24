@@ -8,12 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from collections import defaultdict
+from typing import Any, Dict
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
+from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
@@ -21,7 +24,7 @@ from bkuser.common.error_codes import error_codes
 
 from .mixins import LoginApiAccessControlMixin
 from .serializers import (
-    GlobalSettingRetrieveOutputSLZ,
+    GlobalInfoRetrieveOutputSLZ,
     IdpListOutputSLZ,
     IdpRetrieveOutputSLZ,
     LocalUserCredentialAuthenticateInputSLZ,
@@ -66,10 +69,38 @@ class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.Cr
         return Response(LocalUserCredentialAuthenticateOutputSLZ(instance=matched_users, many=True).data)
 
 
-class GlobalSettingRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
+class GlobalInfoRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
-        # TODO: 待实现全局配置管理功能后调整
-        return Response(GlobalSettingRetrieveOutputSLZ(instance={"tenant_visible": False}).data)
+        # 查询租户启用的认证源
+        enabled_idp_map = defaultdict(list)
+        for idp in Idp.objects.filter(status=IdpStatus.ENABLED).values("owner_tenant_id", "id", "plugin_id"):
+            enabled_idp_map[idp["owner_tenant_id"]].append({"id": idp["id"], "plugin_id": idp["plugin_id"]})
+
+        # 启用认证源的租户数量
+        enabled_auth_tenant_number = len(enabled_idp_map)
+
+        # 唯一启用认证的租户信息
+        only_enabled_auth_tenant: Dict[str, Any] | None = None
+        if enabled_auth_tenant_number == 1:
+            owner_tenant_id, enabled_idps = next(iter(enabled_idp_map.items()))
+            tenant = Tenant.objects.get(id=owner_tenant_id)
+            only_enabled_auth_tenant = {
+                "id": tenant.id,
+                "name": tenant.name,
+                "logo": tenant.logo,
+                "enabled_idps": enabled_idps,
+            }
+
+        return Response(
+            GlobalInfoRetrieveOutputSLZ(
+                instance={
+                    # FIXME (nan): 待实现全局配置管理功能后调整
+                    "tenant_visible": False,
+                    "enabled_auth_tenant_number": enabled_auth_tenant_number,
+                    "only_enabled_auth_tenant": only_enabled_auth_tenant,
+                }
+            ).data
+        )
 
 
 class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
