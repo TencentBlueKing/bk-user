@@ -5,7 +5,7 @@
     </bk-form-item>
 
     <bk-form-item property="password">
-      <bk-input size="large" v-model="formData.password" type="password" placeholder="请输入密码"></bk-input>
+      <bk-input size="large" v-model="formData.password" type="password" placeholder="请输入密码" @enter="handleLogin"></bk-input>
     </bk-form-item>
 
     <p class="error-text" v-if="errorMessage">{{ errorMessage }}</p>

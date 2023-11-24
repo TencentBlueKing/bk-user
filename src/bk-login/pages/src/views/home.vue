@@ -1,17 +1,28 @@
 <template>
-  <bk-form form-type="vertical">
+  <bk-form form-type="vertical" v-bkloading="{ loading }">
     <section v-if="!hasStorage">
       <h1 class="login-header">请选择登录租户</h1>
 
       <bk-form-item>
-        <bk-input
-          v-if="!tenantVisible"
-          size="large"
-          placeholder="填写租户ID"
-          v-model="tenantId"
-          @blur="handleGetTenant"
-          @enter="handleGetTenant">
-        </bk-input>
+        <div style="display: flex;" v-if="!tenantVisible">
+          <bk-input
+            class="tenant-input"
+            size="large"
+            placeholder="填写租户ID"
+            v-model="tenantId"
+            @enter="handleGetTenant">
+          </bk-input>
+
+          <bk-button 
+            size="large" 
+            theme="primary"
+            :disabled="!tenantId"
+            :outline="!!tenant"
+            class="tenant-button"
+            @click="handleGetTenant">
+            识别
+          </bk-button>
+        </div>
 
         <bk-select v-else size="large" filterable @change="handleTenantChange">
           <bk-option
@@ -67,7 +78,7 @@
           {{ tenant?.name.charAt(0).toUpperCase() }}
         </span>
         {{ tenant?.name }}
-        <bk-popover v-if="changList.length" trigger="click" theme="light" placement="bottom" ext-cls="tenant-popover">
+        <bk-popover v-if="changList.length && !isOnlyOneTenant" trigger="click" theme="light" placement="bottom" ext-cls="tenant-popover">
           <div class="tenant-change">
             <Transfer class="bk-icon" />
             <span>切换租户</span>
@@ -81,7 +92,7 @@
             </section>
           </template>
         </bk-popover>
-        <div v-else class="tenant-change" @click="addTenant">
+        <div v-else-if="!isOnlyOneTenant" class="tenant-change" @click="addTenant">
           <Transfer class="bk-icon" />
           <span>切换租户</span>
         </div>
@@ -110,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { getAllTenantList, getIdpList, getTenant, getTenantList, getVisible, signIn } from '@/http/api';
+import { getAllTenantList, getIdpList, getTenant, getTenantList, getGlobalInfos, signIn } from '@/http/api';
 import { Done, Transfer } from 'bkui-vue/lib/icon';
 import { type Ref, onBeforeMount, ref, watch, computed } from 'vue';
 import Password from './components/password.vue';
@@ -136,10 +147,12 @@ interface Plugin {
 
 type Category = 'enterprise' | 'social';
 
+const loading = ref(false);
 const allTenantList: Ref<Tenant[]> = ref([]);
 const tenantId = ref('');
 const tenantIdList: Ref<string[]> = ref([]);
 const tenantList = ref<Tenant[]>([]);
+const hasStorage = ref(!!localStorage.getItem('tenantId'));
 
 // 选择租户
 const handleTenantChange = (id: string) => {
@@ -192,10 +205,11 @@ const signInAndFetchIdp = async () => {
   const res = await getIdpList();
   idps.value = res;
   [activeIdp.value] = res;
+  handleChangeIdp(activeIdp.value);
+  loading.value = false;
 };
 
 const tenantVisible = ref(false);
-const hasStorage = ref(!!localStorage.getItem('tenantId'));
 
 // 存在登录过的租户
 if (hasStorage.value) {
@@ -231,6 +245,8 @@ const handleChangeIdp = (idp: Idp) => {
 
 const protocolVisible = ref(false);
 
+const isOnlyOneTenant = ref(false);
+
 watch(
   () => tenantIdList.value,
   (val) => {
@@ -242,11 +258,20 @@ watch(
   { immediate: true },
 );
 onBeforeMount(() => {
-  getVisible().then((res) => {
+  loading.value = true;
+  getGlobalInfos().then((res) => {
     tenantVisible.value = res.tenant_visible;
-    if (res.tenant_visible) {
+    // 如果只有一个租户，不用选择租户
+    if (res.enabled_auth_tenant_number === 1) {
+      isOnlyOneTenant.value = true;
+      hasStorage.value = true;
+      tenant.value = res.only_enabled_auth_tenant;
+      tenantId.value = res.only_enabled_auth_tenant.id;
+      signInAndFetchIdp();
+    } else if (res.tenant_visible) { // 如果租户可见，改为选择租户
       getAllTenantList().then((res) => {
         allTenantList.value = res;
+        loading.value = false;
       });
     }
   });
@@ -261,6 +286,16 @@ onBeforeMount(() => {
   font-size: 32px;
   color: #313238;
   margin-bottom: 32px;
+}
+
+.tenant-input {
+  flex-grow: 1;
+}
+
+.tenant-button {
+  margin-left: 8px;
+  width: 72px;
+  height: 40px;
 }
 
 .tenant-content {

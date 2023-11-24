@@ -55,9 +55,10 @@ const handleLogin = () => {
 onBeforeMount(() => {
   getUserList().then((res) => {
     userList.value = res;
-    // 如果只有一个账号，默认选中
+    // 如果只有一个账号，默认选中并登录
     if (res.length === 1) {
       userId.value = res[0].id;
+      handleLogin();
     }
   });
 });
