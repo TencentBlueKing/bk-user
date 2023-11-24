@@ -8,17 +8,31 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
 from .constants import IdpStatus
 
 
-class GlobalSetting(BaseModel):
-    """全局配置"""
+class EnabledIdp(BaseModel):
+    id: str
+    plugin_id: str
+
+
+class OnlyEnabledAuthTenant(BaseModel):
+    id: str
+    name: str
+    logo: str = ""
+    enabled_idps: List[EnabledIdp]
+
+
+class GlobalInfo(BaseModel):
+    """全局信息"""
 
     tenant_visible: bool
+    enabled_auth_tenant_number: int
+    only_enabled_auth_tenant: OnlyEnabledAuthTenant | None
 
 
 class TenantInfo(BaseModel):

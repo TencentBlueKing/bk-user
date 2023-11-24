@@ -22,8 +22,10 @@ urlpatterns = [
     # 前端页面（选择登录的用户）
     path("page/users/", TemplateView.as_view(template_name="index.html")),
     # ------------------------------------------ 租户 & 登录方式选择 ------------------------------------------
-    # 租户配置
-    path("tenant-global-settings/", views.TenantGlobalSettingRetrieveApi.as_view()),
+    # FIXME: 待联调tenant-global-infos完成后删除tenant-global-settings
+    path("tenant-global-settings/", views.TenantGlobalInfoRetrieveApi.as_view()),
+    # 租户全局信息
+    path("tenant-global-infos/", views.TenantGlobalInfoRetrieveApi.as_view()),
     # 租户信息
     path("tenants/", views.TenantListApi.as_view()),
     path("tenants/<str:tenant_id>/", views.TenantRetrieveApi.as_view()),

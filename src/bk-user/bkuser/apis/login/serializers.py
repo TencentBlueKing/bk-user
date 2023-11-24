@@ -57,6 +57,24 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
     ...
 
 
+class EnabledIdpOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="认证源 ID")
+    plugin_id = serializers.CharField(help_text="认证源插件 ID")
+
+
+class OnlyEnabledAuthTenantOutputSLZ(TenantListOutputSLZ):
+    enabled_idps = serializers.ListField(child=EnabledIdpOutputSLZ(help_text="认证源插件"))
+
+
+class GlobalInfoRetrieveOutputSLZ(serializers.Serializer):
+    tenant_visible = serializers.BooleanField(help_text="租户可见性")
+    enabled_auth_tenant_number = serializers.IntegerField(help_text="启用用户认证的租户数量")
+    only_enabled_auth_tenant = OnlyEnabledAuthTenantOutputSLZ(
+        help_text="唯一启动用户认证的租户数量，当 enabled_auth_tenant_number 不是一个时，该值为空",
+        allow_null=True,
+    )
+
+
 class IdpPluginOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源插件 ID")
     name = serializers.CharField(help_text="认证源插件名称")
