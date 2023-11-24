@@ -32,6 +32,7 @@ class GlobalInfo(BaseModel):
 
     tenant_visible: bool
     enabled_auth_tenant_number: int
+    # 当且仅当只有一个租户认证可用时候才有值，即 enabled_auth_tenant_number = 1 时才有值
     only_enabled_auth_tenant: OnlyEnabledAuthTenant | None
 
 

@@ -82,13 +82,13 @@ class GlobalInfoRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView
         # 唯一启用认证的租户信息
         only_enabled_auth_tenant: Dict[str, Any] | None = None
         if enabled_auth_tenant_number == 1:
-            owner_tenant_id, enabled_ids = next(iter(enabled_idp_map.items()))
+            owner_tenant_id, enabled_idps = next(iter(enabled_idp_map.items()))
             tenant = Tenant.objects.get(id=owner_tenant_id)
             only_enabled_auth_tenant = {
                 "id": tenant.id,
                 "name": tenant.name,
                 "logo": tenant.logo,
-                "enabled_idps": enabled_ids,
+                "enabled_idps": enabled_idps,
             }
 
         return Response(
