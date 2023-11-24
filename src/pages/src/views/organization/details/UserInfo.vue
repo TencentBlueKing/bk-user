@@ -51,8 +51,16 @@
           </div>
         </template>
       </bk-table-column> -->
-      <bk-table-column prop="email" label="邮箱" />
-      <bk-table-column prop="phone" label="手机号" />
+      <bk-table-column prop="email" label="邮箱">
+        <template #default="{ row }">
+          <span>{{ row.email || '--' }}</span>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="phone" label="手机号">
+        <template #default="{ row }">
+          <span>{{ row.email || '--' }}</span>
+        </template>
+      </bk-table-column>
       <bk-table-column prop="departments" label="组织">
         <template #default="{ row }">
           <span>{{ formatConvert(row.departments) }}</span>

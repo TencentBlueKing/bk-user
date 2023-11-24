@@ -40,7 +40,9 @@
         :handle-res-code="handleRes"
         :url="formData.logo"
         :custom-request="customRequest"
+        :size="2"
         @delete="handleDelete"
+        @error="handleError"
       />
       <bk-form-item label="邮箱" property="email" required>
         <bk-input v-model="formData.email" placeholder="请输入" @focus="handleChange" />
@@ -140,6 +142,7 @@
 </template>
 
 <script setup lang="ts">
+import { Message } from 'bkui-vue';
 import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import phoneInput from '@/components/phoneInput.vue';
@@ -221,6 +224,12 @@ const customRequest = (event) => {
   handleChange();
 };
 
+const handleError = (file) => {
+  if (file.size > (2 * 1024 * 1024)) {
+    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+  }
+};
+
 const scrollLoading = ref(false);
 const departmentsCount = ref(0);
 const leadersCount = ref(0);
@@ -244,8 +253,10 @@ onMounted(async () => {
   const leaders = await getDataSourceLeaders(leadersParams);
   state.departments = departments.data.results;
   departmentsCount.value = departments.data.count;
-  state.leaders = leaders.data.results.filter(item => item.id !== props.currentId);
-  leadersCount.value = leaders.data.count;
+  state.leaders = props.type === 'add'
+    ? leaders.data.results
+    : leaders.data.results.filter(item => item.id !== props.currentId);
+  leadersCount.value = props.type === 'add' ? leaders.data.count : leaders.data.count - 1;
 });
 
 const changeCountryCode = (code: string) => {
@@ -274,7 +285,9 @@ const leadersScrollEnd = () => {
     leadersParams.page += 1;
     getDataSourceLeaders(leadersParams).then((res) => {
       state.leaders.push(...res.data.results.filter(item => item.id !== props.currentId));
-      leadersCount.value = res.data.count;
+      leadersCount.value = (props.type !== 'add' && formData.username.indexOf(leadersParams.keyword) !== -1)
+        ? res.data.count - 1
+        : res.data.count;
       scrollLoading.value = false;
     })
       .catch((e) => {
@@ -332,8 +345,12 @@ const searchLeaders = (value: string) => {
   leadersParams.keyword = value;
   leadersParams.page = 1;
   getDataSourceLeaders(leadersParams).then((res) => {
-    state.leaders = res.data.results.filter(item => item.id !== props.currentId);
-    leadersCount.value = res.data.count;
+    state.leaders = props.type === 'add'
+      ? res.data.results
+      : res.data.results.filter(item => item.id !== props.currentId);
+    leadersCount.value = (props.type !== 'add' && formData.username.indexOf(value) !== -1)
+      ? res.data.count - 1
+      : res.data.count;
   })
     .catch((e) => {
       console.warn(e);

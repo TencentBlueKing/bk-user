@@ -32,7 +32,9 @@
             :handle-res-code="handleRes"
             :url="formData.logo"
             :custom-request="customRequest"
+            :size="2"
             @delete="handleDelete"
+            @error="handleError"
           />
         </div>
       </div>
@@ -127,6 +129,7 @@
 </template>
 
 <script setup lang="tsx">
+import { Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
@@ -204,12 +207,16 @@ const isPasswordInitial = ref(false);
 const isDropdownPasswordInitial = ref(false);
 
 watch(() => formData.password_initial_config?.generate_method, (value) => {
+  enabledMethodsError.value = value === 'random' && !formData.password_initial_config?.notification?.enabled_methods.length;
   if (value === 'random') {
     formData.password_initial_config.fixed_password = null;
   }
 });
 
 watch(() => formData.password_initial_config?.notification?.enabled_methods, (value) => {
+  if (formData.password_initial_config.generate_method === 'fixed') {
+    return enabledMethodsError.value = false;
+  }
   enabledMethodsError.value = !value.length;
 });
 
@@ -277,6 +284,12 @@ const customRequest = (event) => {
 const handleDelete = () => {
   formData.logo = "";
   handleChange();
+};
+
+const handleError = (file) => {
+  if (file.size > (2 * 1024 * 1024)) {
+    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+  }
 };
 
 const fieldItemFn = (row: any) => {
@@ -406,19 +419,19 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 const phoneError = ref(false);
 // 校验表单
 async function handleSubmit() {
-  if (enabledMethodsError.value) return;
-
   formData.managers?.forEach((item) => {
-    item.error = item.phone === '' || item.error;
-    phoneError.value = item.error;
+    if (props.type === 'add') {
+      item.error = item.phone === '' || item.error;
+      phoneError.value = item.error;
+    }
     if (!item.error) {
       delete item.error;
       delete item.disabled;
     };
   });
-  
+
   await Promise.all([basicRef.value.validate(), userRef.value.validate()]);
-  if (phoneError.value) return;
+  if (phoneError.value || enabledMethodsError.value) return;
 
   state.isLoading = true;
   props.type === "add" ? createTenantsFn() : putTenantsFn();

@@ -24,16 +24,22 @@
         <div class="basic-config">
           <p>以下数据源已开启「账密登录」</p>
           <div class="on">
-            <span v-for="(item, index) in onDataSources" :key="index">
+            <bk-overflow-title
+              type="tips"
+              class="source-name"
+              v-for="(item, index) in onDataSources"
+              :key="index">
               {{ item.data_source_name }}
-            </span>
+            </bk-overflow-title>
           </div>
           <p>以下数据源未开启「账密登录」</p>
           <div class="off" v-for="(item, index) in notDataSources" :key="index">
-            <span>
+            <bk-overflow-title
+              type="tips"
+              class="source-name">
               {{ item.data_source_name }}
               <bk-button text theme="primary" @click="handleOpen(item)">去开启</bk-button>
-            </span>
+            </bk-overflow-title>
           </div>
         </div>
       </div>
@@ -52,15 +58,23 @@
             <div class="field-rules">
               <dl>
                 <dt>数据源字段：</dt>
-                <dd v-for="(val, i) in item.field_compare_rules" :key="i">
+                <bk-overflow-title
+                  type="tips"
+                  class="source-field"
+                  v-for="(val, i) in item.field_compare_rules"
+                  :key="i">
                   {{ val.source_field }}
-                </dd>
+                </bk-overflow-title>
               </dl>
               <dl>
                 <dt>认证源字段：</dt>
-                <dd v-for="(val, i) in item.field_compare_rules" :key="i">
+                <bk-overflow-title
+                  type="tips"
+                  class="source-field"
+                  v-for="(val, i) in item.field_compare_rules"
+                  :key="i">
                   {{ val.target_field }}
-                </dd>
+                </bk-overflow-title>
               </dl>
             </div>
             <span class="or" v-if="index !== 0">or</span>
@@ -207,6 +221,7 @@ const handleSubmit = async () => {
 
   .auth-source-form {
     .content-item {
+      margin-bottom: 16px;
       background: #fff;
       border-radius: 2px;
       box-shadow: 0 2px 4px 0 #1919290d;
@@ -218,6 +233,7 @@ const handleSubmit = async () => {
       }
 
       .basic-config {
+        padding-bottom: 12px;
         margin-left: 64px;
 
         p {
@@ -226,8 +242,7 @@ const handleSubmit = async () => {
           color: #63656E;
         }
 
-        span {
-          display: inline-block;
+        .source-name {
           width: 300px;
           height: 40px;
           padding-left: 24px;
@@ -240,9 +255,13 @@ const handleSubmit = async () => {
         }
 
         .off {
-          span {
+          .source-name {
             position: relative;
             color: #C4C6CC;
+
+            ::v-deep .text-ov {
+              width: 220px;
+            }
 
             .bk-button {
               position: absolute;
@@ -332,7 +351,7 @@ const handleSubmit = async () => {
           border-radius: 2px;
 
           dl {
-            padding: 12px 50px;
+            padding: 12px 0 12px 50px;;
 
             dt {
               font-size: 14px;
@@ -340,7 +359,9 @@ const handleSubmit = async () => {
               color: #979BA5;
             }
 
-            dd {
+            .source-field {
+              max-width: 250px;
+              min-width: 120px;
               font-size: 14px;
               line-height: 22px;
               color: #313238;
