@@ -19,6 +19,7 @@ from bkuser.apis.web.personal_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
     PersonalCenterTenantUserRetrieveOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
+    TenantUserLogoUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
@@ -70,7 +71,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         return Response(NaturalUserWithTenantUserListOutputSLZ(nature_user_with_tenant_users_info).data)
 
 
-class TenantUserRetrieveApi(generics.RetrieveAPIView):
+class TenantUserRetrievePatchApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -82,7 +83,26 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
         responses={status.HTTP_200_OK: PersonalCenterTenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return Response(PersonalCenterTenantUserRetrieveOutputSLZ(self.get_object()).data)
+        return Response(PersonalCenterTenantUserRetrieveOutputSLZ(instance=self.get_object()).data)
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户用户更新头像",
+        request_body=TenantUserLogoUpdateInputSLZ,
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def patch(self, request, *args, **kwargs):
+        slz = TenantUserLogoUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        instance = self.get_object()
+
+        data_source_user = instance.data_source_user
+        data_source_user.logo = data["logo"]
+        data_source_user.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
@@ -94,7 +114,7 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         tags=["personal_center"],
         operation_description="租户用户更新手机号",
         request_body=TenantUserPhoneUpdateInputSLZ,
-        responses={status.HTTP_200_OK: ""},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def patch(self, request, *args, **kwargs):
         slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
@@ -107,7 +127,7 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
             custom_phone_country_code=data["custom_phone_country_code"],
         )
         TenantUserHandler.update_tenant_user_phone(self.get_object(), phone_info)
-        return Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
@@ -119,7 +139,7 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         tags=["personal_center"],
         operation_description="租户用户更新手机号",
         request_body=TenantUserEmailUpdateInputSLZ,
-        responses={status.HTTP_200_OK: ""},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def patch(self, request, *args, **kwargs):
         slz = TenantUserEmailUpdateInputSLZ(data=request.data)
@@ -131,4 +151,4 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
             custom_email=data.get("custom_email", ""),
         )
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
-        return Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)

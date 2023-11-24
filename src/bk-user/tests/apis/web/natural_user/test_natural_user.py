@@ -163,7 +163,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         绑定自然人情况下，可以随机访问
         """
         tenant_user = random.choice(tenant_users)
-        resp = api_client.get(reverse("personal_center.tenant_users.retrieve", kwargs={"id": tenant_user.id}))
+        resp = api_client.get(reverse("personal_center.tenant_users.retrieve_update", kwargs={"id": tenant_user.id}))
         assert resp.status_code == status.HTTP_200_OK
         # 常规属性检查
         self._check_general_property(tenant_user, resp.data)
@@ -173,7 +173,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         self._check_departments(tenant_user, resp.data["departments"])
 
         random_user = random.choice(random_tenant_users)
-        resp = api_client.get(reverse("personal_center.tenant_users.retrieve", kwargs={"id": random_user.id}))
+        resp = api_client.get(reverse("personal_center.tenant_users.retrieve_update", kwargs={"id": random_user.id}))
         assert resp.status_code == status.HTTP_200_OK
         self._check_general_property(random_user, resp.data)
         self._check_leaders(random_user, resp.data["leaders"])
@@ -184,7 +184,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         未捆绑自然人情况下，测试和当前用户非同一数据源用户的租户详情
         """
         resp = api_client.get(
-            reverse("personal_center.tenant_users.retrieve", kwargs={"id": additional_tenant_user.id})
+            reverse("personal_center.tenant_users.retrieve_update", kwargs={"id": additional_tenant_user.id})
         )
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
@@ -199,7 +199,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         """
 
         resp = api_client.get(
-            reverse("personal_center.tenant_users.retrieve", kwargs={"id": additional_tenant_user.id})
+            reverse("personal_center.tenant_users.retrieve_update", kwargs={"id": additional_tenant_user.id})
         )
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
@@ -254,7 +254,7 @@ class TestTenantUserChangeEmail:
 
         # 当前租户用户修改
         resp = self._call_update_email_api(api_client, current_tenant_user.id, input_email_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_email(current_tenant_user.id, input_email_data)
 
         # 同一数据源用户下的其他租户用户
@@ -262,7 +262,7 @@ class TestTenantUserChangeEmail:
             data_source_user=current_tenant_user.data_source_user, tenant_id=random_tenant
         )
         resp = self._call_update_email_api(api_client, random_tenant_user.id, input_email_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_email(random_tenant_user.id, input_email_data)
 
         # 同一数据源下其他数据源用户的租户用户
@@ -293,11 +293,11 @@ class TestTenantUserChangeEmail:
         input_email_data = {"is_inherited_email": is_inherited_email, "custom_email": custom_email}
 
         resp = self._call_update_email_api(api_client, tenant_user.id, input_email_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_email(tenant_user.id, input_email_data)
 
         resp = self._call_update_email_api(api_client, random_tenant_user.id, input_email_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_email(random_tenant_user.id, input_email_data)
 
     @pytest.mark.parametrize(
@@ -377,7 +377,7 @@ class TestTenantUserChangePhone:
 
         # 当前租户用户修改
         resp = self._call_update_tenant_user_phone_api(api_client, current_tenant_user.id, input_phone_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_tenant_user_phone_data(current_tenant_user.id, input_phone_data)
 
         # 同一数据源用户下的其他租户用户
@@ -385,7 +385,7 @@ class TestTenantUserChangePhone:
             data_source_user=current_tenant_user.data_source_user, tenant_id=random_tenant
         )
         resp = self._call_update_tenant_user_phone_api(api_client, random_tenant_user.id, input_phone_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_tenant_user_phone_data(random_tenant_user.id, input_phone_data)
 
         # 同一数据源下的其他租户用户
@@ -413,11 +413,11 @@ class TestTenantUserChangePhone:
         }
 
         resp = self._call_update_tenant_user_phone_api(api_client, tenant_user.id, input_phone_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_tenant_user_phone_data(tenant_user.id, input_phone_data)
 
         resp = self._call_update_tenant_user_phone_api(api_client, random_tenant_user.id, input_phone_data)
-        assert resp.status_code == status.HTTP_200_OK
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
         self._check_tenant_user_phone_data(random_tenant_user.id, input_phone_data)
 
     @pytest.mark.parametrize(

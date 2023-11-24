@@ -21,7 +21,9 @@ urlpatterns = [
     ),
     # 租户用户详情
     path(
-        "tenant-users/<str:id>/", views.TenantUserRetrieveApi.as_view(), name="personal_center.tenant_users.retrieve"
+        "tenant-users/<str:id>/",
+        views.TenantUserRetrievePatchApi.as_view(),
+        name="personal_center.tenant_users.retrieve_update",
     ),
     path(
         "tenant-users/<str:id>/phone/",
