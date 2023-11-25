@@ -20,8 +20,8 @@ global_setting_value_type_map = {
 }
 
 
-def validate_global_setting_value_type(global_setting_id: GlobalSettingEnum, value) -> Any:
-    """校验并返回value类型"""
+def validate_global_setting_value_type(global_setting_id: GlobalSettingEnum, value: Any) -> Any:
+    """校验并返回validated value"""
     if global_setting_id not in global_setting_value_type_map:
         raise ValueError(f"global setting {global_setting_id} not define value type")
 

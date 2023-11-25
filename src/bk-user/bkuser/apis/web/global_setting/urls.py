@@ -13,5 +13,5 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("<str:id>/", views.GlobalSettingRetrieveUpdateApi.as_view(), name="global_setting.retrieve"),
+    path("<str:id>/", views.GlobalSettingRetrieveUpdateApi.as_view(), name="global_setting.retrieve_update"),
 ]
