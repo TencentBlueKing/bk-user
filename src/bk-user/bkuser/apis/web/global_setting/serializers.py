@@ -34,4 +34,4 @@ class GlobalSettingUpdateInputSLZ(serializers.Serializer):
         except PDValidationError as e:
             raise ValidationError(_("配置信息值不合法，{}").format(stringify_pydantic_error(e)))
         except ValueError as e:
-            raise ValidationError(e)
+            raise ValidationError(str(e))
