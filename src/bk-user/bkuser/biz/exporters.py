@@ -59,7 +59,7 @@ class DataSourceUserExporter:
             # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
                 value = u.extras.get(field.name, field.default)
-                value = ", ".join(value) if isinstance(value, list) else str(value)  # type: ignore
+                value = ",".join(value) if isinstance(value, list) else str(value)  # type: ignore
                 extras.append(value)
 
             self.sheet.append(  # noqa: PERF401 sheet isn't a list
@@ -73,9 +73,9 @@ class DataSourceUserExporter:
                     # 手机号
                     f"+{u.phone_country_code}{u.phone}" if u.phone else "",
                     # 组织信息
-                    ", ".join(dept_org_map.get(dept_id, "") for dept_id in user_departments_map.get(u.id, [])),
+                    ",".join(dept_org_map.get(dept_id, "") for dept_id in user_departments_map.get(u.id, [])),
                     # 直接上级
-                    ", ".join(user_username_map.get(leader_id, "") for leader_id in user_leaders_map.get(u.id, [])),
+                    ",".join(user_username_map.get(leader_id, "") for leader_id in user_leaders_map.get(u.id, [])),
                     # 自定义字段
                     *extras,
                 )
