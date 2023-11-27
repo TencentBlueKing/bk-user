@@ -26,4 +26,6 @@ urlpatterns = [
     path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
     # 个人中心
     path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
+    # 全局配置
+    path("global-settings/", include("bkuser.apis.web.global_setting.urls")),
 ]
