@@ -1,6 +1,6 @@
 <template>
   <bk-form form-type="vertical" v-bkloading="{ loading }">
-    <section v-if="!hasStorage">
+    <section v-if="!hasStorage && !loading">
       <h1 class="login-header">请选择登录租户</h1>
 
       <bk-form-item>
@@ -273,6 +273,8 @@ onBeforeMount(() => {
         allTenantList.value = res;
         loading.value = false;
       });
+    } else {
+      loading.value = false;
     }
   });
 });
