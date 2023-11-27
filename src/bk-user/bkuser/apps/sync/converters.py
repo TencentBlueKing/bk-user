@@ -48,15 +48,17 @@ class DataSourceUserConverter:
         if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
             raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
 
-        # 2. 全名也是必须提供的
+        # 2. 姓名也是必须提供的
         full_name = props.get(mapping["full_name"])
         if not full_name:
-            raise ValueError("full_name is required")
+            raise ValueError(f"username {username}, full_name is required")
 
         email = props.get(mapping["email"]) or ""
         # 3. 如果提供了邮箱，则必须满足正则校验规则
         if email and not re.fullmatch(EMAIL_REGEX, email):
-            raise ValueError(f"email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}")
+            raise ValueError(
+                f"username {username}, email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}"
+            )
 
         phone = props.get(mapping["phone"]) or ""
         country_code = props.get(mapping["phone_country_code"]) or settings.DEFAULT_PHONE_COUNTRY_CODE
@@ -123,40 +125,38 @@ class DataSourceUserConverter:
     def _build_extras(self, username: str, props: Dict[str, str], mapping: Dict[str, str]) -> Dict[str, Any]:
         extras = {}
         for f in self.custom_fields:
+            # 并不是所有的自定义字段，都已经被配置到字段映射中，这里应该以字段映射为准
             if f.name not in mapping:
                 continue
 
             opt_ids = [opt["id"] for opt in f.options]
             value = props.get(mapping[f.name], f.default)
 
-            # 数字类型，转换成整形不丢精度就转，不行就浮点数
+            # 数字类型，转换成整型不丢精度就转，不行就浮点数
             if f.data_type == UserFieldDataType.NUMBER:
                 try:
                     value = float(value)  # type: ignore
                     value = int(value) if int(value) == value else value  # type: ignore
                 except ValueError:
                     raise ValueError(
-                        "username: {}, number field {} value `{}` cannot convert to number".format(
-                            username, f.name, value
-                        )
+                        f"username: {username}, number field {f.name} value `{value}` cannot convert to number"
                     )
             # 枚举类型，值（id）必须是字符串，且是可选项中的一个
             elif f.data_type == UserFieldDataType.ENUM:
                 if value not in opt_ids:
                     raise ValueError(
-                        "username: {}, enum field {} value `{}` not in options {}".format(
-                            username, f.name, value, opt_ids
-                        )
+                        f"username: {username}, enum field {f.name} value `{value}` not in options {opt_ids}"
                     )
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
                 # 兼容 xlsx 导入，统一所有插件输出的多选枚举，都是通过 "," 分隔的字符串表示列表
-                value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
+                # 但是，默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
+                if isinstance(value, str):
+                    value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
+
                 if set(value) - set(opt_ids):
                     raise ValueError(
-                        "username: {}, multi enum field {} value `{}` not subset of options {}".format(
-                            username, f.name, value, opt_ids
-                        )
+                        f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_ids}"
                     )
 
             extras[f.name] = value

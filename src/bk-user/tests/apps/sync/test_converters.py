@@ -245,5 +245,5 @@ class TestDataSourceUserConverter:
             departments=["company"],
         )
 
-        with pytest.raises(ValueError, match="not subset of options"):
+        with pytest.raises(ValueError, match="not subset of"):
             DataSourceUserConverter(bare_local_data_source, logger).convert(raw_zhangsan)
