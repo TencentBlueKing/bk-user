@@ -79,18 +79,20 @@ def _validate_field_mapping_with_tenant_user_fields(
 ) -> List[Dict[str, str]]:
     target_fields = {m.get("target_field") for m in field_mapping}
 
-    builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
+    builtin_fields = UserBuiltinField.objects.all()
     tenant_user_custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
 
-    allowed_target_fields = builtin_fields | set(tenant_user_custom_fields.values_list("name", flat=True))
-    required_target_fields = builtin_fields | set(
-        tenant_user_custom_fields.filter(required=True).values_list("name", flat=True)
+    allowed_target_fields = set(builtin_fields.values_list("name", flat=True)) | set(
+        tenant_user_custom_fields.values_list("name", flat=True)
     )
-
     if not_allowed_fields := target_fields - allowed_target_fields:
         raise ValidationError(
             _("字段映射中的目标字段 {} 不属于用户自定义字段或内置字段").format(not_allowed_fields),
         )
+
+    required_target_fields = set(builtin_fields.filter(required=True).values_list("name", flat=True)) | set(
+        tenant_user_custom_fields.filter(required=True).values_list("name", flat=True)
+    )
     if missed_required_fields := required_target_fields - target_fields:
         raise ValidationError(_("必填目标字段 {} 缺少字段映射").format(missed_required_fields))
 

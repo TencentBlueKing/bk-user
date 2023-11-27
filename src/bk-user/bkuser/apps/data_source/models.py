@@ -88,6 +88,10 @@ class DataSource(AuditedModel):
         """
         plugin_cfg = self.plugin_config
         for info in DataSourceSensitiveInfo.objects.filter(data_source=self):
+            # 嵌套路径中可能某层的值为 None，此时应该跳过
+            if not dictx.exist_key(plugin_cfg, info.key):
+                continue
+
             dictx.set_items(plugin_cfg, info.key, info.value)
 
         PluginCfgCls = get_plugin_cfg_cls(self.plugin.id)  # noqa: N806

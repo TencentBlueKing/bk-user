@@ -38,7 +38,9 @@
             :handle-res-code="handleRes"
             :url="formData.logo"
             :custom-request="customRequest"
+            :size="2"
             @delete="handleDelete"
+            @error="handleError"
           />
         </div>
       </div>
@@ -67,6 +69,7 @@
 </template>
 
 <script setup lang="tsx">
+import { Message } from 'bkui-vue';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
 import { getBase64 } from "@/utils";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
@@ -129,12 +132,6 @@ const rulesBasicInfo = {
   id: [validate.required],
 };
 
-const rulesUserInfo = {
-  username: [validate.required, validate.name],
-  full_name: [validate.required, validate.name],
-  email: [validate.required, validate.email],
-};
-
 const rulesUserName = {
   username: [validate.required],
 };
@@ -172,13 +169,19 @@ const handleDelete = () => {
   handleChange();
 };
 
+const handleError = (file) => {
+  if (file.size > (2 * 1024 * 1024)) {
+    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+  }
+};
+
 const fieldItemFn = (row: any) => {
   const { column, index, data } = row;
   return (
     <bk-form-item
       error-display-type="tooltips"
       property={`managers.${index}.${column.field}`}
-      rules={data.id ? rulesUserInfo[column.field] : rulesUserName[column.field]}
+      rules={rulesUserName[column.field]}
     >
       {!data.id ? (
         column.field === "username" ? (

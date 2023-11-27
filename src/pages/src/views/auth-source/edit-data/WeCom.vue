@@ -117,7 +117,7 @@
             <i
               class="bk-sq-icon icon-close-fill"
               v-if="formData.data_source_match_rules.length > 1 && hoverItem === index"
-              @click="handleDelete(index)"></i>
+              @click="handleDelete(item, index)"></i>
             <span class="or" v-if="index !== 0">or</span>
           </div>
         </div>
@@ -317,8 +317,9 @@ const handleAdd = () => {
   });
 };
 // 删除数据源匹配
-const handleDelete = (index) => {
+const handleDelete = (item, index) => {
   formData.value.data_source_match_rules.splice(index, 1);
+  dataSourceList.value.find(val => val.key === item.data_source_id).disabled = false;
   handleChange();
 };
 

@@ -364,12 +364,10 @@ const handleNext = async () => {
         }
       };
 
-      res.data?.builtin_fields?.forEach(fields => addApiField(fields, false));
       res.data?.custom_fields?.forEach((fields) => {
         if (!customList.includes(fields.name)) {
           fieldSettingData.field_mapping.custom_fields.push(fields);
         }
-        addApiField(fields, false);
       });
 
       userProperties.value.forEach(item => addApiField({ name: item }, false));
@@ -380,18 +378,15 @@ const handleNext = async () => {
         custom_fields: customFields,
       };
 
-      const updateFields = (fields, shouldAdd) => {
+      const updateFields = (fields) => {
         fields.forEach((field) => {
           field.mapping_operation = 'direct';
           field.source_field = '';
-          if (shouldAdd && !userProperties.value.includes(field.name)) {
-            userProperties.value.push(field.name);
-          }
         });
       };
 
-      updateFields(builtinFields, false);
-      updateFields(customFields, true);
+      updateFields(builtinFields);
+      updateFields(customFields);
 
       apiFields.value = userProperties.value.map(item => ({ key: item, disabled: false }));
     }

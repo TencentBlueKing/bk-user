@@ -16,11 +16,11 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">邮箱：</span>
-          <span class="details-content-value">{{ userData.email }}</span>
+          <span class="details-content-value">{{ userData.email || '--' }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">手机号：</span>
-          <span class="details-content-value">{{ userData.phone }}</span>
+          <span class="details-content-value">{{ userData.phone || '--' }}</span>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">所属组织：</span>

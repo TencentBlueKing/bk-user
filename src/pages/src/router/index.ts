@@ -15,7 +15,7 @@ export default createRouter({
         name: 'tenantInfo',
       },
       meta: {
-        navName: '集团概览',
+        navName: '租户概览',
       },
       component: () => import('@/views/tenant/index.vue'),
       children: [
@@ -24,7 +24,7 @@ export default createRouter({
           name: 'tenantInfo',
           meta: {
             routeParentName: 'tenant',
-            navName: '集团概览',
+            navName: '租户概览',
             isMenu: true,
           },
           component: () => import('@/views/tenant/group-details/index.vue'),

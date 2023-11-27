@@ -1,26 +1,28 @@
 <template>
-  <div class="cursor-pointer" @click="goBack">&lt; 返回上一级</div>
-  <h2 class="header">请选择你要登录的账号</h2>
-  <div class="account">
-    <div
-      class="item"
-      v-for="item in userList"
-      :class="userId === item.id ? 'active' : ''"
-      :key="item.id"
-      @click="userId = item.id">
-      {{ `${item.username}(${item.full_name})` }}
-      <Done v-if="userId === item.id" class="check-icon" />
+  <div v-bkloading="{ loading }">
+    <div class="cursor-pointer" @click="goBack">&lt; 返回上一级</div>
+    <h2 class="header">请选择你要登录的账号</h2>
+    <div class="account">
+      <div
+        class="item"
+        v-for="item in userList"
+        :class="userId === item.id ? 'active' : ''"
+        :key="item.id"
+        @click="userId = item.id">
+        {{ `${item.username}(${item.full_name})` }}
+        <Done v-if="userId === item.id" class="check-icon" />
+      </div>
     </div>
-  </div>
-  <div>
-    <bk-button
-      theme="primary"
-      size="large"
-      style="width: 100%"
-      :disabled="!userId"
-      @click="handleLogin">
-      立即登录
-    </bk-button>
+    <div>
+      <bk-button
+        theme="primary"
+        size="large"
+        style="width: 100%"
+        :disabled="!userId"
+        @click="handleLogin">
+        立即登录
+      </bk-button>
+    </div>
   </div>
 </template>
 
@@ -52,13 +54,17 @@ const handleLogin = () => {
   });
 };
 
+const loading = ref(false);
 onBeforeMount(() => {
+  loading.value = true;
   getUserList().then((res) => {
     userList.value = res;
     // 如果只有一个账号，默认选中并登录
     if (res.length === 1) {
       userId.value = res[0].id;
       handleLogin();
+    } else {
+      loading.value = false;
     }
   });
 });
