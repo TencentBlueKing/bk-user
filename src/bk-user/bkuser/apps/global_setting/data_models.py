@@ -21,7 +21,10 @@ global_setting_value_type_map = {
 
 
 def validate_global_setting_value_type(global_setting_id: GlobalSettingEnum, value: Any) -> Any:
-    """校验并返回validated value"""
+    """
+    校验并返回validated value
+    逻辑：获取配置的数据类型 -> 动态创建Pydantic数据类型后进行初始化对象校验 -> 转换为可JSON的Python数据
+    """
     if global_setting_id not in global_setting_value_type_map:
         raise ValueError(f"global setting {global_setting_id} not define value type")
 
@@ -32,4 +35,6 @@ def validate_global_setting_value_type(global_setting_id: GlobalSettingEnum, val
 
     data = dynamic_value_model(value=value)
 
+    # Q: 为什么不是直接 data.value，而是要model_dump后再去value呢
+    # A: 由于 value 的类型可能是Pydantic BaseModel，如果不使用model_dump的话，返回的数据类对象不能被JSON序列化
     return data.model_dump(include={"value"})["value"]

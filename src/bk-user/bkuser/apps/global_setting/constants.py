@@ -16,4 +16,4 @@ class GlobalSettingEnum(str, StructuredEnum):
     """全局配置枚举"""
 
     TENANT_VISIBLE = EnumField("tenant_visible", label=_("租户可见性"))
-    # 后续还有其他配置，比如前后端传输敏感内容的加密RSA公钥和私钥等等
+    # 后续还有其他配置
