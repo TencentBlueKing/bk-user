@@ -79,9 +79,11 @@ class TestDataSourceUserConverter:
                 "full_name": "张三",
                 "email": "zhangsan@m.com",
                 "phone": "13512345671",
-                "age": "18",
+                # 给个浮点数用于测试
+                "age": "18.5",
                 "region": "beijing",
-                "sport_hobby": "golf",
+                # 字符串表示列表也是支持的
+                "sport_hobby": "running, golf",
             },
             leaders=[],
             departments=["company"],
@@ -94,7 +96,12 @@ class TestDataSourceUserConverter:
         assert zhangsan.email == "zhangsan@m.com"
         assert zhangsan.phone == "13512345671"
         assert zhangsan.phone_country_code == "86"
-        assert zhangsan.extras == {"age": "18", "gender": "male", "region": "beijing", "sport_hobby": "golf"}
+        assert zhangsan.extras == {
+            "age": 18.5,
+            "gender": "male",
+            "region": "beijing",
+            "sport_hobby": ["running", "golf"],
+        }
 
     def test_convert_use_string_field_default(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
@@ -107,7 +114,7 @@ class TestDataSourceUserConverter:
                 "phone_country_code": "63",
                 "age": "28",
                 "gender": "female",
-                "sport_hobby": "golf",
+                "sport_hobby": "swimming, golf",
             },
             leaders=["zhangsan"],
             departments=["dept_a", "center_aa"],
@@ -120,7 +127,7 @@ class TestDataSourceUserConverter:
         assert lisi.email == "lisi@m.com"
         assert lisi.phone == "13512345672"
         assert lisi.phone_country_code == "63"
-        assert lisi.extras == {"age": "28", "gender": "female", "region": "", "sport_hobby": "golf"}
+        assert lisi.extras == {"age": 28, "gender": "female", "region": "", "sport_hobby": ["swimming", "golf"]}
 
     def test_convert_with_not_same_field_name_mapping(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
@@ -145,7 +152,7 @@ class TestDataSourceUserConverter:
         converter.field_mapping[-2].source_field = "custom_region"
 
         lisi = converter.convert(raw_lisi)
-        assert lisi.extras == {"age": "28", "gender": "female", "sport_hobby": "golf", "region": "shanghai"}
+        assert lisi.extras == {"age": 28, "gender": "female", "sport_hobby": ["golf"], "region": "shanghai"}
 
     def test_convert_with_invalid_username(self, bare_local_data_source, logger):
         raw_user = RawDataSourceUser(code="test", properties={}, leaders=[], departments=[])
@@ -182,3 +189,61 @@ class TestDataSourceUserConverter:
         )
         with pytest.raises(ValueError, match="phone number"):
             DataSourceUserConverter(bare_local_data_source, logger).convert(raw_user)
+
+    def test_covert_with_invalid_number(self, bare_local_data_source, tenant_user_custom_fields, logger):
+        raw_zhangsan = RawDataSourceUser(
+            code="zhangsan",
+            properties={
+                "username": "zhangsan",
+                "full_name": "张三",
+                "email": "zhangsan@m.com",
+                "phone": "13512345671",
+                "age": "18.5x",
+                "region": "beijing",
+                "gender": "male",
+                "sport_hobby": "running,golf",
+            },
+            leaders=[],
+            departments=["company"],
+        )
+        with pytest.raises(ValueError, match="cannot convert to number"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_zhangsan)
+
+    def test_covert_with_invalid_enum(self, bare_local_data_source, tenant_user_custom_fields, logger):
+        raw_zhangsan = RawDataSourceUser(
+            code="zhangsan",
+            properties={
+                "username": "zhangsan",
+                "full_name": "张三",
+                "email": "zhangsan@m.com",
+                "phone": "13512345671",
+                "age": "18.5",
+                "region": "beijing",
+                "gender": "military_helicopter",
+                "sport_hobby": "running,golf",
+            },
+            leaders=[],
+            departments=["company"],
+        )
+
+        with pytest.raises(ValueError, match="not in options"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_zhangsan)
+
+    def test_covert_with_invalid_multi_enum(self, bare_local_data_source, tenant_user_custom_fields, logger):
+        raw_zhangsan = RawDataSourceUser(
+            code="zhangsan",
+            properties={
+                "username": "zhangsan",
+                "full_name": "张三",
+                "email": "zhangsan@m.com",
+                "phone": "13512345671",
+                "age": "18",
+                "region": "beijing",
+                "sport_hobby": "paragliding, golf",
+            },
+            leaders=[],
+            departments=["company"],
+        )
+
+        with pytest.raises(ValueError, match="not subset of options"):
+            DataSourceUserConverter(bare_local_data_source, logger).convert(raw_zhangsan)
