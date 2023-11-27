@@ -3,32 +3,25 @@ import { Message } from 'bkui-vue';
 import {
   ref,
 } from 'vue';
-import { useRoute } from 'vue-router';
 
 import HeaderBox from './views/Header.vue';
 
 import { currentUser } from '@/http/api';
-import router from '@/router';
 import { useUser } from '@/store/user';
 
 // 加载完用户数据才会展示页面
-const isLoading = ref(false);
+const isLoading = ref(true);
 // 获取用户数据
 const user = useUser();
-const route = useRoute();
 
 currentUser()
   .then((res) => {
-    if (route.name === 'tenantInfo' && res.data.role === 'tenant_manager') {
-      router.push({
-        name: 'organization',
-      });
-    }
     user.setUser(res.data);
     isLoading.value = false;
   })
   .catch(() => {
     Message('获取用户信息失败，请检查后再试');
+    isLoading.value = false;
   });
 </script>
 

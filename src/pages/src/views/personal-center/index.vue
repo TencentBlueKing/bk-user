@@ -79,9 +79,9 @@
                 切换为该账号登录
               </bk-button>
             </span>
-            <bk-button>
+            <!-- <bk-button>
               取消关联
-            </bk-button>
+            </bk-button> -->
           </div>
         </header>
         <div class="personal-center-details">
@@ -396,14 +396,6 @@ const changeCountryCode = (code: string) => {
 .personal-center-wrapper {
   height: calc(100vh - 52px);
   min-width: 1600px;
-
-  ::v-deep .bk-resize-layout-aside {
-    min-width: 320px;
-  }
-
-  ::v-deep .bk-resize-layout-main {
-    min-width: calc(1600px - 320px);
-  }
 
   .personal-center-left {
     height: 100%;

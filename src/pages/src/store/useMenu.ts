@@ -18,6 +18,9 @@ export const useMenu = defineStore('useMenu', {
   actions: {
     toggle() {
       this.toggleCollapsed = !this.toggleCollapsed;
+      if (this.toggleCollapsed) {
+        this.hoverCollapsed = true;
+      }
     },
     mouseenter() {
       this.hoverCollapsed = false;
