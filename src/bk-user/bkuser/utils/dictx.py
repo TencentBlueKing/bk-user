@@ -50,3 +50,25 @@ def set_items(obj: Dict[str, Any], paths: List[str] | str, value: Any) -> None:
     # 最深层一个 dict 对象
     leaf_obj = reduce(lambda d, k: d[k], paths[:-1], obj)
     leaf_obj[paths[-1]] = value
+
+
+def exist_key(obj: Dict[str, Any], paths: List[str] | str) -> bool:
+    """
+    检查指定的路径对应的键是否存在
+
+    :param obj: 字典类型对象
+    :param paths: ['foo', 'bar'] 或 ".foo.bar" 或 "foo.bar"
+    :return: exists
+    """
+    if not isinstance(obj, Dict):
+        raise TypeError("only support check exist key in dict object!")
+
+    if isinstance(paths, str):
+        paths = paths.strip(".").split(".")
+
+    try:
+        reduce(lambda d, k: d[k], paths, obj)
+    except (KeyError, IndexError, TypeError):
+        return False
+
+    return True

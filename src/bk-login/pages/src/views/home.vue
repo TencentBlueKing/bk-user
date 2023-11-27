@@ -1,6 +1,6 @@
 <template>
   <bk-form form-type="vertical" v-bkloading="{ loading }">
-    <section v-if="!hasStorage">
+    <section v-if="!hasStorage && !loading">
       <h1 class="login-header">请选择登录租户</h1>
 
       <bk-form-item>
@@ -185,7 +185,7 @@ const idps: Ref<Idp[]> = ref([]);
 const activeIdp: Ref<Idp> = ref();
 
 // 确认登录租户
-const confirmTenant = async () => {
+const confirmTenant = () => {
   if (trust.value) {
     localStorage.setItem('tenantId', tenantId.value);
     if (!tenantIdList.value.includes(tenantId.value)) {
@@ -267,12 +267,14 @@ onBeforeMount(() => {
       hasStorage.value = true;
       tenant.value = res.only_enabled_auth_tenant;
       tenantId.value = res.only_enabled_auth_tenant.id;
-      signInAndFetchIdp();
+      confirmTenant();
     } else if (res.tenant_visible) { // 如果租户可见，改为选择租户
       getAllTenantList().then((res) => {
         allTenantList.value = res;
         loading.value = false;
       });
+    } else {
+      loading.value = false;
     }
   });
 });

@@ -115,9 +115,9 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             properties={
                 "username": user["username"],
                 "full_name": user["full_name"],
-                "email": user["email"],
-                "phone": user["phone"],
-                "phone_country_code": user["phone_country_code"],
+                "email": user.get("email", ""),
+                "phone": user.get("phone", ""),
+                "phone_country_code": user.get("phone_country_code", ""),
                 **user["extras"],
             },
             leaders=user["leaders"],

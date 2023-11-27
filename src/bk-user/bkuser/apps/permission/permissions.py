@@ -51,36 +51,41 @@ def perm_class(action: PermAction):  # noqa: C901
             username = request.user.username
             cur_tenant_id = request.user.get_property("tenant_id")
 
-            if isinstance(obj, Tenant):
-                tenant_id = obj.id
-            elif hasattr(obj, "tenant_id"):
-                tenant_id = obj.tenant_id
-            elif isinstance(obj, DataSource):
-                # TODO (su) 考虑数据源协同的情况
-                tenant_id = obj.owner_tenant_id
-            elif hasattr(obj, "data_source"):
-                # TODO (su) 考虑数据源协同的情况
-                tenant_id = obj.data_source.owner_tenant_id
-            elif isinstance(obj, Idp):
-                tenant_id = obj.owner_tenant_id
-            elif isinstance(obj, (DataSourcePlugin, IdpPlugin)):
-                # 认证源插件和数据源插件的配置信息、默认配置等可能包含一些低敏感级别的信息，
-                # 所以需要确保用户可管理租户才可看到
-                tenant_id = cur_tenant_id
-            else:
-                logger.exception("failed to get tenant id, obj: %s", obj)
-                return False
-
+            # 校验平台权限，只需要校验是否超级管理员，与数据对象无关
             if action == PermAction.MANAGE_PLATFORM:
                 return is_super_manager(cur_tenant_id, username)
-            if action == PermAction.MANAGE_TENANT:
-                return is_tenant_manager(tenant_id, username)
+
+            # 普通用户权限
             if action == PermAction.USE_PLATFORM:
                 # 当前平台使用（普通用户）能编辑的资源只有 TenantUser
                 if not isinstance(obj, TenantUser):
                     return False
 
                 return is_same_nature_user(obj.id, cur_tenant_id, username)
+
+            # 租户权限与具体对象有关系的，需要根据具体对象确定关联的租户后再鉴权
+            if action == PermAction.MANAGE_TENANT:
+                if isinstance(obj, Tenant):
+                    tenant_id = obj.id
+                elif hasattr(obj, "tenant_id"):
+                    tenant_id = obj.tenant_id
+                elif isinstance(obj, DataSource):
+                    # TODO (su) 考虑数据源协同的情况
+                    tenant_id = obj.owner_tenant_id
+                elif hasattr(obj, "data_source"):
+                    # TODO (su) 考虑数据源协同的情况
+                    tenant_id = obj.data_source.owner_tenant_id
+                elif isinstance(obj, Idp):
+                    tenant_id = obj.owner_tenant_id
+                elif isinstance(obj, (DataSourcePlugin, IdpPlugin)):
+                    # 认证源插件和数据源插件的配置信息、默认配置等可能包含一些低敏感级别的信息，
+                    # 所以需要确保用户可管理租户才可看到
+                    tenant_id = cur_tenant_id
+                else:
+                    logger.exception("failed to get tenant id, obj: %s", obj)
+                    return False
+
+                return is_tenant_manager(tenant_id, username)
 
             return False
 

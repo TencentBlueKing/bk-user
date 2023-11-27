@@ -64,13 +64,13 @@ class DataSourceUserExporter:
                     # 邮箱
                     u.email,
                     # 手机号
-                    f"+{u.phone_country_code}{u.phone}",
+                    f"+{u.phone_country_code}{u.phone}" if u.phone else "",
                     # 组织信息
                     ", ".join(dept_org_map.get(dept_id, "") for dept_id in user_departments_map.get(u.id, [])),
                     # 直接上级
                     ", ".join(user_username_map.get(leader_id, "") for leader_id in user_leaders_map.get(u.id, [])),
                     # 自定义字段
-                    *[u.extras.get(field.name, "") for field in self.custom_fields],
+                    *[u.extras.get(field.name, field.default) for field in self.custom_fields],
                 )
             )
 

@@ -16,6 +16,8 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
+from bkuser.apps.global_setting.constants import GlobalSettingEnum
+from bkuser.apps.global_setting.models import GlobalSetting
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
@@ -91,11 +93,14 @@ class GlobalInfoRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView
                 "enabled_idps": enabled_idps,
             }
 
+        # 容错性，不使用get, 配置错了，不影响登录核心链路
+        gs = GlobalSetting.objects.filter(id=GlobalSettingEnum.TENANT_VISIBLE).first()
+        tenant_visible = gs.value if gs is not None else False
+
         return Response(
             GlobalInfoRetrieveOutputSLZ(
                 instance={
-                    # FIXME (nan): 待实现全局配置管理功能后调整
-                    "tenant_visible": False,
+                    "tenant_visible": tenant_visible,
                     "enabled_auth_tenant_number": enabled_auth_tenant_number,
                     "only_enabled_auth_tenant": only_enabled_auth_tenant,
                 }
