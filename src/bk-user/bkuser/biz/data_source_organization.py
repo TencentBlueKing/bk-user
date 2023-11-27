@@ -188,8 +188,7 @@ class DataSourceOrganizationHandler:
             user.phone = base_user_info.phone
             user.phone_country_code = base_user_info.phone_country_code
             user.logo = base_user_info.logo
-
-            user.extras = base_user_info.extras
+            user.extras.update(base_user_info.extras)
 
             user.save()
 

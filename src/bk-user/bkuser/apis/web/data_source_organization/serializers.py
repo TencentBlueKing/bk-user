@@ -24,15 +24,57 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
-from bkuser.biz.validators import (
-    validate_data_source_user_username,
-    validate_enum_field_value_is_legal,
-    validate_fields_existed,
-    validate_required_fields_filled,
-)
+from bkuser.biz.validators import validate_data_source_user_username
 from bkuser.common.validators import validate_phone_with_country_code
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_extras(extras, tenant_id):
+    custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
+    if custom_fields.exists():
+        custom_fields_info = custom_fields.values("name", "options", "data_type", "required")
+
+        # 检测非法字段
+        custom_field_name_list = [field["name"] for field in custom_fields_info]
+        if not_existed_fields := set(extras.keys()) - set(custom_field_name_list):
+            raise serializers.ValidationError(_("不存在自定义字段：{}").format(not_existed_fields))
+
+        if lost_fields := set(custom_field_name_list) - set(extras.keys()):
+            raise serializers.ValidationError(_("缺失自定义字段：{}").format(lost_fields))
+
+        # 必填字段检测, 确保必填项有数据
+        # 常规字段默认值：可能为空字符串/数字：0
+        required_custom_fields = [field["name"] for field in custom_fields_info if field["required"]]
+        if empty_value_fields := [field for field in required_custom_fields if extras.get(field, None) is None]:
+            raise serializers.ValidationError(_("必填字段{}不可为空").format(empty_value_fields))
+
+        # 枚举字段，非法枚举值检测
+        enum_kinds_custom_fields = [
+            field
+            for field in custom_fields_info
+            if field["data_type"] in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
+        ]
+        for field in enum_kinds_custom_fields:
+            # 接口调用时，默认所有都是有的，选填项也是有默认值
+            value = extras[field["name"]]
+            # 设置的选项id
+            option_ids = [option["id"] for option in field["options"]]
+            if field["data_type"] == UserFieldDataType.ENUM and value not in option_ids:
+                raise serializers.ValidationError(
+                    _("字段 {} 值 {} 中 {} 不合法").format(field["name"], option_ids, value)
+                )
+
+            if field["data_type"] == UserFieldDataType.MULTI_ENUM:
+                if not isinstance(value, list):
+                    raise serializers.ValidationError(_("非法多选枚举值: 需要传递列表类型"))
+
+                if invalid_opt_ids := set(value) - set(option_ids):
+                    raise serializers.ValidationError(
+                        _("字段 {} 值 {} 中 {} 不合法").format(field["name"], option_ids, invalid_opt_ids)
+                    )
+
+        # FIXME (su) 唯一性检测
 
 
 class UserSearchInputSLZ(serializers.Serializer):
@@ -105,22 +147,7 @@ class UserCreateInputSLZ(serializers.Serializer):
         return leader_ids
 
     def validate_extras(self, extras):
-        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        if custom_fields.exists():
-            # 检测非法字段
-            custom_field_name_list = custom_fields.values_list("name", flat=True)
-            validate_fields_existed(extras, custom_field_name_list)
-
-            # 必填字段检测
-            required_custom_fields = custom_fields.filter(required=True).values_list("name", flat=True)
-            validate_required_fields_filled(extras, required_custom_fields)
-
-            # 枚举字段，非法枚举值检测
-            enum_kinds_fields = custom_fields.filter(
-                data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
-            )
-            validate_enum_field_value_is_legal(extras, enum_kinds_fields.values("name", "options", "data_type"))
-            # FIXME (su) 唯一性检测
+        _validate_extras(extras, self.context["tenant_id"])
         return extras
 
 
@@ -163,11 +190,10 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
     phone_country_code = serializers.CharField(help_text="手机区号")
     phone = serializers.CharField(help_text="手机号")
     logo = serializers.SerializerMethodField(help_text="用户Logo")
+    extras = serializers.JSONField(help_text="自定义字段")
 
     departments = serializers.SerializerMethodField(help_text="部门信息")
     leaders = serializers.SerializerMethodField(help_text="上级信息")
-
-    extras = serializers.JSONField(help_text="自定义字段")
 
     def get_logo(self, obj: DataSourceUser) -> str:
         return obj.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
@@ -191,11 +217,10 @@ class UserUpdateInputSLZ(serializers.Serializer):
     phone_country_code = serializers.CharField(help_text="手机国际区号")
     phone = serializers.CharField(help_text="手机号")
     logo = serializers.CharField(help_text="用户 Logo", allow_blank=True, required=False, default="")
+    extras = serializers.JSONField(help_text="自定义字段")
 
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField())
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField())
-
-    extras = serializers.JSONField(help_text="自定义字段")
 
     def validate(self, data):
         try:
@@ -231,20 +256,5 @@ class UserUpdateInputSLZ(serializers.Serializer):
         return leader_ids
 
     def validate_extras(self, extras):
-        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        if custom_fields.exists():
-            # 检测非法字段
-            custom_field_name_list = custom_fields.values_list("name", flat=True)
-            validate_fields_existed(extras, custom_field_name_list)
-
-            # 必填字段检测
-            required_custom_fields = custom_fields.filter(required=True).values_list("name", flat=True)
-            validate_required_fields_filled(extras, required_custom_fields)
-
-            # 枚举字段，非法枚举值检测
-            enum_kinds_fields = custom_fields.filter(
-                data_type__in=[UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
-            )
-            validate_enum_field_value_is_legal(extras, enum_kinds_fields.values("name", "options", "data_type"))
-            # FIXME (su) 唯一性检测
+        _validate_extras(extras, self.context["tenant_id"])
         return extras

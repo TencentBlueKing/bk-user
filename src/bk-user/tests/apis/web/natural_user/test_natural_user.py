@@ -142,6 +142,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         assert general_property["email"] == data_source_user.email
         assert general_property["phone"] == data_source_user.phone
         assert general_property["phone_country_code"] == data_source_user.phone_country_code
+        assert general_property["extras"] == data_source_user.extras
 
         assert general_property["is_inherited_phone"] == tenant_user.is_inherited_phone
         assert general_property["custom_phone"] == tenant_user.custom_phone
@@ -149,11 +150,6 @@ class TestNaturalUserTenantUserRetrieveApi:
 
         assert general_property["is_inherited_email"] == tenant_user.is_inherited_email
         assert general_property["custom_email"] == tenant_user.custom_email
-
-        real_extras = data_source_user.extras
-        for key, value in general_property["extras"].items():
-            assert key in real_extras
-            assert real_extras[key] == value
 
     def test_retrieve_tenant_user_with_natural_user(
         self,

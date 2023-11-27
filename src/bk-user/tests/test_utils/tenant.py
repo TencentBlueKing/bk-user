@@ -33,7 +33,9 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     )
 
     # 创建租户完成后，初始化账号有效期设置
-    TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
+    TenantUserValidityPeriodConfig.objects.get_or_create(
+        tenant=tenant, defaults=DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
+    )
 
     plugin_config = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)
     assert plugin_config is not None

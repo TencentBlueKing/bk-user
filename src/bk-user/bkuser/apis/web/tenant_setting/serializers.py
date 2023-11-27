@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from collections import Counter
 from typing import List
 
 from django.utils.translation import gettext_lazy as _
@@ -26,21 +27,22 @@ logger = logging.getLogger(__name__)
 
 def _validate_options(options):
     """用户自定义字段：<选项> 字段校验"""
-    if not options:
-        raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
-
     try:
         options_obj = TenantUserCustomFieldOptions(options=options)
 
-        options_map = {obj.id: obj.value for obj in options_obj.options}
+        def _get_duplicate_values(values: List[str]):
+            counter = Counter(values)
+            return [item for item, count in counter.items() if count > 1]
 
-        # 判断重复值
-        if len(options_map.keys()) != len(set(options_map.keys())):
-            raise serializers.ValidationError(_("枚举ID设置有重复值"))
+        # 判断重复枚举id
+        options_obj_ids = [obj.id for obj in options_obj.options]
+        if duplicate_option_ids := _get_duplicate_values(options_obj_ids):
+            raise serializers.ValidationError(_("枚举id设置有重复值: {}").format(duplicate_option_ids))
 
-        # 判断重复值
-        if len(options_map.values()) != len(set(options_map.values())):
-            raise serializers.ValidationError(_("枚举值设置有重复值"))
+        # 判断重复枚举值
+        options_obj_values = [obj.value for obj in options_obj.options]
+        if duplicated_option_values := _get_duplicate_values(options_obj_values):
+            raise serializers.ValidationError(_("枚举值设置有重复值：{}").format(duplicated_option_values))
 
     except PDValidationError as e:
         raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
@@ -90,13 +92,18 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
     custom_fields = serializers.ListField(help_text="自定义字段", child=TenantUserCustomFieldOutputSLZ())
 
 
+class OptionsSettingSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="枚举ID")
+    value = serializers.CharField(help_text="枚举值")
+
+
 class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="英文标识", max_length=128, validators=[validate_tenant_custom_field_name])
     display_name = serializers.CharField(help_text="字段名称", max_length=128)
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     default = serializers.JSONField(help_text="默认值", required=False)
-    options = serializers.JSONField(help_text="选项", required=False, default=list)
+    options = serializers.ListField(help_text="选项", required=False, child=OptionsSettingSLZ())
 
     def validate_display_name(self, display_name):
         if TenantUserCustomField.objects.filter(
@@ -120,17 +127,17 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs):
         data_type = attrs.get("data_type")
+        options = attrs.get("options")
+        default = attrs.get("default")
 
-        if data_type in [UserFieldDataType.ENUM.value, UserFieldDataType.MULTI_ENUM.value]:
-            options = attrs.get("options")
+        opt_ids = [opt["id"] for opt in options]
+        if data_type == UserFieldDataType.ENUM.value:
             _validate_options(options)
+            _validate_enum_default(default, opt_ids)
 
-            default = attrs.get("default")
-            opt_ids = [opt["id"] for opt in options]
-            if data_type == UserFieldDataType.ENUM.value:
-                _validate_enum_default(default, opt_ids)
-            else:
-                _validate_multi_enum_default(default, opt_ids)
+        elif data_type == UserFieldDataType.MULTI_ENUM.value:
+            _validate_options(options)
+            _validate_multi_enum_default(default, opt_ids)
 
         return attrs
 
@@ -143,7 +150,7 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称", max_length=128)
     required = serializers.BooleanField(help_text="是否必填")
     default = serializers.JSONField(help_text="默认值", required=False)
-    options = serializers.JSONField(help_text="选项", required=False, default=list)
+    options = serializers.ListField(help_text="选项", required=False, child=OptionsSettingSLZ())
 
     def validate_display_name(self, display_name):
         if (
@@ -159,19 +166,24 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         return display_name
 
     def validate(self, attrs):
-        current_custom_field = TenantUserCustomField.objects.get(id=self.context["current_custom_field_id"])
-        data_type = current_custom_field.data_type
+        data_type = attrs["data_type"]
 
-        if data_type in [UserFieldDataType.ENUM.value, UserFieldDataType.MULTI_ENUM.value]:
-            options = attrs.get("options")
-            _validate_options(options)
+        if data_type not in [UserFieldDataType.ENUM.value, UserFieldDataType.MULTI_ENUM.value]:
+            return attrs
 
-            default = attrs.get("default")
-            opt_ids = [opt["id"] for opt in options]
-            if data_type == UserFieldDataType.ENUM.value:
-                _validate_enum_default(default, opt_ids)
-            else:
-                _validate_multi_enum_default(default, opt_ids)
+        options = attrs.get("options")
+        if not options:
+            raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
+
+        # 校验选项设置是否有重复值
+        _validate_options(options)
+
+        default = attrs.get("default")
+        opt_ids = [opt["id"] for opt in options]
+        if data_type == UserFieldDataType.ENUM.value:
+            _validate_enum_default(default, opt_ids)
+        else:
+            _validate_multi_enum_default(default, opt_ids)
 
         return attrs
 

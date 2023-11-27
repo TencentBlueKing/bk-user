@@ -19,7 +19,7 @@ TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.common_timezones)]
 TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{2,31}")
 
 # 自定义字段英文标识命名规则
-TENANT_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
+TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
 
 
 class TenantFeatureFlag(FeatureFlag):  # type: ignore

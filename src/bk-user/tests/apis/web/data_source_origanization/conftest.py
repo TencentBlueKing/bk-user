@@ -9,12 +9,45 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from typing import List
 
 import pytest
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
+from bkuser.plugins.constants import DataSourcePluginEnum
+
+from tests.test_utils.data_source import (
+    create_data_source_departments_with_relations,
+    create_data_source_users_with_relations,
+)
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture()
+def data_source(default_tenant):
+    return DataSource.objects.get(
+        owner_tenant_id=default_tenant.id,
+        name=f"{default_tenant.id}-default-local",
+        plugin_id=DataSourcePluginEnum.LOCAL,
+    )
+
+
+@pytest.fixture()
+def data_source_departments(data_source) -> List[DataSourceDepartment]:
+    """
+    根据测试数据源，创建测试数据源部门
+    """
+    return create_data_source_departments_with_relations(data_source)
+
+
+@pytest.fixture()
+def data_source_users(data_source_departments, data_source) -> List[DataSourceUser]:
+    """
+    根据测试数据源，创建测试数据源用户
+    """
+    return create_data_source_users_with_relations(data_source, data_source_departments)
 
 
 @pytest.fixture()
@@ -26,6 +59,15 @@ def custom_fields(default_tenant):
             "display_name": "数字测试",
             "data_type": UserFieldDataType.NUMBER,
             "required": True,
+            "default": 0,
+            "options": [],
+        },
+        {
+            "tenant": default_tenant,
+            "name": "test_not_required",
+            "display_name": "选填测试",
+            "data_type": UserFieldDataType.NUMBER,
+            "required": False,
             "default": 0,
             "options": [],
         },

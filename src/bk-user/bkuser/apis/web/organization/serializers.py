@@ -82,6 +82,7 @@ class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
                     "extras": user.extras,
                 }
             )
+        print("-----------------", data)
         return data
 
 

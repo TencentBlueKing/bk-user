@@ -225,9 +225,6 @@ class DataSourceUserRetrieveUpdateApi(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        updated_extras = user.extras
-        updated_extras.update(data["extras"])
-
         # 用户数据整合
         base_user_info = DataSourceUserEditableBaseInfo(
             full_name=data["full_name"],
@@ -235,7 +232,7 @@ class DataSourceUserRetrieveUpdateApi(
             phone_country_code=data["phone_country_code"],
             phone=data["phone"],
             logo=data["logo"],
-            extras=updated_extras,
+            extras=data["extras"],
         )
         relation_info = DataSourceUserRelationInfo(
             department_ids=data["department_ids"], leader_ids=data["leader_ids"]
