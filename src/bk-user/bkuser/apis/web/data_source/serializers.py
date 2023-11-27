@@ -79,11 +79,13 @@ def _validate_field_mapping_with_tenant_user_fields(
 ) -> List[Dict[str, str]]:
     target_fields = {m.get("target_field") for m in field_mapping}
 
-    builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
+    builtin_fields = UserBuiltinField.objects.all()
     tenant_user_custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
 
-    allowed_target_fields = builtin_fields | set(tenant_user_custom_fields.values_list("name", flat=True))
-    required_target_fields = builtin_fields | set(
+    allowed_target_fields = set(builtin_fields.values_list("name", flat=True)) | set(
+        tenant_user_custom_fields.values_list("name", flat=True)
+    )
+    required_target_fields = set(builtin_fields.filter(required=True).values_list("name", flat=True)) | set(
         tenant_user_custom_fields.filter(required=True).values_list("name", flat=True)
     )
 

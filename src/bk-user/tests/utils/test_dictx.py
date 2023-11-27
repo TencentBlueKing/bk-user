@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.utils.dictx import get_items, set_items
+from bkuser.utils.dictx import exist_key, get_items, set_items
 
 
 @pytest.mark.parametrize(
@@ -71,3 +71,20 @@ def test_set_items(obj, paths, value):
 def test_set_items_exceptions(obj, paths, value):
     with pytest.raises(TypeError):
         set_items(obj, paths, value)  # type: ignore
+
+
+@pytest.mark.parametrize(
+    ("obj", "paths", "expected"),
+    [
+        ({"a": {"b": {"c": 1}}}, "a.b.c", True),
+        ({"a": {"b": {"c": 1}}}, ".a.b.c", True),
+        ({"a": {"b": {"c": 1}}}, ["a", "b", "c"], True),
+        ({"a": {"b": {"c": None}}}, "a.b.c", True),
+        ({"a": {"b": {}}, "c": 2}, "c", True),
+        ({"a": {"b": {}}, "c": 2}, "d", False),
+        ({}, "a", False),
+        ({"a": 1}, "", False),
+    ],
+)
+def test_exist_key(obj, paths, expected):
+    assert exist_key(obj, paths) == expected
