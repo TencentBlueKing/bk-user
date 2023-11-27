@@ -8,8 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import hashlib
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 import environ
 import urllib3
@@ -39,6 +41,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
+    "django_prometheus",
     "bklogin.authentication",
 ]
 
@@ -47,6 +51,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -133,15 +138,38 @@ BK_LOGIN_ADDR = env.str("BK_LOGIN_ADDR", "")
 BK_LOGIN_URL = f"{BK_DOMAIN_SCHEME}://{BK_LOGIN_ADDR}{SITE_URL}"
 AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
 # 蓝鲸公共的Cookie的Domain(比如 bk_token和blueking_language)
-BK_COOKIE_DOMAIN = "." + env.str("BK_DOMAIN")
+BK_COOKIE_DOMAIN = f".{BK_DOMAIN}"
 # 登录完成后允许重定向的HOST
 ALLOWED_REDIRECT_HOSTS = env.list("BK_LOGIN_ALLOWED_REDIRECT_HOSTS", default=[])
-
-# django cookie
-SESSION_COOKIE_NAME = "bklogin_sessionid"
-SESSION_COOKIE_AGE = 60 * 60 * 24  # 1天
-CSRF_COOKIE_NAME = "bklogin_csrftoken"
+# 语言Cookie（蓝鲸体系共享）
 LANGUAGE_COOKIE_DOMAIN = BK_COOKIE_DOMAIN
+
+# session & csrf
+_BK_LOGIN_URL_PARSE_URL = urlparse(BK_LOGIN_URL)
+_BK_LOGIN_HOSTNAME = _BK_LOGIN_URL_PARSE_URL.hostname  # 去除端口的域名
+_BK_LOGIN_NETLOC = _BK_LOGIN_URL_PARSE_URL.netloc  # 若有端口，则会带上对应端口
+_BK_LOGIN_IS_SPECIAL_PORT = _BK_LOGIN_URL_PARSE_URL.port in [None, 80, 443]
+_BK_LOGIN_SCHEME = _BK_LOGIN_URL_PARSE_URL.scheme
+_BK_LOGIN_URL_MD5_16BIT = hashlib.md5(BK_LOGIN_URL.encode("utf-8")).hexdigest()[8:-8]
+# 注意：Cookie Domain是不支持端口的
+SESSION_COOKIE_DOMAIN = _BK_LOGIN_HOSTNAME
+CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
+SESSION_COOKIE_NAME = f"bklogin_sessionid_{_BK_LOGIN_URL_MD5_16BIT}"
+SESSION_COOKIE_AGE = 60 * 60 * 24  # 1天
+CSRF_COOKIE_NAME = f"bklogin_csrftoken_{_BK_LOGIN_URL_MD5_16BIT}"
+# 对于特殊端口，带端口和不带端口都得添加，其他只需要添加默认原生的即可
+CSRF_TRUSTED_ORIGINS = [_BK_LOGIN_HOSTNAME, _BK_LOGIN_NETLOC] if _BK_LOGIN_IS_SPECIAL_PORT else [_BK_LOGIN_NETLOC]
+
+# cors
+CORS_ALLOW_CREDENTIALS = True  # 在 response 添加 Access-Control-Allow-Credentials, 即允许跨域使用 cookies
+CORS_ORIGIN_WHITELIST = (
+    [f"{_BK_LOGIN_SCHEME}://{_BK_LOGIN_HOSTNAME}", f"{_BK_LOGIN_SCHEME}://{_BK_LOGIN_NETLOC}"]
+    if _BK_LOGIN_IS_SPECIAL_PORT
+    else [f"{_BK_LOGIN_SCHEME}://{_BK_LOGIN_NETLOC}"]
+)
+# debug/联调测试时需要允许额外的域名跨域请求
+CORS_ORIGIN_ADDITIONAL_WHITELIST = env.list("CORS_ORIGIN_ADDITIONAL_WHITELIST", default=[])
+CORS_ORIGIN_WHITELIST.extend(CORS_ORIGIN_ADDITIONAL_WHITELIST)
 
 # 登录票据
 # 登录票据Cookie名称
@@ -236,3 +264,41 @@ LOGGING = {
         },
     },
 }
+
+# ------------------------------------------ Healthz 配置 ------------------------------------------
+
+# 调用 Healthz API 需要的 Token
+HEALTHZ_TOKEN = env.str("HEALTHZ_TOKEN", "")
+# 服务健康探针配置
+HEALTHZ_PROBES = env.list(
+    "HEALTHZ_PROBES",
+    default=[
+        "bklogin.monitoring.healthz.probes.MysqlProbe",
+    ],
+)
+
+# ------------------------------------------ Metric 配置 ------------------------------------------
+
+# 调用 Metric API 需要的 Token
+METRIC_TOKEN = env.str("METRIC_TOKEN", "")
+
+# ------------------------------------------ Tracing 配置 ------------------------------------------
+
+# Sentry DSN 配置
+SENTRY_DSN = env.str("SENTRY_DSN", "")
+
+# 是否开启 OTEL 数据上报，默认不启用
+ENABLE_OTEL_TRACE = env.bool("ENABLE_OTEL_TRACE", False)
+# 上报数据服务名称，一般使用默认值即可
+OTEL_SERVICE_NAME = env.str("OTEL_SERVICE_NAME", "bk-user")
+# sdk 采样规则（always_on / always_off ...）
+OTEL_SAMPLER = env.str("OTEL_SAMPLER", "always_on")
+# OTEL 上报地址（grpc）
+OTEL_GRPC_URL = env.str("OTEL_GRPC_URL", "")
+# OTEL 上报到监控平台的数据 Token，可通过监控平台上新建应用获得
+OTEL_DATA_TOKEN = env.str("OTEL_DATA_TOKEN", "")
+# 是否记录 DB 相关 tracing
+OTEL_INSTRUMENT_DB_API = env.bool("OTEL_INSTRUMENT_DB_API", False)
+
+if ENABLE_OTEL_TRACE or SENTRY_DSN:
+    INSTALLED_APPS += ("bklogin.monitoring.tracing",)

@@ -8,11 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
+from typing import Any, Dict, List
 
 from rest_framework import serializers
 
 from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.models import Idp
 from bkuser.biz.validators import validate_data_source_user_username
 
 
@@ -48,14 +49,38 @@ class TenantListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="租户名称")
     logo = serializers.CharField(help_text="租户 Logo")
 
+    class Meta:
+        ref_name = "login.TenantListOutputSLZ"
+
 
 class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
     ...
 
 
+class EnabledIdpOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="认证源 ID")
+    plugin_id = serializers.CharField(help_text="认证源插件 ID")
+
+
+class OnlyEnabledAuthTenantOutputSLZ(TenantListOutputSLZ):
+    enabled_idps = serializers.ListField(child=EnabledIdpOutputSLZ(help_text="认证源插件"))
+
+
+class GlobalInfoRetrieveOutputSLZ(serializers.Serializer):
+    tenant_visible = serializers.BooleanField(help_text="租户可见性")
+    enabled_auth_tenant_number = serializers.IntegerField(help_text="启用用户认证的租户数量")
+    only_enabled_auth_tenant = OnlyEnabledAuthTenantOutputSLZ(
+        help_text="唯一启动用户认证的租户数量，当 enabled_auth_tenant_number 不是一个时，该值为空",
+        allow_null=True,
+    )
+
+
 class IdpPluginOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源插件 ID")
     name = serializers.CharField(help_text="认证源插件名称")
+
+    class Meta:
+        ref_name = "login.IdpPluginOutputSLZ"
 
 
 class IdpListOutputSLZ(serializers.Serializer):
@@ -67,7 +92,13 @@ class IdpListOutputSLZ(serializers.Serializer):
 
 class IdpRetrieveOutputSLZ(IdpListOutputSLZ):
     owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")
-    plugin_config = serializers.JSONField(help_text="认证源插件配置")
+    plugin_config = serializers.SerializerMethodField(help_text="认证源插件配置")
+
+    class Meta:
+        ref_name = "login.IdpRetrieveOutputSLZ"
+
+    def get_plugin_config(self, obj: Idp) -> Dict[str, Any]:
+        return obj.get_plugin_cfg().model_dump()
 
 
 class TenantUserMatchInputSLZ(serializers.Serializer):
@@ -92,3 +123,6 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     time_zone = serializers.CharField(help_text="时区")
 
     tenant_id = serializers.CharField(help_text="用户所在租户 ID")
+
+    class Meta:
+        ref_name = "login.TenantUserRetrieveOutputSLZ"

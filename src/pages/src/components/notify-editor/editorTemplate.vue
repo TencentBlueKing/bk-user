@@ -72,4 +72,33 @@ const handleBlur = () => {
 };
 </script>
 
-<style></style>
+<style>
+.w-e-modal {
+  top: 30px !important;
+  bottom: 40px !important;
+
+  .babel-container {
+    margin-bottom: 10px !important;
+
+    span {
+      margin-bottom: 5px !important;
+    }
+  }
+}
+
+.w-e-panel-content-color {
+  width: 185px;
+  height: 194px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #dcdee5;
+    border-radius: 4px;
+  }
+}
+</style>

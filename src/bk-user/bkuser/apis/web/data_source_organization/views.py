@@ -52,7 +52,9 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         data_source_id = self.kwargs["id"]
 
         # 校验数据源是否存在
-        data_source = DataSource.objects.filter(id=data_source_id).first()
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(), id=data_source_id
+        ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
@@ -117,7 +119,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         return Response(UserCreateOutputSLZ(instance={"id": user_id}).data, status=status.HTTP_201_CREATED)
 
 
-class DataSourceLeadersListApi(generics.ListAPIView):
+class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
     serializer_class = LeaderSearchOutputSLZ
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -127,7 +129,9 @@ class DataSourceLeadersListApi(generics.ListAPIView):
         data = slz.validated_data
 
         # 校验数据源是否存在
-        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
+        ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
@@ -147,7 +151,7 @@ class DataSourceLeadersListApi(generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class DataSourceDepartmentsListApi(generics.ListAPIView):
+class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DepartmentSearchOutputSLZ
 
@@ -157,7 +161,9 @@ class DataSourceDepartmentsListApi(generics.ListAPIView):
         data = slz.validated_data
 
         # 校验数据源是否存在
-        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
+        ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 

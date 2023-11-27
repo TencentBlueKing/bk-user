@@ -10,13 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Any, Dict, Tuple
-from urllib.parse import urljoin
 
 from django.utils.translation import gettext_lazy as _
 
 from .settings import WECOM_API_BASE_URL
 from ..exceptions import RequestAPIError, UnexpectedDataError
 from ..http import http_get_20x
+from ..utils import urljoin
 
 logger = logging.getLogger(__name__)
 

@@ -16,7 +16,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from bkuser.monitoring.healthz.probes import get_default_probes
-from bkuser.monitoring.healthz.serializers import DianosisSerializer
+from bkuser.monitoring.healthz.serializers import DiagnosisSerializer
 
 
 class HealthzApi(viewsets.ViewSet):
@@ -48,4 +48,4 @@ class HealthzApi(viewsets.ViewSet):
             # by monitor system and make response as a plain text
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data=diagnosis_list.get_fatal_report())
 
-        return Response(data={"results": DianosisSerializer(diagnosis_list.items, many=True).data})
+        return Response(data={"results": DiagnosisSerializer(diagnosis_list.items, many=True).data})

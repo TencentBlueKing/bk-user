@@ -26,9 +26,10 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserSearchInputSLZ,
 )
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
+from bkuser.apps.data_source.models import DataSourceDepartmentRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.biz.tenant import (
     TenantDepartmentHandler,
     TenantEditableBaseInfo,
@@ -47,28 +48,6 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserListOutputSLZ
 
-    def get_serializer_context(self):
-        slz = TenantDepartmentUserSearchInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        # 过滤出该租户部门的租户用户
-        tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant_department(
-            tenant_department_id=self.kwargs["id"], recursive=data["recursive"]
-        )
-
-        # 租户用户基础信息
-        tenant_users = TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)
-        tenant_users_info_map = {i.id: i for i in tenant_users}
-
-        # 租户用户所属租户组织
-        tenant_user_departments_map = TenantUserHandler.get_tenant_user_departments_map_by_id(tenant_user_ids)
-
-        return {
-            "tenant_users_info": tenant_users_info_map,
-            "tenant_user_departments": tenant_user_departments_map,
-        }
-
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户部门下用户列表",
@@ -82,7 +61,7 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         # 过滤出该租户部门的租户用户
         tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant_department(
-            tenant_department_id=self.kwargs["id"], recursive=data["recursive"]
+            tenant_id=self.get_current_tenant_id(), tenant_department_id=self.kwargs["id"], recursive=data["recursive"]
         )
 
         # build response
@@ -91,12 +70,19 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             queryset = queryset.select_related("data_source_user").filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
+
+        slz_context = {
+            # 租户用户基础信息
+            "tenant_users_info": {i.id: i for i in TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)},
+            # 租户用户所属租户组织
+            "tenant_user_departments": TenantUserHandler.get_tenant_user_departments_map_by_id(tenant_user_ids),
+        }
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, many=True, context=slz_context)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True, context=slz_context)
         return Response(serializer.data)
 
 
@@ -186,10 +172,14 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDepartmentChildrenListApi(generics.ListAPIView):
+class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantDepartmentChildrenListOutputSLZ
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
         tags=["tenant-organization"],
@@ -197,9 +187,15 @@ class TenantDepartmentChildrenListApi(generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        tenant_department_id = self.kwargs["id"]
-        # 拉取子部门信息列表
-        tenant_department_children = TenantDepartmentHandler.get_tenant_department_children_by_id(tenant_department_id)
+        tenant_department = self.get_object()
+
+        children = DataSourceDepartmentRelation.objects.get(
+            department=tenant_department.data_source_department
+        ).get_children()
+
+        tenant_department_children = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
+            tenant_department.tenant_id, children.values_list("department_id", flat=True)
+        )
         data = [item.model_dump(include={"id", "name", "has_children"}) for item in tenant_department_children]
         return Response(TenantDepartmentChildrenListOutputSLZ(data, many=True).data)
 

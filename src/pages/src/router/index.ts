@@ -15,7 +15,7 @@ export default createRouter({
         name: 'tenantInfo',
       },
       meta: {
-        navName: '集团概览',
+        navName: '租户概览',
       },
       component: () => import('@/views/tenant/index.vue'),
       children: [
@@ -24,7 +24,7 @@ export default createRouter({
           name: 'tenantInfo',
           meta: {
             routeParentName: 'tenant',
-            navName: '集团概览',
+            navName: '租户概览',
             isMenu: true,
           },
           component: () => import('@/views/tenant/group-details/index.vue'),
@@ -118,15 +118,40 @@ export default createRouter({
     {
       path: '/auth-source',
       name: 'authSource',
-      component: () => import('@/views/auth-source/index.vue'),
-    },
-    {
-      path: '/auth-source/new',
-      name: 'newAuthSource',
       meta: {
-        navName: '新建认证源',
+        navName: '认证源管理',
       },
-      component: () => import('@/views/auth-source/new-data/NewConfig.vue'),
+      component: () => import('@/views/auth-source/index.vue'),
+      children: [
+        {
+          path: '',
+          name: 'authSourceList',
+          meta: {
+            routeParentName: 'authSource',
+            navName: '认证源管理',
+          },
+          component: () => import('@/views/auth-source/List.vue'),
+        },
+        {
+          path: 'new',
+          name: 'newAuthSource',
+          meta: {
+            routeParentName: 'authSource',
+            navName: '新建认证源',
+          },
+          component: () => import('@/views/auth-source/new-data/index.vue'),
+        },
+        {
+          path: 'edit/:type/:id',
+          name: 'editAuthSource',
+          meta: {
+            routeParentName: 'authSource',
+            navName: '编辑认证源',
+            showBack: true,
+          },
+          component: () => import('@/views/auth-source/edit-data/index.vue'),
+        },
+      ],
     },
     {
       path: '/audit',

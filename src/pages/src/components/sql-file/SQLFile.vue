@@ -84,10 +84,10 @@ const handleCopy = () => {
 
 const handleDownload = () => {
   const link = document.createElement('a');
-  link.download = `${props.title.replace(/\s/g, '')}.sql`;
+  link.download = `${props.title.replace(/\s/g, '')}.txt`;
   link.style.display = 'none';
   // 字符内容转变成blob地址
-  const blob = new Blob([props.modelValue], { type: 'sql' });
+  const blob = new Blob([props.modelValue], { type: 'txt' });
   link.href = URL.createObjectURL(blob);
   document.body.appendChild(link);
   link.click();

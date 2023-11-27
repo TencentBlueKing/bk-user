@@ -10,13 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Any, Dict, List
-from urllib.parse import urljoin
 
 from requests.auth import HTTPBasicAuth
 
 from .settings import BK_USER_API_URL, BK_USER_APP_CODE, BK_USER_APP_SECRET
 from ..exceptions import RequestAPIError, ValidationError
 from ..http import http_post
+from ..utils import urljoin
 
 logger = logging.getLogger(__name__)
 

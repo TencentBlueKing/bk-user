@@ -8,22 +8,23 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import operator
-from functools import reduce
+from collections import defaultdict
+from typing import Any, Dict
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apps.data_source.models import DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.apps.idp.data_models import DataSourceMatchRuleList, convert_match_rules_to_queryset_filter
+from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
+from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
 from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.biz.idp import AuthenticationMatcher
 from bkuser.common.error_codes import error_codes
 
 from .mixins import LoginApiAccessControlMixin
 from .serializers import (
-    GlobalSettingRetrieveOutputSLZ,
+    GlobalInfoRetrieveOutputSLZ,
     IdpListOutputSLZ,
     IdpRetrieveOutputSLZ,
     LocalUserCredentialAuthenticateInputSLZ,
@@ -68,10 +69,38 @@ class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.Cr
         return Response(LocalUserCredentialAuthenticateOutputSLZ(instance=matched_users, many=True).data)
 
 
-class GlobalSettingRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
+class GlobalInfoRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
-        # TODO: 待实现全局配置管理功能后调整
-        return Response(GlobalSettingRetrieveOutputSLZ(instance={"tenant_visible": False}).data)
+        # 查询租户启用的认证源
+        enabled_idp_map = defaultdict(list)
+        for idp in Idp.objects.filter(status=IdpStatus.ENABLED).values("owner_tenant_id", "id", "plugin_id"):
+            enabled_idp_map[idp["owner_tenant_id"]].append({"id": idp["id"], "plugin_id": idp["plugin_id"]})
+
+        # 启用认证源的租户数量
+        enabled_auth_tenant_number = len(enabled_idp_map)
+
+        # 唯一启用认证的租户信息
+        only_enabled_auth_tenant: Dict[str, Any] | None = None
+        if enabled_auth_tenant_number == 1:
+            owner_tenant_id, enabled_idps = next(iter(enabled_idp_map.items()))
+            tenant = Tenant.objects.get(id=owner_tenant_id)
+            only_enabled_auth_tenant = {
+                "id": tenant.id,
+                "name": tenant.name,
+                "logo": tenant.logo,
+                "enabled_idps": enabled_idps,
+            }
+
+        return Response(
+            GlobalInfoRetrieveOutputSLZ(
+                instance={
+                    # FIXME (nan): 待实现全局配置管理功能后调整
+                    "tenant_visible": False,
+                    "enabled_auth_tenant_number": enabled_auth_tenant_number,
+                    "only_enabled_auth_tenant": only_enabled_auth_tenant,
+                }
+            ).data
+        )
 
 
 class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
@@ -126,29 +155,14 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
 
         # 认证源
         idp_id = kwargs["idp_id"]
-        idp = Idp.objects.filter(owner_tenant_id=tenant_id, id=idp_id).first()
-        if not idp:
+        if not Idp.objects.filter(owner_tenant_id=tenant_id, id=idp_id).exists():
             raise error_codes.OBJECT_NOT_FOUND.f(_("认证源 {} 不存在").format(idp_id))
 
         # FIXME: 查询是绑定匹配还是直接匹配，
         #  一般社会化登录都得通过绑定匹配方式，比如QQ，用户得先绑定后才能使用QQ登录
         #  直接匹配，一般是企业身份登录方式，
         #  比如企业内部SAML2.0登录，认证后获取到的用户字段，能直接与数据源里的用户数据字段匹配
-        # 认证源与数据源的匹配规则
-        data_source_match_rules = DataSourceMatchRuleList.validate_python(idp.data_source_match_rules)
-        # 将规则转换为Django Queryset 过滤条件, 不同用户之间过滤逻辑是OR
-        conditions = [
-            condition
-            for userinfo in data["idp_users"]
-            if (condition := convert_match_rules_to_queryset_filter(data_source_match_rules, userinfo))
-        ]
-
-        # 查询数据源用户
-        data_source_user_ids = (
-            DataSourceUser.objects.filter(reduce(operator.or_, conditions)).values_list("id", flat=True)
-            if conditions
-            else []
-        )
+        data_source_user_ids = AuthenticationMatcher(tenant_id, idp_id).match(data["idp_users"])
 
         # 查询租户用户
         tenant_users = TenantUser.objects.filter(

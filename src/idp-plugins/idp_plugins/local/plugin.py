@@ -12,16 +12,15 @@ from typing import Any, Dict, List
 
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
-from pydantic import BaseModel
 
 from .client import BkUserAPIClient
-from ..base import BaseCredentialIdpPlugin
+from ..base import BaseCredentialIdpPlugin, BasePluginConfig
 from ..exceptions import InvalidParamError, UnexpectedDataError
 from ..models import TestConnectionResult
 from ..utils import parse_request_body_json
 
 
-class LocalIdpPluginConfig(BaseModel):
+class LocalIdpPluginConfig(BasePluginConfig):
     """ "本地账密认证源插件配置"""
 
     # 开启账密登录的数据源

@@ -19,8 +19,8 @@ urlpatterns = [
         views.LocalUserCredentialAuthenticateApi.as_view(),
         name="login.local_user_credentials.authenticate",
     ),
-    # 全局配置
-    path("global-settings/", views.GlobalSettingRetrieveApi.as_view(), name="login.global_setting.retrieve"),
+    # 全局信息
+    path("global-infos/", views.GlobalInfoRetrieveApi.as_view(), name="login.global_info.retrieve"),
     # 租户列表
     path("tenants/", views.TenantListApi.as_view(), name="login.tenant.list"),
     # 单个租户

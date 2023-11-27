@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from typing import Any, Callable, Dict, List
-from urllib.parse import quote_plus, urljoin
+from urllib.parse import quote_plus
 
 import pydantic
 from django.conf import settings
@@ -27,14 +27,15 @@ from bklogin.common.request import parse_request_body_json
 from bklogin.common.response import APISuccessResponse
 from bklogin.component.bk_user import api as bk_user_api
 from bklogin.component.bk_user.constants import IdpStatus
-from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls
-from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum
+from bklogin.idp_plugins.base import BaseCredentialIdpPlugin, BaseFederationIdpPlugin, get_plugin_cls, get_plugin_type
+from bklogin.idp_plugins.constants import AllowedHttpMethodEnum, BuiltinActionEnum, PluginTypeEnum
 from bklogin.idp_plugins.exceptions import (
     InvalidParamError,
     ParseRequestBodyError,
     UnexpectedDataError,
     ValidationError,
 )
+from bklogin.utils.url import urljoin
 
 from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .manager import BkTokenManager
@@ -78,18 +79,36 @@ class LoginView(View):
         # 存储到当前session里，待认证成功后取出后重定向
         request.session["redirect_uri"] = redirect_url
 
-        # TODO: 【优化】当只有一个租户且该租户有且仅有一种登录方式，且该登录方式为联邦登录，则直接重定向到第三方登录
+        # 当只有一个租户且该租户有且仅有一种登录方式，且该登录方式为联邦登录，则直接重定向到第三方登录
+        global_info = bk_user_api.get_global_info()
+        if (
+            global_info.enabled_auth_tenant_number == 1
+            and global_info.only_enabled_auth_tenant
+            and len(global_info.only_enabled_auth_tenant.enabled_idps) == 1
+        ):
+            idp = global_info.only_enabled_auth_tenant.enabled_idps[0]
+            # 判断是否联邦登录
+            if get_plugin_type(idp.plugin_id) == PluginTypeEnum.FEDERATION:
+                # session记录登录的租户
+                request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = global_info.only_enabled_auth_tenant.id
+                # 联邦登录，则直接重定向到第三方登录
+                return HttpResponseRedirect(f"/auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/")
+
         # 返回登录页面
         return render(request, self.template_name)
 
 
-class TenantGlobalSettingRetrieveApi(View):
+class TenantGlobalInfoRetrieveApi(View):
     def get(self, request, *args, **kwargs):
         """
-        租户的全局配置，即所有租户的公共配置
+        租户的全局信息
         """
-        global_setting = bk_user_api.get_global_setting()
-        return APISuccessResponse(data=global_setting.model_dump(include={"tenant_visible"}))
+        global_info = bk_user_api.get_global_info()
+        return APISuccessResponse(
+            data=global_info.model_dump(
+                include={"tenant_visible", "enabled_auth_tenant_number", "only_enabled_auth_tenant"}
+            )
+        )
 
 
 class TenantListApi(View):
@@ -102,7 +121,7 @@ class TenantListApi(View):
         tenant_ids = [i for i in tenant_ids_str.split(",") if i]
 
         # 无tenant_ids表示需要获取全部租户，这时候需要检查租户是否可见
-        global_setting = bk_user_api.get_global_setting()
+        global_setting = bk_user_api.get_global_info()
         if not tenant_ids and not global_setting.tenant_visible:
             raise error_codes.NO_PERMISSION.f(_("租户信息不可见"))
 
@@ -272,7 +291,7 @@ class IdpPluginDispatchView(View):
                 context.idp.plugin_id,
             )
             raise error_codes.PLUGIN_SYSTEM_ERROR.f(
-                _("认证源[{}]执行插件[{}]失败, {}").format(context.idp.name, context.idp.plugin_name),
+                _("认证源[{}]执行插件[{}]失败").format(context.idp.name, context.idp.plugin_name),
             )
 
     def _dispatch_credential_idp_plugin(
@@ -343,7 +362,7 @@ class IdpPluginDispatchView(View):
             # 记录支持登录的租户用户
             request.session[ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY] = tenant_users
             # 联邦认证则重定向到前端选择账号页面
-            return HttpResponseRedirect(redirect_to="page/users/")
+            return HttpResponseRedirect(redirect_to="/page/users/")
 
         return self.wrap_plugin_error(
             plugin_error_context, plugin.dispatch_extension, action=action, http_method=http_method, request=request

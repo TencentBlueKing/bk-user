@@ -340,7 +340,6 @@ const handleNext = async () => {
           mapping_operation: item.mapping_operation,
           source_field: item.source_field,
           disabled: isDisabled,
-          target_field: fields.name,
         });
         fieldSettingData.field_mapping[fieldMappingType].push(fields);
         apiFields.value.push({ key: item.source_field, disabled: isDisabled });
@@ -356,39 +355,40 @@ const handleNext = async () => {
         res.data?.custom_fields?.forEach(fields => mapFields(fields, item, true, 'custom_fields'));
       });
 
-      const filterKeys = apiFields.value.map(item => item.key);
+      const filterKeys = new Set(apiFields.value.map(item => item.key));
 
-      res.data?.builtin_fields?.forEach((fields) => {
-        if (filterKeys.includes(fields.name)) return;
-        apiFields.value.push({ key: fields.name, disabled: false });
-      });
+      const addApiField = (fields, isDisabled) => {
+        if (!filterKeys.has(fields.name)) {
+          apiFields.value.push({ key: fields.name, disabled: isDisabled });
+          filterKeys.add(fields.name);
+        }
+      };
 
       res.data?.custom_fields?.forEach((fields) => {
         if (!customList.includes(fields.name)) {
           fieldSettingData.field_mapping.custom_fields.push(fields);
         }
-        if (list.includes(fields.name)) return;
-
-        Object.assign(fields, {
-          mapping_operation: 'direct',
-          source_field: '',
-          disabled: false,
-          target_field: fields.name,
-        });
-
-        apiFields.value.push({ key: fields.name, disabled: false });
       });
+
+      userProperties.value.forEach(item => addApiField({ name: item }, false));
     } else {
-      fieldSettingData.field_mapping.builtin_fields = res.data?.builtin_fields;
-      fieldSettingData.field_mapping.custom_fields = res.data?.custom_fields;
-      [fieldSettingData.field_mapping.builtin_fields, fieldSettingData.field_mapping.custom_fields]
-        .forEach((fields) => {
-          fields.forEach((item) => {
-            item.mapping_operation = 'direct';
-            item.source_field = '';
-            apiFields.value.push({ key: item.name, disabled: false });
-          });
+      const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
+      fieldSettingData.field_mapping = {
+        builtin_fields: builtinFields,
+        custom_fields: customFields,
+      };
+
+      const updateFields = (fields) => {
+        fields.forEach((field) => {
+          field.mapping_operation = 'direct';
+          field.source_field = '';
         });
+      };
+
+      updateFields(builtinFields);
+      updateFields(customFields);
+
+      apiFields.value = userProperties.value.map(item => ({ key: item, disabled: false }));
     }
   } catch (e) {
     console.warn(e);
@@ -426,6 +426,7 @@ const nextDisabled = ref(true);
 const connectionLoading = ref(false);
 const connectionStatus = ref(null);
 const connectionText = ref('');
+const userProperties = ref([]);
 
 // 连通性测试
 const handleTestConnection = async () => {
@@ -447,6 +448,7 @@ const handleTestConnection = async () => {
       connectionStatus.value = true;
       connectionText.value = '测试成功';
       nextDisabled.value = false;
+      userProperties.value = Object.keys(res.data?.user?.properties);
     } else {
       connectionStatus.value = false;
       connectionText.value = res.data.error_message;

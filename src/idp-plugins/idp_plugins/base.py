@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Type
+from typing import Any, ClassVar, Dict, List, Type
 
 from django.http import HttpRequest, HttpResponse, HttpResponseNotFound
 from pydantic import BaseModel
@@ -21,13 +21,23 @@ from .models import DispatchConfigItem, TestConnectionResult
 logger = logging.getLogger(__name__)
 
 
+class BasePluginConfig(BaseModel):
+    """插件配置基类"""
+
+    # 注：敏感字段声明有以下规范
+    # 字段形式如: auth.secret
+    # 字段类型为 str 或 (str | None)
+    # 字段路径中不支持列表下标，只能是字典 key
+    sensitive_fields: ClassVar[List[str]] = []
+
+
 class BaseIdpPlugin(ABC):
     """认证源插件基类"""
 
     # 插件唯一标识，比如oauth2、oidc、saml2、local，自定义插件需要以custom_为前缀
     id: str
     # 插件本身的配置类，比如OAuth2.0可能需要提供ClientID/ClientSecret等等
-    config_class: Type[BaseModel]
+    config_class: Type[BasePluginConfig]
 
     # 扩展请求的配置
     dispatch_configs: List[DispatchConfigItem]
@@ -141,7 +151,7 @@ def get_plugin_cls(plugin_id: str) -> Type[BaseCredentialIdpPlugin] | Type[BaseF
     return _plugin_cls_map[plugin_id]
 
 
-def get_plugin_cfg_cls(plugin_id: str) -> Type[BaseModel]:
+def get_plugin_cfg_cls(plugin_id: str) -> Type[BasePluginConfig]:
     """获取指定插件的配置类"""
     return get_plugin_cls(plugin_id).config_class
 
@@ -163,3 +173,8 @@ def get_plugin_type(plugin_id: str) -> PluginTypeEnum:
         f"plugin class({plugin_cls.__name__}) must is a subclass of "
         f"{BaseCredentialIdpPlugin.__name__} or {BaseFederationIdpPlugin.__name__}"
     )
+
+
+def list_plugin_cls() -> List[Type[BaseCredentialIdpPlugin] | Type[BaseFederationIdpPlugin]]:
+    """获取插件类列表"""
+    return list(_plugin_cls_map.values())

@@ -53,7 +53,7 @@ class DataSourceManager(models.Manager):
 
 
 class DataSource(AuditedModel):
-    name = models.CharField("数据源名称", max_length=128, unique=True)
+    name = models.CharField("数据源名称", max_length=128)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
     status = models.CharField(
         "数据源状态",
@@ -73,6 +73,7 @@ class DataSource(AuditedModel):
 
     class Meta:
         ordering = ["id"]
+        unique_together = [("name", "owner_tenant_id")]
 
     @property
     def is_local(self) -> bool:

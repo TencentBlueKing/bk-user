@@ -139,12 +139,12 @@ const handleInitError = () => {
 
 const verifyInput = () => {
   if (data.value.phone === '') {
-    return emit('changeTelError', true);
+    return emit('changeTelError', true, data.value.phone);
   }
   const validation = area.value === 'cn'
     ? /^1[3-9]\d{9}$/.test(data.value.phone)
     : iti.value.isValidNumber();
-  !validation && (emit('changeTelError', true));
+  !validation && (emit('changeTelError', true, data.value.phone));
 };
 
 const hiddenVerify = () => {
@@ -152,7 +152,7 @@ const hiddenVerify = () => {
 };
 
 const handleInput = () => {
-  emit('changeTelError', false);
+  emit('changeTelError', false, data.value.phone);
 };
 </script>
 
