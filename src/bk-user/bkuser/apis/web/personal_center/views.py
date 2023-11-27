@@ -71,7 +71,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         return Response(NaturalUserWithTenantUserListOutputSLZ(nature_user_with_tenant_users_info).data)
 
 
-class TenantUserRetrievePatchApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+class TenantUserRetrievePatchApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -96,11 +96,11 @@ class TenantUserRetrievePatchApi(ExcludePutAPIViewMixin, generics.UpdateAPIView)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        instance = self.get_object()
+        tenant_user = self.get_object()
 
-        data_source_user = instance.data_source_user
+        data_source_user = tenant_user.data_source_user
         data_source_user.logo = data["logo"]
-        data_source_user.save()
+        data_source_user.save(update_fields=["logo", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
