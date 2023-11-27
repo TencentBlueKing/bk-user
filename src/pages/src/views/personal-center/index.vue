@@ -113,7 +113,7 @@
                           v-model="currentUserInfo.is_inherited_email"
                           @change="toggleEmail"
                         >
-                          <bk-radio-button :label="true">基础数据源</bk-radio-button>
+                          <bk-radio-button :label="true">继承数据源</bk-radio-button>
                           <bk-radio-button :label="false">自定义</bk-radio-button>
                         </bk-radio-group>
                         <bk-input
@@ -152,7 +152,7 @@
                           v-model="currentUserInfo.is_inherited_phone"
                           @change="togglePhone"
                         >
-                          <bk-radio-button :label="true">基础数据源</bk-radio-button>
+                          <bk-radio-button :label="true">继承数据源</bk-radio-button>
                           <bk-radio-button :label="false">自定义</bk-radio-button>
                         </bk-radio-group>
                         <bk-form-item
@@ -194,7 +194,7 @@
                 <div class="item-div">
                   <li>
                     <span class="key">所属租户ID：</span>
-                    <span class="value">{{ currentUserInfo.id }}</span>
+                    <span class="value">{{ currentTenantInfo.tenant?.id }}</span>
                   </li>
                   <li>
                     <span class="key">所属组织：</span>
@@ -241,9 +241,12 @@ const infoLoading = ref(false);
 const isInheritedEmail = ref(true);
 const isInheritedPhone = ref(true);
 const customEmail = ref('');
+const customPhone = ref('');
+const customPhoneCode = ref('');
 const rules = {
   custom_email: [validate.required, validate.email],
 };
+const formRef = ref();
 
 onMounted(() => {
   getNaturalUser();
@@ -272,6 +275,8 @@ const getCurrentUser = (id) => {
   getPersonalCenterUsers(id).then((res) => {
     currentUserInfo.value = res.data;
     customEmail.value = res.data.custom_email;
+    customPhone.value = res.data.custom_phone;
+    customPhoneCode.value = res.data.custom_phone_country_code;
     isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
     isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
     infoLoading.value = false;
@@ -302,7 +307,8 @@ const toggleEmail = (value) => {
   });
 };
 // 修改邮箱
-const changeEmail = () => {
+const changeEmail = async () => {
+  await formRef.value.validate();
   isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
   customEmail.value = currentUserInfo.value.custom_email;
   patchUsersEmail({
@@ -333,15 +339,17 @@ watch(() => isEditPhone.value, (val) => {
 // 切换手机号
 const togglePhone = (value) => {
   nextTick(() => {
-    if (!value) {
-      const phoneInput = document.querySelectorAll('.phone-input input');
-      phoneInput[0].focus();
-    }
+    if (value) return telError.value = false;
+    currentUserInfo.value.custom_phone = customPhone.value;
+    const phoneInput = document.querySelectorAll('.phone-input input');
+    phoneInput[0].focus();
   });
 };
 // 修改手机号
 const changePhone = () => {
+  if (telError.value) return;
   isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+  customEmail.value = currentUserInfo.value.custom_phone;
   patchUsersPhone({
     id: currentUserInfo.value.id,
     is_inherited_phone: currentUserInfo.value.is_inherited_phone,
@@ -354,6 +362,8 @@ const changePhone = () => {
 // 取消编辑手机号
 const cancelEditPhone = () => {
   currentUserInfo.value.is_inherited_phone = isInheritedPhone.value;
+  currentUserInfo.value.custom_phone = customPhone.value;
+  currentUserInfo.value.custom_phone_country_code = customPhoneCode.value;
   isEditPhone.value = false;
   telError.value = false;
   window.changeInput = false;
@@ -372,8 +382,9 @@ const handleClickItem = async (item) => {
 
 const telError = ref(false);
 
-const changeTelError = (value: boolean) => {
+const changeTelError = (value: boolean, phone: string) => {
   telError.value = value;
+  currentUserInfo.value.custom_phone = phone;
 };
 
 const changeCountryCode = (code: string) => {

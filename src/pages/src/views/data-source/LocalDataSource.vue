@@ -1,7 +1,7 @@
 <template>
   <div class="user-info-wrapper user-scroll-y">
     <header>
-      <bk-dropdown placement="bottom-start">
+      <bk-dropdown placement="bottom-start" trigger="click">
         <bk-button theme="primary">
           <i class="user-icon icon-add-2 mr8" />
           新建数据源

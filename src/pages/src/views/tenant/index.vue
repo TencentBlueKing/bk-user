@@ -43,7 +43,7 @@ const { activeKey, handleChangeMenu } = useMenuInfo();
 
 const menuData = reactive([
   {
-    name: '集团概览',
+    name: '租户概览',
     key: 'tenantInfo',
   },
   // {
