@@ -129,7 +129,6 @@ class PasswordInitialConfig(BaseModel):
     # 初始密码生成方式
     generate_method: PasswordGenerateMethod
     # 固定初始密码（仅密码生成方式为'固定值'时有效）
-    # FIXME (su) 固定的初始密码需要加密存储，考虑独立建表？且因为需要在通知时使用，只能使用对称加密？
     fixed_password: Optional[str] = None
     # 通知相关配置
     notification: NotificationConfig

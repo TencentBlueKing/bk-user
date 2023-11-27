@@ -39,7 +39,7 @@ def send_notifications(tenant_id: str, scene: NotificationScene, tenant_user_ids
 @app.task(base=BaseTask, ignore_result=True)
 def notify_expiring_tenant_user():
     """扫描全部租户用户，做即将过期通知"""
-    logger.info("[celery] receive period task:send_tenant_user_expiring_notification")
+    logger.info("[celery] receive period task:notify_expiring_tenant_user")
     now = timezone.now()
 
     # 获取账号有效期-临期配置
@@ -75,7 +75,7 @@ def notify_expiring_tenant_user():
 @app.task(base=BaseTask, ignore_result=True)
 def notify_expired_tenant_user():
     """扫描全部租户用户，做过期通知"""
-    logger.info("[celery] receive period task:send_tenant_user_expired_notification")
+    logger.info("[celery] receive period task:notify_expired_tenant_user")
 
     # 今日过期, 当前时间转换为实际时区的时间
     now = timezone.now()
