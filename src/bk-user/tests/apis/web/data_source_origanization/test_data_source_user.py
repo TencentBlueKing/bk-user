@@ -96,8 +96,10 @@ class TestDataSourceUserWithCustomField:
     @pytest.mark.parametrize(
         "invalid_extras",
         [
-            # 必填
-            {},
+            # 缺少必填字段
+            {
+                "test_not_required": 1,
+            },
             # 未提供选填字段
             {
                 "test_num": 1,
@@ -118,7 +120,7 @@ class TestDataSourceUserWithCustomField:
                 "test_num": 1,
                 "test_str": "test",
                 "test_enum": "test_a",
-                "test_multi_enum": ["test_d"],
+                "test_multi_enum": ["test_d", "test_e"],
                 "test_not_required": 1,
             },
             # 多选枚举字段非法格式
@@ -161,8 +163,10 @@ class TestDataSourceUserWithCustomField:
     @pytest.mark.parametrize(
         "invalid_extras",
         [
-            # 必填
-            {},
+            # 缺少必填字段
+            {
+                "test_not_required": 1,
+            },
             # 未提供选填字段
             {
                 "test_num": 1,
@@ -183,7 +187,7 @@ class TestDataSourceUserWithCustomField:
                 "test_num": 1,
                 "test_str": "test",
                 "test_enum": "test_a",
-                "test_multi_enum": ["test_d"],
+                "test_multi_enum": ["test_d", "test_e"],
                 "test_not_required": 1,
             },
             # 多选枚举字段非法格式
