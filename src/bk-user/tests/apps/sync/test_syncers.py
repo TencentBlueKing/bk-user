@@ -185,7 +185,7 @@ class TestDataSourceUserSyncer:
         assert zhangsan.email == "zhangsan_rename@m.com"
         assert zhangsan.phone == "13512345655"
         assert zhangsan.phone_country_code == "63"
-        assert zhangsan.extras.get("age") == "30"
+        assert zhangsan.extras.get("age") == 30  # noqa: PLR2004
 
         # 验证用户被重建的情况
         lisi = users.filter(username="lisi").first()

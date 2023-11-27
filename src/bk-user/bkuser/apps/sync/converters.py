@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import re
-from typing import List
+from typing import Any, Dict, List
 
 import pydantic
 from django.conf import settings
@@ -19,6 +19,7 @@ from bkuser.apps.data_source.data_models import DataSourceUserFieldMapping
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.sync.constants import DATA_SOURCE_USERNAME_REGEX, EMAIL_REGEX
 from bkuser.apps.sync.context import TaskLogger
+from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.models import RawDataSourceUser
@@ -33,6 +34,48 @@ class DataSourceUserConverter:
         self.logger = logger
         self.custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.data_source.owner_tenant_id)
         self.field_mapping = self._get_field_mapping()
+
+    def convert(self, user: RawDataSourceUser) -> DataSourceUser:
+        # TODO (su) 支持复杂字段映射类型，如表达式，目前都当作直接映射处理（目前只支持直接映射）
+        mapping = {m.target_field: m.source_field for m in self.field_mapping}
+        props = user.properties
+
+        username = props.get(mapping["username"])
+        # 1. 用户名是必须提供的，而且需要满足正则校验规则
+        if not username:
+            raise ValueError("username is required")
+
+        if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
+            raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
+
+        # 2. 姓名也是必须提供的
+        full_name = props.get(mapping["full_name"])
+        if not full_name:
+            raise ValueError(f"username {username}, full_name is required")
+
+        email = props.get(mapping["email"]) or ""
+        # 3. 如果提供了邮箱，则必须满足正则校验规则
+        if email and not re.fullmatch(EMAIL_REGEX, email):
+            raise ValueError(
+                f"username {username}, email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}"
+            )
+
+        phone = props.get(mapping["phone"]) or ""
+        country_code = props.get(mapping["phone_country_code"]) or settings.DEFAULT_PHONE_COUNTRY_CODE
+        # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
+        if phone:
+            validate_phone_with_country_code(phone, country_code)
+
+        return DataSourceUser(
+            data_source=self.data_source,
+            code=user.code,
+            username=username,
+            full_name=full_name,
+            email=email,
+            phone=phone,
+            phone_country_code=country_code,
+            extras=self._build_extras(username, props, mapping),
+        )
 
     def _get_field_mapping(self) -> List[DataSourceUserFieldMapping]:
         """获取字段映射配置"""
@@ -79,43 +122,43 @@ class DataSourceUserConverter:
             for f in fields
         ]
 
-    def convert(self, user: RawDataSourceUser) -> DataSourceUser:
-        # TODO (su) 支持复杂字段映射类型，如表达式，目前都当作直接映射处理（目前只支持直接映射）
-        mapping = {m.target_field: m.source_field for m in self.field_mapping}
-        props = user.properties
+    def _build_extras(self, username: str, props: Dict[str, str], mapping: Dict[str, str]) -> Dict[str, Any]:
+        extras = {}
+        for f in self.custom_fields:
+            # 并不是所有的自定义字段，都已经被配置到字段映射中，这里应该以字段映射为准
+            if f.name not in mapping:
+                continue
 
-        username = props.get(mapping["username"])
-        # 1. 用户名是必须提供的，而且需要满足正则校验规则
-        if not username:
-            raise ValueError("username is required")
+            opt_ids = [opt["id"] for opt in f.options]
+            value = props.get(mapping[f.name], f.default)
 
-        if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, username):
-            raise ValueError(f"username [{username}] not match pattern {DATA_SOURCE_USERNAME_REGEX.pattern}")
+            # 数字类型，转换成整型不丢精度就转，不行就浮点数
+            if f.data_type == UserFieldDataType.NUMBER:
+                try:
+                    value = float(value)  # type: ignore
+                    value = int(value) if int(value) == value else value  # type: ignore
+                except ValueError:
+                    raise ValueError(
+                        f"username: {username}, number field {f.name} value `{value}` cannot convert to number"
+                    )
+            # 枚举类型，值（id）必须是字符串，且是可选项中的一个
+            elif f.data_type == UserFieldDataType.ENUM:
+                if value not in opt_ids:
+                    raise ValueError(
+                        f"username: {username}, enum field {f.name} value `{value}` not in options {opt_ids}"
+                    )
+            # 多选枚举类型，值必须是字符串列表，且是可选项的子集
+            elif f.data_type == UserFieldDataType.MULTI_ENUM:
+                # 兼容 xlsx 导入，统一所有插件输出的多选枚举，都是通过 "," 分隔的字符串表示列表
+                # 但是，默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
+                if isinstance(value, str):
+                    value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
 
-        # 2. 全名也是必须提供的
-        full_name = props.get(mapping["full_name"])
-        if not full_name:
-            raise ValueError("full_name is required")
+                if set(value) - set(opt_ids):
+                    raise ValueError(
+                        f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_ids}"
+                    )
 
-        email = props.get(mapping["email"]) or ""
-        # 3. 如果提供了邮箱，则必须满足正则校验规则
-        if email and not re.fullmatch(EMAIL_REGEX, email):
-            raise ValueError(f"email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}")
+            extras[f.name] = value
 
-        phone = props.get(mapping["phone"]) or ""
-        country_code = props.get(mapping["phone_country_code"]) or settings.DEFAULT_PHONE_COUNTRY_CODE
-        # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
-        if phone:
-            validate_phone_with_country_code(phone, country_code)
-
-        return DataSourceUser(
-            data_source=self.data_source,
-            code=user.code,
-            username=username,
-            full_name=full_name,
-            email=email,
-            phone=phone,
-            phone_country_code=country_code,
-            # TODO (su) 自定义字段应该也需要校验下（比如说枚举值？） & 根据配置的类型 format 下？
-            extras={f.name: props.get(mapping[f.name], f.default) for f in self.custom_fields if f.name in mapping},
-        )
+        return extras

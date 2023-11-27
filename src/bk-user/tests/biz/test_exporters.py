@@ -58,17 +58,18 @@ class TestDataSourceExporter:
             assert row[6].value == str(20 + idx)
             assert row[7].value == "male"
             assert row[8].value == "region-" + str(idx)
+            assert row[9].value == "running,swimming"
 
         # 检查组织信息
         assert [cell.value for cell in wk["users"]["E"][2:]] == [
             "公司",
-            "公司/部门A, 公司/部门A/中心AA",
-            "公司/部门A, 公司/部门B",
+            "公司/部门A,公司/部门A/中心AA",
+            "公司/部门A,公司/部门B",
             "公司/部门A/中心AA",
             "公司/部门A/中心AA/小组AAA",
             "公司/部门A/中心AB",
             "公司/部门A/中心AB",
-            "公司/部门B/中心BA, 公司/部门A/中心AB/小组ABA",
+            "公司/部门B/中心BA,公司/部门A/中心AB/小组ABA",
             "公司/部门A/中心AB/小组ABA",
             "公司/部门B/中心BA/小组BAA",
             "",
@@ -81,9 +82,9 @@ class TestDataSourceExporter:
             "zhangsan",
             "lisi",
             "zhaoliu",
-            "lisi, wangwu",
+            "lisi,wangwu",
             "wangwu",
-            "wangwu, maiba",
+            "wangwu,maiba",
             "lushi",
             "lushi",
             "",

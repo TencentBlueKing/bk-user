@@ -36,7 +36,8 @@ class RawDataSourceUser(BaseModel):
 
     # 用户唯一标识
     code: str
-    # 用户名，邮箱，手机号等个人信息
+    # 用户名，邮箱，手机号等个人信息，强制要求都是字符串类型
+    # 注意：如果是多项枚举，请用 "," 进行拼接，如 {"hobby": "running,swimming"}
     properties: Dict[str, str]
     # 直接上级信息（code）
     leaders: List[str]

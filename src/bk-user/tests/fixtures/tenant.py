@@ -35,11 +35,20 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "data_type": UserFieldDataType.ENUM,
             "required": True,
             "default": "male",
-            "options": {
-                "male": "男",
-                "female": "女",
-                "other": "其他",
-            },
+            "options": [
+                {
+                    "id": "male",
+                    "value": "男",
+                },
+                {
+                    "id": "female",
+                    "value": "女",
+                },
+                {
+                    "id": "other",
+                    "value": "其他",
+                },
+            ],
         },
     )
     region_field, _ = TenantUserCustomField.objects.get_or_create(
@@ -58,15 +67,33 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "display_name": "运动爱好",
             "data_type": UserFieldDataType.MULTI_ENUM,
             "required": True,
-            "default": "running",
-            "options": {
-                "running": "跑步",
-                "swimming": "游泳",
-                "Basketball": "篮球",
-                "football": "足球",
-                "golf": "高尔夫",
-                "cycling": "骑行",
-            },
+            "default": ["running", "swimming"],
+            "options": [
+                {
+                    "id": "running",
+                    "value": "跑步",
+                },
+                {
+                    "id": "swimming",
+                    "value": "游泳",
+                },
+                {
+                    "id": "basketball",
+                    "value": "篮球",
+                },
+                {
+                    "id": "football",
+                    "value": "足球",
+                },
+                {
+                    "id": "golf",
+                    "value": "高尔夫",
+                },
+                {
+                    "id": "cycling",
+                    "value": "骑行",
+                },
+            ],
         },
     )
     return [age_field, gender_field, region_field, sport_hobby_field]
