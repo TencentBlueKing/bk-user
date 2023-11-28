@@ -1,5 +1,5 @@
 <template>
-  <div class="group-details-wrapper user-scroll-y">
+  <bk-loading :loading="state.tableLoading" class="group-details-wrapper user-scroll-y">
     <div class="main-content">
       <div class="content-search">
         <div class="content-search-left">
@@ -7,12 +7,13 @@
             <i class="user-icon icon-add-2 mr8" />
             新建租户
           </bk-button>
-          <!-- <bk-switcher
-            v-model="demo"
+          <bk-switcher
+            v-model="tenantVisible"
             theme="primary"
             size="large"
+            @change="changeVisible"
           />
-          <span class="switcher-text">租户名是否跨租户可见</span> -->
+          <span class="switcher-text">租户名是否跨租户可见</span>
         </div>
         <bk-input
           class="content-search-input"
@@ -24,68 +25,66 @@
           @clear="fetchTenantsList"
         />
       </div>
-      <bk-loading :loading="state.tableLoading">
-        <bk-table
-          class="content-table"
-          :data="state.list"
-          :max-height="tableMaxHeight"
-          show-overflow-tooltip>
-          <template #empty>
-            <Empty
-              :is-data-empty="state.isTableDataEmpty"
-              :is-search-empty="state.isEmptySearch"
-              :is-data-error="state.isTableDataError"
-              @handleEmpty="fetchTenantsList"
-              @handleUpdate="fetchTenantsList"
-            />
-          </template>
-          <bk-table-column
-            prop="name"
-            label="租户名"
-            :sort="{ value: 'asc' }">
-            <template #default="{ row, index }">
-              <div class="item-name">
-                <img v-if="row.logo" class="img-logo" :src="row.logo" />
-                <span v-else class="span-logo" :style="`background-color: ${LOGO_COLOR[index]}`">
-                  {{ logoConvert(row.name) }}
-                </span>
-                <bk-button
-                  text
-                  theme="primary"
-                  @click="handleClick('view', row)"
-                >
-                  {{ row.name }}
-                </bk-button>
-                <img v-if="row.new" class="icon-new" src="@/images/new.svg" alt="">
-              </div>
-            </template>
-          </bk-table-column>
-          <bk-table-column prop="id" label="租户ID"></bk-table-column>
-          <bk-table-column prop="managers" label="租户管理员">
-            <template #default="{ row }">
-              <bk-tag v-for="(item, index) in row.managers" :key="index">{{ item.username }}</bk-tag>
-            </template>
-          </bk-table-column>
-          <bk-table-column prop="data_sources" label="已绑定数据源">
-            <template #default="{ row }">
-              <span>{{ formatConvert(row.data_sources) }}</span>
-            </template>
-          </bk-table-column>
-          <bk-table-column prop="created_at" label="创建时间" :sort="true" />
-          <bk-table-column label="操作">
-            <template #default="{ row }">
+      <bk-table
+        class="content-table"
+        :data="state.list"
+        :max-height="tableMaxHeight"
+        show-overflow-tooltip>
+        <template #empty>
+          <Empty
+            :is-data-empty="state.isTableDataEmpty"
+            :is-search-empty="state.isEmptySearch"
+            :is-data-error="state.isTableDataError"
+            @handleEmpty="fetchTenantsList"
+            @handleUpdate="fetchTenantsList"
+          />
+        </template>
+        <bk-table-column
+          prop="name"
+          label="租户名"
+          :sort="{ value: 'asc' }">
+          <template #default="{ row, index }">
+            <div class="item-name">
+              <img v-if="row.logo" class="img-logo" :src="row.logo" />
+              <span v-else class="span-logo" :style="`background-color: ${LOGO_COLOR[index]}`">
+                {{ logoConvert(row.name) }}
+              </span>
               <bk-button
                 text
                 theme="primary"
-                style="margin-right: 8px;"
-                @click="handleClick('edit', row)"
+                @click="handleClick('view', row)"
               >
-                编辑
+                {{ row.name }}
               </bk-button>
-            </template>
-          </bk-table-column>
-        </bk-table>
-      </bk-loading>
+              <img v-if="row.new" class="icon-new" src="@/images/new.svg" alt="">
+            </div>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="id" label="租户ID"></bk-table-column>
+        <bk-table-column prop="managers" label="租户管理员">
+          <template #default="{ row }">
+            <bk-tag v-for="(item, index) in row.managers" :key="index">{{ item.username }}</bk-tag>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="data_sources" label="已绑定数据源">
+          <template #default="{ row }">
+            <span>{{ formatConvert(row.data_sources) }}</span>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="created_at" label="创建时间" :sort="true" />
+        <bk-table-column label="操作">
+          <template #default="{ row }">
+            <bk-button
+              text
+              theme="primary"
+              style="margin-right: 8px;"
+              @click="handleClick('edit', row)"
+            >
+              编辑
+            </bk-button>
+          </template>
+        </bk-table-column>
+      </bk-table>
     </div>
     <bk-sideslider
       :ext-cls="['details-wrapper', { 'details-edit-wrapper': !isView }]"
@@ -117,12 +116,12 @@
         />
       </template>
     </bk-sideslider>
-  </div>
+  </bk-loading>
 </template>
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, inject, reactive, ref, watch } from 'vue';
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
@@ -131,8 +130,10 @@ import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
 import { getDefaultConfig } from '@/http/dataSourceFiles';
 import {
+  getGlobalSetting,
   getTenantDetails,
   getTenants,
+  putGlobalSetting,
   searchTenants,
 } from '@/http/tenantsFiles';
 import { useMainViewStore } from '@/store/mainView';
@@ -250,6 +251,23 @@ const handleCancelEdit = async () => {
     window.changeInput = false;
   }
 };
+
+const tenantVisible = ref({});
+
+onMounted(async () => {
+  fetchTenantsList();
+  getGlobalSetting('tenant_visible').then((res) => {
+    tenantVisible.value = res.data.value;
+  });
+});
+
+const changeVisible = () => {
+  putGlobalSetting({
+    id: 'tenant_visible',
+    value: tenantVisible.value,
+  });
+};
+
 // 获取租户列表
 const fetchTenantsList = () => {
   searchName.value = '';
@@ -278,8 +296,7 @@ const fetchTenantsList = () => {
       state.tableLoading = false;
     });
 };
-// 初始化加载
-fetchTenantsList();
+
 // 搜索租户列表
 const handleEnter = () => {
   state.tableLoading = true;

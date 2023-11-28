@@ -189,10 +189,10 @@ const typeList = [
     id: 'number',
     name: '数值',
   },
-  {
-    id: 'timer',
-    name: '日期',
-  },
+  // {
+  //   id: 'timer',
+  //   name: '日期',
+  // },
 ];
 
 const rulesFields = {
