@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 
 def _validate_options(options):
     """用户自定义字段：<选项> 字段校验"""
-    try:
-        if not options:
-            raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
+    if not options:
+        raise serializers.ValidationError(_("枚举类型的自定义字段需要传递非空的<选项>字段"))
 
+    try:
         options_obj = TenantUserCustomFieldOptions(options=options)
     except PDValidationError as e:
         raise serializers.ValidationError(_("<选项>字段不合法: {}".format(e)))
@@ -54,7 +54,7 @@ def _validate_enum_default(default: str, opt_ids: List[str]):
     """用户自定义字段：单枚举类型的 <默认值> 字段校验"""
 
     # 单枚举类型要求 default 的值为 options 其中一个对象的 ID 值
-    if not default or default not in opt_ids:
+    if default is None or default not in opt_ids:
         raise serializers.ValidationError(_("默认值必须是 options 中对象的其中一个 id 值"))
 
 
@@ -64,7 +64,7 @@ def _validate_multi_enum_default(default: List[str], opt_ids: List[str]):
         raise ValidationError(_("多选枚举类型自定义字段的 default 值需要传递列表类型"))
 
     # 多选枚举类型要求 default 中的值都为 options 其中任一对象的 ID 值
-    if not default or not set(default).issubset(opt_ids):
+    if default is None or not set(default).issubset(opt_ids):
         raise serializers.ValidationError(_("默认值必须属于 options 中对象的 id 值"))
 
 
