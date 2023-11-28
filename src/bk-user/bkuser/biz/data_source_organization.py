@@ -189,7 +189,6 @@ class DataSourceOrganizationHandler:
             user.phone_country_code = base_user_info.phone_country_code
             user.logo = base_user_info.logo
             user.extras.update(base_user_info.extras)
-
             user.save()
 
             # 更新用户-部门关系

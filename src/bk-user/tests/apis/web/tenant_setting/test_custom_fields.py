@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Any, Dict
 
 import pytest
 from bkuser.apps.tenant.constants import UserFieldDataType
@@ -18,16 +17,9 @@ from rest_framework import status
 pytestmark = pytest.mark.django_db
 
 
-def _check_extras(extras: Dict[str, Any], original_extras: Dict[str, Any]):
-    for key, value in extras.items():
-        assert key in original_extras
-        assert value == original_extras[key]
-
-
 class TestCustomField:
     def test_create_normal_custom_field(self, api_client, default_tenant):
         input_field = {
-            "tenant": default_tenant.id,
             "name": "test_num",
             "display_name": "数字测试",
             "data_type": UserFieldDataType.NUMBER,
@@ -123,13 +115,12 @@ class TestCustomField:
         self, api_client, default_tenant, name, display_name, required, data_type, options, default
     ):
         input_field = {
-            "tenant": default_tenant.id,
             "name": name,
             "display_name": display_name,
-            "data_type": data_type,
             "required": required,
-            "default": default,
+            "data_type": data_type,
             "options": options,
+            "default": default,
         }
         resp = api_client.post(reverse("tenant_setting_custom_fields.create"), data=input_field)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST

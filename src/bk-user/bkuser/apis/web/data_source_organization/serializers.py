@@ -39,13 +39,13 @@ def _validate_extras(extras, tenant_id):
         custom_field_name_list = [field["name"] for field in custom_fields_info]
         if not_existed_fields := set(extras.keys()) - set(custom_field_name_list):
             raise serializers.ValidationError(_("不存在自定义字段：{}").format(not_existed_fields))
-
+        # 调用接口，默认会传递所有自定义字段（选填字段会填充默认值）
         if lost_fields := set(custom_field_name_list) - set(extras.keys()):
             raise serializers.ValidationError(_("缺失自定义字段：{}").format(lost_fields))
 
-        # 必填字段检测, 确保必填项有数据
-        # 常规字段默认值：可能为空字符串/数字：0
+        # 必填自定义字段检测, 确保必填项有数据
         required_custom_fields = [field["name"] for field in custom_fields_info if field["required"]]
+        # 常规自定义字段值：可能为空字符串/数字：0
         if empty_value_fields := [field for field in required_custom_fields if extras.get(field, None) is None]:
             raise serializers.ValidationError(_("必填字段{}不可为空").format(empty_value_fields))
 
@@ -56,7 +56,7 @@ def _validate_extras(extras, tenant_id):
             if field["data_type"] in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
         ]
         for field in enum_kinds_custom_fields:
-            # 接口调用时，默认所有都是有的，选填项也是有默认值
+            # 接口调用时，会传递所有自定义字段，选填项也是有默认值
             value = extras[field["name"]]
             # 设置的选项id
             option_ids = [option["id"] for option in field["options"]]
