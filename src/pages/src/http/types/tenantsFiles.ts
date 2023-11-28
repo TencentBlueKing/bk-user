@@ -99,3 +99,11 @@ export interface TenantUsersListParams {
   page: number,
   pageSize: number,
 }
+
+/**
+ * 更新全局配置
+ */
+export interface GlobalSettingUpdateParams {
+  id: string,
+  value: boolean,
+}

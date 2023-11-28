@@ -1,5 +1,6 @@
 import http from './fetch';
 import type {
+  GlobalSettingUpdateParams,
   NewTenantParams,
   TenantDetailsResult,
   TenantsListResult,
@@ -45,3 +46,13 @@ export const getTenantUsersList = (params: TenantUsersListParams): Promise<Tenan
   const { tenantId, keyword, page, pageSize  } = params;
   return http.get(`/api/v1/web/tenants/${tenantId}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
 };
+
+/**
+ * 全局配置-租户可见性
+ */
+export const getGlobalSetting = (id: string) => http.get(`/api/v1/web/global-settings/${id}/`);
+
+/**
+ * 更新全局配置
+ */
+export const putGlobalSetting = (params: GlobalSettingUpdateParams) => http.put(`/api/v1/web/global-settings/${params.id}/`, params);
