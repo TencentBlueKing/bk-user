@@ -53,15 +53,20 @@ class DataSourceUserConverter:
         if not full_name:
             raise ValueError(f"username {username}, full_name is required")
 
-        email = props.get(mapping["email"]) or ""
+        email = props.get(mapping.get("email")) or ""  # type: ignore
         # 3. 如果提供了邮箱，则必须满足正则校验规则
         if email and not re.fullmatch(EMAIL_REGEX, email):
             raise ValueError(
                 f"username {username}, email [{email}] provided but not match pattern {EMAIL_REGEX.pattern}"
             )
 
-        phone = props.get(mapping["phone"]) or ""
-        country_code = props.get(mapping["phone_country_code"]) or settings.DEFAULT_PHONE_COUNTRY_CODE
+        phone = props.get(mapping.get("phone")) or ""  # type: ignore
+        country_code = (
+            props.get(
+                mapping.get("phone_country_code"),  # type: ignore
+            )
+            or settings.DEFAULT_PHONE_COUNTRY_CODE
+        )
         # 4. 如果提供了手机号，则需要通过 phonenumbers 的检查，确保手机号码合法
         if phone:
             validate_phone_with_country_code(phone, country_code)
