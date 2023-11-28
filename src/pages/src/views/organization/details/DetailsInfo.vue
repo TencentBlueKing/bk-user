@@ -1,6 +1,6 @@
 <template>
   <div class="details-info-wrapper user-scroll-y">
-    <ul class="details-info-content" v-if="!state.isEdit">
+    <ul class="details-info-content" v-if="!isEdit">
       <li class="content-item">
         <div class="item-header">
           <p class="item-title">基本信息</p>
@@ -81,12 +81,15 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  isEdit: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(['updateTenantsList', 'handleCancel']);
+const emit = defineEmits(['updateTenantsList', 'handleCancel', 'changeEdit']);
 
 const state = reactive({
-  isEdit: false,
   userData: {},
   managers: [],
   isDataEmpty: false,
@@ -106,12 +109,13 @@ watch(() => props.userData.managers, (value) => {
 });
 
 const handleClickEdit = () => {
-  state.isEdit = true;
+  emit('changeEdit', true);
+  window.changeInput = true;
 };
 
 const handleCancel = () => {
   emit('handleCancel');
-  state.isEdit = false;
+  emit('changeEdit', false);
   window.changeInput = false;
 };
 

@@ -22,7 +22,7 @@
             </bk-form-item>
             <bk-form-item label="人员数量">
               <bk-radio-group
-                v-model="formData.feature_flags.user_number_visible"
+                :value="formData.feature_flags?.user_number_visible"
                 @change="handleChange"
               >
                 <bk-radio-button :label="true">显示</bk-radio-button>
@@ -73,8 +73,7 @@ import { Message } from 'bkui-vue';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
 import { getBase64 } from "@/utils";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
-import { getTenantUsersList } from "@/http/tenantsFiles";
-import { putTenantOrganizationDetails } from "@/http/organizationFiles";
+import { getTenantUsersList, putTenantOrganizationDetails } from "@/http/organizationFiles";
 import useValidate from "@/hooks/use-validate";
 import PhoneInput from '@/components/phoneInput.vue';
 
@@ -121,7 +120,7 @@ const state = reactive({
 });
 
 const params = reactive({
-  tenantId: props.tenantsData.id,
+  id: props.tenantsData.id,
   keyword: "",
   page: 1,
   pageSize: 10,
@@ -316,7 +315,7 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 const fetchUserList = (value: string) => {
   params.keyword = value;
   params.page = 1;
-  if (params.tenantId) {
+  if (params.id) {
     getTenantUsersList(params).then((res) => {
       const list = formData.managers.map((item) => item.id);
       state.count = res.data.count;
@@ -379,7 +378,7 @@ function putTenantOrganization() {
     name: formData.name,
     logo: formData.logo,
     feature_flags: {
-      user_number_visible: formData.feature_flags.user_number_visible,
+      user_number_visible: formData.feature_flags?.user_number_visible,
     },
     manager_ids,
   };

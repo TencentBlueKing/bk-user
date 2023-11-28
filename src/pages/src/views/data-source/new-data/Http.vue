@@ -336,17 +336,19 @@ const handleNext = async () => {
         if (fields.name !== item.target_field) return;
 
         list.push(item.source_field);
+        customList.push(fields.name);
         Object.assign(fields, {
           mapping_operation: item.mapping_operation,
           source_field: item.source_field,
           disabled: isDisabled,
         });
-        fieldSettingData.field_mapping[fieldMappingType].push(fields);
         apiFields.value.push({ key: item.source_field, disabled: isDisabled });
 
-        if (fieldMappingType === 'custom_fields') {
+        if (fieldMappingType === 'builtin_fields' && fields.required) {
+          fieldSettingData.field_mapping.builtin_fields.push(fields);
+        } else {
           fieldSettingData.addFieldList.push(item);
-          customList.push(fields.name);
+          fieldSettingData.field_mapping.custom_fields.push(fields);
         }
       };
 
@@ -364,7 +366,7 @@ const handleNext = async () => {
         }
       };
 
-      res.data?.custom_fields?.forEach((fields) => {
+      res.data?.custom_fields?.concat(res.data?.builtin_fields || []).forEach((fields) => {
         if (!customList.includes(fields.name)) {
           fieldSettingData.field_mapping.custom_fields.push(fields);
         }
@@ -373,20 +375,30 @@ const handleNext = async () => {
       userProperties.value.forEach(item => addApiField({ name: item }, false));
     } else {
       const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
-      fieldSettingData.field_mapping = {
-        builtin_fields: builtinFields,
-        custom_fields: customFields,
-      };
 
-      const updateFields = (fields) => {
+      const updateFields = (fields, isBuiltin) => {
         fields.forEach((field) => {
-          field.mapping_operation = 'direct';
-          field.source_field = '';
+          Object.assign(field, {
+            mapping_operation: 'direct',
+            source_field: '',
+            disabled: isBuiltin && !field.required,
+          });
+
+          const target = isBuiltin && field.required ? 'builtin_fields' : 'custom_fields';
+          fieldSettingData.field_mapping[target].push(field);
+
+          if (isBuiltin && !field.required) {
+            fieldSettingData.addFieldList.push({
+              mapping_operation: 'direct',
+              source_field: '',
+              target_field: field.name,
+            });
+          }
         });
       };
 
-      updateFields(builtinFields);
-      updateFields(customFields);
+      updateFields(builtinFields, true);
+      updateFields(customFields, false);
 
       apiFields.value = userProperties.value.map(item => ({ key: item, disabled: false }));
     }

@@ -20,6 +20,7 @@
         class="user-info-table"
         :data="tableData"
         :border="['outer']"
+        :max-height="tableMaxHeight"
         show-overflow-tooltip
         @column-filter="handleFilter"
       >
@@ -69,7 +70,7 @@
         <bk-table-column label="操作" width="150">
           <template #default="{ row }">
             <bk-button class="mr10" theme="primary" text @click="handleEdit(row)">编辑</bk-button>
-            <bk-popover
+            <!-- <bk-popover
               class="dot-menu"
               placement="bottom-start"
               theme="light"
@@ -80,7 +81,7 @@
                   <li class="dot-menu-item">删除</li>
                 </ul>
               </template>
-            </bk-popover>
+            </bk-popover> -->
           </template>
         </bk-table-column>
       </bk-table>
@@ -100,7 +101,7 @@
             @click="handleEdit(currentRow)">
             编辑
           </bk-button>
-          <bk-button>删除</bk-button>
+          <!-- <bk-button>删除</bk-button> -->
         </div>
       </template>
       <template #default>
@@ -116,6 +117,7 @@ import { onMounted, reactive, ref } from 'vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
+import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
 import { getIdps } from '@/http/authSourceFiles';
 import router from '@/router/index';
 import { dataSourceStatus } from '@/utils';
@@ -126,6 +128,7 @@ const tableData = ref([]);
 const isDataEmpty = ref(false);
 const isEmptySearch = ref(false);
 const isDataError = ref(false);
+const tableMaxHeight = useTableMaxHeight(150);
 
 const statusFilters = [
   { text: '正常', value: 'enabled' },

@@ -1,114 +1,126 @@
 <template>
-  <bk-loading class="organization-wrapper" :loading="state.isLoading">
-    <bk-loading class="tree-wrapper user-scroll-y" :loading="state.treeLoading">
-      <div class="tree-main">
-        <bk-tree
-          ref="treeRef"
-          :data="state.treeData"
-          node-key="id"
-          label="name"
-          children="children"
-          :node-content-action="['selected', 'expand', 'click', 'collapse']"
-          :selected="selectedId"
-          @node-click="changeNode"
-          @node-expand="changeNode"
+  <bk-resize-layout
+    class="organization-wrapper"
+    immediate
+    :min="280"
+    :max="400"
+    :initial-divide="280">
+    <template #aside>
+      <bk-loading class="tree-wrapper user-scroll-y" :loading="state.treeLoading">
+        <div class="tree-main">
+          <bk-tree
+            ref="treeRef"
+            :data="state.treeData"
+            node-key="id"
+            label="name"
+            children="children"
+            :node-content-action="['selected', 'expand', 'click', 'collapse']"
+            :selected="selectedId"
+            @node-click="changeNode"
+            @node-expand="changeNode"
+          >
+            <template #nodeAction="item">
+              <span v-if="!item.__attr__.isRoot" style="color: #979ba5;">
+                <DownShape class="h-[34px] mt-[4px]" v-if="item.has_children && item.__attr__.isOpen" />
+                <RightShape class="h-[34px] mt-[4px]" v-if="item.has_children && !item.__attr__.isOpen" />
+              </span>
+            </template>
+            <template #nodeType="item">
+              <img class="img-logo" v-if="item.__attr__.isRoot && item.logo" :src="item.logo" />
+              <span
+                class="span-logo"
+                v-else-if="item.__attr__.isRoot && !item.logo"
+              >
+                {{ item.name.charAt(0).toUpperCase() }}
+              </span>
+              <i class="bk-sq-icon icon-file-close" v-else />
+            </template>
+            <template #node="item">
+              <span v-overflow-title>{{ item.name }}</span>
+            </template>
+            <template #nodeAppend="item">
+              <span class="user-number"></span>
+              <bk-dropdown
+                trigger="click"
+                placement="bottom-start"
+                ref="dropdownMenu"
+                @click.stop
+              >
+                <i class="user-icon icon-more"></i>
+                <template #content>
+                  <bk-dropdown-menu>
+                    <bk-dropdown-item
+                      v-for="(child, index) in submenu"
+                      :key="index"
+                      @click="handleClick(child.type, item)">
+                      {{ child.name }}
+                    </bk-dropdown-item>
+                  </bk-dropdown-menu>
+                </template>
+              </bk-dropdown>
+            </template>
+          </bk-tree>
+        </div>
+      </bk-loading>
+    </template>
+    <template #main>
+      <div class="organization-main">
+        <header>
+          <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
+          <span v-else class="span-logo">{{ logoConvert(state.currentTenant.name) }}</span>
+          <span class="name">{{ state.currentTenant.name }}</span>
+        </header>
+        <bk-tab
+          :active="state.active"
+          type="unborder-card"
+          ext-cls="tab-details"
+          @change="tabChange"
         >
-          <template #nodeAction="item">
-            <span v-if="!item.__attr__.isRoot" style="color: #979ba5;">
-              <DownShape class="h-[34px] mt-[4px]" v-if="item.has_children && item.__attr__.isOpen" />
-              <RightShape class="h-[34px] mt-[4px]" v-if="item.has_children && !item.__attr__.isOpen" />
-            </span>
-          </template>
-          <template #nodeType="item">
-            <img class="img-logo" v-if="item.__attr__.isRoot && item.logo" :src="item.logo" />
-            <span
-              class="span-logo"
-              v-else-if="item.__attr__.isRoot && !item.logo"
-            >
-              {{ item.name.charAt(0).toUpperCase() }}
-            </span>
-            <i class="bk-sq-icon icon-file-close" v-else />
-          </template>
-          <template #node="item">
-            <span v-overflow-title>{{ item.name }}</span>
-          </template>
-          <template #nodeAppend="item">
-            <span class="user-number"></span>
-            <bk-dropdown
-              trigger="click"
-              placement="bottom-start"
-              ref="dropdownMenu"
-              @click.stop
-            >
-              <i class="user-icon icon-more"></i>
-              <template #content>
-                <bk-dropdown-menu>
-                  <bk-dropdown-item
-                    v-for="(child, index) in submenu"
-                    :key="index"
-                    @click="handleClick(child.type, item)">
-                    {{ child.name }}
-                  </bk-dropdown-item>
-                </bk-dropdown-menu>
-              </template>
-            </bk-dropdown>
-          </template>
-        </bk-tree>
+          <bk-tab-panel
+            v-for="(item, index) in panels"
+            :key="item.name"
+            :name="item.name"
+            :label="item.label"
+            :visible="item.isVisible"
+          >
+            <bk-loading :loading="state.tabLoading">
+              <UserInfo
+                v-if="index === 0"
+                :user-data="state.currentUsers"
+                :is-data-empty="state.isDataEmpty"
+                :is-empty-search="state.isEmptySearch"
+                :is-data-error="state.isDataError"
+                :pagination="pagination"
+                :keyword="params.keyword"
+                :is-tenant="isTenant"
+                @searchUsers="searchUsers"
+                @changeUsers="changeUsers"
+                @updatePageLimit="updatePageLimit"
+                @updatePageCurrent="updatePageCurrent" />
+              <DetailsInfo
+                v-if="index === 1"
+                :user-data="state.currentTenant"
+                :is-edit="isEdit"
+                @updateTenantsList="updateTenantsList"
+                @handleCancel="handleCancel"
+                @changeEdit="changeEdit" />
+            </bk-loading>
+          </bk-tab-panel>
+        </bk-tab>
       </div>
-    </bk-loading>
-    <div class="organization-main">
-      <header>
-        <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
-        <span v-else class="span-logo">{{ logoConvert(state.currentTenant.name) }}</span>
-        <span class="name">{{ state.currentTenant.name }}</span>
-      </header>
-      <bk-tab
-        v-model:active="state.active"
-        type="unborder-card"
-        ext-cls="tab-details"
-        @change="tabChange"
-      >
-        <bk-tab-panel
-          v-for="(item, index) in panels"
-          :key="item.name"
-          :name="item.name"
-          :label="item.label"
-          :visible="item.isVisible"
-        >
-          <bk-loading :loading="state.tabLoading">
-            <UserInfo
-              v-if="index === 0"
-              :user-data="state.currentUsers"
-              :is-data-empty="state.isDataEmpty"
-              :is-empty-search="state.isEmptySearch"
-              :is-data-error="state.isDataError"
-              :pagination="pagination"
-              :keyword="params.keyword"
-              :is-tenant="isTenant"
-              @searchUsers="searchUsers"
-              @changeUsers="changeUsers"
-              @updatePageLimit="updatePageLimit"
-              @updatePageCurrent="updatePageCurrent" />
-            <DetailsInfo
-              v-if="index === 1"
-              :user-data="state.currentTenant"
-              @updateTenantsList="updateTenantsList"
-              @handleCancel="handleCancel" />
-          </bk-loading>
-        </bk-tab-panel>
-      </bk-tab>
-    </div>
-  </bk-loading>
+    </template>
+  </bk-resize-layout>
 </template>
 
 <script setup lang="ts">
 import { Message, overflowTitle } from 'bkui-vue';
 import { DownShape, RightShape } from 'bkui-vue/lib/icon';
-import { computed, inject, reactive, ref } from 'vue';
+import { computed, inject, onMounted, reactive, ref } from 'vue';
 
 import DetailsInfo from './details/DetailsInfo.vue';
 import UserInfo from './details/UserInfo.vue';
 
+import { currentUser } from '@/http/api';
 import {
   getTenantDepartments,
   getTenantDepartmentsList,
@@ -116,16 +128,14 @@ import {
   getTenantOrganizationList,
   getTenantUsersList,
 } from '@/http/organizationFiles';
-import { useUser } from '@/store/user';
+import router from '@/router';
 import { copy, logoConvert } from '@/utils';
 
 const vOverflowTitle = overflowTitle;
 const editLeaveBefore = inject('editLeaveBefore');
-const userStore = useUser();
 
 const treeRef = ref();
 const state = reactive({
-  isLoading: false,
   treeLoading: false,
   tabLoading: false,
   treeData: [],
@@ -169,11 +179,20 @@ const pagination = reactive({
 
 const isTenant = computed(() => (!!state.currentTenant.isRoot));
 
+onMounted(() => {
+  currentUser()
+    .then((res) => {
+      res.data.role === 'natural_user' ?  router.push({ name: 'personalCenter' }) : initData();
+    })
+    .catch(() => {
+      Message('获取用户信息失败，请检查后再试');
+    });
+});
+
 const initData = async () => {
-  if (userStore.user.role === 'natural_user') return;
   try {
-    state.isLoading = true;
     state.treeLoading = true;
+    state.tabLoading = true;
     const res = await getTenantOrganizationList();
     state.treeData = res.data;
     state.treeData.forEach((item, index) => {
@@ -193,12 +212,11 @@ const initData = async () => {
   } catch (e) {
     console.warn(e);
     state.isDataError = true;
+    state.tabLoading = false;
   } finally {
-    state.isLoading = false;
     state.treeLoading = false;
   }
 };
-initData();
 
 const changeNode = async (node) => {
   if (state.currentItem.id === node.id) return;
@@ -210,6 +228,7 @@ const changeNode = async (node) => {
   let enableLeave = true;
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
+    isEdit.value = false;
   }
   if (!enableLeave) {
     return Promise.resolve(enableLeave);
@@ -237,8 +256,22 @@ const handleClick = (type, item) => {
   copy(item[type]);
 };
 
-const tabChange = (val) => {
+const isEdit = ref(false);
+const tabChange = async (val) => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+    window.changeInput = false;
+    isEdit.value = false;
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
   state.active = val;
+};
+
+const changeEdit = (status: boolean) => {
+  isEdit.value = status;
 };
 
 const getTenantUsers = async (id) => {
@@ -346,7 +379,6 @@ const handleCancel = () => {
   height: calc(100vh - 52px);
 
   .organization-main {
-    width: calc(100% - 280px);
     height: calc(100% - 52px);
 
     header {

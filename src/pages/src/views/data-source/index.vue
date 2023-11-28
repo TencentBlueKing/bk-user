@@ -54,10 +54,10 @@ const menuData = reactive([
 </script>
 
 <style lang="less" scoped>
-@import url("../../css/menuStyle.less");
+@import url("@/css/menuStyle.less");
 
 :deep(.main-breadcrumbs) {
-  box-shadow: none;
+  box-shadow: none !important;
 }
 
 :deep(.tab-details) {

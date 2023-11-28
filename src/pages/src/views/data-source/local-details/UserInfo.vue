@@ -92,7 +92,7 @@
     >
       <template #header>
         <span>{{ detailsConfig.title }}</span>
-        <div v-if="isView">
+        <div v-if="isView && pluginId === 'local'">
           <bk-button
             outline
             theme="primary"
