@@ -570,4 +570,10 @@ const handleRandomPassword = async () => {
   align-items: center;
   justify-content: center;
 }
+
+::v-deep .bk-select {
+  .angle-up {
+    display: none !important;
+  }
+}
 </style>

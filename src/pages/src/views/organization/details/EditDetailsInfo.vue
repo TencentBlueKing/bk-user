@@ -418,4 +418,10 @@ const handleChange = () => {
     margin-right: 8px;
   }
 }
+
+::v-deep .bk-select {
+  .angle-up {
+    display: none !important;
+  }
+}
 </style>

@@ -78,6 +78,12 @@ export default () => {
     trigger: 'blur',
   };
 
+  const checkSpace = {
+    validator: (value: string) => /^[^\s]*$/.test(value),
+    message: '不能使用空格符',
+    trigger: 'blur',
+  };
+
   return {
     required,
     name,
@@ -90,5 +96,6 @@ export default () => {
     serverBaseUrl,
     apiPath,
     sourceField,
+    checkSpace,
   };
 };

@@ -37,16 +37,16 @@
             <i :class="fieldStatus(row.required)"></i>
           </template>
         </bk-table-column>
-        <!-- <bk-table-column prop="unique" label="是否唯一">
+        <bk-table-column prop="unique" label="是否唯一">
           <template #default="{ row }">
             <i :class="fieldStatus(row.unique)"></i>
           </template>
-        </bk-table-column> -->
-        <bk-table-column prop="builtin" label="是否可编辑">
+        </bk-table-column>
+        <!-- <bk-table-column prop="builtin" label="是否可编辑">
           <template #default="{ row }">
             <i :class="fieldStatus(!row.builtin)"></i>
           </template>
-        </bk-table-column>
+        </bk-table-column> -->
         <bk-table-column label="操作">
           <template #default="{ row }">
             <span v-bk-tooltips="{ content: '该内置字段，不支持修改', disabled: !row.builtin }">
@@ -163,9 +163,10 @@ const addField = () => {
     builtin: false,
     default: 0,
     options: [
-      { id: 0, value: '' },
-      { id: 1, value: '' },
+      { id: '', value: '' },
+      { id: '', value: '' },
     ],
+    unique: false,
   };
   fieldData.isShow = true;
 };
