@@ -83,7 +83,7 @@ def custom_fields(default_tenant):
             "tenant": default_tenant,
             "name": "test_str",
             "display_name": "字符测试",
-            "data_type": UserFieldDataType.NUMBER,
+            "data_type": UserFieldDataType.STRING,
             "required": True,
             "default": "test",
             "options": [],

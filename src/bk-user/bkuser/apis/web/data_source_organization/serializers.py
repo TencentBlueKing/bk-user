@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -30,51 +30,67 @@ from bkuser.common.validators import validate_phone_with_country_code
 logger = logging.getLogger(__name__)
 
 
-def _validate_extras(extras, tenant_id):
+def _validate_extras(extras: Dict[str, Any], tenant_id: str):  # noqa: C901
     custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
-    if custom_fields.exists():
-        custom_fields_info = custom_fields.values("name", "options", "data_type", "required")
 
-        # 检测非法字段
-        custom_field_name_list = [field["name"] for field in custom_fields_info]
-        if not_existed_fields := set(extras.keys()) - set(custom_field_name_list):
-            raise serializers.ValidationError(_("不存在自定义字段：{}").format(not_existed_fields))
-        # 调用接口，默认会传递所有自定义字段（选填字段会填充默认值）
-        if lost_fields := set(custom_field_name_list) - set(extras.keys()):
-            raise serializers.ValidationError(_("缺失自定义字段：{}").format(lost_fields))
+    if not custom_fields.exists() and extras:
+        raise ValidationError(_("非法数据提交：该租户未设置自定义字段"))
 
-        # 必填自定义字段检测, 确保必填项有数据
-        required_custom_fields = [field["name"] for field in custom_fields_info if field["required"]]
-        # 常规自定义字段值：可能为空字符串/数字：0
-        if empty_value_fields := [field for field in required_custom_fields if extras.get(field, None) is None]:
-            raise serializers.ValidationError(_("必填字段{}不可为空").format(empty_value_fields))
+    # 检测不存在的自定义字段
+    custom_field_name_set = {field.name for field in custom_fields}
+    if not_allowed_fields := set(extras.keys()) - custom_field_name_set:
+        raise ValidationError(_("自定义字段不存在：{}").format(not_allowed_fields))
 
-        # 枚举字段，非法枚举值检测
-        enum_kinds_custom_fields = [
-            field
-            for field in custom_fields_info
-            if field["data_type"] in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]
-        ]
-        for field in enum_kinds_custom_fields:
-            # 接口调用时，会传递所有自定义字段，选填项也是有默认值
-            value = extras[field["name"]]
-            # 设置的选项id
-            option_ids = [option["id"] for option in field["options"]]
-            if field["data_type"] == UserFieldDataType.ENUM and value not in option_ids:
-                raise serializers.ValidationError(
-                    _("字段 {} 值 {} 中 {} 不合法").format(field["name"], option_ids, value)
+    # 检测缺少的自定义字段：调用接口，需传递当前租户下的自定义字段
+    if missed_fields := custom_field_name_set - set(extras.keys()):
+        raise ValidationError(_("缺失自定义字段：{}").format(missed_fields))
+
+    # 自定义字段，填充的数据检测（选填字段不进行填写，会填充默认值）
+    for field in custom_fields:
+        value = extras[field.name]
+        field_data_type = field.data_type
+        # 字符: 字符类型可能会有输入空字符，
+        if field_data_type == UserFieldDataType.STRING and not isinstance(value, str):
+            raise ValidationError(
+                _("自定义字段{}: 提交的数据 {} 为非字符数据，请传递字符类型数据").format(field.name, value)
+            )
+
+        # 数值
+        if field_data_type == UserFieldDataType.NUMBER and not isinstance(value, (int, float)):
+            raise ValidationError(
+                _("自定义字段{}: 提交的数据 {} 为非数值类型， 请传递数值类型数据").format(field.name, value)
+            )
+
+        # 设置的选项id（仅对枚举类型字段起效）
+        option_ids = [option["id"] for option in field.options]
+        if field_data_type == UserFieldDataType.ENUM and value not in option_ids:
+            raise ValidationError(
+                _("单选字段 {} 选项设置为 {}，不存在选项 {}，请提供正确的选项").format(field.name, option_ids, value)
+            )
+
+        if field_data_type == UserFieldDataType.MULTI_ENUM:
+            if not isinstance(value, List) or not value:
+                raise ValidationError(
+                    _("多选枚举字段{}-{}：提交的数据{}异常，请提交非空列表类型数据").format(
+                        field.display_name, field.name, value
+                    )
                 )
 
-            if field["data_type"] == UserFieldDataType.MULTI_ENUM:
-                if not isinstance(value, list):
-                    raise serializers.ValidationError(_("非法多选枚举值: 需要传递列表类型"))
-
-                if invalid_opt_ids := set(value) - set(option_ids):
-                    raise serializers.ValidationError(
-                        _("字段 {} 值 {} 中 {} 不合法").format(field["name"], option_ids, invalid_opt_ids)
+            if invalid_opt_ids := set(value) - set(option_ids):
+                raise ValidationError(
+                    _("多选枚举字段{}-{} 选项设置为 {}，不存在选项 {}，请提供正确的选项").format(
+                        field.display_name, field.name, option_ids, invalid_opt_ids
                     )
+                )
+            # 提交的值是否有重复值
+            if len(value) != len(set(value)):
+                raise ValidationError(
+                    _("多选枚举字段{}-{}，所提交的数据 {} 存在数据异常：选项重复").format(
+                        field.display_name, field.name, value
+                    )
+                )
 
-        # FIXME (su) 唯一性检测
+    # FIXME (su) 唯一性检测
 
 
 class UserSearchInputSLZ(serializers.Serializer):

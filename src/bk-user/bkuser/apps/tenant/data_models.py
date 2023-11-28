@@ -14,6 +14,8 @@ from pydantic import BaseModel
 
 
 class Option(BaseModel):
+    """枚举字段-选项协议设置"""
+
     id: str
     value: str
 

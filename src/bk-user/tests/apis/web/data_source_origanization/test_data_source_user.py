@@ -182,6 +182,14 @@ class TestDataSourceUserWithCustomField:
                 "test_multi_enum": ["test_a"],
                 "test_not_required": 1,
             },
+            # 非法数值字段
+            {
+                "test_num": "test",
+                "test_str": "test",
+                "test_enum": "test_a",
+                "test_multi_enum": ["test_a"],
+                "test_not_required": 1,
+            },
             # 多选枚举字段非法选项
             {
                 "test_num": 1,
@@ -196,6 +204,22 @@ class TestDataSourceUserWithCustomField:
                 "test_str": "test",
                 "test_enum": "test_a",
                 "test_multi_enum": "test_a",
+                "test_not_required": 1,
+            },
+            # 多选枚举字段-空值
+            {
+                "test_num": 1,
+                "test_str": "test",
+                "test_enum": "test_a",
+                "test_multi_enum": [],
+                "test_not_required": 1,
+            },
+            # 多选枚举字段-重复值
+            {
+                "test_num": 1,
+                "test_str": "test",
+                "test_enum": "test_a",
+                "test_multi_enum": ["test_a", "test_a"],
                 "test_not_required": 1,
             },
             # 非法字段
