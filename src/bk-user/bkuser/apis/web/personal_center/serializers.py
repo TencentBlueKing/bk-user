@@ -142,4 +142,4 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
 
 
 class TenantUserLogoUpdateInputSLZ(serializers.Serializer):
-    logo = serializers.CharField(help_text="用户 Logo", default=settings.DEFAULT_DATA_SOURCE_USER_LOGO)
+    logo = serializers.CharField(help_text="用户 Logo")

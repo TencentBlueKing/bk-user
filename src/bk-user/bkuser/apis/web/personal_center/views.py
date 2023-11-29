@@ -71,7 +71,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         return Response(NaturalUserWithTenantUserListOutputSLZ(nature_user_with_tenant_users_info).data)
 
 
-class TenantUserRetrievePatchApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
+class TenantUserRetrieveUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]

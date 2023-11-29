@@ -22,7 +22,7 @@ urlpatterns = [
     # 租户用户详情
     path(
         "tenant-users/<str:id>/",
-        views.TenantUserRetrievePatchApi.as_view(),
+        views.TenantUserRetrieveUpdateApi.as_view(),
         name="personal_center.tenant_users.retrieve_update",
     ),
     path(
