@@ -487,12 +487,6 @@ if ENABLE_OTEL_TRACE or SENTRY_DSN:
 
 # ------------------------------------------ 加密算法配置 ------------------------------------------
 
-# 密码加密算法（可选值：pbkdf2_sha256，pbkdf2_sm3）
-# 重要：一旦用户数据写入后该值不能修改，否则可能导致现有 DB 数据不可用
-# 注：pbkdf2_sm3 性能较差，单次加密约 360ms，pbkdf2_sha256 单次加密约为 60ms
-# 注：尽管 Django 默认支持 argon2, scrypt 等加密算法，但是并发加密时候会对内存有明显压力，更安全但不推荐使用
-PASSWORD_ENCRYPT_ALGORITHM = env.str("PASSWORD_ENCRYPT_ALGORITHM", "pbkdf2_sha256")
-
 # Django 密码框架配置：https://docs.djangoproject.com/en/3.2/topics/auth/passwords/#auth-password-storage
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -511,6 +505,15 @@ BKKRILL_ENCRYPT_SECRET_KEY = force_bytes(env.str("BKKRILL_ENCRYPT_SECRET_KEY"))
 # 选择加密数据库内容的算法，可选值：SHANGMI, CLASSIC
 BK_CRYPTO_TYPE = env.str("BK_CRYPTO_TYPE", "CLASSIC")
 ENCRYPT_CIPHER_TYPE = "SM4CTR" if BK_CRYPTO_TYPE == "SHANGMI" else "FernetCipher"
+
+# 密码加密算法（可选值：pbkdf2_sha256，pbkdf2_sm3）
+# 重要：一旦用户数据写入后该值不能修改，否则可能导致现有 DB 数据不可用
+# 注：pbkdf2_sm3 性能较差，单次加密约 360ms，pbkdf2_sha256 单次加密约为 60ms
+# 注：尽管 Django 默认支持 argon2, scrypt 等加密算法，但是并发加密时候会对内存有明显压力，更安全但不推荐使用
+PASSWORD_ENCRYPT_ALGORITHM = env.str("PASSWORD_ENCRYPT_ALGORITHM", "")
+
+if not PASSWORD_ENCRYPT_ALGORITHM:
+    PASSWORD_ENCRYPT_ALGORITHM = "pbkdf2_sm3" if BK_CRYPTO_TYPE == "SHANGMI" else "pbkdf2_sha256"
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 
