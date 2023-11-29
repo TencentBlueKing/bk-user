@@ -103,7 +103,9 @@ class TenantUserCustomFieldUpdateDeleteApi(
         custom_field = self.get_object()
 
         custom_field.display_name = data["display_name"]
-        custom_field.required = data["required"]
+        # FIXME (su) 评估是否允许修改自定义字段必填 & 唯一属性
+        # custom_field.required = data["required"]
+        # custom_field.unique = data["unique"]
         custom_field.default = data["default"]
         custom_field.options = data["options"]
         custom_field.save()

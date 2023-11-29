@@ -139,6 +139,7 @@ class TenantUserCustomField(TimestampedModel):
     display_name = models.CharField("字段名称", max_length=128)
     data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
     required = models.BooleanField("是否必填")
+    unique = models.BooleanField("是否唯一", default=False)
     default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default=dict)
 

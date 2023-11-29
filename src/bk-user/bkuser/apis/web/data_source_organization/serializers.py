@@ -18,6 +18,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.models import (
+    DataSource,
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
@@ -30,67 +31,80 @@ from bkuser.common.validators import validate_phone_with_country_code
 logger = logging.getLogger(__name__)
 
 
-def _validate_extras(extras: Dict[str, Any], tenant_id: str):  # noqa: C901
+def _validate_type_and_convert_field_data(field: TenantUserCustomField, value: Any) -> Any:  # noqa: C901
+    """对自定义字段的值进行类型检查 & 做必要的类型转换"""
+    if value is None:
+        # 必填性在后续进行检查，这里直接跳过即可
+        return value
+
+    opt_ids = [opt["id"] for opt in field.options]
+
+    # 数字类型，转换成整型不丢精度就转，不行就浮点数
+    if field.data_type == UserFieldDataType.NUMBER:
+        try:
+            value = float(value)  # type: ignore
+            value = int(value) if int(value) == value else value  # type: ignore
+        except ValueError:
+            raise ValidationError(_("字段 {} 的值 {} 不是合法数字").format(field.display_name, value))
+
+        return value
+
+    # 枚举类型，值（id）必须是字符串，且是可选项中的一个
+    if field.data_type == UserFieldDataType.ENUM:
+        if value not in opt_ids:
+            raise ValidationError(_("字段 {} 的值 {} 不是可选项之一").format(field.display_name, value))
+
+        return value
+
+    # 多选枚举类型，值必须是字符串列表，且是可选项的子集
+    if field.data_type == UserFieldDataType.MULTI_ENUM:
+        if not isinstance(value, list):
+            raise ValidationError(_("多选枚举类型自定义字段值必须是列表类型"))
+
+        if set(value) - set(opt_ids):
+            raise ValidationError(_("字段 {} 的值 {} 不是可选项的子集").format(field.display_name, value))
+
+        return value
+
+    # 字符串类型，不需要做转换
+    if field.data_type == UserFieldDataType.STRING:
+        if not isinstance(value, str):
+            raise ValidationError(_("字段 {} 的值 {} 不是字符串类型").format(field.display_name, value))
+
+        return value
+
+    raise ValidationError(_("字段类型 {} 不被支持".format(field.data_type)))
+
+
+def _validate_unique_and_required(field: TenantUserCustomField, data_source: DataSource, value: Any) -> Any:
+    """对自定义字段的值进行唯一性检查 & 必填性检查"""
+    if field.required and value is None:
+        raise ValidationError(_("字段 {} 必须填值".format(field.display_name)))
+
+    filters = {f"extras__{field.name}": value}
+    if field.unique and DataSourceUser.objects.filter(data_source=data_source, **filters).exists():
+        raise ValidationError(_("字段 {} 的值 {} 不满足唯一性要求").format(field.display_name, value))
+
+    return value
+
+
+def _validate_user_extras(extras: Dict[str, Any], tenant_id: str, data_source: DataSource) -> Dict[str, Any]:
     custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
 
     if not custom_fields.exists() and extras:
-        raise ValidationError(_("非法数据提交：该租户未设置自定义字段"))
+        raise ValidationError(_("当前租户未设置租户用户自定义字段"))
 
-    # 检测不存在的自定义字段
-    custom_field_name_set = {field.name for field in custom_fields}
-    if not_allowed_fields := set(extras.keys()) - custom_field_name_set:
-        raise ValidationError(_("自定义字段不存在：{}").format(not_allowed_fields))
+    if set(extras.keys()) != {field.name for field in custom_fields}:
+        # Q：这里为什么不抛出具体的错误字段信息
+        # A：这个校验是用于序列化器的，在前端逻辑正确的情况下，不会触发该异常，因此不暴露过多的错误信息
+        raise ValidationError(_("提供的自定义字段数据与租户自定义字段不匹配"))
 
-    # 检测缺少的自定义字段：调用接口，需传递当前租户下的自定义字段
-    if missed_fields := custom_field_name_set - set(extras.keys()):
-        raise ValidationError(_("缺失自定义字段：{}").format(missed_fields))
-
-    # 自定义字段，填充的数据检测（选填字段不进行填写，会填充默认值）
     for field in custom_fields:
-        value = extras[field.name]
-        field_data_type = field.data_type
-        # 字符: 字符类型可能会有输入空字符，
-        if field_data_type == UserFieldDataType.STRING and not isinstance(value, str):
-            raise ValidationError(
-                _("自定义字段{}: 提交的数据 {} 为非字符数据，请传递字符类型数据").format(field.name, value)
-            )
+        value = _validate_type_and_convert_field_data(field, extras[field.name])
+        value = _validate_unique_and_required(field, data_source, value)
+        extras[field.name] = value
 
-        # 数值
-        if field_data_type == UserFieldDataType.NUMBER and not isinstance(value, (int, float)):
-            raise ValidationError(
-                _("自定义字段{}: 提交的数据 {} 为非数值类型， 请传递数值类型数据").format(field.name, value)
-            )
-
-        # 设置的选项id（仅对枚举类型字段起效）
-        option_ids = [option["id"] for option in field.options]
-        if field_data_type == UserFieldDataType.ENUM and value not in option_ids:
-            raise ValidationError(
-                _("单选字段 {} 选项设置为 {}，不存在选项 {}，请提供正确的选项").format(field.name, option_ids, value)
-            )
-
-        if field_data_type == UserFieldDataType.MULTI_ENUM:
-            if not isinstance(value, List) or not value:
-                raise ValidationError(
-                    _("多选枚举字段{}-{}：提交的数据{}异常，请提交非空列表类型数据").format(
-                        field.display_name, field.name, value
-                    )
-                )
-
-            if invalid_opt_ids := set(value) - set(option_ids):
-                raise ValidationError(
-                    _("多选枚举字段{}-{} 选项设置为 {}，不存在选项 {}，请提供正确的选项").format(
-                        field.display_name, field.name, option_ids, invalid_opt_ids
-                    )
-                )
-            # 提交的值是否有重复值
-            if len(value) != len(set(value)):
-                raise ValidationError(
-                    _("多选枚举字段{}-{}，所提交的数据 {} 存在数据异常：选项重复").format(
-                        field.display_name, field.name, value
-                    )
-                )
-
-    # FIXME (su) 唯一性检测
+    return extras
 
 
 class UserSearchInputSLZ(serializers.Serializer):
@@ -129,9 +143,10 @@ class UserCreateInputSLZ(serializers.Serializer):
     )
     phone = serializers.CharField(help_text="手机号")
     logo = serializers.CharField(help_text="用户 Logo", required=False, default=settings.DEFAULT_DATA_SOURCE_USER_LOGO)
+    extras = serializers.JSONField(help_text="自定义字段", default=dict)
+
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField(), default=[])
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField(), default=[])
-    extras = serializers.JSONField(help_text="自定义字段", default=dict)
 
     def validate(self, data):
         try:
@@ -148,7 +163,7 @@ class UserCreateInputSLZ(serializers.Serializer):
             ).values_list("id", flat=True)
         )
         if diff_department_ids:
-            raise serializers.ValidationError(_("传递了错误的部门信息: {}").format(diff_department_ids))
+            raise ValidationError(_("传递了错误的部门信息: {}").format(diff_department_ids))
         return department_ids
 
     def validate_leader_ids(self, leader_ids):
@@ -159,12 +174,11 @@ class UserCreateInputSLZ(serializers.Serializer):
             ).values_list("id", flat=True)
         )
         if diff_leader_ids:
-            raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
+            raise ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
         return leader_ids
 
-    def validate_extras(self, extras):
-        _validate_extras(extras, self.context["tenant_id"])
-        return extras
+    def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
+        return _validate_user_extras(extras, self.context["tenant_id"], self.context["data_source"])
 
 
 class UserCreateOutputSLZ(serializers.Serializer):
@@ -253,7 +267,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
             ).values_list("id", flat=True)
         )
         if diff_department_ids:
-            raise serializers.ValidationError(_("传递了错误的部门信息: {}").format(diff_department_ids))
+            raise ValidationError(_("传递了错误的部门信息: {}").format(diff_department_ids))
         return department_ids
 
     def validate_leader_ids(self, leader_ids):
@@ -264,13 +278,12 @@ class UserUpdateInputSLZ(serializers.Serializer):
             ).values_list("id", flat=True)
         )
         if diff_leader_ids:
-            raise serializers.ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
+            raise ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
 
         if self.context["user_id"] in leader_ids:
-            raise serializers.ValidationError(_("上级不可传递自身"))
+            raise ValidationError(_("上级不可传递自身"))
 
         return leader_ids
 
-    def validate_extras(self, extras):
-        _validate_extras(extras, self.context["tenant_id"])
-        return extras
+    def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
+        return _validate_user_extras(extras, self.context["tenant_id"], self.context["data_source"])

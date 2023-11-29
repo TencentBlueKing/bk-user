@@ -18,7 +18,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestCustomField:
-    def test_create_normal_custom_field(self, api_client, default_tenant):
+    def test_create_normal_custom_field(self, api_client):
         input_field = {
             "name": "test_num",
             "display_name": "数字测试",
@@ -113,7 +113,7 @@ class TestCustomField:
         ],
     )
     def test_create_custom_field_with_invalid_data(
-        self, api_client, default_tenant, name, display_name, required, data_type, options, default
+        self, api_client, name, display_name, required, data_type, options, default
     ):
         input_field = {
             "name": name,
