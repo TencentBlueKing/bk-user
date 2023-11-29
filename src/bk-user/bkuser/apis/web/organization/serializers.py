@@ -54,6 +54,7 @@ class TenantUserInfoOutputSLZ(serializers.Serializer):
     )
     account_expired_at = serializers.SerializerMethodField(help_text="账号过期时间")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
+    extras = serializers.JSONField(help_text="自定义字段", required=False)
 
     def get_account_expired_at(self, instance: TenantUser) -> str:
         return instance.account_expired_at_display
@@ -78,6 +79,7 @@ class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
                     "phone": user.phone,
                     "phone_country_code": user.phone_country_code,
                     "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
+                    "extras": user.extras,
                 }
             )
         return data
@@ -116,6 +118,7 @@ class TenantUserRetrieveOutputSLZ(TenantUserInfoOutputSLZ):
                     "phone": user.phone,
                     "phone_country_code": user.phone_country_code,
                     "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
+                    "extras": user.extras,
                 }
             )
         return data

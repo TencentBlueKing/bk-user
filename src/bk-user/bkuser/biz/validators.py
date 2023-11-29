@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
+from bkuser.apps.tenant.constants import TENANT_USER_CUSTOM_FIELD_NAME_REGEX
 
 logger = logging.getLogger(__name__)
 
@@ -24,5 +25,14 @@ def validate_data_source_user_username(value):
         raise ValidationError(
             _(
                 "{} 不符合 用户名 的命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头及结尾"  # noqa: E501
+            ).format(value),
+        )
+
+
+def validate_tenant_custom_field_name(value):
+    if not re.fullmatch(TENANT_USER_CUSTOM_FIELD_NAME_REGEX, value):
+        raise ValidationError(
+            _(
+                "{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字母开头，字母或数字结尾"  # noqa: E501
             ).format(value),
         )

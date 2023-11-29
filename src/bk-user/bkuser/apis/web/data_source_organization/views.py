@@ -85,7 +85,9 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
-        slz = UserCreateInputSLZ(data=request.data, context={"data_source": data_source})
+        slz = UserCreateInputSLZ(
+            data=request.data, context={"data_source": data_source, "tenant_id": self.get_current_tenant_id()}
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -104,6 +106,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
             phone=data["phone"],
             phone_country_code=data["phone_country_code"],
             logo=data["logo"],
+            extras=data["extras"],
         )
 
         relation_info = DataSourceUserRelationInfo(
@@ -113,7 +116,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         user_id = DataSourceOrganizationHandler.create_user(
             data_source=data_source, base_user_info=base_user_info, relation_info=relation_info
         )
-        return Response(UserCreateOutputSLZ(instance={"id": user_id}).data)
+        return Response(UserCreateOutputSLZ(instance={"id": user_id}).data, status=status.HTTP_201_CREATED)
 
 
 class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -181,7 +184,9 @@ class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView)
         return self.list(request, *args, **kwargs)
 
 
-class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
+class DataSourceUserRetrieveUpdateApi(
+    ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView
+):
     queryset = DataSourceUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -213,7 +218,10 @@ class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.Retriev
         if not user.data_source.is_local:
             raise error_codes.CANNOT_UPDATE_DATA_SOURCE_USER
 
-        slz = UserUpdateInputSLZ(data=request.data, context={"data_source": user.data_source, "user_id": user.id})
+        slz = UserUpdateInputSLZ(
+            data=request.data,
+            context={"data_source": user.data_source, "user_id": user.id, "tenant_id": self.get_current_tenant_id()},
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
@@ -224,6 +232,7 @@ class DataSourceUserRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.Retriev
             phone_country_code=data["phone_country_code"],
             phone=data["phone"],
             logo=data["logo"],
+            extras=data["extras"],
         )
         relation_info = DataSourceUserRelationInfo(
             department_ids=data["department_ids"], leader_ids=data["leader_ids"]

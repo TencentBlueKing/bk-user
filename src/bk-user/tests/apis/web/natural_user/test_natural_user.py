@@ -142,6 +142,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         assert general_property["email"] == data_source_user.email
         assert general_property["phone"] == data_source_user.phone
         assert general_property["phone_country_code"] == data_source_user.phone_country_code
+        assert general_property["extras"] == data_source_user.extras
 
         assert general_property["is_inherited_phone"] == tenant_user.is_inherited_phone
         assert general_property["custom_phone"] == tenant_user.custom_phone
