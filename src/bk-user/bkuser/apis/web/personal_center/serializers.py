@@ -139,3 +139,7 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
             raise ValidationError(_("自定义邮箱为必填项"))
 
         return attrs
+
+
+class TenantUserLogoUpdateInputSLZ(serializers.Serializer):
+    logo = serializers.CharField(help_text="用户 Logo")
