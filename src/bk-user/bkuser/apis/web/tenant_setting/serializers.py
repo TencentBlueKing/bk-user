@@ -98,7 +98,7 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="字段名称", max_length=128)
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
-    unique = serializers.BooleanField(help_text="是否必填", default=False)
+    unique = serializers.BooleanField(help_text="是否唯一", default=False)
     default = serializers.JSONField(help_text="默认值", required=False)
     options = serializers.ListField(
         help_text="选项", required=False, child=OptionInputSLZ(help_text="枚举字段选项设置"), default=list
@@ -129,18 +129,19 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         options = attrs.get("options")
         default = attrs.get("default")
 
-        if data_type == UserFieldDataType.NUMBER.value:
-            try:
-                float(default)
-            except Exception:
-                raise ValidationError(_("数字类型自定义字段默认值必须是合法数字"))
+        if attrs["unique"] and data_type in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]:
+            raise ValidationError(_("枚举类型字段不支持设置唯一性"))
+
+        if data_type == UserFieldDataType.NUMBER:
+            # 数字类型默认值为 0，不可用模型默认的 ""
+            attrs["default"] = 0
 
         opt_ids = [opt["id"] for opt in options]
-        if data_type == UserFieldDataType.ENUM.value:
+        if data_type == UserFieldDataType.ENUM:
             _validate_options(options)
             _validate_enum_default(default, opt_ids)
 
-        elif data_type == UserFieldDataType.MULTI_ENUM.value:
+        elif data_type == UserFieldDataType.MULTI_ENUM:
             _validate_options(options)
             _validate_multi_enum_default(default, opt_ids)
 
@@ -154,7 +155,7 @@ class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
 class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称", max_length=128)
     required = serializers.BooleanField(help_text="是否必填")
-    unique = serializers.BooleanField(help_text="是否必填", default=False)
+    unique = serializers.BooleanField(help_text="是否唯一", default=False)
     default = serializers.JSONField(help_text="默认值", required=False)
     options = serializers.ListField(
         help_text="选项", required=False, child=OptionInputSLZ(help_text="枚举字段选项设置"), default=list
@@ -163,7 +164,7 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     def validate_display_name(self, display_name):
         if (
             TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"], display_name=display_name)
-            .exclude(id=self.context["current_custom_field_id"])
+            .exclude(id=self.context["custom_field_id"])
             .exists()
         ):
             raise ValidationError(_("展示用名称 {} 已存在").format(display_name))
@@ -174,17 +175,20 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         return display_name
 
     def validate(self, attrs):
-        current_custom_field = TenantUserCustomField.objects.get(id=self.context["current_custom_field_id"])
-        data_type = current_custom_field.data_type
+        custom_field = TenantUserCustomField.objects.get(id=self.context["custom_field_id"])
+        data_type = custom_field.data_type
         options = attrs.get("options")
         default = attrs.get("default")
 
+        if attrs["unique"] and data_type in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]:
+            raise ValidationError(_("枚举类型字段不支持设置唯一性"))
+
         opt_ids = [opt["id"] for opt in options]
-        if data_type == UserFieldDataType.ENUM.value:
+        if data_type == UserFieldDataType.ENUM:
             _validate_options(options)
             _validate_enum_default(default, opt_ids)
 
-        elif data_type == UserFieldDataType.MULTI_ENUM.value:
+        elif data_type == UserFieldDataType.MULTI_ENUM:
             _validate_options(options)
             _validate_multi_enum_default(default, opt_ids)
 

@@ -96,7 +96,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
         tenant_id = self.get_current_tenant_id()
 
         slz = TenantUserCustomFieldUpdateInputSLZ(
-            data=request.data, context={"tenant_id": tenant_id, "current_custom_field_id": kwargs["id"]}
+            data=request.data, context={"tenant_id": tenant_id, "custom_field_id": kwargs["id"]}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data

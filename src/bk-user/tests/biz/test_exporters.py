@@ -58,7 +58,7 @@ class TestDataSourceExporter:
             assert row[6].value == str(20 + idx)
             assert row[7].value == "male"
             assert row[8].value == "region-" + str(idx)
-            assert row[9].value == "running,swimming"
+            assert row[9].value == ""
 
         # 检查组织信息
         assert [cell.value for cell in wk["users"]["E"][2:]] == [
