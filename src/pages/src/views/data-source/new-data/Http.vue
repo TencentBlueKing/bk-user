@@ -284,7 +284,7 @@ const pageSizeList = ref([
 ]);
 
 const rulesServerConfig = {
-  name: [validate.required, validate.name],
+  name: [validate.required, validate.name, validate.checkSpace],
   'server_config.server_base_url': [validate.required, validate.serverBaseUrl],
   'server_config.user_api_path': [validate.required, validate.apiPath],
   'server_config.department_api_path': [validate.required, validate.apiPath],

@@ -203,7 +203,7 @@ const files = computed(() => {
 
 const rules = {
   username: [validate.required, validate.userName],
-  full_name: [validate.required, validate.name],
+  full_name: [validate.required, validate.name, validate.checkSpace],
   email: [validate.required, validate.email],
   phone: [validate.required, validate.phone],
 };

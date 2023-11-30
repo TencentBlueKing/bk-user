@@ -105,10 +105,6 @@ const handleScrollEnd = () => {
         border-color: #3a84ff;
       }
     }
-
-    .angle-up {
-      display: none !important;
-    }
   }
 }
 

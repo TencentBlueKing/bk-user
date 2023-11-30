@@ -88,12 +88,18 @@
               </div>
             </div>
             <div class="select-box icon-box">
-              <bk-form ref="enumRef" :model="item" :rules="rulesEnum">
-                <bk-form-item property="value" required>
+              <bk-form class="enum-form" ref="enumRef" :model="item" :rules="rulesEnum">
+                <bk-form-item class="enum-id" property="id" required>
+                  <bk-input
+                    v-model="item.id"
+                    placeholder="请输入ID" />
+                </bk-form-item>
+                <bk-form-item class="enum-value" property="value" required>
                   <bk-input
                     type="text"
                     class="select-text"
                     v-model="item.value"
+                    placeholder="请输入值"
                     @change="handleChange"
                   />
                 </bk-form-item>
@@ -117,17 +123,17 @@
     <div class="select-type">
       <bk-checkbox
         :value="fieldsInfor.required"
-        :disabled="fieldsInfor.builtin"
+        :disabled="isEdit"
         v-model="fieldsInfor.required"
         @change="handleChange">
         <span v-bk-tooltips="{ content: '该字段在用户信息里必须填写' }">必填</span>
       </bk-checkbox>
-      <!-- <bk-checkbox
+      <bk-checkbox
         :value="fieldsInfor.unique"
         :disabled="isEdit"
         v-model="fieldsInfor.unique">
         <span v-bk-tooltips="{ content: '该字段在不同用户信息里不能相同' }">唯一</span>
-      </bk-checkbox> -->
+      </bk-checkbox>
       <!-- <bk-checkbox
         :value="fieldsInfor.editable"
         v-model="fieldsInfor.editable"
@@ -164,9 +170,7 @@ const emit = defineEmits(['handleCancel', 'submitData']);
 const validate = useValidate();
 const fieldsRef = ref();
 const enumRef = ref();
-const fieldsInfor = reactive({
-  ...props.currentEditorData,
-});
+const fieldsInfor = reactive(JSON.parse(JSON.stringify({ ...props.currentEditorData })));
 const state = reactive({
   defaultSelected: 'string',
   isDeleteOption: true,
@@ -196,12 +200,35 @@ const typeList = [
 ];
 
 const rulesFields = {
-  display_name: [validate.required, validate.fieldsDisplayName],
+  display_name: [validate.required, validate.fieldsDisplayName, validate.checkSpace],
   name: [validate.required, validate.fieldsName],
 };
 
 const rulesEnum = {
-  value: [validate.required],
+  id: [
+    validate.required,
+    validate.checkSpace,
+    {
+      validator: (value: string) => {
+        const result = blurId();
+        return value !== result;
+      },
+      message: 'id不能重复',
+      trigger: 'blur',
+    },
+  ],
+  value: [
+    validate.required,
+    validate.checkSpace,
+    {
+      validator: (value: string) => {
+        const result = blurValue();
+        return value !== result;
+      },
+      message: 'value不能重复',
+      trigger: 'blur',
+    },
+  ],
 };
 
 const isEdit = computed(() => props?.setType === 'edit');
@@ -209,7 +236,18 @@ const isEdit = computed(() => props?.setType === 'edit');
 watch(() => fieldsInfor.data_type, (val) => {
   if (!props?.currentEditorData?.id) {
     fieldsInfor.default = val === 'multi_enum' ? [0] : 0;
+  } else {
+    const defaultIndex = id => fieldsInfor.options.findIndex(item => item.id === id);
+
+    if (val === 'enum') {
+      fieldsInfor.default = defaultIndex(fieldsInfor.default);
+    } else if (val === 'multi_enum') {
+      fieldsInfor.default = fieldsInfor.default.map(defaultIndex);
+    }
   }
+}, {
+  deep: true,
+  immediate: true,
 });
 
 watch(() => fieldsInfor.options.length, (val) => {
@@ -250,6 +288,9 @@ const handleChange = () => {
 // 删除枚举
 const deleteEg = (index) => {
   window.changeInput = true;
+  if (fieldsInfor.data_type === 'enum' && index > 0 && index === fieldsInfor.options.length - 1) {
+    fieldsInfor.default = index - 1;
+  }
   if (fieldsInfor.options.length <= 1) {
     return;
   }
@@ -262,12 +303,12 @@ const addEg = () => {
     return;
   }
   const param = {
-    id: fieldsInfor.options.length,
+    id: '',
     value: '',
   };
   fieldsInfor.options.push(param);
   nextTick(() => {
-    const inputList = document.querySelectorAll('.content-list input');
+    const inputList = document.querySelectorAll('.enum-id input');
     inputList[inputList.length - 1].focus();
   });
 };
@@ -288,37 +329,59 @@ const submitInfor = async () => {
 
     state.btnLoading = true;
 
-    if (isEdit.value) {
-      await putCustomFields({
-        id: fieldsInfor.id,
-        display_name: fieldsInfor.display_name,
-        required: fieldsInfor.required,
-        default: fieldsInfor.default,
-        options: fieldsInfor.options,
-      });
-      emit('submitData', '修改字段成功');
-    } else {
-      const newFieldData = {
-        name: fieldsInfor.name,
-        display_name: fieldsInfor.display_name,
-        required: fieldsInfor.required,
-        data_type: fieldsInfor.data_type,
-      };
+    const newFieldData = {
+      ...(isEdit.value ? { id: fieldsInfor.id } : { name: fieldsInfor.name }),
+      display_name: fieldsInfor.display_name,
+      required: fieldsInfor.required,
+      data_type: fieldsInfor.data_type,
+      unique: fieldsInfor.unique,
+    };
 
-      if (isEnumType) {
-        newFieldData.options = fieldsInfor.options;
-        newFieldData.default = fieldsInfor.default;
+    if (isEnumType) {
+      const defaultIndex = fieldsInfor.data_type === 'enum' ? [fieldsInfor.default] : fieldsInfor.default;
+      newFieldData.options = fieldsInfor.options;
+      newFieldData.default = fieldsInfor.options
+        .filter((_, index) => defaultIndex.includes(index))
+        .map(item => item.id);
+      if (fieldsInfor.data_type === 'enum') {
+        newFieldData.default = newFieldData.default[0] || null;
       }
-
-      await newCustomFields(newFieldData);
-      emit('submitData', '添加字段成功');
     }
+
+    const action = isEdit.value ? putCustomFields : newCustomFields;
+    const successMessage = isEdit.value ? '修改字段成功' : '添加字段成功';
+
+    await action(newFieldData);
+    emit('submitData', successMessage);
   } catch (e) {
     console.warn(e);
   } finally {
     state.btnLoading = false;
   }
 };
+
+// 校验重复值
+const findFirstDuplicate = (key) => {
+  const obj = {};
+  const result = ref('');
+  fieldsInfor.options.forEach((item, index) => {
+    if (!obj[item[key]]) {
+      obj[item[key]] = new Set();
+    }
+    obj[item[key]].add(index);
+  });
+
+  for (const [itemKey, value] of Object.entries(obj)) {
+    if (value.size > 1) {
+      result.value = itemKey;
+      break;
+    }
+  }
+  return result.value;
+};
+
+const blurId = () => findFirstDuplicate('id');
+const blurValue = () => findFirstDuplicate('value');
 </script>
 
 <style lang="less" scoped>
@@ -327,7 +390,7 @@ const submitInfor = async () => {
   padding: 24px 0;
 
   .bk-form {
-    padding: 0 24px;
+    padding: 0 16px;
   }
 
   .enumerate-wrapper {
@@ -451,6 +514,17 @@ const submitInfor = async () => {
                 vertical-align: middle;
                 border: 1px solid #979ba5;
                 border-radius: 2px;
+              }
+            }
+          }
+
+          ::v-deep .enum-form {
+            display: flex;
+
+            .enum-id {
+              .bk-form-content {
+                width: 100px;
+                margin-right: 10px;
               }
             }
           }
