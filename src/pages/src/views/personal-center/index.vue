@@ -57,8 +57,28 @@
       <div class="personal-center-main" v-bkloading="{ loading: infoLoading }">
         <header>
           <div class="header-left">
-            <img v-if="currentUserInfo.logo" :src="currentUserInfo.logo" />
-            <img v-else src="@/images/avatar.png" />
+            <bk-upload
+              :ext-cls="currentUserInfo.logo ? 'show-logo' : 'normal-logo'"
+              theme="picture"
+              with-credentials
+              :multiple="false"
+              :files="files"
+              :handle-res-code="handleRes"
+              :url="currentUserInfo.logo"
+              :custom-request="customRequest"
+              :size="2"
+              @error="handleError"
+            >
+              <template #trigger>
+                <div class="logo-box" v-if="currentUserInfo.logo">
+                  <img :src="currentUserInfo.logo" />
+                  <div class="logo-hover">
+                    <i class="user-icon icon-edit" @click="customRequest" />
+                  </div>
+                </div>
+                <i v-else class="user-icon icon-yonghu" />
+              </template>
+            </bk-upload>
             <div>
               <p class="name">
                 {{ currentTenantInfo.username }}
@@ -215,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 
 import phoneInput from '@/components/phoneInput.vue';
@@ -223,10 +243,11 @@ import useValidate from '@/hooks/use-validate';
 import {
   getCurrentNaturalUser,
   getPersonalCenterUsers,
+  patchTenantUsersLogo,
   patchUsersEmail,
   patchUsersPhone,
 } from '@/http/personalCenterFiles';
-import { formatConvert } from '@/utils';
+import { formatConvert, getBase64 } from '@/utils';
 
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
@@ -390,6 +411,32 @@ const changeTelError = (value: boolean, phone: string) => {
 const changeCountryCode = (code: string) => {
   currentUserInfo.value.custom_phone_country_code = code;
 };
+
+const handleRes = (response: any) => {
+  if (response.id) {
+    return true;
+  }
+  return false;
+};
+
+const customRequest = (event) => {
+  getBase64(event.file).then((res) => {
+    currentUserInfo.value.logo = res;
+    patchTenantUsersLogo({
+      id: currentUserInfo.value.id,
+      logo: currentUserInfo.value.logo,
+    });
+  })
+    .catch((e) => {
+      console.warn(e);
+    });
+};
+
+const handleError = (file) => {
+  if (file.size > (2 * 1024 * 1024)) {
+    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+  }
+};
 </script>
 
 <style lang="less" scoped>
@@ -526,11 +573,89 @@ const changeCountryCode = (code: string) => {
       .header-left {
         display: flex;
 
-        img {
-          width: 72px;
-          height: 72px;
-          object-fit: contain;
-          margin-right: 16px;
+        ::v-deep .normal-logo {
+          .bk-upload-trigger--picture {
+            width: 72px;
+            height: 72px;
+            margin: 0;
+            margin-right: 16px;
+
+            .icon-yonghu {
+              font-size: 40px;
+              width: 72px;
+              height: 72px;
+              line-height: 72px;
+              background: #FAFBFD;
+              color: #DCDEE5;
+
+              &:hover {
+                cursor: pointer;
+                color: #A3C5FD;
+                background: #F0F1F5;
+              }
+            }
+          }
+
+          // .bk-upload-trigger--has-file {
+          //   border-style: dashed;
+          // }
+
+          // .bk-upload-trigger--fail {
+          //   border-color: #c4c6cc;
+
+          //   &:hover {
+          //     border-color: #3A84FF;
+          //   }
+          // }
+        }
+
+        ::v-deep .show-logo {
+          .bk-upload-trigger--picture {
+            width: 72px;
+            height: 72px;
+            margin: 0;
+            margin-right: 16px;
+            border-style: solid;
+            position: relative;
+
+            &:hover {
+              border-color: #c4c6cc;
+            }
+
+            .logo-box {
+              padding: 2px;
+
+              img {
+                object-fit: contain;
+                width: 66px;
+                height: 66px;
+              }
+
+              &:hover {
+                .logo-hover {
+                  display: block;
+                }
+              }
+              .logo-hover {
+                display: none;
+                position: absolute;
+                top: 2px;
+                z-index: 9;
+                background-color: rgba(0, 0, 0, 0.6);
+                width: 66px;
+                height: 66px;
+                left: 2px;
+                color: #fff;
+                border: 1px solid #ff5656;
+                line-height: 66px;
+                text-align: center;
+
+                i {
+                  font-size: 16px;
+                }
+              }
+            }
+          }
         }
 
         .name {

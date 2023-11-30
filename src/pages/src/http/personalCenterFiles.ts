@@ -1,6 +1,7 @@
 import http from './fetch';
 import type {
   PatchUserEmailParams,
+  PatchUserLogoParams,
   PatchUserPhoneParams,
 } from './types/personalCenterFiles';
 
@@ -23,3 +24,8 @@ export const patchUsersEmail = (params: PatchUserEmailParams) => http.patch(`/ap
  * 租户用户更新手机号
  */
 export const patchUsersPhone = (params: PatchUserPhoneParams) => http.patch(`/api/v1/web/personal-center/tenant-users/${params.id}/phone/`, params);
+
+/**
+ * 租户用户更新头像
+ */
+export const patchTenantUsersLogo = (params: PatchUserLogoParams) => http.patch(`/api/v1/web/personal-center/tenant-users/${params.id}/`, params);
