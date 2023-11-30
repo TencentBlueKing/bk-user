@@ -76,22 +76,31 @@ def _validate_type_and_convert_field_data(field: TenantUserCustomField, value: A
 
         return value
 
-    raise ValidationError(_("字段类型 {} 不被支持".format(field.data_type)))
+    raise ValidationError(_("字段类型 {} 不被支持").format(field.data_type))
 
 
-def _validate_unique_and_required(field: TenantUserCustomField, data_source: DataSource, value: Any) -> Any:
+def _validate_unique_and_required(
+    field: TenantUserCustomField, data_source: DataSource, user_id: int | None, value: Any
+) -> Any:
     """对自定义字段的值进行唯一性检查 & 必填性检查"""
-    if field.required and value is None:
-        raise ValidationError(_("字段 {} 必须填值".format(field.display_name)))
+    if field.required and value in ["", None]:
+        raise ValidationError(_("字段 {} 必须填值").format(field.display_name))
 
-    filters = {f"extras__{field.name}": value}
-    if field.unique and DataSourceUser.objects.filter(data_source=data_source, **filters).exists():
-        raise ValidationError(_("字段 {} 的值 {} 不满足唯一性要求").format(field.display_name, value))
+    if field.unique:
+        # 唯一性检查，由于添加 / 修改用户一般不会有并发操作，因此这里没有对并发的情况进行预防
+        queryset = DataSourceUser.objects.filter(data_source=data_source, **{f"extras__{field.name}": value})
+        if user_id:
+            queryset.exclude(id=user_id)
+
+        if queryset.exists():
+            raise ValidationError(_("字段 {} 的值 {} 不满足唯一性要求").format(field.display_name, value))
 
     return value
 
 
-def _validate_user_extras(extras: Dict[str, Any], tenant_id: str, data_source: DataSource) -> Dict[str, Any]:
+def _validate_user_extras(
+    extras: Dict[str, Any], tenant_id: str, data_source: DataSource, user_id: int | None = None
+) -> Dict[str, Any]:
     custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
 
     if not custom_fields.exists() and extras:
@@ -104,7 +113,7 @@ def _validate_user_extras(extras: Dict[str, Any], tenant_id: str, data_source: D
 
     for field in custom_fields:
         value = _validate_type_and_convert_field_data(field, extras[field.name])
-        value = _validate_unique_and_required(field, data_source, value)
+        value = _validate_unique_and_required(field, data_source, user_id, value)
         extras[field.name] = value
 
     return extras
@@ -289,4 +298,6 @@ class UserUpdateInputSLZ(serializers.Serializer):
         return leader_ids
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
-        return _validate_user_extras(extras, self.context["tenant_id"], self.context["data_source"])
+        return _validate_user_extras(
+            extras, self.context["tenant_id"], self.context["data_source"], self.context["user_id"]
+        )

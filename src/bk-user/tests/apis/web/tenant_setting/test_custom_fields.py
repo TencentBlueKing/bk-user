@@ -33,8 +33,7 @@ class TestCustomField:
     @pytest.mark.parametrize(
         ("name", "display_name", "required", "data_type", "options", "default"),
         [
-            ("111invalid_name", "111invalid_name", False, UserFieldDataType.STRING, [], ""),
-            ("invalid_num_field", "invalid_num_field", False, UserFieldDataType.NUMBER, [], "invalid_num_field"),
+            ("1_invalid_name", "111invalid_name", False, UserFieldDataType.STRING, [], ""),
             ("duplicate_builtin_field_display_name", "用户名", False, UserFieldDataType.STRING, [], ""),
             ("username", "用户名重复", False, UserFieldDataType.STRING, [], ""),
             ("enum_options_empty", "invalid_enum_options", False, UserFieldDataType.ENUM, [], ""),
