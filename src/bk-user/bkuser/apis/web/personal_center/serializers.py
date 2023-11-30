@@ -31,6 +31,7 @@ class TenantUserBaseInfoOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户ID")
     username = serializers.CharField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
+    logo = serializers.CharField(help_text="头像")
     tenant = TenantBaseInfoOutputSLZ(help_text="租户")
 
 

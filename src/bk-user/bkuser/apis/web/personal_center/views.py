@@ -62,6 +62,7 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
                     "id": user.id,
                     "username": user.data_source_user.username,
                     "full_name": user.data_source_user.full_name,
+                    "logo": user.data_source_user.logo,
                     "tenant": {"id": user.tenant_id, "name": user.tenant.name},
                 }
                 for user in sorted_tenant_users
