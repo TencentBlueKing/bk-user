@@ -42,7 +42,7 @@
         <li v-if="authSourceData.plugin?.id === 'local'">
           <span class="item-title">基础配置：</span>
           <div class="basic-config">
-            <p>以下数据源已开启「账密登录」</p>
+            <p v-if="onDataSources.length">以下数据源已开启「账密登录」</p>
             <div class="on">
               <bk-overflow-title
                 type="tips"
@@ -52,7 +52,7 @@
                 {{ item.data_source_name }}
               </bk-overflow-title>
             </div>
-            <p>以下数据源未开启「账密登录」</p>
+            <p v-if="notDataSources.length">以下数据源未开启「账密登录」</p>
             <div class="off" v-for="(item, index) in notDataSources" :key="index">
               <bk-overflow-title
                 type="tips"

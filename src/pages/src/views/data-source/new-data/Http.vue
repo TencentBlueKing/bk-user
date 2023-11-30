@@ -136,9 +136,18 @@
           <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">下一步</bk-button>
           <bk-button @click="handleCancel">取消</bk-button>
         </div>
-        <div class="connection-tips" v-if="connectionStatus !== null">
-          <i :class="['bk-sq-icon', connectionStatus ? 'icon-duihao-2' : 'icon-close-fill']"></i>
-          {{ connectionText }}
+        <div class="connection-alert" v-if="connectionStatus !== null">
+          <bk-alert
+            :theme="connectionStatus ? 'success' : 'error'"
+            :show-icon="false">
+            <template #title>
+              <span>
+                <i v-if="connectionStatus" class="user-icon icon-duihao-2" />
+                <i v-else class="bk-sq-icon icon-close-fill" />
+                {{ connectionText }}
+              </span>
+            </template>
+          </bk-alert>
         </div>
       </div>
     </bk-form>
@@ -177,8 +186,8 @@
         </bk-form-item>
       </div>
       <div class="btn">
-        <bk-button theme="primary" class="mr8" @click="handleLastStep">上一步</bk-button>
-        <bk-button class="mr8" :loading="submitLoading" @click="handleSubmit">
+        <bk-button class="mr8" @click="handleLastStep">上一步</bk-button>
+        <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
           {{ currentId ? '保存' : '提交' }}
         </bk-button>
         <bk-button @click="handleCancel">取消</bk-button>
@@ -445,6 +454,7 @@ const handleTestConnection = async () => {
   try {
     await formRef1.value.validate();
     connectionLoading.value = true;
+    connectionStatus.value = null;
     const params = {
       plugin_id: serverConfigData.plugin_id,
       plugin_config: {
