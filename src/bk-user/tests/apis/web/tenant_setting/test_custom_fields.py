@@ -96,7 +96,7 @@ class TestCustomField:
             ),
             (
                 "invalid_multi_enum_default",
-                "invalid_enum_default",
+                "invalid_multi_enum_default",
                 False,
                 UserFieldDataType.MULTI_ENUM,
                 [{"id": "a", "value": "1"}],
@@ -104,7 +104,7 @@ class TestCustomField:
             ),
             (
                 "invalid_multi_enum_default",
-                "invalid_enum_default",
+                "invalid_multi_enum_default",
                 False,
                 UserFieldDataType.MULTI_ENUM,
                 [{"id": "a", "value": "1"}],

@@ -58,11 +58,14 @@ def _validate_type_and_convert_field_data(field: TenantUserCustomField, value: A
 
     # 多选枚举类型，值必须是字符串列表，且是可选项的子集
     if field.data_type == UserFieldDataType.MULTI_ENUM:
-        if not isinstance(value, list):
-            raise ValidationError(_("多选枚举类型自定义字段值必须是列表类型"))
+        if not (value and isinstance(value, list)):
+            raise ValidationError(_("多选枚举类型自定义字段值必须是非空列表"))
 
         if set(value) - set(opt_ids):
             raise ValidationError(_("字段 {} 的值 {} 不是可选项的子集").format(field.display_name, value))
+
+        if len(value) != len(set(value)):
+            raise ValidationError(_("字段 {} 的值 {} 中存在重复值").format(field.display_name, value))
 
         return value
 
