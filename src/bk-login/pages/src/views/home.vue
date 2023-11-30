@@ -13,8 +13,8 @@
             @enter="handleGetTenant">
           </bk-input>
 
-          <bk-button 
-            size="large" 
+          <bk-button
+            size="large"
             theme="primary"
             :disabled="!tenantId"
             :outline="!!tenant"
@@ -30,7 +30,7 @@
             class="tenant-option"
             :id="item.id"
             :key="item.id"
-            :value="item.id">
+            :name="item.name">
             {{ item.name }}
           </bk-option>
         </bk-select>
@@ -78,7 +78,11 @@
           {{ tenant?.name.charAt(0).toUpperCase() }}
         </span>
         {{ tenant?.name }}
-        <bk-popover v-if="changList.length && !isOnlyOneTenant" trigger="click" theme="light" placement="bottom" ext-cls="tenant-popover">
+        <bk-popover
+          v-if="changList.length && !isOnlyOneTenant"
+          trigger="click" theme="light"
+          placement="bottom"
+          ext-cls="tenant-popover">
           <div class="tenant-change">
             <Transfer class="bk-icon" />
             <span>切换租户</span>
@@ -241,7 +245,7 @@ const handleChangeIdp = (idp: Idp) => {
   if (!customPlugins.includes(idp.plugin.id)) {
     window.location.href = `/auth/idps/${idp.id}/actions/login/`;
   }
-}
+};
 
 const protocolVisible = ref(false);
 
