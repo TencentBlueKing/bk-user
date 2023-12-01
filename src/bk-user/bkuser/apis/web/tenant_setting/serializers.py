@@ -154,8 +154,6 @@ class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
 
 class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称", max_length=128)
-    required = serializers.BooleanField(help_text="是否必填")
-    unique = serializers.BooleanField(help_text="是否唯一", default=False)
     default = serializers.JSONField(help_text="默认值", required=False)
     options = serializers.ListField(
         help_text="选项", required=False, child=OptionInputSLZ(help_text="枚举字段选项设置"), default=list
