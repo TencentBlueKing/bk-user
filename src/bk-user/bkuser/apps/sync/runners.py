@@ -23,6 +23,7 @@ from bkuser.apps.sync.syncers import (
     TenantDepartmentSyncer,
     TenantUserSyncer,
 )
+from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
 from bkuser.apps.tenant.models import Tenant
 from bkuser.plugins.base import get_plugin_cls
 
@@ -45,6 +46,7 @@ class DataSourceSyncTaskRunner:
         with DataSourceSyncTaskContext(self.task) as ctx, transaction.atomic():
             self._sync_departments(ctx)
             self._sync_users(ctx)
+            self._validate_unique_fields(ctx)
 
         self._send_signal()
 
@@ -69,6 +71,10 @@ class DataSourceSyncTaskRunner:
             overwrite=bool(self.task.extras.get("overwrite", False)),
             incremental=bool(self.task.extras.get("incremental", False)),
         ).sync()
+
+    def _validate_unique_fields(self, ctx: DataSourceSyncTaskContext):
+        """对有唯一性要求的自定义字段的校验"""
+        DataSourceUserExtrasUniqueValidator(self.data_source, ctx.logger).validate()
 
     def _send_signal(self):
         """发送数据源同步完成信号，触发后续流程"""

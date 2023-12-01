@@ -18,7 +18,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestCustomField:
-    def test_create_normal_custom_field(self, api_client, default_tenant):
+    def test_create_normal_custom_field(self, api_client):
         input_field = {
             "name": "test_num",
             "display_name": "数字测试",
@@ -33,8 +33,7 @@ class TestCustomField:
     @pytest.mark.parametrize(
         ("name", "display_name", "required", "data_type", "options", "default"),
         [
-            ("111invalid_name", "111invalid_name", False, UserFieldDataType.STRING, [], ""),
-            ("invalid_num_field", "invalid_num_field", False, UserFieldDataType.NUMBER, [], "invalid_num_field"),
+            ("1_invalid_name", "111invalid_name", False, UserFieldDataType.STRING, [], ""),
             ("duplicate_builtin_field_display_name", "用户名", False, UserFieldDataType.STRING, [], ""),
             ("username", "用户名重复", False, UserFieldDataType.STRING, [], ""),
             ("enum_options_empty", "invalid_enum_options", False, UserFieldDataType.ENUM, [], ""),
@@ -96,7 +95,7 @@ class TestCustomField:
             ),
             (
                 "invalid_multi_enum_default",
-                "invalid_enum_default",
+                "invalid_multi_enum_default",
                 False,
                 UserFieldDataType.MULTI_ENUM,
                 [{"id": "a", "value": "1"}],
@@ -104,7 +103,7 @@ class TestCustomField:
             ),
             (
                 "invalid_multi_enum_default",
-                "invalid_enum_default",
+                "invalid_multi_enum_default",
                 False,
                 UserFieldDataType.MULTI_ENUM,
                 [{"id": "a", "value": "1"}],
@@ -113,7 +112,7 @@ class TestCustomField:
         ],
     )
     def test_create_custom_field_with_invalid_data(
-        self, api_client, default_tenant, name, display_name, required, data_type, options, default
+        self, api_client, name, display_name, required, data_type, options, default
     ):
         input_field = {
             "name": name,

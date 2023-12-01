@@ -58,7 +58,8 @@ class DataSourceUserExporter:
             extras = []
             # 自定义字段的值，不一定是字符串类型，需要做下转换
             for field in self.custom_fields:
-                value = u.extras.get(field.name, field.default)
+                # 导出数据时，若自定义字段不存在或为空值，则替换为 ""
+                value = u.extras.get(field.name) or ""
                 value = ",".join(value) if isinstance(value, list) else str(value)  # type: ignore
                 extras.append(value)
 
