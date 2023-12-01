@@ -133,7 +133,8 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
             raise ValidationError(_("枚举类型字段不支持设置唯一性"))
 
         if data_type == UserFieldDataType.NUMBER:
-            # 数字类型默认值为 0，不可用模型默认的 ""
+            # 目前字段编辑，数字类型没有支持填写默认值，而模型默认是 ""
+            # 无法在后续流程中做类型转换，因此这里修改默认值为 0
             attrs["default"] = 0
 
         opt_ids = [opt["id"] for opt in options]

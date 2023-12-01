@@ -90,7 +90,7 @@ def _validate_unique_and_required(
         # 唯一性检查，由于添加 / 修改用户一般不会有并发操作，因此这里没有对并发的情况进行预防
         queryset = DataSourceUser.objects.filter(data_source=data_source, **{f"extras__{field.name}": value})
         if user_id:
-            queryset.exclude(id=user_id)
+            queryset = queryset.exclude(id=user_id)
 
         if queryset.exists():
             raise ValidationError(_("字段 {} 的值 {} 不满足唯一性要求").format(field.display_name, value))
