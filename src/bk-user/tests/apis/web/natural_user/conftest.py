@@ -121,10 +121,10 @@ def additional_tenant_user(random_tenant, additional_data_source_user) -> Tenant
     根据独立数据源用户，创建额外的租户用户
     """
     return TenantUser.objects.create(
+        id=generate_uuid(),
         data_source_user=additional_data_source_user,
         data_source=additional_data_source_user.data_source,
         tenant=random_tenant,
-        id=generate_uuid(),
     )
 
 

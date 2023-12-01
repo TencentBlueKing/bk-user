@@ -23,8 +23,8 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
-from bkuser.utils.uuid import generate_uuid
 
 
 class DataSourceUserBaseInfo(BaseModel):
@@ -109,10 +109,10 @@ class DataSourceOrganizationHandler:
 
             # 创建租户用户
             tenant_user = TenantUser(
+                id=gen_tenant_user_id(tenant.id, data_source, user),
                 data_source_user=user,
                 tenant=tenant,
                 data_source=data_source,
-                id=generate_uuid(),
             )
 
             # 根据配置初始化账号有效期
@@ -121,6 +121,7 @@ class DataSourceOrganizationHandler:
                 tenant_user.account_expired_at = timezone.now() + datetime.timedelta(days=cfg.validity_period)
             # 入库
             tenant_user.save()
+
         return user.id
 
     @staticmethod

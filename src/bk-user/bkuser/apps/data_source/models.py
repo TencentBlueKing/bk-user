@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceStatus
+from bkuser.apps.data_source.constants import DataSourceStatus, TenantUserIdRuleEnum
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -68,6 +68,13 @@ class DataSource(AuditedModel):
     sync_config = models.JSONField("同步任务配置", default=dict)
     # 字段映射，外部数据源提供商，用户数据字段映射到租户用户数据字段
     field_mapping = models.JSONField("用户字段映射", default=list)
+    domain = models.CharField("所属租户域名", max_length=128, unique=True, blank=True, null=True)
+    owner_tenant_user_id_rule = models.CharField(
+        "归属租户用户 ID 生成规则",
+        max_length=64,
+        choices=TenantUserIdRuleEnum.get_choices(),
+        default=TenantUserIdRuleEnum.UUID4_HEX.value,
+    )
 
     objects = DataSourceManager()
 
