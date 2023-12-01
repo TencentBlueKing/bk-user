@@ -22,6 +22,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     DepartmentRelationMPTTTree,
 )
+from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.sync.constants import DataSourceSyncObjectType, SyncOperation, TenantSyncObjectType
 from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.converters import DataSourceUserConverter
@@ -29,7 +30,6 @@ from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, Tena
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.plugins.models import RawDataSourceDepartment, RawDataSourceUser
 from bkuser.utils.tree import bfs_traversal_tree, build_forest_with_parent_relations
-from bkuser.utils.uuid import generate_uuid
 
 
 class DataSourceDepartmentSyncer:
@@ -517,7 +517,7 @@ class TenantUserSyncer:
         )
         waiting_create_tenant_users = [
             TenantUser(
-                id=generate_uuid(),
+                id=gen_tenant_user_id(self.data_source, user),
                 tenant=self.tenant,
                 data_source_user=user,
                 data_source=self.data_source,

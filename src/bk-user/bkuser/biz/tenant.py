@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import DataSourceDepartmentRelation, DataSourceUser
+from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
 from bkuser.apps.tenant.models import (
     Tenant,
@@ -33,7 +34,6 @@ from bkuser.biz.data_source import (
     DataSourceUserHandler,
 )
 from bkuser.plugins.local.models import PasswordInitialConfig
-from bkuser.utils.uuid import generate_uuid
 
 
 class DataSourceUserInfo(BaseModel):
@@ -322,10 +322,10 @@ class TenantHandler:
                 )
                 # 创建对应的租户用户
                 tenant_user = TenantUser.objects.create(
+                    id=gen_tenant_user_id(data_source, data_source_user),
                     data_source_user=data_source_user,
                     tenant=tenant,
                     data_source=data_source,
-                    id=generate_uuid(),
                 )
 
                 tenant_managers.append(TenantManager(tenant=tenant, tenant_user=tenant_user))
