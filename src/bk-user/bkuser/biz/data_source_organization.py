@@ -109,7 +109,7 @@ class DataSourceOrganizationHandler:
 
             # 创建租户用户
             tenant_user = TenantUser(
-                id=gen_tenant_user_id(data_source, user),
+                id=gen_tenant_user_id(tenant.id, data_source, user),
                 data_source_user=user,
                 tenant=tenant,
                 data_source=data_source,

@@ -517,7 +517,7 @@ class TenantUserSyncer:
         )
         waiting_create_tenant_users = [
             TenantUser(
-                id=gen_tenant_user_id(self.data_source, user),
+                id=gen_tenant_user_id(self.tenant.id, self.data_source, user),
                 tenant=self.tenant,
                 data_source_user=user,
                 data_source=self.data_source,

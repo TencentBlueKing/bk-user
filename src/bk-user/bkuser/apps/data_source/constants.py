@@ -28,7 +28,7 @@ class FieldMappingOperation(str, StructuredEnum):
     EXPRESSION = EnumField("expression", label=_("表达式"))
 
 
-class TenantUserIdRule(str, StructuredEnum):
+class TenantUserIdRuleEnum(str, StructuredEnum):
     """租户用户 ID 生成规则"""
 
     UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))

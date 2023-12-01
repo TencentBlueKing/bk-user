@@ -10,19 +10,24 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser.apps.data_source.constants import TenantUserIdRule
+from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.utils.uuid import generate_uuid
 
 logger = logging.getLogger(__name__)
 
 
-def gen_tenant_user_id(data_source: DataSource, user: DataSourceUser) -> str:
+def gen_tenant_user_id(user_tenant_id: str, data_source: DataSource, user: DataSourceUser) -> str:
     """根据规则生成租户用户 ID"""
-    if data_source.owner_tenant_user_id_rule == TenantUserIdRule.USERNAME_WITH_DOMAIN:
+
+    # 考虑协同数据源的情况，只有数据源所属的租户，才能按规则生成用户 ID，其他的协同数据源，都是 uuid
+    if user_tenant_id != data_source.owner_tenant_id:
+        return generate_uuid()
+
+    if data_source.owner_tenant_user_id_rule == TenantUserIdRuleEnum.USERNAME_WITH_DOMAIN:
         return f"{user.username}@{data_source.domain}"
 
-    if data_source.owner_tenant_user_id_rule == TenantUserIdRule.USERNAME:
+    if data_source.owner_tenant_user_id_rule == TenantUserIdRuleEnum.USERNAME:
         return user.username
 
     return generate_uuid()
