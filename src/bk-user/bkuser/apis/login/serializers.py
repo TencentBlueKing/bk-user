@@ -8,19 +8,31 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import re
 from typing import Any, Dict, List
 
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
-from bkuser.biz.validators import validate_data_source_user_username
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
     data_source_ids = serializers.ListField(help_text="指定查询的数据源ID列表", child=serializers.IntegerField())
-    username = serializers.CharField(help_text="用户名", validators=[validate_data_source_user_username])
+    username = serializers.CharField(help_text="用户名")
     password = serializers.CharField(help_text="密码")
+
+    def validate_username(self, value: str) -> str:
+        # Q: 为什么不使用 biz.validators.py 封装的 validate_data_source_user_username
+        # A: 这里是登录验证用户名密码，虽然用户名规则不符合，
+        #    但由于安全原因(避免攻击者知道规则)，只能告知用户名或密码错误
+        if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, value):
+            raise ValidationError(_("用户名或密码错误"))
+
+        return value
 
 
 class LocalUserCredentialAuthenticateOutputSLZ(serializers.Serializer):
