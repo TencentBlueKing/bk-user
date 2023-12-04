@@ -16,3 +16,11 @@ export interface PatchUserPhoneParams {
   custom_phone: string,
   custom_phone_country_code: string,
 }
+
+/**
+ * 租户用户更新头像
+ */
+export interface PatchUserLogoParams {
+  id: string,
+  logo: string,
+}
