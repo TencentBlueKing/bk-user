@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 
 import Empty from '@/components/Empty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
@@ -213,6 +213,28 @@ const beforeClose = () => {
   logsDetails.value = {};
   logConfig.value.isShow = false;
 };
+
+const interval = setInterval(() => {
+  dataRecordConfig.isDataEmpty = false;
+  dataRecordConfig.isDataError = false;
+  const params = {
+    page: pagination.current,
+    pageSize: pagination.limit,
+    status: dataRecordConfig.status,
+  };
+  getSyncRecords(params).then((res) => {
+    dataRecordConfig.list = res.data.results;
+    dataRecordConfig.isDataEmpty = res.data.count === 0;
+    pagination.count = res.data.count;
+  })
+    .catch(() => {
+      dataRecordConfig.isDataError = true;
+    });
+}, 5000);
+
+onBeforeUnmount(() => {
+  clearInterval(interval);
+});
 </script>
 
 <style lang="less" scoped>

@@ -130,9 +130,9 @@
       </bk-checkbox>
       <bk-checkbox
         :value="fieldsInfor.unique"
-        :disabled="isEdit"
+        :disabled="uniqueDisabled"
         v-model="fieldsInfor.unique">
-        <span v-bk-tooltips="{ content: '该字段在不同用户信息里不能相同' }">唯一</span>
+        <span v-bk-tooltips="{ content: uniqueText }">唯一</span>
       </bk-checkbox>
       <!-- <bk-checkbox
         :value="fieldsInfor.editable"
@@ -232,8 +232,13 @@ const rulesEnum = {
 };
 
 const isEdit = computed(() => props?.setType === 'edit');
+const uniqueDisabled = ref(false);
+const uniqueText = ref('该字段在不同用户信息里不能相同');
 
 watch(() => fieldsInfor.data_type, (val) => {
+  uniqueDisabled.value = val === 'enum' || val === 'multi_enum' || props?.currentEditorData?.id;
+  uniqueText.value = uniqueDisabled.value ? '枚举类型字段不允许设置唯一性' : '该字段在不同用户信息里不能相同';
+
   if (!props?.currentEditorData?.id) {
     fieldsInfor.default = val === 'multi_enum' ? [0] : 0;
   } else {

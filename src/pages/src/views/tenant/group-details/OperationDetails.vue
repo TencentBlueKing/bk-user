@@ -76,7 +76,7 @@
               </template>
             </bk-input>
           </bk-form-item>
-          <bk-form-item label="通知方式" required>
+          <bk-form-item label="通知方式" :required="formData.password_initial_config.generate_method === 'random'">
             <NotifyEditorTemplate
               :active-methods="formData.password_initial_config.notification.enabled_methods"
               :checkbox-info="NOTIFICATION_METHODS"

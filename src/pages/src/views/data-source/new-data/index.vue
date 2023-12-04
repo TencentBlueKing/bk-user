@@ -6,6 +6,7 @@
           class="data-source-type"
           v-for="item in typeList"
           :key="item"
+          trigger="click"
           placement="bottom-start"
           @hide="() => (isDropdown = false)"
           @show="() => (isDropdown = true)">
@@ -121,9 +122,10 @@ const toBack = () => {
     display: flex;
     height: 24px;
     line-height: 24px;
+    cursor: pointer;
     background-color: #f0f1f5;
-    align-items: center;
     border-radius: 2px;
+    align-items: center;
 
     img {
       width: 14px;
