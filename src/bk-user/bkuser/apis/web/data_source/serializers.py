@@ -344,7 +344,13 @@ class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
 
 class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
     data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
-    status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices(), required=False)
+    status = serializers.CharField(help_text="数据源同步状态", required=False)
+
+    def validate(self, attrs):
+        if attrs.get("status"):
+            attrs["statuses"] = attrs["status"].split(",")
+
+        return attrs
 
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
