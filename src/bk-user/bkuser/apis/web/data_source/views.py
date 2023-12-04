@@ -441,8 +441,8 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         if data_source_id := data.get("data_source_id"):
             queryset = queryset.filter(data_source_id=data_source_id)
 
-        if status := data.get("status"):
-            queryset = queryset.filter(status=status)
+        if statuses := data.get("statuses"):
+            queryset = queryset.filter(status__in=statuses)
 
         return queryset
 
