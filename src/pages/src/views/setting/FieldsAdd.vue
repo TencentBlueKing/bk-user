@@ -200,7 +200,7 @@ const typeList = [
 ];
 
 const rulesFields = {
-  display_name: [validate.required, validate.fieldsDisplayName, validate.checkSpace],
+  display_name: [validate.required, validate.fieldsDisplayName],
   name: [validate.required, validate.fieldsName],
 };
 
@@ -237,7 +237,9 @@ const uniqueText = ref('该字段在不同用户信息里不能相同');
 
 watch(() => fieldsInfor.data_type, (val) => {
   uniqueDisabled.value = val === 'enum' || val === 'multi_enum' || props?.currentEditorData?.id;
-  uniqueText.value = uniqueDisabled.value ? '枚举类型字段不允许设置唯一性' : '该字段在不同用户信息里不能相同';
+  uniqueText.value = (val === 'enum' || val === 'multi_enum')
+    ? '枚举类型字段不允许设置唯一性'
+    : '该字段在不同用户信息里不能相同';
 
   if (!props?.currentEditorData?.id) {
     fieldsInfor.default = val === 'multi_enum' ? [0] : 0;
@@ -351,6 +353,10 @@ const submitInfor = async () => {
       if (fieldsInfor.data_type === 'enum') {
         newFieldData.default = newFieldData.default[0] || null;
       }
+    }
+
+    if (fieldsInfor.data_type === 'number') {
+      newFieldData.default = 0;
     }
 
     const action = isEdit.value ? putCustomFields : newCustomFields;

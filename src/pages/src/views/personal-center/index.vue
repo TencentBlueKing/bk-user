@@ -226,6 +226,12 @@
                   </li>
                 </div>
               </bk-form>
+              <div class="item-flex">
+                <li v-for="(item, index) in currentUserInfo.extras" :key="index">
+                  <bk-overflow-title class="key" type="tips">{{ item.key }}：</bk-overflow-title>
+                  <span class="value">{{ ConvertVal(item.value) }}</span>
+                </li>
+              </div>
             </li>
           </ul>
         </div>
@@ -240,6 +246,7 @@ import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 
 import phoneInput from '@/components/phoneInput.vue';
 import useValidate from '@/hooks/use-validate';
+import { useCustomFields } from '@/hooks/useCustomFields';
 import {
   getCurrentNaturalUser,
   getPersonalCenterUsers,
@@ -247,6 +254,7 @@ import {
   patchUsersEmail,
   patchUsersPhone,
 } from '@/http/personalCenterFiles';
+import { getFields } from '@/http/settingFiles';
 import { formatConvert, getBase64 } from '@/utils';
 
 const validate = useValidate();
@@ -283,7 +291,7 @@ const getNaturalUser = () => {
   });
 };
 
-const getCurrentUser = (id) => {
+const getCurrentUser = async (id) => {
   infoLoading.value = true;
   isEditEmail.value = false;
   isEditPhone.value = false;
@@ -293,15 +301,26 @@ const getCurrentUser = (id) => {
     }
   });
   // 关联账户详情
-  getPersonalCenterUsers(id).then((res) => {
-    currentUserInfo.value = res.data;
-    customEmail.value = res.data.custom_email;
-    customPhone.value = res.data.custom_phone;
-    customPhoneCode.value = res.data.custom_phone_country_code;
-    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
-    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
-    infoLoading.value = false;
-  });
+  const res = await getPersonalCenterUsers(id);
+  const fieldsRes = await getFields();
+  currentUserInfo.value = res.data;
+  currentUserInfo.value.extras = useCustomFields(currentUserInfo.value?.extras, fieldsRes.data.custom_fields);
+  customEmail.value = res.data.custom_email;
+  customPhone.value = res.data.custom_phone;
+  customPhoneCode.value = res.data.custom_phone_country_code;
+  isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+  isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+  infoLoading.value = false;
+};
+
+const ConvertVal = (val: any) => {
+  const demo = ref('');
+  if (val instanceof Array) {
+    demo.value = val?.map(item => item.value).join('；') || '--';
+  } else {
+    demo.value = val || '--';
+  }
+  return demo.value;
 };
 
 const tagTheme = value => (value ? 'info' : 'warning');
@@ -581,16 +600,16 @@ const handleError = (file) => {
             margin-right: 16px;
 
             .icon-yonghu {
-              font-size: 40px;
               width: 72px;
               height: 72px;
+              font-size: 40px;
               line-height: 72px;
-              background: #FAFBFD;
               color: #DCDEE5;
+              background: #FAFBFD;
 
               &:hover {
-                cursor: pointer;
                 color: #A3C5FD;
+                cursor: pointer;
                 background: #F0F1F5;
               }
             }
@@ -611,12 +630,12 @@ const handleError = (file) => {
 
         ::v-deep .show-logo {
           .bk-upload-trigger--picture {
+            position: relative;
             width: 72px;
             height: 72px;
             margin: 0;
             margin-right: 16px;
             border-style: solid;
-            position: relative;
 
             &:hover {
               border-color: #c4c6cc;
@@ -636,19 +655,20 @@ const handleError = (file) => {
                   display: block;
                 }
               }
+
               .logo-hover {
-                display: none;
                 position: absolute;
                 top: 2px;
+                left: 2px;
                 z-index: 9;
-                background-color: rgba(0, 0, 0, 0.6);
+                display: none;
                 width: 66px;
                 height: 66px;
-                left: 2px;
-                color: #fff;
-                border: 1px solid #ff5656;
                 line-height: 66px;
+                color: #fff;
                 text-align: center;
+                background-color: rgb(0 0 0 / 60%);
+                border: 1px solid #ff5656;
 
                 i {
                   font-size: 16px;
@@ -714,7 +734,7 @@ const handleError = (file) => {
 
                 .key {
                   display: inline-block;
-                  min-width: 100px;
+                  width: 120px;
                   text-align: right;
                 }
 
@@ -754,6 +774,36 @@ const handleError = (file) => {
                     }
                   }
                 }
+              }
+            }
+          }
+
+          .item-flex {
+            display: flex;
+            flex-wrap: wrap;
+
+            li {
+              display: flex;
+              width: 50%;
+              font-size: 14px;
+              line-height: 50px;
+
+              .key {
+                display: inline-block;
+                width: 120px;
+                text-align: right;
+
+                ::v-deep .text-ov {
+                  width: 120px;
+                }
+              }
+
+              .value {
+                min-width: 600px;
+                overflow: hidden;
+                color: #313238;
+                text-overflow: ellipsis;
+                white-space: nowrap;
               }
             }
           }
