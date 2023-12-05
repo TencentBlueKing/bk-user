@@ -9,22 +9,22 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.conf import settings
+from django.http import JsonResponse
 from django_prometheus.exports import ExportToDjangoView
 from rest_framework import status
-from rest_framework.response import Response
 
 
 def metric_view(request):
     """metric view with basic auth"""
     token = request.GET.get("token", "")
     if not settings.METRIC_TOKEN:
-        return Response(
-            data={"errors": "Metric token was not configured in settings, request denied"},
+        return JsonResponse(
+            data={"error": "Metric token was not configured in settings, request denied"},
             status=status.HTTP_400_BAD_REQUEST,
         )
     if not (token and token == settings.METRIC_TOKEN):
-        return Response(
-            data={"errors": "Please provide valid token"},
+        return JsonResponse(
+            data={"error": "Please provide valid token"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

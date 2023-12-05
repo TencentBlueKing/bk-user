@@ -92,17 +92,26 @@ curl -H "Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=" http://bk.example.com/ap
         {
             "id": "company",  // 部门（当前数据源内）唯一 ID
             "name": "总公司",  // 部门展示用名称
-            "parent": null    // 父部门唯一 ID，若为根部门则为 null
+            "parent": null,   // 父部门唯一 ID，若为根部门则为 null
+            "extras": {       // 额外信息
+                "region": "CN",
+            }
         },
         {
             "id": "dept_a",
             "name": "部门A",
-            "parent": "company"
+            "parent": "company",
+            "extras": {
+                "region": "CN",
+            }
         },
         {
             "id": "center_aa",
             "name": "中心AA",
-            "parent": "dept_a"
+            "parent": "dept_a",
+            "extras": {
+                "region": "US"
+            },
         }
     ]
 }

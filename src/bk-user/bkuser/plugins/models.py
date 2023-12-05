@@ -54,6 +54,8 @@ class RawDataSourceDepartment(BaseModel):
     name: str
     # 上级部门
     parent: str | None
+    # 额外信息
+    extras: Dict[str, Any] = {}
 
 
 class TestConnectionResult(BaseModel):

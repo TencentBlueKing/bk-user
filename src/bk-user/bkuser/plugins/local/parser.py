@@ -168,7 +168,13 @@ class LocalDataSourceDataParser:
         for org in organizations:
             parent_org, __, dept_name = org.rpartition("/")
             self.departments.append(
-                RawDataSourceDepartment(code=org_code_map[org], name=dept_name, parent=org_code_map.get(parent_org))
+                RawDataSourceDepartment(
+                    code=org_code_map[org],
+                    name=dept_name,
+                    parent=org_code_map.get(parent_org),
+                    # 注：本地数据源导入，不支持设置部门的 extras 信息
+                    extras={},
+                )
             )
 
     def _parse_users(self):

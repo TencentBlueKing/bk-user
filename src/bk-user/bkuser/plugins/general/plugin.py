@@ -130,4 +130,5 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
             code=dept["id"],
             name=dept["name"],
             parent=dept["parent"],
+            extras=dept.get("extras") or {},
         )

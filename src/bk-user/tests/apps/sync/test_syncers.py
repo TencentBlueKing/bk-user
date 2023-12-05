@@ -50,10 +50,10 @@ class TestDataSourceDepartmentSyncer:
 
     def test_update(self, data_source_sync_task_ctx, full_local_data_source):
         raw_departments = [
-            RawDataSourceDepartment(code="company", name="公司", parent=None),
-            RawDataSourceDepartment(code="dept_a", name="部门A(重命名)", parent="company"),
-            RawDataSourceDepartment(code="dept_c", name="部门C", parent="company"),
-            RawDataSourceDepartment(code="center_ca", name="中心CA", parent="dept_c"),
+            RawDataSourceDepartment(code="company", name="公司", parent=None, extras={"region": "SZ"}),
+            RawDataSourceDepartment(code="dept_a", name="部门A(重命名)", parent="company", extras={"region": "GZ"}),
+            RawDataSourceDepartment(code="dept_c", name="部门C", parent="company", extras={"region": "SH"}),
+            RawDataSourceDepartment(code="center_ca", name="中心CA", parent="dept_c", extras={"region": "CS"}),
         ]
         DataSourceDepartmentSyncer(data_source_sync_task_ctx, full_local_data_source, raw_departments).sync()
 
@@ -62,6 +62,8 @@ class TestDataSourceDepartmentSyncer:
         assert departments.count() == len(raw_departments)
         assert set(departments.values_list("code", flat=True)) == {dept.code for dept in raw_departments}
         assert set(departments.values_list("name", flat=True)) == {dept.name for dept in raw_departments}
+        assert departments.filter(code="dept_a").first().extras == {"region": "GZ"}
+        assert departments.filter(code="dept_c").first().extras == {"region": "SH"}
 
         # 验证部门关系信息
         assert self._gen_parent_relations_from_db(
