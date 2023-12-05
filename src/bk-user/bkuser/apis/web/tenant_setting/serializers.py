@@ -159,6 +159,7 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     options = serializers.ListField(
         help_text="选项", required=False, child=OptionInputSLZ(help_text="枚举字段选项设置"), default=list
     )
+    unique = serializers.BooleanField(help_text="是否唯一", default=False)
 
     def validate_display_name(self, display_name):
         if (
