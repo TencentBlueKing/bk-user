@@ -56,9 +56,9 @@ class TestGeneralDataSourcePlugin:
     @mock.patch(
         "bkuser.plugins.general.plugin.fetch_all_data",
         return_value=[
-            {"id": "company", "name": "总公司", "parent": None},
-            {"id": "dept_a", "name": "部门A", "parent": "company"},
-            {"id": "center_aa", "name": "中心AA", "parent": "dept_a"},
+            {"id": "company", "name": "总公司", "parent": None, "extras": {"region": "CN"}},
+            {"id": "dept_a", "name": "部门A", "parent": "company", "extras": {"region": "CN"}},
+            {"id": "center_aa", "name": "中心AA", "parent": "dept_a", "extras": {"region": "US"}},
         ],
     )
     def test_get_departments(self, general_ds_cfg):

@@ -89,7 +89,7 @@ class DataSourceDepartmentSyncer:
 
     def _create_departments(self, raw_departments: List[RawDataSourceDepartment]):
         departments = [
-            DataSourceDepartment(data_source=self.data_source, code=dept.code, name=dept.name)
+            DataSourceDepartment(data_source=self.data_source, code=dept.code, name=dept.name, extras=dept.extras)
             for dept in raw_departments
         ]
         DataSourceDepartment.objects.bulk_create(departments, batch_size=self.batch_size)
@@ -99,7 +99,9 @@ class DataSourceDepartmentSyncer:
 
     def _update_departments(self, raw_departments: List[RawDataSourceDepartment]):
         dept_map = {
-            dept.code: DataSourceDepartment(data_source=self.data_source, code=dept.code, name=dept.name)
+            dept.code: DataSourceDepartment(
+                data_source=self.data_source, code=dept.code, name=dept.name, extras=dept.extras
+            )
             for dept in raw_departments
         }
 
@@ -109,10 +111,12 @@ class DataSourceDepartmentSyncer:
         waiting_update_departments = []
         for d in may_update_departments:
             target_dept = dept_map[d.code]
-            if d.name == target_dept.name:
+            # 前后数据都一致，没有更新的必要
+            if d.name == target_dept.name and d.extras == target_dept.extras:
                 continue
 
             d.name = target_dept.name
+            d.extras = target_dept.extras
             d.updated_at = timezone.now()
             waiting_update_departments.append(d)
 
@@ -120,7 +124,7 @@ class DataSourceDepartmentSyncer:
             return
 
         DataSourceDepartment.objects.bulk_update(
-            waiting_update_departments, fields=["name", "updated_at"], batch_size=self.batch_size
+            waiting_update_departments, fields=["name", "extras", "updated_at"], batch_size=self.batch_size
         )
         self.ctx.logger.info(f"update {len(waiting_update_departments)} departments")  # noqa: G004
         self.ctx.recorder.add(SyncOperation.UPDATE, DataSourceSyncObjectType.DEPARTMENT, waiting_update_departments)

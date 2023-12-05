@@ -61,16 +61,16 @@ def tenant_sync_task_ctx(tenant_sync_task) -> TenantSyncTaskContext:
 def raw_departments() -> List[RawDataSourceDepartment]:
     """数据源插件提供的原始部门信息"""
     return [
-        RawDataSourceDepartment(code="company", name="公司", parent=None),
-        RawDataSourceDepartment(code="dept_a", name="部门A", parent="company"),
-        RawDataSourceDepartment(code="dept_b", name="部门B", parent="company"),
-        RawDataSourceDepartment(code="center_aa", name="中心AA", parent="dept_a"),
-        RawDataSourceDepartment(code="center_ab", name="中心AB", parent="dept_a"),
-        RawDataSourceDepartment(code="center_ba", name="中心BA", parent="dept_b"),
-        RawDataSourceDepartment(code="group_aaa", name="小组AAA", parent="center_aa"),
-        RawDataSourceDepartment(code="group_aba", name="小组ABA", parent="center_ab"),
-        RawDataSourceDepartment(code="group_baa", name="小组BAA", parent="center_ba"),
-        RawDataSourceDepartment(code="v", name="V", parent=None),
+        RawDataSourceDepartment(code="company", name="公司", parent=None, extras={"region": "SZ"}),
+        RawDataSourceDepartment(code="dept_a", name="部门A", parent="company", extras={"region": "SH"}),
+        RawDataSourceDepartment(code="dept_b", name="部门B", parent="company", extras={"region": "ZZ"}),
+        RawDataSourceDepartment(code="center_aa", name="中心AA", parent="dept_a", extras={"region": "SJJ"}),
+        RawDataSourceDepartment(code="center_ab", name="中心AB", parent="dept_a", extras={"region": "BJ"}),
+        RawDataSourceDepartment(code="center_ba", name="中心BA", parent="dept_b", extras={"region": "CS"}),
+        RawDataSourceDepartment(code="group_aaa", name="小组AAA", parent="center_aa", extras={"region": "GZ"}),
+        RawDataSourceDepartment(code="group_aba", name="小组ABA", parent="center_ab", extras={"region": "HZ"}),
+        RawDataSourceDepartment(code="group_baa", name="小组BAA", parent="center_ba", extras={"region": "ST"}),
+        RawDataSourceDepartment(code="v", name="V", parent=None, extras={"region": "V"}),
     ]
 
 
