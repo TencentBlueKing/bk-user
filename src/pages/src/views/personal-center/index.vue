@@ -228,7 +228,7 @@
               </bk-form>
               <div class="item-flex">
                 <li v-for="(item, index) in currentUserInfo.extras" :key="index">
-                  <bk-overflow-title class="key" type="tips">{{ item.key }}：</bk-overflow-title>
+                  <bk-overflow-title class="key" type="tips">{{ item.displayName }}：</bk-overflow-title>
                   <span class="value">{{ ConvertVal(item.value) }}</span>
                 </li>
               </div>

@@ -22,8 +22,8 @@
             </bk-form-item>
             <bk-form-item label="人员数量">
               <bk-radio-group
-                :value="formData.feature_flags?.user_number_visible"
-                @change="handleChange"
+                :model-value="formData.feature_flags?.user_number_visible"
+                @change="changeVisible"
               >
                 <bk-radio-button :label="true">显示</bk-radio-button>
                 <bk-radio-button :label="false">隐藏</bk-radio-button>
@@ -105,13 +105,7 @@ const emit = defineEmits(['updateTenantsList']);
 
 const basicRef = ref();
 const userRef = ref();
-const formData = reactive({
-  id: props.tenantsData.id,
-  name: props.tenantsData.name,
-  logo: props.tenantsData.logo,
-  feature_flags: props.tenantsData.feature_flags,
-  managers: props.managers,
-});
+const formData = reactive(JSON.parse(JSON.stringify({ ...props.tenantsData })));
 const state = reactive({
   username: "",
   count: 0,
@@ -270,7 +264,7 @@ const columns = [
             disabled={formData.managers.length === 1}
             onClick={handleItemChange.bind(this, index, 'remove')}
           >
-            <i class="user-icon icon-minus-fill" />
+            <i class={['user-icon icon-minus-fill', { 'forbid': formData.managers.length === 1 }]} />
           </bk-button>
         </div>
       );
@@ -399,6 +393,10 @@ function putTenantOrganization() {
 
 const handleChange = () => {
   window.changeInput = true;
+}
+
+const changeVisible = (status: boolean) => {
+  formData.feature_flags.user_number_visible = status;
 }
 </script>
 
