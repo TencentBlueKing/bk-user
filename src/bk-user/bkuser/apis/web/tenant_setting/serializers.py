@@ -179,9 +179,6 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         options = attrs.get("options")
         default = attrs.get("default")
 
-        if attrs["unique"] and data_type in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]:
-            raise ValidationError(_("枚举类型字段不支持设置唯一性"))
-
         opt_ids = [opt["id"] for opt in options]
         if data_type == UserFieldDataType.ENUM:
             _validate_options(options)
