@@ -40,6 +40,7 @@
           <span class="details-content-key">账号过期时间：</span>
           <span class="details-content-value">{{ dateConvert(userData.account_expired_at) }}</span>
         </div>
+        <CustomFieldsView :extras="userData.extras" />
       </div>
       <img v-if="userData.logo" class="user-logo" :src="userData.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
@@ -50,6 +51,7 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
 
+import CustomFieldsView from '@/components/custom-fields/view.vue';
 import { dateConvert, formatConvert } from '@/utils';
 
 defineProps({

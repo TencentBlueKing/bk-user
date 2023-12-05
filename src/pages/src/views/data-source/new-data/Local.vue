@@ -272,7 +272,7 @@ const formData = reactive({
 });
 
 const rulesInfo = {
-  name: [validate.required, validate.name, validate.checkSpace],
+  name: [validate.required, validate.name],
   min_length: [validate.required],
 };
 

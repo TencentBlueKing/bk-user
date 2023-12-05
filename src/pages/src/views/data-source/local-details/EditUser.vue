@@ -90,6 +90,7 @@
           </bk-select>
         </bk-form-item>
       </div>
+      <CustomFields :extras="formData.extras" :rules="rules" />
       <!-- 一期不做 -->
       <!-- <div class="form-item-flex">
         <bk-form-item label="在职状态" required>
@@ -145,6 +146,7 @@
 import { Message } from 'bkui-vue';
 import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
+import CustomFields from '@/components/custom-fields/index.vue';
 import phoneInput from '@/components/phoneInput.vue';
 import useValidate from '@/hooks/use-validate';
 import { getDataSourceDepartments, getDataSourceLeaders, newDataSourceUser, putDataSourceUserDetails } from '@/http/dataSourceFiles';
@@ -203,7 +205,7 @@ const files = computed(() => {
 
 const rules = {
   username: [validate.required, validate.userName],
-  full_name: [validate.required, validate.name, validate.checkSpace],
+  full_name: [validate.required, validate.name],
   email: [validate.required, validate.email],
   phone: [validate.required, validate.phone],
 };
@@ -313,6 +315,13 @@ const handleSubmit = async () => {
   if (telError.value) return;
   state.isLoading = true;
   const data = { ...formData };
+  // 转换自定义字段
+  const transformed = formData.extras.reduce((obj, field) => {
+    obj[field.name] = field.default;
+    return obj;
+  }, {});
+  data.extras = transformed;
+
   if (!data.logo) delete data.logo;
   let text = '';
   if (props.type === 'edit') {

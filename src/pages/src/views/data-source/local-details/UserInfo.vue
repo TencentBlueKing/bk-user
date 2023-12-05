@@ -104,15 +104,17 @@
         </div>
       </template>
       <template #default>
-        <ViewUser v-if="isView" :users-data="detailsConfig.usersData" />
-        <EditUser
-          v-else
-          :type="detailsConfig.type"
-          :users-data="detailsConfig.usersData"
-          :current-id="detailsConfig.id"
-          :data-source-id="dataSourceId"
-          @handleCancelEdit="handleCancelEdit"
-          @updateUsers="updateUsers" />
+        <bk-loading :loading="detailsLoading">
+          <ViewUser v-if="isView" :users-data="detailsConfig.usersData" />
+          <EditUser
+            v-else
+            :type="detailsConfig.type"
+            :users-data="detailsConfig.usersData"
+            :current-id="detailsConfig.id"
+            :data-source-id="dataSourceId"
+            @handleCancelEdit="handleCancelEdit"
+            @updateUsers="updateUsers" />
+        </bk-loading>
       </template>
     </bk-sideslider>
     <!-- 导入 -->
@@ -221,7 +223,9 @@ import EditUser from './EditUser.vue';
 import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
+import { useCustomFields } from '@/hooks/useCustomFields';
 import { getDataSourceUserDetails, getDataSourceUsers } from '@/http/dataSourceFiles';
+import { getFields } from '@/http/settingFiles';
 import { formatConvert } from '@/utils';
 
 const props = defineProps({
@@ -249,6 +253,7 @@ const detailsConfig = reactive({
     phone_country_code: '+86',
     phone: '',
     logo: '',
+    extras: {},
   },
   id: '',
 });
@@ -281,6 +286,7 @@ watch(
         phone_country_code: '+86',
         phone: '',
         logo: '',
+        extras: {},
       };
     }
   },
@@ -304,6 +310,7 @@ const pagination = reactive({
 });
 
 const users = ref([]);
+const detailsLoading = ref(false);
 
 const getUsers = async () => {
   try {
@@ -330,12 +337,42 @@ const getUsers = async () => {
   }
 };
 
+const getCustomFields = async (type: string) => {
+  const result = Object.keys(detailsConfig.usersData.extras);
+  const res = await getFields();
+  if (type === 'add') {
+    detailsConfig.usersData.extras = res.data.custom_fields;
+    detailsLoading.value = false;
+  } else if (type === 'edit') {
+    const extras: any = [];
+    res.data.custom_fields?.forEach((item) => {
+      Object.entries(detailsConfig.usersData.extras).forEach((option) => {
+        const [name, defaultValue] = option;
+        if (item.name === name) {
+          item.default = defaultValue;
+          extras.push(item);
+        }
+      });
+      if (!result.includes(item.name)) {
+        extras.push(item);
+      }
+    });
+    detailsConfig.usersData.extras = extras;
+    detailsLoading.value = false;
+  } else {
+    detailsConfig.usersData.extras = useCustomFields(detailsConfig.usersData.extras, res.data.custom_fields);
+    detailsLoading.value = false;
+  }
+};
+
 const handleClick = async (type: string, item?: any) => {
+  detailsLoading.value = true;
   if (type !== 'add') {
     const res = await getDataSourceUserDetails(item.id);
     detailsConfig.usersData = res.data;
     detailsConfig.id = item.id;
   }
+  await getCustomFields(type);
   detailsConfig.title = enumData[type].title;
   detailsConfig.type = enumData[type].type;
   detailsConfig.isShow = true;
@@ -346,8 +383,7 @@ const handleCancelEdit = () => {
   if (detailsConfig.type === 'add') {
     detailsConfig.isShow = false;
   } else {
-    detailsConfig.type = 'view';
-    detailsConfig.title = '用户详情';
+    handleClick('view', detailsConfig);
     window.changeInput = false;
   }
 };

@@ -32,6 +32,7 @@
           </span>
           <span class="details-content-value" v-else>{{ '--' }}</span>
         </div>
+        <CustomFieldsView :extras="usersData.extras" />
       </div>
       <img v-if="usersData.logo" class="user-logo" :src="usersData.logo" alt="" />
       <img v-else class="user-logo" src="@/images/avatar.png" alt="" />
@@ -42,6 +43,7 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
 
+import CustomFieldsView from '@/components/custom-fields/view.vue';
 import { formatConvert } from '@/utils';
 
 defineProps({

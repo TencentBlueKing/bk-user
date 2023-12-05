@@ -91,9 +91,11 @@ import { defineEmits, defineProps, inject, reactive, ref } from 'vue';
 import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
+import { useCustomFields } from '@/hooks/useCustomFields';
 import {
   getTenantUsers,
 } from '@/http/organizationFiles';
+import { getFields } from '@/http/settingFiles';
 import { formatConvert } from '@/utils';
 
 const editLeaveBefore = inject('editLeaveBefore');
@@ -141,8 +143,10 @@ const state = reactive({
 });
 
 const handleClick = async (item: any) => {
-  const res = await getTenantUsers(item.id);
-  state.userInfo = res.data;
+  const userRes = await getTenantUsers(item.id);
+  state.userInfo = userRes.data;
+  const res = await getFields();
+  state.userInfo.extras = useCustomFields(state.userInfo?.extras, res.data.custom_fields);
   detailsConfig.title = '用户详情';
   detailsConfig.isShow = true;
 };
