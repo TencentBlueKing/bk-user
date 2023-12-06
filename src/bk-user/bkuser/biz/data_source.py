@@ -87,13 +87,13 @@ class DataSourceDepartmentHandler:
             dept_relation = DataSourceDepartmentRelation.objects.get(department=dept)
 
             # 部门路径构建
-            full_name_list = list(dept_relation.get_ancestors().values_list("department__name", flat=True))
-            full_name_list.append(dept.name)
+            department_path = list(dept_relation.get_ancestors().values_list("department__name", flat=True))
+            department_path.append(dept.name)
 
             departments_map[dept.id] = DataSourceDepartmentInfoWithChildren(
                 id=dept.id,
                 name=dept.name,
-                department_path="/".join(full_name_list),
+                department_path="/".join(department_path),
                 children_ids=list(dept_relation.get_children().values_list("department_id", flat=True)),
             )
 
