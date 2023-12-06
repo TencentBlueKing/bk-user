@@ -29,6 +29,7 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordIni
 class DataSourceDepartmentInfoWithChildren(BaseModel):
     id: int
     name: str
+    full_name: str
     children_ids: List[int]
 
 
@@ -81,15 +82,19 @@ class DataSourceDepartmentHandler:
         获取部门基础信息
         """
         departments_map: Dict = {}
+
         for dept in DataSourceDepartment.objects.filter(id__in=department_ids):
+            dept_relation = DataSourceDepartmentRelation.objects.get(department=dept)
+
+            # 部门路径构建
+            full_name_list = list(dept_relation.get_ancestors().values_list("department__name", flat=True))
+            full_name_list.append(dept.name)
+
             departments_map[dept.id] = DataSourceDepartmentInfoWithChildren(
                 id=dept.id,
                 name=dept.name,
-                children_ids=list(
-                    DataSourceDepartmentRelation.objects.get(department=dept)
-                    .get_children()
-                    .values_list("department_id", flat=True)
-                ),
+                full_name="/".join(full_name_list),
+                children_ids=list(dept_relation.get_children().values_list("department_id", flat=True)),
             )
 
         return departments_map

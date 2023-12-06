@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from collections import defaultdict
+
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -30,6 +32,7 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.biz.data_source import DataSourceDepartmentHandler
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
@@ -63,6 +66,17 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
             queryset = queryset.filter(username__icontains=username)
 
         return queryset
+
+    def get_serializer_context(self):
+        data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
+            user_ids=self.get_queryset().values_list("id", flat=True)
+        )
+        data_source_user_department_map = defaultdict(list)
+        for user_id, departments in data_source_user_department_ids_map.items():
+            # 获取用户的数据源部门基础信息
+            department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(departments)
+            data_source_user_department_map[user_id] = list(department_info_map.values())
+        return {"data_source_user_department_map": data_source_user_department_map}
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -193,11 +207,17 @@ class DataSourceUserRetrieveUpdateApi(
     serializer_class = UserRetrieveOutputSLZ
 
     def get_serializer_context(self):
-        user_departments_map = DataSourceOrganizationHandler.get_user_departments_map_by_user_id(
+        data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
             user_ids=[self.kwargs["id"]]
         )
+        data_source_user_department_map = defaultdict(list)
+        for user_id, departments in data_source_user_department_ids_map.items():
+            # 获取用户的数据源部门基础信息
+            department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(departments)
+            data_source_user_department_map[user_id] = list(department_info_map.values())
+
         user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([self.kwargs["id"]])
-        return {"user_departments_map": user_departments_map, "user_leaders_map": user_leaders_map}
+        return {"user_departments_map": data_source_user_department_map, "user_leaders_map": user_leaders_map}
 
     @swagger_auto_schema(
         tags=["data_source"],

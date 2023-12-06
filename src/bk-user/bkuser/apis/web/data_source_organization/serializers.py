@@ -20,7 +20,6 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
-    DataSourceDepartmentUserRelation,
     DataSourceUser,
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
@@ -126,6 +125,7 @@ class UserSearchInputSLZ(serializers.Serializer):
 class DataSourceSearchDepartmentsOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
+    full_name = serializers.CharField(help_text="部门路径")
 
 
 class UserSearchOutputSLZ(serializers.Serializer):
@@ -137,13 +137,10 @@ class UserSearchOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="用户部门")
     extras = serializers.JSONField(help_text="自定义字段")
 
-    # FIXME:考虑抽象一个函数 获取数据后传递到context
     @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser):
-        return [
-            {"id": department_user_relation.department.id, "name": department_user_relation.department.name}
-            for department_user_relation in DataSourceDepartmentUserRelation.objects.filter(user=obj)
-        ]
+        departments = self.context["data_source_user_department_map"][obj.id]
+        return [{"id": i.id, "name": i.name, "full_name": i.full_name} for i in departments]
 
 
 class UserCreateInputSLZ(serializers.Serializer):
@@ -218,6 +215,7 @@ class DepartmentSearchOutputSLZ(serializers.Serializer):
 class UserDepartmentOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
+    full_name = serializers.CharField(help_text="部门名称")
 
 
 class UserLeaderOutputSLZ(serializers.Serializer):
@@ -244,7 +242,7 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
         user_departments_map = self.context["user_departments_map"]
         departments = user_departments_map.get(obj.id, [])
-        return [{"id": dept.id, "name": dept.name} for dept in departments]
+        return [{"id": dept.id, "name": dept.name, "full_name": dept.full_name} for dept in departments]
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
     def get_leaders(self, obj: DataSourceUser) -> List[Dict]:
