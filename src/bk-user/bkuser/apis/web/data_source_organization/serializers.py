@@ -139,7 +139,7 @@ class UserSearchOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser):
-        departments = self.context["data_source_user_department_map"][obj.id]
+        departments = self.context["data_source_user_department_map"].get(obj.id, [])
         return [{"id": i.id, "name": i.name, "department_path": i.department_path} for i in departments]
 
 
@@ -240,8 +240,7 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
-        user_departments_map = self.context["user_departments_map"]
-        departments = user_departments_map.get(obj.id, [])
+        departments = self.context["user_departments_map"].get(obj.id, [])
         return [{"id": dept.id, "name": dept.name, "department_path": dept.department_path} for dept in departments]
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
