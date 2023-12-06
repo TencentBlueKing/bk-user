@@ -605,7 +605,7 @@ const blurValue = () => findFirstDuplicate('value');
             cursor: pointer;
 
             &.forbid {
-              color: #c4c6cc;
+              color: #ea3636;
               cursor: not-allowed;
             }
 

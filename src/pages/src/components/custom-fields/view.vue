@@ -4,7 +4,7 @@
       class="details-content-item"
       v-for="(item, index) in extras"
       :key="index">
-      <span class="details-content-key">{{ item.key }}：</span>
+      <span class="details-content-key">{{ item.displayName }}：</span>
       <span class="details-content-value">{{ ConvertVal(item.value) }}</span>
     </div>
   </div>

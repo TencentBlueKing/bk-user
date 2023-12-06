@@ -71,6 +71,7 @@
           <span class="name">{{ state.currentTenant.name }}</span>
         </header>
         <bk-tab
+          v-if="isTenant"
           :active="state.active"
           type="unborder-card"
           ext-cls="tab-details"
@@ -81,7 +82,6 @@
             :key="item.name"
             :name="item.name"
             :label="item.label"
-            :visible="item.isVisible"
           >
             <bk-loading :loading="state.tabLoading">
               <UserInfo
@@ -107,6 +107,20 @@
             </bk-loading>
           </bk-tab-panel>
         </bk-tab>
+        <bk-loading v-else :loading="state.tabLoading">
+          <UserInfo
+            :user-data="state.currentUsers"
+            :is-data-empty="state.isDataEmpty"
+            :is-empty-search="state.isEmptySearch"
+            :is-data-error="state.isDataError"
+            :pagination="pagination"
+            :keyword="params.keyword"
+            :is-tenant="isTenant"
+            @searchUsers="searchUsers"
+            @changeUsers="changeUsers"
+            @updatePageLimit="updatePageLimit"
+            @updatePageCurrent="updatePageCurrent" />
+        </bk-loading>
       </div>
     </template>
   </bk-resize-layout>
@@ -148,8 +162,8 @@ const state = reactive({
   isDataError: false,
 });
 const panels = reactive([
-  { name: 'user_info', label: '人员信息', isVisible: true },
-  { name: 'details_info', label: '详细信息', isVisible: true },
+  { name: 'user_info', label: '人员信息' },
+  { name: 'details_info', label: '详细信息' },
 ]);
 
 const submenu = [
@@ -237,13 +251,11 @@ const changeNode = async (node) => {
   params.page = 1;
   params.keyword = '';
   if (node.isRoot) {
-    panels[1].isVisible = true;
     state.active = 'user_info';
     // 切换租户
     await getTenantDetails(node.id);
     await getTenantUsers(node.id);
   } else {
-    panels[1].isVisible = false;
     // 切换组织
     await getDepartmentsDetails(node);
     await getTenantDepartmentsUser(node.id);
@@ -359,6 +371,7 @@ const getUserList = () => {
 
 const updateTenantsList = async () => {
   await getTenantDetails(state.currentTenant.id);
+  await getTenantUsers(state.currentTenant.id);
   Message({
     theme: 'success',
     message: '租户信息更新成功',

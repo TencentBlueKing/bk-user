@@ -1,6 +1,6 @@
 <template>
   <bk-loading :loading="isLoading" class="details-info-wrapper user-scroll-y">
-    <ul class="details-info-content">
+    <ul class="details-info-content" v-if="isPluginConfig">
       <li class="content-item">
         <div class="item-header">
           <p class="item-title">服务配置</p>
@@ -111,6 +111,11 @@
         </ul>
       </li>
     </ul>
+    <div class="details-info-box" v-else>
+      <bk-button theme="primary" @click="handleClickEdit">
+        编辑
+      </bk-button>
+    </div>
   </bk-loading>
 </template>
 
@@ -135,6 +140,8 @@ const fieldMapping = ref([]);
 // 同步配置
 const syncConfig = ref({});
 
+const isPluginConfig = ref(true);
+
 const currentId = computed(() => route.params.id);
 
 onMounted(async () => {
@@ -155,8 +162,13 @@ onMounted(async () => {
       });
     });
 
-    serverConfig.value = res.data?.plugin_config?.server_config;
-    authConfig.value = res.data?.plugin_config?.auth_config;
+    if (JSON.stringify(res.data?.plugin_config) === '{}') {
+      isPluginConfig.value = false;
+    } else {
+      serverConfig.value = res.data?.plugin_config?.server_config;
+      authConfig.value = res.data?.plugin_config?.auth_config;
+      isPluginConfig.value = true;
+    }
     syncConfig.value = res.data?.sync_config;
     plugin.value = res.data?.plugin;
   } catch (e) {
@@ -220,6 +232,20 @@ const handleClickEdit = () => {
     font-size: 14px;
     line-height: 26px;
     text-align: right;
+  }
+}
+
+.details-info-box {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .bk-button {
+    width: 88px;
   }
 }
 </style>

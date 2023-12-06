@@ -3,7 +3,7 @@
     <bk-form-item
       v-for="(item, index) in extras"
       :key="index"
-      :label="item.name"
+      :label="item.display_name"
       :property="`extras.${index}.default`"
       :required="item.required"
       :rules="rules.default">

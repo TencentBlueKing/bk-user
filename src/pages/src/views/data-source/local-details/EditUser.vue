@@ -310,32 +310,36 @@ const changeTelError = (value: boolean) => {
 };
 
 const handleSubmit = async () => {
-  const phoneDom = document.getElementsByClassName('select-text')[0];
-  await Promise.all([formRef.value.validate(), phoneDom?.focus(), phoneDom?.blur()]);
-  if (telError.value) return;
-  state.isLoading = true;
-  const data = { ...formData };
-  // 转换自定义字段
-  const transformed = formData.extras.reduce((obj, field) => {
-    obj[field.name] = field.default;
-    return obj;
-  }, {});
-  data.extras = transformed;
+  try {
+    const phoneDom = document.getElementsByClassName('select-text')[0];
+    await Promise.all([formRef.value.validate(), phoneDom?.focus(), phoneDom?.blur()]);
+    if (telError.value) return;
+    state.isLoading = true;
+    const data = { ...formData };
+    // 转换自定义字段
+    const transformed = formData.extras.reduce((obj, field) => {
+      obj[field.name] = field.default;
+      return obj;
+    }, {});
+    data.extras = transformed;
 
-  if (!data.logo) delete data.logo;
-  let text = '';
-  if (props.type === 'edit') {
-    data.id = props.currentId;
-    text = '用户更新成功';
-    await putDataSourceUserDetails(data);
-  } else {
-    data.id = props.dataSourceId;
-    text = '用户创建成功';
-    await newDataSourceUser(data);
+    if (!data.logo) delete data.logo;
+    let text = '';
+    if (props.type === 'edit') {
+      data.id = props.currentId;
+      text = '用户更新成功';
+      await putDataSourceUserDetails(data);
+    } else {
+      data.id = props.dataSourceId;
+      text = '用户创建成功';
+      await newDataSourceUser(data);
+    }
+    emit('updateUsers', '', text);
+    state.isLoading = false;
+    window.changeInput = false;
+  } finally {
+    state.isLoading = false;
   }
-  emit('updateUsers', '', text);
-  state.isLoading = false;
-  window.changeInput = false;
 };
 
 const searchDepartments = (value: string) => {

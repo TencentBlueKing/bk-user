@@ -317,8 +317,10 @@ onMounted(async () => {
       const res = await getDataSourceDetails(currentId.value);
       serverConfigData.name = res.data?.name;
       serverConfigData.plugin_id = res.data?.plugin?.id;
-      serverConfigData.server_config = res.data?.plugin_config?.server_config;
-      serverConfigData.auth_config = res.data?.plugin_config?.auth_config;
+      if (JSON.stringify(res.data?.plugin_config) !== '{}') {
+        serverConfigData.server_config = res.data?.plugin_config?.server_config;
+        serverConfigData.auth_config = res.data?.plugin_config?.auth_config;
+      }
       fieldSettingData.sync_config = res.data?.sync_config;
       fieldMappingList.value = res.data?.field_mapping;
     }

@@ -65,16 +65,13 @@
                 <span v-bk-tooltips="{ content: '所有管理员的密码都一致' }">固定</span>
               </bk-radio>
             </bk-radio-group>
-            <bk-input
-              class="input-password"
-              v-if="formData.password_initial_config.generate_method === 'fixed'"
-              type="password"
-              v-model="formData.password_initial_config.fixed_password"
-            >
-              <template #prefix>
-                <span class="prefix-slot" @click="handleRandomPassword">随机生成</span>
-              </template>
-            </bk-input>
+            <div v-if="formData.password_initial_config.generate_method === 'fixed'">
+              <bk-input
+                class="input-password"
+                type="password"
+                v-model="formData.password_initial_config.fixed_password" />
+              <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">随机生成</bk-button>
+            </div>
           </bk-form-item>
           <bk-form-item label="通知方式" :required="formData.password_initial_config.generate_method === 'random'">
             <NotifyEditorTemplate
@@ -384,7 +381,7 @@ const columns = [
             disabled={formData.managers.length === 1}
             onClick={handleItemChange.bind(this, index, 'remove')}
           >
-            <i class="user-icon icon-minus-fill" />
+            <i class={['user-icon icon-minus-fill', { 'forbid': formData.managers.length === 1 }]} />
           </bk-button>
         </div>
       );
@@ -544,8 +541,8 @@ const handleRandomPassword = async () => {
     }
 
     .input-password {
-      width: 380px;
-      margin-left: 24px;
+      width: 240px;
+      margin-left: 28px;
     }
   }
 }

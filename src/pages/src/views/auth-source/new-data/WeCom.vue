@@ -110,7 +110,7 @@
                 text
                 :disabled="item.field_compare_rules.length === 1"
                 @click="handleDeleteItem(field.target_field, index, item.field_compare_rules, i)">
-                <i class="user-icon icon-minus-fill" />
+                <i :class="['user-icon icon-minus-fill', { 'forbid': item.field_compare_rules.length === 1 }]" />
               </bk-button>
               <span class="and" v-if="i !== 0">and</span>
             </div>

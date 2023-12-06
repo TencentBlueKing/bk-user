@@ -15,7 +15,7 @@
         <ul class="item-content flex" style="width: 72%">
           <li>
             <span class="key">租户名称：</span>
-            <span class="value">{{ state.userData.name }}</span>
+            <span class="value">{{ state.name }}</span>
           </li>
           <li>
             <span class="key">人员数量：</span>
@@ -23,13 +23,13 @@
           </li>
           <li>
             <span class="key">租户ID：</span>
-            <span class="value">{{ state.userData.id }}</span>
+            <span class="value">{{ state.id }}</span>
           </li>
           <li>
             <span class="key">更新时间：</span>
-            <span class="value">{{ state.userData.updated_at }}</span>
+            <span class="value">{{ state.updated_at }}</span>
           </li>
-          <img v-if="state.userData.logo" :src="state.userData.logo" />
+          <img v-if="state.logo" :src="state.logo" />
           <img v-else src="@/images/avatar.png" />
         </ul>
       </li>
@@ -37,7 +37,7 @@
         <div class="item-title">管理员</div>
         <bk-table
           class="user-info-table"
-          :data="state.userData.managers"
+          :data="state.managers"
           show-overflow-tooltip
         >
           <template #empty>
@@ -60,7 +60,7 @@
     </ul>
     <EditInfo
       v-else
-      :tenants-data="state.userData"
+      :tenants-data="state"
       :managers="state.managers"
       @handleCancel="handleCancel"
       @updateTenantsList="updateTenantsList" />
@@ -90,8 +90,7 @@ const props = defineProps({
 const emit = defineEmits(['updateTenantsList', 'handleCancel', 'changeEdit']);
 
 const state = reactive({
-  userData: {},
-  managers: [],
+  ...props.userData || {},
   isDataEmpty: false,
 });
 
@@ -99,7 +98,6 @@ const userNumberVisible = computed(() => (props?.userData?.feature_flags?.user_n
 const isCurrentTenant = computed(() => props?.userData?.id && props?.userData?.id === userStore.user.tenant_id);
 
 watch(() => props.userData.managers, (value) => {
-  state.userData = props.userData;
   if (value.length > 0) {
     state.managers = props.userData.managers;
     state.isDataEmpty = false;

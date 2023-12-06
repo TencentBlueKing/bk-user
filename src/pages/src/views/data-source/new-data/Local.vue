@@ -122,16 +122,13 @@
             <bk-radio label="random">随机</bk-radio>
             <bk-radio label="fixed">固定</bk-radio>
           </bk-radio-group>
-          <bk-input
-            class="input-password"
-            v-if="formData.config.password_initial.generate_method === 'fixed'"
-            v-model="formData.config.password_initial.fixed_password"
-            type="password"
-          >
-            <template #prefix>
-              <span class="prefix-slot" @click="handleRandomPassword">随机生成</span>
-            </template>
-          </bk-input>
+          <div v-if="formData.config.password_initial.generate_method === 'fixed'">
+            <bk-input
+              class="input-password"
+              v-model="formData.config.password_initial.fixed_password"
+              type="password" />
+            <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">随机生成</bk-button>
+          </div>
         </bk-form-item>
         <bk-form-item label="通知方式" property="config.password_initial.notification.enabled_methods" required>
           <NotifyEditorTemplate
