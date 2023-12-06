@@ -29,7 +29,8 @@
         class="content-table"
         :data="state.list"
         :max-height="tableMaxHeight"
-        show-overflow-tooltip>
+        show-overflow-tooltip
+        @column-sort="columnSort">
         <template #empty>
           <Empty
             :is-data-empty="state.isTableDataEmpty"
@@ -268,6 +269,12 @@ const changeVisible = () => {
   });
 };
 
+// 新建租户状态 id
+const isCreated = ref(false);
+const newId = ref('');
+
+const getRows = () => document.getElementsByClassName('hover-highlight')[0].getElementsByTagName('td');
+
 // 获取租户列表
 const fetchTenantsList = () => {
   searchName.value = '';
@@ -288,7 +295,19 @@ const fetchTenantsList = () => {
         item.new = Math.floor((newDate - createdDate) / (24 * 3600 * 1000)) <= 1;
       });
 
-      state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+      if (isCreated.value) {
+        state.list = res.data.map((item) => {
+          item.add = item.id === newId.value;
+          return item;
+        }).sort((a, b) => !a.add - !b.add);
+
+        const rows = getRows();
+        for (const i of rows) {
+          i.style.background = '#DCFFE2';
+        }
+      } else {
+        state.list = res.data.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+      }
       state.tableLoading = false;
     })
     .catch(() => {
@@ -300,12 +319,19 @@ const fetchTenantsList = () => {
 // 搜索租户列表
 const handleEnter = () => {
   state.tableLoading = true;
+  isCreated.value = false;
+  newId.value = '';
   searchTenants(searchName.value)
     .then((res: any) => {
       if (res.data.length === 0) {
         state.isEmptySearch = true;
       }
       state.list = res.data;
+
+      const rows = getRows();
+      for (const i of rows) {
+        i.style.background = '#fff';
+      }
       state.tableLoading = false;
     })
     .catch(() => {
@@ -314,13 +340,15 @@ const handleEnter = () => {
     });
 };
 // 更新租户列表
-const updateTenantsList = (text) => {
+const updateTenantsList = (type: string, id: string) => {
   detailsConfig.isShow = false;
   window.changeInput = false;
+  isCreated.value = type === 'add';
+  newId.value = id;
   fetchTenantsList();
   Message({
     theme: 'success',
-    message: text,
+    message: isCreated.value ? '租户创建成功' : '租户更新成功',
   });
 };
 
@@ -334,6 +362,19 @@ const handleBeforeClose = async () => {
   }
   if (!enableLeave) {
     return Promise.resolve(enableLeave);
+  }
+};
+
+const columnSort = ({ index, type }) => {
+  if (isCreated.value) {
+    const rows = getRows();
+    for (const i of rows) {
+      if ((index === 0 || index === 4) && type !== 'null') {
+        i.style.background = '#fff';
+      } else {
+        i.style.background = '#DCFFE2';
+      }
+    }
   }
 };
 </script>

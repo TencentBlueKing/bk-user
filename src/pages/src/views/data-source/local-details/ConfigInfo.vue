@@ -236,11 +236,11 @@ const handleClickEdit = () => {
 }
 
 .details-info-box {
+  display: flex;
   width: 100%;
   height: 100%;
   min-height: 500px;
   background: #fff;
-  display: flex;
   justify-content: center;
   align-items: center;
 
