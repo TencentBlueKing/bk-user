@@ -440,7 +440,7 @@ function createTenantsFn() {
   if (!data.logo) delete data.logo;
 
   createTenants(data).then(() => {
-    emit('updateTenantsList', '租户创建成功');
+    emit('updateTenantsList', 'add', formData.id);
   }).finally(() => {
     state.isLoading = false;
   });
@@ -460,7 +460,7 @@ function putTenantsFn() {
   if (!params.logo) delete params.logo;
 
   putTenants(formData.id, params).then(() => {
-    emit('updateTenantsList', '租户更新成功');
+    emit('updateTenantsList', 'edit');
   }).finally(() => {
     state.isLoading = false;
   });
