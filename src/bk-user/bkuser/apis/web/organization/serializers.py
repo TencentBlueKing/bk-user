@@ -27,7 +27,7 @@ class TenantDepartmentOutputSLZ(serializers.Serializer):
 class TenantUserDepartmentOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="租户用户ID")
     name = serializers.CharField(help_text="租户部门名称")
-    full_name = serializers.CharField(help_text="部门路径")
+    department_path = serializers.CharField(help_text="部门路径")
 
 
 class TenantUserLeaderOutputSLZ(serializers.Serializer):
@@ -65,7 +65,7 @@ class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, instance: TenantUser) -> List[Dict]:
         departments = self.context["tenant_user_departments"].get(instance.id) or []
-        return [{"id": i.id, "name": i.name, "full_name": i.full_name} for i in departments]
+        return [{"id": i.id, "name": i.name, "department_path": i.department_path} for i in departments]
 
     def to_representation(self, instance: TenantUser) -> Dict:
         data = super().to_representation(instance)
@@ -93,7 +93,7 @@ class TenantUserRetrieveOutputSLZ(TenantUserInfoOutputSLZ):
     def get_departments(self, instance: TenantUser) -> List[Dict]:
         tenant_user_departments = TenantUserHandler.get_tenant_user_departments_map_by_id([instance.id])
         departments = tenant_user_departments.get(instance.id) or []
-        return [{"id": i.id, "name": i.name, "full_name": i.full_name} for i in departments]
+        return [{"id": i.id, "name": i.name, "department_path": i.department_path} for i in departments]
 
     @swagger_serializer_method(serializer_or_field=TenantUserLeaderOutputSLZ(many=True))
     def get_leaders(self, instance: TenantUser) -> List[Dict]:
