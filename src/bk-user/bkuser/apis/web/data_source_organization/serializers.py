@@ -215,7 +215,7 @@ class DepartmentSearchOutputSLZ(serializers.Serializer):
 class UserDepartmentOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
-    full_name = serializers.CharField(help_text="部门名称")
+    full_name = serializers.CharField(help_text="部门路径")
 
 
 class UserLeaderOutputSLZ(serializers.Serializer):
