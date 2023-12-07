@@ -20,6 +20,8 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.tenant.constants import TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION
+from bkuser.biz.tenant import TenantHandler
 from bkuser.common.error_codes import error_codes
 
 from .schema import get_idp_plugin_cfg_json_schema, get_idp_plugin_cfg_openapi_schema_map
@@ -82,10 +84,19 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
 
     def get_serializer_context(self):
         # TODO 目前未支持数据源跨租户协助，所以只查询本租户数据源
+        tenant_manager_map = {
+            manager.id: manager for manager in TenantHandler.retrieve_tenant_managers(self.get_current_tenant_id())
+        }
+
         data_source_name_map = dict(
             DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id()).values_list("id", "name")
         )
-        return {"data_source_name_map": data_source_name_map}
+        return {
+            "data_source_name_map": data_source_name_map,
+            "tenant_manager_map": tenant_manager_map,
+            # FIXME 表达式可进行设置后，这里需要做调整
+            "display_name_expression": TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION,
+        }
 
     def get_queryset(self):
         slz = IdpSearchInputSLZ(data=self.request.query_params)

@@ -47,11 +47,21 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
     plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
     cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
     status = serializers.CharField(help_text="数据源状态")
-    updater = serializers.CharField(help_text="更新者")
+    updater = serializers.SerializerMethodField(help_text="更新者")
     updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
 
     def get_plugin_name(self, obj: DataSource) -> str:
         return self.context["data_source_plugin_map"].get(obj.plugin_id, "")
+
+    def get_updater(self, obj: DataSource) -> str:
+        if not obj.updater:
+            return ""
+        updater = self.context["tenant_manager_map"][obj.updater].data_source_user
+        expression_factors = {
+            "username": updater.username,
+            "full_name": updater.full_name,
+        }
+        return self.context["display_name_expression"].format(**expression_factors)
 
     @swagger_serializer_method(
         serializer_or_field=serializers.ListField(

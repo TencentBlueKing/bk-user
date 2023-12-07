@@ -21,6 +21,9 @@ TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{2,31}")
 # 自定义字段英文标识命名规则
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
 
+# 默认名称表达式
+TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION = "{username}({full_name})"
+
 
 class TenantFeatureFlag(FeatureFlag):  # type: ignore
     """租户特性标志"""

@@ -38,6 +38,7 @@ from .serializers import (
     TenantUserMatchOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
+from ...apps.tenant.constants import TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION
 
 
 class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.CreateAPIView):
@@ -181,3 +182,7 @@ class TenantUserRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView
     serializer_class = TenantUserRetrieveOutputSLZ
     queryset = TenantUser.objects.all()
     lookup_field = "id"
+
+    def get_serializer_context(self):
+        # FIXME 表达式可进行设置后，这里需要做调整
+        return {"display_name_expression": TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION}

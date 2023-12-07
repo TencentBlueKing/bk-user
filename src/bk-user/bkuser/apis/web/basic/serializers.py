@@ -16,4 +16,5 @@ from bkuser.apps.permission.constants import UserRole
 class CurrentUserRetrieveOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")
     tenant_id = serializers.CharField(help_text="租户 ID")
+    display_name = serializers.CharField(help_text="租户用户名称")
     role = serializers.ChoiceField(help_text="用户角色", choices=UserRole.get_choices())

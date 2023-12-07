@@ -49,7 +49,9 @@ from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.apps.tenant.constants import TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION
 from bkuser.biz.exporters import DataSourceUserExporter
+from bkuser.biz.tenant import TenantHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
@@ -103,7 +105,16 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
     serializer_class = DataSourceSearchOutputSLZ
 
     def get_serializer_context(self):
-        return {"data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name"))}
+        # TODO 获取当前租户管理员map
+        tenant_manager_map = {
+            manager.id: manager for manager in TenantHandler.retrieve_tenant_managers(self.get_current_tenant_id())
+        }
+        return {
+            "data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name")),
+            "tenant_manager_map": tenant_manager_map,
+            # FIXME 表达式可进行设置后，这里需要做调整
+            "display_name_expression": TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION,
+        }
 
     def get_queryset(self):
         slz = DataSourceSearchInputSLZ(data=self.request.query_params)

@@ -69,6 +69,7 @@ class TenantUserInfo(BaseModel):
     id: str
     username: str
     full_name: str
+    display_name: str
 
 
 class TenantUserDetailInfo(TenantUserInfo):

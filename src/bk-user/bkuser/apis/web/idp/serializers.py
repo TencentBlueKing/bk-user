@@ -67,6 +67,16 @@ class IdpSearchOutputSLZ(serializers.Serializer):
             if r.data_source_id in data_source_name_map
         ]
 
+    def get_updater(self, obj: Idp) -> str:
+        if not obj.updater:
+            return ""
+        updater = self.context["tenant_manager_map"][obj.updater].data_source_user
+        expression_factors = {
+            "username": updater.username,
+            "full_name": updater.full_name,
+        }
+        return self.context["display_name_expression"].format(**expression_factors)
+
 
 def _validate_duplicate_idp_name(name: str, tenant_id: str, idp_id: str = "") -> str:
     """校验IDP 是否重名"""
