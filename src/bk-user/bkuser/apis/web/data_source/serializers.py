@@ -370,7 +370,7 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
-    operator = serializers.CharField(help_text="操作人")
+    operator = serializers.SerializerMethodField(help_text="操作人")
     start_at = serializers.SerializerMethodField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
@@ -380,6 +380,14 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
 
     def get_start_at(self, obj: DataSourceSyncTask) -> str:
         return obj.start_at_display
+
+    def get_operator(self, obj: DataSourceSyncTask):
+        operator = self.context["tenant_manager_map"][obj.operator].data_source_user
+        expression_factors = {
+            "username": operator.username,
+            "full_name": operator.full_name,
+        }
+        return self.context["display_name_expression"].format(**expression_factors)
 
 
 class DataSourceSyncRecordRetrieveOutputSLZ(serializers.Serializer):

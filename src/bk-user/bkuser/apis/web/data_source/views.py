@@ -459,6 +459,12 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        tenant_manager_map = {
+            manager.id: manager for manager in TenantHandler.retrieve_tenant_managers(self.get_current_tenant_id())
+        }
+        context["tenant_manager_map"] = tenant_manager_map
+        # FIXME 表达式可进行设置后，这里需要做调整
+        context["display_name_expression"] = TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION
         context["data_source_name_map"] = {
             ds.id: ds.name for ds in DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
         }

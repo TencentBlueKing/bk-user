@@ -46,7 +46,7 @@ class IdpSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源唯一标识")
     name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
-    updater = serializers.CharField(help_text="更新者")
+    updater = serializers.SerializerMethodField(help_text="更新者")
     updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
     plugin = IdpPluginOutputSLZ(help_text="认证源插件")
     matched_data_sources = serializers.SerializerMethodField(help_text="匹配的数据源列表")
