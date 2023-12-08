@@ -68,7 +68,9 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, instance: TenantUser) -> List[Dict]:
-        tenant_user_departments = TenantUserHandler.get_tenant_user_departments_map_by_id([instance.id])
+        tenant_user_departments = TenantUserHandler.get_tenant_user_departments_map_by_id(
+            instance.tenant_id, [instance.id]
+        )
         departments = tenant_user_departments.get(instance.id) or []
         return [{"id": i.id, "name": i.name} for i in departments]
 

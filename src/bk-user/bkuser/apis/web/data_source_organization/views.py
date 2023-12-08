@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from collections import defaultdict
+from typing import Dict, List
 
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
@@ -67,16 +68,26 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
 
         return queryset
 
-    def get_serializer_context(self):
+    def _get_data_source_user_department_info_map(self, data_source_user_ids: List[int]) -> Dict[int, List]:
         data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
-            user_ids=self.get_queryset().values_list("id", flat=True)
+            user_ids=data_source_user_ids
         )
-        data_source_user_department_map = defaultdict(list)
-        for user_id, departments in data_source_user_department_ids_map.items():
-            # 获取用户的数据源部门基础信息
-            department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(departments)
-            data_source_user_department_map[user_id] = list(department_info_map.values())
-        return {"data_source_user_department_map": data_source_user_department_map}
+        data_source_department_id_list = []
+        for department_ids in data_source_user_department_ids_map.values():
+            data_source_department_id_list += department_ids
+        # 获取数据源部门基础信息
+        department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(
+            data_source_department_id_list
+        )
+
+        # 构建映射
+        user_department_info_map = defaultdict(list)
+        for user_id, department_ids in data_source_user_department_ids_map.items():
+            user_department_info_map[user_id] = [
+                department_info_map[department_id] for department_id in department_ids
+            ]
+
+        return user_department_info_map
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -85,7 +96,16 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         responses={status.HTTP_200_OK: UserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+        data_source_users = self.paginate_queryset(queryset)
+
+        context = {
+            "data_source_user_department_map": self._get_data_source_user_department_info_map(
+                [user.id for user in data_source_users]
+            )
+        }
+        serializer = self.get_serializer(data_source_users, many=True, context=context)
+        return self.get_paginated_response(serializer.data)
 
     @swagger_auto_schema(
         tags=["data_source"],
