@@ -381,7 +381,9 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     def get_start_at(self, obj: DataSourceSyncTask) -> str:
         return obj.start_at_display
 
-    def get_operator(self, obj: DataSourceSyncTask):
+    def get_operator(self, obj: DataSourceSyncTask) -> str:
+        if not obj.operator:
+            return ""
         operator = self.context["tenant_manager_map"][obj.operator].data_source_user
         expression_factors = {
             "username": operator.username,
