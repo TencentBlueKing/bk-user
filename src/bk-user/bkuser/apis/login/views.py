@@ -20,6 +20,7 @@ from bkuser.apps.global_setting.constants import GlobalSettingEnum
 from bkuser.apps.global_setting.models import GlobalSetting
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
+from bkuser.apps.tenant.constants import TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
 from bkuser.common.error_codes import error_codes
@@ -38,7 +39,6 @@ from .serializers import (
     TenantUserMatchOutputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
-from ...apps.tenant.constants import TENANT_USER_DEFAULT_DISPLAY_NAME_EXPRESSION
 
 
 class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.CreateAPIView):
