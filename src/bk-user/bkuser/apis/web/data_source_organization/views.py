@@ -230,14 +230,14 @@ class DataSourceUserRetrieveUpdateApi(
         data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
             user_ids=[self.kwargs["id"]]
         )
-        data_source_user_department_map = defaultdict(list)
+        user_departments_map = defaultdict(list)
         for user_id, departments in data_source_user_department_ids_map.items():
             # 获取用户的数据源部门基础信息
             department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(departments)
-            data_source_user_department_map[user_id] = list(department_info_map.values())
+            user_departments_map[user_id] = list(department_info_map.values())
 
         user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([self.kwargs["id"]])
-        return {"user_departments_map": data_source_user_department_map, "user_leaders_map": user_leaders_map}
+        return {"user_departments_map": user_departments_map, "user_leaders_map": user_leaders_map}
 
     @swagger_auto_schema(
         tags=["data_source"],
