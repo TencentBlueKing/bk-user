@@ -268,7 +268,7 @@ class TenantUserHandler:
         tenant_user.save()
 
     @staticmethod
-    def get_tenant_user_display_name(user: TenantUser) -> str:
+    def generate_tenant_user_display_name(user: TenantUser) -> str:
         # TODO (su) 支持读取表达式并渲染
         return f"{user.data_source_user.username} ({user.data_source_user.full_name})"
 
@@ -279,10 +279,12 @@ class TenantUserHandler:
 
         :return: {user_id: user_display_name}
         """
+        # 1. 尝试从 TenantUser 表根据表达式渲染出展示用名称
         display_name_map = {
-            user.id: TenantUserHandler.get_tenant_user_display_name(user)
+            user.id: TenantUserHandler.generate_tenant_user_display_name(user)
             for user in TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
         }
+        # 2. 针对可能出现的 TenantUser 中被删除的 user_id，尝试从 User 表获取展示用名称（登录过就有记录）
         if not_exists_user_ids := set(tenant_user_ids) - set(display_name_map.keys()):
             logger.warning(
                 "tenant user ids: %s not exists in TenantUser model, try find display name in User Model",
@@ -292,6 +294,11 @@ class TenantUserHandler:
             for user in UserModel.objects.filter(username__in=not_exists_user_ids):
                 # FIXME (nan) get_property 有 N+1 的风险，需要处理
                 display_name_map[user.username] = user.get_property("display_name") or user.username
+
+        # 3. 前两种方式都失效，那就给啥 user_id 就返回啥，避免调用的地方还需要处理
+        if not_exists_user_ids := set(tenant_user_ids) - set(display_name_map.keys()):
+            for user_id in not_exists_user_ids:
+                display_name_map[user_id] = user_id
 
         return display_name_map
 

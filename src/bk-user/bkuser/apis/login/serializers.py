@@ -140,7 +140,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="用户所在租户 ID")
 
     def get_display_name(self, obj: TenantUser) -> str:
-        return TenantUserHandler.get_tenant_user_display_name(obj)
+        return TenantUserHandler.generate_tenant_user_display_name(obj)
 
     class Meta:
         ref_name = "login.TenantUserRetrieveOutputSLZ"
