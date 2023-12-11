@@ -91,7 +91,7 @@ class TenantManagerWithoutID(BaseModel):
 class TenantDepartmentBaseInfo(BaseModel):
     id: int
     name: str
-    department_path: str
+    organization_path: str
     has_children: bool
 
 
@@ -436,7 +436,7 @@ class TenantDepartmentHandler:
             data[data_source_department_id] = TenantDepartmentBaseInfo(
                 id=tenant_department.id,
                 name=data_source_department_info.name,
-                department_path=data_source_department_info.department_path,
+                organization_path=data_source_department_info.organization_path,
                 has_children=any(children_flag),
             )
 

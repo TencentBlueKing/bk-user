@@ -74,9 +74,11 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             )
 
         tenant_users = self.paginate_queryset(queryset)
+
         tenant_user_ids = [user.id for user in tenant_users]
+        tenant_user_info_map = {user.id: user for user in TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)}
         context = {
-            "tenant_user_info_map": TenantUserHandler.list_tenant_user_by_id(tenant_user_ids),
+            "tenant_user_info_map": tenant_user_info_map,
             "tenant_user_departments_map": TenantUserHandler.get_tenant_user_departments_map_by_id(
                 tenant_id, tenant_user_ids
             ),
@@ -242,9 +244,11 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             )
 
         tenant_users = self.paginate_queryset(queryset)
+
         tenant_user_ids = [user.id for user in tenant_users]
+        tenant_user_info_map = {user.id: user for user in TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)}
         context = {
-            "tenant_user_info_map": TenantUserHandler.list_tenant_user_by_id(tenant_user_ids),
+            "tenant_user_info_map": tenant_user_info_map,
             "tenant_user_departments_map": TenantUserHandler.get_tenant_user_departments_map_by_id(
                 tenant_id, tenant_user_ids
             ),

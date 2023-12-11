@@ -125,7 +125,7 @@ class UserSearchInputSLZ(serializers.Serializer):
 class DataSourceSearchDepartmentsOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
-    department_path = serializers.CharField(help_text="部门路径")
+    organization_path = serializers.CharField(help_text="部门路径")
 
 
 class UserSearchOutputSLZ(serializers.Serializer):
@@ -140,7 +140,7 @@ class UserSearchOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser):
         departments = self.context["data_source_user_department_map"].get(obj.id, [])
-        return [{"id": i.id, "name": i.name, "department_path": i.department_path} for i in departments]
+        return [{"id": i.id, "name": i.name, "organization_path": i.organization_path} for i in departments]
 
 
 class UserCreateInputSLZ(serializers.Serializer):
@@ -215,7 +215,7 @@ class DepartmentSearchOutputSLZ(serializers.Serializer):
 class UserDepartmentOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
-    department_path = serializers.CharField(help_text="部门路径")
+    organization_path = serializers.CharField(help_text="部门路径")
 
 
 class UserLeaderOutputSLZ(serializers.Serializer):
@@ -241,7 +241,9 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
         departments = self.context["user_departments_map"].get(obj.id, [])
-        return [{"id": dept.id, "name": dept.name, "department_path": dept.department_path} for dept in departments]
+        return [
+            {"id": dept.id, "name": dept.name, "organization_path": dept.organization_path} for dept in departments
+        ]
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
     def get_leaders(self, obj: DataSourceUser) -> List[Dict]:
