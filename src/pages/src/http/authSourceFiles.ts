@@ -34,3 +34,8 @@ export const patchIdps = (params: PatchIdpsParams) => http.patch(`/api/v1/web/id
  * 更新认证源
  */
 export const putIdps = (params: PutIdpsParams) => http.put(`/api/v1/web/idps/${params.id}/`, params);
+
+/**
+ * 认证源插件默认配置
+ */
+export const getIdpsPluginsConfig = (id: string) => http.get(`/api/v1/web/idps/plugins/${id}/config-meta/`);

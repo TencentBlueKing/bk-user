@@ -17,6 +17,10 @@
           v-if="currentPlugin.id === 'wecom'"
           :plugin="currentPlugin"
           @prev="handlePrev" />
+        <CustomPlugin
+          v-else
+          :plugin="currentPlugin"
+          @prev="handlePrev" />
       </div>
     </div>
   </div>
@@ -26,6 +30,7 @@
 import { inject, reactive, ref } from 'vue';
 
 import Config from './config.vue';
+import CustomPlugin from './CustomPlugin.vue';
 import WeCom from './WeCom.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';

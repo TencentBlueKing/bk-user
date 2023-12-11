@@ -23,6 +23,7 @@
 
   .auth-source-form {
     .content-item {
+      margin-bottom: 16px;
       background: #fff;
       border-radius: 2px;
       box-shadow: 0 2px 4px 0 #1919290d;
@@ -256,6 +257,18 @@
 
         span {
           margin-left: 5px;
+        }
+      }
+
+      ::v-deep .bk-schema-form {
+        .bk-form-item {
+          width: 600px;
+          padding-bottom: 0;
+          font-size: 14px;
+
+          &:last-child {
+            padding-bottom: 24px;
+          }
         }
       }
     }

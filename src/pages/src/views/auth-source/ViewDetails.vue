@@ -21,24 +21,6 @@
           <span class="item-title">名称：</span>
           <div>{{ authSourceData.name }}</div>
         </li>
-        <div v-if="authSourceData.plugin?.id === 'wecom'">
-          <li>
-            <span class="item-title">企业ID：</span>
-            <div>{{ authSourceData.plugin_config?.corp_id }}</div>
-          </li>
-          <li>
-            <span class="item-title">Agent ID：</span>
-            <div>{{ authSourceData.plugin_config?.agent_id }}</div>
-          </li>
-          <li>
-            <span class="item-title">Secret：</span>
-            <div>**********</div>
-          </li>
-          <li>
-            <span class="item-title">登录模式：</span>
-            <div>仅用于登录</div>
-          </li>
-        </div>
         <li v-if="authSourceData.plugin?.id === 'local'">
           <span class="item-title">基础配置：</span>
           <div class="basic-config">
@@ -63,6 +45,32 @@
             </div>
           </div>
         </li>
+        <template v-else>
+          <div v-if="authSourceData.plugin?.id === 'wecom'">
+            <li>
+              <span class="item-title">企业ID：</span>
+              <div>{{ authSourceData.plugin_config?.corp_id }}</div>
+            </li>
+            <li>
+              <span class="item-title">Agent ID：</span>
+              <div>{{ authSourceData.plugin_config?.agent_id }}</div>
+            </li>
+            <li>
+              <span class="item-title">Secret：</span>
+              <div>**********</div>
+            </li>
+          </div>
+          <div v-else>
+            <li v-for="(item, key, index) in authSourceData.plugin_config" :key="index">
+              <span class="item-title">{{ key }}：</span>
+              <div>{{ item }}</div>
+            </li>
+          </div>
+          <li>
+            <span class="item-title">登录模式：</span>
+            <div>仅用于登录</div>
+          </li>
+        </template>
         <li>
           <span class="item-title">数据源匹配：</span>
           <div class="content-matching">
