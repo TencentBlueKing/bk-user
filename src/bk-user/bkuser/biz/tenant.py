@@ -8,10 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -34,6 +36,8 @@ from bkuser.biz.data_source import (
     DataSourceUserHandler,
 )
 from bkuser.plugins.local.models import PasswordInitialConfig
+
+logger = logging.getLogger(__name__)
 
 
 class DataSourceUserInfo(BaseModel):
@@ -275,10 +279,21 @@ class TenantUserHandler:
 
         :return: {user_id: user_display_name}
         """
-        return {
+        display_name_map = {
             user.id: TenantUserHandler.get_tenant_user_display_name(user)
             for user in TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
         }
+        if not_exists_user_ids := set(tenant_user_ids) - set(display_name_map.keys()):
+            logger.warning(
+                "tenant user ids: %s not exists in TenantUser model, try find display name in User Model",
+                not_exists_user_ids,
+            )
+            UserModel = get_user_model()  # noqa: N806
+            for user in UserModel.objects.filter(username__in=not_exists_user_ids):
+                # FIXME (nan) get_property 有 N+1 的风险，需要处理
+                display_name_map[user.username] = user.get_property("display_name") or user.username
+
+        return display_name_map
 
 
 class TenantHandler:
