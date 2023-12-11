@@ -21,7 +21,10 @@
       </div>
       <div class="content-item">
         <p class="item-title">基础配置</p>
-        <SchemaForm :plugins-config="pluginsConfig" :form-data="formData" />
+        <SchemaForm
+          :plugins-config="pluginsConfig"
+          :form-data="formData"
+          @changePluginConfig="changePluginConfig" />
       </div>
       <div class="content-item">
         <p class="item-title">登录模式</p>
@@ -216,6 +219,10 @@ onMounted(async () => {
   );
   isLoading.value = false;
 });
+
+const changePluginConfig = (value: any) => {
+  formData.value.plugin_config = value;
+};
 
 const {
   changeDataSourceId,
