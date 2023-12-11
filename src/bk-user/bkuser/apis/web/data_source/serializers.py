@@ -47,7 +47,7 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
     plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
     cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
     status = serializers.CharField(help_text="数据源状态")
-    updater = serializers.CharField(help_text="更新者")
+    updater = serializers.SerializerMethodField(help_text="更新者")
     updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
 
     def get_plugin_name(self, obj: DataSource) -> str:
@@ -63,6 +63,9 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
     def get_cooperation_tenants(self, obj: DataSource) -> List[str]:
         # TODO 目前未支持数据源跨租户协作，因此该数据均为空
         return []
+
+    def get_updater(self, obj: DataSource) -> str:
+        return self.context["user_display_name_map"].get(obj.updater) or obj.updater
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
@@ -360,13 +363,16 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
-    operator = serializers.CharField(help_text="操作人")
+    operator = serializers.SerializerMethodField(help_text="操作人")
     start_at = serializers.SerializerMethodField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
 
     def get_data_source_name(self, obj: DataSourceSyncTask) -> str:
         return self.context["data_source_name_map"].get(obj.data_source_id)
+
+    def get_operator(self, obj: DataSourceSyncTask) -> str:
+        return self.context["user_display_name_map"].get(obj.operator) or obj.operator
 
     def get_start_at(self, obj: DataSourceSyncTask) -> str:
         return obj.start_at_display

@@ -263,6 +263,23 @@ class TenantUserHandler:
             tenant_user.custom_email = email_info.custom_email
         tenant_user.save()
 
+    @staticmethod
+    def get_tenant_user_display_name(user: TenantUser) -> str:
+        # TODO (su) 支持读取表达式并渲染
+        return f"{user.data_source_user.username} ({user.data_source_user.full_name})"
+
+    @staticmethod
+    def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
+        """
+        根据指定的租户用户 ID 列表，获取对应的展示用名称列表
+
+        :return: {user_id: user_display_name}
+        """
+        return {
+            user.id: TenantUserHandler.get_tenant_user_display_name(user)
+            for user in TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
+        }
+
 
 class TenantHandler:
     @staticmethod
