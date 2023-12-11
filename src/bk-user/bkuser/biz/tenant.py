@@ -8,10 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import logging
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -34,6 +36,8 @@ from bkuser.biz.data_source import (
     DataSourceUserHandler,
 )
 from bkuser.plugins.local.models import PasswordInitialConfig
+
+logger = logging.getLogger(__name__)
 
 
 class DataSourceUserInfo(BaseModel):
@@ -262,6 +266,41 @@ class TenantUserHandler:
         if not email_info.is_inherited_email:
             tenant_user.custom_email = email_info.custom_email
         tenant_user.save()
+
+    @staticmethod
+    def generate_tenant_user_display_name(user: TenantUser) -> str:
+        # TODO (su) 支持读取表达式并渲染
+        return f"{user.data_source_user.username} ({user.data_source_user.full_name})"
+
+    @staticmethod
+    def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
+        """
+        根据指定的租户用户 ID 列表，获取对应的展示用名称列表
+
+        :return: {user_id: user_display_name}
+        """
+        # 1. 尝试从 TenantUser 表根据表达式渲染出展示用名称
+        display_name_map = {
+            user.id: TenantUserHandler.generate_tenant_user_display_name(user)
+            for user in TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
+        }
+        # 2. 针对可能出现的 TenantUser 中被删除的 user_id，尝试从 User 表获取展示用名称（登录过就有记录）
+        if not_exists_user_ids := set(tenant_user_ids) - set(display_name_map.keys()):
+            logger.warning(
+                "tenant user ids: %s not exists in TenantUser model, try find display name in User Model",
+                not_exists_user_ids,
+            )
+            UserModel = get_user_model()  # noqa: N806
+            for user in UserModel.objects.filter(username__in=not_exists_user_ids):
+                # FIXME (nan) get_property 有 N+1 的风险，需要处理
+                display_name_map[user.username] = user.get_property("display_name") or user.username
+
+        # 3. 前两种方式都失效，那就给啥 user_id 就返回啥，避免调用的地方还需要处理
+        if not_exists_user_ids := set(tenant_user_ids) - set(display_name_map.keys()):
+            for user_id in not_exists_user_ids:
+                display_name_map[user_id] = user_id
+
+        return display_name_map
 
 
 class TenantHandler:

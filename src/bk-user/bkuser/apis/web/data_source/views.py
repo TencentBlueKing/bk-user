@@ -50,6 +50,7 @@ from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.biz.exporters import DataSourceUserExporter
+from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
@@ -103,7 +104,13 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
     serializer_class = DataSourceSearchOutputSLZ
 
     def get_serializer_context(self):
-        return {"data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name"))}
+        tenant_user_ids = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(),
+        ).values_list("updater", flat=True)
+        return {
+            "data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name")),
+            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
+        }
 
     def get_queryset(self):
         slz = DataSourceSearchInputSLZ(data=self.request.query_params)
@@ -447,11 +454,12 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         return queryset
 
     def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["data_source_name_map"] = {
-            ds.id: ds.name for ds in DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
+        data_sources = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
+        tenant_user_ids = data_sources.values_list("updater", flat=True)
+        return {
+            "data_source_name_map": {ds.id: ds.name for ds in data_sources},
+            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
         }
-        return context
 
     @swagger_auto_schema(
         tags=["data_source"],

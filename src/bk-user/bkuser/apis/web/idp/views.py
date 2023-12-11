@@ -20,6 +20,7 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 
 from .schema import get_idp_plugin_cfg_json_schema, get_idp_plugin_cfg_openapi_schema_map
@@ -85,7 +86,14 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
         data_source_name_map = dict(
             DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id()).values_list("id", "name")
         )
-        return {"data_source_name_map": data_source_name_map}
+        tenant_user_ids = Idp.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(),
+        ).values_list("updater", flat=True)
+
+        return {
+            "data_source_name_map": data_source_name_map,
+            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
+        }
 
     def get_queryset(self):
         slz = IdpSearchInputSLZ(data=self.request.query_params)

@@ -18,6 +18,8 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
+from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserHandler
 
 
 class LocalUserCredentialAuthenticateInputSLZ(serializers.Serializer):
@@ -131,10 +133,14 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     username = serializers.ReadOnlyField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.ReadOnlyField(help_text="用户姓名", source="data_source_user.full_name")
+    display_name = serializers.SerializerMethodField(help_text="用户姓名")
     language = serializers.CharField(help_text="语言")
     time_zone = serializers.CharField(help_text="时区")
 
     tenant_id = serializers.CharField(help_text="用户所在租户 ID")
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)
 
     class Meta:
         ref_name = "login.TenantUserRetrieveOutputSLZ"

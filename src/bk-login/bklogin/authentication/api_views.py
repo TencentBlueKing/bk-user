@@ -45,6 +45,7 @@ class GetUserApi(View):
                 "tenant_id": user.tenant_id,
                 "full_name": user.full_name,
                 "source_username": user.username,
+                "display_name": user.display_name,
                 "language": user.language,
                 "time_zone": user.time_zone,
             }

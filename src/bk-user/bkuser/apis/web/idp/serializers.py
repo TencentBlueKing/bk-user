@@ -46,7 +46,7 @@ class IdpSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源唯一标识")
     name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
-    updater = serializers.CharField(help_text="更新者")
+    updater = serializers.SerializerMethodField(help_text="更新者")
     updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
     plugin = IdpPluginOutputSLZ(help_text="认证源插件")
     matched_data_sources = serializers.SerializerMethodField(help_text="匹配的数据源列表")
@@ -66,6 +66,9 @@ class IdpSearchOutputSLZ(serializers.Serializer):
             for r in obj.data_source_match_rule_objs
             if r.data_source_id in data_source_name_map
         ]
+
+    def get_updater(self, obj: Idp) -> str:
+        return self.context["user_display_name_map"].get(obj.updater) or obj.updater
 
 
 def _validate_duplicate_idp_name(name: str, tenant_id: str, idp_id: str = "") -> str:
@@ -89,7 +92,7 @@ def _validate_source_field(value):
     if not re.fullmatch(SOURCE_FIELD_REGEX, value):
         raise ValidationError(
             _(
-                "{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组成，以字母开头并以字母或数字结尾"  # noqa: E501
+                "{} 不符合认证源字段的命名规范: 由3-32位字母、数字、下划线(_)、连接符(-)字符组成，以字母开头并以字母或数字结尾",  # noqa: E501
             ).format(value),
         )
 
