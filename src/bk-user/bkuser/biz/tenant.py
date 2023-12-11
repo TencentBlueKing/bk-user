@@ -399,7 +399,9 @@ class TenantDepartmentHandler:
         tenant_id: str, data_source_department_info_map: Dict[int, DataSourceDepartmentInfoWithChildren]
     ) -> Dict[int, TenantDepartmentBaseInfo]:
         """
-        转换为租户部门
+        转换为租户部门，返回数据源部门ID-租户部门数据 映射
+        tenant_id: 租户ID
+        data_source_department_info_map: 数据源部门ID-数据源部门数据 映射
         """
         # tenant_id 租户下部门关系映射
         tenant_departments = TenantDepartment.objects.filter(tenant_id=tenant_id)

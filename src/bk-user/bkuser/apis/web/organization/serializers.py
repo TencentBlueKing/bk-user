@@ -69,7 +69,7 @@ class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
 
     def to_representation(self, instance: TenantUser) -> Dict:
         data = super().to_representation(instance)
-        user_info = self.context["tenant_users_info_map"].get(instance.id)
+        user_info = self.context["tenant_user_info_map"].get(instance.id)
         if user_info is not None:
             user = user_info.data_source_user
             data.update(

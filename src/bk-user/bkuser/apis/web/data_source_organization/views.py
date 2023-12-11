@@ -33,7 +33,7 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.biz.data_source import DataSourceDepartmentHandler
+from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceDepartmentInfoWithChildren
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
@@ -68,7 +68,12 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
 
         return queryset
 
-    def _get_data_source_user_department_info_map(self, data_source_user_ids: List[int]) -> Dict[int, List]:
+    def _get_data_source_user_department_info_map(
+        self, data_source_user_ids: List[int]
+    ) -> Dict[int, List[DataSourceDepartmentInfoWithChildren]]:
+        """
+        获取用户所属部门数据，返回数据源用户ID-所属数据源部门数据列表 映射
+        """
         data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
             user_ids=data_source_user_ids
         )
@@ -104,7 +109,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
                 [user.id for user in data_source_users]
             )
         }
-        serializer = self.get_serializer(data_source_users, many=True, context=context)
+        serializer = UserSearchOutputSLZ(data_source_users, many=True, context=context)
         return self.get_paginated_response(serializer.data)
 
     @swagger_auto_schema(
@@ -231,9 +236,9 @@ class DataSourceUserRetrieveUpdateApi(
             user_ids=[self.kwargs["id"]]
         )
         user_departments_map = defaultdict(list)
-        for user_id, departments in data_source_user_department_ids_map.items():
+        for user_id, department_ids in data_source_user_department_ids_map.items():
             # 获取用户的数据源部门基础信息
-            department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(departments)
+            department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(department_ids)
             user_departments_map[user_id] = list(department_info_map.values())
 
         user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([self.kwargs["id"]])
