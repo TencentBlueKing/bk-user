@@ -16,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.data_source_organization.serializers import (
-    DataSourceUserPaaswordInputSLZ,
+    DataSourceUserPasswordInputSLZ,
     DepartmentSearchInputSLZ,
     DepartmentSearchOutputSLZ,
     LeaderSearchInputSLZ,
@@ -33,10 +33,10 @@ from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
     DataSourceUser,
-    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.biz.data_source import DataSourceUserHandler
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
@@ -44,9 +44,7 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.hashers import make_password
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
-from bkuser.plugins.local.models import PasswordRuleConfig
 
 
 class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
@@ -261,7 +259,7 @@ class DataSourceUserPasswordUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveU
     @swagger_auto_schema(
         tags=["data_source_organization"],
         operation_description="更新数据源用户密码",
-        request_body=DataSourceUserPaaswordInputSLZ(),
+        request_body=DataSourceUserPasswordInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def patch(self, request, *args, **kwargs):
@@ -269,14 +267,10 @@ class DataSourceUserPasswordUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveU
         if not data_source_user.data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源类型用户可变更密码"))
 
-        data_source = data_source_user.data_source
-        password_rule_config = PasswordRuleConfig(**data_source.plugin_config["password_rule"])
-
-        slz = DataSourceUserPaaswordInputSLZ(request.data, context={"password_rule_config": password_rule_config})
+        slz = DataSourceUserPasswordInputSLZ(request.data)
         slz.is_valid()
 
         new_password = slz.validated_data["password"]
-        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
-        user_identify_info.password = make_password(new_password)
-        user_identify_info.save(update_fields=["password", "updated_at"])
+        DataSourceUserHandler.update_data_source_user_password(data_source_user, new_password)
+
         return Response(status=status.HTTP_204_NO_CONTENT)

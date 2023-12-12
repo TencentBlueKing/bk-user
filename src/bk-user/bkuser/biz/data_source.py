@@ -11,7 +11,9 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict, List, Optional
 
+from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
+from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -19,11 +21,15 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourcePlugin,
+    DataSourceUser,
     DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
 )
+from bkuser.common.hashers import make_password
+from bkuser.common.passwd import PasswordValidator
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig, PasswordRuleConfig
 
 
 class DataSourceDepartmentInfoWithChildren(BaseModel):
@@ -146,3 +152,16 @@ class DataSourceUserHandler:
             leaders_map[relation.user_id].append(relation.leader_id)
 
         return leaders_map
+
+    @staticmethod
+    def update_data_source_user_password(data_source_user: DataSourceUser, new_password: str):
+        data_source = data_source_user.data_source
+        password_rule_config = PasswordRuleConfig(**data_source.plugin_config["password_rule"])
+
+        ret = PasswordValidator(password_rule_config.to_rule()).validate(new_password)
+        if not ret.ok:
+            raise ValidationError(_("传递的密码不符合密码规则：{}").format(ret.exception_message))
+
+        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        user_identify_info.password = make_password(new_password)
+        user_identify_info.save(update_fields=["password", "updated_at"])
