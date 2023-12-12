@@ -88,7 +88,7 @@ class DataSourceDepartmentHandler:
             )
         # 获取部门的子部门ID列表
         for dept_relation in DataSourceDepartmentRelation.objects.filter(department_id__in=department_ids):
-            departments_map[dept_relation.department.id].children_ids = list(
+            departments_map[dept_relation.department_id].children_ids = list(
                 dept_relation.get_children().values_list("department_id", flat=True)
             )
 
