@@ -89,7 +89,7 @@ class TenantUserValidityPeriodNotifier:
         self.tenant_id = tenant_id
         self.scene = scene
 
-        self.templates = self._get_templates_with_scene(scene)
+        self.templates = self._get_templates_by_scene(scene)
 
     def send(self, users: List[TenantUser]) -> None:
         """根据配置，发送对应的通知信息"""
@@ -105,7 +105,7 @@ class TenantUserValidityPeriodNotifier:
                     u.id,
                 )
 
-    def _get_templates_with_scene(self, scene: NotificationScene) -> List[NotificationTemplate]:
+    def _get_templates_by_scene(self, scene: NotificationScene) -> List[NotificationTemplate]:
         """根据场景以及插件配置中设置的通知方式，获取需要发送通知的模板"""
 
         if scene not in [NotificationScene.TENANT_USER_EXPIRED, NotificationScene.TENANT_USER_EXPIRING]:

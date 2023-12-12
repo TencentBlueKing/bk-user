@@ -26,7 +26,8 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserSearchInputSLZ,
 )
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation
+from bkuser.apps.data_source.constants import DataSourceStatus
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
@@ -37,6 +38,7 @@ from bkuser.biz.tenant import (
     TenantHandler,
     TenantUserHandler,
 )
+from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
@@ -46,7 +48,11 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = TenantUserListOutputSLZ
+
+    def get_queryset(self):
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+        ).select_related("data_source_department")
 
     @swagger_auto_schema(
         tags=["tenant-organization"],
@@ -59,31 +65,40 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 过滤出该租户部门的租户用户
-        tenant_user_ids = TenantUserHandler.get_tenant_user_ids_by_tenant_department(
-            tenant_id=self.get_current_tenant_id(), tenant_department_id=self.kwargs["id"], recursive=data["recursive"]
-        )
+        tenant_dept = self.get_object()
+        data_source_id = tenant_dept.data_source_department.data_source_id
 
-        # build response
-        queryset = self.filter_queryset(self.get_queryset().filter(id__in=tenant_user_ids))
+        # FIXME (su) 梳理数据源状态流转后重构
+        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
+            raise error_codes.DATA_SOURCE_DISABLED
+
+        # 需要通过数据源部门 - 用户关系反查租户部门用户信息，且需要支持递归查询子孙部门用户
+        data_source_dept_ids = [tenant_dept.data_source_department_id]
+        if data["recursive"]:
+            rel = DataSourceDepartmentRelation.objects.get(department_id=tenant_dept.data_source_department_id)
+            data_source_dept_ids = rel.get_descendants(include_self=True).values_list("department_id", flat=True)
+
+        data_source_user_ids = DataSourceDepartmentUserRelation.objects.filter(
+            department_id__in=data_source_dept_ids,
+        ).values_list("user_id", flat=True)
+
+        tenant_users = TenantUser.objects.filter(
+            data_source_user_id__in=data_source_user_ids,
+        ).select_related("data_source_user")
+
         if keyword := data.get("keyword"):
-            queryset = queryset.select_related("data_source_user").filter(
+            tenant_users = tenant_users.filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
 
-        slz_context = {
-            # 租户用户基础信息
-            "tenant_users_info": {i.id: i for i in TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)},
-            # 租户用户所属租户组织
-            "tenant_user_departments": TenantUserHandler.get_tenant_user_departments_map_by_id(tenant_user_ids),
+        context = {
+            "tenant_user_departments_map": TenantUserHandler.get_tenant_user_depts_map(data_source_id, tenant_users),
         }
-        page = self.paginate_queryset(queryset)
+        page = self.paginate_queryset(tenant_users)
         if page is not None:
-            serializer = self.get_serializer(page, many=True, context=slz_context)
-            return self.get_paginated_response(serializer.data)
+            return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
 
-        serializer = self.get_serializer(queryset, many=True, context=slz_context)
-        return Response(serializer.data)
+        return Response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):
@@ -92,6 +107,7 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserRetrieveOutputSLZ
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户部门下单个用户详情",
@@ -105,6 +121,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户列表",
@@ -152,6 +169,7 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="更新租户",
@@ -181,6 +199,7 @@ class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIVi
     def get_queryset(self):
         return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户部门的二级子部门列表",
@@ -231,6 +250,7 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             "tenant_user_departments": tenant_user_departments_map,
         }
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户下用户列表",

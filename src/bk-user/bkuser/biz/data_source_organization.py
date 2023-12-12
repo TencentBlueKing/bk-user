@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
+    DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
@@ -69,6 +70,12 @@ class DataSourceUserRelationInfo(BaseModel):
 
     department_ids: List[int]
     leader_ids: List[int]
+
+
+class DataSourceDepartmentInfoWithChildren(BaseModel):
+    id: int
+    name: str
+    children_ids: List[int]
 
 
 class DataSourceOrganizationHandler:
@@ -276,3 +283,39 @@ class DataSourceOrganizationHandler:
             data[user_id] = DataSourceOrganizationHandler.list_leader_info_by_id(leaders_ids=leaders_ids)
 
         return data
+
+
+class DataSourceDepartmentHandler:
+    @staticmethod
+    def get_department_info_map_by_ids(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
+        """
+        获取部门基础信息和其子部门ID列表
+        """
+        departments_map: Dict = {}
+        # 获取部门基础信息
+        for dept in DataSourceDepartment.objects.filter(id__in=department_ids):
+            departments_map[dept.id] = DataSourceDepartmentInfoWithChildren(
+                id=dept.id, name=dept.name, children_ids=[]
+            )
+        # 获取部门的子部门ID列表
+        for dept_relation in DataSourceDepartmentRelation.objects.filter(department_id__in=department_ids):
+            departments_map[dept_relation.department_id].children_ids = list(
+                dept_relation.get_children().values_list("department_id", flat=True)
+            )
+
+        return departments_map
+
+    # TODO deprecated
+    @staticmethod
+    def get_user_department_ids_map(user_ids: List[int]) -> Dict[int, List[int]]:
+        """
+        批量获取数据源用户部门 id 信息
+
+        :param user_ids: 数据源用户 ID 列表
+        :returns: 多个数据源用户部门 ID 列表
+        """
+        user_department_ids_map = defaultdict(list)
+        for item in DataSourceDepartmentUserRelation.objects.filter(user_id__in=user_ids):
+            user_department_ids_map[item.user_id].append(item.department_id)
+
+        return user_department_ids_map

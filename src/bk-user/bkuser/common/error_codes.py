@@ -82,6 +82,7 @@ class ErrorCodes:
     CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))
     DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
     DATA_SOURCE_IMPORT_FAILED = ErrorCode(_("数据源导入失败"))
+    DATA_SOURCE_DISABLED = ErrorCode(_("数据源已禁用，当前操作不受支持"))
     CREATE_DATA_SOURCE_SYNC_TASK_FAILED = ErrorCode(_("创建数据源同步任务失败"))
 
     # 认证源

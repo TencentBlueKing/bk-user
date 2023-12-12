@@ -38,8 +38,9 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceDepartmentInfoWithChildren
 from bkuser.biz.data_source_organization import (
+    DataSourceDepartmentHandler,
+    DataSourceDepartmentInfoWithChildren,
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
     DataSourceUserEditableBaseInfo,
@@ -99,6 +100,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
 
         return user_department_info_map
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["data_source_organization"],
         operation_description="数据源用户列表",
@@ -117,6 +119,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         serializer = UserSearchOutputSLZ(data_source_users, many=True, context=context)
         return self.get_paginated_response(serializer.data)
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["data_source_organization"],
         operation_description="新建数据源用户",
@@ -185,6 +188,7 @@ class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         return queryset
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["data_source_organization"],
         operation_description="数据源用户上级列表",
@@ -218,6 +222,7 @@ class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView)
 
         return queryset
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["data_source_organization"],
         operation_description="数据源部门列表",
@@ -249,6 +254,7 @@ class DataSourceUserRetrieveUpdateApi(
         user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([self.kwargs["id"]])
         return {"user_departments_map": user_departments_map, "user_leaders_map": user_leaders_map}
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["data_source_organization"],
         operation_description="数据源用户详情",
@@ -257,6 +263,7 @@ class DataSourceUserRetrieveUpdateApi(
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
+    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["data_source_organization"],
         operation_description="更新数据源用户",

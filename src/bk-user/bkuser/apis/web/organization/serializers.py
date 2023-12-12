@@ -62,26 +62,25 @@ class TenantUserInfoOutputSLZ(serializers.Serializer):
 
 class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
-    def get_departments(self, instance: TenantUser) -> List[Dict]:
-        departments = self.context["tenant_user_departments"].get(instance.id) or []
+    def get_departments(self, obj: TenantUser) -> List[Dict]:
+        departments = self.context["tenant_user_departments_map"].get(obj.id) or []
         return [{"id": i.id, "name": i.name} for i in departments]
 
-    def to_representation(self, instance: TenantUser) -> Dict:
-        data = super().to_representation(instance)
-        user_info = self.context["tenant_users_info"].get(instance.id)
-        if user_info is not None:
-            user = user_info.data_source_user
-            data.update(
-                {
-                    "full_name": user.full_name,
-                    "username": user.username,
-                    "email": user.email,
-                    "phone": user.phone,
-                    "phone_country_code": user.phone_country_code,
-                    "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
-                    "extras": user.extras,
-                }
-            )
+    def to_representation(self, obj: TenantUser) -> Dict:
+        data = super().to_representation(obj)
+        user = obj.data_source_user
+        data.update(
+            {
+                "full_name": user.full_name,
+                "username": user.username,
+                "email": user.email,
+                "phone": user.phone,
+                "phone_country_code": user.phone_country_code,
+                "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
+                "extras": user.extras,
+            }
+        )
+
         return data
 
 

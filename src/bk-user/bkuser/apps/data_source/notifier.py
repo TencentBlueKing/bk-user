@@ -94,7 +94,7 @@ class LocalDataSourceUserNotifier:
         if not plugin_cfg.enable_account_password_login:
             return
 
-        self.templates = self._get_tmpls_with_scene(plugin_cfg, scene)
+        self.templates = self._get_tmpls_by_scene(plugin_cfg, scene)
 
     def send(self, users: List[DataSourceUser], user_passwd_map: Optional[Dict[int, str]] = None) -> None:
         """根据数据源插件配置，发送对应的通知信息"""
@@ -116,7 +116,7 @@ class LocalDataSourceUserNotifier:
         except Exception:
             logger.exception("send notification failed")
 
-    def _get_tmpls_with_scene(
+    def _get_tmpls_by_scene(
         self, plugin_cfg: LocalDataSourcePluginConfig, scene: NotificationScene
     ) -> List[NotificationTemplate]:
         """根据场景以及插件配置中设置的通知方式，获取需要发送通知的模板"""
