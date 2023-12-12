@@ -11,9 +11,13 @@ specific language governing permissions and limitations under the License.
 import random
 
 import pytest
-from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.plugins.base import get_default_plugin_cfg
+from bkuser.plugins.constants import DataSourcePluginEnum
 from django.urls import reverse
 from rest_framework import status
+
+from tests.test_utils.helpers import generate_random_string
 
 pytestmark = pytest.mark.django_db
 
@@ -251,3 +255,43 @@ class TestDataSourceUserWithCustomField:
             reverse("data_source_user.retrieve_update", kwargs={"id": data_source_user.id}), data=update_data
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+class TestDataSourceUserUpdatePassword:
+    @pytest.fixture()
+    def http_ds_user(self, default_tenant):
+        tenant_id = default_tenant.id
+        _, http_data_source = DataSource.objects.get_or_create(
+            owner_tenant_id=tenant_id,
+            plugin_id=DataSourcePluginEnum.GENERAL,
+            name=f"{tenant_id}-default-http",
+            plugin_config=get_default_plugin_cfg(DataSourcePluginEnum.GENERAL),
+        )
+        users = [
+            DataSourceUser(
+                full_name=generate_random_string(),
+                username=generate_random_string(),
+                email=f"{generate_random_string()}@qq.com",
+                phone="13123456789",
+                data_source=http_data_source,
+            )
+            for _ in range(10)
+        ]
+        DataSourceUser.objects.bulk_create(users)
+        return DataSourceUser.objects.filter(data_source=http_data_source)
+
+    def _call_update_password_api(self, api_client, data_source_user_id, password):
+        return api_client.post(
+            reverse("data_source_user.password.update", kwargs={"id": data_source_user_id}),
+            data={"password": password},
+        )
+
+    def test_ds_user_update_password(self, api_client, data_source_users, http_ds_user):
+        data_source_user: DataSourceUser = random.choice([*data_source_users, *http_ds_user])
+
+        response = self._call_update_password_api(api_client, data_source_user.id, "ZDr@8872341")
+
+        if data_source_user.data_source.is_local:
+            assert response.status_code == status.HTTP_200_OK
+        else:
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
