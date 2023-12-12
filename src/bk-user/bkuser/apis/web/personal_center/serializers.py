@@ -19,6 +19,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.validators import validate_logo
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -145,4 +146,4 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
 
 
 class TenantUserLogoUpdateInputSLZ(serializers.Serializer):
-    logo = serializers.CharField(help_text="用户 Logo")
+    logo = serializers.CharField(help_text="用户 Logo", validators=[validate_logo])

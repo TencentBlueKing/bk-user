@@ -8,9 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import base64
 import logging
 import re
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
@@ -36,3 +38,19 @@ def validate_tenant_custom_field_name(value):
                 "{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字母开头，字母或数字结尾"  # noqa: E501
             ).format(value),
         )
+
+
+def validate_logo(value):
+    if not value:
+        return
+
+    try:
+        decoded_data = base64.b64decode(value)
+    except Exception:
+        # Decoding failed or invalid Base64-encoded image
+        logger.exception("invalid image")
+        raise ValidationError(_("无效logo文件"))
+
+    # Check if the size exceeds the specified limit
+    if len(decoded_data) / 1024 > settings.MAX_LOGO_SIZE:
+        raise ValidationError(_("logo 文件大小超过限制{}KB").format(settings.MAX_LOGO_SIZE))
