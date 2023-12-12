@@ -258,13 +258,8 @@ class DataSourceUserPasswordRestApi(ExcludePutAPIViewMixin, generics.RetrieveUpd
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    def get_serializer_context(self):
-        data_source = self.get_object().data_source
-        password_rule_config = PasswordRuleConfig(**data_source.plugin_config["password_rule"])
-        return {"password_rule_config": password_rule_config}
-
     @swagger_auto_schema(
-        tags=["data_source"],
+        tags=["data_source_organization"],
         operation_description="更新数据源用户密码",
         request_body=DataSourceUserPaaswordInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
@@ -274,7 +269,10 @@ class DataSourceUserPasswordRestApi(ExcludePutAPIViewMixin, generics.RetrieveUpd
         if not data_source_user.data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源类型用户可变更密码"))
 
-        slz = DataSourceUserPaaswordInputSLZ(request.data)
+        data_source = data_source_user.data_source
+        password_rule_config = PasswordRuleConfig(**data_source.plugin_config["password_rule"])
+
+        slz = DataSourceUserPaaswordInputSLZ(request.data, context={"password_rule_config": password_rule_config})
         slz.is_valid()
 
         new_password = slz.validated_data["password"]
