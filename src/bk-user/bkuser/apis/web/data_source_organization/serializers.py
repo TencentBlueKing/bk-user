@@ -20,7 +20,6 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
-    DataSourceDepartmentUserRelation,
     DataSourceUser,
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
@@ -137,13 +136,10 @@ class UserSearchOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="用户部门")
     extras = serializers.JSONField(help_text="自定义字段")
 
-    # FIXME:考虑抽象一个函数 获取数据后传递到context
     @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser):
-        return [
-            {"id": department_user_relation.department.id, "name": department_user_relation.department.name}
-            for department_user_relation in DataSourceDepartmentUserRelation.objects.filter(user=obj)
-        ]
+        departments = self.context["data_source_user_department_map"].get(obj.id, [])
+        return [{"id": i.id, "name": i.name} for i in departments]
 
 
 class UserCreateInputSLZ(serializers.Serializer):
@@ -242,8 +238,7 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
-        user_departments_map = self.context["user_departments_map"]
-        departments = user_departments_map.get(obj.id, [])
+        departments = self.context["user_departments_map"].get(obj.id, [])
         return [{"id": dept.id, "name": dept.name} for dept in departments]
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
@@ -301,3 +296,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
         return _validate_user_extras(
             extras, self.context["tenant_id"], self.context["data_source"], self.context["user_id"]
         )
+
+
+class DataSourceUserOrganizationPathOutputSLZ(serializers.Serializer):
+    organization_paths = serializers.ListField(help_text="数据源用户所属部门路径列表", child=serializers.CharField())

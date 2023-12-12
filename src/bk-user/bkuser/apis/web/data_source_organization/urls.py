@@ -20,4 +20,10 @@ urlpatterns = [
     # 数据源部门
     path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_department.list"),
     path("users/<int:id>/", views.DataSourceUserRetrieveUpdateApi.as_view(), name="data_source_user.retrieve_update"),
+    # 数据源用户所属部门路径
+    path(
+        "users/<int:id>/organization-paths/",
+        views.DataSourceUserOrganizationPathListApi.as_view(),
+        name="data_source_user.organization_path.list",
+    ),
 ]

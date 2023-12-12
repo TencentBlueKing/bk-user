@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Dict, List
+
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -15,6 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.data_source_organization.serializers import (
+    DataSourceUserOrganizationPathOutputSLZ,
     DepartmentSearchInputSLZ,
     DepartmentSearchOutputSLZ,
     LeaderSearchInputSLZ,
@@ -27,9 +30,15 @@ from bkuser.apis.web.data_source_organization.serializers import (
     UserUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceUser,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceDepartmentInfoWithChildren
 from bkuser.biz.data_source_organization import (
     DataSourceOrganizationHandler,
     DataSourceUserBaseInfo,
@@ -64,17 +73,52 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
 
         return queryset
 
+    def _get_data_source_user_department_info_map(
+        self, data_source_user_ids: List[int]
+    ) -> Dict[int, List[DataSourceDepartmentInfoWithChildren]]:
+        """
+        获取用户所属部门数据，返回数据源用户ID-所属数据源部门数据列表 映射
+        """
+        data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
+            user_ids=data_source_user_ids
+        )
+        data_source_department_id_list = []
+        for department_ids in data_source_user_department_ids_map.values():
+            data_source_department_id_list += department_ids
+        # 获取数据源部门基础信息
+        department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(
+            data_source_department_id_list
+        )
+
+        # 构建 用户ID-所属部门信息 映射
+        user_department_info_map = {}
+        for user_id, department_ids in data_source_user_department_ids_map.items():
+            user_department_info_map[user_id] = [
+                department_info_map[department_id] for department_id in department_ids
+            ]
+
+        return user_department_info_map
+
     @swagger_auto_schema(
-        tags=["data_source"],
+        tags=["data_source_organization"],
         operation_description="数据源用户列表",
         query_serializer=UserSearchInputSLZ(),
         responses={status.HTTP_200_OK: UserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+        data_source_users = self.paginate_queryset(queryset)
+
+        context = {
+            "data_source_user_department_map": self._get_data_source_user_department_info_map(
+                [user.id for user in data_source_users]
+            )
+        }
+        serializer = UserSearchOutputSLZ(data_source_users, many=True, context=context)
+        return self.get_paginated_response(serializer.data)
 
     @swagger_auto_schema(
-        tags=["data_source"],
+        tags=["data_source_organization"],
         operation_description="新建数据源用户",
         request_body=UserCreateInputSLZ(),
         responses={status.HTTP_201_CREATED: UserCreateOutputSLZ()},
@@ -142,7 +186,7 @@ class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
         return queryset
 
     @swagger_auto_schema(
-        tags=["data_source"],
+        tags=["data_source_organization"],
         operation_description="数据源用户上级列表",
         query_serializer=LeaderSearchInputSLZ(),
         responses={status.HTTP_200_OK: LeaderSearchOutputSLZ(many=True)},
@@ -175,7 +219,7 @@ class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView)
         return queryset
 
     @swagger_auto_schema(
-        tags=["data_source"],
+        tags=["data_source_organization"],
         operation_description="数据源部门列表",
         query_serializer=DepartmentSearchInputSLZ(),
         responses={status.HTTP_200_OK: DepartmentSearchOutputSLZ(many=True)},
@@ -193,14 +237,20 @@ class DataSourceUserRetrieveUpdateApi(
     serializer_class = UserRetrieveOutputSLZ
 
     def get_serializer_context(self):
-        user_departments_map = DataSourceOrganizationHandler.get_user_departments_map_by_user_id(
+        data_source_user_department_ids_map = DataSourceDepartmentHandler.get_user_department_ids_map(
             user_ids=[self.kwargs["id"]]
         )
+        user_departments_map = {}
+        for user_id, department_ids in data_source_user_department_ids_map.items():
+            # 获取用户的数据源部门基础信息
+            department_info_map = DataSourceDepartmentHandler.get_department_info_map_by_ids(department_ids)
+            user_departments_map[user_id] = list(department_info_map.values())
+
         user_leaders_map = DataSourceOrganizationHandler.get_user_leaders_map_by_user_id([self.kwargs["id"]])
         return {"user_departments_map": user_departments_map, "user_leaders_map": user_leaders_map}
 
     @swagger_auto_schema(
-        tags=["data_source"],
+        tags=["data_source_organization"],
         operation_description="数据源用户详情",
         responses={status.HTTP_200_OK: UserRetrieveOutputSLZ()},
     )
@@ -208,7 +258,7 @@ class DataSourceUserRetrieveUpdateApi(
         return self.retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        tags=["data_source"],
+        tags=["data_source_organization"],
         operation_description="更新数据源用户",
         request_body=UserUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
@@ -242,3 +292,32 @@ class DataSourceUserRetrieveUpdateApi(
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceUserOrganizationPathListApi(generics.ListAPIView):
+    queryset = DataSourceUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["data_source_organization"],
+        operation_description="数据源用户所属部门的部门路径",
+        responses={status.HTTP_200_OK: DataSourceUserOrganizationPathOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        data_source_user_id = self.get_object().id
+        dept_ids = DataSourceDepartmentHandler.get_user_department_ids_map(user_ids=[data_source_user_id]).get(
+            data_source_user_id
+        )
+        if not dept_ids:
+            return Response()
+
+        dept_relations = DataSourceDepartmentRelation.objects.filter(department_id__in=dept_ids)
+        organization_paths: List[str] = []
+        # 部门路径构建
+        for dept_relation in dept_relations:
+            dept_names = list(
+                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
+            )
+            organization_paths.append("/".join(dept_names))
+        return Response(DataSourceUserOrganizationPathOutputSLZ({"organization_paths": organization_paths}).data)
