@@ -78,17 +78,18 @@ class DataSourceDepartmentHandler:
     @staticmethod
     def get_department_info_map_by_ids(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
         """
-        获取部门基础信息
+        获取部门基础信息和其子部门ID列表
         """
         departments_map: Dict = {}
-
+        # 获取部门基础信息
         for dept in DataSourceDepartment.objects.filter(id__in=department_ids):
-            dept_relation = DataSourceDepartmentRelation.objects.get(department=dept)
-
             departments_map[dept.id] = DataSourceDepartmentInfoWithChildren(
-                id=dept.id,
-                name=dept.name,
-                children_ids=list(dept_relation.get_children().values_list("department_id", flat=True)),
+                id=dept.id, name=dept.name, children_ids=[]
+            )
+        # 获取部门的子部门ID列表
+        for dept_relation in DataSourceDepartmentRelation.objects.filter(department_id__in=department_ids):
+            departments_map[dept_relation.department.id].children_ids = list(
+                dept_relation.get_children().values_list("department_id", flat=True)
             )
 
         return departments_map
