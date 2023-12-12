@@ -72,7 +72,7 @@ export default createRouter({
               component: () => import('@/views/data-source/LocalDataSource.vue'),
             },
             {
-              path: 'sync-records',
+              path: 'sync-records/:type?',
               name: 'syncRecords',
               meta: {
                 routeParentName: 'dataSource',
