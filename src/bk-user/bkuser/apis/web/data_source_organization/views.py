@@ -295,7 +295,7 @@ class DataSourceUserRetrieveUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceUserDepartmentListApi(generics.ListAPIView):
+class DataSourceUserOrganizationPathListApi(generics.ListAPIView):
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源用户所属部门的部门路径",

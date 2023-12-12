@@ -125,7 +125,6 @@ class UserSearchInputSLZ(serializers.Serializer):
 class DataSourceSearchDepartmentsOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="部门ID")
     name = serializers.CharField(help_text="部门名称")
-    organization_path = serializers.CharField(help_text="部门路径")
 
 
 class UserSearchOutputSLZ(serializers.Serializer):
