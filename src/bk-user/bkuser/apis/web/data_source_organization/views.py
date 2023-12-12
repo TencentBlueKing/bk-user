@@ -18,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.data_source_organization.serializers import (
+    DataSourceUserOrganizationPathOutputSLZ,
     DepartmentSearchInputSLZ,
     DepartmentSearchOutputSLZ,
     LeaderSearchInputSLZ,
@@ -30,7 +31,12 @@ from bkuser.apis.web.data_source_organization.serializers import (
     UserUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceUser,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.biz.data_source import DataSourceDepartmentHandler, DataSourceDepartmentInfoWithChildren
@@ -287,3 +293,28 @@ class DataSourceUserRetrieveUpdateApi(
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceUserDepartmentListApi(generics.ListAPIView):
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源用户所属部门的部门路径",
+        responses={status.HTTP_200_OK: DataSourceUserOrganizationPathOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        data_source_user_id = self.kwargs["id"]
+        dept_ids = DataSourceDepartmentHandler.get_user_department_ids_map(user_ids=[data_source_user_id]).get(
+            data_source_user_id
+        )
+        if not dept_ids:
+            return Response()
+
+        dept_relations = DataSourceDepartmentRelation.objects.filter(department_id__in=dept_ids)
+        organization_paths: List[str] = []
+        # 部门路径构建
+        for dept_relation in dept_relations:
+            dept_names = list(
+                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
+            )
+            organization_paths.append("/".join(dept_names))
+        return Response(DataSourceUserOrganizationPathOutputSLZ({"organization_paths": organization_paths}).data)

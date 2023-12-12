@@ -29,7 +29,6 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordIni
 class DataSourceDepartmentInfoWithChildren(BaseModel):
     id: int
     name: str
-    organization_path: str
     children_ids: List[int]
 
 
@@ -86,15 +85,9 @@ class DataSourceDepartmentHandler:
         for dept in DataSourceDepartment.objects.filter(id__in=department_ids):
             dept_relation = DataSourceDepartmentRelation.objects.get(department=dept)
 
-            # 部门路径构建
-            dept_names = list(
-                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
-            )
-
             departments_map[dept.id] = DataSourceDepartmentInfoWithChildren(
                 id=dept.id,
                 name=dept.name,
-                organization_path="/".join(dept_names),
                 children_ids=list(dept_relation.get_children().values_list("department_id", flat=True)),
             )
 

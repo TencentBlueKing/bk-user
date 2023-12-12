@@ -140,7 +140,7 @@ class UserSearchOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser):
         departments = self.context["data_source_user_department_map"].get(obj.id, [])
-        return [{"id": i.id, "name": i.name, "organization_path": i.organization_path} for i in departments]
+        return [{"id": i.id, "name": i.name} for i in departments]
 
 
 class UserCreateInputSLZ(serializers.Serializer):
@@ -241,9 +241,7 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
         departments = self.context["user_departments_map"].get(obj.id, [])
-        return [
-            {"id": dept.id, "name": dept.name, "organization_path": dept.organization_path} for dept in departments
-        ]
+        return [{"id": dept.id, "name": dept.name} for dept in departments]
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
     def get_leaders(self, obj: DataSourceUser) -> List[Dict]:
@@ -300,3 +298,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
         return _validate_user_extras(
             extras, self.context["tenant_id"], self.context["data_source"], self.context["user_id"]
         )
+
+
+class DataSourceUserOrganizationPathOutputSLZ(serializers.Serializer):
+    organization_paths = serializers.ListField(help_text="数据源用户所属部门路径列表", child=serializers.CharField())
