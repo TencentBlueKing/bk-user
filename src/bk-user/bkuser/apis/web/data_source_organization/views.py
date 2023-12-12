@@ -253,7 +253,7 @@ class DataSourceUserRetrieveUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceUserPasswordRestApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
+class DataSourceUserPasswordUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
     queryset = DataSourceUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]

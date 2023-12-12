@@ -21,8 +21,8 @@ urlpatterns = [
     path("<int:id>/departments/", views.DataSourceDepartmentsListApi.as_view(), name="data_source_department.list"),
     path("users/<int:id>/", views.DataSourceUserRetrieveUpdateApi.as_view(), name="data_source_user.retrieve_update"),
     path(
-        "users/<int:id>/reset-password/",
-        views.DataSourceUserPasswordRestApi.as_view(),
-        name="data_source_user.reset_password",
+        "users/<int:id>/password/",
+        views.DataSourceUserPasswordUpdateApi.as_view(),
+        name="data_source_user.password.update",
     ),
 ]
