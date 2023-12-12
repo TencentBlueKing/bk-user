@@ -9,12 +9,14 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.data_source_organization.serializers import (
+    DataSourceUserPaaswordInputSLZ,
     DepartmentSearchInputSLZ,
     DepartmentSearchOutputSLZ,
     LeaderSearchInputSLZ,
@@ -27,7 +29,12 @@ from bkuser.apis.web.data_source_organization.serializers import (
     UserUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceUser,
+    LocalDataSourceIdentityInfo,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.biz.data_source_organization import (
@@ -37,7 +44,9 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.common.hashers import make_password
+from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
+from bkuser.plugins.local.models import PasswordRuleConfig
 
 
 class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
@@ -241,4 +250,35 @@ class DataSourceUserRetrieveUpdateApi(
             user=user, base_user_info=base_user_info, relation_info=relation_info
         )
 
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceUserPasswordRestApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
+    queryset = DataSourceUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    def get_serializer_context(self):
+        data_source = self.get_object().data_source
+        password_rule_config = PasswordRuleConfig(**data_source.plugin_config["password_rule"])
+        return {"password_rule_config": password_rule_config}
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="更新数据源用户密码",
+        request_body=DataSourceUserPaaswordInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def patch(self, request, *args, **kwargs):
+        data_source_user = self.get_object()
+        if not data_source_user.data_source.is_local:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源类型用户可变更密码"))
+
+        slz = DataSourceUserPaaswordInputSLZ(request.data)
+        slz.is_valid()
+
+        new_password = slz.validated_data["password"]
+        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        user_identify_info.password = make_password(new_password)
+        user_identify_info.save(update_fields=["password", "updated_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)

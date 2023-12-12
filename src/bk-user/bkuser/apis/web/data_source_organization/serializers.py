@@ -26,6 +26,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.biz.validators import validate_data_source_user_username
+from bkuser.common.passwd import PasswordValidator
 from bkuser.common.validators import validate_phone_with_country_code
 
 logger = logging.getLogger(__name__)
@@ -301,3 +302,15 @@ class UserUpdateInputSLZ(serializers.Serializer):
         return _validate_user_extras(
             extras, self.context["tenant_id"], self.context["data_source"], self.context["user_id"]
         )
+
+
+class DataSourceUserPaaswordInputSLZ(serializers.Serializer):
+    password = serializers.CharField(help_text="数据源用户重置的新密码")
+
+    def validate_new_password(self, password: str) -> str:
+        # 获取当前数据源的密码规则
+        ret = PasswordValidator(self.context["password_rule_config"].to_rule()).validate(password)
+        if not ret.ok:
+            raise ValidationError(_("固定密码的值不符合密码规则：{}").format(ret.exception_message))
+
+        return password
