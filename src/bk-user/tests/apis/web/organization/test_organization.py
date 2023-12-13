@@ -51,3 +51,25 @@ class TestTenantDepartmentUserListApi:
         user = resp.data["results"][0]
         assert user["username"] == "lushi"
         assert {dept["name"] for dept in user["departments"]} == {"小组ABA", "中心BA"}
+
+
+class TestTenantListApi:
+    def test_list(self, api_client, full_data_source):
+        resp = api_client.get(reverse("organization.tenant.list"))
+
+        tenants = resp.data
+        assert len(tenants) == 1
+
+        default_tenant = tenants[0]
+        assert default_tenant["id"] == "default"
+        assert default_tenant["departments"][0]["name"] == "公司"
+
+        # TODO 补充存在协同租户的情况
+
+
+class TestTenantDepartmentChildrenListApi:
+    pass
+
+
+class TestTenantUserListApi:
+    pass

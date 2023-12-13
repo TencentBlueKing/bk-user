@@ -47,80 +47,6 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 logger = logging.getLogger(__name__)
 
 
-class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
-    queryset = TenantUser.objects.all()
-    lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    def get_queryset(self):
-        cur_tenant_id = self.get_current_tenant_id()
-        return TenantDepartment.objects.filter(tenant_id=cur_tenant_id).select_related("data_source_department")
-
-    @swagger_auto_schema(
-        tags=["tenant-organization"],
-        operation_description="租户部门下用户列表",
-        query_serializer=TenantDepartmentUserSearchInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        slz = TenantDepartmentUserSearchInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        tenant_dept = self.get_object()
-
-        # TODO (su) 梳理数据源状态流转后重构
-        data_source_id = tenant_dept.data_source_department.data_source_id
-        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
-            raise error_codes.DATA_SOURCE_DISABLED
-
-        # 需要通过数据源部门 - 用户关系反查租户部门用户信息，且需要支持递归查询子孙部门用户
-        data_source_dept_ids = [tenant_dept.data_source_department_id]
-        if data["recursive"]:
-            rel = DataSourceDepartmentRelation.objects.get(department_id=tenant_dept.data_source_department_id)
-            data_source_dept_ids = rel.get_descendants(include_self=True).values_list("department_id", flat=True)
-
-        data_source_user_ids = DataSourceDepartmentUserRelation.objects.filter(
-            department_id__in=data_source_dept_ids,
-        ).values_list("user_id", flat=True)
-
-        tenant_users = (
-            # 指定租户 ID，可以确保即使跨租户协同，也是在指定的协同范围内的
-            TenantUser.objects.filter(tenant=tenant_dept.tenant, data_source_user_id__in=data_source_user_ids)
-            .select_related("data_source_user")
-            .order_by("data_source_user__username")
-        )
-
-        if keyword := data.get("keyword"):
-            tenant_users = tenant_users.filter(
-                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
-            )
-
-        context = {
-            "tenant_user_depts_map": TenantUserHandler.get_tenant_user_depts_map(tenant_dept.tenant_id, tenant_users),
-        }
-        if page := self.paginate_queryset(tenant_users):
-            return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
-
-        return Response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
-
-
-class TenantUserRetrieveApi(generics.RetrieveAPIView):
-    queryset = TenantUser.objects.all()
-    lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = TenantUserRetrieveOutputSLZ
-
-    # TODO (su) 评估 API 性能优化
-    @swagger_auto_schema(
-        tags=["tenant-organization"],
-        operation_description="租户部门下单个用户详情",
-        responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
-    )
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-
 class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -210,32 +136,6 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIView):
-    pagination_class = None
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = TenantDepartmentChildrenListOutputSLZ
-    lookup_url_kwarg = "id"
-
-    def get_queryset(self):
-        return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
-
-    @swagger_auto_schema(
-        tags=["tenant-organization"],
-        operation_description="租户部门的二级子部门列表",
-        responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        tenant_dept = self.get_object()
-
-        # TODO (su) 梳理数据源状态流转后重构
-        data_source_id = tenant_dept.data_source_department.data_source_id
-        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
-            raise error_codes.DATA_SOURCE_DISABLED
-
-        tenant_dept_children_infos = TenantDepartmentHandler.get_tenant_dept_children_infos(tenant_dept)
-        return Response(TenantDepartmentChildrenListOutputSLZ(tenant_dept_children_infos, many=True).data)
-
-
 class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
@@ -275,3 +175,103 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
 
         return Response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
+
+
+class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    serializer_class = TenantDepartmentChildrenListOutputSLZ
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["tenant-organization"],
+        operation_description="租户部门的二级子部门列表",
+        responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_dept = self.get_object()
+
+        # TODO (su) 梳理数据源状态流转后重构
+        data_source_id = tenant_dept.data_source_department.data_source_id
+        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
+            raise error_codes.DATA_SOURCE_DISABLED
+
+        tenant_dept_children_infos = TenantDepartmentHandler.get_tenant_dept_children_infos(tenant_dept)
+        return Response(TenantDepartmentChildrenListOutputSLZ(tenant_dept_children_infos, many=True).data)
+
+
+class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    def get_queryset(self):
+        cur_tenant_id = self.get_current_tenant_id()
+        return TenantDepartment.objects.filter(tenant_id=cur_tenant_id).select_related("data_source_department")
+
+    @swagger_auto_schema(
+        tags=["tenant-organization"],
+        operation_description="租户部门下用户列表",
+        query_serializer=TenantDepartmentUserSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = TenantDepartmentUserSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_dept = self.get_object()
+
+        # TODO (su) 梳理数据源状态流转后重构
+        data_source_id = tenant_dept.data_source_department.data_source_id
+        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
+            raise error_codes.DATA_SOURCE_DISABLED
+
+        # 需要通过数据源部门 - 用户关系反查租户部门用户信息，且需要支持递归查询子孙部门用户
+        data_source_dept_ids = [tenant_dept.data_source_department_id]
+        if data["recursive"]:
+            rel = DataSourceDepartmentRelation.objects.get(department_id=tenant_dept.data_source_department_id)
+            data_source_dept_ids = rel.get_descendants(include_self=True).values_list("department_id", flat=True)
+
+        data_source_user_ids = DataSourceDepartmentUserRelation.objects.filter(
+            department_id__in=data_source_dept_ids,
+        ).values_list("user_id", flat=True)
+
+        tenant_users = (
+            # 指定租户 ID，可以确保即使跨租户协同，也是在指定的协同范围内的
+            TenantUser.objects.filter(tenant=tenant_dept.tenant, data_source_user_id__in=data_source_user_ids)
+            .select_related("data_source_user")
+            .order_by("data_source_user__username")
+        )
+
+        if keyword := data.get("keyword"):
+            tenant_users = tenant_users.filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+            )
+
+        context = {
+            "tenant_user_depts_map": TenantUserHandler.get_tenant_user_depts_map(tenant_dept.tenant_id, tenant_users),
+        }
+        if page := self.paginate_queryset(tenant_users):
+            return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
+
+        return Response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
+
+
+class TenantUserRetrieveApi(generics.RetrieveAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    serializer_class = TenantUserRetrieveOutputSLZ
+
+    # TODO (su) 评估 API 性能优化
+    @swagger_auto_schema(
+        tags=["tenant-organization"],
+        operation_description="租户部门下单个用户详情",
+        responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
