@@ -467,22 +467,23 @@ class TenantDepartmentHandler:
             return []
 
         # 子部门数据源部门 ID
-        data_source_dept_ids = (
+        sub_data_source_dept_ids = (
             DataSourceDepartmentRelation.objects.get(department_id=tenant_dept.data_source_department_id)
             .get_children()
             .values_list("department_id", flat=True)
         )
-        tenant_depts = TenantDepartment.objects.filter(
-            data_source_department_id__in=data_source_dept_ids,
+        sub_tenant_depts = TenantDepartment.objects.filter(
+            tenant=tenant_dept.tenant,
+            data_source_department_id__in=sub_data_source_dept_ids,
         ).select_related("data_source_department")
         # 子部门的子部门（孙子部门）信息
-        sub_dept_ids_map = DataSourceDepartmentHandler.get_sub_data_source_dept_ids_map(data_source_dept_ids)
+        sub_sub_dept_ids_map = DataSourceDepartmentHandler.get_sub_data_source_dept_ids_map(sub_data_source_dept_ids)
 
         return [
             TenantDepartmentInfoWithChildren(
-                id=tenant_dept.id,
-                name=tenant_dept.data_source_department.name,
-                has_children=bool(len(sub_dept_ids_map[tenant_dept.data_source_department_id])),
+                id=dept.id,
+                name=dept.data_source_department.name,
+                has_children=bool(len(sub_sub_dept_ids_map[dept.data_source_department_id])),
             )
-            for tenant_dept in tenant_depts
+            for dept in sub_tenant_depts
         ]

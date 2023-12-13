@@ -85,7 +85,8 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         ).values_list("user_id", flat=True)
 
         tenant_users = (
-            TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids)
+            # 指定租户 ID，可以确保即使跨租户协同，也是在指定的协同范围内的
+            TenantUser.objects.filter(tenant=tenant_dept.tenant, data_source_user_id__in=data_source_user_ids)
             .select_related("data_source_user")
             .order_by("data_source_user__username")
         )
@@ -145,7 +146,9 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
             .filter(data_source_id__in=[ds.id for ds in data_sources])
             .values_list("department_id", flat=True)
         )
+        # 指定租户 ID，可以确保即使跨租户协同，也是在指定的协同范围内的
         root_tenant_depts = TenantDepartment.objects.filter(
+            tenant_id=cur_tenant_id,
             data_source_department_id__in=root_data_source_dept_ids,
         ).select_related("data_source_department")
 
