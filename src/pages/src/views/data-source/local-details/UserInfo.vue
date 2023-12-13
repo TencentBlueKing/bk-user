@@ -59,7 +59,15 @@
       </bk-table-column>
       <bk-table-column prop="departments" label="所属组织">
         <template #default="{ row }">
-          <span>{{ formatConvert(row.departments) }}</span>
+          <span
+            v-bk-tooltips="{
+              content: tipsText,
+              delay: 300,
+              disabled: !tipsText,
+            }"
+            @mouseenter="tipsShowFn(row.id)">
+            {{ formatConvert(row.departments) }}
+          </span>
         </template>
       </bk-table-column>
       <bk-table-column label="操作" v-if="pluginId === 'local'">
@@ -214,7 +222,7 @@
 
 <script setup lang="ts">
 import axios from 'axios';
-import { Message } from 'bkui-vue';
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { InfoLine } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
 import { computed, defineProps, inject, onMounted, reactive, ref, watch } from 'vue';
@@ -224,7 +232,7 @@ import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
 import { useCustomFields } from '@/hooks/useCustomFields';
-import { getDataSourceUserDetails, getDataSourceUsers } from '@/http/dataSourceFiles';
+import { getDataSourceUserDetails, getDataSourceUsers, getOrganizationPaths } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
 import router from '@/router/index';
 import { formatConvert } from '@/utils';
@@ -530,6 +538,17 @@ const closed = () => {
   uploadInfo.file = {};
   uploadInfo.overwrite = false;
   uploadInfo.incremental = true;
+};
+
+const tipsText = ref('');
+// hover展示数据源用户所属部门组织路径
+const tipsShowFn = async (id: string) => {
+  try {
+    const res = await getOrganizationPaths(id);
+    tipsText.value = res.data?.organization_paths[0] || '';
+  } catch (e) {
+    tipsText.value = '';
+  }
 };
 </script>
 
