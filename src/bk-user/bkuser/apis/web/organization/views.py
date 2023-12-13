@@ -50,9 +50,8 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self):
-        return TenantDepartment.objects.filter(
-            tenant_id=self.get_current_tenant_id(),
-        ).select_related("data_source_department")
+        cur_tenant_id = self.get_current_tenant_id()
+        return TenantDepartment.objects.filter(tenant_id=cur_tenant_id).select_related("data_source_department")
 
     @swagger_auto_schema(
         tags=["tenant-organization"],
@@ -66,9 +65,9 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         data = slz.validated_data
 
         tenant_dept = self.get_object()
-        data_source_id = tenant_dept.data_source_department.data_source_id
 
-        # FIXME (su) 梳理数据源状态流转后重构
+        # TODO (su) 梳理数据源状态流转后重构
+        data_source_id = tenant_dept.data_source_department.data_source_id
         if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
             raise error_codes.DATA_SOURCE_DISABLED
 
@@ -92,7 +91,9 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             )
 
         context = {
-            "tenant_user_departments_map": TenantUserHandler.get_tenant_user_depts_map(data_source_id, tenant_users),
+            "tenant_user_departments_map": TenantUserHandler.get_tenant_user_depts_map(
+                tenant_dept.tenant_id, tenant_users
+            ),
         }
         page = self.paginate_queryset(tenant_users)
         if page is not None:
@@ -199,24 +200,21 @@ class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIVi
     def get_queryset(self):
         return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
 
-    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户部门的二级子部门列表",
         responses={status.HTTP_200_OK: TenantDepartmentChildrenListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        tenant_department = self.get_object()
+        tenant_dept = self.get_object()
 
-        children = DataSourceDepartmentRelation.objects.get(
-            department=tenant_department.data_source_department
-        ).get_children()
+        # TODO (su) 梳理数据源状态流转后重构
+        data_source_id = tenant_dept.data_source_department.data_source_id
+        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
+            raise error_codes.DATA_SOURCE_DISABLED
 
-        tenant_department_children = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
-            tenant_department.tenant_id, children.values_list("department_id", flat=True)
-        )
-        data = [item.model_dump(include={"id", "name", "has_children"}) for item in tenant_department_children]
-        return Response(TenantDepartmentChildrenListOutputSLZ(data, many=True).data)
+        tenant_dept_children_infos = TenantDepartmentHandler.get_tenant_dept_children_infos(tenant_dept)
+        return Response(TenantDepartmentChildrenListOutputSLZ(tenant_dept_children_infos, many=True).data)
 
 
 class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -247,7 +245,7 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         return {
             "tenant_users_info": tenant_users_info_map,
-            "tenant_user_departments": tenant_user_departments_map,
+            "tenant_user_departments_map": tenant_user_departments_map,
         }
 
     # TODO (su) 评估 API 性能优化

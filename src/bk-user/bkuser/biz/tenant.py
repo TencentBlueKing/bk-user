@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import QuerySet
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
@@ -207,7 +206,7 @@ class TenantUserHandler:
 
         return tenant_user_leaders_map
 
-    # TODO (su) deprecated
+    # TODO (su) [deprecated] use get_tenant_user_depts_map instead
     @staticmethod
     def get_tenant_user_departments_map_by_id(
         tenant_user_ids: List[str],
@@ -233,18 +232,16 @@ class TenantUserHandler:
 
     @staticmethod
     def get_tenant_user_depts_map(
-        data_source_id: int, tenant_users: QuerySet[TenantUser]
+        tenant_id: str, tenant_users: List[TenantUser]
     ) -> Dict[str, List[TenantDepartmentInfo]]:
         """获取某个数据源绑定的租户用户的部门信息"""
         # {数据源部门 ID: 租户部门信息(id, name)}
         data_source_dept_id_tenant_dept_info_map = {
             dept.data_source_department_id: TenantDepartmentInfo(id=dept.id, name=dept.data_source_department.name)
-            for dept in TenantDepartment.objects.filter(
-                data_source_id=data_source_id,
-            ).select_related("data_source_department")
+            for dept in TenantDepartment.objects.filter(tenant_id=tenant_id).select_related("data_source_department")
         }
 
-        data_source_user_ids = tenant_users.values_list("data_source_user_id", flat=True)
+        data_source_user_ids = [u.data_source_user_id for u in tenant_users]
         # {数据源用户 ID: [数据源部门 ID1, 数据源部门 ID2]}
         data_source_user_dept_ids_map = defaultdict(list)
         for rel in DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids):
@@ -435,6 +432,7 @@ class TenantHandler:
 
 
 class TenantDepartmentHandler:
+    # TODO [deprecated] use get_tenant_dept_children_infos instead
     @staticmethod
     def convert_data_source_department_to_tenant_department(
         tenant_id: str, data_source_department_ids: List[int]
@@ -485,6 +483,42 @@ class TenantDepartmentHandler:
                 )
             )
         return data
+
+    @staticmethod
+    def get_tenant_dept_children_infos(tenant_dept: TenantDepartment) -> List[TenantDepartmentInfoWithChildren]:
+        """获取租户部门的子部门信息"""
+        relation = DataSourceDepartmentRelation.objects.filter(
+            department_id=tenant_dept.data_source_department_id,
+        ).first()
+        # 完全独立的部门（没有和其他部门进行关联）的情况
+        if not relation:
+            return []
+
+        # 子部门数据源部门 ID
+        data_source_dept_ids = (
+            DataSourceDepartmentRelation.objects.get(department_id=tenant_dept.data_source_department_id)
+            .get_children()
+            .values_list("department_id", flat=True)
+        )
+        tenant_depts = TenantDepartment.objects.filter(
+            data_source_department_id__in=data_source_dept_ids,
+        ).select_related("data_source_department")
+
+        # 通过裸查 MPTT 表而非逐个 is_leaf_node 的方式避免循环中查询 DB，目的是判断是否有子部门
+        sub_dept_ids_map = defaultdict(list)
+        for rel in DataSourceDepartmentRelation.objects.filter(
+            parent__department_id__in=data_source_dept_ids,
+        ).select_related("parent"):
+            sub_dept_ids_map[rel.parent.department_id].append(rel.department_id)
+
+        return [
+            TenantDepartmentInfoWithChildren(
+                id=tenant_dept.id,
+                name=tenant_dept.data_source_department.name,
+                has_children=bool(len(sub_dept_ids_map[tenant_dept.data_source_department_id])),
+            )
+            for tenant_dept in tenant_depts
+        ]
 
     @staticmethod
     def get_tenant_root_department_map_by_tenant_id(
