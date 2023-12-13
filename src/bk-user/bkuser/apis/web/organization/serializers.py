@@ -134,8 +134,7 @@ class TenantListOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=TenantDepartmentOutputSLZ(many=True))
     def get_departments(self, instance: Tenant):
-        departments = self.context["tenant_root_departments_map"].get(instance.id) or []
-        return [item.model_dump(include={"id", "name", "has_children"}) for item in departments]
+        return self.context["tenant_root_depts_map"].get(instance.id) or []
 
 
 class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):

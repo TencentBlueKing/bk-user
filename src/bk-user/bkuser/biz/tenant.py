@@ -34,7 +34,7 @@ from bkuser.apps.tenant.models import (
     TenantUser,
     TenantUserValidityPeriodConfig,
 )
-from bkuser.biz.data_source import DataSourceHandler, DataSourceSimpleInfo
+from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
 from bkuser.plugins.local.models import PasswordInitialConfig
 
@@ -256,21 +256,6 @@ class TenantUserHandler:
         }
 
     @staticmethod
-    def get_tenant_user_ids_by_tenant(tenant_id: str) -> List[str]:
-        """
-        获取ID=tenant_id的租户下（非协同数据源），所有租户用户
-        """
-        data_source_ids_map: Dict = TenantHandler.get_data_source_ids_map_by_ids([tenant_id])
-        data_source_ids: List[int] = []
-        for data_sources in data_source_ids_map.values():
-            data_source_ids += data_sources
-
-        return TenantUser.objects.filter(
-            data_source_id__in=data_source_ids,
-            tenant_id=tenant_id,
-        ).values_list("id", flat=True)
-
-    @staticmethod
     def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserPhoneInfo):
         tenant_user.is_inherited_phone = phone_info.is_inherited_phone
         if not phone_info.is_inherited_phone:
@@ -416,19 +401,6 @@ class TenantHandler:
                 TenantManager.objects.bulk_create(
                     [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in should_add_manager_ids]
                 )
-
-    @staticmethod
-    def get_data_source_ids_map_by_ids(tenant_ids: List[str]) -> Dict[str, List[int]]:
-        # 当前属于租户的数据源
-        tenant_data_source_map = defaultdict(list)
-        data_sources: Dict[str, List[DataSourceSimpleInfo]] = DataSourceHandler.get_data_source_map_by_owner(
-            tenant_ids
-        )
-        for tenant_id, data_source_list in data_sources.items():
-            data_source_ids: List = [data_source.id for data_source in data_source_list]
-            tenant_data_source_map[tenant_id] = data_source_ids
-        # TODO 协同数据源获取
-        return tenant_data_source_map
 
 
 class TenantDepartmentHandler:
