@@ -13,6 +13,7 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
+from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -59,3 +60,9 @@ class DataSourceHandler:
             plugin=DataSourcePlugin.objects.get(id=plugin_id),
             plugin_config=plugin_config,
         )
+
+    @staticmethod
+    def get_tenant_available_data_sources(tenant_id: str) -> List[DataSource]:
+        """获取租户有查看的数据源，包括拥有的以及协同的，但是要排除已经禁用的情况"""
+        # TODO (su) 考虑租户协同的情况
+        return DataSource.objects.filter(owner_tenant_id=tenant_id).exclude(status=DataSourceStatus.DISABLED)

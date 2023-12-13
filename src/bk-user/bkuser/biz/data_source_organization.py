@@ -305,7 +305,7 @@ class DataSourceDepartmentHandler:
 
         return departments_map
 
-    # TODO deprecated
+    # TODO (su) deprecated
     @staticmethod
     def get_user_department_ids_map(user_ids: List[int]) -> Dict[int, List[int]]:
         """
@@ -319,3 +319,14 @@ class DataSourceDepartmentHandler:
             user_department_ids_map[item.user_id].append(item.department_id)
 
         return user_department_ids_map
+
+    @staticmethod
+    def get_sub_data_source_dept_ids_map(parent_dept_ids: List[int]) -> Dict[str, List[int]]:
+        """获取一批数据源部门的子部门 id 列表信息"""
+        sub_dept_ids_map = defaultdict(list)
+        for rel in DataSourceDepartmentRelation.objects.filter(
+            parent__department_id__in=parent_dept_ids,
+        ).select_related("parent"):
+            sub_dept_ids_map[rel.parent.department_id].append(rel.department_id)
+
+        return sub_dept_ids_map

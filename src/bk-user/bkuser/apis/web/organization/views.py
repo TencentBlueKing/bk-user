@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from collections import defaultdict
 
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
@@ -31,6 +32,8 @@ from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelat
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
+from bkuser.biz.data_source import DataSourceHandler
+from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
 from bkuser.biz.tenant import (
     TenantDepartmentHandler,
     TenantEditableBaseInfo,
@@ -81,9 +84,11 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             department_id__in=data_source_dept_ids,
         ).values_list("user_id", flat=True)
 
-        tenant_users = TenantUser.objects.filter(
-            data_source_user_id__in=data_source_user_ids,
-        ).select_related("data_source_user")
+        tenant_users = (
+            TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids)
+            .select_related("data_source_user")
+            .order_by("data_source_user__username")
+        )
 
         if keyword := data.get("keyword"):
             tenant_users = tenant_users.filter(
@@ -91,12 +96,9 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             )
 
         context = {
-            "tenant_user_departments_map": TenantUserHandler.get_tenant_user_depts_map(
-                tenant_dept.tenant_id, tenant_users
-            ),
+            "tenant_user_depts_map": TenantUserHandler.get_tenant_user_depts_map(tenant_dept.tenant_id, tenant_users),
         }
-        page = self.paginate_queryset(tenant_users)
-        if page is not None:
+        if page := self.paginate_queryset(tenant_users):
             return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
 
         return Response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
@@ -122,33 +124,47 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户列表",
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        current_tenant_id: str = self.get_current_tenant_id()
+        cur_tenant_id = self.get_current_tenant_id()
+        # TODO 目前只有当前用户登录的租户，后续需要考虑跨租户协同的情况
+        tenant_ids = [cur_tenant_id]
 
-        # 获取当前租户以及有协同关系的租户
-        # TODO 过滤出与当前租户有协同关系的租户
-        queryset = Tenant.objects.filter(id__in=[current_tenant_id])
+        tenants = Tenant.objects.filter(id__in=tenant_ids)
+        # 将当前登录用户所在的租户置顶
+        tenants = sorted(tenants, key=lambda t: t.id != cur_tenant_id)
 
-        # 将当前租户置顶
-        # 通过比对租户id, 当等于当前登录用户的租户id，将其排序到查询集的顶部, 否则排序到查询集的底部
-        sorted_queryset = sorted(queryset, key=lambda t: t.id != current_tenant_id)
-
-        # 获取租户根组织
-        tenant_root_departments_map = TenantDepartmentHandler.get_tenant_root_department_map_by_tenant_id(
-            list(queryset.values_list("id", flat=True)), current_tenant_id
+        # 先获取租户有权限的数据源（包括拥有的以及协同的）
+        data_sources = DataSourceHandler.get_tenant_available_data_sources(cur_tenant_id)
+        root_data_source_dept_ids = (
+            DataSourceDepartmentRelation.objects.filter(data_source_id__in=[ds.id for ds in data_sources])
+            .root_nodes()
+            .values_list("department_id", flat=True)
         )
+        root_tenant_depts = TenantDepartment.objects.filter(
+            data_source_department_id__in=root_data_source_dept_ids,
+        ).select_related("data_source_department")
 
-        serializer = TenantListOutputSLZ(
-            sorted_queryset, many=True, context={"tenant_root_departments_map": tenant_root_departments_map}
+        sub_dept_ids_map = DataSourceDepartmentHandler.get_sub_data_source_dept_ids_map(root_data_source_dept_ids)
+
+        tenant_root_depts_map = defaultdict(list)
+        for tenant in tenants:
+            for dept in root_tenant_depts:
+                tenant_root_depts_map[tenant.id].append(
+                    {
+                        "id": dept.id,
+                        "name": dept.data_source_department.name,
+                        "has_children": bool(len(sub_dept_ids_map[dept.data_source_department_id])),
+                    }
+                )
+
+        return Response(
+            TenantListOutputSLZ(tenants, many=True, context={"tenant_root_depts_map": tenant_root_depts_map}).data
         )
-
-        return Response(serializer.data)
 
 
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView):
@@ -223,16 +239,8 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserListOutputSLZ
 
-    def get_tenant_user_ids(self, tenant_id):
-        # 当前获取租户下所有用户
-        current_tenant_id = self.get_current_tenant_id()
-        if tenant_id != current_tenant_id:
-            # FIXME 因协同数据源,绑定的租户用户
-            return []
-
-        return TenantUserHandler.get_tenant_user_ids_by_tenant(tenant_id=current_tenant_id)
-
     def get_serializer_context(self):
+        # FIXME (su) 需要合并到 view 函数中，避免重复的 DB 查询
         # 过滤出该租户租户用户
         tenant_user_ids = self.get_tenant_user_ids(tenant_id=self.kwargs["id"])
 
@@ -245,7 +253,7 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         return {
             "tenant_users_info": tenant_users_info_map,
-            "tenant_user_departments_map": tenant_user_departments_map,
+            "tenant_user_depts_map": tenant_user_departments_map,
         }
 
     # TODO (su) 评估 API 性能优化
@@ -263,16 +271,28 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         # 租户用户列表ids
         tenant_user_ids = self.get_tenant_user_ids(self.kwargs["id"])
 
-        # build response
-        queryset = self.filter_queryset(self.get_queryset().filter(id__in=tenant_user_ids))
+        tenant_users = (
+            TenantUser.objects.filter(id__in=tenant_user_ids)
+            .select_related("data_source_user")
+            .order_by("data_source_user__username")
+        )
         if keyword := data.get("keyword"):
-            queryset = queryset.select_related("data_source_user").filter(
+            tenant_users = tenant_users.filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
-        page = self.paginate_queryset(queryset)
-        if page is not None:
+
+        if page := self.paginate_queryset(tenant_users):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(tenant_users, many=True)
         return Response(serializer.data)
+
+    def get_tenant_user_ids(self, tenant_id):
+        # 当前获取租户下所有用户
+        current_tenant_id = self.get_current_tenant_id()
+        if tenant_id != current_tenant_id:
+            # FIXME 因协同数据源,绑定的租户用户
+            return []
+
+        return TenantUserHandler.get_tenant_user_ids_by_tenant(tenant_id=current_tenant_id)

@@ -503,13 +503,8 @@ class TenantDepartmentHandler:
         tenant_depts = TenantDepartment.objects.filter(
             data_source_department_id__in=data_source_dept_ids,
         ).select_related("data_source_department")
-
-        # 通过裸查 MPTT 表而非逐个 is_leaf_node 的方式避免循环中查询 DB，目的是判断是否有子部门
-        sub_dept_ids_map = defaultdict(list)
-        for rel in DataSourceDepartmentRelation.objects.filter(
-            parent__department_id__in=data_source_dept_ids,
-        ).select_related("parent"):
-            sub_dept_ids_map[rel.parent.department_id].append(rel.department_id)
+        # 子部门的子部门（孙子部门）信息
+        sub_dept_ids_map = DataSourceDepartmentHandler.get_sub_data_source_dept_ids_map(data_source_dept_ids)
 
         return [
             TenantDepartmentInfoWithChildren(
@@ -519,24 +514,3 @@ class TenantDepartmentHandler:
             )
             for tenant_dept in tenant_depts
         ]
-
-    @staticmethod
-    def get_tenant_root_department_map_by_tenant_id(
-        tenant_ids: List[str], current_tenant_id: str
-    ) -> Dict[str, List[TenantDepartmentInfoWithChildren]]:
-        data_source_map = TenantHandler.get_data_source_ids_map_by_ids(tenant_ids)
-
-        # 通过获取数据源的根节点
-        tenant_root_department_map = defaultdict(list)
-        for tenant_id, data_source_ids in data_source_map.items():
-            root_department_ids = (
-                DataSourceDepartmentRelation.objects.root_nodes()
-                .filter(data_source_id__in=data_source_ids)
-                .values_list("department_id", flat=True)
-            )
-            # 转换数据源部门为当前为 current_tenant_id 租户的租户部门
-            tenant_root_department = TenantDepartmentHandler.convert_data_source_department_to_tenant_department(
-                tenant_id=current_tenant_id, data_source_department_ids=list(root_department_ids)
-            )
-            tenant_root_department_map[tenant_id] = tenant_root_department
-        return tenant_root_department_map
