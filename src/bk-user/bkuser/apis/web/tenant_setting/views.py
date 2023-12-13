@@ -35,7 +35,8 @@ from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 class TenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
     pagination_class = None
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    # FIXME (su) 权限应该是 MANAGE_TENANT，但前端在个人中心误用该 API，因此临时改为 USE_PLATFORM，需要尽快修复
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
     serializer_class = TenantUserFieldOutputSLZ
 
     @swagger_auto_schema(
