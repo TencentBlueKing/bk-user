@@ -69,7 +69,7 @@
         >
           <div
             :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-            <span class="help-info-name">{{ userInfo.username }}</span>
+            <span class="help-info-name">{{ userInfo.display_name }}</span>
             <DownShape class="help-info-icon" />
           </div>
           <template #content>

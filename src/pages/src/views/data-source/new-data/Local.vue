@@ -99,7 +99,7 @@
           </bk-checkbox>
         </bk-form-item>
         <bk-form-item label="" required>
-          <div>
+          <div class="div-flex">
             <bk-checkbox
               v-model="formData.config.password_initial.cannot_use_previous_password"
               @change="handleChange">
@@ -130,7 +130,7 @@
             <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">随机生成</bk-button>
           </div>
         </bk-form-item>
-        <bk-form-item label="通知方式" property="config.password_initial.notification.enabled_methods" required>
+        <bk-form-item label="通知方式" :required="formData.config.password_initial.generate_method === 'random'">
           <NotifyEditorTemplate
             :active-methods="formData.config.password_initial.notification.enabled_methods"
             :checkbox-info="NOTIFICATION_METHODS"
@@ -167,6 +167,7 @@
               </div>
             </template>
           </NotifyEditorTemplate>
+          <p class="error" v-show="enabledMethodsError">通知方式不能为空</p>
         </bk-form-item>
       </div>
       <div class="content-item">
@@ -261,7 +262,7 @@ const isLoading = ref(false);
 const passwordRuleError = ref(false);
 const passwordCountError = ref(false);
 const passwordConfigError = ref(false);
-const fixedPasswordError = ref(false);
+const enabledMethodsError = ref(false);
 
 const formData = reactive({
   name: '',
@@ -337,10 +338,17 @@ watch(() => formData.config?.password_rule?.not_continuous_count, (value, oldVal
 });
 
 watch(() => formData.config?.password_initial?.generate_method, (value) => {
+  enabledMethodsError.value = value === 'random' && !formData.config.password_initial.notification.enabled_methods.length;
   if (value === 'random') {
     formData.config.password_initial.fixed_password = null;
-    fixedPasswordError.value = false;
   }
+});
+
+watch(() => formData.config?.password_initial?.notification?.enabled_methods, (value) => {
+  if (formData.config?.password_initial?.generate_method === 'fixed') {
+    return enabledMethodsError.value = false;
+  }
+  enabledMethodsError.value = !value.length;
 });
 
 const maxTrailTimesList = reactive([
@@ -381,12 +389,10 @@ const handleClickCancel = () => {
 const btnLoading = ref(false);
 const handleSubmit = async () => {
   try {
-    fixedPasswordError.value = formData.config?.password_initial?.generate_method === 'fixed'
-      && !formData.config.password_initial.fixed_password;
     if (passwordRuleError.value
       || passwordCountError.value
       || passwordConfigError.value
-      || fixedPasswordError.value) return;
+      || enabledMethodsError.value) return;
     await formRef.value.validate();
     btnLoading.value = true;
     const params = {
@@ -490,5 +496,16 @@ const handleRandomPassword = async () => {
   background: #e1ecff;
   align-items: center;
   justify-content: center;
+}
+
+.error {
+  position: absolute;
+  left: 0;
+  padding-top: 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: #ea3636;
+  text-align: left;
+  animation: form-error-appear-animation 0.15s;
 }
 </style>

@@ -56,6 +56,10 @@
             >
               日志详情
             </bk-button>
+            <ExclamationCircleShape
+              class="circle-shape"
+              v-if="row.has_warning"
+              v-bk-tooltips="{ content: '有部分数据失败' }" />
           </template>
         </bk-table-column>
       </bk-table>
@@ -89,13 +93,18 @@
 </template>
 
 <script setup lang="ts">
+import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { ExclamationCircleShape } from 'bkui-vue/lib/icon';
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 import Empty from '@/components/Empty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { getSyncLogs, getSyncRecords } from '@/http/dataSourceFiles';
 import router from '@/router/index';
 import { dataRecordStatus } from '@/utils';
+
+const route = useRoute();
 
 const dataRecordConfig = reactive({
   loading: false,
@@ -149,6 +158,10 @@ const getSyncRecordsList = async () => {
     dataRecordConfig.list = res.data.results;
     dataRecordConfig.isDataEmpty = res.data.count === 0;
     pagination.count = res.data.count;
+    const record = dataRecordConfig.list[0];
+    if (route.params.type && (record.status === 'failed' || (record.status === 'success' && record.has_warning))) {
+      handleLogDetails(record);
+    }
   } catch (e) {
     dataRecordConfig.isDataError = true;
     console.warn(e);
@@ -285,6 +298,13 @@ onBeforeUnmount(() => {
       span {
         margin-left: 8px;
       }
+    }
+
+    .circle-shape {
+      font-size: 14px;
+      color: #FF9C01;
+      vertical-align: middle;
+      cursor: pointer;
     }
   }
 

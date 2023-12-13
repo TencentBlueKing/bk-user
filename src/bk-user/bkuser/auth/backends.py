@@ -43,6 +43,7 @@ class TokenBackend(BaseBackend):
             user.set_property(key="language", value=user_info.get("language", ""))
             user.set_property(key="time_zone", value=user_info.get("time_zone", ""))
             user.set_property(key="tenant_id", value=user_info.get("tenant_id", ""))
+            user.set_property(key="display_name", value=user_info.get("display_name", ""))
 
             return user
 
@@ -79,6 +80,7 @@ class TokenBackend(BaseBackend):
             "language": data.get("language", ""),
             "time_zone": data.get("time_zone", ""),
             "tenant_id": data.get("tenant_id", ""),
+            "display_name": data.get("display_name", ""),
         }
         return True, user_info
 
