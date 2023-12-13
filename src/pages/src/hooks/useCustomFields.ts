@@ -11,6 +11,7 @@ export const useCustomFields = (data, customFields) => {
               key: item.name,
               value: k.value,
               displayName: item.display_name,
+              type: item.data_type,
             });
           }
         });
@@ -20,6 +21,7 @@ export const useCustomFields = (data, customFields) => {
           key: item.name,
           value: item.options.filter((k: string) => item.default.includes(k.id)).filter(k => k.value),
           displayName: item.display_name,
+          type: item.data_type,
         });
       } else {
         extras.push({
@@ -27,6 +29,7 @@ export const useCustomFields = (data, customFields) => {
           key: item.name,
           value: item.default,
           displayName: item.display_name,
+          type: item.data_type,
         });
       }
     } else {
@@ -38,6 +41,7 @@ export const useCustomFields = (data, customFields) => {
               key: item.name,
               value: k.value,
               displayName: item.display_name,
+              type: item.data_type,
             });
           }
         });
@@ -47,6 +51,7 @@ export const useCustomFields = (data, customFields) => {
           key: item.name,
           value: item.options.filter((k: string) => data[item.name].includes(k.id)).filter(k => k.value),
           displayName: item.display_name,
+          type: item.data_type,
         });
       } else {
         extras.push({
@@ -54,6 +59,7 @@ export const useCustomFields = (data, customFields) => {
           key: item.name,
           value: data[item.name],
           displayName: item.display_name,
+          type: item.data_type,
         });
       }
     }

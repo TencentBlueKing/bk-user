@@ -7,3 +7,4 @@ mock-server
 
 src/views/organization/details/EditDetailsInfo.vue
 src/views/tenant/group-details/OperationDetails.vue
+src/common/bkui-form.js

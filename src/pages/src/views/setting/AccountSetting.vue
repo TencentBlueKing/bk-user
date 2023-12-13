@@ -5,7 +5,7 @@
         <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="changeEnabled" />
       </bk-form-item>
       <div v-if="formData.enabled">
-        <bk-form-item label="账号有效期">
+        <bk-form-item label="账号有效期" required>
           <bk-radio-group v-model="formData.validity_period" @change="handleChange">
             <bk-radio-button
               v-for="(item, index) in VALID_TIME"

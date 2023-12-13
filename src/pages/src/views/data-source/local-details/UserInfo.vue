@@ -226,6 +226,7 @@ import Empty from '@/components/Empty.vue';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { getDataSourceUserDetails, getDataSourceUsers } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
+import router from '@/router/index';
 import { formatConvert } from '@/utils';
 
 const props = defineProps({
@@ -519,6 +520,7 @@ const confirmImportUsers = async () => {
     const { message } = e.response.data.error;
     Message({ theme: 'error', message });
   } finally {
+    router.push({ name: 'syncRecords', params: { type: 'import' } });
     importDialog.loading = false;
   }
 };
