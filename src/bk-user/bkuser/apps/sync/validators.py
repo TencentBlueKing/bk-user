@@ -24,7 +24,9 @@ class DataSourceUserExtrasUniqueValidator:
         self.has_duplicate_unique_value = False
 
     def validate(self):
-        unique_custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.data_source.owner_tenant_id)
+        unique_custom_fields = TenantUserCustomField.objects.filter(
+            tenant_id=self.data_source.owner_tenant_id, unique=True
+        )
         if not unique_custom_fields.exists():
             self.logger.info(
                 f"no unique custom fields found in tenant {self.data_source.owner_tenant_id}, skip..."  # noqa: G004
