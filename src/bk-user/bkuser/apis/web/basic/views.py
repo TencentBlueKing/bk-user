@@ -32,6 +32,7 @@ class CurrentUserRetrieveApi(generics.RetrieveAPIView):
             "username": current_user.username,
             "tenant_id": current_tenant_id,
             "role": get_user_role(current_tenant_id, current_user.username),
+            "display_name": current_user.get_property("display_name"),
         }
 
         return Response(CurrentUserRetrieveOutputSLZ(instance=info).data)
