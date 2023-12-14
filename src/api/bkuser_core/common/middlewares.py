@@ -32,6 +32,7 @@ class BKLanguageMiddleware(MiddlewareMixin):
     这里通过使用Blueking-Language值替换Accept-Language的值来达到设置语言的目的
     Note: BKLanguageMiddleware 必须配置在django.middleware.locale.LocaleMiddleware之前
     """
+
     BK_LANGUAGE_HEADER = "HTTP_BLUEKING_LANGUAGE"
     LANGUAGE_HEADER = "HTTP_ACCEPT_LANGUAGE"
 

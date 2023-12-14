@@ -154,9 +154,7 @@ class ProfileExcelExporter:
         """更新表格标题"""
         required_fields = [x for x in self.fields if x["builtin"] and x["name"] not in exclude_keys]
         not_required_field_names = [
-            x["display_name"]
-            for x in self.fields
-            if not x["builtin"] and x["name"] not in exclude_keys
+            x["display_name"] for x in self.fields if not x["builtin"] and x["name"] not in exclude_keys
         ]
 
         field_col_map = {}

@@ -31,8 +31,8 @@ from bkuser_core.api.login.serializers import (
     ProfileLoginSerializer,
     ProfileSerializer,
 )
-from bkuser_core.audit.constants import LogInFailReason
-from bkuser_core.audit.utils import create_profile_log
+from bkuser_core.audit.constants import LogInFailReason, OperationType
+from bkuser_core.audit.utils import create_general_log, create_profile_log
 from bkuser_core.categories.constants import CategoryType
 from bkuser_core.categories.loader import get_plugin_by_category
 from bkuser_core.categories.models import ProfileCategory
@@ -333,6 +333,13 @@ class ProfileLoginViewSet(viewsets.ViewSet):
             except Exception:  # pylint: disable=broad-except
                 logger.exception("failed to update iso_code for profile %s", username)
                 # do nothing
+
+        create_general_log(
+            operator=request.operator,
+            operate_type=OperationType.CREATE.value if created else OperationType.UPDATE.value,
+            operator_obj=profile,
+            request=request,
+        )
 
         return Response(data=ProfileSerializer(profile, context={"request": request}).data)
 
