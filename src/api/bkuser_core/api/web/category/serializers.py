@@ -11,13 +11,14 @@ specific language governing permissions and limitations under the License.
 from typing import List
 
 from django.utils.translation import ugettext_lazy as _
+from django_celery_beat.models import PeriodicTask
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from bkuser_core.api.web.serializers import StringArrayField
 from bkuser_core.api.web.utils import get_extras_with_default_values
 from bkuser_core.bkiam.serializers import AuthInfoSLZ
-from bkuser_core.categories.constants import CategoryStatus, CreateAbleCategoryType
+from bkuser_core.categories.constants import CategoryStatus, CategoryType, CreateAbleCategoryType
 from bkuser_core.categories.models import ProfileCategory
 from bkuser_core.departments.models import Department
 from bkuser_core.profiles.models import Profile
@@ -121,6 +122,13 @@ class CategoryUpdateInputSLZ(serializers.Serializer):
         if activated is not None:
             instance.status = CategoryStatus.NORMAL.value if activated else CategoryStatus.INACTIVE.value
             should_updated_fields.append("status")
+            # 根据目录启用/停用状态，对定时同步任务做开关处理
+            if instance != CategoryType.LOCAL.value:
+                task_names = [f"plugin-sync-data-{instance.id}", str(instance.id)]
+                period_tasks = PeriodicTask.objects.filter(name__in=task_names)
+                for task in period_tasks:
+                    task.enabled = activated
+                    task.save()
 
         display_name = validated_data.get("display_name")
         if display_name:
