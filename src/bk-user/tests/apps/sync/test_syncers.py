@@ -12,6 +12,7 @@ from itertools import groupby
 from typing import Dict, List, Set, Tuple
 
 import pytest
+from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -139,8 +140,7 @@ class TestDataSourceUserSyncer:
         random_raw_user,
     ):
         # 1. 修改用户姓名，电话，邮箱，年龄等信息
-        # su 注：用户名更新暂时被禁用，需要进一步讨论策略
-        # raw_users[0].properties["username"] = "zhangsan_rename"
+        raw_users[0].properties["username"] = "zhangsan_rename"
         raw_users[0].properties["full_name"] = "张三的另一个名字"
         raw_users[0].properties["email"] = "zhangsan_rename@m.com"
         raw_users[0].properties["phone"] = "13512345655"
@@ -181,8 +181,7 @@ class TestDataSourceUserSyncer:
 
         # 验证内置/自定义字段被更新
         zhangsan = users.filter(code="zhangsan").first()
-        # su 注：用户名更新暂时被禁用，需要进一步讨论策略
-        # assert zhangsan.username == "zhangsan_rename"
+        assert zhangsan.username == "zhangsan_rename"
         assert zhangsan.full_name == "张三的另一个名字"
         assert zhangsan.email == "zhangsan_rename@m.com"
         assert zhangsan.phone == "13512345655"
@@ -299,6 +298,36 @@ class TestDataSourceUserSyncer:
         ).sync()
 
         assert data_source_sync_task_ctx.logger.has_warning is True
+
+    def test_update_with_unable_update_username(self, data_source_sync_task_ctx, full_local_data_source):
+        """对于某些特定的数据源，同步并不会更新 username"""
+        raw_users = [
+            RawDataSourceUser(
+                code="zhangsan",
+                properties={
+                    "username": "zhangsan_rename",
+                    "full_name": "张三重命名",
+                    "email": "zhangsan@m.com",
+                    "phone": "07712345678",
+                    "phone_country_code": "44",
+                },
+                leaders=[],
+                departments=[],
+            )
+        ]
+        # 修改数据源的特定属性，导致其在同步数据源用户时候无法更新 username
+        full_local_data_source.owner_tenant_user_id_rule = TenantUserIdRuleEnum.USERNAME
+        full_local_data_source.save()
+
+        DataSourceUserSyncer(
+            data_source_sync_task_ctx, full_local_data_source, raw_users, overwrite=True, incremental=False
+        ).sync()
+
+        zhangsan = DataSourceUser.objects.filter(data_source=full_local_data_source, code="zhangsan").first()
+        # 不支持数据源用户的 username 更新的情况
+        assert zhangsan.username == "zhangsan"
+        assert zhangsan.full_name == "张三重命名"
+        assert zhangsan.email == "zhangsan@m.com"
 
     def test_destroy(self, data_source_sync_task_ctx, full_local_data_source):
         raw_users: List[RawDataSourceUser] = []
