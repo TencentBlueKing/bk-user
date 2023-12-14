@@ -36,7 +36,7 @@ from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
 from bkuser.biz.tenant import (
     TenantDepartmentHandler,
-    TenantEditableBaseInfo,
+    TenantEditableInfo,
     TenantFeatureFlag,
     TenantHandler,
     TenantUserHandler,
@@ -115,7 +115,6 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
-    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="更新租户",
@@ -128,8 +127,10 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
         data = slz.validated_data
 
         tenant = self.get_object()
-        tenant_info = TenantEditableBaseInfo(
-            name=data["name"], logo=data["logo"] or "", feature_flags=TenantFeatureFlag(**data["feature_flags"])
+        tenant_info = TenantEditableInfo(
+            name=data["name"],
+            logo=data["logo"] or "",
+            feature_flags=TenantFeatureFlag(**data["feature_flags"]),
         )
 
         TenantHandler.update_with_managers(tenant.id, tenant_info, data["manager_ids"])
@@ -169,7 +170,7 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             )
 
         context = {
-            "tenant_user_depts_map": TenantUserHandler.get_tenant_user_depts_map(cur_tenant_id, tenant_users),
+            "tenant_user_depts_map": TenantUserHandler.get_tenant_users_depts_map(cur_tenant_id, tenant_users),
         }
         if page := self.paginate_queryset(tenant_users):
             return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
@@ -253,7 +254,7 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             )
 
         context = {
-            "tenant_user_depts_map": TenantUserHandler.get_tenant_user_depts_map(tenant_dept.tenant_id, tenant_users),
+            "tenant_user_depts_map": TenantUserHandler.get_tenant_users_depts_map(tenant_dept.tenant_id, tenant_users),
         }
         if page := self.paginate_queryset(tenant_users):
             return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
@@ -267,7 +268,6 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantUserRetrieveOutputSLZ
 
-    # TODO (su) 评估 API 性能优化
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="租户部门下单个用户详情",
