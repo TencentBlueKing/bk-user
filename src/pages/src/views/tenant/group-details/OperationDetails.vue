@@ -126,19 +126,17 @@
 </template>
 
 <script setup lang="tsx">
-import { Message } from 'bkui-vue';
+import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, onMounted, defineExpose } from "vue";
-import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
-import { getBase64, NOTIFICATION_METHODS } from "@/utils";
-import MemberSelector from "./MemberSelector.vue";
-import useValidate from "@/hooks/use-validate";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, defineExpose } from 'vue';
+import { createTenants, putTenants, getTenantUsersList } from '@/http/tenantsFiles';
+import { getBase64, NOTIFICATION_METHODS } from '@/utils';
+import MemberSelector from './MemberSelector.vue';
+import useValidate from '@/hooks/use-validate';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
-import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { randomPasswords } from '@/http/dataSourceFiles';
 import PhoneInput from '@/components/phoneInput.vue';
-import { addListener, removeListener } from 'resize-detector';
-import { debounce } from 'bkui-vue/lib/shared';
+import { useButtonFixed } from '@/hooks/useButtonFixed';
 
 interface TableItem {
   username: string;
@@ -418,17 +416,8 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 const boxRef = ref();
 const cardRef = ref();
 const footerRef = ref();
-const isScroll = ref(false);
-// 按钮超出屏幕吸底
-function handleResize() {
-  isScroll.value = footerRef.value.scrollHeight > (boxRef.value.clientHeight - cardRef.value.clientHeight - 617);
-}
-
-onMounted(() => {
-  const listenResize = debounce(300, () => handleResize());
-  addListener(boxRef.value, listenResize);
-  nextTick(handleResize);
-})
+// footer按钮状态
+const isScroll = useButtonFixed(boxRef, cardRef, footerRef, 617);
 
 const phoneError = ref(false);
 // 校验表单

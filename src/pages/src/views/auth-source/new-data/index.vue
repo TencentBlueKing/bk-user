@@ -10,16 +10,18 @@
         />
       </template>
     </MainBreadcrumbsDetails>
-    <div class="user-scroll-y">
+    <div ref="boxRef" class="user-scroll-y">
       <Config v-if="curStep === 1" @next="handleNext" />
       <div v-else>
         <WeCom
           v-if="currentPlugin.id === 'wecom'"
           :plugin="currentPlugin"
+          :box-ref="boxRef"
           @prev="handlePrev" />
         <CustomPlugin
           v-else
           :plugin="currentPlugin"
+          :box-ref="boxRef"
           @prev="handlePrev" />
       </div>
     </div>
@@ -27,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, reactive, ref } from 'vue';
+import { defineExpose, inject, reactive, ref } from 'vue';
 
 import Config from './config.vue';
 import CustomPlugin from './CustomPlugin.vue';
@@ -74,6 +76,9 @@ const getStatus = async () => {
     return Promise.resolve(enableLeave);
   }
 };
+
+const boxRef = ref();
+defineExpose({ boxRef });
 </script>
 
 <style lang="less" scoped>
@@ -98,6 +103,8 @@ const getStatus = async () => {
 }
 
 .user-scroll-y {
+  position: relative;
   height: calc(100vh - 104px);
+  padding-bottom: 48px;
 }
 </style>
