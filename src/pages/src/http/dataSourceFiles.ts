@@ -113,3 +113,8 @@ export const getSyncRecords = (params: SyncRecordsParams) => {
  * 数据源更新日志
  */
 export const getSyncLogs = (id: string) => http.get(`/api/v1/web/data-sources/sync-records/${id}/`);
+
+/**
+ * 数据源用户所属部门组织路径
+ */
+export const getOrganizationPaths = (id: string) => http.get(`/api/v1/web/data-sources/users/${id}/organization-paths/`);

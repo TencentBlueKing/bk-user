@@ -439,7 +439,7 @@ const columnSort = ({ index, type }) => {
 
 .details-edit-wrapper {
   :deep(.bk-modal-content) {
-    height: calc(100vh - 106px);
+    height: calc(100vh - 52px);
     background: #f5f7fa;
 
     &::-webkit-scrollbar {

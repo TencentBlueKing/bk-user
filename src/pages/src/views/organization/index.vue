@@ -296,11 +296,11 @@ const getTenantUsers = async (id) => {
     state.isEmptySearch = false;
     state.isDataError = false;
     const res = await getTenantUsersList(data);
-    if (res.data.count === 0) {
+    if (res.data?.count === 0 || !res.data.length) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
-    pagination.count = res.data.count;
-    state.currentUsers = res.data.results;
+    pagination.count = res.data?.count;
+    state.currentUsers = res.data?.results || [];
     state.tabLoading = false;
   } catch (e) {
     state.isDataError = true;
@@ -325,11 +325,11 @@ const getTenantDepartmentsUser = async (id) => {
     state.isEmptySearch = false;
     state.isDataError = false;
     const res = await getTenantDepartmentsList(params);
-    if (res.data.count === 0) {
+    if (res.data?.count === 0 || !res.data.length) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
-    pagination.count = res.data.count;
-    state.currentUsers = res.data.results;
+    pagination.count = res.data?.count;
+    state.currentUsers = res.data?.results || [];
     state.tabLoading = false;
   } catch (e) {
     state.isDataError = true;
