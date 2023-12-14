@@ -209,7 +209,7 @@ const handleUpdateRecord = async () => {
 
 const handleSync = async (row) => {
   const res = await postOperationsSync(row.id);
-  router.push({ name: 'syncRecords' });
+  router.push({ name: 'syncRecords', params: { type: 'sync' } });
   const status = res.data?.status === 'failed' ? 'error' : 'success';
   Message({ theme: status, message: res.data.summary });
 };

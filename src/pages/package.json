@@ -41,6 +41,7 @@
     "pinia": "^2.0.23",
     "query-string": "^8.1.0",
     "request": "^2.88.2",
+    "resize-detector": "^0.3.0",
     "screenfull": "^6.0.2",
     "sortablejs": "^1.15.0",
     "vite-plugin-monaco-editor": "^1.1.0",

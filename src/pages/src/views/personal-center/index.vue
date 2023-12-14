@@ -229,7 +229,7 @@
               <div class="item-flex">
                 <li v-for="(item, index) in currentUserInfo.extras" :key="index">
                   <bk-overflow-title class="key" type="tips">{{ item.displayName }}：</bk-overflow-title>
-                  <span class="value">{{ ConvertVal(item.value) }}</span>
+                  <span class="value">{{ ConvertVal(item) }}</span>
                 </li>
               </div>
             </li>
@@ -313,12 +313,14 @@ const getCurrentUser = async (id) => {
   infoLoading.value = false;
 };
 
-const ConvertVal = (val: any) => {
+const ConvertVal = (item: any) => {
   const demo = ref('');
-  if (val instanceof Array) {
-    demo.value = val?.map(item => item.value).join('；') || '--';
+  if (item.type === 'multi_enum') {
+    demo.value = item.value?.map(k => k.value).join('；') || '--';
+  } else if (item.type === 'number') {
+    demo.value = item.value;
   } else {
-    demo.value = val || '--';
+    demo.value = item.value || '--';
   }
   return demo.value;
 };

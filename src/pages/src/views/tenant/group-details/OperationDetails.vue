@@ -1,5 +1,5 @@
 <template>
-  <div class="operation-wrapper">
+  <div ref="boxRef" class="operation-wrapper">
     <div class="operation-content">
       <div class="operation-card">
         <div class="operation-content-title">基本信息</div>
@@ -38,7 +38,7 @@
           />
         </div>
       </div>
-      <div class="operation-card">
+      <div ref="cardRef" class="operation-card">
         <div class="operation-content-title">管理员</div>
         <bk-form ref="userRef" :model="formData">
           <bk-table
@@ -114,7 +114,7 @@
         </bk-form>
       </div>
     </div>
-    <div class="footer">
+    <div ref="footerRef" class="footer" :class="{ 'fixed': isScroll }">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
@@ -128,7 +128,7 @@
 <script setup lang="tsx">
 import { Message } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, onMounted, defineExpose } from "vue";
 import { createTenants, putTenants, getTenantUsersList } from "@/http/tenantsFiles";
 import { getBase64, NOTIFICATION_METHODS } from "@/utils";
 import MemberSelector from "./MemberSelector.vue";
@@ -137,6 +137,8 @@ import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplat
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { randomPasswords } from '@/http/dataSourceFiles';
 import PhoneInput from '@/components/phoneInput.vue';
+import { addListener, removeListener } from 'resize-detector';
+import { debounce } from 'bkui-vue/lib/shared';
 
 interface TableItem {
   username: string;
@@ -161,7 +163,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['updateTenantsList']);
+const emit = defineEmits(['updateTenantsList', 'handleCancelEdit']);
 
 const validate = useValidate();
 
@@ -403,7 +405,7 @@ const columns = [
 }
 
 function handleItemChange(index: number, action: 'add' | 'remove') {
-  if(action === 'add') {
+  if (action === 'add') {
     formData.managers.splice(index + 1, 0, getTableItem());
   } else if (action === 'remove') {
     formData.managers.splice(index, 1);
@@ -412,6 +414,21 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
   window.changeInput = true;
   fetchUserList("");
 }
+
+const boxRef = ref();
+const cardRef = ref();
+const footerRef = ref();
+const isScroll = ref(false);
+// 按钮超出屏幕吸底
+function handleResize() {
+  isScroll.value = footerRef.value.scrollHeight > (boxRef.value.clientHeight - cardRef.value.clientHeight - 617);
+}
+
+onMounted(() => {
+  const listenResize = debounce(300, () => handleResize());
+  addListener(boxRef.value, listenResize);
+  nextTick(handleResize);
+})
 
 const phoneError = ref(false);
 // 校验表单
@@ -526,6 +543,12 @@ const handleRandomPassword = async () => {
     console.warn(e);
   }
 };
+
+defineExpose({
+  boxRef,
+  cardRef,
+  footerRef,
+});
 </script>
 
 <style lang="less" scoped>

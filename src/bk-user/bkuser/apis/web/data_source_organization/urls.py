@@ -25,4 +25,10 @@ urlpatterns = [
         views.DataSourceUserPasswordUpdateApi.as_view(),
         name="data_source_user.password.update",
     ),
+    # 数据源用户所属部门路径
+    path(
+        "users/<int:id>/organization-paths/",
+        views.DataSourceUserOrganizationPathListApi.as_view(),
+        name="data_source_user.organization_path.list",
+    ),
 ]

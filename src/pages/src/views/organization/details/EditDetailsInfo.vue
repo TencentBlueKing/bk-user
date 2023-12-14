@@ -1,5 +1,5 @@
 <template>
-  <div class="operation-wrapper">
+  <div ref="boxRef" class="operation-wrapper pt-[8px]">
     <div class="operation-content">
       <div class="operation-card">
         <div class="operation-content-title">基本信息</div>
@@ -44,7 +44,7 @@
           />
         </div>
       </div>
-      <div class="operation-card">
+      <div ref="cardRef" class="operation-card">
         <div class="operation-content-title">管理员</div>
         <bk-form ref="userRef" :model="formData">
           <bk-table
@@ -57,7 +57,7 @@
         </bk-form>
       </div>
     </div>
-    <div class="footer-box">
+    <div ref="footerRef" class="footer" :class="{ 'fixed': isScroll}">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
@@ -70,12 +70,14 @@
 
 <script setup lang="tsx">
 import { Message } from 'bkui-vue';
-import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch } from "vue";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, onMounted, defineExpose } from "vue";
 import { getBase64 } from "@/utils";
 import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
 import { getTenantUsersList, putTenantOrganizationDetails } from "@/http/organizationFiles";
 import useValidate from "@/hooks/use-validate";
 import PhoneInput from '@/components/phoneInput.vue';
+import { addListener } from 'resize-detector';
+import { debounce } from 'bkui-vue/lib/shared';
 
 interface TableItem {
   username: string;
@@ -101,7 +103,7 @@ const props = defineProps({
 });
 
 const validate = useValidate();
-const emit = defineEmits(['updateTenantsList']);
+const emit = defineEmits(['updateTenantsList', 'handleCancel']);
 
 const basicRef = ref();
 const userRef = ref();
@@ -305,6 +307,21 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
   fetchUserList('');
 }
 
+const boxRef = ref();
+const cardRef = ref();
+const footerRef = ref();
+const isScroll = ref(false);
+// 按钮超出屏幕吸底
+function handleResize() {
+  isScroll.value = footerRef.value.scrollHeight > (boxRef.value.clientHeight - cardRef.value.clientHeight - 390);
+}
+
+onMounted(() => {
+  const listenResize = debounce(300, () => handleResize());
+  addListener(boxRef.value, listenResize);
+  nextTick(handleResize);
+})
+
 // 获取管理员列表
 const fetchUserList = (value: string) => {
   params.keyword = value;
@@ -398,24 +415,16 @@ const handleChange = () => {
 const changeVisible = (status: boolean) => {
   formData.feature_flags.user_number_visible = status;
 }
+
+defineExpose({
+  boxRef,
+  cardRef,
+  footerRef,
+});
 </script>
 
 <style lang="less" scoped>
 @import url("@/css/tenantEditStyle.less");
-
-.operation-content {
-  padding: 0 !important;
-}
-
-.footer-box {
-  height: 48px;
-  line-height: 48px;
-
-  .bk-button {
-    width: 88px;
-    margin-right: 8px;
-  }
-}
 
 ::v-deep .bk-select {
   .angle-up {

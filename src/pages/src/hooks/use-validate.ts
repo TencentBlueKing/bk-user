@@ -6,8 +6,8 @@ export default () => {
   };
 
   const name = {
-    validator: (value: string) => value.length && value.length <= 32,
-    message: '由1-32位字符组成',
+    validator: (value: string) => /^[\u4e00-\u9fa5a-zA-Z0-9\s\S]{1,64}$/.test(value),
+    message: '由1-64位字符组成',
     trigger: 'blur',
   };
 
