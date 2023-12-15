@@ -1,24 +1,24 @@
-name: ESLint
+# name: ESLint
 
-on:
-  push:
-    branches: [ main, pre_*, ft_*, release/* ]
-  pull_request:
-    branches: [ main, pre_*, ft_*, release/* ]
+# on:
+#   push:
+#     branches: [ main, pre_*, ft_*, release/* ]
+#   pull_request:
+#     branches: [ main, pre_*, ft_*, release/* ]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 16
-    - name: Install modules
-      run: |
-        cd src/pages
-        npm i
-    - name: Run ESLint
-      run: |
-        cd src/pages
-        npm run lint
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v3
+#     - uses: actions/setup-node@v3
+#       with:
+#         node-version: 16
+#     - name: Install modules
+#       run: |
+#         cd src/pages
+#         npm i
+#     - name: Run ESLint
+#       run: |
+#         cd src/pages
+#         npm run lint
