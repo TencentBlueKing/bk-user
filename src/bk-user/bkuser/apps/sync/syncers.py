@@ -13,7 +13,6 @@ from typing import Dict, List, Set
 
 from django.utils import timezone
 
-from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -215,7 +214,7 @@ class DataSourceUserSyncer:
         self.converter = DataSourceUserConverter(data_source, ctx.logger)
         # 由于在部分老版本迁移过来的数据源中租户用户 ID 会由 username + 规则 拼接生成，
         # 该类数据源同步时候不可更新 username，而全新数据源对应租户 ID 都是 uuid 则不受影响
-        self.enable_update_username = bool(data_source.owner_tenant_user_id_rule == TenantUserIdRuleEnum.UUID4_HEX)
+        self.enable_update_username = not data_source.is_username_frozen
 
     def sync(self):
         self.ctx.logger.info(f"receive {len(self.raw_users)} users from data source plugin")  # noqa: G004
