@@ -83,12 +83,14 @@
       </div>
     </bk-form>
     <div class="footer-wrapper">
-      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
-        提交
-      </bk-button>
-      <bk-button @click="handleCancel">
-        取消
-      </bk-button>
+      <div class="footer-div">
+        <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
+          提交
+        </bk-button>
+        <bk-button @click="handleCancel">
+          取消
+        </bk-button>
+      </div>
     </div>
   </bk-loading>
 </template>
@@ -591,7 +593,21 @@ const handleSubmit = async () => {
   }
 
   .footer-wrapper {
-    margin: 24px 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 9;
+    width: 100%;
+    height: 48px;
+    margin-bottom: 0;
+    line-height: 48px;
+    background: #FAFBFD;
+    box-shadow: 0 -1px 0 0 #DCDEE5;
+
+    .footer-div {
+      width: 1000px;
+      margin: 0 auto;
+    }
 
     .bk-button {
       width: 88px;
