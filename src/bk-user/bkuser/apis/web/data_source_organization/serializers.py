@@ -302,7 +302,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
 class DataSourceUserPasswordInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="数据源用户重置的新密码")
 
-    def validate_password(self, password):
+    def validate_password(self, password: str) -> str:
         data_source = self.context["data_source"]
         password_rule_config = PasswordRuleConfig(**data_source.plugin_config["password_rule"])
         ret = PasswordValidator(password_rule_config.to_rule()).validate(password)

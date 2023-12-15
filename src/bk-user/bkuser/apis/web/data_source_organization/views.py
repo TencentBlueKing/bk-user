@@ -269,10 +269,10 @@ class DataSourceUserPasswordUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveU
         if not data_source_user.data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源类型用户可变更密码"))
 
-        slz = DataSourceUserPasswordInputSLZ(request.data, context={"data_source": data_source_user.data_source})
-        slz.is_valid()
-
+        slz = DataSourceUserPasswordInputSLZ(data=request.data, context={"data_source": data_source_user.data_source})
+        slz.is_valid(raise_exception=True)
         new_password = slz.validated_data["password"]
+
         DataSourceUserHandler.update_data_source_user_password(data_source_user.id, new_password)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
