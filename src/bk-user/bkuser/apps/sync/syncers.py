@@ -212,6 +212,9 @@ class DataSourceUserSyncer:
         self.overwrite = overwrite
         self.incremental = incremental
         self.converter = DataSourceUserConverter(data_source, ctx.logger)
+        # 由于在部分老版本迁移过来的数据源中租户用户 ID 会由 username + 规则 拼接生成，
+        # 该类数据源同步时候不可更新 username，而全新数据源对应租户 ID 都是 uuid 则不受影响
+        self.enable_update_username = not data_source.is_username_frozen
 
     def sync(self):
         self.ctx.logger.info(f"receive {len(self.raw_users)} users from data source plugin")  # noqa: G004
@@ -312,8 +315,8 @@ class DataSourceUserSyncer:
             # 先进行 diff，不是所有的用户都要被更新，只有有字段不一致的，才需要更新
             target_user = user_map[u.code]
             if (
-                # u.username == target_user.username
-                u.full_name == target_user.full_name
+                (u.username == target_user.username or not self.enable_update_username)
+                and u.full_name == target_user.full_name
                 and u.email == target_user.email
                 and u.phone == target_user.phone
                 and u.phone_country_code == target_user.phone_country_code
@@ -321,8 +324,9 @@ class DataSourceUserSyncer:
             ):
                 continue
 
-            # FIXME (su) 评估 username 更新策略 https://github.com/TencentBlueKing/bk-user/issues/1325
-            # u.username = target_user.username
+            if self.enable_update_username:
+                u.username = target_user.username
+
             u.full_name = target_user.full_name
             u.email = target_user.email
             u.phone = target_user.phone

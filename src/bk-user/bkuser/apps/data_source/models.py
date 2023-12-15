@@ -87,6 +87,11 @@ class DataSource(AuditedModel):
         """检查类型是否为本地数据源"""
         return self.plugin.id == DataSourcePluginEnum.LOCAL
 
+    @property
+    def is_username_frozen(self) -> bool:
+        """用户名在初始化后不可再次更新，对于租户用户 ID 为 uuid 的数据源无效"""
+        return bool(self.owner_tenant_user_id_rule != TenantUserIdRuleEnum.UUID4_HEX)
+
     def get_plugin_cfg(self) -> BasePluginConfig:
         """获取插件配置
 
