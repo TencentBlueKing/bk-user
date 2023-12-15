@@ -52,5 +52,5 @@ def validate_logo(value):
         raise ValidationError(_("无效logo文件"))
 
     # Check if the size exceeds the specified limit
-    if len(decoded_data) / 1024 > settings.MAX_LOGO_SIZE:
-        raise ValidationError(_("logo 文件大小超过限制{}KB").format(settings.MAX_LOGO_SIZE))
+    if len(decoded_data) > settings.MAX_LOGO_SIZE * 1024:
+        raise ValidationError(_("logo 文件大小，不可超过{}KB").format(settings.MAX_LOGO_SIZE))
