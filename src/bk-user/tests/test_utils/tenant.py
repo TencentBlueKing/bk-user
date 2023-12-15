@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import List, Optional
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -43,6 +44,31 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     return tenant
 
 
+def sync_users_depts_to_tenant(tenant: Tenant, data_source: DataSource) -> None:
+    """将数据源数据同步到租户下（租户用户 & 租户部门）"""
+    tenant_users = [
+        TenantUser(
+            tenant=tenant,
+            data_source_user=user,
+            data_source=data_source,
+            id=gen_tenant_user_id(tenant.id, data_source, user),
+        )
+        for user in DataSourceUser.objects.filter(data_source=data_source)
+    ]
+    TenantUser.objects.bulk_create(tenant_users)
+
+    tenant_depts = [
+        TenantDepartment(
+            tenant=tenant,
+            data_source_department=dept,
+            data_source=data_source,
+        )
+        for dept in DataSourceDepartment.objects.filter(data_source=data_source)
+    ]
+    TenantDepartment.objects.bulk_create(tenant_depts)
+
+
+# TODO (su) deprecated
 def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser]) -> List[TenantUser]:
     """创建租户用户"""
 
@@ -63,6 +89,7 @@ def create_tenant_users(tenant: Tenant, data_source_users: List[DataSourceUser])
     return TenantUser.objects.filter(tenant=tenant, data_source_user__in=data_source_users)
 
 
+# TODO (su) deprecated
 def create_tenant_departments(
     tenant: Tenant, data_source_departments: List[DataSourceDepartment]
 ) -> List[TenantDepartment]:

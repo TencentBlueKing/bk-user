@@ -13,23 +13,11 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import (
-    DataSource,
-    DataSourceDepartment,
-    DataSourceDepartmentRelation,
-    DataSourceDepartmentUserRelation,
-    DataSourcePlugin,
-    DataSourceUserLeaderRelation,
-)
+from bkuser.apps.data_source.constants import DataSourceStatus
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
-
-
-class DataSourceDepartmentInfoWithChildren(BaseModel):
-    id: int
-    name: str
-    children_ids: List[int]
 
 
 class DataSourceSimpleInfo(BaseModel):
@@ -73,76 +61,8 @@ class DataSourceHandler:
             plugin_config=plugin_config,
         )
 
-
-class DataSourceDepartmentHandler:
     @staticmethod
-    def get_department_info_map_by_ids(department_ids: List[int]) -> Dict[int, DataSourceDepartmentInfoWithChildren]:
-        """
-        获取部门基础信息和其子部门ID列表
-        """
-        departments_map: Dict = {}
-        # 获取部门基础信息
-        for dept in DataSourceDepartment.objects.filter(id__in=department_ids):
-            departments_map[dept.id] = DataSourceDepartmentInfoWithChildren(
-                id=dept.id, name=dept.name, children_ids=[]
-            )
-        # 获取部门的子部门ID列表
-        for dept_relation in DataSourceDepartmentRelation.objects.filter(department_id__in=department_ids):
-            departments_map[dept_relation.department_id].children_ids = list(
-                dept_relation.get_children().values_list("department_id", flat=True)
-            )
-
-        return departments_map
-
-    @staticmethod
-    def list_department_user_ids(department_id: int, recursive: bool = True) -> List[str]:
-        """
-        获取部门下用户id列表
-        """
-        # 是否返回子部门用户
-        if not recursive:
-            return list(
-                DataSourceDepartmentUserRelation.objects.filter(
-                    department_id=department_id,
-                ).values_list("user_id", flat=True)
-            )
-
-        department = DataSourceDepartmentRelation.objects.get(department_id=department_id)
-        recursive_department_ids = department.get_descendants(include_self=True).values_list(
-            "department_id", flat=True
-        )
-        return list(
-            DataSourceDepartmentUserRelation.objects.filter(
-                department_id__in=recursive_department_ids,
-            ).values_list("user_id", flat=True)
-        )
-
-    @staticmethod
-    def get_user_department_ids_map(user_ids: List[int]) -> Dict[int, List[int]]:
-        """
-        批量获取数据源用户部门 id 信息
-
-        :param user_ids: 数据源用户 ID 列表
-        :returns: 多个数据源用户部门 ID 列表
-        """
-        user_department_ids_map = defaultdict(list)
-        for item in DataSourceDepartmentUserRelation.objects.filter(user_id__in=user_ids):
-            user_department_ids_map[item.user_id].append(item.department_id)
-
-        return user_department_ids_map
-
-
-class DataSourceUserHandler:
-    @staticmethod
-    def get_user_leader_ids_map(user_ids: List[int]) -> Dict[int, List[int]]:
-        """
-        批量获取数据源用户 leader id 信息
-
-        :param user_ids: 数据源用户 ID 列表
-        :returns: 多个数据源用户 leader ID 列表
-        """
-        leaders_map = defaultdict(list)
-        for relation in DataSourceUserLeaderRelation.objects.filter(user_id__in=user_ids):
-            leaders_map[relation.user_id].append(relation.leader_id)
-
-        return leaders_map
+    def get_tenant_available_data_sources(tenant_id: str) -> List[DataSource]:
+        """获取租户有查看的数据源，包括拥有的以及协同的，但是要排除已经禁用的情况"""
+        # TODO (su) 考虑租户协同的情况
+        return DataSource.objects.filter(owner_tenant_id=tenant_id).exclude(status=DataSourceStatus.DISABLED)

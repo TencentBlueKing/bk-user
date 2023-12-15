@@ -31,10 +31,10 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.tenant import (
-    TenantBaseInfo,
-    TenantEditableBaseInfo,
+    TenantEditableInfo,
     TenantFeatureFlag,
     TenantHandler,
+    TenantInfo,
     TenantManagerWithoutID,
 )
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -89,7 +89,12 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         # 初始化租户和租户管理员
         feature_flags = TenantFeatureFlag(**data["feature_flags"])
-        tenant_info = TenantBaseInfo(id=data["id"], name=data["name"], feature_flags=feature_flags, logo=data["logo"])
+        tenant_info = TenantInfo(
+            id=data["id"],
+            name=data["name"],
+            feature_flags=feature_flags,
+            logo=data["logo"],
+        )
         managers = [
             TenantManagerWithoutID(
                 username=i["username"],
@@ -134,22 +139,22 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         tags=["tenant"],
         operation_description="更新租户",
         request_body=TenantUpdateInputSLZ(),
-        responses={status.HTTP_200_OK: ""},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         slz = TenantUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        instance = self.get_object()
-
-        should_updated_info = TenantEditableBaseInfo(
-            name=data["name"], logo=data.get("logo") or "", feature_flags=TenantFeatureFlag(**data["feature_flags"])
+        tenant = self.get_object()
+        tenant_info = TenantEditableInfo(
+            name=data["name"],
+            logo=data.get("logo") or "",
+            feature_flags=TenantFeatureFlag(**data["feature_flags"]),
         )
 
-        TenantHandler.update_with_managers(instance.id, should_updated_info, data["manager_ids"])
-
-        return Response()
+        TenantHandler.update_with_managers(tenant.id, tenant_info, data["manager_ids"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantUsersListApi(generics.ListAPIView):
