@@ -76,7 +76,12 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
   // 删除数据源匹配
   const handleDelete = (item, index) => {
     formData.value.data_source_match_rules.splice(index, 1);
-    dataSourceList.value.find(val => val.key === item.data_source_id).disabled = false;
+    if (Array.isArray(dataSourceList.value)) {
+      const foundItem = dataSourceList.value.find(val => val.key === item.data_source_id);
+      if (foundItem) {
+        foundItem.disabled = false;
+      }
+    }
     handleChange();
   };
 

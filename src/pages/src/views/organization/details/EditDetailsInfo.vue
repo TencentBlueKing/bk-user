@@ -70,14 +70,13 @@
 
 <script setup lang="tsx">
 import { Message } from 'bkui-vue';
-import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, onMounted, defineExpose } from "vue";
-import { getBase64 } from "@/utils";
-import MemberSelector from "@/views/tenant/group-details/MemberSelector.vue";
-import { getTenantUsersList, putTenantOrganizationDetails } from "@/http/organizationFiles";
-import useValidate from "@/hooks/use-validate";
+import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, defineExpose } from 'vue';
+import { getBase64 } from '@/utils';
+import MemberSelector from '@/views/tenant/group-details/MemberSelector.vue';
+import { getTenantUsersList, putTenantOrganizationDetails } from '@/http/organizationFiles';
+import useValidate from '@/hooks/use-validate';
 import PhoneInput from '@/components/phoneInput.vue';
-import { addListener } from 'resize-detector';
-import { debounce } from 'bkui-vue/lib/shared';
+import { useButtonFixed } from '@/hooks/useButtonFixed';
 
 interface TableItem {
   username: string;
@@ -310,17 +309,8 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 const boxRef = ref();
 const cardRef = ref();
 const footerRef = ref();
-const isScroll = ref(false);
-// 按钮超出屏幕吸底
-function handleResize() {
-  isScroll.value = footerRef.value.scrollHeight > (boxRef.value.clientHeight - cardRef.value.clientHeight - 390);
-}
-
-onMounted(() => {
-  const listenResize = debounce(300, () => handleResize());
-  addListener(boxRef.value, listenResize);
-  nextTick(handleResize);
-})
+// footer按钮状态
+const isScroll = useButtonFixed(boxRef, cardRef, footerRef, 390);
 
 // 获取管理员列表
 const fetchUserList = (value: string) => {

@@ -40,7 +40,7 @@
           </bk-radio-group>
         </bk-form-item>
       </div>
-      <div class="content-item pb-[24px]">
+      <div ref="cardRef" class="content-item pb-[24px]">
         <p class="item-title">数据源匹配</p>
         <div class="data-source-matching">
           <div
@@ -127,22 +127,26 @@
         </div>
       </div>
     </bk-form>
-    <div class="footer-wrapper">
-      <bk-button @click="emit('prev')">
-        上一步
-      </bk-button>
-      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
-        提交
-      </bk-button>
-      <bk-button @click="handleCancel">
-        取消
-      </bk-button>
+    <div ref="footerRef" class="footer-wrapper" :class="{ 'fixed': isScroll }">
+      <div class="footer-div">
+        <bk-button @click="emit('prev')">
+          上一步
+        </bk-button>
+        <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
+          提交
+        </bk-button>
+        <bk-button @click="handleCancel">
+          取消
+        </bk-button>
+      </div>
     </div>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { debounce } from 'bkui-vue/lib/shared';
+import { addListener, removeListener } from 'resize-detector';
+import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import useValidate from '@/hooks/use-validate';
 import { useCustomPlugin } from '@/hooks/useCustomPlugin';
@@ -155,6 +159,10 @@ const emit = defineEmits(['prev']);
 
 const props = defineProps({
   plugin: {
+    type: Object,
+    default: () => ({}),
+  },
+  boxRef: {
     type: Object,
     default: () => ({}),
   },
@@ -204,24 +212,44 @@ const dataSourceList = ref([]);
 const builtinFields = ref([]);
 const customFields = ref([]);
 
+const cardRef = ref();
+const footerRef = ref();
+const isScroll = ref(false);
+// 按钮超出屏幕吸底
+const handleResize = () => {
+  isScroll.value = footerRef.value.scrollHeight > (props.boxRef.clientHeight - cardRef.value.clientHeight - 705);
+};
+
 onMounted(async () => {
-  isLoading.value = true;
-  dataSourceList.value = [];
-  builtinFields.value = [];
-  customFields.value = [];
-  const [res, fieldRes] = await Promise.all([getDataSourceList(''), getFields()]);
-  dataSourceList.value = res.data?.map(item => ({ key: item.id, name: item.name, disabled: false })) || [];
-  builtinFields.value = fieldRes.data?.builtin_fields || [];
-  customFields.value = fieldRes.data?.custom_fields || [];
-  formData.value.data_source_match_rules[0].targetFields.push(
-    ...fieldRes.data?.builtin_fields?.map(item => ({
-      key: item.id, name: item.name, disabled: false, type: '内置',
-    })) || [],
-    ...fieldRes.data?.custom_fields?.map(item => ({
-      key: item.id, name: item.name, disabled: false, type: '自定义',
-    })) || [],
-  );
-  isLoading.value = false;
+  try {
+    isLoading.value = true;
+    dataSourceList.value = [];
+    builtinFields.value = [];
+    customFields.value = [];
+    const [res, fieldRes] = await Promise.all([getDataSourceList(''), getFields()]);
+    dataSourceList.value = res.data?.map(item => ({ key: item.id, name: item.name, disabled: false })) || [];
+    builtinFields.value = fieldRes.data?.builtin_fields || [];
+    customFields.value = fieldRes.data?.custom_fields || [];
+    formData.value.data_source_match_rules[0].targetFields.push(
+      ...fieldRes.data?.builtin_fields?.map(item => ({
+        key: item.id, name: item.name, disabled: false, type: '内置',
+      })) || [],
+      ...fieldRes.data?.custom_fields?.map(item => ({
+        key: item.id, name: item.name, disabled: false, type: '自定义',
+      })) || [],
+    );
+  } catch (error) {
+    console.error(error);
+  } finally {
+    const listenResize = debounce(300, () => handleResize());
+    addListener(props.boxRef as HTMLElement, listenResize);
+    nextTick(() => handleResize());
+    isLoading.value = false;
+  }
+});
+
+onBeforeUnmount(() => {
+  removeListener(props.boxRef as HTMLElement, handleResize);
 });
 
 const {
@@ -247,6 +275,11 @@ const {
   formRef,
   'add',
 );
+
+defineExpose({
+  cardRef,
+  footerRef,
+});
 </script>
 
 <style lang="less">

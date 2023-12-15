@@ -40,7 +40,7 @@
           </bk-radio-group>
         </bk-form-item>
       </div>
-      <div class="content-item pb-[24px]">
+      <div ref="cardRef" class="content-item pb-[24px]">
         <p class="item-title">数据源匹配</p>
         <div class="data-source-matching">
           <div
@@ -127,20 +127,23 @@
         </div>
       </div>
     </bk-form>
-    <div class="footer-wrapper">
-      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
-        提交
-      </bk-button>
-      <bk-button @click="handleCancel">
-        取消
-      </bk-button>
+    <div ref="footerRef" class="footer-wrapper" :class="{ 'fixed': isScroll }">
+      <div class="footer-div">
+        <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
+          提交
+        </bk-button>
+        <bk-button @click="handleCancel">
+          取消
+        </bk-button>
+      </div>
     </div>
   </bk-loading>
 </template>
 
 <script setup lang="ts">
-
-import { onMounted, ref } from 'vue';
+import { debounce } from 'bkui-vue/lib/shared';
+import { addListener, removeListener } from 'resize-detector';
+import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import useValidate from '@/hooks/use-validate';
@@ -153,6 +156,13 @@ import { useMainViewStore } from '@/store/mainView';
 const route = useRoute();
 const validate = useValidate();
 const store = useMainViewStore();
+
+const props = defineProps({
+  boxRef: {
+    type: Object,
+    default: () => ({}),
+  },
+});
 
 const formRef = ref();
 const isLoading = ref(false);
@@ -200,6 +210,14 @@ const dataSourceList = ref([]);
 const builtinFields = ref([]);
 const customFields = ref([]);
 
+const cardRef = ref();
+const footerRef = ref();
+const isScroll = ref(false);
+// 按钮超出屏幕吸底
+const handleResize = () => {
+  isScroll.value = footerRef.value.scrollHeight > (props.boxRef.clientHeight - cardRef.value.clientHeight - 705);
+};
+
 onMounted(async () => {
   try {
     isLoading.value = true;
@@ -245,8 +263,15 @@ onMounted(async () => {
   } catch (error) {
     console.error(error);
   } finally {
+    const listenResize = debounce(300, () => handleResize());
+    addListener(props.boxRef as HTMLElement, listenResize);
+    nextTick(() => handleResize());
     isLoading.value = false;
   }
+});
+
+onBeforeUnmount(() => {
+  removeListener(props.boxRef as HTMLElement, handleResize);
 });
 
 const {
@@ -272,6 +297,11 @@ const {
   formRef,
   'edit',
 );
+
+defineExpose({
+  cardRef,
+  footerRef,
+});
 </script>
 
 <style lang="less" scoped>

@@ -1,16 +1,16 @@
 <template>
   <div>
     <MainBreadcrumbs />
-    <div class="edit-data-wrapper user-scroll-y">
+    <div ref="boxRef" class="edit-data-wrapper user-scroll-y">
       <Local v-if="pluginId === 'local'" />
-      <WeCom v-else-if="pluginId === 'wecom'" />
-      <CustomPlugin v-else />
+      <WeCom v-else-if="pluginId === 'wecom'" :box-ref="boxRef" />
+      <CustomPlugin v-else :box-ref="boxRef" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineExpose, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import CustomPlugin from './CustomPlugin.vue';
@@ -22,6 +22,9 @@ import MainBreadcrumbs from '@/components/layouts/MainBreadcrumbs.vue';
 const route = useRoute();
 
 const pluginId = computed(() => route.params.type);
+
+const boxRef = ref();
+defineExpose({ boxRef });
 </script>
 
 <style lang="less">
@@ -30,6 +33,8 @@ const pluginId = computed(() => route.params.type);
 }
 
 .edit-data-wrapper {
+  position: relative;
   height: calc(100vh - 104px);
+  padding-bottom: 48px;
 }
 </style>

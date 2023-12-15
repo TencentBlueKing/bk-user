@@ -94,7 +94,7 @@ class TenantCreateInputSLZ(serializers.Serializer):
 
         if not re.fullmatch(TENANT_ID_REGEX, id):
             raise ValidationError(
-                _("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(id)
+                _("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(id),
             )  # noqa: E501
 
         return id
@@ -218,9 +218,9 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
 
-    def to_representation(self, instance: TenantUser) -> Dict:
-        data = super().to_representation(instance)
-        data_source_user = DataSourceUser.objects.filter(id=instance.data_source_user_id).first()
+    def to_representation(self, obj: TenantUser) -> Dict:
+        data = super().to_representation(obj)
+        data_source_user = DataSourceUser.objects.filter(id=obj.data_source_user_id).first()
         if data_source_user is not None:
             data["username"] = data_source_user.username
             data["full_name"] = data_source_user.full_name

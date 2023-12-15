@@ -23,14 +23,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestNaturalUserTenantUserListApi:
-    def test_list_with_natural_user(
-        self,
-        api_client,
-        bk_user,
-        natural_user,
-        tenant_users,
-        random_tenant_users,
-    ):
+    def test_list_with_natural_user(self, api_client, bk_user, natural_user, tenant_users, random_tenant_users):
         """
         绑定自然人的情况
         """
@@ -63,13 +56,7 @@ class TestNaturalUserTenantUserListApi:
             assert item["tenant"]["id"] == tenant_user.tenant_id
             assert item["tenant"]["name"] == tenant_user.tenant.name
 
-    def test_list_without_natural_user(
-        self,
-        api_client,
-        bk_user,
-        tenant_users,
-        random_tenant_users,
-    ):
+    def test_list_without_natural_user(self, api_client, bk_user, tenant_users, random_tenant_users):
         """
         未绑定自然人的情况
         """
@@ -190,10 +177,7 @@ class TestNaturalUserTenantUserRetrieveApi:
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
     def test_retrieve_additional_tenant_user_from_additional_natural_user(
-        self,
-        api_client,
-        additional_natural_user,
-        additional_tenant_user,
+        self, api_client, additional_natural_user, additional_tenant_user
     ):
         """
         绑定自然人情况下，测试和当前用户非同一自然人用户的租户详情

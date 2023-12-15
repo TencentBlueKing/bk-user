@@ -22,23 +22,23 @@ from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.validators import validate_phone_with_country_code
 
 
-class TenantBaseInfoOutputSLZ(serializers.Serializer):
+class TenantInfoOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户ID")
     name = serializers.CharField(help_text="租户名称")
 
 
-class TenantUserBaseInfoOutputSLZ(serializers.Serializer):
+class TenantUserInfoOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户ID")
     username = serializers.CharField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
     logo = serializers.CharField(help_text="头像")
-    tenant = TenantBaseInfoOutputSLZ(help_text="租户")
+    tenant = TenantInfoOutputSLZ(help_text="租户")
 
 
 class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="自然人ID")
     full_name = serializers.CharField(help_text="自然人姓名")
-    tenant_users = serializers.ListField(help_text="自然人关联的租户账号列表", child=TenantUserBaseInfoOutputSLZ())
+    tenant_users = serializers.ListField(help_text="自然人关联的租户账号列表", child=TenantUserInfoOutputSLZ())
 
 
 class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
@@ -67,29 +67,22 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     extras = serializers.JSONField(help_text="自定义字段", required=False)
 
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
-    def get_departments(self, instance: TenantUser) -> List[Dict]:
-        tenant_user_departments = TenantUserHandler.get_tenant_user_departments_map_by_id([instance.id])
-        departments = tenant_user_departments.get(instance.id) or []
-        return [{"id": i.id, "name": i.name} for i in departments]
+    def get_departments(self, obj: TenantUser) -> List[Dict]:
+        tenant_user_depts_map = TenantUserHandler.get_tenant_users_depts_map(obj.tenant_id, [obj])
+        depts = tenant_user_depts_map.get(obj.id) or []
+        return TenantUserDepartmentOutputSLZ(depts, many=True).data
 
     @swagger_serializer_method(serializer_or_field=TenantUserLeaderOutputSLZ(many=True))
-    def get_leaders(self, instance: TenantUser) -> List[Dict]:
-        leaders = TenantUserHandler.get_tenant_user_leaders_map_by_id([instance.id]).get(instance.id) or []
-        return [
-            {
-                "id": i.id,
-                "username": i.username,
-                "full_name": i.full_name,
-            }
-            for i in leaders
-        ]
+    def get_leaders(self, obj: TenantUser) -> List[Dict]:
+        tenant_users_leader_infos = TenantUserHandler.get_tenant_user_leader_infos(obj)
+        return TenantUserLeaderOutputSLZ(tenant_users_leader_infos, many=True).data
 
-    def get_account_expired_at(self, instance: TenantUser) -> str:
-        return instance.account_expired_at_display
+    def get_account_expired_at(self, obj: TenantUser) -> str:
+        return obj.account_expired_at_display
 
-    def to_representation(self, instance: TenantUser) -> Dict:
-        data = super().to_representation(instance)
-        user = instance.data_source_user
+    def to_representation(self, obj: TenantUser) -> Dict:
+        data = super().to_representation(obj)
+        user = obj.data_source_user
         if user is not None:
             data.update(
                 {

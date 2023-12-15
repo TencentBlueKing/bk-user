@@ -20,7 +20,9 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
+    DataSourceDepartmentUserRelation,
     DataSourceUser,
+    DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
@@ -140,8 +142,8 @@ class UserSearchOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=DataSourceSearchDepartmentsOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser):
-        departments = self.context["data_source_user_department_map"].get(obj.id, [])
-        return [{"id": i.id, "name": i.name} for i in departments]
+        departments = self.context["user_dept_infos_map"].get(obj.id) or []
+        return DataSourceSearchDepartmentsOutputSLZ(departments, many=True).data
 
 
 class UserCreateInputSLZ(serializers.Serializer):
@@ -191,10 +193,6 @@ class UserCreateInputSLZ(serializers.Serializer):
         return _validate_user_extras(extras, self.context["tenant_id"], self.context["data_source"])
 
 
-class UserCreateOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="数据源用户ID")
-
-
 class LeaderSearchInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", required=False)
 
@@ -240,14 +238,15 @@ class UserRetrieveOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=UserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: DataSourceUser) -> List[Dict]:
-        departments = self.context["user_departments_map"].get(obj.id, [])
-        return [{"id": dept.id, "name": dept.name} for dept in departments]
+        relations = DataSourceDepartmentUserRelation.objects.filter(user_id=obj.id).select_related("department")
+        departments = [{"id": rel.department_id, "name": rel.department.name} for rel in relations]
+        return UserDepartmentOutputSLZ(departments, many=True).data
 
     @swagger_serializer_method(serializer_or_field=UserLeaderOutputSLZ(many=True))
     def get_leaders(self, obj: DataSourceUser) -> List[Dict]:
-        user_leaders_map = self.context["user_leaders_map"]
-        leaders = user_leaders_map.get(obj.id, [])
-        return [{"id": leader.id, "username": leader.username} for leader in leaders]
+        relations = DataSourceUserLeaderRelation.objects.filter(user_id=obj.id).select_related("leader")
+        leaders = [{"id": rel.leader_id, "username": rel.leader.username} for rel in relations]
+        return UserLeaderOutputSLZ(leaders, many=True).data
 
 
 class UserUpdateInputSLZ(serializers.Serializer):
