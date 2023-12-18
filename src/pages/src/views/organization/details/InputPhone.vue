@@ -99,10 +99,10 @@ export default {
     },
     // 失焦验证
     verifyInput(item) {
-      if (item === '') {
+      if (item.value === '') {
         return this.$emit('phone', true);
       }
-      const validation = item.iso_code === 'cn'
+      const validation = item.iso_code.toLowerCase() === 'cn'
         ? /^1[3-9]\d{9}$/.test(item.value)
         : this.iti.isValidNumber();
       !validation && (item.isError = true);
