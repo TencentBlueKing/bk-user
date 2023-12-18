@@ -454,8 +454,10 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
         return queryset
 
     def get_serializer_context(self):
-        data_sources = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
-        tenant_user_ids = data_sources.values_list("updater", flat=True)
+        cur_tenant_id = self.get_current_tenant_id()
+        data_sources = DataSource.objects.filter(owner_tenant_id=cur_tenant_id)
+        sync_tasks = DataSourceSyncTask.objects.filter(data_source__in=data_sources)
+        tenant_user_ids = sync_tasks.values_list("operator", flat=True)
         return {
             "data_source_name_map": {ds.id: ds.name for ds in data_sources},
             "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),

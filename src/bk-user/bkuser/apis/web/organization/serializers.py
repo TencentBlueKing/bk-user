@@ -45,16 +45,18 @@ class TenantDepartmentUserSearchInputSLZ(TenantUserSearchInputSLZ):
 
 class TenantUserInfoOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户ID")
-    username = serializers.CharField(help_text="租户用户名", required=False)
-    full_name = serializers.CharField(help_text="用户姓名", required=False)
-    email = serializers.EmailField(help_text="用户邮箱", required=False)
-    phone = serializers.CharField(help_text="用户手机号", required=False)
+    username = serializers.CharField(help_text="租户用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
+    email = serializers.EmailField(help_text="用户邮箱", source="data_source_user.email")
+    phone = serializers.CharField(help_text="用户手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(
-        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+        help_text="手机号国际区号",
+        source="data_source_user.phone_country_code",
+        default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
     account_expired_at = serializers.SerializerMethodField(help_text="账号过期时间")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
-    extras = serializers.JSONField(help_text="自定义字段", required=False)
+    extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
 
     def get_account_expired_at(self, obj: TenantUser) -> str:
         return obj.account_expired_at_display
@@ -64,24 +66,7 @@ class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: TenantUser) -> List[Dict]:
         departments = self.context["tenant_user_depts_map"].get(obj.id) or []
-        return [{"id": i.id, "name": i.name} for i in departments]
-
-    def to_representation(self, obj: TenantUser) -> Dict:
-        data = super().to_representation(obj)
-        user = obj.data_source_user
-        data.update(
-            {
-                "full_name": user.full_name,
-                "username": user.username,
-                "email": user.email,
-                "phone": user.phone,
-                "phone_country_code": user.phone_country_code,
-                "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
-                "extras": user.extras,
-            }
-        )
-
-        return data
+        return TenantUserDepartmentOutputSLZ(departments, many=True).data
 
 
 class TenantUserRetrieveOutputSLZ(TenantUserInfoOutputSLZ):
@@ -97,23 +82,6 @@ class TenantUserRetrieveOutputSLZ(TenantUserInfoOutputSLZ):
     def get_leaders(self, obj: TenantUser) -> List[Dict]:
         tenant_users_leader_infos = TenantUserHandler.get_tenant_user_leader_infos(obj)
         return TenantUserLeaderOutputSLZ(tenant_users_leader_infos, many=True).data
-
-    def to_representation(self, obj: TenantUser) -> Dict:
-        data = super().to_representation(obj)
-        user = obj.data_source_user
-        if user is not None:
-            data.update(
-                {
-                    "full_name": user.full_name,
-                    "username": user.username,
-                    "email": user.email,
-                    "phone": user.phone,
-                    "phone_country_code": user.phone_country_code,
-                    "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
-                    "extras": user.extras,
-                }
-            )
-        return data
 
 
 class TenantListOutputSLZ(serializers.Serializer):

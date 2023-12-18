@@ -43,20 +43,22 @@ class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
 
 class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户ID")
-    username = serializers.CharField(help_text="用户名", required=False)
-    full_name = serializers.CharField(help_text="用户姓名", required=False)
-    logo = serializers.CharField(help_text="头像", required=False)
+    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
+    logo = serializers.CharField(help_text="头像", source="data_source_user.logo")
 
     # 邮箱信息
     is_inherited_email = serializers.BooleanField(help_text="是否继承数据源邮箱")
-    email = serializers.EmailField(help_text="用户邮箱", required=False)
+    email = serializers.EmailField(help_text="用户邮箱", source="data_source_user.email")
     custom_email = serializers.EmailField(help_text="自定义用户邮箱")
 
     # 手机号信息
     is_inherited_phone = serializers.BooleanField(help_text="是否继承数据源手机号")
-    phone = serializers.CharField(help_text="用户手机号", required=False)
+    phone = serializers.CharField(help_text="用户手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(
-        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+        help_text="手机号国际区号",
+        source="data_source_user.phone_country_code",
+        default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
     custom_phone = serializers.CharField(help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(help_text="自定义用户手机国际区号")
@@ -64,7 +66,7 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     account_expired_at = serializers.SerializerMethodField(help_text="账号过期时间")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
-    extras = serializers.JSONField(help_text="自定义字段", required=False)
+    extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
 
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: TenantUser) -> List[Dict]:
@@ -79,23 +81,6 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     def get_account_expired_at(self, obj: TenantUser) -> str:
         return obj.account_expired_at_display
-
-    def to_representation(self, obj: TenantUser) -> Dict:
-        data = super().to_representation(obj)
-        user = obj.data_source_user
-        if user is not None:
-            data.update(
-                {
-                    "full_name": user.full_name,
-                    "username": user.username,
-                    "email": user.email,
-                    "phone": user.phone,
-                    "phone_country_code": user.phone_country_code,
-                    "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
-                    "extras": user.extras,
-                }
-            )
-        return data
 
 
 class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):

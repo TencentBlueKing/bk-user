@@ -158,13 +158,13 @@ class UserCreateInputSLZ(serializers.Serializer):
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField(), default=[])
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField(), default=[])
 
-    def validate(self, data):
+    def validate(self, attrs):
         try:
-            validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+            validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
         except ValueError as e:
             raise ValidationError(e)
 
-        return data
+        return attrs
 
     def validate_department_ids(self, department_ids):
         diff_department_ids = set(department_ids) - set(

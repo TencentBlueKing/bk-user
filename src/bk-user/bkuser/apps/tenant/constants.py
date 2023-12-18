@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.common_timezones)]
 
-TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{2,31}")
+TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{2,30}[a-zA-Z0-9]$")
 
 # 自定义字段英文标识命名规则
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
