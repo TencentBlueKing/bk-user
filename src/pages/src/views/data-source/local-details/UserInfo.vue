@@ -113,7 +113,7 @@
       </template>
       <template #default>
         <bk-loading :loading="detailsLoading">
-          <ViewUser v-if="isView" :users-data="detailsConfig.usersData" />
+          <ViewUser v-if="isView" :users-data="detailsConfig.usersData" :paths="paths" />
           <EditUser
             v-else
             :type="detailsConfig.type"
@@ -259,13 +259,15 @@ const detailsConfig = reactive({
     department_ids: [],
     leader_ids: [],
     email: '',
-    phone_country_code: '+86',
+    phone_country_code: '86',
     phone: '',
     logo: '',
     extras: {},
   },
   id: '',
 });
+
+const paths = ref('');
 
 const enumData = {
   add: {
@@ -292,7 +294,7 @@ watch(
         department_ids: [],
         leader_ids: [],
         email: '',
-        phone_country_code: '+86',
+        phone_country_code: '86',
         phone: '',
         logo: '',
         extras: {},
@@ -380,6 +382,10 @@ const handleClick = async (type: string, item?: any) => {
     const res = await getDataSourceUserDetails(item.id);
     detailsConfig.usersData = res.data;
     detailsConfig.id = item.id;
+    if (type === 'view') {
+      const pathsRes = await getOrganizationPaths(item.id);
+      paths.value = pathsRes.data?.organization_paths[0] || '--';
+    }
   }
   await getCustomFields(type);
   detailsConfig.title = enumData[type].title;

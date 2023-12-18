@@ -20,10 +20,9 @@
         </div>
         <div class="details-content-item">
           <span class="details-content-key">所属组织：</span>
-          <span class="details-content-value" v-if="usersData.departments.length > 0">
-            {{ formatConvert(usersData.departments) }}
-          </span>
-          <span class="details-content-value" v-else>{{ '--' }}</span>
+          <bk-overflow-title class="details-content-value" type="tips">
+            {{ paths }}
+          </bk-overflow-title>
         </div>
         <div class="details-content-item">
           <span class="details-content-key">直属上级：</span>
@@ -50,6 +49,10 @@ defineProps({
   usersData: {
     type: Object,
     default: () => ({}),
+  },
+  paths: {
+    type: String,
+    default: '',
   },
 });
 </script>

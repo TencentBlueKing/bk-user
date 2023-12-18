@@ -28,6 +28,7 @@
       <bk-table
         class="content-table"
         :data="state.list"
+        :border="['outer']"
         :max-height="tableMaxHeight"
         show-overflow-tooltip
         @column-sort="columnSort">
@@ -365,15 +366,13 @@ const handleBeforeClose = async () => {
   }
 };
 
-const columnSort = ({ index, type }) => {
+const columnSort = () => {
   if (isCreated.value) {
+    isCreated.value = false;
+    newId.value = '';
     const rows = getRows();
     for (const i of rows) {
-      if ((index === 0 || index === 4) && type !== 'null') {
-        i.style.background = '#fff';
-      } else {
-        i.style.background = '#DCFFE2';
-      }
+      i.style.background = '#fff';
     }
   }
 };

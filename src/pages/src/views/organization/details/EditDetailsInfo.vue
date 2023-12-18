@@ -1,6 +1,6 @@
 <template>
   <div ref="boxRef" class="operation-wrapper pt-[8px]">
-    <div class="operation-content">
+    <div ref="cardRef" class="operation-content">
       <div class="operation-card">
         <div class="operation-content-title">基本信息</div>
         <div class="operation-content-info">
@@ -44,7 +44,7 @@
           />
         </div>
       </div>
-      <div ref="cardRef" class="operation-card">
+      <div class="operation-card">
         <div class="operation-content-title">管理员</div>
         <bk-form ref="userRef" :model="formData">
           <bk-table
@@ -57,7 +57,7 @@
         </bk-form>
       </div>
     </div>
-    <div ref="footerRef" class="footer" :class="{ 'fixed': isScroll}">
+    <div class="footer" :class="{ 'fixed': isScroll}">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
@@ -308,9 +308,8 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 
 const boxRef = ref();
 const cardRef = ref();
-const footerRef = ref();
 // footer按钮状态
-const isScroll = useButtonFixed(boxRef, cardRef, footerRef, 390);
+const isScroll = useButtonFixed(boxRef, cardRef, 54);
 
 // 获取管理员列表
 const fetchUserList = (value: string) => {
@@ -409,7 +408,6 @@ const changeVisible = (status: boolean) => {
 defineExpose({
   boxRef,
   cardRef,
-  footerRef,
 });
 </script>
 
