@@ -38,6 +38,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
+    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -48,7 +49,8 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
+from bkuser.common.hashers import make_password
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
@@ -253,7 +255,7 @@ class DataSourceUserRetrieveUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceUserPasswordUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
+class DataSourceUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = DataSourceUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -264,16 +266,25 @@ class DataSourceUserPasswordUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveU
         request_body=DataSourceUserPasswordInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         data_source_user = self.get_object()
-        if not data_source_user.data_source.is_local:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源类型用户可变更密码"))
+        data_source = data_source_user.data_source
+        data_source_config = data_source.get_plugin_cfg()
 
-        slz = DataSourceUserPasswordInputSLZ(data=request.data, context={"data_source": data_source_user.data_source})
+        if not data_source.is_local or not data_source_config.enable_account_password_login:
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
+                _("仅本地数据源类型且启用账密登录功能, 用户可变更密码")
+            )
+
+        slz = DataSourceUserPasswordInputSLZ(
+            data=request.data, context={"password_rule": data_source_config.password_rule}
+        )
         slz.is_valid(raise_exception=True)
         new_password = slz.validated_data["password"]
 
-        DataSourceUserHandler.update_data_source_user_password(data_source_user.id, new_password)
+        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        user_identify_info.password = make_password(new_password)
+        user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

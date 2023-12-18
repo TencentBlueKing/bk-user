@@ -22,11 +22,9 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
-    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
-from bkuser.common.hashers import make_password
 
 
 class DataSourceUserInfo(BaseModel):
@@ -180,12 +178,6 @@ class DataSourceUserHandler:
 
             # 更新用户-上级关系
             DataSourceUserHandler.update_user_leader_relations(user=user, leader_ids=relation_info.leader_ids)
-
-    @staticmethod
-    def update_data_source_user_password(data_source_user_id: int, password: str):
-        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user_id=data_source_user_id)
-        user_identify_info.password = make_password(password)
-        user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
 
 
 class DataSourceDepartmentHandler:
