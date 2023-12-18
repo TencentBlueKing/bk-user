@@ -27,7 +27,7 @@ class TestDataSourceUserWithCustomField:
             "department_ids": [],
             "leader_ids": [],
             "email": "testerA@qq.com",
-            "phone_country_code": "+86",
+            "phone_country_code": "86",
             "phone": "13123456789",
             "extras": default_extras,
         }
@@ -76,7 +76,7 @@ class TestDataSourceUserWithCustomField:
             "department_ids": [],
             "leader_ids": [],
             "email": f"test-{random_data_source_user.full_name}@qq.com",
-            "phone_country_code": "+86",
+            "phone_country_code": "86",
             "phone": "13123456789",
             "extras": extras,
         }
@@ -151,7 +151,7 @@ class TestDataSourceUserWithCustomField:
             "department_ids": [],
             "leader_ids": [],
             "email": "testerA@qq.com",
-            "phone_country_code": "+86",
+            "phone_country_code": "86",
             "phone": "13123456789",
             "extras": invalid_extras,
         }
@@ -243,7 +243,7 @@ class TestDataSourceUserWithCustomField:
             "department_ids": [],
             "leader_ids": [],
             "email": "testerA-1@qq.com",
-            "phone_country_code": "+86",
+            "phone_country_code": "86",
             "phone": "13123456799",
             "extras": invalid_extras,
         }
