@@ -475,12 +475,12 @@ export default {
       let phoneValue = '';
       this.profileInfoList.map((item) => {
         if (item.key === 'telephone') {
-          phoneValue = this.$refs.userInfoData.$refs.phone[0].verifyInput(item.value);
+          phoneValue = this.$refs.userInfoData.$refs.phone[0].verifyInput(item);
         }
         if (item.key === 'position' && item.value === '') {
           item.value = null;
         }
-        if (item.type === 'number' && item.key !== 'telephone') {
+        if (item.type === 'number' && item.key !== 'telephone' && item.value) {
           item.value = item.value.toString();
         }
       });
