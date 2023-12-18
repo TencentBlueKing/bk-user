@@ -105,7 +105,7 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
                     phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
                 )
             except ValueError as e:
-                raise ValidationError(e)
+                raise ValidationError(str(e))
 
         return attrs
 

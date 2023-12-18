@@ -45,7 +45,7 @@ class TenantManagerCreateInputSLZ(serializers.Serializer):
         try:
             validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
         except ValueError as e:
-            raise ValidationError(e)
+            raise ValidationError(str(e))
 
         return attrs
 
@@ -102,7 +102,7 @@ class TenantCreateInputSLZ(serializers.Serializer):
         if not re.fullmatch(TENANT_ID_REGEX, id):
             raise ValidationError(
                 _(
-                    "{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头，字母或数字结尾"
+                    "{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头，字母或数字结尾",
                 ).format(id),
             )  # noqa: E501
 

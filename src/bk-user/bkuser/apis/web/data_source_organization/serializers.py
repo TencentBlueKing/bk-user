@@ -162,7 +162,7 @@ class UserCreateInputSLZ(serializers.Serializer):
         try:
             validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
         except ValueError as e:
-            raise ValidationError(e)
+            raise ValidationError(str(e))
 
         return attrs
 
@@ -262,7 +262,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
         try:
             validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
         except ValueError as e:
-            raise ValidationError(e)
+            raise ValidationError(str(e))
 
         return data
 
