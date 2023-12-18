@@ -26,6 +26,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUser,
     DataSourceUserLeaderRelation,
 )
+from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 
 
@@ -37,7 +38,7 @@ class DataSourceUserExporter:
     # 模板中字段名行索引
     col_name_row_idx = 2
     # 新增的列的默认宽度
-    default_column_width = 25
+    default_column_width = 30
 
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
@@ -46,6 +47,21 @@ class DataSourceUserExporter:
         self._load_template()
 
     def get_template(self) -> Workbook:
+        # 填充示例数据以供参考
+        extras = []
+        for field in self.custom_fields:
+            if field.data_type == UserFieldDataType.ENUM:
+                extras.append(f"{field.default} (one of {[opt['id'] for opt in field.options]})")
+            elif field.data_type == UserFieldDataType.MULTI_ENUM:
+                extras.append(f"{','.join(field.default)} (any of {[opt['id'] for opt in field.options]})")
+            elif field.data_type == UserFieldDataType.NUMBER:
+                extras.append(f"{field.default} (number format)")
+            else:
+                extras.append(f"{field.default} (string format)")
+
+        self.sheet.append(  # noqa: PERF401 sheet isn't a list
+            ("zhangsan", "张三", "zhangsan@qq.com", "+8613512345678", "公司/部门A,公司/部门B", "lisi,wangwu", *extras)
+        )
         return self.workbook
 
     def export(self) -> Workbook:

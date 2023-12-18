@@ -16,12 +16,14 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from openpyxl.workbook import Workbook
 
+from bkuser.plugins.base import PluginLogger
 from bkuser.plugins.local.constants import USERNAME_REGEX
 from bkuser.plugins.local.exceptions import (
     CustomColumnNameInvalid,
     DuplicateColumnName,
     DuplicateUsername,
     InvalidLeader,
+    InvalidOrganization,
     InvalidUsername,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
@@ -40,8 +42,10 @@ class LocalDataSourceDataParser:
     col_name_row_idx = 2
     # 第三行开始，才是用户数据
     user_data_min_row_idx = 3
-    # 组织列索引
-    org_col_idx = 4
+    # 用户名索引（0-based）
+    username_idx_in_row = 0
+    # 组织列索引（0-based）
+    organization_idx_in_row = 4
 
     # 内建字段列名
     builtin_col_names = [
@@ -62,6 +66,8 @@ class LocalDataSourceDataParser:
     all_col_names: List[str] = []
     # 完整的字段名称
     all_field_names: List[str] = []
+    # 有效字段列长度（内建字段 + 自定义字段）
+    valid_col_length = 0
 
     # 必填字段列名，自定义必填字段不在解析器中校验
     required_field_names = [
@@ -71,7 +77,8 @@ class LocalDataSourceDataParser:
         "phone_number",
     ]
 
-    def __init__(self, workbook: Workbook):
+    def __init__(self, logger: PluginLogger, workbook: Workbook):
+        self.logger = logger
         self.workbook = workbook
         self.departments: List[RawDataSourceDepartment] = []
         self.users: List[RawDataSourceUser] = []
@@ -90,7 +97,7 @@ class LocalDataSourceDataParser:
     def get_users(self) -> List[RawDataSourceUser]:
         return self.users
 
-    def _validate_and_prepare(self):  # noqa: C901
+    def _validate_and_prepare(self):  # noqa: C901, PLR0912
         """检查表格格式，确保后续可正常解析"""
         # 1. 确保用户表确实存在
         if self.user_sheet_name not in self.workbook.sheetnames:
@@ -108,24 +115,36 @@ class LocalDataSourceDataParser:
         # N 个之后，是可能存在的自定义字段
         self.custom_col_names = sheet_col_names[builtin_col_length:]
         self.all_col_names = self.builtin_col_names + self.custom_col_names
+        self.valid_col_length = len(self.all_col_names)
+        self.logger.info(f"all column names parsed from workbook: {self.all_col_names}")  # noqa: G004
 
         # 3. 检查自定义字段是否符合格式，格式：display_name/field_name
         for col_name in self.custom_col_names:
+            if not col_name:
+                raise CustomColumnNameInvalid(_("存在值为空的自定义字段列名，请下载使用最新的模板").format(col_name))
+
             display_name, __, field_name = col_name.partition("/")
             if not (display_name and field_name):
                 raise CustomColumnNameInvalid(_("自定义字段 {} 格式不合法，参考格式：年龄/age").format(col_name))
 
         # 获取所有的字段名
         self.all_field_names = [n.split("/")[-1] for n in self.all_col_names]
+        self.logger.info(f"all field names parsed from workbook: {self.all_field_names}")  # noqa: G004
 
         # 4. 检查是否有重复列
         if duplicate_col_names := [n for n, cnt in Counter(sheet_col_names).items() if cnt > 1]:
             raise DuplicateColumnName(_("待导入文件中存在重复列名：{}").format(", ".join(duplicate_col_names)))
 
         all_usernames = []
-        for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
-            info = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
-            # 5. 检查所有必填字段是否有值
+        for cell_values in self.sheet.iter_rows(
+            min_row=self.user_data_min_row_idx, max_col=self.valid_col_length, values_only=True
+        ):
+            if not any(cell_values):
+                self.logger.warning("empty row in sheet found, skip...")
+                continue
+
+            info = dict(zip(self.all_field_names, cell_values, strict=True))
+            # 5. 检查所有必填字段是否有值（注：自定义字段必填在后续的流程中检查）
             for field_name in self.required_field_names:
                 if not info.get(field_name):
                     raise RequiredFieldIsEmpty(_("待导入文件中必填字段 {} 存在空值").format(field_name))
@@ -135,7 +154,7 @@ class LocalDataSourceDataParser:
             if not USERNAME_REGEX.fullmatch(username):
                 raise InvalidUsername(
                     _(
-                        "用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头"  # noqa: E501
+                        "用户名 {} 不符合命名规范: 由3-32位字母、数字、下划线(_)、点(.)、连接符(-)字符组成，以字母或数字开头",  # noqa: E501
                     ).format(username)
                 )
 
@@ -153,15 +172,31 @@ class LocalDataSourceDataParser:
 
     def _parse_departments(self):
         organizations = set()
-        for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
-            if user_orgs := row[self.org_col_idx].value:
-                for org in user_orgs.split(","):
-                    cur_org = org.strip()
-                    organizations.add(cur_org)
-                    # 所有的父部门都要被添加进来
-                    while "/" in cur_org:
-                        cur_org, __, __ = cur_org.rpartition("/")
-                        organizations.add(cur_org.strip())
+        for cell_values in self.sheet.iter_rows(
+            min_row=self.user_data_min_row_idx, max_col=self.valid_col_length, values_only=True
+        ):
+            if not any(cell_values):
+                continue
+
+            username, user_orgs = cell_values[self.username_idx_in_row], cell_values[self.organization_idx_in_row]
+            if not user_orgs:
+                self.logger.info(f"username {username} not provide organization, skip...")  # noqa: G004
+                continue
+
+            for org in user_orgs.split(","):
+                cur_org = org.strip()
+                if not all(cur_org.split("/")):
+                    raise InvalidOrganization(
+                        _(
+                            "用户 {} 组织路径 {} 不合法：不得以 / 开头或结尾或存在连续的 / 字符",
+                        ).format(username, cur_org)
+                    )
+
+                organizations.add(cur_org)
+                # 所有的父部门都要被添加进来
+                while "/" in cur_org:
+                    cur_org, __, __ = cur_org.rpartition("/")
+                    organizations.add(cur_org.strip())
 
         # 组织路径：本数据源部门 Code 映射表
         org_code_map = {org: gen_code(org) for org in organizations}
@@ -178,8 +213,13 @@ class LocalDataSourceDataParser:
             )
 
     def _parse_users(self):
-        for row in self.sheet.iter_rows(min_row=self.user_data_min_row_idx):
-            properties = dict(zip(self.all_field_names, [cell.value for cell in row], strict=True))
+        for cell_values in self.sheet.iter_rows(
+            min_row=self.user_data_min_row_idx, max_col=self.valid_col_length, values_only=True
+        ):
+            if not any(cell_values):
+                continue
+
+            properties = dict(zip(self.all_field_names, cell_values, strict=True))
 
             departments, leaders = [], []
             if organizations := properties.pop("organizations"):

@@ -13,7 +13,7 @@ from typing import List
 from django.utils.translation import gettext_lazy as _
 from openpyxl.workbook import Workbook
 
-from bkuser.plugins.base import BaseDataSourcePlugin
+from bkuser.plugins.base import BaseDataSourcePlugin, PluginLogger
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.plugins.local.parser import LocalDataSourceDataParser
@@ -30,10 +30,10 @@ class LocalDataSourcePlugin(BaseDataSourcePlugin):
     id = DataSourcePluginEnum.LOCAL
     config_class = LocalDataSourcePluginConfig
 
-    def __init__(self, plugin_config: LocalDataSourcePluginConfig, workbook: Workbook):
+    def __init__(self, plugin_config: LocalDataSourcePluginConfig, logger: PluginLogger, workbook: Workbook):
         self.plugin_config = plugin_config
         self.workbook = workbook
-        self.parser = LocalDataSourceDataParser(self.workbook)
+        self.parser = LocalDataSourceDataParser(logger, self.workbook)
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
         """获取部门信息"""

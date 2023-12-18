@@ -127,7 +127,7 @@ class TestDataSourceUserConverter:
         assert lisi.email == "lisi@m.com"
         assert lisi.phone == "13512345672"
         assert lisi.phone_country_code == "63"
-        assert lisi.extras == {"age": 28, "gender": "female", "region": "", "sport_hobby": ["swimming", "golf"]}
+        assert lisi.extras == {"age": 28, "gender": "female", "region": "china", "sport_hobby": ["swimming", "golf"]}
 
     def test_convert_with_not_same_field_name_mapping(self, bare_local_data_source, tenant_user_custom_fields, logger):
         raw_lisi = RawDataSourceUser(
