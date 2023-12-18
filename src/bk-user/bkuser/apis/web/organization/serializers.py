@@ -19,18 +19,18 @@ from bkuser.biz.tenant import TenantUserHandler
 
 
 class TenantDepartmentOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="租户部门ID")
+    id = serializers.IntegerField(help_text="租户部门 ID")
     name = serializers.CharField(help_text="部门名称")
     has_children = serializers.BooleanField(help_text="是否有子部门")
 
 
 class TenantUserDepartmentOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="租户部门ID")
+    id = serializers.IntegerField(help_text="租户部门 ID")
     name = serializers.CharField(help_text="租户部门名称")
 
 
 class TenantUserLeaderOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户ID")
+    id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="租户用户名")
     full_name = serializers.CharField(help_text="租户用户名称")
 
@@ -44,7 +44,7 @@ class TenantDepartmentUserSearchInputSLZ(TenantUserSearchInputSLZ):
 
 
 class TenantUserInfoOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户ID")
+    id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="租户用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     email = serializers.EmailField(help_text="用户邮箱", source="data_source_user.email")
@@ -54,12 +54,9 @@ class TenantUserInfoOutputSLZ(serializers.Serializer):
         source="data_source_user.phone_country_code",
         default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
-    account_expired_at = serializers.SerializerMethodField(help_text="账号过期时间")
+    account_expired_at = serializers.CharField(help_text="账号过期时间", source="account_expired_at_display")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
-
-    def get_account_expired_at(self, obj: TenantUser) -> str:
-        return obj.account_expired_at_display
 
 
 class TenantUserListOutputSLZ(TenantUserInfoOutputSLZ):
@@ -85,7 +82,7 @@ class TenantUserRetrieveOutputSLZ(TenantUserInfoOutputSLZ):
 
 
 class TenantListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户ID")
+    id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
     departments = serializers.SerializerMethodField(help_text="租户下每个数据源的根组织")
@@ -99,6 +96,6 @@ class TenantListOutputSLZ(serializers.Serializer):
 
 
 class TenantDepartmentChildrenListOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="租户部门ID")
+    id = serializers.IntegerField(help_text="租户部门 ID")
     name = serializers.CharField(help_text="部门名称")
     has_children = serializers.BooleanField(help_text="是否有子部门")

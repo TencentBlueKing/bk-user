@@ -23,12 +23,12 @@ from bkuser.common.validators import validate_phone_with_country_code
 
 
 class TenantInfoOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户ID")
+    id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
 
 
 class TenantUserInfoOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户ID")
+    id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
     logo = serializers.CharField(help_text="头像")
@@ -42,7 +42,7 @@ class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
 
 
 class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户ID")
+    id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
     logo = serializers.CharField(help_text="头像", source="data_source_user.logo")
@@ -63,7 +63,7 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     custom_phone = serializers.CharField(help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(help_text="自定义用户手机国际区号")
 
-    account_expired_at = serializers.SerializerMethodField(help_text="账号过期时间")
+    account_expired_at = serializers.CharField(help_text="账号过期时间", source="account_expired_at_display")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
     extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
@@ -78,9 +78,6 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     def get_leaders(self, obj: TenantUser) -> List[Dict]:
         tenant_users_leader_infos = TenantUserHandler.get_tenant_user_leader_infos(obj)
         return TenantUserLeaderOutputSLZ(tenant_users_leader_infos, many=True).data
-
-    def get_account_expired_at(self, obj: TenantUser) -> str:
-        return obj.account_expired_at_display
 
 
 class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
