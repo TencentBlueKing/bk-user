@@ -18,13 +18,13 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.models import DataSourceUser
 from bkuser.apps.tenant.constants import TENANT_ID_REGEX
-from bkuser.apps.tenant.models import Tenant, TenantUser
+from bkuser.apps.tenant.models import Tenant
 from bkuser.biz.data_source import DataSourceSimpleInfo
 from bkuser.biz.tenant import TenantUserWithInheritedInfo
 from bkuser.biz.validators import validate_data_source_user_username
 from bkuser.common.passwd import PasswordValidator
+from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.constants import PasswordGenerateMethod
@@ -36,11 +36,18 @@ class TenantManagerCreateInputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="管理员用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="管理员姓名")
     email = serializers.EmailField(help_text="管理员邮箱")
-    # TODO: 手机号&区号补充校验
     phone = serializers.CharField(help_text="管理员手机号")
     phone_country_code = serializers.CharField(
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(str(e))
+
+        return attrs
 
 
 class TenantFeatureFlagSLZ(serializers.Serializer):
@@ -94,7 +101,9 @@ class TenantCreateInputSLZ(serializers.Serializer):
 
         if not re.fullmatch(TENANT_ID_REGEX, id):
             raise ValidationError(
-                _("{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头").format(id),
+                _(
+                    "{} 不符合 租户ID 的命名规范: 由3-32位字母、数字、连接符(-)字符组成，以字母开头，字母或数字结尾",
+                ).format(id),
             )  # noqa: E501
 
         return id
@@ -210,23 +219,12 @@ class TenantUserSearchInputSLZ(serializers.Serializer):
 
 class TenantUserSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
-    username = serializers.CharField(help_text="租户用户名", required=False)
-    full_name = serializers.CharField(help_text="用户姓名", required=False)
-    email = serializers.EmailField(help_text="用户邮箱", required=False)
-    phone = serializers.CharField(help_text="用户手机号", required=False)
+    username = serializers.CharField(help_text="租户用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
+    email = serializers.EmailField(help_text="用户邮箱", source="data_source_user.email")
+    phone = serializers.CharField(help_text="用户手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(
-        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+        help_text="手机号国际区号",
+        source="data_source_user.phone_country_code",
+        default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
-
-    def to_representation(self, obj: TenantUser) -> Dict:
-        data = super().to_representation(obj)
-        data_source_user = DataSourceUser.objects.filter(id=obj.data_source_user_id).first()
-        if data_source_user is not None:
-            data["username"] = data_source_user.username
-            data["full_name"] = data_source_user.full_name
-            data["email"] = data_source_user.email
-            data["phone"] = data_source_user.phone
-            data["phone_country_code"] = data_source_user.phone_country_code
-            data["logo"] = data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
-
-        return data
