@@ -16,6 +16,7 @@ from bkuser.plugins.local.exceptions import (
     DuplicateColumnName,
     DuplicateUsername,
     InvalidLeader,
+    InvalidOrganization,
     InvalidUsername,
     RequiredFieldIsEmpty,
     SheetColumnsNotMatch,
@@ -37,6 +38,12 @@ class TestLocalDataSourceDataParser:
         # 修改列名，导致与内建字段不匹配
         user_wk["users"]["B2"].value = "这不是姓名/not_full_name"
         with pytest.raises(SheetColumnsNotMatch):
+            LocalDataSourceDataParser(logger, user_wk).parse()
+
+    def test_validate_case_custom_column_name_empty(self, logger, user_wk):
+        # 修改列名，导致自定义列名不合法
+        user_wk["users"]["G2"].value = ""
+        with pytest.raises(CustomColumnNameInvalid):
             LocalDataSourceDataParser(logger, user_wk).parse()
 
     def test_validate_case_custom_column_name_invalid(self, logger, user_wk):
@@ -67,6 +74,24 @@ class TestLocalDataSourceDataParser:
         # 修改表格数据，导致用户名非法
         user_wk["users"]["A4"].value = "zhangsan@m.com"
         with pytest.raises(InvalidUsername):
+            LocalDataSourceDataParser(logger, user_wk).parse()
+
+    def test_validate_case_invalid_organization_start_with_slash(self, logger, user_wk):
+        # 修改表格数据，导致组织非法
+        user_wk["users"]["E4"].value = "/公司/部门A"
+        with pytest.raises(InvalidOrganization):
+            LocalDataSourceDataParser(logger, user_wk).parse()
+
+    def test_validate_case_invalid_organization_end_with_slash(self, logger, user_wk):
+        # 修改表格数据，导致组织非法
+        user_wk["users"]["E4"].value = "公司/部门A/"
+        with pytest.raises(InvalidOrganization):
+            LocalDataSourceDataParser(logger, user_wk).parse()
+
+    def test_validate_case_invalid_organization_continuous_slash(self, logger, user_wk):
+        # 修改表格数据，导致组织非法
+        user_wk["users"]["E4"].value = "公司//部门A"
+        with pytest.raises(InvalidOrganization):
             LocalDataSourceDataParser(logger, user_wk).parse()
 
     def test_validate_case_invalid_leader(self, logger, user_wk):

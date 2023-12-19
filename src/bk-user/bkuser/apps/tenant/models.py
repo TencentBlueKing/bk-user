@@ -128,7 +128,7 @@ class UserBuiltinField(TimestampedModel):
     required = models.BooleanField("是否必填")
     unique = models.BooleanField("是否唯一")
     default = models.JSONField("默认值", default="")
-    options = models.JSONField("配置项", default=dict)
+    options = models.JSONField("配置项", default=list)
 
 
 class TenantUserCustomField(TimestampedModel):
@@ -141,7 +141,7 @@ class TenantUserCustomField(TimestampedModel):
     required = models.BooleanField("是否必填")
     unique = models.BooleanField("是否唯一", default=False)
     default = models.JSONField("默认值", default="")
-    options = models.JSONField("配置项", default=dict)
+    options = models.JSONField("配置项", default=list)
 
     class Meta:
         unique_together = [

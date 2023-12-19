@@ -32,8 +32,7 @@ class LocalDataSourcePlugin(BaseDataSourcePlugin):
 
     def __init__(self, plugin_config: LocalDataSourcePluginConfig, logger: PluginLogger, workbook: Workbook):
         self.plugin_config = plugin_config
-        self.workbook = workbook
-        self.parser = LocalDataSourceDataParser(logger, self.workbook)
+        self.parser = LocalDataSourceDataParser(logger, workbook)
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
         """获取部门信息"""

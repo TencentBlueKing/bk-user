@@ -106,7 +106,7 @@ def get_default_plugin_cfg(plugin_id: str | DataSourcePluginEnum) -> BasePluginC
 
 
 class PluginLogger(Protocol):
-    """插件用记录器"""
+    """插件用日志记录器"""
 
     def info(self, msg: str):
         raise NotImplementedError
