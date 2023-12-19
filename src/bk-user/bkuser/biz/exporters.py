@@ -38,7 +38,7 @@ class DataSourceUserExporter:
     # 模板中字段名行索引
     col_name_row_idx = 2
     # 新增的列的默认宽度
-    default_column_width = 30
+    default_column_width = 40
 
     def __init__(self, data_source: DataSource):
         self.data_source = data_source
@@ -47,18 +47,8 @@ class DataSourceUserExporter:
         self._load_template()
 
     def get_template(self) -> Workbook:
-        # 填充示例数据以供参考
-        extras = []
-        for field in self.custom_fields:
-            if field.data_type == UserFieldDataType.ENUM:
-                extras.append(f"{field.default} (one of {[opt['id'] for opt in field.options]})")
-            elif field.data_type == UserFieldDataType.MULTI_ENUM:
-                extras.append(f"{','.join(field.default)} (any of {[opt['id'] for opt in field.options]})")
-            elif field.data_type == UserFieldDataType.NUMBER:
-                extras.append(f"{field.default} (number format)")
-            else:
-                extras.append(f"{field.default} (string format)")
-
+        # 填充自定义字段默认值以供参考
+        extras = [",".join(f.default) if isinstance(f.default, list) else str(f.default) for f in self.custom_fields]
         self.sheet.append(  # noqa: PERF401 sheet isn't a list
             ("zhangsan", "张三", "zhangsan@qq.com", "+8613512345678", "公司/部门A,公司/部门B", "lisi,wangwu", *extras)
         )
@@ -116,15 +106,27 @@ class DataSourceUserExporter:
         builtin_columns_length = len(list(self.sheet.columns))
         for col_idx, field in enumerate(self.custom_fields, start=builtin_columns_length):
             # NOTE：openpyxl 行/列数字索引是从 1 开始的...
-            cell = self.sheet.cell(row=self.col_name_row_idx, column=col_idx + 1)
-            cell.value = f"{field.display_name}/{field.name}"
-
-            # 设置为垂直居中
-            cell.alignment = Alignment(vertical="center")
-
+            name_cell = self.sheet.cell(row=self.col_name_row_idx, column=col_idx + 1)
+            name_cell.value = f"{field.display_name}/{field.name}"
+            # 设置为垂直居中 + 自动换行
+            name_cell.alignment = Alignment(vertical="center", wrapText=True)
             # 如果是必填列，列名设置为红色
             if field.required:
-                cell.font = Font(color=colors.COLOR_INDEX[2])
+                name_cell.font = Font(color=colors.COLOR_INDEX[2])
+
+            # 自定义字段提示信息（位置是字段名的上一行）
+            tips_cell = self.sheet.cell(row=self.col_name_row_idx - 1, column=col_idx + 1)
+            opts = ", ".join(opt["id"] for opt in field.options)
+            if field.data_type == UserFieldDataType.ENUM:
+                tips_cell.value = f"单选枚举（One of {opts}）"
+            elif field.data_type == UserFieldDataType.MULTI_ENUM:
+                tips_cell.value = f"多选枚举，多个值以英文逗号分隔（Any of {opts}, separated by commas）"
+            elif field.data_type == UserFieldDataType.NUMBER:
+                tips_cell.value = "数据类型：数值（DataType: Number）"
+            elif field.data_type == UserFieldDataType.STRING:
+                tips_cell.value = "数据类型：字符串（DataType: String）"
+            # 设置吸底 + 自动换行
+            tips_cell.alignment = Alignment(vertical="bottom", wrapText=True)
 
             # 设置默认列宽
             self.sheet.column_dimensions[self._gen_sheet_col_idx(col_idx)].width = self.default_column_width

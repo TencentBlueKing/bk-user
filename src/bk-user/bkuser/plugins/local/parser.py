@@ -136,11 +136,12 @@ class LocalDataSourceDataParser:
             raise DuplicateColumnName(_("待导入文件中存在重复列名：{}").format(", ".join(duplicate_col_names)))
 
         all_usernames = []
-        for cell_values in self.sheet.iter_rows(
-            min_row=self.user_data_min_row_idx, max_col=self.valid_col_length, values_only=True
+        for idx, cell_values in enumerate(
+            self.sheet.iter_rows(min_row=self.user_data_min_row_idx, max_col=self.valid_col_length, values_only=True),
+            start=self.user_data_min_row_idx,
         ):
             if not any(cell_values):
-                self.logger.warning("empty row in sheet found, skip...")
+                self.logger.warning(f"empty row found at line {idx} in sheet, skip...")  # noqa: G004
                 continue
 
             info = dict(zip(self.all_field_names, cell_values, strict=True))
