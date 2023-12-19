@@ -292,7 +292,11 @@ class DataSourceUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateA
         user_identify_info.password = encrypted_password
         user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
 
-        DataSourceUserPasswordUpdateRecord.objects.create(user=data_source_user, password=encrypted_password)
+        DataSourceUserPasswordUpdateRecord.objects.create(
+            user=data_source_user,
+            password=encrypted_password,
+            creator=request.user.username,
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

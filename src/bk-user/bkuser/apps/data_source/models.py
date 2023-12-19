@@ -180,7 +180,7 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
         return check_password(raw_password, self.password)
 
 
-class DataSourceUserPasswordUpdateRecord(TimestampedModel):
+class DataSourceUserPasswordUpdateRecord(AuditedModel):
     user = models.ForeignKey(DataSourceUser, on_delete=models.CASCADE)
     password = models.CharField("用户曾用密码", default="", max_length=128)
 
