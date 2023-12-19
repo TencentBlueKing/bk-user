@@ -180,6 +180,17 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
         return check_password(raw_password, self.password)
 
 
+class DataSourceUserPasswordUpdateRecord(TimestampedModel):
+    user = models.ForeignKey(DataSourceUser, on_delete=models.CASCADE)
+    password = models.CharField("用户曾用密码", default="", max_length=128)
+
+    def is_password_used(self, new_password):
+        return check_password(new_password, self.password)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
 class DataSourceDepartment(TimestampedModel):
     """
     数据源部门

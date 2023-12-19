@@ -38,6 +38,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
+    DataSourceUserPasswordUpdateRecord,
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.permission.constants import PermAction
@@ -277,14 +278,21 @@ class DataSourceUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateA
             )
 
         slz = DataSourceUserPasswordInputSLZ(
-            data=request.data, context={"password_rule": data_source_config.password_rule}
+            data=request.data,
+            context={
+                "data_source_config": data_source_config,
+                "data_source_user_id": data_source_user.id,
+            },
         )
         slz.is_valid(raise_exception=True)
         new_password = slz.validated_data["password"]
 
+        encrypted_password = make_password(new_password)
         user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
-        user_identify_info.password = make_password(new_password)
+        user_identify_info.password = encrypted_password
         user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
+
+        DataSourceUserPasswordUpdateRecord.objects.create(user=data_source_user, password=encrypted_password)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

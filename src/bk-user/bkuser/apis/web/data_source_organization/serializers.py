@@ -23,6 +23,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    DataSourceUserPasswordUpdateRecord,
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
@@ -301,11 +302,30 @@ class UserUpdateInputSLZ(serializers.Serializer):
 class DataSourceUserPasswordInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="数据源用户重置的新密码")
 
+    def _check_former_passwords(
+        self,
+        data_source_id: int,
+        new_password: str,
+        reserved_previous_password_count: int,
+    ):
+        """Check if new password has been used in last passwords"""
+        password_records = DataSourceUserPasswordUpdateRecord.objects.filter(user_id=data_source_id)[
+            :reserved_previous_password_count
+        ]
+        for record in password_records:
+            if record.is_password_used(new_password):
+                raise ValidationError(_("新密码不能与最近{}次密码相同".format(reserved_previous_password_count)))
+
     def validate_password(self, password: str) -> str:
-        password_rule = self.context["password_rule"]
+        data_source_config = self.context["data_source_config"]
+        password_rule = data_source_config.password_rule
         ret = PasswordValidator(password_rule.to_rule()).validate(password)
         if not ret.ok:
             raise ValidationError(_("密码不符合密码规则：{}").format(ret.exception_message))
+
+        reserved_previous_password_count = data_source_config.password_initial.reserved_previous_password_count
+        self._check_former_passwords(self.context["data_source_user_id"], password, reserved_previous_password_count)
+
         return password
 
 
