@@ -143,10 +143,12 @@ const state = reactive({
 });
 
 const handleClick = async (item: any) => {
-  const userRes = await getTenantUsers(item.id);
+  const [userRes, fieldsRes] = await Promise.all([
+    getTenantUsers(item.id),
+    getFields(),
+  ]);
   state.userInfo = userRes.data;
-  const res = await getFields();
-  state.userInfo.extras = useCustomFields(state.userInfo?.extras, res.data.custom_fields);
+  state.userInfo.extras = useCustomFields(state.userInfo?.extras, fieldsRes.data.custom_fields);
   detailsConfig.title = '用户详情';
   detailsConfig.isShow = true;
 };

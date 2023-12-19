@@ -143,13 +143,13 @@ section {
 }
 
 body {
-  font-family: 'Helvetica Neue', Helvetica, STHeiTi, sans-serif;
+  font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
   font-size: 12px;
   line-height: 1.5;
   color: #000;
   text-size-adjust: 100%;
   outline: 0;
-  user-select: none;
+  user-select: text;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -176,6 +176,7 @@ th {
 fieldset,
 img {
   border: 0;
+  user-select: none;
 }
 
 li {
@@ -229,4 +230,5 @@ a {
 em,
 i {
   font-style: normal;
+  user-select: none;
 }

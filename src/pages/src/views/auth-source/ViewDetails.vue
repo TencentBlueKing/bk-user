@@ -82,7 +82,7 @@
               description="暂无数据源匹配"
             />
             <div class="content-box" v-else v-for="(item, index) in onDataSources" :key="index">
-              <p>{{ item.data_source_name }}</p>
+              <bk-overflow-title type="tips" class="data-source-title">{{ item.data_source_name }}</bk-overflow-title>
               <div class="field-rules">
                 <dl>
                   <dt>数据源字段：</dt>
@@ -258,18 +258,19 @@ const handleOpen = (item) => {
         font-size: 14px;
 
         .basic-config {
+          width: 100%;
+
           p {
             margin-bottom: 12px;
             font-size: 14px;
-            color: #63656E;
+            color: #313238;
           }
 
           .source-name {
-            width: 300px;
+            width: 460px;
             height: 40px;
             padding-left: 24px;
             margin-bottom: 12px;
-            margin-left: 40px;
             line-height: 40px;
             color: #313238;
             background: #F5F7FA;
@@ -282,7 +283,7 @@ const handleOpen = (item) => {
               color: #C4C6CC;
 
               ::v-deep .text-ov {
-                width: 220px;
+                width: 370px;
               }
 
               .bk-button {
@@ -306,7 +307,7 @@ const handleOpen = (item) => {
       }
 
       .content-matching {
-        margin-left: 20px;
+        width: 100%;
 
         ::v-deep .exception-part {
           position: relative;
@@ -367,9 +368,9 @@ const handleOpen = (item) => {
           }
         }
 
-        p {
+        .data-source-title {
           position: relative;
-          width: 440px;
+          width: 460px;
           padding: 0 24px;
           line-height: 32px;
           background: #F0F1F5;

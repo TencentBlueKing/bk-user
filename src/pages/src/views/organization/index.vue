@@ -65,7 +65,7 @@
     </template>
     <template #main>
       <div class="organization-main">
-        <header>
+        <header :class="{ 'departments-header': !isTenant }">
           <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
           <span v-else class="span-logo">{{ logoConvert(state.currentTenant.name) }}</span>
           <span class="name">{{ state.currentTenant.name }}</span>
@@ -406,6 +406,10 @@ const handleCancel = () => {
         font-size: 16px;
         color: #313238;
       }
+    }
+
+    .departments-header {
+      box-shadow: 0 3px 4px 0 rgb(0 0 0 / 4%);
     }
   }
 }

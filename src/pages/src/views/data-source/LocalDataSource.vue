@@ -294,7 +294,6 @@ const handleSync = async (row) => {
 
 .dropdown-menu-ul {
   width: 380px;
-  font-family: MicrosoftYaHei;
 
   .dropdown-title {
     padding: 12px 16px;

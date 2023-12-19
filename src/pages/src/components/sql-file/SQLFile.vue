@@ -139,7 +139,7 @@ onMounted(() => {
   });
 
   editor = monaco.editor.create(editorRef.value, {
-    value: 'ERROR This is an error\nWARNING This is an warning\nINFO This is an info',
+    value: '',
     language: 'logLanguage',
     theme: 'logTheme',
     readOnly: props.readonly,

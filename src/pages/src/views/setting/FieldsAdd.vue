@@ -28,6 +28,22 @@
           />
         </bk-select>
       </bk-form-item>
+      <bk-form-item label="默认值">
+        <bk-input
+          v-if="fieldsInfor.data_type === 'string'"
+          v-model="fieldsInfor.default"
+          :maxlength="64"
+          @focus="handleChange"
+        />
+        <bk-input
+          v-else-if="fieldsInfor.data_type === 'number'"
+          type="number"
+          v-model="fieldsInfor.default"
+          :max="4294967296"
+          :min="0"
+          @focus="handleChange"
+        />
+      </bk-form-item>
     </bk-form>
     <div class="enumerate-wrapper" v-if="state.isShowEg || fieldsInfor.data_type.indexOf('enum') !== -1">
       <i class="arrow"></i>
@@ -242,7 +258,13 @@ watch(() => fieldsInfor.data_type, (val) => {
     : '该字段在不同用户信息里不能相同';
 
   if (!props?.currentEditorData?.id) {
-    fieldsInfor.default = val === 'multi_enum' ? [0] : 0;
+    if (val === 'multi_enum') {
+      fieldsInfor.default = [0];
+    } else if (val === 'string') {
+      fieldsInfor.default = '';
+    } else {
+      fieldsInfor.default = 0;
+    }
   } else {
     const defaultIndex = id => fieldsInfor.options.findIndex(item => item.id === id);
 
@@ -342,6 +364,7 @@ const submitInfor = async () => {
       required: fieldsInfor.required,
       data_type: fieldsInfor.data_type,
       unique: fieldsInfor.unique,
+      default: fieldsInfor.default,
     };
 
     if (isEnumType) {
@@ -353,10 +376,6 @@ const submitInfor = async () => {
       if (fieldsInfor.data_type === 'enum') {
         newFieldData.default = newFieldData.default[0] || null;
       }
-    }
-
-    if (fieldsInfor.data_type === 'number') {
-      newFieldData.default = 0;
     }
 
     const action = isEdit.value ? putCustomFields : newCustomFields;
