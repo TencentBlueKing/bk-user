@@ -180,12 +180,10 @@ class LocalDataSourceIdentityInfo(TimestampedModel):
         return check_password(raw_password, self.password)
 
 
-class DataSourceUserPasswordUpdateRecord(AuditedModel):
+class DataSourceUserPasswordUpdateRecord(TimestampedModel):
     user = models.ForeignKey(DataSourceUser, on_delete=models.CASCADE)
-    password = models.CharField("用户曾用密码", default="", max_length=128)
-
-    def is_password_used(self, new_password):
-        return check_password(new_password, self.password)
+    password = models.CharField("用户密码", max_length=128)
+    operator = models.CharField("操作人", max_length=128)
 
     class Meta:
         ordering = ["-created_at"]

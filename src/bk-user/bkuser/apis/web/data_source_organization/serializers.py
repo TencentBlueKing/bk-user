@@ -28,6 +28,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.biz.validators import validate_data_source_user_username
+from bkuser.common.hashers import check_password
 from bkuser.common.passwd import PasswordValidator
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -299,22 +300,23 @@ class UserUpdateInputSLZ(serializers.Serializer):
         )
 
 
-class DataSourceUserPasswordInputSLZ(serializers.Serializer):
+class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="数据源用户重置的新密码")
 
     def validate_password(self, password: str) -> str:
-        data_source_config = self.context["data_source_config"]
-        password_rule = data_source_config.password_rule
+        plugin_config = self.context["plugin_config"]
+        password_rule = plugin_config.password_rule
         ret = PasswordValidator(password_rule.to_rule()).validate(password)
         if not ret.ok:
-            raise ValidationError(_("密码不符合密码规则：{}").format(ret.exception_message))
+            raise ValidationError(_("不符合密码规则：{}").format(ret.exception_message))
 
-        reserved_previous_password_count = data_source_config.password_initial.reserved_previous_password_count
-        password_records = DataSourceUserPasswordUpdateRecord.objects.filter(user_id=self.context["data_source_id"])[
-            :reserved_previous_password_count
-        ]
-        for record in password_records:
-            if record.is_password_used(password):
+        reserved_previous_password_count = plugin_config.password_initial.reserved_previous_password_count
+        used_passwords = DataSourceUserPasswordUpdateRecord.objects.filter(
+            user_id=self.context["data_source_user_id"]
+        )[:reserved_previous_password_count].values_list("password", flat=True)
+
+        for used_pwd in used_passwords:
+            if check_password(password, used_pwd):
                 raise ValidationError(_("新密码不能与最近{}次密码相同".format(reserved_previous_password_count)))
 
         return password

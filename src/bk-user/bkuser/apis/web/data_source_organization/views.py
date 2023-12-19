@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import List
 
+from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
@@ -20,7 +21,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.data_source_organization.serializers import (
     DataSourceUserOrganizationPathOutputSLZ,
-    DataSourceUserPasswordInputSLZ,
+    DataSourceUserPasswordResetInputSLZ,
     DepartmentSearchInputSLZ,
     DepartmentSearchOutputSLZ,
     LeaderSearchInputSLZ,
@@ -50,7 +51,7 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.hashers import make_password
+from bkuser.common.hashers import check_password, make_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -263,40 +264,44 @@ class DataSourceUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateA
 
     @swagger_auto_schema(
         tags=["data_source_organization"],
-        operation_description="更新数据源用户密码",
-        request_body=DataSourceUserPasswordInputSLZ(),
+        operation_description="重置数据源用户密码",
+        request_body=DataSourceUserPasswordResetInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         data_source_user = self.get_object()
         data_source = data_source_user.data_source
-        data_source_config = data_source.get_plugin_cfg()
+        plugin_config = data_source.get_plugin_cfg()
 
-        if not data_source.is_local or not data_source_config.enable_account_password_login:
+        if not data_source.is_local or not plugin_config.enable_account_password_login:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
                 _("仅本地数据源类型且启用账密登录功能, 用户可变更密码")
             )
 
-        slz = DataSourceUserPasswordInputSLZ(
+        slz = DataSourceUserPasswordResetInputSLZ(
             data=request.data,
             context={
-                "data_source_config": data_source_config,
+                "plugin_config": plugin_config,
                 "data_source_user_id": data_source_user.id,
             },
         )
         slz.is_valid(raise_exception=True)
         new_password = slz.validated_data["password"]
 
-        encrypted_password = make_password(new_password)
         user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
-        user_identify_info.password = encrypted_password
-        user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
+        if check_password(new_password, user_identify_info.password):
+            raise
 
-        DataSourceUserPasswordUpdateRecord.objects.create(
-            user=data_source_user,
-            password=encrypted_password,
-            creator=request.user.username,
-        )
+        encrypted_password = make_password(new_password)
+        with transaction.atomic():
+            user_identify_info.password = encrypted_password
+            user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
+
+            DataSourceUserPasswordUpdateRecord.objects.create(
+                user=data_source_user,
+                password=encrypted_password,
+                operator=request.user.username,
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
