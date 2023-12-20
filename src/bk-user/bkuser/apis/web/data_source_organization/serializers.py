@@ -22,8 +22,8 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
+    DataSourceUserDeprecatedPasswordRecord,
     DataSourceUserLeaderRelation,
-    DataSourceUserPasswordUpdateRecord,
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
@@ -304,14 +304,20 @@ class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="数据源用户重置的新密码")
 
     def validate_password(self, password: str) -> str:
+        # 判断和当前密码是否相同
+        if check_password(password, self.context["current_password"]):
+            raise ValidationError(_("新密码不可与当前密码相同"))
+
+        # 密码规则校验
         plugin_config = self.context["plugin_config"]
         password_rule = plugin_config.password_rule
         ret = PasswordValidator(password_rule.to_rule()).validate(password)
         if not ret.ok:
             raise ValidationError(_("不符合密码规则：{}").format(ret.exception_message))
 
+        # 是否为前N次所使用的密码
         reserved_previous_password_count = plugin_config.password_initial.reserved_previous_password_count
-        used_passwords = DataSourceUserPasswordUpdateRecord.objects.filter(
+        used_passwords = DataSourceUserDeprecatedPasswordRecord.objects.filter(
             user_id=self.context["data_source_user_id"]
         )[:reserved_previous_password_count].values_list("password", flat=True)
 

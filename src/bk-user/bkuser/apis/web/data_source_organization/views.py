@@ -39,7 +39,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
-    DataSourceUserPasswordUpdateRecord,
+    DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.permission.constants import PermAction
@@ -51,7 +51,7 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.hashers import check_password, make_password
+from bkuser.common.hashers import make_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -278,28 +278,29 @@ class DataSourceUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateA
                 _("仅本地数据源类型且启用账密登录功能, 用户可变更密码")
             )
 
+        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        current_password = user_identify_info.password
         slz = DataSourceUserPasswordResetInputSLZ(
             data=request.data,
             context={
                 "plugin_config": plugin_config,
                 "data_source_user_id": data_source_user.id,
+                "current_password": current_password,
             },
         )
         slz.is_valid(raise_exception=True)
         new_password = slz.validated_data["password"]
 
-        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
-        if check_password(new_password, user_identify_info.password):
-            raise
-
-        encrypted_password = make_password(new_password)
+        # current_password 变更为加密后的new_password
+        current_password, old_password = make_password(new_password), current_password
         with transaction.atomic():
-            user_identify_info.password = encrypted_password
+            user_identify_info.password = current_password
+            # TODO 密码有效期续期，提供另外的入口，不在此处理
             user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
 
-            DataSourceUserPasswordUpdateRecord.objects.create(
+            DataSourceUserDeprecatedPasswordRecord.objects.create(
                 user=data_source_user,
-                password=encrypted_password,
+                password=old_password,
                 operator=request.user.username,
             )
 
