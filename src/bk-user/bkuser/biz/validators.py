@@ -43,6 +43,6 @@ def validate_logo(value):
     if not value:
         return
 
-    # base64_size = (实际数据大小)/3 *4
+    # logo是个base64字符串，base64数据实际大小 = (实际数据大小) //3 * 4，需要做大小转换
     if len(value) > (settings.MAX_LOGO_SIZE * 1024) // 3 * 4:
         raise ValidationError(_("Logo 文件大小不可超过 {} KB").format(settings.MAX_LOGO_SIZE))
