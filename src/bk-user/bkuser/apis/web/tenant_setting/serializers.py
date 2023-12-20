@@ -152,6 +152,9 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
             _validate_options(options)
             _validate_multi_enum_default(default, opt_ids)
 
+        if attrs["personal_center_editable"] and not attrs["personal_center_visible"]:
+            raise ValidationError(_("设置为在个人中心可编辑的字段必须也设置可见"))
+
         return attrs
 
 
