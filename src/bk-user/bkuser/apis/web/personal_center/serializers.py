@@ -71,7 +71,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
 
     class Meta:
-        ref_name = "personal_center.TenantUserFieldOutputSLZ"
+        ref_name = "personal_center.TenantUserRetrieveOutputSLZ"
 
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: TenantUser) -> List[Dict]:
@@ -147,8 +147,8 @@ class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称")
     data_type = serializers.CharField(help_text="字段类型")
     required = serializers.BooleanField(help_text="是否必填")
-    editable = serializers.BooleanField(help_text="可编辑", source="personal_center_editable")
-    options = serializers.JSONField(help_text="选项")
+    editable = serializers.BooleanField(help_text="是否可编辑", source="personal_center_editable")
+    options = serializers.JSONField(help_text="可选项")
 
     class Meta:
         ref_name = "personal_center.TenantUserCustomFieldOutputSLZ"
