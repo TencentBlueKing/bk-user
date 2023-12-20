@@ -79,6 +79,9 @@ class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
     data_type = serializers.CharField(help_text="字段类型")
     required = serializers.BooleanField(help_text="是否必填")
     unique = serializers.BooleanField(help_text="是否唯一")
+    personal_center_visible = serializers.BooleanField(help_text="是否在个人中心可见")
+    personal_center_editable = serializers.BooleanField(help_text="是否在个人中心可编辑")
+    manager_editable = serializers.BooleanField(help_text="租户管理员是否可重复编辑")
     default = serializers.JSONField(help_text="默认值")
     options = serializers.JSONField(help_text="选项")
 
@@ -97,8 +100,11 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="英文标识", max_length=128, validators=[validate_tenant_custom_field_name])
     display_name = serializers.CharField(help_text="字段名称", max_length=128)
     data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
-    required = serializers.BooleanField(help_text="是否必填")
+    required = serializers.BooleanField(help_text="是否必填", default=False)
     unique = serializers.BooleanField(help_text="是否唯一", default=False)
+    personal_center_visible = serializers.BooleanField(help_text="是否在个人中心可见", default=False)
+    personal_center_editable = serializers.BooleanField(help_text="是否在个人中心可编辑", default=False)
+    manager_editable = serializers.BooleanField(help_text="租户管理员是否可重复编辑", default=True)
     default = serializers.JSONField(help_text="默认值", required=False)
     options = serializers.ListField(
         help_text="选项", required=False, child=OptionInputSLZ(help_text="枚举字段选项设置"), default=list
@@ -147,10 +153,6 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
             _validate_multi_enum_default(default, opt_ids)
 
         return attrs
-
-
-class TenantUserCustomFieldCreateOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField()
 
 
 class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):

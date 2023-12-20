@@ -17,14 +17,17 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.personal_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
-    PersonalCenterTenantUserRetrieveOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
+    TenantUserExtrasUpdateInputSLZ,
+    TenantUserFieldOutputSLZ,
     TenantUserLogoUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
+    TenantUserRetrieveOutputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apps.tenant.constants import UserFieldDataType
+from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.common.views import ExcludePutAPIViewMixin
@@ -72,24 +75,37 @@ class NaturalUserTenantUserListApi(generics.ListAPIView):
         return Response(NaturalUserWithTenantUserListOutputSLZ(nature_user_with_tenant_users_info).data)
 
 
-class TenantUserRetrieveUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView):
+class TenantUserRetrieveApi(generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
-    serializer_class = PersonalCenterTenantUserRetrieveOutputSLZ
 
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="个人中心-关联账户详情",
-        responses={status.HTTP_200_OK: PersonalCenterTenantUserRetrieveOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return Response(PersonalCenterTenantUserRetrieveOutputSLZ(instance=self.get_object()).data)
+        tenant_user = self.get_object()
+        custom_field_names = TenantUserCustomField.objects.filter(
+            tenant=tenant_user.tenant, personal_center_visible=True
+        ).values_list("name", flat=True)
+        # 过滤掉 extras 中用户在个人中心不可见的
+        tenant_user.data_source_user.extras = {
+            k: v for k, v in tenant_user.data_source_user.extras.items() if k in custom_field_names
+        }
+        return Response(TenantUserRetrieveOutputSLZ(tenant_user).data)
+
+
+class TenantUserLogoUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
 
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="租户用户更新头像",
-        request_body=TenantUserLogoUpdateInputSLZ,
+        request_body=TenantUserLogoUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def patch(self, request, *args, **kwargs):
@@ -98,11 +114,9 @@ class TenantUserRetrieveUpdateApi(ExcludePutAPIViewMixin, generics.RetrieveUpdat
         data = slz.validated_data
 
         tenant_user = self.get_object()
-
         data_source_user = tenant_user.data_source_user
         data_source_user.logo = data["logo"]
         data_source_user.save(update_fields=["logo", "updated_at"])
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -153,3 +167,66 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         )
         TenantUserHandler.update_tenant_user_email(self.get_object(), email_info)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserExtrasUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户用户更新自定义字段",
+        request_body=TenantUserExtrasUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def patch(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source_user = tenant_user.data_source_user
+
+        slz = TenantUserExtrasUpdateInputSLZ(
+            data=request.data,
+            context={
+                "tenant_id": tenant_user.tenant_id,
+                "data_source_id": data_source_user.data_source_id,
+                "data_source_user_id": data_source_user.id,
+            },
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        data_source_user.extras.update(data["extras"])
+        data_source_user.save(update_fields=["extras", "updated_at"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserFieldListApi(generics.ListAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心-用户可见字段列表",
+        responses={status.HTTP_200_OK: TenantUserFieldOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+
+        custom_fields = TenantUserCustomField.objects.filter(tenant=tenant_user.tenant, personal_center_visible=True)
+        for f in custom_fields:
+            if f.personal_center_editable:
+                continue
+
+            selected = tenant_user.data_source_user.extras.get(f.name)
+            # 如果该字段是不可编辑的，且是枚举类型，则仅仅返回需要的 options 用于前端展示，避免泄露枚举选项
+            if f.data_type == UserFieldDataType.ENUM:
+                f.options = [opt for opt in f.options if opt["id"] == selected]
+            elif f.data_type == UserFieldDataType.MULTI_ENUM:
+                f.options = [opt for opt in f.options if opt["id"] in selected]
+
+        slz = TenantUserFieldOutputSLZ(
+            {"builtin_fields": UserBuiltinField.objects.all(), "custom_fields": custom_fields}
+        )
+        return Response(slz.data)

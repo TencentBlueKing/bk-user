@@ -17,7 +17,6 @@ from rest_framework.response import Response
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserCustomFieldCreateInputSLZ,
-    TenantUserCustomFieldCreateOutputSLZ,
     TenantUserCustomFieldUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserValidityPeriodConfigInputSLZ,
@@ -63,7 +62,7 @@ class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIV
         tags=["tenant-setting"],
         operation_description="新建用户自定义字段",
         request_body=TenantUserCustomFieldCreateInputSLZ(),
-        responses={status.HTTP_201_CREATED: TenantUserCustomFieldCreateOutputSLZ()},
+        responses={status.HTTP_201_CREATED: ""},
     )
     def post(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
@@ -71,11 +70,8 @@ class TenantUserCustomFieldCreateApi(CurrentUserTenantMixin, generics.CreateAPIV
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        user_custom_field = TenantUserCustomField.objects.create(tenant_id=tenant_id, **data)
-        return Response(
-            TenantUserCustomFieldCreateOutputSLZ(instance={"id": user_custom_field.id}).data,
-            status=status.HTTP_201_CREATED,
-        )
+        TenantUserCustomField.objects.create(tenant_id=tenant_id, **data)
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class TenantUserCustomFieldUpdateDeleteApi(
