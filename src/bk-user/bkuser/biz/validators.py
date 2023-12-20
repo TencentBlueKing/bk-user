@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import base64
 import logging
 import re
 
@@ -44,13 +43,6 @@ def validate_logo(value):
     if not value:
         return
 
-    try:
-        decoded_data = base64.b64decode(value)
-    except Exception:
-        # Decoding failed or invalid Base64-encoded image
-        logger.exception("invalid image")
-        raise ValidationError(_("无效logo文件"))
-
-    # Check if the size exceeds the specified limit
-    if len(decoded_data) > settings.MAX_LOGO_SIZE * 1024:
+    # base64_size = (实际数据大小)/3 *4
+    if len(value) > (settings.MAX_LOGO_SIZE * 1024) // 3 * 4:
         raise ValidationError(_("Logo 文件大小不可超过 {} KB").format(settings.MAX_LOGO_SIZE))
