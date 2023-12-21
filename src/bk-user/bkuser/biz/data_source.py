@@ -14,10 +14,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.constants import DataSourceStatus
-from bkuser.apps.data_source.models import (
-    DataSource,
-    DataSourcePlugin,
-)
+from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
