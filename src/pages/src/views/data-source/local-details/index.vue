@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { Message } from 'bkui-vue';
+import { InfoBox, Message } from 'bkui-vue';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -81,12 +81,24 @@ onMounted(async () => {
   typeList.value = pluginsRes.data;
   isLoading.value = false;
 });
-
-const handleClick = async () => {
+// 切换启停状态
+const toggleStatus = async () => {
   const res = await changeSwitchStatus(route.params.id);
   statusText.value = res.data?.status;
   const message = res.data?.status === 'disabled' ? '停用成功' : '启用成功';
   Message({ theme: 'success', message });
+};
+
+const handleClick = async () => {
+  if (statusText.value === 'enabled') {
+    InfoBox({
+      title: '确认停用该数据源吗？',
+      subTitle: '停用后，该数据源下所有用户将无法登录',
+      onConfirm: toggleStatus,
+    });
+  } else {
+    toggleStatus();
+  }
 };
 
 const changeTab = (value) => {

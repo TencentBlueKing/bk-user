@@ -18,7 +18,7 @@
               <span class="key">用户数据API路径：</span>
               <span class="value">{{ serverConfig.user_api_path }}</span>
             </li>
-            <div class="query-params" v-if="serverConfig?.user_api_query_params?.length > 0">
+            <div class="query-params" v-if="showUserApiQueryParams">
               <span class="key">查询参数：</span>
               <div class="value">
                 <bk-tag v-for="(item, index) in serverConfig.user_api_query_params" :key="index">
@@ -30,7 +30,7 @@
               <span class="key">部门数据API路径：</span>
               <span class="value">{{ serverConfig.department_api_path }}</span>
             </li>
-            <div class="query-params" v-if="serverConfig?.department_api_query_params?.length > 0">
+            <div class="query-params" v-if="showDepartmentApiQueryParams">
               <span class="key">查询参数：</span>
               <div class="value">
                 <bk-tag v-for="(item, index) in serverConfig.department_api_query_params" :key="index">
@@ -143,6 +143,9 @@ const syncConfig = ref({});
 const isPluginConfig = ref(true);
 
 const currentId = computed(() => route.params.id);
+// 是否显示用户api查询参数
+const showUserApiQueryParams = ref(false);
+const showDepartmentApiQueryParams = ref(false);
 
 onMounted(async () => {
   try {
@@ -167,6 +170,12 @@ onMounted(async () => {
     } else {
       serverConfig.value = res.data?.plugin_config?.server_config;
       authConfig.value = res.data?.plugin_config?.auth_config;
+      const {
+        user_api_query_params: userApiQueryParams,
+        department_api_query_params: departmentApiQueryParams,
+      } = res.data?.plugin_config?.server_config;
+      showUserApiQueryParams.value = getQueryParamsStatus(userApiQueryParams);
+      showDepartmentApiQueryParams.value = getQueryParamsStatus(departmentApiQueryParams);
       isPluginConfig.value = true;
     }
     syncConfig.value = res.data?.sync_config;
@@ -177,6 +186,8 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+const getQueryParamsStatus = (value: any) => value.every((item: any) => item.key !== '' && item.value !== '');
 
 const handleClickEdit = () => {
   router.push({

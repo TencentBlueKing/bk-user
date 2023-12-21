@@ -2,7 +2,7 @@
   <bk-popover
     placement="bottom-start"
     theme="light"
-    width="480"
+    width="500"
     trigger="click"
     :is-show="isShow"
     @after-hidden="Cancel"
@@ -22,6 +22,7 @@
           查询参数(Query Parameters)：如/staffs?name=value: 出现在?后面, 由&分隔。
         </p>
         <bk-form
+          class="config-form user-scroll-y"
           ref="formRef"
           form-type="vertical"
           :model="dataList">
@@ -30,39 +31,41 @@
             v-for="(item, index) in dataList"
             :key="index">
             <bk-form-item
+              class="w-[200px] mr-[8px]"
+              error-display-type="tooltips"
               :property="`${index}.key`"
               :rules="rules.key">
               <bk-input
-                class="key"
                 placeholder="请输入Key"
                 v-model="item.key"
                 @change="handleChange" />
             </bk-form-item>
             <bk-form-item
+              class="w-[200px] mr-[10px]"
+              error-display-type="tooltips"
               :property="`${index}.value`"
               :rules="rules.value">
               <bk-input
-                class="value"
                 placeholder="请输入Value"
                 v-model="item.value"
                 @change="handleChange" />
             </bk-form-item>
-            <i class="user-icon icon-minus-fill" @click="deleteParams(index)" />
+            <i class="user-icon icon-plus-fill" @click="addParams" />
+            <bk-button
+              text
+              :disabled="dataList.length === 1"
+              @click="deleteParams(index)">
+              <i :class="['user-icon icon-minus-fill', { 'forbid': dataList.length === 1 }]" />
+            </bk-button>
           </div>
         </bk-form>
-        <div class="add-query-params">
-          <bk-button text theme="primary" @click="addParams">
-            <i class="user-icon icon-add-2 mr8" />
-            新增查询参数
+        <div class="footer">
+          <bk-button theme="primary" size="small" @click="handleVerify">
+            确定
           </bk-button>
-          <div>
-            <bk-button theme="primary" size="small" class="mr8" @click="handleVerify">
-              确定
-            </bk-button>
-            <bk-button class="mr8" size="small" @click="Cancel">
-              取消
-            </bk-button>
-          </div>
+          <bk-button size="small" @click="Cancel">
+            取消
+          </bk-button>
         </div>
       </div>
     </template>
@@ -70,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import useValidate from '@/hooks/use-validate';
 
@@ -87,7 +90,7 @@ const props = defineProps({
   },
 });
 
-const dataList = ref([]);
+const dataList = ref(JSON.parse(JSON.stringify(props.paramsList)));
 const formRef = ref();
 const isShow = ref(false);
 const count = ref(0);
@@ -96,12 +99,18 @@ const rules = {
   key: [validate.required],
   value: [validate.required],
 };
+// 已配置查询数量
+watch(() => props.paramsList, (value) => {
+  const status = value.every(item => item.key === '' && item.value === '');
+  if (!status) {
+    count.value = value.length;
+  }
+});
 
 onMounted(() => {
   if (props.currentId) {
     setTimeout(() => {
-      dataList.value = props.paramsList;
-      count.value = props.paramsList.length;
+      dataList.value = JSON.parse(JSON.stringify(props.paramsList));
     }, 500);
   }
 });
@@ -115,7 +124,7 @@ const handleChange = () => {
 };
 
 const Cancel = () => {
-  dataList.value = props.paramsList.filter(item => item.key !== '' && item.value !== '');
+  dataList.value = JSON.parse(JSON.stringify(props.paramsList));
   isShow.value = false;
 };
 
@@ -150,26 +159,23 @@ const deleteParams = (index) => {
     }
   }
 
+  .config-form {
+    max-height: 300px;
+    margin-bottom: 12px;
+    overflow-x: hidden;
+  }
+
   .content {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
 
     ::v-deep .bk-form-item {
       margin-bottom: 0;
     }
 
-    .key {
-      width: 200px;
-      margin-right: 8px;
-    }
-
-    .value {
-      width: 200px;
-      margin-right: 16px;
-    }
-
-    .icon-minus-fill {
+    .user-icon {
+      margin: 0 7px;
       font-size: 16px;
       color: #dcdee5;
       cursor: pointer;
@@ -177,14 +183,21 @@ const deleteParams = (index) => {
       &:hover {
         color: #c4c6cc;
       }
+
+      &.forbid {
+        color: #EAEBF0;
+      }
     }
   }
 
-  .add-query-params {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 0 16px;
+  .footer {
+    padding-bottom: 10px;
+    text-align: right;
+
+    .bk-button {
+      width: 64px;
+      margin-right: 8px;
+    }
   }
 }
 </style>
