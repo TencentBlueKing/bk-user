@@ -158,12 +158,29 @@ class TenantUserCustomFieldCreateInputSLZ(serializers.Serializer):
         return attrs
 
 
+def _validate_mapping(mapping: Dict, current_options: List[Dict], new_options: List[Dict]):
+    """校验数据迁移策略"""
+    if not isinstance(mapping, Dict):
+        raise ValidationError(_("字段迁移映射必须是字典类型，格式为：{被删除的枚举 ID: 迁移目标值枚举 ID}"))
+
+    cur_opt_ids, new_opt_ids = {opt["id"] for opt in current_options}, {opt["id"] for opt in new_options}
+    # 对于被删除的枚举选项，需要确保已经配置了字段迁移映射
+    if deleted_opt_ids := cur_opt_ids - new_opt_ids:  # noqa: SIM102 nested if is necessary
+        if deleted_opt_ids != set(mapping.keys()):
+            raise ValidationError(_("被删除的枚举项 {} 均需要配置字段迁移映射").format(deleted_opt_ids))
+
+    # 对于字段迁移映射的目标值，需要确保都在新的枚举选项中
+    if not_exists_target_ids := set(mapping.values()) - new_opt_ids:
+        raise ValidationError(_("字段迁移映射的目标值 {} 不在新的枚举选项中").format(not_exists_target_ids))
+
+
 class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     display_name = serializers.CharField(help_text="展示用名称", max_length=128)
     default = serializers.JSONField(help_text="默认值", required=False)
     options = serializers.ListField(
         help_text="选项", required=False, child=OptionInputSLZ(help_text="枚举字段选项设置"), default=list
     )
+    mapping = serializers.JSONField(help_text="字段迁移映射", required=False)
 
     def validate_display_name(self, display_name):
         if (
@@ -181,6 +198,7 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
     def validate(self, attrs):
         custom_field = TenantUserCustomField.objects.get(id=self.context["custom_field_id"])
         data_type = custom_field.data_type
+        mapping = attrs.get("mapping")
         options = attrs.get("options")
         default = attrs.get("default")
 
@@ -188,10 +206,16 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
         if data_type == UserFieldDataType.ENUM:
             _validate_options(options)
             _validate_enum_default(default, opt_ids)
+            _validate_mapping(mapping, custom_field.options, options)
 
         elif data_type == UserFieldDataType.MULTI_ENUM:
             _validate_options(options)
             _validate_multi_enum_default(default, opt_ids)
+            _validate_mapping(mapping, custom_field.options, options)
+
+        else:
+            # 非枚举类型的，更新时候不需要字段迁移映射
+            attrs["mapping"] = {}
 
         return attrs
 

@@ -13,6 +13,9 @@ from django.utils.translation import gettext_lazy as _
 
 from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAME_REGEX  # noqa: F401
 
+# 批量更新数据源用户自定义字段单次操作数量
+USER_EXTRAS_UPDATE_BATCH_SIZE = 250
+
 
 class DataSourceStatus(str, StructuredEnum):
     """数据源状态"""
