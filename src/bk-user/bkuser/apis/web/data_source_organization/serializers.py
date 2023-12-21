@@ -27,7 +27,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
-from bkuser.biz.validators import validate_data_source_user_username
+from bkuser.biz.validators import validate_data_source_user_username, validate_logo
 from bkuser.common.hashers import check_password
 from bkuser.common.passwd import PasswordValidator
 from bkuser.common.validators import validate_phone_with_country_code
@@ -155,19 +155,24 @@ class UserCreateInputSLZ(serializers.Serializer):
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
     phone = serializers.CharField(help_text="手机号")
-    logo = serializers.CharField(help_text="用户 Logo", required=False, default=settings.DEFAULT_DATA_SOURCE_USER_LOGO)
+    logo = serializers.CharField(
+        help_text="用户 Logo",
+        required=False,
+        default=settings.DEFAULT_DATA_SOURCE_USER_LOGO,
+        validators=[validate_logo],
+    )
     extras = serializers.JSONField(help_text="自定义字段", default=dict)
 
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField(), default=[])
     leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField(), default=[])
 
-    def validate(self, data):
+    def validate(self, attrs):
         try:
-            validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
+            validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
         except ValueError as e:
-            raise ValidationError(e)
+            raise ValidationError(str(e))
 
-        return data
+        return attrs
 
     def validate_department_ids(self, department_ids):
         diff_department_ids = set(department_ids) - set(
@@ -255,7 +260,13 @@ class UserUpdateInputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱")
     phone_country_code = serializers.CharField(help_text="手机国际区号")
     phone = serializers.CharField(help_text="手机号")
-    logo = serializers.CharField(help_text="用户 Logo", allow_blank=True, required=False, default="")
+    logo = serializers.CharField(
+        help_text="用户 Logo",
+        allow_blank=True,
+        required=False,
+        default=settings.DEFAULT_DATA_SOURCE_USER_LOGO,
+        validators=[validate_logo],
+    )
     extras = serializers.JSONField(help_text="自定义字段")
 
     department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField())
@@ -265,7 +276,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
         try:
             validate_phone_with_country_code(phone=data["phone"], country_code=data["phone_country_code"])
         except ValueError as e:
-            raise ValidationError(e)
+            raise ValidationError(str(e))
 
         return data
 

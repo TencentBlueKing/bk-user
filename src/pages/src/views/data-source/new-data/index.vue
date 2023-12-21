@@ -175,7 +175,10 @@ const toBack = () => {
 }
 
 .steps-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 350px;
-  margin: 0 auto;
+  transform: translate(-50%, -50%);
 }
 </style>

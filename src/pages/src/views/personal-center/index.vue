@@ -560,7 +560,6 @@ const handleError = (file) => {
             display: inline-block;
             max-width: 100px;
             margin: 0 8px;
-            font-family: MicrosoftYaHei;
             font-size: 14px;
             color: #313238;
           }
@@ -604,6 +603,7 @@ const handleError = (file) => {
             .icon-yonghu {
               width: 72px;
               height: 72px;
+              margin-right: 0;
               font-size: 40px;
               line-height: 72px;
               color: #DCDEE5;
@@ -681,7 +681,6 @@ const handleError = (file) => {
         }
 
         .name {
-          font-family: MicrosoftYaHei-Bold;
           font-size: 32px;
           font-weight: 700;
 

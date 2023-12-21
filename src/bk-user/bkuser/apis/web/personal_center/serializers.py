@@ -19,16 +19,17 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.validators import validate_logo
 from bkuser.common.validators import validate_phone_with_country_code
 
 
 class TenantInfoOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户ID")
+    id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
 
 
 class TenantUserInfoOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户ID")
+    id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
     logo = serializers.CharField(help_text="头像")
@@ -42,29 +43,31 @@ class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
 
 
 class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户ID")
-    username = serializers.CharField(help_text="用户名", required=False)
-    full_name = serializers.CharField(help_text="用户姓名", required=False)
-    logo = serializers.CharField(help_text="头像", required=False)
+    id = serializers.CharField(help_text="租户用户 ID")
+    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
+    logo = serializers.CharField(help_text="头像", source="data_source_user.logo")
 
     # 邮箱信息
     is_inherited_email = serializers.BooleanField(help_text="是否继承数据源邮箱")
-    email = serializers.EmailField(help_text="用户邮箱", required=False)
+    email = serializers.EmailField(help_text="用户邮箱", source="data_source_user.email")
     custom_email = serializers.EmailField(help_text="自定义用户邮箱")
 
     # 手机号信息
     is_inherited_phone = serializers.BooleanField(help_text="是否继承数据源手机号")
-    phone = serializers.CharField(help_text="用户手机号", required=False)
+    phone = serializers.CharField(help_text="用户手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(
-        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+        help_text="手机号国际区号",
+        source="data_source_user.phone_country_code",
+        default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
     custom_phone = serializers.CharField(help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(help_text="自定义用户手机国际区号")
 
-    account_expired_at = serializers.SerializerMethodField(help_text="账号过期时间")
+    account_expired_at = serializers.CharField(help_text="账号过期时间", source="account_expired_at_display")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
-    extras = serializers.JSONField(help_text="自定义字段", required=False)
+    extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
 
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: TenantUser) -> List[Dict]:
@@ -76,26 +79,6 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     def get_leaders(self, obj: TenantUser) -> List[Dict]:
         tenant_users_leader_infos = TenantUserHandler.get_tenant_user_leader_infos(obj)
         return TenantUserLeaderOutputSLZ(tenant_users_leader_infos, many=True).data
-
-    def get_account_expired_at(self, obj: TenantUser) -> str:
-        return obj.account_expired_at_display
-
-    def to_representation(self, obj: TenantUser) -> Dict:
-        data = super().to_representation(obj)
-        user = obj.data_source_user
-        if user is not None:
-            data.update(
-                {
-                    "full_name": user.full_name,
-                    "username": user.username,
-                    "email": user.email,
-                    "phone": user.phone,
-                    "phone_country_code": user.phone_country_code,
-                    "logo": user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO,
-                    "extras": user.extras,
-                }
-            )
-        return data
 
 
 class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
@@ -120,7 +103,7 @@ class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):
                     phone=attrs["custom_phone"], country_code=attrs["custom_phone_country_code"]
                 )
             except ValueError as e:
-                raise ValidationError(e)
+                raise ValidationError(str(e))
 
         return attrs
 
@@ -138,4 +121,4 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
 
 
 class TenantUserLogoUpdateInputSLZ(serializers.Serializer):
-    logo = serializers.CharField(help_text="用户 Logo")
+    logo = serializers.CharField(help_text="用户 Logo", validators=[validate_logo])

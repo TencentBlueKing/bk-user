@@ -8,9 +8,17 @@
       :required="item.required"
       :rules="rules.default">
       <bk-input
-        v-if="item.data_type === 'string' || item.data_type === 'number'"
-        :type="inputType(item.data_type)"
+        v-if="item.data_type === 'string'"
         v-model="item.default"
+        :maxlength="64"
+        @focus="handleChange"
+      />
+      <bk-input
+        v-else-if="item.data_type === 'number'"
+        type="number"
+        v-model="item.default"
+        :max="4294967296"
+        :min="0"
         @focus="handleChange"
       />
       <bk-select
@@ -31,8 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
 defineProps({
   extras: {
     type: Array,
@@ -43,16 +49,6 @@ defineProps({
     default: () => ({}),
   },
 });
-
-const inputType = (type: string) => {
-  const text = ref('');
-  if (type === 'string') {
-    text.value = 'text';
-  } else if (type === 'number') {
-    text.value = 'number';
-  }
-  return text.value;
-};
 
 const handleChange = () => {
   window.changeInput = true;

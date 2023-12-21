@@ -49,7 +49,6 @@ class TenantListCreateApi(generics.ListCreateAPIView):
     serializer_class = TenantSearchOutputSLZ
 
     def get_serializer_context(self):
-        # set into context, for slz to_representation
         return {
             "tenant_manager_map": TenantHandler.get_tenant_manager_map(),
             "data_source_map": DataSourceHandler.get_data_source_map_by_owner(),
@@ -121,7 +120,6 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
     serializer_class = TenantRetrieveOutputSLZ
 
     def get_serializer_context(self):
-        # set into context, for slz to_representation
         tenant_id = self.kwargs[self.lookup_url_kwarg]
         return {
             "tenant_manager_map": TenantHandler.get_tenant_manager_map(tenant_ids=[tenant_id]),

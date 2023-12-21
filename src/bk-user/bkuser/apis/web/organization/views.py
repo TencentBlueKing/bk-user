@@ -67,6 +67,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         # 先获取租户有权限的数据源（包括拥有的以及协同的）
         data_sources = DataSourceHandler.get_tenant_available_data_sources(cur_tenant_id)
+        # FIXME (su) 协同的租户不一定会提供根部门，应该改成从协同范围表中获取协同的顶层数据源部门 ID
         root_data_source_dept_ids = (
             DataSourceDepartmentRelation.objects.root_nodes()
             .filter(data_source_id__in=[ds.id for ds in data_sources])
@@ -158,6 +159,7 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         # 当前租户可获取的数据源信息（含协同，不含禁用）
         data_sources = DataSourceHandler.get_tenant_available_data_sources(cur_tenant_id)
         # 指定租户 ID，可以确保即使跨租户协同，也是在指定的协同范围内的
+        # FIXME (su) 协同获得的租户用户，也不一定就是该租户拥有的数据源部门的，需要根据所属数据源所属租户做区分
         tenant_users = (
             TenantUser.objects.filter(tenant_id=cur_tenant_id, data_source__in=data_sources)
             .select_related("data_source_user")
@@ -168,14 +170,11 @@ class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
             tenant_users = tenant_users.filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
-
+        tenant_users = self.paginate_queryset(tenant_users)
         context = {
             "tenant_user_depts_map": TenantUserHandler.get_tenant_users_depts_map(cur_tenant_id, tenant_users),
         }
-        if page := self.paginate_queryset(tenant_users):
-            return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
-
-        return Response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
+        return self.get_paginated_response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
 
 
 class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -253,13 +252,11 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
 
+        tenant_users = self.paginate_queryset(tenant_users)
         context = {
             "tenant_user_depts_map": TenantUserHandler.get_tenant_users_depts_map(tenant_dept.tenant_id, tenant_users),
         }
-        if page := self.paginate_queryset(tenant_users):
-            return self.get_paginated_response(TenantUserListOutputSLZ(page, many=True, context=context).data)
-
-        return Response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
+        return self.get_paginated_response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
 
 
 class TenantUserRetrieveApi(generics.RetrieveAPIView):

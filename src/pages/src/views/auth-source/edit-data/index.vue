@@ -2,7 +2,7 @@
   <div>
     <MainBreadcrumbs />
     <div ref="boxRef" class="edit-data-wrapper user-scroll-y">
-      <Local v-if="pluginId === 'local'" />
+      <Local v-if="pluginId === 'local'" :box-ref="boxRef" />
       <WeCom v-else-if="pluginId === 'wecom'" :box-ref="boxRef" />
       <CustomPlugin v-else :box-ref="boxRef" />
     </div>

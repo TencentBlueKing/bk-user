@@ -21,6 +21,9 @@ def validate_phone_with_country_code(phone: str, country_code: str) -> None:
 
     :raise ValueError: country_code 或 phone 不合法
     """
+    if "+" in country_code:
+        raise ValueError(f"phone country code [{country_code}] shouldn't contain +")
+
     try:
         region = region_code_for_country_code(int(country_code))
     except Exception:
