@@ -304,26 +304,28 @@ class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="数据源用户重置的新密码")
 
     def validate_password(self, password: str) -> str:
-        # 判断和当前密码是否相同
+        # 新密码不可与当前正在使用的密码相同
         if check_password(password, self.context["current_password"]):
             raise ValidationError(_("新密码不可与当前密码相同"))
 
         # 密码规则校验
         plugin_config = self.context["plugin_config"]
-        password_rule = plugin_config.password_rule
-        ret = PasswordValidator(password_rule.to_rule()).validate(password)
+        ret = PasswordValidator(plugin_config.password_rule.to_rule()).validate(password)
         if not ret.ok:
-            raise ValidationError(_("不符合密码规则：{}").format(ret.exception_message))
+            raise ValidationError(_("密码不符合规则：{}").format(ret.exception_message))
 
-        # 是否为前N次所使用的密码
-        reserved_previous_password_count = plugin_config.password_initial.reserved_previous_password_count
+        reseved_cnt = plugin_config.password_initial.reserved_previous_password_count
+        # 当历史密码保留数量小于等于 1 时，只需要检查不与当前密码相同即可
+        if reseved_cnt <= 1:
+            return password
+            
         used_passwords = DataSourceUserDeprecatedPasswordRecord.objects.filter(
-            user_id=self.context["data_source_user_id"]
-        )[:reserved_previous_password_count].values_list("password", flat=True)
-
+            user_id=self.context["data_source_user_id"],
+        )[:reseved_cnt-1].values_list("password", flat=True)
+        
         for used_pwd in used_passwords:
             if check_password(password, used_pwd):
-                raise ValidationError(_("新密码不能与最近{}次密码相同".format(reserved_previous_password_count)))
+                raise ValidationError(_("新密码不能与近 {} 次使用的密码相同".format(reseved_cnt)))
 
         return password
 
