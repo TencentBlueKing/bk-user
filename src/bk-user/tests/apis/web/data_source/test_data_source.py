@@ -109,6 +109,29 @@ class TestDataSourcePluginDefaultConfigApi:
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
+class TestDataSourceRandomPasswordApi:
+    def test_generate_with_config(self, api_client, local_ds_plugin_cfg):
+        resp = api_client.post(
+            reverse("data_source.random_passwords"),
+            data={"password_rule_config": local_ds_plugin_cfg["password_rule"]},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["password"] != ""
+
+    def test_generate_with_data_source_id(self, api_client, bare_local_data_source):
+        resp = api_client.post(
+            reverse("data_source.random_passwords"),
+            data={"data_source_id": bare_local_data_source.id},
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["password"] != ""
+
+    def test_generate_with_default_config(self, api_client):
+        resp = api_client.post(reverse("data_source.random_passwords"))
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["password"] != ""
+
+
 class TestDataSourceCreateApi:
     def test_create_local_data_source(self, api_client, local_ds_plugin_cfg):
         resp = api_client.post(

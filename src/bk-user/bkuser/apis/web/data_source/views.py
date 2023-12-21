@@ -219,7 +219,7 @@ class DataSourceRetrieveUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceRandomPasswordApi(generics.CreateAPIView):
+class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="生成数据源用户随机密码",
@@ -227,7 +227,10 @@ class DataSourceRandomPasswordApi(generics.CreateAPIView):
         responses={status.HTTP_200_OK: DataSourceRandomPasswordOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
-        slz = DataSourceRandomPasswordInputSLZ(data=request.data)
+        slz = DataSourceRandomPasswordInputSLZ(
+            data=request.data,
+            context={"tenant_id": self.get_current_tenant_id()},
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
