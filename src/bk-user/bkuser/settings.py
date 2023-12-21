@@ -517,6 +517,9 @@ if not PASSWORD_ENCRYPT_ALGORITHM:
 
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 
+# logo文件大小限制，单位为: KB
+MAX_LOGO_SIZE = env.int("MAX_LOGO_SIZE", 256)
+
 # 数据源插件默认Logo，值为base64格式图片数据
 DEFAULT_DATA_SOURCE_PLUGIN_LOGO = ""
 # 租户默认Logo，值为base64格式图片数据

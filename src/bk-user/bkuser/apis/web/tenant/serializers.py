@@ -22,7 +22,7 @@ from bkuser.apps.tenant.constants import TENANT_ID_REGEX
 from bkuser.apps.tenant.models import Tenant
 from bkuser.biz.data_source import DataSourceSimpleInfo
 from bkuser.biz.tenant import TenantUserWithInheritedInfo
-from bkuser.biz.validators import validate_data_source_user_username
+from bkuser.biz.validators import validate_data_source_user_username, validate_logo
 from bkuser.common.passwd import PasswordValidator
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.base import get_default_plugin_cfg
@@ -90,7 +90,13 @@ class TenantManagerPasswordInitialConfigSLZ(serializers.Serializer):
 class TenantCreateInputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
-    logo = serializers.CharField(help_text="租户 Logo", required=False, allow_blank=True, default="")
+    logo = serializers.CharField(
+        help_text="租户 Logo",
+        required=False,
+        allow_blank=True,
+        default=settings.DEFAULT_TENANT_LOGO,
+        validators=[validate_logo],
+    )
     managers = serializers.ListField(help_text="管理人列表", child=TenantManagerCreateInputSLZ(), allow_empty=False)
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
     password_initial_config = TenantManagerPasswordInitialConfigSLZ()
@@ -170,7 +176,11 @@ class TenantSearchOutputSLZ(serializers.Serializer):
 class TenantUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="租户名称")
     logo = serializers.CharField(
-        help_text="租户 Logo", required=False, allow_blank=True, default=settings.DEFAULT_TENANT_LOGO
+        help_text="租户 Logo",
+        required=False,
+        allow_blank=True,
+        default=settings.DEFAULT_TENANT_LOGO,
+        validators=[validate_logo],
     )
     manager_ids = serializers.ListField(child=serializers.CharField(), help_text="租户用户 ID 列表", allow_empty=False)
     feature_flags = TenantFeatureFlagSLZ(help_text="租户特性集")
