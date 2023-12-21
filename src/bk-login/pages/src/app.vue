@@ -28,16 +28,13 @@
           </template>
         </bk-popover>
       </p>
-      <p>Copyright © 2012-{{ currentYear }} Tencent BlueKing. All Rights Reserved.</p>
-      <p>蓝鲸智云 版权所有</p>
+      <p>Copyright © 2012 Tencent BlueKing. All Rights Reserved.</p>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-
-const currentYear = new Date().getFullYear();
 
 onMounted(() => {
   particlesJS(
