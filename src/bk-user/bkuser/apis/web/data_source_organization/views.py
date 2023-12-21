@@ -13,6 +13,7 @@ from typing import List
 
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -293,6 +294,7 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
 
         with transaction.atomic():
             identify_info.password = make_password(raw_password)
+            identify_info.password_updated_at = timezone.now()
             identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
 
             DataSourceUserDeprecatedPasswordRecord.objects.create(
