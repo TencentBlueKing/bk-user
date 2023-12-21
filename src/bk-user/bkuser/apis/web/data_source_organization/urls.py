@@ -22,8 +22,8 @@ urlpatterns = [
     path("users/<int:id>/", views.DataSourceUserRetrieveUpdateApi.as_view(), name="data_source_user.retrieve_update"),
     path(
         "users/<int:id>/password/",
-        views.DataSourceUserPasswordUpdateApi.as_view(),
-        name="data_source_user.password.update",
+        views.DataSourceUserPasswordResetApi.as_view(),
+        name="data_source_user.password.reset",
     ),
     # 数据源用户所属部门路径
     path(
