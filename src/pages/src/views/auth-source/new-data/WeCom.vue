@@ -17,7 +17,7 @@
         <div class="content-item">
           <p class="item-title">基础信息</p>
           <bk-form-item class="w-[600px]" label="名称" property="name" required>
-            <bk-input v-model="formData.name" @focus="handleChange" />
+            <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
           </bk-form-item>
         </div>
         <div class="content-item">
@@ -91,7 +91,7 @@
                       :id="option.name"
                       :name="option.name"
                       :disabled="option.disabled">
-                      <span>{{option.name}}</span>
+                      <bk-overflow-title type="tips" class="name">{{option.name}}</bk-overflow-title>
                       <span>{{option.type}}</span>
                     </bk-option>
                   </bk-select>
@@ -203,7 +203,7 @@ const formData = ref({
 const LoginMethod = ref('a');
 
 const rules = {
-  name: [validate.required],
+  name: [validate.required, validate.name],
   'plugin_config.corp_id': [validate.required],
   'plugin_config.agent_id': [validate.required],
   'plugin_config.secret': [validate.required],

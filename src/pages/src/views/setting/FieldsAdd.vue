@@ -3,13 +3,13 @@
     <bk-form ref="fieldsRef" form-type="vertical" :model="fieldsInfor" :rules="rulesFields">
       <bk-form-item label="字段名称" property="display_name" required>
         <bk-input
-          placeholder="最多不得超过12个字符（6个汉字）"
+          :placeholder="validate.fieldsDisplayName.message"
           v-model="fieldsInfor.display_name"
           @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="英文标识" property="name" required>
         <bk-input
-          placeholder="由英文字母组成"
+          :placeholder="validate.fieldsName.message"
           :disabled="isEdit"
           v-model="fieldsInfor.name"
           @focus="handleChange" />
@@ -28,15 +28,15 @@
           />
         </bk-select>
       </bk-form-item>
-      <bk-form-item label="默认值">
+      <bk-form-item label="默认值" v-if="fieldsInfor.data_type === 'string'">
         <bk-input
-          v-if="fieldsInfor.data_type === 'string'"
           v-model="fieldsInfor.default"
           :maxlength="64"
           @focus="handleChange"
         />
+      </bk-form-item>
+      <bk-form-item label="默认值" v-else-if="fieldsInfor.data_type === 'number'">
         <bk-input
-          v-else-if="fieldsInfor.data_type === 'number'"
           type="number"
           v-model="fieldsInfor.default"
           :max="4294967296"
@@ -620,11 +620,15 @@ const blurValue = () => findFirstDuplicate('value');
             top: 6px;
             margin-right: 5px;
             font-size: 20px;
-            color: #c7d1da;
+            color: #EAEBF0;
             cursor: pointer;
 
+            &:hover {
+              color: #c4c6cc;
+            }
+
             &.forbid {
-              color: #ea3636;
+              color: #EAEBF0;
               cursor: not-allowed;
             }
 

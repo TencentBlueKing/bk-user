@@ -12,10 +12,14 @@
             :rules="rulesBasicInfo"
           >
             <bk-form-item label="租户名称" property="name" required>
-              <bk-input v-model="formData.name" @focus="handleChange" />
+              <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="租户ID" property="id" required>
-              <bk-input v-model="formData.id" :disabled="isEdit" @focus="handleChange" />
+              <bk-input
+                v-model="formData.id"
+                :placeholder="validate.id.message"
+                :disabled="isEdit"
+                @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="人员数量">
               <bk-radio-group v-model="formData.feature_flags.user_number_visible" @change="handleChange">

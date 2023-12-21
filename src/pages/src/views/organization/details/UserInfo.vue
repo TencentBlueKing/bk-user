@@ -68,20 +68,22 @@
       </bk-table-column>
     </bk-table>
     <!-- 查看/编辑用户 -->
-    <bk-sideslider
-      ext-cls="details-edit-wrapper"
-      :width="640"
-      :is-show="detailsConfig.isShow"
-      :title="detailsConfig.title"
-      :before-close="handleBeforeClose"
-      quick-close
-    >
-      <template #header>
-        <span>{{ detailsConfig.title }}</span>
+    <div v-if="showSideBar">
+      <bk-sideslider
+        ext-cls="details-edit-wrapper"
+        :width="640"
+        :is-show="detailsConfig.isShow"
+        :title="detailsConfig.title"
+        :before-close="handleBeforeClose"
+        quick-close
+      >
+        <template #header>
+          <span>{{ detailsConfig.title }}</span>
         <!-- <bk-button>删除</bk-button> -->
-      </template>
-      <ViewUser :user-data="state.userInfo" />
-    </bk-sideslider>
+        </template>
+        <ViewUser :user-data="state.userInfo" />
+      </bk-sideslider>
+    </div>
   </div>
 </template>
 
@@ -142,7 +144,16 @@ const state = reactive({
   userInfo: {},
 });
 
+const showSideBar = ref(false);
+// 销毁侧栏，防止tips不消失
+const hideSideBar = () => {
+  setTimeout(() => {
+    showSideBar.value = false;
+  }, 300);
+};
+
 const handleClick = async (item: any) => {
+  showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
     getTenantUsers(item.id),
     getFields(),
@@ -158,8 +169,10 @@ const handleBeforeClose = async () => {
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
     detailsConfig.isShow = false;
+    hideSideBar();
   } else {
     detailsConfig.isShow = false;
+    hideSideBar();
   }
   if (!enableLeave) {
     return Promise.resolve(enableLeave);
