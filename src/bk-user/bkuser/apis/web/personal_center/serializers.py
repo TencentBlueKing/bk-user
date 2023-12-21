@@ -21,6 +21,7 @@ from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputS
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.biz.validators import validate_logo
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -125,7 +126,7 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
 
 
 class TenantUserLogoUpdateInputSLZ(serializers.Serializer):
-    logo = serializers.CharField(help_text="用户 Logo")
+    logo = serializers.CharField(help_text="用户 Logo", validators=[validate_logo])
 
 
 class TenantUserExtrasUpdateInputSLZ(serializers.Serializer):

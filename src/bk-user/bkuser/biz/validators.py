@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 import re
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
@@ -36,3 +37,12 @@ def validate_tenant_custom_field_name(value):
                 "{} 不符合 自定义字段 的命名规范: 由3-32位字母、数字、下划线(_)字符组成，以字母开头，字母或数字结尾"  # noqa: E501
             ).format(value),
         )
+
+
+def validate_logo(value):
+    if not value:
+        return
+
+    # Logo 使用 Base64 编码，编码后长度 ≈ 原始图片字节长度 // 3 * 4 
+    if len(value) > (settings.MAX_LOGO_SIZE * 1024) // 3 * 4:
+        raise ValidationError(_("Logo 文件大小不可超过 {} KB").format(settings.MAX_LOGO_SIZE))
