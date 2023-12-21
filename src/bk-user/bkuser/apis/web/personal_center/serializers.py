@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -16,8 +16,10 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apis.web.data_source_organization.serializers import validate_user_extras
 from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
-from bkuser.apps.tenant.models import TenantUser
+from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
+from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.validators import validate_phone_with_country_code
 
@@ -41,7 +43,7 @@ class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
     tenant_users = serializers.ListField(help_text="自然人关联的租户账号列表", child=TenantUserInfoOutputSLZ())
 
 
-class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
+class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
@@ -67,6 +69,9 @@ class PersonalCenterTenantUserRetrieveOutputSLZ(serializers.Serializer):
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
     extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
+
+    class Meta:
+        ref_name = "personal_center.TenantUserRetrieveOutputSLZ"
 
     @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
     def get_departments(self, obj: TenantUser) -> List[Dict]:
@@ -121,3 +126,37 @@ class TenantUserEmailUpdateInputSLZ(serializers.Serializer):
 
 class TenantUserLogoUpdateInputSLZ(serializers.Serializer):
     logo = serializers.CharField(help_text="用户 Logo")
+
+
+class TenantUserExtrasUpdateInputSLZ(serializers.Serializer):
+    extras = serializers.JSONField(help_text="自定义字段")
+
+    def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
+        custom_fields = TenantUserCustomField.objects.filter(
+            tenant_id=self.context["tenant_id"],
+            personal_center_editable=True,
+        )
+        return validate_user_extras(
+            extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]
+        )
+
+
+class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="字段 ID")
+    name = serializers.CharField(help_text="英文标识")
+    display_name = serializers.CharField(help_text="展示用名称")
+    data_type = serializers.CharField(help_text="字段类型")
+    required = serializers.BooleanField(help_text="是否必填")
+    editable = serializers.BooleanField(help_text="是否可编辑", source="personal_center_editable")
+    options = serializers.JSONField(help_text="可选项")
+
+    class Meta:
+        ref_name = "personal_center.TenantUserCustomFieldOutputSLZ"
+
+
+class TenantUserFieldOutputSLZ(serializers.Serializer):
+    builtin_fields = serializers.ListField(help_text="内置字段", child=BuiltinFieldOutputSLZ())
+    custom_fields = serializers.ListField(help_text="自定义字段", child=TenantUserCustomFieldOutputSLZ())
+
+    class Meta:
+        ref_name = "personal_center.TenantUserFieldOutputSLZ"

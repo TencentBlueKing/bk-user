@@ -25,6 +25,9 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "data_type": UserFieldDataType.NUMBER,
             "required": False,
             "default": 0,
+            "personal_center_visible": True,
+            "personal_center_editable": False,
+            "manager_editable": True,
         },
     )
     gender_field, _ = TenantUserCustomField.objects.get_or_create(
@@ -35,6 +38,9 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "data_type": UserFieldDataType.ENUM,
             "required": True,
             "default": "male",
+            "personal_center_visible": True,
+            "personal_center_editable": True,
+            "manager_editable": True,
             "options": [
                 {
                     "id": "male",
@@ -58,6 +64,9 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "display_name": "籍贯",
             "data_type": UserFieldDataType.STRING,
             "required": True,
+            "personal_center_visible": False,
+            "personal_center_editable": False,
+            "manager_editable": True,
         },
     )
     sport_hobby_field, _ = TenantUserCustomField.objects.get_or_create(
@@ -68,6 +77,9 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "data_type": UserFieldDataType.MULTI_ENUM,
             "required": True,
             "default": ["running", "swimming"],
+            "personal_center_visible": True,
+            "personal_center_editable": True,
+            "manager_editable": False,
             "options": [
                 {
                     "id": "running",

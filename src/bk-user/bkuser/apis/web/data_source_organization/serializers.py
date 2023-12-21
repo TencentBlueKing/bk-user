@@ -12,6 +12,7 @@ import logging
 from typing import Any, Dict, List
 
 from django.conf import settings
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
@@ -99,11 +100,13 @@ def _validate_unique_and_required(
     return value
 
 
-def _validate_user_extras(
-    extras: Dict[str, Any], tenant_id: str, data_source: DataSource, user_id: int | None = None
+def validate_user_extras(
+    extras: Dict[str, Any],
+    custom_fields: QuerySet[TenantUserCustomField],
+    data_source: DataSource,
+    user_id: int | None = None,
 ) -> Dict[str, Any]:
-    custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
-
+    """校验 extras 中的键，值是否合法"""
     if not custom_fields.exists() and extras:
         raise ValidationError(_("当前租户未设置租户用户自定义字段"))
 
@@ -169,7 +172,7 @@ class UserCreateInputSLZ(serializers.Serializer):
     def validate_department_ids(self, department_ids):
         diff_department_ids = set(department_ids) - set(
             DataSourceDepartment.objects.filter(
-                id__in=department_ids, data_source=self.context["data_source"]
+                id__in=department_ids, data_source_id=self.context["data_source_id"]
             ).values_list("id", flat=True)
         )
         if diff_department_ids:
@@ -180,7 +183,7 @@ class UserCreateInputSLZ(serializers.Serializer):
         diff_leader_ids = set(leader_ids) - set(
             DataSourceUser.objects.filter(
                 id__in=leader_ids,
-                data_source=self.context["data_source"],
+                data_source_id=self.context["data_source_id"],
             ).values_list("id", flat=True)
         )
         if diff_leader_ids:
@@ -188,7 +191,8 @@ class UserCreateInputSLZ(serializers.Serializer):
         return leader_ids
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
-        return _validate_user_extras(extras, self.context["tenant_id"], self.context["data_source"])
+        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        return validate_user_extras(extras, custom_fields, self.context["data_source_id"])
 
 
 class LeaderSearchInputSLZ(serializers.Serializer):
@@ -255,8 +259,8 @@ class UserUpdateInputSLZ(serializers.Serializer):
     logo = serializers.CharField(help_text="用户 Logo", allow_blank=True, required=False, default="")
     extras = serializers.JSONField(help_text="自定义字段")
 
-    department_ids = serializers.ListField(help_text="部门ID列表", child=serializers.IntegerField())
-    leader_ids = serializers.ListField(help_text="上级ID列表", child=serializers.IntegerField())
+    department_ids = serializers.ListField(help_text="部门 ID 列表", child=serializers.IntegerField())
+    leader_ids = serializers.ListField(help_text="上级 ID 列表", child=serializers.IntegerField())
 
     def validate(self, data):
         try:
@@ -269,7 +273,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
     def validate_department_ids(self, department_ids):
         diff_department_ids = set(department_ids) - set(
             DataSourceDepartment.objects.filter(
-                id__in=department_ids, data_source=self.context["data_source"]
+                id__in=department_ids, data_source_id=self.context["data_source_id"]
             ).values_list("id", flat=True)
         )
         if diff_department_ids:
@@ -279,8 +283,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
     def validate_leader_ids(self, leader_ids):
         diff_leader_ids = set(leader_ids) - set(
             DataSourceUser.objects.filter(
-                id__in=leader_ids,
-                data_source=self.context["data_source"],
+                id__in=leader_ids, data_source_id=self.context["data_source_id"]
             ).values_list("id", flat=True)
         )
         if diff_leader_ids:
@@ -292,9 +295,8 @@ class UserUpdateInputSLZ(serializers.Serializer):
         return leader_ids
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
-        return _validate_user_extras(
-            extras, self.context["tenant_id"], self.context["data_source"], self.context["user_id"]
-        )
+        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        return validate_user_extras(extras, custom_fields, self.context["data_source_id"], self.context["user_id"])
 
 
 class DataSourceUserOrganizationPathOutputSLZ(serializers.Serializer):

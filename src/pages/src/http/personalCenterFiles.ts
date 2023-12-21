@@ -28,4 +28,4 @@ export const patchUsersPhone = (params: PatchUserPhoneParams) => http.patch(`/ap
 /**
  * 租户用户更新头像
  */
-export const patchTenantUsersLogo = (params: PatchUserLogoParams) => http.patch(`/api/v1/web/personal-center/tenant-users/${params.id}/`, params);
+export const patchTenantUsersLogo = (params: PatchUserLogoParams) => http.patch(`/api/v1/web/personal-center/tenant-users/${params.id}/logo/`, params);

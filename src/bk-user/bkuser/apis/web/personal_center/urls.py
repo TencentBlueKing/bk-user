@@ -22,8 +22,13 @@ urlpatterns = [
     # 租户用户详情
     path(
         "tenant-users/<str:id>/",
-        views.TenantUserRetrieveUpdateApi.as_view(),
-        name="personal_center.tenant_users.retrieve_update",
+        views.TenantUserRetrieveApi.as_view(),
+        name="personal_center.tenant_users.retrieve",
+    ),
+    path(
+        "tenant-users/<str:id>/logo/",
+        views.TenantUserLogoUpdateApi.as_view(),
+        name="personal_center.tenant_users.logo.update",
     ),
     path(
         "tenant-users/<str:id>/phone/",
@@ -34,5 +39,15 @@ urlpatterns = [
         "tenant-users/<str:id>/email/",
         views.TenantUserEmailUpdateApi.as_view(),
         name="personal_center.tenant_users.email.update",
+    ),
+    path(
+        "tenant-users/<str:id>/extras/",
+        views.TenantUserExtrasUpdateApi.as_view(),
+        name="personal_center.tenant_users.extras.update",
+    ),
+    path(
+        "tenant-users/<str:id>/fields/",
+        views.TenantUserFieldListApi.as_view(),
+        name="personal_center.tenant_users.fields.list",
     ),
 ]
