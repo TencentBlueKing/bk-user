@@ -257,7 +257,7 @@ class DataSourceUserRetrieveUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = DataSourceUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -269,38 +269,35 @@ class DataSourceUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateA
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
-        data_source_user = self.get_object()
-        data_source = data_source_user.data_source
+        user = self.get_object()
+        data_source = user.data_source
         plugin_config = data_source.get_plugin_cfg()
 
-        if not data_source.is_local or not plugin_config.enable_account_password_login:
+        if not (data_source.is_local and plugin_config.enable_account_password_login):
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
-                _("仅本地数据源类型且启用账密登录功能, 用户可变更密码")
+                _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
             )
 
-        user_identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
-        current_password = user_identify_info.password
+        identify_info = LocalDataSourceIdentityInfo.objects.get(user=user)
+        current_password = identify_info.password
         slz = DataSourceUserPasswordResetInputSLZ(
             data=request.data,
             context={
                 "plugin_config": plugin_config,
-                "data_source_user_id": data_source_user.id,
+                "data_source_user_id": user.id,
                 "current_password": current_password,
             },
         )
         slz.is_valid(raise_exception=True)
-        new_password = slz.validated_data["password"]
+        raw_password = slz.validated_data["password"]
 
-        # current_password 变更为加密后的new_password
-        current_password, old_password = make_password(new_password), current_password
         with transaction.atomic():
-            user_identify_info.password = current_password
-            # TODO 密码有效期续期，提供另外的入口，不在此处理
-            user_identify_info.save(update_fields=["password", "updated_at", "password_updated_at"])
+            identify_info.password = make_password(raw_password)
+            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
 
             DataSourceUserDeprecatedPasswordRecord.objects.create(
-                user=data_source_user,
-                password=old_password,
+                user=user,
+                password=current_password,
                 operator=request.user.username,
             )
 
