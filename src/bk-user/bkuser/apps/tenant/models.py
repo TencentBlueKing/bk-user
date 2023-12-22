@@ -138,8 +138,11 @@ class TenantUserCustomField(TimestampedModel):
     name = models.CharField("英文标识", max_length=128)
     display_name = models.CharField("字段名称", max_length=128)
     data_type = models.CharField("数据类型", choices=UserFieldDataType.get_choices(), max_length=32)
-    required = models.BooleanField("是否必填")
+    required = models.BooleanField("是否必填", default=False)
     unique = models.BooleanField("是否唯一", default=False)
+    personal_center_visible = models.BooleanField("是否在个人中心可见", default=False)
+    personal_center_editable = models.BooleanField("是否在个人中心可编辑", default=False)
+    manager_editable = models.BooleanField("租户管理员是否可重复编辑", default=True)
     default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default=list)
 

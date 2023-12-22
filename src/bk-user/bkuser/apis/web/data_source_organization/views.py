@@ -112,7 +112,11 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
             raise error_codes.DATA_SOURCE_NOT_EXIST
 
         slz = UserCreateInputSLZ(
-            data=request.data, context={"data_source": data_source, "tenant_id": self.get_current_tenant_id()}
+            data=request.data,
+            context={
+                "tenant_id": self.get_current_tenant_id(),
+                "data_source_id": data_source.id,
+            },
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -124,7 +128,6 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         if DataSourceUser.objects.filter(username=data["username"], data_source=data_source).exists():
             raise error_codes.DATA_SOURCE_USER_ALREADY_EXISTED
 
-        # 用户数据整合
         user_info = DataSourceUserInfo(
             username=data["username"],
             full_name=data["full_name"],
@@ -134,11 +137,9 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
             logo=data["logo"],
             extras=data["extras"],
         )
-
         relation_info = DataSourceUserRelationInfo(
             department_ids=data["department_ids"], leader_ids=data["leader_ids"]
         )
-
         DataSourceUserHandler.create_user(data_source, user_info, relation_info)
         return Response(status=status.HTTP_201_CREATED)
 
@@ -236,7 +237,11 @@ class DataSourceUserRetrieveUpdateApi(
 
         slz = UserUpdateInputSLZ(
             data=request.data,
-            context={"data_source": user.data_source, "user_id": user.id, "tenant_id": self.get_current_tenant_id()},
+            context={
+                "data_source_id": user.data_source_id,
+                "data_source_user_id": user.id,
+                "tenant_id": self.get_current_tenant_id(),
+            },
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
