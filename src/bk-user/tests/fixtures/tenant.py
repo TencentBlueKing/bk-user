@@ -58,6 +58,7 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "display_name": "籍贯",
             "data_type": UserFieldDataType.STRING,
             "required": True,
+            "default": "china",
         },
     )
     sport_hobby_field, _ = TenantUserCustomField.objects.get_or_create(

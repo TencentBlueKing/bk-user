@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Type
+from typing import Dict, List, Protocol, Type
 
 from drf_yasg import openapi
 
@@ -103,3 +103,16 @@ def get_default_plugin_cfg(plugin_id: str | DataSourcePluginEnum) -> BasePluginC
 
     # 深复制以避免在其他逻辑中修改到默认的配置
     return _plugin_default_cfg_map[plugin_id].model_copy(deep=True)
+
+
+class PluginLogger(Protocol):
+    """插件用日志记录器"""
+
+    def info(self, msg: str):
+        raise NotImplementedError
+
+    def warning(self, msg: str):
+        raise NotImplementedError
+
+    def error(self, msg: str):
+        raise NotImplementedError

@@ -40,22 +40,23 @@ class DataSourceSyncTaskRunner:
     def __init__(self, task: DataSourceSyncTask, plugin_init_extra_kwargs: Dict[str, Any]):
         self.task = task
         self.data_source = DataSource.objects.get(id=self.task.data_source_id)
-        self._initial_plugin(plugin_init_extra_kwargs)
+        self.plugin_init_extra_kwargs = plugin_init_extra_kwargs
 
     def run(self):
         with DataSourceSyncTaskContext(self.task) as ctx, transaction.atomic():
+            self._initial_plugin(ctx, self.plugin_init_extra_kwargs)
             self._sync_departments(ctx)
             self._sync_users(ctx)
             self._validate_unique_fields(ctx)
 
         self._send_signal()
 
-    def _initial_plugin(self, plugin_init_extra_kwargs: Dict[str, Any]):
+    def _initial_plugin(self, ctx: DataSourceSyncTaskContext, plugin_init_extra_kwargs: Dict[str, Any]):
         """初始化数据源插件"""
         plugin_cfg = self.data_source.get_plugin_cfg()
 
         PluginCls = get_plugin_cls(self.data_source.plugin_id)  # noqa: N806
-        self.plugin = PluginCls(plugin_cfg, **plugin_init_extra_kwargs)
+        self.plugin = PluginCls(plugin_cfg, ctx.logger, **plugin_init_extra_kwargs)
 
     def _sync_departments(self, ctx: DataSourceSyncTaskContext):
         """同步部门信息"""
