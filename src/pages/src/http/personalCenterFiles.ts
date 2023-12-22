@@ -18,14 +18,14 @@ export const getPersonalCenterUsers = (id: string) => http.get(`/api/v1/web/pers
 /**
  * 租户用户更新邮箱
  */
-export const patchUsersEmail = (params: PatchUserEmailParams) => http.patch(`/api/v1/web/personal-center/tenant-users/${params.id}/email/`, params);
+export const patchUsersEmail = (params: PatchUserEmailParams) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/email/`, params);
 
 /**
  * 租户用户更新手机号
  */
-export const patchUsersPhone = (params: PatchUserPhoneParams) => http.patch(`/api/v1/web/personal-center/tenant-users/${params.id}/phone/`, params);
+export const patchUsersPhone = (params: PatchUserPhoneParams) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/phone/`, params);
 
 /**
  * 租户用户更新头像
  */
-export const patchTenantUsersLogo = (params: PatchUserLogoParams) => http.patch(`/api/v1/web/personal-center/tenant-users/${params.id}/logo/`, params);
+export const patchTenantUsersLogo = (params: PatchUserLogoParams) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/logo/`, params);

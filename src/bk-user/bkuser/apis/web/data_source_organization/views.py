@@ -232,7 +232,7 @@ class DataSourceUserRetrieveUpdateApi(
             data=request.data,
             context={
                 "data_source_id": user.data_source_id,
-                "user_id": user.id,
+                "data_source_user_id": user.id,
                 "tenant_id": self.get_current_tenant_id(),
             },
         )

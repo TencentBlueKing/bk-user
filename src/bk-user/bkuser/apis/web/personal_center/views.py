@@ -30,7 +30,7 @@ from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
-from bkuser.common.views import ExcludePutAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class NaturalUserTenantUserListApi(generics.ListAPIView):
@@ -87,17 +87,18 @@ class TenantUserRetrieveApi(generics.RetrieveAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
-        custom_field_names = TenantUserCustomField.objects.filter(
+
+        visible_custom_field_names = TenantUserCustomField.objects.filter(
             tenant=tenant_user.tenant, personal_center_visible=True
         ).values_list("name", flat=True)
-        # 过滤掉 extras 中用户在个人中心不可见的
-        tenant_user.data_source_user.extras = {
-            k: v for k, v in tenant_user.data_source_user.extras.items() if k in custom_field_names
-        }
-        return Response(TenantUserRetrieveOutputSLZ(tenant_user).data)
+
+        slz = TenantUserRetrieveOutputSLZ(
+            tenant_user, context={"visible_custom_field_names": visible_custom_field_names}
+        )
+        return Response(slz.data)
 
 
-class TenantUserLogoUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+class TenantUserLogoUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -108,7 +109,7 @@ class TenantUserLogoUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         request_body=TenantUserLogoUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         slz = TenantUserLogoUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -120,7 +121,7 @@ class TenantUserLogoUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+class TenantUserPhoneUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -131,7 +132,7 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         request_body=TenantUserPhoneUpdateInputSLZ,
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         slz = TenantUserPhoneUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -145,7 +146,7 @@ class TenantUserPhoneUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+class TenantUserEmailUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -156,7 +157,7 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         request_body=TenantUserEmailUpdateInputSLZ,
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         slz = TenantUserEmailUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -169,7 +170,7 @@ class TenantUserEmailUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantUserExtrasUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+class TenantUserExtrasUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -180,7 +181,7 @@ class TenantUserExtrasUpdateApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         request_body=TenantUserExtrasUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         tenant_user = self.get_object()
         data_source_user = tenant_user.data_source_user
 
