@@ -11,7 +11,10 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import List
 
+from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -19,6 +22,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.data_source_organization.serializers import (
     DataSourceUserOrganizationPathOutputSLZ,
+    DataSourceUserPasswordResetInputSLZ,
     DepartmentSearchInputSLZ,
     DepartmentSearchOutputSLZ,
     LeaderSearchInputSLZ,
@@ -36,6 +40,8 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
+    DataSourceUserDeprecatedPasswordRecord,
+    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -46,6 +52,7 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
+from bkuser.common.hashers import make_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -252,6 +259,54 @@ class DataSourceUserRetrieveUpdateApi(
             department_ids=data["department_ids"], leader_ids=data["leader_ids"]
         )
         DataSourceUserHandler.update_user(user, user_info, relation_info)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    queryset = DataSourceUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["data_source_organization"],
+        operation_description="重置数据源用户密码",
+        request_body=DataSourceUserPasswordResetInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        user = self.get_object()
+        data_source = user.data_source
+        plugin_config = data_source.get_plugin_cfg()
+
+        if not (data_source.is_local and plugin_config.enable_account_password_login):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
+                _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
+            )
+
+        identify_info = LocalDataSourceIdentityInfo.objects.get(user=user)
+        current_password = identify_info.password
+        slz = DataSourceUserPasswordResetInputSLZ(
+            data=request.data,
+            context={
+                "plugin_config": plugin_config,
+                "data_source_user_id": user.id,
+                "current_password": current_password,
+            },
+        )
+        slz.is_valid(raise_exception=True)
+        raw_password = slz.validated_data["password"]
+
+        with transaction.atomic():
+            identify_info.password = make_password(raw_password)
+            identify_info.password_updated_at = timezone.now()
+            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
+
+            DataSourceUserDeprecatedPasswordRecord.objects.create(
+                user=user,
+                password=current_password,
+                operator=request.user.username,
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

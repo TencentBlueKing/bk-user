@@ -3,13 +3,13 @@
     <bk-form ref="fieldsRef" form-type="vertical" :model="fieldsInfor" :rules="rulesFields">
       <bk-form-item label="字段名称" property="display_name" required>
         <bk-input
-          placeholder="最多不得超过12个字符（6个汉字）"
+          :placeholder="validate.fieldsDisplayName.message"
           v-model="fieldsInfor.display_name"
           @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="英文标识" property="name" required>
         <bk-input
-          placeholder="由英文字母组成"
+          :placeholder="validate.fieldsName.message"
           :disabled="isEdit"
           v-model="fieldsInfor.name"
           @focus="handleChange" />
@@ -27,6 +27,22 @@
             :name="option.name"
           />
         </bk-select>
+      </bk-form-item>
+      <bk-form-item label="默认值" v-if="fieldsInfor.data_type === 'string'">
+        <bk-input
+          v-model="fieldsInfor.default"
+          :maxlength="64"
+          @focus="handleChange"
+        />
+      </bk-form-item>
+      <bk-form-item label="默认值" v-else-if="fieldsInfor.data_type === 'number'">
+        <bk-input
+          type="number"
+          v-model="fieldsInfor.default"
+          :max="4294967296"
+          :min="0"
+          @focus="handleChange"
+        />
       </bk-form-item>
     </bk-form>
     <div class="enumerate-wrapper" v-if="state.isShowEg || fieldsInfor.data_type.indexOf('enum') !== -1">
@@ -242,7 +258,13 @@ watch(() => fieldsInfor.data_type, (val) => {
     : '该字段在不同用户信息里不能相同';
 
   if (!props?.currentEditorData?.id) {
-    fieldsInfor.default = val === 'multi_enum' ? [0] : 0;
+    if (val === 'multi_enum') {
+      fieldsInfor.default = [0];
+    } else if (val === 'string') {
+      fieldsInfor.default = '';
+    } else {
+      fieldsInfor.default = 0;
+    }
   } else {
     const defaultIndex = id => fieldsInfor.options.findIndex(item => item.id === id);
 
@@ -342,6 +364,7 @@ const submitInfor = async () => {
       required: fieldsInfor.required,
       data_type: fieldsInfor.data_type,
       unique: fieldsInfor.unique,
+      default: fieldsInfor.default,
     };
 
     if (isEnumType) {
@@ -353,10 +376,6 @@ const submitInfor = async () => {
       if (fieldsInfor.data_type === 'enum') {
         newFieldData.default = newFieldData.default[0] || null;
       }
-    }
-
-    if (fieldsInfor.data_type === 'number') {
-      newFieldData.default = 0;
     }
 
     const action = isEdit.value ? putCustomFields : newCustomFields;
@@ -601,11 +620,15 @@ const blurValue = () => findFirstDuplicate('value');
             top: 6px;
             margin-right: 5px;
             font-size: 20px;
-            color: #c7d1da;
+            color: #EAEBF0;
             cursor: pointer;
 
+            &:hover {
+              color: #c4c6cc;
+            }
+
             &.forbid {
-              color: #ea3636;
+              color: #EAEBF0;
               cursor: not-allowed;
             }
 

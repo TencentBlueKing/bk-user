@@ -176,13 +176,9 @@
               &:hover {
                 color: #c4c6cc;
               }
-            }
 
-            .forbid {
-              color: #ea3636;
-              
-              &:hover {
-                color: #ea3636;
+              &.forbid {
+                color: #EAEBF0;
               }
             }
 
@@ -260,6 +256,13 @@
         }
       }
 
+      .forbid-data-source {
+        color: #fff;
+        cursor: not-allowed;
+        background-color: #dcdee5;
+        border: 1px dashed #dcdee5;
+      }
+
       ::v-deep .bk-schema-form {
         .bk-form-item {
           width: 600px;
@@ -305,4 +308,9 @@
 .option-select {
   display: flex !important;
   justify-content: space-between;
+
+  .name {
+    display: inline-block;
+    max-width: 160px;
+  }
 }

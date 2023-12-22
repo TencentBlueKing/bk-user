@@ -7,82 +7,84 @@
         <p class="subtitle">{{ authSourceData.plugin?.description }}</p>
       </div>
     </div>
-    <bk-form
-      class="auth-source-form"
-      ref="formRef"
-      form-type="vertical"
-      :model="authSourceData"
-      :rules="rules">
-      <div class="content-item">
-        <p class="item-title">基础信息</p>
-        <bk-form-item class="w-[600px]" label="名称" property="name" required>
-          <bk-input v-model="authSourceData.name" @change="handleChange" />
-        </bk-form-item>
-      </div>
-      <div class="content-item">
-        <p class="item-title">基础配置</p>
-        <div class="basic-config">
-          <p v-if="onDataSources.length">以下数据源已开启「账密登录」</p>
-          <div class="on">
-            <bk-overflow-title
-              type="tips"
-              class="source-name"
-              v-for="(item, index) in onDataSources"
-              :key="index">
-              {{ item.data_source_name }}
-            </bk-overflow-title>
-          </div>
-          <p v-if="notDataSources.length">以下数据源未开启「账密登录」</p>
-          <div class="off" v-for="(item, index) in notDataSources" :key="index">
-            <bk-overflow-title
-              type="tips"
-              class="source-name">
-              {{ item.data_source_name }}
-              <bk-button text theme="primary" @click="handleOpen(item)">去开启</bk-button>
-            </bk-overflow-title>
-          </div>
+    <div ref="cardRef">
+      <bk-form
+        class="auth-source-form"
+        ref="formRef"
+        form-type="vertical"
+        :model="authSourceData"
+        :rules="rules">
+        <div class="content-item">
+          <p class="item-title">基础信息</p>
+          <bk-form-item class="w-[600px]" label="名称" property="name" required>
+            <bk-input v-model="authSourceData.name" :placeholder="validate.name.message" @change="handleChange" />
+          </bk-form-item>
         </div>
-      </div>
-      <div class="content-item pb-[24px]">
-        <p class="item-title">数据源匹配</p>
-        <div class="content-matching">
-          <bk-exception
-            v-if="onDataSources.length === 0"
-            class="exception-part"
-            type="empty"
-            scene="part"
-            description="暂无数据源匹配"
-          />
-          <div class="content-box" v-else v-for="(item, index) in onDataSources" :key="index">
-            <p>{{ item.data_source_name }}</p>
-            <div class="field-rules">
-              <dl>
-                <dt>数据源字段：</dt>
-                <bk-overflow-title
-                  type="tips"
-                  class="source-field"
-                  v-for="(val, i) in item.field_compare_rules"
-                  :key="i">
-                  {{ val.source_field }}
-                </bk-overflow-title>
-              </dl>
-              <dl>
-                <dt>认证源字段：</dt>
-                <bk-overflow-title
-                  type="tips"
-                  class="source-field"
-                  v-for="(val, i) in item.field_compare_rules"
-                  :key="i">
-                  {{ val.target_field }}
-                </bk-overflow-title>
-              </dl>
+        <div class="content-item">
+          <p class="item-title">基础配置</p>
+          <div class="basic-config">
+            <p v-if="onDataSources.length">以下数据源已开启「账密登录」</p>
+            <div class="on">
+              <bk-overflow-title
+                type="tips"
+                class="source-name"
+                v-for="(item, index) in onDataSources"
+                :key="index">
+                {{ item.data_source_name }}
+              </bk-overflow-title>
             </div>
-            <span class="or" v-if="index !== 0">or</span>
+            <p v-if="notDataSources.length">以下数据源未开启「账密登录」</p>
+            <div class="off" v-for="(item, index) in notDataSources" :key="index">
+              <bk-overflow-title
+                type="tips"
+                class="source-name">
+                {{ item.data_source_name }}
+                <bk-button text theme="primary" @click="handleOpen(item)">去开启</bk-button>
+              </bk-overflow-title>
+            </div>
           </div>
         </div>
-      </div>
-    </bk-form>
-    <div class="footer-wrapper">
+        <div class="content-item pb-[24px]">
+          <p class="item-title">数据源匹配</p>
+          <div class="content-matching">
+            <bk-exception
+              v-if="onDataSources.length === 0"
+              class="exception-part"
+              type="empty"
+              scene="part"
+              description="暂无数据源匹配"
+            />
+            <div class="content-box" v-else v-for="(item, index) in onDataSources" :key="index">
+              <bk-overflow-title class="data-source-title">{{ item.data_source_name }}</bk-overflow-title>
+              <div class="field-rules">
+                <dl>
+                  <dt>数据源字段：</dt>
+                  <bk-overflow-title
+                    type="tips"
+                    class="source-field"
+                    v-for="(val, i) in item.field_compare_rules"
+                    :key="i">
+                    {{ val.source_field }}
+                  </bk-overflow-title>
+                </dl>
+                <dl>
+                  <dt>认证源字段：</dt>
+                  <bk-overflow-title
+                    type="tips"
+                    class="source-field"
+                    v-for="(val, i) in item.field_compare_rules"
+                    :key="i">
+                    {{ val.target_field }}
+                  </bk-overflow-title>
+                </dl>
+              </div>
+              <span class="or" v-if="index !== 0">or</span>
+            </div>
+          </div>
+        </div>
+      </bk-form>
+    </div>
+    <div class="footer-wrapper" :class="{ 'fixed': isScroll }">
       <div class="footer-div">
         <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
           提交
@@ -97,7 +99,9 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { onMounted, ref } from 'vue';
+import { debounce } from 'bkui-vue/lib/shared';
+import { addListener, removeListener } from 'resize-detector';
+import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import useValidate from '@/hooks/use-validate';
@@ -110,6 +114,13 @@ const route = useRoute();
 const validate = useValidate();
 const store = useMainViewStore();
 
+const props = defineProps({
+  boxRef: {
+    type: Object,
+    default: () => ({}),
+  },
+});
+
 const formRef = ref();
 const isLoading = ref(false);
 const authSourceData = ref({});
@@ -119,6 +130,13 @@ const btnLoading = ref(false);
 
 const rules = {
   name: [validate.required, validate.name],
+};
+
+const cardRef = ref();
+const isScroll = ref(false);
+// 按钮超出屏幕吸底
+const handleResize = () => {
+  isScroll.value = 32 >= (props.boxRef.clientHeight - cardRef.value.clientHeight - 122);
 };
 
 onMounted(async () => {
@@ -134,8 +152,15 @@ onMounted(async () => {
   } catch (error) {
     console.error(error);
   } finally {
+    const listenResize = debounce(300, () => handleResize());
+    addListener(props.boxRef as HTMLElement, listenResize);
+    nextTick(() => handleResize());
     isLoading.value = false;
   }
+});
+
+onBeforeUnmount(() => {
+  removeListener(props.boxRef as HTMLElement, handleResize);
 });
 
 const processMatchRules = (list) => {
@@ -195,6 +220,10 @@ const handleSubmit = async () => {
       btnLoading.value = false;
     });
 };
+
+defineExpose({
+  cardRef,
+});
 </script>
 
 <style lang="less" scoped>
@@ -245,11 +274,10 @@ const handleSubmit = async () => {
         }
 
         .source-name {
-          width: 300px;
+          width: 622px;
           height: 40px;
           padding-left: 24px;
           margin-bottom: 12px;
-          margin-left: 40px;
           line-height: 40px;
           color: #313238;
           background: #F5F7FA;
@@ -262,7 +290,7 @@ const handleSubmit = async () => {
             color: #C4C6CC;
 
             ::v-deep .text-ov {
-              width: 220px;
+              width: 535px;
             }
 
             .bk-button {
@@ -275,7 +303,7 @@ const handleSubmit = async () => {
       }
 
       .content-matching {
-        margin-left: 59px;
+        margin-left: 64px;
 
         ::v-deep .exception-part {
           position: relative;
@@ -338,7 +366,7 @@ const handleSubmit = async () => {
           }
         }
 
-        p {
+        .data-source-title {
           position: relative;
           padding: 0 24px;
           line-height: 32px;
@@ -593,6 +621,15 @@ const handleSubmit = async () => {
   }
 
   .footer-wrapper {
+    position: absolute;
+
+    .bk-button {
+      width: 88px;
+      margin-right: 8px;
+    }
+  }
+
+  .fixed {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -607,11 +644,6 @@ const handleSubmit = async () => {
     .footer-div {
       width: 1000px;
       margin: 0 auto;
-    }
-
-    .bk-button {
-      width: 88px;
-      margin-right: 8px;
     }
   }
 }

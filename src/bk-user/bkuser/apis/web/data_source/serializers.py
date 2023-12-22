@@ -297,15 +297,29 @@ class DataSourceTestConnectionOutputSLZ(serializers.Serializer):
 class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
     """生成随机密码"""
 
+    data_source_id = serializers.IntegerField(help_text="数据源 ID", required=False)
     password_rule_config = serializers.JSONField(help_text="密码规则配置", required=False)
 
     def validate(self, attrs):
-        passwd_rule_cfg = attrs.get("password_rule_config")
-        if passwd_rule_cfg:
+        if passwd_rule_cfg := attrs.get("password_rule_config"):
             try:
                 attrs["password_rule"] = PasswordRuleConfig(**passwd_rule_cfg).to_rule()
             except PDValidationError as e:
                 raise ValidationError(_("密码规则配置不合法: {}").format(stringify_pydantic_error(e)))
+        elif data_source_id := attrs.get("data_source_id"):
+            data_source = DataSource.objects.filter(
+                id=data_source_id,
+                plugin_id=DataSourcePluginEnum.LOCAL,
+                owner_tenant_id=self.context["tenant_id"],
+            ).first()
+            if not data_source:
+                raise ValidationError(_("指定数据源不存在或不可用"))
+
+            plugin_config = data_source.get_plugin_cfg()
+            if not plugin_config.enable_account_password_login:
+                raise ValidationError(_("无法使用该数据源生成随机密码"))
+
+            attrs["password_rule"] = plugin_config.password_rule.to_rule()
         else:
             attrs["password_rule"] = get_default_plugin_cfg(  # type: ignore
                 DataSourcePluginEnum.LOCAL,

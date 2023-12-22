@@ -90,41 +90,43 @@
       </bk-table-column>
     </bk-table>
     <!-- 查看/编辑用户 -->
-    <bk-sideslider
-      ext-cls="details-edit-wrapper"
-      :width="640"
-      :is-show="detailsConfig.isShow"
-      :title="detailsConfig.title"
-      :before-close="handleBeforeClose"
-      quick-close
-    >
-      <template #header>
-        <span>{{ detailsConfig.title }}</span>
-        <div v-if="isView && pluginId === 'local'">
-          <bk-button
-            outline
-            theme="primary"
-            @click="handleClick('edit', detailsConfig)">
-            编辑
-          </bk-button>
+    <div v-if="showSideBar">
+      <bk-sideslider
+        ext-cls="details-edit-wrapper"
+        :width="640"
+        :is-show="detailsConfig.isShow"
+        :title="detailsConfig.title"
+        :before-close="handleBeforeClose"
+        quick-close
+      >
+        <template #header>
+          <span>{{ detailsConfig.title }}</span>
+          <div v-if="isView && pluginId === 'local'">
+            <bk-button
+              outline
+              theme="primary"
+              @click="handleClick('edit', detailsConfig)">
+              编辑
+            </bk-button>
           <!-- <bk-button>重置</bk-button>
           <bk-button>删除</bk-button> -->
-        </div>
-      </template>
-      <template #default>
-        <bk-loading :loading="detailsLoading">
-          <ViewUser v-if="isView" :users-data="detailsConfig.usersData" />
-          <EditUser
-            v-else
-            :type="detailsConfig.type"
-            :users-data="detailsConfig.usersData"
-            :current-id="detailsConfig.id"
-            :data-source-id="dataSourceId"
-            @handleCancelEdit="handleCancelEdit"
-            @updateUsers="updateUsers" />
-        </bk-loading>
-      </template>
-    </bk-sideslider>
+          </div>
+        </template>
+        <template #default>
+          <bk-loading :loading="detailsLoading">
+            <ViewUser v-if="isView" :users-data="detailsConfig.usersData" :paths="paths" />
+            <EditUser
+              v-else
+              :type="detailsConfig.type"
+              :users-data="detailsConfig.usersData"
+              :current-id="detailsConfig.id"
+              :data-source-id="dataSourceId"
+              @handleCancelEdit="handleCancelEdit"
+              @updateUsers="updateUsers" />
+          </bk-loading>
+        </template>
+      </bk-sideslider>
+    </div>
     <!-- 导入 -->
     <bk-dialog
       :is-show="importDialog.isShow"
@@ -259,13 +261,15 @@ const detailsConfig = reactive({
     department_ids: [],
     leader_ids: [],
     email: '',
-    phone_country_code: '+86',
+    phone_country_code: '86',
     phone: '',
     logo: '',
     extras: {},
   },
   id: '',
 });
+
+const paths = ref('');
 
 const enumData = {
   add: {
@@ -292,7 +296,7 @@ watch(
         department_ids: [],
         leader_ids: [],
         email: '',
-        phone_country_code: '+86',
+        phone_country_code: '86',
         phone: '',
         logo: '',
         extras: {},
@@ -374,12 +378,25 @@ const getCustomFields = async (type: string) => {
   }
 };
 
+const showSideBar = ref(false);
+// 销毁侧栏，防止tips不消失
+const hideSideBar = () => {
+  setTimeout(() => {
+    showSideBar.value = false;
+  }, 300);
+};
+
 const handleClick = async (type: string, item?: any) => {
+  showSideBar.value = true;
   detailsLoading.value = true;
   if (type !== 'add') {
     const res = await getDataSourceUserDetails(item.id);
     detailsConfig.usersData = res.data;
     detailsConfig.id = item.id;
+    if (type === 'view') {
+      const pathsRes = await getOrganizationPaths(item.id);
+      paths.value = pathsRes.data?.organization_paths.join(' ; ') || '--';
+    }
   }
   await getCustomFields(type);
   detailsConfig.title = enumData[type].title;
@@ -391,6 +408,7 @@ const handleCancelEdit = () => {
   window.changeInput = false;
   if (detailsConfig.type === 'add') {
     detailsConfig.isShow = false;
+    hideSideBar();
   } else {
     handleClick('view', detailsConfig);
     window.changeInput = false;
@@ -402,8 +420,10 @@ const handleBeforeClose = async () => {
   if (window.changeInput) {
     enableLeave = await editLeaveBefore();
     detailsConfig.isShow = false;
+    hideSideBar();
   } else {
     detailsConfig.isShow = false;
+    hideSideBar();
   }
   if (!enableLeave) {
     return Promise.resolve(enableLeave);
@@ -545,7 +565,7 @@ const tipsText = ref('');
 const tipsShowFn = async (id: string) => {
   try {
     const res = await getOrganizationPaths(id);
-    tipsText.value = res.data?.organization_paths[0] || '';
+    tipsText.value = res.data?.organization_paths.join('\n') || '';
   } catch (e) {
     tipsText.value = '';
   }

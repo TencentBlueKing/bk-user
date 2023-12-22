@@ -5,7 +5,9 @@
       v-for="(item, index) in extras"
       :key="index">
       <span class="details-content-key">{{ item.displayName }}：</span>
-      <span class="details-content-value">{{ ConvertVal(item) }}</span>
+      <bk-overflow-title class="details-content-value" type="tips">
+        {{ ConvertVal(item) }}
+      </bk-overflow-title>
     </div>
   </div>
 </template>

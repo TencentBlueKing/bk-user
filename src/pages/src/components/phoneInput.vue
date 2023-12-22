@@ -88,8 +88,9 @@ const iti = ref(null);
 onMounted(async () => {
   if (data.value.phone_country_code) {
     COUNTRY_CODE.forEach((item) => {
-      if (item.tel === data.value.phone_country_code) {
-        area.value = item.short.toLowerCase();;
+      if (item.tel === data.value.phone_country_code.replace(/\+/g, '')) {
+        area.value = item.short.toLowerCase();
+        emit('changeCountryCode', item.tel);
       }
     });
   }
@@ -144,7 +145,7 @@ const verifyInput = () => {
   const validation = area.value === 'cn'
     ? /^1[3-9]\d{9}$/.test(data.value.phone)
     : iti.value.isValidNumber();
-  !validation && (emit('changeTelError', true, data.value.phone));
+  emit('changeTelError', !validation, data.value.phone);
 };
 
 const hiddenVerify = () => {

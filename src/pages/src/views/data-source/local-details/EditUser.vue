@@ -15,7 +15,7 @@
       >
         <bk-input
           v-model="formData.username"
-          placeholder="数字、下划线(_)、点(.)、减号(-)字符组成，以字母或数字开头"
+          :placeholder="validate.userName.message"
           :disabled="isEdit"
           @focus="handleChange"
         />
@@ -28,7 +28,7 @@
       >
         <bk-input
           v-model="formData.full_name"
-          placeholder="全名可随时修改"
+          :placeholder="validate.name.message"
           @focus="handleChange"
         />
       </bk-form-item>

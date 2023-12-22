@@ -203,6 +203,7 @@ const dataRecordFilter = ({ checked }) => {
     pagination.current = 1;
   }
   dataRecordConfig.status = checked;
+  pagination.current = 1;
   getSyncRecordsList();
 };
 
@@ -329,7 +330,6 @@ onBeforeUnmount(() => {
 
     .title {
       padding: 16px 0;
-      font-family: MicrosoftYaHei-Bold;
       font-size: 16px;
       font-weight: 700;
       line-height: 24px;

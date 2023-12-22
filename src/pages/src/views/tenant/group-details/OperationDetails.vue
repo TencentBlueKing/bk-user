@@ -1,6 +1,6 @@
 <template>
   <div ref="boxRef" class="operation-wrapper">
-    <div class="operation-content">
+    <div ref="cardRef" class="operation-content">
       <div class="operation-card">
         <div class="operation-content-title">基本信息</div>
         <div class="operation-content-info">
@@ -12,10 +12,14 @@
             :rules="rulesBasicInfo"
           >
             <bk-form-item label="租户名称" property="name" required>
-              <bk-input v-model="formData.name" @focus="handleChange" />
+              <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="租户ID" property="id" required>
-              <bk-input v-model="formData.id" :disabled="isEdit" @focus="handleChange" />
+              <bk-input
+                v-model="formData.id"
+                :placeholder="validate.id.message"
+                :disabled="isEdit"
+                @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="人员数量">
               <bk-radio-group v-model="formData.feature_flags.user_number_visible" @change="handleChange">
@@ -38,7 +42,7 @@
           />
         </div>
       </div>
-      <div ref="cardRef" class="operation-card">
+      <div class="operation-card">
         <div class="operation-content-title">管理员</div>
         <bk-form ref="userRef" :model="formData">
           <bk-table
@@ -50,7 +54,7 @@
           </bk-table>
         </bk-form>
       </div>
-      <div class="operation-card" v-if="!isEdit">
+      <div ref="card2Ref" class="operation-card" v-if="!isEdit">
         <div class="operation-content-title">管理员初始密码</div>
         <bk-form
           form-type="vertical"
@@ -114,7 +118,7 @@
         </bk-form>
       </div>
     </div>
-    <div ref="footerRef" class="footer" :class="{ 'fixed': isScroll }">
+    <div class="footer" :class="{ 'fixed': isScroll }">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
         提交
       </bk-button>
@@ -414,11 +418,10 @@ function handleItemChange(index: number, action: 'add' | 'remove') {
 }
 
 const boxRef = ref();
-const cardRef = ref();
-const footerRef = ref();
+const cardRef = ref(); // 管理员卡片高度
+const card2Ref = ref(); // 初始密码卡片高度
 // footer按钮状态
-const isScroll = useButtonFixed(boxRef, cardRef, footerRef, 617);
-
+const isScroll = useButtonFixed(boxRef, cardRef, 42);
 const phoneError = ref(false);
 // 校验表单
 async function handleSubmit() {
@@ -536,7 +539,7 @@ const handleRandomPassword = async () => {
 defineExpose({
   boxRef,
   cardRef,
-  footerRef,
+  card2Ref,
 });
 </script>
 
