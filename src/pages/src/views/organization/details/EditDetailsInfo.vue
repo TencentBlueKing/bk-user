@@ -12,7 +12,7 @@
             :rules="rulesBasicInfo"
           >
             <bk-form-item label="租户名称" property="name" required>
-              <bk-input v-model="formData.name" @focus="handleChange" />
+              <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
             </bk-form-item>
             <bk-form-item label="租户ID" property="id" required>
               <bk-input

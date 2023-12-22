@@ -196,10 +196,17 @@ const confirmTenant = () => {
       tenantIdList.value = tenantIdList.value.concat(tenantId.value);
       localStorage.setItem('tenantIdList', JSON.stringify(tenantIdList.value));
     }
-    hasStorage.value = true;
   } else {
-    hasStorage.value = true;
+    tenantIdList.value = tenantIdList.value.filter(item => item !== tenantId.value);
+    localStorage.setItem('tenantIdList', JSON.stringify(tenantIdList.value));
+    // 如果tenantIdList为空，清除localStorage tenantId，否则设置为第一个
+    if (tenantIdList.value.length === 0) {
+      localStorage.removeItem('tenantId');
+    } else {
+      localStorage.setItem('tenantId', tenantIdList.value[0]);
+    }
   }
+  hasStorage.value = true;
   signInAndFetchIdp();
 };
 
@@ -236,7 +243,8 @@ const changList = computed(() => tenantList.value.filter(item => item.id !== ten
 const handleChange = (item: Tenant) => {
   tenantId.value = item.id;
   tenant.value = item;
-  confirmTenant();
+  hasStorage.value = true;
+  signInAndFetchIdp();
 };
 
 const handleChangeIdp = (idp: Idp) => {

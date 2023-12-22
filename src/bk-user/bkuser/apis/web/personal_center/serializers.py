@@ -69,7 +69,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     account_expired_at = serializers.CharField(help_text="账号过期时间", source="account_expired_at_display")
     departments = serializers.SerializerMethodField(help_text="用户所属部门")
     leaders = serializers.SerializerMethodField(help_text="用户上级")
-    extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
+    extras = serializers.SerializerMethodField(help_text="自定义字段")
 
     class Meta:
         ref_name = "personal_center.TenantUserRetrieveOutputSLZ"
@@ -84,6 +84,13 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     def get_leaders(self, obj: TenantUser) -> List[Dict]:
         tenant_users_leader_infos = TenantUserHandler.get_tenant_user_leader_infos(obj)
         return TenantUserLeaderOutputSLZ(tenant_users_leader_infos, many=True).data
+
+    @swagger_serializer_method(serializer_or_field=serializers.JSONField)
+    def get_extras(self, obj: TenantUser) -> Dict[str, Any]:
+        # 过滤掉 extras 中用户在个人中心不可见的自定义字段
+        return {
+            k: v for k, v in obj.data_source_user.extras.items() if k in self.context["visible_custom_field_names"]
+        }
 
 
 class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):

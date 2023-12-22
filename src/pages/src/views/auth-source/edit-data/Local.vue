@@ -17,7 +17,7 @@
         <div class="content-item">
           <p class="item-title">基础信息</p>
           <bk-form-item class="w-[600px]" label="名称" property="name" required>
-            <bk-input v-model="authSourceData.name" @change="handleChange" />
+            <bk-input v-model="authSourceData.name" :placeholder="validate.name.message" @change="handleChange" />
           </bk-form-item>
         </div>
         <div class="content-item">

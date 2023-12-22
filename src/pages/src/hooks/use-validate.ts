@@ -52,13 +52,13 @@ export default () => {
 
   const serverBaseUrl = {
     validator: (value: string) => /^https?:\/\/[a-zA-Z0-9-\\.]+(:\d+)?$/.test(value),
-    message: '请输入正确的地址',
+    message: '请输入服务地址，需以 https/http 开头，不得以 / 结尾',
     trigger: 'blur',
   };
 
   const apiPath = {
     validator: (value: string) => /^\/[\w-]+(\/[\w-]+)*\/?$/.test(value),
-    message: '请输入正确的 API 路径',
+    message: '请输入路径，需以 / 开头',
     trigger: 'blur',
   };
 

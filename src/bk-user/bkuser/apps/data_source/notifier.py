@@ -105,16 +105,15 @@ class LocalDataSourceUserNotifier:
             if not_passwd_users := {u.id for u in users} - set(user_passwd_map.keys()):
                 raise ValueError(f"users {not_passwd_users} not found in user passwd map")
 
-        try:
-            for u in users:
-                scene_kwargs = {}
-                if self.scene == NotificationScene.USER_INITIALIZE:
-                    scene_kwargs["passwd"] = user_passwd_map[u.id]
-
+        for u in users:
+            scene_kwargs = {}
+            if self.scene == NotificationScene.USER_INITIALIZE:
+                scene_kwargs["passwd"] = user_passwd_map[u.id]
+            try:
                 self._send_notifications(u, **scene_kwargs)
-        # TODO (su) 细化异常处理
-        except Exception:
-            logger.exception("send notification failed")
+            except Exception:
+                # TODO (su) 细化异常处理
+                logger.exception("send notification failed")
 
     def _get_tmpls_by_scene(
         self, plugin_cfg: LocalDataSourcePluginConfig, scene: NotificationScene

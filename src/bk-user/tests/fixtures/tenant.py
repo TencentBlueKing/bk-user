@@ -64,6 +64,7 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
             "display_name": "籍贯",
             "data_type": UserFieldDataType.STRING,
             "required": True,
+            "default": "china",
             "personal_center_visible": False,
             "personal_center_editable": False,
             "manager_editable": True,

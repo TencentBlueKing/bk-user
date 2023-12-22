@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 ('required', models.BooleanField(verbose_name='是否必填')),
                 ('unique', models.BooleanField(verbose_name='是否唯一')),
                 ('default', models.JSONField(default='', verbose_name='默认值')),
-                ('options', models.JSONField(default=dict, verbose_name='配置项')),
+                ('options', models.JSONField(default=list, verbose_name='配置项')),
             ],
             options={
                 'abstract': False,
@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
                 ('data_type', models.CharField(choices=[('string', '字符串'), ('number', '数字'), ('enum', '枚举'), ('multi_enum', '多选枚举')], max_length=32, verbose_name='数据类型')),
                 ('required', models.BooleanField(verbose_name='是否必填')),
                 ('default', models.JSONField(default='', verbose_name='默认值')),
-                ('options', models.JSONField(default=dict, verbose_name='配置项')),
+                ('options', models.JSONField(default=list, verbose_name='配置项')),
                 ('tenant', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.CASCADE, to='tenant.tenant')),
             ],
             options={

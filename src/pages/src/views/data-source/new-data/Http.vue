@@ -9,7 +9,11 @@
       <div class="content-item">
         <p class="item-title">基础信息</p>
         <bk-form-item class="w-[560px]" label="数据源名称" property="name" required>
-          <bk-input v-model="serverConfigData.name" @focus="handleFocus" @input="handleChange" />
+          <bk-input
+            v-model="serverConfigData.name"
+            :placeholder="validate.name.message"
+            @focus="handleFocus"
+            @input="handleChange" />
         </bk-form-item>
       </div>
       <div class="content-item">
@@ -17,7 +21,7 @@
         <bk-form-item class="w-[560px]" label="服务地址" property="server_config.server_base_url" required>
           <bk-input
             v-model="serverConfigData.server_config.server_base_url"
-            placeholder="请输入服务地址，需以 https/http 开头，不得以 / 结尾"
+            :placeholder="validate.serverBaseUrl.message"
             @focus="handleFocus"
             @input="handleChange" />
         </bk-form-item>
@@ -25,7 +29,7 @@
           <bk-form-item class="w-[560px]" label="用户数据 API 路径" property="server_config.user_api_path" required>
             <bk-input
               v-model="serverConfigData.server_config.user_api_path"
-              placeholder="请输入路径，需以 / 开头"
+              :placeholder="validate.apiPath.message"
               @focus="handleFocus"
               @input="handleChange" />
           </bk-form-item>
@@ -38,7 +42,7 @@
           <bk-form-item class="w-[560px]" label="部门数据 API 路径" property="server_config.department_api_path" required>
             <bk-input
               v-model="serverConfigData.server_config.department_api_path"
-              placeholder="请输入路径，需以 / 开头"
+              :placeholder="validate.apiPath.message"
               @focus="handleFocus"
               @input="handleChange" />
           </bk-form-item>
@@ -233,9 +237,13 @@ const serverConfigData = reactive({
   server_config: {
     server_base_url: '',
     user_api_path: '',
-    user_api_query_params: [],
+    user_api_query_params: [
+      { key: '', value: '' },
+    ],
     department_api_path: '',
-    department_api_query_params: [],
+    department_api_query_params: [
+      { key: '', value: '' },
+    ],
     request_timeout: '',
     retries: '',
     page_size: 100,

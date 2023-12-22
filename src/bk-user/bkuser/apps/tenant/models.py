@@ -128,7 +128,7 @@ class UserBuiltinField(TimestampedModel):
     required = models.BooleanField("是否必填")
     unique = models.BooleanField("是否唯一")
     default = models.JSONField("默认值", default="")
-    options = models.JSONField("配置项", default=dict)
+    options = models.JSONField("配置项", default=list)
 
 
 class TenantUserCustomField(TimestampedModel):
@@ -144,7 +144,7 @@ class TenantUserCustomField(TimestampedModel):
     personal_center_editable = models.BooleanField("是否在个人中心可编辑", default=False)
     manager_editable = models.BooleanField("租户管理员是否可重复编辑", default=True)
     default = models.JSONField("默认值", default="")
-    options = models.JSONField("配置项", default=dict)
+    options = models.JSONField("配置项", default=list)
 
     class Meta:
         unique_together = [

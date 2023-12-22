@@ -19,7 +19,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.models import (
-    DataSource,
     DataSourceDepartment,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
@@ -85,7 +84,7 @@ def _validate_type_and_convert_field_data(field: TenantUserCustomField, value: A
 
 
 def _validate_unique_and_required(
-    field: TenantUserCustomField, data_source: DataSource, user_id: int | None, value: Any
+    field: TenantUserCustomField, data_source_id: int, data_source_user_id: int | None, value: Any
 ) -> Any:
     """对自定义字段的值进行唯一性检查 & 必填性检查"""
     if field.required and value in ["", None]:
@@ -93,9 +92,9 @@ def _validate_unique_and_required(
 
     if field.unique:
         # 唯一性检查，由于添加 / 修改用户一般不会有并发操作，因此这里没有对并发的情况进行预防
-        queryset = DataSourceUser.objects.filter(data_source=data_source, **{f"extras__{field.name}": value})
-        if user_id:
-            queryset = queryset.exclude(id=user_id)
+        queryset = DataSourceUser.objects.filter(data_source_id=data_source_id, **{f"extras__{field.name}": value})
+        if data_source_user_id:
+            queryset = queryset.exclude(id=data_source_user_id)
 
         if queryset.exists():
             raise ValidationError(_("字段 {} 的值 {} 不满足唯一性要求").format(field.display_name, value))
@@ -106,8 +105,8 @@ def _validate_unique_and_required(
 def validate_user_extras(
     extras: Dict[str, Any],
     custom_fields: QuerySet[TenantUserCustomField],
-    data_source: DataSource,
-    user_id: int | None = None,
+    data_source_id: int,
+    data_source_user_id: int | None = None,
 ) -> Dict[str, Any]:
     """校验 extras 中的键，值是否合法"""
     if not custom_fields.exists() and extras:
@@ -120,7 +119,7 @@ def validate_user_extras(
 
     for field in custom_fields:
         value = _validate_type_and_convert_field_data(field, extras[field.name])
-        value = _validate_unique_and_required(field, data_source, user_id, value)
+        value = _validate_unique_and_required(field, data_source_id, data_source_user_id, value)
         extras[field.name] = value
 
     return extras
@@ -303,14 +302,16 @@ class UserUpdateInputSLZ(serializers.Serializer):
         if diff_leader_ids:
             raise ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
 
-        if self.context["user_id"] in leader_ids:
+        if self.context["data_source_user_id"] in leader_ids:
             raise ValidationError(_("上级不可传递自身"))
 
         return leader_ids
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
-        return validate_user_extras(extras, custom_fields, self.context["data_source_id"], self.context["user_id"])
+        return validate_user_extras(
+            extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]
+        )
 
 
 class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
@@ -332,9 +333,13 @@ class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
         if reseved_cnt <= 1:
             return password
 
-        used_passwords = DataSourceUserDeprecatedPasswordRecord.objects.filter(
-            user_id=self.context["data_source_user_id"],
-        )[: reseved_cnt - 1].values_list("password", flat=True)
+        used_passwords = (
+            DataSourceUserDeprecatedPasswordRecord.objects.filter(
+                user_id=self.context["data_source_user_id"],
+            )
+            .order_by("-created_at")[: reseved_cnt - 1]
+            .values_list("password", flat=True)
+        )
 
         for used_pwd in used_passwords:
             if check_password(password, used_pwd):
