@@ -127,7 +127,7 @@ class DataSourceUserConverter:
             for f in fields
         ]
 
-    def _build_extras(self, username: str, props: Dict[str, str], mapping: Dict[str, str]) -> Dict[str, Any]:
+    def _build_extras(self, username: str, props: Dict[str, str], mapping: Dict[str, str]) -> Dict[str, Any]:  # noqa: C901
         extras = {}
         for f in self.custom_fields:
             # 并不是所有的自定义字段，都已经被配置到字段映射中，这里应该以字段映射为准
@@ -163,6 +163,9 @@ class DataSourceUserConverter:
                     raise ValueError(
                         f"username: {username}, multi enum field {f.name} value `{value}` not subset of {opt_ids}"
                     )
+            # 必填字段检查仅适用于字符串类型字段，因为数字类型即使是 0 也不能判断是空，枚举类型都有值检查
+            elif f.data_type == UserFieldDataType.STRING and f.required and not value:
+                raise ValueError(f"username: {username}, field {f.name} is required")
 
             extras[f.name] = value
 

@@ -56,8 +56,9 @@ class FoxDataSourcePlugin(BaseDataSourcePlugin):
     # 插件配置类建模
     config_class = FoxDataSourcePluginConfig
 
-    def __init__(self, plugin_config: FoxDataSourcePluginConfig):
+    def __init__(self, plugin_config: FoxDataSourcePluginConfig, logger: PluginLogger):
         self.plugin_config = plugin_config
+        self.logger = logger
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
         """获取部门信息"""

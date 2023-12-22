@@ -61,8 +61,8 @@ class TestGeneralDataSourcePlugin:
             {"id": "center_aa", "name": "中心AA", "parent": "dept_a", "extras": {"region": "US"}},
         ],
     )
-    def test_get_departments(self, general_ds_cfg):
-        plugin = GeneralDataSourcePlugin(general_ds_cfg)
+    def test_get_departments(self, general_ds_cfg, logger):
+        plugin = GeneralDataSourcePlugin(general_ds_cfg, logger)
         assert len(plugin.fetch_departments()) == 3  # noqa: PLR2004
 
     @mock.patch(
@@ -109,28 +109,28 @@ class TestGeneralDataSourcePlugin:
             },
         ],
     )
-    def test_get_users(self, general_ds_cfg):
-        plugin = GeneralDataSourcePlugin(general_ds_cfg)
+    def test_get_users(self, general_ds_cfg, logger):
+        plugin = GeneralDataSourcePlugin(general_ds_cfg, logger)
         assert len(plugin.fetch_users()) == 3  # noqa: PLR2004
 
     @mock.patch("bkuser.plugins.general.plugin.fetch_first_item", new=_mocked_fetch_first_item)
-    def test_test_connection(self, general_ds_cfg):
-        result = GeneralDataSourcePlugin(general_ds_cfg).test_connection()
+    def test_test_connection(self, general_ds_cfg, logger):
+        result = GeneralDataSourcePlugin(general_ds_cfg, logger).test_connection()
         assert not result.error_message
         assert result.user
         assert result.department
         assert result.extras
 
     @mock.patch("bkuser.plugins.general.plugin.fetch_first_item", new=_mocked_fetch_first_item)
-    def test_test_connection_with_simple_users(self, general_ds_cfg):
+    def test_test_connection_with_simple_users(self, general_ds_cfg, logger):
         """API 返回的字段不足，无法完全解析"""
         general_ds_cfg.server_config.user_api_path = "/api/v1/simple_users"
-        result = GeneralDataSourcePlugin(general_ds_cfg).test_connection()
+        result = GeneralDataSourcePlugin(general_ds_cfg, logger).test_connection()
         assert result.error_message == "解析用户/部门数据失败，请确保 API 返回数据符合协议规范"
 
     @mock.patch("bkuser.plugins.general.plugin.fetch_first_item", new=_mocked_fetch_first_item)
-    def test_test_connection_without_data(self, general_ds_cfg):
+    def test_test_connection_without_data(self, general_ds_cfg, logger):
         """部门 / 用户 API 返回数据为空 -> 数据源不可用"""
         general_ds_cfg.server_config.user_api_path = "/api/v1/bad_path"
-        result = GeneralDataSourcePlugin(general_ds_cfg).test_connection()
+        result = GeneralDataSourcePlugin(general_ds_cfg, logger).test_connection()
         assert result.error_message == "获取到的用户/部门数据为空，请检查数据源 API 服务"

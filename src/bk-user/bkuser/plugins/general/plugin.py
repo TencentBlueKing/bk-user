@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.plugins.base import BaseDataSourcePlugin
+from bkuser.plugins.base import BaseDataSourcePlugin, PluginLogger
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.exceptions import RequestApiError, RespDataFormatError
 from bkuser.plugins.general.http import fetch_all_data, fetch_first_item, gen_headers, gen_query_params
@@ -33,8 +33,9 @@ class GeneralDataSourcePlugin(BaseDataSourcePlugin):
     id = DataSourcePluginEnum.GENERAL
     config_class = GeneralDataSourcePluginConfig
 
-    def __init__(self, plugin_config: GeneralDataSourcePluginConfig):
+    def __init__(self, plugin_config: GeneralDataSourcePluginConfig, logger: PluginLogger):
         self.plugin_config = plugin_config
+        self.logger = logger
 
     def fetch_departments(self) -> List[RawDataSourceDepartment]:
         """获取部门信息"""
