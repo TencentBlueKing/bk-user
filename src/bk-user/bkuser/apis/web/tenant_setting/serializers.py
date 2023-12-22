@@ -164,6 +164,9 @@ def _validate_mapping(mapping: Dict, current_options: List[Dict], new_options: L
         raise ValidationError(_("字段迁移映射必须是字典类型，格式为：{被删除的枚举 ID: 迁移目标值枚举 ID}"))
 
     cur_opt_ids, new_opt_ids = {opt["id"] for opt in current_options}, {opt["id"] for opt in new_options}
+    if (cur_opt_ids == new_opt_ids) and mapping:
+        raise ValidationError(_("枚举选项没有修改，无需配置字段迁移映射"))
+
     # 对于被删除的枚举选项，需要确保已经配置了字段迁移映射
     if deleted_opt_ids := cur_opt_ids - new_opt_ids:  # noqa: SIM102 nested if is necessary
         if deleted_opt_ids != set(mapping.keys()):
