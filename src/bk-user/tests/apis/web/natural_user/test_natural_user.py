@@ -191,7 +191,7 @@ class TestNaturalUserTenantUserRetrieveApi:
 
 class TestTenantUserChangeEmail:
     def _call_update_email_api(self, api_client: APIClient, tenant_user_id: str, email_data: Dict):
-        return api_client.patch(
+        return api_client.put(
             reverse("personal_center.tenant_users.email.update", kwargs={"id": tenant_user_id}),
             data=email_data,
         )
@@ -303,7 +303,7 @@ class TestTenantUserChangeEmail:
 
 class TestTenantUserChangePhone:
     def _call_update_tenant_user_phone_api(self, api_client: APIClient, tenant_user_id: str, phone_data: Dict):
-        return api_client.patch(
+        return api_client.put(
             reverse("personal_center.tenant_users.phone.update", kwargs={"id": tenant_user_id}),
             data=phone_data,
         )

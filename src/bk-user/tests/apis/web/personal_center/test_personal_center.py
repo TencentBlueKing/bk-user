@@ -23,14 +23,14 @@ def tenant_user(bk_user) -> TenantUser:
 
 class TestTenantUserExtrasUpdateApi:
     def test_update(self, api_client, tenant_user, tenant_user_custom_fields):
-        resp = api_client.patch(
+        resp = api_client.put(
             reverse("personal_center.tenant_users.extras.update", kwargs={"id": tenant_user.id}),
             data={"extras": {"gender": "male", "sport_hobby": ["basketball"]}},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
     def test_update_not_editable_field(self, api_client, tenant_user, tenant_user_custom_fields):
-        resp = api_client.patch(
+        resp = api_client.put(
             reverse("personal_center.tenant_users.extras.update", kwargs={"id": tenant_user.id}),
             data={"extras": {"age": 18}},
         )
@@ -38,7 +38,7 @@ class TestTenantUserExtrasUpdateApi:
         assert "提供的自定义字段数据与租户自定义字段不匹配" in resp.data["message"]
 
     def test_update_without_all_editable_fields(self, api_client, tenant_user, tenant_user_custom_fields):
-        resp = api_client.patch(
+        resp = api_client.put(
             reverse("personal_center.tenant_users.extras.update", kwargs={"id": tenant_user.id}),
             data={"extras": {"gender": "male"}},
         )
@@ -46,7 +46,7 @@ class TestTenantUserExtrasUpdateApi:
         assert "提供的自定义字段数据与租户自定义字段不匹配" in resp.data["message"]
 
     def test_update_with_invalid_value_case_1(self, api_client, tenant_user, tenant_user_custom_fields):
-        resp = api_client.patch(
+        resp = api_client.put(
             reverse("personal_center.tenant_users.extras.update", kwargs={"id": tenant_user.id}),
             data={"extras": {"gender": "make", "sport_hobby": ["basketball"]}},
         )
@@ -54,7 +54,7 @@ class TestTenantUserExtrasUpdateApi:
         assert "字段 性别 的值 make 不是可选项之一" in resp.data["message"]
 
     def test_update_with_invalid_value_case_2(self, api_client, tenant_user, tenant_user_custom_fields):
-        resp = api_client.patch(
+        resp = api_client.put(
             reverse("personal_center.tenant_users.extras.update", kwargs={"id": tenant_user.id}),
             data={"extras": {"gender": "female", "sport_hobby": []}},
         )
@@ -62,7 +62,7 @@ class TestTenantUserExtrasUpdateApi:
         assert "多选枚举类型自定义字段值必须是非空列表" in resp.data["message"]
 
     def test_update_with_invalid_value_case_3(self, api_client, tenant_user, tenant_user_custom_fields):
-        resp = api_client.patch(
+        resp = api_client.put(
             reverse("personal_center.tenant_users.extras.update", kwargs={"id": tenant_user.id}),
             data={"extras": {"gender": "female", "sport_hobby": ["flying"]}},
         )

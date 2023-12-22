@@ -302,7 +302,7 @@ class UserUpdateInputSLZ(serializers.Serializer):
         if diff_leader_ids:
             raise ValidationError(_("传递了错误的上级信息: {}").format(diff_leader_ids))
 
-        if self.context["user_id"] in leader_ids:
+        if self.context["data_source_user_id"] in leader_ids:
             raise ValidationError(_("上级不可传递自身"))
 
         return leader_ids
@@ -333,9 +333,13 @@ class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
         if reseved_cnt <= 1:
             return password
 
-        used_passwords = DataSourceUserDeprecatedPasswordRecord.objects.filter(
-            user_id=self.context["data_source_user_id"],
-        )[: reseved_cnt - 1].values_list("password", flat=True)
+        used_passwords = (
+            DataSourceUserDeprecatedPasswordRecord.objects.filter(
+                user_id=self.context["data_source_user_id"],
+            )
+            .order_by("-created_at")[: reseved_cnt - 1]
+            .values_list("password", flat=True)
+        )
 
         for used_pwd in used_passwords:
             if check_password(password, used_pwd):
