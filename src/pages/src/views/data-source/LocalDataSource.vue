@@ -190,7 +190,6 @@ function handleClick(item) {
     name: 'dataConfDetails',
     params: {
       id: item.id,
-      status: item.status,
     },
   });
 }

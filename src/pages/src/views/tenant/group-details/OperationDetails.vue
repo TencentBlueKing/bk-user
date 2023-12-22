@@ -528,7 +528,7 @@ const handleChange = () => {
 
 const handleRandomPassword = async () => {
   try {
-    const passwordRes = await randomPasswords();
+    const passwordRes = await randomPasswords({});
     formData.password_initial_config.fixed_password = passwordRes.data.password;
     window.changeInput = true;
   } catch (e) {

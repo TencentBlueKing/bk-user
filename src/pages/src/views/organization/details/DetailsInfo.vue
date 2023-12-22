@@ -127,4 +127,9 @@ const updateTenantsList = () => {
 
 <style lang="less" scoped>
 @import url("@/css/tenantViewStyle.less");
+
+.details-info-wrapper {
+  height: calc(100vh - 140px);
+  padding-bottom: 0;
+}
 </style>

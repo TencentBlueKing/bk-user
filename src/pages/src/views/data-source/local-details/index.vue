@@ -30,7 +30,11 @@
       @change="changeTab"
     >
       <bk-tab-panel name="user" label="用户信息">
-        <UserInfo v-if="activeKey === 'user'" :data-source-id="currentId" :plugin-id="pluginId" />
+        <UserInfo
+          v-if="activeKey === 'user'"
+          :data-source-id="currentId"
+          :plugin-id="pluginId"
+          :is-password-login="isPasswordLogin" />
       </bk-tab-panel>
       <bk-tab-panel :visible="pluginId === 'local'" name="account" label="账密信息">
         <PswInfo v-if="activeKey === 'account'" />
@@ -52,7 +56,13 @@ import PswInfo from './PswInfo.vue';
 import UserInfo from './UserInfo.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
-import { changeSwitchStatus, getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http/dataSourceFiles';
+import {
+  changeSwitchStatus,
+  getDataSourceDetails,
+  getDataSourceList,
+  getDataSourcePlugins,
+  postOperationsSync,
+} from '@/http/dataSourceFiles';
 import router from '@/router/index';
 
 const route = useRoute();
@@ -66,6 +76,8 @@ const subtitle = ref('');
 const statusText = ref('');
 const typeList = ref([]);
 const pluginId = ref('');
+// 是否开启账密登录
+const isPasswordLogin = ref(false);
 
 onMounted(async () => {
   isLoading.value = true;
@@ -78,6 +90,8 @@ onMounted(async () => {
     }
   });
   const pluginsRes = await getDataSourcePlugins();
+  const loginRes = await getDataSourceDetails(currentId?.value);
+  isPasswordLogin.value = loginRes.data?.plugin_config?.enable_account_password_login;
   typeList.value = pluginsRes.data;
   isLoading.value = false;
 });
@@ -138,6 +152,24 @@ const toBack = () => {
 
   span {
     padding-right: 10px;
+  }
+}
+
+::v-deep .tab-details {
+  .bk-tab-content {
+    height: calc(100vh - 140px);
+    padding: 24px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #dcdee5;
+      border-radius: 4px;
+    }
   }
 }
 </style>

@@ -109,3 +109,19 @@ export interface SyncRecordsParams {
   pageSize: number,
   status: string,
 }
+
+/**
+ * 生成数据源用户随机密码参数
+ */
+export interface GeneratePasswordParams {
+  data_source_id?: string,
+  password_rule_config?: {},
+}
+
+/**
+ * 数据源用户密码重置参数
+ */
+export interface ResetPasswordParams {
+  id: string,
+  password: string,
+}
