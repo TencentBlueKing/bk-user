@@ -22,8 +22,14 @@ from bkuser.apis.web.tenant_setting.serializers import (
     TenantUserValidityPeriodConfigInputSLZ,
     TenantUserValidityPeriodConfigOutputSLZ,
 )
+from bkuser.apps.data_source.tasks import (
+    migrate_user_extras_with_mapping,
+    remove_dropped_field_in_field_mapping,
+    remove_dropped_field_in_user_extras,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import (
     TenantUserCustomField,
     TenantUserValidityPeriodConfig,
@@ -90,18 +96,21 @@ class TenantUserCustomFieldUpdateDeleteApi(
     )
     def put(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
-
         slz = TenantUserCustomFieldUpdateInputSLZ(
             data=request.data, context={"tenant_id": tenant_id, "custom_field_id": kwargs["id"]}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        custom_field = self.get_object()
 
+        custom_field = self.get_object()
         custom_field.display_name = data["display_name"]
         custom_field.default = data["default"]
         custom_field.options = data["options"]
         custom_field.save()
+
+        # 修改自定义字段配置，可能会影响到现存的枚举/多选枚举类型字段数据，需要支持数据迁移
+        if custom_field.data_type in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]:
+            migrate_user_extras_with_mapping.delay(tenant_id, custom_field.name, data["mapping"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -111,7 +120,15 @@ class TenantUserCustomFieldUpdateDeleteApi(
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+        custom_field = self.get_object()
+        tenant_id, field_name = custom_field.tenant_id, custom_field.name
+        custom_field.delete()
+
+        # 删除自定义字段，需要执行数据清理，包括数据源字段映射配置 + 用户自定义字段数据
+        remove_dropped_field_in_field_mapping.delay(tenant_id, field_name)
+        remove_dropped_field_in_user_extras.delay(tenant_id, field_name)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantUserValidityPeriodConfigRetrieveUpdateApi(
