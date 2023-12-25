@@ -44,98 +44,83 @@
           @focus="handleChange"
         />
       </bk-form-item>
+      <bk-loading
+        :loading="enumLoading"
+        class="enumerate-wrapper"
+        v-if="state.isShowEg || fieldsInfor.data_type.indexOf('enum') !== -1">
+        <bk-form-item style="margin-bottom: 10px;" label="枚举类型" required>
+          <bk-radio-group class="king-radio-group" v-model="fieldsInfor.data_type">
+            <bk-radio
+              label="enum"
+              name="egRadio"
+              :disabled="isEdit"
+            >单选</bk-radio
+            >
+            <bk-radio
+              label="multi_enum"
+              name="egRadio"
+              :disabled="isEdit"
+            >多选</bk-radio
+            >
+          </bk-radio-group>
+        </bk-form-item>
+        <div class="enum-title">
+          <bk-form-item class="w-[200px]" label="选项ID" required />
+          <bk-form-item class="w-[184px]" label="选项值" required />
+          <bk-form-item class="w-[60px] ml-[12px]" label="为默认值" />
+        </div>
+        <div
+          class="enum-list"
+          v-for="(item, index) in fieldsInfor.options"
+          :key="index"
+        >
+          <bk-form class="enum-form" ref="enumRef" form-type="vertical" :model="item" :rules="rulesEnum">
+            <bk-form-item class="w-[200px]" property="id" required error-display-type="tooltips">
+              <bk-input
+                v-model="item.id"
+                placeholder="请输入ID" />
+            </bk-form-item>
+            <bk-form-item class="w-[184px]" property="value" required error-display-type="tooltips">
+              <bk-input
+                type="text"
+                class="select-text"
+                v-model="item.value"
+                placeholder="请输入值"
+                @change="handleChange"
+              />
+            </bk-form-item>
+            <div class="input-container">
+              <label
+                v-if="fieldsInfor.data_type === 'enum'"
+                class="king-radio"
+              >
+                <input
+                  name="eg"
+                  type="radio"
+                  :value="index"
+                  v-model="fieldsInfor.default"
+                />
+              </label>
+              <label v-else class="king-checkbox">
+                <input
+                  name="egCheckbox"
+                  type="checkbox"
+                  :value="index"
+                  v-model="fieldsInfor.default"
+                />
+              </label>
+            </div>
+            <i
+              :class="['user-icon icon-delete', { 'forbid': fieldsInfor.options.length <= 1 }]"
+              @click="deleteEg(item, index)" />
+          </bk-form>
+        </div>
+        <bk-button class="add-enum" text theme="primary" @click="addEg">
+          <i class="user-icon icon-add-2 mr8" />
+          添加选项
+        </bk-button>
+      </bk-loading>
     </bk-form>
-    <div class="enumerate-wrapper" v-if="state.isShowEg || fieldsInfor.data_type.indexOf('enum') !== -1">
-      <i class="arrow"></i>
-      <h4 class="enum-title">
-        <i class="icon icon-user-cog"></i>
-        <span class="text">枚举设置</span>
-      </h4>
-      <div class="type-select-wrapper">
-        <p class="desc">枚举类型</p>
-        <bk-radio-group class="king-radio-group" v-model="fieldsInfor.data_type">
-          <bk-radio
-            label="enum"
-            name="egRadio"
-            :disabled="isEdit"
-          >单选</bk-radio
-          >
-          <bk-radio
-            label="multi_enum"
-            name="egRadio"
-            :disabled="isEdit"
-          >多选</bk-radio
-          >
-        </bk-radio-group>
-      </div>
-      <div class="enum-settings" data-test-id="fieldData">
-        <p class="explain">
-          <span class="default">默认选项</span>
-          <span class="text">选项值</span>
-        </p>
-        <ul>
-          <li
-            class="content-list"
-            v-for="(item, index) in fieldsInfor.options"
-            :key="index"
-          >
-            <div class="select-box default-box">
-              <div class="input-container">
-                <label
-                  v-if="fieldsInfor.data_type === 'enum'"
-                  class="king-radio"
-                >
-                  <input
-                    name="eg"
-                    type="radio"
-                    :value="index"
-                    v-model="fieldsInfor.default"
-                    :class="{ 'is-checked': fieldsInfor.default === index }"
-                  />
-                </label>
-                <label v-else class="king-checkbox king-checkbox-small">
-                  <input
-                    name="egCheckbox"
-                    type="checkbox"
-                    :value="index"
-                    v-model="fieldsInfor.default"
-                  />
-                </label>
-              </div>
-            </div>
-            <div class="select-box icon-box">
-              <bk-form class="enum-form" ref="enumRef" :model="item" :rules="rulesEnum">
-                <bk-form-item class="enum-id" property="id" required>
-                  <bk-input
-                    v-model="item.id"
-                    placeholder="请输入ID" />
-                </bk-form-item>
-                <bk-form-item class="enum-value" property="value" required>
-                  <bk-input
-                    type="text"
-                    class="select-text"
-                    v-model="item.value"
-                    placeholder="请输入值"
-                    @change="handleChange"
-                  />
-                </bk-form-item>
-              </bk-form>
-            </div>
-            <div class="select-box icon-box">
-              <i
-                class="user-icon icon-minus-fill"
-                :class="{ 'forbid': !state.isDeleteOption }"
-                @click="deleteEg(index)"
-              ></i>
-              <i
-                class="user-icon icon-plus-fill"
-                v-if="index === fieldsInfor.options.length - 1"
-                @click="addEg" />
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
     <div class="select-type">
       <bk-checkbox
         :value="fieldsInfor.required"
@@ -150,26 +135,90 @@
         v-model="fieldsInfor.unique">
         <span v-bk-tooltips="{ content: uniqueText }">唯一</span>
       </bk-checkbox>
-      <!-- <bk-checkbox
-        :value="fieldsInfor.editable"
-        v-model="fieldsInfor.editable"
-        :disabled="fieldsInfor.builtin">
-        <span v-bk-tooltips="{ content: '该字段在用户信息里可编辑' }">可编辑</span>
-      </bk-checkbox> -->
+      <bk-checkbox
+        :value="fieldsInfor.manager_editable"
+        v-model="fieldsInfor.manager_editable">
+        <span v-bk-tooltips="{ content: '该字段在用户信息里可编辑' }">管理员可编辑</span>
+      </bk-checkbox>
     </div>
+    <bk-form form-type="vertical">
+      <bk-form-item label="在个人中心展示">
+        <div style="display: flex; align-items: center;">
+          <bk-switcher
+            size="large"
+            v-model="fieldsInfor.personal_center_visible"
+            theme="primary"
+            :disabled="isEdit"
+          />
+          <bk-checkbox
+            v-if="fieldsInfor.personal_center_visible"
+            class="ml-[40px]"
+            v-model="fieldsInfor.personal_center_editable">
+            个人中心可编辑
+          </bk-checkbox>
+        </div>
+      </bk-form-item>
+    </bk-form>
     <div class="submit-btn">
       <bk-button theme="primary" @click="submitInfor" :loading="state.btnLoading">保存</bk-button>
       <bk-button theme="default" @click="$emit('handleCancel')">取消</bk-button>
     </div>
+    <!-- 枚举值删除确认弹框 -->
+    <bk-dialog
+      ext-cls="enum-dialog-wrapper"
+      :is-show="enumDialog.isShow"
+      title=""
+      :theme="'primary'"
+      :dialog-type="'show'"
+      :quick-close="false"
+      width="400"
+      @closed="enumDialog.isShow = false"
+    >
+      <div class="enum-dialog-content">
+        <div class="header">
+          <p class="title">是否删除该枚举值？</p>
+          <p class="subtitle">
+            <span class="name">枚举值：</span>
+            <span class="value">{{ enumDialog.item.id }}：{{ enumDialog.item.value }}</span>
+          </p>
+        </div>
+        <p class="content-text">该枚举值删除后，请为已引用的记录指定其他值：</p>
+        <ul class="content-list">
+          <li
+            :class="['content-list-item', { 'active-item': enumDialog.activeId === item.id }]"
+            v-for="(item, index) in enumDialog.list"
+            :key="index"
+            @click="handleEnumValue(item)">
+            <span class="name">
+              {{ item.id }}
+            </span>
+            <i :class="['user-icon icon-check-line', { 'active': enumDialog.activeId === item.id }]" />
+          </li>
+        </ul>
+        <div class="content-btn">
+          <bk-button
+            class="mr-[3px]"
+            theme="primary"
+            :disabled="!enumDialog.activeId"
+            :loading="btnLoading"
+            @click="changeEnumValue"
+          >确定</bk-button>
+          <bk-button
+            theme="default"
+            @click="enumDialog.isShow = false"
+          >取消</bk-button>
+        </div>
+      </div>
+    </bk-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
-import { computed, defineEmits, defineProps, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import useValidate from '@/hooks/use-validate';
-import { newCustomFields, putCustomFields } from '@/http/settingFiles';
+import { getFields, newCustomFields, putCustomFields } from '@/http/settingFiles';
 
 const props = defineProps({
   currentEditorData: {
@@ -181,12 +230,12 @@ const props = defineProps({
     default: '',
   },
 });
-const emit = defineEmits(['handleCancel', 'submitData']);
+const emit = defineEmits(['handleCancel', 'submitData', 'updateFields']);
 
 const validate = useValidate();
 const fieldsRef = ref();
 const enumRef = ref();
-const fieldsInfor = reactive(JSON.parse(JSON.stringify({ ...props.currentEditorData })));
+let fieldsInfor = reactive(JSON.parse(JSON.stringify({ ...props.currentEditorData })));
 const state = reactive({
   defaultSelected: 'string',
   isDeleteOption: true,
@@ -314,16 +363,95 @@ const selectedType = (newType) => {
 const handleChange = () => {
   window.changeInput = true;
 };
-// 删除枚举
-const deleteEg = (index) => {
-  window.changeInput = true;
-  if (fieldsInfor.data_type === 'enum' && index > 0 && index === fieldsInfor.options.length - 1) {
-    fieldsInfor.default = index - 1;
+const enumLoading = ref(false);
+const btnLoading = ref(false);
+const enumDialog = ref({
+  isShow: false,
+  list: [],
+  deleteId: '',
+  activeId: '',
+  item: { id: '', value: '' },
+});
+
+const handleEnumValue = (item: any) => {
+  enumDialog.value.activeId = item.id;
+};
+
+const changeEnumValue = async () => {
+  try {
+    btnLoading.value = true;
+    enumLoading.value = true;
+    const { deleteId, activeId } = enumDialog.value;
+    fieldsInfor.mapping = { [deleteId]: activeId };
+    if (fieldsInfor.data_type === 'enum') {
+      fieldsInfor.default = fieldsInfor.options.some(item => item.id === activeId) ? activeId : fieldsInfor.default;
+    } else {
+      const newDefault = fieldsInfor.default.map(index => fieldsInfor.options[index].id);
+      if (!newDefault.includes(activeId)) {
+        newDefault.push(activeId);
+      }
+      fieldsInfor.default = newDefault.filter(id => id !== deleteId);
+    }
+    fieldsInfor.options = fieldsInfor.options.filter(item => item.id !== deleteId);
+
+    await putCustomFields(fieldsInfor);
+    enumDialog.value.isShow = false;
+    emit('updateFields');
+
+    const fieldsRef = await getFields();
+    fieldsRef.data.custom_fields.forEach((fields) => {
+      if (fields.id === fieldsInfor.id) {
+        fieldsInfor = reactive(fields);
+      }
+    });
+
+    const findIndexById = id => fieldsInfor.options.findIndex(item => item.id === id);
+    fieldsInfor.default = fieldsInfor.data_type === 'enum' ? findIndexById(fieldsInfor.default)
+      : fieldsInfor.data_type === 'multi_enum' ? fieldsInfor.default.map(findIndexById)
+        : fieldsInfor.default;
+  } catch (error) {
+    console.warn(error);
+  } finally {
+    btnLoading.value = false;
+    enumLoading.value = false;
   }
+};
+// 删除枚举
+const deleteEg = (item: any, index: number) => {
   if (fieldsInfor.options.length <= 1) {
     return;
   }
-  fieldsInfor.options.splice(index, 1);
+  window.changeInput = true;
+  enumDialog.value = {
+    isShow: false,
+    list: [],
+    deleteId: '',
+    activeId: '',
+    item: { id: '', value: '' },
+  };
+  if (props.setType === 'edit') {
+    enumDialog.value.item = item;
+    fieldsInfor.options.forEach((k) => {
+      if (k.id === item.id) {
+        enumDialog.value.deleteId = k.id;
+        enumDialog.value.isShow = true;
+      } else {
+        if (!item.id) {
+          fieldsInfor.options.splice(index, 1);
+        }
+        enumDialog.value.list.push(k);
+      }
+    });
+  } else {
+    if (fieldsInfor.data_type === 'enum' && fieldsInfor.default === index) {
+      if (index === 0) {
+        fieldsInfor.default = index;
+      } else {
+        fieldsInfor.default = index - 1;
+      }
+    }
+    fieldsInfor.options.splice(index, 1);
+  }
 };
 // 添加枚举类型
 const addEg = () => {
@@ -336,10 +464,6 @@ const addEg = () => {
     value: '',
   };
   fieldsInfor.options.push(param);
-  nextTick(() => {
-    const inputList = document.querySelectorAll('.enum-id input');
-    inputList[inputList.length - 1].focus();
-  });
 };
 
 // 表单校验
@@ -360,13 +484,9 @@ const submitInfor = async () => {
 
     const newFieldData = {
       ...(isEdit.value ? { id: fieldsInfor.id } : { name: fieldsInfor.name }),
-      display_name: fieldsInfor.display_name,
-      required: fieldsInfor.required,
-      data_type: fieldsInfor.data_type,
-      unique: fieldsInfor.unique,
-      default: fieldsInfor.default,
+      ...fieldsInfor,
     };
-
+    newFieldData.options = [];
     if (isEnumType) {
       const defaultIndex = fieldsInfor.data_type === 'enum' ? [fieldsInfor.default] : fieldsInfor.default;
       newFieldData.options = fieldsInfor.options;
@@ -376,6 +496,7 @@ const submitInfor = async () => {
       if (fieldsInfor.data_type === 'enum') {
         newFieldData.default = newFieldData.default[0] || null;
       }
+      newFieldData.mapping = {};
     }
 
     const action = isEdit.value ? putCustomFields : newCustomFields;
@@ -414,247 +535,168 @@ const blurId = () => findFirstDuplicate('id');
 const blurValue = () => findFirstDuplicate('value');
 </script>
 
+<style lang="less">
+.enum-dialog-wrapper .enum-dialog-content {
+  .header {
+    margin-bottom: 12px;
+    text-align: center;
+
+    .title {
+      margin-bottom: 8px;
+      font-size: 20px;
+      line-height: 32px;
+      color: #313238;
+    }
+
+    .subtitle {
+      .name {
+        color: #313238;
+      }
+
+      .value {
+        display: inline-block;
+        height: 22px;
+        padding: 0 8px;
+        font-size: 12px;
+        background: #F0F1F5;
+      }
+    }
+  }
+
+  .content-text {
+    margin-bottom: 12px;
+  }
+
+  .content-list {
+    .content-list-item {
+      position: relative;
+      height: 32px;
+      margin-bottom: 8px;
+      line-height: 32px;
+      text-align: center;
+      background: #F0F1F5;
+      border-radius: 2px;
+
+      .name {
+        color: #313238;
+      }
+
+      .user-icon {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: none;
+        font-size: 14px;
+        color: #C4C6CC;
+      }
+
+      &:hover {
+        cursor: pointer;
+
+        .user-icon {
+          display: inline-block;
+        }
+      }
+    }
+
+    .active-item {
+      background: #E1ECFF;
+
+      .active {
+        display: inline-block;
+        color: #3A84FF;
+      }
+    }
+  }
+
+  .content-btn {
+    margin-top: 24px;
+    text-align: center;
+
+    .bk-button {
+      width: 88px;
+    }
+  }
+}
+</style>
+
 <style lang="less" scoped>
 .fields-add-wrapper {
   height: calc(100vh - 52px);
   padding: 24px 0;
 
   .bk-form {
-    padding: 0 16px;
+    padding: 0 40px;
   }
 
   .enumerate-wrapper {
-    position: relative;
-    z-index: 10;
-    padding: 0 30px;
-    margin-bottom: 30px;
-    color: rgb(99 101 110 / 100%);
-    background: rgb(255 255 255 / 100%);
-    border: 1px solid rgb(221 228 235 / 100%);
+    padding: 16px 24px;
+    margin-bottom: 18px;
+    background: #F5F7FA;
     border-radius: 2px;
 
-    .arrow {
-      position: absolute;
-      top: -5px;
-      left: 51px;
-      z-index: 10;
-      width: 8px;
-      height: 8px;
-      background: white;
-      border-top: 1px solid #dde4eb;
-      border-left: 1px solid #dde4eb;
-      transform: rotate(45deg);
-    }
-
     .enum-title {
-      font-size: 0;
-      font-weight: bold;
-      line-height: 38px;
-      color: rgb(115 121 135 / 100%);
-
-      .text,
-      .icon {
-        display: inline-block;
-        font-size: 14px;
-        vertical-align: middle;
-      }
-
-      .icon {
-        margin-right: 6px;
-        font-size: 16px;
-      }
-
-      .text {
-        width: 95%;
-        border-bottom: 1px solid #dde4eb;
-      }
-    }
-
-    .type-select-wrapper {
       display: flex;
       align-items: center;
-      padding: 20px 0;
 
-      .desc {
-        padding-right: 12px;
-        font-size: 14px;
+      .bk-form-item {
+        margin-right: 12px;
+        margin-bottom: 0;
       }
 
-      .king-radio-group {
-        display: flex;
-        align-items: center;
-        width: auto;
-        height: 19px;
-        line-height: 19px;
+    }
 
-        .bk-form-radio {
-          padding-right: 12px;
+    .enum-list {
+      .enum-form {
+        display: flex;
+        padding: 0;
+
+        .bk-form-item {
+          margin: 0 12px 12px 0;
+        }
+
+        .input-container {
+          width: 60px;
+          margin: 0 0 12px 12px;
+
+          .king-radio, .king-checkbox {
+            line-height: 32px;
+
+            input {
+              width: 16px;
+              height: 16px;
+              cursor: pointer;
+            }
+          }
+        }
+
+        .icon-delete {
+          margin-left: 12px;
+          font-size: 16px;
+          line-height: 24px;
+          color: #FF5656;
+          cursor: pointer;
+
+          &.forbid {
+            color: #EAEBF0;
+            cursor: not-allowed;
+          }
         }
       }
     }
 
-    .enum-settings {
-      .explain {
-        margin-bottom: 20px;
-        font-size: 0;
-
-        span {
-          display: inline-block;
-          font-size: 14px;
-          vertical-align: middle;
-
-          &.default {
-            width: 56px;
-          }
-
-          &.text {
-            width: 200px;
-            margin-right: 10px;
-            margin-left: 20px;
-          }
-        }
-      }
-
-      .content-list {
-        padding-bottom: 10px;
-        margin-bottom: 10px;
-        font-size: 0;
-
-        .select-box {
-          position: relative;
-          display: inline-block;
-          height: 32px;
-          font-size: 14px;
-          vertical-align: middle;
-
-          &.default-box {
-            width: 56px;
-
-            .king-checkbox {
-              position: relative;
-              margin: 0;
-              text-align: center;
-              vertical-align: center;
-
-              input {
-                position: relative;
-                display: inline-block;
-                width: 16px;
-                height: 16px;
-                vertical-align: middle;
-                border: 1px solid #979ba5;
-                border-radius: 2px;
-              }
-            }
-          }
-
-          ::v-deep .enum-form {
-            display: flex;
-
-            .enum-id {
-              .bk-form-content {
-                width: 100px;
-                margin-right: 10px;
-              }
-            }
-          }
-
-          ::v-deep .bk-form-content {
-            width: 200px;
-            margin-left: 0 !important;
-          }
-
-          > .select-text {
-            width: 100%;
-            height: 32px;
-            padding-left: 10px;
-            line-height: 32px;
-            border-radius: 2px;
-            outline: none;
-            resize: none;
-          }
-
-          > .input-container {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-
-            > label {
-              width: 16px;
-              height: 16px;
-            }
-
-            > .king-radio {
-              position: relative;
-              display: inline-block;
-              font-size: 14px;
-              color: #63656e;
-
-              > input[type="radio"] {
-                width: 16px;
-                height: 16px;
-                color: #fff;
-                cursor: pointer;
-                background-color: #fff;
-                border: 1px solid #979ba5;
-                border-radius: 50%;
-                outline: none;
-                visibility: visible;
-                background-clip: content-box;
-                appearance: none;
-
-                &.is-checked {
-                  padding: 3px;
-                  color: #3a84ff;
-                  background-color: currentcolor;
-                  border-color: currentcolor;
-                }
-              }
-            }
-          }
-
-          > .user-icon {
-            position: relative;
-            top: 6px;
-            margin-right: 5px;
-            font-size: 20px;
-            color: #EAEBF0;
-            cursor: pointer;
-
-            &:hover {
-              color: #c4c6cc;
-            }
-
-            &.forbid {
-              color: #EAEBF0;
-              cursor: not-allowed;
-            }
-
-            &:last-child {
-              margin-right: 0;
-            }
-          }
-        }
-
-        .hint {
-          position: absolute;
-          top: 32px;
-          left: 0;
-          color: #ea3636;
-        }
-      }
+    .add-enum {
+      font-size: 14px;
     }
   }
 
   .select-type {
     display: flex;
-    padding: 0 24px 30px;
+    padding: 0 40px 22px;
   }
 
   .submit-btn {
-    padding: 0 24px;
+    padding: 0 40px;
 
     .bk-button {
       width: 76px !important;
