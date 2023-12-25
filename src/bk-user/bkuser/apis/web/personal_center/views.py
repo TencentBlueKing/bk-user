@@ -10,6 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict
 
+from django.db import transaction
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -21,15 +24,19 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserExtrasUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserLogoUpdateInputSLZ,
+    TenantUserPasswordModifyInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
+from bkuser.apps.data_source.models import DataSourceUserDeprecatedPasswordRecord, LocalDataSourceIdentityInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
+from bkuser.common.error_codes import error_codes
+from bkuser.common.hashers import check_password, make_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -231,3 +238,49 @@ class TenantUserFieldListApi(generics.ListAPIView):
             {"builtin_fields": UserBuiltinField.objects.all(), "custom_fields": custom_fields}
         )
         return Response(slz.data)
+
+
+class TenantUserPasswordModifyApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="租户用户重置密码",
+        request_body=TenantUserPasswordModifyInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source_user = tenant_user.data_source_user
+        data_source = data_source_user.data_source
+        plugin_config = data_source.get_plugin_cfg()
+
+        if not (data_source.is_local and plugin_config.enable_account_password_login):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
+                _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
+            )
+
+        slz = TenantUserPasswordModifyInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        old_password = data["old_password"]
+        new_password = data["new_password"]
+
+        identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        if not check_password(old_password, identify_info.password):
+            raise error_codes.USERNAME_OR_PASSWORD_WRONG_ERROR
+
+        with transaction.atomic():
+            identify_info.password = make_password(new_password)
+            identify_info.password_updated_at = timezone.now()
+            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
+
+            DataSourceUserDeprecatedPasswordRecord.objects.create(
+                user=data_source_user,
+                password=old_password,
+                operator=request.user.username,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

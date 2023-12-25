@@ -168,3 +168,8 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
     class Meta:
         ref_name = "personal_center.TenantUserFieldOutputSLZ"
+
+
+class TenantUserPasswordModifyInputSLZ(serializers.Serializer):
+    old_password = serializers.CharField(required=True, max_length=254)
+    new_password = serializers.CharField(required=True, max_length=254)
