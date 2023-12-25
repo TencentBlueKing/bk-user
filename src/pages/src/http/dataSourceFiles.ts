@@ -3,11 +3,13 @@ import type {
   DataSourceUsersParams,
   DataSourceUsersResult,
   DepartmentsParams,
+  GeneratePasswordParams,
   LeadersParams,
   NewDataSourceParams,
   NewDataSourceUserParams,
   PutDataSourceParams,
   PutDataSourceUserParams,
+  ResetPasswordParams,
   SyncRecordsParams,
   TestConnectionParams,
 } from './types/dataSourceFiles';
@@ -99,7 +101,7 @@ export const postOperationsSync = (id: string) => http.post(`/api/v1/web/data-so
 /**
  * 生成数据源用户随机密码
  */
-export const randomPasswords = () => http.post('/api/v1/web/data-sources/random-passwords/');
+export const randomPasswords = (params: GeneratePasswordParams) => http.post('/api/v1/web/data-sources/random-passwords/', params);
 
 /**
  * 数据源更新记录
@@ -118,3 +120,8 @@ export const getSyncLogs = (id: string) => http.get(`/api/v1/web/data-sources/sy
  * 数据源用户所属部门组织路径
  */
 export const getOrganizationPaths = (id: string) => http.get(`/api/v1/web/data-sources/users/${id}/organization-paths/`);
+
+/**
+ * 重置数据源用户密码
+ */
+export const putUsersPassword = (params: ResetPasswordParams) => http.put(`/api/v1/web/data-sources/users/${params.id}/password/`, params);

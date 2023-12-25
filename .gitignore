@@ -221,3 +221,6 @@ cliff.toml
 # igonre symlinks
 src/bk-user/bkuser/idp_plugins
 src/bk-login/bklogin/idp_plugins
+
+
+pre-*-bkcodeai

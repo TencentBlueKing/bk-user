@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="isLoading" class="details-info-wrapper user-scroll-y">
+  <bk-loading :loading="isLoading" class="details-info-wrapper">
     <ul class="details-info-content" v-if="openPasswordLogin">
       <li class="content-item">
         <div class="item-header">

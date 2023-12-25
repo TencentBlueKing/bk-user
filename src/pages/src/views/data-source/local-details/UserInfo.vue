@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="isLoading" class="user-info-wrapper user-scroll-y">
+  <bk-loading :loading="isLoading" class="user-info-wrapper">
     <header>
       <div>
         <template v-if="pluginId === 'local'">
@@ -80,10 +80,15 @@
           >
             编辑
           </bk-button>
-          <!-- <bk-button theme="primary" text class="mr8">
+          <bk-button
+            v-if="isPasswordLogin"
+            theme="primary"
+            text
+            class="mr8"
+            @click="handleResetPassword(row)">
             重置密码
           </bk-button>
-          <bk-button theme="primary" text>
+          <!-- <bk-button theme="primary" text>
             删除
           </bk-button> -->
         </template>
@@ -108,8 +113,12 @@
               @click="handleClick('edit', detailsConfig)">
               编辑
             </bk-button>
-          <!-- <bk-button>重置</bk-button>
-          <bk-button>删除</bk-button> -->
+            <bk-button
+              v-if="isPasswordLogin"
+              @click="handleResetPassword(detailsConfig)">
+              重置密码
+            </bk-button>
+          <!-- <bk-button>删除</bk-button> -->
           </div>
         </template>
         <template #default>
@@ -219,6 +228,10 @@
         </div>
       </template>
     </bk-dialog>
+    <ResetPassword
+      :config="resetPasswordConfig"
+      @closed="closedResetPassword"
+      @changePassword="changePassword" />
   </bk-loading>
 </template>
 
@@ -233,6 +246,7 @@ import EditUser from './EditUser.vue';
 import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
+import ResetPassword from '@/components/ResetPassword.vue';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import { getDataSourceUserDetails, getDataSourceUsers, getOrganizationPaths } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
@@ -246,6 +260,10 @@ const props = defineProps({
   pluginId: {
     type: String,
     default: '',
+  },
+  isPasswordLogin: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -570,13 +588,32 @@ const tipsShowFn = async (id: string) => {
     tipsText.value = '';
   }
 };
+
+const resetPasswordConfig = reactive({
+  isShow: false,
+  title: '重置密码',
+  dataSourceId: props.dataSourceId,
+  userId: '',
+});
+
+const handleResetPassword = (item: any) => {
+  resetPasswordConfig.isShow = true;
+  resetPasswordConfig.userId = item.id;
+};
+
+const closedResetPassword = () => {
+  resetPasswordConfig.isShow = false;
+};
+
+const changePassword = () => {
+  resetPasswordConfig.isShow = false;
+};
 </script>
 
 <style lang="less" scoped>
 .user-info-wrapper {
   width: 100%;
-  height: calc(100vh - 140px);
-  padding: 24px;
+  padding-bottom: 24px;
 
   header {
     display: flex;
