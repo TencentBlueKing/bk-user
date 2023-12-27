@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from .esb import _call_esb_api
-from .http import http_get
+from .http import http_post
 
 
 def send_mail(receiver: str, sender: str, title: str, content: str):
@@ -23,7 +23,9 @@ def send_mail(receiver: str, sender: str, title: str, content: str):
     """
     url_path = "/api/c/compapi/cmsi/send_mail/"
     return _call_esb_api(
-        http_get, url_path, data={"receiver__username": receiver, "sender": sender, "title": title, "content": content}
+        http_post,
+        url_path,
+        data={"receiver__username": receiver, "sender": sender, "title": title, "content": content},
     )
 
 
@@ -35,4 +37,4 @@ def send_sms(receiver: str, content: str):
     :param content: 短信内容
     """
     url_path = "/api/c/compapi/cmsi/send_sms/"
-    return _call_esb_api(http_get, url_path, data={"receiver__username": receiver, "content": content})
+    return _call_esb_api(http_post, url_path, data={"receiver__username": receiver, "content": content})
