@@ -43,6 +43,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
+from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.biz.data_source_organization import (
@@ -308,6 +309,8 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
                 operator=request.user.username,
             )
 
+        # 发送新密码通知到用户
+        send_reset_password_to_user.delay(user.id, raw_password)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

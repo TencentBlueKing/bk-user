@@ -14,7 +14,6 @@ import pytest
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
-from bkuser.plugins.local.constants import NotificationMethod, NotificationScene, PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
 from tests.test_utils.helpers import generate_random_string
@@ -44,37 +43,37 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
             "force_change_at_first_login": True,
             "cannot_use_previous_password": True,
             "reserved_previous_password_count": 3,
-            "generate_method": PasswordGenerateMethod.RANDOM,
+            "generate_method": "random",
             "fixed_password": None,
             "notification": {
-                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
+                "enabled_methods": ["email", "sms"],
                 "templates": [
                     {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.USER_INITIALIZE,
+                        "method": "email",
+                        "scene": "user_initialize",
                         "title": "您的账户已经成功创建",
                         "sender": "蓝鲸智云",
                         "content": "您的账户已经成功创建，请尽快修改密码",
                         "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
                     },
                     {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.RESET_PASSWORD,
+                        "method": "email",
+                        "scene": "reset_password",
                         "title": "登录密码重置",
                         "sender": "蓝鲸智云",
                         "content": "点击以下链接以重置代码",
                         "content_html": "<p>点击以下链接以重置代码</p>",
                     },
                     {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.USER_INITIALIZE,
+                        "method": "sms",
+                        "scene": "user_initialize",
                         "sender": "蓝鲸智云",
                         "content": "您的账户已经成功创建，请尽快修改密码",
                         "content_html": "<p>您的账户已经成功创建，请尽快修改密码</p>",
                     },
                     {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.RESET_PASSWORD,
+                        "method": "sms",
+                        "scene": "reset_password",
                         "sender": "蓝鲸智云",
                         "content": "点击以下链接以重置代码",
                         "content_html": "<p>点击以下链接以重置代码</p>",
@@ -85,34 +84,34 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
         "password_expire": {
             "remind_before_expire": [1, 7],
             "notification": {
-                "enabled_methods": [NotificationMethod.EMAIL, NotificationMethod.SMS],
+                "enabled_methods": ["email", "sms"],
                 "templates": [
                     {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.PASSWORD_EXPIRING,
+                        "method": "email",
+                        "scene": "password_expiring",
                         "title": "【蓝鲸智云】密码即将到期提醒！",
                         "sender": "蓝鲸智云",
                         "content": "您的密码即将到期！",
                         "content_html": "<p>您的密码即将到期！</p>",
                     },
                     {
-                        "method": NotificationMethod.EMAIL,
-                        "scene": NotificationScene.PASSWORD_EXPIRED,
+                        "method": "email",
+                        "scene": "password_expired",
                         "title": "【蓝鲸智云】密码到期提醒！",
                         "sender": "蓝鲸智云",
                         "content": "点击以下链接以重置代码",
                         "content_html": "<p>您的密码已到期！</p>",
                     },
                     {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.PASSWORD_EXPIRING,
+                        "method": "sms",
+                        "scene": "password_expiring",
                         "sender": "蓝鲸智云",
                         "content": "您的密码即将到期！",
                         "content_html": "<p>您的密码即将到期！</p>",
                     },
                     {
-                        "method": NotificationMethod.SMS,
-                        "scene": NotificationScene.PASSWORD_EXPIRED,
+                        "method": "sms",
+                        "scene": "password_expired",
                         "sender": "蓝鲸智云",
                         "content": "您的密码已到期！",
                         "content_html": "<p>您的密码已到期！</p>",

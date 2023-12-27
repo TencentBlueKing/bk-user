@@ -18,20 +18,15 @@ from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from pydantic import ValidationError
 
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.data_source.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.sync.constants import DataSourceSyncPeriod
 from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
 from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
-from bkuser.apps.sync.signals import post_sync_data_source
+from bkuser.apps.sync.signals import post_sync_data_source, post_sync_tenant
+from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
+from bkuser.apps.tenant.models import TenantUser
 
 logger = logging.getLogger(__name__)
-
-
-@receiver(post_sync_data_source)
-def sync_identity_infos_and_notify(sender, data_source: DataSource, **kwargs):
-    """在完成数据源同步后，需要对本地数据源的用户账密信息做初始化"""
-    transaction.on_commit(lambda: initialize_identity_info_and_send_notification.delay(data_source.id))
 
 
 @receiver(post_sync_data_source)
@@ -39,6 +34,42 @@ def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     """同步租户数据（部门 & 用户）"""
     # TODO (su) 目前没有跨租户协同，因此只要往数据源所属租户同步即可
     TenantSyncManager(data_source, data_source.owner_tenant_id, TenantSyncOptions()).execute()
+
+
+@receiver(post_sync_tenant)
+def sync_identity_infos_and_notify_after_sync_tenant(sender, data_source: DataSource, **kwargs):
+    """
+    在完成租户同步后，需要对本地数据源的用户账密信息做初始化
+
+    Q: 为什么在完成租户同步后才初始化本地数据源用户账密信息（而不是数据源同步后就整）?
+    A: 1. 初始化后，通知只能发送给租户用户，因此需要等待租户同步完成后才执行
+       2. 用户管理对外只有租户用户，如果租户用户未创建，则初始化也是没有意义的
+    """
+    transaction.on_commit(lambda: initialize_identity_info_and_send_notification.delay(data_source.id))
+
+
+@receiver(post_save, sender=DataSource)
+def sync_identity_infos_and_notify_after_modify_data_source(sender, instance: DataSource, created: bool, **kwargs):
+    """
+    数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用账密登录，
+    则需要对没有账密信息的用户，进行密码的初始化 & 发送通知，批量创建数据源用户同理
+    """
+    if created:
+        # 数据源刚刚创建的信号不需要处理，因为此时没有数据源用户 & 租户用户
+        return
+
+    transaction.on_commit(lambda: initialize_identity_info_and_send_notification.delay(instance.id))
+
+
+@receiver(post_save, sender=TenantUser)
+def initialize_identity_info_and_notify(sender, instance: TenantUser, created: bool, **kwargs):
+    """在创建完租户用户后，需要初始化账密信息，并发送通知"""
+    if created:
+        transaction.on_commit(
+            lambda: initialize_identity_info_and_send_notification.delay(
+                instance.data_source_id, instance.data_source_user.id
+            )
+        )
 
 
 @receiver(post_save, sender=DataSource)
