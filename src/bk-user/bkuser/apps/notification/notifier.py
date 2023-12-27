@@ -70,9 +70,10 @@ class NotificationTmplsGetter:
         ]
 
     def _get_from_validity_period_config(self, scene: NotificationScene, **kwargs) -> List[NotificationTemplate]:
+        """从租户有效期配置中获取通知模板"""
         assert "tenant_id" in kwargs
-
         cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=kwargs["tenant_id"])
+
         # 返回场景匹配，且被声明启用的模板列表
         return [
             NotificationTemplate(
@@ -86,7 +87,7 @@ class NotificationTmplsGetter:
         ]
 
     def _get_from_data_source_plugin_config(self, scene: NotificationScene, **kwargs) -> List[NotificationTemplate]:
-        # 从数据源插件配置中获取通知模板
+        """从数据源插件配置中获取通知模板"""
         assert "data_source_id" in kwargs
         data_source = DataSource.objects.get(id=kwargs["data_source_id"])
 
