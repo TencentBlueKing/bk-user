@@ -21,10 +21,13 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
+    DataSourceUserDeprecatedPasswordRecord,
     DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
+from bkuser.common.hashers import make_password
 
 
 class DataSourceUserInfo(BaseModel):
@@ -178,6 +181,22 @@ class DataSourceUserHandler:
 
             # 更新用户-上级关系
             DataSourceUserHandler.update_user_leader_relations(user=user, leader_ids=relation_info.leader_ids)
+
+    @staticmethod
+    def update_user_password(
+        raw_password: str, operator: str, user: DataSourceUser, identify_info: LocalDataSourceIdentityInfo
+    ):
+        deprecated_password = identify_info.password
+        with transaction.atomic():
+            identify_info.password = make_password(raw_password)
+            identify_info.password_updated_at = timezone.now()
+            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
+
+            DataSourceUserDeprecatedPasswordRecord.objects.create(
+                user=user,
+                password=deprecated_password,
+                operator=operator,
+            )
 
 
 class DataSourceDepartmentHandler:

@@ -11,9 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import List
 
-from django.db import transaction
 from django.db.models import Q
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -40,7 +38,6 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
-    DataSourceUserDeprecatedPasswordRecord,
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.permission.constants import PermAction
@@ -52,7 +49,6 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.hashers import make_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -297,16 +293,8 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
         slz.is_valid(raise_exception=True)
         raw_password = slz.validated_data["password"]
 
-        with transaction.atomic():
-            identify_info.password = make_password(raw_password)
-            identify_info.password_updated_at = timezone.now()
-            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
-
-            DataSourceUserDeprecatedPasswordRecord.objects.create(
-                user=user,
-                password=current_password,
-                operator=request.user.username,
-            )
+        operator = request.user.username
+        DataSourceUserHandler.update_user_password(raw_password, operator, user, identify_info)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

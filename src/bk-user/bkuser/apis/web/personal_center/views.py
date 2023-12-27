@@ -10,8 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict
 
-from django.db import transaction
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -28,15 +26,16 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserPhoneUpdateInputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSourceUserDeprecatedPasswordRecord, LocalDataSourceIdentityInfo
+from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField, UserBuiltinField
+from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.common.error_codes import error_codes
-from bkuser.common.hashers import check_password, make_password
+from bkuser.common.hashers import check_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -272,15 +271,7 @@ class TenantUserPasswordModifyApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         if not check_password(old_password, identify_info.password):
             raise error_codes.USERNAME_OR_PASSWORD_WRONG_ERROR
 
-        with transaction.atomic():
-            identify_info.password = make_password(new_password)
-            identify_info.password_updated_at = timezone.now()
-            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
-
-            DataSourceUserDeprecatedPasswordRecord.objects.create(
-                user=data_source_user,
-                password=old_password,
-                operator=request.user.username,
-            )
+        operator = request.user.username
+        DataSourceUserHandler.update_user_password(new_password, operator, data_source_user, identify_info)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
