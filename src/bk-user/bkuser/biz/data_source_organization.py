@@ -184,18 +184,16 @@ class DataSourceUserHandler:
 
     @staticmethod
     def update_user_password(
-        raw_password: str, operator: str, user: DataSourceUser, identify_info: LocalDataSourceIdentityInfo
+        password: str, operator: str, user: DataSourceUser, identify_info: LocalDataSourceIdentityInfo
     ):
         deprecated_password = identify_info.password
         with transaction.atomic():
-            identify_info.password = make_password(raw_password)
+            identify_info.password = make_password(password)
             identify_info.password_updated_at = timezone.now()
             identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
 
             DataSourceUserDeprecatedPasswordRecord.objects.create(
-                user=user,
-                password=deprecated_password,
-                operator=operator,
+                user=user, password=deprecated_password, operator=operator
             )
 
 

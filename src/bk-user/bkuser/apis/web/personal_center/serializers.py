@@ -21,7 +21,7 @@ from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputS
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.tenant import TenantUserHandler
-from bkuser.biz.validators import validate_logo
+from bkuser.biz.validators import validate_logo, validate_password
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -170,6 +170,16 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
         ref_name = "personal_center.TenantUserFieldOutputSLZ"
 
 
-class TenantUserPasswordModifyInputSLZ(serializers.Serializer):
+class TenantUserPasswordResetInputSLZ(serializers.Serializer):
     old_password = serializers.CharField(required=True, max_length=254)
     new_password = serializers.CharField(required=True, max_length=254)
+
+    def validate_new_password(self, new_password: str) -> str:
+        validate_password(
+            new_password,
+            self.context["current_password"],
+            self.context["data_source_user_id"],
+            self.context["plugin_config"],
+        )
+
+        return new_password

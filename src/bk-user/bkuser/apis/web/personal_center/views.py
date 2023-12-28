@@ -22,7 +22,7 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserExtrasUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserLogoUpdateInputSLZ,
-    TenantUserPasswordModifyInputSLZ,
+    TenantUserPasswordResetInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
@@ -239,7 +239,7 @@ class TenantUserFieldListApi(generics.ListAPIView):
         return Response(slz.data)
 
 
-class TenantUserPasswordModifyApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class TenantUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -247,7 +247,7 @@ class TenantUserPasswordModifyApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="租户用户重置密码",
-        request_body=TenantUserPasswordModifyInputSLZ(),
+        request_body=TenantUserPasswordResetInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
@@ -261,17 +261,25 @@ class TenantUserPasswordModifyApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
                 _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
             )
 
-        slz = TenantUserPasswordModifyInputSLZ(data=request.data)
+        identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        slz = TenantUserPasswordResetInputSLZ(
+            data=request.data,
+            context={
+                "plugin_config": plugin_config,
+                "data_source_user_id": data_source_user.id,
+                "current_password": identify_info.password,
+            },
+        )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
         old_password = data["old_password"]
         new_password = data["new_password"]
 
-        identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
         if not check_password(old_password, identify_info.password):
             raise error_codes.USERNAME_OR_PASSWORD_WRONG_ERROR
 
-        operator = request.user.username
-        DataSourceUserHandler.update_user_password(new_password, operator, data_source_user, identify_info)
+        DataSourceUserHandler.update_user_password(
+            password=new_password, operator=request.user.username, user=data_source_user, identify_info=identify_info
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

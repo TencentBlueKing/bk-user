@@ -281,20 +281,20 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
             )
 
         identify_info = LocalDataSourceIdentityInfo.objects.get(user=user)
-        current_password = identify_info.password
         slz = DataSourceUserPasswordResetInputSLZ(
             data=request.data,
             context={
                 "plugin_config": plugin_config,
                 "data_source_user_id": user.id,
-                "current_password": current_password,
+                "current_password": identify_info.password,
             },
         )
         slz.is_valid(raise_exception=True)
         raw_password = slz.validated_data["password"]
 
-        operator = request.user.username
-        DataSourceUserHandler.update_user_password(raw_password, operator, user, identify_info)
+        DataSourceUserHandler.update_user_password(
+            password=raw_password, operator=request.user.username, user=user, identify_info=identify_info
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
