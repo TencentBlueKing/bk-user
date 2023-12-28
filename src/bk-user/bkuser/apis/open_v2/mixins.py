@@ -10,14 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 from rest_framework.permissions import IsAuthenticated
 
-from .authentications import OpenV2ApiAuthentication
+from bkuser.apis.open_v2.authentications import ESBAuthentication
 
 
-class OpenV2ApiAccessControlMixin:
+class OpenApiAccessControlMixin:
     """
     兼容旧版本 Open API 访问权限控制
     Note: 继承时，必须添加到第一个父类，否则可能会被其他父类的覆盖
     """
 
-    authentication_classes = [OpenV2ApiAuthentication]
+    authentication_classes = [ESBAuthentication]
     permission_classes = [IsAuthenticated]

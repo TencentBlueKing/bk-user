@@ -12,10 +12,11 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_v2.mixins import OpenApiAccessControlMixin
 from bkuser.apps.tenant.models import TenantDepartment
 
 
-class DepartmentListApi(generics.ListAPIView):
+class DepartmentListApi(OpenApiAccessControlMixin, generics.ListAPIView):
     queryset = TenantDepartment.objects.all()
     pagination_class = None
 
@@ -28,7 +29,7 @@ class DepartmentListApi(generics.ListAPIView):
         return Response("TODO")
 
 
-class DepartmentRetrieveApi(generics.RetrieveAPIView):
+class DepartmentRetrieveApi(OpenApiAccessControlMixin, generics.RetrieveAPIView):
     queryset = TenantDepartment.objects.all()
 
     @swagger_auto_schema(
@@ -40,7 +41,7 @@ class DepartmentRetrieveApi(generics.RetrieveAPIView):
         return Response("TODO")
 
 
-class DepartmentChildrenListApi(generics.ListAPIView):
+class DepartmentChildrenListApi(OpenApiAccessControlMixin, generics.ListAPIView):
     queryset = TenantDepartment.objects.all()
     pagination_class = None
 
@@ -53,7 +54,7 @@ class DepartmentChildrenListApi(generics.ListAPIView):
         return Response("TODO")
 
 
-class ProfileDepartmentListApi(generics.ListAPIView):
+class ProfileDepartmentListApi(OpenApiAccessControlMixin, generics.ListAPIView):
     queryset = TenantDepartment.objects.all()
     pagination_class = None
 

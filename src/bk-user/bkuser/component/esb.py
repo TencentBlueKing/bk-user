@@ -10,12 +10,14 @@ specific language governing permissions and limitations under the License.
 """
 import json
 import logging
+from typing import Dict
 from urllib.parse import urlparse
 
 from django.conf import settings
 
 from bkuser.common.error_codes import error_codes
 from bkuser.common.local import local
+from bkuser.component.http import http_get
 from bkuser.utils.url import urljoin
 
 logger = logging.getLogger("component")
@@ -95,3 +97,9 @@ def _call_esb_api(http_func, url_path, **kwargs):
         f"Request=[{http_func.__name__} {urlparse(url).path} request_id={request_id}] "
         f"Response[code={code}, message={message}]"
     )
+
+
+def get_api_public_key() -> Dict:
+    """获取 ESB API Public Key"""
+    url_path = "/api/c/compapi/v2/esb/get_api_public_key/"
+    return _call_esb_api(http_get, url_path, data={})
