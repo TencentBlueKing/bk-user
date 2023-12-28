@@ -315,11 +315,14 @@ class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="数据源用户重置的新密码")
 
     def validate_password(self, password: str) -> str:
+        password_rule = self.context["plugin_config"].password_rule.to_rule()
+        reserved_cnt = self.context["plugin_config"].password_initial.reserved_previous_password_count
         validate_password(
             password,
             self.context["current_password"],
             self.context["data_source_user_id"],
-            self.context["plugin_config"],
+            password_rule,
+            reserved_cnt,
         )
         return password
 

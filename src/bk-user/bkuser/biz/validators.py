@@ -19,12 +19,12 @@ from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.data_source.models import DataSourceUserDeprecatedPasswordRecord
 from bkuser.apps.tenant.constants import TENANT_USER_CUSTOM_FIELD_NAME_REGEX
 from bkuser.common.hashers import check_password
-from bkuser.common.passwd import PasswordValidator
+from bkuser.common.passwd import PasswordRule, PasswordValidator
 
 logger = logging.getLogger(__name__)
 
 
-def validate_data_source_user_username(value):
+def validate_data_source_user_username(value: str):
     if not re.fullmatch(DATA_SOURCE_USERNAME_REGEX, value):
         raise ValidationError(
             _(
@@ -33,7 +33,7 @@ def validate_data_source_user_username(value):
         )
 
 
-def validate_tenant_custom_field_name(value):
+def validate_tenant_custom_field_name(value: str):
     if not re.fullmatch(TENANT_USER_CUSTOM_FIELD_NAME_REGEX, value):
         raise ValidationError(
             _(
@@ -42,7 +42,7 @@ def validate_tenant_custom_field_name(value):
         )
 
 
-def validate_logo(value):
+def validate_logo(value: str):
     if not value:
         return
 
@@ -51,17 +51,18 @@ def validate_logo(value):
         raise ValidationError(_("Logo 文件大小不可超过 {} KB").format(settings.MAX_LOGO_SIZE))
 
 
-def validate_password(value, current_password, data_source_user_id, plugin_config):
+def validate_password(
+    value: str, current_password: str, data_source_user_id: int, password_rule: PasswordRule, reserved_cnt: int
+):
     # 新密码不可与当前正在使用的密码相同
     if check_password(value, current_password):
         raise ValidationError(_("新密码不可与当前密码相同"))
 
     # 密码规则校验
-    ret = PasswordValidator(plugin_config.password_rule.to_rule()).validate(value)
+    ret = PasswordValidator(password_rule).validate(value)
     if not ret.ok:
         raise ValidationError(_("密码不符合规则：{}").format(ret.exception_message))
 
-    reserved_cnt = plugin_config.password_initial.reserved_previous_password_count
     # 当历史密码保留数量小于等于 1 时，只需要检查不与当前密码相同即可
     if reserved_cnt <= 1:
         return

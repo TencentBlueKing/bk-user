@@ -22,6 +22,7 @@ from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.biz.validators import validate_logo, validate_password
+from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -171,15 +172,22 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
 
 class TenantUserPasswordResetInputSLZ(serializers.Serializer):
-    old_password = serializers.CharField(required=True, max_length=254)
-    new_password = serializers.CharField(required=True, max_length=254)
+    new_password = serializers.CharField(help_text="新密码", required=True, max_length=254)
+    old_password = serializers.CharField(help_text="旧密码", required=True, max_length=254)
 
-    def validate_new_password(self, new_password: str) -> str:
+    def validate(self, attrs):
+        old_password = attrs["old_password"]
+        if not check_password(old_password, self.context["current_password"]):
+            raise ValidationError(_("账号密码错误"))
+
+        new_password = attrs["new_password"]
+        password_rule = self.context["plugin_config"].password_rule.to_rule()
+        reserved_cnt = self.context["plugin_config"].password_initial.reserved_previous_password_count
         validate_password(
             new_password,
             self.context["current_password"],
             self.context["data_source_user_id"],
-            self.context["plugin_config"],
+            password_rule,
+            reserved_cnt,
         )
-
-        return new_password
+        return attrs
