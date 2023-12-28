@@ -17,8 +17,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication
 
-from bkuser.apis.constants import BKNonEntityUser
 from bkuser.common.cache import cachedmethod
+from bkuser.common.constants import BKNonEntityUser
 from bkuser.component import esb
 
 logger = logging.getLogger(__name__)
