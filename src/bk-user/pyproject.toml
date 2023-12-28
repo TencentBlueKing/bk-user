@@ -194,7 +194,7 @@ name = "Apis Independence contract"
 type = "independence"
 modules = [
     "bkuser.apis.login",
-    "bkuser.apis.open",
+    "bkuser.apis.open_v2",
     "bkuser.apis.web",
 ]
 
