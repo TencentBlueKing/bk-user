@@ -12,10 +12,11 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_v2.mixins import OpenApiAccessControlMixin
 from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation, DataSourceUserLeaderRelation
 
 
-class DepartmentProfileRelationListApi(generics.ListAPIView):
+class DepartmentProfileRelationListApi(OpenApiAccessControlMixin, generics.ListAPIView):
     queryset = DataSourceDepartmentUserRelation.objects.all()
     pagination_class = None
 
@@ -28,7 +29,7 @@ class DepartmentProfileRelationListApi(generics.ListAPIView):
         return Response("TODO")
 
 
-class ProfileLeaderRelationListApi(generics.ListAPIView):
+class ProfileLeaderRelationListApi(OpenApiAccessControlMixin, generics.ListAPIView):
     queryset = DataSourceUserLeaderRelation.objects.all()
     pagination_class = None
 

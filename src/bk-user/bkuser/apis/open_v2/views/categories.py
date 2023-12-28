@@ -12,10 +12,11 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
+from bkuser.apis.open_v2.mixins import OpenApiAccessControlMixin
 from bkuser.apps.data_source.models import DataSource
 
 
-class CategoriesListApi(generics.ListAPIView):
+class CategoriesListApi(OpenApiAccessControlMixin, generics.ListAPIView):
     queryset = DataSource.objects.all()
     pagination_class = None
 
