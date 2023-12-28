@@ -1,0 +1,13 @@
+bkpkg: v1
+name: usermgr
+type: file+tar
+description: 用户管理后台。
+contains:
+relations:
+- rationale: "基础权限体系"
+  requires:
+  - bkiam^1.12.0
+- rationale: "ESB"
+  requires:
+  - "bkpaas^2.14.0 OR bk-apigateway^1.12.0"
+bkimports:
