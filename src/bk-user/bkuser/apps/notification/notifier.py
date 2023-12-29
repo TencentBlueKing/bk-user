@@ -181,7 +181,7 @@ class TmplContextGenerator:
         """租户用户即将过期"""
         valid_time = self.user.account_expired_at - timezone.now()
         return {
-            "valid_days": str(valid_time.days + 1),
+            "valid_days": str(valid_time.days),
             **self._gen_base_ctx(),
         }
 

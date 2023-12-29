@@ -57,7 +57,7 @@ def notify_expiring_tenant_users(tenant_id: str):
     for remain_days in cfg.remind_before_expire:
         expired_at = midnight + timedelta(days=int(remain_days))
         expired_date_filters.append(
-            Q(account_expired_at__gt=expired_at - timedelta(1), account_expired_at__lte=expired_at)
+            Q(account_expired_at__gt=expired_at, account_expired_at__lte=expired_at + timedelta(days=1))
         )
 
     tenant_users = tenant_users.filter(reduce(operator.or_, expired_date_filters))
@@ -80,7 +80,7 @@ def build_and_run_notify_expiring_tenant_users_task():
 
 @app.task(base=BaseTask, ignore_result=True)
 def notify_expired_tenant_users(tenant_id: str):
-    """对当天过期的租户用户发送通知"""
+    """对昨天过期的租户用户发送通知"""
     logger.info("[celery] receive task: notify_expired_tenant_users, tenant_id is %s", tenant_id)
 
     # Q：为什么不使用 timezone.now 而是要转换成 midnight?
