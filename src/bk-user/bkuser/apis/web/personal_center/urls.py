@@ -52,7 +52,7 @@ urlpatterns = [
     ),
     path(
         "tenant-users/<str:id>/password/",
-        views.TenantUserPasswordResetApi.as_view(),
-        name="personal_center.tenant_users.password.reset",
+        views.TenantUserPasswordUpdateApi.as_view(),
+        name="personal_center.tenant_users.password.update",
     ),
 ]

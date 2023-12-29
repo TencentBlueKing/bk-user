@@ -22,11 +22,10 @@ from bkuser.apis.web.personal_center.serializers import (
     TenantUserExtrasUpdateInputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserLogoUpdateInputSLZ,
-    TenantUserPasswordResetInputSLZ,
+    TenantUserPasswordUpdateInputSLZ,
     TenantUserPhoneUpdateInputSLZ,
     TenantUserRetrieveOutputSLZ,
 )
-from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
@@ -35,7 +34,6 @@ from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.biz.natural_user import NatureUserHandler
 from bkuser.biz.tenant import TenantUserEmailInfo, TenantUserHandler, TenantUserPhoneInfo
 from bkuser.common.error_codes import error_codes
-from bkuser.common.hashers import check_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -239,7 +237,7 @@ class TenantUserFieldListApi(generics.ListAPIView):
         return Response(slz.data)
 
 
-class TenantUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     queryset = TenantUser.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
@@ -247,7 +245,7 @@ class TenantUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVie
     @swagger_auto_schema(
         tags=["personal_center"],
         operation_description="租户用户重置密码",
-        request_body=TenantUserPasswordResetInputSLZ(),
+        request_body=TenantUserPasswordUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
@@ -261,25 +259,21 @@ class TenantUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVie
                 _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
             )
 
-        identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
-        slz = TenantUserPasswordResetInputSLZ(
+        slz = TenantUserPasswordUpdateInputSLZ(
             data=request.data,
             context={
                 "plugin_config": plugin_config,
                 "data_source_user_id": data_source_user.id,
-                "current_password": identify_info.password,
             },
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
-        old_password = data["old_password"]
         new_password = data["new_password"]
 
-        if not check_password(old_password, identify_info.password):
-            raise error_codes.USERNAME_OR_PASSWORD_WRONG_ERROR
-
-        DataSourceUserHandler.update_user_password(
-            password=new_password, operator=request.user.username, user=data_source_user, identify_info=identify_info
+        DataSourceUserHandler.update_password(
+            data_source_user=data_source_user,
+            password=new_password,
+            operator=request.user.username,
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

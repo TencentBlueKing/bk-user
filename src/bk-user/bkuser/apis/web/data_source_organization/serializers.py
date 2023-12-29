@@ -26,7 +26,8 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
-from bkuser.biz.validators import validate_data_source_user_username, validate_logo, validate_password
+from bkuser.biz.data_source_organization import DataSourceUserHandler
+from bkuser.biz.validators import validate_data_source_user_username, validate_logo, validate_user_password
 from bkuser.common.validators import validate_phone_with_country_code
 
 logger = logging.getLogger(__name__)
@@ -315,16 +316,17 @@ class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="数据源用户重置的新密码")
 
     def validate_password(self, password: str) -> str:
-        password_rule = self.context["plugin_config"].password_rule.to_rule()
-        reserved_cnt = self.context["plugin_config"].password_initial.reserved_previous_password_count
-        validate_password(
-            password,
-            self.context["current_password"],
-            self.context["data_source_user_id"],
-            password_rule,
-            reserved_cnt,
+        data_source_user_id = self.context["data_source_user_id"]
+
+        # 新密码不可与当前正在使用的密码相同
+        if DataSourceUserHandler.check_password(raw_password=password, data_source_user_id=data_source_user_id):
+            raise ValidationError(_("新密码不可与当前密码相同"))
+
+        return validate_user_password(
+            password=password,
+            data_source_user_id=self.context["data_source_user_id"],
+            plugin_config=self.context["plugin_config"],
         )
-        return password
 
 
 class DataSourceUserOrganizationPathOutputSLZ(serializers.Serializer):

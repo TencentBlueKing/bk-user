@@ -38,7 +38,6 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
-    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -280,20 +279,20 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
                 _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
             )
 
-        identify_info = LocalDataSourceIdentityInfo.objects.get(user=user)
         slz = DataSourceUserPasswordResetInputSLZ(
             data=request.data,
             context={
                 "plugin_config": plugin_config,
                 "data_source_user_id": user.id,
-                "current_password": identify_info.password,
             },
         )
         slz.is_valid(raise_exception=True)
         raw_password = slz.validated_data["password"]
 
-        DataSourceUserHandler.update_user_password(
-            password=raw_password, operator=request.user.username, user=user, identify_info=identify_info
+        DataSourceUserHandler.update_password(
+            data_source_user=user,
+            password=raw_password,
+            operator=request.user.username,
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
