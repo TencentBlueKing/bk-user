@@ -18,7 +18,7 @@ class DepartmentProfileRelationListInputSLZ(serializers.Serializer):
 class DepartmentProfileRelationListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="关联 ID")
     department_id = serializers.IntegerField(help_text="租户部门 ID")
-    user_id = serializers.CharField(help_text="租户用户 ID")
+    profile_id = serializers.CharField(help_text="租户用户 ID")
 
 
 class ProfileLeaderRelationListInputSLZ(serializers.Serializer):

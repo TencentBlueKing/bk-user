@@ -48,7 +48,7 @@ class DepartmentProfileRelationListApi(OpenApiAccessControlMixin, generics.ListA
         """分页获取部门用户关系数据，无缓存"""
         relations = self._convert(
             [
-                {"id": rel.id, "department_id": rel.department_id, "user_id": rel.user_id}
+                {"id": rel.id, "department_id": rel.department_id, "profile_id": rel.user_id}
                 for rel in self.paginate_queryset(self.get_queryset())
             ]
         )
@@ -62,7 +62,10 @@ class DepartmentProfileRelationListApi(OpenApiAccessControlMixin, generics.ListA
             return Response(relations)
 
         relations = self._convert(
-            [{"id": rel.id, "department_id": rel.department_id, "user_id": rel.user_id} for rel in self.get_queryset()]
+            [
+                {"id": rel.id, "department_id": rel.department_id, "profile_id": rel.user_id}
+                for rel in self.get_queryset()
+            ]
         )
         cache.set(self.cache_key, relations, timeout=self.cache_timeout)
         return Response(relations)
@@ -71,7 +74,7 @@ class DepartmentProfileRelationListApi(OpenApiAccessControlMixin, generics.ListA
         """将数据源部门 ID / 数据源用户 ID 转换成租户部门 ID / 租户用户 ID"""
         user_id_map = dict(
             TenantUser.objects.filter(
-                data_source_user_id__in=[rel["user_id"] for rel in data_source_dept_user_relations],
+                data_source_user_id__in=[rel["profile_id"] for rel in data_source_dept_user_relations],
             ).values_list("data_source_user_id", "id")
         )
         dept_id_map = dict(
@@ -83,10 +86,10 @@ class DepartmentProfileRelationListApi(OpenApiAccessControlMixin, generics.ListA
             {
                 "id": rel["id"],
                 "department_id": dept_id_map[rel["department_id"]],
-                "user_id": user_id_map[rel["user_id"]],
+                "profile_id": user_id_map[rel["profile_id"]],
             }
             for rel in data_source_dept_user_relations
-            if rel["department_id"] in dept_id_map and rel["user_id"] in user_id_map
+            if rel["department_id"] in dept_id_map and rel["profile_id"] in user_id_map
         ]
 
 
