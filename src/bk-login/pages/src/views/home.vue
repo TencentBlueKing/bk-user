@@ -1,7 +1,7 @@
 <template>
   <bk-form form-type="vertical" v-bkloading="{ loading }">
     <section v-if="!hasStorage && !loading">
-      <h1 class="login-header">请选择登录租户</h1>
+      <h1 class="login-header">请选择租户</h1>
 
       <bk-form-item>
         <div style="display: flex;" v-if="!tenantVisible">
@@ -62,7 +62,7 @@
           style="width: 100%"
           :disabled="!tenant"
           @click="confirmTenant">
-          确认并登录
+          确认
         </bk-button>
       </bk-form-item>
     </section>
