@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+import operator
 from datetime import timedelta
 from functools import reduce
 
@@ -43,7 +44,6 @@ def notify_expiring_tenant_users(tenant_id: str):
     """对即将过期的租户用户发送通知"""
     logger.info("[celery] receive task: notify_expiring_tenant_users, tenant_id is %s", tenant_id)
 
-    time_now = timezone.now()
     cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=tenant_id)
     if not cfg.remind_before_expire:
         logger.warning("tenant %s didn't set remind before expire config, skip notify...", tenant_id)
@@ -51,15 +51,16 @@ def notify_expiring_tenant_users(tenant_id: str):
 
     tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)
 
+    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     # 将要过期提醒，支持配置多值，对应 1/7/15 天等
     expired_date_filters = []
     for remain_days in cfg.remind_before_expire:
-        expired_at = time_now + timedelta(days=int(remain_days))
+        expired_at = midnight + timedelta(days=int(remain_days))
         expired_date_filters.append(
             Q(account_expired_at__gt=expired_at - timedelta(1), account_expired_at__lte=expired_at)
         )
 
-    tenant_users = tenant_users.filter(reduce(lambda x, y: x | y, expired_date_filters))
+    tenant_users = tenant_users.filter(reduce(operator.or_, expired_date_filters))
     if not tenant_users.exists():
         logger.info("tenant %s not tenant user need expiring notification, skip notify...", tenant_id)
         return
@@ -82,14 +83,16 @@ def notify_expired_tenant_users(tenant_id: str):
     """对当天过期的租户用户发送通知"""
     logger.info("[celery] receive task: notify_expired_tenant_users, tenant_id is %s", tenant_id)
 
-    time_now = timezone.now()
+    # Q：为什么不使用 timezone.now 而是要转换成 midnight?
+    # A: 相关讨论：https://github.com/TencentBlueKing/bk-user/pull/1504#discussion_r1438059142
+    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     # Q：为什么不使用 account_expired_at__date=time_now.date() 的方式？
     # A：在 USE_TZ == True 的情况下，查询的 SQL 中会使用 CONVERT_TZ 对时间进行转换，
     #    该转换要求 DB 中有配置对应的时区（如 UTC，GMT，Asia/Shanghai 等）
     #    但是 MySQL 中默认是只有 SYSTEM 时区的，转换会失败（NULL），导致查询不到任何有效值
     #    ref: https://docs.djangoproject.com/en/dev/ref/models/querysets/#date
     tenant_users = TenantUser.objects.filter(
-        tenant_id=tenant_id, account_expired_at__gt=time_now - timedelta(1), account_expired_at__lte=time_now
+        tenant_id=tenant_id, account_expired_at__gt=midnight - timedelta(1), account_expired_at__lte=midnight
     )
     if not tenant_users.exists():
         logger.info("tenant %s not tenant user expired today, skip notify...", tenant_id)

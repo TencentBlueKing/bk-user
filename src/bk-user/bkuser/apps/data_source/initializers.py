@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from django.utils import timezone
 
@@ -60,9 +60,9 @@ class LocalDataSourceIdentityInfoInitializer:
             self.plugin_cfg.password_initial,  # type: ignore
         )
 
-    def initialize(self, users: Optional[List[DataSourceUser]] = None) -> Tuple[List[DataSourceUser], Dict[int, str]]:
+    def initialize(self) -> Tuple[List[DataSourceUser], Dict[int, str]]:
         """
-        初始化指定用户的身份信息，若没有指定，则初始化该数据源所有没有初始化过的
+        初始化该数据源所有没有初始化过账密信息的用户
 
         :returns: (数据源用户列表, {user_id: password})
         """
@@ -73,12 +73,9 @@ class LocalDataSourceIdentityInfoInitializer:
             data_source=self.data_source,
         ).values_list("user_id", flat=True)
 
-        if users:
-            waiting_init_users = [u for u in users if u.id not in exists_info_user_ids]
-        else:
-            waiting_init_users = DataSourceUser.objects.filter(
-                data_source=self.data_source,
-            ).exclude(id__in=exists_info_user_ids)
+        waiting_init_users = DataSourceUser.objects.filter(
+            data_source=self.data_source,
+        ).exclude(id__in=exists_info_user_ids)
 
         if not waiting_init_users:
             logger.warning("not users need initialize, skip...")

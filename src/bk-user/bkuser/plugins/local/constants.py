@@ -61,4 +61,4 @@ class NotificationScene(str, StructuredEnum):
     USER_INITIALIZE = EnumField("user_initialize", label=_("用户初始化"))
     RESET_PASSWORD = EnumField("reset_password", label=_("重置密码"))
     PASSWORD_EXPIRING = EnumField("password_expiring", label=_("密码即将过期"))
-    PASSWORD_EXPIRED = EnumField("password_expired", label=_("密码过期"))
+    PASSWORD_EXPIRED = EnumField("password_expired", label=_("密码已过期"))

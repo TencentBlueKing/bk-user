@@ -33,7 +33,7 @@ def send_sms(receiver: str, content: str):
     """
     发送短信
 
-    :param receiver: 接收者租户用户 ID（用户管理理论上没有向多个用户发送相同邮件的需求）
+    :param receiver: 接收者租户用户 ID（用户管理理论上没有向多个用户发送相同短信的需求）
     :param content: 短信内容
     """
     url_path = "/api/c/compapi/cmsi/send_sms/"

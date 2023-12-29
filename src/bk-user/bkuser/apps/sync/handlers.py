@@ -24,7 +24,6 @@ from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
 from bkuser.apps.sync.signals import post_sync_data_source, post_sync_tenant
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.tenant.models import TenantUser
 
 logger = logging.getLogger(__name__)
 
@@ -59,17 +58,6 @@ def sync_identity_infos_and_notify_after_modify_data_source(sender, instance: Da
         return
 
     transaction.on_commit(lambda: initialize_identity_info_and_send_notification.delay(instance.id))
-
-
-@receiver(post_save, sender=TenantUser)
-def initialize_identity_info_and_notify(sender, instance: TenantUser, created: bool, **kwargs):
-    """在创建完租户用户后，需要初始化账密信息，并发送通知"""
-    if created:
-        transaction.on_commit(
-            lambda: initialize_identity_info_and_send_notification.delay(
-                instance.data_source_id, instance.data_source_user.id
-            )
-        )
 
 
 @receiver(post_save, sender=DataSource)

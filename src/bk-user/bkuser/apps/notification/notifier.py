@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class NotificationTmplsGetter:
     """根据指定的不同场景获取通知模板"""
 
-    def get(self, scene: NotificationScene, **kwargs) -> List[NotificationTemplate]:
+    def get(self, scene: NotificationScene, **scene_kwargs) -> List[NotificationTemplate]:
         """获取指定的通知模板"""
         # 租户管理员重置密码使用的是固定模板
         if scene == NotificationScene.MANAGER_RESET_PASSWORD:
@@ -40,7 +40,7 @@ class NotificationTmplsGetter:
             NotificationScene.TENANT_USER_EXPIRING,
             NotificationScene.TENANT_USER_EXPIRED,
         ]:
-            return self._get_from_validity_period_config(scene, **kwargs)
+            return self._get_from_validity_period_config(scene, **scene_kwargs)
 
         # 从数据源插件配置中获取通知模板
         if scene in (
@@ -49,7 +49,7 @@ class NotificationTmplsGetter:
             NotificationScene.PASSWORD_EXPIRING,
             NotificationScene.PASSWORD_EXPIRED,
         ):
-            return self._get_from_data_source_plugin_config(scene, **kwargs)
+            return self._get_from_data_source_plugin_cfg(scene, **scene_kwargs)
 
         raise ValueError(_("通知场景 {} 未被支持".format(scene)))
 
@@ -69,10 +69,10 @@ class NotificationTmplsGetter:
             )
         ]
 
-    def _get_from_validity_period_config(self, scene: NotificationScene, **kwargs) -> List[NotificationTemplate]:
+    def _get_from_validity_period_config(self, scene: NotificationScene, **scene_kwargs) -> List[NotificationTemplate]:
         """从租户有效期配置中获取通知模板"""
-        assert "tenant_id" in kwargs
-        cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=kwargs["tenant_id"])
+        assert "tenant_id" in scene_kwargs
+        cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=scene_kwargs["tenant_id"])
 
         # 返回场景匹配，且被声明启用的模板列表
         return [
@@ -86,10 +86,10 @@ class NotificationTmplsGetter:
             if tmpl["scene"] == scene and tmpl["method"] in cfg.enabled_notification_methods
         ]
 
-    def _get_from_data_source_plugin_config(self, scene: NotificationScene, **kwargs) -> List[NotificationTemplate]:
+    def _get_from_data_source_plugin_cfg(self, scene: NotificationScene, **scene_kwargs) -> List[NotificationTemplate]:
         """从数据源插件配置中获取通知模板"""
-        assert "data_source_id" in kwargs
-        data_source = DataSource.objects.get(id=kwargs["data_source_id"])
+        assert "data_source_id" in scene_kwargs
+        data_source = DataSource.objects.get(id=scene_kwargs["data_source_id"])
 
         plugin_cfg = data_source.get_plugin_cfg()
         assert isinstance(plugin_cfg, LocalDataSourcePluginConfig)
@@ -193,14 +193,14 @@ class TmplContextGenerator:
 class TenantUserNotifier:
     """租户用户通知器，用于向一批或某个租户用户发送通知"""
 
-    def __init__(self, scene: NotificationScene, **kwargs):
+    def __init__(self, scene: NotificationScene, **scene_kwargs):
         """
         :param scene: 通知场景
         :param data_source_id: 数据源 ID，当通知模板来源于数据源插件时必须
         :param tenant_id: 租户 ID，当通知模板来源于租户相关配置时必须
         """
         self.scene = scene
-        self.templates = NotificationTmplsGetter().get(scene, **kwargs)
+        self.templates = NotificationTmplsGetter().get(scene, **scene_kwargs)
 
     def batch_send(self, users: List[TenantUser], **kwargs) -> None:
         """
