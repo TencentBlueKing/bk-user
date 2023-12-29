@@ -8,24 +8,18 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import OpenApiAccessControlMixin
+from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.serializers import CategoriesListInputSLZ, CategoriesListOutputSLZ
 from bkuser.apps.data_source.constants import DataSourceStatus, TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import DataSource
 
 
-class CategoriesListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = DataSource.objects.all()
 
-    @swagger_auto_schema(
-        tags=["open_v2.categories"],
-        operation_description="查询目录列表",
-        responses={status.HTTP_200_OK: CategoriesListOutputSLZ(many=True)},
-    )
     def get(self, request, *args, **kwargs):
         slz = CategoriesListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)

@@ -11,13 +11,10 @@ specific language governing permissions and limitations under the License.
 from rest_framework.permissions import IsAuthenticated
 
 from bkuser.apis.open_v2.authentications import ESBAuthentication
+from bkuser.apis.open_v2.renderers import BkLegacyApiJSONRenderer
 
 
-class OpenApiAccessControlMixin:
-    """
-    兼容旧版本 Open API 访问权限控制
-    Note: 继承时，必须添加到第一个父类，否则可能会被其他父类的覆盖
-    """
-
+class LegacyOpenApiCommonMixin:
     authentication_classes = [ESBAuthentication]
     permission_classes = [IsAuthenticated]
+    renderer_classes = [BkLegacyApiJSONRenderer]

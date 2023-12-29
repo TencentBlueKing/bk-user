@@ -10,11 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Dict, List
 
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import OpenApiAccessControlMixin
+from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.serializers import (
     DepartmentProfileRelationListInputSLZ,
     DepartmentProfileRelationListOutputSLZ,
@@ -26,16 +25,11 @@ from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
-class DepartmentProfileRelationListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class DepartmentProfileRelationListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = DataSourceDepartmentUserRelation.objects.only("id", "department_id", "user_id").all()
     cache_key = "list_department_profile_relations"
     cache_timeout = 60 * 10
 
-    @swagger_auto_schema(
-        tags=["open_v2.edges"],
-        operation_description="部门与用户关系表",
-        responses={status.HTTP_200_OK: DepartmentProfileRelationListOutputSLZ(many=True)},
-    )
     def get(self, request, *args, **kwargs):
         slz = DepartmentProfileRelationListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
@@ -93,16 +87,11 @@ class DepartmentProfileRelationListApi(OpenApiAccessControlMixin, generics.ListA
         ]
 
 
-class ProfileLeaderRelationListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class ProfileLeaderRelationListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = DataSourceUserLeaderRelation.objects.only("id", "user_id", "leader_id").all()
     cache_key = "list_profile_leader_relations"
     cache_timeout = 60 * 10
 
-    @swagger_auto_schema(
-        tags=["open_v2.edges"],
-        operation_description="用户与 Leader 关系表",
-        responses={status.HTTP_200_OK: ProfileLeaderRelationListOutputSLZ(many=True)},
-    )
     def get(self, request, *args, **kwargs):
         slz = ProfileLeaderRelationListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
