@@ -11,6 +11,6 @@ specific language governing permissions and limitations under the License.
 from django.apps import AppConfig
 
 
-class DataSourceConfig(AppConfig):
+class NotificationConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.data_source"
+    name = "bkuser.apps.notification"

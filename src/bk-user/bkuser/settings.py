@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "bkuser.apps.natural_user",
     "bkuser.apps.permission",
     "bkuser.apps.global_setting",
+    "bkuser.apps.notification",
 ]
 
 MIDDLEWARE = [
@@ -239,11 +240,11 @@ CELERY_RESULT_SERIALIZER = "json"
 # 内置的周期任务
 CELERYBEAT_SCHEDULE = {
     "periodic_notify_expiring_tenant_users": {
-        "task": "bkuser.apps.tenant.tasks.notify_expiring_tenant_user",
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_expiring_tenant_users_task",
         "schedule": crontab(minute="0", hour="10"),  # 每天10时执行
     },
     "periodic_notify_expired_tenant_users": {
-        "task": "bkuser.apps.tenant.tasks.notify_expired_tenant_user",
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_expired_tenant_users_task",
         "schedule": crontab(minute="0", hour="10"),  # 每天10时执行
     },
 }

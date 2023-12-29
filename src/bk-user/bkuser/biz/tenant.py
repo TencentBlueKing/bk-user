@@ -26,6 +26,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.data_source.utils import gen_tenant_user_id
+from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
 from bkuser.apps.tenant.models import (
     Tenant,
@@ -323,6 +324,9 @@ class TenantHandler:
 
             if tenant_managers:
                 TenantManager.objects.bulk_create(tenant_managers)
+
+        # 对租户管理员进行账密信息初始化 & 发送密码通知
+        initialize_identity_info_and_send_notification.delay(data_source.id)
 
         return tenant_info.id
 
