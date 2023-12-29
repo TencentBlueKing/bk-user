@@ -324,7 +324,7 @@ class DataSourceUserPasswordResetInputSLZ(serializers.Serializer):
 
         return validate_user_password(
             password=password,
-            data_source_user_id=self.context["data_source_user_id"],
+            data_source_user_id=data_source_user_id,
             plugin_config=self.context["plugin_config"],
         )
 
