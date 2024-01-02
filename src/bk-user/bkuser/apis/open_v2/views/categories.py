@@ -12,12 +12,14 @@ from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers import CategoriesListInputSLZ, CategoriesListOutputSLZ
 from bkuser.apps.data_source.constants import DataSourceStatus, TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import DataSource
 
 
 class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+    pagination_class = LegacyOpenApiPagination
     queryset = DataSource.objects.all()
 
     def get(self, request, *args, **kwargs):

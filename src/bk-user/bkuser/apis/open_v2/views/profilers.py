@@ -13,12 +13,13 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apps.tenant.models import TenantUser
 
 
 class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
-    pagination_class = None
+    pagination_class = LegacyOpenApiPagination
 
     @swagger_auto_schema(
         tags=["open_v2.profiles"],
@@ -43,7 +44,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
 
 class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
-    pagination_class = None
+    pagination_class = LegacyOpenApiPagination
 
     @swagger_auto_schema(
         tags=["open_v2.profiles"],
