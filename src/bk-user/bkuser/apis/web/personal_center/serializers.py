@@ -144,6 +144,8 @@ class TenantUserExtrasUpdateInputSLZ(serializers.Serializer):
         custom_fields = TenantUserCustomField.objects.filter(
             tenant_id=self.context["tenant_id"],
             personal_center_editable=True,
+            # 允许仅更新部分 Extras 字段
+            name__in=extras.keys(),
         )
         return validate_user_extras(
             extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]

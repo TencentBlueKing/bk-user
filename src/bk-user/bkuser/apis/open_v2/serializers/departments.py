@@ -8,13 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.permissions import IsAuthenticated
-
-from bkuser.apis.open_v2.authentications import ESBAuthentication
-from bkuser.apis.open_v2.renderers import BkLegacyApiJSONRenderer
-
-
-class LegacyOpenApiCommonMixin:
-    authentication_classes = [ESBAuthentication]
-    permission_classes = [IsAuthenticated]
-    renderer_classes = [BkLegacyApiJSONRenderer]

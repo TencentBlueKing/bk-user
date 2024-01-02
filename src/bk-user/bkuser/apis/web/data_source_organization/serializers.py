@@ -108,7 +108,7 @@ def validate_user_extras(
 ) -> Dict[str, Any]:
     """校验 extras 中的键，值是否合法"""
     if not custom_fields.exists() and extras:
-        raise ValidationError(_("当前租户未设置租户用户自定义字段"))
+        raise ValidationError(_("当前用户无可编辑的租户自定义字段"))
 
     if set(extras.keys()) != {field.name for field in custom_fields}:
         # Q：这里为什么不抛出具体的错误字段信息

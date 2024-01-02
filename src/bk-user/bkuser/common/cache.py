@@ -31,6 +31,8 @@ class CacheKeyPrefixEnum(str, StructuredEnum):
     AUTO = "auto"
     # 分布式锁
     LOCK = "lock"
+    # API 响应结果数据
+    V2_API = "v2_api"
 
 
 def _default_key_function(*args, **kwargs):

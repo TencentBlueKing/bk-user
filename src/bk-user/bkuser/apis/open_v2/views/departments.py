@@ -12,13 +12,14 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import OpenApiAccessControlMixin
+from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apps.tenant.models import TenantDepartment
 
 
-class DepartmentListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = TenantDepartment.objects.all()
-    pagination_class = None
+    pagination_class = LegacyOpenApiPagination
 
     @swagger_auto_schema(
         tags=["open_v2.departments"],
@@ -29,8 +30,9 @@ class DepartmentListApi(OpenApiAccessControlMixin, generics.ListAPIView):
         return Response("TODO")
 
 
-class DepartmentRetrieveApi(OpenApiAccessControlMixin, generics.RetrieveAPIView):
+class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
     queryset = TenantDepartment.objects.all()
+    lookup_field = "id"
 
     @swagger_auto_schema(
         tags=["open_v2.departments"],
@@ -41,9 +43,9 @@ class DepartmentRetrieveApi(OpenApiAccessControlMixin, generics.RetrieveAPIView)
         return Response("TODO")
 
 
-class DepartmentChildrenListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = TenantDepartment.objects.all()
-    pagination_class = None
+    pagination_class = LegacyOpenApiPagination
 
     @swagger_auto_schema(
         tags=["open_v2.departments"],
@@ -54,9 +56,9 @@ class DepartmentChildrenListApi(OpenApiAccessControlMixin, generics.ListAPIView)
         return Response("TODO")
 
 
-class ProfileDepartmentListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = TenantDepartment.objects.all()
-    pagination_class = None
+    pagination_class = LegacyOpenApiPagination
 
     @swagger_auto_schema(
         tags=["open_v2.departments"],

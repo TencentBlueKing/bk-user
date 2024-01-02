@@ -8,13 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from rest_framework.permissions import IsAuthenticated
-
-from bkuser.apis.open_v2.authentications import ESBAuthentication
-from bkuser.apis.open_v2.renderers import BkLegacyApiJSONRenderer
+from bkuser.common.pagination import CustomPageNumberPagination
 
 
-class LegacyOpenApiCommonMixin:
-    authentication_classes = [ESBAuthentication]
-    permission_classes = [IsAuthenticated]
-    renderer_classes = [BkLegacyApiJSONRenderer]
+class LegacyOpenApiPagination(CustomPageNumberPagination):
+    # 兼容 API 单页默认返回条数与老版本保持一致
+    page_size = 50
+    page_size_query_param = "page_size"
+    # 兼容 API 单页返回条数上限与老版本默认值保持一致
+    max_page_size = 2000

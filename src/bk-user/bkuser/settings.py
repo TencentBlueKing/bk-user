@@ -152,6 +152,9 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["bkuser.common.renderers.BkStandardApiJSONRenderer"],
     "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
 }
+# 单页最大返回条数
+MAX_PAGE_SIZE = env.int("MAX_PAGE_SIZE", 500)
+
 SWAGGER_ENABLE = env.bool("SWAGGER_ENABLE", default=False)
 SWAGGER_SETTINGS = {
     "DEFAULT_AUTO_SCHEMA_CLASS": "bkuser.common.swagger.BkStandardResponseSwaggerAutoSchema",

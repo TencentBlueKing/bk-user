@@ -12,13 +12,14 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from bkuser.apis.open_v2.mixins import OpenApiAccessControlMixin
+from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
+from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apps.tenant.models import TenantUser
 
 
-class ProfileListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
-    pagination_class = None
+    pagination_class = LegacyOpenApiPagination
 
     @swagger_auto_schema(
         tags=["open_v2.profiles"],
@@ -29,7 +30,7 @@ class ProfileListApi(OpenApiAccessControlMixin, generics.ListAPIView):
         return Response("TODO")
 
 
-class ProfileRetrieveApi(OpenApiAccessControlMixin, generics.RetrieveAPIView):
+class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
     queryset = TenantUser.objects.all()
 
     @swagger_auto_schema(
@@ -41,9 +42,9 @@ class ProfileRetrieveApi(OpenApiAccessControlMixin, generics.RetrieveAPIView):
         return Response("TODO")
 
 
-class DepartmentProfileListApi(OpenApiAccessControlMixin, generics.ListAPIView):
+class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     queryset = TenantUser.objects.all()
-    pagination_class = None
+    pagination_class = LegacyOpenApiPagination
 
     @swagger_auto_schema(
         tags=["open_v2.profiles"],
