@@ -78,37 +78,29 @@
             <bk-form-item class="w-[200px]" property="id" required error-display-type="tooltips">
               <bk-input
                 v-model="item.id"
-                placeholder="请输入ID" />
+                placeholder="请输入ID"
+                @change="handleChange" />
             </bk-form-item>
             <bk-form-item class="w-[184px]" property="value" required error-display-type="tooltips">
               <bk-input
-                type="text"
-                class="select-text"
                 v-model="item.value"
                 placeholder="请输入值"
                 @change="handleChange"
               />
             </bk-form-item>
             <div class="input-container">
-              <label
+              <bk-radio-group
                 v-if="fieldsInfor.data_type === 'enum'"
-                class="king-radio"
-              >
-                <input
-                  name="eg"
-                  type="radio"
-                  :value="index"
-                  v-model="fieldsInfor.default"
-                />
-              </label>
-              <label v-else class="king-checkbox">
-                <input
-                  name="egCheckbox"
-                  type="checkbox"
-                  :value="index"
-                  v-model="fieldsInfor.default"
-                />
-              </label>
+                :model-value="fieldsInfor.default"
+                @change="changeRadio(index)">
+                <bk-radio :label="index" :model-value="index" />
+              </bk-radio-group>
+              <bk-checkbox-group
+                v-else
+                :model-value="fieldsInfor.default"
+                @change="changeCheckbox(index)">
+                <bk-checkbox :label="index" :model-value="index" />
+              </bk-checkbox-group>
             </div>
             <i
               :class="['user-icon icon-delete', { 'forbid': fieldsInfor.options.length <= 1 }]"
@@ -137,7 +129,8 @@
       </bk-checkbox>
       <bk-checkbox
         :value="fieldsInfor.manager_editable"
-        v-model="fieldsInfor.manager_editable">
+        v-model="fieldsInfor.manager_editable"
+        :disabled="isEdit">
         <span v-bk-tooltips="{ content: '该字段在用户信息里可编辑' }">管理员可编辑</span>
       </bk-checkbox>
     </div>
@@ -153,7 +146,8 @@
           <bk-checkbox
             v-if="fieldsInfor.personal_center_visible"
             class="ml-[40px]"
-            v-model="fieldsInfor.personal_center_editable">
+            v-model="fieldsInfor.personal_center_editable"
+            :disabled="isEdit">
             个人中心可编辑
           </bk-checkbox>
         </div>
@@ -407,7 +401,7 @@ const changeEnumValue = async () => {
 
     const findIndexById = id => fieldsInfor.options.findIndex(item => item.id === id);
     fieldsInfor.default = fieldsInfor.data_type === 'enum' ? findIndexById(fieldsInfor.default)
-      : fieldsInfor.data_type === 'multi_enum' ? fieldsInfor.default.map(findIndexById)
+      : fieldsInfor.data_type === 'multi_enum' ? fieldsInfor.default?.map(findIndexById)
         : fieldsInfor.default;
   } catch (error) {
     console.warn(error);
@@ -465,7 +459,18 @@ const addEg = () => {
   };
   fieldsInfor.options.push(param);
 };
+// 变更枚举值
+const changeRadio = (val) => {
+  fieldsInfor.default = val;
+};
 
+const changeCheckbox = (val) => {
+  if (fieldsInfor.default.includes(val)) {
+    fieldsInfor.default = fieldsInfor.default.filter(item => item !== val);
+  } else {
+    fieldsInfor.default.push(val);
+  }
+};
 // 表单校验
 const submitInfor = async () => {
   try {
@@ -650,30 +655,25 @@ const blurValue = () => findFirstDuplicate('value');
       .enum-form {
         display: flex;
         padding: 0;
+        align-items: center;
+        margin-bottom: 12px;
 
         .bk-form-item {
-          margin: 0 12px 12px 0;
+          margin: 0 12px 0 0;
         }
 
-        .input-container {
+        ::v-deep .input-container {
           width: 60px;
-          margin: 0 0 12px 12px;
+          margin-left: 12px;
 
-          .king-radio, .king-checkbox {
-            line-height: 32px;
-
-            input {
-              width: 16px;
-              height: 16px;
-              cursor: pointer;
-            }
+          .bk-checkbox-label, .bk-radio-label {
+            visibility: hidden;
           }
         }
 
         .icon-delete {
           margin-left: 12px;
           font-size: 16px;
-          line-height: 24px;
           color: #FF5656;
           cursor: pointer;
 

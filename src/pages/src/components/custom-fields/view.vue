@@ -6,14 +6,16 @@
       :key="index">
       <span class="details-content-key">{{ item.display_name }}：</span>
       <bk-overflow-title class="details-content-value" type="tips">
-        {{ ConvertVal(item) }}
+        {{ customFieldsMap(item) }}
       </bk-overflow-title>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref } from 'vue';
+import { defineProps } from 'vue';
+
+import { customFieldsMap } from '@/utils';
 
 defineProps({
   extras: {
@@ -21,10 +23,6 @@ defineProps({
     default: () => ([]),
   },
 });
-
-const ConvertVal = (item: any) => {
-  return item.value === '' ? '--' : (item.data_type === 'multi_enum' ? item.value?.join(' ; ') : item.value);
-};
 </script>
 
 <style lang="less" scoped>
