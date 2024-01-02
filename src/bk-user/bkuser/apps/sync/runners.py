@@ -16,7 +16,7 @@ from django.db import transaction
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
-from bkuser.apps.sync.signals import post_sync_data_source
+from bkuser.apps.sync.signals import post_sync_data_source, post_sync_tenant
 from bkuser.apps.sync.syncers import (
     DataSourceDepartmentSyncer,
     DataSourceUserSyncer,
@@ -99,6 +99,8 @@ class TenantSyncTaskRunner:
             self._sync_departments(ctx)
             self._sync_users(ctx)
 
+        self._send_signal()
+
     def _sync_departments(self, ctx: TenantSyncTaskContext):
         """同步部门信息"""
         TenantDepartmentSyncer(ctx, self.data_source, self.tenant).sync()
@@ -106,3 +108,7 @@ class TenantSyncTaskRunner:
     def _sync_users(self, ctx: TenantSyncTaskContext):
         """同步用户信息"""
         TenantUserSyncer(ctx, self.data_source, self.tenant).sync()
+
+    def _send_signal(self):
+        """发送租户同步完成信号，触发后续流程"""
+        post_sync_tenant.send(sender=self.__class__, tenant=self.tenant, data_source=self.data_source)

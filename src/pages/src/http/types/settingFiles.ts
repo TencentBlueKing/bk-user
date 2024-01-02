@@ -19,6 +19,12 @@ export interface PutCustomFieldsParams {
   required: boolean,
   default: {},
   options: {},
+  data_type: string,
+  unique: string,
+  personal_center_visible: boolean,
+  personal_center_editable: boolean,
+  manager_editable: boolean,
+  mapping: {},
 }
 
 /**

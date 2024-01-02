@@ -29,3 +29,13 @@ export const patchUsersPhone = (params: PatchUserPhoneParams) => http.put(`/api/
  * 租户用户更新头像
  */
 export const patchTenantUsersLogo = (params: PatchUserLogoParams) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/logo/`, params);
+
+/**
+ * 个人中心-用户可见字段列表
+ */
+export const getPersonalCenterUserVisibleFields = (id: string) => http.get(`/api/v1/web/personal-center/tenant-users/${id}/fields/`);
+
+/**
+ * 修改用户自定义字段
+ */
+export const putPersonalCenterUserExtrasFields = (params: any) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/extras/`, params);

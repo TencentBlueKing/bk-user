@@ -65,7 +65,7 @@
     </div>
     <!-- 添加字段的侧边栏 -->
     <bk-sideslider
-      :width="520"
+      :width="640"
       :is-show="fieldData.isShow"
       :title="fieldData.title"
       :before-close="handleBeforeClose"
@@ -74,7 +74,8 @@
         :set-type="fieldData.setType"
         :current-editor-data="fieldData.currentEditorData"
         @submitData="submitData"
-        @handleCancel="handleCancel" />
+        @handleCancel="handleCancel"
+        @updateFields="getFieldsList" />
     </bk-sideslider>
   </bk-loading>
 </template>
@@ -116,6 +117,8 @@ onMounted(() => {
 const getFieldsList = async () => {
   try {
     isLoading.value = true;
+    fieldData.isTableDataEmpty = false;
+    fieldData.isTableDataError = false;
     tableData.value = [];
     const res = await getFields();
     const { builtin_fields: builtinFields, custom_fields: customFields } = res.data || {};
@@ -125,8 +128,12 @@ const getFieldsList = async () => {
         tableData.value.push(item);
       });
     });
+    if (tableData.value.length === 0) {
+      fieldData.isTableDataEmpty = true;
+    }
   } catch (e) {
     console.warn(e);
+    fieldData.isTableDataError = true;
   } finally {
     isLoading.value = false;
   }
@@ -156,17 +163,20 @@ const addField = () => {
   fieldData.title = '添加字段';
   fieldData.setType = 'add';
   fieldData.currentEditorData = {
-    name: '',
-    display_name: '',
-    data_type: 'string',
-    required: false,
-    builtin: false,
-    default: 0,
+    name: '', // 英文标识
+    display_name: '', // 字段名称
+    data_type: 'string', // 字段类型
+    required: false, // 是否必填
+    builtin: false, // 是否内置字段
+    default: 0, // 默认值
     options: [
       { id: '', value: '' },
       { id: '', value: '' },
-    ],
-    unique: false,
+    ], // 枚举字段选项设置
+    unique: false, // 是否唯一
+    personal_center_visible: false, // 是否在个人中心可见
+    personal_center_editable: false, // 是否在个人中心可编辑
+    manager_editable: false, // 租户管理员是否可编辑
   };
   fieldData.isShow = true;
 };

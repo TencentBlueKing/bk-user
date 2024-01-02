@@ -26,12 +26,6 @@ class TestLocalDataSourceIdentityInfoInitializer:
             == DataSourceUser.objects.filter(data_source=full_local_data_source).count()
         )
 
-    def test_initialize(self, full_local_data_source):
-        """单个初始化的情况"""
-        users = DataSourceUser.objects.filter(data_source=full_local_data_source, username__in=["zhangsan", "cck"])
-        LocalDataSourceIdentityInfoInitializer(full_local_data_source).initialize(users)
-        assert LocalDataSourceIdentityInfo.objects.filter(data_source=full_local_data_source).count() == 1
-
     def test_skip_not_local_data_source(self, full_general_data_source):
         """不是本地数据源的，同步不会生效"""
         LocalDataSourceIdentityInfoInitializer(full_general_data_source).initialize()

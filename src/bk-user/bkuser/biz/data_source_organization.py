@@ -21,10 +21,13 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
+    DataSourceUserDeprecatedPasswordRecord,
     DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
+from bkuser.common.hashers import check_password, make_password
 
 
 class DataSourceUserInfo(BaseModel):
@@ -178,6 +181,35 @@ class DataSourceUserHandler:
 
             # 更新用户-上级关系
             DataSourceUserHandler.update_user_leader_relations(user=user, leader_ids=relation_info.leader_ids)
+
+    @staticmethod
+    def update_password(
+        data_source_user: DataSourceUser,
+        password: str,
+        operator: str,
+    ):
+        """
+        更新某个用户的密码
+        """
+        identify_info = LocalDataSourceIdentityInfo.objects.get(user=data_source_user)
+        deprecated_password = identify_info.password
+
+        with transaction.atomic():
+            identify_info.password = make_password(password)
+            identify_info.password_updated_at = timezone.now()
+            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
+
+            DataSourceUserDeprecatedPasswordRecord.objects.create(
+                user=data_source_user, password=deprecated_password, operator=operator
+            )
+
+    @staticmethod
+    def check_password(data_source_user_id: int, raw_password: str) -> bool:
+        """
+        检查某个用户的密码
+        """
+        identify_info = LocalDataSourceIdentityInfo.objects.get(user_id=data_source_user_id)
+        return check_password(raw_password, identify_info.password)
 
 
 class DataSourceDepartmentHandler:

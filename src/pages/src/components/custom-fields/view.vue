@@ -4,7 +4,7 @@
       class="details-content-item"
       v-for="(item, index) in extras"
       :key="index">
-      <span class="details-content-key">{{ item.displayName }}：</span>
+      <span class="details-content-key">{{ item.display_name }}：</span>
       <bk-overflow-title class="details-content-value" type="tips">
         {{ ConvertVal(item) }}
       </bk-overflow-title>
@@ -23,15 +23,7 @@ defineProps({
 });
 
 const ConvertVal = (item: any) => {
-  const demo = ref('');
-  if (item.type === 'multi_enum') {
-    demo.value = item.value?.map(k => k.value).join('；') || '--';
-  } else if (item.type === 'number') {
-    demo.value = item.value;
-  } else {
-    demo.value = item.value || '--';
-  }
-  return demo.value;
+  return item.value === '' ? '--' : (item.data_type === 'multi_enum' ? item.value?.join(' ; ') : item.value);
 };
 </script>
 

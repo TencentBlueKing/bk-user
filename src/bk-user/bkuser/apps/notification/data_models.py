@@ -8,9 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.apps import AppConfig
+from typing import Optional
+
+from pydantic import BaseModel
+
+from bkuser.apps.notification.constants import NotificationMethod
 
 
-class DataSourceConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "bkuser.apps.data_source"
+class NotificationTemplate(BaseModel):
+    """通知模板"""
+
+    method: NotificationMethod
+    # 发送者
+    sender: str
+    # 通知模板标题
+    title: Optional[str] = None
+    # 模板内容
+    content: str
