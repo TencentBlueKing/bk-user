@@ -24,7 +24,7 @@
       <bk-select
         v-else
         v-model="item.default"
-        :clearable="!item.require"
+        :clearable="!item.required"
         :multiple="item.data_type === 'multi_enum'"
         @change="handleChange">
         <bk-option

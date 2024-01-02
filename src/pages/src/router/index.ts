@@ -206,5 +206,10 @@ export default createRouter({
       name: 'personalCenter',
       component: () => import('@/views/personal-center/index.vue'),
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'notFound',
+      component: () => import('@/views/NotFound.vue'),
+    },
   ],
 });

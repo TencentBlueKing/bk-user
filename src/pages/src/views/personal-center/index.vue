@@ -163,7 +163,7 @@
                       </div>
                     </div>
                   </li>
-                  <li>
+                  <li class="mb-[10px]">
                     <span class="key">手机号：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditPhone">
@@ -226,10 +226,69 @@
                   </li>
                 </div>
               </bk-form>
+              <!-- 自定义字段 -->
               <div class="item-flex">
-                <li v-for="(item, index) in currentUserInfo.extras" :key="index">
-                  <bk-overflow-title class="key" type="tips">{{ item.displayName }}：</bk-overflow-title>
-                  <span class="value">{{ ConvertVal(item) }}</span>
+                <li
+                  v-for="(item, index) in currentUserInfo.extras"
+                  :key="index"
+                >
+                  <bk-overflow-title class="key" type="tips">{{ item.display_name }}：</bk-overflow-title>
+                  <div class="value-edit custom-input">
+                    <span v-if="!item.isEdit" class="value">
+                      {{ ConvertVal(item) }}
+                    </span>
+                    <div v-else class="input-list w-[240px]">
+                      <bk-input
+                        v-if="item.data_type === 'string'"
+                        :class="{ 'custom-error': item.error && !item.value }"
+                        v-model="item.value"
+                        :maxlength="64"
+                        @blur="customBlur(item)"
+                        @input="handleInput(item)"
+                      />
+                      <bk-input
+                        v-else-if="item.data_type === 'number'"
+                        :class="{ 'custom-error': item.error && !item.value }"
+                        type="number"
+                        v-model="item.value"
+                        :max="4294967296"
+                        :min="0"
+                        @blur="customBlur(item)"
+                        @change="handleInput(item)"
+                      />
+                      <bk-select
+                        v-else
+                        :class="{ 'custom-select': item.error && (item.value === '' || !item.value.length) }"
+                        v-model="item.value"
+                        :clearable="item.data_type === 'multi_enum'"
+                        :multiple="item.data_type === 'multi_enum'"
+                        @blur="customBlur(item)"
+                        @change="changeSelect(item, index)"
+                        @clear="clearSelect(item)">
+                        <bk-option
+                          v-for="(option, i) in item.options"
+                          :key="i"
+                          :id="option.id"
+                          :name="option.value">
+                        </bk-option>
+                      </bk-select>
+                      <span class="error-text" v-show="item.error && (!item.value || !item.value.length)">
+                        必填项
+                      </span>
+                    </div>
+                    <i
+                      v-if="item.editable && !item.isEdit"
+                      class="user-icon icon-edit"
+                      @click="editExtra(item, index)" />
+                    <div v-if="item.isEdit" style="line-height: 32px;">
+                      <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeCustomFields(item)">
+                        确定
+                      </bk-button>
+                      <bk-button text theme="primary" @click="cancelCustomFields(item, index)">
+                        取消
+                      </bk-button>
+                    </div>
+                  </div>
                 </li>
               </div>
             </li>
@@ -250,11 +309,12 @@ import { useCustomFields } from '@/hooks/useCustomFields';
 import {
   getCurrentNaturalUser,
   getPersonalCenterUsers,
+  getPersonalCenterUserVisibleFields,
   patchTenantUsersLogo,
   patchUsersEmail,
   patchUsersPhone,
+  putPersonalCenterUserExtrasFields,
 } from '@/http/personalCenterFiles';
-import { getFields } from '@/http/settingFiles';
 import { formatConvert, getBase64 } from '@/utils';
 
 const validate = useValidate();
@@ -276,6 +336,8 @@ const rules = {
   custom_email: [validate.required, validate.email],
 };
 const formRef = ref();
+// 保存修改后的extras数据
+const extrasList = ref([]);
 
 onMounted(() => {
   getNaturalUser();
@@ -292,38 +354,104 @@ const getNaturalUser = () => {
 };
 
 const getCurrentUser = async (id) => {
-  infoLoading.value = true;
-  isEditEmail.value = false;
-  isEditPhone.value = false;
-  currentNaturalUser.value?.tenant_users.forEach((item) => {
-    if (item.id === id) {
-      currentTenantInfo.value = item;
-    }
-  });
-  // 关联账户详情
-  const res = await getPersonalCenterUsers(id);
-  const fieldsRes = await getFields();
-  currentUserInfo.value = res.data;
-  currentUserInfo.value.extras = useCustomFields(currentUserInfo.value?.extras, fieldsRes.data.custom_fields);
-  customEmail.value = res.data.custom_email;
-  customPhone.value = res.data.custom_phone;
-  customPhoneCode.value = res.data.custom_phone_country_code;
-  isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
-  isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
-  infoLoading.value = false;
+  try {
+    infoLoading.value = true;
+    isEditEmail.value = false;
+    isEditPhone.value = false;
+    currentNaturalUser.value?.tenant_users.forEach((item) => {
+      if (item.id === id) {
+        currentTenantInfo.value = item;
+      }
+    });
+    // 关联账户详情
+    const res = await getPersonalCenterUsers(id);
+    currentUserInfo.value = res.data;
+    const fieldsRes = await getPersonalCenterUserVisibleFields(id);
+    currentUserInfo.value.extras = useCustomFields(currentUserInfo.value?.extras, fieldsRes.data.custom_fields);
+    extrasList.value = JSON.parse(JSON.stringify(currentUserInfo.value.extras));
+    customEmail.value = res.data.custom_email;
+    customPhone.value = res.data.custom_phone;
+    customPhoneCode.value = res.data.custom_phone_country_code;
+    isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
+    isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
+  } catch (error) {
+    console.warn(error);
+  } finally {
+    infoLoading.value = false;
+  }
 };
 
 const ConvertVal = (item: any) => {
-  const demo = ref('');
-  if (item.type === 'multi_enum') {
-    demo.value = item.value?.map(k => k.value).join('；') || '--';
-  } else if (item.type === 'number') {
-    demo.value = item.value;
-  } else {
-    demo.value = item.value || '--';
-  }
-  return demo.value;
+  return item.value === '' ? '--' : (item.data_type === 'multi_enum' ? item.value?.join(' ; ') : item.value);
 };
+// 获取当前编辑框焦点
+const editExtra = (item, index) => {
+  item.isEdit = true;
+  if (item.data_type === 'multi_enum' && item.value === '') {
+    item.value = [];
+  }
+  nextTick(() => {
+    const customInput = document.getElementsByClassName('custom-input')[index];
+    const inputElement = customInput.getElementsByTagName('input')?.[0];
+    if (inputElement) {
+      inputElement.addEventListener('blur', () => {
+        customBlur(item);
+      });
+      inputElement.focus();
+    }
+  });
+};
+// 失焦校验
+const customBlur = (item) => {
+  item.error = item.value === '' || (item.data_type === 'multi_enum' && !item.value.length);
+};
+
+const handleInput = (item) => {
+  item.error = false;
+};
+// 改变枚举值
+const changeSelect = (item) => {
+  item.value = item.value;
+  item.error = false;
+};
+
+const clearSelect = (item) => {
+  item.error = true;
+};
+// 提交修改自定义字段
+const changeCustomFields = async (item) => {
+  try {
+    if (item.error) {
+      return;
+    }
+    const params = {
+      id: currentUserInfo.value.id,
+      extras: {
+        [item.name]: item.value,
+      },
+    };
+    await putPersonalCenterUserExtrasFields(params);
+    extrasList.value = JSON.parse(JSON.stringify(currentUserInfo.value.extras));
+    item.isEdit = false;
+  } catch (error) {
+    console.warn(error);
+  }
+};
+// 取消自定义字段修改
+const cancelCustomFields = (item, index) => {
+  item.value = extrasList.value[index]?.value;
+  item.isEdit = false;
+  item.error = false;
+};
+
+watch(() => currentUserInfo.value?.extras, (val) => {
+  if (val.length) {
+    const allFalse = val.every((item) => !item.isEdit);
+    window.changeInput = !(allFalse && isEditEmail.value === false && isEditPhone.value === false);
+  }
+}, {
+  deep: true,
+});
 
 const tagTheme = value => (value ? 'info' : 'warning');
 const tagText = value => (value ? '数据源' : '自定义');
@@ -359,7 +487,7 @@ const changeEmail = async () => {
     custom_email: currentUserInfo.value.custom_email,
   }).then(() => {
     isEditEmail.value = false;
-    window.changeInput = false;
+    isEditFn();
   });
 };
 // 取消编辑邮箱
@@ -367,7 +495,7 @@ const cancelEditEmail = () => {
   currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
   currentUserInfo.value.custom_email = customEmail.value;
   isEditEmail.value = false;
-  window.changeInput = false;
+  isEditFn();
 };
 
 const isEditPhone = ref(false);
@@ -399,6 +527,7 @@ const changePhone = () => {
     custom_phone_country_code: currentUserInfo.value.custom_phone_country_code,
   }).then(() => {
     isEditPhone.value = false;
+    isEditFn();
   });
 };
 // 取消编辑手机号
@@ -408,7 +537,7 @@ const cancelEditPhone = () => {
   currentUserInfo.value.custom_phone_country_code = customPhoneCode.value;
   isEditPhone.value = false;
   telError.value = false;
-  window.changeInput = false;
+  isEditFn();
 };
 // 切换关联账号
 const handleClickItem = async (item) => {
@@ -457,6 +586,12 @@ const handleError = (file) => {
   if (file.size > (2 * 1024 * 1024)) {
     Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
   }
+};
+
+// 是否是编辑状态
+const isEditFn = () => {
+  const allFalse = currentUserInfo.value?.extras.every((item) => !item.isEdit);
+  window.changeInput = !(allFalse && isEditEmail.value === false && isEditPhone.value === false);
 };
 </script>
 
@@ -759,7 +894,9 @@ const handleError = (file) => {
                   }
 
                   .icon-edit {
+                    margin-left: 10px;
                     font-size: 16px;
+                    color: #979BA5;
                     cursor: pointer;
 
                     &:hover {
@@ -787,11 +924,11 @@ const handleError = (file) => {
               display: flex;
               width: 50%;
               font-size: 14px;
-              line-height: 50px;
 
               .key {
                 display: inline-block;
                 width: 120px;
+                line-height: 32px;
                 text-align: right;
 
                 ::v-deep .text-ov {
@@ -799,12 +936,55 @@ const handleError = (file) => {
                 }
               }
 
-              .value {
-                min-width: 600px;
+              .value-edit {
+                display: flex;
+                min-width: 480px;
+                padding-bottom: 18px;
                 overflow: hidden;
                 color: #313238;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+                align-items: center;
+
+                .value {
+                  line-height: 32px;
+                }
+
+                .input-list {
+                  position: relative;
+
+                  .custom-error {
+                    border: 1px solid #ea3636 !important;
+                  }
+
+                  .custom-select {
+                    ::v-deep .bk-input {
+                      border: 1px solid #ea3636 !important;
+                    }
+                  }
+
+                  .error-text {
+                    position: absolute;
+                    top: 32px;
+                    left: 0;
+                    display: inline-block;
+                    padding-top: 4px;
+                    font-size: 12px;
+                    line-height: 1;
+                    color: #ea3636;
+                  }
+                }
+
+                .icon-edit {
+                  margin-left: 10px;
+                  font-size: 16px;
+                  color: #979BA5;
+                  cursor: pointer;
+
+                  &:hover {
+                    color: #3A84FF;
+                  }
+                }
               }
             }
           }

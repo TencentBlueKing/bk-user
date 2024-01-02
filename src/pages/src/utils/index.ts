@@ -97,7 +97,7 @@ export function logoConvert(value: string) {
 
 // 组织上级转换
 export function formatConvert(value: any) {
-  return value?.map(item => item.name || item.username).join(' ; ') || '--';;
+  return value?.map(item => item.name || item.username).join(' ; ') || '--';
 }
 
 // 数据源启用状态
