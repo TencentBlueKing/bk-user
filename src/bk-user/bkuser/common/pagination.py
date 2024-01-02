@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from collections import OrderedDict
 
+from django.conf import settings
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -22,6 +23,7 @@ class CustomPageNumberPagination(PageNumberPagination):
     """
 
     page_size_query_param = "page_size"
+    max_page_size = settings.MAX_PAGE_SIZE
 
     def _positive_int(self, integer_string, strict=False, cutoff=None):
         """

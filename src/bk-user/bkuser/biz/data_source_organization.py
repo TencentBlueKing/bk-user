@@ -26,6 +26,7 @@ from bkuser.apps.data_source.models import (
     LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.data_source.utils import gen_tenant_user_id
+from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
 from bkuser.common.hashers import check_password, make_password
 
@@ -105,6 +106,9 @@ class DataSourceUserHandler:
                 tenant_user.account_expired_at = timezone.now() + datetime.timedelta(days=cfg.validity_period)
 
             tenant_user.save()
+
+        # 对新增的用户进行账密信息初始化 & 发送密码通知
+        initialize_identity_info_and_send_notification.delay(data_source.id)
 
     @staticmethod
     def update_user_department_relations(user: DataSourceUser, department_ids: List):
