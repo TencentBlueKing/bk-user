@@ -50,4 +50,9 @@ urlpatterns = [
         views.TenantUserFieldListApi.as_view(),
         name="personal_center.tenant_users.fields.list",
     ),
+    path(
+        "tenant-users/<str:id>/password/",
+        views.TenantUserPasswordUpdateApi.as_view(),
+        name="personal_center.tenant_users.password.update",
+    ),
 ]

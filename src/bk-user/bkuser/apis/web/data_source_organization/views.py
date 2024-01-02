@@ -11,9 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import List
 
-from django.db import transaction
 from django.db.models import Q
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -40,8 +38,6 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
-    DataSourceUserDeprecatedPasswordRecord,
-    LocalDataSourceIdentityInfo,
 )
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
@@ -53,7 +49,6 @@ from bkuser.biz.data_source_organization import (
     DataSourceUserRelationInfo,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.hashers import make_password
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
@@ -285,29 +280,21 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
                 _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
             )
 
-        identify_info = LocalDataSourceIdentityInfo.objects.get(user=user)
-        current_password = identify_info.password
         slz = DataSourceUserPasswordResetInputSLZ(
             data=request.data,
             context={
                 "plugin_config": plugin_config,
                 "data_source_user_id": user.id,
-                "current_password": current_password,
             },
         )
         slz.is_valid(raise_exception=True)
         raw_password = slz.validated_data["password"]
 
-        with transaction.atomic():
-            identify_info.password = make_password(raw_password)
-            identify_info.password_updated_at = timezone.now()
-            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
-
-            DataSourceUserDeprecatedPasswordRecord.objects.create(
-                user=user,
-                password=current_password,
-                operator=request.user.username,
-            )
+        DataSourceUserHandler.update_password(
+            data_source_user=user,
+            password=raw_password,
+            operator=request.user.username,
+        )
 
         # 发送新密码通知到用户
         send_reset_password_to_user.delay(user.id, raw_password)

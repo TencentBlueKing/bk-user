@@ -20,8 +20,9 @@ from bkuser.apis.web.data_source_organization.serializers import validate_user_e
 from bkuser.apis.web.organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
+from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.biz.tenant import TenantUserHandler
-from bkuser.biz.validators import validate_logo
+from bkuser.biz.validators import validate_logo, validate_user_password
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -168,3 +169,29 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
     class Meta:
         ref_name = "personal_center.TenantUserFieldOutputSLZ"
+
+
+class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
+    old_password = serializers.CharField(help_text="旧密码", max_length=128)
+    new_password = serializers.CharField(help_text="新密码", max_length=128)
+
+    def validate(self, attrs):
+        old_password = attrs["old_password"]
+        if not DataSourceUserHandler.check_password(
+            raw_password=old_password, data_source_user_id=self.context["data_source_user_id"]
+        ):
+            raise ValidationError(_("原密码校验失败"))
+
+        new_password = attrs["new_password"]
+        data_source_user_id = self.context["data_source_user_id"]
+        # 新密码不可与当前正在使用的密码相同
+        if DataSourceUserHandler.check_password(raw_password=new_password, data_source_user_id=data_source_user_id):
+            raise ValidationError(_("新密码不可与当前密码相同"))
+
+        validate_user_password(
+            password=new_password,
+            data_source_user_id=data_source_user_id,
+            plugin_config=self.context["plugin_config"],
+        )
+
+        return attrs
