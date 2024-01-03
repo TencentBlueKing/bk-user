@@ -8,3 +8,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import List
+
+from rest_framework import serializers
+
+
+class DepartmentRetrieveInputSLZ(serializers.Serializer):
+    fields = serializers.CharField(help_text="需要返回的字段", required=False)
+    with_ancestors = serializers.BooleanField(help_text="是否返回上级部门", default=False)
+    include_disabled = serializers.BooleanField(help_text="是否包含软删除部门", default=False)
+
+    def validate_fields(self, fields: str) -> List[str]:
+        dept_fields = [f.strip() for f in fields.split(",")]
+        allowed_fields = {"id", "name", "extras", "category_id", "parent", "enabled", "level"}
+        if invalid_fields := set(dept_fields) - allowed_fields:
+            raise serializers.ValidationError(f"{invalid_fields} unsupported")
+
+        return dept_fields
