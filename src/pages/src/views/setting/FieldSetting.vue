@@ -42,11 +42,21 @@
             <i :class="fieldStatus(row.unique)"></i>
           </template>
         </bk-table-column>
-        <!-- <bk-table-column prop="builtin" label="是否可编辑">
+        <bk-table-column prop="manager_editable" label="管理员可编辑">
           <template #default="{ row }">
-            <i :class="fieldStatus(!row.builtin)"></i>
+            <i :class="fieldStatus(row.manager_editable)"></i>
           </template>
-        </bk-table-column> -->
+        </bk-table-column>
+        <bk-table-column prop="personal_center_visible" label="个人中心展示">
+          <template #default="{ row }">
+            <i :class="fieldStatus(row.personal_center_visible)"></i>
+          </template>
+        </bk-table-column>
+        <bk-table-column prop="personal_center_editable" label="个人中心可编辑">
+          <template #default="{ row }">
+            <i :class="fieldStatus(row.personal_center_editable)"></i>
+          </template>
+        </bk-table-column>
         <bk-table-column label="操作">
           <template #default="{ row }">
             <span v-bk-tooltips="{ content: '该内置字段，不支持修改', disabled: !row.builtin }">

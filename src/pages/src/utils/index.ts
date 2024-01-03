@@ -1,5 +1,6 @@
 import { Message } from 'bkui-vue';
 import moment from 'moment';
+import { ref } from 'vue';
 
 import abnormalImg from '@/images/abnormal.svg';
 import loadingImg from '@/images/loading.svg';
@@ -296,3 +297,15 @@ export const NOTIFICATION_METHODS = [
   { value: 'email', label: '邮箱', status: true },
   { value: 'sms', label: '短信', status: false },
 ];
+
+// 自定义字段转换
+export function customFieldsMap(item: any) {
+  const fields = ref('');
+  fields.value = item.value === '' ? '--'
+    : item.data_type === 'enum' ? item.options?.find(option => option.id === item.value)?.value
+      : item.data_type === 'multi_enum' ? item.value?.map(key => item.options?.find(option => option.id === key)?.value)
+        .filter(Boolean)
+        .join(' ; ')
+        : item.value;
+  return fields.value;
+};

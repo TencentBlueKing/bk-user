@@ -234,9 +234,9 @@
                 >
                   <bk-overflow-title class="key" type="tips">{{ item.display_name }}：</bk-overflow-title>
                   <div class="value-edit custom-input">
-                    <span v-if="!item.isEdit" class="value">
-                      {{ ConvertVal(item) }}
-                    </span>
+                    <bk-overflow-title v-if="!item.isEdit" class="value" type="tips">
+                      {{ customFieldsMap(item) }}
+                    </bk-overflow-title>
                     <div v-else class="input-list w-[240px]">
                       <bk-input
                         v-if="item.data_type === 'string'"
@@ -315,7 +315,7 @@ import {
   patchUsersPhone,
   putPersonalCenterUserExtrasFields,
 } from '@/http/personalCenterFiles';
-import { formatConvert, getBase64 } from '@/utils';
+import { customFieldsMap, formatConvert, getBase64 } from '@/utils';
 
 const validate = useValidate();
 const editLeaveBefore = inject('editLeaveBefore');
@@ -381,9 +381,6 @@ const getCurrentUser = async (id) => {
   }
 };
 
-const ConvertVal = (item: any) => {
-  return item.value === '' ? '--' : (item.data_type === 'multi_enum' ? item.value?.join(' ; ') : item.value);
-};
 // 获取当前编辑框焦点
 const editExtra = (item, index) => {
   item.isEdit = true;
@@ -446,7 +443,7 @@ const cancelCustomFields = (item, index) => {
 
 watch(() => currentUserInfo.value?.extras, (val) => {
   if (val.length) {
-    const allFalse = val.every((item) => !item.isEdit);
+    const allFalse = val.every(item => !item.isEdit);
     window.changeInput = !(allFalse && isEditEmail.value === false && isEditPhone.value === false);
   }
 }, {
@@ -590,7 +587,7 @@ const handleError = (file) => {
 
 // 是否是编辑状态
 const isEditFn = () => {
-  const allFalse = currentUserInfo.value?.extras.every((item) => !item.isEdit);
+  const allFalse = currentUserInfo.value?.extras.every(item => !item.isEdit);
   window.changeInput = !(allFalse && isEditEmail.value === false && isEditPhone.value === false);
 };
 </script>
@@ -948,6 +945,7 @@ const isEditFn = () => {
 
                 .value {
                   line-height: 32px;
+                  max-width: 400px;
                 }
 
                 .input-list {
