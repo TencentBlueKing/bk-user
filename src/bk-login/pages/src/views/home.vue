@@ -92,7 +92,7 @@
               <div class="item" v-for="item in changList" :key="item.id" @click="handleChange(item)">
                 {{ item.name }}
               </div>
-              <div class="add" @click="addTenant">新增租户</div>
+              <div class="add" @click="addTenant">其他租户</div>
             </section>
           </template>
         </bk-popover>
