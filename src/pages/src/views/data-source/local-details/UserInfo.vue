@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="isLoading" class="user-info-wrapper">
+  <bk-loading :loading="isLoading" :z-index="9" class="user-info-wrapper">
     <header>
       <div>
         <template v-if="pluginId === 'local'">
@@ -27,8 +27,10 @@
       remote-pagination
       :pagination="pagination"
       show-overflow-tooltip
+      :settings="tableSettings"
       @page-limit-change="pageLimitChange"
       @page-value-change="pageCurrentChange"
+      @setting-change="handleSettingChange"
     >
       <template #empty>
         <Empty
@@ -39,37 +41,26 @@
           @handleUpdate="handleClear"
         />
       </template>
-      <bk-table-column prop="username" label="用户名">
-        <template #default="{ row }">
-          <bk-button text theme="primary" @click="handleClick('view', row)">
-            {{ row.username }}
-          </bk-button>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="full_name" label="全名"></bk-table-column>
-      <bk-table-column prop="phone" label="手机号">
-        <template #default="{ row }">
-          <span>{{ row.phone || '--' }}</span>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="email" label="邮箱">
-        <template #default="{ row }">
-          <span>{{ row.email || '--' }}</span>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="departments" label="所属组织">
-        <template #default="{ row }">
-          <span
-            v-bk-tooltips="{
-              content: tipsText,
-              delay: 300,
-              disabled: !tipsText,
-            }"
-            @mouseenter="tipsShowFn(row.id)">
-            {{ formatConvert(row.departments) }}
-          </span>
-        </template>
-      </bk-table-column>
+      <template v-for="(item, index) in tableSettings.fields" :key="index">
+        <bk-table-column :prop="item.field" :label="item.name">
+          <template #default="{ row }">
+            <bk-button v-if="item.field === 'username'" text theme="primary" @click="handleClick('view', row)">
+              {{ row.username }}
+            </bk-button>
+            <span
+              v-else-if="item.field === 'departments'"
+              v-bk-tooltips="{
+                content: tipsText,
+                delay: 300,
+                disabled: !tipsText,
+              }"
+              @mouseenter="tipsShowFn(row.id)">
+              {{ formatConvert(row.departments) }}
+            </span>
+            <span v-else>{{ getTableValue(row, item) }}</span>
+          </template>
+        </bk-table-column>
+      </template>
       <bk-table-column label="操作" v-if="pluginId === 'local'">
         <template #default="{ row }">
           <bk-button
@@ -248,10 +239,11 @@ import ViewUser from './ViewUser.vue';
 import Empty from '@/components/Empty.vue';
 import ResetPassword from '@/components/ResetPassword.vue';
 import { useCustomFields } from '@/hooks/useCustomFields';
+import { useTableFields } from '@/hooks/useTableFields';
 import { getDataSourceUserDetails, getDataSourceUsers, getOrganizationPaths } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
 import router from '@/router/index';
-import { formatConvert } from '@/utils';
+import { formatConvert, getTableValue } from '@/utils';
 
 const props = defineProps({
   dataSourceId: {
@@ -326,7 +318,7 @@ watch(
 const isView = computed(() => detailsConfig.type === 'view');
 
 onMounted(() => {
-  getUsers();
+  getUsers(true);
 });
 
 const isLoading = ref(false);
@@ -343,24 +335,45 @@ const pagination = reactive({
 const users = ref([]);
 const detailsLoading = ref(false);
 
-const getUsers = async () => {
+const { tableSettings, handleSettingChange } = useTableFields();
+const getUsers = async (init?: boolean) => {
   try {
     isLoading.value = true;
     isDataEmpty.value = false;
     isEmptySearch.value = false;
     isDataError.value = false;
+
     const params = {
       id: props.dataSourceId,
       username: searchVal.value,
       page: pagination.current,
       pageSize: pagination.limit,
     };
-    const res = await getDataSourceUsers(params);
-    if (res.data.count === 0) {
+
+    const [usersRes, fieldsRes] = await Promise.all([getDataSourceUsers(params), getFields()]);
+
+    if (usersRes.data.count === 0) {
       searchVal.value === '' ? isDataEmpty.value = true : isEmptySearch.value = true;
     }
-    pagination.count = res.data.count;
-    users.value = res.data.results;
+    pagination.count = usersRes.data.count;
+
+    const filterList: any = [];
+    usersRes.data.results?.forEach((item, index) => {
+      const entries = Object.entries(item.extras);
+      fieldsRes.data.custom_fields?.forEach((key) => {
+        if (index === 0 && init) {
+          tableSettings.fields.push({
+            name: key.display_name,
+            field: key.name,
+            data_type: key.data_type,
+            options: key.options,
+          });
+        }
+        item = { ...item, [key.name]: entries.find(([a]) => a === key.name)?.[1] || '' };
+      });
+      filterList.push(item);
+    });
+    users.value = filterList;
   } catch (error) {
     isDataError.value = true;
   } finally {
@@ -413,7 +426,7 @@ const handleClick = async (type: string, item?: any) => {
     detailsConfig.id = item.id;
     if (type === 'view') {
       const pathsRes = await getOrganizationPaths(item.id);
-      paths.value = pathsRes.data?.organization_paths.join(' ; ') || '--';
+      paths.value = pathsRes.data?.organization_paths.join(', ') || '--';
     }
   }
   await getCustomFields(type);

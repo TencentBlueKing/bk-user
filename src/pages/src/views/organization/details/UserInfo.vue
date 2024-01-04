@@ -24,9 +24,11 @@
       :pagination="props.pagination"
       :border="['outer']"
       show-overflow-tooltip
+      :settings="tableSettings"
       @page-limit-change="pageLimitChange"
       @page-value-change="pageCurrentChange"
-    >
+      @setting-change="emit('handleSettingChange', $event)">
+      >
       <template #empty>
         <Empty
           :is-data-empty="props.isDataEmpty"
@@ -35,37 +37,19 @@
           @handleEmpty="handleClear"
           @handleUpdate="handleClear" />
       </template>
-      <bk-table-column prop="username" label="用户名">
-        <template #default="{ row }">
-          <bk-button text theme="primary" @click="handleClick(row)">
-            {{ row.username }}
-          </bk-button>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="full_name" label="全名" />
-      <!-- <bk-table-column prop="status" label="状态">
-        <template #default="{ row }">
-          <div>
-            <img :src="statusIcon[row.status]?.icon" class="account-status-icon" />
-            <span>{{ statusIcon[row.status]?.text }}</span>
-          </div>
-        </template>
-      </bk-table-column> -->
-      <bk-table-column prop="email" label="邮箱">
-        <template #default="{ row }">
-          <span>{{ row.email || '--' }}</span>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="phone" label="手机号">
-        <template #default="{ row }">
-          <span>{{ row.email || '--' }}</span>
-        </template>
-      </bk-table-column>
-      <bk-table-column prop="departments" label="组织">
-        <template #default="{ row }">
-          <span>{{ formatConvert(row.departments) }}</span>
-        </template>
-      </bk-table-column>
+      <template v-for="(item, index) in tableSettings.fields" :key="index">
+        <bk-table-column :prop="item.field" :label="item.name">
+          <template #default="{ row }">
+            <bk-button v-if="item.field === 'username'" text theme="primary" @click="handleClick('view', row)">
+              {{ row.username }}
+            </bk-button>
+            <span v-else-if="item.field === 'departments'">
+              {{ formatConvert(row.departments) }}
+            </span>
+            <span v-else>{{ getTableValue(row, item) }}</span>
+          </template>
+        </bk-table-column>
+      </template>
     </bk-table>
     <!-- 查看/编辑用户 -->
     <div v-if="showSideBar">
@@ -98,7 +82,7 @@ import {
   getTenantUsers,
 } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
-import { formatConvert } from '@/utils';
+import { formatConvert, getTableValue } from '@/utils';
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -131,8 +115,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  tableSettings: {
+    type: Object,
+    default: () => ({}),
+  },
 });
-const emit = defineEmits(['searchUsers', 'changeUsers', 'updatePageLimit', 'updatePageCurrent']);
+const emit = defineEmits(['searchUsers', 'changeUsers', 'updatePageLimit', 'updatePageCurrent', 'handleSettingChange']);
 const isCurrentUsers = ref(true);
 const detailsConfig = reactive({
   isShow: false,

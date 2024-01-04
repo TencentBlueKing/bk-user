@@ -944,8 +944,8 @@ const isEditFn = () => {
                 align-items: center;
 
                 .value {
-                  line-height: 32px;
                   max-width: 400px;
+                  line-height: 32px;
                 }
 
                 .input-list {

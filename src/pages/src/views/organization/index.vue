@@ -64,17 +64,16 @@
       </bk-loading>
     </template>
     <template #main>
-      <div class="organization-main">
+      <bk-loading class="organization-main" :loading="state.tabLoading" :z-index="9">
         <header :class="{ 'departments-header': !isTenant }">
           <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
           <span v-else class="span-logo">{{ logoConvert(state.currentTenant.name) }}</span>
           <span class="name">{{ state.currentTenant.name }}</span>
         </header>
         <bk-tab
-          v-if="isTenant"
           :active="state.active"
           type="unborder-card"
-          ext-cls="tab-details"
+          :ext-cls="['tab-details', { 'tab-departments': !isTenant }]"
           @change="tabChange"
         >
           <bk-tab-panel
@@ -82,46 +81,33 @@
             :key="item.name"
             :name="item.name"
             :label="item.label"
+            :visible="item.isVisible"
           >
-            <bk-loading :loading="state.tabLoading">
-              <UserInfo
-                v-if="index === 0"
-                :user-data="state.currentUsers"
-                :is-data-empty="state.isDataEmpty"
-                :is-empty-search="state.isEmptySearch"
-                :is-data-error="state.isDataError"
-                :pagination="pagination"
-                :keyword="params.keyword"
-                :is-tenant="isTenant"
-                @searchUsers="searchUsers"
-                @changeUsers="changeUsers"
-                @updatePageLimit="updatePageLimit"
-                @updatePageCurrent="updatePageCurrent" />
-              <DetailsInfo
-                v-if="index === 1"
-                :user-data="state.currentTenant"
-                :is-edit="isEdit"
-                @updateTenantsList="updateTenantsList"
-                @handleCancel="handleCancel"
-                @changeEdit="changeEdit" />
-            </bk-loading>
+            <UserInfo
+              v-if="index === 0"
+              :user-data="state.currentUsers"
+              :is-data-empty="state.isDataEmpty"
+              :is-empty-search="state.isEmptySearch"
+              :is-data-error="state.isDataError"
+              :pagination="pagination"
+              :keyword="params.keyword"
+              :is-tenant="isTenant"
+              :table-settings="tableSettings"
+              @searchUsers="searchUsers"
+              @changeUsers="changeUsers"
+              @updatePageLimit="updatePageLimit"
+              @updatePageCurrent="updatePageCurrent"
+              @handleSettingChange="handleSettingChange" />
+            <DetailsInfo
+              v-if="index === 1"
+              :user-data="state.currentTenant"
+              :is-edit="isEdit"
+              @updateTenantsList="updateTenantsList"
+              @handleCancel="handleCancel"
+              @changeEdit="changeEdit" />
           </bk-tab-panel>
         </bk-tab>
-        <bk-loading v-else :loading="state.tabLoading">
-          <UserInfo
-            :user-data="state.currentUsers"
-            :is-data-empty="state.isDataEmpty"
-            :is-empty-search="state.isEmptySearch"
-            :is-data-error="state.isDataError"
-            :pagination="pagination"
-            :keyword="params.keyword"
-            :is-tenant="isTenant"
-            @searchUsers="searchUsers"
-            @changeUsers="changeUsers"
-            @updatePageLimit="updatePageLimit"
-            @updatePageCurrent="updatePageCurrent" />
-        </bk-loading>
-      </div>
+      </bk-loading>
     </template>
   </bk-resize-layout>
 </template>
@@ -134,6 +120,7 @@ import { computed, inject, onMounted, reactive, ref } from 'vue';
 import DetailsInfo from './details/DetailsInfo.vue';
 import UserInfo from './details/UserInfo.vue';
 
+import { useTableFields } from '@/hooks/useTableFields';
 import { currentUser } from '@/http/api';
 import {
   getTenantDepartments,
@@ -142,6 +129,7 @@ import {
   getTenantOrganizationList,
   getTenantUsersList,
 } from '@/http/organizationFiles';
+import { getFields } from '@/http/settingFiles';
 import router from '@/router';
 import { copy, logoConvert } from '@/utils';
 
@@ -162,8 +150,8 @@ const state = reactive({
   isDataError: false,
 });
 const panels = reactive([
-  { name: 'user_info', label: '人员信息' },
-  { name: 'details_info', label: '详细信息' },
+  { name: 'user_info', label: '人员信息', isVisible: true },
+  { name: 'details_info', label: '详细信息', isVisible: true },
 ]);
 
 const submenu = [
@@ -212,7 +200,7 @@ const initData = async () => {
     state.treeData.forEach((item, index) => {
       if (index === 0) {
         getTenantDetails(item.id);
-        getTenantUsers(item.id);
+        getTenantUsers(item.id, true);
         state.currentItem = item;
       }
       item.isRoot = true;
@@ -251,11 +239,13 @@ const changeNode = async (node) => {
   params.page = 1;
   params.keyword = '';
   if (node.isRoot) {
+    panels[1].isVisible = true;
     state.active = 'user_info';
     // 切换租户
     await getTenantDetails(node.id);
     await getTenantUsers(node.id);
   } else {
+    panels[1].isVisible = false;
     // 切换组织
     await getDepartmentsDetails(node);
     await getTenantDepartmentsUser(node.id);
@@ -286,7 +276,9 @@ const changeEdit = (status: boolean) => {
   isEdit.value = status;
 };
 
-const getTenantUsers = async (id) => {
+const { tableSettings, handleSettingChange } = useTableFields();
+
+const getTenantUsers = async (id, init?: boolean) => {
   try {
     state.tabLoading = true;
     params.id = id;
@@ -295,16 +287,33 @@ const getTenantUsers = async (id) => {
     state.isDataEmpty = false;
     state.isEmptySearch = false;
     state.isDataError = false;
-    const res = await getTenantUsersList(data);
-    if (res.data?.count === 0 || !res.data.length) {
+
+    const [usersRes, fieldsRes] = await Promise.all([getTenantUsersList(data), getFields()]);
+
+    if (usersRes.data?.count === 0 || !usersRes.data.length) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
-    pagination.count = res.data?.count;
-    state.currentUsers = res.data?.results || [];
-    state.tabLoading = false;
+    pagination.count = usersRes.data?.count;
+
+    const filterList: any = [];
+    usersRes.data.results?.forEach((item, index) => {
+      const entries = Object.entries(item.extras);
+      fieldsRes.data.custom_fields?.forEach((key) => {
+        if (index === 0 && init) {
+          tableSettings.fields.push({
+            name: key.display_name,
+            field: key.name,
+            data_type: key.data_type,
+            options: key.options,
+          });
+        }
+        item = { ...item, [key.name]: entries.find(([a]) => a === key.name)?.[1] || '' };
+      });
+      filterList.push(item);
+    });
+    state.currentUsers = filterList;
   } catch (e) {
     state.isDataError = true;
-    state.tabLoading = false;
   } finally {
     state.tabLoading = false;
   }
@@ -312,7 +321,6 @@ const getTenantUsers = async (id) => {
 
 const getTenantDetails = async (id: string) => {
   const res = await getTenantOrganizationDetails(id);
-  pagination.count = res.data.managers.length;
   state.currentTenant = res.data;
   state.currentTenant.isRoot = true;
 };
@@ -324,13 +332,23 @@ const getTenantDepartmentsUser = async (id) => {
     state.isDataEmpty = false;
     state.isEmptySearch = false;
     state.isDataError = false;
-    const res = await getTenantDepartmentsList(params);
-    if (res.data?.count === 0 || !res.data.length) {
+
+    const [usersRes, fieldsRes] = await Promise.all([getTenantDepartmentsList(params), getFields()]);
+
+    if (usersRes.data?.count === 0 || !usersRes.data.length) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
-    pagination.count = res.data?.count;
-    state.currentUsers = res.data?.results || [];
-    state.tabLoading = false;
+    pagination.count = usersRes.data?.count;
+
+    const filterList: any = [];
+    usersRes.data.results?.forEach((item) => {
+      const entries = Object.entries(item.extras);
+      fieldsRes.data.custom_fields?.forEach((key) => {
+        item = { ...item, [key.name]: entries.find(([a]) => a === key.name)?.[1] || '' };
+      });
+      filterList.push(item);
+    });
+    state.currentUsers = filterList;
   } catch (e) {
     state.isDataError = true;
   } finally {
@@ -392,8 +410,6 @@ const handleCancel = () => {
   height: calc(100vh - 52px);
 
   .organization-main {
-    height: calc(100% - 52px);
-
     header {
       display: flex;
       height: 52px;
@@ -432,6 +448,13 @@ const handleCancel = () => {
 
   .bk-tab-content {
     padding: 0;
+  }
+}
+
+:deep(.tab-departments) {
+  .bk-tab-header {
+    line-height: 0 !important;
+    visibility: hidden;
   }
 }
 </style>
