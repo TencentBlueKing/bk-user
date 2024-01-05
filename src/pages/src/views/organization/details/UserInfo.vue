@@ -40,7 +40,7 @@
       <template v-for="(item, index) in tableSettings.fields" :key="index">
         <bk-table-column :prop="item.field" :label="item.name">
           <template #default="{ row }">
-            <bk-button v-if="item.field === 'username'" text theme="primary" @click="handleClick('view', row)">
+            <bk-button v-if="item.field === 'username'" text theme="primary" @click="handleClick(row)">
               {{ row.username }}
             </bk-button>
             <span v-else-if="item.field === 'departments'">
