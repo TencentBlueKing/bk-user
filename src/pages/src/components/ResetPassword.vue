@@ -1,5 +1,6 @@
 <template>
   <bk-dialog
+    ext-cls="dialog-reset-password"
     :is-show="config.isShow"
     :title="config.title"
     theme="primary"
@@ -86,6 +87,10 @@ const confirm = async () => {
 };
 </script>
 
-<style>
-
+<style lang="less" scoped>
+.dialog-reset-password {
+  ::v-deep .bk-modal-content {
+    min-height: 0;
+  }
+}
 </style>
