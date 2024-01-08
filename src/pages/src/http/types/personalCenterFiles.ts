@@ -24,3 +24,12 @@ export interface PatchUserLogoParams {
   id: string,
   logo: string,
 }
+
+/**
+ * 租户用户更新密码
+ */
+export interface PutUserPasswordParams {
+  id: string,
+  old_password: string,
+  new_password: string,
+}

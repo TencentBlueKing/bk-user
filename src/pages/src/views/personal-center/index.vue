@@ -90,6 +90,9 @@
             </div>
           </div>
           <div class="header-right">
+            <bk-button class="w-[88px]" @click="showPasswordModal">
+              修改密码
+            </bk-button>
             <span v-bk-tooltips="{
               content: '该账号已登录',
               distance: 20,
@@ -295,6 +298,10 @@
           </ul>
         </div>
       </div>
+      <!-- 修改密码 -->
+      <ChangePassword
+        :config="passwordModalConfig"
+        @closed="hidePasswordModal" />
     </template>
   </bk-resize-layout>
 </template>
@@ -303,6 +310,7 @@
 import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 
+import ChangePassword from '@/components/ChangePassword.vue';
 import phoneInput from '@/components/phoneInput.vue';
 import useValidate from '@/hooks/use-validate';
 import { useCustomFields } from '@/hooks/useCustomFields';
@@ -484,7 +492,7 @@ const changeEmail = async () => {
     custom_email: currentUserInfo.value.custom_email,
   }).then(() => {
     isEditEmail.value = false;
-    isEditFn();
+    isEditing();
   });
 };
 // 取消编辑邮箱
@@ -492,7 +500,7 @@ const cancelEditEmail = () => {
   currentUserInfo.value.is_inherited_email = isInheritedEmail.value;
   currentUserInfo.value.custom_email = customEmail.value;
   isEditEmail.value = false;
-  isEditFn();
+  isEditing();
 };
 
 const isEditPhone = ref(false);
@@ -524,7 +532,7 @@ const changePhone = () => {
     custom_phone_country_code: currentUserInfo.value.custom_phone_country_code,
   }).then(() => {
     isEditPhone.value = false;
-    isEditFn();
+    isEditing();
   });
 };
 // 取消编辑手机号
@@ -534,7 +542,7 @@ const cancelEditPhone = () => {
   currentUserInfo.value.custom_phone_country_code = customPhoneCode.value;
   isEditPhone.value = false;
   telError.value = false;
-  isEditFn();
+  isEditing();
 };
 // 切换关联账号
 const handleClickItem = async (item) => {
@@ -586,9 +594,25 @@ const handleError = (file) => {
 };
 
 // 是否是编辑状态
-const isEditFn = () => {
+const isEditing = () => {
   const allFalse = currentUserInfo.value?.extras.every(item => !item.isEdit);
   window.changeInput = !(allFalse && isEditEmail.value === false && isEditPhone.value === false);
+};
+
+// 修改密码
+const passwordModalConfig = ref({
+  isShow: false,
+  title: '修改密码',
+  id: '',
+});
+
+const showPasswordModal = () => {
+  passwordModalConfig.value.isShow = true;
+  passwordModalConfig.value.id = currentUserInfo.value?.id;
+};
+
+const hidePasswordModal = () => {
+  passwordModalConfig.value.isShow = false;
 };
 </script>
 
