@@ -182,16 +182,23 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
 
 
 class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
-    queryset = TenantDepartment.objects.all()
     pagination_class = LegacyOpenApiPagination
 
-    @swagger_auto_schema(
-        tags=["open_v2.departments"],
-        operation_description="查询子部门列表",
-        responses={status.HTTP_200_OK: "TODO"},
-    )
     def get(self, request, *args, **kwargs):
-        return Response("TODO")
+        # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的部门还是 Raise 404?
+        tenant_dept = TenantDepartment.objects.filter(id=kwargs["lookup_value"]).first()
+        if not tenant_dept:
+            raise Http404
+
+        dept_relations = DataSourceDepartmentRelation.objects.filter(
+            parent_id=tenant_dept.data_source_department_id,
+        ).select_related("department")
+
+        resp_data = [
+            {"id": dept.department_id, "name": dept.department.name, "order": idx}
+            for idx, dept in enumerate(dept_relations)
+        ]
+        return Response(resp_data)
 
 
 class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
