@@ -25,3 +25,10 @@ class DepartmentRetrieveInputSLZ(serializers.Serializer):
             raise serializers.ValidationError(f"{invalid_fields} unsupported")
 
         return dept_fields
+
+
+class ProfileDepartmentListInputSLZ(serializers.Serializer):
+    lookup_field = serializers.ChoiceField(help_text="字段名称", choices=["id", "username"], required=False)
+    include_disabled = serializers.BooleanField(help_text="是否包含软删除用户", default=False)
+    with_ancestors = serializers.BooleanField(help_text="是否返回上级部门", default=False)
+    with_family = serializers.BooleanField(help_text="兼容参数（与 with_ancestors 等价）", default=False)

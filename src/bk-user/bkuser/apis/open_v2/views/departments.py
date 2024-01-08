@@ -18,9 +18,13 @@ from rest_framework.response import Response
 
 from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
-from bkuser.apis.open_v2.serializers.departments import DepartmentRetrieveInputSLZ
-from bkuser.apps.data_source.models import DataSourceDepartmentRelation
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apis.open_v2.serializers.departments import DepartmentRetrieveInputSLZ, ProfileDepartmentListInputSLZ
+from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+)
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 
 
 class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
@@ -92,7 +96,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
 
     @staticmethod
     def _get_dept_full_name(dept_relation: DataSourceDepartmentRelation) -> str:
-        """获取租户部门组织路径信息（支持缓存）"""
+        """获取部门组织路径信息"""
         # TODO 考虑协同的情况，不能直接吐出到根部门的路径
         if not dept_relation:
             return ""
@@ -191,13 +195,96 @@ class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
 
 
 class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
-    queryset = TenantDepartment.objects.all()
+    """查询单个用户的部门列表"""
+
     pagination_class = LegacyOpenApiPagination
 
-    @swagger_auto_schema(
-        tags=["open_v2.departments"],
-        operation_description="查询单个用户的部门列表",
-        responses={status.HTTP_200_OK: "TODO"},
-    )
     def get(self, request, *args, **kwargs):
-        return Response("TODO")
+        slz = ProfileDepartmentListInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        # TODO (su) 支持软删除后需要根据 include_disabled 参数修改 filters
+        if params["lookup_field"] == "username":
+            # username 其实就是新的租户用户 ID，形式如 admin / admin@qq.com / uuid4
+            filters = {"id": kwargs["lookup_value"]}
+        else:
+            # TODO 目前 ID 指的是数据源用户 ID，未来支持协同之后，需要重新考虑
+            filters = {"data_source_user__id": kwargs["lookup_value"]}
+
+        tenant_user = TenantUser.objects.select_related("data_source_user").filter(**filters).first()
+        if not tenant_user:
+            raise Http404
+
+        if params["with_ancestors"] or params["with_family"]:
+            return Response(self._get_user_dept_infos(tenant_user, with_ancestors=True))
+
+        return Response(self._get_user_dept_infos(tenant_user, with_ancestors=False))
+
+    def _get_user_dept_infos(self, tenant_user: TenantUser, with_ancestors: bool) -> List[Dict]:
+        departments = [
+            rel.department
+            for rel in DataSourceDepartmentUserRelation.objects.filter(
+                user=tenant_user.data_source_user,
+            )
+        ]
+        if not departments:
+            return []
+
+        dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department__in=departments, tenant_id=tenant_user.tenant_id
+            ).values_list("data_source_department_id", "id")
+        )
+        user_dept_infos = []
+        for idx, dept in enumerate(departments):
+            if dept.id not in dept_id_map:
+                continue
+
+            dept_info = {
+                "id": dept_id_map[dept.id],
+                "name": dept.name,
+                "full_name": self._get_dept_full_name(dept),
+                "order": idx,
+            }
+            if with_ancestors:
+                dept_info["family"] = self._get_dept_ancestors(dept, dept_info["full_name"], tenant_user.tenant_id)
+
+            user_dept_infos.append(dept_info)
+
+        return user_dept_infos
+
+    @staticmethod
+    def _get_dept_ancestors(dept: DataSourceDepartment, dept_full_name: str, tenant_id: str) -> List[Dict]:
+        """获取某个部门祖先信息"""
+        dept_relation = DataSourceDepartmentRelation.objects.filter(department=dept).first()
+        if not dept_relation:
+            return []
+
+        ancestors = dept_relation.get_ancestors().select_related("department")
+        dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department_id__in=[rel.department_id for rel in ancestors], tenant_id=tenant_id
+            ).values_list("data_source_department_id", "id")
+        )
+        ancestor_count = ancestors.count()
+        return [
+            {
+                "id": dept_id_map[dept.department_id],
+                "name": dept.department.name,
+                "full_name": dept_full_name.rsplit("/", ancestor_count - idx)[0],
+                "order": idx,
+            }
+            for idx, dept in enumerate(ancestors)
+            if dept.department_id in dept_id_map
+        ]
+
+    @staticmethod
+    def _get_dept_full_name(dept: DataSourceDepartment) -> str:
+        """获取部门组织路径信息"""
+        dept_relation = DataSourceDepartmentRelation.objects.filter(department=dept).first()
+        if not dept_relation:
+            return ""
+
+        # TODO 考虑协同的情况，不能直接吐出到根部门的路径
+        return "/".join(dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True))
