@@ -3,6 +3,7 @@ import type {
   PatchUserEmailParams,
   PatchUserLogoParams,
   PatchUserPhoneParams,
+  PutUserPasswordParams,
 } from './types/personalCenterFiles';
 
 /**
@@ -39,3 +40,8 @@ export const getPersonalCenterUserVisibleFields = (id: string) => http.get(`/api
  * 修改用户自定义字段
  */
 export const putPersonalCenterUserExtrasFields = (params: any) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/extras/`, params);
+
+/**
+ * 个人中心修改密码
+ */
+export const putPersonalCenterUserPassword = (params: PutUserPasswordParams) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/password/`, params);
