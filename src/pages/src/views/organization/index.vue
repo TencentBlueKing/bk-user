@@ -99,7 +99,7 @@
               @updatePageCurrent="updatePageCurrent"
               @handleSettingChange="handleSettingChange" />
             <DetailsInfo
-              v-if="index === 1"
+              v-if="index === 1 && isTenant"
               :user-data="state.currentTenant"
               :is-edit="isEdit"
               @updateTenantsList="updateTenantsList"
