@@ -238,3 +238,7 @@ pre_commit_hooks
 
 # local settings
 cliff.toml
+.codecc
+.idea
+
+pre-*-bkcodeai
