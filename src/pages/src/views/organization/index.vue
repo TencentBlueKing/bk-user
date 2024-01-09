@@ -624,7 +624,7 @@ export default {
       this.paginationConfig.current = 1;
       this.handleTabData.totalNumber = null;
       this.handleTabData.currentNumber = null;
-      this.handleTabData.departName = this.currentParam.item.full_name || this.currentParam.item.display_name;
+      this.handleTabData.departName = this.currentParam.item.name;
       this.getTableData();
     },
     async getTableData() {
@@ -646,35 +646,22 @@ export default {
           pageSize: this.paginationConfig.limit,
           page: this.paginationConfig.current,
           keyword: this.checkSearchKey,
-          recursive: true,
+          recursive: !this.isSearchCurrentDepartment,
         };
-        if (this.isSearchCurrentDepartment) {
-          params.recursive = false;
-        }
         const res = await this.$store.dispatch('organization/getProfiles', params);
-
-        this.filterUserData(res.data.data);
-        this.paginationConfig.count = res.data.count;
-        if (!this.tableSearchKey) {
-          if (this.isSearchCurrentDepartment) {
-            // 当前组织下成员
-            this.handleTabData.totalNumber = res.data.total_count;
-            this.handleTabData.currentNumber = res.data.count;
-          } else {
-            // 默认查询
-            this.handleTabData.totalNumber = res.data.count;
-            this.handleTabData.currentNumber = res.data.current_count;
-          }
-        }
-
-        this.isEmptyDepartment = false;
+        this.handleTabData.totalNumber = res.data.count;
+        this.handleTabData.currentNumber = res.data.count;
         this.isTableDataEmpty = false;
         this.isEmptySearch = false;
+        this.isTableDataError = false;
+
+        if (!!this.tableSearchKey.length) return;
+        this.$set(this.currentParam.item, 'profile_count', res.data.count);
+        this.filterUserData(res.data.data);
+        this.paginationConfig.count = res.data.count;
         if (this.paginationConfig.count === 0) {
           this.isTableDataEmpty = true;
         }
-
-        this.isTableDataError = false;
       } catch (e) {
         console.warn(e);
         this.isTableDataError = true;
@@ -731,17 +718,17 @@ export default {
 
     // 分页查询
     changeCurrentPage() {
-      this.getTableData();
+      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.getTableData();
     },
     changeLimitPage(limit) {
       this.paginationConfig.current = 1;
       this.paginationConfig.limit = limit;
-      this.getTableData();
+      this.tableSearchKey.length ? this.handleTableSearch(this.tableSearchKey) : this.getTableData();
     },
     updateHeardList(value) {
       this.searchDataList = [];
       value.forEach((item) => {
-        if (item.builtin) {
+        if (item.builtin && item.key !== 'department_name') {
           this.searchDataList.push(item);
         }
       });
@@ -755,29 +742,45 @@ export default {
     // 搜索table
     handleTableSearch(list) {
       this.isTableDataEmpty = false;
-      if (!list.length) return this.getTableData();
-      const valueList = this.isSearchCurrentDepartment ? [`category_id=${this.currentCategoryId}&departments=${this.departmentsId}`] : [`category_id=${this.currentCategoryId}`];
-      let key = '';
+      if (!list.length) return this.handleClickEmpty();
+      if (!this.searchFilterList.length) return;
+
+      this.basicLoading = true;
+      const valueList = [`category_id=${this.currentCategoryId}&page=${this.paginationConfig.current}&page_size=${this.paginationConfig.limit}`];
+
       list.forEach((item) => {
+        if (!Array.isArray(item.values)) {
+          const { id, name } = item;
+          Object.assign(item, { values: [{ id, name }] });
+          // 默认搜索第一个
+          item.id = this.searchFilterList[0].id;
+          item.name = this.searchFilterList[0].name;
+        }
+        let key = '';
         const value = [];
         if (Object.keys(this.enumList).includes(item.id)) {
           key = this.enumList[item.id];
         }
+        if (!item.values) return;
         item.values.forEach((v) => {
           value.push(v.id);
         });
         valueList.push(`${key}=${value}`);
       });
+
       const params = valueList.join('&');
       this.$store.dispatch('organization/getMultiConditionQuery', params).then((res) => {
         if (res.result) {
+          this.basicLoading = false;
           this.isEmptySearch = res.data.count === 0;
+          this.paginationConfig.count = res.data.count;
           this.filterUserData(res.data.results);
         }
       })
         .catch((e) => {
           console.warn(e);
           this.isTableDataError = true;
+          this.basicLoading = false;
         });
     },
     // 搜索文件配置列表
