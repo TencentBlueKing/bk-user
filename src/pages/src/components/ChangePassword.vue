@@ -71,7 +71,7 @@ const changePassword = () => {
 const confirm = async () => {
   try {
     await formRef.value.validate();
-    if (formData.newPassword === formData.confirmPassword) {
+    if (formData.newPassword !== formData.confirmPassword) {
       return isError.value = true;
     }
     isLoading.value = true;
