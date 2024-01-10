@@ -545,15 +545,16 @@ const handleExportTemplate = () => {
   const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.dataSourceId}/operations/download_template/`;
   window.open(url);
 };
-
+// 导入用户
 const confirmImportUsers = async () => {
+  if (!uploadInfo.file.name) {
+    return Message({ theme: 'warning', message: '请选择文件再上传' });
+  }
+  if (isError.value) {
+    return Message({ theme: 'warning', message: '文件大小超出限制,请重新上传' });
+  };
+
   try {
-    if (!uploadInfo.file.name) {
-      return Message({ theme: 'warning', message: '请选择文件再上传' });
-    }
-    if (isError.value) {
-      return Message({ theme: 'warning', message: '文件大小超出限制,请重新上传' });
-    };
     importDialog.loading = true;
     const formData = new FormData();
     formData.append('file', uploadInfo.file);
@@ -563,24 +564,21 @@ const confirmImportUsers = async () => {
         'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
         'x-requested-with': 'XMLHttpRequest',
       },
+      withCredentials: true,
     };
-    axios.defaults.withCredentials = true;
     const url = `${window.AJAX_BASE_URL}/api/v1/web/data-sources/${props.dataSourceId}/operations/import/`;
-    const res = await axios.post(url, {
-      overwrite: uploadInfo.overwrite,
-      incremental: uploadInfo.incremental,
-      file: formData.get('file'),
-    }, config);
-    const theme = res.data.data.status === 'success' ? 'success' : 'error';
-    Message({ theme, message: res.data.data.summary });
+    const res = await axios.post(url, formData, config);
+    Message({
+      theme: res.data.data.status === 'success' ? 'success' : 'error',
+      message: res.data.data.summary
+    });
+  } catch (e) {
+    Message({ theme: 'error', message: e.response.data.error.message });
+  } finally {
+    importDialog.loading = false;
     importDialog.isShow = false;
     getUsers();
-  } catch (e) {
-    const { message } = e.response.data.error;
-    Message({ theme: 'error', message });
-  } finally {
     router.push({ name: 'syncRecords', params: { type: 'import' } });
-    importDialog.loading = false;
   }
 };
 

@@ -37,6 +37,7 @@ export const useTableFields = () => {
     ],
     checked: ['username', 'full_name', 'phone', 'email', 'departments'],
     size: 'small',
+    trigger: 'click',
   });
 
   const handleSettingChange = ({ checked, size }) => {
