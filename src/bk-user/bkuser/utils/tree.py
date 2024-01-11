@@ -8,7 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Generator, List, Tuple
+from collections import defaultdict, deque
+from typing import Generator, Hashable, List, Tuple
 
 from pydantic import BaseModel
 
@@ -40,3 +41,71 @@ def bfs_traversal_tree(root: TreeNode) -> Generator[TreeNode, None, None]:
         node = queue.pop(0)
         yield node
         queue.extend(node.children)
+
+
+class Tree:
+    def __init__(self, pairs: List[Tuple[Hashable, Hashable | None]]):
+        """
+        :param pairs: List[(node, parent_node), ...]
+        """
+        self.parent_map = {}
+        self.children_map = defaultdict(list)
+        # 构建 parent 和 children 关系映射
+        for child, parent in pairs:
+            if parent is None:
+                continue
+
+            self.parent_map[child] = parent
+            self.children_map[parent].append(child)
+
+    def get_parent(self, node: Hashable) -> Hashable | None:
+        """
+        获取父亲
+        时间复杂度：O(1)
+        """
+        return self.parent_map.get(node)
+
+    def get_ancestors(self, node: Hashable, include_self: bool = False) -> List[Hashable]:
+        """
+        获取祖先
+        时间复杂度：O(deep), deep 代表 node 在树的深度
+        """
+        ancestors = [node] if include_self else []
+        while node in self.parent_map:
+            node = self.parent_map[node]
+
+            # 避免有环导致死循环
+            if node in ancestors:
+                break
+
+            ancestors.append(node)
+
+        # 反转，从根开始
+        ancestors.reverse()
+
+        return ancestors
+
+    def get_children(self, node: Hashable) -> List[Hashable]:
+        """
+        获取孩子
+        时间复杂度：O(1)
+        """
+        return self.children_map[node]
+
+    def get_descendants(self, node: Hashable, include_self: bool = False) -> List[Hashable]:
+        """
+        获取子孙
+        最大时间复杂度：O(N)，N 表示子孙数量
+        """
+        descendants = [node] if include_self else []
+
+        # BFS 查找子孙
+        q = deque([node])
+        while q:
+            n = q.popleft()
+            children = self.children_map[n]
+            if children:
+                descendants.extend(children)
+                q.extend(children)
+
+        return descendants

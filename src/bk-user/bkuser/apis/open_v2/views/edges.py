@@ -15,7 +15,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
-from bkuser.apis.open_v2.serializers import (
+from bkuser.apis.open_v2.serializers.edges import (
     DepartmentProfileRelationListInputSLZ,
     DepartmentProfileRelationListOutputSLZ,
     ProfileLeaderRelationListInputSLZ,

@@ -8,36 +8,158 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import operator
 from collections import defaultdict
-from typing import Dict, List
+from functools import reduce
+from typing import Any, Dict, List
 
+from django.db.models import Q, QuerySet
 from django.http import Http404
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.response import Response
 
 from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
-from bkuser.apis.open_v2.serializers.departments import DepartmentRetrieveInputSLZ, ProfileDepartmentListInputSLZ
+from bkuser.apis.open_v2.serializers.departments import (
+    DepartmentListInputSLZ,
+    DepartmentRetrieveInputSLZ,
+    ProfileDepartmentListInputSLZ,
+)
 from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.utils.tree import Tree
 
 
 class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
-    queryset = TenantDepartment.objects.all()
+    """查询部门列表"""
+
     pagination_class = LegacyOpenApiPagination
 
-    @swagger_auto_schema(
-        tags=["open_v2.departments"],
-        operation_description="查询部门列表",
-        responses={status.HTTP_200_OK: "TODO"},
-    )
     def get(self, request, *args, **kwargs):
-        return Response("TODO")
+        slz = DepartmentListInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        if params["no_page"]:
+            return self._get_with_no_page(params)
+
+        return self._get_with_page(params)
+
+    def _get_with_no_page(self, params: Dict[str, Any]) -> Response:
+        tenant_depts = self._filter_queryset(params)
+        return Response(self._build_dept_infos(tenant_depts, params))
+
+    def _get_with_page(self, params: Dict[str, Any]) -> Response:
+        tenant_depts = self.paginate_queryset(self._filter_queryset(params))
+        return Response(self._build_dept_infos(tenant_depts, params))
+
+    def _build_dept_infos(
+        self, tenant_depts: QuerySet[TenantDepartment], params: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        # 父部门 ID 映射：{数据源部门 ID：租户部门 ID}
+        parent_dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                id__in=[dept.data_source_department.department_relation.parent_id for dept in tenant_depts]
+            ).values_list("data_source_department_id", "id")
+        )
+        dept_id_name_map = dict(DataSourceDepartment.objects.values_list("id", "name"))
+        rel_tree = Tree(DataSourceDepartmentRelation.objects.values_list("department_id", "parent_id"))
+
+        resp_data = []
+        for dept in tenant_depts:
+            dept_info = {
+                "id": dept.id,
+                "name": dept.data_source_department.name,
+                "extras": dept.data_source_department.extras,
+                "category_id": dept.data_source_department.data_source_id,
+                "parent": parent_dept_id_map.get(dept.data_source_department.department_relation.parent_id) or None,
+                "level": dept.data_source_department.department_relation.level,
+                # TODO 支持软删除后需要特殊处理
+                "enabled": True,
+            }
+            # 特殊指定 fields 的情况下仅返回指定的字段
+            if fields := params.get("fields"):
+                dept_info = {k: v for k, v in dept_info.items() if k in fields}
+                resp_data.append(dept_info)
+                continue
+
+            # 没有指定 fields 的时候，额外返回 full_name & children 字段
+            dept_full_name = "/".join(
+                [dept_id_name_map[x] for x in rel_tree.get_ancestors(dept.id, include_self=True)]
+            )
+            dept_info["full_name"] = dept_full_name
+            dept_info["has_children"] = bool(rel_tree.get_children(dept.id))
+
+            # 若指定 with_ancestors == True，则额外返回祖先 & 孩子部门信息（为什么需要孩子信息？总之老的逻辑是这样的）
+            if params["with_ancestors"]:
+                dept_info["ancestors"] = [
+                    {"id": id, "name": dept_id_name_map.get(id, "--")} for id in rel_tree.get_ancestors(dept.id)
+                ]
+                children = []
+                for child_dept_id in rel_tree.get_children(dept.id):
+                    child_dept_name = dept_id_name_map.get(child_dept_id, "--")
+                    children.append(
+                        {
+                            "id": child_dept_id,
+                            "name": child_dept_name,
+                            "full_name": f"{dept_full_name}/{child_dept_name}",
+                            "has_children": bool(rel_tree.get_children(child_dept_id)),
+                        }
+                    )
+
+                dept_info["children"] = children
+
+            resp_data.append(dept_info)
+
+        return resp_data
+
+    def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet:
+        queryset = TenantDepartment.objects.select_related("data_source_department__department_relation")
+        if not params.get("lookup_field"):
+            return queryset
+
+        target_lookups = []
+        lookup_field = params["lookup_field"]
+
+        if exact_lookups := params["exact_lookups"]:
+            # 在 DB 中根据 parent 过滤只能使用数据源部门 ID，这里需要特殊转换
+            # 注：fuzzy_lookups 不需要特殊转换，原因是 fuzzy_lookups 只支持按 name 查询
+            if lookup_field == "parent":
+                exact_lookups = TenantDepartment.objects.filter(
+                    id__in=exact_lookups,
+                ).values_list("data_source_department_id", flat=True)
+
+            target_lookups = [Q(**{self._convert_lookup_field(lookup_field): x}) for x in exact_lookups]
+        elif fuzzy_lookups := params["fuzzy_lookups"]:
+            target_lookups = [
+                Q(**{f"{self._convert_lookup_field(lookup_field)}__icontains": x}) for x in fuzzy_lookups
+            ]
+
+        return queryset.filter(reduce(operator.or_, target_lookups))
+
+    @staticmethod
+    def _convert_lookup_field(lookup_field: str) -> str:
+        """兼容 API 中 lookup field 字段都是老版本中数据库表字段，但新版本中这些字段分散在多个表中，需要特殊转换"""
+        if lookup_field == "id":
+            return "id"
+        if lookup_field == "name":
+            return "data_source_department__name"
+        if lookup_field == "category_id":
+            # TODO 考虑协同的情况
+            return "data_source_department__data_source_id"
+        if lookup_field == "parent":
+            return "data_source_department__department_relation__parent"
+        if lookup_field == "enabled":
+            # FIXME 支持 enabled 参数
+            raise ValueError("lookup field enabled is not supported now")
+        if lookup_field == "level":
+            return "data_source_department__department_relation__level"
+
+        raise ValueError(f"unsupported lookup field: {lookup_field}")
 
 
 class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
@@ -49,11 +171,17 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         params = slz.validated_data
 
         # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的部门还是 Raise 404
-        tenant_dept = TenantDepartment.objects.select_related("data_source_department").filter(id=kwargs["id"]).first()
+        tenant_dept = (
+            TenantDepartment.objects.select_related(
+                "data_source_department__department_relation",
+            )
+            .filter(id=kwargs["id"])
+            .first()
+        )
+
         if not tenant_dept:
             raise Http404
 
-        # 如果指定返回字段，则只需要返回对应的字段即可
         resp_data = {
             "id": tenant_dept.id,
             "name": tenant_dept.data_source_department.name,
@@ -65,10 +193,9 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         }
 
         # 当前部门对应的 MPTT 树节点
-        dept_relation = DataSourceDepartmentRelation.objects.filter(
-            department_id=tenant_dept.data_source_department_id,
-        ).first()
+        dept_relation = tenant_dept.data_source_department.department_relation
 
+        # 如果指定返回字段，则只需要返回对应的字段即可
         if fields := params.get("fields"):
             resp_data = {k: v for k, v in resp_data.items() if k in fields}
             # 由于 parent 需要额外计算，因此特殊分支处理
@@ -182,6 +309,8 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
 
 
 class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
+    """获取某部门的子部门列表"""
+
     pagination_class = LegacyOpenApiPagination
 
     def get(self, request, *args, **kwargs):

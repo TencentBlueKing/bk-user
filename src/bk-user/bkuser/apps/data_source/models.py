@@ -214,7 +214,11 @@ class DataSourceDepartmentRelation(MPTTModel, TimestampedModel):
     """
 
     department = models.OneToOneField(
-        DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False, primary_key=True
+        DataSourceDepartment,
+        on_delete=models.DO_NOTHING,
+        db_constraint=False,
+        primary_key=True,
+        related_name="department_relation",
     )
     parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
     # 冗余字段

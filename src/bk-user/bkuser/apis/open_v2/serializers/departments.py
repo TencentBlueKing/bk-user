@@ -8,23 +8,56 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
+from typing import Any, Dict, List
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
+from bkuser.common.serializers import StringArrayField
 
 
-class DepartmentRetrieveInputSLZ(serializers.Serializer):
-    fields = serializers.CharField(help_text="需要返回的字段", required=False)
+class DepartmentFieldsSLZ(serializers.Serializer):
+    """部门字段校验序列化器"""
+
+    fields = StringArrayField(help_text="需要返回的部门字段", required=False)
+
+    def validate_fields(self, fields: List[str]) -> List[str]:
+        allowed_fields = {"id", "name", "extras", "category_id", "parent", "enabled", "level"}
+        if invalid_fields := set(fields) - allowed_fields:
+            raise serializers.ValidationError(f"fields {invalid_fields} unsupported")
+
+        return fields
+
+
+class DepartmentListInputSLZ(DepartmentFieldsSLZ):
+    with_ancestors = serializers.BooleanField(help_text="是否返回上级部门", default=False)
+    lookup_field = serializers.ChoiceField(
+        help_text="字段名称",
+        choices=["id", "name", "category_id", "parent", "enabled", "level"],
+        required=False,
+    )
+    exact_lookups = StringArrayField(help_text="精确匹配字段", required=False)
+    fuzzy_lookups = StringArrayField(help_text="模糊匹配字段", required=False)
+    no_page = serializers.BooleanField(help_text="全量返回", default=False)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        lookup_field = attrs.get("lookup_field")
+        exact_lookups = attrs.get("exact_lookups")
+        fuzzy_lookups = attrs.get("fuzzy_lookups")
+
+        if lookup_field:
+            if not (exact_lookups or fuzzy_lookups):
+                raise ValidationError("exact_lookups or fuzzy_lookups required")
+
+            if lookup_field != "name" and fuzzy_lookups:
+                raise ValidationError("fuzzy_lookups only supported when lookup_field is name")
+
+        return attrs
+
+
+class DepartmentRetrieveInputSLZ(DepartmentFieldsSLZ):
     with_ancestors = serializers.BooleanField(help_text="是否返回上级部门", default=False)
     include_disabled = serializers.BooleanField(help_text="是否包含软删除部门", default=False)
-
-    def validate_fields(self, fields: str) -> List[str]:
-        dept_fields = [f.strip() for f in fields.split(",")]
-        allowed_fields = {"id", "name", "extras", "category_id", "parent", "enabled", "level"}
-        if invalid_fields := set(dept_fields) - allowed_fields:
-            raise serializers.ValidationError(f"{invalid_fields} unsupported")
-
-        return dept_fields
 
 
 class ProfileDepartmentListInputSLZ(serializers.Serializer):
