@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import operator
-from collections import defaultdict
 from functools import reduce
 from typing import Any, Dict, List
 
@@ -44,28 +43,23 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        if params["no_page"]:
-            return self._get_with_no_page(params)
-
-        return self._get_with_page(params)
-
-    def _get_with_no_page(self, params: Dict[str, Any]) -> Response:
         tenant_depts = self._filter_queryset(params)
-        return Response(self._build_dept_infos(tenant_depts, params))
+        if not params["no_page"]:
+            tenant_depts = self.paginate_queryset(tenant_depts)
 
-    def _get_with_page(self, params: Dict[str, Any]) -> Response:
-        tenant_depts = self.paginate_queryset(self._filter_queryset(params))
-        return Response(self._build_dept_infos(tenant_depts, params))
+        return Response(self._build_dept_infos(tenant_depts, params.get("fields", []), params["with_ancestors"]))
 
     def _build_dept_infos(
-        self, tenant_depts: QuerySet[TenantDepartment], params: Dict[str, Any]
+        self, tenant_depts: QuerySet[TenantDepartment], fields: List[str], with_ancestors: bool
     ) -> List[Dict[str, Any]]:
-        # 父部门 ID 映射：{数据源部门 ID：租户部门 ID}
-        parent_dept_id_map = dict(
-            TenantDepartment.objects.filter(
-                id__in=[dept.data_source_department.department_relation.parent_id for dept in tenant_depts]
-            ).values_list("data_source_department_id", "id")
-        )
+        # 部门 ID 映射：{(数据源部门 ID, 租户 ID)：租户部门 ID}
+        tenant_dept_id_map = {
+            (data_source_dept_id, tenant_id): dept_id
+            for (data_source_dept_id, tenant_id, dept_id) in TenantDepartment.objects.values_list(
+                "data_source_department_id", "tenant_id", "id"
+            )
+        }
+        # {数据源部门 ID: 数据源部门名称}
         dept_id_name_map = dict(DataSourceDepartment.objects.values_list("id", "name"))
         rel_tree = Tree(DataSourceDepartmentRelation.objects.values_list("department_id", "parent_id"))
 
@@ -76,35 +70,45 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                 "name": dept.data_source_department.name,
                 "extras": dept.data_source_department.extras,
                 "category_id": dept.data_source_department.data_source_id,
-                "parent": parent_dept_id_map.get(dept.data_source_department.department_relation.parent_id) or None,
+                "parent": tenant_dept_id_map.get(
+                    (dept.data_source_department.department_relation.parent_id, dept.tenant_id)
+                ),
                 "level": dept.data_source_department.department_relation.level,
                 # TODO 支持软删除后需要特殊处理
                 "enabled": True,
             }
             # 特殊指定 fields 的情况下仅返回指定的字段
-            if fields := params.get("fields"):
+            if fields:
                 dept_info = {k: v for k, v in dept_info.items() if k in fields}
                 resp_data.append(dept_info)
                 continue
 
             # 没有指定 fields 的时候，额外返回 full_name & children 字段
             dept_full_name = "/".join(
-                [dept_id_name_map[x] for x in rel_tree.get_ancestors(dept.id, include_self=True)]
+                [
+                    dept_id_name_map[x]
+                    for x in rel_tree.get_ancestors(dept.data_source_department_id, include_self=True)
+                ]
             )
             dept_info["full_name"] = dept_full_name
-            dept_info["has_children"] = bool(rel_tree.get_children(dept.id))
+            dept_info["has_children"] = bool(rel_tree.get_children(dept.data_source_department_id))
 
             # 若指定 with_ancestors == True，则额外返回祖先 & 孩子部门信息（为什么需要孩子信息？总之老的逻辑是这样的）
-            if params["with_ancestors"]:
+            if with_ancestors:
                 dept_info["ancestors"] = [
-                    {"id": id, "name": dept_id_name_map.get(id, "--")} for id in rel_tree.get_ancestors(dept.id)
+                    {"id": tenant_dept_id_map[(id, dept.tenant_id)], "name": dept_id_name_map.get(id, "--")}
+                    for id in rel_tree.get_ancestors(dept.data_source_department_id)
+                    if (id, dept.tenant_id) in tenant_dept_id_map
                 ]
                 children = []
-                for child_dept_id in rel_tree.get_children(dept.id):
+                for child_dept_id in rel_tree.get_children(dept.data_source_department_id):
+                    if (child_dept_id, dept.tenant_id) not in tenant_dept_id_map:
+                        continue
+
                     child_dept_name = dept_id_name_map.get(child_dept_id, "--")
                     children.append(
                         {
-                            "id": child_dept_id,
+                            "id": tenant_dept_id_map[(child_dept_id, dept.tenant_id)],
                             "name": child_dept_name,
                             "full_name": f"{dept_full_name}/{child_dept_name}",
                             "has_children": bool(rel_tree.get_children(child_dept_id)),
@@ -118,14 +122,15 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         return resp_data
 
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet:
-        queryset = TenantDepartment.objects.select_related("data_source_department__department_relation")
+        # TODO 支持软删除后需要考虑 include_disabled 参数
+        queryset = TenantDepartment.objects.select_related("data_source_department__department_relation").distinct()
         if not params.get("lookup_field"):
             return queryset
 
         target_lookups = []
         lookup_field = params["lookup_field"]
 
-        if exact_lookups := params["exact_lookups"]:
+        if exact_lookups := params.get("exact_lookups"):
             # 在 DB 中根据 parent 过滤只能使用数据源部门 ID，这里需要特殊转换
             # 注：fuzzy_lookups 不需要特殊转换，原因是 fuzzy_lookups 只支持按 name 查询
             if lookup_field == "parent":
@@ -134,7 +139,7 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                 ).values_list("data_source_department_id", flat=True)
 
             target_lookups = [Q(**{self._convert_lookup_field(lookup_field): x}) for x in exact_lookups]
-        elif fuzzy_lookups := params["fuzzy_lookups"]:
+        elif fuzzy_lookups := params.get("fuzzy_lookups"):
             target_lookups = [
                 Q(**{f"{self._convert_lookup_field(lookup_field)}__icontains": x}) for x in fuzzy_lookups
             ]
@@ -180,7 +185,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         )
 
         if not tenant_dept:
-            raise Http404
+            raise Http404(f"department {kwargs['id']} not found")
 
         resp_data = {
             "id": tenant_dept.id,
@@ -211,14 +216,15 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         resp_data["parent"] = self._get_dept_parent_id(tenant_dept, dept_relation)
         resp_data["level"] = self._get_dept_tree_level(dept_relation)
 
-        if params.get("with_ancestors"):
-            resp_data["ancestors"] = self._get_dept_ancestors(tenant_dept, dept_relation)
-
         tenant_dept_full_name = self._get_dept_full_name(dept_relation)
         children = self._get_dept_children(tenant_dept, tenant_dept_full_name)
         resp_data["full_name"] = tenant_dept_full_name
         resp_data["has_children"] = bool(children)
         resp_data["children"] = children
+
+        if params.get("with_ancestors"):
+            resp_data["ancestors"] = self._get_dept_ancestors(tenant_dept, dept_relation)
+
         return Response(resp_data)
 
     @staticmethod
@@ -251,35 +257,33 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         ]
 
     @staticmethod
-    def _get_dept_children(tenant_dept: TenantDepartment, parent_dept_full_name: str) -> List[Dict]:
+    def _get_dept_children(tenant_dept: TenantDepartment, dept_full_name: str) -> List[Dict]:
         """获取租户部门子部门信息"""
-        dept_relations = DataSourceDepartmentRelation.objects.filter(
+        child_dept_relations = DataSourceDepartmentRelation.objects.filter(
             parent_id=tenant_dept.data_source_department_id,
         ).select_related("department")
 
-        if not dept_relations.exists():
+        if not child_dept_relations.exists():
             return []
 
-        sub_dept_relations = DataSourceDepartmentRelation.objects.filter(
-            parent_id__in=[rel.department_id for rel in dept_relations],
+        grandchild_dept_relations = DataSourceDepartmentRelation.objects.filter(
+            parent_id__in=[rel.department_id for rel in child_dept_relations],
         )
-        sub_children_map = defaultdict(list)
-        for rel in sub_dept_relations:
-            sub_children_map[rel.parent_id].append(rel.department_id)
-
+        has_grand_child_map = {rel.parent_id: True for rel in grandchild_dept_relations}
         dept_id_map = dict(
             TenantDepartment.objects.filter(
-                data_source_department_id__in=[rel.department_id for rel in dept_relations],
+                data_source_department_id__in=[rel.department_id for rel in child_dept_relations],
+                tenant_id=tenant_dept.tenant_id,
             ).values_list("data_source_department_id", "id")
         )
         return [
             {
                 "id": dept_id_map[rel.department_id],
                 "name": rel.department.name,
-                "full_name": f"{parent_dept_full_name}/{rel.department.name}",
-                "has_children": bool(sub_children_map.get(rel.department_id, [])),
+                "full_name": f"{dept_full_name}/{rel.department.name}",
+                "has_children": has_grand_child_map.get(rel.department_id, False),
             }
-            for rel in dept_relations
+            for rel in child_dept_relations
             if rel.department_id in dept_id_map
         ]
 
@@ -317,15 +321,23 @@ class DepartmentChildrenListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的部门还是 Raise 404?
         tenant_dept = TenantDepartment.objects.filter(id=kwargs["lookup_value"]).first()
         if not tenant_dept:
-            raise Http404
+            raise Http404(f"department {kwargs['lookup_value']} not found")
 
         dept_relations = DataSourceDepartmentRelation.objects.filter(
             parent_id=tenant_dept.data_source_department_id,
         ).select_related("department")
 
+        dept_id_map = dict(
+            TenantDepartment.objects.filter(
+                data_source_department_id__in=[rel.department_id for rel in dept_relations],
+                tenant_id=tenant_dept.tenant_id,
+            ).values_list("data_source_department_id", "id")
+        )
+
         resp_data = [
-            {"id": dept.department_id, "name": dept.department.name, "order": idx}
-            for idx, dept in enumerate(dept_relations)
+            {"id": dept_id_map[dept.department_id], "name": dept.department.name, "order": idx}
+            for idx, dept in enumerate(dept_relations, start=1)
+            if dept.department_id in dept_id_map
         ]
         return Response(resp_data)
 
@@ -350,12 +362,10 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
 
         tenant_user = TenantUser.objects.select_related("data_source_user").filter(**filters).first()
         if not tenant_user:
-            raise Http404
+            raise Http404(f"user {kwargs['lookup_field']}:{kwargs['lookup_value']} not found")
 
-        if params["with_ancestors"] or params["with_family"]:
-            return Response(self._get_user_dept_infos(tenant_user, with_ancestors=True))
-
-        return Response(self._get_user_dept_infos(tenant_user, with_ancestors=False))
+        with_ancestors = params["with_ancestors"] or params["with_family"]
+        return Response(self._get_user_dept_infos(tenant_user, with_ancestors=with_ancestors))
 
     def _get_user_dept_infos(self, tenant_user: TenantUser, with_ancestors: bool) -> List[Dict]:
         departments = [
@@ -373,7 +383,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
             ).values_list("data_source_department_id", "id")
         )
         user_dept_infos = []
-        for idx, dept in enumerate(departments):
+        for idx, dept in enumerate(departments, start=1):
             if dept.id not in dept_id_map:
                 continue
 
@@ -411,7 +421,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                 "full_name": dept_full_name.rsplit("/", ancestor_count - idx)[0],
                 "order": idx,
             }
-            for idx, dept in enumerate(ancestors)
+            for idx, dept in enumerate(ancestors, start=1)
             if dept.department_id in dept_id_map
         ]
 

@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from collections import defaultdict, deque
-from typing import Generator, Hashable, List, Tuple
+from typing import Generator, Hashable, List, Tuple, TypeVar
 
 from pydantic import BaseModel
 
@@ -43,8 +43,11 @@ def bfs_traversal_tree(root: TreeNode) -> Generator[TreeNode, None, None]:
         queue.extend(node.children)
 
 
+T = TypeVar("T", bound=Hashable)
+
+
 class Tree:
-    def __init__(self, pairs: List[Tuple[Hashable, Hashable | None]]):
+    def __init__(self, pairs: List[Tuple[T, T | None]]):
         """
         :param pairs: List[(node, parent_node), ...]
         """
@@ -58,14 +61,14 @@ class Tree:
             self.parent_map[child] = parent
             self.children_map[parent].append(child)
 
-    def get_parent(self, node: Hashable) -> Hashable | None:
+    def get_parent(self, node: T) -> T | None:
         """
         获取父亲
         时间复杂度：O(1)
         """
         return self.parent_map.get(node)
 
-    def get_ancestors(self, node: Hashable, include_self: bool = False) -> List[Hashable]:
+    def get_ancestors(self, node: T, include_self: bool = False) -> List[T]:
         """
         获取祖先
         时间复杂度：O(deep), deep 代表 node 在树的深度
@@ -85,14 +88,14 @@ class Tree:
 
         return ancestors
 
-    def get_children(self, node: Hashable) -> List[Hashable]:
+    def get_children(self, node: T) -> List[T]:
         """
         获取孩子
         时间复杂度：O(1)
         """
         return self.children_map[node]
 
-    def get_descendants(self, node: Hashable, include_self: bool = False) -> List[Hashable]:
+    def get_descendants(self, node: T, include_self: bool = False) -> List[T]:
         """
         获取子孙
         最大时间复杂度：O(N)，N 表示子孙数量

@@ -22,15 +22,12 @@ class DepartmentFieldsSLZ(serializers.Serializer):
     fields = StringArrayField(help_text="需要返回的部门字段", required=False)
 
     def validate_fields(self, fields: List[str]) -> List[str]:
+        # 不再支持提供 code、order、lft、rght、tree_id 等字段，并且丢弃用户指定的无效字段
         allowed_fields = {"id", "name", "extras", "category_id", "parent", "enabled", "level"}
-        if invalid_fields := set(fields) - allowed_fields:
-            raise serializers.ValidationError(f"fields {invalid_fields} unsupported")
-
-        return fields
+        return list(set(fields) & allowed_fields)
 
 
 class DepartmentListInputSLZ(DepartmentFieldsSLZ):
-    with_ancestors = serializers.BooleanField(help_text="是否返回上级部门", default=False)
     lookup_field = serializers.ChoiceField(
         help_text="字段名称",
         choices=["id", "name", "category_id", "parent", "enabled", "level"],
@@ -38,6 +35,8 @@ class DepartmentListInputSLZ(DepartmentFieldsSLZ):
     )
     exact_lookups = StringArrayField(help_text="精确匹配字段", required=False)
     fuzzy_lookups = StringArrayField(help_text="模糊匹配字段", required=False)
+    with_ancestors = serializers.BooleanField(help_text="是否返回上级部门", default=False)
+    include_disabled = serializers.BooleanField(help_text="是否包含软删除部门", default=False)
     no_page = serializers.BooleanField(help_text="全量返回", default=False)
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
@@ -49,6 +48,7 @@ class DepartmentListInputSLZ(DepartmentFieldsSLZ):
             if not (exact_lookups or fuzzy_lookups):
                 raise ValidationError("exact_lookups or fuzzy_lookups required")
 
+            # 其他字段都是整型，无需模糊匹配
             if lookup_field != "name" and fuzzy_lookups:
                 raise ValidationError("fuzzy_lookups only supported when lookup_field is name")
 
@@ -61,7 +61,7 @@ class DepartmentRetrieveInputSLZ(DepartmentFieldsSLZ):
 
 
 class ProfileDepartmentListInputSLZ(serializers.Serializer):
-    lookup_field = serializers.ChoiceField(help_text="字段名称", choices=["id", "username"], required=False)
+    lookup_field = serializers.ChoiceField(help_text="字段名称", choices=["id", "username"], default="username")
     include_disabled = serializers.BooleanField(help_text="是否包含软删除用户", default=False)
     with_ancestors = serializers.BooleanField(help_text="是否返回上级部门", default=False)
     with_family = serializers.BooleanField(help_text="兼容参数（与 with_ancestors 等价）", default=False)
