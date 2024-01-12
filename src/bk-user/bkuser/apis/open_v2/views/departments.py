@@ -418,7 +418,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
             {
                 "id": dept_id_map[dept.department_id],
                 "name": dept.department.name,
-                "full_name": dept_full_name.rsplit("/", ancestor_count - idx)[0],
+                "full_name": dept_full_name.rsplit("/", ancestor_count - idx + 1)[0],
                 "order": idx,
             }
             for idx, dept in enumerate(ancestors, start=1)
