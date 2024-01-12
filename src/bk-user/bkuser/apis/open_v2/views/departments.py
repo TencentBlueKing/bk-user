@@ -362,7 +362,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
 
         tenant_user = TenantUser.objects.select_related("data_source_user").filter(**filters).first()
         if not tenant_user:
-            raise Http404(f"user {kwargs['lookup_field']}:{kwargs['lookup_value']} not found")
+            raise Http404(f"user {params['lookup_field']}:{kwargs['lookup_value']} not found")
 
         with_ancestors = params["with_ancestors"] or params["with_family"]
         return Response(self._get_user_dept_infos(tenant_user, with_ancestors=with_ancestors))
