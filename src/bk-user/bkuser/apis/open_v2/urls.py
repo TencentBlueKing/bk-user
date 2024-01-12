@@ -28,7 +28,7 @@ urlpatterns = [
     # 查询单个用户的部门列表
     path(
         "profiles/<str:lookup_value>/departments/",
-        views.ProfileLeaderRelationListApi.as_view(),
+        views.ProfileDepartmentListApi.as_view(),
         name="open_v2.list_profile_departments",
     ),
     # 查询部门用户关系表

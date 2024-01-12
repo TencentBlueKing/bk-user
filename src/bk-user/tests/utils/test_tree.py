@@ -10,7 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List, Tuple
 
-from bkuser.utils.tree import TreeNode, bfs_traversal_tree, build_forest_with_parent_relations
+import pytest
+from bkuser.utils.tree import Tree, TreeNode, bfs_traversal_tree, build_forest_with_parent_relations
 
 
 def test_build_forest_with_tree_parent_relations():
@@ -79,3 +80,62 @@ def test_bfs_traversal_tree_single():
     root = TreeNode(id="A")
     nodes = list(bfs_traversal_tree(root))
     assert nodes == [root]
+
+
+class TestTree:
+    @pytest.fixture()
+    def simple_tree(self) -> Tree:
+        return Tree(
+            [
+                ("公司", None),
+                ("部门A", "公司"),
+                ("中心AA", "部门A"),
+                ("小组AAA", "中心AA"),
+                ("中心AB", "部门A"),
+                ("小组ABA", "中心AB"),
+                ("部门B", "公司"),
+                ("中心BA", "部门B"),
+                ("小组BAA", "中心BA"),
+            ]
+        )
+
+    def test_get_parent(self, simple_tree):
+        assert simple_tree.get_parent("公司") is None
+        assert simple_tree.get_parent("部门A") == "公司"
+        assert simple_tree.get_parent("中心AB") == "部门A"
+        assert simple_tree.get_parent("小组ABA") == "中心AB"
+
+    def test_get_ancestors(self, simple_tree):
+        assert simple_tree.get_ancestors("公司") == []
+        assert simple_tree.get_ancestors("部门A") == ["公司"]
+        assert simple_tree.get_ancestors("小组ABA") == ["公司", "部门A", "中心AB"]
+        assert simple_tree.get_ancestors("小组BAA") == ["公司", "部门B", "中心BA"]
+
+    def test_get_ancestors_include_self(self, simple_tree):
+        assert simple_tree.get_ancestors("公司", include_self=True) == ["公司"]
+        assert simple_tree.get_ancestors("部门A", include_self=True) == ["公司", "部门A"]
+
+    def test_get_children(self, simple_tree):
+        assert simple_tree.get_children("公司") == ["部门A", "部门B"]
+        assert simple_tree.get_children("部门A") == ["中心AA", "中心AB"]
+        assert simple_tree.get_children("中心AA") == ["小组AAA"]
+        assert simple_tree.get_children("小组AAA") == []
+
+    def test_get_descendants(self, simple_tree):
+        assert simple_tree.get_descendants("公司") == [
+            "部门A",
+            "部门B",
+            "中心AA",
+            "中心AB",
+            "中心BA",
+            "小组AAA",
+            "小组ABA",
+            "小组BAA",
+        ]
+        assert simple_tree.get_descendants("部门A") == ["中心AA", "中心AB", "小组AAA", "小组ABA"]
+        assert simple_tree.get_descendants("中心AA") == ["小组AAA"]
+        assert simple_tree.get_descendants("小组AAA") == []
+
+    def test_get_descendants_include_self(self, simple_tree):
+        assert simple_tree.get_descendants("中心AA", include_self=True) == ["中心AA", "小组AAA"]
+        assert simple_tree.get_descendants("小组AAA", include_self=True) == ["小组AAA"]
