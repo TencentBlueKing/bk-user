@@ -4,7 +4,7 @@
     :hover-width="240"
     navigation-type="top-bottom"
     :need-menu="false"
-    :side-title="'蓝鲸用户管理'"
+    :side-title="$t('蓝鲸用户管理')"
     theme-color="#1e2634"
   >
     <template #side-header>
@@ -13,7 +13,7 @@
         :to="{ name: 'organization' }"
       >
         <i class="user-icon icon-user-logo-i" />
-        <span class="title-desc">蓝鲸用户管理</span>
+        <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
       </RouterLink>
     </template>
     <template #header>
@@ -29,23 +29,28 @@
         </span>
       </div>
       <div class="main-navigation-right">
-        <!-- <bk-dropdown
+        <bk-dropdown
           @hide="() => (state.languageDropdown = false)"
           @show="() => (state.languageDropdown = true)"
         >
-          <div class="help-info" :class="state.languageDropdown && 'active'">
-            <i class="bk-sq-icon icon-yuyanqiehuanzhongwen"></i>
+          <div class="help-info language" :class="state.languageDropdown && 'active'">
+            <i :class="['bk-sq-icon', $i18n.locale === 'en'
+              ? 'icon-yuyanqiehuanyingwen' : 'icon-yuyanqiehuanzhongwen']" />
           </div>
           <template #content>
             <bk-dropdown-menu>
-              <bk-dropdown-item v-for="(item, index) in languageNav" :key="index">
-                <i :class="item.icon" style=" margin-right: 5px;font-size: 16px;"></i>
-                <span>{{ item.name }}</span>
-              </bk-dropdown-item>
+              <div v-for="(item, index) in languageNav" :key="index">
+                <bk-dropdown-item
+                  :class="[{ 'active-item': $i18n.locale === item.language }]"
+                  @click="handleSwitchLocale(item.language)">
+                  <i :class="item.icon" style=" margin-right: 5px;font-size: 16px;"></i>
+                  <span>{{ item.name }}</span>
+                </bk-dropdown-item>
+              </div>
             </bk-dropdown-menu>
           </template>
         </bk-dropdown>
-        <bk-dropdown
+        <!-- <bk-dropdown
           @hide="() => (state.helpDropdown = false)"
           @show="() => (state.helpDropdown = true)"
         >
@@ -75,11 +80,11 @@
           <template #content>
             <bk-dropdown-menu ext-cls="dropdown-menu-box">
               <bk-dropdown-item
-                :class="{ 'active': isPersonalCenter }"
+                :class="{ 'active-item': isPersonalCenter }"
                 @click="toIndividualCenter">
-                个人中心
+                {{ $t('个人中心') }}
               </bk-dropdown-item>
-              <bk-dropdown-item @click="logout">退出登录</bk-dropdown-item>
+              <bk-dropdown-item @click="logout">{{ $t('退出登录') }}</bk-dropdown-item>
             </bk-dropdown-menu>
           </template>
         </bk-dropdown>
@@ -92,11 +97,13 @@
 
 <script setup lang="ts">
 import { DownShape } from 'bkui-vue/lib/icon';
+import Cookies from 'js-cookie';
 import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { logout } from '@/common/auth';
 import Login from '@/components/layouts/Login.vue';
+import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store/user';
 
@@ -112,14 +119,14 @@ const headerNav = ref([]);
 const userInfo = computed(() => {
   const { role } = userStore.user;
   const baseNav = [
-    { name: '组织架构', path: 'organization' },
-    { name: '数据源管理', path: 'dataSource' },
-    { name: '认证源管理', path: 'authSourceList' },
+    { name: t('组织架构'), path: 'organization' },
+    { name: t('数据源管理1'), path: 'dataSource' },
+    { name: t('认证源管理1'), path: 'authSourceList' },
   ];
   if (role === 'super_manager') {
-    headerNav.value = [...baseNav, { name: '租户管理', path: 'tenant' }, { name: '设置', path: 'setting' }];
+    headerNav.value = [...baseNav, { name: t('租户管理1'), path: 'tenant' }, { name: t('设置'), path: 'setting' }];
   } else if (role === 'tenant_manager') {
-    headerNav.value = [...baseNav, { name: '设置', path: 'setting' }];
+    headerNav.value = [...baseNav, { name: t('设置'), path: 'setting' }];
   } else if (role === 'natural_user') {
     router.push({ name: 'personalCenter' });
   }
@@ -129,27 +136,29 @@ const userInfo = computed(() => {
 const route = useRoute();
 const isPersonalCenter = computed(() => route.name === 'personalCenter');
 
-// const languageNav = reactive([
-//   {
-//     name: '中文',
-//     icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
-//   },
-//   {
-//     name: 'English',
-//     icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
-//   },
-// ]);
+const languageNav = reactive([
+  {
+    name: '中文',
+    icon: 'bk-sq-icon icon-yuyanqiehuanzhongwen',
+    language: 'zh-cn',
+  },
+  {
+    name: 'English',
+    icon: 'bk-sq-icon icon-yuyanqiehuanyingwen',
+    language: 'en',
+  },
+]);
 // const helpNav = reactive([
 //   {
-//     name: '产品文档',
+//     name: t('产品文档'),
 //     url: '',
 //   },
 //   {
-//     name: '版本日志',
+//     name: t('版本日志'),
 //     url: '',
 //   },
 //   {
-//     name: '问题反馈',
+//     name: t('问题反馈'),
 //     url: '',
 //   },
 // ]);
@@ -161,6 +170,29 @@ const toIndividualCenter = () => {
     name: 'personalCenter',
   });
 };
+
+const handleSwitchLocale = (locale: string) => {
+  const api = `${window.BK_COMPONENT_API_URL}/api/c/compapi/v2/usermanage/fe_update_user_language/`;
+  const scriptId = 'jsonp-script';
+  const prevJsonpScript = document.getElementById(scriptId);
+  if (prevJsonpScript) {
+    document.body.removeChild(prevJsonpScript);
+  }
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = `${api}?language=${locale}`;
+  script.id = scriptId;
+  document.body.appendChild(script);
+
+  Cookies.set('blueking_language', locale, {
+    expires: 3600,
+    path: '/',
+    domain: window.BK_DOMAIN,
+  });
+  I18n.global.locale.value = locale as any;
+  document.querySelector('html')?.setAttribute('lang', locale);
+  window.location.reload();
+};
 </script>
 
 <style lang="less" scoped>
@@ -169,6 +201,10 @@ const toIndividualCenter = () => {
 
   :deep(.bk-navigation-header) {
     background-color: #0e1525;
+
+    .bk-navigation-title {
+      overflow: initial;
+    }
 
     .icon-user-logo-i {
       font-size: 28px;
@@ -215,15 +251,20 @@ const toIndividualCenter = () => {
 }
 
 .main-navigation-right {
-  margin: 0 10px;
+  // margin: 0 10px;
   color: #96a2b9;
 
   .bk-dropdown {
-    padding: 0 10px;
+    // padding: 0 10px;
 
     .help-info {
       padding: 5px;
+      cursor: pointer;
       border-radius: 50%;
+    }
+
+    .language {
+      margin: 0 10px;
     }
 
     .active {
@@ -269,14 +310,12 @@ const toIndividualCenter = () => {
   }
 }
 
-.dropdown-menu-box {
-  .active {
-    color: #3a84ff;
-    background-color: #E1ECFF;
+.active-item {
+  color: #3a84ff !important;
+  background-color: #E1ECFF;
 
-    &:hover {
-      background-color: #E1ECFF;
-    }
+  &:hover {
+    background-color: #E1ECFF !important;
   }
 }
 </style>

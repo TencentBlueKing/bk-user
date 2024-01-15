@@ -3,23 +3,23 @@
     <ul class="details-info-content" v-if="isPluginConfig">
       <li class="content-item">
         <div class="item-header">
-          <p class="item-title">服务配置</p>
+          <p class="item-title">{{ $t('服务配置') }}</p>
           <bk-button outline theme="primary" @click="handleClickEdit">
-            编辑
+            {{ $t('编辑') }}
           </bk-button>
         </div>
         <ul class="item-content" style="display: flex">
           <div class="w-[50%]">
             <li>
-              <span class="key">服务地址：</span>
+              <span class="key">{{ $t('服务地址') }}：</span>
               <span class="value">{{ serverConfig.server_base_url }}</span>
             </li>
             <li>
-              <span class="key">用户数据API路径：</span>
+              <span class="key">{{ $t('用户数据 API 路径') }}：</span>
               <span class="value">{{ serverConfig.user_api_path }}</span>
             </li>
             <div class="query-params" v-if="showUserApiQueryParams">
-              <span class="key">查询参数：</span>
+              <span class="key">{{ $t('查询参数') }}：</span>
               <div class="value">
                 <bk-tag v-for="(item, index) in serverConfig.user_api_query_params" :key="index">
                   {{item.key}}：{{item.value}}
@@ -27,11 +27,11 @@
               </div>
             </div>
             <li>
-              <span class="key">部门数据API路径：</span>
+              <span class="key">{{ $t('部门数据 API 路径') }}：</span>
               <span class="value">{{ serverConfig.department_api_path }}</span>
             </li>
             <div class="query-params" v-if="showDepartmentApiQueryParams">
-              <span class="key">查询参数：</span>
+              <span class="key">{{ $t('查询参数') }}：</span>
               <div class="value">
                 <bk-tag v-for="(item, index) in serverConfig.department_api_query_params" :key="index">
                   {{item.key}}：{{item.value}}
@@ -41,27 +41,27 @@
           </div>
           <div class="w-[50%]">
             <li>
-              <span class="key">分页请求每次数量：</span>
+              <span class="key">{{ $t('分页请求每页数量') }}：</span>
               <span class="value">{{ serverConfig.page_size }}</span>
             </li>
             <li>
-              <span class="key">请求超出时间：</span>
-              <span class="value">{{ serverConfig.request_timeout }}秒</span>
+              <span class="key">{{ $t('请求超时时间') }}：</span>
+              <span class="value">{{ serverConfig.request_timeout }}{{ $t('秒') }}</span>
             </li>
             <li>
-              <span class="key">重试次数：</span>
-              <span class="value">{{ serverConfig.retries }}次</span>
+              <span class="key">{{ $t('重试次数') }}：</span>
+              <span class="value">{{ serverConfig.retries }}{{ $t('次') }}</span>
             </li>
           </div>
         </ul>
       </li>
       <li class="content-item">
         <div class="item-header">
-          <p class="item-title">认证配置</p>
+          <p class="item-title">{{ $t('认证配置') }}</p>
         </div>
         <ul class="item-content">
           <li>
-            <span class="key">认证方式：</span>
+            <span class="key">{{ $t('认证方式') }}：</span>
             <span class="value">{{ authConfig.method }}</span>
           </li>
           <li v-if="authConfig.method === 'bearer_token'">
@@ -70,11 +70,11 @@
           </li>
           <template v-else>
             <li>
-              <span class="key">用户名：</span>
+              <span class="key">{{ $t('用户名') }}：</span>
               <span class="value">{{ authConfig.username }}</span>
             </li>
             <li>
-              <span class="key">密码：</span>
+              <span class="key">{{ $t('密码') }}：</span>
               <span class="value">******</span>
             </li>
           </template>
@@ -82,11 +82,11 @@
       </li>
       <li class="content-item">
         <div class="item-header">
-          <p class="item-title">字段设置</p>
+          <p class="item-title">{{ $t('字段设置') }}</p>
         </div>
         <ul class="item-content">
           <li>
-            <span class="key">字段映射：</span>
+            <span class="key">{{ $t('字段映射') }}：</span>
             <div class="value">
               <div v-for="(item, index) in fieldMapping" :key="index">
                 <span>{{ item.target_field }}</span>
@@ -99,11 +99,11 @@
       </li>
       <li class="content-item">
         <div class="item-header">
-          <p class="item-title">同步配置</p>
+          <p class="item-title">{{ $t('同步配置') }}</p>
         </div>
         <ul class="item-content">
           <li>
-            <span class="key">同步周期：</span>
+            <span class="key">{{ $t('同步周期') }}：</span>
             <span class="value" v-for="(item, index) in SYNC_CONFIG_LIST" :key="index">
               <span v-if="item.value === syncConfig.sync_period">{{ item.label }}</span>
             </span>
@@ -113,7 +113,7 @@
     </ul>
     <div class="details-info-box" v-else>
       <bk-button theme="primary" @click="handleClickEdit">
-        编辑
+        {{ $t('编辑') }}
       </bk-button>
     </div>
   </bk-loading>

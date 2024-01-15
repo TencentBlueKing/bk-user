@@ -3,12 +3,12 @@
     <header>
       <bk-button theme="primary" @click="newAuthSource">
         <i class="user-icon icon-add-2 mr8" />
-        新建
+        {{ $t('新建') }}
       </bk-button>
       <bk-input
         class="header-right"
         v-model="searchVal"
-        placeholder="搜索认证源名称"
+        :placeholder="$t('搜索认证源名称')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -33,14 +33,14 @@
             @handleUpdate="fetchAuthSourceList"
           />
         </template>
-        <bk-table-column prop="name" label="认证源名称">
+        <bk-table-column prop="name" :label="$t('认证源名称')">
           <template #default="{ row }">
             <bk-button text theme="primary" @click="handleClick(row)">
               {{ row.name }}
             </bk-button>
           </template>
         </bk-table-column>
-        <bk-table-column prop="plugin.id" label="类型">
+        <bk-table-column prop="plugin.id" :label="$t('类型')">
           <template #default="{ row }">
             <div class="data-source-type">
               <img :src="row.plugin?.logo">
@@ -48,12 +48,12 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column prop="matched_data_sources" label="匹配数据源">
+        <bk-table-column prop="matched_data_sources" :label="$t('匹配数据源')">
           <template #default="{ row }">
             <bk-tag v-for="(item, index) in row.matched_data_sources" :key="index">{{ item }}</bk-tag>
           </template>
         </bk-table-column>
-        <bk-table-column prop="status" label="状态" :filter="{ list: statusFilters }">
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: statusFilters }">
           <template #default="{ row }">
             <div>
               <img :src="dataSourceStatus[row.status]?.icon" class="status-icon" />
@@ -61,15 +61,15 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column prop="updater" label="更新人">
+        <bk-table-column prop="updater" :label="$t('更新人')">
           <template #default="{ row }">
             <span>{{ row.updater || '--' }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="updated_at" label="更新时间"></bk-table-column>
-        <bk-table-column label="操作" width="150">
+        <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
+        <bk-table-column :label="$t('操作')" width="150">
           <template #default="{ row }">
-            <bk-button class="mr10" theme="primary" text @click="handleEdit(row)">编辑</bk-button>
+            <bk-button class="mr10" theme="primary" text @click="handleEdit(row)">{{ $t('编辑') }}</bk-button>
             <!-- <bk-popover
               class="dot-menu"
               placement="bottom-start"
@@ -99,7 +99,7 @@
             outline
             theme="primary"
             @click="handleEdit(currentRow)">
-            编辑
+            {{ $t('编辑') }}
           </bk-button>
           <!-- <bk-button>删除</bk-button> -->
         </div>
@@ -119,6 +119,7 @@ import ViewDetails from './ViewDetails.vue';
 import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
 import { getIdps } from '@/http/authSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { dataSourceStatus } from '@/utils';
 
@@ -131,8 +132,8 @@ const isDataError = ref(false);
 const tableMaxHeight = useTableMaxHeight(150);
 
 const statusFilters = [
-  { text: '正常', value: 'enabled' },
-  { text: '未启用', value: 'disabled' },
+  { text: t('正常'), value: 'enabled' },
+  { text: t('未启用'), value: 'disabled' },
 ];
 
 onMounted(() => {
@@ -182,7 +183,7 @@ const newAuthSource = () => {
 
 const detailsConfig = reactive({
   show: false,
-  title: '认证源详情',
+  title: t('认证源详情'),
 });
 
 const authDetails = ref({});

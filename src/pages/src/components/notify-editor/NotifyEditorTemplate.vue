@@ -8,21 +8,21 @@
         data-test-id="list_emailInfo">
         <ul class="template-config clearfix">
           <li class="email-block">
-            <h3 class="email-block-name">{{createAccountEmail ? createAccountEmail : '即将到期提醒'}}</h3>
+            <h3 class="email-block-name">{{createAccountEmail ? createAccountEmail : $t('即将到期提醒')}}</h3>
             <div class="email-info clearfix">
-              <p class="title">标题<span class="star">*</span></p>
+              <p class="title">{{ $t('标题') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
                 v-model="expiringEmail.title" />
             </div>
             <div class="email-info clearfix">
-              <p class="title">发件人<span class="star">*</span></p>
+              <p class="title">{{ $t('发件人') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
                 v-model="expiringEmail.sender" />
             </div>
             <div class="email-info clearfix">
-              <p class="title" style="height: 260px">正文<span class="star">*</span></p>
+              <p class="title" style="height: 260px">{{ $t('正文') }}<span class="star">*</span></p>
               <edtiorTemplate
                 :toolbar-config="emailConfig"
                 :html-text="expiringEmail.content_html"
@@ -30,21 +30,21 @@
             </div>
           </li>
           <li class="email-block">
-            <h3 class="email-block-name">{{resetPasswordEmail ? resetPasswordEmail : '已过期提醒'}}</h3>
+            <h3 class="email-block-name">{{resetPasswordEmail ? resetPasswordEmail : $t('已过期提醒')}}</h3>
             <div class="email-info clearfix">
-              <p class="title">标题<span class="star">*</span></p>
+              <p class="title">{{ $t('标题') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
                 v-model="expiredEmail.title" />
             </div>
             <div class="email-info clearfix">
-              <p class="title">发件人<span class="star">*</span></p>
+              <p class="title">{{ $t('发件人') }}<span class="star">*</span></p>
               <bk-input
                 type="text" class="input-style"
                 v-model="expiredEmail.sender" />
             </div>
             <div class="email-info clearfix">
-              <p class="title" style="height: 260px">正文<span class="star">*</span></p>
+              <p class="title" style="height: 260px">{{ $t('正文') }}<span class="star">*</span></p>
               <edtiorTemplate
                 :toolbar-config="emailConfig"
                 :html-text="expiredEmail.content_html"
@@ -59,9 +59,9 @@
         data-test-id="list_emailInfo">
         <ul class="template-config clearfix">
           <li class="email-block">
-            <h3 class="email-block-name">{{createAccountSms ? createAccountSms : '即将到期提醒'}}</h3>
+            <h3 class="email-block-name">{{createAccountSms ? createAccountSms : $t('即将到期提醒')}}</h3>
             <div class="email-info clearfix">
-              <p class="title" style="height: 260px">正文<span class="star">*</span></p>
+              <p class="title" style="height: 260px">{{ $t('正文') }}<span class="star">*</span></p>
               <edtiorTemplate
                 :toolbar-config="infoConfig"
                 :html-text="expiringSms.content_html"
@@ -69,9 +69,9 @@
             </div>
           </li>
           <li class="email-block">
-            <h3 class="email-block-name">{{resetPasswordSms ? resetPasswordSms : '已过期提醒'}}</h3>
+            <h3 class="email-block-name">{{resetPasswordSms ? resetPasswordSms : $t('已过期提醒')}}</h3>
             <div class="email-info clearfix">
-              <p class="title" style="height: 260px">正文<span class="star">*</span></p>
+              <p class="title" style="height: 260px">{{ $t('正文') }}<span class="star">*</span></p>
               <edtiorTemplate
                 :toolbar-config="infoConfig"
                 :html-text="expiredSms.content_html"

@@ -11,14 +11,14 @@
         <div>
           <bk-button
             v-if="pluginId !== 'local'"
-            class="w-[88px] mr-[8px]"
+            class="min-w-[88px] mr-[8px]"
             outline
             theme="primary"
             @click="handleSync">
-            一键同步
+            {{ $t('一键同步') }}
           </bk-button>
-          <bk-button v-if="statusText" class="w-[64px]" hover-theme="primary" @click="handleClick">
-            {{ statusText === 'disabled' ? '启用' : '停用' }}
+          <bk-button v-if="statusText" class="min-w-[64px]" hover-theme="primary" @click="handleClick">
+            {{ statusText === 'disabled' ? t('启用') : t('停用') }}
           </bk-button>
         </div>
       </template>
@@ -29,17 +29,17 @@
       ext-cls="tab-details"
       @change="changeTab"
     >
-      <bk-tab-panel name="user" label="用户信息">
+      <bk-tab-panel name="user" :label="$t('用户信息')">
         <UserInfo
           v-if="activeKey === 'user'"
           :data-source-id="currentId"
           :plugin-id="pluginId"
           :is-password-login="isPasswordLogin" />
       </bk-tab-panel>
-      <bk-tab-panel :visible="pluginId === 'local'" name="account" label="账密信息">
+      <bk-tab-panel :visible="pluginId === 'local'" name="account" :label="$t('账密信息')">
         <PswInfo v-if="activeKey === 'account'" />
       </bk-tab-panel>
-      <bk-tab-panel :visible="pluginId !== 'local'" name="config" label="配置信息">
+      <bk-tab-panel :visible="pluginId !== 'local'" name="config" :label="$t('配置信息')">
         <ConfigInfo v-if="activeKey === 'config'" />
       </bk-tab-panel>
     </bk-tab>
@@ -63,6 +63,7 @@ import {
   getDataSourcePlugins,
   postOperationsSync,
 } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 
 const route = useRoute();
@@ -99,15 +100,15 @@ onMounted(async () => {
 const toggleStatus = async () => {
   const res = await changeSwitchStatus(route.params.id);
   statusText.value = res.data?.status;
-  const message = res.data?.status === 'disabled' ? '停用成功' : '启用成功';
+  const message = res.data?.status === 'disabled' ? t('停用成功') : t('启用成功');
   Message({ theme: 'success', message });
 };
 
 const handleClick = async () => {
   if (statusText.value === 'enabled') {
     InfoBox({
-      title: '确认停用该数据源吗？',
-      subTitle: '停用后，该数据源下所有用户将无法登录',
+      title: t('确认停用该数据源吗？'),
+      subTitle: t('停用后，该数据源下所有用户将无法登录'),
       onConfirm: toggleStatus,
     });
   } else {

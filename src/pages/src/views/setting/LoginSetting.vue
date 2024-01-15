@@ -164,7 +164,7 @@ const handleClickAdd = () => {
 const selectDeConfirmFn = () => {
   if (!getSelectedDepartments.value.length) {
     Message({
-      message: this.$t('请选择组织'),
+      message: '请选择组织',
       theme: 'warning',
     });
     return;

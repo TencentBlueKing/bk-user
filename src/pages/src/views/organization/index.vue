@@ -130,6 +130,7 @@ import {
   getTenantUsersList,
 } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
+import { t } from '@/language/index';
 import router from '@/router';
 import { copy, logoConvert } from '@/utils';
 
@@ -150,17 +151,17 @@ const state = reactive({
   isDataError: false,
 });
 const panels = reactive([
-  { name: 'user_info', label: '人员信息', isVisible: true },
-  { name: 'details_info', label: '详细信息', isVisible: true },
+  { name: 'user_info', label: t('人员信息'), isVisible: true },
+  { name: 'details_info', label: t('详细信息'), isVisible: true },
 ]);
 
 const submenu = [
   {
-    name: '复制组织ID',
+    name: t('复制组织ID'),
     type: 'id',
   },
   {
-    name: '复制组织名称',
+    name: t('复制组织名称'),
     type: 'name',
   },
 ];
@@ -187,7 +188,7 @@ onMounted(() => {
       res.data.role === 'natural_user' ?  router.push({ name: 'personalCenter' }) : initData();
     })
     .catch(() => {
-      Message('获取用户信息失败，请检查后再试');
+      Message(t('获取用户信息失败，请检查后再试'));
     });
 });
 
@@ -392,7 +393,7 @@ const updateTenantsList = async () => {
   await getTenantUsers(state.currentTenant.id);
   Message({
     theme: 'success',
-    message: '租户信息更新成功',
+    message: t('租户信息更新成功'),
   });
 };
 

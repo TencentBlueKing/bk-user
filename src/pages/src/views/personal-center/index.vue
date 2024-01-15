@@ -23,7 +23,7 @@
         </div>
         <div class="left-add">
           <p>
-            <span class="account">已关联账号</span>
+            <span class="account">{{ $t('已关联账号') }}</span>
             <span class="number">{{ currentNaturalUser.tenant_users?.length }}</span>
           </p>
           <!-- <bk-button theme="primary" text>
@@ -46,7 +46,7 @@
                 <span class="tenant text-overflow">@ {{ item.tenant.name }}</span>
               </div>
               <bk-tag type="filled" theme="success" v-if="currentNaturalUser.full_name === item.full_name">
-                当前登录
+                {{ $t('当前登录') }}
               </bk-tag>
             </div>
           </li>
@@ -86,20 +86,20 @@
                   {{ currentTenantInfo.tenant?.id }}
                 </bk-tag>
               </p>
-              <p class="login-time">最近登录时间：{{ '--' }}</p>
+              <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p>
             </div>
           </div>
           <div class="header-right">
-            <bk-button class="w-[88px]" @click="showPasswordModal">
-              修改密码
+            <bk-button class="min-w-[88px]" @click="showPasswordModal">
+              {{ $t('修改密码') }}
             </bk-button>
             <span v-bk-tooltips="{
-              content: '该账号已登录',
+              content: $t('该账号已登录'),
               distance: 20,
               disabled: !isCurrentTenant,
             }">
               <bk-button :disabled="isCurrentTenant">
-                切换为该账号登录
+                {{ $t('切换为该账号登录') }}
               </bk-button>
             </span>
             <!-- <bk-button>
@@ -111,7 +111,7 @@
           <ul class="details-info">
             <li class="details-info-item">
               <div class="item-header">
-                <p class="item-title">身份信息</p>
+                <p class="item-title">{{ $t('身份信息') }}</p>
               </div>
               <bk-form
                 ref="formRef"
@@ -120,15 +120,15 @@
                 :rules="rules">
                 <div class="item-div">
                   <li>
-                    <span class="key">用户名：</span>
+                    <span class="key">{{ $t('用户名') }}：</span>
                     <span class="value">{{ currentUserInfo.username }}</span>
                   </li>
                   <li>
-                    <span class="key">全名：</span>
+                    <span class="key">{{ $t('全名') }}：</span>
                     <span class="value">{{ currentUserInfo.full_name }}</span>
                   </li>
                   <li>
-                    <span class="key">邮箱：</span>
+                    <span class="key">{{ $t('邮箱') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditEmail">
                         <bk-radio-group
@@ -136,8 +136,8 @@
                           v-model="currentUserInfo.is_inherited_email"
                           @change="toggleEmail"
                         >
-                          <bk-radio-button :label="true">继承数据源</bk-radio-button>
-                          <bk-radio-button :label="false">自定义</bk-radio-button>
+                          <bk-radio-button :label="true">{{ $t('继承数据源') }}</bk-radio-button>
+                          <bk-radio-button :label="false">{{ $t('自定义') }}</bk-radio-button>
                         </bk-radio-group>
                         <bk-input
                           v-if="currentUserInfo.is_inherited_email"
@@ -147,10 +147,10 @@
                           <bk-input v-model="currentUserInfo.custom_email" />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeEmail">
-                          确定
+                          {{ $t('确定') }}
                         </bk-button>
                         <bk-button text theme="primary" @click="cancelEditEmail">
-                          取消
+                          {{ $t('取消') }}
                         </bk-button>
                       </div>
                       <div v-else>
@@ -167,7 +167,7 @@
                     </div>
                   </li>
                   <li class="mb-[10px]">
-                    <span class="key">手机号：</span>
+                    <span class="key">{{ $t('手机号') }}：</span>
                     <div class="value-content">
                       <div class="value-edit" v-if="isEditPhone">
                         <bk-radio-group
@@ -175,8 +175,8 @@
                           v-model="currentUserInfo.is_inherited_phone"
                           @change="togglePhone"
                         >
-                          <bk-radio-button :label="true">继承数据源</bk-radio-button>
-                          <bk-radio-button :label="false">自定义</bk-radio-button>
+                          <bk-radio-button :label="true">{{ $t('继承数据源') }}</bk-radio-button>
+                          <bk-radio-button :label="false">{{ $t('自定义') }}</bk-radio-button>
                         </bk-radio-group>
                         <bk-form-item
                           v-if="currentUserInfo.is_inherited_phone"
@@ -194,10 +194,10 @@
                             @changeTelError="changeTelError" />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changePhone">
-                          确定
+                          {{ $t('确定') }}
                         </bk-button>
                         <bk-button text theme="primary" @click="cancelEditPhone">
-                          取消
+                          {{ $t('取消') }}
                         </bk-button>
                       </div>
                       <div v-else>
@@ -216,15 +216,15 @@
                 </div>
                 <div class="item-div">
                   <li>
-                    <span class="key">所属租户ID：</span>
+                    <span class="key">{{ $t('所属租户ID') }}：</span>
                     <span class="value">{{ currentTenantInfo.tenant?.id }}</span>
                   </li>
                   <li>
-                    <span class="key">所属组织：</span>
+                    <span class="key">{{ $t('所属组织') }}：</span>
                     <span class="value">{{ formatConvert(currentUserInfo.departments) }}</span>
                   </li>
                   <li>
-                    <span class="key">直属上级：</span>
+                    <span class="key">{{ $t('直属上级') }}：</span>
                     <span class="value">{{ formatConvert(currentUserInfo.leaders) }}</span>
                   </li>
                 </div>
@@ -276,7 +276,7 @@
                         </bk-option>
                       </bk-select>
                       <span class="error-text" v-show="item.error && (!item.value || !item.value.length)">
-                        必填项
+                        {{ $t('必填项') }}
                       </span>
                     </div>
                     <i
@@ -285,10 +285,10 @@
                       @click="editExtra(item, index)" />
                     <div v-if="item.isEdit" style="line-height: 32px;">
                       <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changeCustomFields(item)">
-                        确定
+                        {{ $t('确定') }}
                       </bk-button>
                       <bk-button text theme="primary" @click="cancelCustomFields(item, index)">
-                        取消
+                        {{ $t('取消') }}
                       </bk-button>
                     </div>
                   </div>
@@ -323,6 +323,7 @@ import {
   patchUsersPhone,
   putPersonalCenterUserExtrasFields,
 } from '@/http/personalCenterFiles';
+import { t } from '@/language/index';
 import { customFieldsMap, formatConvert, getBase64 } from '@/utils';
 
 const validate = useValidate();
@@ -459,7 +460,7 @@ watch(() => currentUserInfo.value?.extras, (val) => {
 });
 
 const tagTheme = value => (value ? 'info' : 'warning');
-const tagText = value => (value ? '数据源' : '自定义');
+const tagText = value => (value ? t('数据源') : t('自定义'));
 
 const isEditEmail = ref(false);
 
@@ -589,7 +590,7 @@ const customRequest = (event) => {
 
 const handleError = (file) => {
   if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
   }
 };
 
@@ -602,7 +603,7 @@ const isEditing = () => {
 // 修改密码
 const passwordModalConfig = ref({
   isShow: false,
-  title: '修改密码',
+  title: t('修改密码'),
   id: '',
 });
 

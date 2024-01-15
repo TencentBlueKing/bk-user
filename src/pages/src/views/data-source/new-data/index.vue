@@ -55,6 +55,7 @@ import Local from './Local.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import { getDataSourcePlugins } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { useMainViewStore } from '@/store/mainView';
 
@@ -76,8 +77,8 @@ const typeList = ref([]);
 const curStep = ref(1);
 const typeSteps = reactive({
   general: [
-    { title: '服务配置' },
-    { title: '字段设置' },
+    { title: t('服务配置') },
+    { title: t('字段设置') },
   ],
 });
 
@@ -89,7 +90,7 @@ onMounted(async () => {
     const pluginsRes = await getDataSourcePlugins();
     typeList.value = pluginsRes.data;
     if (currentId.value) {
-      store.breadCrumbsTitle = '编辑数据源';
+      store.breadCrumbsTitle = t('编辑数据源');
     }
   } catch (e) {
     console.warn(e);

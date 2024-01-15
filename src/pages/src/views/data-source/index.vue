@@ -36,6 +36,7 @@ import { reactive } from 'vue';
 
 import MainView from '@/components/layouts/MainView.vue';
 import { useMenuInfo } from '@/hooks/useMenuInfo';
+import { t } from '@/language/index';
 import { useMenu } from '@/store/useMenu';
 
 const menuStore = useMenu();
@@ -43,7 +44,7 @@ const { activeKey, handleChangeMenu } = useMenuInfo();
 
 const menuData = reactive([
   {
-    name: '数据源管理',
+    name: t('数据源管理'),
     key: 'local',
   },
   // {

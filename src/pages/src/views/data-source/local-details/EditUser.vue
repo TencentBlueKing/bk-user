@@ -9,7 +9,7 @@
     >
       <bk-form-item
         style="width: 440px;"
-        label="用户名"
+        :label="$t('用户名')"
         property="username"
         required
       >
@@ -22,7 +22,7 @@
       </bk-form-item>
       <bk-form-item
         style="width: 440px;"
-        label="全名"
+        :label="$t('全名')"
         property="full_name"
         required
       >
@@ -44,10 +44,10 @@
         @delete="handleDelete"
         @error="handleError"
       />
-      <bk-form-item label="邮箱" property="email" required>
+      <bk-form-item :label="$t('邮箱')" property="email" required>
         <bk-input v-model="formData.email" placeholder="请输入" @focus="handleChange" />
       </bk-form-item>
-      <bk-form-item label="手机号" required>
+      <bk-form-item :label="$t('手机号')" required>
         <phoneInput
           :form-data="formData"
           :tel-error="telError"
@@ -55,7 +55,7 @@
           @changeTelError="changeTelError" />
       </bk-form-item>
       <div class="form-item-flex">
-        <bk-form-item label="所属组织">
+        <bk-form-item :label="$t('所属组织')">
           <bk-select
             v-model="formData.department_ids"
             filterable
@@ -72,7 +72,7 @@
               :label="item.name" />
           </bk-select>
         </bk-form-item>
-        <bk-form-item label="直属上级">
+        <bk-form-item :label="$t('直属上级')">
           <bk-select
             v-model="formData.leader_ids"
             filterable
@@ -133,10 +133,10 @@
     </bk-form>
     <div class="footer">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
-        提交
+        {{ $t('提交') }}
       </bk-button>
       <bk-button @click="() => emit('handleCancelEdit')">
-        取消
+        {{ $t('取消') }}
       </bk-button>
     </div>
   </div>
@@ -150,6 +150,7 @@ import CustomFields from '@/components/custom-fields/index.vue';
 import phoneInput from '@/components/phoneInput.vue';
 import useValidate from '@/hooks/use-validate';
 import { getDataSourceDepartments, getDataSourceLeaders, newDataSourceUser, putDataSourceUserDetails } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import { getBase64 } from '@/utils';
 
 const props = defineProps({
@@ -228,7 +229,7 @@ const customRequest = (event) => {
 
 const handleError = (file) => {
   if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
   }
 };
 
@@ -327,11 +328,11 @@ const handleSubmit = async () => {
     let text = '';
     if (props.type === 'edit') {
       data.id = props.currentId;
-      text = '用户更新成功';
+      text = t('用户更新成功');
       await putDataSourceUserDetails(data);
     } else {
       data.id = props.dataSourceId;
-      text = '用户创建成功';
+      text = t('用户创建成功');
       await newDataSourceUser(data);
     }
     emit('updateUsers', '', text);

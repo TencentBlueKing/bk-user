@@ -3,10 +3,9 @@
     <MainBreadcrumbsDetails @toBack="toBack">
       <template #content>
         <bk-steps
-          ext-cls="steps-wrapper"
+          :class="['steps-wrapper', { 'en': $i18n.locale === 'en' }]"
           :cur-step="curStep"
           :steps="stepsConfig"
-          class="mb20"
         />
       </template>
     </MainBreadcrumbsDetails>
@@ -36,13 +35,14 @@ import CustomPlugin from './CustomPlugin.vue';
 import WeCom from './WeCom.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
+import { t } from '@/language/index';
 import router from '@/router/index';
 
 const editLeaveBefore = inject('editLeaveBefore');
 const curStep = ref(1);
 const stepsConfig = reactive([
-  { title: '认证源选择', icon: 1 },
-  { title: '登录配置', icon: 2 },
+  { title: t('认证源选择'), icon: 1 },
+  { title: t('登录配置'), icon: 2 },
 ]);
 
 const toBack = async () => {
@@ -102,6 +102,10 @@ defineExpose({ boxRef });
     left: 50%;
     width: 360px;
     transform: translate(-50%, -50%);
+  }
+
+  .en {
+    width: 460px;
   }
 }
 

@@ -7,6 +7,7 @@ import {
 import HeaderBox from './views/Header.vue';
 
 import { currentUser } from '@/http/api';
+import { t } from '@/language/index';
 import { useUser } from '@/store/user';
 
 // 加载完用户数据才会展示页面
@@ -20,7 +21,7 @@ currentUser()
     isLoading.value = false;
   })
   .catch(() => {
-    Message('获取用户信息失败，请检查后再试');
+    Message(t('获取用户信息失败，请检查后再试'));
     isLoading.value = false;
   });
 </script>

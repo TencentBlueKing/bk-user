@@ -4,12 +4,12 @@
       <bk-dropdown placement="bottom-start" trigger="click">
         <bk-button theme="primary">
           <i class="user-icon icon-add-2 mr8" />
-          新建数据源
+          {{ $t('新建数据源') }}
         </bk-button>
         <template #content>
           <bk-dropdown-menu ext-cls="dropdown-menu-ul">
-            <p class="dropdown-title" v-if="state.typeList.length > 0">数据源类型选择</p>
-            <p class="dropdown-title" v-else>暂无数据源类型</p>
+            <p class="dropdown-title" v-if="state.typeList.length > 0">{{ $t('数据源类型选择') }}</p>
+            <p class="dropdown-title" v-else>{{ $t('暂无数据源类型') }}</p>
             <bk-dropdown-item
               v-for="item in state.typeList"
               :key="item"
@@ -27,7 +27,7 @@
       <div class="header-right">
         <bk-input
           v-model="searchVal"
-          placeholder="搜索数据源名称"
+          :placeholder="$t('搜索数据源名称')"
           type="search"
           clearable
           @enter="handleEnter"
@@ -35,7 +35,7 @@
         />
         <bk-button text theme="primary" @click="handleUpdateRecord">
           <i class="user-icon icon-lishijilu" />
-          数据更新记录
+          {{ $t('数据更新记录') }}
         </bk-button>
       </div>
     </header>
@@ -57,14 +57,14 @@
             @handleUpdate="handleUpdateRecord"
           />
         </template>
-        <bk-table-column prop="name" label="数据源名称">
+        <bk-table-column prop="name" :label="$t('数据源名称')">
           <template #default="{ row }">
             <bk-button text theme="primary" @click="handleClick(row)">
               {{ row.name }}
             </bk-button>
           </template>
         </bk-table-column>
-        <bk-table-column prop="plugin_id" label="数据源类型">
+        <bk-table-column prop="plugin_id" :label="$t('数据源类型')">
           <template #default="{ row }">
             <div class="data-source-type" v-for="item in state.typeList" :key="item">
               <img v-if="item.id === row.plugin_id && item.logo" :src="item.logo">
@@ -72,7 +72,7 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column prop="status" label="状态" :filter="{ list: statusFilters }">
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: statusFilters }">
           <template #default="{ row }">
             <div>
               <img :src="dataSourceStatus[row.status]?.icon" class="account-status-icon" />
@@ -80,16 +80,16 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column prop="updater" label="更新人">
+        <bk-table-column prop="updater" :label="$t('更新人')">
           <template #default="{ row }">
             <span>{{ row.updater || '--' }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="updated_at" label="更新时间"></bk-table-column>
-        <bk-table-column label="操作">
+        <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
+        <bk-table-column :label="$t('操作')">
           <template #default="{ row }">
             <span v-bk-tooltips="{
-              content: '本地数据源不支持同步，请到详情页使用导入功能',
+              content: $t('本地数据源不支持同步，请到详情页使用导入功能'),
               distance: 20,
               disabled: row.plugin_id !== 'local',
             }">
@@ -100,7 +100,7 @@
                 :disabled="row.plugin_id === 'local'"
                 @click="handleSync(row)"
               >
-                一键同步
+                {{ $t('一键同步') }}
               </bk-button>
             </span>
           </template>
@@ -117,6 +117,7 @@ import { onMounted, reactive, ref } from 'vue';
 import Empty from '@/components/Empty.vue';
 import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
 import { getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { useMainViewStore } from '@/store/mainView';
 import { dataSourceStatus } from '@/utils';
@@ -139,8 +140,8 @@ const state = reactive({
 });
 
 const statusFilters = [
-  { text: '正常', value: 'enabled' },
-  { text: '未启用', value: 'disabled' },
+  { text: t('正常'), value: 'enabled' },
+  { text: t('未启用'), value: 'disabled' },
 ];
 
 onMounted(() => {

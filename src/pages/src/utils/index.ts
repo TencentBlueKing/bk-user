@@ -6,27 +6,8 @@ import abnormalImg from '@/images/abnormal.svg';
 import loadingImg from '@/images/loading.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
-import warningImg from '@/images/warning.svg';
+import { t } from '@/language/index';
 export * from './countryCode';
-
-export const statusIcon = {
-  normal: {
-    icon: normalImg,
-    text: '正常',
-  },
-  disabled: {
-    icon: unknownImg,
-    text: '禁用',
-  },
-  locked: {
-    icon: warningImg,
-    text: '冻结',
-  },
-  delete: {
-    icon: abnormalImg,
-    text: '删除',
-  },
-};
 
 export const copy = (value: string) => {
   const textArea = document.createElement('textarea');
@@ -43,7 +24,7 @@ export const copy = (value: string) => {
     const res = document.execCommand('copy');
     if (res) {
       Message({
-        message: '复制成功',
+        message: t('复制成功'),
         theme: 'success',
         delay: 1500,
       });
@@ -52,7 +33,7 @@ export const copy = (value: string) => {
     throw new Error();
   } catch (e) {
     Message({
-      message: '复制失败',
+      message: t('复制失败'),
       theme: 'error',
       delay: 1500,
     });
@@ -85,7 +66,7 @@ export function dateConvert(value: string) {
     case null:
       return '--';
     case '2100-01-01':
-      return '永久';
+      return t('永久');
     default:
       return value;
   }
@@ -105,20 +86,20 @@ export function formatConvert(value: any) {
 export const dataSourceStatus = {
   enabled: {
     icon: normalImg,
-    text: '正常',
+    text: t('正常'),
   },
   disabled: {
     icon: unknownImg,
-    text: '未启用',
+    text: t('未启用'),
   },
 };
 
 export const validTime = {
-  30: '一个月',
-  90: '三个月',
-  180: '六个月',
-  365: '一年',
-  '-1': '永久',
+  30: t('一个月'),
+  90: t('三个月'),
+  180: t('六个月'),
+  365: t('一年'),
+  '-1': t('永久'),
 };
 
 export function validTimeMap(value: number) {
@@ -126,9 +107,9 @@ export function validTimeMap(value: number) {
 }
 
 export const noticeTime = {
-  1: '1天',
-  7: '7天',
-  15: '15天',
+  1: t('1天'),
+  7: t('7天'),
+  15: t('15天'),
 };
 export function noticeTimeMap(value: any) {
   const list: string[] = value?.map(key => noticeTime[key]).filter(Boolean) || [];
@@ -136,8 +117,8 @@ export function noticeTimeMap(value: any) {
 };
 
 export const notification = {
-  email: '邮箱',
-  sms: '短信',
+  email: t('邮箱'),
+  sms: t('短信'),
 };
 
 export function notificationMap(value: any) {
@@ -146,10 +127,10 @@ export function notificationMap(value: any) {
 };
 
 export const passwordMustIncludes = {
-  contain_lowercase: '小写字母',
-  contain_uppercase: '连续字母序',
-  contain_digit: '数字',
-  contain_punctuation: '特殊字符（除空格）',
+  contain_lowercase: t('小写字母'),
+  contain_uppercase: t('连续字母序'),
+  contain_digit: t('数字'),
+  contain_punctuation: t('特殊字符（除空格）'),
 };
 
 export function passwordMustIncludesMap(value: any) {
@@ -160,10 +141,10 @@ export function passwordMustIncludesMap(value: any) {
 };
 
 export const passwordNotAllowed = {
-  not_keyboard_order: '键盘序',
-  not_continuous_letter: '连续字母序',
-  not_continuous_digit: '连续数字序',
-  not_repeated_symbol: '重复字母、数字、特殊符号',
+  not_keyboard_order: t('键盘序'),
+  not_continuous_letter: t('连续字母序'),
+  not_continuous_digit: t('连续数字序'),
+  not_repeated_symbol: t('重复字母、数字、特殊符号'),
 };
 
 export function passwordNotAllowedMap(value: any) {
@@ -216,39 +197,39 @@ export const currentLimit = (top: number, pagination: any, rowHeight?: number) =
 export const SYNC_CONFIG_LIST = [
   {
     value: 0,
-    label: '从不',
+    label: t('从不'),
   },
   {
     value: 30,
-    label: '每 30 分钟',
+    label: t('每 30 分钟'),
   },
   {
     value: 60,
-    label: '每 1 小时',
+    label: t('每 1 小时'),
   },
   {
     value: 3 * 60,
-    label: '每 3 小时',
+    label: t('每 3 小时'),
   },
   {
     value: 6 * 60,
-    label: '每 6 小时',
+    label: t('每 6 小时'),
   },
   {
     value: 12 * 60,
-    label: '每 12 小时',
+    label: t('每 12 小时'),
   },
   {
     value: 24 * 60,
-    label: '每 1 天',
+    label: t('每 1 天'),
   },
   {
     value: 7 * 24 * 60,
-    label: '每 7 天',
+    label: t('每 7 天'),
   },
   {
     value: 30 * 24 * 60,
-    label: '每 30 天',
+    label: t('每 30 天'),
   },
 ];
 
@@ -256,46 +237,46 @@ export const SYNC_CONFIG_LIST = [
 export const dataRecordStatus = {
   pending: {
     icon: loadingImg,
-    text: '待执行',
+    text: t('待执行'),
     theme: 'warning',
   },
   running: {
     icon: loadingImg,
-    text: '同步中',
+    text: t('同步中'),
     theme: 'warning',
   },
   success: {
     icon: normalImg,
-    text: '成功',
+    text: t('成功'),
     theme: 'success',
   },
   failed: {
     icon: abnormalImg,
-    text: '失败',
+    text: t('失败'),
     theme: 'danger',
   },
 };
 
 // 有效期
 export const VALID_TIME = [
-  { days: 30, text: '一个月' },
-  { days: 90, text: '三个月' },
-  { days: 180, text: '六个月' },
-  { days: 365, text: '一年' },
-  { days: -1, text: '永久' },
+  { days: 30, text: t('一个月') },
+  { days: 90, text: t('三个月') },
+  { days: 180, text: t('六个月') },
+  { days: 365, text: t('一年') },
+  { days: -1, text: t('永久') },
 ];
 
 // 提醒时间
 export const REMIND_DAYS = [
-  { value: 1, label: '1天' },
-  { value: 7, label: '7天' },
-  { value: 15, label: '15天' },
+  { value: 1, label: t('1天') },
+  { value: 7, label: t('7天') },
+  { value: 15, label: t('15天') },
 ];
 
 // 通知方式
 export const NOTIFICATION_METHODS = [
-  { value: 'email', label: '邮箱', status: true },
-  { value: 'sms', label: '短信', status: false },
+  { value: 'email', label: t('邮箱'), status: true },
+  { value: 'sms', label: t('短信'), status: false },
 ];
 
 // 自定义字段转换

@@ -4,6 +4,7 @@ import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 
 import App from './app.vue';
+import i18n from './language/index';
 import router from './router';
 
 import './css/index.css';
@@ -17,8 +18,8 @@ const leaveBoxInstance = InfoBox({
 });
 const leaveBox = (opt = {}) => new Promise((resolve) => {
   const opts = Object.assign({
-    title: '确定离开当前页？',
-    subTitle: '离开将会导致未保存的信息丢失',
+    title: i18n.global.t('确定离开当前页？'),
+    subTitle: i18n.global.t('离开将会导致未保存的信息丢失'),
     quickClose: false,
     onConfirm: async () => {
       window.changeInput = false;
@@ -63,5 +64,6 @@ createApp(App)
   .use(router)
   .use(createPinia())
   .use(bkui)
+  .use(i18n)
   .provide('editLeaveBefore', leaveBox)
   .mount('.app');

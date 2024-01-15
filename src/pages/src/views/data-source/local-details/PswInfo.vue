@@ -3,61 +3,61 @@
     <ul class="details-info-content" v-if="openPasswordLogin">
       <li class="content-item">
         <div class="item-header">
-          <p class="item-title">密码规则</p>
+          <p class="item-title">{{ $t('密码规则') }}</p>
           <bk-button outline theme="primary" @click="handleClickEdit">
-            编辑
+            {{ $t('编辑') }}
           </bk-button>
         </div>
         <ul class="item-content flex">
           <li>
-            <span class="key">密码长度：</span>
-            <span class="value">{{ passwordRule?.min_length }}~32位</span>
+            <span class="key">{{ $t('密码长度') }}：</span>
+            <span class="value">{{ passwordRule?.min_length }}~32{{ $t('位') }}</span>
           </li>
           <li>
-            <span class="key">密码试错次数：</span>
-            <span class="value">{{ passwordRule?.max_retries }}次</span>
+            <span class="key">{{ $t('密码试错次数') }}：</span>
+            <span class="value">{{ passwordRule?.max_retries }}{{ $t('次') }}</span>
           </li>
           <li>
-            <span class="key">密码必须包含：</span>
+            <bk-overflow-title class="key" type="tips">{{ $t('密码必须包含') }}：</bk-overflow-title>
             <span class="value">{{ passwordMustIncludesMap(passwordRule) }}</span>
           </li>
           <li>
-            <span class="key">锁定时间：</span>
-            <span class="value">{{ passwordRule?.lock_time }}秒</span>
+            <span class="key">{{ $t('锁定时间') }}：</span>
+            <span class="value">{{ passwordRule?.lock_time }}{{ $t('秒') }}</span>
           </li>
           <li>
-            <span class="key">密码不允许：</span>
+            <bk-overflow-title class="key" type="tips">{{ $t('密码不允许') }}：</bk-overflow-title>
             <span class="value" v-if="passwordRule?.not_continuous_count === 0">--</span>
             <span class="value" v-else>
-              连续{{ passwordRule?.not_continuous_count }}位出现
+              {{ $t('连续x位出现', { count: passwordRule?.not_continuous_count }) }}
               {{ passwordNotAllowedMap(passwordRule) }}
             </span>
           </li>
           <li>
-            <span class="key">密码有效期：</span>
+            <span class="key">{{ $t('密码有效期') }}：</span>
             <span class="value">{{ validTimeMap(passwordRule?.valid_time) }}</span>
           </li>
         </ul>
       </li>
       <li class="content-item">
         <div class="item-header">
-          <p class="item-title">密码设置</p>
+          <p class="item-title">{{ $t('密码设置') }}</p>
         </div>
-        <ul class="item-content">
+        <ul :class="['item-content', { 'en': $i18n.locale === 'en' }]">
           <li>
-            <span class="key">初始密码获取方式：</span>
+            <bk-overflow-title class="key" type="tips">{{ $t('初始密码获取方式') }}：</bk-overflow-title>
             <span class="value">{{ passwordMethod }}</span>
           </li>
           <li>
-            <span class="key">初始密码通知方式：</span>
+            <bk-overflow-title class="key" type="tips">{{ $t('初始密码通知方式') }}：</bk-overflow-title>
             <span class="value">{{ notificationMap(passwordInitial?.notification?.enabled_methods) }}</span>
           </li>
           <li>
-            <span class="key">密码到期提醒时间：</span>
+            <bk-overflow-title class="key" type="tips">{{ $t('密码到期提醒时间')}}：</bk-overflow-title>
             <span class="value">{{ noticeTimeMap(passwordExpire?.remind_before_expire) }}</span>
           </li>
           <li>
-            <span class="key">密码到期通知方式：</span>
+            <bk-overflow-title class="key" type="tips">{{ $t('密码到期通知方式') }}：</bk-overflow-title>
             <span class="value">{{ notificationMap(passwordExpire?.notification?.enabled_methods) }}</span>
           </li>
         </ul>
@@ -66,9 +66,9 @@
     <div class="details-info-box" v-else>
       <bk-exception
         type="empty"
-        description="暂未开通账密登录">
+        :description="$t('暂未开通账密登录')">
         <bk-button theme="primary" @click="handleClickEdit">
-          去开通
+          {{ $t('去开通') }}
         </bk-button>
       </bk-exception>
     </div>
@@ -80,6 +80,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { getDataSourceDetails } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router';
 import { noticeTimeMap, notificationMap, passwordMustIncludesMap, passwordNotAllowedMap, validTimeMap } from '@/utils';
 
@@ -92,7 +93,7 @@ const passwordExpire = ref({});
 const plugin = ref({});
 
 const currentId = computed(() => route.params.id);
-const passwordMethod = computed(() => (passwordInitial.value?.generate_method === 'random' ? '随机' : '固定'));
+const passwordMethod = computed(() => (passwordInitial.value?.generate_method === 'random' ? t('随机') : t('固定')));
 
 onMounted(async () => {
   try {

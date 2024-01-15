@@ -2,7 +2,7 @@
   <div ref="boxRef" class="operation-wrapper">
     <div ref="cardRef" class="operation-content">
       <div class="operation-card">
-        <div class="operation-content-title">基本信息</div>
+        <div class="operation-content-title">{{ $t('基本信息') }}</div>
         <div class="operation-content-info">
           <bk-form
             class="operation-content-form"
@@ -11,20 +11,20 @@
             :model="formData"
             :rules="rulesBasicInfo"
           >
-            <bk-form-item label="租户名称" property="name" required>
+            <bk-form-item :label="$t('租户名称')" property="name" required>
               <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
             </bk-form-item>
-            <bk-form-item label="租户ID" property="id" required>
+            <bk-form-item :label="$t('租户ID')" property="id" required>
               <bk-input
                 v-model="formData.id"
                 :placeholder="validate.id.message"
                 :disabled="isEdit"
                 @focus="handleChange" />
             </bk-form-item>
-            <bk-form-item label="人员数量">
+            <bk-form-item :label="$t('人员数量')">
               <bk-radio-group v-model="formData.feature_flags.user_number_visible" @change="handleChange">
-                <bk-radio-button :label="true">显示</bk-radio-button>
-                <bk-radio-button :label="false">隐藏</bk-radio-button>
+                <bk-radio-button :label="true">{{ $t('显示') }}</bk-radio-button>
+                <bk-radio-button :label="false">{{ $t('隐藏') }}</bk-radio-button>
               </bk-radio-group>
             </bk-form-item>
           </bk-form>
@@ -43,7 +43,7 @@
         </div>
       </div>
       <div class="operation-card">
-        <div class="operation-content-title">管理员</div>
+        <div class="operation-content-title">{{ $t('管理员') }}</div>
         <bk-form ref="userRef" :model="formData">
           <bk-table
             class="operation-content-table"
@@ -55,18 +55,18 @@
         </bk-form>
       </div>
       <div ref="card2Ref" class="operation-card" v-if="!isEdit">
-        <div class="operation-content-title">管理员初始密码</div>
+        <div class="operation-content-title">{{ $t('管理员初始密码') }}</div>
         <bk-form
           form-type="vertical"
           :model="formData.password_initial_config"
         >
-          <bk-form-item class="form-item-password" label="密码生成" required>
+          <bk-form-item class="form-item-password" :label="$t('密码生成')" required>
             <bk-radio-group v-model="formData.password_initial_config.generate_method">
               <bk-radio label="random">
-                <span v-bk-tooltips="{ content: '所有管理员的密码都随机生成，互不相同' }">随机</span>
+                <span v-bk-tooltips="{ content: $t('所有管理员的密码都随机生成，互不相同') }">{{ $t('随机') }}</span>
               </bk-radio>
               <bk-radio label="fixed">
-                <span v-bk-tooltips="{ content: '所有管理员的密码都一致' }">固定</span>
+                <span v-bk-tooltips="{ content: $t('所有管理员的密码都一致') }">{{ $t('固定') }}</span>
               </bk-radio>
             </bk-radio-group>
             <div v-if="formData.password_initial_config.generate_method === 'fixed'">
@@ -74,10 +74,10 @@
                 class="input-password"
                 type="password"
                 v-model="formData.password_initial_config.fixed_password" />
-              <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">随机生成</bk-button>
+              <bk-button outline theme="primary" class="ml-[8px]" @click="handleRandomPassword">{{ $t('随机生成') }}</bk-button>
             </div>
           </bk-form-item>
-          <bk-form-item label="通知方式" :required="formData.password_initial_config.generate_method === 'random'">
+          <bk-form-item :label="$t('通知方式')" :required="formData.password_initial_config.generate_method === 'random'">
             <NotifyEditorTemplate
               :active-methods="formData.password_initial_config.notification.enabled_methods"
               :checkbox-info="NOTIFICATION_METHODS"
@@ -87,15 +87,14 @@
               :expired-email-key="'reset_password'"
               :expiring-sms-key="'user_initialize'"
               :expired-sms-key="'reset_password'"
-              :create-account-email="'创建账户邮件'"
-              :reset-password-email="'重设密码后的邮件'"
-              :create-account-sms="'创建账户短信'"
-              :reset-password-sms="'重设密码后的短信'"
+              :create-account-email="$t('创建账户邮件')"
+              :reset-password-email="$t('重设密码后的邮件')"
+              :create-account-sms="$t('创建账户短信')"
+              :reset-password-sms="$t('重设密码后的短信')"
               @handleEditorText="handleEditorText">
               <template #label>
                 <div class="password-header">
                   <bk-checkbox-group
-                    class="checkbox-zh"
                     v-model="formData.password_initial_config.notification.enabled_methods">
                     <bk-checkbox
                       v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
@@ -106,24 +105,24 @@
                     </bk-checkbox>
                   </bk-checkbox-group>
                   <div class="edit-info" @click="passwordInitialTemplate">
-                    <span style="font-size:14px">编辑通知模板</span>
+                    <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
                     <AngleUp v-if="isDropdownPasswordInitial" />
                     <AngleDown v-else />
                   </div>
                 </div>
               </template>
             </NotifyEditorTemplate>
-            <p class="error" v-show="enabledMethodsError">通知方式不能为空</p>
+            <p class="error" v-show="enabledMethodsError">{{ $t('通知方式不能为空') }}</p>
           </bk-form-item>
         </bk-form>
       </div>
     </div>
     <div class="footer" :class="{ 'fixed': isScroll }">
       <bk-button theme="primary" @click="handleSubmit" :loading="state.isLoading">
-        提交
+        {{ $t('提交') }}
       </bk-button>
       <bk-button @click="() => $emit('handleCancelEdit')">
-        取消
+        {{ $t('取消') }}
       </bk-button>
     </div>
   </div>
@@ -141,6 +140,7 @@ import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplat
 import { randomPasswords } from '@/http/dataSourceFiles';
 import PhoneInput from '@/components/phoneInput.vue';
 import { useButtonFixed } from '@/hooks/useButtonFixed';
+import { t } from '@/language/index';
 
 interface TableItem {
   username: string;
@@ -289,7 +289,7 @@ const handleDelete = () => {
 
 const handleError = (file) => {
   if (file.size > (2 * 1024 * 1024)) {
-    Message({ theme: 'error', message: '图片大小超出限制，请重新上传' });
+    Message({ theme: 'error', message: t('图片大小超出限制，请重新上传') });
   }
 };
 
@@ -346,28 +346,28 @@ const changeTelError = (value: boolean, index: number) => {
 
 const columns = [
   {
-    label: "用户名",
+    label: t('用户名'),
     field: "username",
     render: fieldItemFn,
   },
   {
-    label: "姓名",
+    label: t('全名'),
     field: "full_name",
     render: fieldItemFn,
   },
   {
-    label: "邮箱",
+    label: t('邮箱'),
     field: "email",
     render: fieldItemFn,
   },
   {
-    label: "手机号",
+    label: t('手机号'),
     field: "phone",
     width: 200,
     render: fieldItemFn,
   },
   {
-    label: "操作",
+    label: t('操作'),
     field: "",
     width: 65,
     render: ({ data, index }: TableColumnData) => {

@@ -5,12 +5,12 @@
         :class="{ 'is-status': isTenant }"
         v-model="isCurrentUsers"
         @change="emit('changeUsers', isCurrentUsers ? false : true)">
-        仅显示本级用户（<span>{{ props.pagination.count }}</span>）
+        {{ $t('仅显示本级用户') }}（<span>{{ props.pagination.count }}</span>）
       </bk-checkbox>
       <bk-input
         class="header-right"
         v-model="searchValue"
-        placeholder="搜索用户名、全名"
+        :placeholder="$t('搜索用户名、全名')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -82,6 +82,7 @@ import {
   getTenantUsers,
 } from '@/http/organizationFiles';
 import { getFields } from '@/http/settingFiles';
+import { t } from '@/language/index';
 import { formatConvert, getTableValue } from '@/utils';
 
 const editLeaveBefore = inject('editLeaveBefore');
@@ -148,7 +149,7 @@ const handleClick = async (item: any) => {
   ]);
   state.userInfo = userRes.data;
   state.userInfo.extras = useCustomFields(state.userInfo?.extras, fieldsRes.data.custom_fields);
-  detailsConfig.title = '用户详情';
+  detailsConfig.title = t('用户详情');
   detailsConfig.isShow = true;
 };
 
