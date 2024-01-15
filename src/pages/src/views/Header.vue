@@ -9,12 +9,21 @@
   >
     <template #side-header>
       <RouterLink
-        style="display: flex; align-items: center; text-decoration: none;"
+        style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
         :to="{ name: 'organization' }"
       >
         <i class="user-icon icon-user-logo-i" />
         <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
       </RouterLink>
+      <div class="tenant-style" v-if="route.name !== 'tenant'">
+        <span class="logo">{{ logoConvert(userStore.user?.tenant_id) }}</span>
+        <span class="tenant-id">{{ userStore.user?.tenant_id }}</span>
+        <i
+          v-if="userStore.user?.role === 'super_manager'"
+          class="user-icon icon-shezhi"
+          @click="toTenant"
+        />
+      </div>
     </template>
     <template #header>
       <div class="main-navigation-left">
@@ -106,6 +115,7 @@ import Login from '@/components/layouts/Login.vue';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store/user';
+import { logoConvert } from '@/utils';
 
 const state = reactive({
   logoutDropdown: false,
@@ -120,13 +130,12 @@ const userInfo = computed(() => {
   const { role } = userStore.user;
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },
-    { name: t('数据源管理1'), path: 'dataSource' },
-    { name: t('认证源管理1'), path: 'authSourceList' },
+    { name: t('设置'), path: 'setting' },
   ];
-  if (role === 'super_manager') {
-    headerNav.value = [...baseNav, { name: t('租户管理1'), path: 'tenant' }, { name: t('设置'), path: 'setting' }];
+  if (role === 'super_manager' && route.name !== 'tenant') {
+    headerNav.value = baseNav;
   } else if (role === 'tenant_manager') {
-    headerNav.value = [...baseNav, { name: t('设置'), path: 'setting' }];
+    headerNav.value = baseNav;
   } else if (role === 'natural_user') {
     router.push({ name: 'personalCenter' });
   }
@@ -193,6 +202,12 @@ const handleSwitchLocale = (locale: string) => {
   document.querySelector('html')?.setAttribute('lang', locale);
   window.location.reload();
 };
+
+const toTenant = () => {
+  router.push({
+    name: 'tenant',
+  });
+};
 </script>
 
 <style lang="less" scoped>
@@ -203,7 +218,40 @@ const handleSwitchLocale = (locale: string) => {
     background-color: #0e1525;
 
     .bk-navigation-title {
+      min-width: 280px;
       overflow: initial;
+
+
+      .tenant-style {
+        display: flex;
+        height: 16px;
+        padding-left: 16px;
+        border-left: 1px solid #40454E;
+        align-items: center;
+
+        .logo {
+          display: inline-block;
+          width: 16px;
+          font-size: 12px;
+          font-weight: 700;
+          line-height: 16px;
+          color: #fff;
+          text-align: center;
+          background: #1CAB88;
+          border-radius: 4px;
+        }
+
+        .tenant-id {
+          margin: 0 8px 0 4px;
+          color: #FFF;
+        }
+
+        .icon-shezhi {
+          font-size: 14px;
+          color: #3A84FF;
+          cursor: pointer;
+        }
+      }
     }
 
     .icon-user-logo-i {

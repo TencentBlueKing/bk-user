@@ -1,9 +1,8 @@
 import { InfoBox, Message } from 'bkui-vue';
 import { h, ref } from 'vue';
 
-import { postIdps, putIdps } from '@/http/authSourceFiles';
+import { postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
-import router from '@/router/index';
 import { copy } from '@/utils';
 
 export const useCustomPlugin = (formData, dataSourceList, builtinFields, customFields, btnLoading, formRef, type) => {
@@ -99,12 +98,6 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
     window.changeInput = true;
   };
 
-  const handleCancel = () => {
-    router.push({
-      name: 'authSourceList',
-    });
-  };
-
   const handleSubmit = async () => {
     try {
       await formRef.value.validate();
@@ -145,16 +138,12 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
           quickClose: false,
           onConfirm() {
             window.changeInput = false;
-            router.push({
-              name: 'authSourceList',
-            });
           },
         });
       } else {
         await putIdps(data);
         Message({ theme: 'success', message: t('认证源更新成功') });
         window.changeInput = false;
-        router.push({ name: 'authSourceList' });
       }
     } catch (e) {
       console.warn(e);
@@ -174,7 +163,6 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
     mouseenter,
     mouseleave,
     handleChange,
-    handleCancel,
     handleSubmit,
     hoverItem,
   };

@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="isLoading" :z-index="9" class="user-info-wrapper">
+  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="user-info-wrapper user-scroll-y">
     <header>
       <div>
         <template v-if="pluginId === 'local'">
@@ -223,7 +223,7 @@
       :config="resetPasswordConfig"
       @closed="closedResetPassword"
       @changePassword="changePassword" />
-  </bk-loading>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -238,10 +238,13 @@ import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
 import ResetPassword from '@/components/ResetPassword.vue';
-import { useCustomFields } from '@/hooks/useCustomFields';
-import { useTableFields } from '@/hooks/useTableFields';
-import { getDataSourceUserDetails, getDataSourceUsers, getOrganizationPaths } from '@/http/dataSourceFiles';
-import { getFields } from '@/http/settingFiles';
+import { useCustomFields, useTableFields } from '@/hooks';
+import {
+  getDataSourceUserDetails,
+  getDataSourceUsers,
+  getFields,
+  getOrganizationPaths,
+} from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { formatConvert, getTableValue } from '@/utils';
@@ -383,29 +386,32 @@ const getUsers = async (init?: boolean) => {
 };
 
 const getCustomFields = async (type: string) => {
-  const result = Object.keys(detailsConfig.usersData.extras);
-  const res = await getFields();
-  if (type === 'add') {
-    detailsConfig.usersData.extras = res.data.custom_fields;
-    detailsLoading.value = false;
-  } else if (type === 'edit') {
-    const extras: any = [];
-    res.data.custom_fields?.forEach((item) => {
-      Object.entries(detailsConfig.usersData.extras).forEach((option) => {
-        const [name, defaultValue] = option;
-        if (item.name === name) {
-          item.default = defaultValue;
+  try {
+    const result = Object.keys(detailsConfig.usersData.extras);
+    const res = await getFields();
+    if (type === 'add') {
+      detailsConfig.usersData.extras = res.data.custom_fields;
+    } else if (type === 'edit') {
+      const extras: any = [];
+      res.data.custom_fields?.forEach((item) => {
+        Object.entries(detailsConfig.usersData.extras).forEach((option) => {
+          const [name, defaultValue] = option;
+          if (item.name === name) {
+            item.default = defaultValue;
+            extras.push(item);
+          }
+        });
+        if (!result.includes(item.name)) {
           extras.push(item);
         }
       });
-      if (!result.includes(item.name)) {
-        extras.push(item);
-      }
-    });
-    detailsConfig.usersData.extras = extras;
-    detailsLoading.value = false;
-  } else {
-    detailsConfig.usersData.extras = useCustomFields(detailsConfig.usersData.extras, res.data.custom_fields);
+      detailsConfig.usersData.extras = extras;
+    } else {
+      detailsConfig.usersData.extras = useCustomFields(detailsConfig.usersData.extras, res.data.custom_fields);
+    }
+  } catch (e) {
+    console.warn(e);
+  } finally {
     detailsLoading.value = false;
   }
 };
@@ -625,7 +631,8 @@ const changePassword = () => {
 <style lang="less" scoped>
 .user-info-wrapper {
   width: 100%;
-  padding-bottom: 24px;
+  height: calc(100vh - 140px);
+  padding: 24px;
 
   header {
     display: flex;

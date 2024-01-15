@@ -18,14 +18,16 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { t } from '@/language/index';
 import router from '@/router/index';
 
-const active = ref('local');
+const route = useRoute();
+const active = ref(route.name);
 const panels = reactive([
   { name: 'local', label: t('本租户') },
-  // { name: 'other', label: '其他租户' },
+  { name: 'other', label: t('其他租户') },
 ]);
 
 const handleChange = (name) => {
@@ -33,4 +35,6 @@ const handleChange = (name) => {
 };
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+@import url("@/css/tabStyle.less");
+</style>

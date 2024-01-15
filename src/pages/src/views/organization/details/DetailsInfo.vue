@@ -1,6 +1,6 @@
 <template>
   <div class="details-info-wrapper user-scroll-y">
-    <div v-if="!isEdit" style="padding: 24px;">
+    <div v-if="!isEdit">
       <ul class="details-info-content">
         <li class="content-item">
           <div class="item-header">
@@ -76,7 +76,7 @@ import EditInfo from './EditDetailsInfo.vue';
 
 import Empty from '@/components/Empty.vue';
 import { t } from '@/language/index';
-import { useUser } from '@/store/user';
+import { useUser } from '@/store';
 
 const userStore = useUser();
 const props = defineProps({
@@ -128,9 +128,4 @@ const updateTenantsList = () => {
 
 <style lang="less" scoped>
 @import url("@/css/tenantViewStyle.less");
-
-.details-info-wrapper {
-  height: calc(100vh - 140px);
-  padding-bottom: 0;
-}
 </style>

@@ -41,7 +41,7 @@ import { Message } from 'bkui-vue';
 import { reactive, ref, watch } from 'vue';
 
 import { logout } from '@/common/auth';
-import { putPersonalCenterUserPassword } from '@/http/personalCenterFiles';
+import { putPersonalCenterUserPassword } from '@/http';
 import { t } from '@/language/index';
 
 const emit = defineEmits(['closed']);

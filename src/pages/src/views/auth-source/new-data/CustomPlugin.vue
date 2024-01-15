@@ -151,11 +151,8 @@ import { addListener, removeListener } from 'resize-detector';
 import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import SchemaForm from '@/components/schema-form/SchemaForm.vue';
-import useValidate from '@/hooks/use-validate';
-import { useCustomPlugin } from '@/hooks/useCustomPlugin';
-import { getIdpsPluginsConfig } from '@/http/authSourceFiles';
-import { getDataSourceList } from '@/http/dataSourceFiles';
-import { getFields } from '@/http/settingFiles';
+import { useCustomPlugin, useValidate } from '@/hooks';
+import { getDataSourceList, getFields, getIdpsPluginsConfig } from '@/http';
 
 const validate = useValidate();
 

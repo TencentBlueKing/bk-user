@@ -78,8 +78,8 @@ import { reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { logout } from '@/common/auth';
-import useValidate from '@/hooks/use-validate';
-import { getUsers, resetPassword } from '@/http/resetPasswordFiles';
+import { useValidate } from '@/hooks';
+import { getUsers, resetPassword } from '@/http';
 import { t } from '@/language/index';
 
 const route = useRoute();

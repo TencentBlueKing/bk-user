@@ -35,16 +35,16 @@
 import { reactive } from 'vue';
 
 import MainView from '@/components/layouts/MainView.vue';
-import { useMenuInfo } from '@/hooks/useMenuInfo';
+import { useMenuInfo } from '@/hooks';
 import { t } from '@/language/index';
-import { useMenu } from '@/store/useMenu';
+import { useMenu } from '@/store';
 
 const menuStore = useMenu();
 const { activeKey, handleChangeMenu } = useMenuInfo();
 
 const menuData = reactive([
   {
-    name: t('数据源管理'),
+    name: t('数据源配置'),
     key: 'local',
   },
   // {
@@ -56,29 +56,5 @@ const menuData = reactive([
 
 <style lang="less" scoped>
 @import url("@/css/menuStyle.less");
-
-:deep(.main-breadcrumbs) {
-  box-shadow: none !important;
-}
-
-:deep(.tab-details) {
-  height: calc(100vh - 104px);
-
-  .bk-tab-header {
-    font-size: 14px;
-    line-height: 36px !important;
-    background: #fff;
-    border-bottom: none;
-    box-shadow: 0 3px 4px 0 rgb(0 0 0 / 4%);
-
-    .bk-tab-header-item {
-      padding: 0 5px !important;
-      margin: 0 20px;
-    }
-  }
-
-  .bk-tab-content {
-    padding: 0;
-  }
-}
+@import url("@/css/tabStyle.less");
 </style>

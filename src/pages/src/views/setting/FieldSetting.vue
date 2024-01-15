@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="isLoading" class="field-setting-content user-scroll-y">
+  <div v-bkloading="{ loading: isLoading, zIndex: 9 }" class="field-setting-content user-scroll-y">
     <bk-button class="add-field" theme="primary" @click="addField">
       <i class="user-icon icon-add-2 mr8" />
       {{ $t('添加字段') }}
@@ -86,7 +86,7 @@
         @submitData="submitData"
         @handleCancel="handleCancel" />
     </bk-sideslider>
-  </bk-loading>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -97,10 +97,10 @@ import { inject, onMounted, reactive, ref } from 'vue';
 import FieldsAdd from './FieldsAdd.vue';
 
 import Empty from '@/components/Empty.vue';
-import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
-import { deleteCustomFields, getFields } from '@/http/settingFiles';
+import { useTableMaxHeight } from '@/hooks';
+import { deleteCustomFields, getFields } from '@/http';
 import { t } from '@/language/index';
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;

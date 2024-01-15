@@ -44,10 +44,10 @@
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { computed, onMounted, ref } from 'vue';
 
-import { getIdpsPlugins } from '@/http/authSourceFiles';
+import { getIdpsPlugins } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 const store = useMainViewStore();
 store.breadCrumbsTitle = t('新建认证源');

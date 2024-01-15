@@ -26,9 +26,7 @@
 <script setup lang="ts">
 import MainBreadcrumbs from './MainBreadcrumbs.vue';
 
-import { useMainViewStore } from '@/store/mainView';
-import { useMenu } from '@/store/useMenu';
-
+import { useMainViewStore, useMenu } from '@/store';
 const menuStore = useMenu();
 const mainViewStore = useMainViewStore();
 </script>
