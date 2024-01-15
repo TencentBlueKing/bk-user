@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="isLoading" class="details-info-wrapper">
+  <bk-loading :loading="isLoading" class="details-info-wrapper user-scroll-y">
     <ul class="details-info-content" v-if="openPasswordLogin">
       <li class="content-item">
         <div class="item-header">
@@ -79,7 +79,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { getDataSourceDetails } from '@/http/dataSourceFiles';
+import { getDataSourceDetails } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
 import { noticeTimeMap, notificationMap, passwordMustIncludesMap, passwordNotAllowedMap, validTimeMap } from '@/utils';
@@ -105,7 +105,7 @@ onMounted(async () => {
     passwordExpire.value = res.data?.plugin_config?.password_expire;
     plugin.value = res.data?.plugin;
   } catch (e) {
-    isLoading.value = false;
+    console.warn(e);
   } finally {
     isLoading.value = false;
   }

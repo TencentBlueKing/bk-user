@@ -188,3 +188,24 @@ url("fonts/iconcool.eot?#iefix") format("embedded-opentype");
 .icon-canshu:before {
 	content: "\e13e";
 }
+.icon-weixin:before {
+	content: "\e142";
+}
+.icon-google:before {
+	content: "\e13f";
+}
+.icon-microsoft:before {
+	content: "\e140";
+}
+.icon-qq:before {
+	content: "\e141";
+}
+.icon-qiyeweixin-2:before {
+	content: "\e143";
+}
+.icon-git-hub:before {
+	content: "\e144";
+}
+.icon-shezhi:before {
+	content: "\e145";
+}

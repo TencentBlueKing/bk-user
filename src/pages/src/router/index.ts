@@ -7,115 +7,13 @@ export default createRouter({
   routes: [
     {
       path: '/',
+      name: 'tenant',
+      component: () => import('@/views/tenant/index.vue'),
+    },
+    {
+      path: '/organization',
       name: 'organization',
       component: () => import('@/views/organization/index.vue'),
-    },
-    {
-      path: '/tenant',
-      name: 'tenant',
-      redirect: {
-        name: 'tenantInfo',
-      },
-      meta: {
-        navName: t('租户概览'),
-      },
-      component: () => import('@/views/tenant/index.vue'),
-      children: [
-        {
-          path: 'info',
-          name: 'tenantInfo',
-          meta: {
-            routeParentName: 'tenant',
-            navName: t('租户概览'),
-            isMenu: true,
-          },
-          component: () => import('@/views/tenant/group-details/index.vue'),
-        },
-        // {
-        //   path: "setting",
-        //   name: "globalSetting",
-        //   meta: {
-        //     routeParentName: "tenant",
-        //     navName: "全局设置",
-        //     isMenu: true,
-        //   },
-        // },
-      ],
-    },
-    {
-      path: '/data-source',
-      name: 'dataSource',
-      redirect: {
-        name: 'local',
-      },
-      meta: {
-        navName: t('数据源管理'),
-      },
-      component: () => import('@/views/data-source/index.vue'),
-      children: [
-        {
-          path: '',
-          name: '',
-          meta: {
-            routeParentName: 'data-source',
-            navName: t('数据源管理'),
-            activeMenu: 'local',
-          },
-          component: () => import('@/views/data-source/LocalCompany.vue'),
-          children: [
-            {
-              path: 'local',
-              name: 'local',
-              meta: {
-                routeParentName: 'dataSource',
-                navName: t('数据源管理'),
-                activeMenu: 'local',
-              },
-              component: () => import('@/views/data-source/LocalDataSource.vue'),
-            },
-            {
-              path: 'sync-records/:type?',
-              name: 'syncRecords',
-              meta: {
-                routeParentName: 'dataSource',
-                navName: t('数据源管理'),
-                activeMenu: 'local',
-              },
-              component: () => import('@/views/data-source/SyncRecords.vue'),
-            },
-            {
-              path: 'other',
-              name: 'other',
-              meta: {
-                routeParentName: 'dataSource',
-                navName: t('数据源管理'),
-                activeMenu: 'local',
-              },
-              component: () => import('@/views/data-source/OtherDataSource.vue'),
-            },
-          ],
-        },
-        {
-          path: 'details/:id',
-          name: 'dataConfDetails',
-          meta: {
-            routeParentName: 'dataSource',
-            navName: t('数据源详情'),
-            activeMenu: 'local',
-          },
-          component: () => import('@/views/data-source/local-details/index.vue'),
-        },
-        {
-          path: 'config/:type/:id?',
-          name: 'newLocal',
-          meta: {
-            routeParentName: 'dataSource',
-            navName: t('新建数据源'),
-            activeMenu: 'local',
-          },
-          component: () => import('@/views/data-source/new-data/index.vue'),
-        },
-      ],
     },
     {
       path: '/auth-source',
@@ -164,16 +62,56 @@ export default createRouter({
       path: '/setting',
       name: 'setting',
       redirect: {
-        name: 'userFields',
+        name: 'admin',
       },
       meta: {
-        navName: t('用户字段设置'),
+        navName: t('设置'),
       },
       component: () => import('@/views/setting/index.vue'),
       children: [
         {
+          path: 'admin',
+          name: 'admin',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('管理员配置'),
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/AdminSetting.vue'),
+        },
+        {
+          path: 'data-source',
+          name: 'dataSource',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('数据源配置'),
+            activeMenu: 'dataSource',
+          },
+          component: () => import('@/views/setting/data-source/index.vue'),
+        },
+        {
+          path: 'new',
+          name: 'newDataSource',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('数据源配置'),
+            activeMenu: 'dataSource',
+          },
+          component: () => import('@/views/setting/data-source/NewConfig.vue'),
+        },
+        {
+          path: 'collaboration',
+          name: 'collaboration',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('跨租户协同'),
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/cross-tenant-collaboration/index.vue'),
+        },
+        {
           path: 'fields',
-          name: 'userFields',
+          name: 'field',
           meta: {
             routeParentName: 'setting',
             navName: t('用户字段设置'),
@@ -192,6 +130,16 @@ export default createRouter({
           component: () => import('@/views/setting/LoginSetting.vue'),
         },
         {
+          path: 'fma',
+          name: 'fma',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('MFA设置'),
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/MFASetting.vue'),
+        },
+        {
           path: 'account',
           name: 'account',
           meta: {
@@ -200,6 +148,16 @@ export default createRouter({
             isMenu: true,
           },
           component: () => import('@/views/setting/AccountSetting.vue'),
+        },
+        {
+          path: 'basics',
+          name: 'basics',
+          meta: {
+            routeParentName: 'setting',
+            navName: t('基础设置'),
+            isMenu: true,
+          },
+          component: () => import('@/views/setting/BasicsSetting.vue'),
         },
       ],
     },
@@ -217,6 +175,11 @@ export default createRouter({
       path: '/reset-password/:token?',
       name: 'resetPassword',
       component: () => import('@/views/reset-password/newPassword.vue'),
+    },
+    {
+      path: '/recycle',
+      name: 'recycle',
+      component: () => import('@/views/recycle/index.vue'),
     },
     {
       path: '/:pathMatch(.*)*',

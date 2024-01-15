@@ -6,6 +6,7 @@ import abnormalImg from '@/images/abnormal.svg';
 import loadingImg from '@/images/loading.svg';
 import normalImg from '@/images/normal.svg';
 import unknownImg from '@/images/unknown.svg';
+import warningImg from '@/images/warning.svg';
 import { t } from '@/language/index';
 export * from './countryCode';
 
@@ -91,6 +92,10 @@ export const dataSourceStatus = {
   disabled: {
     icon: unknownImg,
     text: t('未启用'),
+  },
+  confirmed: {
+    icon: warningImg,
+    text: t('待确认'),
   },
 };
 
@@ -305,3 +310,14 @@ export function getTableValue(row: any, item: any) {
   return val;
 };
 
+// 数据源启用状态
+export const tenantStatus = {
+  enabled: {
+    icon: normalImg,
+    text: t('已启用'),
+  },
+  disabled: {
+    icon: unknownImg,
+    text: t('未启用'),
+  },
+};

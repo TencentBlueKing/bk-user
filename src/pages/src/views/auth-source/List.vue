@@ -117,8 +117,8 @@ import { onMounted, reactive, ref } from 'vue';
 import ViewDetails from './ViewDetails.vue';
 
 import Empty from '@/components/Empty.vue';
-import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
-import { getIdps } from '@/http/authSourceFiles';
+import { useTableMaxHeight } from '@/hooks';
+import { getIdps } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { dataSourceStatus } from '@/utils';

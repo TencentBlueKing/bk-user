@@ -1,12 +1,14 @@
 <template>
   <div class="user-info-wrapper user-scroll-y">
     <header>
-      <bk-checkbox
-        :class="{ 'is-status': isTenant }"
-        v-model="isCurrentUsers"
-        @change="emit('changeUsers', isCurrentUsers ? false : true)">
-        {{ $t('仅显示本级用户') }}（<span>{{ props.pagination.count }}</span>）
-      </bk-checkbox>
+      <div>
+        <bk-checkbox
+          v-if="!isTenant"
+          v-model="isCurrentUsers"
+          @change="emit('changeUsers', isCurrentUsers ? false : true)">
+          {{ $t('仅显示本级用户') }}（<span>{{ props.pagination.count }}</span>）
+        </bk-checkbox>
+      </div>
       <bk-input
         class="header-right"
         v-model="searchValue"
@@ -77,11 +79,11 @@ import { defineEmits, defineProps, inject, reactive, ref } from 'vue';
 import ViewUser from './ViewUser.vue';
 
 import Empty from '@/components/Empty.vue';
-import { useCustomFields } from '@/hooks/useCustomFields';
+import { useCustomFields } from '@/hooks';
 import {
-  getTenantUsers,
-} from '@/http/organizationFiles';
-import { getFields } from '@/http/settingFiles';
+  getFields,
+  getTenantOrganizationUsers,
+} from '@/http';
 import { t } from '@/language/index';
 import { formatConvert, getTableValue } from '@/utils';
 
@@ -144,7 +146,7 @@ const hideSideBar = () => {
 const handleClick = async (item: any) => {
   showSideBar.value = true;
   const [userRes, fieldsRes] = await Promise.all([
-    getTenantUsers(item.id),
+    getTenantOrganizationUsers(item.id),
     getFields(),
   ]);
   state.userInfo = userRes.data;
@@ -195,10 +197,6 @@ const pageCurrentChange = (current) => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
-
-    .is-status {
-      visibility: hidden;
-    }
 
     .header-right {
       width: 400px;

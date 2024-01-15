@@ -5,9 +5,9 @@ import { useRoute } from 'vue-router';
 
 import HeaderBox from './views/Header.vue';
 
-import { currentUser } from '@/http/api';
+import { currentUser } from '@/http';
 import { t } from '@/language/index';
-import { useUser } from '@/store/user';
+import { useUser } from '@/store';
 import Password from '@/views/reset-password/index.vue';
 import ResetPassword from '@/views/reset-password/newPassword.vue';
 

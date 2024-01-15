@@ -72,11 +72,10 @@
 import { Message } from 'bkui-vue';
 import { ref, reactive, computed, nextTick, defineProps, defineEmits, watch, defineExpose } from 'vue';
 import { getBase64 } from '@/utils';
-import MemberSelector from '@/views/tenant/group-details/MemberSelector.vue';
-import { getTenantUsersList, putTenantOrganizationDetails } from '@/http/organizationFiles';
-import useValidate from '@/hooks/use-validate';
+import MemberSelector from '@/views/tenant/MemberSelector.vue';
+import { getTenantOrganizationUsersList, putTenantOrganizationDetails } from '@/http';
 import PhoneInput from '@/components/phoneInput.vue';
-import { useButtonFixed } from '@/hooks/useButtonFixed';
+import { useValidate, useButtonFixed } from '@/hooks';
 import { t } from '@/language/index';
 
 interface TableItem {
@@ -317,7 +316,7 @@ const fetchUserList = (value: string) => {
   params.keyword = value;
   params.page = 1;
   if (params.id) {
-    getTenantUsersList(params).then((res) => {
+    getTenantOrganizationUsersList(params).then((res) => {
       const list = formData.managers.map((item) => item.id);
       state.count = res.data.count;
       state.list = res.data.results.map(item => ({
@@ -351,7 +350,7 @@ const selectList = (list) => {
 
 const scrollChange = () => {
   params.page += 1;
-  getTenantUsersList(params).then((res) => {
+  getTenantOrganizationUsersList(params).then((res) => {
     const list = formData.managers.map((item) => item.id);
     state.count = res.data.count;
     state.list.push(...res.data.results.map(item => ({

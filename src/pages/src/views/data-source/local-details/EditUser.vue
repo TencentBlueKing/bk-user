@@ -148,8 +148,13 @@ import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } f
 
 import CustomFields from '@/components/custom-fields/index.vue';
 import phoneInput from '@/components/phoneInput.vue';
-import useValidate from '@/hooks/use-validate';
-import { getDataSourceDepartments, getDataSourceLeaders, newDataSourceUser, putDataSourceUserDetails } from '@/http/dataSourceFiles';
+import { useValidate } from '@/hooks';
+import {
+  getDataSourceDepartments,
+  getDataSourceLeaders,
+  newDataSourceUser,
+  putDataSourceUserDetails,
+} from '@/http';
 import { t } from '@/language/index';
 import { getBase64 } from '@/utils';
 
