@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import json
 import logging
 from typing import Optional
 
@@ -126,7 +127,13 @@ class BkUserApiProxy(GenericViewSet):
 
         # 无权限, 改状态码为403
         if b"auth_infos" in content and b"callback_url" in content:
-            status_code = status.HTTP_403_FORBIDDEN
+            # 目录metas接口较为特殊：对个别类型目录创建操作进行授权,需每个项的authorized=False， 返回403
+            if path == "/api/v1/web/categories/metas/":
+                is_authorized_category_type_list = [item["authorized"] for item in json.loads(content)["data"]]
+                if not any(is_authorized_category_type_list):
+                    status_code = status.HTTP_403_FORBIDDEN
+            else:
+                status_code = status.HTTP_403_FORBIDDEN
 
         resp_headers = resp.headers
         if "Content-Encoding" in resp_headers:
