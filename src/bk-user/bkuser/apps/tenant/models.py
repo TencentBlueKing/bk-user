@@ -151,6 +151,8 @@ class TenantUserCustomField(TimestampedModel):
     manager_editable = models.BooleanField("租户管理员是否可重复编辑", default=True)
     default = models.JSONField("默认值", default="")
     options = models.JSONField("配置项", default=list)
+    # 兼容逻辑，只有老版本迁移过来的枚举类型自定义字段会需要
+    use_digit_option_id = models.BooleanField("是否使用数字作为选项ID", default=False)
 
     class Meta:
         unique_together = [

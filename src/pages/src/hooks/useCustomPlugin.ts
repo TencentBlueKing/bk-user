@@ -2,6 +2,7 @@ import { InfoBox, Message } from 'bkui-vue';
 import { h, ref } from 'vue';
 
 import { postIdps, putIdps } from '@/http/authSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { copy } from '@/utils';
 
@@ -65,10 +66,10 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
       ],
       targetFields: [
         ...builtinFields.value?.map(item => ({
-          key: item.id, name: item.name, disabled: false, type: '内置',
+          key: item.id, name: item.name, disabled: false, type: t('内置'),
         })) || [],
         ...customFields.value?.map(item => ({
-          key: item.id, name: item.name, disabled: false, type: '自定义',
+          key: item.id, name: item.name, disabled: false, type: t('自定义'),
         })) || [],
       ],
     });
@@ -117,7 +118,7 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
         const res = await postIdps(data);
 
         InfoBox({
-          title: '认证源创建成功',
+          title: t('认证源创建成功'),
           extCls: 'info-wrapper',
           subTitle: h('div', {
             class: 'details-url',
@@ -127,7 +128,7 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
           }, [
             h('p', {
               class: 'title',
-            }, '请将一下回调地址填写到企业微信配置内：'),
+            }, t('请将一下回调地址填写到企业微信配置内：')),
             h('div', {
               class: 'content',
             }, [
@@ -139,7 +140,7 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
             ]),
           ]),
           dialogType: 'confirm',
-          confirmText: '确定',
+          confirmText: t('确定'),
           infoType: 'success',
           quickClose: false,
           onConfirm() {
@@ -151,7 +152,7 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
         });
       } else {
         await putIdps(data);
-        Message({ theme: 'success', message: '认证源更新成功' });
+        Message({ theme: 'success', message: t('认证源更新成功') });
         window.changeInput = false;
         router.push({ name: 'authSourceList' });
       }

@@ -5,16 +5,16 @@
         <template v-if="pluginId === 'local'">
           <bk-button theme="primary" class="mr8" @click="handleClick('add')">
             <i class="user-icon icon-add-2 mr8" />
-            新建用户
+            {{ $t('新建用户') }}
           </bk-button>
-          <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">导入</bk-button>
-          <bk-button class="w-[64px]" @click="handleExport">导出</bk-button>
+          <bk-button class="mr8 w-[64px]" @click="importDialog.isShow = true">{{ $t('导入') }}</bk-button>
+          <bk-button class="w-[64px]" @click="handleExport">{{ $t('导出') }}</bk-button>
         </template>
       </div>
       <bk-input
         class="header-right"
         v-model="searchVal"
-        placeholder="搜索用户名"
+        :placeholder="$t('搜索用户名')"
         type="search"
         clearable
         @enter="handleEnter"
@@ -61,7 +61,7 @@
           </template>
         </bk-table-column>
       </template>
-      <bk-table-column label="操作" v-if="pluginId === 'local'">
+      <bk-table-column :label="$t('操作')" v-if="pluginId === 'local'">
         <template #default="{ row }">
           <bk-button
             theme="primary"
@@ -69,7 +69,7 @@
             class="mr8"
             @click="handleClick('edit', row)"
           >
-            编辑
+            {{ $t('编辑') }}
           </bk-button>
           <bk-button
             v-if="isPasswordLogin"
@@ -77,7 +77,7 @@
             text
             class="mr8"
             @click="handleResetPassword(row)">
-            重置密码
+            {{ $t('重置密码') }}
           </bk-button>
           <!-- <bk-button theme="primary" text>
             删除
@@ -102,12 +102,12 @@
               outline
               theme="primary"
               @click="handleClick('edit', detailsConfig)">
-              编辑
+              {{ $t('编辑') }}
             </bk-button>
             <bk-button
               v-if="isPasswordLogin"
               @click="handleResetPassword(detailsConfig)">
-              重置密码
+              {{ $t('重置密码') }}
             </bk-button>
           <!-- <bk-button>删除</bk-button> -->
           </div>
@@ -137,16 +137,16 @@
     >
       <div class="import-dialog-header">
         <div class="mb-[24px]">
-          <span>更新方式</span>
+          <span>{{ $t('更新方式') }}</span>
           <bk-radio-group
             v-model="uploadInfo.incremental"
             type="card"
           >
-            <bk-radio-button :label="true">增量更新</bk-radio-button>
-            <bk-radio-button :label="false">全量更新</bk-radio-button>
+            <bk-radio-button :label="true">{{ $t('增量更新') }}</bk-radio-button>
+            <bk-radio-button :label="false">{{ $t('全量更新') }}</bk-radio-button>
           </bk-radio-group>
         </div>
-        <span>上传用户信息</span>
+        <span>{{ $t('上传用户信息') }}</span>
       </div>
       <bk-upload
         ref="uploadRef"
@@ -182,8 +182,8 @@
         </template>
         <template #tip>
           <div class="mt-[8px]">
-            <span>支持 Excel 文件，文件小于 10 M，下载</span>
-            <bk-button text theme="primary" @click="handleExportTemplate">模版文件</bk-button>
+            <span>{{ $t('支持 Excel 文件，文件小于 10 M，下载') }}</span>
+            <bk-button text theme="primary" @click="handleExportTemplate">{{ $t('模版文件') }}</bk-button>
           </div>
         </template>
       </bk-upload>
@@ -191,11 +191,11 @@
         <div class="footer-wrapper">
           <div class="footer-left">
             <bk-checkbox v-model="uploadInfo.overwrite">
-              允许对同名用户覆盖更新
+              {{ $t('允许对同名用户覆盖更新') }}
             </bk-checkbox>
             <bk-popover
               ext-cls="popover-wrapper"
-              content="勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。"
+              :content="$t('勾选覆盖用户信息将会对数据源中存在、但文件中不存在的成员执行删除操作，请谨慎选择。')"
               placement="top"
               width="280"
             >
@@ -208,12 +208,12 @@
               class="w-[64px] mr-[8px]"
               :loading="importDialog.loading"
               @click="confirmImportUsers">
-              确定
+              {{ $t('确定') }}
             </bk-button>
             <bk-button
               class="w-[64px]"
               @click="closed">
-              取消
+              {{ $t('取消') }}
             </bk-button>
           </div>
         </div>
@@ -242,6 +242,7 @@ import { useCustomFields } from '@/hooks/useCustomFields';
 import { useTableFields } from '@/hooks/useTableFields';
 import { getDataSourceUserDetails, getDataSourceUsers, getOrganizationPaths } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { formatConvert, getTableValue } from '@/utils';
 
@@ -283,15 +284,15 @@ const paths = ref('');
 
 const enumData = {
   add: {
-    title: '新建用户',
+    title: t('新建用户'),
     type: 'add',
   },
   view: {
-    title: '用户详情',
+    title: t('用户详情'),
     type: 'view',
   },
   edit: {
-    title: '编辑用户',
+    title: t('编辑用户'),
     type: 'edit',
   },
 };
@@ -495,7 +496,7 @@ const pageCurrentChange = (current) => {
 const importDialog = reactive({
   isShow: false,
   loading: false,
-  title: '批量新增用户',
+  title: t('批量新增用户'),
 });
 
 const uploadInfo = reactive({
@@ -512,16 +513,16 @@ const isError = ref(false);
 const customRequest = (data) => {
   if (data.file.size > (10 * 1024 * 1024)) {
     isError.value = true;
-    textTips.value = '文件大小超出限制';
+    textTips.value = t('文件大小超出限制');
   } else {
     isError.value = false;
-    textTips.value = '上传成功';
+    textTips.value = t('上传成功');
   }
   uploadInfo.file = data.file;
 };
 
 const exceed = () => {
-  Message({ theme: 'error', message: '最多上传1个文件，如需更新，请先删除已上传文件' });
+  Message({ theme: 'error', message: t('最多上传1个文件，如需更新，请先删除已上传文件') });
 };
 
 const getSize = (value) => {
@@ -548,10 +549,10 @@ const handleExportTemplate = () => {
 // 导入用户
 const confirmImportUsers = async () => {
   if (!uploadInfo.file.name) {
-    return Message({ theme: 'warning', message: '请选择文件再上传' });
+    return Message({ theme: 'warning', message: t('请选择文件再上传') });
   }
   if (isError.value) {
-    return Message({ theme: 'warning', message: '文件大小超出限制,请重新上传' });
+    return Message({ theme: 'warning', message: t('文件大小超出限制，请重新上传') });
   };
 
   try {
@@ -570,7 +571,7 @@ const confirmImportUsers = async () => {
     const res = await axios.post(url, formData, config);
     Message({
       theme: res.data.data.status === 'success' ? 'success' : 'error',
-      message: res.data.data.summary
+      message: res.data.data.summary,
     });
   } catch (e) {
     Message({ theme: 'error', message: e.response.data.error.message });
@@ -602,7 +603,7 @@ const tipsShowFn = async (id: string) => {
 
 const resetPasswordConfig = reactive({
   isShow: false,
-  title: '重置密码',
+  title: t('重置密码'),
   dataSourceId: props.dataSourceId,
   userId: '',
 });

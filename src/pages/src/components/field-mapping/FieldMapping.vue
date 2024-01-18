@@ -2,9 +2,9 @@
   <div>
     <div class="field-mapping">
       <div class="field-title">
-        <bk-form-item class="w-[240px]" label="用户管理字段" required />
-        <bk-form-item class="w-[100px]" label="映射关系" />
-        <bk-form-item class="w-[240px]" label="API返回字段" required />
+        <bk-form-item class="w-[240px]" :label="$t('用户管理字段')" required />
+        <bk-form-item class="w-[100px]" :label="$t('映射关系')" />
+        <bk-form-item class="w-[240px]" :label="$t('API返回字段')" required />
       </div>
       <div class="field-content" v-for="(item, index) in fieldSettingData.field_mapping.builtin_fields" :key="index">
         <div class="field-name">
@@ -90,13 +90,15 @@
     </div>
     <bk-button class="add-field" text theme="primary" @click="() => emit('handleAddField')">
       <i class="user-icon icon-add-2 mr8" />
-      新增字段映射
+      {{ $t('新增字段映射') }}
     </bk-button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
+import { t } from '@/language/index';
 
 defineProps({
   fieldSettingData: {
@@ -116,8 +118,8 @@ defineProps({
 const emit = defineEmits(['changeApiFields', 'handleAddField', 'handleDeleteField', 'changeCustomField']);
 
 const customConditions = ref([
-  { name: '直接', key: 'direct' },
-  { name: '表达式', key: 'expression' },
+  { name: t('直接'), key: 'direct' },
+  { name: t('表达式'), key: 'expression' },
 ]);
 </script>
 

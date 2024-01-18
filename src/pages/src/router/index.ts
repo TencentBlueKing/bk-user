@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+import { t } from '@/language/index';
+
 export default createRouter({
   history: createWebHistory(window.SITE_URL),
   routes: [
@@ -15,7 +17,7 @@ export default createRouter({
         name: 'tenantInfo',
       },
       meta: {
-        navName: '租户概览',
+        navName: t('租户概览'),
       },
       component: () => import('@/views/tenant/index.vue'),
       children: [
@@ -24,7 +26,7 @@ export default createRouter({
           name: 'tenantInfo',
           meta: {
             routeParentName: 'tenant',
-            navName: '租户概览',
+            navName: t('租户概览'),
             isMenu: true,
           },
           component: () => import('@/views/tenant/group-details/index.vue'),
@@ -47,7 +49,7 @@ export default createRouter({
         name: 'local',
       },
       meta: {
-        navName: '数据源管理',
+        navName: t('数据源管理'),
       },
       component: () => import('@/views/data-source/index.vue'),
       children: [
@@ -56,7 +58,7 @@ export default createRouter({
           name: '',
           meta: {
             routeParentName: 'data-source',
-            navName: '数据源管理',
+            navName: t('数据源管理'),
             activeMenu: 'local',
           },
           component: () => import('@/views/data-source/LocalCompany.vue'),
@@ -66,7 +68,7 @@ export default createRouter({
               name: 'local',
               meta: {
                 routeParentName: 'dataSource',
-                navName: '数据源管理',
+                navName: t('数据源管理'),
                 activeMenu: 'local',
               },
               component: () => import('@/views/data-source/LocalDataSource.vue'),
@@ -76,7 +78,7 @@ export default createRouter({
               name: 'syncRecords',
               meta: {
                 routeParentName: 'dataSource',
-                navName: '数据源管理',
+                navName: t('数据源管理'),
                 activeMenu: 'local',
               },
               component: () => import('@/views/data-source/SyncRecords.vue'),
@@ -86,7 +88,7 @@ export default createRouter({
               name: 'other',
               meta: {
                 routeParentName: 'dataSource',
-                navName: '数据源管理',
+                navName: t('数据源管理'),
                 activeMenu: 'local',
               },
               component: () => import('@/views/data-source/OtherDataSource.vue'),
@@ -98,7 +100,7 @@ export default createRouter({
           name: 'dataConfDetails',
           meta: {
             routeParentName: 'dataSource',
-            navName: '数据源详情',
+            navName: t('数据源详情'),
             activeMenu: 'local',
           },
           component: () => import('@/views/data-source/local-details/index.vue'),
@@ -108,7 +110,7 @@ export default createRouter({
           name: 'newLocal',
           meta: {
             routeParentName: 'dataSource',
-            navName: '新建数据源',
+            navName: t('新建数据源'),
             activeMenu: 'local',
           },
           component: () => import('@/views/data-source/new-data/index.vue'),
@@ -119,7 +121,7 @@ export default createRouter({
       path: '/auth-source',
       name: 'authSource',
       meta: {
-        navName: '认证源管理',
+        navName: t('认证源管理'),
       },
       component: () => import('@/views/auth-source/index.vue'),
       children: [
@@ -128,7 +130,7 @@ export default createRouter({
           name: 'authSourceList',
           meta: {
             routeParentName: 'authSource',
-            navName: '认证源管理',
+            navName: t('认证源管理'),
           },
           component: () => import('@/views/auth-source/List.vue'),
         },
@@ -137,7 +139,7 @@ export default createRouter({
           name: 'newAuthSource',
           meta: {
             routeParentName: 'authSource',
-            navName: '新建认证源',
+            navName: t('新建认证源'),
           },
           component: () => import('@/views/auth-source/new-data/index.vue'),
         },
@@ -146,7 +148,7 @@ export default createRouter({
           name: 'editAuthSource',
           meta: {
             routeParentName: 'authSource',
-            navName: '编辑认证源',
+            navName: t('编辑认证源'),
             showBack: true,
           },
           component: () => import('@/views/auth-source/edit-data/index.vue'),
@@ -165,7 +167,7 @@ export default createRouter({
         name: 'userFields',
       },
       meta: {
-        navName: '用户字段设置',
+        navName: t('用户字段设置'),
       },
       component: () => import('@/views/setting/index.vue'),
       children: [
@@ -174,7 +176,7 @@ export default createRouter({
           name: 'userFields',
           meta: {
             routeParentName: 'setting',
-            navName: '用户字段设置',
+            navName: t('用户字段设置'),
             isMenu: true,
           },
           component: () => import('@/views/setting/FieldSetting.vue'),
@@ -184,7 +186,7 @@ export default createRouter({
           name: 'login',
           meta: {
             routeParentName: 'setting',
-            navName: '登录设置',
+            navName: t('登录设置'),
             isMenu: true,
           },
           component: () => import('@/views/setting/LoginSetting.vue'),
@@ -194,7 +196,7 @@ export default createRouter({
           name: 'account',
           meta: {
             routeParentName: 'setting',
-            navName: '账号设置',
+            navName: t('账号设置'),
             isMenu: true,
           },
           component: () => import('@/views/setting/AccountSetting.vue'),

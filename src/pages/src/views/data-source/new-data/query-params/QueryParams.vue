@@ -9,17 +9,17 @@
   >
     <bk-button v-if="count === 0" text theme="primary" @click="handleShow">
       <i class="user-icon icon-canshu"></i>
-      配置查询参数
+      {{ $t('配置查询参数') }}
     </bk-button>
     <bk-button v-else text theme="primary" @click="handleShow">
       <i class="user-icon icon-canshu"></i>
-      已配置{{ count }}项查询参数
+      {{ $t('已配置x项查询参数', { count }) }}
     </bk-button>
     <template #content>
       <div class="config-params">
         <p class="title">
           <i class="user-icon icon-info-i"></i>
-          查询参数(Query Parameters)：如/staffs?name=value: 出现在?后面, 由&分隔。
+          {{ $t('查询参数(Query Parameters)：如/staffs？name=value: 出现在？后面，由&分隔。') }}
         </p>
         <bk-form
           class="config-form user-scroll-y"
@@ -36,7 +36,7 @@
               :property="`${index}.key`"
               :rules="rules.key">
               <bk-input
-                placeholder="请输入Key"
+                :placeholder="$t('请输入Key')"
                 v-model="item.key"
                 @change="handleChange" />
             </bk-form-item>
@@ -46,7 +46,7 @@
               :property="`${index}.value`"
               :rules="rules.value">
               <bk-input
-                placeholder="请输入Value"
+                :placeholder="$t('请输入Value')"
                 v-model="item.value"
                 @change="handleChange" />
             </bk-form-item>
@@ -61,10 +61,10 @@
         </bk-form>
         <div class="footer">
           <bk-button theme="primary" size="small" @click="handleVerify">
-            确定
+            {{ $t('确定') }}
           </bk-button>
           <bk-button size="small" @click="Cancel">
-            取消
+            {{ $t('取消') }}
           </bk-button>
         </div>
       </div>

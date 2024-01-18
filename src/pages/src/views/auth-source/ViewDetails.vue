@@ -8,23 +8,23 @@
       </div>
     </div>
     <div class="details-url" v-if="authSourceData.callback_uri">
-      <p class="title">回调地址</p>
+      <p class="title">{{ $t('回调地址') }}</p>
       <div class="content">
         <p>{{ authSourceData.callback_uri }}</p>
         <i class="user-icon icon-copy" @click="copy(authSourceData.callback_uri)" />
       </div>
     </div>
     <div class="details-info">
-      <p class="title">认证源信息</p>
+      <p class="title">{{ $t('认证源信息') }}</p>
       <ul class="content">
         <li>
-          <span class="item-title">名称：</span>
+          <span class="item-title">{{ $t('名称') }}：</span>
           <div>{{ authSourceData.name }}</div>
         </li>
         <li v-if="authSourceData.plugin?.id === 'local'">
-          <span class="item-title">基础配置：</span>
+          <span class="item-title">{{ $t('基础配置') }}：</span>
           <div class="basic-config">
-            <p v-if="onDataSources.length">以下数据源已开启「账密登录」</p>
+            <p v-if="onDataSources.length">{{ $t('以下数据源已开启「账密登录」') }}</p>
             <div class="on">
               <bk-overflow-title
                 type="tips"
@@ -34,13 +34,13 @@
                 {{ item.data_source_name }}
               </bk-overflow-title>
             </div>
-            <p v-if="notDataSources.length">以下数据源未开启「账密登录」</p>
+            <p v-if="notDataSources.length">{{ $t('以下数据源未开启「账密登录」') }}</p>
             <div class="off" v-for="(item, index) in notDataSources" :key="index">
               <bk-overflow-title
                 type="tips"
                 class="source-name">
                 {{ item.data_source_name }}
-                <bk-button text theme="primary" @click="handleOpen(item)">去开启</bk-button>
+                <bk-button text theme="primary" @click="handleOpen(item)">{{ $t('去开启') }}</bk-button>
               </bk-overflow-title>
             </div>
           </div>
@@ -48,7 +48,7 @@
         <template v-else>
           <div v-if="authSourceData.plugin?.id === 'wecom'">
             <li>
-              <span class="item-title">企业ID：</span>
+              <span class="item-title">{{ $t('企业 ID') }}：</span>
               <div>{{ authSourceData.plugin_config?.corp_id }}</div>
             </li>
             <li>
@@ -67,25 +67,25 @@
             </li>
           </div>
           <li>
-            <span class="item-title">登录模式：</span>
-            <div>仅用于登录</div>
+            <span class="item-title">{{ $t('登录模式') }}：</span>
+            <div>{{ $t('仅用于登录') }}</div>
           </li>
         </template>
         <li>
-          <span class="item-title">数据源匹配：</span>
+          <span class="item-title">{{ $t('数据源匹配') }}：</span>
           <div class="content-matching">
             <bk-exception
               v-if="onDataSources.length === 0"
               class="exception-part"
               type="empty"
               scene="part"
-              description="暂无数据源匹配"
+              :description="$t('暂无数据源匹配')"
             />
             <div class="content-box" v-else v-for="(item, index) in onDataSources" :key="index">
               <bk-overflow-title type="tips" class="data-source-title">{{ item.data_source_name }}</bk-overflow-title>
               <div class="field-rules">
                 <dl>
-                  <dt>数据源字段：</dt>
+                  <dt>{{ $t('数据源字段') }}：</dt>
                   <bk-overflow-title
                     type="tips"
                     class="source-field"
@@ -95,7 +95,7 @@
                   </bk-overflow-title>
                 </dl>
                 <dl>
-                  <dt>认证源字段：</dt>
+                  <dt>{{ $t('认证源字段') }}：</dt>
                   <bk-overflow-title
                     type="tips"
                     class="source-field"

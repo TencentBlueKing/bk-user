@@ -7,8 +7,8 @@
       :model="serverConfigData"
       :rules="rulesServerConfig">
       <div class="content-item">
-        <p class="item-title">基础信息</p>
-        <bk-form-item class="w-[560px]" label="数据源名称" property="name" required>
+        <p class="item-title">{{ $t('基本信息') }}</p>
+        <bk-form-item class="w-[560px]" :label="$t('数据源名称')" property="name" required>
           <bk-input
             v-model="serverConfigData.name"
             :placeholder="validate.name.message"
@@ -17,8 +17,8 @@
         </bk-form-item>
       </div>
       <div class="content-item">
-        <p class="item-title">服务配置</p>
-        <bk-form-item class="w-[560px]" label="服务地址" property="server_config.server_base_url" required>
+        <p class="item-title">{{ $t('服务配置') }}</p>
+        <bk-form-item class="w-[560px]" :label="$t('服务地址')" property="server_config.server_base_url" required>
           <bk-input
             v-model="serverConfigData.server_config.server_base_url"
             :placeholder="validate.serverBaseUrl.message"
@@ -26,7 +26,11 @@
             @input="handleChange" />
         </bk-form-item>
         <div class="api-url-style">
-          <bk-form-item class="w-[560px]" label="用户数据 API 路径" property="server_config.user_api_path" required>
+          <bk-form-item
+            class="w-[560px]"
+            :label="$t('用户数据 API 路径')"
+            property="server_config.user_api_path"
+            required>
             <bk-input
               v-model="serverConfigData.server_config.user_api_path"
               :placeholder="validate.apiPath.message"
@@ -39,7 +43,11 @@
             @saveParams="(list) => saveParams(list, 'user')" />
         </div>
         <div class="api-url-style">
-          <bk-form-item class="w-[560px]" label="部门数据 API 路径" property="server_config.department_api_path" required>
+          <bk-form-item
+            class="w-[560px]"
+            :label="$t('部门数据 API 路径')"
+            property="server_config.department_api_path"
+            required>
             <bk-input
               v-model="serverConfigData.server_config.department_api_path"
               :placeholder="validate.apiPath.message"
@@ -52,7 +60,7 @@
             @saveParams="(list) => saveParams(list, 'department')" />
         </div>
         <div class="item-flex3">
-          <bk-form-item label="分页请求每页数量" property="server_config.page_size" required>
+          <bk-form-item :label="$t('分页请求每页数量')" property="server_config.page_size" required>
             <bk-select
               :clearable="false"
               v-model="serverConfigData.server_config.page_size"
@@ -65,20 +73,24 @@
               />
             </bk-select>
           </bk-form-item>
-          <bk-form-item class="ml-[24px]" label="请求超时时间" property="server_config.request_timeout" required>
+          <bk-form-item
+            class="ml-[24px]"
+            :label="$t('请求超时时间')"
+            property="server_config.request_timeout"
+            required>
             <bk-input
               type="number"
-              suffix="秒"
+              :suffix="$t('秒')"
               :min="5"
               :max="120"
               v-model="serverConfigData.server_config.request_timeout"
               @change="handleChange"
             />
           </bk-form-item>
-          <bk-form-item class="ml-[24px]" label="重试次数" property="server_config.retries" required>
+          <bk-form-item class="ml-[24px]" :label="$t('重试次数')" property="server_config.retries" required>
             <bk-input
               type="number"
-              suffix="次"
+              :suffix="$t('次')"
               :min="0"
               :max="3"
               v-model="serverConfigData.server_config.retries"
@@ -88,8 +100,8 @@
         </div>
       </div>
       <div class="content-item">
-        <p class="item-title">认证配置</p>
-        <bk-form-item label="认证方式" required>
+        <p class="item-title">{{ $t('认证配置') }}</p>
+        <bk-form-item :label="$t('认证方式')" required>
           <bk-radio-group
             v-model="serverConfigData.auth_config.method"
             @change="handleChange"
@@ -112,14 +124,14 @@
             @input="handleChange" />
         </bk-form-item>
         <div v-else class="item-flex">
-          <bk-form-item label="用户名" property="auth_config.username" required>
+          <bk-form-item :label="$t('用户名')" property="auth_config.username" required>
             <bk-input
               v-model="serverConfigData.auth_config.username"
               @focus="handleFocus"
               @input="handleChange"
             />
           </bk-form-item>
-          <bk-form-item label="密码" property="auth_config.password" required>
+          <bk-form-item :label="$t('密码')" property="auth_config.password" required>
             <bk-input
               type="password"
               v-model="serverConfigData.auth_config.password"
@@ -132,13 +144,15 @@
       <div class="btn">
         <div>
           <bk-button
-            class="w-[100px] mr-[8px]"
+            class="mr-[8px]"
             theme="primary"
             :outline="!nextDisabled"
             :loading="connectionLoading"
-            @click="handleTestConnection">连通性测试</bk-button>
-          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">下一步</bk-button>
-          <bk-button @click="handleCancel">取消</bk-button>
+            @click="handleTestConnection">{{ $t('连通性测试') }}</bk-button>
+          <bk-button theme="primary" class="mr8" :disabled="nextDisabled" @click="handleNext">
+            {{ $t('下一步') }}
+          </bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
         </div>
         <div class="connection-alert" v-if="connectionStatus !== null">
           <bk-alert
@@ -162,7 +176,7 @@
       :model="fieldSettingData"
       :rules="rulesFieldSetting">
       <div class="content-item mb-[24px]">
-        <p class="item-title">字段映射</p>
+        <p class="item-title">{{ $t('字段映射') }}</p>
         <FieldMapping
           :field-setting-data="fieldSettingData"
           :api-fields="apiFields"
@@ -173,8 +187,8 @@
           @changeCustomField="changeCustomField" />
       </div>
       <div class="content-item">
-        <p class="item-title">同步配置</p>
-        <bk-form-item label="同步周期" required>
+        <p class="item-title">{{ $t('同步配置') }}</p>
+        <bk-form-item :label="$t('同步周期')" required>
           <bk-select
             class="w-[560px]"
             :clearable="false"
@@ -190,11 +204,11 @@
         </bk-form-item>
       </div>
       <div class="btn">
-        <bk-button class="mr8" @click="handleLastStep">上一步</bk-button>
+        <bk-button class="mr8" @click="handleLastStep">{{ $t('上一步') }}</bk-button>
         <bk-button theme="primary" class="mr8" :loading="submitLoading" @click="handleSubmit">
-          {{ currentId ? '保存' : '提交' }}
+          {{ currentId ? $t('保存') : $t('提交') }}
         </bk-button>
-        <bk-button @click="handleCancel">取消</bk-button>
+        <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
       </div>
     </bk-form>
   </bk-loading>
@@ -211,6 +225,7 @@ import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
 import useValidate from '@/hooks/use-validate';
 import { getDataSourceDetails, newDataSource, postTestConnection, putDataSourceDetails } from '@/http/dataSourceFiles';
 import { getFields } from '@/http/settingFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { SYNC_CONFIG_LIST } from '@/utils';
 
@@ -478,7 +493,7 @@ const handleTestConnection = async () => {
     const res = await postTestConnection(params);
     if (res.data.error_message === '') {
       connectionStatus.value = true;
-      connectionText.value = '测试成功';
+      connectionText.value = t('测试成功');
       nextDisabled.value = false;
       userProperties.value = Object.keys(res.data?.user?.properties);
     } else {
@@ -565,11 +580,11 @@ const handleSubmit = async () => {
     if (currentId.value) {
       params.id = currentId.value;
       await putDataSourceDetails(params);
-      Message({ theme: 'success', message: '数据源更新成功' });
+      Message({ theme: 'success', message: t('数据源更新成功') });
     } else {
       params.plugin_id = serverConfigData.plugin_id;
       await newDataSource(params);
-      Message({ theme: 'success', message: '数据源创建成功' });
+      Message({ theme: 'success', message: t('数据源创建成功') });
     }
     window.changeInput = false;
     router.push({ name: 'dataSource' });

@@ -1,11 +1,11 @@
 <template>
   <bk-loading :loading="isLoading" :z-index="9" class="account-setting-wrapper user-scroll-y">
     <bk-form class="account-setting-content" form-type="vertical" :model="formData" ref="formRef">
-      <bk-form-item label="账号有效期开启">
+      <bk-form-item :label="$t('账号有效期开启')">
         <bk-switcher v-model="formData.enabled" theme="primary" size="large" @change="changeEnabled" />
       </bk-form-item>
       <div v-if="formData.enabled">
-        <bk-form-item label="账号有效期" required>
+        <bk-form-item :label="$t('账号有效期')" required>
           <bk-radio-group v-model="formData.validity_period" @change="handleChange">
             <bk-radio-button
               v-for="(item, index) in VALID_TIME"
@@ -16,7 +16,7 @@
             </bk-radio-button>
           </bk-radio-group>
         </bk-form-item>
-        <bk-form-item label="续期提醒时间" property="remind_before_expire" required>
+        <bk-form-item :label="$t('续期提醒时间')" property="remind_before_expire" required>
           <bk-checkbox-group v-model="formData.remind_before_expire" @change="handleChange">
             <bk-checkbox
               v-for="(item, index) in REMIND_DAYS"
@@ -26,7 +26,7 @@
             >
           </bk-checkbox-group>
         </bk-form-item>
-        <bk-form-item label="通知方式" property="enabled_notification_methods" required>
+        <bk-form-item :label="$t('通知方式')" property="enabled_notification_methods" required>
           <NotifyEditorTemplate
             v-if="formData.enabled_notification_methods"
             :active-methods="formData.enabled_notification_methods"
@@ -41,7 +41,6 @@
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group
-                  class="checkbox-zh"
                   v-model="formData.enabled_notification_methods"
                   @change="handleChange">
                   <bk-checkbox
@@ -53,7 +52,7 @@
                   </bk-checkbox>
                 </bk-checkbox-group>
                 <div class="edit-info" @click="accountExpireTemplate">
-                  <span style="font-size:14px">编辑通知模板</span>
+                  <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
                   <AngleUp v-if="isDropdownAccountExpire" />
                   <AngleDown v-else />
                 </div>
@@ -64,7 +63,7 @@
       </div>
     </bk-form>
     <div class="account-setting-footer">
-      <bk-button theme="primary" @click="changeApplication">应用</bk-button>
+      <bk-button theme="primary" @click="changeApplication">{{ $t('应用') }}</bk-button>
     </div>
   </bk-loading>
 </template>
@@ -76,6 +75,7 @@ import { onMounted, ref } from 'vue';
 
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import { getTenantUserValidityPeriod, putTenantUserValidityPeriod } from '@/http/settingFiles';
+import { t } from '@/language/index';
 import { NOTIFICATION_METHODS, REMIND_DAYS, VALID_TIME } from '@/utils';
 
 const isLoading = ref(false);
@@ -128,7 +128,7 @@ const changeApplication = async () => {
   try {
     await formRef.value.validate();
     await putTenantUserValidityPeriod(formData.value);
-    Message({ theme: 'success', message: '更新成功' });
+    Message({ theme: 'success', message: t('更新成功') });
     getAccountCongif();
     window.changeInput = false;
   } catch (e) {
@@ -139,8 +139,8 @@ const changeApplication = async () => {
 const changeEnabled = (value) => {
   if (!value) {
     InfoBox({
-      title: '确认要关闭账号有效期吗？',
-      subTitle: '关闭后，存量账号有效期不变，新账号有效期永久。',
+      title: t('确认要关闭账号有效期吗？'),
+      subTitle: t('关闭后，存量账号有效期不变，新账号有效期永久。'),
       onClosed() {
         formData.value.enabled = !value;
       },

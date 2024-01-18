@@ -25,6 +25,7 @@ import { computed, defineEmits, defineProps, onBeforeUnmount, ref, shallowRef } 
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
 
 import '@wangeditor/editor/dist/css/style.css';
+import { t } from '@/language/index';
 
 const props = defineProps({
   htmlText: {
@@ -43,7 +44,7 @@ const editorRef = shallowRef();
 
 // 内容 HTML
 const valueHtml = computed(() => props.htmlText);
-const editorConfig = { placeholder: '请输入内容...' };
+const editorConfig = { placeholder: t('请输入内容...') };
 const mode = ref('simple');
 const isActive = ref(false);
 

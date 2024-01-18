@@ -5,7 +5,7 @@
       ref="telRef"
       :class="['select-text', { 'input-error': telError }]"
       v-model="data.phone"
-      placeholder="请输入"
+      :placeholder="$t('请输入')"
       :disabled="disabled"
       @blur="verifyInput"
       @focus="hiddenVerify"
@@ -14,14 +14,14 @@
     <template v-if="tooltips">
       <bk-popover
         v-if="telError && data.phone"
-        content="请填写正确的手机号"
+        :content="$t('请填写正确的手机号')"
         placement="top"
       >
         <ExclamationCircleShape class="error-icon" />
       </bk-popover>
       <bk-popover
         v-if="telError && !data.phone"
-        content="必填项"
+        :content="$t('必填项')"
         placement="top"
       >
         <ExclamationCircleShape class="error-icon" />
@@ -29,10 +29,10 @@
     </template>
     <template v-else>
       <p class="error-text" v-show="telError && data.phone">
-        请填写正确的手机号
+        {{ $t('请填写正确的手机号') }}
       </p>
       <p class="error-text" v-show="telError && !data.phone">
-        必填项
+        {{ $t('必填项') }}
       </p>
     </template>
   </div>

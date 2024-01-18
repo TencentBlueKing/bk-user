@@ -5,7 +5,7 @@
         <div class="content-search-left">
           <bk-button class="mr-[24px]" theme="primary" @click="handleClick('add')">
             <i class="user-icon icon-add-2 mr8" />
-            新建租户
+            {{ $t('新建租户') }}
           </bk-button>
           <bk-switcher
             v-model="tenantVisible"
@@ -13,12 +13,12 @@
             size="large"
             @change="changeVisible"
           />
-          <span class="switcher-text">租户名是否跨租户可见</span>
+          <span class="switcher-text">{{ $t('租户名是否跨租户可见') }}</span>
         </div>
         <bk-input
           class="content-search-input"
           v-model="searchName"
-          placeholder="搜索租户名"
+          :placeholder="$t('搜索租户名')"
           type="search"
           clearable
           @enter="handleEnter"
@@ -43,7 +43,7 @@
         </template>
         <bk-table-column
           prop="name"
-          label="租户名"
+          :label="$t('租户名')"
           :sort="{ value: 'asc' }">
           <template #default="{ row, index }">
             <div class="item-name">
@@ -62,19 +62,19 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column prop="id" label="租户ID"></bk-table-column>
-        <bk-table-column prop="managers" label="租户管理员">
+        <bk-table-column prop="id" :label="$t('租户ID')"></bk-table-column>
+        <bk-table-column prop="managers" :label="$t('租户管理员')">
           <template #default="{ row }">
             <bk-tag v-for="(item, index) in row.managers" :key="index">{{ item.username }}</bk-tag>
           </template>
         </bk-table-column>
-        <bk-table-column prop="data_sources" label="已绑定数据源">
+        <bk-table-column prop="data_sources" :label="$t('已绑定数据源')">
           <template #default="{ row }">
             <span>{{ formatConvert(row.data_sources) }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="created_at" label="创建时间" :sort="true" />
-        <bk-table-column label="操作">
+        <bk-table-column prop="created_at" :label="$t('创建时间')" :sort="true" />
+        <bk-table-column :label="$t('操作')">
           <template #default="{ row }">
             <bk-button
               text
@@ -82,7 +82,7 @@
               style="margin-right: 8px;"
               @click="handleClick('edit', row)"
             >
-              编辑
+              {{ $t('编辑') }}
             </bk-button>
           </template>
         </bk-table-column>
@@ -103,7 +103,7 @@
             outline
             theme="primary"
             @click="handleClick('edit', state.tenantsData)"
-          >编辑</bk-button
+          >{{ $t('编辑') }}</bk-button
           >
         </div>
       </template>
@@ -138,6 +138,7 @@ import {
   putGlobalSetting,
   searchTenants,
 } from '@/http/tenantsFiles';
+import { t } from '@/language/index';
 import { useMainViewStore } from '@/store/mainView';
 import { formatConvert, LOGO_COLOR, logoConvert } from '@/utils';
 
@@ -184,15 +185,15 @@ const detailsConfig = reactive({
 });
 const enumData = {
   view: {
-    title: '租户详情',
+    title: t('租户详情'),
     type: 'view',
   },
   add: {
-    title: '新建租户',
+    title: t('新建租户'),
     type: 'add',
   },
   edit: {
-    title: '编辑租户',
+    title: t('编辑租户'),
     type: 'edit',
   },
 };
@@ -249,7 +250,7 @@ const handleCancelEdit = async () => {
     const res = await getTenantDetails(currentTenantId.value);
     state.tenantsData = res.data;
     detailsConfig.type = 'view';
-    detailsConfig.title = '租户详情';
+    detailsConfig.title = t('租户详情');
     window.changeInput = false;
   }
 };
@@ -349,7 +350,7 @@ const updateTenantsList = (type: string, id: string) => {
   fetchTenantsList();
   Message({
     theme: 'success',
-    message: isCreated.value ? '租户创建成功' : '租户更新成功',
+    message: isCreated.value ? t('租户创建成功') : t('租户更新成功'),
   });
 };
 

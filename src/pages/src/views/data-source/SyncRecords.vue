@@ -2,10 +2,10 @@
   <div class="sync-records-wrapper user-scroll-y">
     <span class="back-previous" @click="handleBack">
       <i class="user-icon icon-arrow-left" />
-      返回上一页
+      {{ $t('返回上一页') }}
     </span>
     <bk-loading class="data-record-content" :loading="dataRecordConfig.loading">
-      <p class="title">数据更新记录</p>
+      <p class="title">{{ $t('数据更新记录') }}</p>
       <bk-table
         class="user-info-table"
         :data="dataRecordConfig.list"
@@ -23,30 +23,30 @@
             @handleUpdate="getSyncRecordsList"
           />
         </template>
-        <bk-table-column prop="start_at" label="开始时间" />
-        <bk-table-column prop="duration" label="耗时">
+        <bk-table-column prop="start_at" :label="$t('开始时间')" />
+        <bk-table-column prop="duration" :label="$t('耗时')">
           <template #default="{ row }">
             <span>{{ durationText(row.duration) }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="operator" label="操作人">
+        <bk-table-column prop="operator" :label="$t('操作人')">
           <template #default="{ row }">
             <span>{{ row.operator || '--' }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="trigger" label="触发类型">
+        <bk-table-column prop="trigger" :label="$t('触发类型')">
           <template #default="{ row }">
             <span>{{ triggeMode[row.trigger] }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="data_source_name" label="数据源" />
-        <bk-table-column prop="status" label="状态" :filter="{ list: updateStatusFilters }">
+        <bk-table-column prop="data_source_name" :label="$t('数据源')" />
+        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters }">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
             <span>{{ dataRecordStatus[row.status]?.text }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column label="操作">
+        <bk-table-column :label="$t('操作')">
           <template #default="{ row }">
             <bk-button
               text
@@ -54,12 +54,12 @@
               style="margin-right: 8px;"
               @click="handleLogDetails(row)"
             >
-              日志详情
+              {{ $t('日志详情') }}
             </bk-button>
             <ExclamationCircleShape
               class="circle-shape"
               v-if="row.has_warning"
-              v-bk-tooltips="{ content: '有部分数据失败' }" />
+              v-bk-tooltips="{ content: t('有部分数据失败') }" />
           </template>
         </bk-table-column>
       </bk-table>
@@ -67,26 +67,26 @@
     <bk-sideslider
       ext-cls="log-wrapper"
       :is-show="logConfig.isShow"
-      title="日志详情"
+      :title="$t('日志详情')"
       :width="960"
       quick-close
       :before-close="beforeClose"
     >
       <template #header>
         <div class="logs-header">
-          <span>日志详情</span>
+          <span>{{ $t('日志详情') }}</span>
           <bk-tag>{{ logsDetails.start_at }}</bk-tag>
           <bk-tag :theme="dataRecordStatus[logsDetails.status]?.theme">
             {{ dataRecordStatus[logsDetails.status]?.text }}
           </bk-tag>
-          <span class="logs-duration">总耗时 {{ durationText(logsDetails.duration) }}</span>
+          <span class="logs-duration">{{ $t('总耗时') }} {{ durationText(logsDetails.duration) }}</span>
         </div>
       </template>
       <template #default>
         <SQLFile
           v-model="logsDetails.logs"
           readonly
-          title="执行日志" />
+          :title="$t('执行日志')" />
       </template>
     </bk-sideslider>
   </div>
@@ -101,6 +101,7 @@ import { useRoute } from 'vue-router';
 import Empty from '@/components/Empty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { getSyncLogs, getSyncRecords } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { dataRecordStatus } from '@/utils';
 
@@ -129,15 +130,15 @@ const logConfig = ref({
 const logsDetails = ref({});
 
 const triggeMode = {
-  crontab: '定时',
-  manual: '手动',
+  crontab: t('定时'),
+  manual: t('手动'),
 };
 
 const updateStatusFilters = [
-  { text: '待执行', value: 'pending' },
-  { text: '同步中', value: 'running' },
-  { text: '成功', value: 'success' },
-  { text: '失败', value: 'failed' },
+  { text: t('待执行'), value: 'pending' },
+  { text: t('同步中'), value: 'running' },
+  { text: t('成功'), value: 'success' },
+  { text: t('失败'), value: 'failed' },
 ];
 
 onMounted(() => {
@@ -174,13 +175,13 @@ const durationText = (value) => {
   if (value) {
     value = value.slice(6);
     if (value < 60) {
-      return '<1 分钟';
+      return `<1 ${t('分钟')}`;
     }
     if (60 <= value && value < 3600) {
       const time = value / 60;
       const min = time.toString().split('.')[0];
       const sec = parseInt(time.toString().split('.')[1][0], 10) * 6;
-      return `${min} 分钟 ${sec} 秒`;
+      return `${min} ${t('分钟')} ${sec} ${t('秒')}`;
     }
     if (3600 <= value) {
       const time = value / 3600;

@@ -4,7 +4,7 @@
       class="details-content-item"
       v-for="(item, index) in extras"
       :key="index">
-      <span class="details-content-key">{{ item.display_name }}：</span>
+      <bk-overflow-title class="details-content-key" type="tips">{{ item.display_name }}：</bk-overflow-title>
       <bk-overflow-title class="details-content-value" type="tips">
         {{ customFieldsMap(item) }}
       </bk-overflow-title>

@@ -220,6 +220,12 @@ class TenantUserCustomFieldUpdateInputSLZ(serializers.Serializer):
             # 非枚举类型的，更新时候不需要字段迁移映射
             attrs["mapping"] = {}
 
+        # NOTE: 对于历史迁移的数据，必须保证即使修改，选项 ID 也是可以转换回整数的（向前兼容）
+        if custom_field.use_digit_option_id and options:
+            for opt in options:
+                if not opt["id"].isdigit():
+                    raise ValidationError(_("枚举选项 ID 必须是数字，值 {} 不合法").format(opt["id"]))
+
         return attrs
 
 

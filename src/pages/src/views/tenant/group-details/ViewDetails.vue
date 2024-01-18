@@ -1,10 +1,10 @@
 <template>
   <ul class="details-content">
     <li>
-      <div class="details-content-title">基本信息</div>
+      <div class="details-content-title">{{ $t('基本信息') }}</div>
       <div class="details-content-info">
         <div
-          class="details-content-item"
+          :class="['details-content-item', { 'en': $i18n.locale === 'en' }]"
           v-for="(item, index) in basicData"
           :key="index"
         >
@@ -16,16 +16,16 @@
       <img v-else class="user-logo" src="@/images/avatar.png" alt="">
     </li>
     <li>
-      <div class="details-content-title">管理员</div>
+      <div class="details-content-title">{{ $t('管理员') }}</div>
       <bk-table
         class="details-content-table"
         :data="managersList"
         show-overflow-tooltip
       >
-        <bk-table-column prop="username" label="用户名" />
-        <bk-table-column prop="full_name" label="姓名" />
-        <bk-table-column prop="email" label="邮箱" />
-        <bk-table-column prop="phone" label="手机号" />
+        <bk-table-column prop="username" :label="$t('用户名')" />
+        <bk-table-column prop="full_name" :label="$t('全名')" />
+        <bk-table-column prop="email" :label="$t('邮箱')" />
+        <bk-table-column prop="phone" :label="$t('手机号')" />
       </bk-table>
     </li>
   </ul>
@@ -33,6 +33,8 @@
 
 <script setup lang="ts">
 import { computed, defineProps, reactive } from 'vue';
+
+import { t } from '@/language/index';
 
 const props = defineProps({
   tenantsData: {
@@ -45,16 +47,16 @@ const managersList = computed(() => props.tenantsData.managers.filter(item => it
 
 const basicData = reactive([
   {
-    name: '租户名称',
+    name: t('租户名称'),
     value: props.tenantsData.name,
   },
   {
-    name: '租户ID',
+    name: t('租户ID'),
     value: props.tenantsData.id,
   },
   {
-    name: '人员数量',
-    value: props.tenantsData.feature_flags.user_number_visible ? '显示' : '隐藏',
+    name: t('人员数量'),
+    value: props.tenantsData.feature_flags.user_number_visible ? t('显示') : t('隐藏'),
   },
 ]);
 </script>
@@ -101,6 +103,16 @@ const basicData = reactive([
           text-overflow: ellipsis;
           white-space: nowrap;
           vertical-align: top;
+        }
+      }
+
+      .en {
+        .details-content-key {
+          width: 160px;
+        }
+
+        .details-content-value {
+          width: calc(100% - 160px);
         }
       }
     }

@@ -3,29 +3,29 @@
     <li>
       <div class="details-content-info">
         <div class="details-content-item">
-          <span class="details-content-key">用户名：</span>
+          <span class="details-content-key">{{ $t('用户名') }}：</span>
           <span class="details-content-value">{{ usersData.username }}</span>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">全名：</span>
+          <span class="details-content-key">{{ $t('全名') }}：</span>
           <span class="details-content-value">{{ usersData.full_name }}</span>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">邮箱：</span>
+          <span class="details-content-key">{{ $t('邮箱') }}：</span>
           <span class="details-content-value">{{ usersData.email || '--' }}</span>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">手机号：</span>
+          <span class="details-content-key">{{ $t('手机号') }}：</span>
           <span class="details-content-value">{{ usersData.phone || '--' }}</span>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">所属组织：</span>
+          <bk-overflow-title type="tips" class="details-content-key">{{ $t('所属组织') }}：</bk-overflow-title>
           <bk-overflow-title class="details-content-value" type="tips">
             {{ paths }}
           </bk-overflow-title>
         </div>
         <div class="details-content-item">
-          <span class="details-content-key">直属上级：</span>
+          <span class="details-content-key">{{ $t('直属上级') }}：</span>
           <span class="details-content-value" v-if="usersData.leaders.length > 0">
             {{ formatConvert(usersData.leaders) }}
           </span>

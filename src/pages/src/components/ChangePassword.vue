@@ -11,22 +11,26 @@
   >
     <bk-alert
       theme="info"
-      title="密码修改成功后需要进行重新登录"
+      :title="$t('密码修改成功后需要进行重新登录')"
       closable
     />
     <bk-form
       form-type="vertical"
       ref="formRef"
       :model="formData">
-      <bk-form-item label="旧密码" property="oldPassword" required>
-        <bk-input v-model="formData.oldPassword" />
+      <bk-form-item :label="$t('旧密码')" property="oldPassword" required>
+        <bk-input type="password" v-model="formData.oldPassword" />
       </bk-form-item>
-      <bk-form-item label="新密码" property="newPassword" required>
-        <bk-input v-model="formData.newPassword" />
+      <bk-form-item :label="$t('新密码')" property="newPassword" required>
+        <bk-input type="password" v-model="formData.newPassword" />
       </bk-form-item>
-      <bk-form-item label="确认密码" property="confirmPassword" required>
-        <bk-input :class="{ 'is-error': isError }" v-model="formData.confirmPassword" @input="changePassword" />
-        <p class="error" v-show="isError">两次输入的密码不一致，请重新输入</p>
+      <bk-form-item :label="$t('确认密码')" property="confirmPassword" required>
+        <bk-input
+          :class="{ 'is-error': isError }"
+          type="password"
+          v-model="formData.confirmPassword"
+          @input="changePassword" />
+        <p class="error" v-show="isError">{{ $t('两次输入的密码不一致，请重新输入') }}</p>
       </bk-form-item>
     </bk-form>
   </bk-dialog>
@@ -36,7 +40,9 @@
 import { Message } from 'bkui-vue';
 import { reactive, ref, watch } from 'vue';
 
+import { logout } from '@/common/auth';
 import { putPersonalCenterUserPassword } from '@/http/personalCenterFiles';
+import { t } from '@/language/index';
 
 const emit = defineEmits(['closed']);
 const props = defineProps({
@@ -81,7 +87,8 @@ const confirm = async () => {
       new_password: formData.newPassword,
     });
     emit('closed');
-    Message({ theme: 'success', message: '修改密码成功' });
+    Message({ theme: 'success', message: t('修改密码成功') });
+    logout();
   } catch (e) {
     console.warn(e);
   } finally {

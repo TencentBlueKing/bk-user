@@ -15,15 +15,15 @@
         :model="authSourceData"
         :rules="rules">
         <div class="content-item">
-          <p class="item-title">基础信息</p>
+          <p class="item-title">{{ $t('基本信息') }}</p>
           <bk-form-item class="w-[600px]" label="名称" property="name" required>
             <bk-input v-model="authSourceData.name" :placeholder="validate.name.message" @change="handleChange" />
           </bk-form-item>
         </div>
         <div class="content-item">
-          <p class="item-title">基础配置</p>
+          <p class="item-title">{{ $t('基础配置') }}</p>
           <div class="basic-config">
-            <p v-if="onDataSources.length">以下数据源已开启「账密登录」</p>
+            <p v-if="onDataSources.length">{{ $t('以下数据源已开启「账密登录」') }}</p>
             <div class="on">
               <bk-overflow-title
                 type="tips"
@@ -33,32 +33,32 @@
                 {{ item.data_source_name }}
               </bk-overflow-title>
             </div>
-            <p v-if="notDataSources.length">以下数据源未开启「账密登录」</p>
+            <p v-if="notDataSources.length">{{ $t('以下数据源未开启「账密登录」') }}</p>
             <div class="off" v-for="(item, index) in notDataSources" :key="index">
               <bk-overflow-title
                 type="tips"
                 class="source-name">
                 {{ item.data_source_name }}
-                <bk-button text theme="primary" @click="handleOpen(item)">去开启</bk-button>
+                <bk-button text theme="primary" @click="handleOpen(item)">{{ $t('去开启') }}</bk-button>
               </bk-overflow-title>
             </div>
           </div>
         </div>
         <div class="content-item pb-[24px]">
-          <p class="item-title">数据源匹配</p>
+          <p class="item-title">{{ $t('数据源匹配') }}</p>
           <div class="content-matching">
             <bk-exception
               v-if="onDataSources.length === 0"
               class="exception-part"
               type="empty"
               scene="part"
-              description="暂无数据源匹配"
+              :description="$t('暂无数据源匹配')"
             />
             <div class="content-box" v-else v-for="(item, index) in onDataSources" :key="index">
               <bk-overflow-title class="data-source-title">{{ item.data_source_name }}</bk-overflow-title>
               <div class="field-rules">
                 <dl>
-                  <dt>数据源字段：</dt>
+                  <dt>{{ $t('数据源字段') }}：</dt>
                   <bk-overflow-title
                     type="tips"
                     class="source-field"
@@ -68,7 +68,7 @@
                   </bk-overflow-title>
                 </dl>
                 <dl>
-                  <dt>认证源字段：</dt>
+                  <dt>{{ $t('认证源字段') }}：</dt>
                   <bk-overflow-title
                     type="tips"
                     class="source-field"
@@ -87,10 +87,10 @@
     <div class="footer-wrapper" :class="{ 'fixed': isScroll }">
       <div class="footer-div">
         <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
-          提交
+          {{ $t('提交') }}
         </bk-button>
         <bk-button @click="handleCancel">
-          取消
+          {{ $t('取消') }}
         </bk-button>
       </div>
     </div>
@@ -107,6 +107,7 @@ import { useRoute } from 'vue-router';
 import useValidate from '@/hooks/use-validate';
 import { getIdpsDetails, patchIdps } from '@/http/authSourceFiles';
 import { getDataSourceList } from '@/http/dataSourceFiles';
+import { t } from '@/language/index';
 import router from '@/router/index';
 import { useMainViewStore } from '@/store/mainView';
 
@@ -147,7 +148,7 @@ onMounted(async () => {
       getDataSourceList(''),
     ]);
     authSourceData.value = authRes.data;
-    store.breadCrumbsTitle = `编辑${authSourceData.value.plugin.name}认证源`;
+    store.breadCrumbsTitle = t('编辑x认证源', { name: authSourceData.value.plugin.name });
     processMatchRules(dataRes.data);
   } catch (error) {
     console.error(error);
@@ -208,13 +209,13 @@ const handleSubmit = async () => {
     id: route.params.id,
     name: authSourceData.value.name,
   }).then(() => {
-    Message({ theme: 'success', message: '认证源更新成功' });
+    Message({ theme: 'success', message: t('认证源更新成功') });
     window.changeInput = false;
     router.push({ name: 'authSourceList' });
   })
     .catch((e) => {
       console.warn(e);
-      Message({ theme: 'error', message: '认证源更新失败' });
+      Message({ theme: 'error', message: t('认证源更新失败') });
     })
     .finally(() => {
       btnLoading.value = false;
