@@ -21,7 +21,7 @@ from ..utils import parse_request_body_json
 
 
 class LocalIdpPluginConfig(BasePluginConfig):
-    """ "本地账密认证源插件配置"""
+    """本地账密认证源插件配置"""
 
     # 开启账密登录的数据源
     data_source_ids: List[int] = []
