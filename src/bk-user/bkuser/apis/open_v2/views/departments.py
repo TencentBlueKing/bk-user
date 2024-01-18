@@ -216,7 +216,7 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         resp_data["parent"] = self._get_dept_parent_id(tenant_dept, dept_relation)
         resp_data["level"] = self._get_dept_tree_level(dept_relation)
 
-        tenant_dept_full_name = self._get_dept_full_name(dept_relation)
+        tenant_dept_full_name = self._get_dept_full_name(tenant_dept, dept_relation)
         children = self._get_dept_children(tenant_dept, tenant_dept_full_name)
         resp_data["full_name"] = tenant_dept_full_name
         resp_data["has_children"] = bool(children)
@@ -228,11 +228,11 @@ class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         return Response(resp_data)
 
     @staticmethod
-    def _get_dept_full_name(dept_relation: DataSourceDepartmentRelation) -> str:
+    def _get_dept_full_name(tenant_dept: TenantDepartment, dept_relation: DataSourceDepartmentRelation) -> str:
         """获取部门组织路径信息"""
         # TODO 考虑协同的情况，不能直接吐出到根部门的路径
         if not dept_relation:
-            return ""
+            return tenant_dept.data_source_department.name
 
         return "/".join(dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True))
 
@@ -430,7 +430,7 @@ class ProfileDepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         """获取部门组织路径信息"""
         dept_relation = DataSourceDepartmentRelation.objects.filter(department=dept).first()
         if not dept_relation:
-            return ""
+            return dept.name
 
         # TODO 考虑协同的情况，不能直接吐出到根部门的路径
         return "/".join(dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True))

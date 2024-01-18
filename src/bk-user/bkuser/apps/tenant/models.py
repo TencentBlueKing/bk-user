@@ -8,6 +8,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Tuple
+
 from django.conf import settings
 from django.db import models
 
@@ -80,6 +82,18 @@ class TenantUser(TimestampedModel):
     @property
     def account_expired_at_display(self) -> str:
         return datetime_to_display(self.account_expired_at)
+
+    @property
+    def email(self) -> str:
+        return self.data_source_user.email if self.is_inherited_email else self.custom_email
+
+    @property
+    def phone_info(self) -> Tuple[str, str]:
+        return (
+            (self.data_source_user.phone, self.data_source_user.phone_country_code)
+            if self.is_inherited_phone
+            else (self.custom_phone, self.custom_phone_country_code)
+        )
 
 
 class TenantDepartment(TimestampedModel):

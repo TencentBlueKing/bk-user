@@ -223,7 +223,7 @@ class TenantUserHandler:
     @staticmethod
     def generate_tenant_user_display_name(user: TenantUser) -> str:
         # TODO (su) 支持读取表达式并渲染
-        return f"{user.data_source_user.username} ({user.data_source_user.full_name})"
+        return f"{user.data_source_user.full_name}"
 
     @staticmethod
     def get_tenant_user_display_name_map_by_ids(tenant_user_ids: List[str]) -> Dict[str, str]:
