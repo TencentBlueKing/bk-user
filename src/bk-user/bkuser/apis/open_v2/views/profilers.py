@@ -34,6 +34,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.error_codes import error_codes
 from bkuser.utils.tree import Tree
 
 
@@ -66,6 +67,8 @@ class TenantUserListToUserInfosMixin:
         for tenant_user in tenant_users:
             # 手机号和手机区号
             phone, phone_country_code = tenant_user.phone_info
+            # 自定义字段
+            extras = tenant_user.data_source_user.extras
 
             # 不会放大查询的字段
             user_info = {
@@ -88,10 +91,11 @@ class TenantUserListToUserInfosMixin:
                 "staff_status": "",
                 "enabled": True,
                 # TODO: 协同时需要调整为按照协同租户配置的用户自定义字段进行输出
-                "extras": tenant_user.data_source_user.extras,
+                "extras": extras,
+                # 旧版本内置字段，新版本迁移在自定义字段里
+                "position": int(extras.get("position")),
                 # 总是返回固定值
                 "logo": "",
-                "position": 0,
             }
 
             # 指定对外字段，则只返回指定的字段
@@ -217,14 +221,19 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
         slz = ProfileListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
+        no_page = params["no_page"]
 
         # 根据参数过滤
         tenant_users = self._filter_queryset(params)
-        if not params["no_page"]:
+        if not no_page:
             tenant_users = self.paginate_queryset(tenant_users)
 
         # 根据 fields 构造对外的用户信息
-        return Response(self.build_user_infos(tenant_users, params.get("fields")))
+        user_infos = self.build_user_infos(tenant_users, params.get("fields"))
+        if not no_page:
+            return self.get_paginated_response(user_infos)
+
+        return Response(user_infos)
 
     def _filter_queryset(self, params: Dict[str, Any]) -> QuerySet[TenantUser]:
         """根据参数过滤, 生成 TenantUser QuerySet"""
@@ -239,7 +248,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
         target_lookups = []
         if exact_lookups := params.get("exact_lookups"):
             # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤，这里单独处理
-            if lookup_field in ["email", "phone"]:
+            if lookup_field in ["email", "telephone"]:
                 target_lookups = [
                     self._convert_optional_inherited_lookup_field(lookup_field, x, is_exact=True)
                     for x in exact_lookups
@@ -249,17 +258,19 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
                 target_lookups = [Q(**{self._convert_lookup_field(lookup_field): x}) for x in exact_lookups]
         elif fuzzy_lookups := params.get("fuzzy_lookups"):
             # 手机号和邮件，并不是一定继承数据源用户，还有自定义，所以需要多条件过滤，这里单独处理
-            if lookup_field in ["email", "phone"]:
+            if lookup_field in ["email", "telephone"]:
                 target_lookups = [
                     self._convert_optional_inherited_lookup_field(lookup_field, x, is_exact=False)
                     for x in fuzzy_lookups
                 ]
             elif lookup_field == "create_time":
                 # create_time 比较特殊，只针对 IAM 提供，特殊条件处理
-                target_lookups = self._convert_create_time_lookup_field(fuzzy_lookups)
+                target_lookups = [self._convert_create_time_lookup_field(fuzzy_lookups)]
             else:
                 # 单一条件通用转换处理
-                target_lookups = [Q(**{self._convert_lookup_field(lookup_field): x}) for x in fuzzy_lookups]
+                target_lookups = [
+                    Q(**{f"{self._convert_lookup_field(lookup_field)}__icontains": x}) for x in fuzzy_lookups
+                ]
 
         if target_lookups:
             return queryset.filter(reduce(operator.or_, target_lookups))
@@ -286,9 +297,9 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
             return "data_source_id"
         if lookup_field in ["enabled", "status", "staff_status"]:
             # FIXME (su) 支持 enabled / status / staff_status 参数
-            raise ValueError("lookup field enabled / status / staff_status is not supported now")
+            raise error_codes.VALIDATION_ERROR.f("lookup field enabled / status / staff_status is not supported now")
 
-        raise ValueError(f"unsupported lookup field: {lookup_field}")
+        raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
 
     @staticmethod
     def _convert_create_time_lookup_field(values: List[str]) -> Q:
@@ -300,16 +311,19 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
         start_time = datetime_values[0]
         if all(start_time + datetime.timedelta(minutes=idx) == i for idx, i in enumerate(datetime_values)):
             return Q(
-                create_time__gte=datetime_values[0],
-                create_time__lt=datetime_values[-1] + datetime.timedelta(minutes=1),
+                created_at__gte=datetime_values[0],
+                created_at__lt=datetime_values[-1] + datetime.timedelta(minutes=1),
             )
 
-        raise ValueError("unsupported lookup field: create_time")
+        raise error_codes.VALIDATION_ERROR.f("unsupported lookup field: create_time")
 
     @staticmethod
     def _convert_optional_inherited_lookup_field(lookup_field: str, value: str, is_exact: bool = True) -> Q:
         """对于可选是否继承数据源用户的字段，构造对应的查询条件，比如 email 和 phone"""
-        # 精确查询
+        if lookup_field == "telephone":
+            lookup_field = "phone"
+
+            # 精确查询
         if is_exact:
             return Q(
                 # 继承
@@ -427,6 +441,8 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
         phone, phone_country_code = tenant_user.phone_info
         iso_code = _phone_country_code_to_iso_code(phone_country_code)
 
+        extras = tenant_user.data_source_user.extras
+
         user_info = {
             # TODO 目前 ID 指的是数据源用户 ID，未来支持协同之后，需要重新考虑
             "id": tenant_user.data_source_user.id,
@@ -448,10 +464,10 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
             "staff_status": "",
             "enabled": True,
             # TODO: 协同时需要调整为按照协同租户配置的用户自定义字段进行输出
-            "extras": tenant_user.data_source_user.extras,
+            "extras": extras,
+            "position": int(extras.get("position", 0)),
             # 总是返回固定值
             "logo": "",
-            "position": 0,
             "type": "",
             "role": 0,
         }
@@ -484,6 +500,7 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, T
         slz = DepartmentProfileListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
+        no_page = params["no_page"]
 
         # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的部门还是 Raise 404
         tenant_dept = TenantDepartment.objects.filter(id=kwargs["id"]).first()
@@ -493,11 +510,15 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, T
 
         # 根据部门、是否递归，过滤出 部门下的用户
         tenant_users = self._filter_queryset(tenant_dept, params.get("recursive"))
-        if not params["no_page"]:
+        if not no_page:
             tenant_users = self.paginate_queryset(tenant_users)
 
         # 不指定用户字段
-        return Response(self.build_user_infos(tenant_users, []))
+        user_infos = self.build_user_infos(tenant_users, [])
+        if not no_page:
+            return self.get_paginated_response(user_infos)
+
+        return Response(user_infos)
 
     @staticmethod
     def _filter_queryset(tenant_dept: TenantDepartment, recursive: bool) -> QuerySet[TenantUser]:

@@ -52,6 +52,7 @@ class ProfileFieldsSLZ(serializers.Serializer):
             "departments",
             "leader",
         }
+
         # 忽略无效的指定字段
         return list(set(fields) & allowed_fields)
 
@@ -95,3 +96,4 @@ class ProfileListInputSLZ(ProfileFieldsSLZ):
 class DepartmentProfileListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="是否递归", required=False, default=False)
     include_disabled = serializers.BooleanField(help_text="是否包含软删除部门", required=False, default=False)
+    no_page = serializers.BooleanField(help_text="全量返回", required=False, default=False)

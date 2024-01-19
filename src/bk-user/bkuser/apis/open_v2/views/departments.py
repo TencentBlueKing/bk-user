@@ -30,6 +30,7 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.common.error_codes import error_codes
 from bkuser.utils.tree import Tree
 
 
@@ -42,12 +43,17 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         slz = DepartmentListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
+        no_page = params["no_page"]
 
         tenant_depts = self._filter_queryset(params)
-        if not params["no_page"]:
+        if not no_page:
             tenant_depts = self.paginate_queryset(tenant_depts)
 
-        return Response(self._build_dept_infos(tenant_depts, params.get("fields", []), params["with_ancestors"]))
+        dept_infos = self._build_dept_infos(tenant_depts, params.get("fields", []), params["with_ancestors"])
+        if not no_page:
+            return self.get_paginated_response(dept_infos)
+
+        return Response(dept_infos)
 
     def _build_dept_infos(
         self, tenant_depts: QuerySet[TenantDepartment], fields: List[str], with_ancestors: bool
@@ -160,11 +166,11 @@ class DepartmentListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
             return "data_source_department__department_relation__parent"
         if lookup_field == "enabled":
             # FIXME 支持 enabled 参数
-            raise ValueError("lookup field enabled is not supported now")
+            raise error_codes.VALIDATION_ERROR.f("lookup field enabled is not supported now")
         if lookup_field == "level":
             return "data_source_department__department_relation__level"
 
-        raise ValueError(f"unsupported lookup field: {lookup_field}")
+        raise error_codes.VALIDATION_ERROR.f(f"unsupported lookup field: {lookup_field}")
 
 
 class DepartmentRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
