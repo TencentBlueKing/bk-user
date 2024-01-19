@@ -190,6 +190,7 @@ class DataSourceUserHandler:
     def update_password(
         data_source_user: DataSourceUser,
         password: str,
+        valid_days: int,
         operator: str,
     ):
         """
@@ -201,7 +202,8 @@ class DataSourceUserHandler:
         with transaction.atomic():
             identify_info.password = make_password(password)
             identify_info.password_updated_at = timezone.now()
-            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
+            identify_info.password_expired_at = timezone.now() + datetime.timedelta(days=valid_days)
+            identify_info.save(update_fields=["password", "password_updated_at", "password_expired_at", "updated_at"])
 
             DataSourceUserDeprecatedPasswordRecord.objects.create(
                 user=data_source_user, password=deprecated_password, operator=operator
