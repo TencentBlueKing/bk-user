@@ -44,6 +44,7 @@ class LocalUserCredentialAuthenticateApi(LoginApiAccessControlMixin, generics.Cr
     """本地数据源用户的凭据认证"""
 
     def post(self, request, *args, **kwargs):
+        # TODO: 所有报错都添加日志，便于后续排查
         slz = LocalUserCredentialAuthenticateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
