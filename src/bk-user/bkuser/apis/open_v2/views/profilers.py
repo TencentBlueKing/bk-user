@@ -555,7 +555,7 @@ class ProfileLanguageUpdateApi(ExcludePatchAPIViewMixin, LegacyOpenApiCommonMixi
         slz = ProfileLanguageUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
 
-        # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的用户还是 Raise 404
+        # TODO (su) 支持软删除后，这里要添加过滤条件，只支持正常用户的更新，非正常状态用户无法更新，直接 Http404
         tenant_user = TenantUser.objects.filter(id=kwargs["username"]).first()
         if not tenant_user:
             raise Http404(f"user username:{kwargs['username']} not found")
