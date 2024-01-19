@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 from .categories import CategoriesListApi
 from .departments import DepartmentChildrenListApi, DepartmentListApi, DepartmentRetrieveApi, ProfileDepartmentListApi
 from .edges import DepartmentProfileRelationListApi, ProfileLeaderRelationListApi
-from .profilers import DepartmentProfileListApi, ProfileListApi, ProfileRetrieveApi
+from .profilers import DepartmentProfileListApi, ProfileLanguageUpdateApi, ProfileListApi, ProfileRetrieveApi
 
 __all__ = [
     # 目录类
@@ -29,4 +29,5 @@ __all__ = [
     "ProfileListApi",
     "ProfileRetrieveApi",
     "DepartmentProfileListApi",
+    "ProfileLanguageUpdateApi",
 ]

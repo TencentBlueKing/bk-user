@@ -25,7 +25,7 @@ class ProfileFieldsSLZ(serializers.Serializer):
         #  [基本] code, qq
         #  [登录&密码相关] password_valid_days, password_update_time, last_login_time, account_expiration_date,
         #  [时间相关] create_time, update_time
-        # 总返回固定值字段：logo, position, type, role
+        # 总返回固定值字段：logo, type, role
         allowed_fields = {
             # 基础字段
             "id",
@@ -97,3 +97,7 @@ class DepartmentProfileListInputSLZ(serializers.Serializer):
     recursive = serializers.BooleanField(help_text="是否递归", required=False, default=False)
     include_disabled = serializers.BooleanField(help_text="是否包含软删除部门", required=False, default=False)
     no_page = serializers.BooleanField(help_text="全量返回", required=False, default=False)
+
+
+class ProfileLanguageUpdateInputSLZ(serializers.Serializer):
+    language = serializers.ChoiceField(help_text="需设置的语言", choices=["zh-cn", "en"])

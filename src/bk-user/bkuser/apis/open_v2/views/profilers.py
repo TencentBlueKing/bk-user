@@ -24,6 +24,7 @@ from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.profilers import (
     DepartmentProfileListInputSLZ,
+    ProfileLanguageUpdateInputSLZ,
     ProfileListInputSLZ,
     ProfileRetrieveInputSLZ,
 )
@@ -35,6 +36,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.tenant.models import DataSourceDepartment, TenantDepartment, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
+from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.tree import Tree
 
 
@@ -85,6 +87,7 @@ class TenantUserListToUserInfosMixin:
                 "language": tenant_user.language,
                 "wx_userid": tenant_user.wx_userid,
                 "domain": tenant_user.data_source.domain,
+                # TODO: 协同需要调整
                 "category_id": tenant_user.data_source_id,
                 # TODO 1. 支持软删除后需要特殊处理 2. 支持状态时需要特殊处理
                 "status": "",
@@ -280,7 +283,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
     @staticmethod
     def _convert_lookup_field(lookup_field: str) -> str:
         if lookup_field == "id":
-            return f"data_source_user__{lookup_field}"
+            return "data_source_user__id"
         if lookup_field == "username":
             return "id"
         if lookup_field == "display_name":
@@ -323,7 +326,7 @@ class ProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, TenantUserL
         if lookup_field == "telephone":
             lookup_field = "phone"
 
-            # 精确查询
+        # 精确查询
         if is_exact:
             return Q(
                 # 继承
@@ -361,7 +364,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
             # TODO 目前 ID 指的是数据源用户 ID，未来支持协同之后，需要重新考虑
             filters = {"data_source_user__id": lookup_value}
 
-        # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的部门还是 Raise 404
+        # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的用户还是 Raise 404
         tenant_user = TenantUser.objects.select_related("data_source_user").filter(**filters).first()
         if not tenant_user:
             raise Http404(f"user {params['lookup_field']}:{kwargs['lookup_value']} not found")
@@ -408,7 +411,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
 
         # 查询对应的租户部门
         departments = TenantDepartment.objects.filter(
-            tenant=tenant_user.tenant, data_source_department_id__in=department_ids
+            tenant_id=tenant_user.tenant_id, data_source_department_id__in=department_ids
         ).select_related("data_source_department")
 
         # 部门的 full_name
@@ -458,6 +461,7 @@ class ProfileRetrieveApi(LegacyOpenApiCommonMixin, generics.RetrieveAPIView):
             "wx_userid": tenant_user.wx_userid,
             "wx_openid": tenant_user.wx_openid,
             "domain": tenant_user.data_source.domain,
+            # TODO: 协同需要调整
             "category_id": tenant_user.data_source_id,
             # TODO 1. 支持软删除后需要特殊处理 2. 支持状态时需要特殊处理
             "status": "",
@@ -527,12 +531,14 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, T
         dept_ids = [tenant_dept.data_source_department_id]
         if recursive:
             # 根据部门关系，查询部门子孙（包括自身）
-            rel = DataSourceDepartmentRelation.objects.filter(department=tenant_dept.data_source_department).first()
+            rel = DataSourceDepartmentRelation.objects.filter(
+                department_id=tenant_dept.data_source_department_id
+            ).first()
             if rel:
                 dept_ids = rel.get_descendants(include_self=True).values_list("department_id", flat=True)
 
         # 查询部门下的用户 ID 列表
-        user_ids = DataSourceDepartmentUserRelation.objects.filter(department__in=dept_ids).values_list(
+        user_ids = DataSourceDepartmentUserRelation.objects.filter(department_id__in=dept_ids).values_list(
             "user_id", flat=True
         )
 
@@ -540,3 +546,21 @@ class DepartmentProfileListApi(LegacyOpenApiCommonMixin, generics.ListAPIView, T
         return TenantUser.objects.filter(
             tenant_id=tenant_dept.tenant_id, data_source_user_id__in=user_ids
         ).select_related("data_source_user")
+
+
+class ProfileLanguageUpdateApi(ExcludePatchAPIViewMixin, LegacyOpenApiCommonMixin, generics.UpdateAPIView):
+    """更新用户国际化语言"""
+
+    def put(self, request, *args, **kwargs):
+        slz = ProfileLanguageUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+
+        # TODO (su) 支持软删除后，需要根据 include_disabled 参数判断是返回被删除的用户还是 Raise 404
+        tenant_user = TenantUser.objects.filter(id=kwargs["username"]).first()
+        if not tenant_user:
+            raise Http404(f"user username:{kwargs['username']} not found")
+
+        tenant_user.language = slz.validated_data["language"]
+        tenant_user.save(update_fields=["language"])
+
+        return Response()

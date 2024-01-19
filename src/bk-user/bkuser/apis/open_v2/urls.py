@@ -53,4 +53,10 @@ urlpatterns = [
         views.DepartmentProfileListApi.as_view(),
         name="open_v2.list_department_profiles",
     ),
+    # 更新用户语言
+    path(
+        "profiles/<str:username>/languages/",
+        views.ProfileLanguageUpdateApi.as_view(),
+        name="open_v2.update_profile_language",
+    ),
 ]
