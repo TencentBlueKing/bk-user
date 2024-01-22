@@ -14,6 +14,9 @@ from django.utils.translation import gettext_lazy as _
 # 非内置插件，必须以指定前缀开头
 CUSTOM_PLUGIN_ID_PREFIX = "custom_"
 
+# Logo 限制 64KB，过大的 logo 会导致性能下降，1024 * 1024 约 37KB
+MAX_LOGO_SIZE = 64 * 1024
+
 
 class PluginTypeEnum(str, StructuredEnum):
     """认证源插件类型枚举"""

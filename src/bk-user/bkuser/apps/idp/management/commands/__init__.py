@@ -8,27 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from pydantic import BaseModel, Field
-
-from .constants import AllowedHttpMethodEnum
-
-
-class PluginMetadata(BaseModel):
-    """插件基本信息"""
-
-    id: str
-    name: str
-    description: str
-
-
-class DispatchConfigItem(BaseModel):
-    action: str = Field(pattern="^[a-zA-Z0-9][a-zA-Z0-9_-]{1,30}[a-zA-Z0-9]$")
-    http_method: AllowedHttpMethodEnum
-    handler_func_name: str
-
-
-class TestConnectionResult(BaseModel):
-    """连通性测试结果，包含示例数据"""
-
-    ok: bool
-    message: str
