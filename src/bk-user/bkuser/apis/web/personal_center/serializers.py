@@ -23,8 +23,8 @@ from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.biz.validators import validate_logo, validate_user_password
+from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.validators import validate_phone_with_country_code
-from bkuser.utils.desensitize import desensitize_email, desensitize_phone
 
 
 class TenantInfoOutputSLZ(serializers.Serializer):

@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.utils.desensitize import PLACEHOLDER, desensitize_email, desensitize_phone
+from bkuser.common.desensitize import PLACEHOLDER, desensitize_email, desensitize_phone
 
 
 @pytest.mark.parametrize(
@@ -41,7 +41,7 @@ def test_desensitize_email(email, excepted):
         # 台湾
         ("+886912345678", "91****678"),
         # 海外
-        ("+11234567890", "+112****7890****"),
+        ("+11234567890", "+1****3456****"),
         # 特殊场景
         (" 138 1234 5678 ", "138****5678"),
         (" 138-1234-5678 ", "13****78"),

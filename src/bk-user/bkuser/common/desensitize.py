@@ -10,6 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 import re
 
+import phonenumbers
+
 PLACEHOLDER = "--"
 
 # 邮箱
@@ -39,7 +41,7 @@ def desensitize_email(email: str) -> str:
 
     # 显示 username 前 2 位字符以及 @ 及 @ 后所有字符
     username, domain = email.split("@")
-    return f"{username[:2]}****@{domain}"
+    return username[:2] + "****@" + domain
 
 
 def desensitize_phone(phone: str) -> str:
@@ -71,8 +73,9 @@ def desensitize_phone(phone: str) -> str:
 
     # 海外：只展示地区号和中间 4 位，占位符用 4 个 *
     if OVERSEAS_PHONE_PATTERN.match(phone):
-        area_code, remaining_digits = re.sub(OVERSEAS_PHONE_PATTERN, r"\1 \2", phone).split()
-        return area_code + "****" + remaining_digits[-4:] + "****"
+        ret = phonenumbers.parse(phone)
+        phone, country_code = str(ret.national_number), str(ret.country_code)
+        return "+" + country_code + "****" + phone[-8:-4] + "****"
 
     # 固定电话：只展示区号和后 4 位，中间用 4 个 * 代替
     if MAINLAND_LANDLINE_PATTERN.match(phone):
