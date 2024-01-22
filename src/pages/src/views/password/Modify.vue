@@ -94,6 +94,7 @@ export default {
     };
   },
   mounted() {
+    this.$store.dispatch('getUserInfo');
     this.initRsa();
   },
   methods: {
