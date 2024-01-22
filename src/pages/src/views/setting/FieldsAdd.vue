@@ -230,7 +230,7 @@ const emit = defineEmits(['handleCancel', 'submitData', 'updateFields']);
 const validate = useValidate();
 const fieldsRef = ref();
 const enumRef = ref();
-let fieldsInfor = reactive(JSON.parse(JSON.stringify({ ...props.currentEditorData })));
+const fieldsInfor = reactive(JSON.parse(JSON.stringify({ ...props.currentEditorData })));
 const state = reactive({
   defaultSelected: 'string',
   isDeleteOption: true,
@@ -372,16 +372,20 @@ const handleEnumValue = (item: any) => {
   enumDialog.value.activeId = item.id;
 };
 
+const deleteList = ref([]);
+// 修改枚举值
 const changeEnumValue = async () => {
   try {
     btnLoading.value = true;
     enumLoading.value = true;
     const { deleteId, activeId } = enumDialog.value;
-    fieldsInfor.mapping = { [deleteId]: activeId };
+    deleteList.value.push({ [deleteId]: activeId });
+    fieldsInfor.mapping = transformArrayToObject(deleteList.value);
+
     if (fieldsInfor.data_type === 'enum') {
       fieldsInfor.default = fieldsInfor.options.some(item => item.id === activeId) ? activeId : fieldsInfor.default;
     } else {
-      const newDefault = fieldsInfor.default.map(index => fieldsInfor.options[index].id);
+      const newDefault = fieldsInfor.default.map(index => fieldsInfor.options[index]?.id);
       if (!newDefault.includes(activeId)) {
         newDefault.push(activeId);
       }
@@ -389,16 +393,7 @@ const changeEnumValue = async () => {
     }
     fieldsInfor.options = fieldsInfor.options.filter(item => item.id !== deleteId);
 
-    await putCustomFields(fieldsInfor);
     enumDialog.value.isShow = false;
-    emit('updateFields');
-
-    const fieldsRef = await getFields();
-    fieldsRef.data.custom_fields.forEach((fields) => {
-      if (fields.id === fieldsInfor.id) {
-        fieldsInfor = reactive(fields);
-      }
-    });
 
     const findIndexById = id => fieldsInfor.options.findIndex(item => item.id === id);
     fieldsInfor.default = fieldsInfor.data_type === 'enum' ? findIndexById(fieldsInfor.default)
@@ -411,6 +406,26 @@ const changeEnumValue = async () => {
     enumLoading.value = false;
   }
 };
+
+// 将数组转换为对象
+const transformArrayToObject = (array) => {
+  const keyValueMap = {};
+  array.forEach((obj) => {
+    for (const [key, value] of Object.entries(obj)) {
+      keyValueMap[key] = value;
+    }
+  });
+
+  const result = {};
+  array.forEach((obj) => {
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = keyValueMap[value] || value;
+    }
+  });
+
+  return result;
+};
+
 // 删除枚举
 const deleteEg = (item: any, index: number) => {
   if (fieldsInfor.options.length <= 1) {
@@ -502,7 +517,7 @@ const submitInfor = async () => {
       if (fieldsInfor.data_type === 'enum') {
         newFieldData.default = newFieldData.default[0] || null;
       }
-      newFieldData.mapping = {};
+      newFieldData.mapping = fieldsInfor?.mapping || {};
     }
 
     const action = isEdit.value ? putCustomFields : newCustomFields;

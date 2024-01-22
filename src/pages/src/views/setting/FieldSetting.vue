@@ -84,8 +84,7 @@
         :set-type="fieldData.setType"
         :current-editor-data="fieldData.currentEditorData"
         @submitData="submitData"
-        @handleCancel="handleCancel"
-        @updateFields="getFieldsList" />
+        @handleCancel="handleCancel" />
     </bk-sideslider>
   </bk-loading>
 </template>
