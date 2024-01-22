@@ -135,7 +135,7 @@ def register_plugin(plugin_cls: Type[BaseCredentialIdpPlugin] | Type[BaseFederat
         raise RuntimeError(f"plugin {plugin_cls} not provide config_class")
 
     # 非内建插件，id 必须以 custom_ 为前缀
-    if plugin_id not in BuiltinIdpPluginIDs and plugin_id.startswith(CUSTOM_PLUGIN_ID_PREFIX):
+    if plugin_id not in BuiltinIdpPluginIDs and not plugin_id.startswith(CUSTOM_PLUGIN_ID_PREFIX):
         raise RuntimeError(f"custom plugin's id must start with `{CUSTOM_PLUGIN_ID_PREFIX}`")
 
     logger.info("register idp plugin: %s", plugin_id)
