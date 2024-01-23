@@ -60,33 +60,20 @@
                 :property="'leader'"
                 :error-display-type="'normal'">
                 <bk-select
-                  v-if="showselectData || detailsBarInfo.type === 'add'"
                   searchable
                   multiple
                   display-tag
                   v-model="userSettingData.leader"
                   :list="rtxList"
-                  ext-popover-cls="scrollview"
+                  enable-scroll-load
+                  :scroll-loading="showLeaderLoading"
+                  :remote-method="searchRtxByName"
                   @toggle="handleBranchToggle"
                   :scroll-height="188"
-                  @change="changSelect">
+                  @change="changSelect"
+                  @scroll-end="handleScrollToBottom">
                   <bk-option
                     v-for="option in rtxList"
-                    :key="option.id"
-                    :id="option.id"
-                    :name="option.username">
-                  </bk-option>
-                </bk-select>
-                <bk-select
-                  v-else
-                  searchable
-                  multiple
-                  display-tag
-                  v-model="userSettingData.leader"
-                  @toggle="handleBranchToggle"
-                  @change="changSelect">
-                  <bk-option
-                    v-for="option in currentProfile.leader"
                     :key="option.id"
                     :id="option.id"
                     :name="option.username">
@@ -345,28 +332,7 @@ export default {
           this.paginationConfig.current = 1;
           this.copyList = [];
           this.initRtxList(this.searchValue, this.paginationConfig.current);
-          const selectorList = document.querySelector('.scrollview').querySelector('.bk-options');
-          if (selectorList) {
-            selectorList.scrollTop = 0;
-            selectorList.addEventListener('scroll', this.scrollHandler);
-          }
         });
-      }
-    },
-    // 滚动回调
-    scrollHandler() {
-      const scrollContainer = document.querySelector('.scrollview').querySelector('.bk-options');
-      if (scrollContainer.scrollTop === 0) {
-        return;
-      }
-      if (scrollContainer.scrollTop + scrollContainer.offsetHeight >= scrollContainer.scrollHeight) {
-        this.paginationConfig.current = this.paginationConfig.current + 1;
-        if (this.paginationConfig.current
-        <= Math.floor((this.paginationConfig.count / this.paginationConfig.limit) + 1)) {
-          setTimeout(async () => {
-            await this.initRtxList(this.searchValue, this.paginationConfig.current);
-          }, 200);
-        }
       }
     },
     // 编辑成员信息
@@ -410,7 +376,7 @@ export default {
     },
     // 初始化直接上级列表
     // eslint-disable-next-line no-unused-vars
-    async initRtxList(searchValue, curPage) {
+    async initRtxList(searchValue, curPage, scroll) {
       try {
         const params = {
           id: this.currentCategoryId,
@@ -418,23 +384,16 @@ export default {
           page: curPage,
           keyword: searchValue,
         };
-        this.showLeaderLoading = true;
         const res = await this.$store.dispatch('organization/getSupOrganization', params);
         this.paginationConfig.count = res.data.count;
-        this.copyList.push(...res.data.results);
-        if (this.detailsBarInfo.type === 'add') {
-          // 新增 profile
-          this.rtxList = this.copyList;
-        } else {
-          // 编辑 profile
-          this.rtxList = this.copyList.filter((item) => {
-            return item.username !== this.currentProfile.username;
-          });
-        }
+
+        scroll ? this.copyList.push(...res.data.results) : this.copyList = res.data.results;
+
+        this.rtxList = this.detailsBarInfo.type === 'add' ? this.copyList : this.copyList.filter((item) => {
+          return item.username !== this.currentProfile.username;
+        });
       } catch (e) {
         console.warn(e);
-      } finally {
-        this.showLeaderLoading = false;
       }
     },
     tpl(node, ctx, highlightKeyword) {
@@ -568,6 +527,21 @@ export default {
     changSelect(val, oldVal) {
       if (oldVal === null) return;
       window.changeInput = true;
+    },
+    searchRtxByName(keyword) {
+      this.searchValue = keyword;
+      this.paginationConfig.current = 1;
+      this.initRtxList(this.searchValue, this.paginationConfig.current);
+    },
+    handleScrollToBottom() {
+      if (!this.showLeaderLoading && this.paginationConfig.count > (this.paginationConfig.current * 10)) {
+        this.showLeaderLoading = true;
+        setTimeout(() => {
+          this.paginationConfig.current += 1;
+          this.initRtxList(this.searchValue, this.paginationConfig.current, 'scroll');
+          this.showLeaderLoading = false;
+        }, 1000);
+      }
     },
   },
 };
