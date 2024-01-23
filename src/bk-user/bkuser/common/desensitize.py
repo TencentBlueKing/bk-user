@@ -73,7 +73,11 @@ def desensitize_phone(phone: str) -> str:
 
     # 海外：只展示地区号和中间 4 位，占位符用 4 个 *
     if OVERSEAS_PHONE_PATTERN.match(phone):
-        ret = phonenumbers.parse(phone)
+        try:
+            ret = phonenumbers.parse(phone)
+        except phonenumbers.NumberParseException:
+            return phone[:2] + "****" + phone[-2:]
+
         phone, country_code = str(ret.national_number), str(ret.country_code)
         return "+" + country_code + "****" + phone[-8:-4] + "****"
 
