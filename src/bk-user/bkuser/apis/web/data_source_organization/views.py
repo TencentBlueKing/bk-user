@@ -293,6 +293,7 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
         DataSourceUserHandler.update_password(
             data_source_user=user,
             password=raw_password,
+            valid_days=plugin_config.password_rule.valid_time,
             operator=request.user.username,
         )
 

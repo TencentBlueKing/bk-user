@@ -16,12 +16,13 @@ from functools import reduce
 from django.db.models import Q
 from django.utils import timezone
 
-from bkuser.apps.data_source.models import DataSourceUser
+from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationScene
 from bkuser.apps.notification.notifier import TenantUserNotifier
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,80 @@ def send_reset_password_to_user(data_source_user_id: int, new_password: str):
     TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD).send(tenant_user, passwd=new_password)
 
 
-# TODO (su) 密码即将过期/已过期也需要对应的通知任务
+@app.task(base=BaseTask, ignore_result=True)
+def notify_password_expiring_users(data_source_id: int):
+    """对密码即将过期的用户发送通知"""
+    logger.info("[celery] receive task: notify_password_expiring_users, data_source_id is %s", data_source_id)
+
+    data_source = DataSource.objects.get(id=data_source_id)
+    plugin_cfg = data_source.get_plugin_cfg()
+
+    if not plugin_cfg.password_expire.remind_before_expire:
+        logger.warning("data source %s didn't set remind before expire config, skip notify...", data_source_id)
+        return
+
+    identity_infos = LocalDataSourceIdentityInfo.objects.filter(data_source_id=data_source_id)
+    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    # 将要过期提醒，支持配置多值，对应 1/7/15 天等
+    expired_date_filters = []
+    for remain_days in plugin_cfg.password_expire.remind_before_expire:
+        expired_at = midnight + timedelta(days=int(remain_days))
+        expired_date_filters.append(
+            Q(password_expired_at__gt=expired_at, password_expired_at__lte=expired_at + timedelta(days=1))
+        )
+
+    identity_infos = identity_infos.filter(reduce(operator.or_, expired_date_filters))
+    if not identity_infos.exists():
+        logger.info("data source %s not user need password expiring notification, skip notify...", data_source_id)
+        return
+
+    tenant_users = TenantUser.objects.filter(data_source_user_id__in=identity_infos.values_list("user_id", flat=True))
+    logger.info(
+        "data source %s send password expiring notification to %d users...", data_source_id, tenant_users.count()
+    )
+    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRING, data_source_id=data_source_id).batch_send(tenant_users)
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def build_and_run_notify_password_expiring_users_task():
+    """构建并运行即将过期通知任务"""
+    logger.info("[celery] receive period task: build_and_run_notify_password_expiring_users_task")
+
+    for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+        if data_source.plugin_config.get("enable_account_password_login", False):
+            notify_password_expiring_users.delay(data_source.id)
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def notify_password_expired_users(data_source_id: int):
+    """对昨天过期的租户用户发送通知"""
+    logger.info("[celery] receive task: notify_password_expired_users, data_source_id is %s", data_source_id)
+
+    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    identity_infos = LocalDataSourceIdentityInfo.objects.filter(
+        data_source_id=data_source_id,
+        password_expired_at__gt=midnight - timedelta(days=1),
+        password_expired_at__lte=midnight,
+    )
+    if not identity_infos.exists():
+        logger.info("data source %s not user password expired today, skip notify...", data_source_id)
+        return
+
+    tenant_users = TenantUser.objects.filter(data_source_user_id__in=identity_infos.values_list("user_id", flat=True))
+    logger.info(
+        "data source %s send password expired notification to %d users...", data_source_id, tenant_users.count()
+    )
+    TenantUserNotifier(NotificationScene.PASSWORD_EXPIRED, data_source_id=data_source_id).batch_send(tenant_users)
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def build_and_run_notify_password_expired_users_task():
+    """构建并运行过期通知任务"""
+    logger.info("[celery] receive period task: build_and_run_notify_password_expired_users_task")
+
+    for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+        if data_source.plugin_config.get("enable_account_password_login", False):
+            notify_password_expired_users.delay(data_source.id)
 
 
 @app.task(base=BaseTask, ignore_result=True)
@@ -92,7 +166,7 @@ def notify_expired_tenant_users(tenant_id: str):
     #    但是 MySQL 中默认是只有 SYSTEM 时区的，转换会失败（NULL），导致查询不到任何有效值
     #    ref: https://docs.djangoproject.com/en/dev/ref/models/querysets/#date
     tenant_users = TenantUser.objects.filter(
-        tenant_id=tenant_id, account_expired_at__gt=midnight - timedelta(1), account_expired_at__lte=midnight
+        tenant_id=tenant_id, account_expired_at__gt=midnight - timedelta(days=1), account_expired_at__lte=midnight
     )
     if not tenant_users.exists():
         logger.info("tenant %s not tenant user expired today, skip notify...", tenant_id)

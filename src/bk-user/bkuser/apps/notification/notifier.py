@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from bkuser import settings
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
 from bkuser.apps.notification.data_models import NotificationTemplate
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
@@ -164,7 +164,12 @@ class TmplContextGenerator:
 
     def _gen_passwd_expiring_ctx(self) -> Dict[str, str]:
         """密码即将过期"""
-        return self._gen_base_ctx()
+        identify_info = LocalDataSourceIdentityInfo.objects.get(user_id=self.user.data_source_user_id)
+        valid_time = identify_info.password_expired_at - timezone.now()
+        return {
+            "valid_days": str(valid_time.days + 1),
+            **self._gen_base_ctx(),
+        }
 
     def _gen_passwd_expired_ctx(self) -> Dict[str, str]:
         """密码过期"""
@@ -181,7 +186,7 @@ class TmplContextGenerator:
         """租户用户即将过期"""
         valid_time = self.user.account_expired_at - timezone.now()
         return {
-            "valid_days": str(valid_time.days),
+            "valid_days": str(valid_time.days + 1),
             **self._gen_base_ctx(),
         }
 
