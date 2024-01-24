@@ -212,7 +212,7 @@ import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { computed, defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import useValidate from '@/hooks/use-validate';
-import { getFields, newCustomFields, putCustomFields } from '@/http/settingFiles';
+import { newCustomFields, putCustomFields } from '@/http/settingFiles';
 import { t } from '@/language/index';
 
 const props = defineProps({

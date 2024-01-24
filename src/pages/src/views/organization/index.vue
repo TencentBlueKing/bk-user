@@ -21,8 +21,8 @@
           >
             <template #nodeAction="item">
               <span v-if="!item.__attr__.isRoot" style="color: #979ba5;">
-                <DownShape class="h-[34px] mt-[4px]" v-if="item.has_children && item.__attr__.isOpen" />
-                <RightShape class="h-[34px] mt-[4px]" v-if="item.has_children && !item.__attr__.isOpen" />
+                <DownShape class="h-[34px]" v-if="item.has_children && item.__attr__.isOpen" />
+                <RightShape class="h-[34px]" v-if="item.has_children && !item.__attr__.isOpen" />
               </span>
             </template>
             <template #nodeType="item">

@@ -40,7 +40,8 @@
           <QueryParams
             :current-id="currentId"
             :params-list="serverConfigData.server_config.user_api_query_params"
-            @saveParams="(list) => saveParams(list, 'user')" />
+            @saveParams="(list) => saveParams(list, 'user')"
+            @updateStatus="handleChange" />
         </div>
         <div class="api-url-style">
           <bk-form-item
@@ -57,7 +58,8 @@
           <QueryParams
             :current-id="currentId"
             :params-list="serverConfigData.server_config.department_api_query_params"
-            @saveParams="(list) => saveParams(list, 'department')" />
+            @saveParams="(list) => saveParams(list, 'department')"
+            @updateStatus="handleChange" />
         </div>
         <div class="item-flex3">
           <bk-form-item :label="$t('分页请求每页数量')" property="server_config.page_size" required>
@@ -480,6 +482,13 @@ const handleTestConnection = async () => {
     await formRef1.value.validate();
     connectionLoading.value = true;
     connectionStatus.value = null;
+
+    const clearEmptyParams = params => (params.every(item => !item.key && !item.value) ? [] : params);
+    const { user_api_query_params: user, department_api_query_params: department } = serverConfigData.server_config;
+
+    serverConfigData.server_config.user_api_query_params = clearEmptyParams(user);
+    serverConfigData.server_config.department_api_query_params = clearEmptyParams(department);
+
     const params = {
       plugin_id: serverConfigData.plugin_id,
       plugin_config: {

@@ -10,8 +10,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 
-import '@blueking/bkui-form/dist/bkui-form.css';
-import createForm from '@/common/bkui-form';
+import createForm from '@blueking/bkui-form';
 
 const BkSchemaForm = createForm();
 

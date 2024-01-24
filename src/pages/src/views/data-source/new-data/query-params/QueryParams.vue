@@ -38,7 +38,7 @@
               <bk-input
                 :placeholder="$t('请输入Key')"
                 v-model="item.key"
-                @change="handleChange" />
+                @input="$emit('updateStatus')" />
             </bk-form-item>
             <bk-form-item
               class="w-[200px] mr-[10px]"
@@ -48,7 +48,7 @@
               <bk-input
                 :placeholder="$t('请输入Value')"
                 v-model="item.value"
-                @change="handleChange" />
+                @input="$emit('updateStatus')" />
             </bk-form-item>
             <i class="user-icon icon-plus-fill" @click="addParams" />
             <bk-button
@@ -79,7 +79,7 @@ import useValidate from '@/hooks/use-validate';
 
 const validate = useValidate();
 
-const emit = defineEmits(['saveParams']);
+const emit = defineEmits(['saveParams', 'updateStatus']);
 const props = defineProps({
   paramsList: {
     type: Array,
@@ -105,6 +105,9 @@ watch(() => props.paramsList, (value) => {
   if (!status) {
     count.value = value.length;
   }
+}, {
+  deep: true,
+  immediate: true,
 });
 
 onMounted(() => {
@@ -116,11 +119,11 @@ onMounted(() => {
 });
 
 const handleShow = () => {
+  if (!props.paramsList.length) {
+    dataList.value.push({ key: '', value: '' });
+    emit('saveParams', dataList.value);
+  }
   isShow.value = true;
-};
-
-const handleChange = () => {
-  window.changeInput = true;
 };
 
 const Cancel = () => {
