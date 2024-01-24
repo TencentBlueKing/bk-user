@@ -16,6 +16,7 @@ from functools import reduce
 from django.db.models import Q
 from django.utils import timezone
 
+from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationScene
 from bkuser.apps.notification.notifier import TenantUserNotifier
@@ -76,7 +77,10 @@ def build_and_run_notify_password_expiring_users_task():
     """构建并运行即将过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expiring_users_task")
 
-    for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+    # 对于停用 / 软删除的数据源，不发送密码即将过期提醒
+    for data_source in DataSource.objects.filter(
+        plugin_id=DataSourcePluginEnum.LOCAL, status=DataSourceStatus.ENABLED
+    ):
         if data_source.plugin_config.get("enable_account_password_login", False):
             notify_password_expiring_users.delay(data_source.id)
 
@@ -108,7 +112,10 @@ def build_and_run_notify_password_expired_users_task():
     """构建并运行过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expired_users_task")
 
-    for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+    # 对于停用 / 软删除的数据源，不发送密码过期提醒
+    for data_source in DataSource.objects.filter(
+        plugin_id=DataSourcePluginEnum.LOCAL, status=DataSourceStatus.ENABLED
+    ):
         if data_source.plugin_config.get("enable_account_password_login", False):
             notify_password_expired_users.delay(data_source.id)
 
