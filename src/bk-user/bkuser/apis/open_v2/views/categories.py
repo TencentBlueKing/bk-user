@@ -20,7 +20,7 @@ from bkuser.apps.data_source.models import DataSource
 
 class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     pagination_class = LegacyOpenApiPagination
-    queryset = DataSource.objects.all()
+    queryset = DataSource.objects.filter(status=DataSourceStatus.ENABLED)
 
     def get(self, request, *args, **kwargs):
         slz = CategoriesListInputSLZ(data=request.query_params)

@@ -13,6 +13,7 @@ from typing import Any, Dict
 
 from django.db import transaction
 
+from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
@@ -24,6 +25,7 @@ from bkuser.apps.sync.syncers import (
     TenantUserSyncer,
 )
 from bkuser.apps.sync.validators import DataSourceUserExtrasUniqueValidator
+from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant
 from bkuser.plugins.base import get_plugin_cls
 
@@ -43,6 +45,10 @@ class DataSourceSyncTaskRunner:
         self.plugin_init_extra_kwargs = plugin_init_extra_kwargs
 
     def run(self):
+        if self.data_source.status != DataSourceStatus.ENABLED:
+            logger.warning("data source %s isn't enabled, skip sync...", self.data_source.id)
+            return
+
         with DataSourceSyncTaskContext(self.task) as ctx, transaction.atomic():
             self._initial_plugin(ctx, self.plugin_init_extra_kwargs)
             self._sync_departments(ctx)
@@ -95,6 +101,14 @@ class TenantSyncTaskRunner:
         self.tenant = Tenant.objects.get(id=task.tenant_id)
 
     def run(self):
+        if self.data_source.status != DataSourceStatus.ENABLED:
+            logger.warning("data source %s isn't enabled, skip sync...", self.data_source.id)
+            return
+
+        if self.tenant.status != TenantStatus.ENABLED:
+            logger.warning("tenant %s isn't enabled, skip sync...", self.tenant.id)
+            return
+
         with TenantSyncTaskContext(self.task) as ctx, transaction.atomic():
             self._sync_departments(ctx)
             self._sync_users(ctx)

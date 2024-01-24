@@ -44,7 +44,7 @@ urlpatterns = [
         name="data_source.sync_record.retrieve",
     ),
     # 数据源更新/获取
-    path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),
+    path("<int:id>/", views.DataSourceRetrieveUpdateDestroyApi.as_view(), name="data_source.retrieve_update_destroy"),
     # 数据源启/停
     path(
         "<int:id>/operations/switch_status/",

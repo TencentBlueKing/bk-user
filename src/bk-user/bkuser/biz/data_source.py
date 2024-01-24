@@ -8,8 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import List
 
 from pydantic import BaseModel
 
@@ -26,23 +25,6 @@ class DataSourceSimpleInfo(BaseModel):
 
 
 class DataSourceHandler:
-    @staticmethod
-    def get_data_source_map_by_owner(
-        owner_tenant_ids: Optional[List[str]] = None,
-    ) -> Dict[str, List[DataSourceSimpleInfo]]:
-        """
-        查询数据源
-        """
-        data_sources = DataSource.objects.all()
-        if owner_tenant_ids is not None:
-            data_sources = data_sources.filter(owner_tenant_id__in=owner_tenant_ids)
-
-        data = defaultdict(list)
-        for i in data_sources:
-            data[i.owner_tenant_id].append(DataSourceSimpleInfo(id=i.id, name=i.name))
-
-        return data
-
     @staticmethod
     def create_local_data_source_with_merge_config(
         data_source_name: str,
@@ -63,6 +45,6 @@ class DataSourceHandler:
 
     @staticmethod
     def get_tenant_available_data_sources(tenant_id: str) -> List[DataSource]:
-        """获取租户有查看的数据源，包括拥有的以及协同的，但是要排除已经禁用的情况"""
+        """获取租户有查看的数据源，包括拥有的以及协同的"""
         # TODO (su) 考虑租户协同的情况
-        return DataSource.objects.filter(owner_tenant_id=tenant_id).exclude(status=DataSourceStatus.DISABLED)
+        return DataSource.objects.filter(owner_tenant_id=tenant_id).exclude(status=DataSourceStatus.DELETED)

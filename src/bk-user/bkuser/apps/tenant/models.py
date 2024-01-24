@@ -14,7 +14,13 @@ from django.conf import settings
 from django.db import models
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantFeatureFlag, UserFieldDataType
+from bkuser.apps.tenant.constants import (
+    TIME_ZONE_CHOICES,
+    TenantDepartmentStatus,
+    TenantFeatureFlag,
+    TenantUserStatus,
+    UserFieldDataType,
+)
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.common.time import datetime_to_display
@@ -49,6 +55,9 @@ class TenantUser(TimestampedModel):
     # Note: 值：对于新用户则为uuid，对于迁移则兼容旧版本 username@domain或username
     # 兼容旧版本：对外 id/username/bk_username 这3个字段，值是一样的
     id = models.CharField("蓝鲸用户对外唯一标识", primary_key=True, max_length=128)
+    status = models.CharField(
+        "状态", max_length=32, choices=TenantUserStatus.get_choices(), default=TenantUserStatus.ENABLED
+    )
 
     # 蓝鲸特有
     language = models.CharField("语言", choices=BkLanguageEnum.get_choices(), default="zh-cn", max_length=32)
@@ -103,6 +112,10 @@ class TenantDepartment(TimestampedModel):
 
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     data_source_department = models.ForeignKey(DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False)
+
+    status = models.CharField(
+        "状态", max_length=32, choices=TenantDepartmentStatus.get_choices(), default=TenantDepartmentStatus.ENABLED
+    )
 
     # 冗余字段
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)

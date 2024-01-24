@@ -104,10 +104,6 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
     serializer_class = TenantRetrieveOutputSLZ
     lookup_url_kwarg = "id"
 
-    def get_serializer_context(self):
-        current_tenant_id = self.get_current_tenant_id()
-        return {"tenant_manager_map": {current_tenant_id: TenantHandler.retrieve_tenant_managers(current_tenant_id)}}
-
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="单个租户详情",
@@ -194,10 +190,12 @@ class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIVi
     def get(self, request, *args, **kwargs):
         tenant_dept = self.get_object()
 
-        # TODO (su) 梳理数据源状态流转后重构
         data_source_id = tenant_dept.data_source_department.data_source_id
-        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
-            raise error_codes.DATA_SOURCE_DISABLED
+        # 即使数据源被停用，也是可以查看组织架构信息的
+        if not DataSource.objects.filter(
+            id=data_source_id, status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED]
+        ).exists():
+            raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         tenant_dept_children_infos = TenantDepartmentHandler.get_tenant_dept_children_infos(tenant_dept)
         return Response(TenantDepartmentChildrenListOutputSLZ(tenant_dept_children_infos, many=True).data)
@@ -225,10 +223,12 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         tenant_dept = self.get_object()
 
-        # TODO (su) 梳理数据源状态流转后重构
         data_source_id = tenant_dept.data_source_department.data_source_id
-        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
-            raise error_codes.DATA_SOURCE_DISABLED
+        # 即使数据源被停用，也是可以查看组织架构信息的
+        if not DataSource.objects.filter(
+            id=data_source_id, status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED]
+        ).exists():
+            raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         # 需要通过数据源部门 - 用户关系反查租户部门用户信息，且需要支持递归查询子孙部门用户
         data_source_dept_ids = [tenant_dept.data_source_department_id]

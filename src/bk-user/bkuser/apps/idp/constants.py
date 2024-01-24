@@ -24,6 +24,7 @@ class IdpStatus(str, StructuredEnum):
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("未启用"))
+    DELETED = EnumField("deleted", label=_("软删除"))
 
 
 class AllowBindScopeObjectType(str, StructuredEnum):

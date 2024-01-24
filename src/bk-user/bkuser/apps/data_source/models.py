@@ -13,7 +13,12 @@ from django.conf import settings
 from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceStatus, TenantUserIdRuleEnum
+from bkuser.apps.data_source.constants import (
+    DataSourceDepartmentStatus,
+    DataSourceStatus,
+    DataSourceUserStatus,
+    TenantUserIdRuleEnum,
+)
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -132,6 +137,12 @@ class DataSource(AuditedModel):
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
     code = models.CharField("用户标识", max_length=128, default=generate_uuid)
+    status = models.CharField(
+        "用户状态",
+        max_length=32,
+        choices=DataSourceUserStatus.get_choices(),
+        default=DataSourceUserStatus.ENABLED,
+    )
 
     # ----------------------- 内置字段相关 -----------------------
     username = models.CharField("用户名", max_length=128)
@@ -197,6 +208,12 @@ class DataSourceDepartment(TimestampedModel):
     """
 
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
+    status = models.CharField(
+        "部门状态",
+        max_length=32,
+        choices=DataSourceDepartmentStatus.get_choices(),
+        default=DataSourceDepartmentStatus.ENABLED,
+    )
 
     code = models.CharField("部门标识", max_length=128, default=generate_uuid)
     name = models.CharField("部门名称", max_length=255)

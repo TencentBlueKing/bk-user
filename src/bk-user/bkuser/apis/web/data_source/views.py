@@ -106,6 +106,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
     def get_serializer_context(self):
         tenant_user_ids = DataSource.objects.filter(
             owner_tenant_id=self.get_current_tenant_id(),
+            status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
         ).values_list("updater", flat=True)
         return {
             "data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name")),
@@ -117,7 +118,10 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
+        queryset = DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(),
+            status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
+        )
         if kw := data.get("keyword"):
             queryset = queryset.filter(name__icontains=kw)
 
@@ -166,8 +170,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         )
 
 
-class DataSourceRetrieveUpdateApi(
-    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
+class DataSourceRetrieveUpdateDestroyApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
 ):
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -216,6 +220,21 @@ class DataSourceRetrieveUpdateApi(
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
 
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="软删除数据源",
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        data_source = self.get_object()
+        if data_source.status != DataSourceStatus.DISABLED:
+            raise error_codes.DATA_SOURCE_DELETE_FAILED.f(_("需要先停用数据源才能删除"))
+
+        data_source.status = DataSourceStatus.DELETED
+        data_source.updater = request.user.username
+        data_source.save(update_fields=["status", "updater", "updated_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -427,7 +446,7 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             # Q: 为什么不包装一层 DataSourceSyncError 而是捕获 Exception？
             # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
-            raise error_codes.CREATE_DATA_SOURCE_SYNC_TASK_FAILED.f(str(e))
+            raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(

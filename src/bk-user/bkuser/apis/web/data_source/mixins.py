@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
+from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 
 
@@ -18,4 +19,7 @@ class CurrentUserTenantDataSourceMixin(CurrentUserTenantMixin):
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        return DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
+        return DataSource.objects.filter(
+            owner_tenant_id=self.get_current_tenant_id(),
+            status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
+        )

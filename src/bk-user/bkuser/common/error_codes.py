@@ -77,13 +77,14 @@ class ErrorCodes:
 
     # 数据源
     DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("当前数据源不支持该操作"))
-    DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
-    CANNOT_CREATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持新增用户"))
-    CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))
-    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
+    DATA_SOURCE_NOT_ENABLED = ErrorCode(_("数据源不存在或未启用"))
     DATA_SOURCE_IMPORT_FAILED = ErrorCode(_("数据源导入失败"))
-    DATA_SOURCE_DISABLED = ErrorCode(_("数据源已禁用，当前操作不受支持"))
-    CREATE_DATA_SOURCE_SYNC_TASK_FAILED = ErrorCode(_("创建数据源同步任务失败"))
+    DATA_SOURCE_NOT_EXISTS = ErrorCode(_("数据源不存在或已删除"))
+    DATA_SOURCE_DELETE_FAILED = ErrorCode(_("数据源删除失败"))
+    DATA_SOURCE_USER_CREATE_FAILED = ErrorCode(_("该数据源不支持新增用户"))
+    DATA_SOURCE_USER_UPDATE_FAILED = ErrorCode(_("该数据源不支持更新用户"))
+    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
+    DATA_SOURCE_SYNC_TASK_CREATE_FAILED = ErrorCode(_("创建数据源同步任务失败"))
 
     # 认证源
     IDP_PLUGIN_NOT_LOAD = ErrorCode(_("认证源插件未加载"))

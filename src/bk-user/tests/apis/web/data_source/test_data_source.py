@@ -337,21 +337,19 @@ class TestDataSourceListApi:
 
 class TestDataSourceUpdateApi:
     def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_cfg):
+        url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
         new_data_source_name = generate_random_string()
         local_ds_plugin_cfg["enable_account_password_login"] = False
-        resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"name": new_data_source_name, "plugin_config": local_ds_plugin_cfg},
-        )
+        resp = api_client.put(url, data={"name": new_data_source_name, "plugin_config": local_ds_plugin_cfg})
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        resp = api_client.get(url)
         assert resp.data["name"] == new_data_source_name
         assert resp.data["plugin_config"]["enable_account_password_login"] is False
 
     def test_update_without_change_name(self, api_client, data_source, local_ds_plugin_cfg):
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             data={"name": data_source.name, "plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -359,7 +357,7 @@ class TestDataSourceUpdateApi:
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
         local_ds_plugin_cfg.pop("enable_account_password_login")
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             data={"name": generate_random_string(), "plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -369,7 +367,7 @@ class TestDataSourceUpdateApi:
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping, sync_config
     ):
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": general_ds_plugin_cfg,
@@ -384,7 +382,7 @@ class TestDataSourceUpdateApi:
     ):
         """非本地数据源，需要字段映射配置"""
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": general_ds_plugin_cfg,
@@ -399,7 +397,7 @@ class TestDataSourceUpdateApi:
     ):
         """非本地数据源，需要同步配置"""
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": general_ds_plugin_cfg,
@@ -419,7 +417,7 @@ class TestDataSourceUpdateApi:
             data_source=bare_local_data_source, key="password_initial.fixed_password", value="Pa-@-114514-2887"
         )
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_local_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_local_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": local_ds_plugin_cfg,
@@ -436,7 +434,7 @@ class TestDataSourceUpdateApi:
         local_ds_plugin_cfg["password_initial"]["generate_method"] = PasswordGenerateMethod.FIXED
         local_ds_plugin_cfg["password_initial"]["fixed_password"] = "*******"
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_local_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_local_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": local_ds_plugin_cfg,
@@ -449,7 +447,7 @@ class TestDataSourceUpdateApi:
 
 class TestDataSourceRetrieveApi:
     def test_retrieve(self, api_client, data_source):
-        resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        resp = api_client.get(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         assert resp.data["id"] == data_source.id
         assert resp.data["name"] == data_source.name
         assert resp.data["owner_tenant_id"] == data_source.owner_tenant_id
@@ -461,8 +459,31 @@ class TestDataSourceRetrieveApi:
         assert resp.data["field_mapping"] == data_source.field_mapping
 
     def test_retrieve_other_tenant_data_source(self, api_client, random_tenant, data_source):
-        resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        resp = api_client.get(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         # 无法查看到其他租户的数据源信息
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+class TestDataSourceDestroyApi:
+    def test_destroy(self, api_client, data_source):
+        data_source.status = DataSourceStatus.DISABLED
+        data_source.save()
+
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        data_source.refresh_from_db()
+        assert data_source.status == DataSourceStatus.DELETED
+
+    def test_destroy_enabled_data_source(self, api_client, data_source):
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_destroy_deleted_data_source(self, api_client, data_source):
+        data_source.status = DataSourceStatus.DELETED
+        data_source.save(update_fields=["status"])
+
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 

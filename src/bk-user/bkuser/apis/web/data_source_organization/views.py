@@ -32,6 +32,7 @@ from bkuser.apis.web.data_source_organization.serializers import (
     UserUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
+from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -63,12 +64,14 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         data = slz.validated_data
         data_source_id = self.kwargs["id"]
 
-        # 校验数据源是否存在
+        # 数据源处于启用 / 停用状态下都可以查询用户，但是软删除状态下不行
         data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=data_source_id
+            id=data_source_id,
+            owner_tenant_id=self.get_current_tenant_id(),
+            status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST
+            raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         queryset = DataSourceUser.objects.filter(data_source=data_source)
         if username := data.get("username"):
@@ -102,10 +105,14 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         responses={status.HTTP_201_CREATED: ""},
     )
     def post(self, request, *args, **kwargs):
-        # 校验数据源是否存在
-        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
+        # 只有已经启用的数据源才可以新增用户
+        data_source = DataSource.objects.filter(id=self.kwargs["id"], status=DataSourceStatus.ENABLED).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST
+            raise error_codes.DATA_SOURCE_NOT_ENABLED
+
+        # 不允许对非本地数据源进行用户新增操作
+        if not data_source.is_local:
+            raise error_codes.DATA_SOURCE_USER_CREATE_FAILED
 
         slz = UserCreateInputSLZ(
             data=request.data,
@@ -117,9 +124,6 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 不允许对非本地数据源进行用户新增操作
-        if not data_source.is_local:
-            raise error_codes.CANNOT_CREATE_DATA_SOURCE_USER
         # 校验是否已存在该用户
         if DataSourceUser.objects.filter(username=data["username"], data_source=data_source).exists():
             raise error_codes.DATA_SOURCE_USER_ALREADY_EXISTED
@@ -151,10 +155,10 @@ class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         # 校验数据源是否存在
         data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"], status=DataSourceStatus.ENABLED
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST
+            raise error_codes.DATA_SOURCE_NOT_ENABLED
 
         queryset = DataSourceUser.objects.filter(data_source=data_source)
         if keyword := data.get("keyword"):
@@ -183,10 +187,10 @@ class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView)
 
         # 校验数据源是否存在
         data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"], status=DataSourceStatus.ENABLED
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST
+            raise error_codes.DATA_SOURCE_NOT_ENABLED
 
         queryset = DataSourceDepartment.objects.filter(data_source=data_source)
         if name := data.get("name"):
@@ -229,7 +233,7 @@ class DataSourceUserRetrieveUpdateApi(
     def put(self, request, *args, **kwargs):
         user = self.get_object()
         if not user.data_source.is_local:
-            raise error_codes.CANNOT_UPDATE_DATA_SOURCE_USER
+            raise error_codes.DATA_SOURCE_USER_UPDATE_FAILED
 
         slz = UserUpdateInputSLZ(
             data=request.data,

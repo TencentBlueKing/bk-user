@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from collections import defaultdict
 
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
@@ -26,10 +27,11 @@ from bkuser.apis.web.tenant.serializers import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
+from bkuser.apps.data_source.constants import DataSourceStatus
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import Tenant, TenantUser
-from bkuser.biz.data_source import DataSourceHandler
+from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.biz.tenant import (
     TenantEditableInfo,
     TenantFeatureFlag,
@@ -49,9 +51,24 @@ class TenantListCreateApi(generics.ListCreateAPIView):
     serializer_class = TenantSearchOutputSLZ
 
     def get_serializer_context(self):
+        # {租户：租户管理员信息}
+        tenant_manager_map = defaultdict(list)
+        for m in TenantManager.objects.select_related("tenant_user__data_source_user"):
+            tenant_manager_map[m.tenant_id].append(
+                {
+                    "id": m.tenant_user.id,
+                    "username": m.tenant_user.data_source_user.username,
+                    "full_name": m.tenant_user.data_source_user.full_name,
+                }
+            )
+        # {租户：数据源信息}
+        tenant_data_source_map = defaultdict(list)
+        for ds in DataSource.objects.exclude(status=DataSourceStatus.DELETED):
+            tenant_data_source_map[ds.owner_tenant_id].append({"id": ds.id, "name": ds.name})
+
         return {
-            "tenant_manager_map": TenantHandler.get_tenant_manager_map(),
-            "data_source_map": DataSourceHandler.get_data_source_map_by_owner(),
+            "tenant_manager_map": tenant_manager_map,
+            "tenant_data_source_map": tenant_data_source_map,
         }
 
     def get_queryset(self):
@@ -118,12 +135,6 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
     serializer_class = TenantRetrieveOutputSLZ
-
-    def get_serializer_context(self):
-        tenant_id = self.kwargs[self.lookup_url_kwarg]
-        return {
-            "tenant_manager_map": TenantHandler.get_tenant_manager_map(tenant_ids=[tenant_id]),
-        }
 
     @swagger_auto_schema(
         tags=["tenant"],
