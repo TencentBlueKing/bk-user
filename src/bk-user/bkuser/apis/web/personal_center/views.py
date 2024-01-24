@@ -273,6 +273,7 @@ class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIVi
         DataSourceUserHandler.update_password(
             data_source_user=data_source_user,
             password=new_password,
+            valid_days=plugin_config.password_rule.valid_time,
             operator=request.user.username,
         )
 

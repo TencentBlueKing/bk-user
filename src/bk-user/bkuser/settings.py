@@ -244,11 +244,19 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERYBEAT_SCHEDULE = {
     "periodic_notify_expiring_tenant_users": {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_expiring_tenant_users_task",
-        "schedule": crontab(minute="0", hour="10"),  # 每天10时执行
+        "schedule": crontab(minute="0", hour="10"),
     },
     "periodic_notify_expired_tenant_users": {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_expired_tenant_users_task",
-        "schedule": crontab(minute="0", hour="10"),  # 每天10时执行
+        "schedule": crontab(minute="0", hour="10"),
+    },
+    "periodic_notify_password_expiring_users": {
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expiring_users_task",
+        "schedule": crontab(minute="30", hour="10"),
+    },
+    "periodic_notify_password_expired_users": {
+        "task": "bkuser.apps.notification.tasks.build_and_run_notify_password_expired_users_task",
+        "schedule": crontab(minute="30", hour="10"),
     },
 }
 # Celery 消息队列配置

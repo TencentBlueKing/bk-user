@@ -28,6 +28,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
+from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.hashers import check_password, make_password
 
 
@@ -190,6 +191,7 @@ class DataSourceUserHandler:
     def update_password(
         data_source_user: DataSourceUser,
         password: str,
+        valid_days: int,
         operator: str,
     ):
         """
@@ -201,7 +203,12 @@ class DataSourceUserHandler:
         with transaction.atomic():
             identify_info.password = make_password(password)
             identify_info.password_updated_at = timezone.now()
-            identify_info.save(update_fields=["password", "password_updated_at", "updated_at"])
+            if valid_days < 0:
+                identify_info.password_expired_at = PERMANENT_TIME
+            else:
+                identify_info.password_expired_at = timezone.now() + datetime.timedelta(days=valid_days)
+
+            identify_info.save(update_fields=["password", "password_updated_at", "password_expired_at", "updated_at"])
 
             DataSourceUserDeprecatedPasswordRecord.objects.create(
                 user=data_source_user, password=deprecated_password, operator=operator
