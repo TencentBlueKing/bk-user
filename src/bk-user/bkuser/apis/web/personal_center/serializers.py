@@ -23,6 +23,7 @@ from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.biz.validators import validate_logo, validate_user_password
+from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -53,18 +54,18 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
 
     # 邮箱信息
     is_inherited_email = serializers.BooleanField(help_text="是否继承数据源邮箱")
-    email = serializers.EmailField(help_text="用户邮箱", source="data_source_user.email")
-    custom_email = serializers.EmailField(help_text="自定义用户邮箱")
+    email = serializers.SerializerMethodField(help_text="用户邮箱")
+    custom_email = serializers.SerializerMethodField(help_text="自定义用户邮箱")
 
     # 手机号信息
     is_inherited_phone = serializers.BooleanField(help_text="是否继承数据源手机号")
-    phone = serializers.CharField(help_text="用户手机号", source="data_source_user.phone")
+    phone = serializers.SerializerMethodField(help_text="用户手机号")
     phone_country_code = serializers.CharField(
         help_text="手机号国际区号",
         source="data_source_user.phone_country_code",
         default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
-    custom_phone = serializers.CharField(help_text="自定义用户手机号")
+    custom_phone = serializers.SerializerMethodField(help_text="自定义用户手机号")
     custom_phone_country_code = serializers.CharField(help_text="自定义用户手机国际区号")
 
     account_expired_at = serializers.CharField(help_text="账号过期时间", source="account_expired_at_display")
@@ -92,6 +93,22 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         return {
             k: v for k, v in obj.data_source_user.extras.items() if k in self.context["visible_custom_field_names"]
         }
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_email(self, obj: TenantUser) -> str:
+        return desensitize_email(obj.data_source_user.email)
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_custom_email(self, obj: TenantUser) -> str:
+        return desensitize_email(obj.custom_email)
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_phone(self, obj: TenantUser) -> str:
+        return desensitize_phone(obj.data_source_user.phone)
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_custom_phone(self, obj: TenantUser) -> str:
+        return desensitize_phone(obj.custom_phone)
 
 
 class TenantUserPhoneUpdateInputSLZ(serializers.Serializer):

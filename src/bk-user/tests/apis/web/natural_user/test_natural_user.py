@@ -15,6 +15,7 @@ import pytest
 from bkuser.apps.data_source.models import DataSourceDepartmentUserRelation, DataSourceUserLeaderRelation
 from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -126,17 +127,17 @@ class TestNaturalUserTenantUserRetrieveApi:
 
         assert general_property["username"] == data_source_user.username
         assert general_property["full_name"] == data_source_user.full_name
-        assert general_property["email"] == data_source_user.email
-        assert general_property["phone"] == data_source_user.phone
+        assert general_property["email"] == desensitize_email(data_source_user.email)
+        assert general_property["phone"] == desensitize_phone(data_source_user.phone)
         assert general_property["phone_country_code"] == data_source_user.phone_country_code
         assert general_property["extras"] == data_source_user.extras
 
         assert general_property["is_inherited_phone"] == tenant_user.is_inherited_phone
-        assert general_property["custom_phone"] == tenant_user.custom_phone
+        assert general_property["custom_phone"] == desensitize_phone(tenant_user.custom_phone)
         assert general_property["custom_phone_country_code"] == tenant_user.custom_phone_country_code
 
         assert general_property["is_inherited_email"] == tenant_user.is_inherited_email
-        assert general_property["custom_email"] == tenant_user.custom_email
+        assert general_property["custom_email"] == desensitize_email(tenant_user.custom_email)
 
     def test_retrieve_tenant_user_with_natural_user(
         self,
