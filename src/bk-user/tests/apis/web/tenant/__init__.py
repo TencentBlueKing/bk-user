@@ -8,13 +8,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.urls import path
-
-from . import views
-
-urlpatterns = [
-    path("", views.TenantListCreateApi.as_view(), name="tenant.list_create"),
-    path("<str:id>/", views.TenantRetrieveUpdateDestroyApi.as_view(), name="tenant.retrieve_update_destroy"),
-    path("<str:id>/operations/switch_status/", views.TenantSwitchStatusApi.as_view(), name="tenant.switch_status"),
-    path("<str:tenant_id>/users/", views.TenantUsersListApi.as_view(), name="tenant_users.list"),
-]

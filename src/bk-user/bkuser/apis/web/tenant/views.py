@@ -24,6 +24,7 @@ from bkuser.apis.web.tenant.serializers import (
     TenantRetrieveOutputSLZ,
     TenantSearchInputSLZ,
     TenantSearchOutputSLZ,
+    TenantSwitchStatusOutputSLZ,
     TenantUpdateInputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
@@ -129,11 +130,11 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         # 创建租户和租户管理员
         tenant_id = TenantHandler.create_with_managers(tenant_info, managers, config)
 
-        return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data)
+        return Response(TenantCreateOutputSLZ(instance={"id": tenant_id}).data, status=status.HTTP_201_CREATED)
 
 
-class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView):
-    queryset = Tenant.objects.all()
+class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
     serializer_class = TenantRetrieveOutputSLZ
@@ -169,6 +170,47 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
 
         TenantHandler.update_with_managers(tenant.id, tenant_info, data["manager_ids"])
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        tags=["tenant"],
+        operation_description="软删除租户",
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        tenant = self.get_object()
+        if tenant.status != TenantStatus.DISABLED:
+            raise error_codes.TENANT_DELETE_FAILED.f(_("需要先停用租户才能删除"))
+
+        tenant.status = TenantStatus.DELETED
+        tenant.updater = request.user.username
+        tenant.save(update_fields=["status", "updater", "updated_at"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantSwitchStatusApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    """切换租户状态（启/停）"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
+    serializer_class = TenantSwitchStatusOutputSLZ
+    queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
+    lookup_url_kwarg = "id"
+
+    @swagger_auto_schema(
+        tags=["tenant"],
+        operation_description="变更租户状态",
+        responses={status.HTTP_200_OK: TenantSwitchStatusOutputSLZ()},
+    )
+    def patch(self, request, *args, **kwargs):
+        tenant = self.get_object()
+        if tenant.status == TenantStatus.ENABLED:
+            tenant.status = TenantStatus.DISABLED
+        else:
+            tenant.status = TenantStatus.ENABLED
+
+        tenant.updater = request.user.username
+        tenant.save(update_fields=["status", "updater", "updated_at"])
+
+        return Response(TenantSwitchStatusOutputSLZ(instance={"status": tenant.status.value}).data)
 
 
 class TenantUsersListApi(generics.ListAPIView):

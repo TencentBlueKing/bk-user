@@ -141,6 +141,7 @@ class TenantSearchDataSourceOutputSLZ(serializers.Serializer):
 class TenantSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
+    status = serializers.CharField(help_text="租户状态")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
     created_at = serializers.SerializerMethodField(help_text="创建时间")
     managers = serializers.SerializerMethodField(help_text="租户管理员")
@@ -226,3 +227,7 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
         source="data_source_user.phone_country_code",
         default=settings.DEFAULT_PHONE_COUNTRY_CODE,
     )
+
+
+class TenantSwitchStatusOutputSLZ(serializers.Serializer):
+    status = serializers.CharField(help_text="租户状态")

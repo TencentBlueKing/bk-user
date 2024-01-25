@@ -27,7 +27,7 @@ from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.common.time import datetime_to_display
 
 
-class Tenant(TimestampedModel):
+class Tenant(AuditedModel):
     id = models.CharField("租户唯一标识", primary_key=True, max_length=128)
     name = models.CharField("租户名称", max_length=128, unique=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
