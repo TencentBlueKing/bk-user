@@ -94,6 +94,7 @@ class ErrorCodes:
     CREATE_TENANT_FAILED = ErrorCode(_("租户创建失败"))
     UPDATE_TENANT_FAILED = ErrorCode(_("租户更新失败"))
     TENANT_NOT_EXIST = ErrorCode(_("租户不存在"))
+    TENANT_NOT_ENABLED = ErrorCode(_("租户不存在或未启用"))
     BIND_TENANT_USER_FAILED = ErrorCode(_("数据源用户绑定租户失败"))
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     UPDATE_TENANT_MANAGERS_FAILED = ErrorCode(_("更新租户管理员失败"))

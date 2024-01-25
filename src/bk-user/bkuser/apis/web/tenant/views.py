@@ -12,6 +12,7 @@ import logging
 from collections import defaultdict
 
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -31,6 +32,7 @@ from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.biz.tenant import (
     TenantEditableInfo,
@@ -39,6 +41,7 @@ from bkuser.biz.tenant import (
     TenantInfo,
     TenantManagerWithoutID,
 )
+from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.local.models import PasswordInitialConfig
 
@@ -76,10 +79,9 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = Tenant.objects.all()
-
+        queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
         if data.get("name"):
-            queryset = Tenant.objects.filter(name__icontains=data["name"])
+            queryset = queryset.filter(name__icontains=data["name"])
 
         return queryset
 
@@ -156,6 +158,9 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateA
         data = slz.validated_data
 
         tenant = self.get_object()
+        if tenant.status != TenantStatus.ENABLED:
+            raise error_codes.TENANT_NOT_ENABLED.f(_("仅可编辑已启用的租户配置信息"))
+
         tenant_info = TenantEditableInfo(
             name=data["name"],
             logo=data.get("logo") or "",

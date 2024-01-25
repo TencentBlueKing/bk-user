@@ -20,6 +20,7 @@ from bkuser.apps.global_setting.constants import GlobalSettingEnum
 from bkuser.apps.global_setting.models import GlobalSetting
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp
+from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.idp import AuthenticationMatcher
 from bkuser.common.error_codes import error_codes
@@ -118,7 +119,7 @@ class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = Tenant.objects.all()
+        queryset = Tenant.objects.filter(status=TenantStatus.ENABLED)
         if data["tenant_ids"]:
             queryset = queryset.filter(id__in=data["tenant_ids"])
 
@@ -127,7 +128,7 @@ class TenantListApi(LoginApiAccessControlMixin, generics.ListAPIView):
 
 class TenantRetrieveApi(LoginApiAccessControlMixin, generics.RetrieveAPIView):
     serializer_class = TenantRetrieveOutputSLZ
-    queryset = Tenant.objects.all()
+    queryset = Tenant.objects.filter(status=TenantStatus.ENABLED)
     lookup_field = "id"
 
 
@@ -155,7 +156,7 @@ class TenantUserMatchApi(LoginApiAccessControlMixin, generics.CreateAPIView):
 
         # 登录的租户
         tenant_id = kwargs["tenant_id"]
-        tenant = Tenant.objects.filter(id=tenant_id).first()
+        tenant = Tenant.objects.filter(id=tenant_id, status=TenantStatus.ENABLED).first()
         if not tenant:
             raise error_codes.OBJECT_NOT_FOUND.f(_("租户 {} 不存在").format(tenant_id))
 

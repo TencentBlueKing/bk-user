@@ -12,6 +12,7 @@ import logging
 from collections import defaultdict
 
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -31,6 +32,7 @@ from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
@@ -61,7 +63,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
         # TODO 目前只有当前用户登录的租户，后续需要考虑跨租户协同的情况
         tenant_ids = [cur_tenant_id]
 
-        tenants = Tenant.objects.filter(id__in=tenant_ids)
+        tenants = Tenant.objects.filter(id__in=tenant_ids, status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
         # 将当前登录用户所在的租户置顶
         tenants = sorted(tenants, key=lambda t: t.id != cur_tenant_id)
 
@@ -98,7 +100,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
 
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView):
-    queryset = Tenant.objects.all()
+    queryset = Tenant.objects.filter(status_in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantRetrieveOutputSLZ
@@ -124,6 +126,9 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
         data = slz.validated_data
 
         tenant = self.get_object()
+        if tenant.status != TenantStatus.ENABLED:
+            raise error_codes.TENANT_NOT_ENABLED.f(_("仅可编辑已启用的租户配置信息"))
+
         tenant_info = TenantEditableInfo(
             name=data["name"],
             logo=data["logo"] or "",
