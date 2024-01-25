@@ -100,7 +100,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
 
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView):
-    queryset = Tenant.objects.filter(status_in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
+    queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantRetrieveOutputSLZ

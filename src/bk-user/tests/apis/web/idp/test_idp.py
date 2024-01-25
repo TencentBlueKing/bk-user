@@ -151,7 +151,7 @@ class TestIdpCreateApi:
 
         resp = api_client.post(reverse("idp.list_create"), data=request_data)
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "数据源必须是当前租户下的" in resp.data["message"]
+        assert "当前租户下不存在 ID 为" in resp.data["message"]
 
         request_data["data_source_match_rules"] = [
             {

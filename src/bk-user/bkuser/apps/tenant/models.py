@@ -18,6 +18,7 @@ from bkuser.apps.tenant.constants import (
     TIME_ZONE_CHOICES,
     TenantDepartmentStatus,
     TenantFeatureFlag,
+    TenantStatus,
     TenantUserStatus,
     UserFieldDataType,
 )
@@ -32,6 +33,7 @@ class Tenant(TimestampedModel):
     logo = models.TextField("Logo", null=True, blank=True, default="")
     is_default = models.BooleanField("是否默认租户", default=False)
     feature_flags = models.JSONField("租户特性标志集", default=dict)
+    status = models.CharField("状态", max_length=32, choices=TenantStatus.get_choices(), default=TenantStatus.ENABLED)
 
     class Meta:
         ordering = ["created_at"]
