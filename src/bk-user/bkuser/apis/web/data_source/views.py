@@ -299,11 +299,9 @@ class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIV
     )
     def patch(self, request, *args, **kwargs):
         data_source = self.get_object()
-        if data_source.status == DataSourceStatus.ENABLED:
-            data_source.status = DataSourceStatus.DISABLED
-        else:
-            data_source.status = DataSourceStatus.ENABLED
-
+        data_source.status = (
+            DataSourceStatus.DISABLED if data_source.status == DataSourceStatus.ENABLED else DataSourceStatus.DISABLED
+        )
         data_source.updater = request.user.username
         data_source.save(update_fields=["status", "updater", "updated_at"])
 

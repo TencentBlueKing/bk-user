@@ -17,11 +17,13 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
+from bkuser.common.views import ExcludePutAPIViewMixin
 
 from .schema import get_idp_plugin_cfg_json_schema, get_idp_plugin_cfg_openapi_schema_map
 from .serializers import (
@@ -33,6 +35,7 @@ from .serializers import (
     IdpRetrieveOutputSLZ,
     IdpSearchInputSLZ,
     IdpSearchOutputSLZ,
+    IdpSwitchStatusOutputSLZ,
     IdpUpdateInputSLZ,
 )
 
@@ -212,3 +215,27 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
             idp.set_plugin_cfg(data["plugin_config"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class IdpSwitchStatusApi(CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
+    """切换租户状态（启/停）"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    serializer_class = IdpSwitchStatusOutputSLZ
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return Idp.objects.filter(owner_tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["idp"],
+        operation_description="变更认证源状态",
+        responses={status.HTTP_200_OK: IdpSwitchStatusOutputSLZ()},
+    )
+    def patch(self, request, *args, **kwargs):
+        idp = self.get_object()
+        idp.status = IdpStatus.DISABLED if idp.status == IdpStatus.ENABLED else IdpStatus.ENABLED
+        idp.updater = request.user.username
+        idp.save(update_fields=["status", "updater", "updated_at"])
+
+        return Response(IdpSwitchStatusOutputSLZ(instance={"status": idp.status.value}).data)

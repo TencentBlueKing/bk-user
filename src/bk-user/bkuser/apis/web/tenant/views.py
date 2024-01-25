@@ -43,7 +43,7 @@ from bkuser.biz.tenant import (
     TenantManagerWithoutID,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 from bkuser.plugins.local.models import PasswordInitialConfig
 
 logger = logging.getLogger(__name__)
@@ -187,7 +187,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantSwitchStatusApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     """切换租户状态（启/停）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
@@ -202,11 +202,7 @@ class TenantSwitchStatusApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     )
     def patch(self, request, *args, **kwargs):
         tenant = self.get_object()
-        if tenant.status == TenantStatus.ENABLED:
-            tenant.status = TenantStatus.DISABLED
-        else:
-            tenant.status = TenantStatus.ENABLED
-
+        tenant.status = TenantStatus.DISABLED if tenant.status == TenantStatus.ENABLED else TenantStatus.DISABLED
         tenant.updater = request.user.username
         tenant.save(update_fields=["status", "updater", "updated_at"])
 

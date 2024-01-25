@@ -205,3 +205,7 @@ class IdpUpdateInputSLZ(serializers.Serializer):
             return cfg_cls(**plugin_config)
         except PDValidationError as e:
             raise ValidationError(_("认证源插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+
+class IdpSwitchStatusOutputSLZ(serializers.Serializer):
+    status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
