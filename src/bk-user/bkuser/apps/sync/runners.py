@@ -45,8 +45,7 @@ class DataSourceSyncTaskRunner:
         self.plugin_init_extra_kwargs = plugin_init_extra_kwargs
 
     def run(self):
-        if self.data_source.status != DataSourceStatus.ENABLED:
-            logger.warning("data source %s isn't enabled, skip sync...", self.data_source.id)
+        if self._need_skip_sync():
             return
 
         with DataSourceSyncTaskContext(self.task) as ctx, transaction.atomic():
@@ -56,6 +55,22 @@ class DataSourceSyncTaskRunner:
             self._validate_unique_fields(ctx)
 
         self._send_signal()
+
+    def _need_skip_sync(self) -> bool:
+        """数据源 / 租户不是启用状态，都需要跳过同步"""
+        if self.data_source.status != DataSourceStatus.ENABLED:
+            logger.warning("data source %s isn't enabled, skip sync...", self.data_source.id)
+            return True
+
+        if not Tenant.objects.filter(id=self.data_source.owner_tenant_id, status=TenantStatus.ENABLED).exists():
+            logger.warning(
+                "data source %s's owner tenant %s isn't enabled, skip sync...",
+                self.data_source.id,
+                self.data_source.owner_tenant_id,
+            )
+            return True
+
+        return False
 
     def _initial_plugin(self, ctx: DataSourceSyncTaskContext, plugin_init_extra_kwargs: Dict[str, Any]):
         """初始化数据源插件"""
@@ -101,12 +116,7 @@ class TenantSyncTaskRunner:
         self.tenant = Tenant.objects.get(id=task.tenant_id)
 
     def run(self):
-        if self.data_source.status != DataSourceStatus.ENABLED:
-            logger.warning("data source %s isn't enabled, skip sync...", self.data_source.id)
-            return
-
-        if self.tenant.status != TenantStatus.ENABLED:
-            logger.warning("tenant %s isn't enabled, skip sync...", self.tenant.id)
+        if self._need_skip_sync():
             return
 
         with TenantSyncTaskContext(self.task) as ctx, transaction.atomic():
@@ -114,6 +124,30 @@ class TenantSyncTaskRunner:
             self._sync_users(ctx)
 
         self._send_signal()
+
+    def _need_skip_sync(self) -> bool:
+        """数据源 / 租户不是启用状态，都需要跳过同步"""
+        if self.data_source.status != DataSourceStatus.ENABLED:
+            logger.warning("data source %s isn't enabled, skip tenant sync...", self.data_source.id)
+            return True
+
+        if self.tenant.status != TenantStatus.ENABLED:
+            logger.warning("tenant %s isn't enabled, skip tenant sync...", self.tenant.id)
+            return True
+
+        # 数据源所属租户与待同步租户相同，不需要再次检查
+        if self.data_source.owner_tenant_id == self.tenant.id:
+            return False
+
+        if not Tenant.objects.filter(id=self.data_source.owner_tenant_id, status=TenantStatus.ENABLED).exists():
+            logger.warning(
+                "data source %s's owner tenant %s isn't enabled, skip tenant sync...",
+                self.data_source.id,
+                self.data_source.owner_tenant_id,
+            )
+            return True
+
+        return False
 
     def _sync_departments(self, ctx: TenantSyncTaskContext):
         """同步部门信息"""
