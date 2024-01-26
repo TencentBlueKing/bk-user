@@ -15,6 +15,7 @@ from enum import auto
 from threading import RLock
 from typing import Any, ClassVar, List, Optional, Type
 
+from django.conf import settings
 from django.db import connections, models
 
 from bkuser_core.common.enum import AutoLowerEnum
@@ -40,6 +41,7 @@ class SyncModelMeta:
     table_name: ClassVar[str]
     is_relation_table: bool = False
     pk_field: str = "id"
+    table_schema: str = settings.DATABASES["default"]["NAME"]
     update_exclude_fields: List = []
     use_bulk: bool = True
     # TODO: support unique_together
@@ -131,7 +133,7 @@ class SyncModelManager:
             cursor.execute(
                 "SELECT `AUTO_INCREMENT` "
                 "FROM  INFORMATION_SCHEMA.TABLES "
-                "WHERE TABLE_NAME = '%s';" % self.meta.table_name
+                "WHERE TABLE_NAME = '{}' and TABLE_SCHEMA = '{}';".format(self.meta.table_name, self.meta.table_schema)
             )
             all_value = cursor.fetchall()
             all_value = [v[0] for v in all_value]
