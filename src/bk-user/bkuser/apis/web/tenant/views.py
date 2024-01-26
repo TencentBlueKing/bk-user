@@ -202,7 +202,7 @@ class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     )
     def patch(self, request, *args, **kwargs):
         tenant = self.get_object()
-        tenant.status = TenantStatus.DISABLED if tenant.status == TenantStatus.ENABLED else TenantStatus.DISABLED
+        tenant.status = TenantStatus.DISABLED if tenant.status == TenantStatus.ENABLED else TenantStatus.ENABLED
         tenant.updater = request.user.username
         tenant.save(update_fields=["status", "updater", "updated_at"])
 
