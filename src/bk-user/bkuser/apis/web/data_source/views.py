@@ -262,7 +262,7 @@ class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f("本地数据源插件不支持连通性测试")
 
         PluginCls = get_plugin_cls(plugin_id)  # noqa: N806
-        result = PluginCls(data["plugin_config"]).test_connection()
+        result = PluginCls(data["plugin_config"], logger).test_connection()
 
         return Response(DataSourceTestConnectionOutputSLZ(instance=result).data)
 
