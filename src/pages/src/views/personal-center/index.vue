@@ -41,7 +41,7 @@
             <div class="account-item">
               <div>
                 <img v-if="item.logo" :src="item.logo" />
-                <img v-else src="@/images/avatar.png" />
+                <i v-else class="user-icon icon-yonghu" />
                 <span class="name text-overflow">{{ item.full_name }}</span>
                 <span class="tenant text-overflow">@ {{ item.tenant.name }}</span>
               </div>
@@ -80,12 +80,13 @@
               </template>
             </bk-upload>
             <div>
-              <p class="name">
-                {{ currentTenantInfo.username }}
-                <bk-tag>
+              <div class="user-info">
+                <span class="name">{{ currentTenantInfo.username }}</span>
+                <div>
+                  <span class="span-logo">T</span>
                   {{ currentTenantInfo.tenant?.id }}
-                </bk-tag>
-              </p>
+                </div>
+              </div>
               <p class="login-time">{{ $t('最近登录时间') }}：{{ '--' }}</p>
             </div>
           </div>
@@ -713,6 +714,14 @@ const hidePasswordModal = () => {
             object-fit: contain;
           }
 
+          .icon-yonghu {
+            padding: 3px;
+            font-size: 16px;
+            color: #FAFBFD;
+            background: #DCDEE5;
+            border-radius: 2px;
+          }
+
           .name {
             display: inline-block;
             max-width: 100px;
@@ -837,12 +846,27 @@ const hidePasswordModal = () => {
           }
         }
 
-        .name {
+        .user-info {
+          display: flex;
           font-size: 32px;
           font-weight: 700;
+          align-items: center;
 
-          .bk-tag {
+          div {
+            height: 24px;
+            padding-right: 8px;
+            margin-left: 16px;
+            font-size: 12px;
             font-weight: 400;
+            line-height: 24px;
+            background: #EAEBF0;
+            border-radius: 2px;
+
+            .span-logo {
+              margin-right: 0;
+              margin-left: 4px;
+              background: #3A84FF;
+            }
           }
         }
 
