@@ -29,7 +29,8 @@ class BkStandardApiJSONRenderer(JSONRenderer):
     def render(self, data, accepted_media_type=None, renderer_context=None):
         # Wrap response data on demand
         resp = renderer_context["response"]
-        if status.is_success(resp.status_code):
+        # Note: 状态码 204 时，不可以返回内容，否则经过 Nginx 等代理，可能会导致请求一直 pending
+        if status.is_success(resp.status_code) and resp.status_code != status.HTTP_204_NO_CONTENT:
             data = {"data": data}
         elif status.is_client_error(resp.status_code) or status.is_server_error(resp.status_code):
             data = {"error": data}
