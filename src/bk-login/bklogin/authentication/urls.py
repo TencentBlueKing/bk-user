@@ -35,7 +35,7 @@ urlpatterns = [
     path("idps/", views.TenantIdpListApi.as_view()),
     # ------------------------------------------ 认证插件 ------------------------------------------
     # 插件认证
-    path("auth/idps/<str:idp_id>/actions/<str:action>/", views.IdpPluginDispatchView.as_view()),
+    path("auth/idps/<str:idp_id>/actions/<str:action>/", xframe_options_exempt(views.IdpPluginDispatchView.as_view())),
     # ------------------------------------------ 用户选择 ------------------------------------------
     # 已认证后的用户列表
     path("tenant-users/", views.TenantUserListApi.as_view()),
