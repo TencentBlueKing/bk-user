@@ -150,4 +150,4 @@ class TenantDepartmentStatus(str, StructuredEnum):
     """租户部门状态"""
 
     ENABLED = EnumField("enabled", label=_("启用"))
-    DISABLED = EnumField("disabled", label=_("禁用"))
+    DELETED = EnumField("deleted", label=_("软删除"))

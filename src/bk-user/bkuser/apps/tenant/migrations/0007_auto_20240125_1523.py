@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tenantdepartment',
             name='status',
-            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用')], default=bkuser.apps.tenant.constants.TenantDepartmentStatus['ENABLED'], max_length=32, verbose_name='状态'),
+            field=models.CharField(choices=[('enabled', '启用'),  ('deleted', '软删除')], default=bkuser.apps.tenant.constants.TenantDepartmentStatus['ENABLED'], max_length=32, verbose_name='状态'),
         ),
         migrations.AddField(
             model_name='tenantuser',

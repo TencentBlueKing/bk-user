@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='datasourcedepartment',
             name='status',
-            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用'), ('deleted', '软删除')], default=bkuser.apps.data_source.constants.DataSourceDepartmentStatus['ENABLED'], max_length=32, verbose_name='部门状态'),
+            field=models.CharField(choices=[('enabled', '启用'), ('deleted', '软删除')], default=bkuser.apps.data_source.constants.DataSourceDepartmentStatus['ENABLED'], max_length=32, verbose_name='部门状态'),
         ),
         migrations.AddField(
             model_name='datasourceuser',
