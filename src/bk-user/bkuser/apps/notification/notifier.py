@@ -35,6 +35,10 @@ class NotificationTmplsGetter:
         if scene == NotificationScene.MANAGER_RESET_PASSWORD:
             return self._get_manager_reset_user_password_tmpls()
 
+        # 用户获取用户管理平台验证码
+        if scene == NotificationScene.SEND_VERIFICATION_CODE:
+            return self._get_send_verification_code_tmpls(**scene_kwargs)
+
         # 从租户有效期配置中获取通知模板
         if scene in [
             NotificationScene.TENANT_USER_EXPIRING,
@@ -62,12 +66,49 @@ class NotificationTmplsGetter:
                 sender="蓝鲸智云",
                 content=(
                     "<p>您好：</p>"
-                    + "<p>您的蓝鲸智云帐户密码已被重置，以下是您的帐户信息\n</p>"
-                    + "<p>登录帐户：{{ username }}，登录密码：{{ password }}\n</p>"
+                    + "<p>您的蓝鲸智云帐户密码已被重置，以下是您的帐户信息</p>"
+                    + "<p>登录帐户：{{ username }}，登录密码：{{ password }}</p>"
                     + "<p>此邮件为系统自动发送，请勿回复。</p>"
                 ),
             )
         ]
+
+    def _get_send_verification_code_tmpls(self, **scene_kwargs) -> List[NotificationTemplate]:
+        """获取用户获取用户管理平台验证码的通知模板"""
+        assert "method" in scene_kwargs
+        method = NotificationMethod(scene_kwargs["method"])
+
+        if method == NotificationMethod.EMAIL:
+            return [
+                NotificationTemplate(
+                    method=NotificationMethod.EMAIL,
+                    title="蓝鲸智云 - 验证码",
+                    sender="蓝鲸智云",
+                    content=(
+                        "<p>您好：</p>"
+                        + "<p>您的蓝鲸智云验证码为: {{ verification_code }}</p>"
+                        + "<p>该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码</p>"
+                        + "<p>此邮件为系统自动发送，请勿回复。</p>"
+                    ),
+                )
+            ]
+
+        if method == NotificationMethod.SMS:
+            return [
+                NotificationTemplate(
+                    method=NotificationMethod.SMS,
+                    title=None,
+                    sender="蓝鲸智云",
+                    content=(
+                        "您好：\n"
+                        + "您的蓝鲸智云验证码为: {{ verification_code }}\n"
+                        + "该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码\n"
+                        + "此邮件为系统自动发送，请勿回复。"
+                    ),
+                )
+            ]
+
+        raise NotImplementedError(f"unsupported method: {method}")
 
     def _get_from_validity_period_config(self, scene: NotificationScene, **scene_kwargs) -> List[NotificationTemplate]:
         """从租户有效期配置中获取通知模板"""
@@ -135,6 +176,8 @@ class TmplContextGenerator:
             return self._gen_passwd_expired_ctx()
         if self.scene == NotificationScene.MANAGER_RESET_PASSWORD:
             return self._gen_manager_reset_passwd_ctx()
+        if self.scene == NotificationScene.SEND_VERIFICATION_CODE:
+            return self._gen_send_verification_code_ctx()
         if self.scene == NotificationScene.TENANT_USER_EXPIRING:
             return self._gen_tenant_user_expiring_ctx()
         if self.scene == NotificationScene.TENANT_USER_EXPIRED:
@@ -151,16 +194,19 @@ class TmplContextGenerator:
 
     def _gen_user_initialize_ctx(self) -> Dict[str, str]:
         """用户初始化"""
-        # FIXME (su) 提供修改密码的 URL（settings.BK_USER_URL + xxxx）
         return {
             "password": self.scene_kwargs["passwd"],
-            "url": settings.BK_USER_URL + "/reset-password",
+            "url": settings.BK_USER_URL + "/personal-center",
             **self._gen_base_ctx(),
         }
 
     def _gen_reset_passwd_ctx(self) -> Dict[str, str]:
         """重置密码"""
-        return self._gen_base_ctx()
+        return {
+            "password": self.scene_kwargs["passwd"],
+            "url": settings.BK_USER_URL + "/personal-center",
+            **self._gen_base_ctx(),
+        }
 
     def _gen_passwd_expiring_ctx(self) -> Dict[str, str]:
         """密码即将过期"""
@@ -180,6 +226,14 @@ class TmplContextGenerator:
         return {
             "password": self.scene_kwargs["passwd"],
             **self._gen_base_ctx(),
+        }
+
+    def _gen_send_verification_code_ctx(self) -> Dict[str, str]:
+        """发送验证码"""
+        return {
+            "verification_code": self.scene_kwargs["verification_code"],
+            # 将验证码有效期换算为分钟，更符合一般表示法
+            "valid_minutes": str(int(settings.VERIFICATION_CODE_VALID_TIME / 60)),
         }
 
     def _gen_tenant_user_expiring_ctx(self) -> Dict[str, str]:

@@ -33,6 +33,8 @@ class CacheKeyPrefixEnum(str, StructuredEnum):
     LOCK = "lock"
     # API 响应结果数据
     V2_API = "v2_api"
+    # 用户验证码
+    VERIFICATION_CODE = "verification_code"
 
 
 def _default_key_function(*args, **kwargs):
@@ -122,6 +124,10 @@ class Cache:
     def set(self, key, value, timeout=DEFAULT_TIMEOUT, version=None):
         key = self._make_key(key)
         self.cache.set(key, value, timeout, version)
+
+    def delete(self, key, version=None):
+        key = self._make_key(key)
+        self.cache.delete(key, version)
 
     def get_many(self, keys, version=None):
         if not keys:

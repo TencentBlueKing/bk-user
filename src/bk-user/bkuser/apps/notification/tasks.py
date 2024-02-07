@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.apps.notification.constants import NotificationScene
+from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
 from bkuser.apps.notification.notifier import TenantUserNotifier
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.celery import app
@@ -28,13 +28,23 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def send_reset_password_to_user(data_source_user_id: int, new_password: str):
+def send_verification_code_to_user(tenant_user_id: str, method: NotificationMethod, code: str):
+    """向用户发送验证码"""
+    tenant_user = TenantUser.objects.get(id=tenant_user_id)
+    TenantUserNotifier(
+        NotificationScene.SEND_VERIFICATION_CODE,
+        method=method,
+    ).send(tenant_user, verification_code=code)
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def send_reset_password_to_user(data_source_user_id: int, scene: NotificationScene, new_password: str):
     """发送被重置的新密码通知到用户"""
     data_source_user = DataSourceUser.objects.select_related("data_source").get(id=data_source_user_id)
     tenant_user = TenantUser.objects.get(
         data_source_user=data_source_user, tenant_id=data_source_user.data_source.owner_tenant_id
     )
-    TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD).send(tenant_user, passwd=new_password)
+    TenantUserNotifier(scene, data_source_id=data_source_user.data_source_id).send(tenant_user, passwd=new_password)
 
 
 @app.task(base=BaseTask, ignore_result=True)
