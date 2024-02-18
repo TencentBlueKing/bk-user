@@ -13,6 +13,7 @@ from typing import Dict
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 
 class SendResetPasswordVerificationCodeInputSLZ(serializers.Serializer):
@@ -25,7 +26,7 @@ class SendResetPasswordVerificationCodeInputSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, str]) -> Dict[str, str]:
         if not (attrs.get("email") or attrs.get("phone")):
-            raise serializers.ValidationError(_("必须提供邮箱或手机号码中的一项"))
+            raise ValidationError(_("必须提供邮箱或手机号码中的一项"))
 
         return attrs
 

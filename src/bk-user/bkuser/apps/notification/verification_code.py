@@ -50,8 +50,8 @@ class VerificationCodeManager:
             raise InvalidVerificationCode(_("验证码错误或已失效"))
 
         # 校验通过后，需要清理掉验证码避免二次使用
-        self.cache.delete(self.retries_cache_key)
         self.cache.delete(self.code_cache_key)
+        self.cache.delete(self.retries_cache_key)
 
     def send(self, method: NotificationMethod):
         """发送验证码"""
