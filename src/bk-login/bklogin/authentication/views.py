@@ -92,7 +92,7 @@ class LoginView(View):
                 # session记录登录的租户
                 request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = global_info.only_enabled_auth_tenant.id
                 # 联邦登录，则直接重定向到第三方登录
-                return HttpResponseRedirect(f"/auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/")
+                return HttpResponseRedirect(f"/login/auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/")
 
         # 返回登录页面
         return render(request, self.template_name)
@@ -362,7 +362,7 @@ class IdpPluginDispatchView(View):
             # 记录支持登录的租户用户
             request.session[ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY] = tenant_users
             # 联邦认证则重定向到前端选择账号页面
-            return HttpResponseRedirect(redirect_to="/page/users/")
+            return HttpResponseRedirect(redirect_to="/login/page/users/")
 
         return self.wrap_plugin_error(
             plugin_error_context, plugin.dispatch_extension, action=action, http_method=http_method, request=request
@@ -370,7 +370,7 @@ class IdpPluginDispatchView(View):
 
     def _get_complete_action_url(self, idp_id: str, action: str) -> str:
         """获取完整"""
-        return urljoin(settings.BK_LOGIN_URL, f"auth/idps/{idp_id}/actions/{action}/")
+        return urljoin(settings.BK_LOGIN_URL, f"/login/auth/idps/{idp_id}/actions/{action}/")
 
     def _auth_backend(
         self, request, sign_in_tenant_id: str, idp_id: str, user_infos: Dict[str, Any] | List[Dict[str, Any]]

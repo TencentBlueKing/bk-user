@@ -209,7 +209,7 @@ BK_LOGIN_PLAIN_WINDOW_HEIGHT = env.int("BK_LOGIN_PLAIN_WINDOW_HEIGHT", default=5
 # 登录回调地址参数Key
 BK_LOGIN_CALLBACK_URL_PARAM_KEY = env.str("BK_LOGIN_CALLBACK_URL_PARAM_KEY", default="c_url")
 # 登录API URL
-BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login")
+BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
@@ -368,7 +368,7 @@ _DEFAULT_LOG_DIR = BASE_DIR / "logs"
 _LOG_DIR = env.str("LOG_FILE_DIR", default=_DEFAULT_LOG_DIR)
 _LOG_FILE_NAME_PREFIX = env.str("LOG_FILE_NAME_PREFIX", default=BK_APP_CODE)
 if not os.path.exists(_LOG_DIR):
-    os.makedirs(_LOG_DIR)
+    os.makedirs(_LOG_DIR, exist_ok=True)
 _LOGGING_FORMAT = {
     "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
     "fmt": ("%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"),

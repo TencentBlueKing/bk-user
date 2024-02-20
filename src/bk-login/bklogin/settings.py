@@ -109,10 +109,10 @@ USE_TZ = True
 TIME_ZONE = "Asia/Shanghai"
 
 # SITE
-SITE_URL = env.str("SITE_URL", default="/")
+SITE_URL = env.str("SITE_URL", default="/login/")
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
-WHITENOISE_STATIC_PREFIX = "/staticfiles/"
+WHITENOISE_STATIC_PREFIX = os.path.join(SITE_URL, "staticfiles/")
 # STATIC_URL 也可以是CDN地址
 STATIC_URL = env.str("STATIC_URL", default=SITE_URL + "staticfiles/")
 
@@ -121,6 +121,9 @@ BK_APP_CODE = env.str("BK_APP_CODE", default="bk_login")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # Django SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
+# [兼容] 用于判断是否 ESB 请求（2.x 版本里，paas_v2/ESB/console/login 共用 bk_paas 的 AppSecret）
+BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", "")
+
 
 # 蓝鲸数据库内容加密私钥
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
@@ -195,7 +198,7 @@ _DEFAULT_LOG_DIR = BASE_DIR / "logs"
 _LOG_DIR = env.str("LOG_FILE_DIR", default=_DEFAULT_LOG_DIR)
 _LOG_FILE_NAME_PREFIX = env.str("LOG_FILE_NAME_PREFIX", default=BK_APP_CODE)
 if not os.path.exists(_LOG_DIR):
-    os.makedirs(_LOG_DIR)
+    os.makedirs(_LOG_DIR, exist_ok=True)
 _LOGGING_FORMAT = {
     "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
     "fmt": ("%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"),

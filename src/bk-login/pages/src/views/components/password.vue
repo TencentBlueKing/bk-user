@@ -71,7 +71,7 @@ const handleLogin = () => {
       },
     ).then(() => {
       loading.value = false;
-      router.push('/page/users/');
+      router.push({name: 'User'});
     })
       .catch((error) => {
         errorMessage.value = error?.message || '登录失败';
