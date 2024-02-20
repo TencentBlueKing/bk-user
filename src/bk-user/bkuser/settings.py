@@ -217,23 +217,19 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
 # 连接 BROKER 超时时间
-BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
-# CELERY与RabbitMQ增加60秒心跳设置项
-BROKER_HEARTBEAT = 60
+CELERY_BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
+# CELERY 与 RabbitMQ 增加60秒心跳设置项
+CELERY_BROKER_HEARTBEAT = 60
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
-CELERYD_CONCURRENCY = env.int("CELERYD_CONCURRENCY", default=2)
+CELERY_WORKER_CONCURRENCY = env.int("CELERYD_CONCURRENCY", default=2)
 # 与周期任务配置的定时相关UTC
 CELERY_ENABLE_UTC = False
-# 周期任务beat生产者来源
-CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # 任务结果存储
 CELERY_RESULT_BACKEND = "django-db"
-# Celery队列名称
-CELERY_DEFAULT_QUEUE = "bkuser"
 # close celery hijack root logger
-CELERYD_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # disable remote control
-CELERY_ENABLE_REMOTE_CONTROL = False
+CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
 # Celery 消息序列化
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -241,7 +237,7 @@ CELERY_RESULT_SERIALIZER = "json"
 # CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
 # CELERY_IMPORTS = []
 # 内置的周期任务
-CELERYBEAT_SCHEDULE = {
+CELERY_BEAT_SCHEDULE = {
     "periodic_notify_expiring_tenant_users": {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_expiring_tenant_users_task",
         "schedule": crontab(minute="0", hour="10"),
