@@ -18,7 +18,9 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
 )
+from bkuser.common.passwd import PasswordGenerator
 
 from tests.test_utils.helpers import generate_random_string
 
@@ -270,3 +272,22 @@ def init_data_source_users_depts_and_relations(ds: DataSource) -> None:
         DataSourceUserLeaderRelation(user=baishier, leader=lushi, data_source=ds),
     ]
     DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relations)
+
+
+def init_local_data_source_identity_infos(ds: DataSource) -> None:
+    """初始化本地数据源身份信息"""
+    if not ds.is_local:
+        return
+
+    plugin_cfg = ds.get_plugin_cfg()
+    passwd_generator = PasswordGenerator(plugin_cfg.password_rule.to_rule())  # type: ignore
+
+    for user in DataSourceUser.objects.filter(data_source=ds):
+        LocalDataSourceIdentityInfo.objects.get_or_create(
+            user=user,
+            defaults={
+                "data_source": ds,
+                "username": user.username,
+                "password": passwd_generator.generate(),
+            },
+        )

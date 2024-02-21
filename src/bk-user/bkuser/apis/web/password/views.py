@@ -128,8 +128,8 @@ class GetResetPasswordUrlByVerificationCodeApi(GetTenantUserMixin, generics.Crea
         responses={status.HTTP_200_OK: GetResetPasswordUrlByVerificationCodeOutputSLZ()},
     )
     @handle_exception_with_settings()
-    def post(self, request, *args, **kwargs):
-        slz = GetResetPasswordUrlByVerificationCodeInputSLZ(data=request.data)
+    def get(self, request, *args, **kwargs):
+        slz = GetResetPasswordUrlByVerificationCodeInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
@@ -202,7 +202,7 @@ class ListUserByResetPasswordTokenApi(generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserMatchedByTokenSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        slz = ListUserByResetPasswordTokenInputSLZ(data=request.data)
+        slz = ListUserByResetPasswordTokenInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 

@@ -33,7 +33,7 @@ class UserResetPasswordTokenManager:
     def __init__(self):
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.RESET_PASSWORD_TOKEN)
 
-    def gen_token(self, tenant_user: TenantUser, related_obj_type: TokenRelatedObjType):
+    def gen_token(self, tenant_user: TenantUser, related_obj_type: TokenRelatedObjType) -> str:
         info = {"type": related_obj_type.value, "tenant_id": tenant_user.tenant_id}
         if related_obj_type == TokenRelatedObjType.TENANT_USER:
             info["tenant_user_id"] = tenant_user.id
