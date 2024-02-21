@@ -28,13 +28,23 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def send_verification_code_to_user(tenant_user_id: str, method: NotificationMethod, code: str):
-    """向用户发送验证码"""
+def send_verification_code_to_user_phone(tenant_user_id: str, code: str):
+    """向用户发送短信验证码"""
     tenant_user = TenantUser.objects.get(id=tenant_user_id)
     TenantUserNotifier(
         NotificationScene.SEND_VERIFICATION_CODE,
-        method=method,
+        method=NotificationMethod.SMS,
     ).send(tenant_user, verification_code=code)
+
+
+@app.task(base=BaseTask, ignore_result=True)
+def send_reset_passwd_url_to_user(tenant_user_id: str, reset_token: str):
+    """发送重置密码链接"""
+    tenant_user = TenantUser.objects.get(id=tenant_user_id)
+    TenantUserNotifier(
+        NotificationScene.RESET_PASSWORD,
+        data_source_id=tenant_user.data_source_user.data_source_id,
+    ).send(tenant_user, token=reset_token)
 
 
 @app.task(base=BaseTask, ignore_result=True)

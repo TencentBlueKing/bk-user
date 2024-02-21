@@ -9,115 +9,106 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
+from typing import List
 
-from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
+from bkuser.apis.web.password.decorators import handle_exception_with_settings
 from bkuser.apis.web.password.serializers import (
-    ResetPasswordByVerificationCodeInputSLZ,
+    GetResetPasswordUrlByVerificationCodeInputSLZ,
+    GetResetPasswordUrlByVerificationCodeOutputSLZ,
+    ListUserByResetPasswordTokenInputSLZ,
+    ResetPasswordByTokenInputSLZ,
+    SendResetPasswordUrlToEmailInputSLZ,
     SendResetPasswordVerificationCodeInputSLZ,
-    SendResetPasswordVerificationCodeOutputSLZ,
+    TenantUserMatchedByTokenSLZ,
 )
-from bkuser.apps.notification.constants import NotificationMethod, NotificationScene, VerificationCodeScene
+from bkuser.apps.notification.constants import (
+    TokenRelatedObjType,
+    VerificationCodeScene,
+)
 from bkuser.apps.notification.exceptions import (
+    ExceedSendResetPasswordTokenLimit,
     ExceedSendVerificationCodeLimit,
     ExceedVerificationCodeRetries,
     InvalidVerificationCode,
 )
-from bkuser.apps.notification.tasks import send_reset_password_to_user
+from bkuser.apps.notification.helpers import gen_reset_password_url
+from bkuser.apps.notification.reset_passwd_token import UserResetPasswordTokenManager
 from bkuser.apps.notification.verification_code import VerificationCodeManager
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
-from bkuser.common.passwd import PasswordGenerator
+from bkuser.common.passwd import PasswordValidator
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 logger = logging.getLogger(__name__)
 
 
-class SendResetPasswordVerificationCodeApi(generics.CreateAPIView):
+class GetTenantUserMixin:
+    """
+    根据指定的联系方式，获取租户用户（来源于本地数据源的）
+
+    需要注意的是：同一联系方式可能会匹配到多个用户，该 Mixin 方法只返回第一个，需要注意只能用于通知场景
+    """
+
+    def _get_tenant_user_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> TenantUser:
+        # FIXME (su) 补充 status 过滤
+        tenant_users = TenantUser.objects.filter_by_phone(tenant_id, phone, phone_country_code).filter(
+            data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL
+        )
+
+        if not tenant_users.exists():
+            raise error_codes.TENANT_USER_NOT_EXIST.f(
+                _("手机号码 +{} {} 在租户 {} 中匹配到不到用户").format(phone_country_code, phone, tenant_id),
+            )
+
+        return tenant_users.first()
+
+    def _get_tenant_user_by_email(self, tenant_id: str, email: str) -> TenantUser:
+        # FIXME (su) 补充 status 过滤
+        tenant_users = TenantUser.objects.filter_by_email(tenant_id, email).filter(
+            data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL
+        )
+
+        if not tenant_users.exists():
+            raise error_codes.TENANT_USER_NOT_EXIST.f(_("邮箱 {} 在租户 {} 中匹配不到用户").format(email, tenant_id))
+
+        return tenant_users.first()
+
+
+class SendResetPasswordVerificationCodeApi(GetTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
-    authentication_classes = None
-    permission_classes = None
+    authentication_classes: List[BaseAuthentication] = []
+    permission_classes: List[BasePermission] = []
 
     @swagger_auto_schema(
         tags=["password"],
-        operation_description="发送重置密码验证码",
+        operation_description="发送短信验证码",
         query_serializer=SendResetPasswordVerificationCodeInputSLZ(),
-        responses={status.HTTP_200_OK: SendResetPasswordVerificationCodeOutputSLZ()},
+        responses={status.HTTP_204_NO_CONTENT: ""},
     )
+    @handle_exception_with_settings()
     def post(self, request, *args, **kwargs):
         slz = SendResetPasswordVerificationCodeInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        # 1. 根据用户提交的邮箱 / 手机号码找到租户用户
-        if email := params.get("email"):
-            tenant_user = self._get_tenant_user_by_email(params["tenant_id"], email)
-            method = NotificationMethod.EMAIL
-        else:
-            tenant_user = self._get_tenant_user_by_phone(
-                params["tenant_id"], params["phone"], params["phone_country_code"]
-            )
-            method = NotificationMethod.SMS
-
-        # 2. 检查该租户用户关联的数据源用户，是否属于本地数据源
-        if not tenant_user.data_source_user.data_source.is_local:
-            raise error_codes.CANNOT_RESET_DATA_SOURCE_USER_PASSWORD.f(_("仅本地数据源用户可重置密码"))
-
-        # 3. 通过指定的途径发送验证码
-        self._send_verification_code_to_user(tenant_user, method)
-
-        # 4. 返回租户用户 ID 用于后续流程
-        return Response(SendResetPasswordVerificationCodeOutputSLZ(instance={"user_id": tenant_user.id}).data)
-
-    def _get_tenant_user_by_email(self, tenant_id: str, email: str) -> TenantUser:
-        # FIXME (su) 补充 status 过滤
-        tenant_users = TenantUser.objects.filter(tenant_id=tenant_id).filter(
-            Q(is_inherited_email=False, custom_email=email) | Q(is_inherited_email=True, data_source_user__email=email)
+        tenant_user = self._get_tenant_user_by_phone(
+            params["tenant_id"], params["phone"], params["phone_country_code"]
         )
-        if not tenant_users.exists():
-            raise error_codes.TENANT_USER_NOT_EXIST.f(_("邮箱 {} 在租户 {} 中匹配不到用户").format(email, tenant_id))
+        self._send_verification_code_to_user_phone(tenant_user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if tenant_users.count() > 1:
-            raise error_codes.MATCH_MORE_THAN_ONE_USER.f(
-                _("邮箱 {} 在租户 {} 中匹配到多个用户").format(email, tenant_id)
-            )
-
-        return tenant_users.first()
-
-    def _get_tenant_user_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> TenantUser:
-        # FIXME (su) 补充 status 过滤
-        tenant_users = TenantUser.objects.filter(tenant_id=tenant_id).filter(
-            Q(
-                is_inherited_email=False,
-                custom_phone=phone,
-                custom_phone_country_code=phone_country_code,
-            )
-            | Q(
-                is_inherited_email=True,
-                data_source_user__phone=phone,
-                data_source_user__phone_country_code=phone_country_code,
-            )
-        )
-        if not tenant_users.exists():
-            raise error_codes.MATCH_MORE_THAN_ONE_USER.f(
-                _("手机号码 +{} {} 在租户 {} 中匹配到不到用户").format(phone_country_code, phone, tenant_id),
-            )
-
-        if tenant_users.count() > 1:
-            raise error_codes.MATCH_MORE_THAN_ONE_USER.f(
-                _("手机号码 +{} {} 在租户 {} 中匹配到多个用户").format(phone_country_code, phone, tenant_id),
-            )
-
-        return tenant_users.first()
-
-    def _send_verification_code_to_user(self, tenant_user: TenantUser, method: NotificationMethod):
-        """发送验证码到指定的租户用户"""
+    def _send_verification_code_to_user_phone(self, tenant_user: TenantUser):
+        """发送短信验证码到指定的租户用户"""
         try:
-            VerificationCodeManager(tenant_user, VerificationCodeScene.RESET_PASSWORD).send(method)
+            VerificationCodeManager(tenant_user, VerificationCodeScene.RESET_PASSWORD).send()
         except ExceedSendVerificationCodeLimit:
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
         except Exception:
@@ -125,41 +116,36 @@ class SendResetPasswordVerificationCodeApi(generics.CreateAPIView):
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
 
 
-class ResetPasswordByVerificationCodeApi(generics.CreateAPIView):
+class GetResetPasswordUrlByVerificationCodeApi(GetTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
-    authentication_classes = None
-    permission_classes = None
+    authentication_classes: List[BaseAuthentication] = []
+    permission_classes: List[BasePermission] = []
 
     @swagger_auto_schema(
         tags=["password"],
-        operation_description="使用验证码重置租户密码",
-        query_serializer=ResetPasswordByVerificationCodeInputSLZ(),
+        operation_description="通过短信验证码获取重置密码链接",
+        query_serializer=GetResetPasswordUrlByVerificationCodeInputSLZ(),
+        responses={status.HTTP_200_OK: GetResetPasswordUrlByVerificationCodeOutputSLZ()},
     )
+    @handle_exception_with_settings()
     def post(self, request, *args, **kwargs):
-        slz = ResetPasswordByVerificationCodeInputSLZ(data=request.data)
+        slz = GetResetPasswordUrlByVerificationCodeInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        tenant_user_id, verification_code = params["user_id"], params["verification_code"]
-        # 1. 寻找指定的租户用户
-        # FIXME (su) 补充 status 过滤
-        tenant_user = TenantUser.objects.filter(id=tenant_user_id).first()
-        if not tenant_user:
-            raise error_codes.TENANT_USER_NOT_EXIST.f(_("ID 为 {} 的用户不存在").format(tenant_user_id))
+        phone, phone_country_code = params["phone"], params["phone_country_code"]
+        verification_code = params["verification_code"]
 
-        # 2. 检查该租户用户是否允许重置密码
-        if not tenant_user.data_source_user.data_source.is_local:
-            raise error_codes.CANNOT_RESET_DATA_SOURCE_USER_PASSWORD.f(_("仅本地数据源用户可重置密码"))
-
-        # 3. 校验验证码是否属于该租户用户且有效
+        # 1. 找到匹配的租户用户
+        tenant_user = self._get_tenant_user_by_phone(params["tenant_id"], phone, phone_country_code)
+        # 2. 校验验证码是否正确
         self._validate_verification_code(tenant_user, verification_code)
+        # 3. 获取重置密码链接
+        url = self._get_reset_password_url(tenant_user)
 
-        # 4. 根据数据源配置重置密码
-        self._reset_password_by_cfg_and_send_notification(tenant_user)
+        return Response(GetResetPasswordUrlByVerificationCodeOutputSLZ({"reset_password_url": url}).data)
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def _validate_verification_code(self, tenant_user, verification_code):
+    def _validate_verification_code(self, tenant_user: TenantUser, verification_code: str):
         try:
             VerificationCodeManager(tenant_user, VerificationCodeScene.RESET_PASSWORD).validate(verification_code)
         except ExceedVerificationCodeRetries:
@@ -170,18 +156,95 @@ class ResetPasswordByVerificationCodeApi(generics.CreateAPIView):
             logger.exception("failed to validate verification code to user %s", tenant_user.id)
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("验证码校验失败，请联系管理员处理"))
 
-    def _reset_password_by_cfg_and_send_notification(self, tenant_user):
+    def _get_reset_password_url(self, tenant_user: TenantUser) -> str:
+        token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.PHONE)
+        return gen_reset_password_url(token)
+
+
+class SendResetPasswordUrlToEmailApi(GetTenantUserMixin, generics.CreateAPIView):
+    # 豁免认证 & 权限
+    authentication_classes: List[BaseAuthentication] = []
+    permission_classes: List[BasePermission] = []
+
+    @swagger_auto_schema(
+        tags=["password"],
+        operation_description="发送重置密码链接到用户邮箱",
+        query_serializer=SendResetPasswordUrlToEmailInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    @handle_exception_with_settings()
+    def post(self, request, *args, **kwargs):
+        slz = SendResetPasswordUrlToEmailInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        tenant_user = self._get_tenant_user_by_email(params["tenant_id"], params["email"])
+        try:
+            UserResetPasswordTokenManager().send(tenant_user)
+        except ExceedSendResetPasswordTokenLimit:
+            raise error_codes.SEND_RESET_PASSWORD_URL_FAILED.f(_("今日发送次数超过上限，请明天再试"))
+        except Exception:
+            logger.exception("failed to send reset password url to user %s", tenant_user.id)
+            raise error_codes.SEND_RESET_PASSWORD_URL_FAILED.f(_("请联系管理员处理"))
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ListUserByResetPasswordTokenApi(generics.ListAPIView):
+    # 豁免认证 & 权限
+    authentication_classes: List[BaseAuthentication] = []
+    permission_classes: List[BasePermission] = []
+
+    @swagger_auto_schema(
+        tags=["password"],
+        operation_description="根据 Token 获取可重置密码的租户用户列表",
+        query_serializer=ListUserByResetPasswordTokenInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserMatchedByTokenSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        slz = ListUserByResetPasswordTokenInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        tenant_users = UserResetPasswordTokenManager().list_user_by_token(params["token"])
+        return Response(TenantUserMatchedByTokenSLZ(tenant_users, many=True).data)
+
+
+class ResetPasswordByTokenApi(generics.CreateAPIView):
+    # 豁免认证 & 权限
+    authentication_classes: List[BaseAuthentication] = []
+    permission_classes: List[BasePermission] = []
+
+    @swagger_auto_schema(
+        tags=["password"],
+        operation_description="根据 Token 重置密码",
+        query_serializer=ResetPasswordByTokenInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        slz = ResetPasswordByTokenInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        tenant_user = (
+            UserResetPasswordTokenManager()
+            .list_user_by_token(params["token"])
+            .filter(id=params["tenant_user_id"])
+            .first()
+        )
+        if not tenant_user:
+            raise error_codes.TENANT_USER_NOT_EXIST.f(_("租户用户不存在"))
+
         data_source_user = tenant_user.data_source_user
         plugin_cfg = data_source_user.data_source.get_plugin_cfg()
-        password = PasswordGenerator(plugin_cfg.password_rule.to_rule()).generate()
+        ret = PasswordValidator(plugin_cfg.password_rule.to_rule()).validate(params["password"])  # type: ignore
+        if not ret.ok:
+            raise error_codes.CANNOT_RESET_USER_PASSWORD.f(_("密码不符合规则：{}").format(ret.exception_message))
 
         DataSourceUserHandler.update_password(
             data_source_user=data_source_user,
-            password=password,
+            password=params["password"],
             valid_days=plugin_cfg.password_rule.valid_time,
-            operator="AnonymousByVerificationCode",
+            operator="AnonymousByResetToken",
         )
-
-        # 发送新密码通知到用户
-        # FIXME (su) 这里有一个讨论点，通知到的是数据源用户的数据源所在租户的关联的租户用户，不一定是指定的租户用户
-        send_reset_password_to_user.delay(data_source_user.id, NotificationScene.RESET_PASSWORD, password)
+        return Response(status=status.HTTP_204_NO_CONTENT)

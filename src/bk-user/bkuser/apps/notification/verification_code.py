@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import random
+import secrets
 import string
 from datetime import timedelta
 
@@ -16,22 +16,19 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.notification.constants import NotificationMethod, VerificationCodeScene
+from bkuser.apps.notification.constants import VerificationCodeScene
 from bkuser.apps.notification.exceptions import (
     ExceedSendVerificationCodeLimit,
     ExceedVerificationCodeRetries,
     InvalidVerificationCode,
 )
-from bkuser.apps.notification.tasks import send_verification_code_to_user
+from bkuser.apps.notification.tasks import send_verification_code_to_user_phone
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 
 
 class VerificationCodeManager:
-    """邮箱 / 手机验证码"""
-
-    # 验证码过期时间
-    cache_timeout = settings.VERIFICATION_CODE_VALID_TIME
+    """手机短信验证码"""
 
     def __init__(self, tenant_user: TenantUser, scene: VerificationCodeScene):
         self.tenant_user = tenant_user
@@ -53,18 +50,18 @@ class VerificationCodeManager:
         self.cache.delete(self.code_cache_key)
         self.cache.delete(self.retries_cache_key)
 
-    def send(self, method: NotificationMethod):
+    def send(self):
         """发送验证码"""
         if not self._can_send():
             raise ExceedSendVerificationCodeLimit(_("超过验证码发送次数限制"))
 
-        send_verification_code_to_user.delay(self.tenant_user.id, method, self._get_verification_code())
+        send_verification_code_to_user_phone.delay(self.tenant_user.id, self._get_verification_code())
 
     def _can_retries(self) -> bool:
         """检查当前验证码试错次数"""
         retries = self.cache.get(self.retries_cache_key, 0)
         if retries < settings.VERIFICATION_CODE_MAX_RETRIES:
-            self.cache.set(self.retries_cache_key, retries + 1, timeout=self.cache_timeout)
+            self.cache.set(self.retries_cache_key, retries + 1, timeout=settings.VERIFICATION_CODE_VALID_TIME)
             return True
 
         self.cache.delete(self.code_cache_key)
@@ -74,14 +71,14 @@ class VerificationCodeManager:
     def _can_send(self) -> bool:
         """检查当前验证码发送次数"""
         send_cnt = self.cache.get(self.send_cnt_cache_key, 0)
-        if send_cnt < settings.VERIFICATION_CODE_MAX_SEND_PER_DAY:
-            # 今天结束后过期
-            midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-            expire_seconds = (midnight - timezone.now()).total_seconds()
-            self.cache.set(self.send_cnt_cache_key, send_cnt + 1, timeout=expire_seconds)
-            return True
+        if send_cnt >= settings.VERIFICATION_CODE_MAX_SEND_PER_DAY:
+            return False
 
-        return False
+        # 今天结束后过期
+        midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        expire_seconds = (midnight - timezone.now()).total_seconds()
+        self.cache.set(self.send_cnt_cache_key, send_cnt + 1, timeout=expire_seconds)
+        return True
 
     def _get_verification_code(self) -> str:
         """从缓存中获取 / 生成验证码"""
@@ -89,13 +86,15 @@ class VerificationCodeManager:
             return code
 
         # 验证码字符集：数字，大小写字母
-        code = "".join(random.sample(string.ascii_letters + string.digits, settings.VERIFICATION_CODE_LENGTH))
+        charset = string.ascii_letters + string.digits
+        code = "".join(secrets.choice(charset) for _ in range(settings.VERIFICATION_CODE_LENGTH))
         # 刷新缓存中的验证码
-        self.cache.set(self.code_cache_key, code, timeout=self.cache_timeout)
+        self.cache.set(self.code_cache_key, code, timeout=settings.VERIFICATION_CODE_VALID_TIME)
         # 重置试错次数
         self.cache.delete(self.retries_cache_key)
         return code
 
     def _gen_cache_key(self, key_type: str) -> str:
         """生成验证码缓存 key"""
-        return f"{self.scene.value}:{self.tenant_user.id}:{key_type}"
+        phone, phone_country_code = self.tenant_user.phone_info
+        return f"{self.scene.value}:{phone_country_code}:{phone}:{key_type}"

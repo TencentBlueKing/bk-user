@@ -86,7 +86,7 @@ class ErrorCodes:
 
     # 数据源用户
     DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
-    CANNOT_RESET_DATA_SOURCE_USER_PASSWORD = ErrorCode(_("数据源用户无法重置密码"))
+    CANNOT_RESET_USER_PASSWORD = ErrorCode(_("无法重置用户密码"))
 
     # 认证源
     IDP_PLUGIN_NOT_LOAD = ErrorCode(_("认证源插件未加载"))
@@ -102,11 +102,12 @@ class ErrorCodes:
     BIND_TENANT_USER_FAILED = ErrorCode(_("数据源用户绑定租户失败"))
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到租户用户"))
     GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
-    MATCH_MORE_THAN_ONE_USER = ErrorCode(_("匹配到多个用户"))
 
     # 验证码
     INVALID_VERIFICATION_CODE = ErrorCode(_("验证码无效"))
     SEND_VERIFICATION_CODE_FAILED = ErrorCode(_("发送验证码失败"))
+
+    SEND_RESET_PASSWORD_URL_FAILED = ErrorCode(_("发送重置密码链接失败"))
 
 
 # 实例化一个全局对象

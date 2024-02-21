@@ -9,18 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-
-class ExceedVerificationCodeRetries(Exception):
-    """超过验证码重试次数"""
+from django.conf import settings
 
 
-class InvalidVerificationCode(Exception):
-    """无效 / 已过期验证码"""
-
-
-class ExceedSendVerificationCodeLimit(Exception):
-    """超过验证码发送限制"""
-
-
-class ExceedSendResetPasswordTokenLimit(Exception):
-    """超过密码重置链接发送限制"""
+def gen_reset_password_url(token: str) -> str:
+    """生成用户重置密码的链接"""
+    return f"{settings.BK_USER_URL.rstrip('/')}/reset-password/?token={token}"

@@ -8,33 +8,55 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict
 
 from django.conf import settings
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+
+from bkuser.apps.tenant.models import TenantUser
+from bkuser.biz.tenant import TenantUserHandler
 
 
 class SendResetPasswordVerificationCodeInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
-    email = serializers.CharField(help_text="邮箱", required=False)
-    phone = serializers.CharField(help_text="手机号码", required=False)
+    phone = serializers.CharField(help_text="手机号码", required=True)
     phone_country_code = serializers.CharField(
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
 
-    def validate(self, attrs: Dict[str, str]) -> Dict[str, str]:
-        if not (attrs.get("email") or attrs.get("phone")):
-            raise ValidationError(_("必须提供邮箱或手机号码中的一项"))
 
-        return attrs
-
-
-class SendResetPasswordVerificationCodeOutputSLZ(serializers.Serializer):
-    user_id = serializers.CharField(help_text="租户用户 ID")
-
-
-class ResetPasswordByVerificationCodeInputSLZ(serializers.Serializer):
-    user_id = serializers.CharField(help_text="租户用户 ID")
+class GetResetPasswordUrlByVerificationCodeInputSLZ(serializers.Serializer):
+    tenant_id = serializers.CharField(help_text="租户 ID")
+    phone = serializers.CharField(help_text="手机号码", required=True)
+    phone_country_code = serializers.CharField(
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+    )
     verification_code = serializers.CharField(help_text="验证码")
+
+
+class GetResetPasswordUrlByVerificationCodeOutputSLZ(serializers.Serializer):
+    reset_password_url = serializers.CharField(help_text="密码重置链接")
+
+
+class SendResetPasswordUrlToEmailInputSLZ(serializers.Serializer):
+    tenant_id = serializers.CharField(help_text="租户 ID")
+    email = serializers.CharField(help_text="邮箱")
+
+
+class ListUserByResetPasswordTokenInputSLZ(serializers.Serializer):
+    token = serializers.CharField(help_text="密码重置 Token", max_length=255)
+
+
+class TenantUserMatchedByTokenSLZ(serializers.Serializer):
+    tenant_id = serializers.CharField(help_text="租户 ID")
+    tenant_user_id = serializers.CharField(help_text="租户用户 ID", source="id")
+    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
+    display_name = serializers.SerializerMethodField(help_text="展示用名称")
+
+    def get_display_name(self, obj: TenantUser) -> str:
+        return TenantUserHandler.generate_tenant_user_display_name(obj)
+
+
+class ResetPasswordByTokenInputSLZ(serializers.Serializer):
+    tenant_user_id = serializers.CharField(help_text="租户用户 ID")
+    password = serializers.CharField(help_text="新密码")
+    token = serializers.CharField(help_text="密码重置 Token", max_length=255)

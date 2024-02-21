@@ -19,6 +19,7 @@ from bkuser import settings
 from bkuser.apps.data_source.models import DataSource, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
 from bkuser.apps.notification.data_models import NotificationTemplate
+from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
 from bkuser.component import cmsi
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -196,16 +197,16 @@ class TmplContextGenerator:
         """用户初始化"""
         return {
             "password": self.scene_kwargs["passwd"],
-            "url": settings.BK_USER_URL + "/personal-center",
+            "url": settings.BK_USER_URL.rstrip("/") + "/personal-center",
             **self._gen_base_ctx(),
         }
 
     def _gen_reset_passwd_ctx(self) -> Dict[str, str]:
-        """重置密码"""
+        """用户重置密码"""
         return {
-            "password": self.scene_kwargs["passwd"],
-            "url": settings.BK_USER_URL + "/personal-center",
-            **self._gen_base_ctx(),
+            "url": gen_reset_password_url(self.scene_kwargs["token"]),
+            # 将验证码有效期换算为分钟，更符合一般表示法
+            "valid_minutes": str(int(settings.RESET_PASSWORD_TOKEN_VALID_TIME / 60)),
         }
 
     def _gen_passwd_expiring_ctx(self) -> Dict[str, str]:

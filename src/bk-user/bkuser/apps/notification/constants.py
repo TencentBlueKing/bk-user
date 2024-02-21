@@ -35,4 +35,12 @@ class NotificationScene(str, StructuredEnum):
 class VerificationCodeScene(str, StructuredEnum):
     """验证码使用场景"""
 
-    RESET_PASSWORD = EnumField("reset_password", label=_("忘记密码后申请重置"))
+    RESET_PASSWORD = EnumField("reset_passwd", label=_("忘记密码后申请重置"))
+
+
+class TokenRelatedObjType(str, StructuredEnum):
+    """令牌关联对象类型"""
+
+    TENANT_USER = EnumField("tenant_user", label=_("租户用户"))
+    PHONE = EnumField("phone", label=_("手机号"))
+    EMAIL = EnumField("email", label=_("邮箱"))
