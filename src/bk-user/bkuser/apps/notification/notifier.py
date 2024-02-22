@@ -104,7 +104,7 @@ class NotificationTmplsGetter:
                         "您好：\n"
                         + "您的蓝鲸智云验证码为: {{ verification_code }}\n"
                         + "该验证码 {{ valid_minutes }} 分钟内有效，为了您的账户安全，请勿向他人泄露该验证码\n"
-                        + "此邮件为系统自动发送，请勿回复。"
+                        + "此短信为系统自动发送，请勿回复。"
                     ),
                 )
             ]

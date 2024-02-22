@@ -190,7 +190,7 @@ class SendResetPasswordUrlToEmailApi(GetTenantUserMixin, generics.CreateAPIView)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ListUserByResetPasswordTokenApi(generics.ListAPIView):
+class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
@@ -206,7 +206,7 @@ class ListUserByResetPasswordTokenApi(generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        tenant_users = UserResetPasswordTokenManager().list_user_by_token(params["token"])
+        tenant_users = UserResetPasswordTokenManager().list_users_by_token(params["token"])
         return Response(TenantUserMatchedByTokenSLZ(tenant_users, many=True).data)
 
 
@@ -228,7 +228,7 @@ class ResetPasswordByTokenApi(generics.CreateAPIView):
 
         tenant_user = (
             UserResetPasswordTokenManager()
-            .list_user_by_token(params["token"])
+            .list_users_by_token(params["token"])
             .filter(id=params["tenant_user_id"])
             .first()
         )

@@ -50,7 +50,7 @@ class UserResetPasswordTokenManager:
         )
         return token
 
-    def list_user_by_token(self, token: str) -> QuerySet[TenantUser]:
+    def list_users_by_token(self, token: str) -> QuerySet[TenantUser]:
         """根据 token 获取用户信息，返回可修改密码的用户列表"""
         cache_val = self.cache.get(self._gen_cache_key_by_token(token), None)
         if not cache_val:

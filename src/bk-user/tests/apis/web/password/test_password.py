@@ -36,7 +36,7 @@ def tenant_user(default_tenant, full_local_data_source) -> TenantUser:
     return TenantUser.objects.filter(data_source_id=full_local_data_source.id).first()
 
 
-class TestResetPasswordAfterForgetByPhone:
+class TestResetPasswordByPhoneAfterForget:
     """忘记密码后通过手机找回"""
 
     def test_normal(self, api_client, tenant_user):
@@ -47,7 +47,7 @@ class TestResetPasswordAfterForgetByPhone:
                 reverse("password.send_verification_code"),
                 data={"tenant_id": tenant_user.tenant_id, "phone": phone, "phone_country_code": phone_country_code},
             )
-
+            print(resp.data)
             assert resp.status_code == status.HTTP_204_NO_CONTENT
 
             # 2. 从缓存中获取验证码用于认证，认证后获取到密码重置链接
@@ -70,9 +70,9 @@ class TestResetPasswordAfterForgetByPhone:
             urllib.parse.urlparse(reset_password_url)
             reset_token = urllib.parse.parse_qs(urllib.parse.urlparse(reset_password_url).query)["token"][0]
 
-            # 4. 通过 token 匹配租户用户
+            # 4. 通过 Token 匹配租户用户
             resp = api_client.get(
-                reverse("password.list_user_by_passwd_reset_token"),
+                reverse("password.list_users_by_passwd_reset_token"),
                 data={"token": reset_token},
             )
             assert resp.status_code == status.HTTP_200_OK
@@ -94,16 +94,22 @@ class TestResetPasswordAfterForgetByPhone:
             identity_info = LocalDataSourceIdentityInfo.objects.get(user=tenant_user.data_source_user)
             check_password(new_password, identity_info.password)
 
-    def test_exceed_send_max_limit(self, api_client):
+    def test_exceed_send_max_limit(self, api_client, tenant_user):
         """单用户超过每日发送上限"""
-        ...
+        with override_settings(
+            ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True,
+            VERIFICATION_CODE_MAX_SEND_PER_DAY=0,
+        ):
+            phone, phone_country_code = tenant_user.phone_info
+            resp = api_client.post(
+                reverse("password.send_verification_code"),
+                data={"tenant_id": tenant_user.tenant_id, "phone": phone, "phone_country_code": phone_country_code},
+            )
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST
+            assert "发送验证码次数超过上限" in resp.data["message"]
 
-    def test_retry_exceed_limit(self, api_client):
-        """验证码试错超过上限"""
-        ...
 
-
-class TestResetPasswordAfterForgetByEmail:
+class TestResetPasswordByEmailAfterForget:
     """忘记密码后通过邮件找回"""
 
     def test_normal(self, api_client, tenant_user):
@@ -119,9 +125,9 @@ class TestResetPasswordAfterForgetByEmail:
             # 2. 搞一个能用的，关联 email 的 token
             reset_token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.EMAIL)
 
-            # 3. 通过 token 匹配租户用户
+            # 3. 通过 Token 匹配租户用户
             resp = api_client.get(
-                reverse("password.list_user_by_passwd_reset_token"),
+                reverse("password.list_users_by_passwd_reset_token"),
                 data={"token": reset_token},
             )
             assert resp.status_code == status.HTTP_200_OK
@@ -143,6 +149,16 @@ class TestResetPasswordAfterForgetByEmail:
             identity_info = LocalDataSourceIdentityInfo.objects.get(user=tenant_user.data_source_user)
             check_password(new_password, identity_info.password)
 
-    def test_exceed_send_max_limit(self, api_client):
+    def test_exceed_send_max_limit(self, api_client, tenant_user):
         """单用户超过每日发送上限"""
-        ...
+        with override_settings(
+            ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True,
+            RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY=0,
+        ):
+            resp = api_client.post(
+                reverse("password.send_passwd_reset_url_to_email"),
+                data={"tenant_id": tenant_user.tenant_id, "email": tenant_user.email},
+            )
+
+            assert resp.status_code == status.HTTP_400_BAD_REQUEST
+            assert "发送次数超过上限" in resp.data["message"]

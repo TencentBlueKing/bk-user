@@ -45,9 +45,9 @@ urlpatterns = [
     ),
     # 通过密码重置 Token 获取可选租户用户
     path(
-        "list-user-by-passwd-reset-token/",
-        views.ListUserByResetPasswordTokenApi.as_view(),
-        name="password.list_user_by_passwd_reset_token",
+        "list-users-by-passwd-reset-token/",
+        views.ListUsersByResetPasswordTokenApi.as_view(),
+        name="password.list_users_by_passwd_reset_token",
     ),
     # 通过密码重置 Token 重置密码
     path(
