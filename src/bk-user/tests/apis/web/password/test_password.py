@@ -47,7 +47,7 @@ class TestResetPasswordByPhoneAfterForget:
                 reverse("password.send_verification_code"),
                 data={"tenant_id": tenant_user.tenant_id, "phone": phone, "phone_country_code": phone_country_code},
             )
-            print(resp.data)
+
             assert resp.status_code == status.HTTP_204_NO_CONTENT
 
             # 2. 从缓存中获取验证码用于认证，认证后获取到密码重置链接

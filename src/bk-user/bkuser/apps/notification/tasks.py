@@ -48,13 +48,13 @@ def send_reset_passwd_url_to_user(tenant_user_id: str, reset_token: str):
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def send_reset_password_to_user(data_source_user_id: int, scene: NotificationScene, new_password: str):
+def send_reset_password_to_user(data_source_user_id: int, new_password: str):
     """发送被重置的新密码通知到用户"""
     data_source_user = DataSourceUser.objects.select_related("data_source").get(id=data_source_user_id)
     tenant_user = TenantUser.objects.get(
         data_source_user=data_source_user, tenant_id=data_source_user.data_source.owner_tenant_id
     )
-    TenantUserNotifier(scene, data_source_id=data_source_user.data_source_id).send(tenant_user, passwd=new_password)
+    TenantUserNotifier(NotificationScene.MANAGER_RESET_PASSWORD).send(tenant_user, passwd=new_password)
 
 
 @app.task(base=BaseTask, ignore_result=True)
