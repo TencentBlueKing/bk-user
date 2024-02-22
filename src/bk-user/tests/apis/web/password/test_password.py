@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import string
-import urllib.parse
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
@@ -67,12 +67,11 @@ class TestResetPasswordByPhoneAfterForget:
             assert reset_password_url is not None
 
             # 3. 解析密码重置链接获取 Token
-            urllib.parse.urlparse(reset_password_url)
-            reset_token = urllib.parse.parse_qs(urllib.parse.urlparse(reset_password_url).query)["token"][0]
+            reset_token = parse_qs(urlparse(reset_password_url).query)["token"][0]
 
             # 4. 通过 Token 匹配租户用户
             resp = api_client.get(
-                reverse("password.list_users_by_passwd_reset_token"),
+                reverse("password.list_users_by_reset_passwd_token"),
                 data={"token": reset_token},
             )
             assert resp.status_code == status.HTTP_200_OK
@@ -82,7 +81,7 @@ class TestResetPasswordByPhoneAfterForget:
             charset = string.ascii_letters + string.digits + string.punctuation
             new_password = generate_random_string(length=32, chars=charset)
             resp = api_client.post(
-                reverse("password.reset_by_passwd_reset_token"),
+                reverse("password.reset_passwd_by_token"),
                 data={
                     "tenant_user_id": tenant_user.id,
                     "password": new_password,
@@ -92,7 +91,7 @@ class TestResetPasswordByPhoneAfterForget:
             assert resp.status_code == status.HTTP_204_NO_CONTENT
 
             identity_info = LocalDataSourceIdentityInfo.objects.get(user=tenant_user.data_source_user)
-            check_password(new_password, identity_info.password)
+            assert check_password(new_password, identity_info.password)
 
     def test_exceed_send_max_limit(self, api_client, tenant_user):
         """单用户超过每日发送上限"""
@@ -127,17 +126,17 @@ class TestResetPasswordByEmailAfterForget:
 
             # 3. 通过 Token 匹配租户用户
             resp = api_client.get(
-                reverse("password.list_users_by_passwd_reset_token"),
+                reverse("password.list_users_by_reset_passwd_token"),
                 data={"token": reset_token},
             )
             assert resp.status_code == status.HTTP_200_OK
             assert tenant_user.id in [user["tenant_user_id"] for user in resp.data]
 
-            # 5. 通过 Token 重置密码
+            # 4. 通过 Token 重置密码
             charset = string.ascii_letters + string.digits + string.punctuation
             new_password = generate_random_string(length=32, chars=charset)
             resp = api_client.post(
-                reverse("password.reset_by_passwd_reset_token"),
+                reverse("password.reset_passwd_by_token"),
                 data={
                     "tenant_user_id": tenant_user.id,
                     "password": new_password,
@@ -147,7 +146,7 @@ class TestResetPasswordByEmailAfterForget:
             assert resp.status_code == status.HTTP_204_NO_CONTENT
 
             identity_info = LocalDataSourceIdentityInfo.objects.get(user=tenant_user.data_source_user)
-            check_password(new_password, identity_info.password)
+            assert check_password(new_password, identity_info.password)
 
     def test_exceed_send_max_limit(self, api_client, tenant_user):
         """单用户超过每日发送上限"""
