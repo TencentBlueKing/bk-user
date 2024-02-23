@@ -16,35 +16,36 @@ class CompatibilityApiErrorCodeEnum(str, StructuredEnum):
 
     SUCCESS = EnumField("SUCCESS")
     PARAM_NOT_VALID = EnumField("PARAM_NOT_VALID")
-    USER_NOT_EXISTS = EnumField("USER_NOT_EXISTS")
-    USER_NOT_EXISTS2 = EnumField("USER_NOT_EXISTS2")
-    USER_INFO_UPDATE_FAIL = EnumField("USER_INFO_UPDATE_FAIL")
-    ACCESS_PERMISSION_DENIED = EnumField("ACCESS_PERMISSION_DENIED")
+    # Note: 以下是 2.x 版本里有的错误码，但实际可能因为某些不知原因，可能不再使用了，这里先注释
+    # USER_NOT_EXISTS = EnumField("USER_NOT_EXISTS")
+    # USER_NOT_EXISTS2 = EnumField("USER_NOT_EXISTS2")
+    # USER_INFO_UPDATE_FAIL = EnumField("USER_INFO_UPDATE_FAIL")
+    # ACCESS_PERMISSION_DENIED = EnumField("ACCESS_PERMISSION_DENIED")
 
 
 CompatibilityApiErrorCodeMap = {
     "v1": {
         CompatibilityApiErrorCodeEnum.SUCCESS: "00",
         CompatibilityApiErrorCodeEnum.PARAM_NOT_VALID: "1200",
-        CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS: "1201",
-        CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS2: "1300",
-        CompatibilityApiErrorCodeEnum.USER_INFO_UPDATE_FAIL: "1202",
-        CompatibilityApiErrorCodeEnum.ACCESS_PERMISSION_DENIED: "1203",
+        # CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS: "1201",
+        # CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS2: "1300",
+        # CompatibilityApiErrorCodeEnum.USER_INFO_UPDATE_FAIL: "1202",
+        # CompatibilityApiErrorCodeEnum.ACCESS_PERMISSION_DENIED: "1203",
     },
     "v2": {
         CompatibilityApiErrorCodeEnum.SUCCESS: 0,
         CompatibilityApiErrorCodeEnum.PARAM_NOT_VALID: 1302100,
-        CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS: 1302101,
-        CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS2: 1302103,
-        CompatibilityApiErrorCodeEnum.USER_INFO_UPDATE_FAIL: 1302102,
-        CompatibilityApiErrorCodeEnum.ACCESS_PERMISSION_DENIED: 1302403,
+        # CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS: 1302101,
+        # CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS2: 1302103,
+        # CompatibilityApiErrorCodeEnum.USER_INFO_UPDATE_FAIL: 1302102,
+        # CompatibilityApiErrorCodeEnum.ACCESS_PERMISSION_DENIED: 1302403,
     },
     "v3": {
         CompatibilityApiErrorCodeEnum.SUCCESS: 0,
         CompatibilityApiErrorCodeEnum.PARAM_NOT_VALID: 1302100,
-        CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS: 1302101,
-        CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS2: 1302103,
-        CompatibilityApiErrorCodeEnum.USER_INFO_UPDATE_FAIL: 1302102,
-        CompatibilityApiErrorCodeEnum.ACCESS_PERMISSION_DENIED: 1302403,
+        # CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS: 1302101,
+        # CompatibilityApiErrorCodeEnum.USER_NOT_EXISTS2: 1302103,
+        # CompatibilityApiErrorCodeEnum.USER_INFO_UPDATE_FAIL: 1302102,
+        # CompatibilityApiErrorCodeEnum.ACCESS_PERMISSION_DENIED: 1302403,
     },
 }
