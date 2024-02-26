@@ -45,3 +45,8 @@ export const putPersonalCenterUserExtrasFields = (params: any) => http.put(`/api
  * 个人中心修改密码
  */
 export const putPersonalCenterUserPassword = (params: PutUserPasswordParams) => http.put(`/api/v1/web/personal-center/tenant-users/${params.id}/password/`, params);
+
+/**
+ * 个人中心-用户功能特性-当前用户是否支持修改密码
+ */
+export const getPersonalCenterUserFeature = (id: string) => http.get(`/api/v1/web/personal-center/tenant-users/${id}/feature-flags/`);

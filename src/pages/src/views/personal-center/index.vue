@@ -91,9 +91,18 @@
             </div>
           </div>
           <div class="header-right">
-            <bk-button class="min-w-[88px]" @click="showPasswordModal">
-              {{ $t('修改密码') }}
-            </bk-button>
+            <span v-bk-tooltips="{
+              content: $t('当前用户不支持修改密码'),
+              distance: 20,
+              disabled: canChangePassword,
+            }">
+              <bk-button
+                class="min-w-[88px]"
+                :disabled="!canChangePassword"
+                @click="showPasswordModal">
+                {{ $t('修改密码') }}
+              </bk-button>
+            </span>
             <span v-bk-tooltips="{
               content: $t('该账号已登录'),
               distance: 20,
@@ -317,6 +326,7 @@ import useValidate from '@/hooks/use-validate';
 import { useCustomFields } from '@/hooks/useCustomFields';
 import {
   getCurrentNaturalUser,
+  getPersonalCenterUserFeature,
   getPersonalCenterUsers,
   getPersonalCenterUserVisibleFields,
   patchTenantUsersLogo,
@@ -348,6 +358,8 @@ const rules = {
 const formRef = ref();
 // 保存修改后的extras数据
 const extrasList = ref([]);
+// 是否可以修改密码
+const canChangePassword = ref(false);
 
 onMounted(() => {
   getNaturalUser();
@@ -374,14 +386,22 @@ const getCurrentUser = async (id) => {
       }
     });
     // 关联账户详情
-    const res = await getPersonalCenterUsers(id);
-    currentUserInfo.value = res.data;
-    const fieldsRes = await getPersonalCenterUserVisibleFields(id);
-    currentUserInfo.value.extras = useCustomFields(currentUserInfo.value?.extras, fieldsRes.data.custom_fields);
-    extrasList.value = JSON.parse(JSON.stringify(currentUserInfo.value.extras));
-    customEmail.value = res.data.custom_email;
-    customPhone.value = res.data.custom_phone;
-    customPhoneCode.value = res.data.custom_phone_country_code;
+    const [userRes, featureRes, fieldsRes] = await Promise.all([
+      getPersonalCenterUsers(id),
+      getPersonalCenterUserFeature(id),
+      getPersonalCenterUserVisibleFields(id),
+    ]);
+
+    currentUserInfo.value = {
+      ...userRes.data,
+      extras: useCustomFields(userRes.data?.extras, fieldsRes.data.custom_fields),
+    };
+
+    canChangePassword.value = featureRes.data.can_change_password;
+    extrasList.value = [...currentUserInfo.value.extras];
+    customEmail.value = userRes.data.custom_email;
+    customPhone.value = userRes.data.custom_phone;
+    customPhoneCode.value = userRes.data.custom_phone_country_code;
     isInheritedEmail.value = currentUserInfo.value.is_inherited_email;
     isInheritedPhone.value = currentUserInfo.value.is_inherited_phone;
   } catch (error) {
