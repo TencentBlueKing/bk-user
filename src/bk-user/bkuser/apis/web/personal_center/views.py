@@ -16,10 +16,12 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from bkuser.apis.web.personal_center.constants import PersonalCenterFeatureFlag
 from bkuser.apis.web.personal_center.serializers import (
     NaturalUserWithTenantUserListOutputSLZ,
     TenantUserEmailUpdateInputSLZ,
     TenantUserExtrasUpdateInputSLZ,
+    TenantUserFeatureFlagOutputSLZ,
     TenantUserFieldOutputSLZ,
     TenantUserLogoUpdateInputSLZ,
     TenantUserPasswordUpdateInputSLZ,
@@ -235,6 +237,29 @@ class TenantUserFieldListApi(generics.ListAPIView):
             {"builtin_fields": UserBuiltinField.objects.all(), "custom_fields": custom_fields}
         )
         return Response(slz.data)
+
+
+class TenantUserFeatureFlagListApi(generics.ListAPIView):
+    queryset = TenantUser.objects.all()
+    lookup_url_kwarg = "id"
+    pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.USE_PLATFORM)]
+
+    @swagger_auto_schema(
+        tags=["personal_center"],
+        operation_description="个人中心-用户功能特性",
+        responses={status.HTTP_200_OK: TenantUserFeatureFlagOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source = tenant_user.data_source_user.data_source
+
+        feature_flags = {
+            PersonalCenterFeatureFlag.CAN_CHANGE_PASSWORD: bool(
+                data_source.is_local and data_source.plugin_config.get("enable_account_password_login", False)
+            )
+        }
+        return Response(TenantUserFeatureFlagOutputSLZ(feature_flags).data)
 
 
 class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):

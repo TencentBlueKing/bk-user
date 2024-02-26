@@ -190,6 +190,10 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
         ref_name = "personal_center.TenantUserFieldOutputSLZ"
 
 
+class TenantUserFeatureFlagOutputSLZ(serializers.Serializer):
+    can_change_password = serializers.BooleanField(help_text="修改密码")
+
+
 class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
     old_password = serializers.CharField(help_text="旧密码", max_length=128)
     new_password = serializers.CharField(help_text="新密码", max_length=128)
