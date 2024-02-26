@@ -191,7 +191,7 @@ class TenantUserFieldOutputSLZ(serializers.Serializer):
 
 
 class TenantUserFeatureFlagOutputSLZ(serializers.Serializer):
-    change_password = serializers.BooleanField(help_text="修改密码")
+    can_change_password = serializers.BooleanField(help_text="修改密码")
 
 
 class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):

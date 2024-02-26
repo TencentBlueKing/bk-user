@@ -252,11 +252,14 @@ class TenantUserFeatureFlagListApi(generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         tenant_user = self.get_object()
+        data_source = tenant_user.data_source_user.data_source
 
-        slz = TenantUserFeatureFlagOutputSLZ(
-            {PersonalCenterFeatureFlag.CHANGE_PASSWORD: tenant_user.data_source_user.data_source.is_local}
-        )
-        return Response(slz.data)
+        feature_flags = {
+            PersonalCenterFeatureFlag.CAN_CHANGE_PASSWORD: bool(
+                data_source.is_local and data_source.plugin_config.get("enable_account_password_login", False)
+            )
+        }
+        return Response(TenantUserFeatureFlagOutputSLZ(feature_flags).data)
 
 
 class TenantUserPasswordUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):

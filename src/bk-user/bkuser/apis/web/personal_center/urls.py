@@ -51,7 +51,7 @@ urlpatterns = [
         name="personal_center.tenant_users.fields.list",
     ),
     path(
-        "tenant-users/<str:id>/feature_flags/",
+        "tenant-users/<str:id>/feature-flags/",
         views.TenantUserFeatureFlagListApi.as_view(),
         name="personal_center.tenant_users.feature_flag.list",
     ),

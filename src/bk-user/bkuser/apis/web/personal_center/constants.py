@@ -13,4 +13,4 @@ from django.utils.translation import gettext_lazy as _
 
 
 class PersonalCenterFeatureFlag(str, StructuredEnum):
-    CHANGE_PASSWORD = EnumField("change_password", label=_("修改密码"))
+    CAN_CHANGE_PASSWORD = EnumField("can_change_password", label=_("修改密码"))
