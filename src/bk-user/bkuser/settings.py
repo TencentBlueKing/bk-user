@@ -347,7 +347,7 @@ if not CELERY_BROKER_URL:
         CELERY_BROKER_URL = ";".join(
             [f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR]
         )
-        BROKER_TRANSPORT_OPTIONS = {
+        CELERY_BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
             "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
             "socket_timeout": 5,
