@@ -10,10 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import pytest
 from bkuser.apps.notification.constants import VerificationCodeScene
-from bkuser.apps.notification.exceptions import (
-    ExceedSendVerificationCodeLimit,
-    InvalidVerificationCode,
-)
+from bkuser.apps.notification.exceptions import ExceedSendVerificationCodeLimit, ExceedVerificationCodeRetries
 from bkuser.apps.notification.verification_code import VerificationCodeManager
 from bkuser.apps.tenant.models import TenantUser
 from django.conf import settings
@@ -42,13 +39,13 @@ class TestVerificationCodeManager:
     def test_validate_with_too_many_retries(self, vc_mgr):
         code = vc_mgr._get_verification_code()
         # 过多次数的失败尝试也会导致验证码失效
-        try:
-            for _ in range(settings.VERIFICATION_CODE_MAX_RETRIES + 1):
+        for _ in range(settings.VERIFICATION_CODE_MAX_RETRIES):
+            try:
                 vc_mgr.validate(f"fake-{code}")
-        except Exception:
-            pass
+            except Exception:  # noqa: PERF203
+                pass
 
-        with pytest.raises(InvalidVerificationCode):
+        with pytest.raises(ExceedVerificationCodeRetries):
             vc_mgr.validate(code)
 
     def test_too_many_send(self, vc_mgr):

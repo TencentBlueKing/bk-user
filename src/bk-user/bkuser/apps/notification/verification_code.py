@@ -65,7 +65,6 @@ class VerificationCodeManager:
             return True
 
         self.cache.delete(self.code_cache_key)
-        self.cache.delete(self.retries_cache_key)
         return False
 
     def _can_send(self) -> bool:
