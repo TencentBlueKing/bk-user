@@ -9,9 +9,9 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import unicodedata
+from urllib.parse import urlparse
 
 from django.http.request import split_domain_port, validate_host
-from django.utils.http import _urlparse
 
 
 # Copied from django.utils.http.url_has_allowed_host_and_scheme()
@@ -45,13 +45,18 @@ def url_has_allowed_host_and_scheme(url, allowed_hosts, require_https=False):
 
 # Copied from django.utils.http._url_has_allowed_host_and_scheme()
 # but additional support for wildcard domain matching.
+# 支持匹配:
+#  (1) * 匹配任意域名
+#  (2) 泛域名匹配，比如 .example.com 可匹配 foo.example.com、example.com、foo.example.com:8000、example.com:8080
+#  (3) 精确域名匹配，比如 example.com 可匹配 example.com、example.com:8000
+#  (4) 精确域名&端口匹配，比如 example.com:9000 只可匹配 example.com:9000
 def _url_has_allowed_host_and_scheme(url, allowed_hosts, require_https=False):
     # Chrome considers any URL with more than two slashes to be absolute, but
     # urlparse is not so flexible. Treat any url with three slashes as unsafe.
     if url.startswith("///"):
         return False
     try:
-        url_info = _urlparse(url)
+        url_info = urlparse(url)
     except ValueError:  # e.g. invalid IPv6 addresses
         return False
     # Forbid URLs like http:///example.com - with a scheme, but without a hostname.
@@ -70,12 +75,16 @@ def _url_has_allowed_host_and_scheme(url, allowed_hosts, require_https=False):
     if not url_info.scheme and url_info.netloc:
         scheme = "http"
     valid_schemes = ["https"] if require_https else ["http", "https"]
+
+    # Check if the scheme is valid.
     if scheme and scheme not in valid_schemes:
         return False
 
+    # Check if netloc is in allowed_hosts
     if not url_info.netloc or url_info.netloc in allowed_hosts:
         return True
 
+    # Check wildcard domain matching
     # Copied from django.http.request.HttpRequest.get_host()
     domain, port = split_domain_port(url_info.netloc)
     return domain and validate_host(domain, allowed_hosts)
