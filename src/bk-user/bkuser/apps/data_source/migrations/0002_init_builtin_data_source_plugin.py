@@ -31,7 +31,7 @@ def forwards_func(apps, schema_editor):
         },
     )
 
-    # Http数据源插件
+    # 通用 HTTP 数据源插件
     # TODO 插件名称，描述国际化
     DataSourcePlugin.objects.get_or_create(
         id=DataSourcePluginEnum.GENERAL,
@@ -39,6 +39,17 @@ def forwards_func(apps, schema_editor):
             "name": DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.GENERAL),
             "description": "支持对接通用 HTTP 数据源的插件，用户需要在服务方提供 `用户数据` 及 `部门数据` API",
             "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/general/logo.png"),
+        },
+    )
+
+    # LDAP 数据源插件
+    # TODO 插件名称，描述国际化
+    DataSourcePlugin.objects.get_or_create(
+        id=DataSourcePluginEnum.LDAP,
+        defaults={
+            "name": DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LDAP),
+            "description": "支持对接 LDAP 服务的插件，支持同步 LDAP 用户，组织，用户组等数据",
+            "logo": load_image_as_base64(settings.BASE_DIR / "bkuser/plugins/ldap/logo.png"),
         },
     )
 
