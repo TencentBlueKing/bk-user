@@ -18,7 +18,7 @@ from bkuser.biz.tenant import TenantUserHandler
 
 class SendResetPasswordVerificationCodeInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
-    phone = serializers.CharField(help_text="手机号码", required=True)
+    phone = serializers.CharField(help_text="手机号码")
     phone_country_code = serializers.CharField(
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
@@ -26,7 +26,7 @@ class SendResetPasswordVerificationCodeInputSLZ(serializers.Serializer):
 
 class GetResetPasswordUrlByVerificationCodeInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
-    phone = serializers.CharField(help_text="手机号码", required=True)
+    phone = serializers.CharField(help_text="手机号码")
     phone_country_code = serializers.CharField(
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
@@ -39,15 +39,14 @@ class GetResetPasswordUrlByVerificationCodeOutputSLZ(serializers.Serializer):
 
 class SendResetPasswordUrlToEmailInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
-    email = serializers.CharField(help_text="邮箱")
+    email = serializers.EmailField(help_text="邮箱")
 
 
 class ListUserByResetPasswordTokenInputSLZ(serializers.Serializer):
     token = serializers.CharField(help_text="密码重置 Token", max_length=255)
 
 
-class TenantUserMatchedByTokenSLZ(serializers.Serializer):
-    tenant_id = serializers.CharField(help_text="租户 ID")
+class TenantUserMatchedByTokenOutputSLZ(serializers.Serializer):
     tenant_user_id = serializers.CharField(help_text="租户用户 ID", source="id")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     display_name = serializers.SerializerMethodField(help_text="展示用名称")

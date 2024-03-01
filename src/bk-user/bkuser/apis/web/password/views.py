@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import List
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -18,7 +19,6 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
-from bkuser.apis.web.password.decorators import handle_exception_with_settings
 from bkuser.apis.web.password.serializers import (
     GetResetPasswordUrlByVerificationCodeInputSLZ,
     GetResetPasswordUrlByVerificationCodeOutputSLZ,
@@ -26,7 +26,7 @@ from bkuser.apis.web.password.serializers import (
     ResetPasswordByTokenInputSLZ,
     SendResetPasswordUrlToEmailInputSLZ,
     SendResetPasswordVerificationCodeInputSLZ,
-    TenantUserMatchedByTokenSLZ,
+    TenantUserMatchedByTokenOutputSLZ,
 )
 from bkuser.apps.notification.constants import (
     TokenRelatedObjType,
@@ -50,14 +50,14 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 logger = logging.getLogger(__name__)
 
 
-class GetTenantUserMixin:
+class GetFirstTenantUserMixin:
     """
     根据指定的联系方式，获取租户用户（来源于本地数据源的）
 
     需要注意的是：同一联系方式可能会匹配到多个用户，该 Mixin 方法只返回第一个，需要注意只能用于通知场景
     """
 
-    def _get_tenant_user_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> TenantUser:
+    def _get_first_tenant_user_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> TenantUser:
         # FIXME (su) 补充 status 过滤
         tenant_users = TenantUser.objects.filter_by_phone(tenant_id, phone, phone_country_code).filter(
             data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL
@@ -70,7 +70,7 @@ class GetTenantUserMixin:
 
         return tenant_users.first()
 
-    def _get_tenant_user_by_email(self, tenant_id: str, email: str) -> TenantUser:
+    def _get_first_tenant_user_by_email(self, tenant_id: str, email: str) -> TenantUser:
         # FIXME (su) 补充 status 过滤
         tenant_users = TenantUser.objects.filter_by_email(tenant_id, email).filter(
             data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL
@@ -82,7 +82,7 @@ class GetTenantUserMixin:
         return tenant_users.first()
 
 
-class SendResetPasswordVerificationCodeApi(GetTenantUserMixin, generics.CreateAPIView):
+class SendResetPasswordVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
@@ -93,15 +93,23 @@ class SendResetPasswordVerificationCodeApi(GetTenantUserMixin, generics.CreateAP
         query_serializer=SendResetPasswordVerificationCodeInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    @handle_exception_with_settings()
     def post(self, request, *args, **kwargs):
         slz = SendResetPasswordVerificationCodeInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        tenant_user = self._get_tenant_user_by_phone(
-            params["tenant_id"], params["phone"], params["phone_country_code"]
-        )
+        tenant_id, phone, phone_country_code = params["tenant_id"], params["phone"], params["phone_country_code"]
+        try:
+            tenant_user = self._get_first_tenant_user_by_phone(tenant_id, phone, phone_country_code)
+        except Exception:
+            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                raise
+
+            logger.warning(
+                "failed to get tenant user by phone +%s %s in tenant %s", phone_country_code, phone, tenant_id
+            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         self._send_verification_code_to_user_phone(tenant_user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -116,7 +124,7 @@ class SendResetPasswordVerificationCodeApi(GetTenantUserMixin, generics.CreateAP
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
 
 
-class GetResetPasswordUrlByVerificationCodeApi(GetTenantUserMixin, generics.CreateAPIView):
+class GetResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
@@ -127,21 +135,30 @@ class GetResetPasswordUrlByVerificationCodeApi(GetTenantUserMixin, generics.Crea
         query_serializer=GetResetPasswordUrlByVerificationCodeInputSLZ(),
         responses={status.HTTP_200_OK: GetResetPasswordUrlByVerificationCodeOutputSLZ()},
     )
-    @handle_exception_with_settings()
     def get(self, request, *args, **kwargs):
         slz = GetResetPasswordUrlByVerificationCodeInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        phone, phone_country_code = params["phone"], params["phone_country_code"]
+        tenant_id, phone, phone_country_code = params["tenant_id"], params["phone"], params["phone_country_code"]
         verification_code = params["verification_code"]
 
         # 1. 找到匹配的租户用户
-        tenant_user = self._get_tenant_user_by_phone(params["tenant_id"], phone, phone_country_code)
+        try:
+            tenant_user = self._get_first_tenant_user_by_phone(tenant_id, phone, phone_country_code)
+        except Exception:
+            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                raise
+
+            logger.warning(
+                "failed to get tenant user by phone +%s %s in tenant %s", phone_country_code, phone, tenant_id
+            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         # 2. 校验验证码是否正确
         self._validate_verification_code(tenant_user, verification_code)
         # 3. 获取重置密码链接
-        url = self._get_reset_password_url(tenant_user)
+        url = self._gen_reset_password_url(tenant_user)
 
         return Response(GetResetPasswordUrlByVerificationCodeOutputSLZ({"reset_password_url": url}).data)
 
@@ -151,17 +168,17 @@ class GetResetPasswordUrlByVerificationCodeApi(GetTenantUserMixin, generics.Crea
         except ExceedVerificationCodeRetries:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("试错次数超过上限导致验证码失效，需重新发送"))
         except InvalidVerificationCode:
-            raise error_codes.INVALID_VERIFICATION_CODE.f(_("请输入正确的验证码"))
+            raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:
             logger.exception("failed to validate verification code to user %s", tenant_user.id)
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("验证码校验失败，请联系管理员处理"))
 
-    def _get_reset_password_url(self, tenant_user: TenantUser) -> str:
+    def _gen_reset_password_url(self, tenant_user: TenantUser) -> str:
         token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.PHONE)
         return gen_reset_password_url(token)
 
 
-class SendResetPasswordUrlToEmailApi(GetTenantUserMixin, generics.CreateAPIView):
+class SendResetPasswordUrlToEmailApi(GetFirstTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
@@ -172,13 +189,20 @@ class SendResetPasswordUrlToEmailApi(GetTenantUserMixin, generics.CreateAPIView)
         query_serializer=SendResetPasswordUrlToEmailInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    @handle_exception_with_settings()
     def post(self, request, *args, **kwargs):
         slz = SendResetPasswordUrlToEmailInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        tenant_user = self._get_tenant_user_by_email(params["tenant_id"], params["email"])
+        try:
+            tenant_user = self._get_first_tenant_user_by_email(params["tenant_id"], params["email"])
+        except Exception:
+            if settings.ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD:
+                raise
+
+            logger.warning("failed to get tenant user by email %s in tenant %s", params["email"], params["tenant_id"])
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         try:
             UserResetPasswordTokenManager().send(tenant_user)
         except ExceedSendResetPasswordTokenLimit:
@@ -199,7 +223,7 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
         tags=["password"],
         operation_description="根据 Token 获取可重置密码的租户用户列表",
         query_serializer=ListUserByResetPasswordTokenInputSLZ(),
-        responses={status.HTTP_200_OK: TenantUserMatchedByTokenSLZ(many=True)},
+        responses={status.HTTP_200_OK: TenantUserMatchedByTokenOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         slz = ListUserByResetPasswordTokenInputSLZ(data=request.query_params)
@@ -207,7 +231,7 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
         params = slz.validated_data
 
         tenant_users = UserResetPasswordTokenManager().list_users_by_token(params["token"])
-        return Response(TenantUserMatchedByTokenSLZ(tenant_users, many=True).data)
+        return Response(TenantUserMatchedByTokenOutputSLZ(tenant_users, many=True).data)
 
 
 class ResetPasswordByTokenApi(generics.CreateAPIView):
