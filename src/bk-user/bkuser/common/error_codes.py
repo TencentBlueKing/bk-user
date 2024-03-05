@@ -66,6 +66,11 @@ class ErrorCodes:
         code_category=ErrorCodeCategoryEnum.INTERNAL,
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
+    TOO_FREQUENTLY = ErrorCode(
+        _("操作过于频繁"),
+        code_category=ErrorCodeCategoryEnum.RATE_LIMIT_EXCEED,
+        status_code=HTTPStatus.TOO_MANY_REQUESTS,
+    )
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
 
@@ -106,8 +111,7 @@ class ErrorCodes:
     # 验证码
     INVALID_VERIFICATION_CODE = ErrorCode(_("验证码无效"))
     SEND_VERIFICATION_CODE_FAILED = ErrorCode(_("发送验证码失败"))
-
-    SEND_RESET_PASSWORD_URL_FAILED = ErrorCode(_("发送重置密码链接失败"))
+    SEND_RESET_PASSWORD_EMAIL_FAILED = ErrorCode(_("发送重置密码邮件失败"))
 
 
 # 实例化一个全局对象

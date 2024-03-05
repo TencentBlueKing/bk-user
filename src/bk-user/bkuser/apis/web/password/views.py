@@ -19,32 +19,33 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
+from bkuser.apis.web.password.constants import TokenRelatedObjType
+from bkuser.apis.web.password.senders import (
+    EmailResetPasswdTokenSender,
+    ExceedSendRateLimit,
+    PhoneVerificationCodeSender,
+)
 from bkuser.apis.web.password.serializers import (
     GetResetPasswordUrlByVerificationCodeInputSLZ,
     GetResetPasswordUrlByVerificationCodeOutputSLZ,
     ListUserByResetPasswordTokenInputSLZ,
     ResetPasswordByTokenInputSLZ,
-    SendResetPasswordUrlToEmailInputSLZ,
-    SendResetPasswordVerificationCodeInputSLZ,
+    SendResetPasswordEmailInputSLZ,
+    SendVerificationCodeInputSLZ,
     TenantUserMatchedByTokenOutputSLZ,
 )
-from bkuser.apps.notification.constants import (
-    TokenRelatedObjType,
-    VerificationCodeScene,
-)
-from bkuser.apps.notification.exceptions import (
-    ExceedSendResetPasswordTokenLimit,
-    ExceedSendVerificationCodeLimit,
-    ExceedVerificationCodeRetries,
-    InvalidVerificationCode,
-)
+from bkuser.apis.web.password.tokens import GenerateTokenTooFrequently, UserResetPasswordTokenManager
 from bkuser.apps.notification.helpers import gen_reset_password_url
-from bkuser.apps.notification.reset_passwd_token import UserResetPasswordTokenManager
-from bkuser.apps.notification.verification_code import VerificationCodeManager
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordValidator
+from bkuser.common.verification_code import (
+    GenerateCodeTooFrequently,
+    InvalidVerificationCode,
+    VerificationCodeManager,
+    VerificationCodeScene,
+)
 from bkuser.plugins.constants import DataSourcePluginEnum
 
 logger = logging.getLogger(__name__)
@@ -82,7 +83,7 @@ class GetFirstTenantUserMixin:
         return tenant_users.first()
 
 
-class SendResetPasswordVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
+class SendVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
@@ -90,11 +91,11 @@ class SendResetPasswordVerificationCodeApi(GetFirstTenantUserMixin, generics.Cre
     @swagger_auto_schema(
         tags=["password"],
         operation_description="发送短信验证码",
-        query_serializer=SendResetPasswordVerificationCodeInputSLZ(),
+        query_serializer=SendVerificationCodeInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def post(self, request, *args, **kwargs):
-        slz = SendResetPasswordVerificationCodeInputSLZ(data=request.data)
+        slz = SendVerificationCodeInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
@@ -115,9 +116,15 @@ class SendResetPasswordVerificationCodeApi(GetFirstTenantUserMixin, generics.Cre
 
     def _send_verification_code_to_user_phone(self, tenant_user: TenantUser):
         """发送短信验证码到指定的租户用户"""
+        phone, phone_country_code = tenant_user.phone_info
         try:
-            VerificationCodeManager(tenant_user, VerificationCodeScene.RESET_PASSWORD).send()
-        except ExceedSendVerificationCodeLimit:
+            code = VerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD).gen_code()
+        except GenerateCodeTooFrequently:
+            raise error_codes.TOO_FREQUENTLY.f(_("发送短信验证码过于频繁，请稍后再试"))
+
+        try:
+            PhoneVerificationCodeSender().send(tenant_user, code)
+        except ExceedSendRateLimit:
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("今日发送验证码次数超过上限，请明天再试"))
         except Exception:
             logger.exception("failed to send verification code to user %s", tenant_user.id)
@@ -135,14 +142,13 @@ class GetResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
         query_serializer=GetResetPasswordUrlByVerificationCodeInputSLZ(),
         responses={status.HTTP_200_OK: GetResetPasswordUrlByVerificationCodeOutputSLZ()},
     )
-    def get(self, request, *args, **kwargs):
-        slz = GetResetPasswordUrlByVerificationCodeInputSLZ(data=request.query_params)
+    def post(self, request, *args, **kwargs):
+        slz = GetResetPasswordUrlByVerificationCodeInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        tenant_id, phone, phone_country_code = params["tenant_id"], params["phone"], params["phone_country_code"]
-        verification_code = params["verification_code"]
-
+        tenant_id = params["tenant_id"]
+        phone, phone_country_code = params["phone"], params["phone_country_code"]
         # 1. 找到匹配的租户用户
         try:
             tenant_user = self._get_first_tenant_user_by_phone(tenant_id, phone, phone_country_code)
@@ -156,29 +162,31 @@ class GetResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         # 2. 校验验证码是否正确
-        self._validate_verification_code(tenant_user, verification_code)
+        self._validate_verification_code(phone, phone_country_code, params["verification_code"])
         # 3. 获取重置密码链接
         url = self._gen_reset_password_url(tenant_user)
 
         return Response(GetResetPasswordUrlByVerificationCodeOutputSLZ({"reset_password_url": url}).data)
 
-    def _validate_verification_code(self, tenant_user: TenantUser, verification_code: str):
+    def _validate_verification_code(self, phone: str, phone_country_code: str, code: str):
         try:
-            VerificationCodeManager(tenant_user, VerificationCodeScene.RESET_PASSWORD).validate(verification_code)
-        except ExceedVerificationCodeRetries:
-            raise error_codes.INVALID_VERIFICATION_CODE.f(_("试错次数超过上限导致验证码失效，需重新发送"))
+            VerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD).validate(code)
         except InvalidVerificationCode:
             raise error_codes.INVALID_VERIFICATION_CODE.f(_("验证码错误"))
         except Exception:
-            logger.exception("failed to validate verification code to user %s", tenant_user.id)
+            logger.exception("validate verification code for phone +%s %s failed", phone_country_code, phone)
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("验证码校验失败，请联系管理员处理"))
 
     def _gen_reset_password_url(self, tenant_user: TenantUser) -> str:
-        token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.PHONE)
+        try:
+            token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.PHONE)
+        except GenerateTokenTooFrequently:
+            raise error_codes.TOO_FREQUENTLY.f(_("操作过于频繁，请稍后再试"))
+
         return gen_reset_password_url(token)
 
 
-class SendResetPasswordUrlToEmailApi(GetFirstTenantUserMixin, generics.CreateAPIView):
+class SendResetPasswordEmailApi(GetFirstTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
@@ -186,11 +194,11 @@ class SendResetPasswordUrlToEmailApi(GetFirstTenantUserMixin, generics.CreateAPI
     @swagger_auto_schema(
         tags=["password"],
         operation_description="发送重置密码链接到用户邮箱",
-        query_serializer=SendResetPasswordUrlToEmailInputSLZ(),
+        query_serializer=SendResetPasswordEmailInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def post(self, request, *args, **kwargs):
-        slz = SendResetPasswordUrlToEmailInputSLZ(data=request.data)
+        slz = SendResetPasswordEmailInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
@@ -203,15 +211,22 @@ class SendResetPasswordUrlToEmailApi(GetFirstTenantUserMixin, generics.CreateAPI
             logger.warning("failed to get tenant user by email %s in tenant %s", params["email"], params["tenant_id"])
             return Response(status=status.HTTP_204_NO_CONTENT)
 
+        self._gen_and_send_reset_password_url(tenant_user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _gen_and_send_reset_password_url(self, tenant_user: TenantUser) -> None:
         try:
-            UserResetPasswordTokenManager().send(tenant_user)
-        except ExceedSendResetPasswordTokenLimit:
-            raise error_codes.SEND_RESET_PASSWORD_URL_FAILED.f(_("今日发送次数超过上限，请明天再试"))
+            token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.EMAIL)
+        except GenerateTokenTooFrequently:
+            raise error_codes.TOO_FREQUENTLY.f(_("操作过于频繁，请稍后再试"))
+
+        try:
+            EmailResetPasswdTokenSender().send(tenant_user, token)
+        except ExceedSendRateLimit:
+            raise error_codes.SEND_RESET_PASSWORD_EMAIL_FAILED.f(_("今日发送次数超过上限，请明天再试"))
         except Exception:
             logger.exception("failed to send reset password url to user %s", tenant_user.id)
-            raise error_codes.SEND_RESET_PASSWORD_URL_FAILED.f(_("请联系管理员处理"))
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            raise error_codes.SEND_RESET_PASSWORD_EMAIL_FAILED.f(_("请联系管理员处理"))
 
 
 class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
@@ -230,7 +245,8 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        tenant_users = UserResetPasswordTokenManager().list_users_by_token(params["token"])
+        # 只是查询租户用户列表，不应该使得令牌失效，否则后续无法进行校验
+        tenant_users = UserResetPasswordTokenManager().list_users_by_token(params["token"], disable_token=False)
         return Response(TenantUserMatchedByTokenOutputSLZ(tenant_users, many=True).data)
 
 

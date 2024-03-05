@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
-from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
+from bkuser.apps.notification.constants import NotificationScene
 from bkuser.apps.notification.notifier import TenantUserNotifier
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.celery import app
@@ -25,26 +25,6 @@ from bkuser.common.task import BaseTask
 from bkuser.plugins.constants import DataSourcePluginEnum
 
 logger = logging.getLogger(__name__)
-
-
-@app.task(base=BaseTask, ignore_result=True)
-def send_verification_code_to_user_phone(tenant_user_id: str, code: str):
-    """向用户发送短信验证码"""
-    tenant_user = TenantUser.objects.get(id=tenant_user_id)
-    TenantUserNotifier(
-        NotificationScene.SEND_VERIFICATION_CODE,
-        method=NotificationMethod.SMS,
-    ).send(tenant_user, verification_code=code)
-
-
-@app.task(base=BaseTask, ignore_result=True)
-def send_reset_passwd_url_to_user(tenant_user_id: str, reset_token: str):
-    """发送重置密码链接"""
-    tenant_user = TenantUser.objects.get(id=tenant_user_id)
-    TenantUserNotifier(
-        NotificationScene.RESET_PASSWORD,
-        data_source_id=tenant_user.data_source_user.data_source_id,
-    ).send(tenant_user, token=reset_token)
 
 
 @app.task(base=BaseTask, ignore_result=True)

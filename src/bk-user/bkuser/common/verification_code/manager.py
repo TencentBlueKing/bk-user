@@ -10,52 +10,40 @@ specific language governing permissions and limitations under the License.
 """
 import secrets
 import string
-from datetime import timedelta
 
 from django.conf import settings
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.notification.constants import VerificationCodeScene
-from bkuser.apps.notification.exceptions import (
-    ExceedSendVerificationCodeLimit,
-    ExceedVerificationCodeRetries,
-    InvalidVerificationCode,
-)
-from bkuser.apps.notification.tasks import send_verification_code_to_user_phone
-from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.common.verification_code.constants import VerificationCodeScene
+from bkuser.common.verification_code.exceptions import GenerateCodeTooFrequently, InvalidVerificationCode
 
 
 class VerificationCodeManager:
     """手机短信验证码"""
 
-    def __init__(self, tenant_user: TenantUser, scene: VerificationCodeScene):
-        self.tenant_user = tenant_user
+    lock_timeout = 60
+
+    def __init__(self, phone: str, phone_country_code: str, scene: VerificationCodeScene):
+        self.phone = phone
+        self.phone_country_code = phone_country_code
         self.scene = scene
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
         self.retries_cache_key = self._gen_cache_key("retries")
         self.code_cache_key = self._gen_cache_key("code")
-        self.send_cnt_cache_key = self._gen_cache_key("send_cnt")
+        self.lock_cache_key = self._gen_cache_key("lock")
 
     def validate(self, code: str):
         """校验验证码是否正确"""
         if not self._can_retries():
-            raise ExceedVerificationCodeRetries(_("超过验证码重试次数"))
+            raise InvalidVerificationCode(_("超过验证码重试次数"))
 
-        if self._get_verification_code() != code:
+        if self.cache.get(self.code_cache_key) != code:
             raise InvalidVerificationCode(_("验证码错误或已失效"))
 
         # 校验通过后，需要清理掉验证码避免二次使用
         self.cache.delete(self.code_cache_key)
         self.cache.delete(self.retries_cache_key)
-
-    def send(self):
-        """发送验证码"""
-        if not self._can_send():
-            raise ExceedSendVerificationCodeLimit(_("超过验证码发送次数限制"))
-
-        send_verification_code_to_user_phone.delay(self.tenant_user.id, self._get_verification_code())
 
     def _can_retries(self) -> bool:
         """检查当前验证码试错次数"""
@@ -67,22 +55,12 @@ class VerificationCodeManager:
         self.cache.delete(self.code_cache_key)
         return False
 
-    def _can_send(self) -> bool:
-        """检查当前验证码发送次数"""
-        send_cnt = self.cache.get(self.send_cnt_cache_key, 0)
-        if send_cnt >= settings.VERIFICATION_CODE_MAX_SEND_PER_DAY:
-            return False
+    def gen_code(self) -> str:
+        # 生成验证码有频率限制，不能短时间内频繁生成
+        if self.cache.get(self.lock_cache_key):
+            raise GenerateCodeTooFrequently(_("生成验证码过于频繁，请稍后再试"))
 
-        # 今天结束后过期
-        midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        expire_seconds = (midnight - timezone.now()).total_seconds()
-        self.cache.set(self.send_cnt_cache_key, send_cnt + 1, timeout=expire_seconds)
-        return True
-
-    def _get_verification_code(self) -> str:
-        """从缓存中获取 / 生成验证码"""
-        if code := self.cache.get(self.code_cache_key):
-            return code
+        self.cache.set(self.lock_cache_key, True, timeout=self.lock_timeout)
 
         # 验证码字符集：数字，大小写字母
         charset = string.ascii_letters + string.digits
@@ -95,5 +73,4 @@ class VerificationCodeManager:
 
     def _gen_cache_key(self, key_type: str) -> str:
         """生成验证码缓存 key"""
-        phone, phone_country_code = self.tenant_user.phone_info
-        return f"{self.scene.value}:{phone_country_code}:{phone}:{key_type}"
+        return f"{self.scene.value}:{self.phone_country_code}:{self.phone}:{key_type}"

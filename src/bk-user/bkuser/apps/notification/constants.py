@@ -30,17 +30,3 @@ class NotificationScene(str, StructuredEnum):
     SEND_VERIFICATION_CODE = EnumField("send_verification_code", label=_("发送验证码"))
     TENANT_USER_EXPIRING = EnumField("tenant_user_expiring", label=_("租户用户即将过期"))
     TENANT_USER_EXPIRED = EnumField("tenant_user_expired", label=_("租户用户已过期"))
-
-
-class VerificationCodeScene(str, StructuredEnum):
-    """验证码使用场景"""
-
-    RESET_PASSWORD = EnumField("reset_passwd", label=_("忘记密码后申请重置"))
-
-
-class TokenRelatedObjType(str, StructuredEnum):
-    """令牌关联对象类型"""
-
-    TENANT_USER = EnumField("tenant_user", label=_("租户用户"))
-    PHONE = EnumField("phone", label=_("手机号"))
-    EMAIL = EnumField("email", label=_("邮箱"))

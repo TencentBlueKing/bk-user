@@ -16,7 +16,7 @@ from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 
 
-class SendResetPasswordVerificationCodeInputSLZ(serializers.Serializer):
+class SendVerificationCodeInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
     phone = serializers.CharField(help_text="手机号码")
     phone_country_code = serializers.CharField(
@@ -37,7 +37,7 @@ class GetResetPasswordUrlByVerificationCodeOutputSLZ(serializers.Serializer):
     reset_password_url = serializers.CharField(help_text="密码重置链接")
 
 
-class SendResetPasswordUrlToEmailInputSLZ(serializers.Serializer):
+class SendResetPasswordEmailInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
     email = serializers.EmailField(help_text="邮箱")
 

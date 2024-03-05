@@ -9,15 +9,16 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import string
+from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from bkuser.apis.web.password.constants import TokenRelatedObjType
+from bkuser.apis.web.password.tokens import UserResetPasswordTokenManager
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
-from bkuser.apps.notification.constants import TokenRelatedObjType, VerificationCodeScene
-from bkuser.apps.notification.reset_passwd_token import UserResetPasswordTokenManager
-from bkuser.apps.notification.verification_code import VerificationCodeManager
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.hashers import check_password
+from bkuser.common.verification_code import VerificationCodeManager, VerificationCodeScene
 from django.test.utils import override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -39,7 +40,9 @@ def tenant_user(default_tenant, full_local_data_source) -> TenantUser:
 class TestResetPasswordByPhoneAfterForget:
     """忘记密码后通过手机找回"""
 
-    def test_normal(self, api_client, tenant_user):
+    @mock.patch("bkuser.component.cmsi.send_mail", return_value=None)
+    @mock.patch("bkuser.component.cmsi.send_sms", return_value=None)
+    def test_normal(self, mocked_send_sms, mocked_send_mail, api_client, tenant_user):
         with override_settings(ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True):
             # 1. 模拟发送验证码
             phone, phone_country_code = tenant_user.phone_info
@@ -51,8 +54,9 @@ class TestResetPasswordByPhoneAfterForget:
             assert resp.status_code == status.HTTP_204_NO_CONTENT
 
             # 2. 从缓存中获取验证码用于认证，认证后获取到密码重置链接
-            code = VerificationCodeManager(tenant_user, VerificationCodeScene.RESET_PASSWORD)._get_verification_code()
-            resp = api_client.get(
+            mgr = VerificationCodeManager(phone, phone_country_code, VerificationCodeScene.RESET_PASSWORD)
+            code = mgr.cache.get(mgr.code_cache_key)
+            resp = api_client.post(
                 reverse("password.get_passwd_reset_url_by_verification_code"),
                 data={
                     "tenant_id": tenant_user.tenant_id,
@@ -93,36 +97,28 @@ class TestResetPasswordByPhoneAfterForget:
             identity_info = LocalDataSourceIdentityInfo.objects.get(user=tenant_user.data_source_user)
             assert check_password(new_password, identity_info.password)
 
-    def test_exceed_send_max_limit(self, api_client, tenant_user):
-        """单用户超过每日发送上限"""
-        with override_settings(
-            ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True,
-            VERIFICATION_CODE_MAX_SEND_PER_DAY=0,
-        ):
-            phone, phone_country_code = tenant_user.phone_info
-            resp = api_client.post(
-                reverse("password.send_verification_code"),
-                data={"tenant_id": tenant_user.tenant_id, "phone": phone, "phone_country_code": phone_country_code},
-            )
-            assert resp.status_code == status.HTTP_400_BAD_REQUEST
-            assert "发送验证码次数超过上限" in resp.data["message"]
-
 
 class TestResetPasswordByEmailAfterForget:
     """忘记密码后通过邮件找回"""
 
-    def test_normal(self, api_client, tenant_user):
+    @mock.patch("bkuser.component.cmsi.send_mail", return_value=None)
+    @mock.patch("bkuser.component.cmsi.send_sms", return_value=None)
+    def test_normal(self, mocked_send_sms, mocked_send_mail, api_client, tenant_user):
         with override_settings(ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True):
             # 1. 发送重置密码链接邮件
             resp = api_client.post(
-                reverse("password.send_passwd_reset_url_to_email"),
+                reverse("password.send_passwd_reset_email"),
                 data={"tenant_id": tenant_user.tenant_id, "email": tenant_user.email},
             )
 
             assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-            # 2. 搞一个能用的，关联 email 的 token
-            reset_token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.EMAIL)
+            # 2. 搞一个能用的，关联 email 的 token，但是需要先干掉频控锁
+            mgr = UserResetPasswordTokenManager()
+            lock_key = f"email:{tenant_user.tenant_id}:{tenant_user.email}"
+            mgr.cache.delete(lock_key)
+
+            reset_token = mgr.gen_token(tenant_user, TokenRelatedObjType.EMAIL)
 
             # 3. 通过 Token 匹配租户用户
             resp = api_client.get(
@@ -147,17 +143,3 @@ class TestResetPasswordByEmailAfterForget:
 
             identity_info = LocalDataSourceIdentityInfo.objects.get(user=tenant_user.data_source_user)
             assert check_password(new_password, identity_info.password)
-
-    def test_exceed_send_max_limit(self, api_client, tenant_user):
-        """单用户超过每日发送上限"""
-        with override_settings(
-            ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True,
-            RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY=0,
-        ):
-            resp = api_client.post(
-                reverse("password.send_passwd_reset_url_to_email"),
-                data={"tenant_id": tenant_user.tenant_id, "email": tenant_user.email},
-            )
-
-            assert resp.status_code == status.HTTP_400_BAD_REQUEST
-            assert "发送次数超过上限" in resp.data["message"]

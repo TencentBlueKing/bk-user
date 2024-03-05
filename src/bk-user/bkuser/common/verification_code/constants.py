@@ -8,19 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from blue_krill.data_types.enum import EnumField, StructuredEnum
+from django.utils.translation import gettext_lazy as _
 
 
-class ExceedVerificationCodeRetries(Exception):
-    """超过验证码重试次数"""
+class VerificationCodeScene(str, StructuredEnum):
+    """验证码使用场景"""
 
-
-class InvalidVerificationCode(Exception):
-    """无效 / 已过期验证码"""
-
-
-class ExceedSendVerificationCodeLimit(Exception):
-    """超过验证码发送限制"""
-
-
-class ExceedSendResetPasswordTokenLimit(Exception):
-    """超过密码重置链接发送限制"""
+    RESET_PASSWORD = EnumField("reset_passwd", label=_("忘记密码后申请重置"))

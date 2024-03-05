@@ -27,31 +27,31 @@ from bkuser.apis.web.password import views
 urlpatterns = [
     # 发送重置密码验证码到手机
     path(
-        "send-verification-code-to-phone/",
-        views.SendResetPasswordVerificationCodeApi.as_view(),
+        "operations/reset/methods/phone/verification-code/",
+        views.SendVerificationCodeApi.as_view(),
         name="password.send_verification_code",
     ),
     # 通过验证码获取密码重置链接
     path(
-        "get-passwd-reset-url-by-verification-code/",
+        "operations/reset/methods/verification-code/token-urls/",
         views.GetResetPasswordUrlByVerificationCodeApi.as_view(),
         name="password.get_passwd_reset_url_by_verification_code",
     ),
     # 发送密码重置链接到邮箱
     path(
-        "send-passwd-reset-url-to-email/",
-        views.SendResetPasswordUrlToEmailApi.as_view(),
-        name="password.send_passwd_reset_url_to_email",
+        "operations/reset/methods/email/token-urls/",
+        views.SendResetPasswordEmailApi.as_view(),
+        name="password.send_passwd_reset_email",
     ),
     # 通过密码重置 Token 获取可选租户用户
     path(
-        "list-users-by-reset-passwd-token/",
+        "operations/reset/methods/token/users/",
         views.ListUsersByResetPasswordTokenApi.as_view(),
         name="password.list_users_by_reset_passwd_token",
     ),
     # 通过密码重置 Token 重置密码
     path(
-        "reset-passwd-by-token/",
+        "operations/reset/methods/token/passwords/",
         views.ResetPasswordByTokenApi.as_view(),
         name="password.reset_passwd_by_token",
     ),
