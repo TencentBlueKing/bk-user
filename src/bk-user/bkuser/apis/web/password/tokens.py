@@ -11,24 +11,27 @@ specific language governing permissions and limitations under the License.
 import json
 import secrets
 import string
-from datetime import timedelta
 from hashlib import md5
+from typing import Dict
 
-from django.conf import settings
 from django.db.models import QuerySet
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.notification.constants import TokenRelatedObjType
-from bkuser.apps.notification.exceptions import ExceedSendResetPasswordTokenLimit
-from bkuser.apps.notification.tasks import send_reset_passwd_url_to_user
+from bkuser import settings
+from bkuser.apis.web.password.constants import TokenRelatedObjType
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.plugins.constants import DataSourcePluginEnum
 
 
+class GenerateTokenTooFrequently(Exception):
+    """生成令牌过于频繁"""
+
+
 class UserResetPasswordTokenManager:
     """用户重置密码 Token 管理器"""
+
+    lock_timeout = 60
 
     def __init__(self):
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.RESET_PASSWORD_TOKEN)
@@ -42,6 +45,13 @@ class UserResetPasswordTokenManager:
         elif related_obj_type == TokenRelatedObjType.PHONE:
             info["phone"], info["phone_country_code"] = tenant_user.phone_info
 
+        # 生成 token 有频率限制，不能短时间内频繁生成
+        lock_key = self._gen_lock_key_by_info(info)
+        if self.cache.get(lock_key):
+            raise GenerateTokenTooFrequently(_("生成令牌过于频繁"))
+
+        self.cache.set(lock_key, True, timeout=self.lock_timeout)
+
         token = self._gen_token()
         self.cache.set(
             self._gen_cache_key_by_token(token),
@@ -50,11 +60,20 @@ class UserResetPasswordTokenManager:
         )
         return token
 
-    def list_users_by_token(self, token: str) -> QuerySet[TenantUser]:
-        """根据 token 获取用户信息，返回可修改密码的用户列表"""
-        cache_val = self.cache.get(self._gen_cache_key_by_token(token), None)
+    def list_users_by_token(self, token: str, disable_token: bool = True) -> QuerySet[TenantUser]:
+        """根据 token 获取用户信息，返回可修改密码的用户列表
+
+        :param token: 重置密码令牌值
+        :param disable_token: 是否禁用令牌（使用令牌重置密码后需要失效，如果只是查询用户，则需要保留）
+        """
+        cache_key = self._gen_cache_key_by_token(token)
+        cache_val = self.cache.get(cache_key, None)
         if not cache_val:
             return TenantUser.objects.none()
+
+        # 如果指定要禁用，则需要及时使 token 失效
+        if disable_token:
+            self.cache.delete(cache_key)
 
         info = json.loads(cache_val)
         if info["type"] == TokenRelatedObjType.EMAIL:
@@ -72,27 +91,6 @@ class UserResetPasswordTokenManager:
         # 只有本地数据源用户关联的租户用户才可以修改密码
         return tenant_users.filter(data_source_user__data_source__plugin_id=DataSourcePluginEnum.LOCAL)
 
-    def send(self, tenant_user: TenantUser):
-        """发送重置密码链接到用户邮箱"""
-        if not self._can_send(tenant_user):
-            raise ExceedSendResetPasswordTokenLimit(_("超过发送次数限制"))
-
-        token = self.gen_token(tenant_user, TokenRelatedObjType.EMAIL)
-        send_reset_passwd_url_to_user.delay(tenant_user.id, token)
-
-    def _can_send(self, tenant_user: TenantUser) -> bool:
-        """检查当前验证码发送次数"""
-        send_cnt_cache_key = f"{tenant_user.email}:send_cnt"
-        send_cnt = self.cache.get(send_cnt_cache_key, 0)
-        if send_cnt >= settings.RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY:
-            return False
-
-        # 今天结束后过期
-        midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        expire_seconds = (midnight - timezone.now()).total_seconds()
-        self.cache.set(send_cnt_cache_key, send_cnt + 1, timeout=expire_seconds)
-        return True
-
     def _gen_token(self) -> str:
         """生成重置密码用 Token，字符集：数字，大小写字母"""
         charset = string.ascii_letters + string.digits
@@ -105,3 +103,7 @@ class UserResetPasswordTokenManager:
         md5 -> 32, sha1 -> 40, sha256 -> 64
         """
         return md5(token.encode("utf-8")).hexdigest()
+
+    def _gen_lock_key_by_info(self, info: Dict[str, str]) -> str:
+        """根据 token 对应信息提供锁，避免短时间重复分配 token"""
+        return ":".join(str(val) for val in info.values())
