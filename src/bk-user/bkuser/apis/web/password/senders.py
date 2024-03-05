@@ -18,14 +18,15 @@ from bkuser.apps.notification.constants import NotificationMethod, NotificationS
 from bkuser.apps.notification.notifier import TenantUserNotifier
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
+from bkuser.common.verification_code import VerificationCodeScene
 
 
 class ExceedSendRateLimit(Exception):
     """超过发送次数限制"""
 
 
-def calc_midnight_expire_seconds() -> int:
-    # 今天结束后过期
+def calc_remaining_seconds_today() -> int:
+    """计算到今天剩余的秒数（在午夜时候过期）"""
     midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return int((midnight - timezone.now()).total_seconds())
 
@@ -33,8 +34,9 @@ def calc_midnight_expire_seconds() -> int:
 class PhoneVerificationCodeSender:
     """发送用户手机验证码（含次数检查）"""
 
-    def __init__(self):
+    def __init__(self, scene: VerificationCodeScene):
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.VERIFICATION_CODE)
+        self.scene = scene
 
     def send(self, tenant_user: TenantUser, code: str):
         """发送验证码到用户手机"""
@@ -48,13 +50,13 @@ class PhoneVerificationCodeSender:
 
     def _can_send(self, tenant_user: TenantUser) -> bool:
         phone, phone_country_code = tenant_user.phone_info
-        send_cnt_cache_key = f"{phone_country_code}:{phone}:send_cnt"
+        send_cnt_cache_key = f"{self.scene.value}:{phone_country_code}:{phone}:send_cnt"
 
         send_cnt = self.cache.get(send_cnt_cache_key, 0)
         if send_cnt >= settings.VERIFICATION_CODE_MAX_SEND_PER_DAY:
             return False
 
-        self.cache.set(send_cnt_cache_key, send_cnt + 1, timeout=calc_midnight_expire_seconds())
+        self.cache.set(send_cnt_cache_key, send_cnt + 1, timeout=calc_remaining_seconds_today())
         return True
 
 
@@ -81,5 +83,5 @@ class EmailResetPasswdTokenSender:
         if send_cnt >= settings.RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY:
             return False
 
-        self.cache.set(send_cnt_cache_key, send_cnt + 1, timeout=calc_midnight_expire_seconds())
+        self.cache.set(send_cnt_cache_key, send_cnt + 1, timeout=calc_remaining_seconds_today())
         return True

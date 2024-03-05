@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 
 from .constants import VerificationCodeScene
 from .exceptions import GenerateCodeTooFrequently, InvalidVerificationCode
-from .manager import VerificationCodeManager
+from .managers import VerificationCodeManager
 
 __all__ = [
     # 验证码管理器

@@ -37,7 +37,7 @@ urlpatterns = [
         views.GetResetPasswordUrlByVerificationCodeApi.as_view(),
         name="password.get_passwd_reset_url_by_verification_code",
     ),
-    # 发送密码重置链接到邮箱
+    # 发送密码重置邮件
     path(
         "operations/reset/methods/email/token-urls/",
         views.SendResetPasswordEmailApi.as_view(),
