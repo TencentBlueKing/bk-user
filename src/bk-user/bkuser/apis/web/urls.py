@@ -28,4 +28,6 @@ urlpatterns = [
     path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
     # 全局配置
     path("global-settings/", include("bkuser.apis.web.global_setting.urls")),
+    # 忘记密码重置
+    path("passwords/", include("bkuser.apis.web.password.urls")),
 ]

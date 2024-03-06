@@ -12,6 +12,7 @@ from typing import Tuple
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q, QuerySet
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantFeatureFlag, UserFieldDataType
@@ -33,6 +34,29 @@ class Tenant(TimestampedModel):
     def has_feature_flag(self, ff: TenantFeatureFlag) -> bool:
         default_flags = TenantFeatureFlag.get_default_flags()
         return self.feature_flags.get(ff, default_flags[ff])
+
+
+class TenantUserManager(models.Manager):
+    """TenantUser DB 模型管理器"""
+
+    def filter_by_email(self, tenant_id: str, email: str) -> QuerySet["TenantUser"]:
+        return self.filter(tenant_id=tenant_id).filter(
+            Q(is_inherited_email=False, custom_email=email) | Q(is_inherited_email=True, data_source_user__email=email)
+        )
+
+    def filter_by_phone(self, tenant_id: str, phone: str, phone_country_code: str) -> QuerySet["TenantUser"]:
+        return self.filter(tenant_id=tenant_id).filter(
+            Q(
+                is_inherited_email=False,
+                custom_phone=phone,
+                custom_phone_country_code=phone_country_code,
+            )
+            | Q(
+                is_inherited_email=True,
+                data_source_user__phone=phone,
+                data_source_user__phone_country_code=phone_country_code,
+            )
+        )
 
 
 class TenantUser(TimestampedModel):
@@ -73,6 +97,8 @@ class TenantUser(TimestampedModel):
     )
     is_inherited_email = models.BooleanField("是否继承数据源邮箱", default=True)
     custom_email = models.EmailField("自定义邮箱", null=True, blank=True, default="")
+
+    objects = TenantUserManager()
 
     class Meta:
         unique_together = [

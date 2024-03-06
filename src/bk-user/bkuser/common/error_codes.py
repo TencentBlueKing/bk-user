@@ -66,6 +66,11 @@ class ErrorCodes:
         code_category=ErrorCodeCategoryEnum.INTERNAL,
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
     )
+    TOO_FREQUENTLY = ErrorCode(
+        _("操作过于频繁"),
+        code_category=ErrorCodeCategoryEnum.RATE_LIMIT_EXCEED,
+        status_code=HTTPStatus.TOO_MANY_REQUESTS,
+    )
     # 调用外部系统API
     REMOTE_REQUEST_ERROR = ErrorCode(_("调用外部系统API异常"))
 
@@ -80,10 +85,13 @@ class ErrorCodes:
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     CANNOT_CREATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持新增用户"))
     CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))
-    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
     DATA_SOURCE_IMPORT_FAILED = ErrorCode(_("数据源导入失败"))
     DATA_SOURCE_DISABLED = ErrorCode(_("数据源已禁用，当前操作不受支持"))
     CREATE_DATA_SOURCE_SYNC_TASK_FAILED = ErrorCode(_("创建数据源同步任务失败"))
+
+    # 数据源用户
+    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
+    CANNOT_RESET_USER_PASSWORD = ErrorCode(_("无法重置用户密码"))
 
     # 认证源
     IDP_PLUGIN_NOT_LOAD = ErrorCode(_("认证源插件未加载"))
@@ -93,10 +101,17 @@ class ErrorCodes:
     CREATE_TENANT_FAILED = ErrorCode(_("租户创建失败"))
     UPDATE_TENANT_FAILED = ErrorCode(_("租户更新失败"))
     TENANT_NOT_EXIST = ErrorCode(_("租户不存在"))
-    BIND_TENANT_USER_FAILED = ErrorCode(_("数据源用户绑定租户失败"))
-    TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     UPDATE_TENANT_MANAGERS_FAILED = ErrorCode(_("更新租户管理员失败"))
+
+    # 租户用户
+    BIND_TENANT_USER_FAILED = ErrorCode(_("数据源用户绑定租户失败"))
+    TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到租户用户"))
     GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
+
+    # 验证码
+    INVALID_VERIFICATION_CODE = ErrorCode(_("验证码无效"))
+    SEND_VERIFICATION_CODE_FAILED = ErrorCode(_("发送验证码失败"))
+    SEND_RESET_PASSWORD_EMAIL_FAILED = ErrorCode(_("发送重置密码邮件失败"))
 
 
 # 实例化一个全局对象

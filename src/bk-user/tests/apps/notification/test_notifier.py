@@ -35,7 +35,7 @@ class TestTenantUserNotifier:
         tmpl = "{{ username }}, {{ full_name }}, {{ password }}, {{ url }}"
         assert (
             notifier._render_tmpl(user, tmpl, passwd="123456")
-            == f"{user.data_source_user.username}, {user.data_source_user.full_name}, 123456, {settings.BK_USER_URL}/reset-password"  # noqa: E501
+            == f"{user.data_source_user.username}, {user.data_source_user.full_name}, 123456, {settings.BK_USER_URL}/personal-center"  # noqa: E501
         )
 
     def test_get_templates(self):
