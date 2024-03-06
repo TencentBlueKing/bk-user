@@ -181,7 +181,7 @@ class GetResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
         try:
             token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.PHONE)
         except GenerateTokenTooFrequently:
-            raise error_codes.TOO_FREQUENTLY.f(_("操作过于频繁，请稍后再试"))
+            raise error_codes.TOO_FREQUENTLY.f(_("请稍后再试"))
 
         return gen_reset_password_url(token)
 
@@ -218,7 +218,7 @@ class SendResetPasswordEmailApi(GetFirstTenantUserMixin, generics.CreateAPIView)
         try:
             token = UserResetPasswordTokenManager().gen_token(tenant_user, TokenRelatedObjType.EMAIL)
         except GenerateTokenTooFrequently:
-            raise error_codes.TOO_FREQUENTLY.f(_("操作过于频繁，请稍后再试"))
+            raise error_codes.TOO_FREQUENTLY.f(_("请稍后再试"))
 
         try:
             EmailResetPasswdTokenSender().send(tenant_user, token)
