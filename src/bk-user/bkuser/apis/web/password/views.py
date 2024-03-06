@@ -233,6 +233,7 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
+    pagination_class = None
 
     @swagger_auto_schema(
         tags=["password"],
