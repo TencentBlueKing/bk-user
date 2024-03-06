@@ -58,7 +58,7 @@ def _call_login_api(http_func, url_path, **kwargs):
 
 def verify_bk_token(bk_token: str):
     """验证bk_token"""
-    url_path = "/api/v1/is_login/"
+    url_path = "/api/v2/is_login/"
     return _call_login_api(http_get, url_path, params={"bk_token": bk_token})
 
 
@@ -66,5 +66,5 @@ def get_user_info(bk_token: str):
     """
     获取用户信息
     """
-    url_path = "/api/v1/get_user/"
+    url_path = "/api/v2/get_user/"
     return _call_login_api(http_get, url_path, params={"bk_token": bk_token})

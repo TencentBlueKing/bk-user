@@ -78,3 +78,11 @@ class TestTenantUserFieldListApi:
         assert len(resp.data["builtin_fields"]) == 5  # noqa: PLR2004
         assert [f["name"] for f in resp.data["custom_fields"]] == ["age", "gender", "sport_hobby"]
         assert [f["name"] for f in resp.data["custom_fields"] if f["editable"]] == ["gender", "sport_hobby"]
+
+
+class TestTenantUserFeatureFlagListApi:
+    def test_list(self, api_client, tenant_user):
+        resp = api_client.get(reverse("personal_center.tenant_users.feature_flag.list", kwargs={"id": tenant_user.id}))
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["can_change_password"] is True

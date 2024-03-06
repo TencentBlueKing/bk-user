@@ -54,7 +54,7 @@
             :is-search-empty="state.isEmptySearch"
             :is-data-error="state.isDataError"
             @handleEmpty="handleClear"
-            @handleUpdate="handleUpdateRecord"
+            @handleUpdate="fetchDataSourceList"
           />
         </template>
         <bk-table-column prop="name" :label="$t('数据源名称')">

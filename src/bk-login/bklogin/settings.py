@@ -109,10 +109,10 @@ USE_TZ = True
 TIME_ZONE = "Asia/Shanghai"
 
 # SITE
-SITE_URL = env.str("SITE_URL", default="/")
+SITE_URL = env.str("SITE_URL", default="/login/")
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = BASE_DIR / "staticfiles"
-WHITENOISE_STATIC_PREFIX = "/staticfiles/"
+WHITENOISE_STATIC_PREFIX = os.path.join(SITE_URL, "staticfiles/")
 # STATIC_URL 也可以是CDN地址
 STATIC_URL = env.str("STATIC_URL", default=SITE_URL + "staticfiles/")
 
@@ -121,6 +121,9 @@ BK_APP_CODE = env.str("BK_APP_CODE", default="bk_login")
 BK_APP_SECRET = env.str("BK_APP_SECRET")
 # Django SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = BK_APP_SECRET
+# [兼容] 用于判断是否 ESB 请求（2.x 版本里，paas_v2/ESB/console/login 共用 bk_paas 的 AppSecret）
+BK_PAAS_APP_SECRET = env.str("BK_PAAS_APP_SECRET", "")
+
 
 # 蓝鲸数据库内容加密私钥
 # 使用 `from cryptography.fernet import Fernet; Fernet.generate_key()` 生成随机秘钥
@@ -140,7 +143,13 @@ AJAX_BASE_URL = env.str("AJAX_BASE_URL", SITE_URL)
 # 蓝鲸公共的Cookie的Domain(比如 bk_token和blueking_language)
 BK_COOKIE_DOMAIN = f".{BK_DOMAIN}"
 # 登录完成后允许重定向的HOST
-ALLOWED_REDIRECT_HOSTS = env.list("BK_LOGIN_ALLOWED_REDIRECT_HOSTS", default=[])
+# 支持匹配:
+#  (1) * 匹配任意域名
+#  (2) 泛域名匹配，比如 .example.com 可匹配 foo.example.com、example.com、foo.example.com:8000、example.com:8080
+#  (3) 精确域名匹配，比如 example.com 可匹配 example.com、example.com:8000
+#  (4) 精确域名&端口匹配，比如 example.com:9000 只可匹配 example.com:9000
+# 默认蓝鲸体系域名都可以匹配
+ALLOWED_REDIRECT_HOSTS = env.list("BK_LOGIN_ALLOWED_REDIRECT_HOSTS", default=[BK_COOKIE_DOMAIN])
 # 语言Cookie（蓝鲸体系共享）
 LANGUAGE_COOKIE_DOMAIN = BK_COOKIE_DOMAIN
 
@@ -195,7 +204,7 @@ _DEFAULT_LOG_DIR = BASE_DIR / "logs"
 _LOG_DIR = env.str("LOG_FILE_DIR", default=_DEFAULT_LOG_DIR)
 _LOG_FILE_NAME_PREFIX = env.str("LOG_FILE_NAME_PREFIX", default=BK_APP_CODE)
 if not os.path.exists(_LOG_DIR):
-    os.makedirs(_LOG_DIR)
+    os.makedirs(_LOG_DIR, exist_ok=True)
 _LOGGING_FORMAT = {
     "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
     "fmt": ("%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"),

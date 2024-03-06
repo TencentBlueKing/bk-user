@@ -209,7 +209,7 @@ BK_LOGIN_PLAIN_WINDOW_HEIGHT = env.int("BK_LOGIN_PLAIN_WINDOW_HEIGHT", default=5
 # 登录回调地址参数Key
 BK_LOGIN_CALLBACK_URL_PARAM_KEY = env.str("BK_LOGIN_CALLBACK_URL_PARAM_KEY", default="c_url")
 # 登录API URL
-BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login")
+BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
@@ -217,23 +217,19 @@ BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
 # 连接 BROKER 超时时间
-BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
-# CELERY与RabbitMQ增加60秒心跳设置项
-BROKER_HEARTBEAT = 60
+CELERY_BROKER_CONNECTION_TIMEOUT = 1  # 单位秒
+# CELERY 与 RabbitMQ 增加60秒心跳设置项
+CELERY_BROKER_HEARTBEAT = 60
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
-CELERYD_CONCURRENCY = env.int("CELERYD_CONCURRENCY", default=2)
+CELERY_WORKER_CONCURRENCY = env.int("CELERY_WORKER_CONCURRENCY", default=2)
 # 与周期任务配置的定时相关UTC
 CELERY_ENABLE_UTC = False
-# 周期任务beat生产者来源
-CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # 任务结果存储
 CELERY_RESULT_BACKEND = "django-db"
-# Celery队列名称
-CELERY_DEFAULT_QUEUE = "bkuser"
 # close celery hijack root logger
-CELERYD_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # disable remote control
-CELERY_ENABLE_REMOTE_CONTROL = False
+CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
 # Celery 消息序列化
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -241,7 +237,7 @@ CELERY_RESULT_SERIALIZER = "json"
 # CELERY 配置，申明任务的文件路径，即包含有 @task 装饰器的函数文件
 # CELERY_IMPORTS = []
 # 内置的周期任务
-CELERYBEAT_SCHEDULE = {
+CELERY_BEAT_SCHEDULE = {
     "periodic_notify_expiring_tenant_users": {
         "task": "bkuser.apps.notification.tasks.build_and_run_notify_expiring_tenant_users_task",
         "schedule": crontab(minute="0", hour="10"),
@@ -315,8 +311,7 @@ CACHES: Dict[str, Any] = {
             "SOCKET_CONNECT_TIMEOUT": 5,
             # 连接建立后的读写操作超时设置，单位秒
             "SOCKET_TIMEOUT": 5,
-            # redis 只作为缓存使用, 触发异常不能影响正常逻辑，可能只是稍微慢点而已
-            "IGNORE_EXCEPTIONS": True,
+            "IGNORE_EXCEPTIONS": False,
             # 默认使用 pickle 序列化数据，可选序列化方式有：pickle、json、msgpack
             # "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer"
             # Redis 连接池配置
@@ -351,7 +346,7 @@ if not CELERY_BROKER_URL:
         CELERY_BROKER_URL = ";".join(
             [f"sentinel://:{REDIS_PASSWORD}@{addr}/{REDIS_DB}" for addr in REDIS_SENTINEL_ADDR]
         )
-        BROKER_TRANSPORT_OPTIONS = {
+        CELERY_BROKER_TRANSPORT_OPTIONS = {
             "master_name": REDIS_SENTINEL_MASTER_NAME,
             "sentinel_kwargs": {"password": REDIS_SENTINEL_PASSWORD},
             "socket_timeout": 5,
@@ -368,7 +363,7 @@ _DEFAULT_LOG_DIR = BASE_DIR / "logs"
 _LOG_DIR = env.str("LOG_FILE_DIR", default=_DEFAULT_LOG_DIR)
 _LOG_FILE_NAME_PREFIX = env.str("LOG_FILE_NAME_PREFIX", default=BK_APP_CODE)
 if not os.path.exists(_LOG_DIR):
-    os.makedirs(_LOG_DIR)
+    os.makedirs(_LOG_DIR, exist_ok=True)
 _LOGGING_FORMAT = {
     "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
     "fmt": ("%(levelname)s %(asctime)s %(pathname)s %(lineno)d " "%(funcName)s %(process)d %(thread)d %(message)s"),
@@ -553,6 +548,25 @@ MAX_WEAK_PASSWD_COMBINATION_THRESHOLD = env.float("MAX_WEAK_PASSWD_COMBINATION_T
 GENERATE_RANDOM_PASSWORD_MAX_RETRIES = env.int("GENERATE_RANDOM_PASSWORD_MAX_RETRIES", 10)
 # zxcvbn 会对密码进行总体强度评估（score [0, 4]），建议限制不能使用评分低于 3 的密码
 MIN_ZXCVBN_PASSWORD_SCORE = env.int("MIN_ZXCVBN_PASSWORD_SCORE", 3)
+
+# 在重置密码是是否允许抛出具体错误信息给到用户（若启用需确认没有被攻击的风险）
+# TODO 评估接入 Captcha 验证码
+ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD = env.bool("ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD", False)
+# 短信验证码有效期，默认 5 min
+VERIFICATION_CODE_VALID_TIME = env.int("VERIFICATION_CODE_VALID_TIME", 60 * 5)
+# 验证码长度，默认 8 位，最长不超过 32 位
+VERIFICATION_CODE_LENGTH = env.int("VERIFICATION_CODE_LENGTH", 8)
+# 验证码最大尝试次数
+VERIFICATION_CODE_MAX_RETRIES = env.int("VERIFICATION_CODE_MAX_RETRIES", 3)
+# 单类验证码每天最大发送次数
+VERIFICATION_CODE_MAX_SEND_PER_DAY = env.int("VERIFICATION_CODE_MAX_SEND_PER_DAY", 3)
+
+# 重置密码 Token 有效期，默认 15 min
+RESET_PASSWORD_TOKEN_VALID_TIME = env.int("RESET_PASSWORD_TOKEN_VALID_TIME", 60 * 15)
+# 重置密码 Token 长度，默认 128 位，最长不超过 255 位
+RESET_PASSWORD_TOKEN_LENGTH = env.int("RESET_PASSWORD_TOKEN_LENGTH", 128)
+# 重置密码 Token 每天最大发送次数
+RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY = env.int("RESET_PASSWORD_TOKEN_MAX_SEND_PER_DAY", 3)
 
 # 数据导入/导出配置
 # 导入文件大小限制，单位为 MB

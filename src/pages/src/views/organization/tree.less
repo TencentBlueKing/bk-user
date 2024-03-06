@@ -24,9 +24,18 @@
   }
 
   .bk-node-row {
+    .is-root .bk-node-action {
+      width: 0 !important;
+      margin-right: 0 !important;
+    }
+
     .bk-tree-node {
       height: 36px;
       line-height: 36px;
+
+      .bk-node-action {
+        width: 14px;
+      }
     }
 
     &:hover {

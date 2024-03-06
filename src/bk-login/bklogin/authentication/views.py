@@ -17,7 +17,6 @@ from django.conf import settings
 from django.http import HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.generic import View
@@ -39,6 +38,7 @@ from bklogin.utils.url import urljoin
 
 from .constants import ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY, REDIRECT_FIELD_NAME, SIGN_IN_TENANT_ID_SESSION_KEY
 from .manager import BkTokenManager
+from .utils import url_has_allowed_host_and_scheme
 
 
 # 确保无论何时，响应必然有CSRFToken Cookie
@@ -52,12 +52,6 @@ class LoginView(View):
     default_redirect_to = "/console/"
     template_name = "index.html"
 
-    def _get_success_url_allowed_hosts(self, request):
-        # FIXME: request.get_host()会从header获取，可能存在伪造的情况，是否修改为直接从settings读取更加安全呢？
-        #  ALLOWED_REDIRECT_HOSTS 需要支持正则，参考Django Settings ALLOWED_HOST配置
-        #  https://github.com/django/django/blob/main/django/http/request.py#L715
-        return {request.get_host(), *settings.ALLOWED_REDIRECT_HOSTS}
-
     def _get_redirect_url(self, request):
         """如果安全的话，返回用户发起的重定向URL"""
         # 重定向URL
@@ -66,9 +60,8 @@ class LoginView(View):
         # 检查回调URL是否安全，防钓鱼
         url_is_safe = url_has_allowed_host_and_scheme(
             url=redirect_to,
-            allowed_hosts=self._get_success_url_allowed_hosts(request),
-            # FIXME: 如果需要考虑兼容https和http，则不能由请求是否https来决定
-            require_https=request.is_secure(),
+            allowed_hosts={*settings.ALLOWED_REDIRECT_HOSTS},
+            require_https=settings.BK_DOMAIN_SCHEME == "https",
         )
         return redirect_to if url_is_safe else self.default_redirect_to
 
@@ -92,7 +85,9 @@ class LoginView(View):
                 # session记录登录的租户
                 request.session[SIGN_IN_TENANT_ID_SESSION_KEY] = global_info.only_enabled_auth_tenant.id
                 # 联邦登录，则直接重定向到第三方登录
-                return HttpResponseRedirect(f"/auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/")
+                return HttpResponseRedirect(
+                    f"{settings.SITE_URL}auth/idps/{idp.id}/actions/{BuiltinActionEnum.LOGIN}/"
+                )
 
         # 返回登录页面
         return render(request, self.template_name)
@@ -362,7 +357,7 @@ class IdpPluginDispatchView(View):
             # 记录支持登录的租户用户
             request.session[ALLOWED_SIGN_IN_TENANT_USERS_SESSION_KEY] = tenant_users
             # 联邦认证则重定向到前端选择账号页面
-            return HttpResponseRedirect(redirect_to="/page/users/")
+            return HttpResponseRedirect(redirect_to=f"{settings.SITE_URL}page/users/")
 
         return self.wrap_plugin_error(
             plugin_error_context, plugin.dispatch_extension, action=action, http_method=http_method, request=request
@@ -370,7 +365,7 @@ class IdpPluginDispatchView(View):
 
     def _get_complete_action_url(self, idp_id: str, action: str) -> str:
         """获取完整"""
-        return urljoin(settings.BK_LOGIN_URL, f"auth/idps/{idp_id}/actions/{action}/")
+        return urljoin(settings.BK_LOGIN_URL, f"{settings.SITE_URL}auth/idps/{idp_id}/actions/{action}/")
 
     def _auth_backend(
         self, request, sign_in_tenant_id: str, idp_id: str, user_infos: Dict[str, Any] | List[Dict[str, Any]]

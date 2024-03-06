@@ -251,7 +251,7 @@ const handleChangeIdp = (idp: Idp) => {
   const customPlugins = ['local'];
   activeIdp.value = idp;
   if (!customPlugins.includes(idp.plugin.id)) {
-    window.location.href = `/auth/idps/${idp.id}/actions/login/`;
+    window.location.href = `${window.SITE_URL}/auth/idps/${idp.id}/actions/login/`;
   }
 };
 

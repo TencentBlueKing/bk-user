@@ -11,6 +11,15 @@ specific language governing permissions and limitations under the License.
 from django.urls import include, path
 
 urlpatterns = [
-    path("", include("bklogin.authentication.urls")),
+    path(
+        # 兼容旧版本，与 PaaS V2 / Console 共享域名，/login 路径前缀指向登录服务
+        "login/",
+        include(
+            [
+                path("", include("bklogin.authentication.urls")),
+                path("", include("bklogin.open_apis.urls")),
+            ]
+        ),
+    ),
     path("", include("bklogin.monitoring.urls")),
 ]

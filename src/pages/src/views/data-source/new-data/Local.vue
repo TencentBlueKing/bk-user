@@ -375,7 +375,10 @@ const maxTrailTimesList = reactive([
 ]);
 
 const handleEditorText = (html, text, key, type) => {
-  formData.config.password_expire.notification.templates.forEach((item) => {
+  const templates = ref(key === 'password_expiring' || key === 'password_expired'
+    ? formData.config.password_expire.notification.templates
+    : formData.config.password_initial.notification.templates);
+  templates.value.forEach((item) => {
     if (item.method === type && item.scene === key) {
       item.content = text;
       item.content_html = html;

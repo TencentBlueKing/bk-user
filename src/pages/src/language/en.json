@@ -365,5 +365,6 @@
   "认证源创建成功": "Auth source created successfully",
   "请将一下回调地址填写到企业微信配置内：": "Please fill in the following callback address into the WeChat Work configuration:",
   "系统错误": "System Error",
-  "确认退出登录？": "Confirm sign out?"
+  "确认退出登录？": "Confirm sign out?",
+  "当前用户不支持修改密码": "The current user cannot change the password"
 }

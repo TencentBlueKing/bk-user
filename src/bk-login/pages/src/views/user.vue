@@ -40,7 +40,7 @@ interface User {
 
 const router = useRouter();
 const goBack = () => {
-  router.push('/');
+  router.push({name: 'Login'});
 };
 
 const userList: Ref<User[]> = ref([]);
