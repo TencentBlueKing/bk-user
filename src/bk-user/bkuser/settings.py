@@ -311,8 +311,7 @@ CACHES: Dict[str, Any] = {
             "SOCKET_CONNECT_TIMEOUT": 5,
             # 连接建立后的读写操作超时设置，单位秒
             "SOCKET_TIMEOUT": 5,
-            # redis 只作为缓存使用, 触发异常不能影响正常逻辑，可能只是稍微慢点而已
-            "IGNORE_EXCEPTIONS": True,
+            "IGNORE_EXCEPTIONS": False,
             # 默认使用 pickle 序列化数据，可选序列化方式有：pickle、json、msgpack
             # "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer"
             # Redis 连接池配置
