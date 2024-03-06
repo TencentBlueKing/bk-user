@@ -14,7 +14,6 @@ from datetime import timedelta
 from functools import reduce
 
 from django.db.models import Q
-from django.utils import timezone
 
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationScene
@@ -23,6 +22,7 @@ from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeri
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.utils.time import get_midnight
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def notify_password_expiring_users(data_source_id: int):
         return
 
     identity_infos = LocalDataSourceIdentityInfo.objects.filter(data_source_id=data_source_id)
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     # 将要过期提醒，支持配置多值，对应 1/7/15 天等
     expired_date_filters = []
     for remain_days in plugin_cfg.password_expire.remind_before_expire:
@@ -86,7 +86,7 @@ def notify_password_expired_users(data_source_id: int):
     """对昨天过期的租户用户发送通知"""
     logger.info("[celery] receive task: notify_password_expired_users, data_source_id is %s", data_source_id)
 
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     identity_infos = LocalDataSourceIdentityInfo.objects.filter(
         data_source_id=data_source_id,
         password_expired_at__gt=midnight - timedelta(days=1),
@@ -125,7 +125,7 @@ def notify_expiring_tenant_users(tenant_id: str):
 
     tenant_users = TenantUser.objects.filter(tenant_id=tenant_id)
 
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     # 将要过期提醒，支持配置多值，对应 1/7/15 天等
     expired_date_filters = []
     for remain_days in cfg.remind_before_expire:
@@ -159,7 +159,7 @@ def notify_expired_tenant_users(tenant_id: str):
 
     # Q：为什么不使用 timezone.now 而是要转换成 midnight?
     # A: 相关讨论：https://github.com/TencentBlueKing/bk-user/pull/1504#discussion_r1438059142
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = get_midnight()
     # Q：为什么不使用 account_expired_at__date=time_now.date() 的方式？
     # A：在 USE_TZ == True 的情况下，查询的 SQL 中会使用 CONVERT_TZ 对时间进行转换，
     #    该转换要求 DB 中有配置对应的时区（如 UTC，GMT，Asia/Shanghai 等）

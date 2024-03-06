@@ -8,10 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from datetime import timedelta
-
 from django.conf import settings
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from bkuser.apps.notification.constants import NotificationMethod, NotificationScene
@@ -19,16 +16,11 @@ from bkuser.apps.notification.notifier import TenantUserNotifier
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.common.cache import Cache, CacheEnum, CacheKeyPrefixEnum
 from bkuser.common.verification_code import VerificationCodeScene
+from bkuser.utils.time import calc_remaining_seconds_today
 
 
 class ExceedSendRateLimit(Exception):
     """超过发送次数限制"""
-
-
-def calc_remaining_seconds_today() -> int:
-    """计算到今天剩余的秒数（在午夜时候过期）"""
-    midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    return int((midnight - timezone.now()).total_seconds())
 
 
 class PhoneVerificationCodeSender:

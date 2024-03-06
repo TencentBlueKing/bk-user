@@ -11,9 +11,11 @@ specific language governing permissions and limitations under the License.
 
 from django.conf import settings
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.tenant import TenantUserHandler
+from bkuser.common.validators import validate_phone_with_country_code
 
 
 class SendVerificationCodeInputSLZ(serializers.Serializer):
@@ -23,6 +25,14 @@ class SendVerificationCodeInputSLZ(serializers.Serializer):
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
 
+    def validate(self, attrs):
+        try:
+            validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(str(e))
+
+        return attrs
+
 
 class GetResetPasswordUrlByVerificationCodeInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
@@ -31,6 +41,14 @@ class GetResetPasswordUrlByVerificationCodeInputSLZ(serializers.Serializer):
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
     verification_code = serializers.CharField(help_text="验证码")
+
+    def validate(self, attrs):
+        try:
+            validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(str(e))
+
+        return attrs
 
 
 class GetResetPasswordUrlByVerificationCodeOutputSLZ(serializers.Serializer):

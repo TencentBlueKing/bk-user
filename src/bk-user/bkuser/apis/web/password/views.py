@@ -131,7 +131,7 @@ class SendVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
             raise error_codes.SEND_VERIFICATION_CODE_FAILED.f(_("请联系管理员处理"))
 
 
-class GetResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
+class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics.CreateAPIView):
     # 豁免认证 & 权限
     authentication_classes: List[BaseAuthentication] = []
     permission_classes: List[BasePermission] = []
@@ -246,7 +246,7 @@ class ListUsersByResetPasswordTokenApi(generics.ListAPIView):
         params = slz.validated_data
 
         # 只是查询租户用户列表，不应该使得令牌失效，否则后续无法进行校验
-        tenant_users = UserResetPasswordTokenManager().list_users_by_token(params["token"], disable_token=False)
+        tenant_users = UserResetPasswordTokenManager().list_users_by_token(params["token"])
         return Response(TenantUserMatchedByTokenOutputSLZ(tenant_users, many=True).data)
 
 
@@ -265,25 +265,24 @@ class ResetPasswordByTokenApi(generics.CreateAPIView):
         slz = ResetPasswordByTokenInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
+        token, password = params["token"], params["password"]
 
-        tenant_user = (
-            UserResetPasswordTokenManager()
-            .list_users_by_token(params["token"])
-            .filter(id=params["tenant_user_id"])
-            .first()
-        )
+        token_mgr = UserResetPasswordTokenManager()
+        tenant_user = token_mgr.list_users_by_token(token).filter(id=params["tenant_user_id"]).first()
         if not tenant_user:
             raise error_codes.TENANT_USER_NOT_EXIST.f(_("租户用户不存在"))
+        # 通过 Token 获取到用户后，需要及时禁用
+        token_mgr.disable_token(token)
 
         data_source_user = tenant_user.data_source_user
         plugin_cfg = data_source_user.data_source.get_plugin_cfg()
-        ret = PasswordValidator(plugin_cfg.password_rule.to_rule()).validate(params["password"])  # type: ignore
+        ret = PasswordValidator(plugin_cfg.password_rule.to_rule()).validate(password)  # type: ignore
         if not ret.ok:
             raise error_codes.CANNOT_RESET_USER_PASSWORD.f(_("密码不符合规则：{}").format(ret.exception_message))
 
         DataSourceUserHandler.update_password(
             data_source_user=data_source_user,
-            password=params["password"],
+            password=password,
             valid_days=plugin_cfg.password_rule.valid_time,
             operator="AnonymousByResetToken",
         )

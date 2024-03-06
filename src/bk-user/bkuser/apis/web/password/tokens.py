@@ -37,6 +37,7 @@ class UserResetPasswordTokenManager:
         self.cache = Cache(CacheEnum.REDIS, CacheKeyPrefixEnum.RESET_PASSWORD_TOKEN)
 
     def gen_token(self, tenant_user: TenantUser, related_obj_type: TokenRelatedObjType) -> str:
+        """生成 token"""
         info = {"type": related_obj_type.value, "tenant_id": tenant_user.tenant_id}
         if related_obj_type == TokenRelatedObjType.TENANT_USER:
             info["tenant_user_id"] = tenant_user.id
@@ -53,27 +54,20 @@ class UserResetPasswordTokenManager:
         self.cache.set(lock_key, True, timeout=self.lock_timeout)
 
         token = self._gen_token()
-        self.cache.set(
-            self._gen_cache_key_by_token(token),
-            json.dumps(info),
-            timeout=settings.RESET_PASSWORD_TOKEN_VALID_TIME,
-        )
+        self.cache.set(self._gen_cache_key_by_token(token), info, timeout=settings.RESET_PASSWORD_TOKEN_VALID_TIME)
         return token
 
-    def list_users_by_token(self, token: str, disable_token: bool = True) -> QuerySet[TenantUser]:
-        """根据 token 获取用户信息，返回可修改密码的用户列表
+    def disable_token(self, token: str) -> None:
+        """禁用 token"""
+        cache_key = self._gen_cache_key_by_token(token)
+        self.cache.delete(cache_key)
 
-        :param token: 重置密码令牌值
-        :param disable_token: 是否禁用令牌（使用令牌重置密码后需要失效，如果只是查询用户，则需要保留）
-        """
+    def list_users_by_token(self, token: str) -> QuerySet[TenantUser]:
+        """根据 token 获取用户信息，返回可修改密码的用户列表"""
         cache_key = self._gen_cache_key_by_token(token)
         cache_val = self.cache.get(cache_key, None)
         if not cache_val:
             return TenantUser.objects.none()
-
-        # 如果指定要禁用，则需要及时使 token 失效
-        if disable_token:
-            self.cache.delete(cache_key)
 
         info = json.loads(cache_val)
         if info["type"] == TokenRelatedObjType.EMAIL:

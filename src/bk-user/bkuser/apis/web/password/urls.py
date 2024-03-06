@@ -27,14 +27,14 @@ from bkuser.apis.web.password import views
 urlpatterns = [
     # 发送重置密码验证码到手机
     path(
-        "operations/reset/methods/phone/verification-code/",
+        "operations/reset/methods/phone/verification-codes/",
         views.SendVerificationCodeApi.as_view(),
         name="password.send_verification_code",
     ),
     # 通过验证码获取密码重置链接
     path(
         "operations/reset/methods/verification-code/token-urls/",
-        views.GetResetPasswordUrlByVerificationCodeApi.as_view(),
+        views.GenResetPasswordUrlByVerificationCodeApi.as_view(),
         name="password.get_passwd_reset_url_by_verification_code",
     ),
     # 发送密码重置邮件

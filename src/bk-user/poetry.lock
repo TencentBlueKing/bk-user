@@ -3312,4 +3312,4 @@ reference = "tencent"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "27f583b681c1c82a62bc0afc8066993ea3403c262e637790119e369198aa7d92"
+content-hash = "83c0ffea25f5e1e0bcc5f9051cba82b6249b872c1b05385f79e883d80e172f39"
