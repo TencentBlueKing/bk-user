@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-import json
 import secrets
 import string
 from hashlib import md5
@@ -65,11 +64,10 @@ class UserResetPasswordTokenManager:
     def list_users_by_token(self, token: str) -> QuerySet[TenantUser]:
         """根据 token 获取用户信息，返回可修改密码的用户列表"""
         cache_key = self._gen_cache_key_by_token(token)
-        cache_val = self.cache.get(cache_key, None)
-        if not cache_val:
+        info = self.cache.get(cache_key, None)
+        if not info:
             return TenantUser.objects.none()
 
-        info = json.loads(cache_val)
         if info["type"] == TokenRelatedObjType.EMAIL:
             tenant_users = TenantUser.objects.filter_by_email(info["tenant_id"], info["email"])
         elif info["type"] == TokenRelatedObjType.PHONE:

@@ -34,13 +34,13 @@ class SendVerificationCodeInputSLZ(serializers.Serializer):
         return attrs
 
 
-class GetResetPasswordUrlByVerificationCodeInputSLZ(serializers.Serializer):
+class GenResetPasswordUrlByVerificationCodeInputSLZ(serializers.Serializer):
     tenant_id = serializers.CharField(help_text="租户 ID")
     phone = serializers.CharField(help_text="手机号码")
     phone_country_code = serializers.CharField(
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
     )
-    verification_code = serializers.CharField(help_text="验证码")
+    verification_code = serializers.CharField(help_text="验证码", max_length=32)
 
     def validate(self, attrs):
         try:
@@ -51,7 +51,7 @@ class GetResetPasswordUrlByVerificationCodeInputSLZ(serializers.Serializer):
         return attrs
 
 
-class GetResetPasswordUrlByVerificationCodeOutputSLZ(serializers.Serializer):
+class GenResetPasswordUrlByVerificationCodeOutputSLZ(serializers.Serializer):
     reset_password_url = serializers.CharField(help_text="密码重置链接")
 
 

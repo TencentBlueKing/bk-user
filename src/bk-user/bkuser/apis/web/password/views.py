@@ -26,8 +26,8 @@ from bkuser.apis.web.password.senders import (
     PhoneVerificationCodeSender,
 )
 from bkuser.apis.web.password.serializers import (
-    GetResetPasswordUrlByVerificationCodeInputSLZ,
-    GetResetPasswordUrlByVerificationCodeOutputSLZ,
+    GenResetPasswordUrlByVerificationCodeInputSLZ,
+    GenResetPasswordUrlByVerificationCodeOutputSLZ,
     ListUserByResetPasswordTokenInputSLZ,
     ResetPasswordByTokenInputSLZ,
     SendResetPasswordEmailInputSLZ,
@@ -139,11 +139,11 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
     @swagger_auto_schema(
         tags=["password"],
         operation_description="通过短信验证码获取重置密码链接",
-        query_serializer=GetResetPasswordUrlByVerificationCodeInputSLZ(),
-        responses={status.HTTP_200_OK: GetResetPasswordUrlByVerificationCodeOutputSLZ()},
+        query_serializer=GenResetPasswordUrlByVerificationCodeInputSLZ(),
+        responses={status.HTTP_200_OK: GenResetPasswordUrlByVerificationCodeOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
-        slz = GetResetPasswordUrlByVerificationCodeInputSLZ(data=request.data)
+        slz = GenResetPasswordUrlByVerificationCodeInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
@@ -166,7 +166,7 @@ class GenResetPasswordUrlByVerificationCodeApi(GetFirstTenantUserMixin, generics
         # 3. 获取重置密码链接
         url = self._gen_reset_password_url(tenant_user)
 
-        return Response(GetResetPasswordUrlByVerificationCodeOutputSLZ({"reset_password_url": url}).data)
+        return Response(GenResetPasswordUrlByVerificationCodeOutputSLZ({"reset_password_url": url}).data)
 
     def _validate_verification_code(self, phone: str, phone_country_code: str, code: str):
         try:
