@@ -218,7 +218,7 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
 
 
 class IdpSwitchStatusApi(CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
-    """切换租户状态（启/停）"""
+    """切换认证源状态（启/停）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = IdpSwitchStatusOutputSLZ

@@ -48,8 +48,8 @@ class TestTenantCreateApi:
                                 "scene": "user_initialize",
                                 "title": "初始化密码",
                                 "sender": "admin",
-                                "content": "您的初始密码为:{{password}}",
-                                "content_html": "您的初始密码为:{{password}}",
+                                "content": "您的初始密码为: {{ password }}",
+                                "content_html": "您的初始密码为: {{ password }}",
                             }
                         ],
                     },

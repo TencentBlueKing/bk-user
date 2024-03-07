@@ -44,6 +44,6 @@ class DataSourceHandler:
 
     @staticmethod
     def get_tenant_available_data_sources(tenant_id: str) -> List[DataSource]:
-        """获取租户有查看的数据源，包括拥有的以及协同的"""
+        """获取租户能查看的数据源，包括拥有的以及协同的"""
         # TODO (su) 考虑租户协同的情况
         return DataSource.objects.filter(owner_tenant_id=tenant_id)

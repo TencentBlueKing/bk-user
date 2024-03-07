@@ -78,7 +78,7 @@ def build_and_run_notify_password_expiring_users_task():
     """构建并运行即将过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expiring_users_task")
 
-    # 对于停用 / 软删除的数据源，不发送密码即将过期提醒
+    # 对于停用的数据源，不发送密码即将过期提醒
     for data_source in DataSource.objects.filter(
         plugin_id=DataSourcePluginEnum.LOCAL, status=DataSourceStatus.ENABLED
     ):
@@ -113,7 +113,7 @@ def build_and_run_notify_password_expired_users_task():
     """构建并运行过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expired_users_task")
 
-    # 对于停用 / 软删除的数据源，不发送密码过期提醒
+    # 对于停用的数据源，不发送密码过期提醒
     for data_source in DataSource.objects.filter(
         plugin_id=DataSourcePluginEnum.LOCAL, status=DataSourceStatus.ENABLED
     ):
@@ -156,7 +156,7 @@ def build_and_run_notify_expiring_tenant_users_task():
     """构建并运行即将过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_expiring_tenant_users_task")
 
-    # 对于停用 / 软删除的租户，不需要对即将过期的租户用户进行提醒
+    # 对于停用的租户，不需要对即将过期的租户用户进行提醒
     for tenant_id in Tenant.objects.filter(status=TenantStatus.ENABLED).values_list("id", flat=True):
         notify_expiring_tenant_users.delay(tenant_id)
 
@@ -190,6 +190,6 @@ def build_and_run_notify_expired_tenant_users_task():
     """构建并运行过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_expired_tenant_users_task")
 
-    # 对于停用 / 软删除的租户，不需要对过期的租户用户进行提醒
+    # 对于停用的租户，不需要对过期的租户用户进行提醒
     for tenant_id in Tenant.objects.filter(status=TenantStatus.ENABLED).values_list("id", flat=True):
         notify_expired_tenant_users.delay(tenant_id)

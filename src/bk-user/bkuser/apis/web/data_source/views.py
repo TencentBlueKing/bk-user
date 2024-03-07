@@ -220,7 +220,7 @@ class DataSourceRetrieveUpdateDestroyApi(
 
     @swagger_auto_schema(
         tags=["data_source"],
-        operation_description="软删除数据源",
+        operation_description="删除数据源",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):

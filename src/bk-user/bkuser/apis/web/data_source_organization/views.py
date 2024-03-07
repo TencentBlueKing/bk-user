@@ -64,7 +64,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         data = slz.validated_data
         data_source_id = self.kwargs["id"]
 
-        # 数据源处于启用 / 停用状态下都可以查询用户，但是软删除状态下不行
+        # 数据源处于启用 / 停用状态下都可以查询用户
         data_source = DataSource.objects.filter(
             id=data_source_id,
             owner_tenant_id=self.get_current_tenant_id(),

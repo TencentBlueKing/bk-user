@@ -172,7 +172,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
 
     @swagger_auto_schema(
         tags=["tenant"],
-        operation_description="软删除租户",
+        operation_description="删除租户",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
