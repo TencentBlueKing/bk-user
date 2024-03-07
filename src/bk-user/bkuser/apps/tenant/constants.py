@@ -134,7 +134,6 @@ class TenantStatus(str, StructuredEnum):
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("禁用"))
-    DELETED = EnumField("deleted", label=_("软删除"))
 
 
 class TenantUserStatus(str, StructuredEnum):
@@ -143,11 +142,3 @@ class TenantUserStatus(str, StructuredEnum):
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("禁用"))
     EXPIRED = EnumField("expired", label=_("已过期"))
-    DELETED = EnumField("deleted", label=_("软删除"))
-
-
-class TenantDepartmentStatus(str, StructuredEnum):
-    """租户部门状态"""
-
-    ENABLED = EnumField("enabled", label=_("启用"))
-    DELETED = EnumField("deleted", label=_("软删除"))

@@ -17,7 +17,6 @@ from django.db.models import Q, QuerySet
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import (
     TIME_ZONE_CHOICES,
-    TenantDepartmentStatus,
     TenantFeatureFlag,
     TenantStatus,
     TenantUserStatus,
@@ -140,10 +139,6 @@ class TenantDepartment(TimestampedModel):
 
     tenant = models.ForeignKey(Tenant, on_delete=models.DO_NOTHING, db_constraint=False)
     data_source_department = models.ForeignKey(DataSourceDepartment, on_delete=models.DO_NOTHING, db_constraint=False)
-
-    status = models.CharField(
-        "状态", max_length=32, choices=TenantDepartmentStatus.get_choices(), default=TenantDepartmentStatus.ENABLED
-    )
 
     # 冗余字段
     data_source = models.ForeignKey(DataSource, on_delete=models.DO_NOTHING, db_constraint=False)

@@ -232,9 +232,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         if data_source.status != DataSourceStatus.DISABLED:
             raise error_codes.DATA_SOURCE_DELETE_FAILED.f(_("需要先停用数据源才能删除"))
 
-        data_source.status = DataSourceStatus.DELETED
-        data_source.updater = request.user.username
-        data_source.save(update_fields=["status", "updater", "updated_at"])
+        data_source.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

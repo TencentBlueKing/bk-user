@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 
 import pytest
 from bkuser.apps.tenant.constants import TenantStatus
+from bkuser.apps.tenant.models import Tenant
 from django.urls import reverse
 from rest_framework import status
 
@@ -97,19 +98,11 @@ class TestTenantDestroyApi:
         resp = api_client.delete(reverse("tenant.retrieve_update_destroy", kwargs={"id": random_tenant.id}))
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        random_tenant.refresh_from_db()
-        assert random_tenant.status == TenantStatus.DELETED
+        assert not Tenant.objects.filter(id=random_tenant.id).exists()
 
     def test_destroy_enabled_tenant(self, api_client, random_tenant):
         resp = api_client.delete(reverse("tenant.retrieve_update_destroy", kwargs={"id": random_tenant.id}))
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_destroy_deleted_tenant(self, api_client, random_tenant):
-        random_tenant.status = TenantStatus.DELETED
-        random_tenant.save(update_fields=["status"])
-
-        resp = api_client.delete(reverse("tenant.retrieve_update_destroy", kwargs={"id": random_tenant.id}))
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestTenantSwitchStatusApi:

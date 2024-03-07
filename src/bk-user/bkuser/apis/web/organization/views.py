@@ -63,7 +63,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
         # TODO 目前只有当前用户登录的租户，后续需要考虑跨租户协同的情况
         tenant_ids = [cur_tenant_id]
 
-        tenants = Tenant.objects.filter(id__in=tenant_ids, status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
+        tenants = Tenant.objects.filter(id__in=tenant_ids)
         # 将当前登录用户所在的租户置顶
         tenants = sorted(tenants, key=lambda t: t.id != cur_tenant_id)
 
@@ -100,7 +100,7 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
 
 class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView):
-    queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
+    queryset = Tenant.objects.all()
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = TenantRetrieveOutputSLZ

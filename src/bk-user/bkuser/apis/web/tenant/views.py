@@ -29,7 +29,6 @@ from bkuser.apis.web.tenant.serializers import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -67,7 +66,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
             )
         # {租户：数据源信息}
         tenant_data_source_map = defaultdict(list)
-        for ds in DataSource.objects.exclude(status=DataSourceStatus.DELETED):
+        for ds in DataSource.objects.all():
             tenant_data_source_map[ds.owner_tenant_id].append({"id": ds.id, "name": ds.name})
 
         return {
@@ -80,7 +79,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
+        queryset = Tenant.objects.all()
         if data.get("name"):
             queryset = queryset.filter(name__icontains=data["name"])
 
@@ -134,7 +133,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
 
 class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
+    queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
     serializer_class = TenantRetrieveOutputSLZ
@@ -178,12 +177,13 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
     )
     def delete(self, request, *args, **kwargs):
         tenant = self.get_object()
+        if tenant.is_default:
+            raise error_codes.TENANT_DELETE_FAILED.f(_("默认租户不能删除"))
+
         if tenant.status != TenantStatus.DISABLED:
             raise error_codes.TENANT_DELETE_FAILED.f(_("需要先停用租户才能删除"))
 
-        tenant.status = TenantStatus.DELETED
-        tenant.updater = request.user.username
-        tenant.save(update_fields=["status", "updater", "updated_at"])
+        tenant.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -192,7 +192,7 @@ class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
     serializer_class = TenantSwitchStatusOutputSLZ
-    queryset = Tenant.objects.filter(status__in=[TenantStatus.ENABLED, TenantStatus.DISABLED])
+    queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
 
     @swagger_auto_schema(
@@ -202,6 +202,9 @@ class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     )
     def patch(self, request, *args, **kwargs):
         tenant = self.get_object()
+        if tenant.is_default:
+            raise error_codes.UPDATE_TENANT_FAILED.f(_("默认租户不能停用"))
+
         tenant.status = TenantStatus.DISABLED if tenant.status == TenantStatus.ENABLED else TenantStatus.ENABLED
         tenant.updater = request.user.username
         tenant.save(update_fields=["status", "updater", "updated_at"])

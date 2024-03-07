@@ -472,19 +472,11 @@ class TestDataSourceDestroyApi:
         resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        data_source.refresh_from_db()
-        assert data_source.status == DataSourceStatus.DELETED
+        assert not DataSource.objects.filter(id=data_source.id).exists()
 
     def test_destroy_enabled_data_source(self, api_client, data_source):
         resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_destroy_deleted_data_source(self, api_client, data_source):
-        data_source.status = DataSourceStatus.DELETED
-        data_source.save(update_fields=["status"])
-
-        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestDataSourceSwitchStatusApi:
@@ -495,7 +487,7 @@ class TestDataSourceSwitchStatusApi:
         # 再次切换，变成可用
         assert api_client.patch(url).data["status"] == DataSourceStatus.ENABLED
 
-    def test_patch_other_tenant_data_source(self, api_client, random_tenant, data_source):
+    def test_switch_other_tenant_data_source(self, api_client, random_tenant, data_source):
         resp = api_client.patch(reverse("data_source.switch_status", kwargs={"id": data_source.id}))
         # 无法操作其他租户的数据源信息
         assert resp.status_code == status.HTTP_404_NOT_FOUND

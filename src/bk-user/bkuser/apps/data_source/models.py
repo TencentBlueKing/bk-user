@@ -14,7 +14,6 @@ from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
 from bkuser.apps.data_source.constants import (
-    DataSourceDepartmentStatus,
     DataSourceStatus,
     DataSourceUserStatus,
     TenantUserIdRuleEnum,
@@ -208,12 +207,6 @@ class DataSourceDepartment(TimestampedModel):
     """
 
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
-    status = models.CharField(
-        "部门状态",
-        max_length=32,
-        choices=DataSourceDepartmentStatus.get_choices(),
-        default=DataSourceDepartmentStatus.ENABLED,
-    )
 
     code = models.CharField("部门标识", max_length=128, default=generate_uuid)
     name = models.CharField("部门名称", max_length=255)

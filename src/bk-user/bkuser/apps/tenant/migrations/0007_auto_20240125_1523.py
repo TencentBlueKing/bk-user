@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tenant',
             name='status',
-            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用'), ('deleted', '软删除')], default=bkuser.apps.tenant.constants.TenantStatus['ENABLED'], max_length=32, verbose_name='状态'),
+            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用')], default=bkuser.apps.tenant.constants.TenantStatus['ENABLED'], max_length=32, verbose_name='状态'),
         ),
         migrations.AddField(
             model_name='tenant',
@@ -27,13 +27,8 @@ class Migration(migrations.Migration):
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.AddField(
-            model_name='tenantdepartment',
-            name='status',
-            field=models.CharField(choices=[('enabled', '启用'),  ('deleted', '软删除')], default=bkuser.apps.tenant.constants.TenantDepartmentStatus['ENABLED'], max_length=32, verbose_name='状态'),
-        ),
-        migrations.AddField(
             model_name='tenantuser',
             name='status',
-            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用'), ('expired', '已过期'), ('deleted', '软删除')], default=bkuser.apps.tenant.constants.TenantUserStatus['ENABLED'], max_length=32, verbose_name='状态'),
+            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用'), ('expired', '已过期')], default=bkuser.apps.tenant.constants.TenantUserStatus['ENABLED'], max_length=32, verbose_name='状态'),
         ),
     ]

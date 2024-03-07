@@ -12,18 +12,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='datasourcedepartment',
-            name='status',
-            field=models.CharField(choices=[('enabled', '启用'), ('deleted', '软删除')], default=bkuser.apps.data_source.constants.DataSourceDepartmentStatus['ENABLED'], max_length=32, verbose_name='部门状态'),
-        ),
-        migrations.AddField(
             model_name='datasourceuser',
             name='status',
-            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用'), ('deleted', '软删除')], default=bkuser.apps.data_source.constants.DataSourceUserStatus['ENABLED'], max_length=32, verbose_name='用户状态'),
+            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用')], default=bkuser.apps.data_source.constants.DataSourceUserStatus['ENABLED'], max_length=32, verbose_name='用户状态'),
         ),
         migrations.AlterField(
             model_name='datasource',
             name='status',
-            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '未启用'), ('deleted', '软删除')], default=bkuser.apps.data_source.constants.DataSourceStatus['ENABLED'], max_length=32, verbose_name='数据源状态'),
+            field=models.CharField(choices=[('enabled', '启用'), ('disabled', '未启用')], default=bkuser.apps.data_source.constants.DataSourceStatus['ENABLED'], max_length=32, verbose_name='数据源状态'),
         ),
     ]
