@@ -68,7 +68,6 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         data_source = DataSource.objects.filter(
             id=data_source_id,
             owner_tenant_id=self.get_current_tenant_id(),
-            status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
         ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXISTS

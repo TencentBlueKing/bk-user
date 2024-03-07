@@ -106,7 +106,6 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
     def get_serializer_context(self):
         tenant_user_ids = DataSource.objects.filter(
             owner_tenant_id=self.get_current_tenant_id(),
-            status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
         ).values_list("updater", flat=True)
         return {
             "data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name")),
@@ -118,10 +117,7 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        queryset = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(),
-            status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
-        )
+        queryset = DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id())
         if kw := data.get("keyword"):
             queryset = queryset.filter(name__icontains=kw)
 

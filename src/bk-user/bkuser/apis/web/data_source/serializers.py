@@ -268,11 +268,7 @@ class DataSourceTestConnectionInputSLZ(serializers.Serializer):
 
         if data_source_id := attrs.get("data_source_id"):
             # 若是更新场景，前端可以通过提供数据源 ID，这里将检查提供的数据源是否属于当前用户所在租户
-            if not DataSource.objects.filter(
-                id=data_source_id,
-                owner_tenant_id=self.context["tenant_id"],
-                status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED],
-            ).exists():
+            if not DataSource.objects.filter(id=data_source_id, owner_tenant_id=self.context["tenant_id"]).exists():
                 raise ValidationError(
                     _("当前用户租户 {} 不存在 ID 为 {} 的数据源").format(self.context["tenant_id"], data_source_id),
                 )

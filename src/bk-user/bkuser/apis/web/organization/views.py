@@ -28,7 +28,6 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserSearchInputSLZ,
 )
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -197,9 +196,7 @@ class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIVi
 
         data_source_id = tenant_dept.data_source_department.data_source_id
         # 即使数据源被停用，也是可以查看组织架构信息的
-        if not DataSource.objects.filter(
-            id=data_source_id, status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED]
-        ).exists():
+        if not DataSource.objects.filter(id=data_source_id).exists():
             raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         tenant_dept_children_infos = TenantDepartmentHandler.get_tenant_dept_children_infos(tenant_dept)
@@ -230,9 +227,7 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         data_source_id = tenant_dept.data_source_department.data_source_id
         # 即使数据源被停用，也是可以查看组织架构信息的
-        if not DataSource.objects.filter(
-            id=data_source_id, status__in=[DataSourceStatus.ENABLED, DataSourceStatus.DISABLED]
-        ).exists():
+        if not DataSource.objects.filter(id=data_source_id).exists():
             raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         # 需要通过数据源部门 - 用户关系反查租户部门用户信息，且需要支持递归查询子孙部门用户
