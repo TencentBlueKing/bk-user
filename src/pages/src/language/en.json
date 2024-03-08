@@ -349,7 +349,7 @@
   "确认密码": "Confirm password",
   "两次输入的密码不一致，请重新输入": "The two passwords entered do not match, please re-enter",
   "修改密码成功": "Password changed successfully",
-  "请输入": "Please Enter",
+  "请输入": "Please enter",
   "请填写正确的手机号": "Please enter a valid mobile number",
   "由1-64位字符组成": "Consists of 1-64 characters",
   "由3-32位字母、数字、连接符(-)字符组成，以字母开头": "Consists of 3-32 letters, numbers, and hyphen (-) characters, starting with a letter",
@@ -366,5 +366,18 @@
   "请将一下回调地址填写到企业微信配置内：": "Please fill in the following callback address into the WeChat Work configuration:",
   "系统错误": "System Error",
   "确认退出登录？": "Confirm sign out?",
-  "当前用户不支持修改密码": "The current user cannot change the password"
+  "当前用户不支持修改密码": "The current user cannot change the password",
+  "忘记密码": "Forgot Password",
+  "请输入手机号以接收短信验证码": "Receive CAPTCHA via mobile number",
+  "请输入邮箱以接收邮件重置密码链接": "Receive a password reset link via email",
+  "请输入验证码": "Please enter the CAPTCHA",
+  "获取验证码": "Get CAPTCHA",
+  "秒后可重发": " s",
+  "请输入邮箱地址": "Please enter your email address",
+  "设置新密码": "Set New Password",
+  "选择账号": "Select account",
+  "确认新密码": "Confirm new password",
+  "返回上一级": "Go back to the previous level",
+  "已发送密码重设邮件": "Password reset email has been sent",
+  "请查看邮件并根据提示进行操作": "Please check your email and follow the instructions"
 }
