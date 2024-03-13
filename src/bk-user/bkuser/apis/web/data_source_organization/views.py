@@ -32,7 +32,6 @@ from bkuser.apis.web.data_source_organization.serializers import (
     UserUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -66,8 +65,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
 
         # 数据源处于启用 / 停用状态下都可以查询用户
         data_source = DataSource.objects.filter(
-            id=data_source_id,
-            owner_tenant_id=self.get_current_tenant_id(),
+            id=data_source_id, owner_tenant_id=self.get_current_tenant_id()
         ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXISTS
@@ -104,8 +102,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         responses={status.HTTP_201_CREATED: ""},
     )
     def post(self, request, *args, **kwargs):
-        # 只有已经启用的数据源才可以新增用户
-        data_source = DataSource.objects.filter(id=self.kwargs["id"], status=DataSourceStatus.ENABLED).first()
+        data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_ENABLED
 
@@ -154,7 +151,7 @@ class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         # 校验数据源是否存在
         data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"], status=DataSourceStatus.ENABLED
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
         ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_ENABLED
@@ -186,7 +183,7 @@ class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView)
 
         # 校验数据源是否存在
         data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"], status=DataSourceStatus.ENABLED
+            owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
         ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_ENABLED

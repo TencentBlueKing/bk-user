@@ -13,7 +13,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
@@ -50,7 +49,7 @@ def _update_local_idp_of_tenant(data_source: DataSource):
     plugin_cfg = data_source.get_plugin_cfg()
     assert isinstance(plugin_cfg, LocalDataSourcePluginConfig)
 
-    enable_login = bool(data_source.status == DataSourceStatus.ENABLED and plugin_cfg.enable_account_password_login)
+    enable_login = plugin_cfg.enable_account_password_login
 
     # 根据数据源是否使用账密登录，修改认证源配置
     idp_plugin_cfg: LocalIdpPluginConfig = idp.get_plugin_cfg()

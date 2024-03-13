@@ -31,7 +31,6 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourceRetrieveOutputSLZ,
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
-    DataSourceSwitchStatusOutputSLZ,
     DataSourceSyncRecordListOutputSLZ,
     DataSourceSyncRecordRetrieveOutputSLZ,
     DataSourceSyncRecordSearchInputSLZ,
@@ -41,7 +40,6 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -54,7 +52,7 @@ from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
-from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -224,10 +222,8 @@ class DataSourceRetrieveUpdateDestroyApi(
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
+        # FIXME (su) 需要提供额外的 API，说明删除数据源的影响范围，且删除数据源会同步删除 部门/用户 & 关系数据
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.DISABLED:
-            raise error_codes.DATA_SOURCE_DELETE_FAILED.f(_("需要先停用数据源才能删除"))
-
         data_source.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -280,28 +276,6 @@ class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView
         return Response(DataSourceTestConnectionOutputSLZ(instance=result).data)
 
 
-class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
-    """切换数据源状态（启/停）"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = DataSourceSwitchStatusOutputSLZ
-
-    @swagger_auto_schema(
-        tags=["data_source"],
-        operation_description="变更数据源状态",
-        responses={status.HTTP_200_OK: DataSourceSwitchStatusOutputSLZ()},
-    )
-    def patch(self, request, *args, **kwargs):
-        data_source = self.get_object()
-        data_source.status = (
-            DataSourceStatus.DISABLED if data_source.status == DataSourceStatus.ENABLED else DataSourceStatus.ENABLED
-        )
-        data_source.updater = request.user.username
-        data_source.save(update_fields=["status", "updater", "updated_at"])
-
-        return Response(DataSourceSwitchStatusOutputSLZ(instance={"status": data_source.status.value}).data)
-
-
 class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """获取本地数据源数据导入模板"""
 
@@ -338,9 +312,6 @@ class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView
     def get(self, request, *args, **kwargs):
         """导出指定的本地数据源用户数据（Excel 格式）"""
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅能导出本地数据源数据"))
 
@@ -366,9 +337,6 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         data = slz.validated_data
 
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源支持导入功能"))
 
@@ -417,9 +385,6 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
     def post(self, request, *args, **kwargs):
         """触发数据源同步任务"""
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
         if data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("本地数据源不支持同步，请使用导入功能"))
 

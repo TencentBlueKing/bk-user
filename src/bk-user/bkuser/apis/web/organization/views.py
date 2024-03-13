@@ -12,7 +12,6 @@ import logging
 from collections import defaultdict
 
 from django.db.models import Q
-from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -31,7 +30,6 @@ from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUp
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
@@ -124,17 +122,13 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant = self.get_object()
-        if tenant.status != TenantStatus.ENABLED:
-            raise error_codes.TENANT_NOT_ENABLED.f(_("仅可编辑已启用的租户配置信息"))
-
         tenant_info = TenantEditableInfo(
             name=data["name"],
             logo=data["logo"] or "",
             feature_flags=TenantFeatureFlag(**data["feature_flags"]),
         )
 
-        TenantHandler.update_with_managers(tenant.id, tenant_info, data["manager_ids"])
+        TenantHandler.update_with_managers(self.get_object().id, tenant_info, data["manager_ids"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict
 
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.initializers import LocalDataSourceIdentityInfoInitializer
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.notification.constants import NotificationScene
@@ -49,10 +48,6 @@ def initialize_identity_info_and_send_notification(data_source_id: int):
     # 非本地数据源直接跳过
     if not data_source.is_local:
         logger.debug("not local data source, skip initialize user identity infos")
-        return
-
-    if data_source.status != DataSourceStatus.ENABLED:
-        logger.info("data source isn't enabled, skip initialize user identity infos")
         return
 
     initializer = LocalDataSourceIdentityInfoInitializer(data_source)

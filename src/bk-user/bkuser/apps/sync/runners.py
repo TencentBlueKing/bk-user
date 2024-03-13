@@ -13,7 +13,6 @@ from typing import Any, Dict
 
 from django.db import transaction
 
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.context import DataSourceSyncTaskContext, TenantSyncTaskContext
 from bkuser.apps.sync.models import DataSourceSyncTask, TenantSyncTask
@@ -33,11 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataSourceSyncTaskRunner:
-    """
-    数据源同步任务执行器
-
-    TODO (su) 后续支持软删除后，需要更新同步逻辑
-    """
+    """数据源同步任务执行器"""
 
     def __init__(self, task: DataSourceSyncTask, plugin_init_extra_kwargs: Dict[str, Any]):
         self.task = task
@@ -57,11 +52,7 @@ class DataSourceSyncTaskRunner:
         self._send_signal()
 
     def _need_skip_sync(self) -> bool:
-        """数据源 / 租户不是启用状态，都需要跳过同步"""
-        if self.data_source.status != DataSourceStatus.ENABLED:
-            logger.warning("data source %s isn't enabled, skip sync...", self.data_source.id)
-            return True
-
+        """租户不是启用状态，需要跳过同步"""
         if not Tenant.objects.filter(id=self.data_source.owner_tenant_id, status=TenantStatus.ENABLED).exists():
             logger.warning(
                 "data source %s's owner tenant %s isn't enabled, skip sync...",
@@ -104,11 +95,7 @@ class DataSourceSyncTaskRunner:
 
 
 class TenantSyncTaskRunner:
-    """
-    租户数据同步任务执行器
-
-    TODO (su) 后续支持软删除后，需要更新同步逻辑
-    """
+    """租户数据同步任务执行器"""
 
     def __init__(self, task: TenantSyncTask):
         self.task = task
@@ -126,11 +113,7 @@ class TenantSyncTaskRunner:
         self._send_signal()
 
     def _need_skip_sync(self) -> bool:
-        """数据源 / 租户不是启用状态，都需要跳过同步"""
-        if self.data_source.status != DataSourceStatus.ENABLED:
-            logger.warning("data source %s isn't enabled, skip tenant sync...", self.data_source.id)
-            return True
-
+        """租户不是启用状态，需要跳过同步"""
         if self.tenant.status != TenantStatus.ENABLED:
             logger.warning("tenant %s isn't enabled, skip tenant sync...", self.tenant.id)
             return True

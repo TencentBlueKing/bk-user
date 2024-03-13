@@ -157,17 +157,13 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant = self.get_object()
-        if tenant.status != TenantStatus.ENABLED:
-            raise error_codes.TENANT_NOT_ENABLED.f(_("仅可编辑已启用的租户配置信息"))
-
         tenant_info = TenantEditableInfo(
             name=data["name"],
             logo=data.get("logo") or "",
             feature_flags=TenantFeatureFlag(**data["feature_flags"]),
         )
 
-        TenantHandler.update_with_managers(tenant.id, tenant_info, data["manager_ids"])
+        TenantHandler.update_with_managers(self.get_object().id, tenant_info, data["manager_ids"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
@@ -176,6 +172,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
+        # FIXME (su) 需要提供额外的 API，说明删除租户的影响范围，且删除租户会同步删除 部门/用户 & 关系数据
         tenant = self.get_object()
         if tenant.is_default:
             raise error_codes.TENANT_DELETE_FAILED.f(_("默认租户不能删除"))

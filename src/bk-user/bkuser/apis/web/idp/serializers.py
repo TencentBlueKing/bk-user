@@ -17,7 +17,6 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
@@ -112,10 +111,8 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 数据源是否当前租户的
         tenant_id = self.context["tenant_id"]
-        if not DataSource.objects.filter(
-            id=attrs["data_source_id"], owner_tenant_id=tenant_id, status=DataSourceStatus.ENABLED
-        ).exists():
-            raise ValidationError(_("当前租户下不存在 ID 为 {} 的已启用的数据源").format(attrs["data_source_id"]))
+        if not DataSource.objects.filter(id=attrs["data_source_id"], owner_tenant_id=tenant_id).exists():
+            raise ValidationError(_("当前租户下不存在 ID 为 {} 的数据源").format(attrs["data_source_id"]))
 
         # 匹配的数据源字段必须是当前租户的用户字段，包括内建字段和自定义字段
         builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))

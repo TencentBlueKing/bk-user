@@ -13,11 +13,7 @@ from django.conf import settings
 from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import (
-    DataSourceStatus,
-    DataSourceUserStatus,
-    TenantUserIdRuleEnum,
-)
+from bkuser.apps.data_source.constants import DataSourceUserStatus, TenantUserIdRuleEnum
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -59,12 +55,6 @@ class DataSourceManager(models.Manager):
 class DataSource(AuditedModel):
     name = models.CharField("数据源名称", max_length=128)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
-    status = models.CharField(
-        "数据源状态",
-        max_length=32,
-        choices=DataSourceStatus.get_choices(),
-        default=DataSourceStatus.ENABLED,
-    )
     # Note: 数据源插件被删除的前提是，插件没有被任何数据源使用
     plugin = models.ForeignKey(DataSourcePlugin, on_delete=models.PROTECT)
     plugin_config = models.JSONField("插件配置", default=dict)

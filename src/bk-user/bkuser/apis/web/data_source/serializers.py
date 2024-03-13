@@ -19,7 +19,7 @@ from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceStatus, FieldMappingOperation
+from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -233,10 +233,6 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class DataSourceSwitchStatusOutputSLZ(serializers.Serializer):
-    status = serializers.CharField(help_text="数据源状态")
-
-
 class RawDataSourceUserSLZ(serializers.Serializer):
     code = serializers.CharField(help_text="用户 Code")
     properties = serializers.JSONField(help_text="用户属性")
@@ -311,7 +307,6 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
                 id=data_source_id,
                 plugin_id=DataSourcePluginEnum.LOCAL,
                 owner_tenant_id=self.context["tenant_id"],
-                status=DataSourceStatus.ENABLED,
             ).first()
             if not data_source:
                 raise ValidationError(_("指定数据源不存在或未启用"))

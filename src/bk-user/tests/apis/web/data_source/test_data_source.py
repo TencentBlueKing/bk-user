@@ -12,7 +12,7 @@ import datetime
 from typing import Any, Dict, List
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourceStatus, FieldMappingOperation
+from bkuser.apps.data_source.constants import FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -326,7 +326,6 @@ class TestDataSourceListApi:
         assert ds["name"] == data_source.name
         assert ds["owner_tenant_id"] == data_source.owner_tenant_id
         assert ds["plugin_name"] == DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL)
-        assert ds["status"] == DataSourceStatus.ENABLED
         assert ds["cooperation_tenants"] == []
 
     def test_list_other_tenant_data_source(self, api_client, random_tenant, data_source):
@@ -453,7 +452,6 @@ class TestDataSourceRetrieveApi:
         assert resp.data["owner_tenant_id"] == data_source.owner_tenant_id
         assert resp.data["plugin"]["id"] == DataSourcePluginEnum.LOCAL
         assert resp.data["plugin"]["name"] == DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL)
-        assert resp.data["status"] == DataSourceStatus.ENABLED
         assert resp.data["plugin_config"] == data_source.plugin_config
         assert resp.data["sync_config"] == data_source.sync_config
         assert resp.data["field_mapping"] == data_source.field_mapping
@@ -465,32 +463,8 @@ class TestDataSourceRetrieveApi:
 
 
 class TestDataSourceDestroyApi:
-    def test_destroy(self, api_client, data_source):
-        data_source.status = DataSourceStatus.DISABLED
-        data_source.save()
-
-        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
-        assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        assert not DataSource.objects.filter(id=data_source.id).exists()
-
-    def test_destroy_enabled_data_source(self, api_client, data_source):
-        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-
-
-class TestDataSourceSwitchStatusApi:
-    def test_switch(self, api_client, data_source):
-        url = reverse("data_source.switch_status", kwargs={"id": data_source.id})
-        # 默认启用，切换后不可用
-        assert api_client.patch(url).data["status"] == DataSourceStatus.DISABLED
-        # 再次切换，变成可用
-        assert api_client.patch(url).data["status"] == DataSourceStatus.ENABLED
-
-    def test_switch_other_tenant_data_source(self, api_client, random_tenant, data_source):
-        resp = api_client.patch(reverse("data_source.switch_status", kwargs={"id": data_source.id}))
-        # 无法操作其他租户的数据源信息
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
+    # FIXME (su) 重写数据源删除 API 的集成测试
+    pass
 
 
 class TestDataSourceSyncRecordApi:

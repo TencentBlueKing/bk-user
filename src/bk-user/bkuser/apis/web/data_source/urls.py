@@ -45,12 +45,6 @@ urlpatterns = [
     ),
     # 数据源更新/获取
     path("<int:id>/", views.DataSourceRetrieveUpdateDestroyApi.as_view(), name="data_source.retrieve_update_destroy"),
-    # 数据源启/停
-    path(
-        "<int:id>/operations/switch_status/",
-        views.DataSourceSwitchStatusApi.as_view(),
-        name="data_source.switch_status",
-    ),
     # 获取用户信息导入模板
     path(
         "<int:id>/operations/download_template/",

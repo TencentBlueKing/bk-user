@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('updater', models.CharField(blank=True, max_length=128, null=True)),
                 ('name', models.CharField(max_length=128, unique=True, verbose_name='数据源名称')),
                 ('owner_tenant_id', models.CharField(db_index=True, max_length=64, verbose_name='归属租户')),
-                ('status', models.CharField(choices=[('enabled', '启用'), ('disabled', '未启用')], default=bkuser.apps.data_source.constants.DataSourceStatus['ENABLED'], max_length=32, verbose_name='数据源状态')),
+                ('status', models.CharField(choices=[('enabled', '启用'), ('disabled', '未启用')], default='enabled', max_length=32, verbose_name='数据源状态')),
                 ('plugin_config', models.JSONField(default=dict, verbose_name='插件配置')),
                 ('sync_config', models.JSONField(default=dict, verbose_name='同步任务配置')),
                 ('field_mapping', models.JSONField(default=list, verbose_name='用户字段映射')),

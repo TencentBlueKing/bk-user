@@ -17,13 +17,6 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 USER_EXTRAS_UPDATE_BATCH_SIZE = 250
 
 
-class DataSourceStatus(str, StructuredEnum):
-    """数据源状态"""
-
-    ENABLED = EnumField("enabled", label=_("启用"))
-    DISABLED = EnumField("disabled", label=_("未启用"))
-
-
 class FieldMappingOperation(str, StructuredEnum):
     """字段映射关系"""
 

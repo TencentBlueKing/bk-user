@@ -14,13 +14,13 @@ from rest_framework.response import Response
 from bkuser.apis.open_v2.mixins import LegacyOpenApiCommonMixin
 from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.categories import CategoriesListInputSLZ, CategoriesListOutputSLZ
-from bkuser.apps.data_source.constants import DataSourceStatus, TenantUserIdRuleEnum
+from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import DataSource
 
 
 class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
     pagination_class = LegacyOpenApiPagination
-    queryset = DataSource.objects.filter(status=DataSourceStatus.ENABLED)
+    queryset = DataSource.objects.all()
 
     def get(self, request, *args, **kwargs):
         slz = CategoriesListInputSLZ(data=request.query_params)
@@ -34,8 +34,8 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                 "domain": ds.domain,
                 # 历史数据迁移后，只有默认目录的租户用户 ID 生成规则是 username
                 "default": bool(ds.owner_tenant_user_id_rule == TenantUserIdRuleEnum.USERNAME),
-                "status": ds.status,
-                "enabled": bool(ds.status == DataSourceStatus.ENABLED),
+                "status": "enabled",
+                "enabled": True,
             }
             for ds in self.get_queryset()
         ]
