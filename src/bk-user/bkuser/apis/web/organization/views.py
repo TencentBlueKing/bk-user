@@ -189,9 +189,8 @@ class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIVi
         tenant_dept = self.get_object()
 
         data_source_id = tenant_dept.data_source_department.data_source_id
-        # 即使数据源被停用，也是可以查看组织架构信息的
         if not DataSource.objects.filter(id=data_source_id).exists():
-            raise error_codes.DATA_SOURCE_NOT_EXISTS
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         tenant_dept_children_infos = TenantDepartmentHandler.get_tenant_dept_children_infos(tenant_dept)
         return Response(TenantDepartmentChildrenListOutputSLZ(tenant_dept_children_infos, many=True).data)
@@ -220,9 +219,8 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         tenant_dept = self.get_object()
 
         data_source_id = tenant_dept.data_source_department.data_source_id
-        # 即使数据源被停用，也是可以查看组织架构信息的
         if not DataSource.objects.filter(id=data_source_id).exists():
-            raise error_codes.DATA_SOURCE_NOT_EXISTS
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         # 需要通过数据源部门 - 用户关系反查租户部门用户信息，且需要支持递归查询子孙部门用户
         data_source_dept_ids = [tenant_dept.data_source_department_id]

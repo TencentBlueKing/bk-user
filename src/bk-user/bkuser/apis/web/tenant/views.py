@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 import logging
 from collections import defaultdict
 
+from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
@@ -33,7 +34,8 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import TenantStatus
-from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantManager, TenantUser
+from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.tenant import (
     TenantEditableInfo,
     TenantFeatureFlag,
@@ -172,7 +174,6 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        # FIXME (su) 需要提供额外的 API，说明删除租户的影响范围，且删除租户会同步删除 部门/用户 & 关系数据
         tenant = self.get_object()
         if tenant.is_default:
             raise error_codes.TENANT_DELETE_FAILED.f(_("默认租户不能删除"))
@@ -180,8 +181,21 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         if tenant.status != TenantStatus.DISABLED:
             raise error_codes.TENANT_DELETE_FAILED.f(_("需要先停用租户才能删除"))
 
-        tenant.delete()
+        with transaction.atomic():
+            # 注：单租户数据源数量不多，且删除租户属于低频操作，可以走循环删除，暂不需要优化
+            for data_source in DataSource.objects.filter(owner_tenant_id=tenant.id):
+                DataSourceHandler.delete_data_source_and_related_resources(data_source)
+
+            # 删除剩余的，通过协同创建的租户用户 / 部门
+            TenantUser.objects.filter(tenant=tenant).delete()
+            TenantDepartment.objects.filter(tenant=tenant).delete()
+            # 最后再回收租户
+            tenant.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# FIXME (su) 需要补充获取租户关联资源的 API
 
 
 class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):

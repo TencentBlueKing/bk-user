@@ -63,12 +63,11 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         data = slz.validated_data
         data_source_id = self.kwargs["id"]
 
-        # 数据源处于启用 / 停用状态下都可以查询用户
         data_source = DataSource.objects.filter(
             id=data_source_id, owner_tenant_id=self.get_current_tenant_id()
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXISTS
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         queryset = DataSourceUser.objects.filter(data_source=data_source)
         if username := data.get("username"):
@@ -104,7 +103,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
     def post(self, request, *args, **kwargs):
         data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXISTS
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         # 不允许对非本地数据源进行用户新增操作
         if not data_source.is_local:
@@ -154,7 +153,7 @@ class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
             owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXISTS
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         queryset = DataSourceUser.objects.filter(data_source=data_source)
         if keyword := data.get("keyword"):
@@ -186,7 +185,7 @@ class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView)
             owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXISTS
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         queryset = DataSourceDepartment.objects.filter(data_source=data_source)
         if name := data.get("name"):

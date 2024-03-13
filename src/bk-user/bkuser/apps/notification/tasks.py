@@ -78,8 +78,8 @@ def build_and_run_notify_password_expiring_users_task():
     logger.info("[celery] receive period task: build_and_run_notify_password_expiring_users_task")
 
     tenant_enabled_map = {tenant.id: tenant.status == TenantStatus.ENABLED for tenant in Tenant.objects.all()}
-    # 对于停用的数据源，不发送密码即将过期提醒
     for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+        # 对于租户已停用的数据源，不发送密码即将过期提醒
         if not tenant_enabled_map.get(data_source.owner_tenant_id):
             logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
             continue
@@ -116,8 +116,8 @@ def build_and_run_notify_password_expired_users_task():
     logger.info("[celery] receive period task: build_and_run_notify_password_expired_users_task")
 
     tenant_enabled_map = {tenant.id: tenant.status == TenantStatus.ENABLED for tenant in Tenant.objects.all()}
-    # 对于停用的数据源，不发送密码过期提醒
     for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+        # 对于租户已停用的数据源，不发送密码过期提醒
         if not tenant_enabled_map.get(data_source.owner_tenant_id):
             logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
             continue

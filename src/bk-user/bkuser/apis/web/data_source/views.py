@@ -28,6 +28,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
     DataSourceRandomPasswordOutputSLZ,
+    DataSourceRelatedResourcesListOutputSLZ,
     DataSourceRetrieveOutputSLZ,
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
@@ -40,13 +41,21 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourcePlugin,
+    DataSourceSensitiveInfo,
+    DataSourceUser,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
@@ -222,10 +231,41 @@ class DataSourceRetrieveUpdateDestroyApi(
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        # FIXME (su) 需要提供额外的 API，说明删除数据源的影响范围，且删除数据源会同步删除 部门/用户 & 关系数据
+        """删除数据源及关联的其他数据"""
         data_source = self.get_object()
-        data_source.delete()
+
+        # TODO (su) 支持操作审计后可删除该日志
+        logger.warning("user %s delete data source %s", request.user.username, data_source.id)
+
+        with transaction.atomic():
+            DataSourceHandler.delete_data_source_and_related_resources(data_source)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceRelatedResourcesListApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
+    pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    serializer_class = DataSourceRelatedResourcesListOutputSLZ
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源关联资源信息",
+        responses={
+            status.HTTP_200_OK: DataSourceRelatedResourcesListOutputSLZ(),
+        },
+    )
+    def get(self, request, *args, **kwargs):
+        data_source = self.get_object()
+        resources = {
+            "data_source_user": DataSourceUser.objects.filter(data_source=data_source).count(),
+            "data_source_department": DataSourceDepartment.objects.filter(data_source=data_source).count(),
+            # TODO (su) 支持协同后，一个数据源可能关联到多个租户
+            "tenant": 1,
+            "tenant_user": TenantUser.objects.filter(data_source=data_source).count(),
+            "tenant_department": TenantDepartment.objects.filter(data_source=data_source).count(),
+        }
+        return Response(DataSourceRelatedResourcesListOutputSLZ(resources).data)
 
 
 class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):

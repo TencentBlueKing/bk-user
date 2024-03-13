@@ -84,7 +84,7 @@ class ErrorCodes:
     DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("当前数据源不支持该操作"))
     CANNOT_CREATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持新增用户"))
     CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))
-    DATA_SOURCE_NOT_EXISTS = ErrorCode(_("数据源不存在"))
+    DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     DATA_SOURCE_IMPORT_FAILED = ErrorCode(_("数据源导入失败"))
     DATA_SOURCE_DELETE_FAILED = ErrorCode(_("数据源删除失败"))
     DATA_SOURCE_USER_CREATE_FAILED = ErrorCode(_("该数据源不支持新增用户"))
