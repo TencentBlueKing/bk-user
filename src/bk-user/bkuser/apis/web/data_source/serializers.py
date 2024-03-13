@@ -309,7 +309,7 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
                 owner_tenant_id=self.context["tenant_id"],
             ).first()
             if not data_source:
-                raise ValidationError(_("指定数据源不存在或未启用"))
+                raise ValidationError(_("指定数据源不存在"))
 
             plugin_config = data_source.get_plugin_cfg()
             if not plugin_config.enable_account_password_login:

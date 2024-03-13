@@ -104,7 +104,7 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
     def post(self, request, *args, **kwargs):
         data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_ENABLED
+            raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         # 不允许对非本地数据源进行用户新增操作
         if not data_source.is_local:
@@ -154,7 +154,7 @@ class DataSourceLeadersListApi(CurrentUserTenantMixin, generics.ListAPIView):
             owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_ENABLED
+            raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         queryset = DataSourceUser.objects.filter(data_source=data_source)
         if keyword := data.get("keyword"):
@@ -186,7 +186,7 @@ class DataSourceDepartmentsListApi(CurrentUserTenantMixin, generics.ListAPIView)
             owner_tenant_id=self.get_current_tenant_id(), id=self.kwargs["id"]
         ).first()
         if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_ENABLED
+            raise error_codes.DATA_SOURCE_NOT_EXISTS
 
         queryset = DataSourceDepartment.objects.filter(data_source=data_source)
         if name := data.get("name"):
