@@ -463,7 +463,7 @@ class TestDataSourceRetrieveApi:
 
 
 class TestDataSourceDestroyApi:
-    def test_retrieve(self, api_client, data_source):
+    def test_destroy(self, api_client, data_source):
         resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 

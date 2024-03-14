@@ -197,9 +197,10 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
 
 
 class TenantRelatedResourceListApi(generics.RetrieveAPIView):
+    """获取租户关联资源信息"""
+
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
-
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
     serializer_class = TenantRelatedResourcesListOutputSLZ
 
@@ -234,10 +235,10 @@ class TenantRelatedResourceListApi(generics.RetrieveAPIView):
 class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
     """切换租户状态（启/停）"""
 
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
-    serializer_class = TenantSwitchStatusOutputSLZ
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
+    serializer_class = TenantSwitchStatusOutputSLZ
 
     @swagger_auto_schema(
         tags=["tenant"],

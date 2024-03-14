@@ -43,7 +43,7 @@ urlpatterns = [
         views.DataSourceSyncRecordRetrieveApi.as_view(),
         name="data_source.sync_record.retrieve",
     ),
-    # 数据源更新/获取
+    # 数据源更新/获取/删除
     path("<int:id>/", views.DataSourceRetrieveUpdateDestroyApi.as_view(), name="data_source.retrieve_update_destroy"),
     # 数据源关联资源查询
     path(
