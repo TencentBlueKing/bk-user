@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 
 import pytest
+from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant
 from django.urls import reverse
@@ -92,6 +93,7 @@ class TestTenantRetrieveApi:
 
 class TestTenantDestroyApi:
     def test_destroy(self, api_client, random_tenant):
+        # 只能删除已经停用的租户
         random_tenant.status = TenantStatus.DISABLED
         random_tenant.save()
 
@@ -99,10 +101,23 @@ class TestTenantDestroyApi:
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         assert not Tenant.objects.filter(id=random_tenant.id).exists()
+        assert not DataSource.objects.filter(owner_tenant_id=random_tenant.id).exists()
 
     def test_destroy_enabled_tenant(self, api_client, random_tenant):
+        # 已启用的租户不能删除
         resp = api_client.delete(reverse("tenant.retrieve_update_destroy", kwargs={"id": random_tenant.id}))
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_destroy_default_tenant(self, api_client, default_tenant):
+        # 默认租户不能删除
+        resp = api_client.delete(reverse("tenant.retrieve_update_destroy", kwargs={"id": default_tenant.id}))
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+class TestTenantRelatedResourceListApi:
+    def test_list(self, api_client, random_tenant):
+        resp = api_client.get(reverse("tenant.related_resource.list", kwargs={"id": random_tenant.id}))
+        assert resp.status_code == status.HTTP_200_OK
 
 
 class TestTenantSwitchStatusApi:

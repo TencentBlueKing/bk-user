@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.constants import FieldMappingOperation
-from bkuser.apps.data_source.models import DataSource, DataSourceSensitiveInfo
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -463,8 +463,20 @@ class TestDataSourceRetrieveApi:
 
 
 class TestDataSourceDestroyApi:
-    # FIXME (su) 重写数据源删除 API 的集成测试
-    pass
+    def test_retrieve(self, api_client, data_source):
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        assert not DataSource.objects.filter(id=data_source.id).exists()
+        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
+
+
+class TestDataSourceRelatedResourceListApi:
+    def test_list(self, api_client, data_source):
+        resp = api_client.get(reverse("data_source.related_resource.list", kwargs={"id": data_source.id}))
+        assert resp.status_code == status.HTTP_200_OK
 
 
 class TestDataSourceSyncRecordApi:

@@ -48,8 +48,8 @@ urlpatterns = [
     # 数据源关联资源查询
     path(
         "<int:id>/related-resources/",
-        views.DataSourceRelatedResourcesListApi.as_view(),
-        name="data_source.related_resources.list",
+        views.DataSourceRelatedResourceListApi.as_view(),
+        name="data_source.related_resource.list",
     ),
     # 获取用户信息导入模板
     path(

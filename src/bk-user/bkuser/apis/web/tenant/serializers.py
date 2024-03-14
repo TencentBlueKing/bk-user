@@ -212,6 +212,15 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
         return obj.logo or settings.DEFAULT_TENANT_LOGO
 
 
+class TenantRelatedResourcesListOutputSLZ(serializers.Serializer):
+    data_source = serializers.IntegerField(help_text="数据源数量")
+    data_source_user = serializers.IntegerField(help_text="数据源用户数量")
+    data_source_department = serializers.IntegerField(help_text="数据源部门数量")
+    tenant = serializers.IntegerField(help_text="关联租户数量（含归属 / 协同）")
+    tenant_user = serializers.IntegerField(help_text="租户用户数量")
+    tenant_department = serializers.IntegerField(help_text="租户部门数量")
+
+
 class TenantUserSearchInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", required=False)
 

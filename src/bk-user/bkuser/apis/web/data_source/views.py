@@ -28,7 +28,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
     DataSourceRandomPasswordOutputSLZ,
-    DataSourceRelatedResourcesListOutputSLZ,
+    DataSourceRelatedResourceListOutputSLZ,
     DataSourceRetrieveOutputSLZ,
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
@@ -243,17 +243,18 @@ class DataSourceRetrieveUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceRelatedResourcesListApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
+class DataSourceRelatedResourceListApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
+    queryset = DataSource.objects.all()
+    lookup_url_kwarg = "id"
+
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = DataSourceRelatedResourcesListOutputSLZ
+    serializer_class = DataSourceRelatedResourceListOutputSLZ
 
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源关联资源信息",
-        responses={
-            status.HTTP_200_OK: DataSourceRelatedResourcesListOutputSLZ(),
-        },
+        responses={status.HTTP_200_OK: DataSourceRelatedResourceListOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         data_source = self.get_object()
@@ -265,7 +266,7 @@ class DataSourceRelatedResourcesListApi(CurrentUserTenantDataSourceMixin, generi
             "tenant_user": TenantUser.objects.filter(data_source=data_source).count(),
             "tenant_department": TenantDepartment.objects.filter(data_source=data_source).count(),
         }
-        return Response(DataSourceRelatedResourcesListOutputSLZ(resources).data)
+        return Response(DataSourceRelatedResourceListOutputSLZ(resources).data)
 
 
 class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):

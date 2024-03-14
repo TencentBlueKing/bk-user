@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from bkuser.apis.web.tenant.serializers import (
     TenantCreateInputSLZ,
     TenantCreateOutputSLZ,
+    TenantRelatedResourcesListOutputSLZ,
     TenantRetrieveOutputSLZ,
     TenantSearchInputSLZ,
     TenantSearchOutputSLZ,
@@ -30,7 +31,7 @@ from bkuser.apis.web.tenant.serializers import (
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
-from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import TenantStatus
@@ -186,16 +187,48 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
             for data_source in DataSource.objects.filter(owner_tenant_id=tenant.id):
                 DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
-            # 删除剩余的，通过协同创建的租户用户 / 部门
+            # 删除剩余的，通过协同创建的租户用户 / 部门（本租户数据源同步所得的，已经在删除数据源时候删除）
             TenantUser.objects.filter(tenant=tenant).delete()
             TenantDepartment.objects.filter(tenant=tenant).delete()
-            # 最后再回收租户
+            # 最后再删除租户
             tenant.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# FIXME (su) 需要补充获取租户关联资源的 API
+class TenantRelatedResourceListApi(generics.RetrieveAPIView):
+    queryset = Tenant.objects.all()
+    lookup_url_kwarg = "id"
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
+    serializer_class = TenantRelatedResourcesListOutputSLZ
+
+    @swagger_auto_schema(
+        tags=["tenant"],
+        operation_description="租户关联资源信息",
+        responses={status.HTTP_200_OK: TenantRelatedResourcesListOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant = self.get_object()
+        data_sources = DataSource.objects.filter(owner_tenant_id=tenant.id)
+
+        resources = {
+            "data_source": data_sources.count(),
+            "data_source_user": DataSourceUser.objects.filter(data_source__in=data_sources).count(),
+            "data_source_department": DataSourceDepartment.objects.filter(data_source__in=data_sources).count(),
+            # TODO (su) 支持协同后，可能关联到多个租户
+            "tenant": 1,
+            # 租户用户 / 部门数量 = 本租户数据源同步创建的（含分享给其他租户的） + 其他租户协同创建的（仅限于本租户）
+            "tenant_user": (
+                TenantUser.objects.filter(data_source__in=data_sources).count()
+                + TenantUser.objects.filter(tenant=tenant).exclude(data_source__in=data_sources).count()
+            ),
+            "tenant_department": (
+                TenantDepartment.objects.filter(data_source__in=data_sources).count()
+                + TenantDepartment.objects.filter(tenant=tenant).exclude(data_source__in=data_sources).count()
+            ),
+        }
+        return Response(TenantRelatedResourcesListOutputSLZ(resources).data)
 
 
 class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
@@ -228,7 +261,7 @@ class TenantUsersListApi(generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
 
     def get_queryset(self):
-        tenant_id = self.kwargs["tenant_id"]
+        tenant_id = self.kwargs["id"]
         slz = TenantUserSearchInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
