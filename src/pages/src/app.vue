@@ -8,15 +8,16 @@ import HeaderBox from './views/Header.vue';
 import { currentUser } from '@/http/api';
 import { t } from '@/language/index';
 import { useUser } from '@/store/user';
-import ResetPassword from '@/views/reset-password/index.vue';
+import Password from '@/views/reset-password/index.vue';
+import ResetPassword from '@/views/reset-password/newPassword.vue';
 
 const route = useRoute();
 
-const showPassword = ref(false);
+const showName = ref(null);
 // 判断是否是重置密码的路由
 watch(() => route.name, (val) => {
   if (val === 'password' || val === 'resetPassword') {
-    showPassword.value = true;
+    showName.value = val;
   } else {
     initUser();
   }
@@ -44,8 +45,10 @@ const initUser = async () => {
 
 <template>
   <div>
+    <Password v-if="showName === 'password'" />
+    <ResetPassword v-else-if="showName === 'resetPassword'" />
     <bk-loading
-      v-if="!showPassword"
+      v-else
       :loading="isLoading"
       :class="{
         'main-loading': isLoading
@@ -53,7 +56,6 @@ const initUser = async () => {
     >
       <HeaderBox v-if="!isLoading" />
     </bk-loading>
-    <ResetPassword v-else />
   </div>
 </template>
 
