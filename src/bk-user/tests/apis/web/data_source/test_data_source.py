@@ -475,7 +475,7 @@ class TestDataSourceDestroyApi:
 
 class TestDataSourceRelatedResourceListApi:
     def test_list(self, api_client, data_source):
-        resp = api_client.get(reverse("data_source.related_resource.list", kwargs={"id": data_source.id}))
+        resp = api_client.get(reverse("data_source.related_resource_stats", kwargs={"id": data_source.id}))
         assert resp.status_code == status.HTTP_200_OK
 
 

@@ -34,7 +34,7 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                 "domain": ds.domain,
                 # 历史数据迁移后，只有默认目录的租户用户 ID 生成规则是 username
                 "default": bool(ds.owner_tenant_user_id_rule == TenantUserIdRuleEnum.USERNAME),
-                "status": "enabled",
+                "status": "normal",
                 "enabled": True,
             }
             for ds in self.get_queryset()

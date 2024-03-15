@@ -243,7 +243,7 @@ class DataSourceRetrieveUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DataSourceRelatedResourceListApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
+class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
     queryset = DataSource.objects.all()
     lookup_url_kwarg = "id"
 
@@ -259,12 +259,12 @@ class DataSourceRelatedResourceListApi(CurrentUserTenantDataSourceMixin, generic
     def get(self, request, *args, **kwargs):
         data_source = self.get_object()
         resources = {
-            "data_source_user": DataSourceUser.objects.filter(data_source=data_source).count(),
-            "data_source_department": DataSourceDepartment.objects.filter(data_source=data_source).count(),
+            "data_source_user_count": DataSourceUser.objects.filter(data_source=data_source).count(),
+            "data_source_department_count": DataSourceDepartment.objects.filter(data_source=data_source).count(),
             # TODO (su) 支持协同后，一个数据源可能关联到多个租户
-            "tenant": 1,
-            "tenant_user": TenantUser.objects.filter(data_source=data_source).count(),
-            "tenant_department": TenantDepartment.objects.filter(data_source=data_source).count(),
+            "tenant_count": 1,
+            "tenant_user_count": TenantUser.objects.filter(data_source=data_source).count(),
+            "tenant_department_count": TenantDepartment.objects.filter(data_source=data_source).count(),
         }
         return Response(DataSourceRelatedResourceListOutputSLZ(resources).data)
 

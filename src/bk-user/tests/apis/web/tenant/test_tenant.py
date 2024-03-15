@@ -116,7 +116,7 @@ class TestTenantDestroyApi:
 
 class TestTenantRelatedResourceListApi:
     def test_list(self, api_client, random_tenant):
-        resp = api_client.get(reverse("tenant.related_resource.list", kwargs={"id": random_tenant.id}))
+        resp = api_client.get(reverse("tenant.related_resource_stats", kwargs={"id": random_tenant.id}))
         assert resp.status_code == status.HTTP_200_OK
 
 

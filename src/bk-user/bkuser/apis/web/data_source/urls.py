@@ -47,9 +47,9 @@ urlpatterns = [
     path("<int:id>/", views.DataSourceRetrieveUpdateDestroyApi.as_view(), name="data_source.retrieve_update_destroy"),
     # 数据源关联资源查询
     path(
-        "<int:id>/related-resources/",
-        views.DataSourceRelatedResourceListApi.as_view(),
-        name="data_source.related_resource.list",
+        "<int:id>/related-resource-statistics/",
+        views.DataSourceRelatedResourceStatsApi.as_view(),
+        name="data_source.related_resource_stats",
     ),
     # 获取用户信息导入模板
     path(

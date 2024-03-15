@@ -188,6 +188,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
                 DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
             # 删除剩余的，通过协同创建的租户用户 / 部门（本租户数据源同步所得的，已经在删除数据源时候删除）
+            # TODO (su) 协同相关数据的需要删除，比如协同策略，被协同的策略等等
             TenantUser.objects.filter(tenant=tenant).delete()
             TenantDepartment.objects.filter(tenant=tenant).delete()
             # 最后再删除租户
@@ -196,7 +197,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantRelatedResourceListApi(generics.RetrieveAPIView):
+class TenantRelatedResourceStatsApi(generics.RetrieveAPIView):
     """获取租户关联资源信息"""
 
     queryset = Tenant.objects.all()
@@ -214,20 +215,18 @@ class TenantRelatedResourceListApi(generics.RetrieveAPIView):
         data_sources = DataSource.objects.filter(owner_tenant_id=tenant.id)
 
         resources = {
-            "data_source": data_sources.count(),
-            "data_source_user": DataSourceUser.objects.filter(data_source__in=data_sources).count(),
-            "data_source_department": DataSourceDepartment.objects.filter(data_source__in=data_sources).count(),
+            "data_source_count": data_sources.count(),
+            "data_source_user_count": DataSourceUser.objects.filter(data_source__in=data_sources).count(),
+            "data_source_department_count": DataSourceDepartment.objects.filter(data_source__in=data_sources).count(),
             # TODO (su) 支持协同后，可能关联到多个租户
-            "tenant": 1,
+            "tenant_count": 1,
             # 租户用户 / 部门数量 = 本租户数据源同步创建的（含分享给其他租户的） + 其他租户协同创建的（仅限于本租户）
-            "tenant_user": (
-                TenantUser.objects.filter(data_source__in=data_sources).count()
-                + TenantUser.objects.filter(tenant=tenant).exclude(data_source__in=data_sources).count()
-            ),
-            "tenant_department": (
-                TenantDepartment.objects.filter(data_source__in=data_sources).count()
-                + TenantDepartment.objects.filter(tenant=tenant).exclude(data_source__in=data_sources).count()
-            ),
+            "tenant_user_count": TenantUser.objects.filter(
+                Q(data_source__in=data_sources) | Q(tenant=tenant),
+            ).count(),
+            "tenant_department_count": TenantDepartment.objects.filter(
+                Q(data_source__in=data_sources) | Q(tenant=tenant),
+            ).count(),
         }
         return Response(TenantRelatedResourcesListOutputSLZ(resources).data)
 

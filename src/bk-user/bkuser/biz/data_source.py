@@ -61,6 +61,8 @@ class DataSourceHandler:
 
     @staticmethod
     def delete_data_source_and_related_resources(data_source: DataSource) -> None:
+        """重要：必须在事务内调用该方法"""
+
         # ======== 删除租户相关模型数据 ========
         # 1. 删除租户部门数据
         TenantDepartment.objects.filter(data_source=data_source).delete()

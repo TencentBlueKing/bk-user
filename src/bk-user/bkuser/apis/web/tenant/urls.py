@@ -18,8 +18,8 @@ urlpatterns = [
     path("<str:id>/operations/switch_status/", views.TenantSwitchStatusApi.as_view(), name="tenant.switch_status"),
     path("<str:id>/users/", views.TenantUsersListApi.as_view(), name="tenant_users.list"),
     path(
-        "<str:id>/related-resources/",
-        views.TenantRelatedResourceListApi.as_view(),
-        name="tenant.related_resource.list",
+        "<str:id>/related-resource-statistics/",
+        views.TenantRelatedResourceStatsApi.as_view(),
+        name="tenant.related_resource_stats",
     ),
 ]
