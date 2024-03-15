@@ -26,5 +26,5 @@ urlpatterns = [
     # 认证源获取/更新
     path("<str:id>/", views.IdpRetrieveUpdateApi.as_view(), name="idp.retrieve_update"),
     # 认证源启 / 停
-    path("<str:id>/operations/switch_status/", views.IdpSwitchStatusApi.as_view(), name="idp.switch_status"),
+    path("<str:id>/status/", views.IdpStatusUpdateApi.as_view(), name="idp.update_status"),
 ]

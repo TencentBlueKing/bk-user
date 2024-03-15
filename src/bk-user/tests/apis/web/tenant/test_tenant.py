@@ -114,16 +114,16 @@ class TestTenantDestroyApi:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-class TestTenantRelatedResourceListApi:
+class TestTenantRelatedResourceStatsApi:
     def test_list(self, api_client, random_tenant):
         resp = api_client.get(reverse("tenant.related_resource_stats", kwargs={"id": random_tenant.id}))
         assert resp.status_code == status.HTTP_200_OK
 
 
-class TestTenantSwitchStatusApi:
-    def test_switch(self, api_client, random_tenant):
-        url = reverse("tenant.switch_status", kwargs={"id": random_tenant.id})
+class TestTenantStatusUpdateApi:
+    def test_update(self, api_client, random_tenant):
+        url = reverse("tenant.update_status", kwargs={"id": random_tenant.id})
         # 默认启用，切换后不可用
-        assert api_client.patch(url).data["status"] == TenantStatus.DISABLED
+        assert api_client.put(url).data["status"] == TenantStatus.DISABLED
         # 再次切换，变成可用
-        assert api_client.patch(url).data["status"] == TenantStatus.ENABLED
+        assert api_client.put(url).data["status"] == TenantStatus.ENABLED

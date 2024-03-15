@@ -23,7 +23,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
-from bkuser.common.views import ExcludePutAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 from .schema import get_idp_plugin_cfg_json_schema, get_idp_plugin_cfg_openapi_schema_map
 from .serializers import (
@@ -217,7 +217,7 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class IdpSwitchStatusApi(CurrentUserTenantMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
+class IdpStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     """切换认证源状态（启/停）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -232,7 +232,7 @@ class IdpSwitchStatusApi(CurrentUserTenantMixin, ExcludePutAPIViewMixin, generic
         operation_description="变更认证源状态",
         responses={status.HTTP_200_OK: IdpSwitchStatusOutputSLZ()},
     )
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         idp = self.get_object()
         idp.status = IdpStatus.DISABLED if idp.status == IdpStatus.ENABLED else IdpStatus.ENABLED
         idp.updater = request.user.username

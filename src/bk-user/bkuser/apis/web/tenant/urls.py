@@ -15,7 +15,7 @@ from . import views
 urlpatterns = [
     path("", views.TenantListCreateApi.as_view(), name="tenant.list_create"),
     path("<str:id>/", views.TenantRetrieveUpdateDestroyApi.as_view(), name="tenant.retrieve_update_destroy"),
-    path("<str:id>/operations/switch_status/", views.TenantSwitchStatusApi.as_view(), name="tenant.switch_status"),
+    path("<str:id>/status/", views.TenantStatusUpdateApi.as_view(), name="tenant.update_status"),
     path("<str:id>/users/", views.TenantUsersListApi.as_view(), name="tenant_users.list"),
     path(
         "<str:id>/related-resource-statistics/",

@@ -212,7 +212,7 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
         return obj.logo or settings.DEFAULT_TENANT_LOGO
 
 
-class TenantRelatedResourcesListOutputSLZ(serializers.Serializer):
+class TenantRelatedResourceStatsOutputSLZ(serializers.Serializer):
     data_source_count = serializers.IntegerField(help_text="数据源数量")
     data_source_user_count = serializers.IntegerField(help_text="数据源用户数量")
     data_source_department_count = serializers.IntegerField(help_text="数据源部门数量")

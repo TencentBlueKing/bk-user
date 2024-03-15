@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 
 import pytest
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
@@ -275,3 +276,12 @@ class TestIdpRetrieveApi:
         assert resp.data["plugin_config"] == wecom_idp.plugin_config
         assert resp.data["data_source_match_rules"] == wecom_idp.data_source_match_rules
         assert resp.data["callback_uri"] == wecom_idp.callback_uri
+
+
+class TestIdpStatusUpdateApi:
+    def test_update(self, api_client, wecom_idp):
+        url = reverse("idp.update_status", kwargs={"id": wecom_idp.id})
+        # 默认启用，切换后不可用
+        assert api_client.put(url).data["status"] == IdpStatus.DISABLED
+        # 再次切换，变成可用
+        assert api_client.put(url).data["status"] == IdpStatus.ENABLED

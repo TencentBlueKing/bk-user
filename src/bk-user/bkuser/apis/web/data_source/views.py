@@ -28,7 +28,7 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
     DataSourceRandomPasswordOutputSLZ,
-    DataSourceRelatedResourceListOutputSLZ,
+    DataSourceRelatedResourceStatsOutputSLZ,
     DataSourceRetrieveOutputSLZ,
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
@@ -249,12 +249,12 @@ class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generi
 
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = DataSourceRelatedResourceListOutputSLZ
+    serializer_class = DataSourceRelatedResourceStatsOutputSLZ
 
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="数据源关联资源信息",
-        responses={status.HTTP_200_OK: DataSourceRelatedResourceListOutputSLZ()},
+        responses={status.HTTP_200_OK: DataSourceRelatedResourceStatsOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         data_source = self.get_object()
@@ -266,7 +266,7 @@ class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generi
             "tenant_user_count": TenantUser.objects.filter(data_source=data_source).count(),
             "tenant_department_count": TenantDepartment.objects.filter(data_source=data_source).count(),
         }
-        return Response(DataSourceRelatedResourceListOutputSLZ(resources).data)
+        return Response(DataSourceRelatedResourceStatsOutputSLZ(resources).data)
 
 
 class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):

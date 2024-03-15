@@ -473,7 +473,7 @@ class TestDataSourceDestroyApi:
         assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
 
 
-class TestDataSourceRelatedResourceListApi:
+class TestDataSourceRelatedResourceStatsApi:
     def test_list(self, api_client, data_source):
         resp = api_client.get(reverse("data_source.related_resource_stats", kwargs={"id": data_source.id}))
         assert resp.status_code == status.HTTP_200_OK

@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from bkuser.apis.web.tenant.serializers import (
     TenantCreateInputSLZ,
     TenantCreateOutputSLZ,
-    TenantRelatedResourcesListOutputSLZ,
+    TenantRelatedResourceStatsOutputSLZ,
     TenantRetrieveOutputSLZ,
     TenantSearchInputSLZ,
     TenantSearchOutputSLZ,
@@ -45,7 +45,7 @@ from bkuser.biz.tenant import (
     TenantManagerWithoutID,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.local.models import PasswordInitialConfig
 
 logger = logging.getLogger(__name__)
@@ -203,12 +203,12 @@ class TenantRelatedResourceStatsApi(generics.RetrieveAPIView):
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_PLATFORM)]
-    serializer_class = TenantRelatedResourcesListOutputSLZ
+    serializer_class = TenantRelatedResourceStatsOutputSLZ
 
     @swagger_auto_schema(
         tags=["tenant"],
         operation_description="租户关联资源信息",
-        responses={status.HTTP_200_OK: TenantRelatedResourcesListOutputSLZ()},
+        responses={status.HTTP_200_OK: TenantRelatedResourceStatsOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
         tenant = self.get_object()
@@ -228,10 +228,10 @@ class TenantRelatedResourceStatsApi(generics.RetrieveAPIView):
                 Q(data_source__in=data_sources) | Q(tenant=tenant),
             ).count(),
         }
-        return Response(TenantRelatedResourcesListOutputSLZ(resources).data)
+        return Response(TenantRelatedResourceStatsOutputSLZ(resources).data)
 
 
-class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
+class TenantStatusUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     """切换租户状态（启/停）"""
 
     queryset = Tenant.objects.all()
@@ -244,7 +244,7 @@ class TenantSwitchStatusApi(ExcludePutAPIViewMixin, generics.UpdateAPIView):
         operation_description="变更租户状态",
         responses={status.HTTP_200_OK: TenantSwitchStatusOutputSLZ()},
     )
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         tenant = self.get_object()
         if tenant.is_default:
             raise error_codes.UPDATE_TENANT_FAILED.f(_("默认租户不能停用"))

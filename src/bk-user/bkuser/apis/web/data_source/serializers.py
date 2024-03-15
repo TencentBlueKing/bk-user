@@ -231,7 +231,7 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class DataSourceRelatedResourceListOutputSLZ(serializers.Serializer):
+class DataSourceRelatedResourceStatsOutputSLZ(serializers.Serializer):
     data_source_user_count = serializers.IntegerField(help_text="数据源用户数量")
     data_source_department_count = serializers.IntegerField(help_text="数据源部门数量")
     tenant_count = serializers.IntegerField(help_text="关联租户数量（含协同）")
