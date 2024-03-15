@@ -43,13 +43,13 @@ urlpatterns = [
         views.DataSourceSyncRecordRetrieveApi.as_view(),
         name="data_source.sync_record.retrieve",
     ),
-    # 数据源更新/获取
-    path("<int:id>/", views.DataSourceRetrieveUpdateApi.as_view(), name="data_source.retrieve_update"),
-    # 数据源启/停
+    # 数据源更新/获取/删除
+    path("<int:id>/", views.DataSourceRetrieveUpdateDestroyApi.as_view(), name="data_source.retrieve_update_destroy"),
+    # 数据源关联资源查询
     path(
-        "<int:id>/operations/switch_status/",
-        views.DataSourceSwitchStatusApi.as_view(),
-        name="data_source.switch_status",
+        "<int:id>/related-resource-statistics/",
+        views.DataSourceRelatedResourceStatsApi.as_view(),
+        name="data_source.related_resource_stats",
     ),
     # 获取用户信息导入模板
     path(

@@ -15,18 +15,25 @@ from django.db import models
 from django.db.models import Q, QuerySet
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantFeatureFlag, UserFieldDataType
+from bkuser.apps.tenant.constants import (
+    TIME_ZONE_CHOICES,
+    TenantFeatureFlag,
+    TenantStatus,
+    TenantUserStatus,
+    UserFieldDataType,
+)
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.common.time import datetime_to_display
 
 
-class Tenant(TimestampedModel):
+class Tenant(AuditedModel):
     id = models.CharField("租户唯一标识", primary_key=True, max_length=128)
     name = models.CharField("租户名称", max_length=128, unique=True)
     logo = models.TextField("Logo", null=True, blank=True, default="")
     is_default = models.BooleanField("是否默认租户", default=False)
     feature_flags = models.JSONField("租户特性标志集", default=dict)
+    status = models.CharField("状态", max_length=32, choices=TenantStatus.get_choices(), default=TenantStatus.ENABLED)
 
     class Meta:
         ordering = ["created_at"]
@@ -73,6 +80,9 @@ class TenantUser(TimestampedModel):
     # Note: 值：对于新用户则为uuid，对于迁移则兼容旧版本 username@domain或username
     # 兼容旧版本：对外 id/username/bk_username 这3个字段，值是一样的
     id = models.CharField("蓝鲸用户对外唯一标识", primary_key=True, max_length=128)
+    status = models.CharField(
+        "状态", max_length=32, choices=TenantUserStatus.get_choices(), default=TenantUserStatus.ENABLED
+    )
 
     # 蓝鲸特有
     language = models.CharField("语言", choices=BkLanguageEnum.get_choices(), default="zh-cn", max_length=32)
@@ -197,20 +207,3 @@ class TenantUserValidityPeriodConfig(AuditedModel):
     remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
     enabled_notification_methods = models.JSONField("通知方式", default=list)
     notification_templates = models.JSONField("通知模板", default=list)
-
-
-# class TenantUserSocialAccountRelation(TimestampedModel):
-#     """租户用户与社交账号绑定表"""
-#
-#     tenant_user = models.ForeignKey(TenantUser, on_delete=models.CASCADE, db_constraint=False)
-#     idp = models.ForeignKey(Idp, on_delete=models.DO_NOTHING, db_constraint=False)
-#     social_client_id = models.CharField("社交认证源对应的ClientID", max_length=128)
-#     social_account_id = models.CharField("绑定的社交账号ID", max_length=128)
-#
-#     class Meta:
-#         unique_together = [
-#             ("social_account_id", "tenant_user", "idp", "social_client_id"),
-#         ]
-#         index_together = [
-#             ("social_account_id", "idp", "social_client_id"),
-#         ]

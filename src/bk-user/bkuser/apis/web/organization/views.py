@@ -27,7 +27,6 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserSearchInputSLZ,
 )
 from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -104,10 +103,6 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
     serializer_class = TenantRetrieveOutputSLZ
     lookup_url_kwarg = "id"
 
-    def get_serializer_context(self):
-        current_tenant_id = self.get_current_tenant_id()
-        return {"tenant_manager_map": {current_tenant_id: TenantHandler.retrieve_tenant_managers(current_tenant_id)}}
-
     @swagger_auto_schema(
         tags=["tenant-organization"],
         operation_description="单个租户详情",
@@ -127,14 +122,13 @@ class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, 
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        tenant = self.get_object()
         tenant_info = TenantEditableInfo(
             name=data["name"],
             logo=data["logo"] or "",
             feature_flags=TenantFeatureFlag(**data["feature_flags"]),
         )
 
-        TenantHandler.update_with_managers(tenant.id, tenant_info, data["manager_ids"])
+        TenantHandler.update_with_managers(self.get_object().id, tenant_info, data["manager_ids"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -194,10 +188,9 @@ class TenantDepartmentChildrenListApi(CurrentUserTenantMixin, generics.ListAPIVi
     def get(self, request, *args, **kwargs):
         tenant_dept = self.get_object()
 
-        # TODO (su) 梳理数据源状态流转后重构
         data_source_id = tenant_dept.data_source_department.data_source_id
-        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
-            raise error_codes.DATA_SOURCE_DISABLED
+        if not DataSource.objects.filter(id=data_source_id).exists():
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         tenant_dept_children_infos = TenantDepartmentHandler.get_tenant_dept_children_infos(tenant_dept)
         return Response(TenantDepartmentChildrenListOutputSLZ(tenant_dept_children_infos, many=True).data)
@@ -225,10 +218,9 @@ class TenantDepartmentUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         tenant_dept = self.get_object()
 
-        # TODO (su) 梳理数据源状态流转后重构
         data_source_id = tenant_dept.data_source_department.data_source_id
-        if DataSource.objects.filter(id=data_source_id, status=DataSourceStatus.DISABLED).exists():
-            raise error_codes.DATA_SOURCE_DISABLED
+        if not DataSource.objects.filter(id=data_source_id).exists():
+            raise error_codes.DATA_SOURCE_NOT_EXIST
 
         # 需要通过数据源部门 - 用户关系反查租户部门用户信息，且需要支持递归查询子孙部门用户
         data_source_dept_ids = [tenant_dept.data_source_department_id]

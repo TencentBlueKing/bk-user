@@ -258,34 +258,6 @@ class TenantUserHandler:
 
 class TenantHandler:
     @staticmethod
-    def get_tenant_manager_map(tenant_ids: Optional[List[str]] = None) -> Dict[str, List[TenantUserWithInheritedInfo]]:
-        """
-        查询租户管理员
-        """
-        tenant_managers = TenantManager.objects.all()
-        if tenant_ids is not None:
-            tenant_managers = tenant_managers.filter(tenant_id__in=tenant_ids)
-
-        # 查询管理员对应的信息
-        tenant_user_ids = [i.tenant_user_id for i in tenant_managers]
-        tenant_users = TenantUserHandler.list_tenant_user_by_id(tenant_user_ids)
-        tenant_users_map = {i.id: i for i in tenant_users}
-
-        # 按照 {tenant_id: List[tenant_user]} 格式组装
-        data = defaultdict(list)
-        for i in tenant_managers:
-            tenant_user = tenant_users_map.get(i.tenant_user_id)
-            if tenant_user is not None:
-                data[i.tenant_id].append(tenant_user)
-
-        return data
-
-    @staticmethod
-    def retrieve_tenant_managers(tenant_id: str) -> List[TenantUserWithInheritedInfo]:
-        """查询单个租户的租户管理员"""
-        return TenantHandler.get_tenant_manager_map([tenant_id]).get(tenant_id) or []
-
-    @staticmethod
     def create_with_managers(
         tenant_info: TenantInfo,
         managers: List[TenantManagerWithoutID],

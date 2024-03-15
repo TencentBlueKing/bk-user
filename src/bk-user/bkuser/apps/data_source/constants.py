@@ -17,13 +17,6 @@ from bkuser.plugins.local.constants import USERNAME_REGEX as DATA_SOURCE_USERNAM
 USER_EXTRAS_UPDATE_BATCH_SIZE = 250
 
 
-class DataSourceStatus(str, StructuredEnum):
-    """数据源状态"""
-
-    ENABLED = EnumField("enabled", label=_("启用"))
-    DISABLED = EnumField("disabled", label=_("未启用"))
-
-
 class FieldMappingOperation(str, StructuredEnum):
     """字段映射关系"""
 
@@ -37,3 +30,10 @@ class TenantUserIdRuleEnum(str, StructuredEnum):
     UUID4_HEX = EnumField("uuid4_hex", label=_("uuid4 hex"))
     USERNAME = EnumField("username", label=_("用户名"))
     USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))
+
+
+class DataSourceUserStatus(str, StructuredEnum):
+    """数据源用户状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))

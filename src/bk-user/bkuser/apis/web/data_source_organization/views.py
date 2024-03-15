@@ -63,9 +63,8 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         data = slz.validated_data
         data_source_id = self.kwargs["id"]
 
-        # 校验数据源是否存在
         data_source = DataSource.objects.filter(
-            owner_tenant_id=self.get_current_tenant_id(), id=data_source_id
+            id=data_source_id, owner_tenant_id=self.get_current_tenant_id()
         ).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
@@ -102,10 +101,13 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         responses={status.HTTP_201_CREATED: ""},
     )
     def post(self, request, *args, **kwargs):
-        # 校验数据源是否存在
         data_source = DataSource.objects.filter(id=self.kwargs["id"]).first()
         if not data_source:
             raise error_codes.DATA_SOURCE_NOT_EXIST
+
+        # 不允许对非本地数据源进行用户新增操作
+        if not data_source.is_local:
+            raise error_codes.DATA_SOURCE_USER_CREATE_FAILED
 
         slz = UserCreateInputSLZ(
             data=request.data,
@@ -117,9 +119,6 @@ class DataSourceUserListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPI
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # 不允许对非本地数据源进行用户新增操作
-        if not data_source.is_local:
-            raise error_codes.CANNOT_CREATE_DATA_SOURCE_USER
         # 校验是否已存在该用户
         if DataSourceUser.objects.filter(username=data["username"], data_source=data_source).exists():
             raise error_codes.DATA_SOURCE_USER_ALREADY_EXISTED
@@ -229,7 +228,7 @@ class DataSourceUserRetrieveUpdateApi(
     def put(self, request, *args, **kwargs):
         user = self.get_object()
         if not user.data_source.is_local:
-            raise error_codes.CANNOT_UPDATE_DATA_SOURCE_USER
+            raise error_codes.DATA_SOURCE_USER_UPDATE_FAILED
 
         slz = UserUpdateInputSLZ(
             data=request.data,

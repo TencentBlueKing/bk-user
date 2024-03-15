@@ -127,3 +127,18 @@ DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG = {
         },
     ],
 }
+
+
+class TenantStatus(str, StructuredEnum):
+    """租户状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))
+
+
+class TenantUserStatus(str, StructuredEnum):
+    """租户用户状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))
+    EXPIRED = EnumField("expired", label=_("已过期"))

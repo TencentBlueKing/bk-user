@@ -12,8 +12,8 @@ import datetime
 from typing import Any, Dict, List
 
 import pytest
-from bkuser.apps.data_source.constants import DataSourceStatus, FieldMappingOperation
-from bkuser.apps.data_source.models import DataSource, DataSourceSensitiveInfo
+from bkuser.apps.data_source.constants import FieldMappingOperation
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
@@ -326,7 +326,6 @@ class TestDataSourceListApi:
         assert ds["name"] == data_source.name
         assert ds["owner_tenant_id"] == data_source.owner_tenant_id
         assert ds["plugin_name"] == DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL)
-        assert ds["status"] == DataSourceStatus.ENABLED
         assert ds["cooperation_tenants"] == []
 
     def test_list_other_tenant_data_source(self, api_client, random_tenant, data_source):
@@ -337,21 +336,19 @@ class TestDataSourceListApi:
 
 class TestDataSourceUpdateApi:
     def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_cfg):
+        url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
         new_data_source_name = generate_random_string()
         local_ds_plugin_cfg["enable_account_password_login"] = False
-        resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
-            data={"name": new_data_source_name, "plugin_config": local_ds_plugin_cfg},
-        )
+        resp = api_client.put(url, data={"name": new_data_source_name, "plugin_config": local_ds_plugin_cfg})
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-        resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        resp = api_client.get(url)
         assert resp.data["name"] == new_data_source_name
         assert resp.data["plugin_config"]["enable_account_password_login"] is False
 
     def test_update_without_change_name(self, api_client, data_source, local_ds_plugin_cfg):
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             data={"name": data_source.name, "plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_204_NO_CONTENT
@@ -359,7 +356,7 @@ class TestDataSourceUpdateApi:
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
         local_ds_plugin_cfg.pop("enable_account_password_login")
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             data={"name": generate_random_string(), "plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
@@ -369,7 +366,7 @@ class TestDataSourceUpdateApi:
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping, sync_config
     ):
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": general_ds_plugin_cfg,
@@ -384,7 +381,7 @@ class TestDataSourceUpdateApi:
     ):
         """非本地数据源，需要字段映射配置"""
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": general_ds_plugin_cfg,
@@ -399,7 +396,7 @@ class TestDataSourceUpdateApi:
     ):
         """非本地数据源，需要同步配置"""
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_general_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_general_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": general_ds_plugin_cfg,
@@ -419,7 +416,7 @@ class TestDataSourceUpdateApi:
             data_source=bare_local_data_source, key="password_initial.fixed_password", value="Pa-@-114514-2887"
         )
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_local_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_local_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": local_ds_plugin_cfg,
@@ -436,7 +433,7 @@ class TestDataSourceUpdateApi:
         local_ds_plugin_cfg["password_initial"]["generate_method"] = PasswordGenerateMethod.FIXED
         local_ds_plugin_cfg["password_initial"]["fixed_password"] = "*******"
         resp = api_client.put(
-            reverse("data_source.retrieve_update", kwargs={"id": bare_local_data_source.id}),
+            reverse("data_source.retrieve_update_destroy", kwargs={"id": bare_local_data_source.id}),
             data={
                 "name": generate_random_string(),
                 "plugin_config": local_ds_plugin_cfg,
@@ -449,35 +446,37 @@ class TestDataSourceUpdateApi:
 
 class TestDataSourceRetrieveApi:
     def test_retrieve(self, api_client, data_source):
-        resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        resp = api_client.get(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         assert resp.data["id"] == data_source.id
         assert resp.data["name"] == data_source.name
         assert resp.data["owner_tenant_id"] == data_source.owner_tenant_id
         assert resp.data["plugin"]["id"] == DataSourcePluginEnum.LOCAL
         assert resp.data["plugin"]["name"] == DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL)
-        assert resp.data["status"] == DataSourceStatus.ENABLED
         assert resp.data["plugin_config"] == data_source.plugin_config
         assert resp.data["sync_config"] == data_source.sync_config
         assert resp.data["field_mapping"] == data_source.field_mapping
 
     def test_retrieve_other_tenant_data_source(self, api_client, random_tenant, data_source):
-        resp = api_client.get(reverse("data_source.retrieve_update", kwargs={"id": data_source.id}))
+        resp = api_client.get(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
         # 无法查看到其他租户的数据源信息
         assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
-class TestDataSourceSwitchStatusApi:
-    def test_switch(self, api_client, data_source):
-        url = reverse("data_source.switch_status", kwargs={"id": data_source.id})
-        # 默认启用，切换后不可用
-        assert api_client.patch(url).data["status"] == DataSourceStatus.DISABLED
-        # 再次切换，变成可用
-        assert api_client.patch(url).data["status"] == DataSourceStatus.ENABLED
+class TestDataSourceDestroyApi:
+    def test_destroy(self, api_client, data_source):
+        resp = api_client.delete(reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}))
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
 
-    def test_patch_other_tenant_data_source(self, api_client, random_tenant, data_source):
-        resp = api_client.patch(reverse("data_source.switch_status", kwargs={"id": data_source.id}))
-        # 无法操作其他租户的数据源信息
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert not DataSource.objects.filter(id=data_source.id).exists()
+        assert not DataSourceUser.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceDepartment.objects.filter(data_source_id=data_source.id).exists()
+        assert not DataSourceSensitiveInfo.objects.filter(data_source_id=data_source.id).exists()
+
+
+class TestDataSourceRelatedResourceStatsApi:
+    def test_list(self, api_client, data_source):
+        resp = api_client.get(reverse("data_source.related_resource_stats", kwargs={"id": data_source.id}))
+        assert resp.status_code == status.HTTP_200_OK
 
 
 class TestDataSourceSyncRecordApi:

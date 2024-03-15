@@ -28,10 +28,10 @@ from bkuser.apis.web.data_source.serializers import (
     DataSourcePluginOutputSLZ,
     DataSourceRandomPasswordInputSLZ,
     DataSourceRandomPasswordOutputSLZ,
+    DataSourceRelatedResourceStatsOutputSLZ,
     DataSourceRetrieveOutputSLZ,
     DataSourceSearchInputSLZ,
     DataSourceSearchOutputSLZ,
-    DataSourceSwitchStatusOutputSLZ,
     DataSourceSyncRecordListOutputSLZ,
     DataSourceSyncRecordRetrieveOutputSLZ,
     DataSourceSyncRecordSearchInputSLZ,
@@ -41,20 +41,27 @@ from bkuser.apis.web.data_source.serializers import (
     LocalDataSourceImportInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.constants import DataSourceStatus
-from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourcePlugin,
+    DataSourceSensitiveInfo,
+    DataSourceUser,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
 from bkuser.apps.sync.managers import DataSourceSyncManager
 from bkuser.apps.sync.models import DataSourceSyncTask
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.exporters import DataSourceUserExporter
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
-from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -166,8 +173,8 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         )
 
 
-class DataSourceRetrieveUpdateApi(
-    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
+class DataSourceRetrieveUpdateDestroyApi(
+    CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
 ):
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -218,6 +225,49 @@ class DataSourceRetrieveUpdateApi(
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="删除数据源",
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        """删除数据源及关联的其他数据"""
+        data_source = self.get_object()
+
+        # TODO (su) 支持操作审计后可删除该日志
+        logger.warning("user %s delete data source %s", request.user.username, data_source.id)
+
+        with transaction.atomic():
+            DataSourceHandler.delete_data_source_and_related_resources(data_source)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
+    queryset = DataSource.objects.all()
+    lookup_url_kwarg = "id"
+
+    pagination_class = None
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    serializer_class = DataSourceRelatedResourceStatsOutputSLZ
+
+    @swagger_auto_schema(
+        tags=["data_source"],
+        operation_description="数据源关联资源信息",
+        responses={status.HTTP_200_OK: DataSourceRelatedResourceStatsOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        data_source = self.get_object()
+        resources = {
+            "data_source_user_count": DataSourceUser.objects.filter(data_source=data_source).count(),
+            "data_source_department_count": DataSourceDepartment.objects.filter(data_source=data_source).count(),
+            # TODO (su) 支持协同后，一个数据源可能关联到多个租户
+            "tenant_count": 1,
+            "tenant_user_count": TenantUser.objects.filter(data_source=data_source).count(),
+            "tenant_department_count": TenantDepartment.objects.filter(data_source=data_source).count(),
+        }
+        return Response(DataSourceRelatedResourceStatsOutputSLZ(resources).data)
+
 
 class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):
     @swagger_auto_schema(
@@ -267,30 +317,6 @@ class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView
         return Response(DataSourceTestConnectionOutputSLZ(instance=result).data)
 
 
-class DataSourceSwitchStatusApi(CurrentUserTenantDataSourceMixin, ExcludePutAPIViewMixin, generics.UpdateAPIView):
-    """切换数据源状态（启/停）"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = DataSourceSwitchStatusOutputSLZ
-
-    @swagger_auto_schema(
-        tags=["data_source"],
-        operation_description="变更数据源状态",
-        responses={status.HTTP_200_OK: DataSourceSwitchStatusOutputSLZ()},
-    )
-    def patch(self, request, *args, **kwargs):
-        data_source = self.get_object()
-        if data_source.status == DataSourceStatus.ENABLED:
-            data_source.status = DataSourceStatus.DISABLED
-        else:
-            data_source.status = DataSourceStatus.ENABLED
-
-        data_source.updater = request.user.username
-        data_source.save(update_fields=["status", "updater", "updated_at"])
-
-        return Response(DataSourceSwitchStatusOutputSLZ(instance={"status": data_source.status.value}).data)
-
-
 class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """获取本地数据源数据导入模板"""
 
@@ -327,9 +353,6 @@ class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView
     def get(self, request, *args, **kwargs):
         """导出指定的本地数据源用户数据（Excel 格式）"""
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅能导出本地数据源数据"))
 
@@ -355,9 +378,6 @@ class DataSourceImportApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIVi
         data = slz.validated_data
 
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
         if not data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("仅本地数据源支持导入功能"))
 
@@ -406,9 +426,6 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
     def post(self, request, *args, **kwargs):
         """触发数据源同步任务"""
         data_source = self.get_object()
-        if data_source.status != DataSourceStatus.ENABLED:
-            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("数据源未启用"))
-
         if data_source.is_local:
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(_("本地数据源不支持同步，请使用导入功能"))
 
@@ -427,7 +444,7 @@ class DataSourceSyncApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView
             # Q: 为什么不包装一层 DataSourceSyncError 而是捕获 Exception？
             # A: logger.exception 难以直接获取被包装的原始异常的抛出位置，影响问题定位，在找到优雅处理方法前，维持现状
             logger.exception("创建下发数据源 %s 同步任务失败", data_source.id)
-            raise error_codes.CREATE_DATA_SOURCE_SYNC_TASK_FAILED.f(str(e))
+            raise error_codes.DATA_SOURCE_SYNC_TASK_CREATE_FAILED.f(str(e))
 
         return Response(
             DataSourceImportOrSyncOutputSLZ(

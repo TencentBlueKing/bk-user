@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser.apps.data_source.constants import DataSourceStatus
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskTrigger
 from bkuser.apps.sync.data_models import DataSourceSyncOptions
@@ -29,10 +28,6 @@ def build_and_run_data_source_sync_task(data_source_id: int):
     data_source = DataSource.objects.get(id=data_source_id)
     if data_source.is_local:
         logger.error("why local data source %s has periodic task?", data_source_id)
-        return
-
-    if data_source.status != DataSourceStatus.ENABLED:
-        logger.warning("data source %s isn't enabled, skip...", data_source_id)
         return
 
     sync_opts = DataSourceSyncOptions(

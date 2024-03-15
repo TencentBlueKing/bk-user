@@ -46,7 +46,6 @@ class DataSourceSearchOutputSLZ(serializers.Serializer):
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
     cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
-    status = serializers.CharField(help_text="数据源状态")
     updater = serializers.SerializerMethodField(help_text="更新者")
     updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
 
@@ -177,7 +176,6 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
     name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
-    status = serializers.CharField(help_text="数据源状态")
     plugin = DataSourcePluginOutputSLZ(help_text="数据源插件")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
@@ -233,8 +231,12 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class DataSourceSwitchStatusOutputSLZ(serializers.Serializer):
-    status = serializers.CharField(help_text="数据源状态")
+class DataSourceRelatedResourceStatsOutputSLZ(serializers.Serializer):
+    data_source_user_count = serializers.IntegerField(help_text="数据源用户数量")
+    data_source_department_count = serializers.IntegerField(help_text="数据源部门数量")
+    tenant_count = serializers.IntegerField(help_text="关联租户数量（含协同）")
+    tenant_user_count = serializers.IntegerField(help_text="租户用户数量（含协同）")
+    tenant_department_count = serializers.IntegerField(help_text="租户部门数量（含协同）")
 
 
 class RawDataSourceUserSLZ(serializers.Serializer):
@@ -313,7 +315,7 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
                 owner_tenant_id=self.context["tenant_id"],
             ).first()
             if not data_source:
-                raise ValidationError(_("指定数据源不存在或不可用"))
+                raise ValidationError(_("指定数据源不存在"))
 
             plugin_config = data_source.get_plugin_cfg()
             if not plugin_config.enable_account_password_login:

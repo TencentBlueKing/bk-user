@@ -18,6 +18,7 @@ from django.db.models import Q
 from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.notification.constants import NotificationScene
 from bkuser.apps.notification.notifier import TenantUserNotifier
+from bkuser.apps.tenant.constants import TenantStatus
 from bkuser.apps.tenant.models import Tenant, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
@@ -76,7 +77,13 @@ def build_and_run_notify_password_expiring_users_task():
     """构建并运行即将过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expiring_users_task")
 
+    tenant_enabled_map = {tenant.id: tenant.status == TenantStatus.ENABLED for tenant in Tenant.objects.all()}
     for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+        # 对于租户已停用的数据源，不发送密码即将过期提醒
+        if not tenant_enabled_map.get(data_source.owner_tenant_id):
+            logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
+            continue
+
         if data_source.plugin_config.get("enable_account_password_login", False):
             notify_password_expiring_users.delay(data_source.id)
 
@@ -108,7 +115,13 @@ def build_and_run_notify_password_expired_users_task():
     """构建并运行过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_password_expired_users_task")
 
+    tenant_enabled_map = {tenant.id: tenant.status == TenantStatus.ENABLED for tenant in Tenant.objects.all()}
     for data_source in DataSource.objects.filter(plugin_id=DataSourcePluginEnum.LOCAL):
+        # 对于租户已停用的数据源，不发送密码过期提醒
+        if not tenant_enabled_map.get(data_source.owner_tenant_id):
+            logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
+            continue
+
         if data_source.plugin_config.get("enable_account_password_login", False):
             notify_password_expired_users.delay(data_source.id)
 
@@ -148,7 +161,8 @@ def build_and_run_notify_expiring_tenant_users_task():
     """构建并运行即将过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_expiring_tenant_users_task")
 
-    for tenant_id in Tenant.objects.all().values_list("id", flat=True):
+    # 对于停用的租户，不需要对即将过期的租户用户进行提醒
+    for tenant_id in Tenant.objects.filter(status=TenantStatus.ENABLED).values_list("id", flat=True):
         notify_expiring_tenant_users.delay(tenant_id)
 
 
@@ -181,5 +195,6 @@ def build_and_run_notify_expired_tenant_users_task():
     """构建并运行过期通知任务"""
     logger.info("[celery] receive period task: build_and_run_notify_expired_tenant_users_task")
 
-    for tenant_id in Tenant.objects.all().values_list("id", flat=True):
+    # 对于停用的租户，不需要对过期的租户用户进行提醒
+    for tenant_id in Tenant.objects.filter(status=TenantStatus.ENABLED).values_list("id", flat=True):
         notify_expired_tenant_users.delay(tenant_id)

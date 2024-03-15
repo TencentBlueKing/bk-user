@@ -112,7 +112,7 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
         # 数据源是否当前租户的
         tenant_id = self.context["tenant_id"]
         if not DataSource.objects.filter(id=attrs["data_source_id"], owner_tenant_id=tenant_id).exists():
-            raise ValidationError(_("数据源必须是当前租户下的，{} 并不符合").format(attrs["data_source_id"]))
+            raise ValidationError(_("当前租户下不存在 ID 为 {} 的数据源").format(attrs["data_source_id"]))
 
         # 匹配的数据源字段必须是当前租户的用户字段，包括内建字段和自定义字段
         builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
@@ -202,3 +202,7 @@ class IdpUpdateInputSLZ(serializers.Serializer):
             return cfg_cls(**plugin_config)
         except PDValidationError as e:
             raise ValidationError(_("认证源插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+
+class IdpSwitchStatusOutputSLZ(serializers.Serializer):
+    status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
