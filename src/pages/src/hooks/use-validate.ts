@@ -86,6 +86,12 @@ export default () => {
     trigger: 'blur',
   };
 
+  const verifyCode = {
+    validator: (value: string) => /^[^\s]{8,}$/.test(value),
+    message: t('验证码不能少于8位'),
+    trigger: 'blur',
+  };
+
   return {
     required,
     name,
@@ -99,5 +105,6 @@ export default () => {
     apiPath,
     sourceField,
     checkSpace,
+    verifyCode,
   };
 };

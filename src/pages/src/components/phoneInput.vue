@@ -1,5 +1,5 @@
 <template>
-  <div :class="['input-text', { 'input-disabled': disabled }]">
+  <div :class="['input-text', { 'input-disabled': disabled }, { 'input-style': inputStyle }]">
     <input
       type="text"
       ref="telRef"
@@ -64,6 +64,10 @@ const props = defineProps({
     default: false,
   },
   tooltips: {
+    type: Boolean,
+    default: false,
+  },
+  inputStyle: {
     type: Boolean,
     default: false,
   },
@@ -201,6 +205,29 @@ const handleInput = () => {
       border-radius: 2px;
       outline: none;
       resize: none;
+
+      &:hover {
+        border-color: #979BA5;
+      }
+
+      &:focus {
+        border-color: #3a84ff;
+      }
+    }
+  }
+}
+
+.input-style {
+  .iti--separate-dial-code {
+    &:hover .select-text {
+      border-color: #979BA5;
+    }
+
+    .select-text {
+      height: 40px;
+      line-height: 40px;
+      background: #F0F1F5;
+      border: none;
 
       &:hover {
         border-color: #979BA5;

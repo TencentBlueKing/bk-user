@@ -209,6 +209,16 @@ export default createRouter({
       component: () => import('@/views/personal-center/index.vue'),
     },
     {
+      path: '/password/:tenantId?',
+      name: 'password',
+      component: () => import('@/views/reset-password/index.vue'),
+    },
+    {
+      path: '/reset-password/:token?',
+      name: 'resetPassword',
+      component: () => import('@/views/reset-password/newPassword.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'notFound',
       component: () => import('@/views/NotFound.vue'),
