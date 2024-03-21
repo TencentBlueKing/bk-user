@@ -53,7 +53,26 @@ def _call_login_api(http_func, url_path, **kwargs):
             f"error={resp_data['error']}"
         )
 
-    return resp_data["data"]
+    code = resp_data.get("bk_error_code", -1)
+    message = resp_data.get("bk_error_msg", "unknown")
+    if code == 0:
+        return resp_data["data"]
+
+    logger.error(
+        "login api error! %s %s, kwargs: %s, request_id: %s, code: %s, message: %s",
+        http_func.__name__,
+        url,
+        kwargs,
+        request_id,
+        code,
+        message,
+    )
+
+    raise error_codes.REMOTE_REQUEST_ERROR.format(
+        f"request login error! "
+        f"Request=[{http_func.__name__} {urlparse(url).path} request_id={request_id}] "
+        f"Response[code={code}, message={message}]"
+    )
 
 
 def verify_bk_token(bk_token: str):
