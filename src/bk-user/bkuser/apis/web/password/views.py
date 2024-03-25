@@ -38,8 +38,8 @@ from bkuser.apis.web.password.tokens import GenerateTokenTooFrequently, UserRese
 from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.data_source_organization import DataSourceUserHandler
+from bkuser.biz.validators import validate_user_password
 from bkuser.common.error_codes import error_codes
-from bkuser.common.passwd import PasswordValidator
 from bkuser.common.verification_code import (
     GenerateCodeTooFrequently,
     InvalidVerificationCode,
@@ -272,14 +272,10 @@ class ResetPasswordByTokenApi(generics.CreateAPIView):
         tenant_user = token_mgr.list_users_by_token(token).filter(id=params["tenant_user_id"]).first()
         if not tenant_user:
             raise error_codes.TENANT_USER_NOT_EXIST.f(_("租户用户不存在"))
-        # 通过 Token 获取到用户后，需要及时禁用
-        token_mgr.disable_token(token)
 
         data_source_user = tenant_user.data_source_user
         plugin_cfg = data_source_user.data_source.get_plugin_cfg()
-        ret = PasswordValidator(plugin_cfg.password_rule.to_rule()).validate(password)  # type: ignore
-        if not ret.ok:
-            raise error_codes.CANNOT_RESET_USER_PASSWORD.f(_("密码不符合规则：{}").format(ret.exception_message))
+        validate_user_password(password, data_source_user.id, plugin_cfg)
 
         DataSourceUserHandler.update_password(
             data_source_user=data_source_user,
@@ -287,4 +283,7 @@ class ResetPasswordByTokenApi(generics.CreateAPIView):
             valid_days=plugin_cfg.password_rule.valid_time,
             operator="AnonymousByResetToken",
         )
+        # 成功修改完用户密码后，需要及时禁用 Token
+        token_mgr.disable_token(token)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
