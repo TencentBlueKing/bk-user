@@ -35,6 +35,9 @@ class TenantListOutputSLZ(serializers.Serializer):
     is_default = serializers.BooleanField(help_text="是否默认租户")
     created_at = serializers.CharField(help_text="创建时间", source="created_at_display")
 
+    class Meta:
+        ref_name = "platform_management.TenantListOutputSLZ"
+
     def get_logo(self, obj: Tenant) -> str:
         return obj.logo or settings.DEFAULT_TENANT_LOGO
 
