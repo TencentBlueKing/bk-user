@@ -29,7 +29,7 @@ from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.models import TenantUser, TenantUserValidityPeriodConfig
 from bkuser.common.constants import PERMANENT_TIME
-from bkuser.common.hashers import check_password, make_password
+from bkuser.common.hashers import make_password
 
 
 class DataSourceUserInfo(BaseModel):
@@ -213,14 +213,6 @@ class DataSourceUserHandler:
             DataSourceUserDeprecatedPasswordRecord.objects.create(
                 user=data_source_user, password=deprecated_password, operator=operator
             )
-
-    @staticmethod
-    def check_password(data_source_user_id: int, raw_password: str) -> bool:
-        """
-        检查某个用户的密码
-        """
-        identify_info = LocalDataSourceIdentityInfo.objects.get(user_id=data_source_user_id)
-        return check_password(raw_password, identify_info.password)
 
 
 class DataSourceDepartmentHandler:
