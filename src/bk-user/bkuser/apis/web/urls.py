@@ -13,8 +13,9 @@ from django.urls import include, path
 urlpatterns = [
     # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
     path("basic/", include("bkuser.apis.web.basic.urls")),
-    # 租户
-    path("tenants/", include("bkuser.apis.web.tenant.urls")),
+    # 平台管理功能
+    path("platform-management/", include("bkuser.apis.web.platform_management.urls")),
+    # -------------- 待调整 ----------------
     # 租户组织架构
     path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
     # 数据源 & 数据源用户/部门

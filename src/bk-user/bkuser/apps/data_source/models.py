@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceUserStatus, TenantUserIdRuleEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUserStatus, TenantUserIdRuleEnum
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -53,6 +53,9 @@ class DataSourceManager(models.Manager):
 
 
 class DataSource(AuditedModel):
+    type = models.CharField(
+        "数据源类型", max_length=32, choices=DataSourceTypeEnum.get_choices(), default=DataSourceTypeEnum.REAL
+    )
     name = models.CharField("数据源名称", max_length=128)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
     # Note: 数据源插件被删除的前提是，插件没有被任何数据源使用
@@ -74,7 +77,10 @@ class DataSource(AuditedModel):
 
     class Meta:
         ordering = ["id"]
-        unique_together = [("name", "owner_tenant_id")]
+        unique_together = [
+            ("name", "owner_tenant_id"),
+            ("owner_tenant_id", "type"),
+        ]
 
     @property
     def is_local(self) -> bool:
