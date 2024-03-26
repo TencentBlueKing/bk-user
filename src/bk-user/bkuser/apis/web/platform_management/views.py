@@ -20,6 +20,7 @@ from rest_framework.response import Response
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourcePlugin, DataSourceUser
 from bkuser.apps.data_source.utils import gen_tenant_user_id
+from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -46,9 +47,9 @@ from .serializers import (
     TenantBuiltinManagerUpdateOutputSLZ,
     TenantCreateInputSLZ,
     TenantCreateOutputSLZ,
+    TenantListOutputSLZ,
     TenantRelatedResourceStatsOutputSLZ,
     TenantRetrieveOutputSLZ,
-    TenantSearchOutputSLZ,
     TenantStatusUpdateOutputSLZ,
     TenantUpdateInputSLZ,
 )
@@ -59,12 +60,12 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
     pagination_class = None
     queryset = Tenant.objects.all()
-    serializer_class = TenantSearchOutputSLZ
+    serializer_class = TenantListOutputSLZ
 
     @swagger_auto_schema(
         tags=["platform_management.tenant"],
         operation_description="租户列表",
-        responses={status.HTTP_200_OK: TenantSearchOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -220,6 +221,10 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
             raise error_codes.TENANT_DELETE_FAILED.f(_("需要先停用租户才能删除"))
 
         with transaction.atomic():
+            # 删除租户配置的认证源
+            idps = Idp.objects.filter(owner_tenant_id=tenant.id)
+            IdpSensitiveInfo.objects.filter(idp__in=idps).delete()
+            idps.delete()
             # 注：单租户数据源数量不多，且删除租户属于低频操作，可以走循环删除，暂不需要优化
             for data_source in DataSource.objects.filter(owner_tenant_id=tenant.id):
                 DataSourceHandler.delete_data_source_and_related_resources(data_source)

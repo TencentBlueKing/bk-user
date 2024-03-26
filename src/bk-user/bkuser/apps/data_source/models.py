@@ -53,11 +53,11 @@ class DataSourceManager(models.Manager):
 
 
 class DataSource(AuditedModel):
+    name = models.CharField("数据源名称", max_length=128)
+    owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
     type = models.CharField(
         "数据源类型", max_length=32, choices=DataSourceTypeEnum.get_choices(), default=DataSourceTypeEnum.REAL
     )
-    name = models.CharField("数据源名称", max_length=128)
-    owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
     # Note: 数据源插件被删除的前提是，插件没有被任何数据源使用
     plugin = models.ForeignKey(DataSourcePlugin, on_delete=models.PROTECT)
     plugin_config = models.JSONField("插件配置", default=dict)

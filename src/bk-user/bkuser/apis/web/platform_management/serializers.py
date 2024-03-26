@@ -27,7 +27,7 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 
-class TenantSearchOutputSLZ(serializers.Serializer):
+class TenantListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
     status = serializers.CharField(help_text="租户状态")

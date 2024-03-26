@@ -46,6 +46,7 @@ def forwards_func(apps, schema_editor):
     DataSource = apps.get_model("data_source", "DataSource")
     DataSourceUser = apps.get_model("data_source", "DataSourceUser")
     LocalDataSourceIdentityInfo = apps.get_model("data_source", "LocalDataSourceIdentityInfo")
+    # FIXME (nan): 认证源需要只匹配内置管理的数据源
     Idp = apps.get_model("idp", "Idp")
 
     default_tenant = Tenant.objects.create(id="default", name="默认租户", is_default=True)
@@ -54,6 +55,7 @@ def forwards_func(apps, schema_editor):
         **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG,
     )
 
+    # FIXME (nan): 数据源类型修改为内置管理，依赖压缩 migration
     data_source = DataSource.objects.create(
         name="default",
         plugin_id=DataSourcePluginEnum.LOCAL,
