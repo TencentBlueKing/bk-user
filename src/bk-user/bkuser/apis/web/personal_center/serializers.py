@@ -22,7 +22,7 @@ from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.tenant import TenantUserHandler
-from bkuser.biz.validators import validate_logo, validate_user_password
+from bkuser.biz.validators import validate_logo, validate_user_new_password
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code
@@ -204,9 +204,9 @@ class TenantUserPasswordUpdateInputSLZ(serializers.Serializer):
 
         identify_info = LocalDataSourceIdentityInfo.objects.get(user_id=data_source_user_id)
         if not check_password(attrs["old_password"], identify_info.password):
-            raise ValidationError(_("原密码校验失败"))
+            raise ValidationError(_("旧密码校验失败"))
 
-        validate_user_password(
+        validate_user_new_password(
             password=attrs["new_password"],
             data_source_user_id=data_source_user_id,
             plugin_config=self.context["plugin_config"],

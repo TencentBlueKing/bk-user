@@ -52,7 +52,9 @@ def validate_logo(value: str):
         raise ValidationError(_("Logo 文件大小不可超过 {} KB").format(settings.MAX_LOGO_SIZE))
 
 
-def validate_user_password(password: str, data_source_user_id: int, plugin_config: LocalDataSourcePluginConfig) -> str:
+def validate_user_new_password(
+    password: str, data_source_user_id: int, plugin_config: LocalDataSourcePluginConfig
+) -> str:
     """校验新密码是否是可用的"""
 
     # 密码规则校验

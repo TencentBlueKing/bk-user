@@ -38,7 +38,7 @@ from bkuser.apis.web.password.tokens import GenerateTokenTooFrequently, UserRese
 from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.models import TenantUser
 from bkuser.biz.data_source_organization import DataSourceUserHandler
-from bkuser.biz.validators import validate_user_password
+from bkuser.biz.validators import validate_user_new_password
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (
     GenerateCodeTooFrequently,
@@ -275,7 +275,7 @@ class ResetPasswordByTokenApi(generics.CreateAPIView):
 
         data_source_user = tenant_user.data_source_user
         plugin_cfg = data_source_user.data_source.get_plugin_cfg()
-        validate_user_password(password, data_source_user.id, plugin_cfg)
+        validate_user_new_password(password, data_source_user.id, plugin_cfg)
 
         DataSourceUserHandler.update_password(
             data_source_user=data_source_user,
