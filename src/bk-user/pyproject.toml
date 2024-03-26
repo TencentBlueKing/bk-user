@@ -207,7 +207,7 @@ modules = [
     "bkuser.apis.web.basic",
     "bkuser.apis.web.data_source",
     "bkuser.apis.web.organization",
-    "bkuser.apis.web.tenant",
+    "bkuser.apis.web.platform_management",
 ]
 ignore_imports = [
     "bkuser.apis.web.*.views -> bkuser.apis.web.*.serializers",

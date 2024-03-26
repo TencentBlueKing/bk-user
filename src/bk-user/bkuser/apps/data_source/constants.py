@@ -37,3 +37,11 @@ class DataSourceUserStatus(str, StructuredEnum):
 
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("禁用"))
+
+
+class DataSourceTypeEnum(str, StructuredEnum):
+    """数据源类型"""
+
+    REAL = EnumField("real", label=_("实体"))
+    VIRTUAL = EnumField("virtual", label=_("虚拟"))
+    BUILTIN_MANAGEMENT = EnumField("builtin_management", label=_("内置管理"))
