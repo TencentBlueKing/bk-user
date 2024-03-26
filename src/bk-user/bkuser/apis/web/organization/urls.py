@@ -15,8 +15,6 @@ from . import views
 urlpatterns = [
     # 租户
     path("tenants/", views.TenantListApi.as_view(), name="organization.tenant.list"),
-    # 租户详情/编辑
-    path("tenants/<str:id>/", views.TenantRetrieveUpdateApi.as_view(), name="organization.tenant.retrieve_update"),
     # 租户用户列表
     path("tenants/<str:id>/users/", views.TenantUserListApi.as_view(), name="organization.tenant.users.list"),
     # 租户部门下子部门

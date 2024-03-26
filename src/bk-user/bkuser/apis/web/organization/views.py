@@ -26,7 +26,6 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserRetrieveOutputSLZ,
     TenantUserSearchInputSLZ,
 )
-from bkuser.apis.web.tenant.serializers import TenantRetrieveOutputSLZ, TenantUpdateInputSLZ
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation, DataSourceDepartmentUserRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
@@ -35,13 +34,9 @@ from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
 from bkuser.biz.tenant import (
     TenantDepartmentHandler,
-    TenantEditableInfo,
-    TenantFeatureFlag,
-    TenantHandler,
     TenantUserHandler,
 )
 from bkuser.common.error_codes import error_codes
-from bkuser.common.views import ExcludePatchAPIViewMixin
 
 logger = logging.getLogger(__name__)
 
@@ -94,42 +89,6 @@ class TenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
         return Response(
             TenantListOutputSLZ(tenants, many=True, context={"tenant_root_depts_map": tenant_root_depts_map}).data
         )
-
-
-class TenantRetrieveUpdateApi(ExcludePatchAPIViewMixin, CurrentUserTenantMixin, generics.RetrieveUpdateAPIView):
-    queryset = Tenant.objects.all()
-    pagination_class = None
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-    serializer_class = TenantRetrieveOutputSLZ
-    lookup_url_kwarg = "id"
-
-    @swagger_auto_schema(
-        tags=["tenant-organization"],
-        operation_description="单个租户详情",
-        responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
-    )
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    @swagger_auto_schema(
-        tags=["tenant-organization"],
-        operation_description="更新租户",
-        request_body=TenantUpdateInputSLZ(),
-        responses={status.HTTP_204_NO_CONTENT: ""},
-    )
-    def put(self, request, *args, **kwargs):
-        slz = TenantUpdateInputSLZ(data=request.data)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        tenant_info = TenantEditableInfo(
-            name=data["name"],
-            logo=data["logo"] or "",
-            feature_flags=TenantFeatureFlag(**data["feature_flags"]),
-        )
-
-        TenantHandler.update_with_managers(self.get_object().id, tenant_info, data["manager_ids"])
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
