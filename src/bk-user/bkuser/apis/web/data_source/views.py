@@ -111,9 +111,6 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
     serializer_class = DataSourceListOutputSLZ
 
-    def get_serializer_context(self):
-        return {"data_source_plugin_map": dict(DataSourcePlugin.objects.values_list("id", "name"))}
-
     def get_queryset(self):
         slz = DataSourceListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)

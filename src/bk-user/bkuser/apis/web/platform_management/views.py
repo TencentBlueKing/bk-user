@@ -200,7 +200,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
 
         # 更新
         tenant.name = data["name"]
-        tenant.log = data["logo"]
+        tenant.logo = data["logo"]
         tenant.updater = request.user.username
         tenant.updated_at = timezone.now()
         tenant.save(update_fields=["name", "logo", "updater", "updated_at"])

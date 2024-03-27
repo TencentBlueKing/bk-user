@@ -14,7 +14,6 @@ from typing import Any, Dict, List
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
-from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -45,23 +44,6 @@ class DataSourceListOutputSLZ(serializers.Serializer):
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
-    plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
-    cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
-    updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
-
-    def get_plugin_name(self, obj: DataSource) -> str:
-        return self.context["data_source_plugin_map"].get(obj.plugin_id, "")
-
-    @swagger_serializer_method(
-        serializer_or_field=serializers.ListField(
-            help_text="协作公司",
-            child=serializers.CharField(),
-            allow_empty=True,
-        )
-    )
-    def get_cooperation_tenants(self, obj: DataSource) -> List[str]:
-        # TODO 目前未支持数据源跨租户协作，因此该数据均为空
-        return []
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
