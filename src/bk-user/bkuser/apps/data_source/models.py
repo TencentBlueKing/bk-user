@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db import models, transaction
 from mptt.models import MPTTModel, TreeForeignKey
 
-from bkuser.apps.data_source.constants import DataSourceUserStatus, TenantUserIdRuleEnum
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, DataSourceUserStatus, TenantUserIdRuleEnum
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.common.hashers.shortcuts import check_password
 from bkuser.common.models import AuditedModel, TimestampedModel
@@ -55,6 +55,9 @@ class DataSourceManager(models.Manager):
 class DataSource(AuditedModel):
     name = models.CharField("数据源名称", max_length=128)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
+    type = models.CharField(
+        "数据源类型", max_length=32, choices=DataSourceTypeEnum.get_choices(), default=DataSourceTypeEnum.REAL
+    )
     # Note: 数据源插件被删除的前提是，插件没有被任何数据源使用
     plugin = models.ForeignKey(DataSourcePlugin, on_delete=models.PROTECT)
     plugin_config = models.JSONField("插件配置", default=dict)
@@ -74,7 +77,10 @@ class DataSource(AuditedModel):
 
     class Meta:
         ordering = ["id"]
-        unique_together = [("name", "owner_tenant_id")]
+        unique_together = [
+            ("name", "owner_tenant_id"),
+            ("owner_tenant_id", "type"),
+        ]
 
     @property
     def is_local(self) -> bool:
@@ -85,6 +91,11 @@ class DataSource(AuditedModel):
     def is_username_frozen(self) -> bool:
         """用户名在初始化后不可再次更新，对于租户用户 ID 为 uuid 的数据源无效"""
         return bool(self.owner_tenant_user_id_rule != TenantUserIdRuleEnum.UUID4_HEX)
+
+    @property
+    def is_real_type(self) -> bool:
+        """检查数据源类型是否为实体"""
+        return self.type == DataSourceTypeEnum.REAL
 
     def get_plugin_cfg(self) -> BasePluginConfig:
         """获取插件配置

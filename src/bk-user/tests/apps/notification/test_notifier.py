@@ -25,8 +25,8 @@ class TestTenantUserNotifier:
     """测试租户用户通知功能"""
 
     @pytest.fixture()
-    def data_source(self, default_tenant, full_local_data_source):
-        sync_users_depts_to_tenant(default_tenant, full_local_data_source)
+    def data_source(self, random_tenant, full_local_data_source):
+        sync_users_depts_to_tenant(random_tenant, full_local_data_source)
         return full_local_data_source
 
     def test_render_tmpl_user_initialize(self, data_source):
