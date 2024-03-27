@@ -70,6 +70,10 @@ logger = logging.getLogger(__name__)
 
 
 class DataSourcePluginListApi(generics.ListAPIView):
+    """数据源插件列表"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     queryset = DataSourcePlugin.objects.all()
     pagination_class = None
     serializer_class = DataSourcePluginOutputSLZ
@@ -84,9 +88,12 @@ class DataSourcePluginListApi(generics.ListAPIView):
 
 
 class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
+    """数据源插件默认配置"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     queryset = DataSourcePlugin.objects.all()
     lookup_url_kwarg = "id"
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
         tags=["data_source_plugin"],
@@ -107,8 +114,11 @@ class DataSourcePluginDefaultConfigApi(generics.RetrieveAPIView):
 
 
 class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
-    pagination_class = None
+    """数据源列表，创建"""
+
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
     serializer_class = DataSourceListOutputSLZ
 
     def get_queryset(self):
@@ -149,7 +159,6 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
         with transaction.atomic():
             current_user = request.user.username
             ds = DataSource.objects.create(
-                name=data["name"],
                 owner_tenant_id=current_tenant_id,
                 type=DataSourceTypeEnum.REAL,
                 plugin=DataSourcePlugin.objects.get(id=data["plugin_id"]),
@@ -169,8 +178,11 @@ class DataSourceListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView
 class DataSourceRetrieveUpdateDestroyApi(
     CurrentUserTenantDataSourceMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
 ):
-    pagination_class = None
+    """数据源详情、更新、删除"""
+
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
     serializer_class = DataSourceRetrieveOutputSLZ
 
     @swagger_auto_schema(
@@ -203,7 +215,6 @@ class DataSourceRetrieveUpdateDestroyApi(
             context={
                 "plugin_id": data_source.plugin_id,
                 "tenant_id": self.get_current_tenant_id(),
-                "current_name": data_source.name,
                 "exists_sensitive_infos": DataSourceSensitiveInfo.objects.filter(data_source=data_source),
             },
         )
@@ -211,11 +222,10 @@ class DataSourceRetrieveUpdateDestroyApi(
         data = slz.validated_data
 
         with transaction.atomic():
-            data_source.name = data["name"]
             data_source.field_mapping = data["field_mapping"]
             data_source.sync_config = data.get("sync_config") or {}
             data_source.updater = request.user.username
-            data_source.save(update_fields=["name", "field_mapping", "sync_config", "updater", "updated_at"])
+            data_source.save(update_fields=["field_mapping", "sync_config", "updater", "updated_at"])
             # 由于需要替换敏感信息，因此需要独立调用 set_plugin_cfg 方法
             data_source.set_plugin_cfg(data["plugin_config"])
 
@@ -242,11 +252,13 @@ class DataSourceRetrieveUpdateDestroyApi(
 
 
 class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generics.RetrieveAPIView):
-    queryset = DataSource.objects.all()
-    lookup_url_kwarg = "id"
+    """数据源关联资源信息"""
 
-    pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+    queryset = DataSource.objects.all()
+    pagination_class = None
     serializer_class = DataSourceRelatedResourceStatsOutputSLZ
 
     @swagger_auto_schema(
@@ -268,6 +280,8 @@ class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generi
 
 
 class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    """生成数据源用户随机密码"""
+
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
@@ -290,6 +304,8 @@ class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView
 
 class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView):
     """数据源连通性测试"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     serializer_class = DataSourceTestConnectionOutputSLZ
 
@@ -320,8 +336,9 @@ class DataSourceTestConnectionApi(CurrentUserTenantMixin, generics.CreateAPIView
 class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """获取本地数据源数据导入模板"""
 
-    pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -342,8 +359,9 @@ class DataSourceTemplateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIVi
 class DataSourceExportApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """本地数据源用户导出"""
 
-    pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
 
     @swagger_auto_schema(
         tags=["data_source"],
@@ -460,6 +478,7 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """数据源同步记录列表"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     serializer_class = DataSourceSyncRecordListOutputSLZ
 
     def get_queryset(self):
@@ -503,8 +522,9 @@ class DataSourceSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
 class DataSourceSyncRecordRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
     """数据源同步记录详情"""
 
-    lookup_url_kwarg = "id"
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
 
     def get_queryset(self):
         return DataSourceSyncTask.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())

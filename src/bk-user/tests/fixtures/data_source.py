@@ -17,7 +17,6 @@ from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.general.models import GeneralDataSourcePluginConfig
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
-from tests.test_utils.helpers import generate_random_string
 
 
 @pytest.fixture()
@@ -132,7 +131,6 @@ def local_ds_plugin() -> DataSourcePlugin:
 def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸本地数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
-        name=generate_random_string(),
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=local_ds_plugin,
@@ -168,11 +166,7 @@ def general_ds_plugin_cfg() -> Dict[str, Any]:
 
 @pytest.fixture()
 def general_ds_plugin() -> DataSourcePlugin:
-    plugin, _ = DataSourcePlugin.objects.get_or_create(
-        id=DataSourcePluginEnum.GENERAL,
-        defaults={"name": "通用 HTTP 数据源"},
-    )
-    return plugin
+    return DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
 
 
 # FIXME (su) 评估能否不使用 random_tenant
@@ -180,7 +174,6 @@ def general_ds_plugin() -> DataSourcePlugin:
 def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_plugin) -> DataSource:
     """裸通用 HTTP 数据源（没有用户，部门等数据）"""
     return DataSource.objects.create(
-        name=generate_random_string(),
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=general_ds_plugin,

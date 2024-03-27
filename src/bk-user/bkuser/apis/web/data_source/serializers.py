@@ -40,7 +40,6 @@ class DataSourceListInputSLZ(serializers.Serializer):
 
 class DataSourceListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
-    name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
@@ -87,19 +86,12 @@ class DataSourceSyncConfigSLZ(serializers.Serializer):
 
 
 class DataSourceCreateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="数据源名称", max_length=128)
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-
-    def validate_name(self, name: str) -> str:
-        if DataSource.objects.filter(name=name, owner_tenant_id=self.context["tenant_id"]).exists():
-            raise ValidationError(_("同名数据源已存在"))
-
-        return name
 
     def validate_plugin_id(self, plugin_id: str) -> str:
         if not DataSourcePlugin.objects.filter(id=plugin_id).exists():
@@ -157,7 +149,6 @@ class DataSourcePluginDefaultConfigOutputSLZ(serializers.Serializer):
 
 class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
-    name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin = DataSourcePluginOutputSLZ(help_text="数据源插件")
@@ -167,22 +158,11 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
 
 
 class DataSourceUpdateInputSLZ(serializers.Serializer):
-    name = serializers.CharField(help_text="数据源名称", max_length=128)
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     field_mapping = serializers.ListField(
         help_text="用户字段映射", child=DataSourceFieldMappingSLZ(), allow_empty=True, required=False, default=list
     )
     sync_config = DataSourceSyncConfigSLZ(help_text="数据源同步配置", required=False)
-
-    def validate_name(self, name: str) -> str:
-        # 自己目前在用的名字是可以的，不然每次更新都要修改名字
-        if name == self.context["current_name"]:
-            return name
-
-        if DataSource.objects.filter(name=name, owner_tenant_id=self.context["tenant_id"]).exists():
-            raise ValidationError(_("同名数据源已存在"))
-
-        return name
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> BasePluginConfig:
         PluginConfigCls = get_plugin_cfg_cls(self.context["plugin_id"])  # noqa: N806

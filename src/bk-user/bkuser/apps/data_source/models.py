@@ -53,7 +53,6 @@ class DataSourceManager(models.Manager):
 
 
 class DataSource(AuditedModel):
-    name = models.CharField("数据源名称", max_length=128)
     owner_tenant_id = models.CharField("归属租户", max_length=64, db_index=True)
     type = models.CharField(
         "数据源类型", max_length=32, choices=DataSourceTypeEnum.get_choices(), default=DataSourceTypeEnum.REAL
@@ -78,7 +77,6 @@ class DataSource(AuditedModel):
     class Meta:
         ordering = ["id"]
         unique_together = [
-            ("name", "owner_tenant_id"),
             ("owner_tenant_id", "type"),
         ]
 

@@ -134,7 +134,6 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         return DataSource.objects.create(
             type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
-            name=f"{tenant_id}_{DataSourceTypeEnum.BUILTIN_MANAGEMENT}",
             owner_tenant_id=tenant_id,
             plugin=DataSourcePlugin.objects.get(id=plugin_id),
             plugin_config=plugin_config,

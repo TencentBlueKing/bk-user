@@ -16,6 +16,7 @@ from bkuser.apis.open_v2.pagination import LegacyOpenApiPagination
 from bkuser.apis.open_v2.serializers.categories import CategoriesListInputSLZ, CategoriesListOutputSLZ
 from bkuser.apps.data_source.constants import TenantUserIdRuleEnum
 from bkuser.apps.data_source.models import DataSource
+from bkuser.apps.tenant.models import Tenant
 
 
 class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
@@ -26,11 +27,13 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
         slz = CategoriesListInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
 
+        tenant_name_map = dict(Tenant.objects.values_list("id", "name"))
         categories = [
             {
                 # TODO 支持租户协同后，因为协同产生的目录也要添加进来，但是其目录 ID 就不能是数据源的 ID
                 "id": ds.id,
-                "display_name": ds.name,
+                # 由于新版本中，单个租户只会有一个数据源，因此这里以租户名称作为数据源名称
+                "display_name": tenant_name_map.get(ds.owner_tenant_id, ""),
                 "domain": ds.domain,
                 # 历史数据迁移后，只有默认目录的租户用户 ID 生成规则是 username
                 "default": bool(ds.owner_tenant_user_id_rule == TenantUserIdRuleEnum.USERNAME),
