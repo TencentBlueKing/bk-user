@@ -25,7 +25,7 @@ from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, TenantFeatureFlag, TenantStatus
+from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, TenantStatus
 from bkuser.apps.tenant.models import (
     Tenant,
     TenantDepartment,
@@ -44,7 +44,7 @@ from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from .serializers import (
     TenantBuiltinManagerRetrieveOutputSLZ,
-    TenantBuiltinManagerUpdateOutputSLZ,
+    TenantBuiltinManagerUpdateInputSLZ,
     TenantCreateInputSLZ,
     TenantCreateOutputSLZ,
     TenantListOutputSLZ,
@@ -83,13 +83,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         with transaction.atomic():
             # 创建租户
-            tenant = Tenant.objects.create(
-                id=data["id"],
-                name=data["name"],
-                logo=data["logo"],
-                status=data["status"],
-                feature_flags=TenantFeatureFlag.get_default_flags(),
-            )
+            tenant = Tenant.objects.create(id=data["id"], name=data["name"], logo=data["logo"], status=data["status"])
             # 租户的一些默认配置初始化
             self._init_default_settings(tenant)
 
@@ -104,6 +98,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
             )
 
         # 对租户内置管理员进行账密信息初始化 & 发送密码通知
+        # FIXME (nan): 调整：不需要经过账号初始化后发送密码，而是直接发送
         initialize_identity_info_and_send_notification.delay(data_source.id)
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant.id}).data, status=status.HTTP_201_CREATED)
@@ -126,6 +121,7 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         assert plugin_config.password_initial is not None
 
         # 修改为固定密码
+        # FIXME (nan): 调整为直接发送账号密码后，不需要记录固定密码，直接使用默认配置的随机密码即可
         plugin_config.password_initial.generate_method = PasswordGenerateMethod.FIXED
         plugin_config.password_initial.fixed_password = fixed_password
 
@@ -289,16 +285,11 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
     @swagger_auto_schema(
         tags=["platform_management.tenant"],
         operation_description="变更内置管理账号密码相关信息",
-        request_body=TenantBuiltinManagerUpdateOutputSLZ(),
+        request_body=TenantBuiltinManagerUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         tenant = self.get_object()
-        slz = TenantBuiltinManagerUpdateOutputSLZ(data=request.data)
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-        fixed_password = data["fixed_password"]
-
         # 查询内置管理数据源
         data_source = DataSource.objects.get(owner_tenant_id=tenant.id, type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
         # 数据源配置
@@ -309,13 +300,23 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
         # 查询内置管理账号
         user = DataSourceUser.objects.get(data_source=data_source)
 
+        slz = TenantBuiltinManagerUpdateInputSLZ(
+            data=request.data,
+            context={"plugin_config": plugin_config, "data_source_user_id": user.id},
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        fixed_password = data["fixed_password"]
+
+        # 修改数据源配置
+        # Note: plugin_config.password_initial.fixed_password 没必要修改，
+        #  直接修改管理账号密码即可，第一次创建时为了发送, 修改时不需要调整了
+        plugin_config.password_initial.notification.enabled_methods = [NotificationMethod(data["notification_method"])]
+
         # 更新
         with transaction.atomic():
-            # 修改数据源配置
-            plugin_config.password_initial.fixed_password = fixed_password
-            plugin_config.password_initial.notification.enabled_methods = [
-                NotificationMethod(data["notification_method"])
-            ]
+            # 更新通知方式
+            data_source.set_plugin_cfg(plugin_config)
             # 重置内置账号密码
             DataSourceUserHandler.update_password(
                 data_source_user=user,

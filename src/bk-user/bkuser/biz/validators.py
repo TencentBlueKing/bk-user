@@ -18,6 +18,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.constants import DATA_SOURCE_USERNAME_REGEX
 from bkuser.apps.data_source.models import DataSourceUserDeprecatedPasswordRecord, LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.constants import TENANT_USER_CUSTOM_FIELD_NAME_REGEX
+from bkuser.apps.tenant.models import Tenant
 from bkuser.common.hashers import check_password
 from bkuser.common.passwd import PasswordValidator
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -88,3 +89,16 @@ def validate_user_new_password(
             raise ValidationError(_("新密码不能与近 {} 次使用的密码相同".format(reserved_cnt)))
 
     return password
+
+
+def validate_duplicate_tenant_name(name: str, tenant_id: str = "") -> str:
+    """检查租户是否重名"""
+    queryset = Tenant.objects.filter(name=name)
+    # 过滤掉自身名称
+    if tenant_id:
+        queryset = queryset.exclude(id=tenant_id)
+
+    if queryset.exists():
+        raise ValidationError(_("租户名 {} 已存在").format(name))
+
+    return name

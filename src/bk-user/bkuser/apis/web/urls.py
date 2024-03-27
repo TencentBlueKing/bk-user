@@ -13,9 +13,12 @@ from django.urls import include, path
 urlpatterns = [
     # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
     path("basic/", include("bkuser.apis.web.basic.urls")),
+    # ------------------------------------------ 面向平台管理员 --------------------------------------------
     # 平台管理功能
     path("platform-management/", include("bkuser.apis.web.platform_management.urls")),
-    # -------------- 待调整 ----------------
+    # ------------------------------------------ 面向租户管理员 --------------------------------------------
+    # 租户本身 & 租户管理员
+    path("tenant-info/", include("bkuser.apis.web.tenant_info.urls")),
     # 租户组织架构
     path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
     # 数据源 & 数据源用户/部门
@@ -25,10 +28,11 @@ urlpatterns = [
     path("idps/", include("bkuser.apis.web.idp.urls")),
     # 租户配置
     path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
-    # 个人中心
-    path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
     # 全局配置
     path("global-settings/", include("bkuser.apis.web.global_setting.urls")),
+    # ------------------------------------------ 面向个人 --------------------------------------------
+    # 个人中心
+    path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
     # 忘记密码重置
     path("passwords/", include("bkuser.apis.web.password.urls")),
 ]

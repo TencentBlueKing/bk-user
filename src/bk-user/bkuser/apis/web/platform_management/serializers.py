@@ -19,7 +19,7 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.notification.constants import NotificationMethod
 from bkuser.apps.tenant.constants import TENANT_ID_REGEX, TenantStatus
 from bkuser.apps.tenant.models import Tenant
-from bkuser.biz.validators import validate_logo
+from bkuser.biz.validators import validate_duplicate_tenant_name, validate_logo, validate_user_new_password
 from bkuser.common.passwd import PasswordValidator
 from bkuser.common.validators import validate_phone_with_country_code
 from bkuser.plugins.base import get_default_plugin_cfg
@@ -40,28 +40,6 @@ class TenantListOutputSLZ(serializers.Serializer):
 
     def get_logo(self, obj: Tenant) -> str:
         return obj.logo or settings.DEFAULT_TENANT_LOGO
-
-
-def _validate_duplicate_tenant_name(name: str, tenant_id: str = "") -> str:
-    """检查租户是否重名"""
-    queryset = Tenant.objects.filter(name=name)
-    # 过滤掉自身名称
-    if tenant_id:
-        queryset = queryset.exclude(id=tenant_id)
-
-    if queryset.exists():
-        raise ValidationError(_("租户名 {} 已存在").format(name))
-
-    return name
-
-
-def _validate_fixed_password(fixed_password: str) -> str:
-    cfg: LocalDataSourcePluginConfig = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)  # type: ignore
-    ret = PasswordValidator(cfg.password_rule.to_rule()).validate(fixed_password)  # type: ignore
-    if not ret.ok:
-        raise ValidationError(_("密码不符合密码规则：{}").format(ret.exception_message))
-
-    return fixed_password
 
 
 def _validate_notification(notification_method: str, email: str, phone: str, phone_country_code: str):
@@ -115,10 +93,15 @@ class TenantCreateInputSLZ(serializers.Serializer):
         return id
 
     def validate_name(self, name: str) -> str:
-        return _validate_duplicate_tenant_name(name)
+        return validate_duplicate_tenant_name(name)
 
     def validate_fixed_password(self, fixed_password: str) -> str:
-        return _validate_fixed_password(fixed_password)
+        cfg: LocalDataSourcePluginConfig = get_default_plugin_cfg(DataSourcePluginEnum.LOCAL)  # type: ignore
+        ret = PasswordValidator(cfg.password_rule.to_rule()).validate(fixed_password)  # type: ignore
+        if not ret.ok:
+            raise ValidationError(_("密码不符合密码规则：{}").format(ret.exception_message))
+
+        return fixed_password
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验通知信息是否正确
@@ -142,6 +125,9 @@ class TenantRetrieveOutputSLZ(serializers.Serializer):
     status = serializers.CharField(help_text="租户状态")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
 
+    class Meta:
+        ref_name = "platform_management.TenantRetrieveOutputSLZ"
+
     def get_logo(self, obj: Tenant) -> str:
         return obj.logo or settings.DEFAULT_TENANT_LOGO
 
@@ -156,8 +142,11 @@ class TenantUpdateInputSLZ(serializers.Serializer):
         validators=[validate_logo],
     )
 
+    class Meta:
+        ref_name = "platform_management.TenantUpdateInputSLZ"
+
     def validate_name(self, name: str) -> str:
-        return _validate_duplicate_tenant_name(name, self.context["tenant_id"])
+        return validate_duplicate_tenant_name(name, self.context["tenant_id"])
 
 
 class TenantStatusUpdateOutputSLZ(serializers.Serializer):
@@ -166,6 +155,9 @@ class TenantStatusUpdateOutputSLZ(serializers.Serializer):
 
 class TenantBuiltinManagerRetrieveOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")
+
+    class Meta:
+        ref_name = "platform_management.TenantBuiltinManagerRetrieveOutputSLZ"
 
 
 class TenantRelatedResourceStatsOutputSLZ(serializers.Serializer):
@@ -177,7 +169,7 @@ class TenantRelatedResourceStatsOutputSLZ(serializers.Serializer):
     tenant_department_count = serializers.IntegerField(help_text="租户部门数量")
 
 
-class TenantBuiltinManagerUpdateOutputSLZ(serializers.Serializer):
+class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
     # [内置管理]类型的本地数据源配置
     fixed_password = serializers.CharField(help_text="固定初始密码")
     notification_method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
@@ -188,8 +180,15 @@ class TenantBuiltinManagerUpdateOutputSLZ(serializers.Serializer):
         help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE, allow_blank=True
     )
 
+    class Meta:
+        ref_name = "platform_management.TenantBuiltinManagerUpdateInputSLZ"
+
     def validate_fixed_password(self, fixed_password: str) -> str:
-        return _validate_fixed_password(fixed_password)
+        return validate_user_new_password(
+            password=fixed_password,
+            data_source_user_id=self.context["data_source_user_id"],
+            plugin_config=self.context["plugin_config"],
+        )
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 校验通知信息是否正确
