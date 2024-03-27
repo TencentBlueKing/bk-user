@@ -11,9 +11,11 @@ specific language governing permissions and limitations under the License.
 
 from typing import Optional
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.auth.models import User
+from bkuser.plugins.constants import DataSourcePluginEnum
 
 from tests.test_utils.helpers import generate_random_string
 
@@ -24,8 +26,12 @@ def create_user(tenant: Tenant, username: Optional[str] = None) -> User:
     user, _ = User.objects.get_or_create(username=username)
     user.set_property("tenant_id", tenant.id)
 
-    # 获取租户默认的本地数据源
-    data_source = DataSource.objects.get(owner_tenant_id=tenant.id, name=f"{tenant.id}-default-local")
+    # 获取租户内置的管理数据源
+    data_source = DataSource.objects.get(
+        owner_tenant_id=tenant.id,
+        plugin_id=DataSourcePluginEnum.LOCAL,
+        type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
+    )
 
     data_source_user, _ = DataSourceUser.objects.get_or_create(
         username=username,

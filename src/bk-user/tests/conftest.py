@@ -41,6 +41,10 @@ def random_tenant() -> Tenant:
 
 
 @pytest.fixture()
-def bk_user(default_tenant) -> User:
+def bk_user(request, default_tenant) -> User:
     """生成随机用户"""
-    return create_user(default_tenant)
+    tenant = default_tenant
+    if "random_tenant" in request.fixturenames:
+        tenant = request.getfixturevalue("random_tenant")
+
+    return create_user(tenant)

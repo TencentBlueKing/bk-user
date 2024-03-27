@@ -16,9 +16,14 @@ from bkuser.apps.tenant.models import TenantUserCustomField
 
 
 @pytest.fixture()
-def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
+def tenant_user_custom_fields(request, default_tenant) -> List[TenantUserCustomField]:
+    """初始化租户用户自定义字段"""
+    tenant = default_tenant
+    if "random_tenant" in request.fixturenames:
+        tenant = request.getfixturevalue("random_tenant")
+
     age_field, _ = TenantUserCustomField.objects.get_or_create(
-        tenant=default_tenant,
+        tenant=tenant,
         name="age",
         defaults={
             "display_name": "年龄",
@@ -31,7 +36,7 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
         },
     )
     gender_field, _ = TenantUserCustomField.objects.get_or_create(
-        tenant=default_tenant,
+        tenant=tenant,
         name="gender",
         defaults={
             "display_name": "性别",
@@ -58,7 +63,7 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
         },
     )
     region_field, _ = TenantUserCustomField.objects.get_or_create(
-        tenant=default_tenant,
+        tenant=tenant,
         name="region",
         defaults={
             "display_name": "籍贯",
@@ -71,7 +76,7 @@ def tenant_user_custom_fields(default_tenant) -> List[TenantUserCustomField]:
         },
     )
     sport_hobby_field, _ = TenantUserCustomField.objects.get_or_create(
-        tenant=default_tenant,
+        tenant=tenant,
         name="sport_hobby",
         defaults={
             "display_name": "运动爱好",

@@ -14,12 +14,11 @@ from typing import Any, Dict, List
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
-from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import FieldMappingOperation
+from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourcePlugin, DataSourceSensitiveInfo
 from bkuser.apps.sync.constants import DataSourceSyncPeriod, SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
@@ -35,36 +34,16 @@ from bkuser.utils.pydantic import stringify_pydantic_error
 logger = logging.getLogger(__name__)
 
 
-class DataSourceSearchInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", required=False)
+class DataSourceListInputSLZ(serializers.Serializer):
+    type = serializers.ChoiceField(help_text="数据源类型", choices=DataSourceTypeEnum.get_choices(), required=False)
 
 
-class DataSourceSearchOutputSLZ(serializers.Serializer):
+class DataSourceListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
     name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
+    type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
-    plugin_name = serializers.SerializerMethodField(help_text="数据源插件名称")
-    cooperation_tenants = serializers.SerializerMethodField(help_text="协作公司")
-    updater = serializers.SerializerMethodField(help_text="更新者")
-    updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
-
-    def get_plugin_name(self, obj: DataSource) -> str:
-        return self.context["data_source_plugin_map"].get(obj.plugin_id, "")
-
-    @swagger_serializer_method(
-        serializer_or_field=serializers.ListField(
-            help_text="协作公司",
-            child=serializers.CharField(),
-            allow_empty=True,
-        )
-    )
-    def get_cooperation_tenants(self, obj: DataSource) -> List[str]:
-        # TODO 目前未支持数据源跨租户协作，因此该数据均为空
-        return []
-
-    def get_updater(self, obj: DataSource) -> str:
-        return self.context["user_display_name_map"].get(obj.updater) or obj.updater
 
 
 class DataSourceFieldMappingSLZ(serializers.Serializer):
@@ -136,6 +115,10 @@ class DataSourceCreateInputSLZ(serializers.Serializer):
         return _validate_field_mapping_with_tenant_user_fields(field_mapping, self.context["tenant_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # 租户至多拥有一个实体类型的数据源
+        if DataSource.objects.filter(owner_tenant_id=self.context["tenant_id"], type=DataSourceTypeEnum.REAL).exists():
+            raise ValidationError(_("租户至多拥有一个实体类型的数据源"))
+
         # 除本地数据源类型外，都需要配置字段映射
         plugin_id = attrs["plugin_id"]
         if plugin_id != DataSourcePluginEnum.LOCAL:
@@ -176,6 +159,7 @@ class DataSourceRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="数据源 ID")
     name = serializers.CharField(help_text="数据源名称")
     owner_tenant_id = serializers.CharField(help_text="数据源所属租户 ID")
+    type = serializers.CharField(help_text="数据源类型")
     plugin = DataSourcePluginOutputSLZ(help_text="数据源插件")
     plugin_config = serializers.JSONField(help_text="数据源插件配置")
     sync_config = serializers.JSONField(help_text="数据源同步任务配置")
@@ -374,8 +358,6 @@ class DataSourceSyncRecordSearchInputSLZ(serializers.Serializer):
 
 class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
-    data_source_id = serializers.IntegerField(help_text="数据源 ID")
-    data_source_name = serializers.SerializerMethodField(help_text="数据源名称")
     status = serializers.ChoiceField(help_text="数据源同步状态", choices=SyncTaskStatus.get_choices())
     has_warning = serializers.BooleanField(help_text="是否有警告")
     trigger = serializers.ChoiceField(help_text="同步触发方式", choices=SyncTaskTrigger.get_choices())
@@ -383,9 +365,6 @@ class DataSourceSyncRecordListOutputSLZ(serializers.Serializer):
     start_at = serializers.SerializerMethodField(help_text="开始时间")
     duration = serializers.DurationField(help_text="持续时间")
     extras = serializers.JSONField(help_text="额外信息")
-
-    def get_data_source_name(self, obj: DataSourceSyncTask) -> str:
-        return self.context["data_source_name_map"].get(obj.data_source_id)
 
     def get_operator(self, obj: DataSourceSyncTask) -> str:
         return self.context["user_display_name_map"].get(obj.operator) or obj.operator

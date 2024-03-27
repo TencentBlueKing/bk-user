@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List, Optional
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
@@ -38,8 +39,11 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
     DataSource.objects.get_or_create(
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,
-        name=f"{tenant_id}-default-local",
-        plugin_config=plugin_config.model_dump(),
+        type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
+        defaults={
+            "name": f"{tenant_id}-builtin-management",
+            "plugin_config": plugin_config.model_dump(),
+        },
     )
     return tenant
 

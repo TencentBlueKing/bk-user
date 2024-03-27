@@ -92,6 +92,11 @@ class DataSource(AuditedModel):
         """用户名在初始化后不可再次更新，对于租户用户 ID 为 uuid 的数据源无效"""
         return bool(self.owner_tenant_user_id_rule != TenantUserIdRuleEnum.UUID4_HEX)
 
+    @property
+    def is_real_type(self) -> bool:
+        """检查数据源类型是否为实体"""
+        return self.type == DataSourceTypeEnum.REAL
+
     def get_plugin_cfg(self) -> BasePluginConfig:
         """获取插件配置
 
