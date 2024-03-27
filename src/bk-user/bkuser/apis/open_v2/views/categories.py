@@ -33,7 +33,7 @@ class CategoriesListApi(LegacyOpenApiCommonMixin, generics.ListAPIView):
                 # TODO 支持租户协同后，因为协同产生的目录也要添加进来，但是其目录 ID 就不能是数据源的 ID
                 "id": ds.id,
                 # 由于新版本中，单个租户只会有一个数据源，因此这里以租户名称作为数据源名称
-                "display_name": tenant_name_map.get(ds.owner_tenant_id, ""),
+                "display_name": tenant_name_map[ds.owner_tenant_id],
                 "domain": ds.domain,
                 # 历史数据迁移后，只有默认目录的租户用户 ID 生成规则是 username
                 "default": bool(ds.owner_tenant_user_id_rule == TenantUserIdRuleEnum.USERNAME),
