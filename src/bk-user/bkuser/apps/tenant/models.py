@@ -85,7 +85,9 @@ class TenantUser(TimestampedModel):
     )
 
     # 蓝鲸特有
-    language = models.CharField("语言", choices=BkLanguageEnum.get_choices(), default="zh-cn", max_length=32)
+    language = models.CharField(
+        "语言", choices=BkLanguageEnum.get_choices(), default=BkLanguageEnum.ZH_CN, max_length=32
+    )
     time_zone = models.CharField("时区", choices=TIME_ZONE_CHOICES, default="Asia/Shanghai", max_length=32)
 
     # wx_userid/wx_openid 兼容旧版本迁移

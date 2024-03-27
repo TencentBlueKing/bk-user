@@ -15,8 +15,8 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class BkLanguageEnum(str, StructuredEnum):
-    ZH_CN = EnumField("zh-cn", label="中文")
-    EN = EnumField("en", label="英文")
+    ZH_CN = EnumField("zh-CN", label="中文")
+    EN = EnumField("en-US", label="英文")
 
 
 class BKNonEntityUser(str, StructuredEnum):
