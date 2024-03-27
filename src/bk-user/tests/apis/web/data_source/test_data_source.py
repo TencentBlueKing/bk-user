@@ -260,11 +260,9 @@ class TestDataSourceListApi:
 
         ds = resp.data[0]
         assert ds["id"] == data_source.id
-        assert ds["name"] == data_source.name
         assert ds["type"] == data_source.type
         assert ds["owner_tenant_id"] == data_source.owner_tenant_id
-        assert ds["plugin_name"] == DataSourcePluginEnum.get_choice_label(DataSourcePluginEnum.LOCAL)
-        assert ds["cooperation_tenants"] == []
+        assert ds["plugin_id"] == DataSourcePluginEnum.LOCAL
 
 
 class TestDataSourceUpdateApi:
