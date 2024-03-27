@@ -271,6 +271,8 @@ class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generi
 
 
 class DataSourceRandomPasswordApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     @swagger_auto_schema(
         tags=["data_source"],
         operation_description="生成数据源用户随机密码",

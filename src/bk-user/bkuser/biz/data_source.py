@@ -17,16 +17,12 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartment,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
-    DataSourcePlugin,
     DataSourceSensitiveInfo,
     DataSourceUser,
     DataSourceUserLeaderRelation,
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.plugins.base import get_default_plugin_cfg
-from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.models import LocalDataSourcePluginConfig, PasswordInitialConfig
 
 
 class DataSourceSimpleInfo(BaseModel):
@@ -35,24 +31,6 @@ class DataSourceSimpleInfo(BaseModel):
 
 
 class DataSourceHandler:
-    @staticmethod
-    def create_local_data_source_with_merge_config(
-        data_source_name: str,
-        owner_tenant_id: str,
-        password_initial_config: PasswordInitialConfig,
-    ) -> DataSource:
-        """使用与默认配置合并后的插件配置，创建本地数据源"""
-        plugin_id = DataSourcePluginEnum.LOCAL
-        plugin_config: LocalDataSourcePluginConfig = get_default_plugin_cfg(plugin_id)  # type: ignore
-        plugin_config.password_initial = password_initial_config
-
-        return DataSource.objects.create(
-            name=data_source_name,
-            owner_tenant_id=owner_tenant_id,
-            plugin=DataSourcePlugin.objects.get(id=plugin_id),
-            plugin_config=plugin_config,
-        )
-
     @staticmethod
     def get_tenant_available_data_sources(tenant_id: str) -> List[DataSource]:
         """获取租户能查看的数据源，包括拥有的以及协同的"""

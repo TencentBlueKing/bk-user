@@ -16,28 +16,20 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
-    DataSourceUser,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.data_source.utils import gen_tenant_user_id
-from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
 from bkuser.apps.tenant.models import (
     Tenant,
     TenantDepartment,
     TenantManager,
     TenantUser,
-    TenantUserValidityPeriodConfig,
 )
-from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
-from bkuser.plugins.local.models import PasswordInitialConfig
 
 logger = logging.getLogger(__name__)
 
@@ -68,29 +60,12 @@ class TenantFeatureFlag(BaseModel):
     user_number_visible: bool = False
 
 
-class TenantInfo(BaseModel):
-    """租户基本信息"""
-
-    id: str
-    name: str
-    logo: str = ""
-    feature_flags: TenantFeatureFlag
-
-
 class TenantEditableInfo(BaseModel):
     """租户可编辑的基本信息"""
 
     name: str
     logo: str = ""
     feature_flags: TenantFeatureFlag
-
-
-class TenantManagerWithoutID(BaseModel):
-    username: str
-    full_name: str
-    email: str
-    phone: str
-    phone_country_code: str
 
 
 class TenantDepartmentInfo(BaseModel):
@@ -257,51 +232,6 @@ class TenantUserHandler:
 
 
 class TenantHandler:
-    @staticmethod
-    def create_with_managers(
-        tenant_info: TenantInfo,
-        managers: List[TenantManagerWithoutID],
-        password_initial_config: PasswordInitialConfig,
-    ) -> str:
-        """创建租户，支持同时创建租户管理员"""
-        with transaction.atomic():
-            # 创建租户本身
-            tenant = Tenant.objects.create(**tenant_info.model_dump())
-
-            # 创建租户完成后，初始化账号有效期设置
-            TenantUserValidityPeriodConfig.objects.create(tenant=tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
-
-            # 创建本地数据源
-            data_source = DataSourceHandler.create_local_data_source_with_merge_config(
-                _("{}-本地数据源").format(tenant_info.name), tenant.id, password_initial_config
-            )
-
-            # 添加数据源用户和租户用户
-            # Note: 批量创建无法返回ID，这里使用循环创建
-            tenant_managers = []
-            for i in managers:
-                # 创建数据源用户
-                data_source_user = DataSourceUser.objects.create(
-                    data_source=data_source, code=i.username, **i.model_dump()
-                )
-                # 创建对应的租户用户
-                tenant_user = TenantUser.objects.create(
-                    id=gen_tenant_user_id(tenant.id, data_source, data_source_user),
-                    data_source_user=data_source_user,
-                    tenant=tenant,
-                    data_source=data_source,
-                )
-
-                tenant_managers.append(TenantManager(tenant=tenant, tenant_user=tenant_user))
-
-            if tenant_managers:
-                TenantManager.objects.bulk_create(tenant_managers)
-
-        # 对租户管理员进行账密信息初始化 & 发送密码通知
-        initialize_identity_info_and_send_notification.delay(data_source.id)
-
-        return tenant_info.id
-
     @staticmethod
     def update_with_managers(tenant_id: str, tenant_info: TenantEditableInfo, manager_ids: List[str]):
         """更新租户 & 租户管理员"""
