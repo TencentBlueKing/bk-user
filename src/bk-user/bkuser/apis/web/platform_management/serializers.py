@@ -95,10 +95,10 @@ class TenantCreateInputSLZ(serializers.Serializer):
     fixed_password = serializers.CharField(help_text="固定初始密码")
     notification_method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     # 内置管理账号信息
-    email = serializers.EmailField(help_text="管理员邮箱", required=False, default="")
-    phone = serializers.CharField(help_text="管理员手机号", required=False, default="")
+    email = serializers.EmailField(help_text="管理员邮箱", required=False, default="", allow_blank=True)
+    phone = serializers.CharField(help_text="管理员手机号", required=False, default="", allow_blank=True)
     phone_country_code = serializers.CharField(
-        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE, allow_blank=True
     )
 
     def validate_id(self, id: str) -> str:
@@ -181,10 +181,10 @@ class TenantBuiltinManagerUpdateOutputSLZ(serializers.Serializer):
     fixed_password = serializers.CharField(help_text="固定初始密码")
     notification_method = serializers.ChoiceField(help_text="通知方式", choices=NotificationMethod.get_choices())
     # 内置管理账号信息
-    email = serializers.EmailField(help_text="管理员邮箱", required=False, default="")
-    phone = serializers.CharField(help_text="管理员手机号", required=False, default="")
+    email = serializers.EmailField(help_text="管理员邮箱", required=False, default="", allow_blank=True)
+    phone = serializers.CharField(help_text="管理员手机号", required=False, default="", allow_blank=True)
     phone_country_code = serializers.CharField(
-        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE
+        help_text="手机号国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE, allow_blank=True
     )
 
     def validate_fixed_password(self, fixed_password: str) -> str:
