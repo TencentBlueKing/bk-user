@@ -139,6 +139,7 @@ class TenantRetrieveBuiltinManagementUserOutputSLZ(serializers.Serializer):
 class TenantRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名")
+    status = serializers.CharField(help_text="租户状态")
     logo = serializers.SerializerMethodField(help_text="租户 Logo")
 
     def get_logo(self, obj: Tenant) -> str:

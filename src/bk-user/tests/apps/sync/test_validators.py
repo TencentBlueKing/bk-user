@@ -17,8 +17,6 @@ from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantUserCustomField
 from bkuser.plugins.constants import DataSourcePluginEnum
 
-from tests.test_utils.helpers import generate_random_string
-
 pytestmark = pytest.mark.django_db
 
 
@@ -45,9 +43,8 @@ class TestDataSourceUserExtrasUniqueValidator:
     @pytest.fixture()
     def random_ds(self, request) -> DataSource:
         tenant_id = request.getfixturevalue("random_tenant").id
-        return DataSource.objects.create(
-            name=generate_random_string(), owner_tenant_id=tenant_id, plugin_id=DataSourcePluginEnum.LOCAL
-        )
+        ds, _ = DataSource.objects.get_or_create(owner_tenant_id=tenant_id, plugin_id=DataSourcePluginEnum.LOCAL)
+        return ds
 
     @pytest.fixture()
     def user_lisi(self, request) -> DataSourceUser:

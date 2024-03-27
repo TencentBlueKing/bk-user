@@ -54,18 +54,12 @@ class IdpSearchOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(
         serializer_or_field=serializers.ListField(
             help_text="匹配的数据源",
-            child=serializers.CharField(),
+            child=serializers.IntegerField(),
             allow_empty=True,
         )
     )
-    def get_matched_data_sources(self, obj: Idp) -> List[str]:
-        data_source_name_map = self.context["data_source_name_map"]
-
-        return [
-            data_source_name_map[r.data_source_id]
-            for r in obj.data_source_match_rule_objs
-            if r.data_source_id in data_source_name_map
-        ]
+    def get_matched_data_sources(self, obj: Idp) -> List[int]:
+        return [r.data_source_id for r in obj.data_source_match_rule_objs]
 
     def get_updater(self, obj: Idp) -> str:
         return self.context["user_display_name_map"].get(obj.updater) or obj.updater

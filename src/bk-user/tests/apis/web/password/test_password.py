@@ -128,9 +128,12 @@ class TestResetPasswordByEmailAfterForget:
             assert resp.status_code == status.HTTP_200_OK
             assert tenant_user.id in [user["tenant_user_id"] for user in resp.data]
 
-            # 4. 通过 Token 重置密码
-            charset = string.ascii_letters + string.digits + string.punctuation
-            new_password = generate_random_string(length=32, chars=charset)
+            # 4. 通过 Token 重置密码，分批次生成再拼接，确保各种字符都有
+            new_password = (
+                generate_random_string(length=16, chars=string.ascii_letters)
+                + generate_random_string(length=8, chars=string.digits)
+                + generate_random_string(length=8, chars=string.punctuation)
+            )
             resp = api_client.post(
                 reverse("password.reset_passwd_by_token"),
                 data={

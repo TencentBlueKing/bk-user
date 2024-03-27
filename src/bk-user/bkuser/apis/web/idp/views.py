@@ -16,7 +16,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.idp.constants import IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.permission.constants import PermAction
@@ -41,6 +40,8 @@ from .serializers import (
 
 
 class IdpPluginListApi(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     queryset = IdpPlugin.objects.all()
     pagination_class = None
     serializer_class = IdpPluginOutputSLZ
@@ -86,17 +87,11 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
 
     def get_serializer_context(self):
         # TODO 目前未支持数据源跨租户协助，所以只查询本租户数据源
-        data_source_name_map = dict(
-            DataSource.objects.filter(owner_tenant_id=self.get_current_tenant_id()).values_list("id", "name")
-        )
         tenant_user_ids = Idp.objects.filter(
             owner_tenant_id=self.get_current_tenant_id(),
         ).values_list("updater", flat=True)
 
-        return {
-            "data_source_name_map": data_source_name_map,
-            "user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids),
-        }
+        return {"user_display_name_map": TenantUserHandler.get_tenant_user_display_name_map_by_ids(tenant_user_ids)}
 
     def get_queryset(self):
         slz = IdpSearchInputSLZ(data=self.request.query_params)
@@ -221,6 +216,7 @@ class IdpStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, gener
     """切换认证源状态（启/停）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
     serializer_class = IdpSwitchStatusOutputSLZ
     lookup_url_kwarg = "id"
 

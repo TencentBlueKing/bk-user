@@ -40,10 +40,7 @@ def create_tenant(tenant_id: Optional[str] = DEFAULT_TENANT) -> Tenant:
         owner_tenant_id=tenant_id,
         plugin_id=DataSourcePluginEnum.LOCAL,
         type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
-        defaults={
-            "name": f"{tenant_id}-builtin-management",
-            "plugin_config": plugin_config.model_dump(),
-        },
+        defaults={"plugin_config": plugin_config.model_dump()},
     )
     return tenant
 

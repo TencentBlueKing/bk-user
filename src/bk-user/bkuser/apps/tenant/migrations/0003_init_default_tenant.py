@@ -57,7 +57,6 @@ def forwards_func(apps, schema_editor):
 
     # FIXME (nan): 数据源类型修改为内置管理，依赖压缩 migration
     data_source = DataSource.objects.create(
-        name="default",
         plugin_id=DataSourcePluginEnum.LOCAL,
         owner_tenant_id=default_tenant.id,
         plugin_config=get_default_plugin_cfg(DataSourcePluginEnum.LOCAL).model_dump(),
