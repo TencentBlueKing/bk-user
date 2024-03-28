@@ -18,7 +18,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceUser
+from bkuser.apps.data_source.models import DataSource, DataSourceUser, LocalDataSourceIdentityInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
@@ -70,7 +70,7 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
         tenant.user_number_visible = data["user_number_visible"]
         tenant.updater = request.user.username
         tenant.updated_at = timezone.now()
-        tenant.save(update_fields=["name", "logo", "updater", "updated_at"])
+        tenant.save(update_fields=["name", "logo", "visible", "user_number_visible", "updater", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -131,6 +131,9 @@ class TenantBuiltinManagerRetrieveUpdateApi(
                 user.username = data["username"]
                 user.updated_at = timezone.now()
                 user.save(update_fields=["username", "updated_at"])
+                # Note: 必须同步修改账密信息里的用户名
+                LocalDataSourceIdentityInfo.objects.filter(user=user).update(username=data["username"])
+
             # 更新是否启用登录
             if plugin_config.enable_account_password_login != data["enable_account_password_login"]:
                 plugin_config.enable_account_password_login = data["enable_account_password_login"]
@@ -206,10 +209,10 @@ class TenantRealManagerListUpdateApi(
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
-        slz = TenantRealManagerUpdateInputSLZ(data=request.data)
+        tenant_id = self.get_current_tenant_id()
+        slz = TenantRealManagerUpdateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
         slz.is_valid(raise_exception=True)
         ids = slz.validated_data["ids"]
-        tenant_id = self.get_current_tenant_id()
 
         # 查询租户已有的所有实名管理账号
         old_ids = list(

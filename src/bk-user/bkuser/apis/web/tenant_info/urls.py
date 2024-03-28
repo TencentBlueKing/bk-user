@@ -22,7 +22,7 @@ urlpatterns = [
         name="tenant_info.retrieve_update_builtin_manager",
     ),
     path(
-        "builtin-manager-password/",
+        "builtin-manager/password/",
         views.TenantBuiltinManagerPasswordUpdateApi.as_view(),
         name="tenant_info.update_builtin_manager_password",
     ),

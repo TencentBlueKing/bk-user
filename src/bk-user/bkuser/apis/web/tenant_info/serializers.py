@@ -76,7 +76,7 @@ class TenantBuiltinManagerPasswordUpdateInputSLZ(serializers.Serializer):
 class TenantRealManagerListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户ID", source="tenant_user.id")
     username = serializers.CharField(help_text="用户名", source="tenant_user.data_source_user.username")
-    full_name = serializers.CharField(help_text="姓名", source="tenant_user.data_source_user.fullname")
+    full_name = serializers.CharField(help_text="姓名", source="tenant_user.data_source_user.full_name")
 
 
 class TenantRealManagerUpdateInputSLZ(serializers.Serializer):
@@ -105,4 +105,4 @@ class TenantRealUserListInputSLZ(serializers.Serializer):
 class TenantRealUserListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
-    full_name = serializers.CharField(help_text="姓名", source="data_source_user.fullname")
+    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
