@@ -22,10 +22,10 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.biz.data_source_organization import DataSourceUserHandler
-from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
-from .mixins import BuiltinDataSourceUserMixin
+from .mixins import CurrentTenantBuiltinDataSourceUserMixin
 from .serializers import (
     TenantBuiltinManagerPasswordUpdateInputSLZ,
     TenantBuiltinManagerRetrieveOutputSLZ,
@@ -75,7 +75,7 @@ class TenantRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, 
 
 
 class TenantBuiltinManagerRetrieveUpdateApi(
-    CurrentUserTenantMixin, BuiltinDataSourceUserMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateAPIView
+    CurrentTenantBuiltinDataSourceUserMixin, ExcludePutAPIViewMixin, generics.RetrieveUpdateAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -85,7 +85,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         responses={status.HTTP_200_OK: TenantBuiltinManagerRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        data_source, user = self.get_builtin_data_source_and_user(self.get_current_tenant_id())
+        data_source, user = self.get_builtin_data_source_and_user()
         return Response(
             TenantBuiltinManagerRetrieveOutputSLZ(
                 {
@@ -101,13 +101,13 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         request_body=TenantBuiltinManagerUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         slz = TenantBuiltinManagerUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         # 内建数据源 & 用户
-        data_source, user = self.get_builtin_data_source_and_user(self.get_current_tenant_id())
+        data_source, user = self.get_builtin_data_source_and_user()
 
         # 数据源配置
         plugin_config = data_source.get_plugin_cfg()
@@ -116,22 +116,24 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         # 更新
         with transaction.atomic():
             # 更新用户名
-            if user.username != data["username"]:
-                user.username = data["username"]
+            new_username = data.get("username")
+            if new_username and user.username != new_username:
+                user.username = new_username
                 user.save(update_fields=["username", "updated_at"])
                 # Note: 必须同步修改账密信息里的用户名
-                LocalDataSourceIdentityInfo.objects.filter(user=user).update(username=data["username"])
+                LocalDataSourceIdentityInfo.objects.filter(user=user).update(username=new_username)
 
             # 更新是否启用登录
-            if plugin_config.enable_account_password_login != data["enable_account_password_login"]:
-                plugin_config.enable_account_password_login = data["enable_account_password_login"]
+            enable = data.get("enable_account_password_login")
+            if enable is not None and plugin_config.enable_account_password_login != enable:
+                plugin_config.enable_account_password_login = enable
                 data_source.set_plugin_cfg(plugin_config)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantBuiltinManagerPasswordUpdateApi(
-    CurrentUserTenantMixin, BuiltinDataSourceUserMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
+    CurrentTenantBuiltinDataSourceUserMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -143,7 +145,7 @@ class TenantBuiltinManagerPasswordUpdateApi(
     )
     def put(self, request, *args, **kwargs):
         # 内建数据源 & 用户
-        data_source, user = self.get_builtin_data_source_and_user(self.get_current_tenant_id())
+        data_source, user = self.get_builtin_data_source_and_user()
 
         # 数据源配置
         plugin_config = data_source.get_plugin_cfg()

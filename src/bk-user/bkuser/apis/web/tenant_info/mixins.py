@@ -10,16 +10,18 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Tuple
 
+from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 
 
-class BuiltinDataSourceUserMixin:
-    @staticmethod
-    def get_builtin_data_source_and_user(tenant_id: str) -> Tuple[DataSource, DataSourceUser]:
+class CurrentTenantBuiltinDataSourceUserMixin(CurrentUserTenantMixin):
+    def get_builtin_data_source_and_user(self) -> Tuple[DataSource, DataSourceUser]:
         """获取内建数据源和用户"""
         # 查询租户的内置管理数据源
-        data_source = DataSource.objects.get(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+        data_source = DataSource.objects.get(
+            owner_tenant_id=self.get_current_tenant_id(), type=DataSourceTypeEnum.BUILTIN_MANAGEMENT
+        )
         # 查询内置管理账号
         # Note: 理论上没有任何入口可以删除内置管理账号，所以不可能为空
         user = DataSourceUser.objects.get(data_source=data_source)
