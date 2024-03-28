@@ -43,10 +43,6 @@ class LocalUserCredentialAuthenticateOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")
 
 
-class GlobalSettingRetrieveOutputSLZ(serializers.Serializer):
-    tenant_visible = serializers.BooleanField(help_text="租户可见性")
-
-
 class TenantListInputSLZ(serializers.Serializer):
     tenant_ids = serializers.CharField(help_text="指定查询的租户, 多个使用英文逗号分隔", required=False, default="")
 

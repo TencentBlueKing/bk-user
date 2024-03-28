@@ -21,7 +21,7 @@ pytestmark = pytest.mark.django_db
 class TestGlobalInfoRetrieveApi:
     def test_retrieve_with_only_tenant(self, api_client, default_tenant):
         resp = api_client.get(reverse("login.global_info.retrieve"))
-        assert not resp.data["tenant_visible"]
+        assert resp.data["tenant_visible"]
         assert resp.data["enabled_auth_tenant_number"] == 1
         assert resp.data["only_enabled_auth_tenant"] is not None
         assert resp.data["only_enabled_auth_tenant"]["id"] == default_tenant.id
@@ -39,6 +39,6 @@ class TestGlobalInfoRetrieveApi:
         )
         resp = api_client.get(reverse("login.global_info.retrieve"))
 
-        assert not resp.data["tenant_visible"]
+        assert resp.data["tenant_visible"]
         assert resp.data["enabled_auth_tenant_number"] > 1
         assert resp.data["only_enabled_auth_tenant"] is None

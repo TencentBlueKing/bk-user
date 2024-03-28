@@ -15,13 +15,7 @@ from django.db import models
 from django.db.models import Q, QuerySet
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import (
-    TIME_ZONE_CHOICES,
-    TenantFeatureFlag,
-    TenantStatus,
-    TenantUserStatus,
-    UserFieldDataType,
-)
+from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantStatus, TenantUserStatus, UserFieldDataType
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.common.time import datetime_to_display
@@ -34,13 +28,12 @@ class Tenant(AuditedModel):
     is_default = models.BooleanField("是否默认租户", default=False)
     feature_flags = models.JSONField("租户特性标志集", default=dict)
     status = models.CharField("状态", max_length=32, choices=TenantStatus.get_choices(), default=TenantStatus.ENABLED)
+    # 特性
+    visible = models.BooleanField("租户可见性", default=True)
+    user_number_visible = models.BooleanField("人员数量是否可见", default=True)
 
     class Meta:
         ordering = ["created_at"]
-
-    def has_feature_flag(self, ff: TenantFeatureFlag) -> bool:
-        default_flags = TenantFeatureFlag.get_default_flags()
-        return self.feature_flags.get(ff, default_flags[ff])
 
 
 class TenantUserManager(models.Manager):

@@ -13,5 +13,24 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("<str:id>/", views.GlobalSettingRetrieveUpdateApi.as_view(), name="global_setting.retrieve_update"),
+    # 租户基本信息
+    path("", views.TenantRetrieveUpdateApi.as_view(), name="tenant_info.retrieve_update"),
+    # 租户内置管理账号
+    path(
+        "builtin-manager/",
+        views.TenantBuiltinManagerRetrieveUpdateApi.as_view(),
+        name="tenant_info.retrieve_update_builtin_manager",
+    ),
+    path(
+        "builtin-manager/password/",
+        views.TenantBuiltinManagerPasswordUpdateApi.as_view(),
+        name="tenant_info.update_builtin_manager_password",
+    ),
+    # 租户实名管理员
+    path(
+        "real-managers/",
+        views.TenantRealManagerListUpdateApi.as_view(),
+        name="tenant_info.list_update_real_manager",
+    ),
+    path("real-users/", views.TenantRealUserListApi.as_view(), name="tenant_info.list_tenant_real_user"),
 ]

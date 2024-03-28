@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import re
 
 import pytz
-from blue_krill.data_types.enum import EnumField, FeatureFlag, FeatureFlagField, StructuredEnum
+from blue_krill.data_types.enum import EnumField, StructuredEnum
 from django.utils.translation import gettext_lazy as _
 
 TIME_ZONE_CHOICES = [(i, i) for i in list(pytz.common_timezones)]
@@ -20,12 +20,6 @@ TENANT_ID_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9-]{2,30}[a-zA-Z0-9]$")
 
 # 自定义字段英文标识命名规则
 TENANT_USER_CUSTOM_FIELD_NAME_REGEX = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{1,30}[a-zA-Z0-9]$")
-
-
-class TenantFeatureFlag(FeatureFlag):  # type: ignore
-    """租户特性标志"""
-
-    USER_NUMBER_VISIBLE = FeatureFlagField(label=_("人员数量是否可见"), default=True)
 
 
 class UserFieldDataType(str, StructuredEnum):
