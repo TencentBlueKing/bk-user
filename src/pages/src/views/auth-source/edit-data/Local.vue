@@ -104,12 +104,11 @@ import { addListener, removeListener } from 'resize-detector';
 import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import useValidate from '@/hooks/use-validate';
-import { getIdpsDetails, patchIdps } from '@/http/authSourceFiles';
-import { getDataSourceList } from '@/http/dataSourceFiles';
+import { useValidate } from '@/hooks';
+import { getDataSourceList, getIdpsDetails, patchIdps } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 const route = useRoute();
 const validate = useValidate();

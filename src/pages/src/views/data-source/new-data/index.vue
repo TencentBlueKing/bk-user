@@ -54,10 +54,10 @@ import Http from './Http.vue';
 import Local from './Local.vue';
 
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
-import { getDataSourcePlugins } from '@/http/dataSourceFiles';
+import { getDataSourcePlugins } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 const route = useRoute();
 const store = useMainViewStore();

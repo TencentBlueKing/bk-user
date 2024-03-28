@@ -1,10 +1,10 @@
 <template>
-  <div class="sync-records-wrapper user-scroll-y">
+  <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper user-scroll-y">
     <span class="back-previous" @click="handleBack">
       <i class="user-icon icon-arrow-left" />
       {{ $t('返回上一页') }}
     </span>
-    <bk-loading class="data-record-content" :loading="dataRecordConfig.loading">
+    <div class="data-record-content">
       <p class="title">{{ $t('数据更新记录') }}</p>
       <bk-table
         class="user-info-table"
@@ -63,7 +63,7 @@
           </template>
         </bk-table-column>
       </bk-table>
-    </bk-loading>
+    </div>
     <bk-sideslider
       ext-cls="log-wrapper"
       :is-show="logConfig.isShow"
@@ -100,7 +100,7 @@ import { useRoute } from 'vue-router';
 
 import Empty from '@/components/Empty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
-import { getSyncLogs, getSyncRecords } from '@/http/dataSourceFiles';
+import { getSyncLogs, getSyncRecords } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { dataRecordStatus } from '@/utils';

@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
 
-import useValidate from '@/hooks/use-validate';
+import { useValidate } from '@/hooks';
 
 const validate = useValidate();
 

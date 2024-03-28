@@ -248,14 +248,14 @@ import { computed, h, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
-import useValidate from '@/hooks/use-validate';
+import { useValidate } from '@/hooks';
 import {
   getDataSourceDetails,
   getDefaultConfig,
   newDataSource,
   putDataSourceDetails,
   randomPasswords,
-} from '@/http/dataSourceFiles';
+} from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
 import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';

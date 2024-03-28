@@ -4,17 +4,10 @@
 export interface TenantsListResult {
   id: string,
   name: string,
+  status: string,
   logo: string,
+  is_default: boolean,
   created_at: string,
-  managers: {
-    id: string,
-    username: string,
-    full_name: string,
-  }[],
-  data_sources: {
-    id: string,
-    name: string,
-  }[],
 }
 
 /**
@@ -23,24 +16,13 @@ export interface TenantsListResult {
 export interface NewTenantParams {
   id: string,
   name: string,
-  feature_flags: {
-    user_number_visible: boolean,
-  },
   logo?: string,
-  // password_settings: {
-  //   init_password: string,
-  //   init_password_method: string,
-  //   init_notify_method: string[],
-  //   init_mail_config: {},
-  //   init_sms_config: {},
-  // },
-  managers: {
-    username: string,
-    full_name: string,
-    email: string,
-    phone: string,
-    phone_country_code: string,
-  }[],
+  status: string,
+  fixed_password: string,
+  notification_method: string,
+  email: string,
+  phone: string,
+  phone_country_code: string,
 }
 
 /**
@@ -50,17 +32,6 @@ export interface TenantDetailsResult {
   id: string,
   name: string,
   logo: string,
-  feature_flags: {
-    user_number_visible: boolean,
-  },
-  managers: {
-    id: string,
-    username: string,
-    full_name: string,
-    email: string,
-    phone: string,
-    phone_country_code: string,
-  }[],
 }
 
 /**
@@ -69,10 +40,6 @@ export interface TenantDetailsResult {
 export interface TenantUpdateParams {
   name: string,
   logo: string,
-  feature_flags: {
-    user_number_visible: boolean,
-  },
-  manager_ids: string[],
 }
 
 /**
@@ -106,4 +73,15 @@ export interface TenantUsersListParams {
 export interface GlobalSettingUpdateParams {
   id: string,
   value: boolean,
+}
+
+/**
+ * 变更内置管理账号密码相关信息
+ */
+export interface BuiltinManagerParams {
+  fixed_password: string,
+  notification_method: string,
+  email: string,
+  phone: string,
+  phone_country_code: string,
 }

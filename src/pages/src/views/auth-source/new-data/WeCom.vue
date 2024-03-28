@@ -155,10 +155,8 @@ import { debounce } from 'bkui-vue/lib/shared';
 import { addListener, removeListener } from 'resize-detector';
 import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
-import useValidate from '@/hooks/use-validate';
-import { useCustomPlugin } from '@/hooks/useCustomPlugin';
-import { getDataSourceList } from '@/http/dataSourceFiles';
-import { getFields } from '@/http/settingFiles';
+import { useCustomPlugin, useValidate } from '@/hooks';
+import { getDataSourceList, getFields } from '@/http';
 import { t } from '@/language/index';
 
 const validate = useValidate();

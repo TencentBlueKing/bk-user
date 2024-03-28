@@ -61,8 +61,8 @@ import { defineProps, reactive, ref } from 'vue';
 
 import { logout } from '@/common/auth';
 import phoneInput from '@/components/phoneInput.vue';
-import useValidate from '@/hooks/use-validate';
-import { resetPasswordUrl, verificationCodes } from '@/http/resetPasswordFiles';
+import { useValidate } from '@/hooks';
+import { resetPasswordUrl, verificationCodes } from '@/http';
 import { t } from '@/language/index';
 
 const validate = useValidate();

@@ -123,8 +123,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { getDataSourceDetails } from '@/http/dataSourceFiles';
-import { getFields } from '@/http/settingFiles';
+import { getDataSourceDetails, getFields } from '@/http';
 import router from '@/router';
 import { SYNC_CONFIG_LIST } from '@/utils';
 
@@ -172,7 +171,7 @@ onMounted(async () => {
     syncConfig.value = res.data?.sync_config;
     plugin.value = res.data?.plugin;
   } catch (e) {
-    isLoading.value = false;
+    console.warn(e);
   } finally {
     isLoading.value = false;
   }

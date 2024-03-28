@@ -28,8 +28,8 @@
 import { Message } from 'bkui-vue';
 import { reactive, ref, watch } from 'vue';
 
-import useValidate from '@/hooks/use-validate';
-import { putUsersPassword, randomPasswords } from '@/http/dataSourceFiles';
+import { useValidate } from '@/hooks';
+import { putUsersPassword, randomPasswords } from '@/http';
 import { t } from '@/language/index';
 
 const validate = useValidate();

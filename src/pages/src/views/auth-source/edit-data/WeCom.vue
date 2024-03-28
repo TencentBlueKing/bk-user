@@ -153,13 +153,10 @@ import { addListener, removeListener } from 'resize-detector';
 import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import useValidate from '@/hooks/use-validate';
-import { useCustomPlugin } from '@/hooks/useCustomPlugin';
-import { getIdpsDetails } from '@/http/authSourceFiles';
-import { getDataSourceList } from '@/http/dataSourceFiles';
-import { getFields } from '@/http/settingFiles';
+import { useCustomPlugin, useValidate } from '@/hooks';
+import { getDataSourceList, getFields, getIdpsDetails } from '@/http';
 import { t } from '@/language/index';
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 const route = useRoute();
 const validate = useValidate();

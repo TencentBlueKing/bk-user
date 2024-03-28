@@ -31,7 +31,7 @@ export const getTenantDepartments = (id: string) => http.get(`/api/v1/web/tenant
 /**
  * 租户下部门单个用户详情
  */
-export const getTenantUsers = (id: string) => http.get(`/api/v1/web/tenant-organization/users/${id}/`);
+export const getTenantOrganizationUsers = (id: string) => http.get(`/api/v1/web/tenant-organization/users/${id}/`);
 
 /**
  * 租户下部门下用户列表
@@ -44,7 +44,7 @@ export const getTenantDepartmentsList = (params: DepartmentsListParams) => {
 /**
  * 租户下用户列表
  */
-export const getTenantUsersList = (params: TenantListParams) => {
+export const getTenantOrganizationUsersList = (params: TenantListParams) => {
   const { id, keyword, page, pageSize } = params;
   return http.get(`/api/v1/web/tenant-organization/tenants/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
 };
