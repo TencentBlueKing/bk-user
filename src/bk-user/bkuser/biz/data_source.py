@@ -10,8 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 from typing import List
 
-from pydantic import BaseModel
-
 from bkuser.apps.data_source.models import (
     DataSource,
     DataSourceDepartment,
@@ -23,11 +21,6 @@ from bkuser.apps.data_source.models import (
     DepartmentRelationMPTTTree,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-
-
-class DataSourceSimpleInfo(BaseModel):
-    id: int
-    name: str
 
 
 class DataSourceHandler:
