@@ -115,8 +115,9 @@
 
       <Password v-if="activeIdp?.plugin.id === 'local'" :idp-id="activeIdp.id" />
 
-      <div>
+      <div class="tenant-password">
         <span class="cursor-pointer" @click="protocolVisible = true">用户协议 ></span>
+        <span class="cursor-pointer" @click="handleResetPassword">忘记密码？</span>
       </div>
 
       <Protocol v-if="protocolVisible" @close="protocolVisible = false" />
@@ -291,6 +292,11 @@ onBeforeMount(() => {
   });
 });
 
+const handleResetPassword = () => {
+  // 确认环境变量后补充路径
+  window.location.href = `/password/?tenantId=${tenantId.value}`;
+};
+
 </script>
 
 <style lang="postcss" scoped>
@@ -416,6 +422,12 @@ onBeforeMount(() => {
       border-bottom: 2px solid #3A84FF;
     }
   }
+}
+
+.tenant-password {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .content-list {
