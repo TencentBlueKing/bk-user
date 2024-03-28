@@ -8,9 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from typing import Tuple
+
 from django.db import transaction
 from django.db.models import Q
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -197,7 +198,6 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
         tenant.name = data["name"]
         tenant.logo = data["logo"]
         tenant.updater = request.user.username
-        tenant.updated_at = timezone.now()
         tenant.save(update_fields=["name", "logo", "updater", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -267,6 +267,17 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
     queryset = Tenant.objects.all()
     lookup_url_kwarg = "id"
 
+    @staticmethod
+    def _get_builtin_data_source_and_user(tenant_id: str) -> Tuple[DataSource, DataSourceUser]:
+        """获取内建数据源和用户"""
+        # 查询租户的内置管理数据源
+        data_source = DataSource.objects.get(owner_tenant_id=tenant_id, type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+        # 查询内置管理账号
+        # Note: 理论上没有任何入口可以删除内置管理账号，所以不可能为空
+        user = DataSourceUser.objects.get(data_source=data_source)
+
+        return data_source, user
+
     @swagger_auto_schema(
         tags=["platform_management.tenant"],
         operation_description="内置管理账号详情",
@@ -274,11 +285,8 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
     )
     def get(self, request, *args, **kwargs):
         tenant = self.get_object()
-        # 查询租户的内置管理数据源
-        data_source = DataSource.objects.get(owner_tenant_id=tenant.id, type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
-        # 查询内置管理账号
-        # Note: 理论上没有任何入口可以删除内置管理账号，所以不可能为空
-        user = DataSourceUser.objects.get(data_source=data_source)
+        # 获取内建数据源 & 用户
+        data_source, user = self._get_builtin_data_source_and_user(tenant.id)
 
         return Response(TenantBuiltinManagerRetrieveOutputSLZ(instance={"username": user.username}).data)
 
@@ -290,16 +298,17 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
     )
     def put(self, request, *args, **kwargs):
         tenant = self.get_object()
-        # 查询内置管理数据源
-        data_source = DataSource.objects.get(owner_tenant_id=tenant.id, type=DataSourceTypeEnum.BUILTIN_MANAGEMENT)
+
+        # 获取内建数据源 & 用户
+        data_source, user = self._get_builtin_data_source_and_user(tenant.id)
+
         # 数据源配置
         plugin_config = data_source.get_plugin_cfg()
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_initial is not None
         assert plugin_config.password_rule is not None
-        # 查询内置管理账号
-        user = DataSourceUser.objects.get(data_source=data_source)
 
+        # 输入参数校验
         slz = TenantBuiltinManagerUpdateInputSLZ(
             data=request.data,
             context={"plugin_config": plugin_config, "data_source_user_id": user.id},
