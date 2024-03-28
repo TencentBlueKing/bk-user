@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     "bkuser.apps.idp",
     "bkuser.apps.natural_user",
     "bkuser.apps.permission",
-    "bkuser.apps.global_setting",
     "bkuser.apps.notification",
 ]
 

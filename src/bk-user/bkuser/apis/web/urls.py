@@ -28,8 +28,6 @@ urlpatterns = [
     path("idps/", include("bkuser.apis.web.idp.urls")),
     # 租户配置
     path("tenant-setting/", include("bkuser.apis.web.tenant_setting.urls")),
-    # 全局配置
-    path("global-settings/", include("bkuser.apis.web.global_setting.urls")),
     # ------------------------------------------ 面向个人 --------------------------------------------
     # 个人中心
     path("personal-center/", include("bkuser.apis.web.personal_center.urls")),
