@@ -8,10 +8,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.conf import settings
-from rest_framework import serializers
+from typing import List
 
-from bkuser.apps.tenant.models import Tenant
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
+from bkuser.apps.tenant.models import Tenant, TenantUser
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_duplicate_tenant_name,
@@ -66,3 +71,38 @@ class TenantBuiltinManagerPasswordUpdateInputSLZ(serializers.Serializer):
             data_source_user_id=self.context["data_source_user_id"],
             plugin_config=self.context["plugin_config"],
         )
+
+
+class TenantRealManagerListOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="用户ID", source="tenant_user.id")
+    username = serializers.CharField(help_text="用户名", source="tenant_user.data_source_user.username")
+    full_name = serializers.CharField(help_text="姓名", source="tenant_user.data_source_user.fullname")
+
+
+class TenantRealManagerUpdateInputSLZ(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.CharField(help_text="租户用户 ID"), allow_empty=True)
+
+    def validate_ids(self, ids: List[str]) -> List[str]:
+        if not ids:
+            return []
+
+        # 过滤出本租户、实名类型的 ID
+        valid_ids = TenantUser.objects.filter(
+            tenant_id=self.context["tenant_id"], data_source__type=DataSourceTypeEnum.REAL, id__in=ids
+        ).values_list("id", flat=True)
+
+        # 非法 ID
+        if invalid_ids := set(ids) - set(valid_ids):
+            raise ValidationError(_("非本租户实名账号（ids={}）不允许添加").format(invalid_ids))
+
+        return ids
+
+
+class TenantRealUserListInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", required=False, allow_blank=True, default="")
+
+
+class TenantRealUserListOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="用户ID")
+    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="姓名", source="data_source_user.fullname")

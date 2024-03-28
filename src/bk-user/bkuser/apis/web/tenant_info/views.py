@@ -9,6 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -20,7 +21,7 @@ from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceUser
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.biz.data_source_organization import DataSourceUserHandler
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
@@ -29,6 +30,10 @@ from .serializers import (
     TenantBuiltinManagerPasswordUpdateInputSLZ,
     TenantBuiltinManagerRetrieveOutputSLZ,
     TenantBuiltinManagerUpdateInputSLZ,
+    TenantRealManagerListOutputSLZ,
+    TenantRealManagerUpdateInputSLZ,
+    TenantRealUserListInputSLZ,
+    TenantRealUserListOutputSLZ,
     TenantRetrieveOutputSLZ,
     TenantUpdateInputSLZ,
 )
@@ -171,3 +176,88 @@ class TenantBuiltinManagerPasswordUpdateApi(CurrentUserTenantMixin, ExcludePatch
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantRealManagerListUpdateApi(
+    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.ListAPIView, generics.UpdateAPIView
+):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    serializer_class = TenantRealManagerListOutputSLZ
+
+    def get_queryset(self):
+        return TenantManager.objects.filter(
+            tenant_id=self.get_current_tenant_id(), tenant_user__data_source__type=DataSourceTypeEnum.REAL
+        ).select_related("tenant_user__data_source_user")
+
+    @swagger_auto_schema(
+        tags=["tenant_info"],
+        operation_description="租户实名管理员列表",
+        responses={status.HTTP_200_OK: TenantRealManagerListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        tags=["tenant_info"],
+        operation_description="修改租户实名管理员账号列表",
+        request_body=TenantRealManagerUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        slz = TenantRealManagerUpdateInputSLZ(data=request.data)
+        slz.is_valid(raise_exception=True)
+        ids = slz.validated_data["ids"]
+        tenant_id = self.get_current_tenant_id()
+
+        # 查询租户已有的所有实名管理账号
+        old_ids = list(
+            TenantManager.objects.filter(
+                tenant_id=tenant_id, tenant_user__data_source__type=DataSourceTypeEnum.REAL
+            ).values_list("tenant_user_id", flat=True)
+        )
+
+        with transaction.atomic():
+            if waiting_create_ids := set(ids) - set(old_ids):
+                TenantManager.objects.bulk_create(
+                    [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in waiting_create_ids]
+                )
+
+            if waiting_delete_ids := set(old_ids) - set(ids):
+                TenantManager.objects.filter(tenant_user_id__in=waiting_delete_ids).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantRealUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    serializer_class = TenantRealUserListOutputSLZ
+
+    def get_queryset(self):
+        slz = TenantRealUserListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 只过滤本租户且为实名的用户
+        queryset = TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.REAL
+        ).select_related("data_source_user")
+
+        # 关键字过滤
+        if keyword := data.get("keyword"):
+            queryset.filter(
+                Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
+            )
+
+        return queryset
+
+    @swagger_auto_schema(
+        tags=["tenant_info"],
+        operation_description="租户实名用户列表",
+        query_serializer=TenantRealUserListInputSLZ(),
+        responses={status.HTTP_200_OK: TenantRealUserListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
