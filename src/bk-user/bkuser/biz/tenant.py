@@ -10,12 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.utils import timezone
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
@@ -23,49 +21,10 @@ from bkuser.apps.data_source.models import (
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.tenant.models import (
-    Tenant,
-    TenantDepartment,
-    TenantManager,
-    TenantUser,
-)
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
 
 logger = logging.getLogger(__name__)
-
-
-class DataSourceUserInfo(BaseModel):
-    """数据源用户信息"""
-
-    id: int
-    username: str
-    full_name: str
-    email: str
-    phone: str
-    phone_country_code: str
-    logo: str
-    extras: Dict[str, Any]
-
-
-class TenantUserWithInheritedInfo(BaseModel):
-    """租户用户，带其继承的用户信息"""
-
-    id: str
-    data_source_user: DataSourceUserInfo
-
-
-class TenantFeatureFlag(BaseModel):
-    """租户特性集"""
-
-    user_number_visible: bool = False
-
-
-class TenantEditableInfo(BaseModel):
-    """租户可编辑的基本信息"""
-
-    name: str
-    logo: str = ""
-    feature_flags: TenantFeatureFlag
 
 
 class TenantDepartmentInfo(BaseModel):
@@ -95,41 +54,6 @@ class TenantUserEmailInfo(BaseModel):
 
 
 class TenantUserHandler:
-    @staticmethod
-    def list_tenant_user_by_id(tenant_user_ids: List[str]) -> List[TenantUserWithInheritedInfo]:
-        """
-        查询租户用户信息
-        """
-        if not tenant_user_ids:
-            return []
-        tenant_users = TenantUser.objects.select_related("data_source_user").filter(id__in=tenant_user_ids)
-
-        # 返回租户用户本身信息和对应数据源用户信息
-        data = []
-        for i in tenant_users:
-            data_source_user = i.data_source_user
-            # 对于数据源用户不存在，则表示该租户用户已经不可用
-            if data_source_user is None:
-                continue
-
-            data.append(
-                TenantUserWithInheritedInfo(
-                    id=i.id,
-                    data_source_user=DataSourceUserInfo(
-                        id=data_source_user.id,
-                        username=data_source_user.username,
-                        full_name=data_source_user.full_name,
-                        email=data_source_user.email,
-                        phone=data_source_user.phone,
-                        phone_country_code=data_source_user.phone_country_code,
-                        logo=data_source_user.logo,
-                        extras=data_source_user.extras,
-                    ),
-                )
-            )
-
-        return data
-
     @staticmethod
     def get_tenant_user_leader_infos(tenant_user: TenantUser) -> List[TenantUserLeaderInfo]:
         """获取某个租户用户的 Leader 信息"""
@@ -229,31 +153,6 @@ class TenantUserHandler:
                 display_name_map[user_id] = user_id
 
         return display_name_map
-
-
-class TenantHandler:
-    @staticmethod
-    def update_with_managers(tenant_id: str, tenant_info: TenantEditableInfo, manager_ids: List[str]):
-        """更新租户 & 租户管理员"""
-        exists_manager_ids = TenantManager.objects.filter(tenant_id=tenant_id).values_list("tenant_user_id", flat=True)
-
-        # 新旧对比 => 需要删除的管理员ID，需要新增的管理员ID
-        waiting_delete_manager_ids = set(exists_manager_ids) - set(manager_ids)
-        waiting_create_manager_ids = set(manager_ids) - set(exists_manager_ids)
-
-        with transaction.atomic():
-            # 更新基本信息
-            Tenant.objects.filter(id=tenant_id).update(updated_at=timezone.now(), **tenant_info.model_dump())
-
-            if waiting_delete_manager_ids:
-                TenantManager.objects.filter(
-                    tenant_id=tenant_id, tenant_user_id__in=waiting_delete_manager_ids
-                ).delete()
-
-            if waiting_create_manager_ids:
-                TenantManager.objects.bulk_create(
-                    [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in waiting_create_manager_ids]
-                )
 
 
 class TenantDepartmentHandler:
