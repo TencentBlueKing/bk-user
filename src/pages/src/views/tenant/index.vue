@@ -109,7 +109,7 @@
                       }">
                       <span
                         :class="{ 'delete-disable': row.status === 'enabled' }"
-                        @click="handleClickDelete(row.id)">
+                        @click="handleClickDelete(row)">
                         {{ $t('删除') }}
                       </span>
                     </li>
@@ -372,6 +372,18 @@ const newId = ref('');
 
 const getRows = () => document.getElementsByClassName('hover-highlight')[0].getElementsByTagName('td');
 
+watch(() => search.value, (val) => {
+  if (val) {
+    isCreated.value = false;
+    newId.value = '';
+    const rows = getRows();
+    for (const i of rows) {
+      i.style.background = '#fff';
+    }
+    state.list = state.list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  }
+});
+
 // 获取租户列表
 const fetchTenantsList = () => {
   search.value = '';
@@ -477,13 +489,14 @@ const handleClickDisable = (item) => {
 };
 
 // 删除租户
-const handleClickDelete = (id: string) => {
+const handleClickDelete = (item) => {
+  if (item.status === 'enabled') return;
   InfoBox({
     width: 400,
     title: t('确定删除当前公司？'),
     subTitle: t('删除后，用户将无法看到该租户信息'),
     onConfirm: async () => {
-      await deleteTenants(id);
+      await deleteTenants(item.id);
       Message({ theme: 'success', message: t('租户删除成功') });
       fetchTenantsList();
     },

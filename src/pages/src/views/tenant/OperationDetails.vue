@@ -21,9 +21,10 @@
             </bk-form-item>
             <bk-form-item v-if="!isEdit" :label="$t('是否启用')" required>
               <bk-switcher
-                :value="formData.status === 'enabled' ? true : false"
+                :value="isEnabled"
                 theme="primary"
                 size="large"
+                @change="changeStatus"
               />
             </bk-form-item>
           </div>
@@ -136,6 +137,13 @@ const formRef = ref();
 const formData = reactive({
   ...props.tenantsData,
 });
+
+const isEnabled = ref(props.tenantsData.status === 'enabled');
+
+const changeStatus = () => {
+  isEnabled.value = !isEnabled.value;
+};
+
 const state = reactive({
   count: 0,
   list: [],
@@ -207,6 +215,7 @@ async function handleSubmit() {
 
 // 新建租户
 function createTenantsFn() {
+  formData.status = isEnabled.value ? 'enabled' : 'disabled';
   createTenants(formData).then(() => {
     emit('updateTenantsList', 'add', formData.id);
   })

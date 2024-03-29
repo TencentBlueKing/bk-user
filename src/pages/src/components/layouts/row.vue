@@ -29,8 +29,7 @@ defineProps({
 
   header {
     display: flex;
-    align-items: end;
-    justify-content: space-between;
+    align-items: center;
 
     p {
       margin: 16px 0;

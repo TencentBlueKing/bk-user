@@ -1,216 +1,389 @@
 <template>
   <div class="admin-setting-wrapper">
-    <div class="mb-[24px]" v-if="isEditAdminAccount">
-      <bk-form
-        ref="formRef"
-        form-type="vertical"
-        :model="formData"
-        :rules="rules">
-        <Row :title="$t('管理员账号')">
-          <bk-form-item :label="$t('使用管理员账号登录')" required>
-            <bk-switcher
-              v-model="formData.status"
-              theme="primary"
-              size="large"
-            />
-          </bk-form-item>
-          <div class="w-[544px]">
-            <bk-form-item :label="$t('用户名')" property="username" required>
-              <bk-input v-model="formData.username" :placeholder="validate.name.message" @focus="handleChange" />
-            </bk-form-item>
-            <bk-form-item :label="$t('密码')" property="password" required>
-              <div class="flex justify-between">
-                <bk-input
-                  type="password"
-                  v-model="formData.password" />
-                <bk-button
-                  outline
-                  theme="primary"
-                  class="ml-[8px] min-w-[88px]"
-                  @click="handleRandomPassword">
-                  {{ $t('随机生成') }}
-                </bk-button>
-              </div>
-            </bk-form-item>
-          </div>
-        </Row>
-      </bk-form>
-      <bk-button
-        class="min-w-[88px] mr-[8px]"
-        theme="primary"
-        @click="saveAdminAccount"
-      >
-        {{ $t('保存') }}
-      </bk-button>
-      <bk-button
-        class="min-w-[88px] mr-[8px]"
-        @click="isEditAdminAccount = false"
-      >
-        {{ $t('取消') }}
-      </bk-button>
-    </div>
-    <Row v-else class="admin-setting-item" :title="$t('管理员账号')">
-      <template #header>
-        <bk-button
-          class="min-w-[64px]"
-          outline
-          theme="primary"
-          @click="editAdminAccount"
-        >
-          {{ $t('编辑') }}
+    <Row class="admin-setting-item" :title="$t('管理员账号')">
+      <LabelContent :label="$t('状态')">
+        <bk-tag :theme="adminAccount.enable_account_password_login ? 'success' : ''">
+          {{ adminAccount.enable_account_password_login ? $t('启用') : $t('未启用') }}
+        </bk-tag>
+        <bk-button text theme="primary" @click="changeStatus">
+          {{ adminAccount.enable_account_password_login ? $t('去停用') : $t('去启用') }}
         </bk-button>
-      </template>
-      <LabelContent :label="$t('状态')"></LabelContent>
-      <LabelContent :label="$t('用户名')"></LabelContent>
-      <LabelContent :label="$t('密码')"></LabelContent>
+      </LabelContent>
+      <LabelContent :label="$t('用户名')">
+        <template v-if="!isEditUsername">
+          <span>{{ adminAccount.username }}</span>
+          <i
+            class="user-icon icon-edit edit"
+            @click="editUsername" />
+        </template>
+        <template v-else>
+          <bk-input class="username-input" style="width: 300px" v-model="adminAccount.username" />
+          <bk-button
+            text
+            theme="primary"
+            class="ml-[12px] mr-[12px]"
+            :disabled="!adminAccount.username"
+            @click="saveUsername">
+            {{ $t('确定') }}
+          </bk-button>
+          <bk-button text theme="primary" @click="cancelUsername">
+            {{ $t('取消') }}
+          </bk-button>
+        </template>
+      </LabelContent>
+      <LabelContent :label="$t('密码')">
+        <span>*************</span>
+        <bk-button
+          class="ml-[8px]"
+          text
+          theme="primary"
+          @click="resetPasswordConfig.isShow = true"
+        >
+          <i class="user-icon icon-refresh" />
+          {{ $t('重置密码') }}
+        </bk-button>
+      </LabelContent>
     </Row>
 
-    <div class="mb-[24px]" v-if="isEditRealNameAccount">
-      <Row class="admin-setting-item" :title="$t('实名账号')">
-        <div class="flex items-center ml-[56px]">
+    <div class="mb-[24px]">
+      <Row v-if="isEditRealNameAccount" class="admin-setting-item" :title="$t('实名账号')">
+        <div class="flex items-center flex-wrap ml-[56px]">
           <bk-tag
             class="tag-style"
-            v-for="(item, index) in selectedValue"
-            :key="index"
+            v-for="item in selectedValue"
+            :key="item.id"
             closable
-            @close="handleTagClose">
+            @close="deleteAccount(item.id)">
             <template #icon>
               <i class="user-icon icon-yonghu" />
             </template>
-            {{ item }}
+            {{ `${item.username}（${item.full_name}）` }}
           </bk-tag>
-          <i class="user-icon icon-add-2"></i>
-          <div>
-            <bk-select
-              v-model="selectedValue"
+          <i
+            class="user-icon icon-add-2"
+            v-if="!showSelectInput"
+            @click="handleSelectValue" />
+          <div v-else class="mb-[12px] flex">
+            <MemberSelector
               class="w-[300px]"
-              filterable
-              multiple
-              multiple-mode="tag"
-            >
-              <bk-option
-                v-for="(item, index) in accounts"
-                :id="item.value"
-                :key="index"
-                :name="item.label"
-              />
-            </bk-select>
+              :selected-ids="selectedIds"
+              :state="realUsers"
+              :params="params"
+              @changeSelectList="changeSelectList"
+              @searchUserList="fetchRealUsers"
+              @scrollChange="scrollChange"
+            />
+            <bk-button
+              text
+              theme="primary"
+              class="ml-[16px] mr-[12px]"
+              style="font-size: 14px"
+              @click="saveRealUsers">
+              {{ $t('确定') }}
+            </bk-button>
+            <bk-button text theme="primary" style="font-size: 14px" @click="showSelectInput = false">
+              {{ $t('取消') }}
+            </bk-button>
           </div>
         </div>
+        <div class="mt-[32px]">
+          <bk-button
+            class="min-w-[88px] mr-[8px]"
+            theme="primary"
+            @click="saveRealNameAccount"
+          >
+            {{ $t('保存') }}
+          </bk-button>
+          <bk-button
+            class="min-w-[88px] mr-[8px]"
+            @click="cancelRealNameAccount"
+          >
+            {{ $t('取消') }}
+          </bk-button>
+        </div>
       </Row>
-      <bk-button
-        class="min-w-[88px] mr-[8px]"
-        theme="primary"
-        @click="saveRealNameAccount"
-      >
-        {{ $t('保存') }}
-      </bk-button>
-      <bk-button
-        class="min-w-[88px] mr-[8px]"
-        @click="isEditRealNameAccount = false"
-      >
-        {{ $t('取消') }}
-      </bk-button>
+      <Row v-else class="admin-setting-item" :title="$t('实名账号')">
+        <template #header>
+          <bk-button
+            class="min-w-[64px]"
+            text
+            theme="primary"
+            @click="isEditRealNameAccount = true"
+          >
+            <i class="user-icon icon-edit mr-[6px]" />
+            {{ $t('编辑') }}
+          </bk-button>
+        </template>
+        <div class="ml-[56px]">
+          <bk-tag
+            class="tag-style"
+            v-for="item in selectedValue"
+            :key="item.id">
+            <template #icon>
+              <i class="user-icon icon-yonghu" />
+            </template>
+            {{ `${item.username}（${item.full_name}）` }}
+          </bk-tag>
+        </div>
+      </Row>
     </div>
-    <Row v-else class="admin-setting-item" :title="$t('实名账号')">
-      <template #header>
-        <bk-button
-          class="min-w-[64px]"
-          outline
-          theme="primary"
-          @click="editRealNameAccount"
-        >
-          {{ $t('编辑') }}
-        </bk-button>
-      </template>
-      <div class="ml-[56px]">
-        <bk-tag
-          class="tag-style"
-          v-for="(item, index) in selectedValue"
-          :key="index">
-          <template #icon>
-            <i class="user-icon icon-yonghu" />
-          </template>
-          {{ item }}
-        </bk-tag>
-      </div>
-    </Row>
+
+    <!-- 重置密码 -->
+    <bk-dialog
+      :is-show="resetPasswordConfig.isShow"
+      :title="resetPasswordConfig.title"
+      :is-loading="resetPasswordConfig.isLoading"
+      :theme="'primary'"
+      :quick-close="false"
+      :height="200"
+      @closed="closedPassword"
+      @confirm="confirmPassword"
+    >
+      <bk-form
+        class="mt-[8px]"
+        ref="formRef"
+        form-type="vertical"
+        :model="resetPasswordConfig"
+        :rules="rules">
+        <bk-form-item :label="$t('密码')" property="password" required>
+          <div class="flex justify-between">
+            <bk-input
+              type="password"
+              v-model="resetPasswordConfig.password"
+              @change="changePassword" />
+            <bk-button
+              outline
+              theme="primary"
+              class="ml-[8px] min-w-[88px]"
+              @click="handleRandomPassword">
+              {{ $t('随机生成') }}
+            </bk-button>
+          </div>
+        </bk-form-item>
+      </bk-form>
+    </bk-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { InfoBox, Message } from 'bkui-vue';
+import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import Row from '@/components/layouts/row.vue';
+import MemberSelector from '@/components/MemberSelector.vue';
 import { useValidate } from '@/hooks';
-// import MemberSelector from '../tenant/MemberSelector.vue';
+import {
+  getBuiltinManager,
+  getRealManagers,
+  getRealUsers,
+  patchBuiltinManager,
+  putBuiltinManagerPassword,
+  putRealManagers,
+  randomPasswords,
+} from '@/http';
+import { t } from '@/language/index';
 
 const validate = useValidate();
 
-const selectedValue = ref(['dancing', 'bike']);
+const adminAccount = ref({
+  username: '',
+  enable_account_password_login: false,
+});
+const fixedAdminAccount = ref({});
 
-const accounts = ref([
-  {
-    value: 'climbing',
-    label: '爬山',
-  },
-  {
-    value: 'running',
-    label: '跑步',
-  },
-  {
-    value: 'unknow',
-    label: '未知',
-  },
-  {
-    value: 'fitness',
-    label: '健身',
-  },
-  {
-    value: 'bike',
-    label: '骑车',
-  },
-  {
-    value: 'dancing',
-    label: '跳舞',
-  },
-  {
-    value: 'sleep',
-    label: '睡觉',
-    disabled: true,
-  },
-]);
-
-const formData = ref({
-  status: true,
-  username: 'admin',
-  password: '12345678',
-  managers: [],
+onMounted(() => {
+  initBuiltinManager();
+  initRealManagers();
 });
 
+const initBuiltinManager = async () => {
+  const { data } = await getBuiltinManager();
+  adminAccount.value = data;
+  fixedAdminAccount.value = { ...data };
+};
+
+// 修改管理员账号状态
+const changeStatus = () => {
+  InfoBox({
+    width: 400,
+    infoType: adminAccount.value.enable_account_password_login ? 'warning' : undefined,
+    title: t(adminAccount.value.enable_account_password_login ? '是否停用管理员账号？' : '是否启用管理员账号？'),
+    subTitle: t(adminAccount.value.enable_account_password_login
+      ? '停用后，将不可使用管理员账号进行登录'
+      : '停用后，可使用管理员账号进行登录'),
+    confirmText: adminAccount.value.enable_account_password_login ? t('停用') : undefined,
+    theme: adminAccount.value.enable_account_password_login ? 'danger' : undefined,
+    onConfirm: async () => {
+      await patchBuiltinManager({ enable_account_password_login: !adminAccount.value.enable_account_password_login });
+      initBuiltinManager();
+    },
+  });
+};
+
+// 修改用户名
+const isEditUsername = ref(false);
+
+watch(() => isEditUsername.value, (val) => {
+  window.changeInput = val;
+}, {
+  deep: true,
+});
+
+const saveUsername = async () => {
+  await patchBuiltinManager({ username: adminAccount.value.username });
+  isEditUsername.value = false;
+};
+
+const cancelUsername = () => {
+  adminAccount.value.username = fixedAdminAccount.value?.username;
+  isEditUsername.value = false;
+};
+
+const editUsername = () => {
+  isEditUsername.value = true;
+  nextTick(() => {
+    const usernameInput = document.querySelectorAll('.username-input input');
+    usernameInput[0].focus();
+  });
+};
+
+// 重置密码
+const resetPasswordConfig = reactive({
+  isShow: false,
+  title: t('重置密码'),
+  isLoading: false,
+  password: '',
+});
+
+const formRef = ref();
+
 const rules = {
-  username: [validate.required, validate.userName],
   password: [validate.required],
 };
 
-const isEditAdminAccount = ref(false);
-
-const editAdminAccount = () => {
-  isEditAdminAccount.value = true;
+const closedPassword = () => {
+  resetPasswordConfig.isShow = false;
+  resetPasswordConfig.password = '';
 };
 
-const saveAdminAccount = () => {
-  isEditAdminAccount.value = false;
+const changePassword = (val: string) => {
+  resetPasswordConfig.password = val;
 };
 
+// 随机密码
+const handleRandomPassword = async () => {
+  try {
+    const passwordRes = await randomPasswords({});
+    resetPasswordConfig.password = passwordRes.data.password;
+  } catch (e) {
+    console.warn(e);
+  }
+};
+
+const confirmPassword = async () => {
+  try {
+    await formRef.value.validate();
+    resetPasswordConfig.isLoading = true;
+
+    await putBuiltinManagerPassword({ password: resetPasswordConfig.password });
+    resetPasswordConfig.isShow = false;
+    resetPasswordConfig.password = '';
+    Message({ theme: 'success', message: t('密码重置成功') });
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    resetPasswordConfig.isLoading = false;
+  }
+};
+
+// 实名账号信息
 const isEditRealNameAccount = ref(false);
+const selectedValue = ref([]);
 
-const editRealNameAccount = () => {
-  isEditRealNameAccount.value = true;
+watch(() => isEditRealNameAccount.value, (val) => {
+  window.changeInput = val;
+}, {
+  deep: true,
+});
+
+const realUsers = ref({
+  count: 0,
+  results: [],
+});
+
+const params = reactive({
+  page: 1,
+  pageSize: 10,
+  keyword: '',
+});
+
+const initRealManagers = async () => {
+  const res = await getRealManagers();
+  selectedValue.value = res.data;
 };
+
+const showSelectInput = ref(false);
+const selectedIds = ref([]);
+
+const handleSelectValue = async () => {
+  showSelectInput.value = true;
+  selectedIds.value = selectedValue.value.map(item => item.id);
+  const res = await getRealUsers({});
+  realUsers.value = res.data;
+};
+
+const changeValues = ref([]);
+const changeSelectList = (values: string[]) => {
+  changeValues.value = values;
+};
+
+// 获取用户列表
+const fetchRealUsers = (value: string) => {
+  params.keyword = value;
+  params.page = 1;
+  getRealUsers(params).then((res) => {
+    realUsers.value = res.data;
+  });
+};
+
+const scrollChange = () => {
+  params.page += 1;
+  getRealUsers(params).then((res) => {
+    realUsers.value.count = res.data.count;
+    realUsers.value.results.push(...res.data.results);
+  });
+};
+
+// 删除实名账号
+const deleteAccount = (id: string) => {
+  selectedValue.value = selectedValue.value.filter(item => item.id !== id);
+  selectedIds.value = selectedValue.value;
+};
+
+const saveRealUsers = () => {
+  showSelectInput.value = false;
+  selectedValue.value = [];
+  realUsers.value.results.forEach((item) => {
+    if (changeValues.value.includes(item.id)) {
+      selectedValue.value.push(item);
+    }
+  });
+};
+
 const saveRealNameAccount = () => {
   isEditRealNameAccount.value = false;
+  const params = {
+    ids: selectedValue.value.map(item => item.id),
+  };
+  putRealManagers(params).then(() => {
+    initRealManagers();
+  });
+};
+
+const cancelRealNameAccount = () => {
+  isEditRealNameAccount.value = false;
+  initRealManagers();
 };
 </script>
 
@@ -223,6 +396,7 @@ const saveRealNameAccount = () => {
 
     ::v-deep .tag-style {
       height: 40px;
+      margin: 0 12px 12px 0;
       line-height: 40px;
 
       .icon-yonghu {
@@ -244,6 +418,7 @@ const saveRealNameAccount = () => {
 
     .icon-add-2 {
       padding: 12px;
+      margin: 0 12px 12px 0;
       font-size: 16px;
       color: #3A84FF;
       background: #F0F5FF;
@@ -254,6 +429,16 @@ const saveRealNameAccount = () => {
         background: #E1ECFF;
       }
     }
+  }
+}
+
+.edit {
+  margin-left: 8px;
+  color: #979BA5;
+
+  &:hover {
+    color: #3A84FF;
+    cursor: pointer;
   }
 }
 </style>
