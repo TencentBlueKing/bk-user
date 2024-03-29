@@ -68,3 +68,13 @@ export interface RealUsersParams {
 export interface PutRealManagersParams {
   ids: string[],
 }
+
+/**
+ * 管理员配置-更新租户
+ */
+export interface PutTenantInfoParams {
+  name: string,
+  logo?: string,
+  visible: boolean,
+  user_number_visible: boolean,
+}

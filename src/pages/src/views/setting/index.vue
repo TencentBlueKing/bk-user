@@ -81,10 +81,10 @@ const menuData = reactive([
         name: t('账号设置'),
         key: 'account',
       },
-      {
-        name: t('MFA 设置'),
-        key: 'fma',
-      },
+      // {
+      //   name: t('MFA 设置'),
+      //   key: 'fma',
+      // },
     ],
   },
   {

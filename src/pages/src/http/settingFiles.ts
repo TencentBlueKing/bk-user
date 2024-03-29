@@ -5,6 +5,7 @@ import type {
   PutCustomFieldsParams,
   PutPasswordParams,
   PutRealManagersParams,
+  PutTenantInfoParams,
   PutUserValidityParams,
   RealUsersParams,
 } from './types/settingFiles';
@@ -68,3 +69,13 @@ export const getRealUsers = (params: RealUsersParams) => http.get('/api/v1/web/t
  * 管理员配置-修改租户实名管理员账号列表
  */
 export const putRealManagers = (params: PutRealManagersParams) => http.put('/api/v1/web/tenant-info/real-managers/', params);
+
+/**
+ * 基础设置-租户详情
+ */
+export const getTenantInfo = () => http.get('/api/v1/web/tenant-info/');
+
+/**
+ * 基础设置-更新租户
+ */
+export const PutTenantInfo = (params: PutTenantInfoParams) => http.put('/api/v1/web/tenant-info/', params);

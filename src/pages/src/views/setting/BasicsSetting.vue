@@ -33,7 +33,7 @@
           </div>
           <bk-form-item :label="$t('租户名')" required>
             <bk-radio-group
-              v-model="formData.tenantName"
+              v-model="formData.visible"
             >
               <bk-radio-button class="min-w-[100px]" :label="true">显示</bk-radio-button>
               <bk-radio-button class="min-w-[100px]" :label="false">隐藏</bk-radio-button>
@@ -41,7 +41,7 @@
           </bk-form-item>
           <bk-form-item :label="$t('用户数量')" required>
             <bk-radio-group
-              v-model="formData.users"
+              v-model="formData.user_number_visible"
             >
               <bk-radio-button class="min-w-[100px]" :label="true">显示</bk-radio-button>
               <bk-radio-button class="min-w-[100px]" :label="false">隐藏</bk-radio-button>
@@ -52,13 +52,13 @@
       <bk-button
         class="min-w-[88px] mr-[8px]"
         theme="primary"
-        @click="save"
+        @click="saveEdit"
       >
         {{ $t('保存') }}
       </bk-button>
       <bk-button
         class="min-w-[88px] mr-[8px]"
-        @click="isEdit = false"
+        @click="cancelEdit"
       >
         {{ $t('取消') }}
       </bk-button>
@@ -69,12 +69,12 @@
           <div>
             <LabelContent :label="$t('租户名称')">{{ formData.name }}</LabelContent>
             <LabelContent :label="$t('租户ID')">{{ formData.id }}</LabelContent>
-            <LabelContent :label="$t('租户名')">{{ formData.tenantName ? $t('显示') : $t('隐藏') }}</LabelContent>
-            <LabelContent :label="$t('用户数量')">{{ formData.users ? $t('显示') : $t('隐藏') }}</LabelContent>
+            <LabelContent :label="$t('租户名')">{{ formData.visible ? $t('显示') : $t('隐藏') }}</LabelContent>
+            <LabelContent :label="$t('用户数量')">{{ formData.user_number_visible ? $t('显示') : $t('隐藏') }}</LabelContent>
           </div>
           <LabelContent class="tenant-logo" :label="$t('租户logo')">
             <img v-if="formData.logo" class="user-logo" :src="formData.logo" alt="">
-            <i class="user-icon icon-yonghu" />
+            <i v-else class="user-icon icon-yonghu" />
           </LabelContent>
           <bk-button
             class="min-w-[64px]"
@@ -92,11 +92,12 @@
 
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import LabelContent from '@/components/layouts/LabelContent.vue';
 import Row from '@/components/layouts/row.vue';
 import { useValidate } from '@/hooks';
+import { getTenantInfo, PutTenantInfo } from '@/http';
 import { t } from '@/language/index';
 import { useMainViewStore } from '@/store';
 import { getBase64 } from '@/utils';
@@ -106,12 +107,12 @@ const validate = useValidate();
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 
-const formData = reactive({
-  name: '',
+const formData = ref({
   id: '',
-  tenantName: true,
-  users: true,
+  name: '',
   logo: '',
+  visible: true,
+  user_number_visible: true,
 });
 
 const rules = {
@@ -121,12 +122,27 @@ const rules = {
 
 const isEdit = ref(false);
 
+watch(() => isEdit.value, (val) => {
+  window.changeInput = val;
+}, {
+  deep: true,
+});
+
+onMounted(() => {
+  initTenantInfo();
+});
+
+const initTenantInfo = async () => {
+  const res = await getTenantInfo();
+  formData.value = res.data;
+};
+
 // 上传头像
 const files = computed(() => {
   const img = [];
-  if (formData.logo !== '') {
+  if (formData.value.logo !== '') {
     img.push({
-      url: formData.logo,
+      url: formData.value.logo,
     });
     return img;
   }
@@ -142,17 +158,15 @@ const handleRes = (response: any) => {
 
 const customRequest = (event) => {
   getBase64(event.file).then((res) => {
-    formData.logo = res;
+    formData.value.logo = res;
   })
     .catch((e) => {
       console.warn(e);
     });
-  handleChange();
 };
 
 const handleDelete = () => {
-  formData.logo = '';
-  handleChange();
+  formData.value.logo = '';
 };
 
 const handleError = (file) => {
@@ -161,8 +175,17 @@ const handleError = (file) => {
   }
 };
 
-const handleChange = () => {
-  window.changeInput = true;
+const saveEdit = () => {
+  const { id, ...params } = formData.value;
+  PutTenantInfo(params).then(() => {
+    isEdit.value = false;
+    initTenantInfo();
+  });
+};
+
+const cancelEdit = () => {
+  isEdit.value = false;
+  initTenantInfo();
 };
 </script>
 
@@ -170,13 +193,22 @@ const handleChange = () => {
 .basics-setting-wrapper {
   padding: 24px;
 
-  ::v-deep .tenant-logo {
-    .label-value {
-      margin-top: 18px;
-    }
+  .tenant-logo {
+    position: relative;
+  }
+
+  .user-logo {
+    position: absolute;
+    top: 10px;
+    width: 72px;
+    height: 72px;
+    border: 1px dashed #C4C6CC;
+    border-radius: 2px;
   }
 
   .icon-yonghu {
+    position: absolute;
+    top: 10px;
     padding: 16px;
     font-size: 40px;
     color: #DCDEE5;
