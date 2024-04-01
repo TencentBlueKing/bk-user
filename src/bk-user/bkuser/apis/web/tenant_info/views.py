@@ -172,7 +172,7 @@ class TenantBuiltinManagerPasswordUpdateApi(
 
 
 class TenantRealManagerListCreateDestroyApi(
-    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.ListCreateAPIView, generics.DestroyAPIView
+    CurrentUserTenantMixin, generics.ListCreateAPIView, generics.DestroyAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -224,7 +224,7 @@ class TenantRealManagerListCreateDestroyApi(
         query_serializer=TenantRealManagerDestroyInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def destroy(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         slz = TenantRealManagerDestroyInputSLZ(data=request.query_params)
         slz.is_valid(raise_exception=True)
         ids = slz.validated_data["ids"]
