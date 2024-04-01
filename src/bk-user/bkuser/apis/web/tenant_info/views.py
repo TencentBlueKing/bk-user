@@ -171,7 +171,7 @@ class TenantBuiltinManagerPasswordUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantRealManagerListUpdateApi(
+class TenantRealManagerListCreateDestroyApi(
     CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.ListCreateAPIView, generics.DestroyAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]

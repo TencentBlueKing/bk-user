@@ -29,8 +29,8 @@ urlpatterns = [
     # 租户实名管理员
     path(
         "real-managers/",
-        views.TenantRealManagerListUpdateApi.as_view(),
-        name="tenant_info.list_update_real_manager",
+        views.TenantRealManagerListCreateDestroyApi.as_view(),
+        name="tenant_info.list_create_destroy_real_manager",
     ),
     path("real-users/", views.TenantRealUserListApi.as_view(), name="tenant_info.list_tenant_real_user"),
 ]
