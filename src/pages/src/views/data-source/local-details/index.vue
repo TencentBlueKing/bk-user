@@ -1,5 +1,5 @@
 <template>
-  <bk-loading :loading="isLoading">
+  <div v-bkloading="{ loading: isLoading, zIndex: 9 }">
     <MainBreadcrumbsDetails :subtitle="subtitle" @toBack="toBack">
       <template #tag>
         <div class="data-source-type" v-for="item in typeList" :key="item">
@@ -43,7 +43,7 @@
         <ConfigInfo v-if="activeKey === 'config'" />
       </bk-tab-panel>
     </bk-tab>
-  </bk-loading>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -62,7 +62,7 @@ import {
   getDataSourceList,
   getDataSourcePlugins,
   postOperationsSync,
-} from '@/http/dataSourceFiles';
+} from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
 
@@ -81,20 +81,25 @@ const pluginId = ref('');
 const isPasswordLogin = ref(false);
 
 onMounted(async () => {
-  isLoading.value = true;
-  const res = await getDataSourceList('');
-  res.data.forEach((item) => {
-    if (item.id === currentId.value) {
-      statusText.value = item.status;
-      subtitle.value = item.name;
-      pluginId.value = item.plugin_id;
-    }
-  });
-  const pluginsRes = await getDataSourcePlugins();
-  const loginRes = await getDataSourceDetails(currentId?.value);
-  isPasswordLogin.value = loginRes.data?.plugin_config?.enable_account_password_login;
-  typeList.value = pluginsRes.data;
-  isLoading.value = false;
+  try {
+    isLoading.value = true;
+    const res = await getDataSourceList('');
+    res.data.forEach((item) => {
+      if (item.id === currentId.value) {
+        statusText.value = item.status;
+        subtitle.value = item.name;
+        pluginId.value = item.plugin_id;
+      }
+    });
+    const pluginsRes = await getDataSourcePlugins();
+    const loginRes = await getDataSourceDetails(currentId?.value);
+    isPasswordLogin.value = loginRes.data?.plugin_config?.enable_account_password_login;
+    typeList.value = pluginsRes.data;
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    isLoading.value = false;
+  }
 });
 // 切换启停状态
 const toggleStatus = async () => {
@@ -133,6 +138,8 @@ const toBack = () => {
 </script>
 
 <style lang="less" scoped>
+@import url("@/css/tabStyle.less");
+
 .main-breadcrumbs-details {
   box-shadow: none;
 }
@@ -153,24 +160,6 @@ const toBack = () => {
 
   span {
     padding-right: 10px;
-  }
-}
-
-::v-deep .tab-details {
-  .bk-tab-content {
-    height: calc(100vh - 140px);
-    padding: 24px;
-    overflow-y: auto;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background-color: #dcdee5;
-      border-radius: 4px;
-    }
   }
 }
 </style>

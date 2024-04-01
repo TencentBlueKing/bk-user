@@ -1,6 +1,6 @@
 import { t } from '@/language/index';
 
-export default () => {
+export const useValidate = () => {
   const required = {
     required: true,
     message: t('必填项'),

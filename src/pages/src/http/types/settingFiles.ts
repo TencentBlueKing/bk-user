@@ -37,3 +37,44 @@ export interface PutUserValidityParams {
   enabled_notification_methods: string[],
   notification_templates: [],
 }
+
+/**
+ * 管理员配置-变更内置管理员账号密码相关信息
+ */
+export interface PatchBuiltinManagerParams {
+  username?: string,
+  enable_account_password_login?: boolean,
+}
+
+/**
+ * 管理员配置-重置内置管理账号密码参数
+ */
+export interface PutPasswordParams {
+  password: string,
+}
+
+/**
+ * 管理员配置-租户实名用户列表参数
+ */
+export interface RealUsersParams {
+  page?: number,
+  page_size?: number,
+  keyword?: string,
+}
+
+/**
+ * 管理员配置-修改租户实名管理员账号列表参数
+ */
+export interface PutRealManagersParams {
+  ids: string[],
+}
+
+/**
+ * 管理员配置-更新租户
+ */
+export interface PutTenantInfoParams {
+  name: string,
+  logo?: string,
+  visible: boolean,
+  user_number_visible: boolean,
+}

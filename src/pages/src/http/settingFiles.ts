@@ -1,8 +1,13 @@
 import http from './fetch';
 import type {
   NewCustomFieldsParams,
+  PatchBuiltinManagerParams,
   PutCustomFieldsParams,
+  PutPasswordParams,
+  PutRealManagersParams,
+  PutTenantInfoParams,
   PutUserValidityParams,
+  RealUsersParams,
 } from './types/settingFiles';
 
 /**
@@ -34,3 +39,43 @@ export const getTenantUserValidityPeriod = () => http.get('/api/v1/web/tenant-se
  * 更新当前租户的账户有效期设置
  */
 export const putTenantUserValidityPeriod = (params: PutUserValidityParams) => http.put('/api/v1/web/tenant-setting/settings/tenant-user-validity-period/', params);
+
+/**
+ * 管理员配置-租户内置管理账号信息
+ */
+export const getBuiltinManager = () => http.get('/api/v1/web/tenant-info/builtin-manager/');
+
+/**
+ * 管理员配置-变更内置管理账号密码相关信息
+ */
+export const patchBuiltinManager = (params: PatchBuiltinManagerParams) => http.patch('/api/v1/web/tenant-info/builtin-manager/', params);
+
+/**
+ * 管理员配置-重置内置管理账号密码
+ */
+export const putBuiltinManagerPassword = (params: PutPasswordParams) => http.put('/api/v1/web/tenant-info/builtin-manager/password/', params);
+
+/**
+ * 管理员配置-租户实名管理员列表
+ */
+export const getRealManagers = () => http.get('/api/v1/web/tenant-info/real-managers/');
+
+/**
+ * 管理员配置-租户实名用户列表
+ */
+export const getRealUsers = (params: RealUsersParams) => http.get('/api/v1/web/tenant-info/real-users/', params);
+
+/**
+ * 管理员配置-修改租户实名管理员账号列表
+ */
+export const putRealManagers = (params: PutRealManagersParams) => http.put('/api/v1/web/tenant-info/real-managers/', params);
+
+/**
+ * 基础设置-租户详情
+ */
+export const getTenantInfo = () => http.get('/api/v1/web/tenant-info/');
+
+/**
+ * 基础设置-更新租户
+ */
+export const PutTenantInfo = (params: PutTenantInfoParams) => http.put('/api/v1/web/tenant-info/', params);

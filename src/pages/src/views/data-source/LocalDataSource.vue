@@ -1,5 +1,5 @@
 <template>
-  <div class="user-info-wrapper user-scroll-y">
+  <div v-bkloading="{ loading: state.isLoading, zIndex: 9 }" class="user-info-wrapper user-scroll-y">
     <header>
       <bk-dropdown placement="bottom-start" trigger="click">
         <bk-button theme="primary">
@@ -39,74 +39,72 @@
         </bk-button>
       </div>
     </header>
-    <bk-loading :loading="state.isLoading">
-      <bk-table
-        class="user-info-table"
-        :data="state.list"
-        :border="['outer']"
-        :max-height="tableMaxHeight"
-        show-overflow-tooltip
-        @column-filter="handleFilter"
-      >
-        <template #empty>
-          <Empty
-            :is-data-empty="state.isDataEmpty"
-            :is-search-empty="state.isEmptySearch"
-            :is-data-error="state.isDataError"
-            @handleEmpty="handleClear"
-            @handleUpdate="fetchDataSourceList"
-          />
+    <bk-table
+      class="user-info-table"
+      :data="state.list"
+      :border="['outer']"
+      :max-height="tableMaxHeight"
+      show-overflow-tooltip
+      @column-filter="handleFilter"
+    >
+      <template #empty>
+        <Empty
+          :is-data-empty="state.isDataEmpty"
+          :is-search-empty="state.isEmptySearch"
+          :is-data-error="state.isDataError"
+          @handleEmpty="handleClear"
+          @handleUpdate="fetchDataSourceList"
+        />
+      </template>
+      <bk-table-column prop="name" :label="$t('数据源名称')">
+        <template #default="{ row }">
+          <bk-button text theme="primary" @click="handleClick(row)">
+            {{ row.name }}
+          </bk-button>
         </template>
-        <bk-table-column prop="name" :label="$t('数据源名称')">
-          <template #default="{ row }">
-            <bk-button text theme="primary" @click="handleClick(row)">
-              {{ row.name }}
+      </bk-table-column>
+      <bk-table-column prop="plugin_id" :label="$t('数据源类型')">
+        <template #default="{ row }">
+          <div class="data-source-type" v-for="item in state.typeList" :key="item">
+            <img v-if="item.id === row.plugin_id && item.logo" :src="item.logo">
+            <span v-if="item.id === row.plugin_id">{{ row.plugin_name }}</span>
+          </div>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: statusFilters }">
+        <template #default="{ row }">
+          <div>
+            <img :src="dataSourceStatus[row.status]?.icon" class="account-status-icon" />
+            <span>{{ dataSourceStatus[row.status]?.text }}</span>
+          </div>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="updater" :label="$t('更新人')">
+        <template #default="{ row }">
+          <span>{{ row.updater || '--' }}</span>
+        </template>
+      </bk-table-column>
+      <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
+      <bk-table-column :label="$t('操作')">
+        <template #default="{ row }">
+          <span v-bk-tooltips="{
+            content: $t('本地数据源不支持同步，请到详情页使用导入功能'),
+            distance: 20,
+            disabled: row.plugin_id !== 'local',
+          }">
+            <bk-button
+              text
+              theme="primary"
+              style="margin-right: 8px;"
+              :disabled="row.plugin_id === 'local'"
+              @click="handleSync(row)"
+            >
+              {{ $t('一键同步') }}
             </bk-button>
-          </template>
-        </bk-table-column>
-        <bk-table-column prop="plugin_id" :label="$t('数据源类型')">
-          <template #default="{ row }">
-            <div class="data-source-type" v-for="item in state.typeList" :key="item">
-              <img v-if="item.id === row.plugin_id && item.logo" :src="item.logo">
-              <span v-if="item.id === row.plugin_id">{{ row.plugin_name }}</span>
-            </div>
-          </template>
-        </bk-table-column>
-        <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: statusFilters }">
-          <template #default="{ row }">
-            <div>
-              <img :src="dataSourceStatus[row.status]?.icon" class="account-status-icon" />
-              <span>{{ dataSourceStatus[row.status]?.text }}</span>
-            </div>
-          </template>
-        </bk-table-column>
-        <bk-table-column prop="updater" :label="$t('更新人')">
-          <template #default="{ row }">
-            <span>{{ row.updater || '--' }}</span>
-          </template>
-        </bk-table-column>
-        <bk-table-column prop="updated_at" :label="$t('更新时间')"></bk-table-column>
-        <bk-table-column :label="$t('操作')">
-          <template #default="{ row }">
-            <span v-bk-tooltips="{
-              content: $t('本地数据源不支持同步，请到详情页使用导入功能'),
-              distance: 20,
-              disabled: row.plugin_id !== 'local',
-            }">
-              <bk-button
-                text
-                theme="primary"
-                style="margin-right: 8px;"
-                :disabled="row.plugin_id === 'local'"
-                @click="handleSync(row)"
-              >
-                {{ $t('一键同步') }}
-              </bk-button>
-            </span>
-          </template>
-        </bk-table-column>
-      </bk-table>
-    </bk-loading>
+          </span>
+        </template>
+      </bk-table-column>
+    </bk-table>
   </div>
 </template>
 
@@ -115,11 +113,11 @@ import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import { onMounted, reactive, ref } from 'vue';
 
 import Empty from '@/components/Empty.vue';
-import { useTableMaxHeight } from '@/hooks/useTableMaxHeight';
-import { getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http/dataSourceFiles';
+import { useTableMaxHeight } from '@/hooks';
+import { getDataSourceList, getDataSourcePlugins, postOperationsSync } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 import { dataSourceStatus } from '@/utils';
 
 const store = useMainViewStore();
@@ -162,7 +160,6 @@ const fetchDataSourceList = async () => {
       searchVal.value === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
     }
     state.list = res.data;
-    state.isLoading = false;
   } catch (error) {
     state.isDataError = true;
   } finally {
@@ -215,11 +212,17 @@ const handleSync = async (row) => {
 };
 </script>
 
+<style lang="less">
+.main-breadcrumbs {
+  box-shadow: none !important;
+}
+</style>
+
 <style lang="less" scoped>
 .user-info-wrapper {
   width: 100%;
   height: calc(100vh - 140px);
-  padding: 16px 24px;
+  padding: 24px;
 
   header {
     display: flex;

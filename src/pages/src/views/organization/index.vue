@@ -66,9 +66,9 @@
     <template #main>
       <bk-loading class="organization-main" :loading="state.tabLoading" :z-index="9">
         <header :class="{ 'departments-header': !isTenant }">
-          <img class="img-logo" v-if="state.currentTenant.logo" :src="state.currentTenant.logo" />
-          <span v-else class="span-logo">{{ logoConvert(state.currentTenant.name) }}</span>
-          <span class="name">{{ state.currentTenant.name }}</span>
+          <img class="img-logo" v-if="state.currentTenant?.logo" :src="state.currentTenant?.logo" />
+          <span v-else class="span-logo">{{ logoConvert(state.currentTenant?.name) }}</span>
+          <span class="name">{{ state.currentTenant?.name }}</span>
         </header>
         <bk-tab
           :active="state.active"
@@ -120,16 +120,16 @@ import { computed, inject, onMounted, reactive, ref } from 'vue';
 import DetailsInfo from './details/DetailsInfo.vue';
 import UserInfo from './details/UserInfo.vue';
 
-import { useTableFields } from '@/hooks/useTableFields';
-import { currentUser } from '@/http/api';
+import { useTableFields } from '@/hooks';
 import {
+  currentUser,
+  getFields,
   getTenantDepartments,
   getTenantDepartmentsList,
   getTenantOrganizationDetails,
   getTenantOrganizationList,
-  getTenantUsersList,
-} from '@/http/organizationFiles';
-import { getFields } from '@/http/settingFiles';
+  getTenantOrganizationUsersList,
+} from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
 import { copy, logoConvert } from '@/utils';
@@ -180,7 +180,7 @@ const pagination = reactive({
   limit: params.pageSize,
 });
 
-const isTenant = computed(() => (!!state.currentTenant.isRoot));
+const isTenant = computed(() => (!!state.currentTenant?.isRoot));
 
 onMounted(() => {
   currentUser()
@@ -289,7 +289,7 @@ const getTenantUsers = async (id, init?: boolean) => {
     state.isEmptySearch = false;
     state.isDataError = false;
 
-    const [usersRes, fieldsRes] = await Promise.all([getTenantUsersList(data), getFields()]);
+    const [usersRes, fieldsRes] = await Promise.all([getTenantOrganizationUsersList(data), getFields()]);
 
     if (usersRes.data?.count === 0 || !usersRes.data.length) {
       params.keyword === '' ? state.isDataEmpty = true : state.isEmptySearch = true;
@@ -404,6 +404,7 @@ const handleCancel = () => {
 
 <style lang="less" scoped>
 @import url("./tree.less");
+@import url("@/css/tabStyle.less");
 
 .organization-wrapper {
   display: flex;
@@ -428,27 +429,6 @@ const handleCancel = () => {
     .departments-header {
       box-shadow: 0 3px 4px 0 rgb(0 0 0 / 4%);
     }
-  }
-}
-
-:deep(.tab-details) {
-  height: calc(100vh - 104px);
-
-  .bk-tab-header {
-    font-size: 14px;
-    line-height: 36px !important;
-    background: #fff;
-    border-bottom: none;
-    box-shadow: 0 3px 4px 0 rgb(0 0 0 / 4%);
-
-    .bk-tab-header-item {
-      padding: 0 5px !important;
-      margin: 0 20px;
-    }
-  }
-
-  .bk-tab-content {
-    padding: 0;
   }
 }
 

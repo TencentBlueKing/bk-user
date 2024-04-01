@@ -36,8 +36,8 @@
 import { reactive, ref } from 'vue';
 
 import { logout } from '@/common/auth';
-import useValidate from '@/hooks/use-validate';
-import { tokenUrls } from '@/http/resetPasswordFiles';
+import { useValidate } from '@/hooks';
+import { tokenUrls } from '@/http';
 
 const validate = useValidate();
 

@@ -322,8 +322,7 @@ import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 
 import ChangePassword from '@/components/ChangePassword.vue';
 import phoneInput from '@/components/phoneInput.vue';
-import useValidate from '@/hooks/use-validate';
-import { useCustomFields } from '@/hooks/useCustomFields';
+import { useCustomFields, useValidate } from '@/hooks';
 import {
   getCurrentNaturalUser,
   getPersonalCenterUserFeature,
@@ -333,7 +332,7 @@ import {
   patchUsersEmail,
   patchUsersPhone,
   putPersonalCenterUserExtrasFields,
-} from '@/http/personalCenterFiles';
+} from '@/http';
 import { t } from '@/language/index';
 import { customFieldsMap, formatConvert, getBase64 } from '@/utils';
 

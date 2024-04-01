@@ -224,9 +224,14 @@ import { useRoute } from 'vue-router';
 import QueryParams from './query-params/QueryParams.vue';
 
 import FieldMapping from '@/components/field-mapping/FieldMapping.vue';
-import useValidate from '@/hooks/use-validate';
-import { getDataSourceDetails, newDataSource, postTestConnection, putDataSourceDetails } from '@/http/dataSourceFiles';
-import { getFields } from '@/http/settingFiles';
+import { useValidate } from '@/hooks';
+import {
+  getDataSourceDetails,
+  getFields,
+  newDataSource,
+  postTestConnection,
+  putDataSourceDetails,
+} from '@/http';
 import { t } from '@/language/index';
 import router from '@/router/index';
 import { SYNC_CONFIG_LIST } from '@/utils';

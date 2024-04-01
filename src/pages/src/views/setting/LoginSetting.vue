@@ -1,272 +1,321 @@
 <template>
-  <div class="login-setting-content user-scroll-y">
-    <!-- <div class="setting-item">
-      <p class="item-title">登录方式设置</p>
-      <bk-form class="setting-form" form-type="vertical">
-        <bk-form-item label="基本登录" description="至少选择一种默认方式">
-          <bk-checkbox-group>
-            <bk-checkbox
-              class="hover-checkbox"
-              v-for="item in state.basicLogin"
-              :key="item.value"
-              :label="item.name"
-            >
-              {{ item.name }}
-              <bk-tag theme="info" v-if="item.default">默认</bk-tag>
-            </bk-checkbox>
-          </bk-checkbox-group>
-        </bk-form-item>
-        <bk-form-item label="个人社交账号登录">
-          <bk-checkbox-group>
-            <bk-checkbox
-              v-for="item in state.accountLogin"
-              :key="item.value"
-              :label="item.name"
-            >
-              {{ item.name }}
-            </bk-checkbox>
-          </bk-checkbox-group>
-        </bk-form-item>
-      </bk-form>
-    </div> -->
-    <div class="setting-item">
-      <p class="item-title">MFA认证方式</p>
-      <bk-form class="setting-form" form-type="vertical">
-        <bk-form-item label="MFA认证方式">
-          <bk-checkbox-group>
-            <bk-checkbox label="手机号+验证码" />
-            <bk-checkbox label="邮箱+验证码" />
-          </bk-checkbox-group>
-        </bk-form-item>
-        <div class="item-flex">
-          <bk-form-item label="强制开启MFA" description="强制开启MFA">
-            <bk-switcher v-model="state.openMFA" theme="primary" size="large" />
-          </bk-form-item>
-          <bk-form-item label="启用范围">
-            <div class="add-wrapper">
-              <bk-button theme="primary" text v-if="!isShow" @click="handleClickAdd">
-                <i class="user-icon icon-plus-fill mr8" />
-                添加范围
-              </bk-button>
-              <template v-else>
-                <bk-button theme="primary" text class="add-text">
-                  已添加 <span>1</span> 个租户，<span>1</span>个组织，<span>2</span>个用户
-                </bk-button>
-                <ul class="add-list">
-                  <li>
-                    <i class="user-icon icon-homepage mr8"></i>
-                    <span>租户</span>
-                  </li>
-                  <li>
-                    <i class="bk-sq-icon icon-file-close mr8"></i>
-                    <span>组织</span>
-                  </li>
-                  <li>
-                    <i class="bk-sq-icon icon-personal-user mr8"></i>
-                    <span>用户</span>
-                  </li>
-                </ul>
-              </template>
+  <div class="login-setting-wrapper user-scroll-y">
+    <ul class="login-setting-content">
+      <li class="item-box">
+        <div class="header">
+          <p>{{ $t('基本登录方式') }}</p>
+        </div>
+        <div class="login-box">
+          <div
+            class="login-item"
+            v-for="(item, index) in loginMethods"
+            :key="index">
+            <div
+              :class="[
+                'login-content',
+                item.status,
+              ]">
+              <div
+                class="name"
+                v-bk-tooltips="{
+                  content: $t('暂未配置'),
+                  disabled: item.status !== 'not',
+                }"
+                @click="handleClickActive(item)">
+                <i :class="item.logo" />
+                <span>{{ item.name }}</span>
+                <bk-tag
+                  v-if="item.type === 'local'"
+                  type="stroke"
+                  theme="info"
+                >
+                  {{ $t('本地') }}
+                </bk-tag>
+              </div>
+              <bk-tag
+                v-if="item.status === 'enable'"
+                class="status-tag"
+                type="filled"
+                theme="success"
+              >
+                {{ $t('已启用') }}
+              </bk-tag>
             </div>
-          </bk-form-item>
-        </div>
-        <div class="item-flex">
-          <bk-form-item label="动态信任策略" description="动态信任策略">
-            <bk-switcher v-model="state.openMFA" theme="primary" size="large" />
-          </bk-form-item>
-          <bk-form-item label="信任天数">
-            <bk-radio-group v-model="state.days">
-              <bk-radio-button
-                v-for="item in state.daysList"
-                :key="item.value"
-                :label="item.name"
-              />
-            </bk-radio-group>
-          </bk-form-item>
-        </div>
-        <bk-form-item label="" required>
-          <div class="item-flex">
-            <bk-checkbox>
-              连续
-            </bk-checkbox>
-            <bk-input
-              style="width: 85px;"
-              type="number"
-              behavior="simplicity"
-              :min="0"
-              :max="5"
-            />
-            <span class="text-sm/[32px]">天 未登录自动冻结（冻结后用户无法登录）</span>
           </div>
-        </bk-form-item>
-      </bk-form>
-    </div>
-    <div class="setting-btn">
-      <bk-button theme="primary" class="mr8">保存</bk-button>
-      <bk-button>重置</bk-button>
-    </div>
-    <!-- 添加范围 -->
-    <bk-dialog
+        </div>
+      </li>
+      <li class="item-box">
+        <div class="header">
+          <p>{{ $t('个人社交账号登录') }}</p>
+        </div>
+        <div class="login-box">
+          <div
+            class="login-item"
+            v-for="(item, index) in personalLoginMethods"
+            :key="index">
+            <div
+              :class="[
+                'login-content',
+                item.status,
+              ]">
+              <div
+                class="name"
+                v-bk-tooltips="{
+                  content: $t('暂未配置'),
+                  disabled: item.status !== 'not',
+                }">
+                <i :class="item.logo" />
+                <span>{{ item.name }}</span>
+              </div>
+              <bk-tag
+                v-if="item.status === 'enable'"
+                class="status-tag"
+                type="filled"
+                theme="success"
+              >
+                {{ $t('已启用') }}
+              </bk-tag>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+    <!-- 认证源详情 -->
+    <bk-sideslider
       width="640"
-      height="520"
-      class="department-dialog"
-      :auto-close="false"
-      :title="'添加启用范围'"
-      :is-show="isShowSetDepartments"
-      @confirm="selectDeConfirmFn"
-      @closed="isShowSetDepartments = false">
-      <div class="select-department-wrapper">
-        <SetDepartment
-          :initial-departments="[]" />
-      </div>
-    </bk-dialog>
+      :is-show="detailsConfig.show"
+      :title="detailsConfig.title"
+      :before-close="handleBeforeClose"
+      quick-close
+    >
+      <template #header>
+        <span>{{ detailsConfig.title }}</span>
+        <div>
+          <bk-button
+            v-if="!detailsConfig.isEdit"
+            outline
+            theme="primary"
+            @click="handleEditDetails">
+            {{ $t('编辑') }}
+          </bk-button>
+          <!-- <bk-button>删除</bk-button> -->
+        </div>
+      </template>
+      <template #default>
+        <Local
+          v-if="authDetails?.type === 'local' && detailsConfig.isEdit"
+          :data="authDetails"
+          @cancelEdit="cancelEdit" />
+        <WeCom
+          v-if="authDetails?.type === 'wecom' && detailsConfig.isEdit"
+          :data="authDetails"
+          @cancelEdit="cancelEdit" />
+        <ViewDetails v-else-if="!detailsConfig.isEdit" :data="authDetails" @updateRow="updateRow" />
+      </template>
+    </bk-sideslider>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Message } from 'bkui-vue';
-import { reactive, ref } from 'vue';
+import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { inject, reactive, ref } from 'vue';
 
-import SetDepartment from '@/components/set-department/SetDepartment.vue';
+import Local from './auth-config/Local.vue';
+import ViewDetails from './auth-config/ViewDetails.vue';
+import WeCom from './auth-config/WeCom.vue';
 
-const isShow = ref(false);
-const isShowSetDepartments = ref(false);
-const getSelectedDepartments = ref([]);
-const state = reactive({
-  basicLogin: [
-    { name: '账密登录（本地）', value: '1', default: false },
-    { name: 'OpenLDAP登录', value: '2', default: false },
-    { name: 'MAD登录', value: '3', default: false },
-    { name: '企业微信登录', value: '4', default: false },
-    { name: '手机号+验证码', value: '5', default: false },
-    { name: '邮箱+验证码', value: '6', default: false },
-  ],
-  accountLogin: [
-    { name: '微信', value: 'weixin' },
-    { name: 'QQ', value: 'qq' },
-    { name: 'Google', value: 'google' },
-  ],
-  openMFA: true,
-  days: '3天',
-  daysList: [
-    { name: '3天', value: 3 },
-    { name: '7天', value: 7 },
-    { name: '14天', value: 14 },
-    { name: '30天', value: 30 },
-    { name: '60天', value: 60 },
-  ],
+import { t } from '@/language/index';
+import { useMainViewStore } from '@/store';
+
+const store = useMainViewStore();
+store.customBreadcrumbs = false;
+const editLeaveBefore = inject('editLeaveBefore');
+
+const loginMethods = ref([
+  {
+    id: 'a48b55c2f3fb41ec8df661a5ea0e1cb6',
+    logo: 'bk-sq-icon icon-personal-user',
+    name: '账密登录1',
+    status: 'enable',
+    type: 'local',
+  },
+  {
+    id: '',
+    logo: 'bk-sq-icon icon-personal-user',
+    name: '账密登录2',
+    status: 'not',
+    type: 'local',
+  },
+  {
+    id: 'bd103f62c51e4683bd240271ab9e08cf',
+    logo: 'user-icon icon-qiyeweixin-2',
+    name: '企业微信登录1',
+    status: 'enable',
+    type: 'wecom',
+  },
+  {
+    id: '',
+    logo: 'user-icon icon-qiyeweixin-2',
+    name: '企业微信登录2',
+    status: 'not',
+    type: 'wecom',
+  },
+]);
+
+const personalLoginMethods = ref([
+  {
+    logo: 'user-icon icon-weixin',
+    name: '微信扫码登录',
+    status: 'enable',
+  },
+  {
+    logo: 'user-icon icon-qq',
+    name: 'QQ扫码登录',
+    status: 'enable',
+  },
+  {
+    logo: 'user-icon icon-google',
+    name: '谷歌账号登录',
+    status: 'not',
+  },
+]);
+
+const detailsConfig = reactive({
+  show: false,
+  title: t('认证源详情'),
+  isEdit: false,
 });
 
-const handleClickAdd = () => {
-  isShowSetDepartments.value = true;
+const authDetails = ref({});
+
+const handleClickActive = (item) => {
+  authDetails.value = item;
+  detailsConfig.show = true;
+  if (item.status === 'not') {
+    detailsConfig.isEdit = true;
+  }
 };
 
-const selectDeConfirmFn = () => {
-  if (!getSelectedDepartments.value.length) {
-    Message({
-      message: '请选择组织',
-      theme: 'warning',
-    });
-    return;
+const currentRow = ref({});
+const updateRow = (row) => {
+  currentRow.value = row;
+};
+
+const handleEditDetails = () => {
+  detailsConfig.isEdit = true;
+};
+
+const cancelEdit = () => {
+  if (!authDetails.value.id) {
+    detailsConfig.show = false;
+  }
+  detailsConfig.isEdit = false;
+};
+
+const handleBeforeClose = async () => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+    detailsConfig.show = false;
+    detailsConfig.isEdit = false;
+  } else {
+    detailsConfig.show = false;
+    detailsConfig.isEdit = false;
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
   }
 };
 </script>
 
 <style lang="less" scoped>
-.login-setting-content {
+.login-setting-wrapper {
   height: calc(100vh - 104px);
   padding: 24px;
 
-  .setting-item {
-    margin-bottom: 16px;
+  .login-setting-content {
+    padding: 24px;
     background: #fff;
-    border-radius: 2px;
-    box-shadow: 0 2px 4px 0 #1919290d;
 
-    .item-title {
-      padding: 16px 0 16px 24px;
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .setting-form {
-      margin-left: 64px;
-
-      .item-flex {
+    .item-box {
+      .header {
         display: flex;
+        align-items: center;
+        justify-content: space-between;
 
-        .bk-form-item {
-          width: 145px;
-
-          .icon-plus-fill {
-            font-size: 14px;
-            color: #3a84ff;
-          }
-
-          &:first-child {
-            width: 145px;
-          }
-
-          &:last-child {
-            width: calc(100% - 145px);
-          }
-        }
-      }
-
-      ::v-deep .bk-form-item {
-        &:last-child {
-          padding-bottom: 24px;
-          margin-bottom: 0;
-        }
-      }
-
-      .add-wrapper {
-        .bk-button {
-          display: block;
+        p {
           font-size: 14px;
-          color: #3A84FF;
-        }
-
-        .add-text span {
           font-weight: 700;
+          color: #313238;
         }
+      }
 
-        .add-list {
-          width: 320px;
-          padding: 16px;
-          background: #F5F7FA;
+      .login-box {
+        display: flex;
+        margin: 24px 0;
+        flex-wrap: wrap;
+
+        .login-item {
+          position: relative;
+          display: inline-block;
+          width: 200px;
+          margin-bottom: 16px;
+          margin-left: 16px;
+          text-align: center;
           border-radius: 2px;
 
-          li {
+          .login-content {
+            position: relative;
+            height: 80px;
+            line-height: 80px;
+            cursor: pointer;
+            background: #F5F7FA;
+
+            &:hover {
+              background: #E1ECFF;
+            }
+
             i {
-              font-size: 16px;
-              color: #A3C5FD;
+              font-size: 24px;
             }
 
             span {
+              margin-left: 8px;
               font-size: 14px;
+              color: #313238;
+            }
+
+            .status-tag {
+              position: absolute;
+              top: -2px;
+              right: -6px;
+              background: #2DCB9D;
+            }
+          }
+
+          .not {
+            &:hover {
+              background: #F5F7FA;
+            }
+
+            i, span {
+              color: #C4C6CC;
             }
           }
         }
       }
-    }
-  }
-
-  .setting-btn {
-    button {
-      width: 88px;
     }
   }
 }
 
-.department-dialog {
-  .select-department-wrapper {
-    height: calc(100% - 7px);
-  }
+:deep(.bk-sideslider-title) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px 0 50px !important;
 
-  .set-department-wrapper {
-    width: 590px;
-    height: 100%;
+  .bk-button {
+    padding: 5px 17px !important;
   }
 }
 </style>

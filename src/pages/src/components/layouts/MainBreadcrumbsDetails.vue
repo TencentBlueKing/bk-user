@@ -24,7 +24,7 @@
 import { computed, defineEmits, defineProps } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { useMainViewStore } from '@/store/mainView';
+import { useMainViewStore } from '@/store';
 
 defineProps({
   subtitle: {

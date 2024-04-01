@@ -117,8 +117,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
-import { getIdpsDetails } from '@/http/authSourceFiles';
-import { getDataSourceList } from '@/http/dataSourceFiles';
+import { getDataSourceList, getIdpsDetails } from '@/http';
 import router from '@/router';
 import { copy } from '@/utils';
 

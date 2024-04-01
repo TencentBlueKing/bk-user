@@ -3,50 +3,39 @@
     <div class="department-content">
       <div class="all-department">
         <!-- 搜索框 -->
-        <bk-input
-          v-model="searchKey"
-          class="king-input-search"
-          placeholder="搜索组织"
-          :clearable="true"
-          :left-icon="'bk-icon icon-search'"
-          @input="handleInput"
-          @clear="clearSearchKey"
-          @left-icon-click="handleSearchDepartment">
-        </bk-input>
-        <div class="department-content-wrapper">
-          <!-- 搜索结果 -->
-          <div class="search-content-container" v-if="searchStatus">
-            <template v-if="searchList.length">
-              <div class="search-content">
-                <p
-                  v-for="(item, index) in searchList" class="search-item"
-                  :class="index === selectedIndex && 'selected'" :key="item.id" @click="selectItem(item)">
-                  <input type="checkbox" class="checkbox" :checked="item.isChecked" />{{item.name}}
-                </p>
-                <p v-if="searchList.length >= searchLength" class="search-item">完善关键字搜索更多内容</p>
-              </div>
-            </template>
-            <div v-else class="no-search-result">
-              <Empty
-                :is-search-empty="!searchList.length"
-                @handleEmpty="clearSearchKey" />
-            </div>
-          </div>
-          <!-- 组织树 -->
-          <div class="department-tree-wrapper" v-else>
-            <Tree :tree-data="treeDataList" />
-          </div>
+        <div class="king-input-search">
+          <bk-input
+            v-model="searchKey"
+            type="search"
+          />
+        </div>
+        <!-- 组织树 -->
+        <div class="department-tree-wrapper">
+          <Tree
+            :tree-data="treeDataList"
+            :search-key="searchKey"
+            @checkedList="checkedList" />
         </div>
       </div>
     </div>
     <div class="selected-department">
-      <div>已选择</div>
+      <div class="selected-title">
+        <p>{{ $t('已选择') }}
+          <span class="tenant">{{ tenantCount }}</span>
+          {{ $t('个租户') }}，<span class="department">{{ departmentCount }}</span>
+          {{ $t('个组织') }}，<span class="user">{{ userCount }}</span>
+          {{ $t('个用户') }}
+        </p>
+        <bk-button text theme="primary" @click="clearAll">{{ $t('清空') }}</bk-button>
+      </div>
       <div class="selected-content" data-test-id="list_selDepartmentsData">
-        123
         <ul v-if="selectedDepartments.length">
-          <li class="selected-list" v-for="(item, index) in selectedDepartments" :key="item.id">
-            <span class="title">{{item.name}}</span>
-            <i class="icon-user-close" @click="deleteSelected(item, index)"></i>
+          <li class="selected-list" v-for="(item) in selectedDepartments" :key="item.id">
+            <div>
+              <i :class="getNodeIcon(item.type)" />
+              <span class="title">{{item.name}}</span>
+            </div>
+            <i class="bk-sq-icon icon-close-fill" @click="deleteSelected(item)"></i>
           </li>
         </ul>
       </div>
@@ -58,11 +47,6 @@
 import { defineProps, onMounted, ref, watch } from 'vue';
 
 import Tree from './Tree.vue';
-
-import Empty from '@/components/Empty.vue';
-import {
-  getTenantOrganizationList,
-} from '@/http/organizationFiles';
 
 const props = defineProps({
   currentCategoryId: {
@@ -77,15 +61,24 @@ const props = defineProps({
 
 const basicLoading = ref(false);
 const searchKey = ref('');
-const searchStatus = ref(false);
-const searchList = ref([]);
-const selectedIndex = ref(null);
 const treeDataList = ref([]);
 // 设置所在组织： 已选择的组织List
 const selectedDepartments = ref([]);
+const tenantCount = ref(0);
+const departmentCount = ref(0);
+const userCount = ref(0);
 
 watch(() => selectedDepartments.value, (val) => {
-  console.log('val', val);
+  const counts = { tenant: 0, department: 0, user: 0 };
+  val.forEach(({ type }) => {
+    if (Object.prototype.hasOwnProperty.call(counts, type)) {
+      counts[type] += 1;
+    }
+  });
+
+  tenantCount.value = counts.tenant;
+  departmentCount.value = counts.department;
+  userCount.value = counts.user;
 });
 
 onMounted(() => {
@@ -96,29 +89,37 @@ onMounted(() => {
   initDepartmentTree();
 });
 
-const initDepartmentTree = async () => {
+const initDepartmentTree = () => {
   try {
-    const res = await getTenantOrganizationList();
-    treeDataList.value = res.data;
+    setTimeout(() => {
+      basicLoading.value = false;
+    }, 600);
   } catch (e) {
     console.warn(e);
-  } finally {
-    basicLoading.value = false;
   }
 };
 
-const handleInput = () => {
-  selectedIndex.value = null;
+const checkedList = (list: any) => {
+  selectedDepartments.value = list;
 };
 
-const clearSearchKey = () => {
-  searchList.value = [];
-  searchKey.value = '';
-  initDepartmentTree();
+const getNodeIcon = (type: string) => {
+  switch (type) {
+    case 'tenant':
+      return 'user-icon icon-homepage';
+    case 'department':
+      return 'bk-sq-icon icon-file-close';
+    default:
+      return 'bk-sq-icon icon-personal-user';
+  }
 };
 
-const handleSearchDepartment = () => {
-  console.log('搜索组织名');
+const deleteSelected = (item: any) => {
+  selectedDepartments.value = selectedDepartments.value.filter(k => k !== item);
+};
+
+const clearAll = () => {
+  selectedDepartments.value = [];
 };
 </script>
 
@@ -130,14 +131,18 @@ const handleSearchDepartment = () => {
 
 .department-content {
   width: 50%;
-  padding-right: 24px;
   border-right: 1px solid #dcdee5;
 
   .all-department {
     height: 100%;
 
-    .department-content-wrapper {
+    .king-input-search {
+      padding: 0 24px;
+    }
+
+    .department-tree-wrapper {
       height: calc(100% - 32px);
+      padding: 12px 24px;
       overflow-y: auto;
 
       &::-webkit-scrollbar {
@@ -155,74 +160,37 @@ const handleSearchDepartment = () => {
 
 .selected-department {
   width: 50%;
-  padding-left: 24px;
-}
 
-// .depart-title {
-//   position: relative;
-//   height: 42px;
-//   padding-left: 24px;
-//   font-size: 14px;
-//   font-weight: 500;
-//   line-height: 42px;
-//   color: rgb(49 50 56 / 100%);
-//   background: #fafbfd;
-//   border: 1px solid #dcdee5;
-//   border-right: none;
-//   border-left: none;
-
-//   .clear {
-//     position: absolute;
-//     top: 13px;
-//     right: 24px;
-//     font-size: 12px;
-//     line-height: 16px;
-//     color: rgb(58 132 255 / 100%);
-//     cursor: pointer;
-//   }
-// }
-
-.department-infor {
-  height: 276px;
-  overflow: hidden;
-  overflow-y: auto;
-}
-
-.search-content-container {
-  padding-left: 24px;
-
-  > .search-content {
+  .selected-title {
     display: flex;
-    flex-flow: column;
+    padding: 0 24px;
+    font-size: 12px;
+    line-height: 32px;
+    justify-content: space-between;
+    align-items: center;
 
-    > .search-item {
-      display: flex;
-      align-items: center;
-      padding: 4px 0;
-      margin-right: 24px;
-      cursor: pointer;
+    span {
+      font-weight: 700;
+    }
 
-      input {
-        flex-shrink: 0;
-      }
+    .tenant {
+      color: #3A84FF;
+    }
 
-      &.selected,
-      &:hover {
-        background: #e1ecff;
-      }
+    .department {
+      color: #2DCB56;
+    }
+
+    .user {
+      color: #FF9C01;
     }
   }
 
-  > .no-search-result {
-    height: 200px;
-    padding-right: 24px;
+  .selected-content {
+    height: calc(100% - 32px);
+    padding: 12px 24px;
+    overflow-y: auto;
   }
-}
-
-.selected-department {
-  // .depart-title {
-  //   padding-left: 15px;
-  // }
 }
 
 .selected-content {
@@ -243,27 +211,25 @@ const handleSearchDepartment = () => {
 }
 
 .selected-list {
-  position: relative;
-  height: 36px;
-  padding: 0 24px 0 15px;
-  font-size: 14px;
-  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   line-height: 36px;
-  color: rgb(115 121 135 / 100%);
 
-  .title {
-    display: block;
-    width: calc(100% - 24px);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  div {
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: 12px;
+      font-size: 18px;
+      color: #A3C5FD;
+    }
   }
 
-  .icon-user-close {
-    position: absolute;
-    top: 13px;
-    right: 24px;
-    font-size: 10px;
+  .icon-close-fill {
+    font-size: 16px;
+    color: #C4C6CC;
     cursor: pointer;
   }
 }

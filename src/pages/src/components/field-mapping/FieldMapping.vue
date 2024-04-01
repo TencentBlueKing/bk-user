@@ -6,7 +6,7 @@
         <bk-form-item class="w-[100px]" :label="$t('映射关系')" />
         <bk-form-item class="w-[240px]" :label="$t('API返回字段')" required />
       </div>
-      <div class="field-content" v-for="(item, index) in fieldSettingData.field_mapping.builtin_fields" :key="index">
+      <div class="field-content" v-for="(item, index) in fieldSettingData?.field_mapping?.builtin_fields" :key="index">
         <div class="field-name">
           <bk-input :value="`${item.display_name}（${item.name}）`" readonly />
         </div>
@@ -42,7 +42,7 @@
         </bk-form-item>
       </div>
     </div>
-    <div class="custom-field" v-for="(item, index) in fieldSettingData.addFieldList" :key="index">
+    <div class="custom-field" v-for="(item, index) in fieldSettingData?.addFieldList" :key="index">
       <bk-form-item
         :property="`addFieldList.${index}.target_field`"
         :rules="rules.target_field">
