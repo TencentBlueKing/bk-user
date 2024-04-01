@@ -59,6 +59,7 @@ export interface PutPasswordParams {
 export interface RealUsersParams {
   page?: number,
   page_size?: number,
+  exclude_manager?: boolean,
   keyword?: string,
 }
 

@@ -66,9 +66,14 @@ export const getRealManagers = () => http.get('/api/v1/web/tenant-info/real-mana
 export const getRealUsers = (params: RealUsersParams) => http.get('/api/v1/web/tenant-info/real-users/', params);
 
 /**
- * 管理员配置-修改租户实名管理员账号列表
+ * 管理员配置-批量添加租户实名管理员
  */
-export const putRealManagers = (params: PutRealManagersParams) => http.put('/api/v1/web/tenant-info/real-managers/', params);
+export const postRealManagers = (params: PutRealManagersParams) => http.post('/api/v1/web/tenant-info/real-managers/', params);
+
+/**
+ * 管理员配置-批量移除租户实名管理员
+ */
+export const deleteRealManagers = (ids: string) => http.delete(`/api/v1/web/tenant-info/real-managers/?ids=${ids}`);
 
 /**
  * 基础设置-租户详情

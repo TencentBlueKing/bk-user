@@ -46,13 +46,13 @@
     </Row>
 
     <div class="mb-[24px]">
-      <Row v-if="isEditRealNameAccount" class="admin-setting-item" :title="$t('实名账号')">
+      <Row class="admin-setting-item" :title="$t('实名账号')">
         <div class="flex items-center flex-wrap ml-[56px]">
           <bk-tag
             class="tag-style"
             v-for="item in selectedValue"
             :key="item.id"
-            closable
+            :closable="!showSelectInput"
             @close="deleteAccount(item.id)">
             <template #icon>
               <i class="user-icon icon-yonghu" />
@@ -66,7 +66,6 @@
           <div v-else class="mb-[12px] flex">
             <MemberSelector
               class="w-[300px]"
-              :selected-ids="selectedIds"
               :state="realUsers"
               :params="params"
               @changeSelectList="changeSelectList"
@@ -81,49 +80,10 @@
               @click="saveRealUsers">
               {{ $t('确定') }}
             </bk-button>
-            <bk-button text theme="primary" style="font-size: 14px" @click="showSelectInput = false">
+            <bk-button text theme="primary" style="font-size: 14px" @click="cancelRealUsers">
               {{ $t('取消') }}
             </bk-button>
           </div>
-        </div>
-        <div class="mt-[32px]">
-          <bk-button
-            class="min-w-[88px] mr-[8px]"
-            theme="primary"
-            @click="saveRealNameAccount"
-          >
-            {{ $t('保存') }}
-          </bk-button>
-          <bk-button
-            class="min-w-[88px] mr-[8px]"
-            @click="cancelRealNameAccount"
-          >
-            {{ $t('取消') }}
-          </bk-button>
-        </div>
-      </Row>
-      <Row v-else class="admin-setting-item" :title="$t('实名账号')">
-        <template #header>
-          <bk-button
-            class="min-w-[64px]"
-            text
-            theme="primary"
-            @click="isEditRealNameAccount = true"
-          >
-            <i class="user-icon icon-edit mr-[6px]" />
-            {{ $t('编辑') }}
-          </bk-button>
-        </template>
-        <div class="ml-[56px]">
-          <bk-tag
-            class="tag-style"
-            v-for="item in selectedValue"
-            :key="item.id">
-            <template #icon>
-              <i class="user-icon icon-yonghu" />
-            </template>
-            {{ `${item.username}（${item.full_name}）` }}
-          </bk-tag>
         </div>
       </Row>
     </div>
@@ -179,7 +139,8 @@ import {
   getRealUsers,
   patchBuiltinManager,
   putBuiltinManagerPassword,
-  putRealManagers,
+  postRealManagers,
+  deleteRealManagers,
   randomPasswords,
 } from '@/http';
 import { t } from '@/language/index';
@@ -298,14 +259,7 @@ const confirmPassword = async () => {
 };
 
 // 实名账号信息
-const isEditRealNameAccount = ref(false);
 const selectedValue = ref([]);
-
-watch(() => isEditRealNameAccount.value, (val) => {
-  window.changeInput = val;
-}, {
-  deep: true,
-});
 
 const realUsers = ref({
   count: 0,
@@ -316,6 +270,7 @@ const params = reactive({
   page: 1,
   pageSize: 10,
   keyword: '',
+  exclude_manager: true,
 });
 
 const initRealManagers = async () => {
@@ -324,12 +279,18 @@ const initRealManagers = async () => {
 };
 
 const showSelectInput = ref(false);
-const selectedIds = ref([]);
+
+watch(() => showSelectInput.value, (val) => {
+  window.changeInput = val;
+}, {
+  deep: true,
+});
 
 const handleSelectValue = async () => {
   showSelectInput.value = true;
-  selectedIds.value = selectedValue.value.map(item => item.id);
-  const res = await getRealUsers({});
+  const res = await getRealUsers({
+    exclude_manager: params.exclude_manager,
+  });
   realUsers.value = res.data;
 };
 
@@ -357,33 +318,23 @@ const scrollChange = () => {
 
 // 删除实名账号
 const deleteAccount = (id: string) => {
-  selectedValue.value = selectedValue.value.filter(item => item.id !== id);
-  selectedIds.value = selectedValue.value;
+  deleteRealManagers(id).then(() => {
+    initRealManagers();
+  });
 };
 
 const saveRealUsers = () => {
   showSelectInput.value = false;
   selectedValue.value = [];
-  realUsers.value.results.forEach((item) => {
-    if (changeValues.value.includes(item.id)) {
-      selectedValue.value.push(item);
-    }
-  });
-};
-
-const saveRealNameAccount = () => {
-  isEditRealNameAccount.value = false;
-  const params = {
-    ids: selectedValue.value.map(item => item.id),
-  };
-  putRealManagers(params).then(() => {
+  postRealManagers({
+    ids: changeValues.value,
+  }).then(() => {
     initRealManagers();
   });
 };
 
-const cancelRealNameAccount = () => {
-  isEditRealNameAccount.value = false;
-  initRealManagers();
+const cancelRealUsers = () => {
+  showSelectInput.value = false;
 };
 </script>
 
