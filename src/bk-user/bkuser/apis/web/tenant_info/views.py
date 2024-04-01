@@ -30,8 +30,9 @@ from .serializers import (
     TenantBuiltinManagerPasswordUpdateInputSLZ,
     TenantBuiltinManagerRetrieveOutputSLZ,
     TenantBuiltinManagerUpdateInputSLZ,
+    TenantRealManagerCreateInputSLZ,
+    TenantRealManagerDestroyInputSLZ,
     TenantRealManagerListOutputSLZ,
-    TenantRealManagerUpdateInputSLZ,
     TenantRealUserListInputSLZ,
     TenantRealUserListOutputSLZ,
     TenantRetrieveOutputSLZ,
@@ -170,8 +171,8 @@ class TenantBuiltinManagerPasswordUpdateApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantRealManagerListUpdateApi(
-    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.ListAPIView, generics.UpdateAPIView
+class TenantRealManagerListCreateDestroyApi(
+    CurrentUserTenantMixin, generics.ListCreateAPIView, generics.DestroyAPIView
 ):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -193,31 +194,47 @@ class TenantRealManagerListUpdateApi(
 
     @swagger_auto_schema(
         tags=["tenant_info"],
-        operation_description="修改租户实名管理员账号列表",
-        request_body=TenantRealManagerUpdateInputSLZ(),
+        operation_description="批量添加租户实名管理员",
+        request_body=TenantRealManagerCreateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
-    def put(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         tenant_id = self.get_current_tenant_id()
-        slz = TenantRealManagerUpdateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
+        slz = TenantRealManagerCreateInputSLZ(data=request.data, context={"tenant_id": tenant_id})
         slz.is_valid(raise_exception=True)
         ids = slz.validated_data["ids"]
 
-        # 查询租户已有的所有实名管理账号
+        # 查询租户已有的所有实名管理账号，用于去重，避免后续创建重复
         old_ids = list(
             TenantManager.objects.filter(
                 tenant_id=tenant_id, tenant_user__data_source__type=DataSourceTypeEnum.REAL
             ).values_list("tenant_user_id", flat=True)
         )
 
-        with transaction.atomic():
-            if waiting_create_ids := set(ids) - set(old_ids):
-                TenantManager.objects.bulk_create(
-                    [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in waiting_create_ids]
-                )
+        if waiting_create_ids := set(ids) - set(old_ids):
+            TenantManager.objects.bulk_create(
+                [TenantManager(tenant_id=tenant_id, tenant_user_id=i) for i in waiting_create_ids]
+            )
 
-            if waiting_delete_ids := set(old_ids) - set(ids):
-                TenantManager.objects.filter(tenant_user_id__in=waiting_delete_ids).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        tags=["tenant_info"],
+        operation_description="批量移除租户实名管理员",
+        query_serializer=TenantRealManagerDestroyInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        slz = TenantRealManagerDestroyInputSLZ(data=request.query_params)
+        slz.is_valid(raise_exception=True)
+        ids = slz.validated_data["ids"]
+
+        if ids:
+            TenantManager.objects.filter(
+                tenant_id=self.get_current_tenant_id(),
+                tenant_user__data_source__type=DataSourceTypeEnum.REAL,
+                tenant_user_id__in=ids,
+            ).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -231,15 +248,25 @@ class TenantRealUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz = TenantRealUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+        tenant_id = self.get_current_tenant_id()
 
         # 只过滤本租户且为实名的用户
         queryset = TenantUser.objects.filter(
-            tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.REAL
+            tenant_id=tenant_id, data_source__type=DataSourceTypeEnum.REAL
         ).select_related("data_source_user")
+
+        # 排除已经是管理员的实名用户
+        if data.get("exclude_manager"):
+            manager_ids = list(
+                TenantManager.objects.filter(
+                    tenant_id=tenant_id, tenant_user__data_source__type=DataSourceTypeEnum.REAL
+                ).values_list("tenant_user_id", flat=True)
+            )
+            queryset = queryset.exclude(id__in=manager_ids)
 
         # 关键字过滤
         if keyword := data.get("keyword"):
-            queryset.filter(
+            queryset = queryset.filter(
                 Q(data_source_user__username__icontains=keyword) | Q(data_source_user__full_name__icontains=keyword)
             )
 

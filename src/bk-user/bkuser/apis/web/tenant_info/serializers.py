@@ -23,6 +23,7 @@ from bkuser.biz.validators import (
     validate_logo,
     validate_user_new_password,
 )
+from bkuser.common.serializers import StringArrayField
 
 
 class TenantRetrieveOutputSLZ(serializers.Serializer):
@@ -81,8 +82,8 @@ class TenantRealManagerListOutputSLZ(serializers.Serializer):
     full_name = serializers.CharField(help_text="姓名", source="tenant_user.data_source_user.full_name")
 
 
-class TenantRealManagerUpdateInputSLZ(serializers.Serializer):
-    ids = serializers.ListField(child=serializers.CharField(help_text="租户用户 ID"), allow_empty=True)
+class TenantRealManagerCreateInputSLZ(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.CharField(help_text="租户用户 ID"), allow_empty=False)
 
     def validate_ids(self, ids: List[str]) -> List[str]:
         if not ids:
@@ -100,7 +101,14 @@ class TenantRealManagerUpdateInputSLZ(serializers.Serializer):
         return ids
 
 
+class TenantRealManagerDestroyInputSLZ(serializers.Serializer):
+    ids = StringArrayField(help_text="租户用户 ID 列表，多个以英文逗号分隔")
+
+
 class TenantRealUserListInputSLZ(serializers.Serializer):
+    exclude_manager = serializers.BooleanField(
+        help_text="是否排除管理员", required=False, allow_null=True, default=False
+    )
     keyword = serializers.CharField(help_text="搜索关键字", required=False, allow_blank=True, default="")
 
 
