@@ -7,8 +7,8 @@
       placeholder="请输入"
       filterable
       multiple
+      showOnInit
       multiple-mode="tag"
-      :model-value="selectedIds"
       :remote-method="remoteFilter"
       enable-scroll-load
       :scroll-loading="scrollLoading"
@@ -33,7 +33,7 @@
 import { defineEmits, defineProps, ref } from 'vue';
 
 const props = defineProps({
-  selectedIds: {
+  modelValue: {
     type: Array,
     default: () => [],
   },
@@ -47,7 +47,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['changeSelectList', 'scrollChange', 'searchUserList']);
+const emit = defineEmits(['update:modelValue', 'changeSelectList', 'scrollChange', 'searchUserList']);
 const isFocus = ref(false);
 const scrollLoading = ref(false);
 const isSearch = ref(false);
