@@ -131,7 +131,7 @@ class ProfileUpdateInputSLZ(serializers.ModelSerializer):
     class Meta:
         model = Profile
         # NOTE: 相对原来的api区别, 不支持extras/create_time/update_time更新
-        exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time"]
+        exclude = ["category_id", "username", "domain", "extras", "create_time", "update_time", "role"]
 
     def validate_password(self, password):
         return get_raw_password(self.instance.category_id, password)

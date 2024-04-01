@@ -19,7 +19,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import (
+from bkuser_core.api.web.profile.serializers import (
     LoginProfileOutputSLZ,
     LoginProfileRetrieveInputSLZ,
     ProfileBatchDeleteInputSLZ,
@@ -48,6 +48,7 @@ from bkuser_core.profiles.utils import (
     parse_username_domain,
     should_check_old_password,
 )
+from bkuser_core.profiles.validators import validate_phone_with_country_code
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
@@ -191,6 +192,12 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
             instance.country_code = settings.DEFAULT_COUNTRY_CODE
             instance.iso_code = settings.DEFAULT_IOS_CODE
 
+        # 校验手机号
+        try:
+            validate_phone_with_country_code(instance.telephone, instance.country_code)
+        except ValueError as e:
+            raise error_codes.ABNORMAL_TELEPHONE.f(e)
+
         # 过期状态，续期后需要调整为正常状态
         # Note: 前提是基于EXPIRED状态一定是从NORMAL状态变更来的
         if instance.status == ProfileStatus.EXPIRED.value and instance.account_expiration_date > now().date():
@@ -271,6 +278,10 @@ class ProfileCreateApi(generics.CreateAPIView):
         unknown_fields = set(extra_fields.keys()) - set([x.name for x in fields if not x.builtin])  # noqa
         if unknown_fields:
             raise error_codes.UNKNOWN_FIELD.f(", ".join(list(unknown_fields)))
+
+        missing_fields = {x.name for x in fields if x.require and not x.builtin} - set(extra_fields.keys())
+        if missing_fields:
+            raise error_codes.MISSED_REQUIRED_FIELD.f(",".join(list(missing_fields)))
 
         slz.validated_data["extras"] = {key: value for key, value in extra_fields.items()}
 
@@ -363,6 +374,12 @@ class ProfileCreateApi(generics.CreateAPIView):
         except (ValueError, CountryISOCodeNotMatch):
             slz.validated_data["country_code"] = settings.DEFAULT_COUNTRY_CODE
             slz.validated_data["iso_code"] = settings.DEFAULT_IOS_CODE
+
+        # 校验手机号
+        try:
+            validate_phone_with_country_code(slz.validated_data["telephone"], slz.validated_data["country_code"])
+        except ValueError as e:
+            raise error_codes.ABNORMAL_TELEPHONE.f(e)
 
         try:
             instance = slz.save()

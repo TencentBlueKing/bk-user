@@ -87,10 +87,3 @@ class DynamicFieldUpdateInputSLZ(serializers.Serializer):
             data["display_name"] = data.pop("name")
 
         return data
-
-    def validate(self, attrs):
-
-        if DynamicFieldInfo.objects.filter(display_name=attrs["display_name"]).exists():
-            raise ValidationError(_("名称为 {} 的自定义字段已存在").format(attrs["display_name"]))
-
-        return super().validate(attrs)
