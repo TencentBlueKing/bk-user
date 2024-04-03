@@ -44,6 +44,7 @@ class Log(TimestampedModel):
 
     # 很多操作并不会来自 Profile, 所以使用 CharField 更自由灵活
     operator = models.CharField("操作者", null=True, blank=True, max_length=32)
+    # DEFAULT_DUMP_KWARGS => ensure_ascii=False 防止中文入库被编码，导致中文模糊查询不可用
     extra_value = JSONField(null=True, dump_kwargs=DEFAULT_DUMP_KWARGS.update({"ensure_ascii": False}))
 
     class Meta:

@@ -251,7 +251,7 @@ def validate_phone_with_country_code(telephone: str, country_code: str) -> None:
     if region == UNKNOWN_REGION:
         raise ValueError(f"unknown phone country code: {country_code}")
 
-    # 手机号通常不会包含数字
+    # 手机号通常不会包含字母
     if not re.fullmatch(re.compile(TELEPHONE_REGEX), telephone):
         raise ValueError(f"error telephone format: {telephone}")
 
