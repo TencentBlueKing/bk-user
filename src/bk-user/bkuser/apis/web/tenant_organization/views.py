@@ -18,7 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
-from bkuser.apis.web.organization.serializers import (
+from bkuser.apis.web.tenant_organization.serializers import (
     TenantDepartmentChildrenListOutputSLZ,
     TenantDepartmentUserSearchInputSLZ,
     TenantListOutputSLZ,

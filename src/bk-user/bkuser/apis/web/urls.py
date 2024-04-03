@@ -20,7 +20,7 @@ urlpatterns = [
     # 租户本身 & 租户管理员
     path("tenant-info/", include("bkuser.apis.web.tenant_info.urls")),
     # 租户组织架构
-    path("tenant-organization/", include("bkuser.apis.web.organization.urls")),
+    path("tenant-organization/", include("bkuser.apis.web.tenant_organization.urls")),
     # 数据源 & 数据源用户/部门
     path("data-sources/", include("bkuser.apis.web.data_source.urls")),
     path("data-sources/", include("bkuser.apis.web.data_source_organization.urls")),
