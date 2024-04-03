@@ -199,8 +199,8 @@ class DataSourceRelatedResourceStatsOutputSLZ(serializers.Serializer):
     own_department_count = serializers.IntegerField(help_text="本租户自有的部门数量")
     own_user_count = serializers.IntegerField(help_text="本租户自有的用户数量")
     shared_to_tenant_count = serializers.IntegerField(help_text="从本租户协同数据的租户数量")
-    shared_to_others_department_count = serializers.IntegerField(help_text="本租户分享给其他租户的部门数量")
-    shared_to_others_user_count = serializers.IntegerField(help_text="本租户分享给其他租户的用户数量")
+    shared_to_department_count = serializers.IntegerField(help_text="本租户分享给其他租户的部门数量")
+    shared_to_user_count = serializers.IntegerField(help_text="本租户分享给其他租户的用户数量")
 
 
 class RawDataSourceUserSLZ(serializers.Serializer):

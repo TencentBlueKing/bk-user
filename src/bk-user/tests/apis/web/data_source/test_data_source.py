@@ -379,8 +379,8 @@ class TestDataSourceRelatedResourceStatsApi:
             "own_department_count": 9,
             "own_user_count": 11,
             "shared_to_tenant_count": 1,
-            "shared_to_others_department_count": 9,
-            "shared_to_others_user_count": 11,
+            "shared_to_department_count": 9,
+            "shared_to_user_count": 11,
         }
 
 

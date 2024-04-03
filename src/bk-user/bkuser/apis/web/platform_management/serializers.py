@@ -164,11 +164,11 @@ class TenantRelatedResourceStatsOutputSLZ(serializers.Serializer):
     own_department_count = serializers.IntegerField(help_text="本租户自有的部门数量")
     own_user_count = serializers.IntegerField(help_text="本租户自有的用户数量")
     shared_from_tenant_count = serializers.IntegerField(help_text="协同数据到本租户的租户数量")
-    shared_from_others_department_count = serializers.IntegerField(help_text="其他租户分享给本租户的部门数量")
-    shared_from_others_user_count = serializers.IntegerField(help_text="其他租户分享给本租户的用户数量")
+    shared_from_department_count = serializers.IntegerField(help_text="其他租户分享给本租户的部门数量")
+    shared_from_user_count = serializers.IntegerField(help_text="其他租户分享给本租户的用户数量")
     shared_to_tenant_count = serializers.IntegerField(help_text="从本租户协同数据的租户数量")
-    shared_to_others_department_count = serializers.IntegerField(help_text="本租户分享给其他租户的部门数量")
-    shared_to_others_user_count = serializers.IntegerField(help_text="本租户分享给其他租户的用户数量")
+    shared_to_department_count = serializers.IntegerField(help_text="本租户分享给其他租户的部门数量")
+    shared_to_user_count = serializers.IntegerField(help_text="本租户分享给其他租户的用户数量")
 
 
 class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
