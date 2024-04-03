@@ -1,0 +1,152 @@
+<template>
+  <div class="data-source-card" v-bkloading="{ loading: isLoading, zIndex: 9 }">
+    <DataSourceCard
+      v-if="!isSuccess"
+      :plugins="currentPlugins"
+      @handleCollapse="handleCollapse">
+      <template #right>
+        <bk-button
+          class="min-w-[64px]"
+          hover-theme="primary"
+          @click="handleReset"
+        >
+          {{ $t('重置') }}
+        </bk-button>
+      </template>
+      <template #content v-if="showContent">
+        <div class="steps-wrapper">
+          <bk-steps
+            ext-cls="steps"
+            :cur-step="curStep"
+            :steps="typeSteps?.[currentType]"
+          />
+        </div>
+        <div>
+          <Http
+            v-if="currentType === 'general'"
+            :cur-step="curStep"
+            :data-source-id="dataSourceId"
+            :is-reset="isReset"
+            @updateCurStep="updateCurStep"
+            @updateSuccess="updateSuccess" />
+        </div>
+      </template>
+    </DataSourceCard>
+    <Success v-else :title="successText" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted, reactive, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+
+import Http from './Http.vue';
+import Success from './Success.vue';
+
+import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
+import {
+  getDataSourcePlugins,
+} from '@/http';
+import { t } from '@/language/index';
+import { useMainViewStore } from '@/store';
+
+const store = useMainViewStore();
+store.customBreadcrumbs = false;
+
+const route = useRoute();
+
+const currentType = ref('');
+// 获取数据源类型
+watch(() => route.query.type, (val: string) => {
+  if (val) {
+    currentType.value = val;
+  }
+}, {
+  deep: true,
+  immediate: true,
+});
+
+const dataSourceId = ref(null);
+// 获取数据源类型
+watch(() => route.query.id, (val: number) => {
+  if (val) {
+    dataSourceId.value = val;
+  }
+}, {
+  deep: true,
+  immediate: true,
+});
+
+const currentPlugins = ref([]);
+const isLoading = ref(false);
+
+const curStep = ref(1);
+const typeSteps = reactive({
+  general: [
+    { title: t('服务配置') },
+    { title: t('字段设置') },
+  ],
+});
+
+onMounted(() => {
+  initDataSourcePlugins();
+});
+
+const initDataSourcePlugins = () => {
+  isLoading.value = true;
+  getDataSourcePlugins().then((res) => {
+    res.data?.forEach((item) => {
+      if (item.id === currentType.value) {
+        currentPlugins.value = [item];
+      }
+    });
+    isLoading.value = false;
+  })
+    .catch(() => {
+      isLoading.value = false;
+    });
+};
+
+// 切换步骤
+const updateCurStep = (value: number) => {
+  curStep.value = value;
+};
+
+// 切换展示状态
+const showContent = ref(true);
+const handleCollapse = () => {
+  showContent.value = !showContent.value;
+};
+
+// 数据源创建、更新
+const successText = ref('新建企业微信数据源成功');
+const isSuccess = ref(false);
+const updateSuccess = (value: string) => {
+  successText.value = `${value}${currentPlugins.value[0].name}成功`;
+  isSuccess.value = true;
+};
+
+const isReset = ref(false);
+const handleReset = (e) => {
+  e.cancelBubble = true;
+  isReset.value = !isReset.value;
+};
+</script>
+
+<style lang="less" scoped>
+.data-source-card {
+  padding: 16px 24px;
+
+  .steps-wrapper {
+    padding: 12px 0;
+    text-align: center;
+    background: #FAFBFD;
+    box-shadow: 0 1px 0 0 #F0F1F5;
+
+    .steps {
+      width: 350px;
+      margin: auto;
+    }
+  }
+}
+</style>

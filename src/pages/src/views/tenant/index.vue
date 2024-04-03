@@ -106,10 +106,9 @@
                       v-bk-tooltips="{
                         content: $t('需要先停用租户才能删除'),
                         disabled: row.status !== 'enabled',
-                      }">
-                      <span
-                        :class="{ 'delete-disable': row.status === 'enabled' }"
-                        @click="handleClickDelete(row)">
+                      }"
+                      @click="handleClickDelete(row)">
+                      <span :class="{ 'delete-disable': row.status === 'enabled' }">
                         {{ $t('删除') }}
                       </span>
                     </li>
@@ -226,7 +225,7 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
-import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, h, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
 import ViewDetails from './ViewDetails.vue';
@@ -240,6 +239,7 @@ import {
   getBuiltinManager,
   getTenantDetails,
   getTenants,
+  getTenantsRelatedResource,
   putBuiltinManager,
   putTenantsStatus,
 } from '@/http';
@@ -489,18 +489,51 @@ const handleClickDisable = (item) => {
 };
 
 // 删除租户
-const handleClickDelete = (item) => {
+const handleClickDelete = async (item) => {
   if (item.status === 'enabled') return;
-  InfoBox({
-    width: 400,
-    title: t('确定删除当前公司？'),
-    subTitle: t('删除后，用户将无法看到该租户信息'),
-    onConfirm: async () => {
-      await deleteTenants(item.id);
-      Message({ theme: 'success', message: t('租户删除成功') });
-      fetchTenantsList();
-    },
-  });
+  try {
+    const res = await getTenantsRelatedResource(item.id);
+    InfoBox({
+      width: 480,
+      title: t('确定删除当前租户？'),
+      subTitle: h('div', {
+        style: {
+          textAlign: 'left',
+          lineHeight: '24px',
+        },
+      }, [
+        h('p', {
+          style: {
+            marginBottom: '12px',
+          },
+        }, t('删除租户将导致以下数据被删除:')),
+        h('p', [
+          t('1.本租户下的数据：共计'),
+          `${res.data?.own_department_count}个组织，`,
+          `${res.data?.own_user_count}个用户。`,
+        ]),
+        h('p', [
+          t('2.本租户分享给其他租户的数据：涉及'),
+          `${res.data?.shared_to_tenant_count}个租户，共计`,
+          `${res.data?.shared_to_department_count}个组织，`,
+          `${res.data?.shared_to_user_count}个用户。`,
+        ]),
+        h('p', [
+          t('3.其他租户分享至本租户的数据：涉及'),
+          `${res.data?.shared_from_tenant_count}个租户，共计`,
+          `${res.data?.shared_from_department_count}个组织，`,
+          `${res.data?.shared_from_user_count}个用户。`,
+        ]),
+      ]),
+      onConfirm: async () => {
+        await deleteTenants(item.id);
+        Message({ theme: 'success', message: t('租户删除成功') });
+        fetchTenantsList();
+      },
+    });
+  } catch (e) {
+    console.warn(e);
+  }
 };
 
 // 重置管理员密码

@@ -87,7 +87,7 @@ export default createRouter({
             navName: t('数据源配置'),
             activeMenu: 'dataSource',
           },
-          component: () => import('@/views/setting/data-source/index.vue'),
+          component: () => import('@/views/setting/data-source/ConfigList.vue'),
         },
         {
           path: 'new',
@@ -97,7 +97,7 @@ export default createRouter({
             navName: t('数据源配置'),
             activeMenu: 'dataSource',
           },
-          component: () => import('@/views/setting/data-source/NewConfig.vue'),
+          component: () => import('@/views/setting/data-source/NewDataSource.vue'),
         },
         {
           path: 'collaboration',

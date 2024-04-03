@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Message } from 'bkui-vue';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import HeaderBox from './views/Header.vue';
@@ -18,8 +18,6 @@ const showName = ref(null);
 watch(() => route.name, (val) => {
   if (val === 'password' || val === 'resetPassword') {
     showName.value = val;
-  } else {
-    initUser();
   }
 });
 
@@ -28,7 +26,8 @@ const isLoading = ref(false);
 // 获取用户数据
 const user = useUser();
 
-const initUser = async () => {
+onMounted(() => {
+  if (showName.value) return;
   isLoading.value = true;
   currentUser()
     .then((res) => {
@@ -40,7 +39,7 @@ const initUser = async () => {
     .finally(() => {
       isLoading.value = false;
     });
-};
+});
 </script>
 
 <template>
