@@ -16,13 +16,12 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apis.web.data_source_organization.serializers import validate_user_extras
 from bkuser.apis.web.tenant_organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
 from bkuser.biz.tenant import TenantUserHandler
-from bkuser.biz.validators import validate_logo, validate_user_new_password
+from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code
