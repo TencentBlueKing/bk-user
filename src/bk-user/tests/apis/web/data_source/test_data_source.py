@@ -17,6 +17,8 @@ from bkuser.plugins.local.constants import PasswordGenerateMethod
 from django.urls import reverse
 from rest_framework import status
 
+from tests.test_utils.tenant import sync_users_depts_to_tenant
+
 pytestmark = pytest.mark.django_db
 
 
@@ -363,9 +365,23 @@ class TestDataSourceDestroyApi:
 
 
 class TestDataSourceRelatedResourceStatsApi:
-    def test_list(self, api_client, data_source):
-        resp = api_client.get(reverse("data_source.related_resource_stats", kwargs={"id": data_source.id}))
+    def test_list(self, api_client, full_local_data_source, default_tenant):
+        sync_users_depts_to_tenant(default_tenant, full_local_data_source)
+
+        resp = api_client.get(
+            reverse(
+                "data_source.related_resource_stats",
+                kwargs={"id": full_local_data_source.id},
+            )
+        )
         assert resp.status_code == status.HTTP_200_OK
+        assert resp.data == {
+            "own_department_count": 9,
+            "own_user_count": 11,
+            "shared_to_tenant_count": 1,
+            "shared_to_department_count": 9,
+            "shared_to_user_count": 11,
+        }
 
 
 class TestDataSourceSyncRecordApi:

@@ -14,7 +14,11 @@ from bkuser.apis.web.data_source import views
 
 urlpatterns = [
     # 数据源插件列表
-    path("plugins/", views.DataSourcePluginListApi.as_view(), name="data_source_plugin.list"),
+    path(
+        "plugins/",
+        views.DataSourcePluginListApi.as_view(),
+        name="data_source_plugin.list",
+    ),
     # 数据源插件默认配置
     path(
         "plugins/<str:id>/default-config/",
@@ -22,9 +26,17 @@ urlpatterns = [
         name="data_source_plugin.default_config",
     ),
     # 数据源创建/获取列表
-    path("", views.DataSourceListCreateApi.as_view(), name="data_source.list_create"),
+    path(
+        "",
+        views.DataSourceListCreateApi.as_view(),
+        name="data_source.list_create",
+    ),
     # 数据源随机密码获取
-    path("random-passwords/", views.DataSourceRandomPasswordApi.as_view(), name="data_source.random_passwords"),
+    path(
+        "random-passwords/",
+        views.DataSourceRandomPasswordApi.as_view(),
+        name="data_source.random_passwords",
+    ),
     # 数据源连通性测试
     path(
         "test-connection/",
@@ -44,7 +56,11 @@ urlpatterns = [
         name="data_source.sync_record.retrieve",
     ),
     # 数据源更新/获取/删除
-    path("<int:id>/", views.DataSourceRetrieveUpdateDestroyApi.as_view(), name="data_source.retrieve_update_destroy"),
+    path(
+        "<int:id>/",
+        views.DataSourceRetrieveUpdateDestroyApi.as_view(),
+        name="data_source.retrieve_update_destroy",
+    ),
     # 数据源关联资源查询
     path(
         "<int:id>/related-resource-statistics/",
@@ -58,9 +74,21 @@ urlpatterns = [
         name="data_source.download_template",
     ),
     # 导出数据源用户数据
-    path("<int:id>/operations/export/", views.DataSourceExportApi.as_view(), name="data_source.export_data"),
+    path(
+        "<int:id>/operations/export/",
+        views.DataSourceExportApi.as_view(),
+        name="data_source.export_data",
+    ),
     # 数据源导入
-    path("<int:id>/operations/import/", views.DataSourceImportApi.as_view(), name="data_source.import_from_excel"),
+    path(
+        "<int:id>/operations/import/",
+        views.DataSourceImportApi.as_view(),
+        name="data_source.import_from_excel",
+    ),
     # 手动触发数据源同步
-    path("<int:id>/operations/sync/", views.DataSourceSyncApi.as_view(), name="data_source.sync"),
+    path(
+        "<int:id>/operations/sync/",
+        views.DataSourceSyncApi.as_view(),
+        name="data_source.sync",
+    ),
 ]

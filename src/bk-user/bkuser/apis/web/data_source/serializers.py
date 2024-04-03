@@ -196,11 +196,11 @@ class DataSourceUpdateInputSLZ(serializers.Serializer):
 
 
 class DataSourceRelatedResourceStatsOutputSLZ(serializers.Serializer):
-    data_source_user_count = serializers.IntegerField(help_text="数据源用户数量")
-    data_source_department_count = serializers.IntegerField(help_text="数据源部门数量")
-    tenant_count = serializers.IntegerField(help_text="关联租户数量（含协同）")
-    tenant_user_count = serializers.IntegerField(help_text="租户用户数量（含协同）")
-    tenant_department_count = serializers.IntegerField(help_text="租户部门数量（含协同）")
+    own_department_count = serializers.IntegerField(help_text="本租户自有的部门数量")
+    own_user_count = serializers.IntegerField(help_text="本租户自有的用户数量")
+    shared_to_tenant_count = serializers.IntegerField(help_text="从本租户协同数据的租户数量")
+    shared_to_department_count = serializers.IntegerField(help_text="本租户分享给其他租户的部门数量")
+    shared_to_user_count = serializers.IntegerField(help_text="本租户分享给其他租户的用户数量")
 
 
 class RawDataSourceUserSLZ(serializers.Serializer):

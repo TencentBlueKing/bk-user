@@ -11,7 +11,6 @@ specific language governing permissions and limitations under the License.
 from typing import Tuple
 
 from django.db import transaction
-from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -357,19 +356,45 @@ class TenantRelatedResourceStatsApi(generics.RetrieveAPIView):
         tenant = self.get_object()
         data_sources = DataSource.objects.filter(owner_tenant_id=tenant.id)
 
-        # TODO: 需要调整为虚拟账号数量、实名账号&部门数量、协同账号&部门数量（用户不关心数据源账号？）
+        # 本租户自有的部门数量，即数据源部门数量，用户数量同理（会一比一同步成租户部门/用户）
+        own_department_count = DataSourceDepartment.objects.filter(data_source__in=data_sources).count()
+        own_user_count = DataSourceUser.objects.filter(data_source__in=data_sources).count()
+
+        # 其他租户分享给本租户的：本租户的租户部门/用户，但是数据源不属于本租户的
+        shared_to_departments = TenantDepartment.objects.filter(
+            tenant=tenant,
+        ).exclude(data_source__in=data_sources)
+        shared_from_users = TenantUser.objects.filter(
+            tenant=tenant,
+        ).exclude(data_source__in=data_sources)
+        shared_from_tenant_count = len(
+            set(shared_to_departments.values_list("tenant_id", flat=True))
+            | set(shared_from_users.values_list("tenant_id", flat=True))
+        )
+
+        # 本租户分享给其他租户的：任意不属于本租户的租户部门/用户，但是数据源是本租户的
+        shared_to_departments = TenantDepartment.objects.filter(
+            data_sources__in=data_sources,
+        ).exclude(tenant=tenant)
+        shared_to_users = TenantUser.objects.filter(
+            data_sources__in=data_sources,
+        ).exclude(tenant=tenant)
+        shared_to_tenant_count = len(
+            set(shared_to_departments.values_list("tenant_id", flat=True))
+            | set(shared_to_users.values_list("tenant_id", flat=True))
+        )
+
         resources = {
-            "data_source_count": data_sources.count(),
-            "data_source_user_count": DataSourceUser.objects.filter(data_source__in=data_sources).count(),
-            "data_source_department_count": DataSourceDepartment.objects.filter(data_source__in=data_sources).count(),
-            # TODO (su) 支持协同后，可能关联到多个租户
-            "tenant_count": 1,
-            # 租户用户 / 部门数量 = 本租户数据源同步创建的（含分享给其他租户的） + 其他租户协同创建的（仅限于本租户）
-            "tenant_user_count": TenantUser.objects.filter(
-                Q(data_source__in=data_sources) | Q(tenant=tenant),
-            ).count(),
-            "tenant_department_count": TenantDepartment.objects.filter(
-                Q(data_source__in=data_sources) | Q(tenant=tenant),
-            ).count(),
+            # own
+            "own_department_count": own_department_count,
+            "own_user_count": own_user_count,
+            # shared from
+            "shared_from_tenant_count": shared_from_tenant_count,
+            "shared_from_department_count": shared_to_departments.count(),
+            "shared_from_user_count": shared_from_users.count(),
+            # shared to
+            "shared_to_tenant_count": shared_to_tenant_count,
+            "shared_to_department_count": shared_to_departments.count(),
+            "shared_to_user_count": shared_to_users.count(),
         }
         return Response(TenantRelatedResourceStatsOutputSLZ(resources).data)

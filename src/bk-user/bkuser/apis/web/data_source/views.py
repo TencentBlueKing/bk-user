@@ -268,13 +268,31 @@ class DataSourceRelatedResourceStatsApi(CurrentUserTenantDataSourceMixin, generi
     )
     def get(self, request, *args, **kwargs):
         data_source = self.get_object()
+
+        # 本租户自有的部门数量，即数据源部门数量，用户数量同理（会一比一同步成租户部门/用户）
+        own_department_count = DataSourceDepartment.objects.filter(data_source=data_source).count()
+        own_user_count = DataSourceUser.objects.filter(data_source=data_source).count()
+
+        # 本租户分享给其他租户的：任意不属于本租户的租户部门/用户，但是数据源是本租户的
+        shared_to_departments = TenantDepartment.objects.filter(
+            data_source=data_source,
+        ).exclude(tenant_id=data_source.owner_tenant_id)
+        shared_to_users = TenantUser.objects.filter(
+            data_source=data_source,
+        ).exclude(tenant_id=data_source.owner_tenant_id)
+        shared_to_tenant_count = len(
+            set(shared_to_departments.values_list("tenant_id", flat=True))
+            | set(shared_to_users.values_list("tenant_id", flat=True))
+        )
+
         resources = {
-            "data_source_user_count": DataSourceUser.objects.filter(data_source=data_source).count(),
-            "data_source_department_count": DataSourceDepartment.objects.filter(data_source=data_source).count(),
-            # TODO (su) 支持协同后，一个数据源可能关联到多个租户
-            "tenant_count": 1,
-            "tenant_user_count": TenantUser.objects.filter(data_source=data_source).count(),
-            "tenant_department_count": TenantDepartment.objects.filter(data_source=data_source).count(),
+            # own
+            "own_department_count": own_department_count,
+            "own_user_count": own_user_count,
+            # shared to
+            "shared_to_tenant_count": shared_to_tenant_count,
+            "shared_to_department_count": shared_to_departments.count(),
+            "shared_to_user_count": shared_to_users.count(),
         }
         return Response(DataSourceRelatedResourceStatsOutputSLZ(resources).data)
 
