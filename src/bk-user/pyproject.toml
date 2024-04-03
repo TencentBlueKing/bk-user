@@ -206,7 +206,7 @@ type = "independence"
 modules = [
     "bkuser.apis.web.basic",
     "bkuser.apis.web.data_source",
-    "bkuser.apis.web.organization",
+    "bkuser.apis.web.tenant_organization",
     "bkuser.apis.web.platform_management",
 ]
 ignore_imports = [
