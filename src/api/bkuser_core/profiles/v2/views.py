@@ -46,7 +46,6 @@ from bkuser_core.profiles.utils import (
     remove_sensitive_fields_for_profile,
 )
 from bkuser_core.profiles.v2.filters import ProfileSearchFilter
-from bkuser_core.profiles.validators import validate_phone_with_country_code
 from bkuser_core.user_settings.exceptions import SettingHasBeenDisabledError
 from bkuser_core.user_settings.loader import ConfigProvider
 from bkuser_global.utils import force_str_2_bool
@@ -289,14 +288,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
             serializer.validated_data["country_code"] = settings.DEFAULT_COUNTRY_CODE
             serializer.validated_data["iso_code"] = settings.DEFAULT_IOS_CODE
 
-        # 校验手机号
-        try:
-            validate_phone_with_country_code(
-                serializer.validated_data["telephone"], serializer.validated_data["country_code"]
-            )
-        except ValueError as e:
-            raise error_codes.ABNORMAL_TELEPHONE.f(e)
-
         try:
             instance = serializer.save()
         except Exception:
@@ -380,12 +371,6 @@ class ProfileViewSet(AdvancedModelViewSet, AdvancedListAPIView):
         except ValueError:
             instance.country_code = settings.DEFAULT_COUNTRY_CODE
             instance.iso_code = settings.DEFAULT_IOS_CODE
-
-        # 校验手机号
-        try:
-            validate_phone_with_country_code(instance.telepone, instance.country_code)
-        except ValueError as e:
-            raise error_codes.ABNORMAL_TELEPHONE.f(e)
 
         try:
             instance.save()

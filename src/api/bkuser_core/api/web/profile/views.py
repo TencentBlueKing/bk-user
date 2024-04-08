@@ -48,7 +48,6 @@ from bkuser_core.profiles.utils import (
     parse_username_domain,
     should_check_old_password,
 )
-from bkuser_core.profiles.validators import validate_phone_with_country_code
 from bkuser_core.user_settings.constants import SettingsEnableNamespaces
 from bkuser_core.user_settings.models import Setting, SettingMeta
 
@@ -191,12 +190,6 @@ class ProfileRetrieveUpdateDeleteApi(generics.RetrieveUpdateDestroyAPIView):
         except ValueError:
             instance.country_code = settings.DEFAULT_COUNTRY_CODE
             instance.iso_code = settings.DEFAULT_IOS_CODE
-
-        # 校验手机号
-        try:
-            validate_phone_with_country_code(instance.telephone, instance.country_code)
-        except ValueError as e:
-            raise error_codes.ABNORMAL_TELEPHONE.f(e)
 
         # 过期状态，续期后需要调整为正常状态
         # Note: 前提是基于EXPIRED状态一定是从NORMAL状态变更来的
@@ -374,12 +367,6 @@ class ProfileCreateApi(generics.CreateAPIView):
         except (ValueError, CountryISOCodeNotMatch):
             slz.validated_data["country_code"] = settings.DEFAULT_COUNTRY_CODE
             slz.validated_data["iso_code"] = settings.DEFAULT_IOS_CODE
-
-        # 校验手机号
-        try:
-            validate_phone_with_country_code(slz.validated_data["telephone"], slz.validated_data["country_code"])
-        except ValueError as e:
-            raise error_codes.ABNORMAL_TELEPHONE.f(e)
 
         try:
             instance = slz.save()

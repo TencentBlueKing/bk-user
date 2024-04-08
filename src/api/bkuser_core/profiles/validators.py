@@ -13,9 +13,7 @@ import logging
 import re
 from typing import Any, ClassVar, Dict, Tuple, Type
 
-import phonenumbers
 from django.utils.translation import gettext_lazy as _
-from phonenumbers import UNKNOWN_REGION, NumberParseException, region_code_for_country_code
 from rest_framework.exceptions import ValidationError
 from typing_extensions import Protocol
 
@@ -25,7 +23,6 @@ USERNAME_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9._-]){0,31}"
 DOMAIN_REGEX = r"^(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
 # for part domain which is not start with
 DOMAIN_PART_REGEX = r"(\d|[a-zA-Z])([a-zA-Z0-9-.]){0,15}"
-TELEPHONE_REGEX = r'^\d+$'
 
 
 def validate_username(value):
@@ -234,34 +231,3 @@ BLACK_FIELD_NAMES = ["extras"]
 def validate_dynamic_field_name(value: str):
     if value in BLACK_FIELD_NAMES:
         raise ValidationError(_("抱歉，{} 是系统字段保留字，请修改").format(value))
-
-
-def validate_phone_with_country_code(telephone: str, country_code: str) -> None:
-    """校验 phone 与 country_code 是否匹配且合法
-
-    :raise ValueError: country_code 或 phone 不合法
-    """
-
-    try:
-        region = region_code_for_country_code(int(country_code))
-    except Exception:
-        raise ValueError(f"parse phone country code [{country_code}] to region failed!")
-
-    # 解析出未知区号
-    if region == UNKNOWN_REGION:
-        raise ValueError(f"unknown phone country code: {country_code}")
-
-    # 手机号通常不会包含字母
-    if not re.fullmatch(re.compile(TELEPHONE_REGEX), telephone):
-        raise ValueError(f"error telephone format: {telephone}")
-
-    # 特殊检查：中国手机号强制要求必须是 11 位
-    if region == "CN" and len(telephone) != 11:  # noqa: PLR2004
-        raise ValueError(f"chinese phone number must be 11 digits, {telephone} is invalid")
-
-    try:
-        phonenumbers.parse(telephone, region)
-    except NumberParseException:
-        raise ValueError(
-            f"parse phone number [{telephone}] with country code [{country_code}] region [{region}] failed!"
-        )

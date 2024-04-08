@@ -191,7 +191,7 @@ export default {
       this.$bkInfo({
         title: this.$t('确认退出登录_'),
         confirmFn: () => {
-          window.location.href = `${window.login_url}?c_url=${window.location.href}`;
+          window.location.href = `${window.login_url}?c_url=${encodeURIComponent(window.location.href)}`;
         },
       });
     },

@@ -179,7 +179,6 @@ error_codes.add_codes(
         # 用户字段
         ErrorCode("UNKNOWN_FIELD", _("未知自定义字段")),
         ErrorCode("MISS_REQUIRED_FIELD", _("未填写必填字段")),
-        ErrorCode("ABNORMAL_TELEPHONE", _("异常手机号码")),
         ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
     ]
 )
