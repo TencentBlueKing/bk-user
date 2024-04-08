@@ -374,10 +374,10 @@ class TenantRelatedResourceStatsApi(generics.RetrieveAPIView):
 
         # 本租户分享给其他租户的：任意不属于本租户的租户部门/用户，但是数据源是本租户的
         shared_to_departments = TenantDepartment.objects.filter(
-            data_sources__in=data_sources,
+            data_source__in=data_sources,
         ).exclude(tenant=tenant)
         shared_to_users = TenantUser.objects.filter(
-            data_sources__in=data_sources,
+            data_source__in=data_sources,
         ).exclude(tenant=tenant)
         shared_to_tenant_count = len(
             set(shared_to_departments.values_list("tenant_id", flat=True))
