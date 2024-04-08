@@ -31,6 +31,15 @@ export const useValidate = () => {
     trigger: 'blur',
   };
 
+  const emailNotRequired = {
+    validator: (value: string) => {
+      const emailReg = /^\S+@\S+\.\S+$/;
+      return value === '' || emailReg.test(value);
+    },
+    message: t('请输入正确的邮箱地址'),
+    trigger: 'blur',
+  };
+
   const phone = {
     validator: (value: string) => /^1[3-9]\d{9}$/.test(value),
     message: t('请输入正确的手机号码'),
@@ -98,6 +107,7 @@ export const useValidate = () => {
     id,
     userName,
     email,
+    emailNotRequired,
     phone,
     fieldsDisplayName,
     fieldsName,

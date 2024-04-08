@@ -16,47 +16,9 @@ export default createRouter({
       component: () => import('@/views/organization/index.vue'),
     },
     {
-      path: '/auth-source',
-      name: 'authSource',
-      meta: {
-        navName: t('认证源管理'),
-      },
-      component: () => import('@/views/auth-source/index.vue'),
-      children: [
-        {
-          path: '',
-          name: 'authSourceList',
-          meta: {
-            routeParentName: 'authSource',
-            navName: t('认证源管理'),
-          },
-          component: () => import('@/views/auth-source/List.vue'),
-        },
-        {
-          path: 'new',
-          name: 'newAuthSource',
-          meta: {
-            routeParentName: 'authSource',
-            navName: t('新建认证源'),
-          },
-          component: () => import('@/views/auth-source/new-data/index.vue'),
-        },
-        {
-          path: 'edit/:type/:id',
-          name: 'editAuthSource',
-          meta: {
-            routeParentName: 'authSource',
-            navName: t('编辑认证源'),
-            showBack: true,
-          },
-          component: () => import('@/views/auth-source/edit-data/index.vue'),
-        },
-      ],
-    },
-    {
-      path: '/audit',
-      name: 'audit',
-      component: () => import('@/views/audit/index.vue'),
+      path: '/virtual-account',
+      name: 'virtual-account',
+      component: () => import('@/views/virtual-account/index.vue'),
     },
     {
       path: '/setting',

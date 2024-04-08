@@ -20,7 +20,7 @@
         <ExclamationCircleShape class="error-icon" />
       </bk-popover>
       <bk-popover
-        v-if="telError && !data.phone"
+        v-if="telError && !data.phone && required"
         :content="$t('必填项')"
         placement="top"
       >
@@ -31,7 +31,7 @@
       <p class="error-text" v-show="telError && data.phone">
         {{ $t('请填写正确的手机号') }}
       </p>
-      <p class="error-text" v-show="telError && !data.phone">
+      <p class="error-text" v-show="telError && !data.phone && required">
         {{ $t('必填项') }}
       </p>
     </template>
@@ -70,6 +70,10 @@ const props = defineProps({
   inputStyle: {
     type: Boolean,
     default: false,
+  },
+  required: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -143,7 +147,10 @@ const handleInitError = () => {
 };
 
 const verifyInput = () => {
-  if (data.value.phone === '') {
+  if (!props.required && data.value.phone === '') {
+    return;
+  }
+  if (data.value.phone === '' && props.required) {
     return emit('changeTelError', true, data.value.phone);
   }
   const validation = area.value === 'cn'

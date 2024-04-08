@@ -6,3 +6,4 @@ export * from './personalCenterFiles';
 export * from './settingFiles';
 export * from './tenantsFiles';
 export * from './resetPasswordFiles';
+export * from './virtualAccount';
