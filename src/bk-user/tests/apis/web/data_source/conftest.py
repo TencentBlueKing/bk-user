@@ -17,6 +17,7 @@ from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import SyncTaskStatus, SyncTaskTrigger
 from bkuser.apps.sync.models import DataSourceSyncTask
 from bkuser.plugins.constants import DataSourcePluginEnum
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 pytestmark = pytest.mark.django_db
 
@@ -29,7 +30,7 @@ def data_source(random_tenant, local_ds_plugin_cfg) -> DataSource:
         owner_tenant_id=random_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin_id=DataSourcePluginEnum.LOCAL,
-        defaults={"plugin_config": local_ds_plugin_cfg},
+        defaults={"plugin_config": LocalDataSourcePluginConfig(**local_ds_plugin_cfg)},
     )
     return ds
 
