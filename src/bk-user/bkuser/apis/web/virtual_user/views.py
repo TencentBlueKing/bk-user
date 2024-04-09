@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -21,6 +21,7 @@ from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import TenantUser
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 from .mixins import CurrentTenantVirtualDataSource
 from .serializers import (
@@ -38,7 +39,7 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
 
     serializer_class = VirtualUserListOutputSLZ
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[TenantUser]:
         slz = VirtualUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -99,13 +100,15 @@ class VirtualUserListCreateApi(CurrentTenantVirtualDataSource, generics.ListCrea
         return Response(status=status.HTTP_201_CREATED, data=VirtualUserCreateOutputSLZ(tenant_user).data)
 
 
-class VirtualUserRetrieveUpdateDestroyApi(CurrentTenantVirtualDataSource, generics.RetrieveUpdateDestroyAPIView):
+class VirtualUserRetrieveUpdateDestroyApi(
+    CurrentTenantVirtualDataSource, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
+):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     lookup_url_kwarg = "id"
     serializer_class = VirtualUserRetrieveOutputSLZ
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[TenantUser]:
         # 过滤当前租户的虚拟用户
         return TenantUser.objects.filter(
             tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.VIRTUAL
