@@ -35,20 +35,24 @@ class IdpPlugin(models.Model):
     logo = models.TextField("Logo", null=True, blank=True, default="")
 
 
-class IdpManager(models.Manager):
-    """认证源管理器类"""
+class IdpQuerySet(models.QuerySet):
+    """认证源 QuerySet 类"""
 
     @transaction.atomic()
-    def create(self, *args, **kwargs):
+    def create(self, **kwargs):
         if "plugin_config" not in kwargs:
-            return super().create(*args, **kwargs)
+            return super().create(**kwargs)
 
         plugin_cfg = kwargs.pop("plugin_config")
         assert isinstance(plugin_cfg, BasePluginConfig)
 
-        idp: Idp = super().create(*args, **kwargs)
+        idp: Idp = super().create(**kwargs)
         idp.set_plugin_cfg(plugin_cfg)
         return idp
+
+
+# 认证源管理器类
+IdpManager = models.Manager.from_queryset(IdpQuerySet)
 
 
 class Idp(AuditedModel):
