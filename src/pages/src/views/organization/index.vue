@@ -634,7 +634,7 @@ export default {
         this.currentParam.item.isNewDeparment = false;
         return;
       }
-
+      this.isEmptyDepartment = false;
       try {
         this.basicLoading = true;
         let id = '';
