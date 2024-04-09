@@ -65,7 +65,7 @@
                   v-model="userSettingData.leader"
                   :list="rtxList"
                   enable-scroll-load
-                  :scroll-loading="showLeaderLoading"
+                  :loading="showLeaderLoading"
                   :remote-method="searchRtxByName"
                   @toggle="handleBranchToggle"
                   :scroll-height="188"
