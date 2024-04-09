@@ -11,7 +11,7 @@
   <div data-test-id="profileInfo">
     <bk-form
       :model="profileInfoData"
-      :rules="formRules"
+      :rules="rules"
       ref="validateForm"
       form-type="vertical"
       v-if="profileInfoList.length">
@@ -110,19 +110,6 @@ export default {
     accountValidDaysList() {
       const date = (this.expireDate && this.expireDate.account_expiration_date) || null;
       return expireDays(date, this.$store.state.passwordValidDaysList);
-    },
-    formRules() {
-      const rules = JSON.parse(JSON.stringify(this.rules));
-      this.profileInfoList.forEach((item) => {
-        if (!rules[item.key]) {
-          rules[item.key] = [{
-            required: true,
-            message: this.$t('必填项'),
-            trigger: 'blur',
-          }];
-        }
-      });
-      return rules;
     },
   },
   mounted() {
