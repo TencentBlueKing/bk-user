@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.urls import include, path
 
 urlpatterns = [
@@ -19,6 +20,8 @@ urlpatterns = [
     # ------------------------------------------ 面向租户管理员 --------------------------------------------
     # 租户本身 & 租户管理员
     path("tenant-info/", include("bkuser.apis.web.tenant_info.urls")),
+    # 虚拟账号管理
+    path("virtual-users/", include("bkuser.apis.web.virtual_user.urls")),
     # 租户组织架构
     path("tenant-organization/", include("bkuser.apis.web.tenant_organization.urls")),
     # 数据源 & 数据源用户/部门

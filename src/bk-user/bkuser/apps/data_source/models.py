@@ -36,20 +36,24 @@ class DataSourcePlugin(models.Model):
     logo = models.TextField("Logo", null=True, blank=True, default="")
 
 
-class DataSourceManager(models.Manager):
-    """数据源管理器类"""
+class DataSourceQuerySet(models.QuerySet):
+    """数据源 QuerySet 类"""
 
     @transaction.atomic()
-    def create(self, *args, **kwargs):
+    def create(self, **kwargs):
         if "plugin_config" not in kwargs:
-            return super().create(*args, **kwargs)
+            return super().create(**kwargs)
 
         plugin_cfg = kwargs.pop("plugin_config")
         assert isinstance(plugin_cfg, BasePluginConfig)
 
-        data_source: DataSource = super().create(*args, **kwargs)
+        data_source: DataSource = super().create(**kwargs)
         data_source.set_plugin_cfg(plugin_cfg)
         return data_source
+
+
+# 数据源管理器类
+DataSourceManager = models.Manager.from_queryset(DataSourceQuerySet)
 
 
 class DataSource(AuditedModel):
