@@ -256,7 +256,7 @@ export default {
       default: null,
     },
     currentCategoryId: {
-      type: Number,
+      type: [Number, String],
     },
   },
   data() {
