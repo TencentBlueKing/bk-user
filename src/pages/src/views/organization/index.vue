@@ -634,7 +634,7 @@ export default {
         this.currentParam.item.isNewDeparment = false;
         return;
       }
-
+      this.isEmptyDepartment = false;
       try {
         this.basicLoading = true;
         let id = '';
@@ -744,7 +744,7 @@ export default {
       this.isTableDataEmpty = false;
       if (!list.length) return this.handleClickEmpty();
       if (!this.searchFilterList.length) return;
-
+      this.paginationConfig.current = 1;
       this.basicLoading = true;
       const valueList = [`category_id=${this.currentCategoryId}&page=${this.paginationConfig.current}&page_size=${this.paginationConfig.limit}`];
 
