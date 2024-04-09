@@ -56,7 +56,7 @@ export const putDataSourceUserDetails = (params: PutDataSourceUserParams) => htt
 /**
  * 数据源列表
  */
-export const getDataSourceList = (keyword: string) => http.get(`/api/v1/web/data-sources/?keyword=${keyword}`);
+export const getDataSourceList = (params: { type: string }) => http.get('/api/v1/web/data-sources/', params);
 
 /**
  * 数据源插件列表
@@ -106,10 +106,7 @@ export const randomPasswords = (params: GeneratePasswordParams) => http.post('/a
 /**
  * 数据源更新记录
  */
-export const getSyncRecords = (params: SyncRecordsParams) => {
-  const { page, pageSize, status } = params;
-  return http.get(`/api/v1/web/data-sources/sync-records/?page=${page}&page_size=${pageSize}&status=${status}`);
-};
+export const getSyncRecords = (params: SyncRecordsParams) => http.get(`/api/v1/web/data-sources/${params.id}/sync-records/`, params);
 
 /**
  * 数据源更新日志
@@ -125,3 +122,13 @@ export const getOrganizationPaths = (id: string) => http.get(`/api/v1/web/data-s
  * 重置数据源用户密码
  */
 export const putUsersPassword = (params: ResetPasswordParams) => http.put(`/api/v1/web/data-sources/users/${params.id}/password/`, params);
+
+/**
+ * 重置数据源
+ */
+export const deleteDataSources = (id: string) => http.delete(`/api/v1/web/data-sources/${id}/`);
+
+/**
+ * 数据源关联资源信息
+ */
+export const getRelatedResource = (id: string) => http.get(`/api/v1/web/data-sources/${id}/related-resource-statistics/`);

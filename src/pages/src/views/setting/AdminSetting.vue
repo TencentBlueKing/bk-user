@@ -134,16 +134,20 @@ import Row from '@/components/layouts/row.vue';
 import MemberSelector from '@/components/MemberSelector.vue';
 import { useValidate } from '@/hooks';
 import {
+  deleteRealManagers,
   getBuiltinManager,
   getRealManagers,
   getRealUsers,
   patchBuiltinManager,
-  putBuiltinManagerPassword,
   postRealManagers,
-  deleteRealManagers,
+  putBuiltinManagerPassword,
   randomPasswords,
 } from '@/http';
 import { t } from '@/language/index';
+import { useMainViewStore } from '@/store';
+
+const store = useMainViewStore();
+store.customBreadcrumbs = false;
 
 const validate = useValidate();
 

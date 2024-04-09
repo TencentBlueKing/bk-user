@@ -77,3 +77,8 @@ export const deleteTenants = (id: string) => http.delete(`/api/v1/web/platform-m
  * 变更租户状态
  */
 export const putTenantsStatus = (id: string) => http.put(`/api/v1/web/platform-management/tenants/${id}/status/`);
+
+/**
+ * 租户关联资源信息
+ */
+export const getTenantsRelatedResource = (id: string) => http.get(`/api/v1/web/platform-management/tenants/${id}/related-resource-statistics/`);

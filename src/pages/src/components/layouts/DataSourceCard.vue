@@ -1,45 +1,114 @@
 <template>
   <div class="card-wrapper">
-    <div class="card-header">
-      <div class="card-header-right">
-        <i :class="list.logo" />
-        <div>
-          <p class="title">{{ list.name }}</p>
-          <p class="subtitle">{{ list.description }}</p>
+    <div class="mb-[12px]" v-for="(item, index) in plugins" :key="index">
+      <div
+        v-if="dataSource?.plugin_id && index === 0"
+        :class="['card-header', { 'hidden-card': dataSource.plugin_id !== item.id }]"
+        v-bk-tooltips="{
+          content: $t('若需切换数据源需要先对当前已选数据源进行重置操作'),
+          delay: 300,
+          offset: 0,
+          disabled: dataSource.plugin_id === item.id,
+        }"
+        @click="handleClick(item.id)">
+        <div class="card-header-right">
+          <img :src="item.logo" />
+          <div>
+            <p class="title">{{ item.name }}</p>
+            <p class="subtitle">{{ item.description }}</p>
+          </div>
         </div>
+        <slot name="right" v-if="dataSource.plugin_id === item.id"></slot>
       </div>
-      <slot name="header"></slot>
+      <template v-else>
+        <div
+          v-if="isShow"
+          :class="['card-header', { 'hidden-card': config }]"
+          v-bk-tooltips="{
+            content: $t('若需切换数据源需要先对当前已选数据源进行重置操作'),
+            delay: 300,
+            offset: 0,
+            disabled: !config,
+          }"
+          @click="handleClick(item.id)">
+          <div class="card-header-right">
+            <img :src="item.logo" />
+            <div>
+              <p class="title">{{ item.name }}</p>
+              <p class="subtitle">{{ item.description }}</p>
+            </div>
+          </div>
+          <slot v-if="index === 0" name="right"></slot>
+        </div>
+      </template>
+      <slot v-if="index === 0" name="content"></slot>
     </div>
-    <div :class="['card-content', { 'active-card-content': list.isShow }]">
-      <div class="step-bar">
-        <slot name="header"></slot>
-      </div>
-      <slot name="content"></slot>
-    </div>
+    <p
+      v-if="dataSource?.plugin_id"
+      class="view-type"
+      @click="toggleState">
+      {{ text }}
+      <AngleDownLine class="ml-[8px]" />
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps({
-  list: {
-    type: Object,
-    default: () => ({}),
+import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { AngleDownLine } from 'bkui-vue/lib/icon';
+import { computed, ref, watch } from 'vue';
+
+import { t } from '@/language/index';
+
+const emit = defineEmits(['handleCollapse']);
+
+const props = defineProps({
+  plugins: {
+    type: Array,
+    default: () => ([]),
   },
-  activeId: {
-    type: String,
-    default: '',
+  dataSource: {
+    type: Object,
+    default: () => {},
+  },
+  config: {
+    type: Boolean,
+    default: false,
+  },
+  showContent: {
+    type: Boolean,
+    default: false,
   },
 });
+
+const handleClick = (id: string) => {
+  if (props.config && props.dataSource.plugin_id === 'local') return;
+  if (!props.config || props.dataSource.plugin_id === id || id !== 'local') {
+    emit('handleCollapse', id);
+  }
+};
+
+const isShow = ref(true);
+
+const text = computed(() => (isShow.value ? t('收起') : t('查看数据源类型')));
+
+watch(() => props.showContent, (val) => {
+  isShow.value = !val;
+});
+
+const toggleState = () => {
+  isShow.value = !isShow.value;
+};
 </script>
 
 <style lang="less" scoped>
 .card-wrapper {
-  margin-bottom: 12px;
-  background: #fff;
-
   .card-header {
     display: flex;
-    padding: 16px 24px;
+    padding: 16px;
+    margin-bottom: 2px;
+    background: #fff;
+    border: 1px solid #fff;
     border-radius: 2px;
     box-shadow: 0 2px 4px 0 #1919290d;
     align-items: center;
@@ -47,16 +116,16 @@ defineProps({
 
     &:hover {
       cursor: pointer;
-      border: 1px solid #A3C5FD;
     }
 
     .card-header-right {
       display: flex;
       align-items: center;
 
-      i {
-        margin-right: 15px;
-        font-size: 18px;
+      img {
+        width: 24px;
+        height: 24px;
+        margin-right: 12px;
       }
 
       .title {
@@ -68,6 +137,16 @@ defineProps({
       .subtitle {
         line-height: 18px;
         color: #979BA5;
+      }
+    }
+
+    &.hidden-card {
+      img, .title, .subtitle {
+        color: #C4C6CC;
+      }
+
+      &:hover {
+        border: 1px solid transparent;
       }
     }
   }
@@ -87,6 +166,16 @@ defineProps({
 
   .active-card-content {
     display: block;
+  }
+
+  .view-type {
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+
+    span {
+      transform: rotate(180deg);
+    }
   }
 }
 </style>

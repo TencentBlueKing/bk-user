@@ -7,7 +7,7 @@
       placeholder="请输入"
       filterable
       multiple
-      showOnInit
+      show-on-init
       multiple-mode="tag"
       :remote-method="remoteFilter"
       enable-scroll-load

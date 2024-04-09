@@ -56,11 +56,10 @@ export interface DataSourceUsersParams {
  * 新建数据源参数
  */
 export interface NewDataSourceParams {
-  name: string,
   plugin_id: string,
   plugin_config: {},
-  field_mapping: [],
-  sync_config: {},
+  field_mapping?: [],
+  sync_config?: {},
 }
 
 /**
@@ -105,9 +104,11 @@ export interface TestConnectionParams {
  * 数据源更新记录参数
  */
 export interface SyncRecordsParams {
-  page: number,
-  pageSize: number,
-  status: string,
+  page?: number,
+  pageSize?: number,
+  data_source_id?: number,
+  status?: string,
+  id: string,
 }
 
 /**

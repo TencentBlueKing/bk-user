@@ -1,11 +1,6 @@
 <template>
   <div v-bkloading="{ loading: dataRecordConfig.loading, zIndex: 9 }" class="sync-records-wrapper user-scroll-y">
-    <span class="back-previous" @click="handleBack">
-      <i class="user-icon icon-arrow-left" />
-      {{ $t('返回上一页') }}
-    </span>
     <div class="data-record-content">
-      <p class="title">{{ $t('数据更新记录') }}</p>
       <bk-table
         class="user-info-table"
         :data="dataRecordConfig.list"
@@ -23,7 +18,7 @@
             @handleUpdate="getSyncRecordsList"
           />
         </template>
-        <bk-table-column prop="start_at" :label="$t('开始时间')" />
+        <bk-table-column prop="start_at" :label="$t('开始时间')" :width="160" />
         <bk-table-column prop="duration" :label="$t('耗时')">
           <template #default="{ row }">
             <span>{{ durationText(row.duration) }}</span>
@@ -39,7 +34,6 @@
             <span>{{ triggeMode[row.trigger] }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column prop="data_source_name" :label="$t('数据源')" />
         <bk-table-column prop="status" :label="$t('状态')" :filter="{ list: updateStatusFilters }">
           <template #default="{ row }">
             <img :src="dataRecordStatus[row.status]?.icon" class="account-status-icon" />
@@ -68,7 +62,7 @@
       ext-cls="log-wrapper"
       :is-show="logConfig.isShow"
       :title="$t('日志详情')"
-      :width="960"
+      :width="800"
       quick-close
       :before-close="beforeClose"
     >
@@ -102,10 +96,16 @@ import Empty from '@/components/Empty.vue';
 import SQLFile from '@/components/sql-file/SQLFile.vue';
 import { getSyncLogs, getSyncRecords } from '@/http';
 import { t } from '@/language/index';
-import router from '@/router/index';
 import { dataRecordStatus } from '@/utils';
 
 const route = useRoute();
+
+const props = defineProps({
+  dataSource: {
+    type: Object,
+    default: () => ({}),
+  },
+});
 
 const dataRecordConfig = reactive({
   loading: false,
@@ -154,6 +154,7 @@ const getSyncRecordsList = async () => {
       page: pagination.current,
       pageSize: pagination.limit,
       status: dataRecordConfig.status,
+      id: props.dataSource?.id,
     };
     const res = await getSyncRecords(params);
     dataRecordConfig.list = res.data.results;
@@ -193,12 +194,6 @@ const durationText = (value) => {
   }
 };
 
-const handleBack = () => {
-  pagination.current = 1;
-  pagination.limit = 10;
-  router.push({ name: 'local' });
-};
-
 const dataRecordFilter = ({ checked }) => {
   if (checked.length === 0) {
     pagination.current = 1;
@@ -236,6 +231,7 @@ const interval = setInterval(() => {
     page: pagination.current,
     pageSize: pagination.limit,
     status: dataRecordConfig.status,
+    id: props.dataSource?.id,
   };
   getSyncRecords(params).then((res) => {
     dataRecordConfig.list = res.data.results;
@@ -256,7 +252,7 @@ onBeforeUnmount(() => {
 .sync-records-wrapper {
   width: 100%;
   height: calc(100vh - 140px);
-  padding: 16px 24px;
+  padding: 28px 30px;
 
   :deep(.user-info-table) {
     .bk-table-head {
@@ -326,7 +322,6 @@ onBeforeUnmount(() => {
   }
 
   .data-record-content {
-    padding: 0 24px 24px;
     background: #fff;
 
     .title {
