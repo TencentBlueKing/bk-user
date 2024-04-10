@@ -48,7 +48,7 @@
       class="view-type"
       @click="toggleState">
       {{ text }}
-      <AngleDownLine class="ml-[8px]" />
+      <AngleDownLine :class="['ml-[8px]', { 'up-line': isShow }]" />
     </p>
   </div>
 </template>
@@ -88,7 +88,7 @@ const handleClick = (id: string) => {
   }
 };
 
-const isShow = ref(true);
+const isShow = ref(!props.dataSource?.id);
 
 const text = computed(() => (isShow.value ? t('收起') : t('查看数据源类型')));
 
@@ -173,7 +173,7 @@ const toggleState = () => {
     text-align: center;
     cursor: pointer;
 
-    span {
+    .up-line {
       transform: rotate(180deg);
     }
   }

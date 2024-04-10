@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-setting-wrapper">
+  <div class="admin-setting-wrapper" v-bkloading="{ loading: isLoading }">
     <Row class="admin-setting-item" :title="$t('管理员账号')">
       <LabelContent :label="$t('状态')">
         <bk-tag :theme="adminAccount.enable_account_password_login ? 'success' : ''">
@@ -156,16 +156,23 @@ const adminAccount = ref({
   enable_account_password_login: false,
 });
 const fixedAdminAccount = ref({});
+const isLoading = ref(false);
 
 onMounted(() => {
+  isLoading.value = true;
   initBuiltinManager();
   initRealManagers();
 });
 
 const initBuiltinManager = async () => {
-  const { data } = await getBuiltinManager();
-  adminAccount.value = data;
-  fixedAdminAccount.value = { ...data };
+  try {
+    const { data } = await getBuiltinManager();
+    adminAccount.value = data;
+    fixedAdminAccount.value = { ...data };
+  } catch (e) {
+    isLoading.value = false;
+    console.warn(e);
+  }
 };
 
 // 修改管理员账号状态
@@ -278,8 +285,12 @@ const params = reactive({
 });
 
 const initRealManagers = async () => {
-  const res = await getRealManagers();
-  selectedValue.value = res.data;
+  try {
+    const res = await getRealManagers();
+    selectedValue.value = res.data;
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const showSelectInput = ref(false);

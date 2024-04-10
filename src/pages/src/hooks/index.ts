@@ -7,3 +7,4 @@ export * from './useTableFields';
 export * from './useTableMaxHeight';
 export * from './useAdminPassword';
 export * from './useDataSource';
+export * from './useInfoBoxContent';

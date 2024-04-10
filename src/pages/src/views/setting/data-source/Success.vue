@@ -3,11 +3,6 @@
     <div class="content">
       <i class="user-icon icon-duihao-2" />
       <p class="title">{{ title }}</p>
-      <div>
-        <bk-tag class="align-middle">
-          <strong class="text-[18px]">{{ remainTime }}</strong> s
-        </bk-tag>{{ $t('后将自动跳转回查看组织架构') }}
-      </div>
       <div class="mt-[24px]">
         <bk-button
           class="mr-[8px]"
@@ -31,8 +26,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { defineProps } from 'vue';
 
+import { useDataSource } from '@/hooks';
 import router from '@/router';
 
 defineProps({
@@ -42,21 +38,12 @@ defineProps({
   },
 });
 
-const remainTime = ref(3);
-const timer = ref(0);
+const { handleOperationsSync } = useDataSource();
 
-onMounted(() => {
-  // 倒计时
-  timer.value = setInterval(() => {
-    remainTime.value = remainTime.value - 1;
-    if (remainTime.value === 0) {
-      clearInterval(timer.value);
-      router.push({ name: 'organization' });
-    }
-  }, 1000);
-});
-
-const handleSync = () => {};
+const handleSync = () => {
+  handleOperationsSync();
+  router.push({ name: 'dataSource' });
+};
 
 const loginConfig = () => {};
 

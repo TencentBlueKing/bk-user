@@ -1,3 +1,4 @@
+import { Message } from 'bkui-vue';
 import { onMounted, reactive, ref } from 'vue';
 
 import {
@@ -6,6 +7,7 @@ import {
   getDefaultConfig,
   getSyncRecords,
   newDataSource,
+  postOperationsSync,
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
@@ -20,6 +22,7 @@ export const useDataSource = () => {
     initDataSourcePlugins();
   });
 
+  // 初始化数据源插件
   const initDataSourcePlugins = () => {
     isLoading.value = true;
     getDataSourcePlugins().then((res) => {
@@ -31,6 +34,7 @@ export const useDataSource = () => {
       });
   };
 
+  // 获取当前数据源
   const initDataSourceList = () => {
     getDataSourceList({ type: 'real' }).then((res) => {
       const firstData = res.data[0];
@@ -47,12 +51,18 @@ export const useDataSource = () => {
       });
   };
 
+  // 获取同步数据源状态
   const syncStatus = ref({});
   const initSyncRecords = async () => {
     const res = await getSyncRecords({ id: currentDataSourceId.value });
     syncStatus.value = res.data?.results[0];
+    if (syncStatus.value?.status === 'success' || syncStatus.value?.status === 'failed') return;
+    setTimeout(() => {
+      initSyncRecords();
+    }, 5000);
   };
 
+  // 点击新建数据源
   const handleClick = async (id: string) => {
     if (!currentDataSourceId.value) {
       if (id === 'local') {
@@ -82,6 +92,14 @@ export const useDataSource = () => {
     id: 'local',
   });
 
+  // 同步数据源
+  const handleOperationsSync = async () => {
+    postOperationsSync(dataSource.value?.id).then((res) => {
+      Message({ theme: res.data.status, message: res.data.summary });
+      initSyncRecords();
+    });
+  };
+
   return {
     dataSourcePlugins,
     dataSource,
@@ -92,5 +110,6 @@ export const useDataSource = () => {
     initSyncRecords,
     handleClick,
     importDialog,
+    handleOperationsSync,
   };
 };

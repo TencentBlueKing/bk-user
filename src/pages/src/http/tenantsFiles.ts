@@ -61,7 +61,7 @@ export const putGlobalSetting = (params: GlobalSettingUpdateParams) => http.put(
 /**
  * 获取内置管理账号详情
  */
-export const getBuiltinManager = (id: string) => http.get(`/api/v1/web/platform-management/tenants/${id}/builtin-manager/`);
+export const getTenantsBuiltinManager = (id: string) => http.get(`/api/v1/web/platform-management/tenants/${id}/builtin-manager/`);
 
 /**
  * 变更内置管理账号密码相关信息
