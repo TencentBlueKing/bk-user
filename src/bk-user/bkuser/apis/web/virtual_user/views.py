@@ -141,7 +141,7 @@ class VirtualUserRetrieveUpdateDestroyApi(
         data_source_user.full_name = data["full_name"]
         data_source_user.email = data["email"]
         data_source_user.phone = data["phone"]
-        data_source_user.full_name = data["phone_country_code"]
+        data_source_user.phone_country_code = data["phone_country_code"]
         data_source_user.save(update_fields=["full_name", "email", "phone", "phone_country_code", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
