@@ -19,7 +19,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .serializers import (
+from bkuser_core.api.web.profile.serializers import (
     LoginProfileOutputSLZ,
     LoginProfileRetrieveInputSLZ,
     ProfileBatchDeleteInputSLZ,
@@ -271,6 +271,10 @@ class ProfileCreateApi(generics.CreateAPIView):
         unknown_fields = set(extra_fields.keys()) - set([x.name for x in fields if not x.builtin])  # noqa
         if unknown_fields:
             raise error_codes.UNKNOWN_FIELD.f(", ".join(list(unknown_fields)))
+
+        missing_fields = {x.name for x in fields if x.require and not x.builtin} - set(extra_fields.keys())
+        if missing_fields:
+            raise error_codes.MISSED_REQUIRED_FIELD.f(",".join(list(missing_fields)))
 
         slz.validated_data["extras"] = {key: value for key, value in extra_fields.items()}
 

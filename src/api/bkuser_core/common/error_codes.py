@@ -178,6 +178,7 @@ error_codes.add_codes(
         ErrorCode("CANNOT_EXPORT_EMPTY_LOG", _("审计日志为空，无法导出")),
         # 用户字段
         ErrorCode("UNKNOWN_FIELD", _("未知自定义字段")),
+        ErrorCode("MISS_REQUIRED_FIELD", _("未填写必填字段")),
         ErrorCode("CANNOT_FIND_PROFILE", _("无法找到用户")),
     ]
 )
