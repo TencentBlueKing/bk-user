@@ -86,7 +86,7 @@ export default {
       default: {},
     },
     rules: {
-      type: Array,
+      type: Object,
       required: true,
     },
     expireDate: {

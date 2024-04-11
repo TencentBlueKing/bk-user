@@ -37,7 +37,7 @@
               :edit-status="detailsBarInfo.type === 'edit'"
               :profile-info-list="profileInfoList"
               :status-map="statusMap"
-              :rules="rules"
+              :rules="formRules"
               :expire-date="currentProfile"
               ref="userInfoData" />
             <UploadAvatar
@@ -65,7 +65,7 @@
                   v-model="userSettingData.leader"
                   :list="rtxList"
                   enable-scroll-load
-                  :scroll-loading="showLeaderLoading"
+                  :loading="showLeaderLoading"
                   :remote-method="searchRtxByName"
                   @toggle="handleBranchToggle"
                   :scroll-height="188"
@@ -283,6 +283,19 @@ export default {
   computed: {
     passwordValidDaysList() {
       return this.$store.state.passwordValidDaysList;
+    },
+    formRules() {
+      this.profileInfoList.forEach((item) => {
+        if (!this.rules[item.key] && item.require && item.key !== 'telephone') {
+          const rule = [{
+            required: true,
+            message: this.$t('必填项'),
+            trigger: 'blur',
+          }];
+          this.$set(this.rules, item.key, rule);
+        }
+      });
+      return this.rules;
     },
   },
   created() {

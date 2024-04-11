@@ -106,6 +106,7 @@ export default {
         ? /^1[3-9]\d{9}$/.test(item.value)
         : this.iti.isValidNumber();
       !validation && (item.isError = true);
+      return !validation;
     },
     // 获焦去掉标红
     hiddenVerify(item) {
