@@ -8,14 +8,13 @@
     theme-color="#1e2634"
   >
     <template #side-header>
-      <RouterLink
+      <div
         style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
-        :to="{ name: 'organization' }"
       >
         <i class="user-icon icon-user-logo-i" />
         <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
-      </RouterLink>
-      <div class="tenant-style" v-if="route.name !== 'tenant'">
+      </div>
+      <div class="tenant-style" v-if="!isTenant">
         <span class="logo">{{ logoConvert(userStore.user?.tenant_id) }}</span>
         <span class="tenant-id">{{ userStore.user?.tenant_id }}</span>
         <i
@@ -89,6 +88,7 @@
           <template #content>
             <bk-dropdown-menu ext-cls="dropdown-menu-box">
               <bk-dropdown-item
+                v-if="!isTenant"
                 :class="{ 'active-item': isPersonalCenter }"
                 @click="toIndividualCenter">
                 {{ $t('个人中心') }}
@@ -132,7 +132,7 @@ const userInfo = computed(() => {
     { name: t('组织架构'), path: 'organization' },
     { name: t('设置'), path: 'setting' },
   ];
-  if (role === 'super_manager' && route.name !== 'tenant') {
+  if (role === 'super_manager' && !isTenant.value) {
     headerNav.value = baseNav;
   } else if (role === 'tenant_manager') {
     headerNav.value = baseNav;
@@ -144,6 +144,7 @@ const userInfo = computed(() => {
 
 const route = useRoute();
 const isPersonalCenter = computed(() => route.name === 'personalCenter');
+const isTenant = computed(() => route.name === 'tenant');
 
 const languageNav = reactive([
   {
@@ -204,9 +205,8 @@ const handleSwitchLocale = (locale: string) => {
 };
 
 const toTenant = () => {
-  router.push({
-    name: 'tenant',
-  });
+  router.push({ name: 'tenant' });
+  headerNav.value = [];
 };
 </script>
 

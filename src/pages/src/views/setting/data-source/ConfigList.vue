@@ -28,9 +28,9 @@
         <template #right>
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
-              <bk-tag :theme="dataRecordStatus[syncStatus?.status]?.theme">
+              <span :class="['tag-style', dataRecordStatus[syncStatus?.status]?.theme]">
                 {{ dataRecordStatus[syncStatus?.status]?.text }}
-              </bk-tag>
+              </span>
               <span>{{ syncStatus?.start_at }}</span>
             </div>
             <div v-if="dataSource?.plugin_id === 'local'">
@@ -173,17 +173,17 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { InfoBox, Message } from 'bkui-vue';
-import { InfoLine } from 'bkui-vue/lib/icon';
+import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
-import { h, reactive, ref } from 'vue';
+import { reactive, ref } from 'vue';
 
 import HttpDetails from './HttpDetails.vue';
 
 import DataSourceCard from '@/components/layouts/DataSourceCard.vue';
 import MainBreadcrumbsDetails from '@/components/layouts/MainBreadcrumbsDetails.vue';
 import SyncRecords from '@/components/SyncRecords.vue';
-import { useDataSource } from '@/hooks';
-import { deleteDataSources, getRelatedResource, postOperationsSync } from '@/http';
+import { useDataSource, useInfoBoxContent } from '@/hooks';
+import { deleteDataSources, getRelatedResource } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
 import { dataRecordStatus } from '@/utils';
@@ -195,42 +195,21 @@ const {
   isLoading,
   initDataSourceList,
   syncStatus,
-  initSyncRecords,
   handleClick,
   importDialog,
+  handleOperationsSync,
 } = useDataSource();
 
 // 重置数据源
 const handleReset = async () => {
   try {
     const res = await getRelatedResource(dataSource.value?.id);
+    const { subContent } = useInfoBoxContent(res.data, '');
     InfoBox({
-      width: 480,
+      width: 600,
       infoType: 'warning',
       title: t('是否重置数据源？'),
-      subTitle: h('div', {
-        style: {
-          textAlign: 'left',
-          lineHeight: '24px',
-        },
-      }, [
-        h('p', {
-          style: {
-            marginBottom: '12px',
-          },
-        }, t('重置后，该数据源内的用户信息将同步删除:')),
-        h('p', [
-          t('1.本租户下的数据：共计'),
-          `${res.data?.own_department_count}个组织，`,
-          `${res.data?.own_user_count}个用户。`,
-        ]),
-        h('p', [
-          t('2.分享给其他租户的数据：涉及'),
-          `${res.data?.shared_to_tenant_count}个租户，共计`,
-          `${res.data?.shared_to_department_count}个组织，`,
-          `${res.data?.shared_to_user_count}个用户。`,
-        ]),
-      ]),
+      subTitle: subContent,
       confirmText: t('重置'),
       theme: 'danger',
       onConfirm: () => {
@@ -329,16 +308,15 @@ const confirmImportUsers = async () => {
     if (res.data.data.status === 'success') {
       importDialog.isShow = false;
       InfoBox({
-        width: 640,
-        height: 284,
         infoType: 'success',
         title: t('导入成功'),
         confirmText: t('查看组织架构'),
         cancelText: t('关闭'),
-        onConfirm: () => {},
+        onConfirm: () => {
+          router.push({ name: 'organization' });
+        },
         onClosed: () => {
           initDataSourceList();
-          initSyncRecords();
         },
       });
     } else {
@@ -375,10 +353,7 @@ const changeLog = () => {
 // 同步数据源
 const handleSync = (e) => {
   e.cancelBubble = true;
-  postOperationsSync(dataSource.value?.id).then((res) => {
-    Message({ theme: res.data.status, message: res.data.summary });
-    initSyncRecords();
-  });
+  handleOperationsSync();
 };
 </script>
 
@@ -393,6 +368,34 @@ const handleSync = (e) => {
       font-size: 14px;
       color: #979BA5;
     }
+  }
+
+  .tag-style {
+    display: inline-block;
+    height: 22px;
+    padding: 0 10px;
+    margin-right: 4px;
+    font-size: 12px;
+    line-height: 22px;
+    border-radius: 2px;
+  }
+
+  .success {
+    color: #14a568;
+    background-color: #e4faf0;
+    border-color: #14a5684d;
+  }
+
+  .danger {
+    color: #ea3636;
+    background-color: #feebea;
+    border-color: #ea35364d;
+  }
+
+  .warning {
+    color: #fe9c00;
+    background-color: #fff1db;
+    border-color: #fea5004d;
   }
 }
 
@@ -416,7 +419,7 @@ const handleSync = (e) => {
   .icon-excel {
     margin-right: 14px;
     font-size: 26px;
-    color: #3A84FF;
+    color: #2dcb56;
   }
 
   .file-text {
