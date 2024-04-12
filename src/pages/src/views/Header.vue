@@ -130,6 +130,7 @@ const userInfo = computed(() => {
   const { role } = userStore.user;
   const baseNav = [
     { name: t('组织架构'), path: 'organization' },
+    { name: t('虚拟账号'), path: 'virtual-account' },
     { name: t('设置'), path: 'setting' },
   ];
   if (role === 'super_manager' && !isTenant.value) {
