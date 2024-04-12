@@ -3,6 +3,10 @@ import { Message } from 'bkui-vue';
 import Cookies from 'js-cookie';
 import qs from 'query-string';
 
+import { showLoginModal } from '@blueking/login-modal';
+
+import { getLoginUrl } from '@/common/auth';
+
 type Methods = 'delete' | 'get' | 'head' | 'options' | 'post' | 'put' | 'patch';
 
 interface ResolveResponseParams<D> {
@@ -82,22 +86,16 @@ const handleResponse = <T>({
 
 const handleReject = (error: AxiosError, config: Record<string, any>) => {
   const { status } = error.response;
-  const { message, data } = error.response.data.error;
+  const { message } = error.response.data.error;
 
   if (status === 401) {
-    const loginData = data;
-    const src = loginData?.login_url
-      ? `${loginData.login_plain_url}?size=small&${loginData.callback_url_param_key}=${encodeURIComponent(window.location.href)}`
-      : '';
+    const loginUrl = getLoginUrl();
 
     if (error.config.url === '/api/v1/web/basic/current-user/') {
-      return window.location.href = src;
+      return window.location.href = loginUrl;
     }
-    window.login.showLogin({
-      src,
-      width: loginData.width,
-      height: loginData.height,
-    });
+    // 登录弹窗
+    showLoginModal({ loginUrl });
 
     return;
   }
