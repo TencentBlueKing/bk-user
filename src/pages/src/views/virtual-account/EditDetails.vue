@@ -16,6 +16,7 @@
         <bk-input
           v-model="formData.username"
           :placeholder="validate.userName.message"
+          :disabled="formData.id"
           @focus="handleChange"
         />
       </bk-form-item>

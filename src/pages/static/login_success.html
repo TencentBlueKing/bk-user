@@ -7,7 +7,8 @@
 </head>
 <body>
   <script>
-    window.opener && window.opener.location.reload();
+    var params = new URLSearchParams(window.location.href)
+    window.opener && window.opener.postMessage({ target: 'bk-login', result: true }, params.get('from'))
     window.close();
   </script>
 </body>
