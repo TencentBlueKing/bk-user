@@ -70,7 +70,7 @@
           <bk-button class="mr-[8px]" theme="primary" text @click="handleClick('edit', row.id)">
             {{ $t('编辑') }}
           </bk-button>
-          <bk-button theme="primary" text @click="handleDelete(row.id)">{{ $t('删除') }}</bk-button>
+          <bk-button theme="primary" text @click="handleDelete(row)">{{ $t('删除') }}</bk-button>
         </template>
       </bk-table-column>
     </bk-table>
@@ -233,13 +233,13 @@ const handleBeforeClose = async () => {
   }
 };
 
-const handleDelete = (id: string) => {
+const handleDelete = (item: any) => {
   InfoBox({
     width: 400,
-    title: t('确认删除该用户'),
+    title: `${t('确认删除')} ${item.username} ${t('用户')}？`,
     confirmText: t('删除'),
     onConfirm: async () => {
-      await deleteVirtualUsers(id);
+      await deleteVirtualUsers(item.id);
       initVirtualUsers();
     },
   });

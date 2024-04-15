@@ -8,7 +8,8 @@ export const getLoginUrl = () => {
   }
 
   const [loginBaseUrl] = siteLoginUrl.split('?');
-  const loginUrl = `${loginBaseUrl}login/plain?size=small&c_url=${encodeURIComponent(successUrl)}`;
+  const newUrl = loginBaseUrl.includes('login/') ? loginBaseUrl : `${loginBaseUrl}login/`;
+  const loginUrl = `${newUrl}plain?size=small&c_url=${encodeURIComponent(successUrl)}`;
   return loginUrl;
 };
 
