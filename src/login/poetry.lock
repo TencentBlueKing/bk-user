@@ -124,7 +124,7 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "blue-krill"
-version = "1.2.6"
+version = "1.2.7"
 description = "Tools and common packages for blueking paas"
 category = "main"
 optional = false
@@ -1492,7 +1492,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.14"
-content-hash = "3340cf8ea701175adadeadb1c1fdcd207e2791a8124c1040469d3733369e4f93"
+content-hash = "30dd92985777f8b7f86fa408c6c1950731cc2c868be938e83c7e216aaf19f8cd"
 
 [metadata.files]
 aiocontextvars = [
@@ -1535,8 +1535,8 @@ black = [
     {file = "black-21.12b0.tar.gz", hash = "sha256:77b80f693a569e2e527958459634f18df9b0ba2625ba4e0c2d5da5be42e6f2b3"},
 ]
 blue-krill = [
-    {file = "blue_krill-1.2.6-py3-none-any.whl", hash = "sha256:2d43e7e816549ea0010bb105341785975c577deb35cdc35e1127c8906b840dfe"},
-    {file = "blue_krill-1.2.6.tar.gz", hash = "sha256:85d6265b35d9daab2c6aa0059c71d841908b3973cb3ea24e7cdf91982f9a8191"},
+    {file = "blue_krill-1.2.7-py3-none-any.whl", hash = "sha256:2fd6d9e028b98c80cd3f4dd472dcbf8a043d1e530f602c6760df4489bfa16e04"},
+    {file = "blue_krill-1.2.7.tar.gz", hash = "sha256:c2b2535c164b845168d4ee7e93c1b93bc5867da1bda8311df4ea7c667f488e5f"},
 ]
 cachetools = [
     {file = "cachetools-3.1.1-py2.py3-none-any.whl", hash = "sha256:428266a1c0d36dc5aca63a2d7c5942e88c2c898d72139fca0e97fdd2380517ae"},
