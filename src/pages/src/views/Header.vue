@@ -100,7 +100,6 @@
       </div>
     </template>
     <router-view></router-view>
-    <Login />
   </bk-navigation>
 </template>
 
@@ -111,7 +110,6 @@ import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { logout } from '@/common/auth';
-import Login from '@/components/layouts/Login.vue';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store/user';

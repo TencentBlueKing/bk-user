@@ -46,20 +46,6 @@ const leaveBefore = async () => {
 
 window.leaveBefore = leaveBefore;
 
-window.loginBox = true;
-let pre = window;
-while (pre.parent && pre.parent !== pre) {
-  pre = pre.parent;
-  if (pre.loginBox) {
-    pre.close?.();
-    break;
-  }
-}
-
-window.close = () => {
-  window.login.hideLogin();
-};
-
 createApp(App)
   .use(router)
   .use(createPinia())
