@@ -316,6 +316,12 @@ class LocalDataSourceImportInputSLZ(serializers.Serializer):
 
         return file
 
+    def validate_incremental(self, incremental: bool) -> bool:
+        if not incremental:
+            raise ValidationError(_("出于安全考虑，全量导入模式暂不可用"))
+
+        return incremental
+
 
 class DataSourceImportOrSyncOutputSLZ(serializers.Serializer):
     """数据源导入/同步结果"""

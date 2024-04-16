@@ -28,7 +28,13 @@ urlpatterns = [
     # 租户部门列表
     path(
         "tenants/<str:id>/departments/",
-        views.TenantDepartmentListApi.as_view(),
-        name="organization.tenant_department.list",
+        views.TenantDepartmentListCreateApi.as_view(),
+        name="organization.tenant_department.list_create",
+    ),
+    # 更新 / 删除租户部门
+    path(
+        "tenants/departments/<str:id>/",
+        views.TenantDepartmentUpdateDestroyApi.as_view(),
+        name="organization.tenant_department.update_destroy",
     ),
 ]

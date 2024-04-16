@@ -107,6 +107,9 @@ class ErrorCodes:
     TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
     UPDATE_TENANT_MANAGERS_FAILED = ErrorCode(_("更新租户管理员失败"))
     GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
+    TENANT_DEPARTMENT_CREATE_FAILED = ErrorCode(_("租户部门创建失败"))
+    TENANT_DEPARTMENT_UPDATE_FAILED = ErrorCode(_("租户部门更新失败"))
+    TENANT_DEPARTMENT_DELETE_FAILED = ErrorCode(_("租户部门删除失败"))
 
     # 验证码
     INVALID_VERIFICATION_CODE = ErrorCode(_("验证码无效"))

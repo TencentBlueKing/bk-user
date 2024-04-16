@@ -11,7 +11,9 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict
 
+from django.db import transaction
 from django.db.models import QuerySet
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -19,16 +21,22 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
+    TenantDepartmentCreateInputSLZ,
+    TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
+    TenantDepartmentUpdateInputSLZ,
     TenantListOutputSLZ,
     TenantRetrieveOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartmentRelation
+from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantDepartment
+from bkuser.common.error_codes import error_codes
+from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.utils.uuid import generate_uuid
 
 
 class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -45,7 +53,8 @@ class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
     )
     def get(self, request, *args, **kwargs):
-        return Response(TenantRetrieveOutputSLZ(self.get_object()), status=status.HTTP_200_OK)
+        tenant = Tenant.objects.get(id=self.get_current_tenant_id())
+        return Response(TenantRetrieveOutputSLZ(tenant).data, status=status.HTTP_200_OK)
 
 
 class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -70,17 +79,18 @@ class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return Response(TenantListOutputSLZ(self.get_queryset(), many=True), status=status.HTTP_200_OK)
+        return Response(TenantListOutputSLZ(self.get_queryset(), many=True).data, status=status.HTTP_200_OK)
 
 
-class TenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
-    """获取当前租户部门信息"""
-
+class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
     pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self):
-        slz = TenantDepartmentListInputSLZ(data=self.request.query_params)
+        slz = TenantDepartmentListInputSLZ(
+            data=self.request.query_params,
+            context={"tenant_id": self.get_current_tenant_id()},
+        )
         slz.is_valid(raise_exception=True)
         parent_dept_id = slz.validated_data["parent_department_id"]
 
@@ -165,4 +175,103 @@ class TenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
             }
             for tenant_dept in tenant_depts
         ]
-        return Response(TenantDepartmentListOutputSLZ(tenant_dept_infos, many=True), status=status.HTTP_200_OK)
+        return Response(TenantDepartmentListOutputSLZ(tenant_dept_infos, many=True).data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="创建租户部门",
+        query_serializer=TenantDepartmentCreateInputSLZ(),
+        responses={status.HTTP_201_CREATED: TenantDepartmentCreateOutputSLZ()},
+    )
+    def post(self, request, *args, **kwargs):
+        current_tenant_id = self.get_current_tenant_id()
+        if self.kwargs["id"] != current_tenant_id:
+            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅可创建属于当前租户的部门"))
+
+        # 必须存在真实用户数据源才可以创建租户部门
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=current_tenant_id, type=DataSourceTypeEnum.REAL
+        ).first()
+        if not data_source:
+            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("租户数据源不存在"))
+        if not data_source.is_local:
+            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅本地数据源支持创建部门"))
+
+        slz = TenantDepartmentCreateInputSLZ(
+            data=request.data, context={"tenant_id": current_tenant_id, "data_source": data_source}
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 则将部门关联到父部门（根部门也需要关联到 None）
+        parent_dept_relation = None
+        if parent_tenant_dept_id := data["parent_department_id"]:
+            # 从租户部门 ID 找数据源部门
+            parent_data_source_dept = TenantDepartment.objects.get(
+                tenant_id=current_tenant_id, id=parent_tenant_dept_id
+            ).data_source_department
+            parent_dept_relation = DataSourceDepartmentRelation.objects.get(
+                department=parent_data_source_dept, data_source=data_source
+            )
+
+        with transaction.atomic():
+            data_source_dept = DataSourceDepartment.objects.create(
+                data_source=data_source, code=generate_uuid(), name=data["name"]
+            )
+            # 将新的数据源部门和父部门关联起来
+            DataSourceDepartmentRelation.objects.create(
+                department=data_source_dept,
+                parent=parent_dept_relation,
+                data_source=data_source,
+            )
+            tenant_dept = TenantDepartment.objects.create(
+                tenant_id=current_tenant_id,
+                data_source_department=data_source_dept,
+                data_source=data_source,
+            )
+
+        return Response(TenantDepartmentCreateOutputSLZ(tenant_dept).data, status=status.HTTP_201_CREATED)
+
+
+class TenantDepartmentUpdateDestroyApi(
+    CurrentTenantRetrieveApi, ExcludePatchAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView
+):
+    """编辑 / 删除租户部门"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="更新租户部门",
+        query_serializer=TenantDepartmentUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        tenant_dept = self.get_object()
+        if not (tenant_dept.data_source.is_local and tenant_dept.data_source.is_real_type):
+            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅本地数据源支持更新部门"))
+
+        slz = TenantDepartmentUpdateInputSLZ(data=request.data, context={"tenant_dept": tenant_dept})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_dept.data_source_department.name = data["name"]
+        tenant_dept.data_source_department.save(update_fields=["name"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="删除租户部门",
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        # TODO 删除租户部门，数据源部门，关联关系，租户用户，数据源用户等等，
+        #  还需要提前弹窗提示用户影响范围，等产品同学想清楚 + 补充设计后再加
+        #  或者另外一种设计，要求把该部门的所有用户都先挪出去，才能删除？
+        # tenant_dept = self.get_object()
+        return Response(status=status.HTTP_204_NO_CONTENT)
