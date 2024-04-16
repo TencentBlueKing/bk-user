@@ -1,5 +1,5 @@
 {
-  "ignore_file_patterns": [
+  "crignore_file_patterns": [
     "out/",
     "dist/",
     "assets/",

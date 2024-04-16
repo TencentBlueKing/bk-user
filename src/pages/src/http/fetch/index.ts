@@ -89,7 +89,6 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
   const { message } = error.response.data.error;
 
   if (status === 401) {
-
     if (error.config.url === '/api/v1/web/basic/current-user/') {
       return window.location.href = getLoginUrl(false);
     }
