@@ -42,7 +42,7 @@ class TestResetPasswordByPhoneAfterForget:
 
     @mock.patch("bkuser.component.cmsi.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.send_sms", return_value=None)
-    def test_normal(self, mocked_send_sms, mocked_send_mail, api_client, tenant_user):
+    def test_standard(self, mocked_send_sms, mocked_send_mail, api_client, tenant_user):
         with override_settings(ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True):
             # 1. 模拟发送验证码
             phone, phone_country_code = tenant_user.phone_info
@@ -103,7 +103,7 @@ class TestResetPasswordByEmailAfterForget:
 
     @mock.patch("bkuser.component.cmsi.send_mail", return_value=None)
     @mock.patch("bkuser.component.cmsi.send_sms", return_value=None)
-    def test_normal(self, mocked_send_sms, mocked_send_mail, api_client, tenant_user):
+    def test_standard(self, mocked_send_sms, mocked_send_mail, api_client, tenant_user):
         with override_settings(ALLOW_RAISE_ERROR_TO_USER_WHEN_RESET_PASSWORD=True):
             # 1. 发送重置密码链接邮件
             resp = api_client.post(

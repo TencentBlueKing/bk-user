@@ -48,7 +48,7 @@ class TestTaskLogger:
 
 
 class TestChangeLogRecorder:
-    def test_normal(self, full_general_data_source):
+    def test_standard(self, full_general_data_source):
         users = list(DataSourceUser.objects.filter(data_source=full_general_data_source))
         departments = list(DataSourceDepartment.objects.filter(data_source=full_general_data_source))
 
