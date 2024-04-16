@@ -33,7 +33,7 @@ class TestLocalDataSourceIdentityInfoInitializer:
 
     def test_skip_not_account_password_login_data_source(self, full_local_data_source):
         """没有启用账密登录的，同步不会生效"""
-        full_local_data_source.plugin_config["enable_account_password_login"] = False
+        full_local_data_source.plugin_config["enable_password"] = False
         full_local_data_source.save()
 
         LocalDataSourceIdentityInfoInitializer(full_local_data_source).initialize()

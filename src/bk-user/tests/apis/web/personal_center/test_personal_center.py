@@ -85,4 +85,4 @@ class TestTenantUserFeatureFlagListApi:
         resp = api_client.get(reverse("personal_center.tenant_users.feature_flag.list", kwargs={"id": tenant_user.id}))
 
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.data["can_change_password"] is True
+        assert resp.data["can_change_password"] is False
