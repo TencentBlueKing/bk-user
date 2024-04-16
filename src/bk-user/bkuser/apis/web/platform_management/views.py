@@ -305,7 +305,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
         plugin_config = data_source.get_plugin_cfg()
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_initial is not None
-        assert plugin_config.password_rule is not None
+        assert plugin_config.password_expire is not None
 
         # 输入参数校验
         slz = TenantBuiltinManagerUpdateInputSLZ(
@@ -329,7 +329,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(ExcludePatchAPIViewMixin, generics.U
             DataSourceUserHandler.update_password(
                 data_source_user=user,
                 password=fixed_password,
-                valid_days=plugin_config.password_rule.valid_time,
+                valid_days=plugin_config.password_expire.valid_time,
                 operator=request.user.username,
             )
 

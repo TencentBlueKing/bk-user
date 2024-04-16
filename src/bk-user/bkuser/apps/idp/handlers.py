@@ -32,7 +32,7 @@ def _update_local_idp_of_tenant(data_source: DataSource):
     """
     更新租户的本地账密登录认证源
     对于每个租户，如果有本地数据源，则必须有本地账密认证源
-    该函数主要是根据本地数据源(status和enable_account_password_login)的变化更新租户的本地账密认证源配置和状态
+    该函数主要是根据本地数据源(status 和 enable_password )的变化更新租户的本地账密认证源配置和状态
     """
     # 非本地数据源不需要默认认证源
     if not data_source.is_local:
@@ -45,11 +45,11 @@ def _update_local_idp_of_tenant(data_source: DataSource):
         owner_tenant_id=data_source.owner_tenant_id, plugin=plugin, defaults={"name": _("本地账密")}
     )
 
-    # 判断数据源 status和enable_account_password_login ，确定是否使用账密登录
+    # 判断数据源 status 和 enable_password ，确定是否使用账密登录
     plugin_cfg = data_source.get_plugin_cfg()
     assert isinstance(plugin_cfg, LocalDataSourcePluginConfig)
 
-    enable_login = plugin_cfg.enable_account_password_login
+    enable_login = plugin_cfg.enable_password
 
     # 根据数据源是否使用账密登录，修改认证源配置
     idp_plugin_cfg: LocalIdpPluginConfig = idp.get_plugin_cfg()

@@ -91,7 +91,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(
             TenantBuiltinManagerRetrieveOutputSLZ(
                 {
                     "username": user.username,
-                    "enable_account_password_login": data_source.plugin_config["enable_account_password_login"],
+                    "enable_account_password_login": data_source.plugin_config["enable_password"],
                 }
             ).data
         )
@@ -126,8 +126,8 @@ class TenantBuiltinManagerRetrieveUpdateApi(
 
             # 更新是否启用登录
             enable = data.get("enable_account_password_login")
-            if enable is not None and plugin_config.enable_account_password_login != enable:
-                plugin_config.enable_account_password_login = enable
+            if enable is not None and plugin_config.enable_password != enable:
+                plugin_config.enable_password = enable
                 data_source.set_plugin_cfg(plugin_config)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -151,7 +151,7 @@ class TenantBuiltinManagerPasswordUpdateApi(
         # 数据源配置
         plugin_config = data_source.get_plugin_cfg()
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
-        assert plugin_config.password_rule is not None
+        assert plugin_config.password_expire is not None
 
         # 数据校验
         slz = TenantBuiltinManagerPasswordUpdateInputSLZ(
@@ -164,7 +164,7 @@ class TenantBuiltinManagerPasswordUpdateApi(
         DataSourceUserHandler.update_password(
             data_source_user=user,
             password=raw_password,
-            valid_days=plugin_config.password_rule.valid_time,
+            valid_days=plugin_config.password_expire.valid_time,
             operator=request.user.username,
         )
 
