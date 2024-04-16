@@ -52,7 +52,7 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
 
 
 class TenantDepartmentListInputSLZ(serializers.Serializer):
-    parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示根部门）", default=0)
+    parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示创建根部门）", default=0)
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
         if (
@@ -76,7 +76,7 @@ class TenantDepartmentListOutputSLZ(serializers.Serializer):
 def _validate_duplicate_dept_name_in_ancestors(
     parent_relation: DataSourceDepartmentRelation | None, name: str
 ) -> None:
-    # 已经是根部门了，不需要继续判断祖先
+    # 没有父部门 -> 已经是根部门，不需要继续判断祖先
     if not parent_relation:
         return
 
@@ -115,11 +115,11 @@ class TenantDepartmentCreateInputSLZ(serializers.Serializer):
                 department=parent_data_source_dept, data_source=self.context["data_source"]
             )
 
-        data_source_dept_ids = DataSourceDepartmentRelation.objects.filter(
+        brother_data_source_dept_ids = DataSourceDepartmentRelation.objects.filter(
             parent=parent_dept_relation, data_source=self.context["data_source"]
         ).values_list("department_id", flat=True)
 
-        if DataSourceDepartment.objects.filter(id__in=data_source_dept_ids, name=dept_name).exists():
+        if DataSourceDepartment.objects.filter(id__in=brother_data_source_dept_ids, name=dept_name).exists():
             raise ValidationError(_("指定的父部门下已存在同名部门：{}").format(dept_name))
 
         # 在祖先部门中检查是否有同名的

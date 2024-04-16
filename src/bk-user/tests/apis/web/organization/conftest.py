@@ -21,11 +21,13 @@ from tests.test_utils.tenant import create_tenant, sync_users_depts_to_tenant
 
 @pytest.fixture()
 def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
+    """初始化租户部门 & 租户用户"""
     sync_users_depts_to_tenant(random_tenant, full_local_data_source)
 
 
 @pytest.fixture()
 def collaborative_tenant() -> Tenant:
+    """创建随机的协同租户"""
     return create_tenant(generate_random_string())
 
 
@@ -36,6 +38,7 @@ def _init_collaborative_users_depts(
     local_ds_plugin,
     local_ds_plugin_cfg,
 ) -> None:
+    """初始化协同所得的租户部门 & 租户用户（协同租户同步到当前随机租户）"""
     data_source = DataSource.objects.create(
         owner_tenant_id=collaborative_tenant.id,
         type=DataSourceTypeEnum.REAL,

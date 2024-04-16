@@ -60,8 +60,9 @@ class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.ListAPIView):
 class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """获取当前租户的协作租户信息"""
 
-    pagination_class = None
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
 
     def get_queryset(self):
         # TODO (su) 目前是根据部门信息获取的协作租户 ID，后续可修改成根据协同策略获取？
@@ -83,8 +84,11 @@ class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
 
 class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
-    pagination_class = None
+    """获取租户部门列表 / 创建租户部门"""
+
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
 
     def get_queryset(self):
         slz = TenantDepartmentListInputSLZ(
@@ -102,9 +106,11 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         return self._get_root_depts()
 
     def _get_root_depts(self) -> QuerySet[TenantDepartment]:
+        owner_tenant_id = self.kwargs["id"]
         # 获取指定租户的数据源，通过数据源部门关系查询部门列表
         data_source = DataSource.objects.filter(
-            owner_tenant_id=self.kwargs["id"], type=DataSourceTypeEnum.REAL
+            owner_tenant_id=owner_tenant_id,
+            type=DataSourceTypeEnum.REAL,
         ).first()
         if not data_source:
             return TenantDepartment.objects.none()
@@ -116,7 +122,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         )
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(),
-            data_source__owner_tenant_id=self.kwargs["id"],
+            data_source__owner_tenant_id=owner_tenant_id,
             data_source_department_id__in=root_data_source_dept_ids,
         ).select_related("data_source_department")
 
@@ -160,7 +166,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
 
     @swagger_auto_schema(
         tags=["organization"],
-        operation_description="获取当前租户部门列表",
+        operation_description="获取指定租户在当前租户的部门列表",
         query_serializer=TenantDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
     )
