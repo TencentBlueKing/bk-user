@@ -55,8 +55,8 @@ export const useDataSource = () => {
   const syncStatus = ref({});
   const initSyncRecords = async () => {
     const res = await getSyncRecords({ id: currentDataSourceId.value });
+    if (res.data?.count === 0 || ['success', 'failed'].includes(syncStatus.value?.status)) return;
     syncStatus.value = res.data?.results[0];
-    if (syncStatus.value?.status === 'success' || syncStatus.value?.status === 'failed') return;
     setTimeout(() => {
       initSyncRecords();
     }, 5000);
