@@ -26,61 +26,15 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
-    TenantListOutputSLZ,
-    TenantRetrieveOutputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import Tenant, TenantDepartment
+from bkuser.apps.tenant.models import TenantDepartment
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
-
-
-class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.ListAPIView):
-    """获取当前用户所在租户信息"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    def get_queryset(self):
-        return Tenant.objects.filter(id=self.get_current_tenant_id())
-
-    @swagger_auto_schema(
-        tags=["organization"],
-        operation_description="获取当前用户所在租户信息",
-        responses={status.HTTP_200_OK: TenantRetrieveOutputSLZ()},
-    )
-    def get(self, request, *args, **kwargs):
-        tenant = Tenant.objects.get(id=self.get_current_tenant_id())
-        return Response(TenantRetrieveOutputSLZ(tenant).data, status=status.HTTP_200_OK)
-
-
-class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
-    """获取当前租户的协作租户信息"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    pagination_class = None
-
-    def get_queryset(self):
-        # TODO (su) 目前是根据部门信息获取的协作租户 ID，后续可修改成根据协同策略获取？
-        # 不过通过部门反查优点是一定有数据（协作策略已确认，但是未同步的情况）
-        cur_tenant_id = self.get_current_tenant_id()
-        depts = TenantDepartment.objects.filter(tenant_id=cur_tenant_id).exclude(
-            data_source__owner_tenant_id=cur_tenant_id
-        )
-        collaborative_tenant_ids = set(depts.values_list("data_source__owner_tenant_id", flat=True))
-        return Tenant.objects.filter(id__in=collaborative_tenant_ids)
-
-    @swagger_auto_schema(
-        tags=["organization"],
-        operation_description="获取当前租户的协作租户信息",
-        responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        return Response(TenantListOutputSLZ(self.get_queryset(), many=True).data, status=status.HTTP_200_OK)
 
 
 class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
@@ -240,7 +194,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
 
 
 class TenantDepartmentUpdateDestroyApi(
-    CurrentTenantRetrieveApi, ExcludePatchAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView
+    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView
 ):
     """编辑 / 删除租户部门"""
 
