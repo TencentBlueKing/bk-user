@@ -1,6 +1,6 @@
 // 获取登录地址
-export const getLoginUrl = () => {
-  const successUrl = window.opener ? `${window.location.origin}${window.BK_STATIC_URL}/login_success.html` : window.location.href;
+export const getLoginUrl = (isOpener = true) => {
+  const successUrl = isOpener ? `${window.location.origin}${window.BK_STATIC_URL}/login_success.html` : window.location.href;
   const siteLoginUrl = window.BK_LOGIN_URL || '';
   if (!siteLoginUrl) {
     console.error('Login URL not configured!');
