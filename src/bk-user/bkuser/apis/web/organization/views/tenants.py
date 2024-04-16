@@ -21,7 +21,7 @@ from bkuser.apis.web.organization.serializers import (
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import Tenant, TenantDepartment
+from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 
 
 class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -48,15 +48,24 @@ class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     pagination_class = None
+    serializer_class = TenantListOutputSLZ
 
     def get_queryset(self):
         # TODO (su) 目前是根据部门信息获取的协作租户 ID，后续可修改成根据协同策略获取？
         # 不过通过部门反查优点是一定有数据（协作策略已确认，但是未同步的情况）
         cur_tenant_id = self.get_current_tenant_id()
-        depts = TenantDepartment.objects.filter(tenant_id=cur_tenant_id).exclude(
-            data_source__owner_tenant_id=cur_tenant_id
+        dept_tenant_ids = (
+            TenantDepartment.objects.filter(tenant_id=cur_tenant_id)
+            .exclude(data_source__owner_tenant_id=cur_tenant_id)
+            .distinct()
         )
-        collaborative_tenant_ids = set(depts.values_list("data_source__owner_tenant_id", flat=True))
+        user_tenant_ids = (
+            TenantUser.objects.filter(tenant_id=cur_tenant_id)
+            .exclude(data_source__owner_tenant_id=cur_tenant_id)
+            .distinct()
+        )
+        # 需要用户和部门的 owner_tenant_id 取并集，避免出现用户不属于任何部门的情况
+        collaborative_tenant_ids = set(dept_tenant_ids) | set(user_tenant_ids)
         return Tenant.objects.filter(id__in=collaborative_tenant_ids)
 
     @swagger_auto_schema(
@@ -65,4 +74,4 @@ class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return Response(TenantListOutputSLZ(self.get_queryset(), many=True).data, status=status.HTTP_200_OK)
+        return self.list(request, *args, **kwargs)

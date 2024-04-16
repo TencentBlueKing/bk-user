@@ -43,7 +43,7 @@ class TestTenantDepartmentListApi:
         assert first_dept["has_children"] is True
 
     @pytest.mark.usefixtures("_init_tenant_users_depts")
-    def test_list_sub_depts(self, api_client, random_tenant):
+    def test_list_child_depts(self, api_client, random_tenant):
         """当前租户的某级子部门"""
         company = TenantDepartment.objects.get(
             data_source_department__name="公司",
@@ -88,7 +88,7 @@ class TestTenantDepartmentListApi:
         assert resp.data[0]["id"] == excepted_dept.id
 
     @pytest.mark.usefixtures("_init_collaborative_users_depts")
-    def test_list_collaborative_sub_depts(self, api_client, collaborative_tenant):
+    def test_list_collaborative_child_depts(self, api_client, collaborative_tenant):
         """某协作租户的某级子部门"""
         dept_a = TenantDepartment.objects.get(
             data_source_department__name="部门A",

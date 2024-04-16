@@ -108,13 +108,13 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         """获取部门是否有子部门的信息"""
         parent_data_source_dept_ids = tenant_depts.values_list("data_source_department_id", flat=True)
 
-        sub_data_source_dept_ids_map = defaultdict(list)
+        child_data_source_dept_ids_map = defaultdict(list)
         # 注：当前 MPTT 模型中，parent_id 等价于 parent__department_id
         for rel in DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids):
-            sub_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
+            child_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
 
         return {
-            tenant_dept.id: bool(sub_data_source_dept_ids_map.get(tenant_dept.data_source_department_id))
+            tenant_dept.id: bool(child_data_source_dept_ids_map.get(tenant_dept.data_source_department_id))
             for tenant_dept in tenant_depts
         }
 
@@ -148,7 +148,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         if self.kwargs["id"] != current_tenant_id:
             raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅可创建属于当前租户的部门"))
 
-        # 必须存在真实用户数据源才可以创建租户部门
+        # 必须存在实名用户数据源才可以创建租户部门
         data_source = DataSource.objects.filter(
             owner_tenant_id=current_tenant_id, type=DataSourceTypeEnum.REAL
         ).first()
@@ -214,14 +214,16 @@ class TenantDepartmentUpdateDestroyApi(
     def put(self, request, *args, **kwargs):
         tenant_dept = self.get_object()
         if not (tenant_dept.data_source.is_local and tenant_dept.data_source.is_real_type):
-            raise error_codes.TENANT_DEPARTMENT_CREATE_FAILED.f(_("仅本地数据源支持更新部门"))
+            raise error_codes.TENANT_DEPARTMENT_UPDATE_FAILED.f(_("仅本地数据源支持更新部门"))
+        if tenant_dept.data_source.owner_tenant_id != self.get_current_tenant_id():
+            raise error_codes.TENANT_DEPARTMENT_UPDATE_FAILED.f(_("仅可更新属于当前租户的部门"))
 
         slz = TenantDepartmentUpdateInputSLZ(data=request.data, context={"tenant_dept": tenant_dept})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         tenant_dept.data_source_department.name = data["name"]
-        tenant_dept.data_source_department.save(update_fields=["name"])
+        tenant_dept.data_source_department.save(update_fields=["name", "updated_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(

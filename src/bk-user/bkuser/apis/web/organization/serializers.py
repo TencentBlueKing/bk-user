@@ -37,7 +37,7 @@ class TenantListOutputSLZ(serializers.Serializer):
 
 
 class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
-    data_source = serializers.SerializerMethodField(help_text="真实用户数据源信息")
+    data_source = serializers.SerializerMethodField(help_text="实名用户数据源信息")
 
     class Meta:
         ref_name = "organization.TenantRetrieveOutputSLZ"
@@ -48,7 +48,8 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
         if not data_source:
             return None
 
-        return {"id": data_source.id, "type": data_source.type, "plugin_id": data_source.plugin_id}
+        data_source_info = {"id": data_source.id, "type": data_source.type, "plugin_id": data_source.plugin_id}
+        return TenantDataSourceSLZ(data_source_info).data
 
 
 class TenantDepartmentListInputSLZ(serializers.Serializer):
