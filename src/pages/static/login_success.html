@@ -8,6 +8,7 @@
 <body>
   <script>
     var params = new URLSearchParams(window.location.href)
+    console.log('🚀 ~ params:', params, window.opener)
     window.opener && window.opener.postMessage({ target: 'bk-login', result: true }, params.get('from'))
     window.close();
   </script>
