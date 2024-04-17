@@ -185,7 +185,7 @@ name = "Biz Layers contract"
 type = "layers"
 layers = [
     "bkuser.biz.tenant",
-    "bkuser.biz.data_source | bkuser.biz.data_source_organization | bkuser.biz.exporters",
+    "bkuser.biz.data_source | bkuser.biz.organization | bkuser.biz.exporters",
     "bkuser.biz.validators",
 ]
 

@@ -34,7 +34,7 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
 )
 from bkuser.biz.data_source import DataSourceHandler
-from bkuser.biz.data_source_organization import DataSourceUserHandler
+from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.plugins.base import get_default_plugin_cfg

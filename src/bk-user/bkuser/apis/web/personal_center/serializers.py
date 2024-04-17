@@ -16,7 +16,6 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apis.web.tenant_organization.serializers import TenantUserDepartmentOutputSLZ, TenantUserLeaderOutputSLZ
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
@@ -25,6 +24,17 @@ from bkuser.biz.validators import validate_logo, validate_user_extras, validate_
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code
+
+
+class TenantUserDepartmentOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="租户部门 ID")
+    name = serializers.CharField(help_text="租户部门名称")
+
+
+class TenantUserLeaderOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户用户 ID")
+    username = serializers.CharField(help_text="租户用户名")
+    full_name = serializers.CharField(help_text="租户用户名称")
 
 
 class TenantInfoOutputSLZ(serializers.Serializer):
