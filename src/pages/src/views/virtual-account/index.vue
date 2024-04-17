@@ -197,7 +197,7 @@ watch(() => detailsConfig.isShow, (val) => {
   }
 });
 
-const handleClick = async (type: string, id: string) => {
+const handleClick = async (type: string, id?: string) => {
   if (type !== 'add') {
     const res = await getVirtualUsersDetail(id);
     detailsInfo.value = res.data;

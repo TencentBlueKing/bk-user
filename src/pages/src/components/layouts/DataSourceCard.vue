@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips } from 'bkui-vue';
 import { AngleDownLine } from 'bkui-vue/lib/icon';
-import { computed, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, ref } from 'vue';
 
 import { t } from '@/language/index';
 
@@ -91,10 +91,6 @@ const handleClick = (id: string) => {
 const isShow = ref(!props.dataSource?.id);
 
 const text = computed(() => (isShow.value ? t('收起') : t('查看数据源类型')));
-
-watch(() => props.showContent, (val) => {
-  isShow.value = !val;
-});
 
 const toggleState = () => {
   isShow.value = !isShow.value;

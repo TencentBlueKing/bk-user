@@ -1,5 +1,5 @@
 <template>
-  <div class="operation-wrapper">
+  <div class="operation-wrapper user-scroll-y">
     <bk-form
       class="operation-content"
       ref="formRef"
@@ -46,7 +46,7 @@
       <Row v-if="!isEdit" :title="$t('内置管理账号')">
         <bk-form-item :label="$t('用户名')" required>
           <bk-input
-            :model-value="`${userStore.user.username}-${userStore.user.tenant_id}`"
+            :model-value="`${userStore.user.username}-${formData.id}`"
             disabled
           />
         </bk-form-item>
@@ -71,7 +71,7 @@
             <bk-radio label="email">
               <span>{{ $t('邮箱') }}</span>
             </bk-radio>
-            <bk-radio label="phone">
+            <bk-radio label="sms">
               <span>{{ $t('短信') }}</span>
             </bk-radio>
           </bk-radio-group>
@@ -280,5 +280,9 @@ const {
 
 .input-error {
   border-color: #ea3636 !important;
+}
+
+::v-deep .bk-upload-trigger--picture {
+  margin: 0 -4px 8px 0;
 }
 </style>

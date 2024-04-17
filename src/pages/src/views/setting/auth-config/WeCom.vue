@@ -1,161 +1,109 @@
 <template>
   <div class="details-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 9 }">
-    <div ref="boxRef" class="box">
-      <div class="details-type">
-        <img :src="authSourceData.plugin?.logo" class="w-[24px] h-[24px] mr-[15px]">
-        <div>
-          <p class="title">{{ authSourceData.plugin?.name }}</p>
-          <p class="subtitle">{{ authSourceData.plugin?.description }}</p>
+    <bk-form
+      class="auth-source-form"
+      ref="formRef"
+      form-type="vertical"
+      :model="formData"
+      :rules="rules">
+      <Row :title="$t('基本信息')">
+        <bk-form-item :label="$t('名称')" property="name" required>
+          <bk-input v-model="formData.name" :placeholder="validate.name.message" @change="handleChange" />
+        </bk-form-item>
+        <bk-form-item label="是否启用" required>
+          <bk-switcher
+            v-model="formData.open"
+            size="large"
+            theme="primary"
+          />
+        </bk-form-item>
+      </Row>
+      <Row :title="$t('基础配置')" v-if="formData.plugin_config">
+        <bk-form-item :label="$t('企业 ID')" property="plugin_config.corp_id" required>
+          <bk-input v-model="formData.plugin_config.corp_id" @change="handleChange" />
+        </bk-form-item>
+        <bk-form-item label="Agent ID" property="plugin_config.agent_id" required>
+          <bk-input v-model="formData.plugin_config.agent_id" @change="handleChange" />
+        </bk-form-item>
+        <bk-form-item label="Secret" property="plugin_config.secret" required>
+          <bk-input type="password" v-model="formData.plugin_config.secret" @change="handleChange" />
+        </bk-form-item>
+      </Row>
+      <Row :title="$t('登录模式')">
+        <bk-form-item>
+          <bk-radio-group v-model="LoginMethod">
+            <bk-radio-button label="a">{{ $t('仅用于登录') }}</bk-radio-button>
+            <bk-radio-button label="b" :disabled="true">{{ $t('可用于登录注册') }}</bk-radio-button>
+          </bk-radio-group>
+        </bk-form-item>
+      </Row>
+      <Row :title="$t('登录模式')">
+        <div class="item-flex-header">
+          <bk-form-item class="w-[236px]" :label="$t('数据源字段')" required />
+          <bk-form-item class="w-[236px] auth-source-fields" :label="$t('认证源字段')" required />
         </div>
-      </div>
-      <div ref="cardRef">
-        <bk-form
-          class="auth-source-form"
-          ref="formRef"
-          form-type="vertical"
-          :model="formData"
-          :rules="rules">
-          <div class="content-item">
-            <p class="item-title">{{ $t('基本信息') }}</p>
-            <bk-form-item :label="$t('名称')" property="name" required>
-              <bk-input v-model="formData.name" :placeholder="validate.name.message" @change="handleChange" />
+        <div v-for="(item, index) in formData.data_source_match_rules" :key="index">
+          <div class="item-flex" v-for="(field, i) in item.field_compare_rules" :key="i">
+            <bk-form-item
+              class="w-[236px]"
+              error-display-type="tooltips"
+              :property="`data_source_match_rules.${index}.field_compare_rules.${i}.target_field`"
+              :rules="rulesData.target_field">
+              <bk-select
+                v-model="field.target_field"
+                @change="changeSourceField"
+                @toggle="handleToggle(index)"
+              >
+                <bk-option
+                  class="option-select"
+                  v-for="option in item.targetFields"
+                  :key="option.name"
+                  :id="option.name"
+                  :name="option.name"
+                  :disabled="option.disabled">
+                  <span>{{option.name}}</span>
+                  <span>{{option.type}}</span>
+                </bk-option>
+              </bk-select>
             </bk-form-item>
-            <bk-form-item label="是否启用" required>
-              <bk-switcher
-                v-model="formData.open"
-                size="large"
-                theme="primary"
-              />
+            <bk-form-item
+              class="w-[236px] auth-source-fields"
+              error-display-type="tooltips"
+              :property="`data_source_match_rules.${index}.field_compare_rules.${i}.source_field`"
+              :rules="rulesData.source_field">
+              <bk-input v-model="field.source_field" @focus="handleChange" />
             </bk-form-item>
+            <bk-button
+              text
+              @click="handleAddItem(item.field_compare_rules, i)"
+            >
+              <i class="user-icon icon-plus-fill" />
+            </bk-button>
+            <bk-button
+              text
+              :disabled="item.field_compare_rules.length === 1"
+              @click="handleDeleteItem(field.target_field, index, item.field_compare_rules, i)">
+              <i :class="['user-icon icon-minus-fill', { 'forbid': item.field_compare_rules.length === 1 }]" />
+            </bk-button>
           </div>
-          <div class="content-item" v-if="formData.plugin_config">
-            <p class="item-title">{{ $t('基础配置') }}</p>
-            <bk-form-item :label="$t('企业 ID')" property="plugin_config.corp_id" required>
-              <bk-input v-model="formData.plugin_config.corp_id" @change="handleChange" />
-            </bk-form-item>
-            <bk-form-item label="Agent ID" property="plugin_config.agent_id" required>
-              <bk-input v-model="formData.plugin_config.agent_id" @change="handleChange" />
-            </bk-form-item>
-            <bk-form-item label="Secret" property="plugin_config.secret" required>
-              <bk-input type="password" v-model="formData.plugin_config.secret" @change="handleChange" />
-            </bk-form-item>
-          </div>
-          <div class="content-item">
-            <p class="item-title">{{ $t('登录模式') }}</p>
-            <bk-form-item>
-              <bk-radio-group v-model="LoginMethod">
-                <bk-radio-button label="a">{{ $t('仅用于登录') }}</bk-radio-button>
-                <bk-radio-button label="b" :disabled="true">{{ $t('可用于登录注册') }}</bk-radio-button>
-              </bk-radio-group>
-            </bk-form-item>
-          </div>
-          <div class="content-item pb-[24px]">
-            <p class="item-title">{{ $t('数据源匹配') }}</p>
-            <div class="data-source-matching">
-              <div
-                :class="['matching-item', {
-                  'hover-item': (hoverItem === index) && formData.data_source_match_rules.length > 1
-                }]"
-                v-for="(item, index) in formData.data_source_match_rules"
-                :key="index"
-                @mouseenter="mouseenter(index)"
-                @mouseleave="mouseleave">
-                <bk-form-item
-                  :label="$t('数据源')"
-                  :property="`data_source_match_rules.${index}.data_source_id`"
-                  :rules="rulesData.data_source_id"
-                  required>
-                  <bk-select v-model="item.data_source_id" @change="changeDataSourceId">
-                    <bk-option
-                      v-for="option in dataSourceList"
-                      :key="option.key"
-                      :id="option.key"
-                      :name="option.name"
-                      :disabled="option.disabled">
-                      <span>{{option.name}}</span>
-                    </bk-option>
-                  </bk-select>
-                </bk-form-item>
-                <div class="item-flex-header">
-                  <bk-form-item class="w-[236px]" :label="$t('数据源字段')" required />
-                  <bk-form-item class="w-[236px] auth-source-fields" :label="$t('认证源字段')" required />
-                </div>
-                <div class="item-flex" v-for="(field, i) in item.field_compare_rules" :key="i">
-                  <bk-form-item
-                    class="w-[236px]"
-                    error-display-type="tooltips"
-                    :property="`data_source_match_rules.${index}.field_compare_rules.${i}.target_field`"
-                    :rules="rulesData.target_field">
-                    <bk-select
-                      v-model="field.target_field"
-                      @change="changeSourceField"
-                      @toggle="handleToggle(index)"
-                    >
-                      <bk-option
-                        class="option-select"
-                        v-for="option in item.targetFields"
-                        :key="option.name"
-                        :id="option.name"
-                        :name="option.name"
-                        :disabled="option.disabled">
-                        <span>{{option.name}}</span>
-                        <span>{{option.type}}</span>
-                      </bk-option>
-                    </bk-select>
-                  </bk-form-item>
-                  <bk-form-item
-                    class="w-[236px] auth-source-fields"
-                    error-display-type="tooltips"
-                    :property="`data_source_match_rules.${index}.field_compare_rules.${i}.source_field`"
-                    :rules="rulesData.source_field">
-                    <bk-input v-model="field.source_field" @focus="handleChange" />
-                  </bk-form-item>
-                  <bk-button
-                    text
-                    @click="handleAddItem(item.field_compare_rules, i)"
-                  >
-                    <i class="user-icon icon-plus-fill" />
-                  </bk-button>
-                  <bk-button
-                    text
-                    :disabled="item.field_compare_rules.length === 1"
-                    @click="handleDeleteItem(field.target_field, index, item.field_compare_rules, i)">
-                    <i :class="['user-icon icon-minus-fill', { 'forbid': item.field_compare_rules.length === 1 }]" />
-                  </bk-button>
-                </div>
-                <i
-                  class="bk-sq-icon icon-close-fill"
-                  v-if="formData.data_source_match_rules.length > 1 && hoverItem === index"
-                  @click="handleDelete(item, index)"></i>
-              </div>
-            </div>
-            <div :class="['add-data-source', {
-                   'forbid-data-source': dataSourceList.every(item => item.disabled === true)
-                 }]"
-                 @click="handleAdd">
-              <i class="user-icon icon-add-2"></i>
-              <span>{{ $t('新增数据源匹配') }}</span>
-            </div>
-          </div>
-        </bk-form>
-      </div>
-      <div class="footer" :class="{ 'fixed': isScroll }">
-        <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
-          {{ $t('提交') }}
-        </bk-button>
-        <bk-button @click="handleCancel">
-          {{ $t('取消') }}
-        </bk-button>
-      </div>
+        </div>
+      </Row>
+    </bk-form>
+    <div class="footer">
+      <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
+        {{ $t('提交') }}
+      </bk-button>
+      <bk-button @click="handleCancel">
+        {{ $t('取消') }}
+      </bk-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { debounce } from 'bkui-vue/lib/shared';
-import { addListener, removeListener } from 'resize-detector';
-import { defineExpose, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { defineEmits, defineProps, onMounted, ref } from 'vue';
 
+import Row from '@/components/layouts/row.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
 import { getDataSourceList, getFields, getIdpsDetails } from '@/http';
 import { t } from '@/language/index';
@@ -217,14 +165,6 @@ const dataSourceList = ref([]);
 const builtinFields = ref([]);
 const customFields = ref([]);
 
-const boxRef = ref();
-const cardRef = ref();
-const isScroll = ref(false);
-// 按钮超出屏幕吸底
-const handleResize = () => {
-  isScroll.value = 32 >= (boxRef.value.clientHeight - cardRef.value.clientHeight - 42);
-};
-
 onMounted(async () => {
   try {
     isLoading.value = true;
@@ -272,15 +212,8 @@ onMounted(async () => {
   } catch (error) {
     console.error(error);
   } finally {
-    const listenResize = debounce(300, () => handleResize());
-    addListener(boxRef.value as HTMLElement, listenResize);
-    nextTick(handleResize);
     isLoading.value = false;
   }
-});
-
-onBeforeUnmount(() => {
-  removeListener(boxRef.value as HTMLElement, handleResize);
 });
 
 const handleCancel = () => {
@@ -288,18 +221,12 @@ const handleCancel = () => {
 };
 
 const {
-  changeDataSourceId,
   changeSourceField,
   handleToggle,
   handleAddItem,
   handleDeleteItem,
-  handleAdd,
-  handleDelete,
-  mouseenter,
-  mouseleave,
   handleChange,
   handleSubmit,
-  hoverItem,
 } = useCustomPlugin(
   formData,
   dataSourceList,
@@ -309,11 +236,6 @@ const {
   formRef,
   'edit',
 );
-
-defineExpose({
-  boxRef,
-  cardRef,
-});
 </script>
 
 <style lang="less" scoped>

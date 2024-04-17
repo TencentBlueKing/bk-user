@@ -26,6 +26,7 @@
                 <span>{{ item.name }}</span>
                 <bk-tag
                   v-if="item.type === 'local'"
+                  class="tag-info"
                   type="stroke"
                   theme="info"
                 >
@@ -82,7 +83,7 @@
     </ul>
     <!-- 认证源详情 -->
     <bk-sideslider
-      width="640"
+      :width="(authDetails?.type === 'local' && detailsConfig.isEdit) ? 960 : 640"
       :is-show="detailsConfig.show"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
@@ -102,27 +103,34 @@
         </div>
       </template>
       <template #default>
-        <Local
-          v-if="authDetails?.type === 'local' && detailsConfig.isEdit"
-          :data="authDetails"
-          @cancelEdit="cancelEdit" />
-        <WeCom
-          v-if="authDetails?.type === 'wecom' && detailsConfig.isEdit"
-          :data="authDetails"
-          @cancelEdit="cancelEdit" />
-        <ViewDetails v-else-if="!detailsConfig.isEdit" :data="authDetails" @updateRow="updateRow" />
+        <template v-if="authDetails?.type === 'local'">
+          <Local
+            v-if="detailsConfig.isEdit"
+            :current-id="authDetails?.id"
+            @cancel="cancelEdit"
+            @success="handleSuccess" />
+          <LocalView v-else :current-id="authDetails?.id" @updateRow="updateRow" />
+        </template>
+        <template v-if="authDetails?.type === 'wecom'">
+          <WeCom
+            v-if="detailsConfig.isEdit"
+            :data="authDetails"
+            @cancelEdit="cancelEdit" :current-id="authDetails?.id" />
+          <WeComView v-else />
+        </template>
       </template>
     </bk-sideslider>
   </div>
 </template>
 
 <script setup lang="ts">
-import { bkTooltips as vBkTooltips } from 'bkui-vue';
-import { inject, reactive, ref } from 'vue';
+import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
+import { h, inject, reactive, ref } from 'vue';
 
 import Local from './auth-config/Local.vue';
-import ViewDetails from './auth-config/ViewDetails.vue';
+import LocalView from './auth-config/LocalView.vue';
 import WeCom from './auth-config/WeCom.vue';
+import WeComView from './auth-config/WeComView.vue';
 
 import { t } from '@/language/index';
 import { useMainViewStore } from '@/store';
@@ -133,7 +141,7 @@ const editLeaveBefore = inject('editLeaveBefore');
 
 const loginMethods = ref([
   {
-    id: 'a48b55c2f3fb41ec8df661a5ea0e1cb6',
+    id: '1',
     logo: 'bk-sq-icon icon-personal-user',
     name: '账密登录1',
     status: 'enable',
@@ -226,6 +234,32 @@ const handleBeforeClose = async () => {
     return Promise.resolve(enableLeave);
   }
 };
+
+const handleSuccess = () => {
+  window.changeInput = false;
+  detailsConfig.show = false;
+  InfoBox({
+    title: t('配置成功'),
+    infoType: 'success',
+    subTitle: h('div', {
+      style: {
+        height: '44px',
+        background: '#F5F7FA',
+        lineHeight: '44px',
+      },
+    }, [
+      h('i', {
+        class: 'user-icon icon-info-i',
+      }),
+      h('span', {
+        style: {
+          fontSize: '12px',
+          marginLeft: '8px',
+        },
+      }, t('账号重置需要一定时间，账号生效以最终邮件通知为准')),
+    ]),
+  });
+};
 </script>
 
 <style lang="less" scoped>
@@ -290,6 +324,14 @@ const handleBeforeClose = async () => {
               top: -2px;
               right: -6px;
               background: #2DCB9D;
+            }
+
+            .tag-info {
+              background: #F0F5FF;
+
+              :deep(.bk-tag-text) {
+                background: #F0F5FF;
+              }
             }
           }
 

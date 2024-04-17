@@ -199,7 +199,7 @@
             <bk-radio label="email">
               <span>{{ $t('邮箱') }}</span>
             </bk-radio>
-            <bk-radio label="phone">
+            <bk-radio label="sms">
               <span>{{ $t('短信') }}</span>
             </bk-radio>
           </bk-radio-group>

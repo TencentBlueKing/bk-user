@@ -40,13 +40,18 @@ defineProps({
 
 const { handleOperationsSync } = useDataSource();
 
+// 同步数据后跳转到数据源配置页面
 const handleSync = () => {
   handleOperationsSync();
   router.push({ name: 'dataSource' });
 };
 
-const loginConfig = () => {};
+// 跳转到登录配置页面
+const loginConfig = () => {
+  router.push({ name: 'login' });
+};
 
+// 跳转到组织架构页面
 const viewOrganization = () => {
   router.push({ name: 'organization' });
 };

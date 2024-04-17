@@ -86,7 +86,7 @@ const handleResponse = <T>({
 
 const handleReject = (error: AxiosError, config: Record<string, any>) => {
   const { status } = error.response;
-  const { message } = error.response.data.error;
+  const { message, data } = error.response.data.error;
 
   if (status === 401) {
     if (error.config.url === '/api/v1/web/basic/current-user/') {
@@ -94,7 +94,11 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
     }
     // 登录弹窗
     const loginUrl = getLoginUrl();
-    showLoginModal({ loginUrl });
+    showLoginModal({
+      loginUrl,
+      width: data.width,
+      height: data.height,
+    });
 
     return;
   }

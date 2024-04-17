@@ -9,6 +9,7 @@
   <script>
     var params = new URLSearchParams(window.location.href)
     window.opener && window.opener.postMessage({ target: 'bk-login', result: true }, params.get('from'))
+    window.opener.location.reload();
     window.close();
   </script>
 </body>

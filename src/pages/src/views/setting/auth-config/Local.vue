@@ -1,590 +1,532 @@
 <template>
-  <bk-loading class="details-wrapper user-scroll-y" :loading="isLoading">
-    <div ref="cardRef">
-      <bk-form
-        class="auth-source-form"
-        ref="formRef"
-        form-type="vertical"
-        :model="authSourceData"
-        :rules="rules">
-        <div class="content-item">
-          <p class="item-title">{{ $t('基本信息') }}</p>
-          <bk-form-item :label="$t('名称')" property="name" required>
-            <bk-input v-model="authSourceData.name" :placeholder="validate.name.message" @change="handleChange" />
-          </bk-form-item>
-          <bk-form-item :label="$t('是否启用')" required>
-            <bk-switcher
-              v-model="authSourceData.open"
-              size="large"
-              theme="primary"
+  <div class="details-wrapper user-scroll-y">
+    <bk-form
+      form-type="vertical"
+      ref="formRef"
+      :model="formData"
+      :rules="rulesInfo"
+      v-bkloading="{ loading: isLoading }">
+      <Row :title="$t('基本信息')">
+        <bk-form-item :label="$t('名称')" property="name" required>
+          <bk-input
+            style="width: 600px;"
+            v-model="formData.name"
+            :placeholder="validate.name.message"
+            @focus="handleChange" />
+        </bk-form-item>
+        <bk-form-item :label="$t('是否启用')" required>
+          <bk-switcher
+            :value="formData.config.enable_account_password_login"
+            theme="primary"
+            size="large"
+            @change="changeAccountPassword"
+          />
+        </bk-form-item>
+      </Row>
+      <template v-if="formData.config.enable_account_password_login">
+        <Row :title="$t('密码规则')">
+          <bk-form-item :label="$t('密码长度')" property="config.password_rule.min_length" required>
+            <bk-input
+              style="width: 200px;"
+              type="number"
+              :suffix="$t('至32位')"
+              :min="10"
+              :max="32"
+              v-model="formData.config.password_rule.min_length"
+              @change="handleChange"
             />
           </bk-form-item>
-        </div>
-        <div class="content-item">
-          <p class="item-title">{{ $t('基础配置') }}</p>
-          <div class="basic-config">
-            <p v-if="onDataSources.length">{{ $t('以下数据源已开启「账密登录」') }}</p>
-            <div class="on">
-              <bk-overflow-title
-                type="tips"
-                class="source-name"
-                v-for="(item, index) in onDataSources"
-                :key="index">
-                {{ item.data_source_name }}
-              </bk-overflow-title>
+          <bk-form-item :label="$t('密码必须包含')" required>
+            <bk-checkbox v-model="formData.config.password_rule.contain_lowercase">{{ $t('小写字母') }}</bk-checkbox>
+            <bk-checkbox v-model="formData.config.password_rule.contain_uppercase">{{ $t('大写字母') }}</bk-checkbox>
+            <bk-checkbox v-model="formData.config.password_rule.contain_digit">{{ $t('数字') }}</bk-checkbox>
+            <bk-checkbox v-model="formData.config.password_rule.contain_punctuation">{{ $t('特殊字符（除空格）') }}</bk-checkbox>
+            <p class="error-text" v-show="passwordRuleError">{{ $t('至少包含一类字符') }}</p>
+          </bk-form-item>
+          <bk-form-item label="" required>
+            <div class="div-flex">
+              <span>{{ $t('密码不允许连续') }}</span>
+              <bk-input
+                style="width: 85px;"
+                type="number"
+                behavior="simplicity"
+                v-model="formData.config.password_rule.not_continuous_count"
+              />
+              <span>{{ $t('位 出现') }}</span>
             </div>
-            <p v-if="notDataSources.length">{{ $t('以下数据源未开启「账密登录」') }}</p>
-            <div class="off" v-for="(item, index) in notDataSources" :key="index">
-              <bk-overflow-title
-                type="tips"
-                class="source-name">
-                {{ item.data_source_name }}
-                <bk-button text theme="primary" @click="handleOpen(item)">{{ $t('去开启') }}</bk-button>
-              </bk-overflow-title>
+            <p class="error-text" v-show="passwordCountError">{{ $t('可选值范围：5-10') }}</p>
+            <bk-checkbox v-model="formData.config.password_rule.not_keyboard_order">
+              {{ $t('键盘序') }}
+            </bk-checkbox>
+            <bk-checkbox v-model="formData.config.password_rule.not_continuous_letter">
+              {{ $t('连续字母序') }}
+            </bk-checkbox>
+            <bk-checkbox v-model="formData.config.password_rule.not_continuous_digit">
+              {{ $t('连续数字序') }}
+            </bk-checkbox>
+            <bk-checkbox v-model="formData.config.password_rule.not_repeated_symbol">
+              {{ $t('重复字母、数字、特殊符号') }}
+            </bk-checkbox>
+            <p class="error-text" v-show="passwordConfigError">{{ $t('至少包含一类连续性场景') }}</p>
+          </bk-form-item>
+        </Row>
+        <Row :title="$t('初始密码设置')">
+          <bk-form-item label="" required>
+            <div class="div-flex">
+              <bk-checkbox
+                v-model="formData.config.password_initial.cannot_use_previous_password"
+                @change="handleChange">
+                {{ $t('修改密码时不能重复前') }}
+              </bk-checkbox>
+              <bk-input
+                style="width: 85px;"
+                type="number"
+                behavior="simplicity"
+                :min="0"
+                :max="5"
+                v-model="formData.config.password_initial.reserved_previous_password_count"
+                @change="handleChange"
+              />
+              <span>{{ $t('次 用过的密码') }}</span>
             </div>
-          </div>
-        </div>
-        <div class="content-item pb-[24px]">
-          <p class="item-title">{{ $t('数据源匹配') }}</p>
-          <div class="content-matching">
-            <bk-exception
-              v-if="onDataSources.length === 0"
-              class="exception-part"
-              type="empty"
-              scene="part"
-              :description="$t('暂无数据源匹配')"
+          </bk-form-item>
+          <bk-form-item class="form-item-flex" :label="$t('密码生成方式')" required>
+            <bk-radio-group v-model="formData.config.password_initial.generate_method" @change="handleChange">
+              <bk-radio label="random">{{ $t('随机') }}</bk-radio>
+              <bk-radio label="fixed">{{ $t('固定') }}</bk-radio>
+            </bk-radio-group>
+            <div v-if="formData.config.password_initial.generate_method === 'fixed'">
+              <bk-input
+                class="input-password"
+                v-model="formData.config.password_initial.fixed_password"
+                type="password" />
+              <bk-button
+                outline
+                theme="primary"
+                class="ml-[8px]"
+                @click="handleRandomPassword">{{ $t('随机生成') }}</bk-button>
+            </div>
+          </bk-form-item>
+          <bk-form-item
+            :label="$t('通知方式')"
+            :required="formData.config.password_initial.generate_method === 'random'">
+            <NotifyEditorTemplate
+              :active-methods="formData.config.password_initial.notification.enabled_methods"
+              :checkbox-info="NOTIFICATION_METHODS"
+              :data-list="formData.config.password_initial.notification.templates"
+              :is-template="isPasswordInitial"
+              :expiring-email-key="'user_initialize'"
+              :expired-email-key="'reset_password'"
+              :expiring-sms-key="'user_initialize'"
+              :expired-sms-key="'reset_password'"
+              :create-account-email="$t('创建账户邮件')"
+              :reset-password-email="$t('重设密码后的邮件')"
+              :create-account-sms="$t('创建账户短信')"
+              :reset-password-sms="$t('重设密码后的短信')"
+              @handleEditorText="handleEditorText">
+              <template #label>
+                <div class="password-header">
+                  <bk-checkbox-group
+                    v-model="formData.config.password_initial.notification.enabled_methods"
+                    @change="handleChange">
+                    <bk-checkbox
+                      v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
+                      :class="['password-tab', item.status ? 'active-tab' : '']"
+                      style="margin-left: 5px;"
+                      :label="item.value">
+                      <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+                    </bk-checkbox>
+                  </bk-checkbox-group>
+                  <div class="edit-info" @click="passwordInitialTemplate">
+                    <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
+                    <AngleUp v-if="isDropdownPasswordInitial" />
+                    <AngleDown v-else />
+                  </div>
+                </div>
+              </template>
+            </NotifyEditorTemplate>
+            <p class="error" v-show="enabledMethodsError">{{ $t('通知方式不能为空') }}</p>
+          </bk-form-item>
+        </Row>
+        <Row :title="$t('登录限制')">
+          <bk-form-item label="" required>
+            <bk-checkbox
+              v-model="formData.config.password_initial.force_change_at_first_login"
+              @change="handleChange">
+              {{ $t('首次登录强制修改密码') }}
+            </bk-checkbox>
+          </bk-form-item>
+          <bk-form-item :label="$t('密码试错次数')" required>
+            <bk-radio-group v-model="formData.config.password_rule.max_retries" @change="handleChange">
+              <bk-radio-button
+                v-for="(item, index) in maxTrailTimesList"
+                :key="index"
+                :label="item.times"
+              >
+                {{ item.text }}
+              </bk-radio-button>
+            </bk-radio-group>
+          </bk-form-item>
+          <bk-form-item :label="$t('锁定时间')" property="config.password_rule.lock_time" required>
+            <bk-input
+              style="width: 200px;"
+              type="number"
+              :suffix="$t('秒')"
+              :min="0"
+              v-model="formData.config.password_rule.lock_time"
+              @change="handleChange"
             />
-            <div class="content-box" v-else v-for="(item, index) in onDataSources" :key="index">
-              <bk-overflow-title class="data-source-title">{{ item.data_source_name }}</bk-overflow-title>
-              <div class="field-rules">
-                <dl>
-                  <dt>{{ $t('数据源字段') }}：</dt>
-                  <bk-overflow-title
-                    type="tips"
-                    class="source-field"
-                    v-for="(val, i) in item.field_compare_rules"
-                    :key="i">
-                    {{ val.source_field }}
-                  </bk-overflow-title>
-                </dl>
-                <dl>
-                  <dt>{{ $t('认证源字段') }}：</dt>
-                  <bk-overflow-title
-                    type="tips"
-                    class="source-field"
-                    v-for="(val, i) in item.field_compare_rules"
-                    :key="i">
-                    {{ val.target_field }}
-                  </bk-overflow-title>
-                </dl>
-              </div>
-              <span class="or" v-if="index !== 0">or</span>
-            </div>
-          </div>
-        </div>
-      </bk-form>
+          </bk-form-item>
+        </Row>
+        <Row :title="$t('密码有效期设置')">
+          <bk-form-item :label="$t('密码有效期')" required>
+            <bk-radio-group v-model="formData.config.password_rule.valid_time" @change="handleChange">
+              <bk-radio-button
+                v-for="(item, index) in VALID_TIME"
+                :key="index"
+                :label="item.days"
+              >
+                {{ item.text }}
+              </bk-radio-button>
+            </bk-radio-group>
+          </bk-form-item>
+          <bk-form-item :label="$t('提醒时间')" property="config.password_expire.remind_before_expire" required>
+            <bk-checkbox-group v-model="formData.config.password_expire.remind_before_expire" @change="handleChange">
+              <bk-checkbox
+                v-for="(item, index) in REMIND_DAYS"
+                :key="index"
+                :label="item.value"
+              >{{ item.label }}</bk-checkbox
+              >
+            </bk-checkbox-group>
+          </bk-form-item>
+          <bk-form-item :label="$t('通知方式')" property="config.password_expire.notification.enabled_methods" required>
+            <NotifyEditorTemplate
+              :active-methods="formData.config.password_expire.notification.enabled_methods"
+              :checkbox-info="NOTIFICATION_METHODS"
+              :data-list="formData.config.password_expire.notification.templates"
+              :is-template="isPasswordExpire"
+              :expiring-email-key="'password_expiring'"
+              :expired-email-key="'password_expired'"
+              :expiring-sms-key="'password_expiring'"
+              :expired-sms-key="'password_expired'"
+              @handleEditorText="handleEditorText">
+              <template #label>
+                <div class="password-header">
+                  <bk-checkbox-group
+                    v-model="formData.config.password_expire.notification.enabled_methods"
+                    @change="handleChange">
+                    <bk-checkbox
+                      v-for="(item, index) in NOTIFICATION_METHODS" :key="index"
+                      :class="['password-tab', item.status ? 'active-tab' : '']"
+                      style="margin-left: 5px;"
+                      :label="item.value">
+                      <span class="checkbox-item" @click="handleClickLabel(item)">{{item.label}}</span>
+                    </bk-checkbox>
+                  </bk-checkbox-group>
+                  <div class="edit-info" @click="passwordExpireTemplate">
+                    <span style="font-size:14px">{{ $t('编辑通知模板') }}</span>
+                    <AngleUp v-if="isDropdownPasswordExpire" />
+                    <AngleDown v-else />
+                  </div>
+                </div>
+              </template>
+            </NotifyEditorTemplate>
+          </bk-form-item>
+        </Row>
+      </template>
+    </bk-form>
+    <div class="footer">
+      <bk-button theme="primary" class="mr8" @click="handleSubmit" :loading="btnLoading">{{ $t('提交') }}</bk-button>
+      <bk-button @click="emit('cancel')">{{ $t('取消') }}</bk-button>
     </div>
-    <div class="footer-wrapper">
-      <div class="footer-div">
-        <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
-          {{ $t('提交') }}
-        </bk-button>
-        <bk-button @click="handleCancel">
-          {{ $t('取消') }}
-        </bk-button>
-      </div>
-    </div>
-  </bk-loading>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Message } from 'bkui-vue';
-import { onMounted, ref } from 'vue';
+import { InfoBox } from 'bkui-vue';
+import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
+import { defineEmits, defineProps, h, onMounted, reactive, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
+import Row from '@/components/layouts/row.vue';
+import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
 import { useValidate } from '@/hooks';
-import { getDataSourceList, getIdpsDetails, patchIdps } from '@/http';
-import router from '@/router/index';
+import {
+  getDataSourceDetails,
+  getDefaultConfig,
+  newDataSource,
+  putDataSourceDetails,
+  randomPasswords,
+} from '@/http';
+import { t } from '@/language/index';
+import { NOTIFICATION_METHODS, passwordMustIncludes, passwordNotAllowed, REMIND_DAYS, VALID_TIME } from '@/utils';
 
+const route = useRoute();
 const validate = useValidate();
 
-const emit = defineEmits(['cancelEdit']);
+const emit = defineEmits(['cancel', 'success']);
 const props = defineProps({
-  data: {
-    type: Object,
-    default: () => ({}),
+  currentId: {
+    type: String,
+    default: '',
   },
 });
 
 const formRef = ref();
+// 初始密码
+const isPasswordInitial = ref(false);
+const isDropdownPasswordInitial = ref(false);
+// 密码到期
+const isPasswordExpire = ref(false);
+const isDropdownPasswordExpire = ref(false);
 const isLoading = ref(false);
-const authSourceData = ref({
-  name: '',
-  open: false,
-});
-const onDataSources = ref([]);
-const notDataSources = ref([]);
-const btnLoading = ref(false);
+const passwordRuleError = ref(false);
+const passwordCountError = ref(false);
+const passwordConfigError = ref(false);
+const enabledMethodsError = ref(false);
 
-const rules = {
+const formData = reactive({
+  name: '',
+  config: {},
+});
+
+const rulesInfo = {
   name: [validate.required, validate.name],
+  min_length: [validate.required],
 };
 
-const cardRef = ref();
-
 onMounted(async () => {
+  isLoading.value = true;
   try {
-    isLoading.value = true;
-    if (props.data.id) {
-      const [authRes, dataRes] = await Promise.all([
-        getIdpsDetails(props.data.id),
-        getDataSourceList(''),
-      ]);
-      authSourceData.value = authRes.data;
-      processMatchRules(dataRes.data);
+    if (props.currentId) {
+      // 获取数据源详情
+      const res = await getDataSourceDetails(props.currentId);
+      formData.name = res?.data?.name;
+      if (!res?.data?.plugin_config?.enable_account_password_login) {
+        const demo = await getDefaultConfig('local');
+        formData.config = {
+          ...demo?.data?.config,
+          enable_account_password_login: false,
+        };
+      } else {
+        formData.config = res?.data?.plugin_config;
+      }
+    } else {
+      // 获取默认配置
+      const res = await getDefaultConfig('local');
+      formData.config = res?.data?.config;
     }
-  } catch (error) {
-    console.error(error);
+  } catch (e) {
+    console.warn(e);
   } finally {
     isLoading.value = false;
   }
 });
 
-const processMatchRules = (list) => {
-  const dataSourceIds = authSourceData.value.data_source_match_rules.map(item => item.data_source_id);
-  onDataSources.value = list
-    .filter(val => dataSourceIds.includes(val.id))
-    .map(val => ({
-      data_source_id: val.id,
-      data_source_name: val.name,
-      field_compare_rules: authSourceData.value.data_source_match_rules
-        .find(item => item.data_source_id === val.id).field_compare_rules,
-    }));
-  notDataSources.value = list
-    .filter(val => !dataSourceIds.includes(val.id) && val.plugin_id === 'local')
-    .map(val => ({
-      data_source_id: val.id,
-      data_source_name: val.name,
-    }));
+// 监听密码规则
+watch(() => formData.config?.password_rule, (value) => {
+  if (!value) return;
+  const list = Object.entries(value).filter(([key]) => passwordMustIncludes[key]);
+  const list2 = Object.entries(value).filter(([key]) => passwordNotAllowed[key]);
+
+  passwordRuleError.value = !list.some(([, val]) => val);
+  passwordConfigError.value = !list2.some(([, val]) => val);
+
+  const count = formData.config?.password_rule?.not_continuous_count;
+  const isCountInRange = count >= 5 && count <= 10;
+
+  if (!passwordConfigError.value && isCountInRange) {
+    passwordCountError.value = false;
+  } else if (!passwordConfigError.value && !isCountInRange) {
+    passwordCountError.value = !isCountInRange;
+  } else {
+    passwordCountError.value = count === 0 && !passwordConfigError.value;
+    passwordConfigError.value = count !== 0 && passwordConfigError.value;
+  }
+}, { deep: true });
+
+watch(() => formData.config?.password_rule?.not_continuous_count, (value, oldVal) => {
+  if (!value) return;
+  if (value !== oldVal) {
+    window.changeInput = true;
+  }
+  const list = Object.entries(formData.config?.password_rule)
+    .filter(([key, val]) => passwordNotAllowed[key] && val)
+    .map(val => val);
+
+  if (value === 0) return;
+
+  const isValueInRange = value >= 5 && value <= 10;
+  passwordCountError.value = !isValueInRange;
+  passwordConfigError.value = !!list.every(v => !v);
+});
+
+// 监听密码生成方式
+watch(() => formData.config?.password_initial?.generate_method, (value) => {
+  enabledMethodsError.value = value === 'random' && !formData.config.password_initial.notification.enabled_methods.length;
+  if (value === 'random') {
+    formData.config.password_initial.fixed_password = null;
+  }
+});
+
+watch(() => formData.config?.password_initial?.notification?.enabled_methods, (value) => {
+  if (formData.config?.password_initial?.generate_method === 'fixed') {
+    return enabledMethodsError.value = false;
+  }
+  enabledMethodsError.value = !value.length;
+});
+
+const maxTrailTimesList = reactive([
+  { times: 3, text: `3 ${t('次')}` },
+  { times: 5, text: `5 ${t('次')}` },
+  { times: 10, text: `10 ${t('次')}` },
+]);
+
+// 编辑通知方式
+const handleEditorText = (html, text, key, type) => {
+  const templates = ref(key === 'password_expiring' || key === 'password_expired'
+    ? formData.config.password_expire.notification.templates
+    : formData.config.password_initial.notification.templates);
+  templates.value.forEach((item) => {
+    if (item.method === type && item.scene === key) {
+      item.content = text;
+      item.content_html = html;
+    }
+  });
 };
 
-const handleOpen = (item) => {
-  router.push({
-    name: 'newLocal',
-    params: {
-      type: 'local',
-      id: item.data_source_id,
-    },
+const handleClickLabel = (item) => {
+  NOTIFICATION_METHODS.forEach((element) => {
+    element.status = element.value === item.value;
   });
+};
+
+const passwordInitialTemplate = () => {
+  isPasswordInitial.value = !isPasswordInitial.value;
+  isDropdownPasswordInitial.value = !isDropdownPasswordInitial.value;
+};
+
+const passwordExpireTemplate = () => {
+  isPasswordExpire.value = !isPasswordExpire.value;
+  isDropdownPasswordExpire.value = !isDropdownPasswordExpire.value;
+};
+
+const btnLoading = ref(false);
+const handleSubmit = async () => {
+  try {
+    if (passwordRuleError.value
+      || passwordCountError.value
+      || passwordConfigError.value
+      || enabledMethodsError.value) return;
+    await formRef.value.validate();
+    btnLoading.value = true;
+    const params = {
+      name: formData.name,
+      plugin_id: route.params.type,
+      field_mapping: [],
+    };
+    if (formData.config.enable_account_password_login) {
+      params.plugin_config = {
+        password_rule: formData.config.password_rule,
+        password_initial: formData.config.password_initial,
+        password_expire: formData.config.password_expire,
+        enable_account_password_login: formData.config.enable_account_password_login,
+      };
+    } else {
+      params.plugin_config = {
+        password_rule: null,
+        password_initial: null,
+        password_expire: null,
+        enable_account_password_login: false,
+      };
+    }
+    props.currentId ? updateDataSource(params) : getDataSource(params);
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    btnLoading.value = false;
+  }
+};
+
+const updateDataSource = async (params) => {
+  const data = {
+    id: props.currentId,
+    name: params.name,
+    field_mapping: params.field_mapping,
+    plugin_config: params.plugin_config,
+  };
+  await putDataSourceDetails(data);
+  emit('success');
+};
+
+const getDataSource = async (params) => {
+  await newDataSource(params);
+  emit('success');
 };
 
 const handleChange = () => {
   window.changeInput = true;
 };
 
-const handleCancel = () => {
-  emit('cancelEdit');
+const changeAccountPassword = (value) => {
+  if (!value) {
+    InfoBox({
+      title: t('确认要关闭账密登录吗？'),
+      subTitle: h('div', {
+        style: {
+          textAlign: 'left',
+          lineHeight: '24px',
+        },
+      }, [
+        h('p', t('1.关闭后该数据的用户将无法通过账密登录')),
+        h('p', t('2.关闭后，再次开启时，账密规则信息会重置')),
+      ]),
+      onConfirm() {
+        formData.config.enable_account_password_login = value;
+      },
+      onClosed() {
+        formData.config.enable_account_password_login = !value;
+      },
+    });
+  } else {
+    formData.config.enable_account_password_login = value;
+  }
+  window.changeInput = true;
 };
 
-const handleSubmit = async () => {
-  await formRef.value.validate();
-  btnLoading.value = true;
-  patchIdps({
-    id: props.data.id,
-    name: authSourceData.value.name,
-  }).then(() => {
-    Message({ theme: 'success', message: t('认证源更新成功') });
-    window.changeInput = false;
-    emit('cancelEdit');
-  })
-    .catch((e) => {
-      console.warn(e);
-      Message({ theme: 'error', message: t('认证源更新失败') });
-    })
-    .finally(() => {
-      btnLoading.value = false;
-    });
+const handleRandomPassword = async () => {
+  try {
+    const passwordRes = await randomPasswords({});
+    formData.config.password_initial.fixed_password = passwordRes.data.password;
+    window.changeInput = true;
+  } catch (e) {
+    console.warn(e);
+  }
 };
 </script>
 
 <style lang="less" scoped>
-.details-wrapper {
-  height: calc(100vh - 52px);
-  padding: 20px 24px;
-  background: #F5F7FA;
+@import url('@/components/notify-editor/NotifyEditor.less');
+@import url('./Local.less');
 
-  .auth-source-form {
-    .content-item {
-      padding: 0 24px;
-      margin-bottom: 16px;
-      background: #fff;
-      border-radius: 2px;
-      box-shadow: 0 2px 4px 0 #1919290d;
+.prefix-slot {
+  display: flex;
+  width: 80px;
+  cursor: pointer;
+  background: #e1ecff;
+  align-items: center;
+  justify-content: center;
+}
 
-      .item-title {
-        padding: 16px 0;
-        font-size: 14px;
-        font-weight: 700;
-      }
-
-      .basic-config {
-        padding-bottom: 12px;
-
-        p {
-          margin-bottom: 12px;
-          font-size: 14px;
-          color: #63656E;
-        }
-
-        .source-name {
-          // width: 622px;
-          height: 40px;
-          padding-left: 24px;
-          margin-bottom: 12px;
-          line-height: 40px;
-          color: #313238;
-          background: #F5F7FA;
-          border-radius: 2px;
-        }
-
-        .off {
-          .source-name {
-            position: relative;
-            color: #C4C6CC;
-
-            ::v-deep .text-ov {
-              width: 535px;
-            }
-
-            .bk-button {
-              position: absolute;
-              top: 13px;
-              right: 16px;
-            }
-          }
-        }
-      }
-
-      .content-matching {
-        padding-bottom: 8px;
-
-        ::v-deep .exception-part {
-          position: relative;
-          width: 400px;
-
-          .bk-exception-img {
-            width: 340px;
-            height: 170px;
-          }
-
-          .bk-exception-description {
-            position: absolute;
-            bottom: 0;
-            font-size: 14px;
-          }
-        }
-
-        .content-box {
-          position: relative;
-
-          .or {
-            position: absolute;
-            top: -16px;
-            left: -22px;
-            display: inline-block;
-            width: 19px;
-            height: 16px;
-            line-height: 16px;
-            color: #FE9C00;
-            text-align: center;
-            background: #FFF3E1;
-            border-radius: 2px;
-
-            &::before {
-              position: absolute;
-              top: -16px;
-              left: 10px;
-              width: 12px;
-              height: 16px;
-              border: 1px solid #DCDEE5;
-              border-right: transparent;
-              border-bottom: transparent;
-              border-top-left-radius: 2px;
-              content: '';
-            }
-
-            &::after {
-              position: absolute;
-              top: 16px;
-              left: 10px;
-              width: 12px;
-              height: 16px;
-              border: 1px solid #DCDEE5;
-              border-top: transparent;
-              border-right: transparent;
-              border-bottom-left-radius: 2px;
-              content: '';
-            }
-          }
-        }
-
-        .data-source-title {
-          position: relative;
-          padding: 0 24px;
-          line-height: 32px;
-          background: #F0F1F5;
-          border-radius: 2px 2px 0 0;
-        }
-
-        .field-rules {
-          display: flex;
-          margin-bottom: 16px;
-          background: #FAFBFD;
-          border-radius: 2px;
-
-          dl {
-            padding: 12px 0 12px 50px;;
-
-            dt {
-              font-size: 14px;
-              line-height: 22px;
-              color: #979BA5;
-            }
-
-            .source-field {
-              max-width: 250px;
-              min-width: 120px;
-              font-size: 14px;
-              line-height: 22px;
-              color: #313238;
-            }
-          }
-        }
-      }
-
-      ::v-deep .bk-form-item {
-        padding-bottom: 24px;
-        margin-bottom: 0;
-        font-size: 14px;
-
-        &:last-child {
-          margin-bottom: 16px;
-        }
-
-        .bk-radio-button {
-          .bk-radio-button-label {
-            font-size: 14px !important;
-          }
-        }
-
-        .bk-radio-label {
-          font-size: 14px !important;
-        }
-
-        .error-text {
-          font-size: 12px;
-          line-height: 1;
-          color: #ea3636;
-          animation: form-error-appear-animation .15s;
-        }
-      }
-
-      .data-source-matching {
-        width: 622px;
-        margin-left: 59px;
-        border-radius: 2px;
-
-        .hover-item {
-          cursor: pointer;
-        }
-
-        .matching-item {
-          position: relative;
-          padding: 16px 16px 16px 24px;
-          margin-bottom: 16px;
-          background: #F5F7FA;
-
-          .bk-sq-icon {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            font-size: 20px;
-            color: #EA3636;
-          }
-
-          .or {
-            position: absolute;
-            top: -16px;
-            left: -22px;
-            display: inline-block;
-            width: 19px;
-            height: 16px;
-            line-height: 16px;
-            color: #FE9C00;
-            text-align: center;
-            background: #FFF3E1;
-            border-radius: 2px;
-
-            &::before {
-              position: absolute;
-              top: -27px;
-              left: 10px;
-              width: 12px;
-              height: 27px;
-              border: 1px solid #DCDEE5;
-              border-right: transparent;
-              border-bottom: transparent;
-              border-top-left-radius: 2px;
-              content: '';
-            }
-
-            &::after {
-              position: absolute;
-              top: 16px;
-              left: 10px;
-              width: 12px;
-              height: 27px;
-              border: 1px solid #DCDEE5;
-              border-top: transparent;
-              border-right: transparent;
-              border-bottom-left-radius: 2px;
-              content: '';
-            }
-          }
-
-          ::v-deep .bk-form-item {
-            padding-bottom: 24px;
-            margin-bottom: 0;
-            margin-left: 0;
-            font-size: 14px;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-          }
-
-          .item-flex-header {
-            display: flex;
-            align-items: center;
-
-            ::v-deep .bk-form-item {
-              padding-bottom: 0;
-              margin-bottom: 0;
-              margin-left: 0;
-              font-size: 14px;
-
-              &:last-child {
-                margin-left: 16px;
-              }
-            }
-          }
-
-          .item-flex {
-            position: relative;
-            display: flex;
-            padding-bottom: 8px;
-            align-items: center;
-
-            ::v-deep .bk-form-item {
-              padding-bottom: 0;
-              margin-bottom: 0;
-              margin-left: 0;
-              font-size: 14px;
-            }
-
-            .auth-source-fields {
-              margin-left: 16px;
-            }
-
-            .user-icon {
-              font-size: 16px;
-              color: #dcdee5;
-
-              &:hover {
-                color: #c4c6cc;
-              }
-            }
-
-            .icon-plus-fill {
-              position: absolute;
-              top: 9px;
-              right: 35px;
-            }
-
-            .icon-minus-fill {
-              position: absolute;
-              top: 9px;
-              right: 5px;
-            }
-
-            .and {
-              position: absolute;
-              top: -12px;
-              left: -24px;
-              display: inline-block;
-              width: 24px;
-              height: 16px;
-              line-height: 16px;
-              color: #14A568;
-              text-align: center;
-              background: #E4FAF0;
-              border-radius: 2px;
-
-              &::before {
-                position: absolute;
-                top: -12px;
-                left: 12px;
-                width: 12px;
-                height: 12px;
-                border: 1px solid #DCDEE5;
-                border-right: transparent;
-                border-bottom: transparent;
-                border-top-left-radius: 2px;
-                content: '';
-              }
-
-              &::after {
-                position: absolute;
-                top: 16px;
-                left: 12px;
-                width: 12px;
-                height: 12px;
-                border: 1px solid #DCDEE5;
-                border-top: transparent;
-                border-right: transparent;
-                border-bottom-left-radius: 2px;
-                content: '';
-              }
-            }
-          }
-        }
-      }
-
-      .add-data-source {
-        display: flex;
-        width: 622px;
-        height: 32px;
-        margin-left: 59px;
-        font-size: 14px;
-        color: #3A84FF;
-        cursor: pointer;
-        background: #F0F5FF;
-        border: 1px dashed #A3C5FD;
-        border-radius: 2px;
-        align-items: center;
-        justify-content: center;
-
-        span {
-          margin-left: 5px;
-        }
-      }
-    }
-  }
-
-  .footer-wrapper {
-    .bk-button {
-      width: 88px;
-      margin-right: 8px;
-    }
-  }
+.error {
+  position: absolute;
+  left: 0;
+  padding-top: 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: #ea3636;
+  text-align: left;
+  animation: form-error-appear-animation 0.15s;
 }
 </style>
