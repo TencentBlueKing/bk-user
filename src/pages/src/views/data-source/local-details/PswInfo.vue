@@ -99,7 +99,7 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     const res = await getDataSourceDetails(currentId.value);
-    openPasswordLogin.value = res.data?.plugin_config?.enable_account_password_login;
+    openPasswordLogin.value = res.data?.plugin_config?.enable_password;
     passwordRule.value = res.data?.plugin_config?.password_rule;
     passwordInitial.value = res.data?.plugin_config?.password_initial;
     passwordExpire.value = res.data?.plugin_config?.password_expire;

@@ -43,7 +43,7 @@ export interface PutUserValidityParams {
  */
 export interface PatchBuiltinManagerParams {
   username?: string,
-  enable_account_password_login?: boolean,
+  enable_login?: boolean,
 }
 
 /**

@@ -16,12 +16,12 @@
           @focus="handleChange" />
       </bk-form-item>
       <bk-form-item label="" required>
-        <bk-checkbox v-model="formData.config.enable_account_password_login" @change="changeAccountPassword">
+        <bk-checkbox v-model="formData.config.enable_password" @change="changeAccountPassword">
           {{ $t('开启账密登录') }}
         </bk-checkbox>
       </bk-form-item>
     </div>
-    <template v-if="formData.config.enable_account_password_login">
+    <template v-if="formData.config.enable_password">
       <div class="content-item">
         <p class="item-title">{{ $t('密码规则') }}</p>
         <bk-form-item :label="$t('密码长度')" property="config.password_rule.min_length" required>
@@ -297,11 +297,11 @@ onMounted(async () => {
     if (currentId.value) {
       const res = await getDataSourceDetails(currentId.value);
       formData.name = res?.data?.name;
-      if (!res?.data?.plugin_config?.enable_account_password_login) {
+      if (!res?.data?.plugin_config?.enable_password) {
         const demo = await getDefaultConfig(route.params.type);
         formData.config = {
           ...demo?.data?.config,
-          enable_account_password_login: false,
+          enable_password: false,
         };
       } else {
         formData.config = res?.data?.plugin_config;
@@ -420,19 +420,19 @@ const handleSubmit = async () => {
       plugin_id: route.params.type,
       field_mapping: [],
     };
-    if (formData.config.enable_account_password_login) {
+    if (formData.config.enable_password) {
       params.plugin_config = {
         password_rule: formData.config.password_rule,
         password_initial: formData.config.password_initial,
         password_expire: formData.config.password_expire,
-        enable_account_password_login: formData.config.enable_account_password_login,
+        enable_password: formData.config.enable_password,
       };
     } else {
       params.plugin_config = {
         password_rule: null,
         password_initial: null,
         password_expire: null,
-        enable_account_password_login: false,
+        enable_password: false,
       };
     }
     currentId.value ? updateDataSource(params) : getDataSource(params);
@@ -487,7 +487,7 @@ const changeAccountPassword = (value) => {
         h('p', t('2.关闭后，再次开启时，账密规则信息会重置')),
       ]),
       onClosed() {
-        formData.config.enable_account_password_login = !value;
+        formData.config.enable_password = !value;
       },
     });
   }

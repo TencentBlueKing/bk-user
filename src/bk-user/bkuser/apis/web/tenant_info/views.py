@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.db import transaction
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -22,6 +23,7 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
 from bkuser.biz.data_source_organization import DataSourceUserHandler
+from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
@@ -91,7 +93,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(
             TenantBuiltinManagerRetrieveOutputSLZ(
                 {
                     "username": user.username,
-                    "enable_account_password_login": data_source.plugin_config["enable_password"],
+                    "enable_login": data_source.plugin_config["enable_password"],
                 }
             ).data
         )
@@ -106,6 +108,12 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         slz = TenantBuiltinManagerUpdateInputSLZ(data=request.data)
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
+
+        # 若当前内置的租户管理员是唯一的管理员，则无法禁用
+        if not TenantManager.objects.filter(
+            tenant_id=self.get_current_tenant_id(), tenant_user__data_source__type=DataSourceTypeEnum.REAL
+        ).exists():
+            raise error_codes.VALIDATION_ERROR.f(_("不存在实名管理员，无法禁用内置管理员账号登录"))
 
         # 内建数据源 & 用户
         data_source, user = self.get_builtin_data_source_and_user()
@@ -125,7 +133,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(
                 LocalDataSourceIdentityInfo.objects.filter(user=user).update(username=new_username)
 
             # 更新是否启用登录
-            enable = data.get("enable_account_password_login")
+            enable = data.get("enable_login")
             if enable is not None and plugin_config.enable_password != enable:
                 plugin_config.enable_password = enable
                 data_source.set_plugin_cfg(plugin_config)

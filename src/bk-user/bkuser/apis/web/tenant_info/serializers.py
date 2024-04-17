@@ -55,14 +55,14 @@ class TenantUpdateInputSLZ(serializers.Serializer):
 
 class TenantBuiltinManagerRetrieveOutputSLZ(serializers.Serializer):
     username = serializers.CharField(help_text="用户名")
-    enable_account_password_login = serializers.BooleanField(help_text="是否启用账密登录")
+    enable_login = serializers.BooleanField(help_text="是否启用账密登录")
 
 
 class TenantBuiltinManagerUpdateInputSLZ(serializers.Serializer):
     username = serializers.CharField(
         help_text="用户名", validators=[validate_data_source_user_username], required=False, allow_blank=True
     )
-    enable_account_password_login = serializers.BooleanField(help_text="是否启用账密登录", required=False)
+    enable_login = serializers.BooleanField(help_text="是否启用账密登录", required=False)
 
 
 class TenantBuiltinManagerPasswordUpdateInputSLZ(serializers.Serializer):
