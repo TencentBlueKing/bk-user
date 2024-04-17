@@ -23,10 +23,9 @@ urlpatterns = [
     # 虚拟账号管理
     path("virtual-users/", include("bkuser.apis.web.virtual_user.urls")),
     # 租户组织架构
-    path("tenant-organization/", include("bkuser.apis.web.tenant_organization.urls")),
+    path("organization/", include("bkuser.apis.web.organization.urls")),
     # 数据源 & 数据源用户/部门
     path("data-sources/", include("bkuser.apis.web.data_source.urls")),
-    path("data-sources/", include("bkuser.apis.web.data_source_organization.urls")),
     # 认证源
     path("idps/", include("bkuser.apis.web.idp.urls")),
     # 租户配置

@@ -158,7 +158,7 @@ class TenantUserHandler:
 class TenantDepartmentHandler:
     @staticmethod
     def get_tenant_dept_children_infos(tenant_dept: TenantDepartment) -> List[TenantDepartmentInfoWithChildren]:
-        """获取租户部门的子部门信息"""
+        """获取租户部门的子部门信息 TODO (su) DEPRECATED"""
         relation = DataSourceDepartmentRelation.objects.filter(
             department_id=tenant_dept.data_source_department_id,
         ).first()

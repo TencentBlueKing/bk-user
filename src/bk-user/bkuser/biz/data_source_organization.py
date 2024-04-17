@@ -218,7 +218,7 @@ class DataSourceUserHandler:
 class DataSourceDepartmentHandler:
     @staticmethod
     def get_sub_data_source_dept_ids_map(parent_dept_ids: List[int]) -> Dict[int, List[int]]:
-        """获取一批数据源部门的子部门 id 列表信息（不包含递归部门）"""
+        """获取一批数据源部门的子部门 id 列表信息（不包含递归部门）TODO (su) DEPRECATED"""
         sub_dept_ids_map = defaultdict(list)
         # 注：当前 MPTT 模型中，parent_id 等价于 parent__department_id
         for rel in DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_dept_ids):

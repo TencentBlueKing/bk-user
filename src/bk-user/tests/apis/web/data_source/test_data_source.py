@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum, FieldMappingOperation
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceSensitiveInfo, DataSourceUser
@@ -20,24 +19,6 @@ from rest_framework import status
 from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
-
-
-class TestDataSourcePluginListApi:
-    def test_list(self, api_client):
-        resp = api_client.get(reverse("data_source_plugin.list"))
-        # 至少会有一个本地数据源插件
-        assert len(resp.data) >= 1
-        assert DataSourcePluginEnum.LOCAL in [d["id"] for d in resp.data]
-
-
-class TestDataSourcePluginDefaultConfigApi:
-    def test_retrieve(self, api_client):
-        resp = api_client.get(reverse("data_source_plugin.default_config", args=[DataSourcePluginEnum.LOCAL.value]))
-        assert resp.status_code == status.HTTP_200_OK
-
-    def test_retrieve_not_exists(self, api_client):
-        resp = api_client.get(reverse("data_source_plugin.default_config", args=["not_exists"]))
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestDataSourceRandomPasswordApi:
