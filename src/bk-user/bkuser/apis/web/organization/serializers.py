@@ -22,7 +22,7 @@ from bkuser.apps.tenant.models import Tenant, TenantDepartment
 
 
 class TenantDataSourceSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="数据源 ID")
+    id = serializers.IntegerField(help_text="数据源 ID")
     type = serializers.CharField(help_text="数据源类型")
     plugin_id = serializers.CharField(help_text="数据源插件 ID")
 
@@ -48,8 +48,7 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
         if not data_source:
             return None
 
-        data_source_info = {"id": data_source.id, "type": data_source.type, "plugin_id": data_source.plugin_id}
-        return TenantDataSourceSLZ(data_source_info).data
+        return TenantDataSourceSLZ(data_source).data
 
 
 class TenantDepartmentListInputSLZ(serializers.Serializer):
