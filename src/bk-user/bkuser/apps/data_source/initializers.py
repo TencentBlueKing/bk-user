@@ -90,7 +90,7 @@ class LocalDataSourceIdentityInfoInitializer:
         if not self.data_source.is_local:
             return True
 
-        # 是本地数据源，但是没开启账密登录的，不需要初始化
+        # 是本地数据源，但是没开启密码功能的，不需要初始化
         if not self.plugin_cfg.enable_password:  # type: ignore
             return True
 

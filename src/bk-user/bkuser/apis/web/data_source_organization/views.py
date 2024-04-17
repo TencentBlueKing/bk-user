@@ -276,7 +276,7 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
 
         if not (data_source.is_local and plugin_config.enable_password):
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
-                _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
+                _("仅可以重置 已经启用密码功能 的 本地数据源 的用户密码")
             )
 
         slz = DataSourceUserPasswordResetInputSLZ(

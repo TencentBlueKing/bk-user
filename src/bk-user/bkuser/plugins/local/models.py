@@ -173,7 +173,7 @@ class LocalDataSourcePluginConfig(BasePluginConfig):
         if not self.enable_password:
             return self
 
-        # 若启用账密登录，则各字段都需要配置上
+        # 若启用密码功能，则各字段都需要配置上
         if not (self.password_rule and self.password_initial and self.password_expire):
             raise ValueError(_("密码生成规则、初始密码设置、密码到期设置均不能为空"))
 
