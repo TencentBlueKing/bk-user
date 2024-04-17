@@ -274,9 +274,9 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
         data_source = user.data_source
         plugin_config = data_source.get_plugin_cfg()
 
-        if not (data_source.is_local and plugin_config.enable_account_password_login):
+        if not (data_source.is_local and plugin_config.enable_password):
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
-                _("仅可以重置 已经启用账密登录功能 的 本地数据源 的用户密码")
+                _("仅可以重置 已经启用密码功能 的 本地数据源 的用户密码")
             )
 
         slz = DataSourceUserPasswordResetInputSLZ(
@@ -292,7 +292,7 @@ class DataSourceUserPasswordResetApi(ExcludePatchAPIViewMixin, generics.UpdateAP
         DataSourceUserHandler.update_password(
             data_source_user=user,
             password=raw_password,
-            valid_days=plugin_config.password_rule.valid_time,
+            valid_days=plugin_config.password_expire.valid_time,
             operator=request.user.username,
         )
 

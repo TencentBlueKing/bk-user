@@ -280,7 +280,7 @@ class ResetPasswordByTokenApi(generics.CreateAPIView):
         DataSourceUserHandler.update_password(
             data_source_user=data_source_user,
             password=password,
-            valid_days=plugin_cfg.password_rule.valid_time,
+            valid_days=plugin_cfg.password_expire.valid_time,
             operator="AnonymousByResetToken",
         )
         # 成功修改完用户密码后，需要及时禁用 Token

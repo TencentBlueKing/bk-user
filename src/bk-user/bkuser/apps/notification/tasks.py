@@ -84,7 +84,7 @@ def build_and_run_notify_password_expiring_users_task():
             logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
             continue
 
-        if data_source.plugin_config.get("enable_account_password_login", False):
+        if data_source.plugin_config.get("enable_password", False):
             notify_password_expiring_users.delay(data_source.id)
 
 
@@ -122,7 +122,7 @@ def build_and_run_notify_password_expired_users_task():
             logger.info("data source's owner tenant %s not enabled, skip notify...", data_source.id)
             continue
 
-        if data_source.plugin_config.get("enable_account_password_login", False):
+        if data_source.plugin_config.get("enable_password", False):
             notify_password_expired_users.delay(data_source.id)
 
 

@@ -50,7 +50,7 @@ def sync_identity_infos_and_notify_after_sync_tenant(sender, data_source: DataSo
 @receiver(post_save, sender=DataSource)
 def sync_identity_infos_and_notify_after_modify_data_source(sender, instance: DataSource, created: bool, **kwargs):
     """
-    数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用账密登录，
+    数据源更新后，需要检查是否是本地数据源，若是本地数据源且启用密码功能，
     则需要对没有账密信息的用户，进行密码的初始化 & 发送通知，批量创建数据源用户同理
     """
     if created:

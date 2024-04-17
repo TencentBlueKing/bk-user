@@ -93,7 +93,7 @@ onMounted(async () => {
     });
     const pluginsRes = await getDataSourcePlugins();
     const loginRes = await getDataSourceDetails(currentId?.value);
-    isPasswordLogin.value = loginRes.data?.plugin_config?.enable_account_password_login;
+    isPasswordLogin.value = loginRes.data?.plugin_config?.enable_password;
     typeList.value = pluginsRes.data;
   } catch (e) {
     console.warn(e);

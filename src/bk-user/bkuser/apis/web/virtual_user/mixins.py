@@ -24,7 +24,7 @@ class CurrentTenantVirtualDataSource(CurrentUserTenantMixin):
             type=DataSourceTypeEnum.VIRTUAL,
             defaults={
                 "plugin": DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL),
-                "plugin_config": LocalDataSourcePluginConfig(enable_account_password_login=False),
+                "plugin_config": LocalDataSourcePluginConfig(enable_password=False),
             },
         )
 

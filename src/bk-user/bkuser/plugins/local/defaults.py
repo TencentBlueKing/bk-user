@@ -15,6 +15,7 @@ from bkuser.plugins.local.constants import (
 )
 from bkuser.plugins.local.models import (
     LocalDataSourcePluginConfig,
+    LoginLimitConfig,
     NotificationConfig,
     NotificationTemplate,
     PasswordExpireConfig,
@@ -24,7 +25,7 @@ from bkuser.plugins.local.models import (
 
 # 本地数据源插件默认配置
 DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
-    enable_account_password_login=True,
+    enable_password=False,
     password_rule=PasswordRuleConfig(
         min_length=12,
         contain_lowercase=True,
@@ -36,12 +37,8 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
         not_continuous_letter=False,
         not_continuous_digit=False,
         not_repeated_symbol=False,
-        valid_time=90,
-        max_retries=3,
-        lock_time=60 * 60,
     ),
     password_initial=PasswordInitialConfig(
-        force_change_at_first_login=True,
         cannot_use_previous_password=True,
         reserved_previous_password_count=3,
         generate_method=PasswordGenerateMethod.RANDOM,
@@ -129,6 +126,7 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
         ),
     ),
     password_expire=PasswordExpireConfig(
+        valid_time=90,
         remind_before_expire=[1, 7, 15],
         notification=NotificationConfig(
             enabled_methods=[NotificationMethod.EMAIL],
@@ -199,5 +197,10 @@ DEFAULT_PLUGIN_CONFIG = LocalDataSourcePluginConfig(
                 ),
             ],
         ),
+    ),
+    login_limit=LoginLimitConfig(
+        force_change_at_first_login=True,
+        max_retries=3,
+        lock_time=60 * 60,
     ),
 )

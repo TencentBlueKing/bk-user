@@ -282,7 +282,7 @@ class DataSourceRandomPasswordInputSLZ(serializers.Serializer):
                 raise ValidationError(_("指定数据源不存在"))
 
             plugin_config = data_source.get_plugin_cfg()
-            if not plugin_config.enable_account_password_login:
+            if not plugin_config.enable_password:
                 raise ValidationError(_("无法使用该数据源生成随机密码"))
 
             attrs["password_rule"] = plugin_config.password_rule.to_rule()

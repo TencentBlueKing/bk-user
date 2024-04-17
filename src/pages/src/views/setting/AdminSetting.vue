@@ -2,11 +2,11 @@
   <div class="admin-setting-wrapper" v-bkloading="{ loading: isLoading }">
     <Row class="admin-setting-item" :title="$t('管理员账号')">
       <LabelContent :label="$t('状态')">
-        <bk-tag :theme="adminAccount.enable_account_password_login ? 'success' : ''">
-          {{ adminAccount.enable_account_password_login ? $t('启用') : $t('未启用') }}
+        <bk-tag :theme="adminAccount.enable_login ? 'success' : ''">
+          {{ adminAccount.enable_login ? $t('启用') : $t('未启用') }}
         </bk-tag>
         <bk-button text theme="primary" @click="changeStatus">
-          {{ adminAccount.enable_account_password_login ? $t('去停用') : $t('去启用') }}
+          {{ adminAccount.enable_login ? $t('去停用') : $t('去启用') }}
         </bk-button>
       </LabelContent>
       <LabelContent :label="$t('用户名')">
@@ -153,7 +153,7 @@ const validate = useValidate();
 
 const adminAccount = ref({
   username: '',
-  enable_account_password_login: false,
+  enable_login: false,
 });
 const fixedAdminAccount = ref({});
 const isLoading = ref(false);
@@ -179,15 +179,15 @@ const initBuiltinManager = async () => {
 const changeStatus = () => {
   InfoBox({
     width: 400,
-    infoType: adminAccount.value.enable_account_password_login ? 'warning' : undefined,
-    title: t(adminAccount.value.enable_account_password_login ? '是否停用管理员账号？' : '是否启用管理员账号？'),
-    subTitle: t(adminAccount.value.enable_account_password_login
+    infoType: adminAccount.value.enable_login ? 'warning' : undefined,
+    title: t(adminAccount.value.enable_login ? '是否停用管理员账号？' : '是否启用管理员账号？'),
+    subTitle: t(adminAccount.value.enable_login
       ? '停用后，将不可使用管理员账号进行登录'
       : '停用后，可使用管理员账号进行登录'),
-    confirmText: adminAccount.value.enable_account_password_login ? t('停用') : undefined,
-    theme: adminAccount.value.enable_account_password_login ? 'danger' : undefined,
+    confirmText: adminAccount.value.enable_login ? t('停用') : undefined,
+    theme: adminAccount.value.enable_login ? 'danger' : undefined,
     onConfirm: async () => {
-      await patchBuiltinManager({ enable_account_password_login: !adminAccount.value.enable_account_password_login });
+      await patchBuiltinManager({ enable_login: !adminAccount.value.enable_login });
       initBuiltinManager();
     },
   });

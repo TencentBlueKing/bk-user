@@ -52,7 +52,7 @@ class LocalDataSourceIdentityInfoInitializer:
         self.plugin_cfg = data_source.get_plugin_cfg()
         assert isinstance(self.plugin_cfg, LocalDataSourcePluginConfig)
 
-        if not self.plugin_cfg.enable_account_password_login:
+        if not self.plugin_cfg.enable_password:
             return
 
         self.password_provider = PasswordProvider(
@@ -90,8 +90,8 @@ class LocalDataSourceIdentityInfoInitializer:
         if not self.data_source.is_local:
             return True
 
-        # 是本地数据源，但是没开启账密登录的，不需要初始化
-        if not self.plugin_cfg.enable_account_password_login:  # type: ignore
+        # 是本地数据源，但是没开启密码功能的，不需要初始化
+        if not self.plugin_cfg.enable_password:  # type: ignore
             return True
 
         return False
@@ -121,7 +121,7 @@ class LocalDataSourceIdentityInfoInitializer:
 
     def _get_password_expired_at(self) -> datetime.datetime:
         """获取密码过期的具体时间"""
-        valid_time: int = self.plugin_cfg.password_rule.valid_time  # type: ignore
+        valid_time: int = self.plugin_cfg.password_expire.valid_time  # type: ignore
         # 有效时间 -1 表示永远有效
         if valid_time < 0:
             return PERMANENT_TIME

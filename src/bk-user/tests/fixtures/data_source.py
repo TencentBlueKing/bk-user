@@ -22,7 +22,7 @@ from tests.test_utils.data_source import init_data_source_users_depts_and_relati
 @pytest.fixture()
 def local_ds_plugin_cfg() -> Dict[str, Any]:
     return {
-        "enable_account_password_login": True,
+        "enable_password": True,
         "password_rule": {
             "min_length": 12,
             "contain_lowercase": True,
@@ -34,12 +34,8 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
             "not_continuous_letter": True,
             "not_continuous_digit": True,
             "not_repeated_symbol": True,
-            "valid_time": 7,
-            "max_retries": 3,
-            "lock_time": 3600,
         },
         "password_initial": {
-            "force_change_at_first_login": True,
             "cannot_use_previous_password": True,
             "reserved_previous_password_count": 3,
             "generate_method": "random",
@@ -81,6 +77,7 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
             },
         },
         "password_expire": {
+            "valid_time": 7,
             "remind_before_expire": [1, 7],
             "notification": {
                 "enabled_methods": ["email", "sms"],
@@ -117,6 +114,11 @@ def local_ds_plugin_cfg() -> Dict[str, Any]:
                     },
                 ],
             },
+        },
+        "login_limit": {
+            "force_change_at_first_login": True,
+            "max_retries": 3,
+            "lock_time": 3600,
         },
     }
 

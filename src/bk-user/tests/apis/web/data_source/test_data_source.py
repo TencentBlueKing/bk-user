@@ -80,7 +80,7 @@ class TestDataSourceCreateApi:
             reverse("data_source.list_create"),
             data={
                 "plugin_id": DataSourcePluginEnum.LOCAL,
-                "plugin_config": {"enable_account_password_login": False},
+                "plugin_config": {"enable_password": False},
             },
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -126,7 +126,7 @@ class TestDataSourceCreateApi:
         assert "邮件通知模板需要提供标题" in resp.data["message"]
 
     def test_create_with_invalid_plugin_config(self, api_client, random_tenant, local_ds_plugin_cfg):
-        local_ds_plugin_cfg.pop("enable_account_password_login")
+        local_ds_plugin_cfg.pop("enable_password")
         resp = api_client.post(
             reverse("data_source.list_create"),
             data={
@@ -135,7 +135,7 @@ class TestDataSourceCreateApi:
             },
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
+        assert "插件配置不合法：enable_password: Field required" in resp.data["message"]
 
     def test_create_general_data_source(
         self, api_client, random_tenant, general_ds_plugin_cfg, tenant_user_custom_fields, field_mapping, sync_config
@@ -253,21 +253,21 @@ class TestDataSourceListApi:
 class TestDataSourceUpdateApi:
     def test_update_local_data_source(self, api_client, data_source, local_ds_plugin_cfg):
         url = reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id})
-        local_ds_plugin_cfg["enable_account_password_login"] = False
+        local_ds_plugin_cfg["enable_password"] = False
         resp = api_client.put(url, data={"plugin_config": local_ds_plugin_cfg})
         assert resp.status_code == status.HTTP_204_NO_CONTENT
 
         resp = api_client.get(url)
-        assert resp.data["plugin_config"]["enable_account_password_login"] is False
+        assert resp.data["plugin_config"]["enable_password"] is False
 
     def test_update_with_invalid_plugin_config(self, api_client, data_source, local_ds_plugin_cfg):
-        local_ds_plugin_cfg.pop("enable_account_password_login")
+        local_ds_plugin_cfg.pop("enable_password")
         resp = api_client.put(
             reverse("data_source.retrieve_update_destroy", kwargs={"id": data_source.id}),
             data={"plugin_config": local_ds_plugin_cfg},
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert "插件配置不合法：enable_account_password_login: Field required" in resp.data["message"]
+        assert "插件配置不合法：enable_password: Field required" in resp.data["message"]
 
     def test_update_general_data_source(
         self, api_client, bare_general_data_source, general_ds_plugin_cfg, field_mapping, sync_config
