@@ -37,4 +37,10 @@ urlpatterns = [
         views.TenantDepartmentUpdateDestroyApi.as_view(),
         name="organization.tenant_department.update_destroy",
     ),
+    # 搜索租户部门（含协同数据）
+    path(
+        "tenants/departments/",
+        views.TenantDepartmentSearchApi.as_view(),
+        name="organization.tenant_department.search",
+    ),
 ]

@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from collections import defaultdict
-from typing import Dict
+from typing import Any, Dict
 
 from django.db import transaction
 from django.db.models import QuerySet
@@ -25,19 +25,42 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
+    TenantDepartmentSearchInputSLZ,
+    TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.tenant.models import Tenant, TenantDepartment
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
 
 
-class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
+class TenantDepartmentHasChildrenMapMixin:
+    """获取指定的一批租户用户是否有子部门的映射"""
+
+    @staticmethod
+    def _get_dept_has_children_map(tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, bool]:
+        """获取部门是否有子部门的信息"""
+        parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
+
+        child_data_source_dept_ids_map = defaultdict(list)
+        # 注：当前 MPTT 模型中，parent_id 等价于 parent__department_id
+        for rel in DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids):
+            child_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
+
+        return {
+            tenant_dept.id: bool(child_data_source_dept_ids_map.get(tenant_dept.data_source_department_id))
+            for tenant_dept in tenant_depts
+        }
+
+
+class TenantDepartmentListCreateApi(
+    CurrentUserTenantMixin, TenantDepartmentHasChildrenMapMixin, generics.ListCreateAPIView
+):
     """获取租户部门列表 / 创建租户部门"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -102,21 +125,6 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         return TenantDepartment.objects.filter(
             data_source_department_id__in=data_source_dept_ids, **filters
         ).select_related("data_source_department")
-
-    @staticmethod
-    def _get_dept_has_children_map(tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, bool]:
-        """获取部门是否有子部门的信息"""
-        parent_data_source_dept_ids = tenant_depts.values_list("data_source_department_id", flat=True)
-
-        child_data_source_dept_ids_map = defaultdict(list)
-        # 注：当前 MPTT 模型中，parent_id 等价于 parent__department_id
-        for rel in DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids):
-            child_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
-
-        return {
-            tenant_dept.id: bool(child_data_source_dept_ids_map.get(tenant_dept.data_source_department_id))
-            for tenant_dept in tenant_depts
-        }
 
     @swagger_auto_schema(
         tags=["organization"],
@@ -237,3 +245,60 @@ class TenantDepartmentUpdateDestroyApi(
         #  或者另外一种设计，要求把该部门的所有用户都先挪出去，才能删除？
         # tenant_dept = self.get_object()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDepartmentHasChildrenMapMixin, generics.ListAPIView):
+    """搜索租户部门"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    serializer_class = TenantDepartmentSearchOutputSLZ
+    # 限制搜索结果，只提供前 20 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = 20
+
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        keyword = slz.validated_data["keyword"]
+
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(), data_source_department__name__icontains=keyword
+        ).select_related("data_source_department")[: self.search_limit]
+
+    def get_serializer_context(self) -> Dict[str, Any]:
+        tenant_depts = self.get_queryset()
+        return {
+            "has_children_map": self._get_dept_has_children_map(tenant_depts),
+            "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
+            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
+        }
+
+    def _get_dept_organization_path_map(self, tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
+        """获取租户部门的组织路径信息"""
+        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
+
+        # 数据源部门 ID -> 组织路径
+        org_path_map = {}
+        for dept_relation in DataSourceDepartmentRelation.objects.filter(
+            department_id__in=data_source_dept_ids
+        ).select_related("department"):
+            dept_names = list(
+                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
+            )
+            org_path_map[dept_relation.department_id] = "/".join(dept_names)
+
+        # 租户部门 ID -> 组织路径
+        return {
+            dept.id: org_path_map.get(dept.data_source_department_id, dept.data_source_department.name)
+            for dept in tenant_depts
+        }
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="搜索租户部门",
+        query_serializer=TenantDepartmentSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantDepartmentSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

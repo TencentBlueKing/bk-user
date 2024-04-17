@@ -9,5 +9,21 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from .departments import TenantDepartmentListCreateApi, TenantDepartmentUpdateDestroyApi  # noqa: F401
+from .departments import (
+    TenantDepartmentListCreateApi,
+    TenantDepartmentSearchApi,
+    TenantDepartmentUpdateDestroyApi,
+)
+
+# noqa: F401
 from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi  # noqa: F401
+
+__all__ = [
+    # 租户
+    "CurrentTenantRetrieveApi",
+    "CollaborativeTenantListApi",
+    # 租户部门
+    "TenantDepartmentListCreateApi",
+    "TenantDepartmentUpdateDestroyApi",
+    "TenantDepartmentSearchApi",
+]
