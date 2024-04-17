@@ -24,13 +24,10 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser
 
 
-class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.ListAPIView):
+class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
     """获取当前用户所在租户信息"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    def get_queryset(self):
-        return Tenant.objects.filter(id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
         tags=["organization"],

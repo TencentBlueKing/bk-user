@@ -53,7 +53,7 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
 
 
 class TenantDepartmentListInputSLZ(serializers.Serializer):
-    parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示创建根部门）", default=0)
+    parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示获取根部门）", default=0)
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
         if (
@@ -87,7 +87,7 @@ def _validate_duplicate_dept_name_in_ancestors(
 
 
 class TenantDepartmentCreateInputSLZ(serializers.Serializer):
-    parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示根部门）", default=0)
+    parent_department_id = serializers.IntegerField(help_text="父部门 ID（为 0 表示创建根部门）", default=0)
     name = serializers.CharField(help_text="部门名称")
 
     def validate_parent_department_id(self, parent_dept_id: int) -> int:
