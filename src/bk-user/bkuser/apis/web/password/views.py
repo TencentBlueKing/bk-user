@@ -37,7 +37,7 @@ from bkuser.apis.web.password.serializers import (
 from bkuser.apis.web.password.tokens import GenerateTokenTooFrequently, UserResetPasswordTokenManager
 from bkuser.apps.notification.helpers import gen_reset_password_url
 from bkuser.apps.tenant.models import TenantUser
-from bkuser.biz.data_source_organization import DataSourceUserHandler
+from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.biz.validators import validate_user_new_password
 from bkuser.common.error_codes import error_codes
 from bkuser.common.verification_code import (

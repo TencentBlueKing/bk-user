@@ -17,12 +17,10 @@ from django.contrib.auth import get_user_model
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
-    DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser
-from bkuser.biz.data_source_organization import DataSourceDepartmentHandler
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +28,6 @@ logger = logging.getLogger(__name__)
 class TenantDepartmentInfo(BaseModel):
     id: int
     name: str
-
-
-class TenantDepartmentInfoWithChildren(TenantDepartmentInfo):
-    has_children: bool
 
 
 class TenantUserLeaderInfo(BaseModel):
@@ -153,37 +147,3 @@ class TenantUserHandler:
                 display_name_map[user_id] = user_id
 
         return display_name_map
-
-
-class TenantDepartmentHandler:
-    @staticmethod
-    def get_tenant_dept_children_infos(tenant_dept: TenantDepartment) -> List[TenantDepartmentInfoWithChildren]:
-        """获取租户部门的子部门信息 TODO (su) DEPRECATED"""
-        relation = DataSourceDepartmentRelation.objects.filter(
-            department_id=tenant_dept.data_source_department_id,
-        ).first()
-        # 完全独立的部门（没有和其他部门进行关联）的情况
-        if not relation:
-            return []
-
-        # 子部门数据源部门 ID
-        sub_data_source_dept_ids = (
-            DataSourceDepartmentRelation.objects.get(department_id=tenant_dept.data_source_department_id)
-            .get_children()
-            .values_list("department_id", flat=True)
-        )
-        sub_tenant_depts = TenantDepartment.objects.filter(
-            tenant=tenant_dept.tenant,
-            data_source_department_id__in=sub_data_source_dept_ids,
-        ).select_related("data_source_department")
-        # 子部门的子部门（孙子部门）信息
-        sub_sub_dept_ids_map = DataSourceDepartmentHandler.get_sub_data_source_dept_ids_map(sub_data_source_dept_ids)
-
-        return [
-            TenantDepartmentInfoWithChildren(
-                id=dept.id,
-                name=dept.data_source_department.name,
-                has_children=bool(len(sub_sub_dept_ids_map[dept.data_source_department_id])),
-            )
-            for dept in sub_tenant_depts
-        ]

@@ -22,7 +22,7 @@ from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
-from bkuser.biz.data_source_organization import DataSourceUserHandler
+from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
