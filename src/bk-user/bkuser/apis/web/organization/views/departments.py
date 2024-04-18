@@ -30,7 +30,12 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentUpdateInputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantDepartment
@@ -192,6 +197,7 @@ class TenantDepartmentListCreateApi(
                 parent=parent_dept_relation,
                 data_source=data_source,
             )
+            # FIXME (su) 支持租户协同后，要把协同的租户部门也创建出来
             tenant_dept = TenantDepartment.objects.create(
                 tenant_id=current_tenant_id,
                 data_source_department=data_source_dept,
@@ -240,10 +246,29 @@ class TenantDepartmentUpdateDestroyApi(
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        # TODO 删除租户部门，数据源部门，关联关系，租户用户，数据源用户等等，
-        #  还需要提前弹窗提示用户影响范围，等产品同学想清楚 + 补充设计后再加
-        #  或者另外一种设计，要求把该部门的所有用户都先挪出去，才能删除？
-        # tenant_dept = self.get_object()
+        """删除租户部门：要求该部门下的用户都被迁移走，否则无法删除"""
+        tenant_dept = self.get_object()
+        if not (tenant_dept.data_source.is_local and tenant_dept.data_source.is_real_type):
+            raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("仅真实用户类型的本地数据源支持删除部门"))
+
+        data_source_dept = tenant_dept.data_source_department
+        # 注：这里不应该使用 filter().first()，因为就算是根部门也会
+        # 有 parent=None 的 relation，如果存在脏数据应该暴露出来而不是悄悄处理
+        dept_relation = DataSourceDepartmentRelation.objects.get(department_id=data_source_dept.id)
+        # 该部门及其所有子部门的 ID 集合
+        data_source_dept_ids = dept_relation.get_descendants(include_self=True).values_list("department_id", flat=True)
+        # 查询关联表确保不存在用户
+        if DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_dept_ids).exists():
+            raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("该部门或其子部门下存在用户，无法删除"))
+
+        # 连带协同产生的租户部门还有子部门都给你删咯
+        TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).delete()
+        # 所有的子数据源部门都要删除
+        DataSourceDepartment.objects.filter(id__in=data_source_dept_ids).delete()
+        # 涉及到的部门关联边都要删除，然后再重建
+        DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids).delete()
+        DataSourceDepartmentRelation.objects.partial_rebuild(dept_relation.tree_id)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

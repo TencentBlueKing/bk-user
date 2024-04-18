@@ -48,3 +48,8 @@ class TestTenantUserSearchApi:
             "公司/部门B/中心BA",
             "公司/部门B/中心BA/小组BAA",
         }
+
+    def test_match_nothing(self, api_client):
+        resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "2887"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0
