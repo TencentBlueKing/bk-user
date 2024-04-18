@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from collections import defaultdict
-from typing import Any, Dict
+from typing import Dict
 
 from django.db import transaction
 from django.db.models import QuerySet
@@ -253,7 +253,6 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDepartmentHasChild
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     pagination_class = None
-    serializer_class = TenantDepartmentSearchOutputSLZ
     # 限制搜索结果，只提供前 20 条记录，如果展示不完全，需要用户细化搜索条件
     search_limit = 20
 
@@ -264,15 +263,7 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDepartmentHasChild
 
         return TenantDepartment.objects.filter(
             tenant_id=self.get_current_tenant_id(), data_source_department__name__icontains=keyword
-        ).select_related("data_source_department")[: self.search_limit]
-
-    def get_serializer_context(self) -> Dict[str, Any]:
-        tenant_depts = self.get_queryset()
-        return {
-            "has_children_map": self._get_dept_has_children_map(tenant_depts),
-            "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
-            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
-        }
+        ).select_related("data_source", "data_source_department")[: self.search_limit]
 
     def _get_dept_organization_path_map(self, tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
         """获取租户部门的组织路径信息"""
@@ -301,4 +292,11 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDepartmentHasChild
         responses={status.HTTP_200_OK: TenantDepartmentSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_depts = self.get_queryset()
+        context = {
+            "has_children_map": self._get_dept_has_children_map(tenant_depts),
+            "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
+            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
+        }
+        resp_data = TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data
+        return Response(resp_data, status=status.HTTP_200_OK)

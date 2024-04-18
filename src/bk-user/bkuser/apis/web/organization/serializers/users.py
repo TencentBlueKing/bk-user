@@ -13,6 +13,7 @@ from typing import List
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantUser
 
 
@@ -24,14 +25,14 @@ class TenantUserSearchOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     username = serializers.CharField(help_text="用户名", source="data_source_user.username")
     full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
-    status = serializers.CharField(help_text="用户状态")
-    tenant_id = serializers.CharField(help_text="租户 ID")
-    tenant_name = serializers.SerializerMethodField(help_text="租户名称")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
+    tenant_id = serializers.CharField(help_text="用户来源租户 ID", source="data_source.owner_tenant_id")
+    tenant_name = serializers.SerializerMethodField(help_text="用户来源租户名称")
     organization_paths = serializers.SerializerMethodField(help_text="组织路径")
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_tenant_name(self, obj: TenantUser) -> str:
-        return self.context["tenant_name_map"].get(obj.tenant_id, "")
+        return self.context["tenant_name_map"].get(obj.data_source.owner_tenant_id, "")
 
     @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
     def get_organization_paths(self, obj: TenantUser) -> List[str]:

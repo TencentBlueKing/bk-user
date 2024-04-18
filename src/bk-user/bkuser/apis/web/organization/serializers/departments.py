@@ -142,8 +142,8 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="部门 ID")
     name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
     has_children = serializers.SerializerMethodField(help_text="是否有子部门")
-    tenant_id = serializers.CharField(help_text="租户 ID")
-    tenant_name = serializers.SerializerMethodField(help_text="租户名称")
+    tenant_id = serializers.CharField(help_text="部门来源租户 ID", source="data_source.owner_tenant_id")
+    tenant_name = serializers.SerializerMethodField(help_text="部门来源租户名称")
     organization_path = serializers.SerializerMethodField(help_text="组织路径")
 
     @swagger_serializer_method(serializer_or_field=serializers.BooleanField)
@@ -152,7 +152,7 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_tenant_name(self, obj: TenantDepartment) -> str:
-        return self.context["tenant_name_map"].get(obj.tenant_id, "")
+        return self.context["tenant_name_map"].get(obj.data_source.owner_tenant_id, "")
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_organization_path(self, obj: TenantDepartment) -> str:

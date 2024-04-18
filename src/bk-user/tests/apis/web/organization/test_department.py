@@ -199,3 +199,33 @@ class TestTenantDepartmentDestroyApi:
     def test_standard(self):
         # TODO 等功能实现后再补充单元测试
         ...
+
+
+class TestTenantDepartmentSearchApi:
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_single_tenant(self, api_client, random_tenant):
+        resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "小组"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 3  # noqa: PLR2004  magic number here is ok
+
+        assert {dept["name"] for dept in resp.data} == {"小组AAA", "小组ABA", "小组BAA"}
+        assert all(dept["tenant_id"] == random_tenant.id for dept in resp.data)
+        assert any(dept["has_children"] for dept in resp.data) is False
+        assert {dept["organization_path"] for dept in resp.data} == {
+            "公司/部门A/中心AA/小组AAA",
+            "公司/部门A/中心AB/小组ABA",
+            "公司/部门B/中心BA/小组BAA",
+        }
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    @pytest.mark.usefixtures("_init_collaborative_users_depts")
+    def test_multi_tenant(self, api_client, random_tenant, collaborative_tenant):
+        resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "部门"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 4  # noqa: PLR2004  magic number here is ok
+
+        assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
+        assert {dept["tenant_id"] for dept in resp.data} == {random_tenant.id, collaborative_tenant.id}
+        assert all(dept["has_children"] for dept in resp.data) is True

@@ -10,12 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 from collections import defaultdict
 from functools import reduce
-from typing import Any, Dict, List, Set
+from typing import Dict, List, Set
 
 from django.db.models import Q, QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
@@ -34,7 +35,6 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     pagination_class = None
-    serializer_class = TenantUserSearchOutputSLZ
     # 限制搜索结果，只提供前 20 条记录，如果展示不完全，需要用户细化搜索条件
     search_limit = 20
 
@@ -54,12 +54,6 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             )
             .select_related("data_source_user")[: self.search_limit]
         )
-
-    def get_serializer_context(self) -> Dict[str, Any]:
-        return {
-            "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
-            "org_path_map": self._get_user_organization_paths_map(self.get_queryset()),
-        }
 
     def _get_user_organization_paths_map(self, tenant_users: QuerySet[TenantUser]) -> Dict[str, List[str]]:
         """获取租户部门的组织路径信息"""
@@ -98,4 +92,10 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_users = self.get_queryset()
+        context = {
+            "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
+            "org_path_map": self._get_user_organization_paths_map(tenant_users),
+        }
+        resp_data = TenantUserSearchOutputSLZ(tenant_users, many=True, context=context).data
+        return Response(resp_data, status=status.HTTP_200_OK)
