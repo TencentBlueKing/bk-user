@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 from collections import defaultdict
-from functools import reduce
 from typing import Dict, List, Set
 
 from django.db.models import Q, QuerySet
@@ -52,7 +51,7 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
                 | Q(data_source_user__email__icontains=keyword)
                 | Q(data_source_user__phone__icontains=keyword)
             )
-            .select_related("data_source_user")[: self.search_limit]
+            .select_related("data_source", "data_source_user")[: self.search_limit]
         )
 
     def _get_user_organization_paths_map(self, tenant_users: QuerySet[TenantUser]) -> Dict[str, List[str]]:
@@ -65,9 +64,7 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             user_dept_id_map[relation.user_id].append(relation.department_id)
 
         # 数据源部门 ID 集合
-        data_source_dept_ids: Set[int] = reduce(
-            lambda x, y: x | y, [set(ids) for ids in user_dept_id_map.values()], set()
-        )
+        data_source_dept_ids: Set[int] = set().union(*user_dept_id_map.values())
 
         # 数据源部门 ID -> 组织路径
         org_path_map = {}
@@ -81,7 +78,11 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         # 租户用户 ID -> 组织路径列表
         return {
-            user.id: [org_path_map.get(dept_id, "") for dept_id in user_dept_id_map.get(user.data_source_user_id, [])]
+            user.id: [
+                org_path_map[dept_id]
+                for dept_id in user_dept_id_map.get(user.data_source_user_id, [])
+                if dept_id in org_path_map
+            ]
             for user in tenant_users
         }
 
