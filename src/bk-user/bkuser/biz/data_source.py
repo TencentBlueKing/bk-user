@@ -8,7 +8,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import List
 
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -24,12 +23,6 @@ from bkuser.apps.tenant.models import TenantDepartment, TenantUser
 
 
 class DataSourceHandler:
-    @staticmethod
-    def get_tenant_available_data_sources(tenant_id: str) -> List[DataSource]:
-        """获取租户能查看的数据源，包括拥有的以及协同的"""
-        # TODO (su) 考虑租户协同的情况
-        return DataSource.objects.filter(owner_tenant_id=tenant_id)
-
     @staticmethod
     def delete_data_source_and_related_resources(data_source: DataSource) -> None:
         """重要：必须在事务内调用该方法"""

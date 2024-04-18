@@ -17,6 +17,7 @@ from .departments import (
 
 # noqa: F401
 from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi  # noqa: F401
+from .users import TenantUserSearchApi  # noqa: F401
 
 __all__ = [
     # 租户
@@ -26,4 +27,6 @@ __all__ = [
     "TenantDepartmentListCreateApi",
     "TenantDepartmentUpdateDestroyApi",
     "TenantDepartmentSearchApi",
+    # 租户用户
+    "TenantUserSearchApi",
 ]
