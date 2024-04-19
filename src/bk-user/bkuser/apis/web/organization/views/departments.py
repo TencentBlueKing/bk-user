@@ -22,6 +22,8 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
+    DataSourceDepartmentListInputSLZ,
+    DataSourceDepartmentListOutputSLZ,
     TenantDepartmentCreateInputSLZ,
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
@@ -320,3 +322,31 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         }
         resp_data = TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)
+
+
+class DataSourceDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """数据源部门列表"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    serializer_class = DataSourceDepartmentListOutputSLZ
+
+    def get_queryset(self) -> QuerySet[DataSourceDepartment]:
+        slz = DataSourceDepartmentListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        queryset = DataSourceDepartment.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        if kw := params.get("keyword"):
+            queryset = queryset.filter(name__icontains=kw)
+
+        return queryset
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="数据源部门列表",
+        query_serializer=DataSourceDepartmentListInputSLZ(),
+        responses={status.HTTP_200_OK: DataSourceDepartmentListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)

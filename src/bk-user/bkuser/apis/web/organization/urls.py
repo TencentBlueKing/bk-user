@@ -43,10 +43,28 @@ urlpatterns = [
         views.TenantDepartmentSearchApi.as_view(),
         name="organization.tenant_department.search",
     ),
+    # 数据源部门列表
+    path(
+        "data-sources/departments/",
+        views.DataSourceDepartmentListApi.as_view(),
+        name="organization.data_source_department.list",
+    ),
+    # 数据源用户列表
+    path(
+        "data-sources/users/",
+        views.DataSourceUserListApi.as_view(),
+        name="organization.data_source_user.list",
+    ),
     # 搜索租户用户（含协同数据）
     path(
         "tenants/users/",
         views.TenantUserSearchApi.as_view(),
         name="organization.tenant_user.search",
+    ),
+    # 租户用户列表 / 创建租户用户
+    path(
+        "tenants/<str:id>/users/",
+        views.TenantUserListCreateApi.as_view(),
+        name="organization.tenant_user.list_create",
     ),
 ]

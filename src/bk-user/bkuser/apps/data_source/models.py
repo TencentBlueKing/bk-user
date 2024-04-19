@@ -139,6 +139,7 @@ class DataSource(AuditedModel):
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
     code = models.CharField("用户标识", max_length=128, default=generate_uuid)
+    # TODO (su) 评估数据源用户是否需要状态这个字段
     status = models.CharField(
         "用户状态",
         max_length=32,

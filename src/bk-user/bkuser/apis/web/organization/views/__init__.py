@@ -10,14 +10,17 @@ specific language governing permissions and limitations under the License.
 """
 
 from .departments import (
+    DataSourceDepartmentListApi,
     TenantDepartmentListCreateApi,
     TenantDepartmentSearchApi,
     TenantDepartmentUpdateDestroyApi,
 )
-
-# noqa: F401
-from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi  # noqa: F401
-from .users import TenantUserSearchApi  # noqa: F401
+from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi
+from .users import (
+    DataSourceUserListApi,
+    TenantUserListCreateApi,
+    TenantUserSearchApi,
+)
 
 __all__ = [
     # 租户
@@ -27,6 +30,9 @@ __all__ = [
     "TenantDepartmentListCreateApi",
     "TenantDepartmentUpdateDestroyApi",
     "TenantDepartmentSearchApi",
+    "DataSourceDepartmentListApi",
     # 租户用户
+    "DataSourceUserListApi",
     "TenantUserSearchApi",
+    "TenantUserListCreateApi",
 ]

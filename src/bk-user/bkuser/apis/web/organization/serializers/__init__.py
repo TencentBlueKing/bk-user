@@ -10,6 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 
 from .departments import (
+    DataSourceDepartmentListInputSLZ,
+    DataSourceDepartmentListOutputSLZ,
     TenantDepartmentCreateInputSLZ,
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
@@ -18,10 +20,17 @@ from .departments import (
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
-
-# noqa: F401
-from .tenants import TenantListOutputSLZ, TenantRetrieveOutputSLZ  # noqa: F401
-from .users import TenantUserSearchInputSLZ, TenantUserSearchOutputSLZ  # noqa: F401
+from .tenants import TenantListOutputSLZ, TenantRetrieveOutputSLZ
+from .users import (
+    DataSourceUserListInputSLZ,
+    DataSourceUserListOutputSLZ,
+    TenantUserCreateInputSLZ,
+    TenantUserCreateOutputSLZ,
+    TenantUserListInputSLZ,
+    TenantUserListOutputSLZ,
+    TenantUserSearchInputSLZ,
+    TenantUserSearchOutputSLZ,
+)
 
 __all__ = [
     # 租户
@@ -35,7 +44,15 @@ __all__ = [
     "TenantDepartmentUpdateInputSLZ",
     "TenantDepartmentSearchInputSLZ",
     "TenantDepartmentSearchOutputSLZ",
+    "DataSourceDepartmentListInputSLZ",
+    "DataSourceDepartmentListOutputSLZ",
     # 租户用户
+    "DataSourceUserListInputSLZ",
+    "DataSourceUserListOutputSLZ",
     "TenantUserSearchInputSLZ",
     "TenantUserSearchOutputSLZ",
+    "TenantUserListInputSLZ",
+    "TenantUserListOutputSLZ",
+    "TenantUserCreateOutputSLZ",
+    "TenantUserCreateInputSLZ",
 ]

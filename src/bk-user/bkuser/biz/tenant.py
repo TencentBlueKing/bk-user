@@ -9,7 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import logging
-from collections import defaultdict
 from typing import Dict, List, Optional
 
 from django.conf import settings
@@ -17,10 +16,9 @@ from django.contrib.auth import get_user_model
 from pydantic import BaseModel
 
 from bkuser.apps.data_source.models import (
-    DataSourceDepartmentUserRelation,
     DataSourceUserLeaderRelation,
 )
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.apps.tenant.models import TenantUser
 
 logger = logging.getLogger(__name__)
 
@@ -68,35 +66,6 @@ class TenantUserHandler:
             )
             for ld in leaders
         ]
-
-    @staticmethod
-    def get_tenant_users_depts_map(
-        tenant_id: str, tenant_users: List[TenantUser]
-    ) -> Dict[str, List[TenantDepartmentInfo]]:
-        """
-        获取一批租户用户的部门信息
-
-        :return: {租户用户 ID: [租户部门信息]}
-        """
-        # {数据源部门 ID: 租户部门信息(id, name)}
-        data_source_dept_id_tenant_dept_info_map = {
-            dept.data_source_department_id: TenantDepartmentInfo(id=dept.id, name=dept.data_source_department.name)
-            for dept in TenantDepartment.objects.filter(tenant_id=tenant_id).select_related("data_source_department")
-        }
-
-        data_source_user_ids = [u.data_source_user_id for u in tenant_users]
-        # {数据源用户 ID: [数据源部门 ID1, 数据源部门 ID2]}
-        data_source_user_dept_ids_map = defaultdict(list)
-        for rel in DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids):
-            data_source_user_dept_ids_map[rel.user_id].append(rel.department_id)
-
-        return {
-            user.id: [
-                data_source_dept_id_tenant_dept_info_map[dept_id]
-                for dept_id in data_source_user_dept_ids_map.get(user.data_source_user_id, [])
-            ]
-            for user in tenant_users
-        }
 
     @staticmethod
     def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserPhoneInfo):
