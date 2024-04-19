@@ -13,7 +13,7 @@
       </p>
     </bk-exception>
     <bk-exception v-if="isDataError" type="500" scene="part">
-      {{ $t('数据获取异常') }}}
+      {{ $t('数据获取异常') }}
       <bk-button
         text
         theme="primary"
