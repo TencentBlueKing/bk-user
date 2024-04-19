@@ -574,3 +574,7 @@ MAX_USER_DATA_FILE_SIZE = env.int("MAX_USER_DATA_FILE_SIZE", 10)
 EXPORT_EXCEL_FILENAME_PREFIX = "bk_user_export"
 # 成员，组织信息导出模板
 EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"
+
+# 限制组织架构页面用户/部门搜索 API 返回的最大条数
+# 由于需要计算组织路径导致性能不佳，建议不要太高，而是让用户细化搜索条件
+ORGANIZATION_SEARCH_API_LIMIT = env.int("ORGANIZATION_SEARCH_API_LIMIT", 20)

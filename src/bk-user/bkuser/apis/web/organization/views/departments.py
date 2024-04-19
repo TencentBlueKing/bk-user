@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
@@ -44,28 +45,7 @@ from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
 
 
-class TenantDepartmentHasChildrenMapMixin:
-    """获取指定的一批租户用户是否有子部门的映射"""
-
-    @staticmethod
-    def _get_dept_has_children_map(tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, bool]:
-        """获取部门是否有子部门的信息"""
-        parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
-
-        child_data_source_dept_ids_map = defaultdict(list)
-        # 注：当前 MPTT 模型中，parent_id 等价于 parent__department_id
-        for rel in DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids):
-            child_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
-
-        return {
-            tenant_dept.id: bool(child_data_source_dept_ids_map.get(tenant_dept.data_source_department_id))
-            for tenant_dept in tenant_depts
-        }
-
-
-class TenantDepartmentListCreateApi(
-    CurrentUserTenantMixin, TenantDepartmentHasChildrenMapMixin, generics.ListCreateAPIView
-):
+class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
     """获取租户部门列表 / 创建租户部门"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -130,6 +110,21 @@ class TenantDepartmentListCreateApi(
         return TenantDepartment.objects.filter(
             data_source_department_id__in=data_source_dept_ids, **filters
         ).select_related("data_source_department")
+
+    @staticmethod
+    def _get_dept_has_children_map(tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, bool]:
+        """获取部门是否有子部门的信息"""
+        parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
+
+        child_data_source_dept_ids_map = defaultdict(list)
+        # 注：当前 MPTT 模型中，parent_id 等价于 parent__department_id
+        for rel in DataSourceDepartmentRelation.objects.filter(parent_id__in=parent_data_source_dept_ids):
+            child_data_source_dept_ids_map[rel.parent_id].append(rel.department_id)
+
+        return {
+            tenant_dept.id: bool(child_data_source_dept_ids_map.get(tenant_dept.data_source_department_id))
+            for tenant_dept in tenant_depts
+        }
 
     @swagger_auto_schema(
         tags=["organization"],
@@ -261,25 +256,26 @@ class TenantDepartmentUpdateDestroyApi(
         if DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_dept_ids).exists():
             raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("该部门或其子部门下存在用户，无法删除"))
 
-        # 连带协同产生的租户部门还有子部门都给你删咯
-        TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).delete()
-        # 所有的子数据源部门都要删除
-        DataSourceDepartment.objects.filter(id__in=data_source_dept_ids).delete()
-        # 涉及到的部门关联边都要删除，然后再重建
-        DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids).delete()
-        DataSourceDepartmentRelation.objects.partial_rebuild(dept_relation.tree_id)
+        with transaction.atomic():
+            # 连带协同产生的租户部门还有子部门都给你删咯
+            TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).delete()
+            # 所有的子数据源部门都要删除
+            DataSourceDepartment.objects.filter(id__in=data_source_dept_ids).delete()
+            # 涉及到的部门关联边都要删除，然后再重建
+            DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids).delete()
+            DataSourceDepartmentRelation.objects.partial_rebuild(dept_relation.tree_id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDepartmentHasChildrenMapMixin, generics.ListAPIView):
+class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     """搜索租户部门"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     pagination_class = None
-    # 限制搜索结果，只提供前 20 条记录，如果展示不完全，需要用户细化搜索条件
-    search_limit = 20
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
 
     def get_queryset(self) -> QuerySet[TenantDepartment]:
         slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
@@ -319,7 +315,6 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDepartmentHasChild
     def get(self, request, *args, **kwargs):
         tenant_depts = self.get_queryset()
         context = {
-            "has_children_map": self._get_dept_has_children_map(tenant_depts),
             "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
             "org_path_map": self._get_dept_organization_path_map(tenant_depts),
         }

@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict, List, Set
 
+from django.conf import settings
 from django.db.models import Q, QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -34,8 +35,8 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     pagination_class = None
-    # 限制搜索结果，只提供前 20 条记录，如果展示不完全，需要用户细化搜索条件
-    search_limit = 20
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
 
     def get_queryset(self) -> QuerySet[TenantUser]:
         slz = TenantUserSearchInputSLZ(data=self.request.query_params)
@@ -80,7 +81,7 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         return {
             user.id: [
                 org_path_map[dept_id]
-                for dept_id in user_dept_id_map.get(user.data_source_user_id, [])
+                for dept_id in user_dept_id_map[user.data_source_user_id]
                 if dept_id in org_path_map
             ]
             for user in tenant_users

@@ -264,7 +264,6 @@ class TestTenantDepartmentSearchApi:
 
         assert {dept["name"] for dept in resp.data} == {"小组AAA", "小组ABA", "小组BAA"}
         assert all(dept["tenant_id"] == random_tenant.id for dept in resp.data)
-        assert any(dept["has_children"] for dept in resp.data) is False
         assert {dept["organization_path"] for dept in resp.data} == {
             "公司/部门A/中心AA/小组AAA",
             "公司/部门A/中心AB/小组ABA",
@@ -281,7 +280,6 @@ class TestTenantDepartmentSearchApi:
 
         assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
         assert {dept["tenant_id"] for dept in resp.data} == {random_tenant.id, collaborative_tenant.id}
-        assert all(dept["has_children"] for dept in resp.data) is True
         assert {dept["organization_path"] for dept in resp.data} == {"公司/部门A", "公司/部门B"}
 
     def test_match_nothing(self, api_client):
