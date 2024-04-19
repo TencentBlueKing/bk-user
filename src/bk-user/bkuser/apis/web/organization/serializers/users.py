@@ -164,3 +164,7 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
 
 class TenantUserCreateOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
+
+
+class TenantUserOrganizationPathOutputSLZ(serializers.Serializer):
+    organization_paths = serializers.ListField(help_text="数据源用户所属部门路径列表", child=serializers.CharField())

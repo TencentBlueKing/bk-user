@@ -19,6 +19,7 @@ from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi
 from .users import (
     DataSourceUserListApi,
     TenantUserListCreateApi,
+    TenantUserOrganizationPathListApi,
     TenantUserSearchApi,
 )
 
@@ -35,4 +36,5 @@ __all__ = [
     "DataSourceUserListApi",
     "TenantUserSearchApi",
     "TenantUserListCreateApi",
+    "TenantUserOrganizationPathListApi",
 ]

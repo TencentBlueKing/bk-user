@@ -30,6 +30,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
+    TenantUserOrganizationPathOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
@@ -296,3 +297,39 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
             tenant_user.save()
 
         return Response(TenantUserCreateOutputSLZ(tenant_user).data, status=status.HTTP_201_CREATED)
+
+
+class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """获取租户用户所属部门组织路径"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self):
+        return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="租户用户所属部门的部门路径",
+        responses={status.HTTP_200_OK: TenantUserOrganizationPathOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+
+        data_source_dept_ids = DataSourceDepartmentUserRelation.objects.filter(
+            user_id=tenant_user.data_source_user.id,
+        ).values_list("department_id", flat=True)
+
+        organization_paths: List[str] = []
+        # NOTE: 用户部门数量不会很多，且该 API 调用不频繁，这里的 N+1 问题可以先不处理
+        for dept_relation in DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids):
+            dept_names = list(
+                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
+            )
+            organization_paths.append("/".join(dept_names))
+
+        return Response(
+            TenantUserOrganizationPathOutputSLZ({"organization_paths": organization_paths}).data,
+            status=status.HTTP_200_OK,
+        )

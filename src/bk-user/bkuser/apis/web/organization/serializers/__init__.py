@@ -28,6 +28,7 @@ from .users import (
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
+    TenantUserOrganizationPathOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
@@ -55,4 +56,5 @@ __all__ = [
     "TenantUserListOutputSLZ",
     "TenantUserCreateOutputSLZ",
     "TenantUserCreateInputSLZ",
+    "TenantUserOrganizationPathOutputSLZ",
 ]
