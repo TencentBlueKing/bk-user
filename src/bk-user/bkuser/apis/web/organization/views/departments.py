@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from collections import defaultdict
 from typing import Dict
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
@@ -25,13 +26,20 @@ from bkuser.apis.web.organization.serializers import (
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
     TenantDepartmentListOutputSLZ,
+    TenantDepartmentSearchInputSLZ,
+    TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
+from bkuser.apps.data_source.models import (
+    DataSource,
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+)
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import TenantDepartment
+from bkuser.apps.tenant.models import Tenant, TenantDepartment
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
@@ -106,7 +114,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
     @staticmethod
     def _get_dept_has_children_map(tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, bool]:
         """获取部门是否有子部门的信息"""
-        parent_data_source_dept_ids = tenant_depts.values_list("data_source_department_id", flat=True)
+        parent_data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
 
         child_data_source_dept_ids_map = defaultdict(list)
         # 注：当前 MPTT 模型中，parent_id 等价于 parent__department_id
@@ -184,6 +192,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                 parent=parent_dept_relation,
                 data_source=data_source,
             )
+            # FIXME (su) 支持租户协同后，要把协同的租户部门也创建出来
             tenant_dept = TenantDepartment.objects.create(
                 tenant_id=current_tenant_id,
                 data_source_department=data_source_dept,
@@ -232,8 +241,82 @@ class TenantDepartmentUpdateDestroyApi(
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        # TODO 删除租户部门，数据源部门，关联关系，租户用户，数据源用户等等，
-        #  还需要提前弹窗提示用户影响范围，等产品同学想清楚 + 补充设计后再加
-        #  或者另外一种设计，要求把该部门的所有用户都先挪出去，才能删除？
-        # tenant_dept = self.get_object()
+        """删除租户部门：要求该部门下的用户都被迁移走，否则无法删除"""
+        tenant_dept = self.get_object()
+        if not (tenant_dept.data_source.is_local and tenant_dept.data_source.is_real_type):
+            raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("仅真实用户类型的本地数据源支持删除部门"))
+
+        data_source_dept = tenant_dept.data_source_department
+        # 注：这里不应该使用 filter().first()，因为就算是根部门也会
+        # 有 parent=None 的 relation，如果存在脏数据应该暴露出来而不是悄悄处理
+        dept_relation = DataSourceDepartmentRelation.objects.get(department_id=data_source_dept.id)
+        # 该部门及其所有子部门的 ID 集合
+        data_source_dept_ids = dept_relation.get_descendants(include_self=True).values_list("department_id", flat=True)
+        # 查询关联表确保不存在用户
+        if DataSourceDepartmentUserRelation.objects.filter(department_id__in=data_source_dept_ids).exists():
+            raise error_codes.TENANT_DEPARTMENT_DELETE_FAILED.f(_("该部门或其子部门下存在用户，无法删除"))
+
+        with transaction.atomic():
+            # 连带协同产生的租户部门还有子部门都给你删咯
+            TenantDepartment.objects.filter(data_source_department_id__in=data_source_dept_ids).delete()
+            # 所有的子数据源部门都要删除
+            DataSourceDepartment.objects.filter(id__in=data_source_dept_ids).delete()
+            # 涉及到的部门关联边都要删除，然后再重建
+            DataSourceDepartmentRelation.objects.filter(department_id__in=data_source_dept_ids).delete()
+            DataSourceDepartmentRelation.objects.partial_rebuild(dept_relation.tree_id)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """搜索租户部门"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
+
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        keyword = slz.validated_data["keyword"]
+
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(), data_source_department__name__icontains=keyword
+        ).select_related("data_source", "data_source_department")[: self.search_limit]
+
+    def _get_dept_organization_path_map(self, tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
+        """获取租户部门的组织路径信息"""
+        data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
+
+        # 数据源部门 ID -> 组织路径
+        org_path_map = {}
+        for dept_relation in DataSourceDepartmentRelation.objects.filter(
+            department_id__in=data_source_dept_ids
+        ).select_related("department"):
+            dept_names = list(
+                dept_relation.get_ancestors(include_self=True).values_list("department__name", flat=True)
+            )
+            org_path_map[dept_relation.department_id] = "/".join(dept_names)
+
+        # 租户部门 ID -> 组织路径
+        return {
+            dept.id: org_path_map.get(dept.data_source_department_id, dept.data_source_department.name)
+            for dept in tenant_depts
+        }
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="搜索租户部门",
+        query_serializer=TenantDepartmentSearchInputSLZ(),
+        responses={status.HTTP_200_OK: TenantDepartmentSearchOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_depts = self.get_queryset()
+        context = {
+            "tenant_name_map": {tenant.id: tenant.name for tenant in Tenant.objects.all()},
+            "org_path_map": self._get_dept_organization_path_map(tenant_depts),
+        }
+        resp_data = TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data
+        return Response(resp_data, status=status.HTTP_200_OK)
