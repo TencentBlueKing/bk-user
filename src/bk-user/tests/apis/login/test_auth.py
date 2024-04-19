@@ -36,6 +36,7 @@ class TestGlobalInfoRetrieveApi:
             name=generate_random_string(),
             owner_tenant_id=random_tenant.id,
             plugin=IdpPlugin.objects.get(id=BuiltinIdpPluginEnum.LOCAL),
+            data_source_id=0,
         )
         resp = api_client.get(reverse("login.global_info.retrieve"))
 

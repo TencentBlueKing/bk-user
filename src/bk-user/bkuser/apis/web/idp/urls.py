@@ -27,4 +27,7 @@ urlpatterns = [
     path("<str:id>/", views.IdpRetrieveUpdateApi.as_view(), name="idp.retrieve_update"),
     # 认证源启 / 停
     path("<str:id>/status/", views.IdpStatusUpdateApi.as_view(), name="idp.update_status"),
+    # 本地账密登录，比较特殊单独 API
+    path("local/", views.LocalIdpCreateApi.as_view(), name="idp.local.create"),
+    path("local/<str:id>/", views.LocalIdpRetrieveUpdateApi.as_view(), name="idp.local.retrieve_update"),
 ]

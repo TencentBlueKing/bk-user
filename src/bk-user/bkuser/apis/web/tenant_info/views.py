@@ -19,6 +19,8 @@ from rest_framework.response import Response
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
+from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.models import Idp
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
@@ -89,11 +91,13 @@ class TenantBuiltinManagerRetrieveUpdateApi(
     )
     def get(self, request, *args, **kwargs):
         data_source, user = self.get_builtin_data_source_and_user()
+        idp = Idp.objects.get(data_source_id=data_source.id)
+
         return Response(
             TenantBuiltinManagerRetrieveOutputSLZ(
                 {
                     "username": user.username,
-                    "enable_login": data_source.plugin_config["enable_password"],
+                    "enable_login": idp.status == IdpStatus.ENABLED,
                 }
             ).data
         )
@@ -115,8 +119,9 @@ class TenantBuiltinManagerRetrieveUpdateApi(
         ).exists():
             raise error_codes.VALIDATION_ERROR.f(_("不存在实名管理员，无法禁用内置管理员账号登录"))
 
-        # 内建数据源 & 用户
+        # 内建数据源 & 用户 & 认证源
         data_source, user = self.get_builtin_data_source_and_user()
+        idp = Idp.objects.get(data_source_id=data_source.id)
 
         # 数据源配置
         plugin_config = data_source.get_plugin_cfg()
@@ -134,9 +139,11 @@ class TenantBuiltinManagerRetrieveUpdateApi(
 
             # 更新是否启用登录
             enable = data.get("enable_login")
-            if enable is not None and plugin_config.enable_password != enable:
-                plugin_config.enable_password = enable
-                data_source.set_plugin_cfg(plugin_config)
+            if enable is not None and (
+                (enable and idp.status == IdpStatus.DISABLED) or (not enable and idp.status == IdpStatus.ENABLED)
+            ):
+                idp.status = IdpStatus.ENABLED if enable else IdpStatus.DISABLED
+                idp.save(update_fields=["status", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
