@@ -20,6 +20,7 @@ from .users import (
     DataSourceUserListApi,
     TenantUserListCreateApi,
     TenantUserOrganizationPathListApi,
+    TenantUserPasswordResetApi,
     TenantUserSearchApi,
 )
 
@@ -36,5 +37,6 @@ __all__ = [
     "DataSourceUserListApi",
     "TenantUserSearchApi",
     "TenantUserListCreateApi",
+    "TenantUserPasswordResetApi",
     "TenantUserOrganizationPathListApi",
 ]

@@ -31,6 +31,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserListInputSLZ,
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
+    TenantUserPasswordResetInputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
 )
@@ -43,10 +44,13 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.data_source.utils import gen_tenant_user_id
+from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
+from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
+from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
 class DataSourceUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
@@ -299,6 +303,53 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
         return Response(TenantUserCreateOutputSLZ(tenant_user).data, status=status.HTTP_201_CREATED)
 
 
+class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="重置租户用户密码",
+        request_body=TenantUserPasswordResetInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source_user = tenant_user.data_source_user
+        data_source = tenant_user.data_source
+        plugin_config = data_source.get_plugin_cfg()
+
+        if not (data_source.is_local and data_source.is_real_type and plugin_config.enable_password):
+            raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
+                _("仅可以重置 已经启用密码功能 的 本地数据源 的用户密码")
+            )
+
+        slz = TenantUserPasswordResetInputSLZ(
+            data=request.data,
+            context={
+                "plugin_config": plugin_config,
+                "data_source_user_id": data_source_user.id,
+            },
+        )
+        slz.is_valid(raise_exception=True)
+        raw_password = slz.validated_data["password"]
+
+        DataSourceUserHandler.update_password(
+            data_source_user=data_source_user,
+            password=raw_password,
+            valid_days=plugin_config.password_expire.valid_time,
+            operator=request.user.username,
+        )
+
+        # 发送新密码通知到用户
+        send_reset_password_to_user.delay(data_source_user.id, raw_password)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """获取租户用户所属部门组织路径"""
 
@@ -306,7 +357,7 @@ class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPI
 
     lookup_url_kwarg = "id"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[TenantUser]:
         return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(

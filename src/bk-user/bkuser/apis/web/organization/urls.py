@@ -67,6 +67,11 @@ urlpatterns = [
         views.TenantUserListCreateApi.as_view(),
         name="organization.tenant_user.list_create",
     ),
+    path(
+        "tenants/users/<str:id>/password/",
+        views.TenantUserPasswordResetApi.as_view(),
+        name="organization.tenant_user.password.reset",
+    ),
     # 租户用户所属部门组织路径
     path(
         "tenants/users/<str:id>/organization-paths/",

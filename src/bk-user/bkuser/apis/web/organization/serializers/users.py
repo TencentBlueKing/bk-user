@@ -19,7 +19,12 @@ from rest_framework.exceptions import ValidationError
 from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
-from bkuser.biz.validators import validate_data_source_user_username, validate_logo, validate_user_extras
+from bkuser.biz.validators import (
+    validate_data_source_user_username,
+    validate_logo,
+    validate_user_extras,
+    validate_user_new_password,
+)
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -164,6 +169,17 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
 
 class TenantUserCreateOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
+
+
+class TenantUserPasswordResetInputSLZ(serializers.Serializer):
+    password = serializers.CharField(help_text="用户重置的新密码")
+
+    def validate_password(self, password: str) -> str:
+        return validate_user_new_password(
+            password=password,
+            data_source_user_id=self.context["data_source_user_id"],
+            plugin_config=self.context["plugin_config"],
+        )
 
 
 class TenantUserOrganizationPathOutputSLZ(serializers.Serializer):
