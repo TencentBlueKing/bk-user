@@ -14,9 +14,9 @@
         <i class="user-icon icon-copy" @click="copy(authSourceData.callback_uri)" />
       </div>
     </div>
-    <ViewRow :title="$t('认证源信息')">
+    <ViewRow :title="$t('认证源信息')" class="mt-[24px]">
       <LabelContent :label="$t('名称')">{{ authSourceData.name }}</LabelContent>
-      <LabelContent :label="$t('是否启用')"></LabelContent>
+      <LabelContent :label="$t('是否启用')">{{ authSourceData.status === 'enabled' ? $t('是') : $t('否') }}</LabelContent>
       <LabelContent :label="$t('企业 ID')">{{ authSourceData.plugin_config?.corp_id }}</LabelContent>
       <LabelContent label="Agent ID">{{ authSourceData.plugin_config?.agent_id }}</LabelContent>
       <LabelContent label="Secret">**********</LabelContent>
@@ -30,8 +30,7 @@
             scene="part"
             :description="$t('暂无数据源匹配')"
           />
-          <div class="content-box" v-else v-for="(item, index) in onDataSources" :key="index">
-            <bk-overflow-title type="tips" class="data-source-title">{{ item.data_source_name }}</bk-overflow-title>
+          <div v-else v-for="(item, index) in onDataSources" :key="index">
             <div class="field-rules">
               <dl>
                 <dt>{{ $t('数据源字段') }}：</dt>
@@ -165,12 +164,17 @@ const processMatchRules = (list) => {
       display: flex;
       padding: 8px 12px;
       color: #313238;
+      word-wrap: break-word;
       background: #F0F5FF;
       align-items: center;
       justify-content: space-between;
+      overflow-wrap: break-word;
+
+      p {
+        width: 70%;
+      }
 
       i {
-        width: 5%;
         font-size: 14px;
         color: #3A84FF;
         cursor: pointer;
@@ -197,67 +201,13 @@ const processMatchRules = (list) => {
       }
     }
 
-    .content-box {
-      position: relative;
-
-      .or {
-        position: absolute;
-        top: -16px;
-        left: -22px;
-        display: inline-block;
-        width: 19px;
-        height: 16px;
-        line-height: 16px;
-        color: #FE9C00;
-        text-align: center;
-        background: #FFF3E1;
-        border-radius: 2px;
-
-        &::before {
-          position: absolute;
-          top: -16px;
-          left: 10px;
-          width: 12px;
-          height: 16px;
-          border: 1px solid #DCDEE5;
-          border-right: transparent;
-          border-bottom: transparent;
-          border-top-left-radius: 2px;
-          content: '';
-        }
-
-        &::after {
-          position: absolute;
-          top: 16px;
-          left: 10px;
-          width: 12px;
-          height: 16px;
-          border: 1px solid #DCDEE5;
-          border-top: transparent;
-          border-right: transparent;
-          border-bottom-left-radius: 2px;
-          content: '';
-        }
-      }
-    }
-
-    .data-source-title {
-      position: relative;
-      width: 460px;
-      padding: 0 24px;
-      line-height: 32px;
-      background: #F0F1F5;
-      border-radius: 2px 2px 0 0;
-    }
-
     .field-rules {
       display: flex;
-      margin-bottom: 16px;
-      background: #FAFBFD;
+      padding: 12px 24px;
       border-radius: 2px;
 
       dl {
-        padding: 12px 50px;
+        width: 50%;
 
         dt {
           font-size: 14px;

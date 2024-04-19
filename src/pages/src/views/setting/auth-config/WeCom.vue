@@ -12,9 +12,10 @@
         </bk-form-item>
         <bk-form-item label="是否启用" required>
           <bk-switcher
-            v-model="formData.open"
+            :value="formData.status === 'enabled'"
             size="large"
             theme="primary"
+            @change="changeStatus"
           />
         </bk-form-item>
       </Row>
@@ -37,7 +38,7 @@
           </bk-radio-group>
         </bk-form-item>
       </Row>
-      <Row :title="$t('登录模式')">
+      <Row :title="$t('登录认证匹配')">
         <div class="item-flex-header">
           <bk-form-item class="w-[236px]" :label="$t('数据源字段')" required />
           <bk-form-item class="w-[236px] auth-source-fields" :label="$t('认证源字段')" required />
@@ -93,7 +94,7 @@
       <bk-button theme="primary" :loading="btnLoading" @click="handleSubmit">
         {{ $t('提交') }}
       </bk-button>
-      <bk-button @click="handleCancel">
+      <bk-button @click="emit('cancelEdit')">
         {{ $t('取消') }}
       </bk-button>
     </div>
@@ -101,32 +102,36 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, onMounted, ref } from 'vue';
+import { InfoBox, Message } from 'bkui-vue';
+import { defineEmits, defineProps, h, onMounted, ref } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
-import { getDataSourceList, getFields, getIdpsDetails } from '@/http';
+import { getDataSourceList, getFields, getIdpsDetails, postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
 
 const validate = useValidate();
 
-const emit = defineEmits(['cancelEdit']);
+const emit = defineEmits(['cancelEdit', 'success']);
 const props = defineProps({
-  data: {
-    type: Object,
-    default: () => ({}),
+  dataSourceId: {
+    type: String,
+    default: '',
+  },
+  currentId: {
+    type: String,
+    default: '',
   },
 });
 
 const formRef = ref();
 const isLoading = ref(false);
-const authSourceData = ref({});
 const btnLoading = ref(false);
 
 const formData = ref({
   name: '',
-  open: true,
-  id: props.data.id,
+  status: 'enabled',
+  plugin_id: 'wecom',
   plugin_config: {
     corp_id: '',
     agent_id: '',
@@ -134,7 +139,7 @@ const formData = ref({
   },
   data_source_match_rules: [
     {
-      data_source_id: '',
+      data_source_id: props?.dataSourceId,
       field_compare_rules: [
         {
           target_field: '',
@@ -168,47 +173,43 @@ const customFields = ref([]);
 onMounted(async () => {
   try {
     isLoading.value = true;
-    const [authRes, sourceRes, fieldRes] = await Promise.all([
-      getIdpsDetails(props.data.id),
-      getDataSourceList(''),
+    const [sourceRes, fieldRes] = await Promise.all([
+      getDataSourceList({ type: 'real' }),
       getFields(),
     ]);
-
-    if (authRes.data?.name) {
-      authSourceData.value = authRes.data;
-
-      formData.value = {
-        ...formData.value,
-        name: authRes.data?.name || '',
-        plugin_config: authRes.data?.plugin_config,
-        data_source_match_rules: authRes.data?.data_source_match_rules,
-      };
-
-      const sourceIds = new Set(formData.value.data_source_match_rules.map(item => item.data_source_id));
-
-      dataSourceList.value = sourceRes.data?.map(item => ({
-        key: item.id,
-        name: item.name,
-        disabled: sourceIds.has(item.id),
-      })) || [];
-
-      const allFields = [
-        ...(fieldRes.data?.builtin_fields?.map(item => ({ ...item, type: t('内置') })) || []),
-        ...(fieldRes.data?.custom_fields?.map(item => ({ ...item, type: t('自定义') })) || []),
-      ];
-
-      builtinFields.value = fieldRes.data?.builtin_fields || [];
-      customFields.value = fieldRes.data?.custom_fields || [];
-
-      formData.value.data_source_match_rules?.forEach((rule) => {
-        rule.targetFields = allFields.map(field => ({
-          key: field.id,
-          name: field.name,
-          disabled: rule.field_compare_rules.some(compareRule => compareRule.target_field === field.name),
-          type: field.type,
-        }));
-      });
+    if (props?.currentId) {
+      // 获取已配置详情
+      const authRes = await getIdpsDetails(props.currentId);
+      if (authRes.data?.id) {
+        formData.value = authRes.data;
+        formData.value.data_source_match_rules[0].data_source_id = props?.dataSourceId;
+      }
     }
+    // 获取数据源字段
+    const sourceIds = new Set(formData.value.data_source_match_rules.map(item => item.data_source_id));
+
+    dataSourceList.value = sourceRes.data?.map(item => ({
+      key: item.id,
+      name: item.name,
+      disabled: sourceIds.has(item.id),
+    })) || [];
+
+    const allFields = [
+      ...(fieldRes.data?.builtin_fields?.map(item => ({ ...item, type: t('内置') })) || []),
+      ...(fieldRes.data?.custom_fields?.map(item => ({ ...item, type: t('自定义') })) || []),
+    ];
+
+    builtinFields.value = fieldRes.data?.builtin_fields || [];
+    customFields.value = fieldRes.data?.custom_fields || [];
+
+    formData.value.data_source_match_rules?.forEach((rule) => {
+      rule.targetFields = allFields.map(field => ({
+        key: field.id,
+        name: field.name,
+        disabled: rule.field_compare_rules.some(compareRule => compareRule.target_field === field.name),
+        type: field.type,
+      }));
+    });
   } catch (error) {
     console.error(error);
   } finally {
@@ -216,8 +217,57 @@ onMounted(async () => {
   }
 });
 
-const handleCancel = () => {
-  emit('cancelEdit');
+// 切换启用状态
+const changeStatus = (value: boolean) => {
+  if (!value) {
+    InfoBox({
+      title: t('确认要关闭企业微信登录吗？'),
+      subTitle: h('div', {
+        style: {
+          textAlign: 'left',
+          lineHeight: '24px',
+        },
+      }, [
+        h('p', t('1.关闭后该数据的用户将无法通过企业微信登录')),
+        h('p', t('2.关闭后，再次开启时，企业微信信息会重置')),
+      ]),
+      onConfirm() {
+        formData.value.status = 'disabled';
+      },
+      onClosed() {
+        formData.value.status = 'enabled';
+      },
+      quickClose: false,
+    });
+  } else {
+    formData.value.status = 'enabled';
+  }
+  window.changeInput = true;
+};
+
+//  提交企业微信认证源配置信息
+const handleSubmit = async () => {
+  try {
+    await formRef.value.validate();
+    btnLoading.value = true;
+    const data = formData.value;
+    data.data_source_match_rules.forEach((item) => {
+      delete item.targetFields;
+    });
+
+    if (!formData.value.id) {
+      const res = await postIdps(data);
+      emit('success', res.data?.callback_uri);
+    } else {
+      await putIdps(data);
+      Message({ theme: 'success', message: t('认证源更新成功') });
+      emit('success');
+    }
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    btnLoading.value = false;
+  }
 };
 
 const {
@@ -226,15 +276,11 @@ const {
   handleAddItem,
   handleDeleteItem,
   handleChange,
-  handleSubmit,
 } = useCustomPlugin(
   formData,
   dataSourceList,
   builtinFields,
   customFields,
-  btnLoading,
-  formRef,
-  'edit',
 );
 </script>
 

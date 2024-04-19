@@ -15,5 +15,5 @@ export const getLoginUrl = (isOpener = true) => {
 
 // 退出登录
 export const logout = () => {
-  location.href = getLoginUrl();
+  location.href = getLoginUrl(false);
 };
