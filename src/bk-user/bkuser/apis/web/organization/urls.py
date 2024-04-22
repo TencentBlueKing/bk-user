@@ -45,15 +45,15 @@ urlpatterns = [
     ),
     # 数据源部门列表
     path(
-        "data-sources/departments/",
-        views.DataSourceDepartmentListApi.as_view(),
-        name="organization.data_source_department.list",
+        "tenants/optional-departments/",
+        views.OptionalTenantDepartmentListApi.as_view(),
+        name="organization.optional_department.list",
     ),
     # 数据源用户列表
     path(
-        "data-sources/users/",
-        views.DataSourceUserListApi.as_view(),
-        name="organization.data_source_user.list",
+        "tenants/optional-leaders/",
+        views.OptionalTenantUserListApi.as_view(),
+        name="organization.optional_leader.list",
     ),
     # 搜索租户用户（含协同数据）
     path(

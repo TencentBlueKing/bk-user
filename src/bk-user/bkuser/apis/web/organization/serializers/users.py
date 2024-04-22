@@ -17,7 +17,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.data_source.models import (
-    DataSourceDepartment,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
     DataSourceUserLeaderRelation,
@@ -33,14 +32,15 @@ from bkuser.biz.validators import (
 from bkuser.common.validators import validate_phone_with_country_code
 
 
-class DataSourceUserListInputSLZ(serializers.Serializer):
+class OptionalTenantUserListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
+    excluded_user_id = serializers.CharField(help_text="排除的租户用户 ID（Leader 不能是自己）", required=False)
 
 
-class DataSourceUserListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="数据源用户 ID")
-    username = serializers.CharField(help_text="用户名")
-    full_name = serializers.CharField(help_text="用户姓名")
+class OptionalTenantUserListOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户用户 ID")
+    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="用户姓名", source="data_source_user.full_name")
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
@@ -124,20 +124,17 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
     )
     extras = serializers.JSONField(help_text="自定义字段", default=dict)
 
-    # Q：这里为什么用的数据源部门/用户 ID 而不是租户部门/用户 ID
-    # A：实际 DB 存储关联表是数据源部门/用户的 ID，如果 options api & 参数都是数据源部门/用户的 ID
-    #   那么就不需要提供出去 & 接收参数后都要转换一遍（数据源 -> 租户 & 租户 -> 数据源）能省点事 :D
     department_ids = serializers.ListField(
-        help_text="数据源部门 ID 列表", child=serializers.IntegerField(), default=list
+        help_text="租户部门 ID 列表", child=serializers.IntegerField(), default=list
     )
-    leader_ids = serializers.ListField(help_text="数据源上级 ID 列表", child=serializers.IntegerField(), default=list)
+    leader_ids = serializers.ListField(help_text="租户上级 ID 列表", child=serializers.CharField(), default=list)
 
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(self.context["data_source_id"], username)
 
-    def validate_department_ids(self, department_ids):
+    def validate_department_ids(self, department_ids: List[int]) -> List[int]:
         invalid_department_ids = set(department_ids) - set(
-            DataSourceDepartment.objects.filter(
+            TenantDepartment.objects.filter(
                 id__in=department_ids, data_source_id=self.context["data_source_id"]
             ).values_list("id", flat=True)
         )
@@ -146,10 +143,11 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
 
         return department_ids
 
-    def validate_leader_ids(self, leader_ids):
+    def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
         invalid_leader_ids = set(leader_ids) - set(
-            DataSourceUser.objects.filter(
-                id__in=leader_ids, data_source_id=self.context["data_source_id"]
+            TenantUser.objects.filter(
+                id__in=leader_ids,
+                data_source_id=self.context["data_source_id"],
             ).values_list("id", flat=True)
         )
         if invalid_leader_ids:
@@ -217,6 +215,12 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         return validate_user_extras(
             extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]
         )
+
+    def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
+        if self.context["tenant_user_id"] in leader_ids:
+            raise ValidationError(_("不能设置自己为自己的直接上级"))
+
+        return super().validate_leader_ids(leader_ids)
 
 
 class TenantUserPasswordResetInputSLZ(serializers.Serializer):

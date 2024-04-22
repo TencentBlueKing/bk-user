@@ -24,8 +24,8 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
-    DataSourceUserListInputSLZ,
-    DataSourceUserListOutputSLZ,
+    OptionalTenantUserListInputSLZ,
+    OptionalTenantUserListOutputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
@@ -57,23 +57,30 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
-class DataSourceUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
-    """数据源用户列表"""
+class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """可选租户用户列表（下拉框数据用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = DataSourceUserListOutputSLZ
+    serializer_class = OptionalTenantUserListOutputSLZ
 
-    def get_queryset(self) -> QuerySet[DataSourceUser]:
-        slz = DataSourceUserListInputSLZ(data=self.request.query_params)
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        slz = OptionalTenantUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        queryset = DataSourceUser.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        queryset = TenantUser.objects.filter(
+            data_source__owner_tenant_id=self.get_current_tenant_id(),
+        ).select_related("data_source_user")
         if kw := params.get("keyword"):
-            queryset = queryset.filter(Q(username__icontains=kw) | Q(full_name__icontains=kw))
+            queryset = queryset.filter(
+                Q(data_source_user__username__icontains=kw) | Q(data_source_user__full_name__icontains=kw)
+            )
 
-        return queryset
+        if excluded_user_id := params.get("excluded_user_id"):
+            queryset = queryset.exclude(id=excluded_user_id)
+
+        return queryset.order_by("data_source_user__username")
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -273,19 +280,29 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
                 logo=data["logo"],
                 extras=data["extras"],
             )
+
             # 创建部门 - 用户关联边
+            # 租户部门 ID —> 数据源部门 ID
+            data_source_dept_ids = TenantDepartment.objects.filter(
+                data_source=data_source, id__in=data["department_ids"]
+            ).values_list("data_source_department_id", flat=True)
             dept_user_relations = [
                 DataSourceDepartmentUserRelation(
                     department_id=dept_id, user_id=data_source_user.id, data_source=data_source
                 )
-                for dept_id in data["department_ids"]
+                for dept_id in data_source_dept_ids
             ]
             if dept_user_relations:
                 DataSourceDepartmentUserRelation.objects.bulk_create(dept_user_relations)
+
             # 创建用户 - 上级关联边
+            # 租户用户 ID -> 数据源用户 ID
+            data_source_leader_ids = TenantUser.objects.filter(
+                data_source=data_source, id__in=data["leader_ids"]
+            ).values_list("data_source_user_id", flat=True)
             user_leader_relations = [
                 DataSourceUserLeaderRelation(user_id=data_source_user.id, leader_id=leader_id, data_source=data_source)
-                for leader_id in data["leader_ids"]
+                for leader_id in data_source_leader_ids
             ]
             if user_leader_relations:
                 DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relations)
@@ -386,6 +403,7 @@ class TenantUserRetrieveUpdateDestroyApi(
             data=request.data,
             context={
                 "tenant_id": cur_tenant_id,
+                "tenant_user_id": tenant_user.id,
                 "data_source_id": data_source.id,
                 "data_source_user_id": data_source_user.id,
             },
@@ -397,6 +415,14 @@ class TenantUserRetrieveUpdateDestroyApi(
         if data_source.is_username_frozen and data["username"] != data_source_user.username:
             raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("当前用户不允许更新用户名"))
 
+        # 提前将参数中的租户部门/ Leader 用户 ID 转换成数据源部门/ Leader 用户 ID
+        data_source_dept_ids = TenantDepartment.objects.filter(
+            data_source=data_source, id__in=data["department_ids"]
+        ).values_list("data_source_department_id", flat=True)
+        data_source_leader_ids = TenantUser.objects.filter(
+            data_source=data_source, id__in=data["leader_ids"]
+        ).values_list("data_source_user_id", flat=True)
+
         with transaction.atomic():
             data_source_user.username = data["username"]
             data_source_user.full_name = data["full_name"]
@@ -407,8 +433,8 @@ class TenantUserRetrieveUpdateDestroyApi(
             data_source_user.extras = data["extras"]
             data_source_user.save()
             # 更新 部门 - 用户，Leader - 用户 关联表信息
-            self._update_user_department_relations(data_source_user, data["department_ids"])
-            self._update_user_leader_relations(data_source_user, data["leader_ids"])
+            self._update_user_department_relations(data_source_user, data_source_dept_ids)
+            self._update_user_leader_relations(data_source_user, data_source_leader_ids)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

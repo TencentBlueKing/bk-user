@@ -10,8 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 
 from .departments import (
-    DataSourceDepartmentListInputSLZ,
-    DataSourceDepartmentListOutputSLZ,
+    OptionalTenantDepartmentListInputSLZ,
+    OptionalTenantDepartmentListOutputSLZ,
     TenantDepartmentCreateInputSLZ,
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
@@ -22,8 +22,8 @@ from .departments import (
 )
 from .tenants import TenantListOutputSLZ, TenantRetrieveOutputSLZ
 from .users import (
-    DataSourceUserListInputSLZ,
-    DataSourceUserListOutputSLZ,
+    OptionalTenantUserListInputSLZ,
+    OptionalTenantUserListOutputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
@@ -49,11 +49,11 @@ __all__ = [
     "TenantDepartmentUpdateInputSLZ",
     "TenantDepartmentSearchInputSLZ",
     "TenantDepartmentSearchOutputSLZ",
-    "DataSourceDepartmentListInputSLZ",
-    "DataSourceDepartmentListOutputSLZ",
+    "OptionalTenantDepartmentListInputSLZ",
+    "OptionalTenantDepartmentListOutputSLZ",
     # 租户用户
-    "DataSourceUserListInputSLZ",
-    "DataSourceUserListOutputSLZ",
+    "OptionalTenantUserListInputSLZ",
+    "OptionalTenantUserListOutputSLZ",
     "TenantUserSearchInputSLZ",
     "TenantUserSearchOutputSLZ",
     "TenantUserListInputSLZ",

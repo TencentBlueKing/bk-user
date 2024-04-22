@@ -22,8 +22,8 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
-    DataSourceDepartmentListInputSLZ,
-    DataSourceDepartmentListOutputSLZ,
+    OptionalTenantDepartmentListInputSLZ,
+    OptionalTenantDepartmentListOutputSLZ,
     TenantDepartmentCreateInputSLZ,
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
@@ -324,29 +324,31 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-class DataSourceDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
-    """数据源部门列表"""
+class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
+    """可选租户部门列表（下拉框数据用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = DataSourceDepartmentListOutputSLZ
+    serializer_class = OptionalTenantDepartmentListOutputSLZ
 
-    def get_queryset(self) -> QuerySet[DataSourceDepartment]:
-        slz = DataSourceDepartmentListInputSLZ(data=self.request.query_params)
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        slz = OptionalTenantDepartmentListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        queryset = DataSourceDepartment.objects.filter(data_source__owner_tenant_id=self.get_current_tenant_id())
+        queryset = TenantDepartment.objects.filter(
+            data_source__owner_tenant_id=self.get_current_tenant_id()
+        ).select_related("data_source_department")
         if kw := params.get("keyword"):
-            queryset = queryset.filter(name__icontains=kw)
+            queryset = queryset.filter(data_source_department__name__icontains=kw)
 
-        return queryset
+        return queryset.order_by("id")
 
     @swagger_auto_schema(
         tags=["organization"],
-        operation_description="数据源部门列表",
-        query_serializer=DataSourceDepartmentListInputSLZ(),
-        responses={status.HTTP_200_OK: DataSourceDepartmentListOutputSLZ(many=True)},
+        operation_description="可选部门列表",
+        query_serializer=OptionalTenantDepartmentListInputSLZ(),
+        responses={status.HTTP_200_OK: OptionalTenantDepartmentListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

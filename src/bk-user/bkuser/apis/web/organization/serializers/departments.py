@@ -154,10 +154,10 @@ class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
         return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)
 
 
-class DataSourceDepartmentListInputSLZ(serializers.Serializer):
+class OptionalTenantDepartmentListInputSLZ(serializers.Serializer):
     keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64, required=False)
 
 
-class DataSourceDepartmentListOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="数据源部门 ID")
-    name = serializers.CharField(help_text="部门名称")
+class OptionalTenantDepartmentListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="租户部门 ID")
+    name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
