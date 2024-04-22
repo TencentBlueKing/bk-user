@@ -184,21 +184,25 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
     extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
-    department_ids = serializers.SerializerMethodField(help_text="数据源部门 ID 列表")
-    leader_ids = serializers.SerializerMethodField(help_text="上级（数据源用户）ID 列表")
+    department_ids = serializers.SerializerMethodField(help_text="租户部门 ID 列表")
+    leader_ids = serializers.SerializerMethodField(help_text="上级（租户用户）ID 列表")
 
     def get_logo(self, obj: TenantUser) -> str:
         return obj.data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
 
     @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.IntegerField()))
     def get_department_ids(self, obj: TenantUser) -> List[int]:
-        relations = DataSourceDepartmentUserRelation.objects.filter(user_id=obj.id)
-        return [rel.department_id for rel in relations]
+        relations = DataSourceDepartmentUserRelation.objects.filter(user_id=obj.data_source_user_id)
+        return TenantDepartment.objects.filter(
+            data_source_department_id__in=[rel.department_id for rel in relations],
+        ).values_list("id", flat=True)
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.IntegerField()))
+    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
     def get_leader_ids(self, obj: TenantUser) -> List[int]:
-        relations = DataSourceUserLeaderRelation.objects.filter(user_id=obj.id)
-        return [rel.leader_id for rel in relations]
+        relations = DataSourceUserLeaderRelation.objects.filter(user_id=obj.data_source_user_id)
+        return TenantUser.objects.filter(
+            data_source_user_id__in=[rel.leader_id for rel in relations],
+        ).values_list("id", flat=True)
 
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"

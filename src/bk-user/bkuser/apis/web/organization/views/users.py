@@ -50,6 +50,7 @@ from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.biz.organization import DataSourceUserHandler
@@ -321,6 +322,8 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
 
             tenant_user.save()
 
+        # 对新增的用户进行账密信息初始化 & 发送密码通知
+        initialize_identity_info_and_send_notification.delay(data_source.id)
         return Response(TenantUserCreateOutputSLZ(tenant_user).data, status=status.HTTP_201_CREATED)
 
 
