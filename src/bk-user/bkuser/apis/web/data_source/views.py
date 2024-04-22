@@ -13,6 +13,7 @@ import logging
 import openpyxl
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -249,15 +250,15 @@ class DataSourceRetrieveUpdateDestroyApi(
         logger.warning("user %s delete data source %s", request.user.username, data_source.id)
 
         with transaction.atomic():
+            idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
             # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
-            Idp.objects.filter(
-                owner_tenant_id=data_source.owner_tenant_id,
-                data_source_id=data_source.id,
-                plugin_id=BuiltinIdpPluginEnum.LOCAL,
-            ).delete()
+            Idp.objects.filter(plugin_id=BuiltinIdpPluginEnum.LOCAL, **idp_filters).delete()
             # 其他认证源则禁用
-            Idp.objects.filter(owner_tenant_id=data_source.owner_tenant_id, data_source_id=data_source.id).update(
-                status=IdpStatus.DISABLED, data_source_id=INVALID_REAL_DATA_SOURCE_ID
+            Idp.objects.filter(**idp_filters).update(
+                status=IdpStatus.DISABLED,
+                data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                updated_at=timezone.now(),
+                updater=request.user.username,
             )
 
             # 删除数据源 & 关联资源数据

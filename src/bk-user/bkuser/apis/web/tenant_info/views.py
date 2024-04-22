@@ -139,9 +139,7 @@ class TenantBuiltinManagerRetrieveUpdateApi(
 
             # 更新是否启用登录
             enable = data.get("enable_login")
-            if enable is not None and (
-                (enable and idp.status == IdpStatus.DISABLED) or (not enable and idp.status == IdpStatus.ENABLED)
-            ):
+            if enable is not None:
                 idp.status = IdpStatus.ENABLED if enable else IdpStatus.DISABLED
                 idp.save(update_fields=["status", "updated_at"])
 

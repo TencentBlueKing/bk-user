@@ -24,6 +24,7 @@ from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
 from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.plugins.base import get_plugin_cfg_schema_map
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 from bkuser.utils import dictx
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -200,11 +201,16 @@ class IdpSwitchStatusOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
 
 
+class LocalDataSourcePluginConfigField(serializers.JSONField):
+    class Meta:
+        swagger_schema_fields = get_plugin_cfg_schema_map()["plugin_config:local"]
+
+
 class LocalIdpCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称", max_length=128)
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     # Note: 本地认证源的密码配置实际上是写入本地数据源的
-    plugin_config = serializers.JSONField(help_text="本地数据源插件配置")
+    plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源插件配置")
 
     def validate_name(self, name: str) -> str:
         return _validate_duplicate_idp_name(name, self.context["tenant_id"])
@@ -233,7 +239,7 @@ class LocalIdpRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源唯一标识")
     name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
-    plugin_config = serializers.JSONField(help_text="本地数据源密码配置")
+    plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源密码配置")
 
 
 class LocalIdpUpdateInputSLZ(LocalIdpCreateInputSLZ):

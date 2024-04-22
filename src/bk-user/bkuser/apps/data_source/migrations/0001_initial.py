@@ -68,7 +68,6 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('code', models.CharField(default=bkuser.utils.uuid.generate_uuid, max_length=128, verbose_name='用户标识')),
-                ('status', models.CharField(choices=[('enabled', '启用'), ('disabled', '禁用')], default=bkuser.apps.data_source.constants.DataSourceUserStatus['ENABLED'], max_length=32, verbose_name='用户状态')),
                 ('username', models.CharField(max_length=128, verbose_name='用户名')),
                 ('full_name', models.CharField(max_length=128, verbose_name='姓名')),
                 ('email', models.EmailField(blank=True, default='', max_length=254, null=True, verbose_name='邮箱')),

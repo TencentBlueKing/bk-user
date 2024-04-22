@@ -10,7 +10,6 @@ specific language governing permissions and limitations under the License.
 """
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
-from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -28,7 +27,6 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
-from bkuser.plugins.base import get_plugin_cfg_schema_map
 from bkuser.plugins.constants import DataSourcePluginEnum
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
@@ -138,7 +136,7 @@ class IdpListCreateApi(CurrentUserTenantMixin, generics.ListCreateAPIView):
             plugin=plugin,
             plugin_config=data["plugin_config"],
             data_source_match_rules=data["data_source_match_rules"],
-            # Note: 当前页面只支持一个认证源配置一个数据源，所以直接去第一个即可
+            # Note: 当前页面只支持一个认证源配置一个数据源，所以直接取第一个即可
             data_source_id=data["data_source_match_rules"][0]["data_source_id"],
             creator=current_user,
             updater=current_user,
@@ -216,7 +214,9 @@ class IdpRetrieveUpdateApi(CurrentUserTenantMixin, generics.RetrieveUpdateAPIVie
             idp.data_source_match_rules = data["data_source_match_rules"]
             idp.data_source_id = data["data_source_match_rules"][0]["data_source_id"]
             idp.updater = request.user.username
-            idp.save(update_fields=["name", "data_source_match_rules", "updater", "updated_at"])
+            idp.save(
+                update_fields=["name", "status", "data_source_match_rules", "data_source_id", "updater", "updated_at"]
+            )
             idp.set_plugin_cfg(data["plugin_config"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -263,11 +263,6 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
         tags=["idp"],
         operation_description="新建本地账密认证源",
         request_body=LocalIdpCreateInputSLZ(),
-        manual_parameters=[
-            openapi.Parameter(
-                "plugin_config", in_=openapi.IN_BODY, schema=get_plugin_cfg_schema_map()["plugin_config:local"]
-            )
-        ],
         responses={status.HTTP_201_CREATED: IdpCreateOutputSLZ()},
     )
     def post(self, request, *args, **kwargs):
@@ -288,7 +283,7 @@ class LocalIdpCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
         if Idp.objects.filter(
             owner_tenant_id=current_tenant_id, plugin_id=BuiltinIdpPluginEnum.LOCAL, data_source_id=data_source.id
         ).exists():
-            raise error_codes.VALIDATION_ERROR.f(_("本地账密登录已存在"))
+            raise error_codes.IDP_CREATE_FAILED.f(_("本地账密登录已存在"))
 
         plugin_config = data["plugin_config"]
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
@@ -354,11 +349,6 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         tags=["idp"],
         operation_description="更新本地认证源",
         request_body=LocalIdpUpdateInputSLZ(),
-        manual_parameters=[
-            openapi.Parameter(
-                "plugin_config", in_=openapi.IN_BODY, schema=get_plugin_cfg_schema_map()["plugin_config:local"]
-            )
-        ],
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
@@ -381,7 +371,7 @@ class LocalIdpRetrieveUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
             idp.name = data["name"]
             idp.status = data["status"]
             idp.updater = request.user.username
-            idp.save(update_fields=["name", "updater", "updated_at"])
-            idp.set_plugin_cfg(data["plugin_config"])
+            idp.save(update_fields=["name", "status", "updater", "updated_at"])
+            data_source.set_plugin_cfg(data["plugin_config"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
