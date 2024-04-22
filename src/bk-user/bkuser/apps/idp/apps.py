@@ -14,6 +14,3 @@ from django.apps import AppConfig
 class IdpConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "bkuser.apps.idp"
-
-    def ready(self):
-        from . import handlers  # noqa

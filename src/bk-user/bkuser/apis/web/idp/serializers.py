@@ -9,20 +9,24 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from django.utils.translation import gettext_lazy as _
-from drf_yasg.utils import swagger_serializer_method
 from pydantic import ValidationError as PDValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.idp.constants import IdpStatus
+from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.tenant.models import TenantUserCustomField, UserBuiltinField
+from bkuser.common.constants import SENSITIVE_MASK
 from bkuser.idp_plugins.base import BasePluginConfig, get_plugin_cfg_cls
 from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.plugins.base import get_plugin_cfg_schema_map
+from bkuser.plugins.local.models import LocalDataSourcePluginConfig
+from bkuser.utils import dictx
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 
@@ -38,31 +42,10 @@ class IdpPluginConfigMetaRetrieveOutputSLZ(serializers.Serializer):
     json_schema = serializers.JSONField(help_text="配置的JSON Schema")
 
 
-class IdpSearchInputSLZ(serializers.Serializer):
-    keyword = serializers.CharField(help_text="搜索关键字", required=False)
-
-
-class IdpSearchOutputSLZ(serializers.Serializer):
+class IdpListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源唯一标识")
-    name = serializers.CharField(help_text="认证源名称")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
-    updater = serializers.SerializerMethodField(help_text="更新者")
-    updated_at = serializers.CharField(help_text="更新时间", source="updated_at_display")
     plugin = IdpPluginOutputSLZ(help_text="认证源插件")
-    matched_data_sources = serializers.SerializerMethodField(help_text="匹配的数据源列表")
-
-    @swagger_serializer_method(
-        serializer_or_field=serializers.ListField(
-            help_text="匹配的数据源",
-            child=serializers.IntegerField(),
-            allow_empty=True,
-        )
-    )
-    def get_matched_data_sources(self, obj: Idp) -> List[int]:
-        return [r.data_source_id for r in obj.data_source_match_rule_objs]
-
-    def get_updater(self, obj: Idp) -> str:
-        return self.context["user_display_name_map"].get(obj.updater) or obj.updater
 
 
 def _validate_duplicate_idp_name(name: str, tenant_id: str, idp_id: str = "") -> str:
@@ -105,8 +88,10 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         # 数据源是否当前租户的
         tenant_id = self.context["tenant_id"]
-        if not DataSource.objects.filter(id=attrs["data_source_id"], owner_tenant_id=tenant_id).exists():
-            raise ValidationError(_("当前租户下不存在 ID 为 {} 的数据源").format(attrs["data_source_id"]))
+        if not DataSource.objects.filter(
+            id=attrs["data_source_id"], owner_tenant_id=tenant_id, type=DataSourceTypeEnum.REAL
+        ).exists():
+            raise ValidationError(_("当前租户下不存在 ID 为 {} 的实名数据源").format(attrs["data_source_id"]))
 
         # 匹配的数据源字段必须是当前租户的用户字段，包括内建字段和自定义字段
         builtin_fields = set(UserBuiltinField.objects.all().values_list("name", flat=True))
@@ -122,10 +107,11 @@ class DataSourceMatchRuleSLZ(serializers.Serializer):
 
 class IdpCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称", max_length=128)
+    status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     plugin_id = serializers.CharField(help_text="认证源插件 ID")
     plugin_config = serializers.JSONField(help_text="认证源插件配置")
     data_source_match_rules = serializers.ListField(
-        help_text="数据源匹配规则", child=DataSourceMatchRuleSLZ(), allow_empty=True, default=list
+        help_text="数据源匹配规则", child=DataSourceMatchRuleSLZ(), allow_empty=False, default=list
     )
 
     def validate_name(self, name: str) -> str:
@@ -142,6 +128,14 @@ class IdpCreateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         plugin_id = attrs["plugin_id"]
+
+        # 同类型的数据源对同一类型插件只允许一个
+        if Idp.objects.filter(
+            owner_tenant_id=self.context["tenant_id"],
+            plugin_id=plugin_id,
+            data_source_id__in=[INVALID_REAL_DATA_SOURCE_ID, attrs["data_source_match_rules"][0]["data_source_id"]],
+        ).exists():
+            raise ValidationError(_("{} 类型的认证源已存在").format(plugin_id))
 
         try:
             cfg_cls = get_plugin_cfg_cls(plugin_id)
@@ -164,7 +158,6 @@ class IdpCreateOutputSLZ(serializers.Serializer):
 class IdpRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="认证源唯一标识")
     name = serializers.CharField(help_text="认证源名称")
-    owner_tenant_id = serializers.CharField(help_text="认证源所属租户 ID")
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     plugin = IdpPluginOutputSLZ(help_text="认证源插件")
     plugin_config = serializers.JSONField(help_text="认证源插件配置")
@@ -181,9 +174,10 @@ class IdpPartialUpdateInputSLZ(serializers.Serializer):
 
 class IdpUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="认证源名称", max_length=128)
+    status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
     plugin_config = serializers.JSONField(help_text="认证源插件配置")
     data_source_match_rules = serializers.ListField(
-        help_text="数据源匹配规则", child=DataSourceMatchRuleSLZ(), allow_empty=True, default=list
+        help_text="数据源匹配规则", child=DataSourceMatchRuleSLZ(), allow_empty=False, default=list
     )
 
     def validate_name(self, name: str) -> str:
@@ -191,6 +185,11 @@ class IdpUpdateInputSLZ(serializers.Serializer):
 
     def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> BasePluginConfig:
         cfg_cls = get_plugin_cfg_cls(self.context["plugin_id"])
+
+        # 将敏感信息填充回 plugin_config，一并进行校验
+        for info in self.context["exists_sensitive_infos"]:
+            if dictx.get_items(plugin_config, info.key) == SENSITIVE_MASK:
+                dictx.set_items(plugin_config, info.key, info.value)
 
         try:
             return cfg_cls(**plugin_config)
@@ -200,3 +199,57 @@ class IdpUpdateInputSLZ(serializers.Serializer):
 
 class IdpSwitchStatusOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
+
+
+class LocalDataSourcePluginConfigField(serializers.JSONField):
+    class Meta:
+        swagger_schema_fields = get_plugin_cfg_schema_map()["plugin_config:local"]
+
+
+class LocalIdpCreateInputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="认证源名称", max_length=128)
+    status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
+    # Note: 本地认证源的密码配置实际上是写入本地数据源的
+    plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源插件配置")
+
+    def validate_name(self, name: str) -> str:
+        return _validate_duplicate_idp_name(name, self.context["tenant_id"])
+
+    def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> LocalDataSourcePluginConfig:
+        try:
+            return LocalDataSourcePluginConfig(**plugin_config)
+        except PDValidationError as e:
+            raise ValidationError(_("认证源插件配置不合法：{}").format(stringify_pydantic_error(e)))
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        plugin_config = attrs["plugin_config"]
+        assert isinstance(plugin_config, LocalDataSourcePluginConfig)
+
+        status = attrs["status"]
+        # 启动登录和启用密码功能必须保持一致
+        if (plugin_config.enable_password and status == IdpStatus.DISABLED) or (
+            not plugin_config.enable_password and status == IdpStatus.ENABLED
+        ):
+            raise ValidationError("本地登录启用状态必须与密码功能启用保持一致")
+
+        return attrs
+
+
+class LocalIdpRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="认证源唯一标识")
+    name = serializers.CharField(help_text="认证源名称")
+    status = serializers.ChoiceField(help_text="认证源状态", choices=IdpStatus.get_choices())
+    plugin_config = LocalDataSourcePluginConfigField(help_text="本地数据源密码配置")
+
+
+class LocalIdpUpdateInputSLZ(LocalIdpCreateInputSLZ):
+    def validate_name(self, name: str) -> str:
+        return _validate_duplicate_idp_name(name, self.context["tenant_id"], self.context["idp_id"])
+
+    def validate_plugin_config(self, plugin_config: Dict[str, Any]) -> LocalDataSourcePluginConfig:
+        # 将敏感信息填充回 plugin_config，一并进行校验
+        for info in self.context["exists_sensitive_infos"]:
+            if dictx.get_items(plugin_config, info.key) == SENSITIVE_MASK:
+                dictx.set_items(plugin_config, info.key, info.value)
+
+        return super().validate_plugin_config(plugin_config)
