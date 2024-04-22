@@ -298,6 +298,22 @@ export default {
       return this.rules;
     },
   },
+  watch: {
+    'detailsBarInfo.type': {
+      handler(newType) {
+        if (newType === 'edit') {
+          this.getLeader().forEach((leader) => {
+            const hasId = this.rtxList.some((rtx) => {
+              return rtx.id === leader.id;
+            });
+            if (!hasId) {
+              this.rtxList.push(leader);
+            }
+          });
+        }
+      },
+    },
+  },
   created() {
     // 新增用户
     if (this.detailsBarInfo.type === 'add') {
@@ -360,8 +376,8 @@ export default {
         fieldInfo.isError = false;
         return true;
       });
-      const { leader, leaders } = this.currentProfile;
-      this.userSettingData.leader = (leader || leaders).map(item => item.id);
+
+      this.userSettingData.leader = this.getLeader().map(item => item.id);
       this.initialDepartments = this.currentProfile.departments;
       this.userSettingData.department_name = this.formatDepartments(this.initialDepartments);
       this.getSelectedDepartments = this.initialDepartments;
@@ -369,6 +385,10 @@ export default {
 
       // 让父组件去修改 detailsBarInfo.type = 'edit'
       this.$emit('editProfile');
+    },
+    getLeader() {
+      const { leader, leaders } = this.currentProfile;
+      return  (leader || leaders);
     },
     // 展示所在的组织
     formatDepartments(departments) {
