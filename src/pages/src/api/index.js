@@ -191,24 +191,29 @@ function handleReject(error, config) {
     const { status, data } = error.response;
     if (status === 401) {
       try {
-        const { login_url: loginUrl, extra_params: extraParams, width, height } = data;
+        const { login_url: url, extra_params: extraParams, width, height } = data;
         let extraQuery = '';
         extraParams && Object.entries(extraParams).forEach((arr) => {
           extraQuery += (`&${arr[0]}=${arr[1]}`);
         });
 
-        if (!loginUrl.includes(window.origin)) { // 登录弹窗 iframe 跨域，跳转登录
-          const url = `${loginUrl}?c_url=${window.location}${extraQuery}`;
-          window.location.assign(url);
-        } else { // 弹窗登录
-          const callbackUrl = `${window.origin + window.SITE_URL}accounts/login_success/`;
-          const url = `${loginUrl}?c_url=${callbackUrl}${extraQuery}`;
-          showLoginModal({
-            url,
-            width,
-            height,
-          });
+        const successUrl = `${window.origin + window.SITE_URL}login_success.html`;
+        if (!url) {
+          console.error('Login URL not configured!');
+          return;
         }
+
+        const loginUrl = `${url}?c_url=${encodeURIComponent(successUrl)}${extraQuery}`;
+        // 跳转到登录页
+        if (error.config.url === 'api/v1/web/profiles/me/') {
+          return window.location.href = loginUrl;
+        }
+        // 登录弹窗
+        showLoginModal({
+          loginUrl,
+          width,
+          height,
+        });
       } catch (e) {
         console.warn('登录401响应数据结构错误', e);
       }
