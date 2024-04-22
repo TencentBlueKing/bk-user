@@ -16,6 +16,7 @@ import CachedPromise from './cached-promise';
 import RequestQueue from './request-queue';
 import { messageError } from '@/common/bkmagic';
 import store from '@/store';
+import { showLoginModal } from '@blueking/login-modal';
 // import UrlParse from 'url-parse';
 // import { parse } from 'query-string';
 // axios 实例
@@ -190,7 +191,7 @@ function handleReject(error, config) {
     const { status, data } = error.response;
     if (status === 401) {
       try {
-        const { login_url: loginUrl, extra_params: extraParams } = data;
+        const { login_url: loginUrl, extra_params: extraParams, width, height } = data;
         let extraQuery = '';
         extraParams && Object.entries(extraParams).forEach((arr) => {
           extraQuery += (`&${arr[0]}=${arr[1]}`);
@@ -202,9 +203,11 @@ function handleReject(error, config) {
         } else { // 弹窗登录
           const callbackUrl = `${window.origin + window.SITE_URL}accounts/login_success/`;
           const url = `${loginUrl}?c_url=${callbackUrl}${extraQuery}`;
-          window.bus.$emit('show-login-modal', Object.assign(data, {
-            loginUrl: url,
-          }));
+          showLoginModal({
+            url,
+            width,
+            height,
+          });
         }
       } catch (e) {
         console.warn('登录401响应数据结构错误', e);

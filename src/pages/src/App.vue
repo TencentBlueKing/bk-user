@@ -16,7 +16,6 @@
       <KingLoading v-show="initLoading"></KingLoading>
       <NoAuthority v-if="noAuthData" :no-auth-data="noAuthData" @reloadRouter="routerKey += 1" />
     </main>
-    <Login v-if="loginData" :login-data="loginData" />
     <!-- <FooterBox /> -->
   </div>
 </template>
@@ -24,7 +23,6 @@
 <script>
 import HeaderBox from './Header';
 // import FooterBox from './Footer';
-import Login from '@/components/login';
 import NoAuthority from '@/components/authority/NoAuthority';
 import KingLoading from '@/components/KingLoading';
 import NoAccessAuthority from './components/authority/NoAccessAuthority.vue';
@@ -33,7 +31,6 @@ export default {
   name: 'App',
   components: {
     HeaderBox,
-    Login,
     NoAuthority,
     KingLoading,
     NoAccessAuthority,
@@ -42,7 +39,6 @@ export default {
   data() {
     return {
       showHeader: true,
-      loginData: null,
       routerKey: 0,
     };
   },
@@ -68,16 +64,6 @@ export default {
     if (window.location.pathname.indexOf('password') !== -1) {
       this.showHeader = false;
     }
-    // 401 打开登录弹窗
-    window.bus.$on('show-login-modal', (loginData) => {
-      this.loginData = loginData;
-    });
-    window.bus.$on('close-login-modal', () => {
-      this.loginData = null;
-      setTimeout(() => {
-        window.location.reload();
-      }, 0);
-    });
   },
 };
 </script>
