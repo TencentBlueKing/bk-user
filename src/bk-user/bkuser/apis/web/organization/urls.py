@@ -67,6 +67,13 @@ urlpatterns = [
         views.TenantUserListCreateApi.as_view(),
         name="organization.tenant_user.list_create",
     ),
+    # 获取 / 更新 / 删除租户用户
+    path(
+        "tenants/users/<str:id>/",
+        views.TenantUserRetrieveUpdateDestroyApi.as_view(),
+        name="organization.tenant_user.retrieve_update_destroy",
+    ),
+    # 重置租户用户密码
     path(
         "tenants/users/<str:id>/password/",
         views.TenantUserPasswordResetApi.as_view(),
@@ -77,5 +84,11 @@ urlpatterns = [
         "tenants/users/<str:id>/organization-paths/",
         views.TenantUserOrganizationPathListApi.as_view(),
         name="organization.tenant_user.organization_path.list",
+    ),
+    # 修改租户用户状态
+    path(
+        "tenants/users/<str:id>/status/",
+        views.TenantUserStatusUpdateApi.as_view(),
+        name="organization.tenant_user.status.update",
     ),
 ]

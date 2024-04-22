@@ -16,7 +16,12 @@ from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceUser
+from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
+    DataSourceDepartmentUserRelation,
+    DataSourceUser,
+    DataSourceUserLeaderRelation,
+)
 from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import (
@@ -89,13 +94,13 @@ class TenantUserListOutputSLZ(serializers.Serializer):
 
 
 def _validate_duplicate_data_source_username(
-    data_source_id: str, username: str, data_source_user_id: int | None = None
+    data_source_id: str, username: str, excluded_data_source_user_id: int | None = None
 ) -> str:
     """校验数据源用户名是否重复"""
     queryset = DataSourceUser.objects.filter(data_source_id=data_source_id, username=username)
     # 过滤掉自身
-    if data_source_user_id:
-        queryset = queryset.exclude(id=data_source_user_id)
+    if excluded_data_source_user_id:
+        queryset = queryset.exclude(id=excluded_data_source_user_id)
 
     if queryset.exists():
         raise ValidationError(_("用户名 {} 已存在").format(username))
@@ -171,6 +176,49 @@ class TenantUserCreateOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
 
 
+class TenantUserRetrieveOutputSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="用户 ID")
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
+    username = serializers.CharField(help_text="用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="姓名", source="data_source_user.full_name")
+    email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
+    phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
+    phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
+    extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
+    logo = serializers.SerializerMethodField(help_text="用户 Logo")
+    department_ids = serializers.SerializerMethodField(help_text="数据源部门 ID 列表")
+    leader_ids = serializers.SerializerMethodField(help_text="上级（数据源用户）ID 列表")
+
+    def get_logo(self, obj: TenantUser) -> str:
+        return obj.data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.IntegerField()))
+    def get_department_ids(self, obj: TenantUser) -> List[int]:
+        relations = DataSourceDepartmentUserRelation.objects.filter(user_id=obj.id)
+        return [rel.department_id for rel in relations]
+
+    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.IntegerField()))
+    def get_leader_ids(self, obj: TenantUser) -> List[int]:
+        relations = DataSourceUserLeaderRelation.objects.filter(user_id=obj.id)
+        return [rel.leader_id for rel in relations]
+
+    class Meta:
+        ref_name = "organization.TenantUserRetrieveOutputSLZ"
+
+
+class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
+    def validate_username(self, username: str) -> str:
+        return _validate_duplicate_data_source_username(
+            self.context["data_source_id"], username, self.context["data_source_user_id"]
+        )
+
+    def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
+        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        return validate_user_extras(
+            extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]
+        )
+
+
 class TenantUserPasswordResetInputSLZ(serializers.Serializer):
     password = serializers.CharField(help_text="用户重置的新密码")
 
@@ -184,3 +232,7 @@ class TenantUserPasswordResetInputSLZ(serializers.Serializer):
 
 class TenantUserOrganizationPathOutputSLZ(serializers.Serializer):
     organization_paths = serializers.ListField(help_text="数据源用户所属部门路径列表", child=serializers.CharField())
+
+
+class TenantUserStatusUpdateOutputSLZ(serializers.Serializer):
+    status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())

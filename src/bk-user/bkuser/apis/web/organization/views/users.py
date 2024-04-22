@@ -32,8 +32,11 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserListOutputSLZ,
     TenantUserOrganizationPathOutputSLZ,
     TenantUserPasswordResetInputSLZ,
+    TenantUserRetrieveOutputSLZ,
     TenantUserSearchInputSLZ,
     TenantUserSearchOutputSLZ,
+    TenantUserStatusUpdateOutputSLZ,
+    TenantUserUpdateInputSLZ,
 )
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
@@ -47,6 +50,7 @@ from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.tenant.constants import TenantUserStatus
 from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
@@ -303,6 +307,131 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
         return Response(TenantUserCreateOutputSLZ(tenant_user).data, status=status.HTTP_201_CREATED)
 
 
+class TenantUserRetrieveUpdateDestroyApi(
+    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView
+):
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+    serializer_class = TenantUserRetrieveOutputSLZ
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+        ).select_related("data_source", "data_source_user")
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="获取租户用户详情",
+        responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
+    )
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def _update_user_department_relations(self, user: DataSourceUser, dept_ids: List[int]) -> None:
+        exists_dept_ids = DataSourceDepartmentUserRelation.objects.filter(
+            user=user,
+        ).values_list("department_id", flat=True)
+
+        waiting_create_dept_ids = set(dept_ids) - set(exists_dept_ids)
+        waiting_delete_dept_ids = set(exists_dept_ids) - set(dept_ids)
+
+        if waiting_create_dept_ids:
+            relations = [
+                DataSourceDepartmentUserRelation(department_id=dept_id, user=user, data_source=user.data_source)
+                for dept_id in waiting_create_dept_ids
+            ]
+            DataSourceDepartmentUserRelation.objects.bulk_create(relations)
+
+        if waiting_delete_dept_ids:
+            DataSourceDepartmentUserRelation.objects.filter(
+                user=user, department_id__in=waiting_delete_dept_ids
+            ).delete()
+
+    def _update_user_leader_relations(self, user: DataSourceUser, leader_ids: List[int]) -> None:
+        exists_leader_ids = DataSourceUserLeaderRelation.objects.filter(user=user).values_list("leader_id", flat=True)
+
+        waiting_create_leader_ids = set(leader_ids) - set(exists_leader_ids)
+        waiting_delete_leader_ids = set(exists_leader_ids) - set(leader_ids)
+
+        if waiting_create_leader_ids:
+            relations = [
+                DataSourceUserLeaderRelation(user=user, leader_id=leader_id, data_source=user.data_source)
+                for leader_id in waiting_create_leader_ids
+            ]
+            DataSourceUserLeaderRelation.objects.bulk_create(relations)
+
+        if waiting_delete_leader_ids:
+            DataSourceUserLeaderRelation.objects.filter(user=user, leader_id__in=waiting_delete_leader_ids).delete()
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="更新租户用户信息",
+        request_body=TenantUserUpdateInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def put(self, request, *args, **kwargs):
+        cur_tenant_id = self.get_current_tenant_id()
+        tenant_user = self.get_object()
+        data_source = tenant_user.data_source
+        data_source_user = tenant_user.data_source_user
+
+        if not (data_source.is_local and data_source.is_real_type):
+            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("仅本地实名数据源支持更新用户信息"))
+        # 如果数据源不是当前租户的，说明该租户用户是协同产生的
+        if data_source.owner_tenant_id != cur_tenant_id:
+            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("仅可删除非协同产生的租户用户"))
+
+        slz = TenantUserUpdateInputSLZ(
+            data=request.data,
+            context={
+                "tenant_id": cur_tenant_id,
+                "data_source_id": data_source.id,
+                "data_source_user_id": data_source_user.id,
+            },
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        # 特殊逻辑：部分历史数据不允许更新用户名
+        if data_source.is_username_frozen and data["username"] != data_source_user.username:
+            raise error_codes.TENANT_USER_UPDATE_FAILED.f(_("当前用户不允许更新用户名"))
+
+        with transaction.atomic():
+            data_source_user.username = data["username"]
+            data_source_user.full_name = data["full_name"]
+            data_source_user.email = data["email"]
+            data_source_user.phone = data["phone"]
+            data_source_user.phone_country_code = data["phone_country_code"]
+            data_source_user.logo = data["logo"]
+            data_source_user.extras = data["extras"]
+            data_source_user.save()
+            # 更新 部门 - 用户，Leader - 用户 关联表信息
+            self._update_user_department_relations(data_source_user, data["department_ids"])
+            self._update_user_leader_relations(data_source_user, data["leader_ids"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        data_source = tenant_user.data_source
+
+        if not (data_source.is_local and data_source.is_real_type):
+            raise error_codes.TENANT_USER_DELETE_FAILED.f(_("仅本地实名数据源支持删除用户"))
+        # 如果数据源不是当前租户的，说明该租户用户是协同产生的
+        if data_source.owner_tenant_id != self.get_current_tenant_id():
+            raise error_codes.TENANT_USER_DELETE_FAILED.f(_("仅可删除非协同产生的租户用户"))
+
+        data_source_user = tenant_user.data_source_user
+        with transaction.atomic():
+            # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
+            # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
+            TenantUser.objects.filter(data_source_user=data_source_user).delete()
+            data_source_user.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
@@ -384,3 +513,36 @@ class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPI
             TenantUserOrganizationPathOutputSLZ({"organization_paths": organization_paths}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    """修改租户用户状态"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[TenantUser]:
+        return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["organization"],
+        operation_description="修改租户用户状态",
+        responses={status.HTTP_200_OK: TenantUserStatusUpdateOutputSLZ()},
+    )
+    def put(self, request, *args, **kwargs):
+        tenant_user = self.get_object()
+        # 正常 / 过期的租户用户都可以停用
+        if tenant_user.status in [TenantUserStatus.ENABLED, TenantUserStatus.EXPIRED]:
+            tenant_user.status = TenantUserStatus.DISABLED
+
+        elif tenant_user.status == TenantUserStatus.DISABLED:
+            # 启用的时候需要根据租户有效期判断，如果过期则转换为过期，否则转换为正常
+            if timezone.now() > tenant_user.account_expired_at:
+                tenant_user.status = TenantUserStatus.EXPIRED
+            else:
+                tenant_user.status = TenantUserStatus.ENABLED
+
+        tenant_user.updater = request.user.username
+        tenant_user.save(update_fields=["status", "updater", "updated_at"])
+        return Response(TenantUserStatusUpdateOutputSLZ(tenant_user).data, status=status.HTTP_200_OK)
