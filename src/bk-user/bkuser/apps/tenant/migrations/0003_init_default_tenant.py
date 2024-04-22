@@ -22,6 +22,7 @@ from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 
 logger = logging.getLogger(__name__)
 
@@ -46,19 +47,16 @@ def forwards_func(apps, schema_editor):
     DataSource = apps.get_model("data_source", "DataSource")
     DataSourceUser = apps.get_model("data_source", "DataSourceUser")
     LocalDataSourceIdentityInfo = apps.get_model("data_source", "LocalDataSourceIdentityInfo")
-    # FIXME (nan): 认证源需要只匹配内置管理的数据源
     Idp = apps.get_model("idp", "Idp")
 
     default_tenant = Tenant.objects.create(id="default", name="默认租户", is_default=True)
-    TenantUserValidityPeriodConfig.objects.create(
-        tenant=default_tenant,
-        **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG,
-    )
+    # 租户配置
+    TenantUserValidityPeriodConfig.objects.create(tenant=default_tenant, **DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG)
 
-    # FIXME (nan): 数据源类型修改为内置管理，依赖压缩 migration
     data_source = DataSource.objects.create(
-        plugin_id=DataSourcePluginEnum.LOCAL,
+        type=DataSourceTypeEnum.BUILTIN_MANAGEMENT,
         owner_tenant_id=default_tenant.id,
+        plugin_id=DataSourcePluginEnum.LOCAL,
         plugin_config=get_default_plugin_cfg(DataSourcePluginEnum.LOCAL).model_dump(),
     )
 
@@ -85,11 +83,12 @@ def forwards_func(apps, schema_editor):
     TenantManager.objects.create(tenant=default_tenant, tenant_user=tenant_user)
 
     Idp.objects.create(
-        name="本地账密",
+        name="管理员账密登录",
         plugin_id=BuiltinIdpPluginEnum.LOCAL,
         owner_tenant_id=default_tenant.id,
         plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source.id]).model_dump(),
         data_source_match_rules=[gen_data_source_match_rule_of_local(data_source.id).model_dump()],
+        data_source_id=data_source.id,
     )
 
     logger.info(

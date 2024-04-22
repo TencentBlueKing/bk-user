@@ -139,6 +139,7 @@ class DataSource(AuditedModel):
 class DataSourceUser(TimestampedModel):
     data_source = models.ForeignKey(DataSource, on_delete=models.PROTECT, db_constraint=False)
     code = models.CharField("用户标识", max_length=128, default=generate_uuid)
+
     # ----------------------- 内置字段相关 -----------------------
     username = models.CharField("用户名", max_length=128)
     full_name = models.CharField("姓名", max_length=128)
