@@ -270,7 +270,6 @@ const pageCurrentChange = (current: number) => {
 
 <style lang="less" scoped>
 .virtual-account-wrapper {
-  height: calc(100vh - 52px);
   padding: 24px 160px;
 
   header {
