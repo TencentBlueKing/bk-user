@@ -1,6 +1,6 @@
 <template>
-  <div class="login-setting-wrapper user-scroll-y">
-    <ul class="login-setting-content">
+  <div class="login-setting-wrapper user-scroll-y" v-bkloading="{ loading: isLoading, zIndex: 9 }">
+    <ul v-if="currentDataSource?.plugin_id" class="login-setting-content">
       <li class="item-box">
         <div class="header">
           <p>{{ $t('基本登录方式') }}</p>
@@ -8,24 +8,20 @@
         <div class="login-box">
           <div
             class="login-item"
-            v-for="(item, index) in loginMethods"
+            v-for="(item, index) in idpsPlugins"
             :key="index">
-            <div
-              :class="[
-                'login-content',
-                item.status,
-              ]">
+            <div class="login-content">
               <div
-                class="name"
+                :class="['box', { 'disabled-box': item.status === 'disabled' && !item.idp_id }]"
                 v-bk-tooltips="{
-                  content: $t('暂未配置'),
-                  disabled: item.status !== 'not',
+                  content: item.text,
+                  disabled: item.status !== 'disabled' || item.idp_id,
                 }"
                 @click="handleClickActive(item)">
-                <i :class="item.logo" />
+                <img :src="item.logo" class="logo-style" />
                 <span>{{ item.name }}</span>
                 <bk-tag
-                  v-if="item.type === 'local'"
+                  v-if="item.id === 'local'"
                   class="tag-info"
                   type="stroke"
                   theme="info"
@@ -34,42 +30,7 @@
                 </bk-tag>
               </div>
               <bk-tag
-                v-if="item.status === 'enable'"
-                class="status-tag"
-                type="filled"
-                theme="success"
-              >
-                {{ $t('已启用') }}
-              </bk-tag>
-            </div>
-          </div>
-        </div>
-      </li>
-      <li class="item-box">
-        <div class="header">
-          <p>{{ $t('个人社交账号登录') }}</p>
-        </div>
-        <div class="login-box">
-          <div
-            class="login-item"
-            v-for="(item, index) in personalLoginMethods"
-            :key="index">
-            <div
-              :class="[
-                'login-content',
-                item.status,
-              ]">
-              <div
-                class="name"
-                v-bk-tooltips="{
-                  content: $t('暂未配置'),
-                  disabled: item.status !== 'not',
-                }">
-                <i :class="item.logo" />
-                <span>{{ item.name }}</span>
-              </div>
-              <bk-tag
-                v-if="item.status === 'enable'"
+                v-if="item.status === 'enabled'"
                 class="status-tag"
                 type="filled"
                 theme="success"
@@ -81,9 +42,30 @@
         </div>
       </li>
     </ul>
+    <div v-else>
+      <bk-exception
+        class="exception-wrap-item"
+        type="building"
+        :title="$t('暂未配置数据源')"
+        :description="$t('需要先配置数据源后才可进行登录配置，当前支持使用以下方式进行登录')"
+      >
+        <div class="bg-white px-[24px] py-[16px] w-[508px] text-left">
+          <p class="mb-[8px]">{{ $t('基本登录方式') }}</p>
+          <bk-tag v-for="(item, index) in idpsPlugins" :key="index" class="mr-[8px] !important">
+            <template #icon>
+              <img :src="item.logo" class="w-[16px] h-[16px]">
+            </template>
+            {{ item.name }}
+          </bk-tag>
+        </div>
+        <bk-button theme="primary" class="mt-[24px]" @click="handleDataSource">
+          {{ $t('配置数据源') }}
+        </bk-button>
+      </bk-exception>
+    </div>
     <!-- 认证源详情 -->
     <bk-sideslider
-      :width="(authDetails?.type === 'local' && detailsConfig.isEdit) ? 960 : 640"
+      :width="(authDetails?.id === 'local' && detailsConfig.isEdit) ? 960 : 640"
       :is-show="detailsConfig.show"
       :title="detailsConfig.title"
       :before-close="handleBeforeClose"
@@ -103,20 +85,22 @@
         </div>
       </template>
       <template #default>
-        <template v-if="authDetails?.type === 'local'">
+        <template v-if="authDetails?.id === 'local'">
           <Local
             v-if="detailsConfig.isEdit"
-            :current-id="authDetails?.id"
+            :current-id="authDetails?.idp_id"
             @cancel="cancelEdit"
-            @success="handleSuccess" />
-          <LocalView v-else :current-id="authDetails?.id" @updateRow="updateRow" />
+            @success="localSuccess" />
+          <LocalView v-else :current-id="authDetails?.idp_id" @updateRow="updateRow" />
         </template>
-        <template v-if="authDetails?.type === 'wecom'">
+        <template v-if="authDetails?.id === 'wecom'">
           <WeCom
             v-if="detailsConfig.isEdit"
-            :data="authDetails"
-            @cancelEdit="cancelEdit" :current-id="authDetails?.id" />
-          <WeComView v-else />
+            :data-source-id="currentDataSource?.id"
+            :current-id="authDetails?.idp_id"
+            @success="weComSuccess"
+            @cancelEdit="cancelEdit" />
+          <WeComView v-else :current-id="authDetails?.idp_id" />
         </template>
       </template>
     </bk-sideslider>
@@ -125,68 +109,70 @@
 
 <script setup lang="ts">
 import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
-import { h, inject, reactive, ref } from 'vue';
+import { h, inject, onMounted, reactive, ref } from 'vue';
 
 import Local from './auth-config/Local.vue';
 import LocalView from './auth-config/LocalView.vue';
 import WeCom from './auth-config/WeCom.vue';
 import WeComView from './auth-config/WeComView.vue';
 
+import {
+  getDataSourceList,
+  getIdps,
+  getIdpsPlugins,
+} from '@/http';
 import { t } from '@/language/index';
+import router from '@/router';
 import { useMainViewStore } from '@/store';
+import { copy } from '@/utils';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 const editLeaveBefore = inject('editLeaveBefore');
 
-const loginMethods = ref([
-  {
-    id: '1',
-    logo: 'bk-sq-icon icon-personal-user',
-    name: '账密登录1',
-    status: 'enable',
-    type: 'local',
-  },
-  {
-    id: '',
-    logo: 'bk-sq-icon icon-personal-user',
-    name: '账密登录2',
-    status: 'not',
-    type: 'local',
-  },
-  {
-    id: 'bd103f62c51e4683bd240271ab9e08cf',
-    logo: 'user-icon icon-qiyeweixin-2',
-    name: '企业微信登录1',
-    status: 'enable',
-    type: 'wecom',
-  },
-  {
-    id: '',
-    logo: 'user-icon icon-qiyeweixin-2',
-    name: '企业微信登录2',
-    status: 'not',
-    type: 'wecom',
-  },
-]);
+const isLoading = ref(false);
+const idpsPlugins = ref([]);
+const currentDataSource = ref({});
+onMounted(() => {
+  getRealDataSource();
+  initIdpsPlugins();
+});
 
-const personalLoginMethods = ref([
-  {
-    logo: 'user-icon icon-weixin',
-    name: '微信扫码登录',
-    status: 'enable',
-  },
-  {
-    logo: 'user-icon icon-qq',
-    name: 'QQ扫码登录',
-    status: 'enable',
-  },
-  {
-    logo: 'user-icon icon-google',
-    name: '谷歌账号登录',
-    status: 'not',
-  },
-]);
+// 获取当前实名数据源
+const getRealDataSource = () => {
+  getDataSourceList({ type: 'real' }).then((res) => {
+    currentDataSource.value = res.data[0] || {};
+  });
+};
+
+const initIdpsPlugins = async () => {
+  try {
+    isLoading.value = true;
+    const [pluginsRes, idpsRes] = await Promise.all([
+      getIdpsPlugins(),
+      getIdps(''),
+    ]);
+
+    idpsPlugins.value = pluginsRes.data;
+
+    idpsPlugins.value.forEach((plugin) => {
+      const idp = idpsRes.data.find(idp => idp.plugin.id === plugin.id);
+      if (idp) {
+        plugin.idp_id = idp.id;
+        plugin.status = idp.status;
+      } else {
+        plugin.status = 'disabled';
+        plugin.text = currentDataSource.value.plugin_id !== 'local' && plugin.id === 'local'
+          ? t('仅对本地数据源启用')
+          : t('暂未配置');
+      }
+    });
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const detailsConfig = reactive({
   show: false,
@@ -197,11 +183,24 @@ const detailsConfig = reactive({
 const authDetails = ref({});
 
 const handleClickActive = (item) => {
+  if (!currentDataSource.value?.plugin_id) {
+    InfoBox({
+      title: t('暂未配置数据源'),
+      confirmText: t('去配置'),
+      onConfirm: () => {
+        router.push({ name: 'dataSource' });
+      },
+    });
+    return;
+  };
+  if (!item.idp_id) {
+    detailsConfig.isEdit = true;
+    detailsConfig.title = `${item.name}${t('登录配置')}`;
+  } else {
+    detailsConfig.title = `${item.name}${t('登录详情')}`;
+  }
   authDetails.value = item;
   detailsConfig.show = true;
-  if (item.status === 'not') {
-    detailsConfig.isEdit = true;
-  }
 };
 
 const currentRow = ref({});
@@ -214,10 +213,11 @@ const handleEditDetails = () => {
 };
 
 const cancelEdit = () => {
-  if (!authDetails.value.id) {
+  if (!authDetails.value.idp_id) {
     detailsConfig.show = false;
   }
   detailsConfig.isEdit = false;
+  window.changeInput = false;
 };
 
 const handleBeforeClose = async () => {
@@ -235,7 +235,8 @@ const handleBeforeClose = async () => {
   }
 };
 
-const handleSuccess = () => {
+// 本地认证源配置成功
+const localSuccess = () => {
   window.changeInput = false;
   detailsConfig.show = false;
   InfoBox({
@@ -258,7 +259,75 @@ const handleSuccess = () => {
         },
       }, t('账号重置需要一定时间，账号生效以最终邮件通知为准')),
     ]),
+    dialogType: 'confirm',
+    footerAlign: 'center',
+    closeIcon: false,
+    quickClose: false,
+    onConfirm: () => {
+      initIdpsPlugins();
+    },
   });
+};
+
+// 企业微信认证源配置成功
+const weComSuccess = (url: string) => {
+  window.changeInput = false;
+  detailsConfig.show = false;
+  if (url) {
+    InfoBox({
+      title: t('配置成功'),
+      subTitle: h('div', {
+        style: {
+          display: url ? 'block' : 'none',
+          textAlign: 'left',
+        },
+      }, [
+        h('p', {
+          style: {
+            marginBottom: '12px',
+          },
+        }, t('请将一下回调地址填写到企业微信配置内：')),
+        h('div', {
+          style: {
+            background: '#F5F7FA',
+            padding: '8px 12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          },
+        }, [
+          h('p', {
+            style: {
+              width: '230px',
+            },
+          }, url),
+          h('i', {
+            class: 'user-icon icon-copy',
+            style: {
+              color: '#3A84FF',
+              fontSize: '14px',
+              cursor: 'pointer',
+            },
+            onClick: () => copy(url),
+          }),
+        ]),
+      ]),
+      dialogType: 'confirm',
+      confirmText: t('确定'),
+      infoType: 'success',
+      quickClose: false,
+      closeIcon: false,
+      onConfirm() {
+        initIdpsPlugins();
+      },
+    });
+  } else {
+    initIdpsPlugins();
+  }
+};
+
+const handleDataSource = () => {
+  router.push({ name: 'dataSource' });
 };
 </script>
 
@@ -309,14 +378,45 @@ const handleSuccess = () => {
               background: #E1ECFF;
             }
 
-            i {
-              font-size: 24px;
+            .box {
+              display: flex;
+              align-items: center;
+
+              .logo-style {
+                width: 24px;
+                height: 24px;
+                margin-left: 24px;
+              }
+
+              span {
+                margin: 0 6px 0 12px;
+                font-size: 14px;
+                color: #313238;
+              }
+
+              .tag-info {
+                background: #F0F5FF;
+
+                :deep(.bk-tag-text) {
+                  background: #F0F5FF;
+                }
+              }
             }
 
-            span {
-              margin-left: 8px;
-              font-size: 14px;
-              color: #313238;
+            .disabled-box {
+              span {
+                color: #C4C6CC !important;
+              }
+
+              .tag-info {
+                background: #FAFBFD;
+                border: 1px solid #DCDEE5;
+
+                :deep(.bk-tag-text) {
+                  color: #C4C6CC;
+                  background: #FAFBFD;
+                }
+              }
             }
 
             .status-tag {
@@ -324,24 +424,6 @@ const handleSuccess = () => {
               top: -2px;
               right: -6px;
               background: #2DCB9D;
-            }
-
-            .tag-info {
-              background: #F0F5FF;
-
-              :deep(.bk-tag-text) {
-                background: #F0F5FF;
-              }
-            }
-          }
-
-          .not {
-            &:hover {
-              background: #F5F7FA;
-            }
-
-            i, span {
-              color: #C4C6CC;
             }
           }
         }

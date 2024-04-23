@@ -3,6 +3,7 @@
  */
 export interface NewIdpsParams {
   name: string,
+  status: string,
   plugin_id: string,
   plugin_config: {},
   data_source_match_rules?: {
@@ -28,6 +29,7 @@ export interface PatchIdpsParams {
 export interface PutIdpsParams {
   id: string,
   name: string,
+  status: string,
   plugin_config: {},
   data_source_match_rules?: {
     data_source_id: number,
@@ -37,3 +39,19 @@ export interface PutIdpsParams {
     }[],
   }[],
 }
+
+/**
+ * 新建本地认证源参数
+ */
+export interface NewLocalIdpsParams {
+  id?: string,
+  name: string,
+  status: string,
+  plugin_config: {
+    enable_password: boolean,
+    password_rule?: object,
+    password_initial?: object,
+    password_expire?: object,
+    login_limit?: object,
+  },
+};
