@@ -68,16 +68,21 @@ class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
+    pagination_class = None
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
     serializer_class = OptionalTenantUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        # FIXME (su) 和 search api 一样，需要限制 limit = 20，不分页
         slz = OptionalTenantUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
+        cur_tenant_id = self.get_current_tenant_id()
+        # 只能是本租户数据源同步过来的用户，协同所得的不可选
         queryset = TenantUser.objects.filter(
-            data_source__owner_tenant_id=self.get_current_tenant_id(),
+            tenant_id=cur_tenant_id,
+            data_source__owner_tenant_id=cur_tenant_id,
         ).select_related("data_source_user")
         if kw := params.get("keyword"):
             queryset = queryset.filter(
@@ -87,7 +92,7 @@ class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         if excluded_user_id := params.get("excluded_user_id"):
             queryset = queryset.exclude(id=excluded_user_id)
 
-        return queryset.order_by("data_source_user__username")
+        return queryset[: self.search_limit]
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

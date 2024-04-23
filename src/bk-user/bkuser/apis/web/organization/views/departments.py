@@ -270,24 +270,7 @@ class TenantDepartmentUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
-    """搜索租户部门"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    pagination_class = None
-    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
-    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
-
-    def get_queryset(self) -> QuerySet[TenantDepartment]:
-        slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        keyword = slz.validated_data["keyword"]
-
-        return TenantDepartment.objects.filter(
-            tenant_id=self.get_current_tenant_id(), data_source_department__name__icontains=keyword
-        ).select_related("data_source", "data_source_department")[: self.search_limit]
-
+class TenantDeptOrgPathMapMixin:
     def _get_dept_organization_path_map(self, tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
         """获取租户部门的组织路径信息"""
         data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
@@ -308,6 +291,25 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             for dept in tenant_depts
         }
 
+
+class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+    """搜索租户部门"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
+
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        keyword = slz.validated_data["keyword"]
+
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(), data_source_department__name__icontains=keyword
+        ).select_related("data_source", "data_source_department")[: self.search_limit]
+
     @swagger_auto_schema(
         tags=["organization.department"],
         operation_description="搜索租户部门",
@@ -324,15 +326,16 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
     """可选租户部门列表（下拉框数据用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = OptionalTenantDepartmentListOutputSLZ
+    pagination_class = None
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
 
     def get_queryset(self) -> QuerySet[TenantDepartment]:
-        # FIXME (su) 和 search api 一样，需要限制 limit = 20, 不分页，然后还需要提供组织路径
         slz = OptionalTenantDepartmentListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
@@ -343,7 +346,7 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIVi
         if kw := params.get("keyword"):
             queryset = queryset.filter(data_source_department__name__icontains=kw)
 
-        return queryset.order_by("id")
+        return queryset[: self.search_limit]
 
     @swagger_auto_schema(
         tags=["organization.department"],
@@ -352,4 +355,7 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIVi
         responses={status.HTTP_200_OK: OptionalTenantDepartmentListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        tenant_depts = self.get_queryset()
+        context = {"org_path_map": self._get_dept_organization_path_map(tenant_depts)}
+        resp_data = OptionalTenantDepartmentListOutputSLZ(tenant_depts, many=True, context=context).data
+        return Response(resp_data, status=status.HTTP_200_OK)
