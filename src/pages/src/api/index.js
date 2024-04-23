@@ -203,12 +203,13 @@ function handleReject(error, config) {
           return;
         }
 
-        const loginUrl = `${url}?c_url=${encodeURIComponent(successUrl)}${extraQuery}`;
         // 跳转到登录页
         if (error.config.url === 'api/v1/web/profiles/me/') {
-          return window.location.href = loginUrl;
+          const loginUrl = `${url}?c_url=${encodeURIComponent(window.location)}${extraQuery}`;
+          return window.location.assign(loginUrl);
         }
         // 登录弹窗
+        const loginUrl = `${url}?c_url=${encodeURIComponent(successUrl)}${extraQuery}`;
         showLoginModal({
           loginUrl,
           width,
