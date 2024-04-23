@@ -40,6 +40,6 @@ if settings.IS_PAGES_INDEPENDENT_DEPLOYMENT:
 
 # 其余path交由前端处理
 urlpatterns += [
-    url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index"),
     url(r"^login_success/", WebPageViewSet.as_view({"get": "login_success"}), name="login_success"),
+    url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index"),
 ]
