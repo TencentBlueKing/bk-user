@@ -47,3 +47,9 @@ class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
             return None
 
         return TenantDataSourceSLZ(data_source).data
+
+
+class TenantRequiredUserFieldOutputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="字段名称")
+    display_name = serializers.CharField(help_text="字段展示名")
+    tips = serializers.CharField(help_text="提示信息")

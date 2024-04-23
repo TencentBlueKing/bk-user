@@ -129,7 +129,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         }
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="获取指定租户在当前租户的部门列表",
         query_serializer=TenantDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
@@ -148,7 +148,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         return Response(TenantDepartmentListOutputSLZ(tenant_dept_infos, many=True).data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="创建租户部门",
         query_serializer=TenantDepartmentCreateInputSLZ(),
         responses={status.HTTP_201_CREATED: TenantDepartmentCreateOutputSLZ()},
@@ -217,7 +217,7 @@ class TenantDepartmentUpdateDestroyApi(
         return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="更新租户部门",
         query_serializer=TenantDepartmentUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
@@ -238,7 +238,7 @@ class TenantDepartmentUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="删除租户部门",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
@@ -309,7 +309,7 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         }
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="搜索租户部门",
         query_serializer=TenantDepartmentSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentSearchOutputSLZ(many=True)},
@@ -332,6 +332,7 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIVi
     serializer_class = OptionalTenantDepartmentListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantDepartment]:
+        # FIXME (su) 和 search api 一样，需要限制 limit = 20, 不分页，然后还需要提供组织路径
         slz = OptionalTenantDepartmentListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
@@ -345,7 +346,7 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, generics.ListAPIVi
         return queryset.order_by("id")
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="可选部门列表",
         query_serializer=OptionalTenantDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: OptionalTenantDepartmentListOutputSLZ(many=True)},

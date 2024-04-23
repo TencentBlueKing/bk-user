@@ -26,6 +26,10 @@ from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
+    TenantUserBatchCopyInputSLZ,
+    TenantUserBatchCreateInputSLZ,
+    TenantUserBatchDeleteInputSLZ,
+    TenantUserBatchMoveInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
@@ -52,7 +56,14 @@ from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import TenantUserStatus
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
+from bkuser.apps.tenant.models import (
+    Tenant,
+    TenantDepartment,
+    TenantUser,
+    TenantUserCustomField,
+    TenantUserValidityPeriodConfig,
+    UserBuiltinField,
+)
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -66,6 +77,7 @@ class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
     serializer_class = OptionalTenantUserListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantUser]:
+        # FIXME (su) 和 search api 一样，需要限制 limit = 20，不分页
         slz = OptionalTenantUserListInputSLZ(data=self.request.query_params)
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
@@ -146,7 +158,7 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         }
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="搜索租户用户",
         query_serializer=TenantUserSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserSearchOutputSLZ(many=True)},
@@ -233,7 +245,7 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
         }
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="租户用户列表",
         query_serializer=TenantUserListInputSLZ(),
         responses={status.HTTP_200_OK: TenantUserListOutputSLZ(many=True)},
@@ -244,7 +256,7 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
         return self.get_paginated_response(TenantUserListOutputSLZ(tenant_users, many=True, context=context).data)
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="创建租户用户",
         request_body=TenantUserCreateInputSLZ(),
         responses={status.HTTP_201_CREATED: TenantUserCreateOutputSLZ()},
@@ -257,7 +269,7 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
         # 必须存在实名用户数据源才可以创建租户部门
         data_source = DataSource.objects.filter(owner_tenant_id=cur_tenant_id, type=DataSourceTypeEnum.REAL).first()
         if not data_source:
-            raise error_codes.TENANT_USER_CREATE_FAILED.f(_("租户数据源不存在"))
+            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在实名用户数据源"))
         if not data_source.is_local:
             raise error_codes.TENANT_USER_CREATE_FAILED.f(_("仅本地数据源支持创建用户"))
 
@@ -341,7 +353,7 @@ class TenantUserRetrieveUpdateDestroyApi(
         ).select_related("data_source", "data_source_user")
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="获取租户用户详情",
         responses={status.HTTP_200_OK: TenantUserRetrieveOutputSLZ()},
     )
@@ -385,7 +397,7 @@ class TenantUserRetrieveUpdateDestroyApi(
             DataSourceUserLeaderRelation.objects.filter(user=user, leader_id__in=waiting_delete_leader_ids).delete()
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="更新租户用户信息",
         request_body=TenantUserUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
@@ -456,6 +468,9 @@ class TenantUserRetrieveUpdateDestroyApi(
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
             # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
             TenantUser.objects.filter(data_source_user=data_source_user).delete()
+            DataSourceDepartmentUserRelation.objects.filter(user=data_source_user).delete()
+            DataSourceUserLeaderRelation.objects.filter(user=data_source_user).delete()
+            DataSourceUserLeaderRelation.objects.filter(leader=data_source_user).delete()
             data_source_user.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -470,7 +485,7 @@ class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixi
         return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="重置租户用户密码",
         request_body=TenantUserPasswordResetInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
@@ -519,7 +534,7 @@ class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPI
         return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="租户用户所属部门的部门路径",
         responses={status.HTTP_200_OK: TenantUserOrganizationPathOutputSLZ()},
     )
@@ -555,7 +570,7 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.user"],
         operation_description="修改租户用户状态",
         responses={status.HTTP_200_OK: TenantUserStatusUpdateOutputSLZ()},
     )
@@ -575,3 +590,211 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
         tenant_user.updater = request.user.username
         tenant_user.save(update_fields=["status", "updater", "updated_at"])
         return Response(TenantUserStatusUpdateOutputSLZ(tenant_user).data, status=status.HTTP_200_OK)
+
+
+class TenantUserBatchCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    """批量创建租户用户"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="租户用户快速录入",
+        request_body=TenantUserBatchCreateInputSLZ(),
+        responses={status.HTTP_201_CREATED: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        cur_tenant_id = self.get_current_tenant_id()
+
+        slz = TenantUserBatchCreateInputSLZ(
+            data=request.data,
+            context={
+                # 默认的内置字段，虽然邮箱 & 手机在 DB 中不是必填，但是在
+                # 快速录入场景中要求必填，手机国际区号与手机号合并，不需要单独提供
+                "required_builtin_fields": UserBuiltinField.objects.exclude(name="phone_country_code"),
+                "required_custom_fields": TenantUserCustomField.objects.filter(tenant_id=cur_tenant_id, required=True),
+            },
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        tenant_dept = (
+            TenantDepartment.objects.select_related("data_source")
+            .filter(id=data["department_id"], tenant_id=cur_tenant_id)
+            .first()
+        )
+        if not tenant_dept:
+            raise error_codes.TENANT_USER_CREATE_FAILED.f(_("指定的租户部门不存在"))
+
+        tenant_id = tenant_dept.tenant_id
+        data_source = tenant_dept.data_source
+        data_source_dept = tenant_dept.data_source_department
+
+        with transaction.atomic():
+            # 新建数据源用户
+            data_source_users = [
+                DataSourceUser(
+                    data_source=data_source,
+                    code=info["username"],
+                    username=info["username"],
+                    full_name=info["full_name"],
+                    email=info["email"],
+                    phone=info["phone"],
+                    phone_country_code=info["phone_country_code"],
+                    extras=info["extras"],
+                )
+                for info in data["user_infos"]
+            ]
+            DataSourceUser.objects.bulk_create(data_source_users)
+
+            # 重新从 DB 查询以获取带 ID 的数据源用户
+            data_source_users = DataSourceUser.objects.filter(code__in=[u["username"] for u in data["user_infos"]])
+
+            # 绑定数据源部门 - 用户
+            relations = [
+                DataSourceDepartmentUserRelation(user=user, department=data_source_dept, data_source=data_source)
+                for user in data_source_users
+            ]
+            DataSourceDepartmentUserRelation.objects.bulk_create(relations)
+
+            # 新建租户用户
+            # FIXME (su) 支持协同后，要对协同的租户也立即创建租户用户（目前只是对数据源所属租户做创建）
+            tenant_users = [
+                TenantUser(
+                    id=gen_tenant_user_id(tenant_id, data_source, user),
+                    tenant_id=tenant_dept.tenant_id,
+                    data_source=data_source,
+                    data_source_user=user,
+                )
+                for user in data_source_users
+            ]
+            TenantUser.objects.bulk_create(tenant_users)
+
+        return Response(status=status.HTTP_201_CREATED)
+
+
+class TenantUserBatchCopyApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    """批量添加 / 拉取租户用户"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="租户用户 - 从其他组织拉取 / 添加到其他组织",
+        request_body=TenantUserBatchCopyInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        cur_tenant_id = self.get_current_tenant_id()
+
+        data_source = DataSource.objects.filter(owner_tenant_id=cur_tenant_id, type=DataSourceTypeEnum.REAL).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在实名用户的本地数据源"))
+        if not data_source.is_local:
+            raise error_codes.TENANT_USER_CREATE_FAILED.f(_("仅本地数据源支持操作用户"))
+
+        slz = TenantUserBatchCopyInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        data_source_dept_ids = TenantDepartment.objects.filter(
+            tenant_id=cur_tenant_id,
+            id__in=data["department_ids"],
+        ).values_list("data_source_department_id", flat=True)
+
+        data_source_user_ids = TenantUser.objects.filter(
+            tenant_id=cur_tenant_id,
+            id__in=data["user_ids"],
+        ).values_list("data_source_user_id", flat=True)
+
+        # 复制操作：为数据源部门 & 用户添加关联边，但是不会影响存量的关联边
+        relations = [
+            DataSourceDepartmentUserRelation(user_id=user_id, department_id=dept_id, data_source=data_source)
+            for dept_id, user_id in zip(data_source_dept_ids, data_source_user_ids)
+        ]
+        # 由于复制操作不会影响存量的关联边，所以需要忽略冲突，避免出现用户复选的情况
+        DataSourceDepartmentUserRelation.objects.bulk_create(relations, ignore_conflicts=True)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserBatchMoveApi(CurrentUserTenantMixin, generics.CreateAPIView):
+    """批量移动租户用户"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="租户用户 - 移动到其他组织",
+        request_body=TenantUserBatchMoveInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def post(self, request, *args, **kwargs):
+        cur_tenant_id = self.get_current_tenant_id()
+
+        data_source = DataSource.objects.filter(owner_tenant_id=cur_tenant_id, type=DataSourceTypeEnum.REAL).first()
+        if not data_source:
+            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在实名用户数据源"))
+        if not data_source.is_local:
+            raise error_codes.TENANT_USER_CREATE_FAILED.f(_("仅本地数据源支持操作用户"))
+
+        slz = TenantUserBatchMoveInputSLZ(data=request.data, context={"tenant_id": self.get_current_tenant_id()})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        data_source_dept_ids = TenantDepartment.objects.filter(
+            tenant_id=cur_tenant_id,
+            id__in=data["department_ids"],
+        ).values_list("data_source_department_id", flat=True)
+
+        data_source_user_ids = TenantUser.objects.filter(
+            tenant_id=cur_tenant_id,
+            id__in=data["user_ids"],
+        ).values_list("data_source_user_id", flat=True)
+
+        # 移动操作：为数据源部门 & 用户添加关联边，但是会删除这批用户所有的存量关联边
+        with transaction.atomic():
+            # 先删除
+            DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids).delete()
+            # 再添加
+            relations = [
+                DataSourceDepartmentUserRelation(user_id=user_id, department_id=dept_id, data_source=data_source)
+                for dept_id, user_id in zip(data_source_dept_ids, data_source_user_ids)
+            ]
+            DataSourceDepartmentUserRelation.objects.bulk_create(relations)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserBatchDeleteApi(CurrentUserTenantMixin, generics.DestroyAPIView):
+    """批量删除租户用户"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="租户用户 - 批量删除",
+        request_body=TenantUserBatchDeleteInputSLZ(),
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        cur_tenant_id = self.get_current_tenant_id()
+
+        slz = TenantUserBatchDeleteInputSLZ(data=request.query_params, context={"tenant_id": cur_tenant_id})
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        data_source_user_ids = TenantUser.objects.filter(
+            id__in=params["user_ids"], tenant_id=cur_tenant_id
+        ).values_list("data_source_user", flat=True)
+
+        with transaction.atomic():
+            # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
+            # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
+            TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids).delete()
+            DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids).delete()
+            DataSourceUserLeaderRelation.objects.filter(user_id__in=data_source_user_ids).delete()
+            DataSourceUserLeaderRelation.objects.filter(leader_id__in=data_source_user_ids).delete()
+            DataSourceUser.objects.filter(id__in=data_source_user_ids).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

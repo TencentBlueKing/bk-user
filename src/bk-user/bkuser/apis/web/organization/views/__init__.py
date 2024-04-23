@@ -15,9 +15,17 @@ from .departments import (
     TenantDepartmentSearchApi,
     TenantDepartmentUpdateDestroyApi,
 )
-from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi
+from .tenants import (
+    CollaborativeTenantListApi,
+    CurrentTenantRetrieveApi,
+    TenantRequiredUserFieldListApi,
+)
 from .users import (
     OptionalTenantUserListApi,
+    TenantUserBatchCopyApi,
+    TenantUserBatchCreateApi,
+    TenantUserBatchDeleteApi,
+    TenantUserBatchMoveApi,
     TenantUserListCreateApi,
     TenantUserOrganizationPathListApi,
     TenantUserPasswordResetApi,
@@ -30,6 +38,7 @@ __all__ = [
     # 租户
     "CurrentTenantRetrieveApi",
     "CollaborativeTenantListApi",
+    "TenantRequiredUserFieldListApi",
     # 租户部门
     "TenantDepartmentListCreateApi",
     "TenantDepartmentUpdateDestroyApi",
@@ -43,4 +52,8 @@ __all__ = [
     "TenantUserPasswordResetApi",
     "TenantUserOrganizationPathListApi",
     "TenantUserStatusUpdateApi",
+    "TenantUserBatchCreateApi",
+    "TenantUserBatchCopyApi",
+    "TenantUserBatchMoveApi",
+    "TenantUserBatchDeleteApi",
 ]

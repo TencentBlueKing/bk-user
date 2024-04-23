@@ -25,6 +25,12 @@ urlpatterns = [
         views.CollaborativeTenantListApi.as_view(),
         name="organization.collaborative_tenant.list",
     ),
+    # 租户用户 - 快速录入必填字段
+    path(
+        "tenants/required-user-fields/",
+        views.TenantRequiredUserFieldListApi.as_view(),
+        name="organization.tenant.required_user_field.list",
+    ),
     # 租户部门列表
     path(
         "tenants/<str:id>/departments/",
@@ -90,5 +96,29 @@ urlpatterns = [
         "tenants/users/<str:id>/status/",
         views.TenantUserStatusUpdateApi.as_view(),
         name="organization.tenant_user.status.update",
+    ),
+    # 租户用户快速录入
+    path(
+        "tenants/users/operations/batch_create/",
+        views.TenantUserBatchCreateApi.as_view(),
+        name="organization.tenant_user.batch_create",
+    ),
+    # 租户用户 - 从其他组织拉取 / 添加到其他组织
+    path(
+        "tenants/users/operations/batch_copy/",
+        views.TenantUserBatchCopyApi.as_view(),
+        name="organization.tenant_user.batch_copy",
+    ),
+    # 租户用户 - 移动到其他组织
+    path(
+        "tenants/users/operations/batch_move/",
+        views.TenantUserBatchMoveApi.as_view(),
+        name="organization.tenant_user.batch_move",
+    ),
+    # 租户用户 - 批量删除
+    path(
+        "tenants/users/operations/batch_delete/",
+        views.TenantUserBatchDeleteApi.as_view(),
+        name="organization.tenant_user.batch_delete",
     ),
 ]

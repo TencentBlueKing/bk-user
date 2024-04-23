@@ -20,10 +20,18 @@ from .departments import (
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
-from .tenants import TenantListOutputSLZ, TenantRetrieveOutputSLZ
+from .tenants import (
+    TenantListOutputSLZ,
+    TenantRequiredUserFieldOutputSLZ,
+    TenantRetrieveOutputSLZ,
+)
 from .users import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
+    TenantUserBatchCopyInputSLZ,
+    TenantUserBatchCreateInputSLZ,
+    TenantUserBatchDeleteInputSLZ,
+    TenantUserBatchMoveInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
@@ -41,6 +49,7 @@ __all__ = [
     # 租户
     "TenantListOutputSLZ",
     "TenantRetrieveOutputSLZ",
+    "TenantRequiredUserFieldOutputSLZ",
     # 租户部门
     "TenantDepartmentListInputSLZ",
     "TenantDepartmentListOutputSLZ",
@@ -58,11 +67,15 @@ __all__ = [
     "TenantUserSearchOutputSLZ",
     "TenantUserListInputSLZ",
     "TenantUserListOutputSLZ",
-    "TenantUserCreateOutputSLZ",
     "TenantUserCreateInputSLZ",
+    "TenantUserCreateOutputSLZ",
     "TenantUserRetrieveOutputSLZ",
     "TenantUserUpdateInputSLZ",
     "TenantUserPasswordResetInputSLZ",
     "TenantUserOrganizationPathOutputSLZ",
     "TenantUserStatusUpdateOutputSLZ",
+    "TenantUserBatchCreateInputSLZ",
+    "TenantUserBatchCopyInputSLZ",
+    "TenantUserBatchMoveInputSLZ",
+    "TenantUserBatchDeleteInputSLZ",
 ]

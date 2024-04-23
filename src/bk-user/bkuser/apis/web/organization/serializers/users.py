@@ -29,6 +29,7 @@ from bkuser.biz.validators import (
     validate_user_extras,
     validate_user_new_password,
 )
+from bkuser.common.serializers import StringArrayField
 from bkuser.common.validators import validate_phone_with_country_code
 
 
@@ -215,7 +216,10 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         )
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
-        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+        # 更新模式下，一些自定义字段是不允许修改的（前端也需要禁用）
+        custom_fields = TenantUserCustomField.objects.filter(
+            tenant_id=self.context["tenant_id"], manager_editable=True
+        )
         return validate_user_extras(
             extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]
         )
@@ -244,3 +248,95 @@ class TenantUserOrganizationPathOutputSLZ(serializers.Serializer):
 
 class TenantUserStatusUpdateOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
+
+
+class TenantUserBatchCreateInputSLZ(serializers.Serializer):
+    user_infos = serializers.ListField(
+        help_text="用户信息列表",
+        child=serializers.CharField(help_text="用户信息（纯字符串，以空格分隔）"),
+        min_length=1,
+        max_length=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
+    )
+    department_id = serializers.IntegerField(help_text="目标租户部门 ID")
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        # FIXME (su) 需要从 context 中拿 fields 信息，然后解析，校验之类的
+        # FIXME (su) 检查 username & code 的唯一性，username 有固定格式，考虑 slz 校验？
+        attrs["user_infos"] = [
+            {
+                "username": "zhangsan-gg",
+                "full_name": "zhangsan-gg",
+                "email": "zhangsan@qq.com",
+                "phone": "12345678901",
+                "phone_country_code": "86",
+                "extras": {"key": "value"},
+            }
+        ]
+        return attrs
+
+
+def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str) -> None:
+    """校验租户用户 ID 列表中数据是否合法"""
+    exists_tenant_users = TenantUser.objects.filter(id__in=user_ids, tenant_id=tenant_id)
+    if invalid_user_ids := set(user_ids) - set(exists_tenant_users.values_list("id", flat=True)):
+        raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
+
+    if len({u.data_source_id for u in exists_tenant_users}) != 1:
+        raise ValidationError(_("待批量操作的用户应属于同一数据源").format(", ".join(user_ids)))
+
+    data_source = exists_tenant_users.first().data_source
+    if not (data_source.is_local and data_source.is_real_type):
+        raise ValidationError(_("仅能批量操作本地数据源用户"))
+
+
+def _validate_tenant_department_ids(department_ids: List[int], tenant_id: str) -> None:
+    """校验租户部门 ID 列表中数据是否合法"""
+    exists_tenant_depts = TenantDepartment.objects.filter(id__in=department_ids, tenant_id=tenant_id)
+    if invalid_dept_ids := set(department_ids) - set(exists_tenant_depts.values_list("id", flat=True)):
+        raise ValidationError(_("部门 ID {} 在当前租户中不存在").format(invalid_dept_ids))
+
+    if len({u.data_source_id for u in exists_tenant_depts}) != 1:
+        raise ValidationError(_("选中的部门应属于同一数据源").format(department_ids))
+
+    data_source = exists_tenant_depts.first().data_source
+    if not (data_source.is_local and data_source.is_real_type):
+        raise ValidationError(_("仅能选择本地数据源部门"))
+
+
+class TenantUserBatchCopyInputSLZ(serializers.Serializer):
+    user_ids = serializers.ListField(
+        help_text="用户 ID 列表",
+        child=serializers.CharField(help_text="租户用户 ID"),
+        min_length=1,
+        max_length=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
+    )
+    department_ids = serializers.ListField(
+        help_text="目标部门 ID 列表",
+        child=serializers.IntegerField(help_text="目标部门 ID"),
+        min_length=1,
+        max_length=10,
+    )
+
+    def validate_user_ids(self, user_ids: List[str]) -> List[str]:
+        _validate_tenant_user_ids(user_ids, self.context["tenant_id"])
+        return user_ids
+
+    def validate_department_ids(self, department_ids: List[int]) -> List[int]:
+        _validate_tenant_department_ids(department_ids, self.context["tenant_id"])
+        return department_ids
+
+
+class TenantUserBatchMoveInputSLZ(TenantUserBatchCopyInputSLZ):
+    ...
+
+
+class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
+    user_ids = StringArrayField(
+        help_text="用户 ID 列表",
+        min_items=1,
+        max_items=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT,
+    )
+
+    def validate_user_ids(self, user_ids: List[str]) -> List[str]:
+        _validate_tenant_user_ids(user_ids, self.context["tenant_id"])
+        return user_ids
