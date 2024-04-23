@@ -64,3 +64,9 @@ class WebPageViewSet(BkUserApiProxy):
             return TemplateResponse(request=request, template=get_template("index.html"))
         except TemplateDoesNotExist:
             raise error_codes.CANNOT_FIND_TEMPLATE
+
+    def login_success(self, request):
+        try:
+            return TemplateResponse(request=request, template=get_template("login_success.html"))
+        except TemplateDoesNotExist:
+            raise error_codes.CANNOT_FIND_TEMPLATE

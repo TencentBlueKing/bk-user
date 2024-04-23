@@ -197,7 +197,7 @@ function handleReject(error, config) {
           extraQuery += (`&${arr[0]}=${arr[1]}`);
         });
 
-        const successUrl = `${window.origin + window.SITE_URL}login_success.html`;
+        const successUrl = `${window.origin + window.SITE_URL}login_success/`;
         if (!url) {
           console.error('Login URL not configured!');
           return;
