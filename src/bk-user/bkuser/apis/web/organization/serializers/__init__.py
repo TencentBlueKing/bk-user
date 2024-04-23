@@ -9,6 +9,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from .batch_operations import (
+    TenantUserBatchCopyInputSLZ,
+    TenantUserBatchCreateInputSLZ,
+    TenantUserBatchDeleteInputSLZ,
+    TenantUserBatchMoveInputSLZ,
+)
 from .departments import (
     OptionalTenantDepartmentListInputSLZ,
     OptionalTenantDepartmentListOutputSLZ,
@@ -28,10 +34,6 @@ from .tenants import (
 from .users import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
-    TenantUserBatchCopyInputSLZ,
-    TenantUserBatchCreateInputSLZ,
-    TenantUserBatchDeleteInputSLZ,
-    TenantUserBatchMoveInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
@@ -74,6 +76,7 @@ __all__ = [
     "TenantUserPasswordResetInputSLZ",
     "TenantUserOrganizationPathOutputSLZ",
     "TenantUserStatusUpdateOutputSLZ",
+    # 批量操作
     "TenantUserBatchCreateInputSLZ",
     "TenantUserBatchCopyInputSLZ",
     "TenantUserBatchMoveInputSLZ",

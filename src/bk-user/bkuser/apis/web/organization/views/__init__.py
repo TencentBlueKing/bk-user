@@ -9,6 +9,12 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
+from .batch_operations import (
+    TenantUserBatchCopyApi,
+    TenantUserBatchCreateApi,
+    TenantUserBatchDeleteApi,
+    TenantUserBatchMoveApi,
+)
 from .departments import (
     OptionalTenantDepartmentListApi,
     TenantDepartmentListCreateApi,
@@ -22,10 +28,6 @@ from .tenants import (
 )
 from .users import (
     OptionalTenantUserListApi,
-    TenantUserBatchCopyApi,
-    TenantUserBatchCreateApi,
-    TenantUserBatchDeleteApi,
-    TenantUserBatchMoveApi,
     TenantUserListCreateApi,
     TenantUserOrganizationPathListApi,
     TenantUserPasswordResetApi,
@@ -52,6 +54,7 @@ __all__ = [
     "TenantUserPasswordResetApi",
     "TenantUserOrganizationPathListApi",
     "TenantUserStatusUpdateApi",
+    # 批量操作
     "TenantUserBatchCreateApi",
     "TenantUserBatchCopyApi",
     "TenantUserBatchMoveApi",
