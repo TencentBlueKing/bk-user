@@ -112,6 +112,49 @@ url = "https://mirrors.tencent.com/pypi/simple"
 reference = "tencent"
 
 [[package]]
+name = "bk-notice-sdk"
+version = "1.3.1"
+description = "A project for fetching and displaying announcement notifications."
+optional = false
+python-versions = "*"
+files = [
+    {file = "bk-notice-sdk-1.3.1.tar.gz", hash = "sha256:89e4ebf294631034d202a52442310d5516f2e5e3b927b2c4c86522218acf06dd"},
+]
+
+[package.dependencies]
+bkapi-client-core = ">=1.0.2,<2.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
+name = "bkapi-client-core"
+version = "1.2.0"
+description = "A toolkit for buiding blueking API clients."
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+files = [
+    {file = "bkapi_client_core-1.2.0-py2.py3-none-any.whl", hash = "sha256:f18b29e0fc0ee8d5eca33ea1f823f26dc7d7adc2f39670cc45cc2f8452f39630"},
+]
+
+[package.dependencies]
+curlify = ">=2.0"
+requests = ">=2.20"
+six = "*"
+typing-extensions = ">=3.7.4"
+
+[package.extras]
+django = ["bkoauth (>=0.0.10)", "prometheus-client (>=0.9.0)"]
+monitor = ["prometheus-client (>=0.9.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.tencent.com/pypi/simple"
+reference = "tencent"
+
+[[package]]
 name = "blue-krill"
 version = "2.0.3"
 description = "Tools and common packages for blueking PaaS platform."
@@ -2978,4 +3021,4 @@ reference = "tencent"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "a94d74bf886dee6e1b18b905d902379ff2afdbaccc44f5c4995841ae6ed37ff2"
+content-hash = "cfb4a2f91d5f85c73141940fea67da9fcb153e21634043e096a220dc4b89b4e4"

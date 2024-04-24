@@ -14,6 +14,7 @@ from django.urls import include, path
 urlpatterns = [
     # 基础公共，比如当前登录的用户信息，一些常用常量枚举列表等等
     path("basic/", include("bkuser.apis.web.basic.urls")),
+    path("version-logs/", include("bkuser.apis.web.version_log.urls")),
     # ------------------------------------------ 面向平台管理员 --------------------------------------------
     # 平台管理功能
     path("platform-management/", include("bkuser.apis.web.platform_management.urls")),

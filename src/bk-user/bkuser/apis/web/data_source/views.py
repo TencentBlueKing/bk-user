@@ -13,6 +13,7 @@ import logging
 import openpyxl
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -49,6 +50,8 @@ from bkuser.apps.data_source.models import (
     DataSourceSensitiveInfo,
     DataSourceUser,
 )
+from bkuser.apps.idp.constants import INVALID_REAL_DATA_SOURCE_ID, IdpStatus
+from bkuser.apps.idp.models import Idp
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.constants import SyncTaskTrigger
@@ -63,6 +66,7 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.passwd import PasswordGenerator
 from bkuser.common.response import convert_workbook_to_response
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
 from bkuser.plugins.base import get_default_plugin_cfg, get_plugin_cfg_schema_map, get_plugin_cls
 from bkuser.plugins.constants import DataSourcePluginEnum
 
@@ -246,6 +250,18 @@ class DataSourceRetrieveUpdateDestroyApi(
         logger.warning("user %s delete data source %s", request.user.username, data_source.id)
 
         with transaction.atomic():
+            idp_filters = {"owner_tenant_id": data_source.owner_tenant_id, "data_source_id": data_source.id}
+            # 对于本地认证源则删除，因为不确定下个数据源是否为本地数据源
+            Idp.objects.filter(plugin_id=BuiltinIdpPluginEnum.LOCAL, **idp_filters).delete()
+            # 其他认证源则禁用
+            Idp.objects.filter(**idp_filters).update(
+                status=IdpStatus.DISABLED,
+                data_source_id=INVALID_REAL_DATA_SOURCE_ID,
+                updated_at=timezone.now(),
+                updater=request.user.username,
+            )
+
+            # 删除数据源 & 关联资源数据
             DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

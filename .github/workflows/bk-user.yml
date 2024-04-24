@@ -73,6 +73,7 @@ jobs:
           export BKKRILL_ENCRYPT_SECRET_KEY="tttHSBLiVdQPItrfy7n9dV7AxAUMZpYVkD6IHMbL0VE="
           export BK_USER_URL=""
           export BK_COMPONENT_API_URL=""
+          export BK_API_URL_TMPL=""
           export MYSQL_PASSWORD=root_pwd
           export MYSQL_HOST="127.0.0.1"
           export INITIAL_ADMIN_USERNAME=admin

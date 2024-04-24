@@ -1,11 +1,8 @@
-import { InfoBox, Message } from 'bkui-vue';
-import { h, ref } from 'vue';
+import { ref } from 'vue';
 
-import { postIdps, putIdps } from '@/http';
 import { t } from '@/language/index';
-import { copy } from '@/utils';
 
-export const useCustomPlugin = (formData, dataSourceList, builtinFields, customFields, btnLoading, formRef, type) => {
+export const useCustomPlugin = (formData, dataSourceList, builtinFields, customFields) => {
   const changeDataSourceId = (val, oldVal) => {
     dataSourceList.value.forEach((item) => {
       if (item.key === val) {
@@ -98,60 +95,6 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
     window.changeInput = true;
   };
 
-  const handleSubmit = async () => {
-    try {
-      await formRef.value.validate();
-      btnLoading.value = true;
-      const data = formData.value;
-      data.data_source_match_rules.forEach((item) => {
-        delete item.targetFields;
-      });
-
-      if (type === 'add') {
-        const res = await postIdps(data);
-
-        InfoBox({
-          title: t('认证源创建成功'),
-          extCls: 'info-wrapper',
-          subTitle: h('div', {
-            class: 'details-url',
-            style: {
-              display: res.data?.callback_uri ? 'block' : 'none',
-            },
-          }, [
-            h('p', {
-              class: 'title',
-            }, t('请将一下回调地址填写到企业微信配置内：')),
-            h('div', {
-              class: 'content',
-            }, [
-              h('p', {}, res.data?.callback_uri),
-              h('i', {
-                class: 'user-icon icon-copy',
-                onClick: () => copy(res.data?.callback_uri),
-              }),
-            ]),
-          ]),
-          dialogType: 'confirm',
-          confirmText: t('确定'),
-          infoType: 'success',
-          quickClose: false,
-          onConfirm() {
-            window.changeInput = false;
-          },
-        });
-      } else {
-        await putIdps(data);
-        Message({ theme: 'success', message: t('认证源更新成功') });
-        window.changeInput = false;
-      }
-    } catch (e) {
-      console.warn(e);
-    } finally {
-      btnLoading.value = false;
-    }
-  };
-
   return {
     changeDataSourceId,
     changeSourceField,
@@ -163,7 +106,6 @@ export const useCustomPlugin = (formData, dataSourceList, builtinFields, customF
     mouseenter,
     mouseleave,
     handleChange,
-    handleSubmit,
     hoverItem,
   };
 };

@@ -38,3 +38,6 @@ class AllowBindScopeObjectType(str, StructuredEnum):
 
 # 社会化认证源，允许绑定的范围为任意对象ID
 ANY_ALLOW_BIND_SCOPE_OBJECT_ID = "*"
+
+# 无效的实名数据源 ID
+INVALID_REAL_DATA_SOURCE_ID = 0

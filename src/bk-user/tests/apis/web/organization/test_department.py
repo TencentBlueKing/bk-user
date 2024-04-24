@@ -9,11 +9,17 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
+from bkuser.apps.data_source.models import (
+    DataSourceDepartment,
+    DataSourceDepartmentRelation,
+    DataSourceDepartmentUserRelation,
+)
 from bkuser.apps.tenant.models import TenantDepartment
 from django.urls import reverse
 from rest_framework import status
 
 from tests.test_utils.helpers import generate_random_string
+from tests.test_utils.tenant import sync_users_depts_to_tenant
 
 pytestmark = pytest.mark.django_db
 
@@ -196,6 +202,87 @@ class TestTenantDepartmentUpdateApi:
 
 
 class TestTenantDepartmentDestroyApi:
-    def test_standard(self):
-        # TODO 等功能实现后再补充单元测试
-        ...
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_standard(self, api_client, random_tenant):
+        center_ba = TenantDepartment.objects.get(data_source_department__name="中心BA", tenant=random_tenant)
+        url = reverse("organization.tenant_department.update_destroy", kwargs={"id": center_ba.id})
+
+        resp = api_client.delete(url)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "部门下存在用户" in resp.data["message"]
+
+        # 仅仅解除本层级的用户关联还不行，子部门有用户也不能删除
+        DataSourceDepartmentUserRelation.objects.filter(department_id=center_ba.data_source_department_id).delete()
+        resp = api_client.delete(url)
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "部门下存在用户" in resp.data["message"]
+
+        # 把子部门里面的用户关系都解除后才可以删除该部门
+        DataSourceDepartmentUserRelation.objects.filter(department__name="小组BAA").delete()
+        resp = api_client.delete(url)
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_with_collaborative(self, api_client, random_tenant, collaborative_tenant, full_local_data_source):
+        # 从随机租户协同数据到协同租户
+        sync_users_depts_to_tenant(collaborative_tenant, full_local_data_source)
+
+        dept_b = TenantDepartment.objects.get(data_source_department__name="部门B", tenant=random_tenant)
+        # 把关联数据都干掉，专心测试删除的影响情况
+        DataSourceDepartmentUserRelation.objects.filter(data_source__owner_tenant_id=random_tenant.id).delete()
+
+        resp = api_client.delete(reverse("organization.tenant_department.update_destroy", kwargs={"id": dept_b.id}))
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+        tenant_ids = [random_tenant.id, collaborative_tenant.id]
+        deleted_dept_codes = ["dept_b", "center_ba", "group_baa"]
+        # 租户部门和子部门都干掉了
+        assert not TenantDepartment.objects.filter(
+            tenant_id__in=tenant_ids, data_source_department__code__in=deleted_dept_codes
+        ).exists()
+        # 数据源部门也是活不了
+        assert not DataSourceDepartment.objects.filter(
+            data_source=full_local_data_source, code__in=deleted_dept_codes
+        ).exists()
+        # mptt 树里面的也别想跑
+        assert not DataSourceDepartmentRelation.objects.filter(
+            data_source=full_local_data_source, department__code__in=deleted_dept_codes
+        ).exists()
+
+    def test_delete_invalid_dept(self, api_client):
+        resp = api_client.delete(reverse("organization.tenant_department.update_destroy", kwargs={"id": 10**7}))
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+class TestTenantDepartmentSearchApi:
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    def test_single_tenant(self, api_client, random_tenant):
+        resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "小组"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 3  # noqa: PLR2004  magic number here is ok
+
+        assert {dept["name"] for dept in resp.data} == {"小组AAA", "小组ABA", "小组BAA"}
+        assert all(dept["tenant_id"] == random_tenant.id for dept in resp.data)
+        assert {dept["organization_path"] for dept in resp.data} == {
+            "公司/部门A/中心AA/小组AAA",
+            "公司/部门A/中心AB/小组ABA",
+            "公司/部门B/中心BA/小组BAA",
+        }
+
+    @pytest.mark.usefixtures("_init_tenant_users_depts")
+    @pytest.mark.usefixtures("_init_collaborative_users_depts")
+    def test_multi_tenant(self, api_client, random_tenant, collaborative_tenant):
+        resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "部门"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 4  # noqa: PLR2004  magic number here is ok
+
+        assert {dept["name"] for dept in resp.data} == {"部门A", "部门B"}
+        assert {dept["tenant_id"] for dept in resp.data} == {random_tenant.id, collaborative_tenant.id}
+        assert {dept["organization_path"] for dept in resp.data} == {"公司/部门A", "公司/部门B"}
+
+    def test_match_nothing(self, api_client):
+        resp = api_client.get(reverse("organization.tenant_department.search"), data={"keyword": "2887"})
+        assert resp.status_code == status.HTTP_200_OK
+        assert len(resp.data) == 0

@@ -10,45 +10,13 @@ specific language governing permissions and limitations under the License.
 """
 from typing import Any, Dict
 
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from bkuser.apps.data_source.constants import DataSourceTypeEnum
-from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceDepartmentRelation
-from bkuser.apps.tenant.models import Tenant, TenantDepartment
-
-
-class TenantDataSourceSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="数据源 ID")
-    type = serializers.CharField(help_text="数据源类型")
-    plugin_id = serializers.CharField(help_text="数据源插件 ID")
-
-
-class TenantListOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户 ID")
-    name = serializers.CharField(help_text="租户名称")
-    logo = serializers.SerializerMethodField(help_text="租户 Logo")
-
-    def get_logo(self, obj: Tenant) -> str:
-        return obj.logo or settings.DEFAULT_TENANT_LOGO
-
-
-class TenantRetrieveOutputSLZ(TenantListOutputSLZ):
-    data_source = serializers.SerializerMethodField(help_text="实名用户数据源信息")
-
-    class Meta:
-        ref_name = "organization.TenantRetrieveOutputSLZ"
-
-    @swagger_serializer_method(serializer_or_field=TenantDataSourceSLZ())
-    def get_data_source(self, obj: Tenant) -> Dict[str, Any] | None:
-        data_source = DataSource.objects.filter(owner_tenant_id=obj.id, type=DataSourceTypeEnum.REAL).first()
-        if not data_source:
-            return None
-
-        return TenantDataSourceSLZ(data_source).data
+from bkuser.apps.data_source.models import DataSourceDepartment, DataSourceDepartmentRelation
+from bkuser.apps.tenant.models import TenantDepartment
 
 
 class TenantDepartmentListInputSLZ(serializers.Serializer):
@@ -103,6 +71,8 @@ class TenantDepartmentCreateInputSLZ(serializers.Serializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         dept_name = attrs["name"]
+        if "/" in dept_name:
+            raise ValidationError(_("部门名称不允许包含斜杠(/)"))
 
         parent_dept_relation = None
         if parent_tenant_dept_id := attrs["parent_department_id"]:
@@ -136,6 +106,9 @@ class TenantDepartmentUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="部门名称")
 
     def validate_name(self, name: str) -> str:
+        if "/" in name:
+            raise ValidationError(_("部门名称不允许包含斜杠(/)"))
+
         tenant_dept: TenantDepartment = self.context["tenant_dept"]
         data_source_dept = tenant_dept.data_source_department
 
@@ -159,3 +132,23 @@ class TenantDepartmentUpdateInputSLZ(serializers.Serializer):
         _validate_duplicate_dept_name_in_ancestors(parent_dept_relation, name)
 
         return name
+
+
+class TenantDepartmentSearchInputSLZ(serializers.Serializer):
+    keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64)
+
+
+class TenantDepartmentSearchOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="部门 ID")
+    name = serializers.CharField(help_text="部门名称", source="data_source_department.name")
+    tenant_id = serializers.CharField(help_text="部门来源租户 ID", source="data_source.owner_tenant_id")
+    tenant_name = serializers.SerializerMethodField(help_text="部门来源租户名称")
+    organization_path = serializers.SerializerMethodField(help_text="组织路径")
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_tenant_name(self, obj: TenantDepartment) -> str:
+        return self.context["tenant_name_map"][obj.data_source.owner_tenant_id]
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_organization_path(self, obj: TenantDepartment) -> str:
+        return self.context["org_path_map"].get(obj.id, obj.data_source_department.name)

@@ -20,6 +20,7 @@ from rest_framework.response import Response
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourcePlugin, DataSourceUser
 from bkuser.apps.data_source.utils import gen_tenant_user_id
+from bkuser.apps.idp.data_models import gen_data_source_match_rule_of_local
 from bkuser.apps.idp.models import Idp, IdpSensitiveInfo
 from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
@@ -37,9 +38,11 @@ from bkuser.biz.data_source import DataSourceHandler
 from bkuser.biz.organization import DataSourceUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
+from bkuser.idp_plugins.constants import BuiltinIdpPluginEnum
+from bkuser.idp_plugins.local.plugin import LocalIdpPluginConfig
 from bkuser.plugins.base import get_default_plugin_cfg
 from bkuser.plugins.constants import DataSourcePluginEnum
-from bkuser.plugins.local.constants import NotificationMethod, PasswordGenerateMethod
+from bkuser.plugins.local.constants import NEVER_EXPIRE_TIME, NotificationMethod, PasswordGenerateMethod
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from .serializers import (
@@ -97,8 +100,10 @@ class TenantListCreateApi(generics.ListCreateAPIView):
                 tenant, data_source, data["email"], data["phone"], data["phone_country_code"]
             )
 
+            # 添加内置管理员账密登录认证源
+            self._add_builtin_management_local_idp(tenant.id, data_source.id)
+
         # 对租户内置管理员进行账密信息初始化 & 发送密码通知
-        # FIXME (nan): 调整：不需要经过账号初始化后发送密码，而是直接发送
         initialize_identity_info_and_send_notification.delay(data_source.id)
 
         return Response(TenantCreateOutputSLZ(instance={"id": tenant.id}).data, status=status.HTTP_201_CREATED)
@@ -119,13 +124,20 @@ class TenantListCreateApi(generics.ListCreateAPIView):
         plugin_config = get_default_plugin_cfg(plugin_id)
         assert isinstance(plugin_config, LocalDataSourcePluginConfig)
         assert plugin_config.password_initial is not None
+        assert plugin_config.login_limit is not None
+        assert plugin_config.password_expire is not None
 
-        # 修改为固定密码
-        # FIXME (nan): 调整为直接发送账号密码后，不需要记录固定密码，直接使用默认配置的随机密码即可
+        # 启用密码功能
+        plugin_config.enable_password = True
+        # 内置管理员账号，不需要首次登录强制修改密码，可以登录后自行修改密码
+        plugin_config.login_limit.force_change_at_first_login = False
+        # 密码有效期为永久，不会有过期续期的功能
+        plugin_config.password_expire.valid_time = NEVER_EXPIRE_TIME
+
+        # 固定密码
         plugin_config.password_initial.generate_method = PasswordGenerateMethod.FIXED
         plugin_config.password_initial.fixed_password = fixed_password
-
-        # 修改通知方式
+        # 设置通知方式
         plugin_config.password_initial.notification.enabled_methods = [NotificationMethod(notification_method)]
 
         return DataSource.objects.create(
@@ -164,6 +176,18 @@ class TenantListCreateApi(generics.ListCreateAPIView):
 
         # 添加为租户管理员
         TenantManager.objects.create(tenant=tenant, tenant_user=tenant_user)
+
+    @staticmethod
+    def _add_builtin_management_local_idp(tenant_id: str, data_source_id: int):
+        """添加内置管理员的账密登录认证源"""
+        Idp.objects.create(
+            name=_("管理员账密登录"),
+            plugin_id=BuiltinIdpPluginEnum.LOCAL,
+            owner_tenant_id=tenant_id,
+            plugin_config=LocalIdpPluginConfig(data_source_ids=[data_source_id]),
+            data_source_match_rules=[gen_data_source_match_rule_of_local(data_source_id).model_dump()],
+            data_source_id=data_source_id,
+        )
 
 
 class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.RetrieveUpdateDestroyAPIView):
