@@ -6,12 +6,27 @@
     :max="400"
     :initial-divide="280">
     <template #aside>
-      <Aside @updateOrg="handleUpdateOrg" />
+      <search></search>
+      <bk-resize-layout
+        placement="top"
+        style="height: 100%;"
+        :border="false"
+        immediate
+        :min="140"
+        :max="900"
+        :initial-divide="'50%'">
+        <template #aside>
+          <aside-tenant />
+        </template>
+        <template #main>
+          <aside-collaboration />
+        </template>
+      </bk-resize-layout>
     </template>
     <template #main>
       <section>
         <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
-          {{ selected?.name }}
+          {{ appStore.currentOrg?.name }}
         </div>
       </section>
     </template>
@@ -19,14 +34,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 
-import Aside from './components/aside.vue';
+import AsideCollaboration from './components/aside-collaboration.vue';
+import AsideTenant from './components/aside-tenant.vue';
+import Search from './components/search.vue';
 
-const selected = ref({});
+import useAppStore from '@/store/app';
 
-const handleUpdateOrg = (org: any) => {
-  selected.value = org;
-};
+const appStore = useAppStore();
 </script>
 
+<style lang="postcss" scoped>
+:deep(.bk-node-row) {
+  &:hover {
+    background-color: #F0F1F5;
+  }
+}
+
+:deep(.org-node) {
+  .opt-more {
+    visibility: hidden;
+
+    &:hover {
+      :deep(.icon-more) {
+        background-color: #DCDEE5;
+      }
+    }
+  }
+
+  &:hover {
+    .opt-more {
+      visibility: visible;
+    }
+  }
+}
+</style>

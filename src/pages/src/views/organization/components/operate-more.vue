@@ -41,9 +41,8 @@
 </template>
 
 
-<script setup lang="ts">
-import { clickoutside as vClickoutside } from 'bkui-vue';
-import { ref  } from 'vue';
+<script setup lang="ts">import { clickoutside as vClickoutside } from 'bkui-vue';
+import { computed, ref   } from 'vue';
 
 import { addDepartment, updateDepartment } from '@/http/organizationFiles';
 import { t } from '@/language/index';
@@ -58,6 +57,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  isCollaboration: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emits = defineEmits(['updateNode', 'addNode']);
@@ -69,7 +72,7 @@ const dropdownVisible = ref(false);
 const orgDialogVisible = ref(false);
 const isAddSubOrg = ref(false);
 
-const deptDropdownList = ref<any[]>([
+const defaultDropdownList = ref<any[]>([
   {
     name: t('添加子组织'),
     action: () => {
@@ -96,6 +99,18 @@ const deptDropdownList = ref<any[]>([
     },
   },
 ]);
+
+const collaborationDropdownList = ref<any[]>([
+  {
+    name: t('协同配置'),
+    action: () => {
+    },
+  },
+]);
+
+const deptDropdownList = computed(() => (props.isCollaboration
+  ? collaborationDropdownList.value
+  : defaultDropdownList.value));
 
 const handleClickOutside = () => {
   setTimeout(() => {
