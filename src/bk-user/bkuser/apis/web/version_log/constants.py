@@ -13,7 +13,7 @@ import re
 VERSION_PATTERN = re.compile(r"[vV]\d+\.\d+\.\d+")
 DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
 
-FILE_NAME = "change_log.md"
-FILE_NAME_EN = "change_log_en.md"
+FILE_NAME = "changelog.md"
+FILE_NAME_EN = "changelog_en.md"
 
 FILE_TEXT_SEP = "---"
