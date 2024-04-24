@@ -66,7 +66,7 @@ const formatTreeData = (data = []) => {
 onBeforeMount(async () => {
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
-  selected.value = tenantData?.data;
+  appStore.currentOrg = tenantData?.data;
   const deptData = await getDepartmentsList(0, currentTenant.value?.id);
   treeData.value = formatTreeData(deptData?.data);
 });
@@ -74,7 +74,6 @@ onBeforeMount(async () => {
 const organizationAsideHooks = useOrganizationAside(currentTenant);
 const {
   treeData,
-  selected,
   getRemoteData,
   handleNodeClick,
   addNode,

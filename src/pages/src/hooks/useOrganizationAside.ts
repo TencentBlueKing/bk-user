@@ -9,7 +9,6 @@ const appStore = useAppStore();
 
 export default function useOrganizationAside(currentTenant: any) {
   const treeData = ref<any>({});
-  const selected = ref<any>({});
 
   const formatTreeData = (data = []) => {
     data.forEach((item) => {
@@ -103,17 +102,8 @@ export default function useOrganizationAside(currentTenant: any) {
     }
   };
 
-
-  /**
- * 监听组织变化
- */
-  watch(selected, (val) => {
-    appStore.currentOrg = val;
-  });
-
   return {
     treeData,
-    selected,
     handleNodeClick,
     getRemoteData,
     getPrefixIcon,
