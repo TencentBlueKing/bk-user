@@ -39,4 +39,7 @@ if settings.IS_PAGES_INDEPENDENT_DEPLOYMENT:
     urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # 其余path交由前端处理
-urlpatterns += [url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index")]
+urlpatterns += [
+    url(r"^login_success/", WebPageViewSet.as_view({"get": "login_success"}), name="login_success"),
+    url(r"^", WebPageViewSet.as_view({"get": "index"}), name="index"),
+]
