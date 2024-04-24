@@ -15,23 +15,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from pydantic import BaseModel
 
-from bkuser.apps.data_source.models import (
-    DataSourceUserLeaderRelation,
-)
 from bkuser.apps.tenant.models import TenantUser
 
 logger = logging.getLogger(__name__)
-
-
-class TenantDepartmentInfo(BaseModel):
-    id: int
-    name: str
-
-
-class TenantUserLeaderInfo(BaseModel):
-    id: str
-    username: str
-    full_name: str
 
 
 class TenantUserPhoneInfo(BaseModel):
@@ -46,27 +32,6 @@ class TenantUserEmailInfo(BaseModel):
 
 
 class TenantUserHandler:
-    @staticmethod
-    def get_tenant_user_leader_infos(tenant_user: TenantUser) -> List[TenantUserLeaderInfo]:
-        """获取某个租户用户的 Leader 信息"""
-        relations = DataSourceUserLeaderRelation.objects.filter(user_id=tenant_user.data_source_user_id)
-        if not relations.exists():
-            return []
-
-        leaders = TenantUser.objects.filter(
-            data_source_user_id__in=[rel.leader_id for rel in relations],
-            tenant_id=tenant_user.tenant_id,
-        ).select_related("data_source_user")
-
-        return [
-            TenantUserLeaderInfo(
-                id=ld.id,
-                username=ld.data_source_user.username,
-                full_name=ld.data_source_user.full_name,
-            )
-            for ld in leaders
-        ]
-
     @staticmethod
     def update_tenant_user_phone(tenant_user: TenantUser, phone_info: TenantUserPhoneInfo):
         tenant_user.is_inherited_phone = phone_info.is_inherited_phone

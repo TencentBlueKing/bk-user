@@ -17,43 +17,55 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apis.web.tenant_setting.serializers import BuiltinFieldOutputSLZ
-from bkuser.apps.data_source.models import LocalDataSourceIdentityInfo
-from bkuser.apps.tenant.models import TenantUser, TenantUserCustomField
-from bkuser.biz.tenant import TenantUserHandler
+from bkuser.apps.data_source.models import (
+    DataSourceDepartmentUserRelation,
+    DataSourceUserLeaderRelation,
+    LocalDataSourceIdentityInfo,
+)
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
 from bkuser.common.hashers import check_password
 from bkuser.common.validators import validate_phone_with_country_code
 
 
-class TenantUserDepartmentOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="租户部门 ID")
-    name = serializers.CharField(help_text="租户部门名称")
-
-
-class TenantUserLeaderOutputSLZ(serializers.Serializer):
-    id = serializers.CharField(help_text="租户用户 ID")
-    username = serializers.CharField(help_text="租户用户名")
-    full_name = serializers.CharField(help_text="租户用户名称")
-
-
-class TenantInfoOutputSLZ(serializers.Serializer):
+class TenantInfoSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户 ID")
     name = serializers.CharField(help_text="租户名称")
 
 
-class TenantUserInfoOutputSLZ(serializers.Serializer):
+class TenantUserInfoSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="租户用户 ID")
     username = serializers.CharField(help_text="用户名")
     full_name = serializers.CharField(help_text="姓名")
     logo = serializers.CharField(help_text="头像")
-    tenant = TenantInfoOutputSLZ(help_text="租户")
+    tenant = TenantInfoSLZ(help_text="租户")
+
+    class Meta:
+        ref_name = "personal_center.TenantUserInfoSLZ"
 
 
 class NaturalUserWithTenantUserListOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="自然人ID")
     full_name = serializers.CharField(help_text="自然人姓名")
-    tenant_users = serializers.ListField(help_text="自然人关联的租户账号列表", child=TenantUserInfoOutputSLZ())
+    tenant_users = serializers.ListField(help_text="自然人关联的租户账号列表", child=TenantUserInfoSLZ())
+
+
+class TenantUserDepartmentSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="租户部门 ID")
+    name = serializers.CharField(help_text="租户部门名称", source="data_source_department.name")
+
+    class Meta:
+        ref_name = "personal_center.TenantUserDepartmentSLZ"
+
+
+class TenantUserLeaderSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户用户 ID")
+    username = serializers.CharField(help_text="租户用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="租户用户名称", source="data_source_user.full_name")
+
+    class Meta:
+        ref_name = "personal_center.TenantUserLeaderSLZ"
 
 
 class TenantUserRetrieveOutputSLZ(serializers.Serializer):
@@ -86,16 +98,29 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     class Meta:
         ref_name = "personal_center.TenantUserRetrieveOutputSLZ"
 
-    @swagger_serializer_method(serializer_or_field=TenantUserDepartmentOutputSLZ(many=True))
+    @swagger_serializer_method(serializer_or_field=TenantUserDepartmentSLZ(many=True))
     def get_departments(self, obj: TenantUser) -> List[Dict]:
-        tenant_user_depts_map = TenantUserHandler.get_tenant_users_depts_map(obj.tenant_id, [obj])
-        depts = tenant_user_depts_map.get(obj.id) or []
-        return TenantUserDepartmentOutputSLZ(depts, many=True).data
+        relations = DataSourceDepartmentUserRelation.objects.filter(user_id=obj.data_source_user_id)
+        if not relations.exists():
+            return []
 
-    @swagger_serializer_method(serializer_or_field=TenantUserLeaderOutputSLZ(many=True))
+        depts = TenantDepartment.objects.filter(
+            tenant_id=obj.tenant_id, data_source_department_id__in=[rel.department_id for rel in relations]
+        ).select_related("data_source_department")
+
+        return TenantUserDepartmentSLZ(depts, many=True).data
+
+    @swagger_serializer_method(serializer_or_field=TenantUserLeaderSLZ(many=True))
     def get_leaders(self, obj: TenantUser) -> List[Dict]:
-        tenant_users_leader_infos = TenantUserHandler.get_tenant_user_leader_infos(obj)
-        return TenantUserLeaderOutputSLZ(tenant_users_leader_infos, many=True).data
+        relations = DataSourceUserLeaderRelation.objects.filter(user_id=obj.data_source_user_id)
+        if not relations.exists():
+            return []
+
+        leaders = TenantUser.objects.filter(
+            tenant_id=obj.tenant_id, data_source_user_id__in=[rel.leader_id for rel in relations]
+        ).select_related("data_source_user")
+
+        return TenantUserLeaderSLZ(leaders, many=True).data
 
     @swagger_serializer_method(serializer_or_field=serializers.JSONField)
     def get_extras(self, obj: TenantUser) -> Dict[str, Any]:

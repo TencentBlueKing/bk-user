@@ -35,6 +35,7 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
+from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
 from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
@@ -119,6 +120,8 @@ class TenantUserBatchCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             ]
             TenantUser.objects.bulk_create(tenant_users)
 
+        # 对新增的用户进行账密信息初始化 & 发送密码通知
+        initialize_identity_info_and_send_notification.delay(data_source.id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

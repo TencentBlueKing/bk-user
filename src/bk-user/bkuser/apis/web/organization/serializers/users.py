@@ -175,6 +175,23 @@ class TenantUserCreateOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
 
 
+class TenantUserDepartmentSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="租户部门 ID")
+    name = serializers.CharField(help_text="租户部门名称", source="data_source_department.name")
+
+    class Meta:
+        ref_name = "organization.TenantUserDepartmentSLZ"
+
+
+class TenantUserLeaderSLZ(serializers.Serializer):
+    id = serializers.CharField(help_text="租户用户 ID")
+    username = serializers.CharField(help_text="租户用户名", source="data_source_user.username")
+    full_name = serializers.CharField(help_text="租户用户名称", source="data_source_user.full_name")
+
+    class Meta:
+        ref_name = "organization.TenantUserLeaderSLZ"
+
+
 class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     id = serializers.CharField(help_text="用户 ID")
     status = serializers.ChoiceField(help_text="用户状态", choices=TenantUserStatus.get_choices())
@@ -185,28 +202,39 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
     extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
-    department_ids = serializers.SerializerMethodField(help_text="租户部门 ID 列表")
-    leader_ids = serializers.SerializerMethodField(help_text="上级（租户用户）ID 列表")
+
+    departments = serializers.SerializerMethodField(help_text="租户部门 ID 列表")
+    leaders = serializers.SerializerMethodField(help_text="上级（租户用户）ID 列表")
+
+    class Meta:
+        ref_name = "organization.TenantUserRetrieveOutputSLZ"
 
     def get_logo(self, obj: TenantUser) -> str:
         return obj.data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.IntegerField()))
-    def get_department_ids(self, obj: TenantUser) -> List[int]:
+    @swagger_serializer_method(serializer_or_field=TenantUserDepartmentSLZ(many=True))
+    def get_departments(self, obj: TenantUser) -> List[Dict]:
         relations = DataSourceDepartmentUserRelation.objects.filter(user_id=obj.data_source_user_id)
-        return TenantDepartment.objects.filter(
-            data_source_department_id__in=[rel.department_id for rel in relations],
-        ).values_list("id", flat=True)
+        if not relations.exists():
+            return []
 
-    @swagger_serializer_method(serializer_or_field=serializers.ListSerializer(child=serializers.CharField()))
-    def get_leader_ids(self, obj: TenantUser) -> List[int]:
+        depts = TenantDepartment.objects.filter(
+            tenant_id=obj.tenant_id, data_source_department_id__in=[rel.department_id for rel in relations]
+        ).select_related("data_source_department")
+
+        return TenantUserDepartmentSLZ(depts, many=True).data
+
+    @swagger_serializer_method(serializer_or_field=TenantUserLeaderSLZ(many=True))
+    def get_leaders(self, obj: TenantUser) -> List[Dict]:
         relations = DataSourceUserLeaderRelation.objects.filter(user_id=obj.data_source_user_id)
-        return TenantUser.objects.filter(
-            data_source_user_id__in=[rel.leader_id for rel in relations],
-        ).values_list("id", flat=True)
+        if not relations.exists():
+            return []
 
-    class Meta:
-        ref_name = "organization.TenantUserRetrieveOutputSLZ"
+        leaders = TenantUser.objects.filter(
+            tenant_id=obj.tenant_id, data_source_user_id__in=[rel.leader_id for rel in relations]
+        ).select_related("data_source_user")
+
+        return TenantUserLeaderSLZ(leaders, many=True).data
 
 
 class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):

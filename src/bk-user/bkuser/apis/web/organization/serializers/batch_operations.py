@@ -37,6 +37,9 @@ class TenantUserInfoSLZ(serializers.Serializer):
     phone_country_code = serializers.CharField(help_text="手机国际区号")
     extras = serializers.JSONField(help_text="自定义字段")
 
+    class Meta:
+        ref_name = "organization.TenantUserInfoSLZ"
+
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         return validate_user_extras(extras, self.context["custom_fields"], self.context["data_source_id"])
 
