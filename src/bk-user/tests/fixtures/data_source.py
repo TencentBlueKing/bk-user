@@ -128,7 +128,6 @@ def local_ds_plugin() -> DataSourcePlugin:
     return DataSourcePlugin.objects.get(id=DataSourcePluginEnum.LOCAL)
 
 
-# FIXME (su) 评估能否不使用 random_tenant
 @pytest.fixture()
 def bare_local_data_source(random_tenant, local_ds_plugin_cfg, local_ds_plugin) -> DataSource:
     """裸本地数据源（没有用户，部门等数据）"""
@@ -171,7 +170,6 @@ def general_ds_plugin() -> DataSourcePlugin:
     return DataSourcePlugin.objects.get(id=DataSourcePluginEnum.GENERAL)
 
 
-# FIXME (su) 评估能否不使用 random_tenant
 @pytest.fixture()
 def bare_general_data_source(random_tenant, general_ds_plugin_cfg, general_ds_plugin) -> DataSource:
     """裸通用 HTTP 数据源（没有用户，部门等数据）"""

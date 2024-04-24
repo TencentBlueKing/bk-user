@@ -10,23 +10,32 @@ specific language governing permissions and limitations under the License.
 """
 
 from .departments import (
-    TenantDepartmentListCreateApi,
-    TenantDepartmentSearchApi,
-    TenantDepartmentUpdateDestroyApi,
+    TenantDepartmentCreateInputSLZ,
+    TenantDepartmentCreateOutputSLZ,
+    TenantDepartmentListInputSLZ,
+    TenantDepartmentListOutputSLZ,
+    TenantDepartmentSearchInputSLZ,
+    TenantDepartmentSearchOutputSLZ,
+    TenantDepartmentUpdateInputSLZ,
 )
 
 # noqa: F401
-from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi  # noqa: F401
-from .users import TenantUserSearchApi  # noqa: F401
+from .tenants import TenantListOutputSLZ, TenantRetrieveOutputSLZ  # noqa: F401
+from .users import TenantUserSearchInputSLZ, TenantUserSearchOutputSLZ  # noqa: F401
 
 __all__ = [
     # 租户
-    "CurrentTenantRetrieveApi",
-    "CollaborativeTenantListApi",
+    "TenantListOutputSLZ",
+    "TenantRetrieveOutputSLZ",
     # 租户部门
-    "TenantDepartmentListCreateApi",
-    "TenantDepartmentUpdateDestroyApi",
-    "TenantDepartmentSearchApi",
+    "TenantDepartmentListInputSLZ",
+    "TenantDepartmentListOutputSLZ",
+    "TenantDepartmentCreateInputSLZ",
+    "TenantDepartmentCreateOutputSLZ",
+    "TenantDepartmentUpdateInputSLZ",
+    "TenantDepartmentSearchInputSLZ",
+    "TenantDepartmentSearchOutputSLZ",
     # 租户用户
-    "TenantUserSearchApi",
+    "TenantUserSearchInputSLZ",
+    "TenantUserSearchOutputSLZ",
 ]

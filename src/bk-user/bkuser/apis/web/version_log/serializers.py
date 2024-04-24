@@ -8,25 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from rest_framework import serializers
 
-from .departments import (
-    TenantDepartmentListCreateApi,
-    TenantDepartmentSearchApi,
-    TenantDepartmentUpdateDestroyApi,
-)
 
-# noqa: F401
-from .tenants import CollaborativeTenantListApi, CurrentTenantRetrieveApi  # noqa: F401
-from .users import TenantUserSearchApi  # noqa: F401
-
-__all__ = [
-    # 租户
-    "CurrentTenantRetrieveApi",
-    "CollaborativeTenantListApi",
-    # 租户部门
-    "TenantDepartmentListCreateApi",
-    "TenantDepartmentUpdateDestroyApi",
-    "TenantDepartmentSearchApi",
-    # 租户用户
-    "TenantUserSearchApi",
-]
+class VersionLogListOutputSLZ(serializers.Serializer):
+    version = serializers.CharField(label="版本号")
+    date = serializers.CharField(label="更新日期")
+    content = serializers.CharField(label="版本内容", help_text="markdown 文件内容")

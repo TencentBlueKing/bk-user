@@ -32,13 +32,6 @@ class TenantUserIdRuleEnum(str, StructuredEnum):
     USERNAME_WITH_DOMAIN = EnumField("username@domain", label=_("用户名@域名"))
 
 
-class DataSourceUserStatus(str, StructuredEnum):
-    """数据源用户状态"""
-
-    ENABLED = EnumField("enabled", label=_("启用"))
-    DISABLED = EnumField("disabled", label=_("禁用"))
-
-
 class DataSourceTypeEnum(str, StructuredEnum):
     """数据源类型"""
 

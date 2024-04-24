@@ -99,6 +99,9 @@ class IdpListOutputSLZ(serializers.Serializer):
     status = serializers.ChoiceField(help_text="状态", choices=IdpStatus.get_choices())
     plugin = IdpPluginOutputSLZ(help_text="认证源插件")
 
+    class Meta:
+        ref_name = "login.IdpListOutputSLZ"
+
 
 class IdpRetrieveOutputSLZ(IdpListOutputSLZ):
     owner_tenant_id = serializers.CharField(help_text="归属的租户 ID")

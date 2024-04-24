@@ -31,6 +31,12 @@ urlpatterns = [
     path("", include("bkuser.monitoring.urls")),
 ]
 
+# 蓝鲸通知中心
+if settings.ENABLE_BK_NOTICE:
+    urlpatterns += [
+        path("api/v1/web/notices/", include(("bk_notice_sdk.urls", "notice"), namespace="notice")),
+    ]
+
 # swagger doc
 if settings.SWAGGER_ENABLE:
     schema_view = get_schema_view(

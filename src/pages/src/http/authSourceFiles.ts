@@ -1,6 +1,7 @@
 import http from './fetch';
 import type {
   NewIdpsParams,
+  NewLocalIdpsParams,
   PatchIdpsParams,
   PutIdpsParams,
 } from './types/authSourceFiles';
@@ -39,3 +40,18 @@ export const putIdps = (params: PutIdpsParams) => http.put(`/api/v1/web/idps/${p
  * 认证源插件默认配置
  */
 export const getIdpsPluginsConfig = (id: string) => http.get(`/api/v1/web/idps/plugins/${id}/config-meta/`);
+
+/**
+ * 新建本地账密认证源
+ */
+export const postLocalIdps = (params: NewLocalIdpsParams) => http.post('/api/v1/web/idps/local/', params);
+
+/**
+ * 本地认证源详情
+ */
+export const getLocalIdps = (id: string) => http.get(`/api/v1/web/idps/local/${id}/`);
+
+/**
+ * 更新本地认证源
+ */
+export const putLocalIdps = (params: NewLocalIdpsParams) => http.put(`/api/v1/web/idps/local/${params.id}/`, params);

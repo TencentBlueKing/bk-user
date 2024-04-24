@@ -184,6 +184,9 @@ class VueTemplateView(TemplateView):
                 "CSRF_COOKIE_NAME": settings.CSRF_COOKIE_NAME,
                 # ESB
                 "BK_COMPONENT_API_URL": settings.BK_COMPONENT_API_URL.rstrip("/"),
+                # 文档 & 反馈链接
+                "BK_USER_DOC_URL": settings.BK_USER_DOC_URL,
+                "BK_USER_FEEDBACK_URL": settings.BK_USER_FEEDBACK_URL,
             }
 
         except Exception:  # pylint: disable=broad-except
