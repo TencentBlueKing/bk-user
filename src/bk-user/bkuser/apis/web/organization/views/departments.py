@@ -95,6 +95,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         filters = {
             "tenant_id": self.get_current_tenant_id(),
             "data_source__owner_tenant_id": self.kwargs["id"],
+            "data_source__type": DataSourceTypeEnum.REAL,
         }
         # 指定的父部门不存在，直接返回 None
         tenant_dept = TenantDepartment.objects.filter(id=parent_dept_id, **filters).first()
@@ -214,7 +215,10 @@ class TenantDepartmentUpdateDestroyApi(
     lookup_url_kwarg = "id"
 
     def get_queryset(self) -> QuerySet[TenantDepartment]:
-        return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
 
     @swagger_auto_schema(
         tags=["organization.department"],
@@ -307,7 +311,9 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixi
         keyword = slz.validated_data["keyword"]
 
         return TenantDepartment.objects.filter(
-            tenant_id=self.get_current_tenant_id(), data_source_department__name__icontains=keyword
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+            data_source_department__name__icontains=keyword,
         ).select_related("data_source", "data_source_department")[: self.search_limit]
 
     @swagger_auto_schema(
@@ -342,7 +348,9 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathM
 
         cur_tenant_id = self.get_current_tenant_id()
         queryset = TenantDepartment.objects.filter(
-            tenant_id=cur_tenant_id, data_source__owner_tenant_id=cur_tenant_id
+            tenant_id=cur_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+            data_source__owner_tenant_id=cur_tenant_id,
         ).select_related("data_source_department")
         if kw := params.get("keyword"):
             queryset = queryset.filter(data_source_department__name__icontains=kw)

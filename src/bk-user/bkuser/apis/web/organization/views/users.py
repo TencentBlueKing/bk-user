@@ -83,6 +83,7 @@ class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         queryset = TenantUser.objects.filter(
             tenant_id=cur_tenant_id,
             data_source__owner_tenant_id=cur_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
         ).select_related("data_source_user")
         if kw := params.get("keyword"):
             queryset = queryset.filter(
@@ -114,7 +115,9 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         # FIXME (su) 手机 & 邮箱过滤在 DB 加密后不可用，到时候再调整
         return (
-            TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
+            TenantUser.objects.filter(
+                tenant_id=self.get_current_tenant_id(), data_source__type=DataSourceTypeEnum.REAL
+            )
             .filter(
                 Q(data_source_user__username__icontains=keyword)
                 | Q(data_source_user__full_name__icontains=keyword)
@@ -184,7 +187,9 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
         params = slz.validated_data
 
         queryset = TenantUser.objects.select_related("data_source_user").filter(
-            tenant_id=self.get_current_tenant_id(), data_source__owner_tenant_id=self.kwargs["id"]
+            tenant_id=self.get_current_tenant_id(),
+            data_source__owner_tenant_id=self.kwargs["id"],
+            data_source__type=DataSourceTypeEnum.REAL,
         )
         if kw := params.get("keyword"):
             queryset = queryset.filter(
@@ -349,6 +354,7 @@ class TenantUserRetrieveUpdateDestroyApi(
     def get_queryset(self) -> QuerySet[TenantUser]:
         return TenantUser.objects.filter(
             tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
         ).select_related("data_source", "data_source_user")
 
     @swagger_auto_schema(
@@ -476,12 +482,17 @@ class TenantUserRetrieveUpdateDestroyApi(
 
 
 class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+    """租户管理员重置用户密码"""
+
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     lookup_url_kwarg = "id"
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
+        return TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
 
     @swagger_auto_schema(
         tags=["organization.user"],
@@ -530,7 +541,10 @@ class TenantUserOrganizationPathListApi(CurrentUserTenantMixin, generics.ListAPI
     lookup_url_kwarg = "id"
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
+        return TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
 
     @swagger_auto_schema(
         tags=["organization.user"],
@@ -566,7 +580,10 @@ class TenantUserStatusUpdateApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin
     lookup_url_kwarg = "id"
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        return TenantUser.objects.filter(tenant_id=self.get_current_tenant_id())
+        return TenantUser.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
 
     @swagger_auto_schema(
         tags=["organization.user"],

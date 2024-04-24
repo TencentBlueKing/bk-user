@@ -8,7 +8,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from datetime import timedelta
+
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -32,7 +35,8 @@ from bkuser.apps.data_source.models import (
 from bkuser.apps.data_source.utils import gen_tenant_user_id
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser
+from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserValidityPeriodConfig
+from bkuser.common.constants import PERMANENT_TIME
 from bkuser.common.error_codes import error_codes
 
 
@@ -96,14 +100,20 @@ class TenantUserBatchCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
 
-            # 新建租户用户
             # FIXME (su) 支持协同后，要对协同的租户也立即创建租户用户（目前只是对数据源所属租户做创建）
+            # 新建租户用户，需要计算账号有效期
+            account_expired_at = PERMANENT_TIME
+            cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=cur_tenant_id)
+            if cfg.enabled and cfg.validity_period > 0:
+                account_expired_at = timezone.now() + timedelta(days=cfg.validity_period)
+
             tenant_users = [
                 TenantUser(
                     id=gen_tenant_user_id(cur_tenant_id, data_source, user),
                     tenant_id=tenant_dept.tenant_id,
                     data_source=data_source,
                     data_source_user=user,
+                    account_expired_at=account_expired_at,
                 )
                 for user in data_source_users
             ]
