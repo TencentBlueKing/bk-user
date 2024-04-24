@@ -212,6 +212,8 @@ BK_LOGIN_API_URL = env.str("BK_LOGIN_API_URL", default="http://bk-login/login/")
 
 # bk esb api url
 BK_COMPONENT_API_URL = env.str("BK_COMPONENT_API_URL")
+# bk apigw url tmpl
+BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
@@ -521,6 +523,24 @@ PASSWORD_ENCRYPT_ALGORITHM = env.str("PASSWORD_ENCRYPT_ALGORITHM", "")
 if not PASSWORD_ENCRYPT_ALGORITHM:
     PASSWORD_ENCRYPT_ALGORITHM = "pbkdf2_sm3" if BK_CRYPTO_TYPE == "SHANGMI" else "pbkdf2_sha256"
 
+# ------------------------------------------ 蓝鲸通知中心配置 ------------------------------------------
+
+# 通知中心的功能可通过配置开启
+ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", False)
+if ENABLE_BK_NOTICE:
+    INSTALLED_APPS += ("bk_notice_sdk",)
+    # 对接通知中心的环境，默认为生产环境
+    BK_NOTICE_ENV = env("BK_NOTICE_ENV", "prod")
+    BK_NOTICE = {
+        "STAGE": BK_NOTICE_ENV,
+        "LANGUAGE_COOKIE_NAME": LANGUAGE_COOKIE_NAME,
+        "DEFAULT_LANGUAGE": "en",
+        "PLATFORM": BK_APP_CODE,  # 平台注册的 code，用于获取系统通知消息时进行过滤
+        "BK_API_URL_TMPL": BK_API_URL_TMPL,
+        "BK_API_APP_CODE": BK_APP_CODE,  # 用于调用 apigw 认证
+        "BK_API_SECRET_KEY": BK_APP_SECRET,  # 用于调用 apigw 认证
+    }
+
 # ------------------------------------------ 业务逻辑配置 ------------------------------------------
 
 # logo文件大小限制，单位为: KB
@@ -581,3 +601,8 @@ ORGANIZATION_SEARCH_API_LIMIT = env.int("ORGANIZATION_SEARCH_API_LIMIT", 20)
 
 # 版本日志
 VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
+# 文档链接
+BK_DOCS_URL_PREFIX = env("BK_DOCS_URL_PREFIX", default="https://bk.tencent.com/docs")
+BK_USER_DOC_URL = f"{BK_DOCS_URL_PREFIX}/markdown/UserManage/UserGuide/Introduce/README.md"
+# 反馈问题链接
+BK_USER_FEEDBACK_URL = env("BK_USER_FEEDBACK_URL", default="https://bk.tencent.com/s-mart/community/")
