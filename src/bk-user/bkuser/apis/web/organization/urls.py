@@ -28,7 +28,7 @@ urlpatterns = [
     # 租户用户 - 快速录入必填字段
     path(
         "tenants/required-user-fields/",
-        views.TenantRequiredUserFieldListApi.as_view(),
+        views.RequiredTenantUserFieldListApi.as_view(),
         name="organization.tenant.required_user_field.list",
     ),
     # 租户部门列表
@@ -49,13 +49,13 @@ urlpatterns = [
         views.TenantDepartmentSearchApi.as_view(),
         name="organization.tenant_department.search",
     ),
-    # 数据源部门列表
+    # 可选租户部门列表（下拉框数据用）
     path(
         "tenants/optional-departments/",
         views.OptionalTenantDepartmentListApi.as_view(),
         name="organization.optional_department.list",
     ),
-    # 数据源用户列表
+    # 可选租户用户列表（下拉框数据用）
     path(
         "tenants/optional-leaders/",
         views.OptionalTenantUserListApi.as_view(),

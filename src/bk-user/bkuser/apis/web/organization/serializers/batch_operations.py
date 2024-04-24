@@ -27,25 +27,24 @@ from bkuser.common.validators import validate_phone_with_country_code
 
 
 class TenantUserInfoSLZ(serializers.Serializer):
+    """批量创建时校验用户信息用，该模式邮箱，手机号等均为必填字段"""
+
     username = serializers.CharField(help_text="用户名", validators=[validate_data_source_user_username])
     full_name = serializers.CharField(help_text="姓名")
-    email = serializers.EmailField(help_text="邮箱", required=False, default="", allow_blank=True)
-    phone = serializers.CharField(help_text="手机号", required=False, default="", allow_blank=True)
-    phone_country_code = serializers.CharField(
-        help_text="手机国际区号", required=False, default=settings.DEFAULT_PHONE_COUNTRY_CODE, allow_blank=True
-    )
-    extras = serializers.JSONField(help_text="自定义字段", default=dict)
+    email = serializers.EmailField(help_text="邮箱")
+    phone = serializers.CharField(help_text="手机号")
+    phone_country_code = serializers.CharField(help_text="手机国际区号")
+    extras = serializers.JSONField(help_text="自定义字段")
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
         return validate_user_extras(extras, self.context["custom_fields"], self.context["data_source_id"])
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        # 如果提供了手机号，则校验手机号是否合法
-        if attrs["phone"]:
-            try:
-                validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
-            except ValueError as e:
-                raise ValidationError(str(e))
+        # 校验手机号是否合法
+        try:
+            validate_phone_with_country_code(phone=attrs["phone"], country_code=attrs["phone_country_code"])
+        except ValueError as e:
+            raise ValidationError(str(e))
 
         return attrs
 
@@ -82,7 +81,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         field_count = len(required_field_names)
         user_infos: List[Dict[str, Any]] = []
         for idx, raw_info in enumerate(raw_user_infos, start=1):
-            # raw_info 格式是以空格为分隔符的用户信息字符串
+            # 注：raw_info 格式是以空格为分隔符的用户信息字符串
             # 形式如：tiga 迪迦 tiga@otm.com +8613612356789 male shenzhen running,swimming
             # 字段对应：username full_name email phone gender region sport_hobbies
             data: List[str] = [s for s in raw_info.split(" ") if s]

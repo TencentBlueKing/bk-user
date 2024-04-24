@@ -340,8 +340,9 @@ class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathM
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
+        cur_tenant_id = self.get_current_tenant_id()
         queryset = TenantDepartment.objects.filter(
-            data_source__owner_tenant_id=self.get_current_tenant_id()
+            tenant_id=cur_tenant_id, data_source__owner_tenant_id=cur_tenant_id
         ).select_related("data_source_department")
         if kw := params.get("keyword"):
             queryset = queryset.filter(data_source_department__name__icontains=kw)

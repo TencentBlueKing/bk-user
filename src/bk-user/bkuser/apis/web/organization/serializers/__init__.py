@@ -27,8 +27,8 @@ from .departments import (
     TenantDepartmentUpdateInputSLZ,
 )
 from .tenants import (
+    RequiredTenantUserFieldOutputSLZ,
     TenantListOutputSLZ,
-    TenantRequiredUserFieldOutputSLZ,
     TenantRetrieveOutputSLZ,
 )
 from .users import (
@@ -51,7 +51,7 @@ __all__ = [
     # 租户
     "TenantListOutputSLZ",
     "TenantRetrieveOutputSLZ",
-    "TenantRequiredUserFieldOutputSLZ",
+    "RequiredTenantUserFieldOutputSLZ",
     # 租户部门
     "TenantDepartmentListInputSLZ",
     "TenantDepartmentListOutputSLZ",

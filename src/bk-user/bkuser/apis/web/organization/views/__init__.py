@@ -24,7 +24,7 @@ from .departments import (
 from .tenants import (
     CollaborativeTenantListApi,
     CurrentTenantRetrieveApi,
-    TenantRequiredUserFieldListApi,
+    RequiredTenantUserFieldListApi,
 )
 from .users import (
     OptionalTenantUserListApi,
@@ -40,7 +40,7 @@ __all__ = [
     # 租户
     "CurrentTenantRetrieveApi",
     "CollaborativeTenantListApi",
-    "TenantRequiredUserFieldListApi",
+    "RequiredTenantUserFieldListApi",
     # 租户部门
     "TenantDepartmentListCreateApi",
     "TenantDepartmentUpdateDestroyApi",

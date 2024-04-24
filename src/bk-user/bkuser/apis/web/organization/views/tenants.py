@@ -17,8 +17,8 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
+    RequiredTenantUserFieldOutputSLZ,
     TenantListOutputSLZ,
-    TenantRequiredUserFieldOutputSLZ,
     TenantRetrieveOutputSLZ,
 )
 from bkuser.apps.permission.constants import PermAction
@@ -79,7 +79,7 @@ class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class TenantRequiredUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class RequiredTenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """租户用户必填字段（快速录入用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -89,7 +89,7 @@ class TenantRequiredUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
     @swagger_auto_schema(
         tags=["organization.tenant"],
         operation_description="快速录入租户用户必填字段",
-        responses={status.HTTP_200_OK: TenantRequiredUserFieldOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: RequiredTenantUserFieldOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
@@ -110,4 +110,4 @@ class TenantRequiredUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
 
             field_infos.append({"name": f.name, "display_name": f.display_name, "tips": tips})
 
-        return Response(TenantRequiredUserFieldOutputSLZ(field_infos, many=True).data, status=status.HTTP_200_OK)
+        return Response(RequiredTenantUserFieldOutputSLZ(field_infos, many=True).data, status=status.HTTP_200_OK)

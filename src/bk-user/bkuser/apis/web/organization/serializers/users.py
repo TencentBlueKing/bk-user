@@ -75,7 +75,7 @@ class TenantUserListInputSLZ(serializers.Serializer):
             department_id
             and not TenantDepartment.objects.filter(tenant_id=self.context["tenant_id"], id=department_id).exists()
         ):
-            raise ValidationError("部门不存在")
+            raise ValidationError(_("部门不存在"))
 
         return department_id
 

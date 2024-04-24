@@ -110,7 +110,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             ]
             TenantUser.objects.bulk_create(tenant_users)
 
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TenantUserBatchCopyApi(CurrentUserTenantMixin, generics.CreateAPIView):
