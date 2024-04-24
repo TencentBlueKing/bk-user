@@ -101,6 +101,7 @@ class RequiredTenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
         ]
         for f in TenantUserCustomField.objects.filter(tenant_id=cur_tenant_id, required=True):
             opts = ", ".join(opt["id"] for opt in f.options)
+
             if f.data_type == UserFieldDataType.ENUM:
                 tips = _("单选枚举，可选值：{}").format(opts)
             elif f.data_type == UserFieldDataType.MULTI_ENUM:

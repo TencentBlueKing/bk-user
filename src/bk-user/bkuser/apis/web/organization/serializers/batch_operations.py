@@ -15,6 +15,7 @@ import phonenumbers
 from django.conf import settings
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
+from phonenumbers import NumberParseException
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -77,13 +78,13 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         required_field_names = [f.name for f in builtin_fields if f.name != "phone_country_code"] + [
             f.name for f in custom_fields if f.required
         ]
-
         field_count = len(required_field_names)
+
         user_infos: List[Dict[str, Any]] = []
         for idx, raw_info in enumerate(raw_user_infos, start=1):
             # 注：raw_info 格式是以空格为分隔符的用户信息字符串
-            # 形式如：tiga 迪迦 tiga@otm.com +8613612356789 male shenzhen running,swimming
-            # 字段对应：username full_name email phone gender region sport_hobbies
+            # 字段：username full_name email phone gender region sport_hobbies
+            # 示例：kafka 卡芙卡 kafka@starrail.com +8613612345678 female StarCoreHunter hunting,burning
             data: List[str] = [s for s in raw_info.split(" ") if s]
             if len(data) != field_count:
                 raise ValidationError(
@@ -93,12 +94,16 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                 )
 
             # 按字段顺序映射（业务逻辑会确保数据顺序一致）
-            props = dict(zip(required_field_names, data, strict=True))
+            props = dict(zip(required_field_names, data))
             # 手机号 + 国际区号单独解析
             phone_numbers = props["phone"]
             props["phone_country_code"] = settings.DEFAULT_PHONE_COUNTRY_CODE
             if phone_numbers.startswith("+"):
-                ret = phonenumbers.parse(phone_numbers)
+                try:
+                    ret = phonenumbers.parse(phone_numbers)
+                except NumberParseException:
+                    raise ValidationError(_("第 {} 行，手机号 {} 格式不正确").format(idx, phone_numbers))
+
                 props["phone"], props["phone_country_code"] = str(ret.national_number), str(ret.country_code)
 
             user_infos.append(
@@ -145,7 +150,7 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
                 # 快速录入的数据中的的多选枚举，都是通过 "," 分隔的字符串表示列表
-                # 但是，默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
+                # 但是默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
                 if isinstance(value, str):
                     value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
 
@@ -153,9 +158,6 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                     raise ValidationError(
                         _("用户名：{} 自定义字段 {} 值 {} 不在可选项 {} 中").format(username, f.name, value, opt_ids)
                     )
-            # 必填字段检查仅适用于字符串类型字段，因为数字类型即使是 0 也不能判断是空，枚举类型都有值检查
-            elif f.data_type == UserFieldDataType.STRING and f.required and not value:
-                raise ValidationError(f"username: {username}, field {f.name} is required")
 
             extras[f.name] = value
 

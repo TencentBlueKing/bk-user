@@ -67,9 +67,6 @@ class TenantUserBatchCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
         if not tenant_dept:
             raise error_codes.TENANT_USER_CREATE_FAILED.f(_("指定的租户部门不存在"))
 
-        tenant_id = tenant_dept.tenant_id
-        data_source_dept = tenant_dept.data_source_department
-
         with transaction.atomic():
             # 新建数据源用户
             data_source_users = [
@@ -92,7 +89,9 @@ class TenantUserBatchCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
 
             # 绑定数据源部门 - 用户
             relations = [
-                DataSourceDepartmentUserRelation(user=user, department=data_source_dept, data_source=data_source)
+                DataSourceDepartmentUserRelation(
+                    user=user, department=tenant_dept.data_source_department, data_source=data_source
+                )
                 for user in data_source_users
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
@@ -101,7 +100,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
             # FIXME (su) 支持协同后，要对协同的租户也立即创建租户用户（目前只是对数据源所属租户做创建）
             tenant_users = [
                 TenantUser(
-                    id=gen_tenant_user_id(tenant_id, data_source, user),
+                    id=gen_tenant_user_id(cur_tenant_id, data_source, user),
                     tenant_id=tenant_dept.tenant_id,
                     data_source=data_source,
                     data_source_user=user,
@@ -224,17 +223,25 @@ class TenantUserBatchDeleteApi(CurrentUserTenantMixin, generics.DestroyAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        data_source_user_ids = TenantUser.objects.filter(
-            id__in=params["user_ids"], tenant_id=cur_tenant_id
-        ).values_list("data_source_user", flat=True)
+        # 注：直接计算待删除的数据源用户 ID 列表，不要使用 .values_list("data_source_user_id", flat=True)
+        # 原因是：惰性求值会导致租户用户删除后，后续无法计算数据源用户 ID 列表，导致数据清理失败
+        # 而且最后才删除租户用户也不合适，因为租户用户是下游数据，应该最先被回收
+        data_source_user_ids = [
+            u.data_source_user_id
+            for u in TenantUser.objects.filter(id__in=params["user_ids"], tenant_id=cur_tenant_id)
+        ]
 
         with transaction.atomic():
             # 删除用户意味着租户用户 & 数据源用户都删除，前面检查过权限，
             # 因此这里所有协同产生的租户用户也需要删除（不等同步，立即生效）
             TenantUser.objects.filter(data_source_user_id__in=data_source_user_ids).delete()
+            # 删除部门 - 用户关系中，用户是待删除用户的
             DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids).delete()
+            # 删除用户 - leader 关系中，用户是待删除用户的
             DataSourceUserLeaderRelation.objects.filter(user_id__in=data_source_user_ids).delete()
+            # 删除用户 - leader 关系中，leader 是待删除用户的
             DataSourceUserLeaderRelation.objects.filter(leader_id__in=data_source_user_ids).delete()
+            # 最后才是批量回收数据源用户
             DataSourceUser.objects.filter(id__in=data_source_user_ids).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
