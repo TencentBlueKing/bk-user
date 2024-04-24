@@ -13,7 +13,7 @@
                 <bk-input v-model="formData.name" :placeholder="validate.name.message" />
               </bk-form-item>
               <bk-form-item :label="$t('租户ID')" property="id" required>
-                <bk-input v-model="formData.id" />
+                <bk-input v-model="formData.id" readonly />
               </bk-form-item>
             </div>
             <bk-form-item :label="$t('租户logo')">
