@@ -578,3 +578,6 @@ EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"
 # 限制组织架构页面用户/部门搜索 API 返回的最大条数
 # 由于需要计算组织路径导致性能不佳，建议不要太高，而是让用户细化搜索条件
 ORGANIZATION_SEARCH_API_LIMIT = env.int("ORGANIZATION_SEARCH_API_LIMIT", 20)
+
+# 版本日志
+VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
