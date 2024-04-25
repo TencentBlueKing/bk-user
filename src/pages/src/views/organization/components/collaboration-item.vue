@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <div class="leading-[36px] text-[14px] px-[6px]">
+    <div class="leading-[36px] text-[14px] px-[6px] inline-flex items-center">
       <img v-if="tenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="tenant?.logo" />
       <span
         v-else

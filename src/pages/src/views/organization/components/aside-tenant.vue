@@ -1,7 +1,7 @@
 <template>
   <section class="bg-white h-full pl-[6px]">
     <div class="">
-      <div class="leading-[36px] text-[14px] px-[6px]">
+      <div class="leading-[36px] text-[14px] px-[6px] inline-flex items-center">
         <img v-if="currentTenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="currentTenant?.logo" />
         <span
           v-else
@@ -30,6 +30,7 @@
               :dept="node"
               :tenant="currentTenant"
               @add-node="addNode"
+              @delete-node="deleteNode"
               @update-node="updateNode">
             </operate-more>
           </div>
@@ -77,6 +78,7 @@ const {
   getRemoteData,
   handleNodeClick,
   addNode,
+  deleteNode,
   updateNode,
   getPrefixIcon,
 } = organizationAsideHooks;

@@ -1,6 +1,6 @@
 <template>
   <bk-resize-layout
-    class="h-[calc(100vh-52px)]"
+    class="h-[calc(100vh-52px)] user-aside"
     immediate
     :min="280"
     :max="400"
@@ -9,7 +9,7 @@
       <search></search>
       <bk-resize-layout
         placement="top"
-        style="height: 100%;"
+        style="height: calc(100vh - 52px);"
         :border="false"
         immediate
         :min="140"
@@ -67,5 +67,9 @@ const appStore = useAppStore();
       visibility: visible;
     }
   }
+}
+
+:deep(.bk-resize-layout-aside-content) {
+  overflow: unset !important;
 }
 </style>
