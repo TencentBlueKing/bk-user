@@ -450,5 +450,9 @@
   "时间": "Time",
   "更新内容": "Update content",
   "变更": "Change",
+  "添加子组织": "Add sub-organization",
+  "重命名": "Rename",
+  "协同租户": "Collaboration Tenant",
+  "协同配置": "Collaboration Configuration",
   "新增": "Add"
 }

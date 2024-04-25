@@ -5,6 +5,8 @@ import type {
   UpdateTenantParams,
 } from './types/organizationFiles';
 
+const prefix = 'api/v1/web/organization';
+
 /**
  * 组织架构-租户列表
  */
@@ -48,3 +50,28 @@ export const getTenantOrganizationUsersList = (params: TenantListParams) => {
   const { id, keyword, page, pageSize } = params;
   return http.get(`/api/v1/web/tenant-organization/tenants/${id}/users/?keyword=${keyword}&page=${page}&page_size=${pageSize}`);
 };
+
+/**
+ * 当前租户
+ */
+export const getCurrentTenant = () => http.get(`${prefix}/current-tenant/`);
+
+/**
+ * 当前租户下的部门列表，id为0时表示获取根部门
+ */
+export const getDepartmentsList = (deptId: number, id: string) => http.get(`${prefix}/tenants/${id}/departments/`, { parent_department_id: deptId });
+
+/**
+ * 创建租户部门
+ */
+export const addDepartment = (id: string, params: any) => http.post(`${prefix}/tenants/${id}/departments/`, params);
+
+/**
+ * 更新租户部门
+ */
+export const updateDepartment = (id: string, params: any) => http.put(`${prefix}/tenants/departments/${id}/`, params);
+
+/**
+ * 获取当前租户的协作租户信息
+ */
+export const getCollaboration = () => http.get(`${prefix}/collaborative-tenants/`);
