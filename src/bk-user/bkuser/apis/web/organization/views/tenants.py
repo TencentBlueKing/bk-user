@@ -105,7 +105,7 @@ class RequiredTenantUserFieldListApi(CurrentUserTenantMixin, generics.ListAPIVie
             if f.data_type == UserFieldDataType.ENUM:
                 tips = _("单选枚举，可选值：{}").format(opts)
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
-                tips = _("多选枚举，多个值以英文逗号分隔，可选值：{}").format(opts)
+                tips = _("多选枚举，多个值以 / 分隔，可选值：{}").format(opts)
             else:
                 tips = _("数据类型：{}").format(UserFieldDataType.get_choice_label(f.data_type))
 

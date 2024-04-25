@@ -10,10 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 
 from .batch_operations import (
-    TenantUserBatchCopyApi,
+    TenantDepartmentUserRelationBatchCreateApi,
+    TenantDepartmentUserRelationBatchUpdateApi,
     TenantUserBatchCreateApi,
     TenantUserBatchDeleteApi,
-    TenantUserBatchMoveApi,
 )
 from .departments import (
     OptionalTenantDepartmentListApi,
@@ -56,7 +56,7 @@ __all__ = [
     "TenantUserStatusUpdateApi",
     # 批量操作
     "TenantUserBatchCreateApi",
-    "TenantUserBatchCopyApi",
-    "TenantUserBatchMoveApi",
     "TenantUserBatchDeleteApi",
+    "TenantDepartmentUserRelationBatchCreateApi",
+    "TenantDepartmentUserRelationBatchUpdateApi",
 ]

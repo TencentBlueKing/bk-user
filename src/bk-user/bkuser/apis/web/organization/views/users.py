@@ -38,6 +38,7 @@ from bkuser.apis.web.organization.serializers import (
     TenantUserStatusUpdateOutputSLZ,
     TenantUserUpdateInputSLZ,
 )
+from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
     DataSource,
@@ -63,7 +64,7 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
-class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class OptionalTenantUserListApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     """可选租户用户列表（下拉框数据用）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -78,12 +79,9 @@ class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
-        cur_tenant_id = self.get_current_tenant_id()
-        # 只能是本租户数据源同步过来的用户，协同所得的不可选
+        # 只能是本租户的本地实名数据源同步过来的用户，协同所得的不可选
         queryset = TenantUser.objects.filter(
-            tenant_id=cur_tenant_id,
-            data_source__owner_tenant_id=cur_tenant_id,
-            data_source__type=DataSourceTypeEnum.REAL,
+            tenant_id=self.get_current_tenant_id(), data_source=self.get_current_tenant_local_real_data_source()
         ).select_related("data_source_user")
         if kw := params.get("keyword"):
             queryset = queryset.filter(
@@ -95,6 +93,12 @@ class OptionalTenantUserListApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         return queryset[: self.search_limit]
 
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="获取可选租户用户列表",
+        query_serializer=OptionalTenantUserListInputSLZ(),
+        responses={status.HTTP_200_OK: OptionalTenantUserListOutputSLZ(many=True)},
+    )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
@@ -179,15 +183,13 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self) -> QuerySet[TenantUser]:
-        slz = TenantUserListInputSLZ(
-            data=self.request.query_params,
-            context={"tenant_id": self.get_current_tenant_id()},
-        )
+        cur_tenant_id = self.get_current_tenant_id()
+        slz = TenantUserListInputSLZ(data=self.request.query_params, context={"tenant_id": cur_tenant_id})
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
         queryset = TenantUser.objects.select_related("data_source_user").filter(
-            tenant_id=self.get_current_tenant_id(),
+            tenant_id=cur_tenant_id,
             data_source__owner_tenant_id=self.kwargs["id"],
             data_source__type=DataSourceTypeEnum.REAL,
         )
@@ -196,16 +198,12 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
                 Q(data_source_user__username__icontains=kw) | Q(data_source_user__full_name__icontains=kw)
             )
 
-        tenant_dept_id = params["department_id"]
-        # FIXME (su) 目前好像没办法只过滤不属于任何部门的用户？如果不指定部门就全捞出来吧
-        recursive = params["recursive"] if tenant_dept_id else True
-
-        if tenant_dept_id:
-            tenant_dept = TenantDepartment.objects.get(id=tenant_dept_id, tenant_id=self.get_current_tenant_id())
+        if params["department_id"]:
+            tenant_dept = TenantDepartment.objects.get(id=params["department_id"], tenant_id=cur_tenant_id)
 
             filter_dept_ids = [tenant_dept.data_source_department_id]
             # 如果指定递归查询，则需要找出所有子部门的 ID，用于后续过滤
-            if recursive:
+            if params["recursive"]:
                 dept_relation = DataSourceDepartmentRelation.objects.get(
                     department_id=tenant_dept.data_source_department_id
                 )
@@ -226,18 +224,21 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
 
         :return: {租户用户 ID: [部门名称]}
         """
-        tenant_id = self.get_current_tenant_id()
+        data_source_user_ids = [u.data_source_user_id for u in tenant_users]
+        relations = DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids)
 
+        data_source_dept_ids = relations.values_list("department_id", flat=True)
         # {数据源部门 ID: 数据源部门名称}
         data_source_dept_id_name_map = {
             dept.data_source_department_id: dept.data_source_department.name
-            for dept in TenantDepartment.objects.filter(tenant_id=tenant_id).select_related("data_source_department")
+            for dept in TenantDepartment.objects.filter(
+                tenant_id=self.get_current_tenant_id(), data_source_department_id__in=data_source_dept_ids
+            ).select_related("data_source_department")
         }
 
-        data_source_user_ids = [u.data_source_user_id for u in tenant_users]
         # {数据源用户 ID: [数据源部门 ID1, 数据源部门 ID2]}
         data_source_user_dept_ids_map = defaultdict(list)
-        for rel in DataSourceDepartmentUserRelation.objects.filter(user_id__in=data_source_user_ids):
+        for rel in relations:
             data_source_user_dept_ids_map[rel.user_id].append(rel.department_id)
 
         return {
@@ -508,7 +509,9 @@ class TenantUserPasswordResetApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixi
 
         if not (data_source.is_local and data_source.is_real_type and plugin_config.enable_password):
             raise error_codes.DATA_SOURCE_OPERATION_UNSUPPORTED.f(
-                _("仅可以重置 已经启用密码功能 的 本地数据源 的用户密码")
+                _(
+                    "仅可以重置 已经启用密码功能 的 本地数据源 的用户密码",
+                )
             )
 
         slz = TenantUserPasswordResetInputSLZ(

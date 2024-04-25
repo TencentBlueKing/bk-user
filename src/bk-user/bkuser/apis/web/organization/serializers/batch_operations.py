@@ -85,10 +85,10 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
 
         user_infos: List[Dict[str, Any]] = []
         for idx, raw_info in enumerate(raw_user_infos, start=1):
-            # 注：raw_info 格式是以空格为分隔符的用户信息字符串
-            # 字段：username full_name email phone gender region sport_hobbies
-            # 示例：kafka 卡芙卡 kafka@starrail.com +8613612345678 female StarCoreHunter hunting,burning
-            data: List[str] = [s for s in raw_info.split(" ") if s]
+            # 注：raw_info 格式是以英文逗号 (,) 为分隔符的用户信息字符串，多选枚举以 / 拼接
+            # 字段：username full_name email phone gender region hobbies
+            # 示例：kafka, 卡芙卡, kafka@starrail.com, +8613612345678, female, StarCoreHunter, hunting/burning
+            data: List[str] = [s.strip() for s in raw_info.split(",") if s.strip()]
             if len(data) != field_count:
                 raise ValidationError(
                     _(
@@ -152,10 +152,10 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
                     )
             # 多选枚举类型，值必须是字符串列表，且是可选项的子集
             elif f.data_type == UserFieldDataType.MULTI_ENUM:
-                # 快速录入的数据中的的多选枚举，都是通过 "," 分隔的字符串表示列表
+                # 快速录入的数据中的的多选枚举，都是通过 "/" 分隔的字符串表示列表
                 # 但是默认值 default 可能是 list 类型，因此这里还是需要做类型判断的
                 if isinstance(value, str):
-                    value = [v.strip() for v in value.split(",") if v.strip()]  # type: ignore
+                    value = [v.strip() for v in value.split("/") if v.strip()]  # type: ignore
 
                 if set(value) - set(opt_ids):
                     raise ValidationError(
@@ -170,16 +170,16 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         self, user_infos: List[Dict[str, Any]], custom_fields: QuerySet[TenantUserCustomField]
     ) -> None:
         """校验用户信息列表中数据是否合法"""
-        usernames = [u["username"] for u in user_infos]
-        # 检查新增的数据是否有用户名重复的
+        usernames = [u["username"].lower() for u in user_infos]
+        # 检查新增的数据是否有用户名重复的，需要忽略大小写，因为 DB 中是忽略的
         counter = collections.Counter(usernames)
         if duplicate_usernames := [u for u, cnt in counter.items() if cnt > 1]:
             raise ValidationError(_("用户名 {} 重复").format(", ".join(duplicate_usernames)))
 
-        if exists_users := DataSourceUser.objects.filter(
+        if exists_usernames := DataSourceUser.objects.filter(
             username__in=usernames, data_source_id=self.context["data_source_id"]
-        ):
-            raise ValidationError(_("用户名 {} 已存在").format(", ".join(u.username for u in exists_users)))
+        ).values_list("username", flat=True):
+            raise ValidationError(_("用户名 {} 已存在").format(", ".join(exists_usernames)))
 
         # 单独字段校验走序列化器，无需获取 validated_data
         TenantUserInfoSLZ(
@@ -193,32 +193,22 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         ).is_valid(raise_exception=True)
 
 
-def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str) -> None:
+def _validate_tenant_user_ids(user_ids: List[str], tenant_id: str, data_source_id: int) -> None:
     """校验租户用户 ID 列表中数据是否合法"""
-    exists_tenant_users = TenantUser.objects.filter(id__in=user_ids, tenant_id=tenant_id)
+    exists_tenant_users = TenantUser.objects.filter(
+        id__in=user_ids, tenant_id=tenant_id, data_source_id=data_source_id
+    )
     if invalid_user_ids := set(user_ids) - set(exists_tenant_users.values_list("id", flat=True)):
         raise ValidationError(_("用户 ID {} 在当前租户中不存在").format(", ".join(invalid_user_ids)))
 
-    if len({u.data_source_id for u in exists_tenant_users}) != 1:
-        raise ValidationError(_("待批量操作的用户应属于同一数据源").format(", ".join(user_ids)))
 
-    data_source = exists_tenant_users.first().data_source
-    if not (data_source.is_local and data_source.is_real_type):
-        raise ValidationError(_("仅能批量操作本地数据源用户"))
-
-
-def _validate_tenant_department_ids(department_ids: List[int], tenant_id: str) -> None:
+def _validate_tenant_department_ids(department_ids: List[int], tenant_id: str, data_source_id: int) -> None:
     """校验租户部门 ID 列表中数据是否合法"""
-    exists_tenant_depts = TenantDepartment.objects.filter(id__in=department_ids, tenant_id=tenant_id)
+    exists_tenant_depts = TenantDepartment.objects.filter(
+        id__in=department_ids, tenant_id=tenant_id, data_source_id=data_source_id
+    )
     if invalid_dept_ids := set(department_ids) - set(exists_tenant_depts.values_list("id", flat=True)):
         raise ValidationError(_("部门 ID {} 在当前租户中不存在").format(invalid_dept_ids))
-
-    if len({u.data_source_id for u in exists_tenant_depts}) != 1:
-        raise ValidationError(_("选中的部门应属于同一数据源").format(department_ids))
-
-    data_source = exists_tenant_depts.first().data_source
-    if not (data_source.is_local and data_source.is_real_type):
-        raise ValidationError(_("仅能选择本地数据源部门"))
 
 
 class TenantUserBatchCopyInputSLZ(serializers.Serializer):
@@ -236,11 +226,11 @@ class TenantUserBatchCopyInputSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        _validate_tenant_user_ids(user_ids, self.context["tenant_id"])
+        _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
         return user_ids
 
     def validate_department_ids(self, department_ids: List[int]) -> List[int]:
-        _validate_tenant_department_ids(department_ids, self.context["tenant_id"])
+        _validate_tenant_department_ids(department_ids, self.context["tenant_id"], self.context["data_source_id"])
         return department_ids
 
 
@@ -256,5 +246,5 @@ class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
     )
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
-        _validate_tenant_user_ids(user_ids, self.context["tenant_id"])
+        _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
         return user_ids

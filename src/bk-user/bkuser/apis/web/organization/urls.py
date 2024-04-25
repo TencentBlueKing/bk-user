@@ -97,28 +97,28 @@ urlpatterns = [
         views.TenantUserStatusUpdateApi.as_view(),
         name="organization.tenant_user.status.update",
     ),
-    # 租户用户快速录入
+    # 租户用户 - 快速录入
     path(
         "tenants/users/operations/batch_create/",
         views.TenantUserBatchCreateApi.as_view(),
         name="organization.tenant_user.batch_create",
-    ),
-    # 租户用户 - 从其他组织拉取 / 添加到其他组织
-    path(
-        "tenants/users/operations/batch_copy/",
-        views.TenantUserBatchCopyApi.as_view(),
-        name="organization.tenant_user.batch_copy",
-    ),
-    # 租户用户 - 移动到其他组织
-    path(
-        "tenants/users/operations/batch_move/",
-        views.TenantUserBatchMoveApi.as_view(),
-        name="organization.tenant_user.batch_move",
     ),
     # 租户用户 - 批量删除
     path(
         "tenants/users/operations/batch_delete/",
         views.TenantUserBatchDeleteApi.as_view(),
         name="organization.tenant_user.batch_delete",
+    ),
+    # 租户用户 - 从其他组织拉取 / 添加到其他组织
+    path(
+        "tenants/department-user-relations/operations/batch_create/",
+        views.TenantDepartmentUserRelationBatchCreateApi.as_view(),
+        name="organization.tenant_department_user_relation.batch_create",
+    ),
+    # 租户用户 - 移动到其他组织
+    path(
+        "tenants/department-user-relations/operations/batch_update/",
+        views.TenantDepartmentUserRelationBatchUpdateApi.as_view(),
+        name="organization.tenant_department_user_relation.batch_update",
     ),
 ]
