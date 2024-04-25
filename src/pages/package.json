@@ -21,6 +21,8 @@
   "dependencies": {
     "@blueking/bkui-form": "^1.0.0-beta.3",
     "@blueking/login-modal": "^1.0.1",
+    "@blueking/notice-component": "^2.0.4",
+    "@blueking/release-note": "^0.0.1-beta.7",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
     "acorn": "8.10.0",
