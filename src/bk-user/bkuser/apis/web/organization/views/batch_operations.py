@@ -20,10 +20,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.organization.serializers import (
-    TenantUserBatchCopyInputSLZ,
+    TenantDepartmentUserRelationBatchCreateInputSLZ,
+    TenantDepartmentUserRelationBatchUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
     TenantUserBatchDeleteInputSLZ,
-    TenantUserBatchMoveInputSLZ,
 )
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apps.data_source.models import (
@@ -129,14 +129,14 @@ class TenantDepartmentUserRelationBatchCreateApi(CurrentUserTenantDataSourceMixi
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 从其他组织拉取 / 添加到其他组织",
-        request_body=TenantUserBatchCopyInputSLZ(),
+        request_body=TenantDepartmentUserRelationBatchCreateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def post(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchCopyInputSLZ(
+        slz = TenantDepartmentUserRelationBatchCreateInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
@@ -171,14 +171,14 @@ class TenantDepartmentUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixi
     @swagger_auto_schema(
         tags=["organization.user"],
         operation_description="租户用户 - 移动到其他组织",
-        request_body=TenantUserBatchMoveInputSLZ(),
+        request_body=TenantDepartmentUserRelationBatchUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def post(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
         data_source = self.get_current_tenant_local_real_data_source()
 
-        slz = TenantUserBatchMoveInputSLZ(
+        slz = TenantDepartmentUserRelationBatchUpdateInputSLZ(
             data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)

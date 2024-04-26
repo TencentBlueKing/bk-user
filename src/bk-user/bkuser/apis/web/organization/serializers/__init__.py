@@ -10,10 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 
 from .batch_operations import (
-    TenantUserBatchCopyInputSLZ,
+    TenantDepartmentUserRelationBatchCreateInputSLZ,
+    TenantDepartmentUserRelationBatchUpdateInputSLZ,
     TenantUserBatchCreateInputSLZ,
     TenantUserBatchDeleteInputSLZ,
-    TenantUserBatchMoveInputSLZ,
 )
 from .departments import (
     OptionalTenantDepartmentListInputSLZ,
@@ -78,7 +78,7 @@ __all__ = [
     "TenantUserStatusUpdateOutputSLZ",
     # 批量操作
     "TenantUserBatchCreateInputSLZ",
-    "TenantUserBatchCopyInputSLZ",
-    "TenantUserBatchMoveInputSLZ",
     "TenantUserBatchDeleteInputSLZ",
+    "TenantDepartmentUserRelationBatchCreateInputSLZ",
+    "TenantDepartmentUserRelationBatchUpdateInputSLZ",
 ]

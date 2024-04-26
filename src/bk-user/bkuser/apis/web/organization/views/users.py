@@ -41,7 +41,6 @@ from bkuser.apis.web.organization.serializers import (
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
-    DataSource,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
@@ -179,7 +178,7 @@ class TenantUserSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
         return Response(resp_data, status=status.HTTP_200_OK)
 
 
-class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
+class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     def get_queryset(self) -> QuerySet[TenantUser]:
@@ -272,11 +271,7 @@ class TenantUserListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
             raise error_codes.TENANT_USER_CREATE_FAILED.f(_("仅可创建属于当前租户的用户"))
 
         # 必须存在实名用户数据源才可以创建租户部门
-        data_source = DataSource.objects.filter(owner_tenant_id=cur_tenant_id, type=DataSourceTypeEnum.REAL).first()
-        if not data_source:
-            raise error_codes.DATA_SOURCE_NOT_EXIST.f(_("当前租户不存在实名用户数据源"))
-        if not data_source.is_local:
-            raise error_codes.TENANT_USER_CREATE_FAILED.f(_("仅本地数据源支持创建用户"))
+        data_source = self.get_current_tenant_local_real_data_source()
 
         # 创建租户用户参数校验
         slz = TenantUserCreateInputSLZ(

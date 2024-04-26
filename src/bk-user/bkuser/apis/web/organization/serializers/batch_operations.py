@@ -211,7 +211,7 @@ def _validate_tenant_department_ids(department_ids: List[int], tenant_id: str, d
         raise ValidationError(_("部门 ID {} 在当前租户中不存在").format(invalid_dept_ids))
 
 
-class TenantUserBatchCopyInputSLZ(serializers.Serializer):
+class TenantDepartmentUserRelationBatchCreateInputSLZ(serializers.Serializer):
     user_ids = serializers.ListField(
         help_text="用户 ID 列表",
         child=serializers.CharField(help_text="租户用户 ID"),
@@ -234,7 +234,7 @@ class TenantUserBatchCopyInputSLZ(serializers.Serializer):
         return department_ids
 
 
-class TenantUserBatchMoveInputSLZ(TenantUserBatchCopyInputSLZ):
+class TenantDepartmentUserRelationBatchUpdateInputSLZ(TenantDepartmentUserRelationBatchCreateInputSLZ):
     ...
 
 
