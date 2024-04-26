@@ -9,17 +9,16 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from .batch_operations import (
-    TenantDepartmentUserRelationBatchCreateApi,
-    TenantDepartmentUserRelationBatchUpdateApi,
-    TenantUserBatchCreateApi,
-    TenantUserBatchDeleteApi,
-)
 from .departments import (
     OptionalTenantDepartmentListApi,
     TenantDepartmentListCreateApi,
     TenantDepartmentSearchApi,
     TenantDepartmentUpdateDestroyApi,
+)
+from .relations import (
+    TenantDeptUserRelationBatchCreateApi,
+    TenantDeptUserRelationBatchDeleteApi,
+    TenantDeptUserRelationBatchUpdateApi,
 )
 from .tenants import (
     CollaborativeTenantListApi,
@@ -28,6 +27,8 @@ from .tenants import (
 )
 from .users import (
     OptionalTenantUserListApi,
+    TenantUserBatchCreateApi,
+    TenantUserBatchDeleteApi,
     TenantUserListCreateApi,
     TenantUserOrganizationPathListApi,
     TenantUserPasswordResetApi,
@@ -54,9 +55,10 @@ __all__ = [
     "TenantUserPasswordResetApi",
     "TenantUserOrganizationPathListApi",
     "TenantUserStatusUpdateApi",
-    # 批量操作
     "TenantUserBatchCreateApi",
     "TenantUserBatchDeleteApi",
-    "TenantDepartmentUserRelationBatchCreateApi",
-    "TenantDepartmentUserRelationBatchUpdateApi",
+    # 租户部门 - 用户关系
+    "TenantDeptUserRelationBatchCreateApi",
+    "TenantDeptUserRelationBatchUpdateApi",
+    "TenantDeptUserRelationBatchDeleteApi",
 ]

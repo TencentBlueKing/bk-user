@@ -9,12 +9,6 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from .batch_operations import (
-    TenantDepartmentUserRelationBatchCreateInputSLZ,
-    TenantDepartmentUserRelationBatchUpdateInputSLZ,
-    TenantUserBatchCreateInputSLZ,
-    TenantUserBatchDeleteInputSLZ,
-)
 from .departments import (
     OptionalTenantDepartmentListInputSLZ,
     OptionalTenantDepartmentListOutputSLZ,
@@ -26,6 +20,12 @@ from .departments import (
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
+from .relations import (
+    TenantDeptUserRelationBatchCreateInputSLZ,
+    TenantDeptUserRelationBatchDeleteInputSLZ,
+    TenantDeptUserRelationBatchPatchInputSLZ,
+    TenantDeptUserRelationBatchUpdateInputSLZ,
+)
 from .tenants import (
     RequiredTenantUserFieldOutputSLZ,
     TenantListOutputSLZ,
@@ -34,6 +34,8 @@ from .tenants import (
 from .users import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
+    TenantUserBatchCreateInputSLZ,
+    TenantUserBatchDeleteInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
     TenantUserListInputSLZ,
@@ -76,9 +78,11 @@ __all__ = [
     "TenantUserPasswordResetInputSLZ",
     "TenantUserOrganizationPathOutputSLZ",
     "TenantUserStatusUpdateOutputSLZ",
-    # 批量操作
     "TenantUserBatchCreateInputSLZ",
     "TenantUserBatchDeleteInputSLZ",
-    "TenantDepartmentUserRelationBatchCreateInputSLZ",
-    "TenantDepartmentUserRelationBatchUpdateInputSLZ",
+    # 租户部门 - 用户关系
+    "TenantDeptUserRelationBatchCreateInputSLZ",
+    "TenantDeptUserRelationBatchUpdateInputSLZ",
+    "TenantDeptUserRelationBatchPatchInputSLZ",
+    "TenantDeptUserRelationBatchDeleteInputSLZ",
 ]
