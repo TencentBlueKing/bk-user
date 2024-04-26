@@ -25,6 +25,12 @@ urlpatterns = [
         views.CollaborativeTenantListApi.as_view(),
         name="organization.collaborative_tenant.list",
     ),
+    # 租户用户 - 快速录入必填字段
+    path(
+        "tenants/required-user-fields/",
+        views.RequiredTenantUserFieldListApi.as_view(),
+        name="organization.tenant.required_user_field.list",
+    ),
     # 租户部门列表
     path(
         "tenants/<str:id>/departments/",
@@ -43,10 +49,76 @@ urlpatterns = [
         views.TenantDepartmentSearchApi.as_view(),
         name="organization.tenant_department.search",
     ),
+    # 可选租户部门列表（下拉框数据用）
+    path(
+        "tenants/optional-departments/",
+        views.OptionalTenantDepartmentListApi.as_view(),
+        name="organization.optional_department.list",
+    ),
+    # 可选租户用户列表（下拉框数据用）
+    path(
+        "tenants/optional-leaders/",
+        views.OptionalTenantUserListApi.as_view(),
+        name="organization.optional_leader.list",
+    ),
     # 搜索租户用户（含协同数据）
     path(
         "tenants/users/",
         views.TenantUserSearchApi.as_view(),
         name="organization.tenant_user.search",
+    ),
+    # 租户用户列表 / 创建租户用户
+    path(
+        "tenants/<str:id>/users/",
+        views.TenantUserListCreateApi.as_view(),
+        name="organization.tenant_user.list_create",
+    ),
+    # 获取 / 更新 / 删除租户用户
+    path(
+        "tenants/users/<str:id>/",
+        views.TenantUserRetrieveUpdateDestroyApi.as_view(),
+        name="organization.tenant_user.retrieve_update_destroy",
+    ),
+    # 重置租户用户密码
+    path(
+        "tenants/users/<str:id>/password/",
+        views.TenantUserPasswordResetApi.as_view(),
+        name="organization.tenant_user.password.reset",
+    ),
+    # 租户用户所属部门组织路径
+    path(
+        "tenants/users/<str:id>/organization-paths/",
+        views.TenantUserOrganizationPathListApi.as_view(),
+        name="organization.tenant_user.organization_path.list",
+    ),
+    # 修改租户用户状态
+    path(
+        "tenants/users/<str:id>/status/",
+        views.TenantUserStatusUpdateApi.as_view(),
+        name="organization.tenant_user.status.update",
+    ),
+    # 租户用户 - 快速录入
+    path(
+        "tenants/users/operations/batch_create/",
+        views.TenantUserBatchCreateApi.as_view(),
+        name="organization.tenant_user.batch_create",
+    ),
+    # 租户用户 - 批量删除
+    path(
+        "tenants/users/operations/batch_delete/",
+        views.TenantUserBatchDeleteApi.as_view(),
+        name="organization.tenant_user.batch_delete",
+    ),
+    # 租户用户 - 从其他组织拉取 / 添加到其他组织
+    path(
+        "tenants/department-user-relations/operations/batch_create/",
+        views.TenantDepartmentUserRelationBatchCreateApi.as_view(),
+        name="organization.tenant_department_user_relation.batch_create",
+    ),
+    # 租户用户 - 移动到其他组织
+    path(
+        "tenants/department-user-relations/operations/batch_update/",
+        views.TenantDepartmentUserRelationBatchUpdateApi.as_view(),
+        name="organization.tenant_department_user_relation.batch_update",
     ),
 ]
