@@ -112,13 +112,19 @@ urlpatterns = [
     # 租户用户 - 从其他组织拉取 / 添加到其他组织
     path(
         "tenants/department-user-relations/operations/batch_create/",
-        views.TenantDepartmentUserRelationBatchCreateApi.as_view(),
-        name="organization.tenant_department_user_relation.batch_create",
+        views.TenantDeptUserRelationBatchCreateApi.as_view(),
+        name="organization.tenant_dept_user_relation.batch_create",
     ),
-    # 租户用户 - 移动到其他组织
+    # 租户用户 - 移动到其他组织 / 清空并加入到其他组织
     path(
         "tenants/department-user-relations/operations/batch_update/",
-        views.TenantDepartmentUserRelationBatchUpdateApi.as_view(),
-        name="organization.tenant_department_user_relation.batch_update",
+        views.TenantDeptUserRelationBatchUpdateApi.as_view(),
+        name="organization.tenant_dept_user_relation.batch_update",
+    ),
+    # 租户用户 - 退出当前组织
+    path(
+        "tenants/department-user-relations/operations/batch_delete/",
+        views.TenantDeptUserRelationBatchDeleteApi.as_view(),
+        name="organization.tenant_dept_user_relation.batch_delete",
     ),
 ]
