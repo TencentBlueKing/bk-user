@@ -129,7 +129,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        cur_data_source_dept = TenantDepartment.objects.get(id=data["current_department_id"]).data_source_department
+        source_data_source_dept = TenantDepartment.objects.get(id=data["source_department_id"]).data_source_department
 
         data_source_dept_ids = TenantDepartment.objects.filter(
             tenant_id=cur_tenant_id, id__in=data["target_department_ids"]
@@ -144,7 +144,7 @@ class TenantDeptUserRelationBatchUpdateApi(CurrentUserTenantDataSourceMixin, gen
         with transaction.atomic():
             # 先删除（仅限于指定部门）
             DataSourceDepartmentUserRelation.objects.filter(
-                user_id__in=data_source_user_ids, department=cur_data_source_dept
+                user_id__in=data_source_user_ids, department=source_data_source_dept
             ).delete()
             # 再添加
             relations = [
@@ -177,7 +177,7 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        cur_data_source_dept = TenantDepartment.objects.get(id=data["current_department_id"]).data_source_department
+        source_data_source_dept = TenantDepartment.objects.get(id=data["source_department_id"]).data_source_department
 
         data_source_user_ids = TenantUser.objects.filter(
             tenant_id=cur_tenant_id,
@@ -185,7 +185,7 @@ class TenantDeptUserRelationBatchDeleteApi(CurrentUserTenantDataSourceMixin, gen
         ).values_list("data_source_user_id", flat=True)
 
         DataSourceDepartmentUserRelation.objects.filter(
-            user_id__in=data_source_user_ids, department=cur_data_source_dept
+            user_id__in=data_source_user_ids, department=source_data_source_dept
         ).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

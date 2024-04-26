@@ -69,9 +69,9 @@ class TenantDeptUserRelationBatchUpdateInputSLZ(TenantDeptUserRelationBatchCreat
 class TenantDeptUserRelationBatchPatchInputSLZ(TenantDeptUserRelationBatchCreateInputSLZ):
     """移至目标组织"""
 
-    current_department_id = serializers.IntegerField(help_text="当前部门 ID")
+    source_department_id = serializers.IntegerField(help_text="当前部门 ID")
 
-    def validate_current_department_id(self, department_id: int) -> int:
+    def validate_source_department_id(self, department_id: int) -> int:
         _validate_tenant_department_ids([department_id], self.context["tenant_id"], self.context["data_source_id"])
         return department_id
 
@@ -82,12 +82,12 @@ class TenantDeptUserRelationBatchDeleteInputSLZ(serializers.Serializer):
     user_ids = StringArrayField(
         help_text="用户 ID 列表", min_items=1, max_items=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT
     )
-    current_department_id = serializers.IntegerField(help_text="当前部门 ID")
+    source_department_id = serializers.IntegerField(help_text="当前部门 ID")
 
     def validate_user_ids(self, user_ids: List[str]) -> List[str]:
         _validate_tenant_user_ids(user_ids, self.context["tenant_id"], self.context["data_source_id"])
         return user_ids
 
-    def validate_current_department_id(self, department_id: int) -> int:
+    def validate_source_department_id(self, department_id: int) -> int:
         _validate_tenant_department_ids([department_id], self.context["tenant_id"], self.context["data_source_id"])
         return department_id
