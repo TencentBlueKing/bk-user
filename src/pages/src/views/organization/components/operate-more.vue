@@ -1,11 +1,11 @@
 <template>
-  <div class="opt-more" v-clickoutside="handleClickOutside">
+  <div class="opt-more absolute right-[12px] top-0" v-clickoutside="handleClickOutside">
     <bk-dropdown
       trigger="manual"
       :is-show="dropdownVisible"
     >
       <span
-        class="user-icon icon-more !leading-[32px] p-[2px]"
+        class="user-icon icon-more !leading-[32px] p-[2px] hover:bg-[#DCDEE5] rounded-[2px]"
         @click="dropdownVisible = !dropdownVisible">
       </span>
       <template #content>

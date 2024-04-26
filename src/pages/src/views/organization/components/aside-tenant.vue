@@ -24,7 +24,7 @@
         }"
       >
         <template #node="node">
-          <div class="org-node flex justify-between pr-[12px]">
+          <div class="org-node pr-[12px] relative">
             <span class="text-[14px]">{{ node.name }}</span>
             <operate-more
               :dept="node"

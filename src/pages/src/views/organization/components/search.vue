@@ -22,7 +22,7 @@
               :key="item.id"
               :class="{ 'bg-[#E1ECFF]': selected.id === item.id }"
               class="py-[6px] hover:bg-[#F5F7FA] cursor-pointer px-[12px]"
-              @click="selected = item"
+              @click="handleOrgSelect(item)"
             >
               <div class="leading-[20px]">
                 <span class="text-[#313238] pr-[8px]">{{ item.name }}</span>
@@ -81,6 +81,9 @@
 import { ref } from 'vue';
 
 import { searchOrganization, searchUser } from '@/http/organizationFiles';
+import useAppStore from '@/store/app';
+
+const appStore = useAppStore();
 
 const search = ref('');
 const orgs = ref([]);
@@ -117,5 +120,12 @@ const searchData = () => {
     .finally(() => {
       searchLoading.value = false;
     });
+};
+
+const handleOrgSelect = (org) => {
+  console.log(org);
+  selected.value = org;
+  searchDialogVisible.value = false;
+  appStore.currentOrg = { ...org };
 };
 </script>

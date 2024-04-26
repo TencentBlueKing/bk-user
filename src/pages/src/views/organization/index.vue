@@ -9,7 +9,7 @@
       <search></search>
       <bk-resize-layout
         placement="top"
-        style="height: calc(100vh - 52px);"
+        style="height: calc(100vh - 106px);"
         :border="false"
         immediate
         :min="140"
@@ -67,9 +67,5 @@ const appStore = useAppStore();
       visibility: visible;
     }
   }
-}
-
-:deep(.bk-resize-layout-aside-content) {
-  overflow: unset !important;
 }
 </style>
