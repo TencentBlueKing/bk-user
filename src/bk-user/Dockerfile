@@ -3,7 +3,7 @@ ENV NPM_VERSION 9.6.7
 
 COPY src/pages /
 WORKDIR /
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 FROM python:3.10.12-slim-bullseye
