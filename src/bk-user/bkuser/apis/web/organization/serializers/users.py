@@ -130,9 +130,15 @@ class TenantUserCreateInputSLZ(serializers.Serializer):
     extras = serializers.JSONField(help_text="自定义字段", default=dict)
 
     department_ids = serializers.ListField(
-        help_text="租户部门 ID 列表", child=serializers.IntegerField(), default=list
+        help_text="租户部门 ID 列表",
+        child=serializers.IntegerField(),
+        default=list,
     )
-    leader_ids = serializers.ListField(help_text="租户上级 ID 列表", child=serializers.CharField(), default=list)
+    leader_ids = serializers.ListField(
+        help_text="租户上级 ID 列表",
+        child=serializers.CharField(),
+        default=list,
+    )
 
     def validate_username(self, username: str) -> str:
         return _validate_duplicate_data_source_username(self.context["data_source_id"], username)
@@ -248,13 +254,18 @@ class TenantUserUpdateInputSLZ(TenantUserCreateInputSLZ):
         )
 
     def validate_extras(self, extras: Dict[str, Any]) -> Dict[str, Any]:
-        # 更新模式下，一些自定义字段是不允许修改的（前端也需要禁用）
-        custom_fields = TenantUserCustomField.objects.filter(
-            tenant_id=self.context["tenant_id"], manager_editable=True
-        )
-        return validate_user_extras(
+        custom_fields = TenantUserCustomField.objects.filter(tenant_id=self.context["tenant_id"])
+
+        extras = validate_user_extras(
             extras, custom_fields, self.context["data_source_id"], self.context["data_source_user_id"]
         )
+        # 更新模式下，一些自定义字段是不允许修改的（前端也需要禁用）
+        # 这里的处理策略是：在通过校验之后，用 DB 中的数据进行替换
+        exists_extras = DataSourceUser.objects.get(id=self.context["data_source_user_id"]).extras
+        for f in custom_fields.filter(manager_editable=False):
+            extras[f.name] = exists_extras[f.name]
+
+        return extras
 
     def validate_leader_ids(self, leader_ids: List[str]) -> List[str]:
         if self.context["tenant_user_id"] in leader_ids:
