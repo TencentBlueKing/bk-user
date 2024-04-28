@@ -13,6 +13,8 @@
       <template #side-header>
         <div
           style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
+          class="cursor-pointer"
+          @click="onGoBack"
         >
           <i class="user-icon icon-user-logo-i" />
           <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
@@ -149,7 +151,10 @@ const state = reactive({
 
 const userStore = useUser();
 const headerNav = ref([]);
-
+const onGoBack = () => {
+  if(route.name === 'tenant') return
+  router.push({name: 'tenant'})
+}
 const userInfo = computed(() => {
   const { role } = userStore.user;
   const baseNav = [
