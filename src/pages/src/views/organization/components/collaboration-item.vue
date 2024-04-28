@@ -1,10 +1,16 @@
 <template>
   <div class="">
-    <div class="leading-[36px] text-[14px] px-[6px] inline-flex items-center">
+    <div
+      class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
+      :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === tenant?.id }"
+      @click="handleNodeClick(tenant)"
+    >
       <img v-if="tenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="tenant?.logo" />
       <span
         v-else
-        class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center">
+        class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
+        :class="{ 'bg-[#3A84FF]': appStore.currentOrg?.id === tenant?.id }"
+      >
         {{ currentTenant?.name.charAt(0).toUpperCase() }}
       </span>
       {{ tenant?.name }}

@@ -12,7 +12,7 @@
     </div>
     <div
       v-if="searchDialogVisible"
-      class="absolute top-[45px] max-h-[500px] overflow-auto w-[394px] bg-white shadow-[0_2px_6px_0_#0000001a] border">
+      class="fixed top-[98px] max-h-[500px] overflow-auto w-[394px] bg-white shadow-[0_2px_6px_0_#0000001a] border">
       <div v-bkloading="{ loading: searchLoading }">
         <section v-if="orgs.length || users.length" class="py-[8px]">
           <div v-if="orgs.length">
