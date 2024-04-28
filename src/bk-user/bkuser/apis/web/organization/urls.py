@@ -103,6 +103,12 @@ urlpatterns = [
         views.TenantUserBatchCreateApi.as_view(),
         name="organization.tenant_user.batch_create",
     ),
+    # 租户用户 - 快速录入 - 预览
+    path(
+        "tenants/users/operations/batch_create_preview/",
+        views.TenantUserBatchCreatePreviewApi.as_view(),
+        name="organization.tenant_user.batch_create_preview",
+    ),
     # 租户用户 - 批量删除
     path(
         "tenants/users/operations/batch_delete/",

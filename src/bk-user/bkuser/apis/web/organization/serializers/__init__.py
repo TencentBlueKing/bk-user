@@ -35,6 +35,8 @@ from .users import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
     TenantUserBatchCreateInputSLZ,
+    TenantUserBatchCreatePreviewInputSLZ,
+    TenantUserBatchCreatePreviewOutputSLZ,
     TenantUserBatchDeleteInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
@@ -79,6 +81,8 @@ __all__ = [
     "TenantUserOrganizationPathOutputSLZ",
     "TenantUserStatusUpdateOutputSLZ",
     "TenantUserBatchCreateInputSLZ",
+    "TenantUserBatchCreatePreviewInputSLZ",
+    "TenantUserBatchCreatePreviewOutputSLZ",
     "TenantUserBatchDeleteInputSLZ",
     # 租户部门 - 用户关系
     "TenantDeptUserRelationBatchCreateInputSLZ",
