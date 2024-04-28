@@ -122,14 +122,13 @@ methods.forEach((method) => {
   Object.defineProperty(http, method, {
     get() {
       return <T>(url: string, payload: any = {}, useConfig = {}) => {
+        updateAxiosInstance();
         const config = initConfig(useConfig);
 
         const fetchURL = getFetchURL(url, method, payload);
         const axiosRequest = methodsWithData.includes(method)
           ? axiosInstance[method as Methods]<ServiceResponseData<T>>(fetchURL, payload, config)
           : axiosInstance[method as Methods]<ServiceResponseData<T>>(fetchURL, config);
-
-        updateAxiosInstance();
 
         return axiosRequest
           .then(response => handleResponse<T>({
