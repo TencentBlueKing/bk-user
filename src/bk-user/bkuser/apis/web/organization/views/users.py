@@ -27,6 +27,8 @@ from bkuser.apis.web.organization.serializers import (
     OptionalTenantUserListInputSLZ,
     OptionalTenantUserListOutputSLZ,
     TenantUserBatchCreateInputSLZ,
+    TenantUserBatchCreatePreviewInputSLZ,
+    TenantUserBatchCreatePreviewOutputSLZ,
     TenantUserBatchDeleteInputSLZ,
     TenantUserCreateInputSLZ,
     TenantUserCreateOutputSLZ,
@@ -625,8 +627,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         data_source = self.get_current_tenant_local_real_data_source()
 
         slz = TenantUserBatchCreateInputSLZ(
-            data=request.data,
-            context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id},
+            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -688,6 +689,33 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         # 对新增的用户进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TenantUserBatchCreatePreviewApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):
+    """批量创建租户用户 - 预览"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    @swagger_auto_schema(
+        tags=["organization.user"],
+        operation_description="租户用户快速录入 - 预览",
+        request_body=TenantUserBatchCreatePreviewInputSLZ(),
+        responses={status.HTTP_200_OK: TenantUserBatchCreatePreviewOutputSLZ(many=True)},
+    )
+    def post(self, request, *args, **kwargs):
+        cur_tenant_id = self.get_current_tenant_id()
+        data_source = self.get_current_tenant_local_real_data_source()
+
+        slz = TenantUserBatchCreatePreviewInputSLZ(
+            data=request.data, context={"tenant_id": cur_tenant_id, "data_source_id": data_source.id}
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        return Response(
+            TenantUserBatchCreatePreviewOutputSLZ(data["user_infos"], many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class TenantUserBatchDeleteApi(CurrentUserTenantDataSourceMixin, generics.DestroyAPIView):

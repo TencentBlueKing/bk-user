@@ -459,6 +459,19 @@ class TenantUserBatchCreateInputSLZ(serializers.Serializer):
         ).is_valid(raise_exception=True)
 
 
+class TenantUserBatchCreatePreviewInputSLZ(TenantUserBatchCreateInputSLZ):
+    ...
+
+
+class TenantUserBatchCreatePreviewOutputSLZ(serializers.Serializer):
+    username = serializers.CharField(help_text="用户名")
+    full_name = serializers.CharField(help_text="姓名")
+    email = serializers.EmailField(help_text="邮箱")
+    phone = serializers.CharField(help_text="手机号")
+    phone_country_code = serializers.CharField(help_text="手机国际区号")
+    extras = serializers.JSONField(help_text="自定义字段")
+
+
 class TenantUserBatchDeleteInputSLZ(serializers.Serializer):
     user_ids = StringArrayField(
         help_text="用户 ID 列表", min_items=1, max_items=settings.ORGANIZATION_BATCH_OPERATION_API_LIMIT
