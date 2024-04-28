@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
 import { InfoBox, Message } from 'bkui-vue';
-import { defineEmits, defineProps, h, onMounted, ref } from 'vue';
+import { defineEmits, defineProps, onMounted, ref } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
 import { useCustomPlugin, useValidate } from '@/hooks';
@@ -222,15 +222,7 @@ const changeStatus = (value: boolean) => {
   if (!value) {
     InfoBox({
       title: t('确认要关闭企业微信登录吗？'),
-      subTitle: h('div', {
-        style: {
-          textAlign: 'left',
-          lineHeight: '24px',
-        },
-      }, [
-        h('p', t('1.关闭后该数据的用户将无法通过企业微信登录')),
-        h('p', t('2.关闭后，再次开启时，企业微信信息会重置')),
-      ]),
+      subTitle: t('关闭后用户将无法通过企业微信登录'),
       onConfirm() {
         formData.value.status = 'disabled';
       },
