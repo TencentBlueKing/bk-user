@@ -7,7 +7,10 @@
       @change="handleSearch"
       @clear="handleClear"
     ></bk-input>
-    <div class="user-icon icon-refresh bg-[#F0F1F5] h-[32px] w-[32px] ml-[8px] !leading-[32px] cursor-pointer">
+    <div 
+      class="user-icon icon-refresh bg-[#F0F1F5] h-[32px] w-[32px] ml-[8px] !leading-[32px] cursor-pointer"
+      @click="handleRefresh"
+    >
     </div>
     <div
       v-if="searchDialogVisible"
@@ -216,4 +219,9 @@ const handleBeforeClose = async () => {
     return Promise.resolve(enableLeave);
   }
 };
+
+const handleRefresh = () => {
+  handleClear();
+  appStore.reloadIndex += 1
+}
 </script>

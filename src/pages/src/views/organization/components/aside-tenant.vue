@@ -1,6 +1,6 @@
 <template>
   <section class="bg-white h-full pl-[6px]">
-    <div class="">
+    <div v-bkloading="{ loading: loading }">
       <div
         class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
         :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
@@ -62,6 +62,7 @@ import useAppStore from '@/store/app';
 const appStore = useAppStore();
 
 const currentTenant = ref();
+const loading = ref(false);
 
 const formatTreeData = (data = []) => {
   data.forEach((item) => {
@@ -74,11 +75,13 @@ const formatTreeData = (data = []) => {
 };
 
 onBeforeMount(async () => {
+  loading.value = true;
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
   appStore.currentOrg = tenantData?.data;
   const deptData = await getDepartmentsList(0, currentTenant.value?.id);
   treeData.value = formatTreeData(deptData?.data);
+  loading.value = false;
 });
 
 const organizationAsideHooks = useOrganizationAside(currentTenant);

@@ -7,8 +7,11 @@ export default defineStore('app', () => {
 
   const isSearchTree = ref(false);
 
+  const reloadIndex = ref(1);
+
   return {
     currentOrg,
     isSearchTree,
+    reloadIndex,
   };
 });

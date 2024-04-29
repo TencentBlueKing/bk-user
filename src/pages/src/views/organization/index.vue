@@ -12,6 +12,7 @@
       </div>
       <bk-resize-layout
         v-show="!appStore.isSearchTree"
+        :key="appStore.reloadIndex"
         placement="top"
         style="height: calc(100vh - 106px);"
         :border="false"
