@@ -423,7 +423,7 @@ const handleSubmit = async () => {
       emit('success', formData.config?.enable_password);
     } else {
       await postLocalIdps(params);
-      emit('success', false);
+      emit('success', formData.config?.enable_password);
     }
   } catch (e) {
     console.warn(e);

@@ -1,5 +1,8 @@
 <template>
-  <div class="data-source-card" v-bkloading="{ loading: isLoading, zIndex: 9 }">
+  <div
+    :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]"
+    v-bkloading="{ loading: isLoading, zIndex: 9 }"
+  >
     <DataSourceCard
       v-if="!isSuccess"
       :plugins="currentPlugins"
@@ -36,8 +39,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+<script setup lang="ts"> import { onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import Http from './Http.vue';
@@ -48,12 +50,14 @@ import {
   getDataSourcePlugins,
 } from '@/http';
 import { t } from '@/language/index';
-import { useMainViewStore } from '@/store';
+import { useMainViewStore, useUser } from '@/store';
 
 const store = useMainViewStore();
 store.customBreadcrumbs = false;
 
 const route = useRoute();
+
+const userStore = useUser();
 
 const currentType = ref('');
 // 获取数据源类型
@@ -134,7 +138,12 @@ const handleReset = (e) => {
 </script>
 
 <style lang="less" scoped>
+.has-alert {
+  height: calc(100vh - 144px) !important;
+}
+
 .data-source-card {
+  height: calc(100vh - 92px);
   padding: 16px 24px;
 
   .steps-wrapper {
