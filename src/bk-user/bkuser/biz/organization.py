@@ -39,6 +39,7 @@ class DataSourceUserHandler:
         with transaction.atomic():
             identify_info.password = make_password(password)
             identify_info.password_updated_at = timezone.now()
+            # 注意：更新密码会重置有效期
             if valid_days < 0:
                 identify_info.password_expired_at = PERMANENT_TIME
             else:

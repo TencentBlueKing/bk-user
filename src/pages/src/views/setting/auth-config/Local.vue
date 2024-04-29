@@ -244,7 +244,7 @@
 <script setup lang="ts">
 import { InfoBox } from 'bkui-vue';
 import { AngleDown, AngleUp } from 'bkui-vue/lib/icon';
-import { defineEmits, defineProps, h, onMounted, reactive, ref, watch } from 'vue';
+import { defineEmits, defineProps, onMounted, reactive, ref, watch } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
 import NotifyEditorTemplate from '@/components/notify-editor/NotifyEditorTemplate.vue';
@@ -306,6 +306,7 @@ onMounted(async () => {
       // 获取默认配置
       const res = await getDefaultConfig('local');
       formData.config = res?.data?.config || {};
+      formData.config.enable_password = true;
     }
   } catch (e) {
     console.warn(e);
@@ -419,10 +420,10 @@ const handleSubmit = async () => {
     if (props.currentId) {
       params.id = props.currentId;
       await putLocalIdps(params);
-      emit('success');
+      emit('success', formData.config?.enable_password);
     } else {
       await postLocalIdps(params);
-      emit('success');
+      emit('success', false);
     }
   } catch (e) {
     console.warn(e);
@@ -439,15 +440,7 @@ const changeAccountPassword = (value) => {
   if (!value) {
     InfoBox({
       title: t('确认要关闭账密登录吗？'),
-      subTitle: h('div', {
-        style: {
-          textAlign: 'left',
-          lineHeight: '24px',
-        },
-      }, [
-        h('p', t('1.关闭后该数据的用户将无法通过账密登录')),
-        h('p', t('2.关闭后，再次开启时，账密规则信息会重置')),
-      ]),
+      subTitle: t('关闭后用户将无法通过账密登录'),
       onConfirm() {
         formData.config.enable_password = value;
       },

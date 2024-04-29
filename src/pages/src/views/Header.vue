@@ -1,106 +1,126 @@
 <template>
-  <bk-navigation
-    class="main-navigation"
-    :hover-width="240"
-    navigation-type="top-bottom"
-    :need-menu="false"
-    :side-title="$t('蓝鲸用户管理')"
-    theme-color="#1e2634"
-  >
-    <template #side-header>
-      <div
-        style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
-      >
-        <i class="user-icon icon-user-logo-i" />
-        <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
-      </div>
-      <div class="tenant-style" v-if="!isTenant">
-        <span class="logo">{{ logoConvert(userStore.user?.tenant_id) }}</span>
-        <span class="tenant-id">{{ userStore.user?.tenant_id }}</span>
-        <i
-          v-if="userStore.user?.role === 'super_manager'"
-          class="user-icon icon-shezhi"
-          @click="toTenant"
-        />
-      </div>
-    </template>
-    <template #header>
-      <div class="main-navigation-left">
-        <span v-for="(item, index) in headerNav" :key="index">
-          <RouterLink
-            active-class="main-navigation-nav--active"
-            class="main-navigation-nav"
-            :to="{ name: item.path }"
+  <div>
+    <!-- 消息通知 -->
+    <NoticeComponent :api-url="apiUrl" @show-alert-change="showAlertChange" />
+    <bk-navigation
+      :class="['main-navigation', { 'has-alert': showAlert}]"
+      :hover-width="240"
+      navigation-type="top-bottom"
+      :need-menu="false"
+      :side-title="$t('蓝鲸用户管理')"
+      theme-color="#1e2634"
+    >
+      <template #side-header>
+        <div
+          style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
+        >
+          <i class="user-icon icon-user-logo-i" />
+          <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
+        </div>
+        <div class="tenant-style" v-if="!isTenant">
+          <span class="logo">{{ logoConvert(userStore.user?.tenant_id) }}</span>
+          <span class="tenant-id">{{ userStore.user?.tenant_id }}</span>
+          <i
+            v-if="userStore.user?.role === 'super_manager'"
+            class="user-icon icon-shezhi"
+            @click="toTenant"
+          />
+        </div>
+      </template>
+      <template #header>
+        <div class="main-navigation-left">
+          <span v-for="(item, index) in headerNav" :key="index">
+            <RouterLink
+              active-class="main-navigation-nav--active"
+              class="main-navigation-nav"
+              :to="{ name: item.path }"
+            >
+              {{ item.name }}
+            </RouterLink>
+          </span>
+        </div>
+        <div class="main-navigation-right">
+          <bk-dropdown
+            class="px-[10px]"
+            @hide="() => (state.languageDropdown = false)"
+            @show="() => (state.languageDropdown = true)"
           >
-            {{ item.name }}
-          </RouterLink>
-        </span>
-      </div>
-      <div class="main-navigation-right">
-        <bk-dropdown
-          @hide="() => (state.languageDropdown = false)"
-          @show="() => (state.languageDropdown = true)"
-        >
-          <div class="help-info language" :class="state.languageDropdown && 'active'">
-            <i :class="['bk-sq-icon', $i18n.locale === 'en'
-              ? 'icon-yuyanqiehuanyingwen' : 'icon-yuyanqiehuanzhongwen']" />
-          </div>
-          <template #content>
-            <bk-dropdown-menu>
-              <div v-for="(item, index) in languageNav" :key="index">
-                <bk-dropdown-item
-                  :class="[{ 'active-item': $i18n.locale === item.language }]"
-                  @click="handleSwitchLocale(item.language)">
-                  <i :class="item.icon" style=" margin-right: 5px;font-size: 16px;"></i>
-                  <span>{{ item.name }}</span>
+            <div class="help-info" :class="state.languageDropdown && 'active'">
+              <i :class="['bk-sq-icon', $i18n.locale === 'en'
+                ? 'icon-yuyanqiehuanyingwen' : 'icon-yuyanqiehuanzhongwen']" />
+            </div>
+            <template #content>
+              <bk-dropdown-menu>
+                <div v-for="(item, index) in languageNav" :key="index">
+                  <bk-dropdown-item
+                    :class="[{ 'active-item': $i18n.locale === item.language }]"
+                    @click="handleSwitchLocale(item.language)">
+                    <i :class="item.icon" style=" margin-right: 5px;font-size: 16px;"></i>
+                    <span>{{ item.name }}</span>
+                  </bk-dropdown-item>
+                </div>
+              </bk-dropdown-menu>
+            </template>
+          </bk-dropdown>
+          <bk-dropdown
+            class="px-[10px]"
+            @hide="() => (state.helpDropdown = false)"
+            @show="() => (state.helpDropdown = true)"
+          >
+            <div class="help-info" :class="state.helpDropdown && 'active'">
+              <i class="user-icon icon-help-document-fill"></i>
+            </div>
+            <template #content>
+              <bk-dropdown-menu>
+                <bk-dropdown-item>
+                  <a :href="docUrl" target="_blank">{{ $t('产品文档') }}</a>
                 </bk-dropdown-item>
-              </div>
-            </bk-dropdown-menu>
-          </template>
-        </bk-dropdown>
-        <!-- <bk-dropdown
-          @hide="() => (state.helpDropdown = false)"
-          @show="() => (state.helpDropdown = true)"
-        >
-          <div class="help-info" :class="state.helpDropdown && 'active'">
-            <span class="help-info-name">
-              <HelpDocumentFill />
-            </span>
-          </div>
-          <template #content>
-            <bk-dropdown-menu>
-              <bk-dropdown-item v-for="(item, index) in helpNav" :key="index" @click="toLink(item)">
-                {{ item.name }}
-              </bk-dropdown-item>
-            </bk-dropdown-menu>
-          </template>
-        </bk-dropdown> -->
-        <bk-dropdown
-          placement="bottom-end"
-          @hide="() => (state.logoutDropdown = false)"
-          @show="() => (state.logoutDropdown = true)"
-        >
-          <div
-            :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
-            <span class="help-info-name">{{ userInfo.display_name }}</span>
-            <DownShape class="help-info-icon" />
-          </div>
-          <template #content>
-            <bk-dropdown-menu ext-cls="dropdown-menu-box">
-              <bk-dropdown-item
-                v-if="!isTenant"
-                :class="{ 'active-item': isPersonalCenter }"
-                @click="toIndividualCenter">
-                {{ $t('个人中心') }}
-              </bk-dropdown-item>
-              <bk-dropdown-item @click="logout">{{ $t('退出登录') }}</bk-dropdown-item>
-            </bk-dropdown-menu>
-          </template>
-        </bk-dropdown>
-      </div>
-    </template>
-    <router-view></router-view>
-  </bk-navigation>
+                <bk-dropdown-item @click="openVersionLog">
+                  <a href="javascript:void(0);">{{ $t('版本日志') }}</a>
+                </bk-dropdown-item>
+                <bk-dropdown-item>
+                  <a :href="feedbackUrl" target="_blank">{{ $t('问题反馈') }}</a>
+                </bk-dropdown-item>
+              </bk-dropdown-menu>
+            </template>
+          </bk-dropdown>
+          <bk-dropdown
+            class="pl-[10px]"
+            placement="bottom-end"
+            @hide="() => (state.logoutDropdown = false)"
+            @show="() => (state.logoutDropdown = true)"
+          >
+            <div
+              :class="['help-info', { 'active-username': state.logoutDropdown }, { 'active-route': isPersonalCenter }]">
+              <span class="help-info-name">{{ userInfo.display_name }}</span>
+              <DownShape class="help-info-icon" />
+            </div>
+            <template #content>
+              <bk-dropdown-menu ext-cls="dropdown-menu-box">
+                <bk-dropdown-item
+                  v-if="!isTenant"
+                  :class="{ 'active-item': isPersonalCenter }"
+                  @click="toIndividualCenter">
+                  {{ $t('个人中心') }}
+                </bk-dropdown-item>
+                <bk-dropdown-item @click="logout">{{ $t('退出登录') }}</bk-dropdown-item>
+              </bk-dropdown-menu>
+            </template>
+          </bk-dropdown>
+        </div>
+      </template>
+      <router-view></router-view>
+    </bk-navigation>
+    <!-- 版本日志 -->
+    <ReleaseNote
+      v-model:show="showReleaseNote"
+      title-key="version"
+      detail-key="content"
+      :list="releaseList"
+      :loading="releaseLoading"
+      :detail="releaseNoteDetail"
+      :active="activeVersion" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -109,11 +129,17 @@ import Cookies from 'js-cookie';
 import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import NoticeComponent from '@blueking/notice-component';
+import ReleaseNote from '@blueking/release-note';
+
+import '@blueking/notice-component/dist/style.css';
+import '@blueking/release-note/dist/vue3-light.css';
 import { logout } from '@/common/auth';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store/user';
 import { logoConvert } from '@/utils';
+import { getVersionLogs } from '@/http';
 
 const state = reactive({
   logoutDropdown: false,
@@ -157,23 +183,7 @@ const languageNav = reactive([
     language: 'en',
   },
 ]);
-// const helpNav = reactive([
-//   {
-//     name: t('产品文档'),
-//     url: '',
-//   },
-//   {
-//     name: t('版本日志'),
-//     url: '',
-//   },
-//   {
-//     name: t('问题反馈'),
-//     url: '',
-//   },
-// ]);
-// const toLink = (item: any) => {
-//   window.open(item.url, '_blank');
-// };
+
 const toIndividualCenter = () => {
   router.push({
     name: 'personalCenter',
@@ -207,9 +217,55 @@ const toTenant = () => {
   router.push({ name: 'tenant' });
   headerNav.value = [];
 };
+
+// 产品文档
+const docUrl = window.BK_USER_DOC_URL;
+
+// 问题反馈
+const feedbackUrl = window.BK_USER_FEEDBACK_URL;
+
+// 消息通知配置信息
+const apiUrl = `${window.AJAX_BASE_URL}/api/v1/web/notices/announcements/`;
+
+// 是否含有跑马灯类型公告
+const showAlert = ref(false);
+
+// 公告列表change事件回调
+const showAlertChange = (isShow: boolean) => {
+  showAlert.value = isShow;
+};
+
+// 版本日志配置信息
+const showReleaseNote = ref(false);
+const releaseNoteDetail = ref('');
+const releaseLoading = ref(false);
+const releaseList = ref([]);
+const activeVersion = ref('');
+// 获取版本日志
+const openVersionLog = async () => {
+  showReleaseNote.value = true;
+  releaseLoading.value = true;
+  try {
+    const { data } = await getVersionLogs();
+    releaseList.value = data;
+    [releaseNoteDetail.value, activeVersion.value] = [data[0].content, data[0].version];
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    releaseLoading.value = false;
+  }
+};
 </script>
 
 <style lang="less" scoped>
+.has-alert {
+  height: calc(100vh - 40px);
+
+  :deep(.bk-navigation-wrapper) {
+    height: calc(100vh - 92px) !important;
+  }
+}
+
 .main-navigation {
   min-width: 1200px;
 
@@ -217,7 +273,7 @@ const toTenant = () => {
     background-color: #0e1525;
 
     .bk-navigation-title {
-      min-width: 280px;
+      // min-width: 280px;
       overflow: initial;
 
 
@@ -263,6 +319,21 @@ const toTenant = () => {
     }
   }
 
+  :deep(.bk-navigation-wrapper) {
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #dcdee5;
+      border-radius: 4px;
+    }
+  }
+
   :deep(.navigation-container) {
     min-width: 1200px;
 
@@ -298,26 +369,19 @@ const toTenant = () => {
 }
 
 .main-navigation-right {
-  // margin: 0 10px;
   color: #96a2b9;
 
   .bk-dropdown {
-    // padding: 0 10px;
-
     .help-info {
       padding: 5px;
       cursor: pointer;
       border-radius: 50%;
     }
 
-    .language {
-      margin: 0 10px;
-    }
-
     .active {
       background: #252f43;
 
-      .bk-sq-icon, .help-info-name {
+      .bk-sq-icon, .user-icon {
         color: #3a84ff;
       }
     }
@@ -351,7 +415,7 @@ const toTenant = () => {
       }
     }
 
-    .bk-sq-icon {
+    .bk-sq-icon, .user-icon {
       font-size: 16px;
     }
   }

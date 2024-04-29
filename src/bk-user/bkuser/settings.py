@@ -218,10 +218,10 @@ BK_API_URL_TMPL = env.str("BK_API_URL_TMPL")
 # 版本日志
 VERSION_LOG_FILES_DIR = BASE_DIR / "version_log"
 # 文档链接
-BK_DOCS_URL_PREFIX = env("BK_DOCS_URL_PREFIX", default="https://bk.tencent.com/docs")
+BK_DOCS_URL_PREFIX = env.str("BK_DOCS_URL_PREFIX", default="https://bk.tencent.com/docs")
 BK_USER_DOC_URL = f"{BK_DOCS_URL_PREFIX}/markdown/UserManage/UserGuide/Introduce/README.md"
 # 反馈问题链接
-BK_USER_FEEDBACK_URL = env("BK_USER_FEEDBACK_URL", default="https://bk.tencent.com/s-mart/community/")
+BK_USER_FEEDBACK_URL = env.str("BK_USER_FEEDBACK_URL", default="https://bk.tencent.com/s-mart/community/")
 
 # ------------------------------------------ Celery 配置 ------------------------------------------
 
@@ -538,7 +538,7 @@ ENABLE_BK_NOTICE = env.bool("ENABLE_BK_NOTICE", False)
 if ENABLE_BK_NOTICE:
     INSTALLED_APPS += ("bk_notice_sdk",)
     # 对接通知中心的环境，默认为生产环境
-    BK_NOTICE_ENV = env("BK_NOTICE_ENV", "prod")
+    BK_NOTICE_ENV = env.str("BK_NOTICE_ENV", "prod")
     BK_NOTICE = {
         "STAGE": BK_NOTICE_ENV,
         "LANGUAGE_COOKIE_NAME": LANGUAGE_COOKIE_NAME,
@@ -606,3 +606,5 @@ EXPORT_ORG_TEMPLATE = MEDIA_ROOT / "excel/export_org_tmpl.xlsx"
 # 限制组织架构页面用户/部门搜索 API 返回的最大条数
 # 由于需要计算组织路径导致性能不佳，建议不要太高，而是让用户细化搜索条件
 ORGANIZATION_SEARCH_API_LIMIT = env.int("ORGANIZATION_SEARCH_API_LIMIT", 20)
+# 限制批量操作数量上限，避免性能问题 / 误操作（目前不支持跨页全选，最大单页 100 条数据）
+ORGANIZATION_BATCH_OPERATION_API_LIMIT = env.int("ORGANIZATION_BATCH_OPERATION_API_LIMIT", 100)

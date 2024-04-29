@@ -82,16 +82,9 @@ class ErrorCodes:
 
     # 数据源
     DATA_SOURCE_OPERATION_UNSUPPORTED = ErrorCode(_("当前数据源不支持该操作"))
-    CANNOT_CREATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持新增用户"))
-    CANNOT_UPDATE_DATA_SOURCE_USER = ErrorCode(_("该数据源不支持更新用户"))
     DATA_SOURCE_NOT_EXIST = ErrorCode(_("数据源不存在"))
     DATA_SOURCE_IMPORT_FAILED = ErrorCode(_("数据源导入失败"))
-    DATA_SOURCE_DELETE_FAILED = ErrorCode(_("数据源删除失败"))
-    DATA_SOURCE_USER_CREATE_FAILED = ErrorCode(_("该数据源不支持新增用户"))
-    DATA_SOURCE_USER_UPDATE_FAILED = ErrorCode(_("该数据源不支持更新用户"))
-    DATA_SOURCE_USER_ALREADY_EXISTED = ErrorCode(_("数据源用户已存在"))
     DATA_SOURCE_SYNC_TASK_CREATE_FAILED = ErrorCode(_("创建数据源同步任务失败"))
-    CANNOT_RESET_USER_PASSWORD = ErrorCode(_("无法重置用户密码"))
 
     # 认证源
     IDP_PLUGIN_NOT_LOAD = ErrorCode(_("认证源插件未加载"))
@@ -99,18 +92,19 @@ class ErrorCodes:
     CANNOT_UPDATE_IDP = ErrorCode(_("该认证源不允许更新配置"))
 
     # 租户
-    CREATE_TENANT_FAILED = ErrorCode(_("租户创建失败"))
-    UPDATE_TENANT_FAILED = ErrorCode(_("租户更新失败"))
-    TENANT_NOT_EXIST = ErrorCode(_("租户不存在"))
-    TENANT_NOT_ENABLED = ErrorCode(_("租户不存在或未启用"))
+    TENANT_UPDATE_FAILED = ErrorCode(_("租户更新失败"))
     TENANT_DELETE_FAILED = ErrorCode(_("租户删除失败"))
-    BIND_TENANT_USER_FAILED = ErrorCode(_("数据源用户绑定租户失败"))
-    TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
-    UPDATE_TENANT_MANAGERS_FAILED = ErrorCode(_("更新租户管理员失败"))
     GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
+
+    # 租户部门
     TENANT_DEPARTMENT_CREATE_FAILED = ErrorCode(_("租户部门创建失败"))
     TENANT_DEPARTMENT_UPDATE_FAILED = ErrorCode(_("租户部门更新失败"))
     TENANT_DEPARTMENT_DELETE_FAILED = ErrorCode(_("租户部门删除失败"))
+    # 租户用户
+    TENANT_USER_NOT_EXIST = ErrorCode(_("无法找到对应租户用户"))
+    TENANT_USER_CREATE_FAILED = ErrorCode(_("租户用户创建失败"))
+    TENANT_USER_UPDATE_FAILED = ErrorCode(_("租户用户更新失败"))
+    TENANT_USER_DELETE_FAILED = ErrorCode(_("租户用户删除失败"))
 
     # 验证码
     INVALID_VERIFICATION_CODE = ErrorCode(_("验证码无效"))

@@ -10,6 +10,8 @@ specific language governing permissions and limitations under the License.
 """
 
 from .departments import (
+    OptionalTenantDepartmentListInputSLZ,
+    OptionalTenantDepartmentListOutputSLZ,
     TenantDepartmentCreateInputSLZ,
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
@@ -18,15 +20,42 @@ from .departments import (
     TenantDepartmentSearchOutputSLZ,
     TenantDepartmentUpdateInputSLZ,
 )
-
-# noqa: F401
-from .tenants import TenantListOutputSLZ, TenantRetrieveOutputSLZ  # noqa: F401
-from .users import TenantUserSearchInputSLZ, TenantUserSearchOutputSLZ  # noqa: F401
+from .relations import (
+    TenantDeptUserRelationBatchCreateInputSLZ,
+    TenantDeptUserRelationBatchDeleteInputSLZ,
+    TenantDeptUserRelationBatchPatchInputSLZ,
+    TenantDeptUserRelationBatchUpdateInputSLZ,
+)
+from .tenants import (
+    RequiredTenantUserFieldOutputSLZ,
+    TenantListOutputSLZ,
+    TenantRetrieveOutputSLZ,
+)
+from .users import (
+    OptionalTenantUserListInputSLZ,
+    OptionalTenantUserListOutputSLZ,
+    TenantUserBatchCreateInputSLZ,
+    TenantUserBatchCreatePreviewInputSLZ,
+    TenantUserBatchCreatePreviewOutputSLZ,
+    TenantUserBatchDeleteInputSLZ,
+    TenantUserCreateInputSLZ,
+    TenantUserCreateOutputSLZ,
+    TenantUserListInputSLZ,
+    TenantUserListOutputSLZ,
+    TenantUserOrganizationPathOutputSLZ,
+    TenantUserPasswordResetInputSLZ,
+    TenantUserRetrieveOutputSLZ,
+    TenantUserSearchInputSLZ,
+    TenantUserSearchOutputSLZ,
+    TenantUserStatusUpdateOutputSLZ,
+    TenantUserUpdateInputSLZ,
+)
 
 __all__ = [
     # 租户
     "TenantListOutputSLZ",
     "TenantRetrieveOutputSLZ",
+    "RequiredTenantUserFieldOutputSLZ",
     # 租户部门
     "TenantDepartmentListInputSLZ",
     "TenantDepartmentListOutputSLZ",
@@ -35,7 +64,29 @@ __all__ = [
     "TenantDepartmentUpdateInputSLZ",
     "TenantDepartmentSearchInputSLZ",
     "TenantDepartmentSearchOutputSLZ",
+    "OptionalTenantDepartmentListInputSLZ",
+    "OptionalTenantDepartmentListOutputSLZ",
     # 租户用户
+    "OptionalTenantUserListInputSLZ",
+    "OptionalTenantUserListOutputSLZ",
     "TenantUserSearchInputSLZ",
     "TenantUserSearchOutputSLZ",
+    "TenantUserListInputSLZ",
+    "TenantUserListOutputSLZ",
+    "TenantUserCreateInputSLZ",
+    "TenantUserCreateOutputSLZ",
+    "TenantUserRetrieveOutputSLZ",
+    "TenantUserUpdateInputSLZ",
+    "TenantUserPasswordResetInputSLZ",
+    "TenantUserOrganizationPathOutputSLZ",
+    "TenantUserStatusUpdateOutputSLZ",
+    "TenantUserBatchCreateInputSLZ",
+    "TenantUserBatchCreatePreviewInputSLZ",
+    "TenantUserBatchCreatePreviewOutputSLZ",
+    "TenantUserBatchDeleteInputSLZ",
+    # 租户部门 - 用户关系
+    "TenantDeptUserRelationBatchCreateInputSLZ",
+    "TenantDeptUserRelationBatchUpdateInputSLZ",
+    "TenantDeptUserRelationBatchPatchInputSLZ",
+    "TenantDeptUserRelationBatchDeleteInputSLZ",
 ]

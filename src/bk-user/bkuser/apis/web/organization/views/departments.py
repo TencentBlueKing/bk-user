@@ -22,6 +22,8 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apis.web.organization.serializers import (
+    OptionalTenantDepartmentListInputSLZ,
+    OptionalTenantDepartmentListOutputSLZ,
     TenantDepartmentCreateInputSLZ,
     TenantDepartmentCreateOutputSLZ,
     TenantDepartmentListInputSLZ,
@@ -93,6 +95,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         filters = {
             "tenant_id": self.get_current_tenant_id(),
             "data_source__owner_tenant_id": self.kwargs["id"],
+            "data_source__type": DataSourceTypeEnum.REAL,
         }
         # 指定的父部门不存在，直接返回 None
         tenant_dept = TenantDepartment.objects.filter(id=parent_dept_id, **filters).first()
@@ -127,7 +130,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         }
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="获取指定租户在当前租户的部门列表",
         query_serializer=TenantDepartmentListInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentListOutputSLZ(many=True)},
@@ -146,7 +149,7 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
         return Response(TenantDepartmentListOutputSLZ(tenant_dept_infos, many=True).data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="创建租户部门",
         query_serializer=TenantDepartmentCreateInputSLZ(),
         responses={status.HTTP_201_CREATED: TenantDepartmentCreateOutputSLZ()},
@@ -212,10 +215,13 @@ class TenantDepartmentUpdateDestroyApi(
     lookup_url_kwarg = "id"
 
     def get_queryset(self) -> QuerySet[TenantDepartment]:
-        return TenantDepartment.objects.filter(tenant_id=self.get_current_tenant_id())
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+        )
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="更新租户部门",
         query_serializer=TenantDepartmentUpdateInputSLZ(),
         responses={status.HTTP_204_NO_CONTENT: ""},
@@ -236,7 +242,7 @@ class TenantDepartmentUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="删除租户部门",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
@@ -268,24 +274,7 @@ class TenantDepartmentUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
-    """搜索租户部门"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    pagination_class = None
-    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
-    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
-
-    def get_queryset(self) -> QuerySet[TenantDepartment]:
-        slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
-        slz.is_valid(raise_exception=True)
-        keyword = slz.validated_data["keyword"]
-
-        return TenantDepartment.objects.filter(
-            tenant_id=self.get_current_tenant_id(), data_source_department__name__icontains=keyword
-        ).select_related("data_source", "data_source_department")[: self.search_limit]
-
+class TenantDeptOrgPathMapMixin:
     def _get_dept_organization_path_map(self, tenant_depts: QuerySet[TenantDepartment]) -> Dict[int, str]:
         """获取租户部门的组织路径信息"""
         data_source_dept_ids = [tenant_dept.data_source_department_id for tenant_dept in tenant_depts]
@@ -306,8 +295,29 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             for dept in tenant_depts
         }
 
+
+class TenantDepartmentSearchApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+    """搜索租户部门"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
+
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        slz = TenantDepartmentSearchInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        keyword = slz.validated_data["keyword"]
+
+        return TenantDepartment.objects.filter(
+            tenant_id=self.get_current_tenant_id(),
+            data_source__type=DataSourceTypeEnum.REAL,
+            data_source_department__name__icontains=keyword,
+        ).select_related("data_source", "data_source_department")[: self.search_limit]
+
     @swagger_auto_schema(
-        tags=["organization"],
+        tags=["organization.department"],
         operation_description="搜索租户部门",
         query_serializer=TenantDepartmentSearchInputSLZ(),
         responses={status.HTTP_200_OK: TenantDepartmentSearchOutputSLZ(many=True)},
@@ -319,4 +329,42 @@ class TenantDepartmentSearchApi(CurrentUserTenantMixin, generics.ListAPIView):
             "org_path_map": self._get_dept_organization_path_map(tenant_depts),
         }
         resp_data = TenantDepartmentSearchOutputSLZ(tenant_depts, many=True, context=context).data
+        return Response(resp_data, status=status.HTTP_200_OK)
+
+
+class OptionalTenantDepartmentListApi(CurrentUserTenantMixin, TenantDeptOrgPathMapMixin, generics.ListAPIView):
+    """可选租户部门列表（下拉框数据用）"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    pagination_class = None
+    # 限制搜索结果，只提供前 N 条记录，如果展示不完全，需要用户细化搜索条件
+    search_limit = settings.ORGANIZATION_SEARCH_API_LIMIT
+
+    def get_queryset(self) -> QuerySet[TenantDepartment]:
+        slz = OptionalTenantDepartmentListInputSLZ(data=self.request.query_params)
+        slz.is_valid(raise_exception=True)
+        params = slz.validated_data
+
+        cur_tenant_id = self.get_current_tenant_id()
+        queryset = TenantDepartment.objects.filter(
+            tenant_id=cur_tenant_id,
+            data_source__type=DataSourceTypeEnum.REAL,
+            data_source__owner_tenant_id=cur_tenant_id,
+        ).select_related("data_source_department")
+        if kw := params.get("keyword"):
+            queryset = queryset.filter(data_source_department__name__icontains=kw)
+
+        return queryset[: self.search_limit]
+
+    @swagger_auto_schema(
+        tags=["organization.department"],
+        operation_description="可选部门列表",
+        query_serializer=OptionalTenantDepartmentListInputSLZ(),
+        responses={status.HTTP_200_OK: OptionalTenantDepartmentListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        tenant_depts = self.get_queryset()
+        context = {"org_path_map": self._get_dept_organization_path_map(tenant_depts)}
+        resp_data = OptionalTenantDepartmentListOutputSLZ(tenant_depts, many=True, context=context).data
         return Response(resp_data, status=status.HTTP_200_OK)

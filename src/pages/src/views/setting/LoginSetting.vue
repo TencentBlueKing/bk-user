@@ -10,7 +10,9 @@
             class="login-item"
             v-for="(item, index) in idpsPlugins"
             :key="index">
-            <div class="login-content">
+            <div
+              :class="['login-content',
+                       { 'login-content-disabled': currentDataSource.plugin_id !== 'local' && item.id === 'local' }]">
               <div
                 :class="['box', { 'disabled-box': item.status === 'disabled' && !item.idp_id }]"
                 v-bk-tooltips="{
@@ -107,9 +109,8 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts"> import { h, inject, onMounted, reactive, ref } from 'vue';
 import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
-import { h, inject, onMounted, reactive, ref } from 'vue';
 
 import Local from './auth-config/Local.vue';
 import LocalView from './auth-config/LocalView.vue';
@@ -183,20 +184,12 @@ const detailsConfig = reactive({
 const authDetails = ref({});
 
 const handleClickActive = (item) => {
-  if (!currentDataSource.value?.plugin_id) {
-    InfoBox({
-      title: t('暂未配置数据源'),
-      confirmText: t('去配置'),
-      onConfirm: () => {
-        router.push({ name: 'dataSource' });
-      },
-    });
-    return;
-  };
+  if (currentDataSource.value.plugin_id !== 'local' && item.id === 'local') return;
   if (!item.idp_id) {
     detailsConfig.isEdit = true;
     detailsConfig.title = `${item.name}${t('登录配置')}`;
   } else {
+    detailsConfig.isEdit = false;
     detailsConfig.title = `${item.name}${t('登录详情')}`;
   }
   authDetails.value = item;
@@ -236,7 +229,7 @@ const handleBeforeClose = async () => {
 };
 
 // 本地认证源配置成功
-const localSuccess = () => {
+const localSuccess = (status: boolean) => {
   window.changeInput = false;
   detailsConfig.show = false;
   InfoBox({
@@ -247,17 +240,21 @@ const localSuccess = () => {
         height: '44px',
         background: '#F5F7FA',
         lineHeight: '44px',
+        display: status ? 'flex' : 'none',
+        alignItems: 'center',
       },
     }, [
       h('i', {
         class: 'user-icon icon-info-i',
+        style: {
+          margin: '0 8px 0 12px',
+        },
       }),
       h('span', {
         style: {
           fontSize: '12px',
-          marginLeft: '8px',
         },
-      }, t('账号重置需要一定时间，账号生效以最终邮件通知为准')),
+      }, t('账号陆续生效中，请以用户最终收到的邮件为准')),
     ]),
     dialogType: 'confirm',
     footerAlign: 'center',
@@ -366,6 +363,12 @@ const handleDataSource = () => {
           margin-left: 16px;
           text-align: center;
           border-radius: 2px;
+
+          .login-content-disabled {
+            &:hover {
+              background: #F5F7FA !important;
+            }
+          }
 
           .login-content {
             position: relative;

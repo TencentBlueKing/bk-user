@@ -273,7 +273,7 @@ class TenantStatusUpdateApi(ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     def put(self, request, *args, **kwargs):
         tenant = self.get_object()
         if tenant.is_default:
-            raise error_codes.UPDATE_TENANT_FAILED.f(_("默认租户不能停用"))
+            raise error_codes.TENANT_UPDATE_FAILED.f(_("默认租户不能停用"))
 
         tenant.status = TenantStatus.DISABLED if tenant.status == TenantStatus.ENABLED else TenantStatus.ENABLED
         tenant.updater = request.user.username

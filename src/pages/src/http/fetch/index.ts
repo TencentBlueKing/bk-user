@@ -46,7 +46,6 @@ const axiosInstance = axios.create({
   xsrfCookieName: window.CSRF_COOKIE_NAME,
   xsrfHeaderName: 'X-CSRFToken',
   headers: {
-    'X-CSRFToken': Cookies.get(window.CSRF_COOKIE_NAME),
     'x-requested-with': 'XMLHttpRequest',
   },
 });
@@ -111,10 +110,19 @@ const handleReject = (error: AxiosError, config: Record<string, any>) => {
   return Promise.reject(error);
 };
 
+// 更新axios实例的cookie
+function updateAxiosInstance() {
+  const csrfToken = Cookies.get(window.CSRF_COOKIE_NAME);
+  if (csrfToken !== undefined) {
+    axiosInstance.defaults.headers.common['X-CSRFToken'] = csrfToken;
+  }
+}
+
 methods.forEach((method) => {
   Object.defineProperty(http, method, {
     get() {
       return <T>(url: string, payload: any = {}, useConfig = {}) => {
+        updateAxiosInstance();
         const config = initConfig(useConfig);
 
         const fetchURL = getFetchURL(url, method, payload);
