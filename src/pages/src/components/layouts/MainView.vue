@@ -14,7 +14,9 @@
           class="main-container__view user-scroll-y user-scroll-x"
           :class="[{
             'pd-24': mainViewStore.hasPadding,
-            'has-breadcrumbs': !mainViewStore.customBreadcrumbs
+            'has-breadcrumbs': !mainViewStore.customBreadcrumbs,
+            'has-alert': userStore.showAlert,
+            'overflow-hidden': hiddenBoxShadow,
           }]">
           <RouterView />
         </div>
@@ -23,18 +25,22 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts"> import { computed } from 'vue';
 import MainBreadcrumbs from './MainBreadcrumbs.vue';
 
-import { useMainViewStore, useMenu } from '@/store';
+import { useRoute } from 'vue-router';
+import { useMainViewStore, useMenu, useUser } from '@/store';
 const menuStore = useMenu();
 const mainViewStore = useMainViewStore();
+const userStore = useUser();
+const route = useRoute();
+
+const hiddenBoxShadow = computed(() => route.meta.hiddenBoxShadow);
 </script>
 
 <style lang="less">
 .main-container {
   display: flex;
-  height: calc(100vh - 52px);
 }
 
 .main-container-content {
@@ -50,8 +56,18 @@ const mainViewStore = useMainViewStore();
   background-color: #f5f7fa;
 
   &.has-breadcrumbs {
-    height: calc(100% - 52px);
+    height: calc(100vh - 104px);
   }
+}
+
+.has-alert {
+  &.has-breadcrumbs {
+    height: calc(100vh - 144px);
+  }
+}
+
+.overflow-hidden {
+  overflow: hidden;
 }
 
 .main-menu {

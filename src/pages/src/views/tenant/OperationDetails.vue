@@ -104,8 +104,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
-import { Message } from 'bkui-vue';
+<script setup lang="ts"> import { Message } from 'bkui-vue';
 import { computed, defineEmits, defineProps, reactive, ref } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
@@ -113,7 +112,7 @@ import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useValidate } from '@/hooks';
 import { createTenants, putTenants } from '@/http';
 import { t } from '@/language/index';
-import { useUser } from '@/store/user';
+import { useUser } from '@/store';
 import { getBase64 } from '@/utils';
 
 const userStore = useUser();
