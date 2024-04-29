@@ -1,5 +1,7 @@
 <template>
-  <div v-bkloading="{ loading: state.tableLoading, zIndex: 9 }" class="group-details-wrapper user-scroll-y">
+  <div
+    v-bkloading="{ loading: state.tableLoading, zIndex: 9 }"
+    :class="['group-details-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <div class="main-content">
       <div class="content-search">
         <div class="content-search-left">
@@ -66,11 +68,12 @@
         <bk-table-column :label="$t('操作')">
           <template #default="{ row }">
             <div class="flex items-center">
-              <span v-bk-tooltips="{
-                content: $t('admin只能进入默认租户'),
-                distance: 20,
-                disabled: userStore.user?.tenant_id === row.id,
-              }">
+              <span
+                v-bk-tooltips="{
+                  content: $t('admin只能进入默认租户'),
+                  distance: 20,
+                  disabled: userStore.user?.tenant_id === row.id,
+                }">
                 <bk-button
                   text
                   theme="primary"
@@ -223,8 +226,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
+<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox, Message } from 'bkui-vue';
 import { computed, inject, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import OperationDetails from './OperationDetails.vue';
@@ -245,8 +247,7 @@ import {
 } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
-import { useMainViewStore } from '@/store';
-import { useUser } from '@/store/user';
+import { useMainViewStore, useUser } from '@/store';
 import { LOGO_COLOR, logoConvert, tenantStatus } from '@/utils';
 
 const userStore = useUser();
@@ -608,9 +609,13 @@ const {
 </script>
 
 <style lang="less" scoped>
+.has-alert {
+  height: calc(100vh - 92px) !important;
+}
+
 .group-details-wrapper {
   width: 100%;
-  height: calc(100vh - 104px);
+  height: calc(100vh - 52px);
   padding: 24px 144px;
 
   .main-content {

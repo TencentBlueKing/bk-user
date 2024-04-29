@@ -1,18 +1,8 @@
 <template>
   <div class="view-details-wrapper">
     <div class="view-details-content">
-      <div class="content-item">
-        <span class="item-key">{{ $t('策略名称') }}：</span>
-        <span class="item-value">{{ data.name }}</span>
-      </div>
-      <div class="content-item">
-        <span class="item-key">{{ $t('目标租户') }}：</span>
-        <div class="item-list min-w-[400px]">
-          <p v-for="(item, index) in data.target" :key="index">
-            {{ item.name }} <span>( {{ item.id }} )</span>
-          </p>
-        </div>
-      </div>
+      <LabelContent :label="$t('策略名称')"></LabelContent>
+      <LabelContent :label="$t('目标公司')"></LabelContent>
       <!-- 一期不做 -->
       <!-- <div class="content-item">
         <span class="item-key">{{ $t('协同范围') }}：</span>
@@ -26,12 +16,8 @@
           </div>
         </div>
       </div> -->
-      <div class="content-item">
-        <span class="item-key">{{ $t('同步范围') }}：</span>
-        <span class="item-value">指定字段（字段1，字段2，字段3）</span>
-      </div>
-      <div class="content-item">
-        <span class="item-key">{{ $t('字段预览') }}：</span>
+      <LabelContent :label="$t('同步范围')"></LabelContent>
+      <LabelContent :label="$t('字段预览')">
         <bk-table
           class="mt-[8px]"
           :data="tableData"
@@ -50,15 +36,16 @@
           <bk-table-column prop="phone" :label="$t('手机号')" />
           <bk-table-column prop="organization" :label="$t('组织')" />
         </bk-table>
-      </div>
+      </LabelContent>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { defineProps, onMounted, ref } from 'vue';
 
 import Empty from '@/components/Empty.vue';
+import LabelContent from '@/components/layouts/LabelContent.vue';
 
 defineProps({
   data: {

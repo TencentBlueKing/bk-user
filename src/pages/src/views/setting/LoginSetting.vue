@@ -330,7 +330,6 @@ const handleDataSource = () => {
 
 <style lang="less" scoped>
 .login-setting-wrapper {
-  height: calc(100vh - 104px);
   padding: 24px;
 
   .login-setting-content {
