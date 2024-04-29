@@ -1,15 +1,20 @@
 <template>
   <bk-resize-layout
-    class="h-[calc(100vh-52px)]"
+    class="h-[calc(100vh-52px)] user-aside"
     immediate
     :min="280"
     :max="400"
     :initial-divide="280">
     <template #aside>
       <search></search>
+      <div v-show="appStore.isSearchTree">
+        <search-result-tree></search-result-tree>
+      </div>
       <bk-resize-layout
+        v-show="!appStore.isSearchTree"
+        :key="appStore.reloadIndex"
         placement="top"
-        style="height: 100%;"
+        style="height: calc(100vh - 106px);"
         :border="false"
         immediate
         :min="140"
@@ -38,6 +43,7 @@
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
 import Search from './components/search.vue';
+import SearchResultTree from './components/search-result-tree.vue';
 
 import useAppStore from '@/store/app';
 

@@ -1,5 +1,5 @@
 
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 
 import { getDepartmentsList } from '@/http/organizationFiles';
 import useAppStore from '@/store/app';
@@ -43,25 +43,26 @@ export default function useOrganizationAside(currentTenant: any) {
     };
   };
 
+
+  const findNode = (item: IOrg, id: number) => {
+    if (item.id === id) {
+      return item;
+    }
+    if (item.children) {
+      for (const child of item.children) {
+        const result = findNode(child, id);
+        if (result) {
+          return result;
+        }
+      }
+    }
+    return null;
+  };
+
   /**
    * 添加子组织
    */
   const addNode = (id, node) => {
-    const findNode = (item: IOrg, id: number) => {
-      if (item.id === id) {
-        return item;
-      }
-      if (item.children) {
-        for (const child of item.children) {
-          const result = findNode(child, id);
-          if (result) {
-            return result;
-          }
-        }
-      }
-      return null;
-    };
-
     for (const item of treeData.value) {
       const current = findNode(item, id);
       if (current) {
@@ -75,25 +76,28 @@ export default function useOrganizationAside(currentTenant: any) {
   };
 
   /**
+   * 删除组织
+   */
+  const deleteDept = (id, list) => {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === id) {
+        list.splice(i, 1);
+        break;
+      }
+      if (list[i].children) {
+        deleteDept(id, list[i].children);
+      }
+    }
+  };
+  const deleteNode = (id) => {
+    deleteDept(id, treeData.value);
+  };
+
+  /**
    * 重命名
    * @param node
    */
   const updateNode = (node: IOrg) => {
-    const findNode = (item: IOrg, id: number) => {
-      if (item.id === id) {
-        return item;
-      }
-      if (item.children) {
-        for (const child of item.children) {
-          const result = findNode(child, id);
-          if (result) {
-            return result;
-          }
-        }
-      }
-      return null;
-    };
-
     for (const item of treeData.value) {
       const current = findNode(item, node.id);
       if (current) {
@@ -108,6 +112,7 @@ export default function useOrganizationAside(currentTenant: any) {
     getRemoteData,
     getPrefixIcon,
     addNode,
+    deleteNode,
     updateNode,
   };
 };
