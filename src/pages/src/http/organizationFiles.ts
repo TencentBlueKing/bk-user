@@ -30,10 +30,6 @@ export const putTenantOrganizationDetails = (id: string, params: UpdateTenantPar
  */
 export const getTenantDepartments = (id: string) => http.get(`/api/v1/web/tenant-organization/departments/${id}/children/`);
 
-/**
- * 租户下部门单个用户详情
- */
-export const getTenantOrganizationUsers = (id: string) => http.get(`/api/v1/web/tenant-organization/users/${id}/`);
 
 /**
  * 租户下部门下用户列表
@@ -90,3 +86,8 @@ export const searchOrganization = (params: any) => http.get(`${prefix}/tenants/d
  * 搜索用户
  */
 export const searchUser = (params: any) => http.get(`${prefix}/tenants/users/`, params);
+
+/**
+ * 租户下部门单个用户详情
+ */
+export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);

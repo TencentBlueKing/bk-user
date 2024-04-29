@@ -4,8 +4,7 @@
       v-model="search"
       type="search"
       :clearable="true"
-      @enter="handleSearch"
-      @search="handleSearch"
+      @change="handleSearch"
       @clear="handleClear"
     ></bk-input>
     <div class="user-icon icon-refresh bg-[#F0F1F5] h-[32px] w-[32px] ml-[8px] !leading-[32px] cursor-pointer">
@@ -43,7 +42,7 @@
               :key="item.id"
               :class="{ 'bg-[#E1ECFF]': selected.id === item.id }"
               class="py-[6px] hover:bg-[#F5F7FA] cursor-pointer px-[12px] relative"
-              @click="selected = item"
+              @click="handleUserSelect(item)"
             >
               <div class="leading-[20px]">
                 <span class="text-[#313238] pr-[8px]">
@@ -52,15 +51,30 @@
                 </span>
                 <span class="text-[#FF9C01]">@{{ item.tenant_name }}</span>
               </div>
-              <bk-overflow-title class="text-[#979BA5] leading-[20px]">
-                {{ item.organization_paths[0] }}
-              </bk-overflow-title>
-              <span
-                v-if="item.status === 'disabled'"
-                class="bg-[#F0F1F5] radius-[2px] absolute top-[18px] right-[12px] py-[2px] px-[8px] text-[#63656E]"
-              >
-                {{ $t('已停用') }}
-              </span>
+              <div class="inline-flex w-full">
+                <bk-overflow-title
+                  class="text-[#979BA5] leading-[20px]"
+                  :class="{
+                    'w-[333px]': !!item.organization_paths.length,
+                    'w-[270px]': !!item.organization_paths.length && item.status === 'disabled'
+                  }"
+                >
+                  {{ item.organization_paths[0] }}
+                </bk-overflow-title>
+                <bk-tag
+                  theme="info"
+                  class="inline-block !m-0 h-[20px] !ml-[2px]"
+                  v-bk-tooltips="{ content: item.organization_paths.join('\n') }"
+                >
+                  +{{ item.organization_paths.length }}
+                </bk-tag>
+                <span
+                  v-if="item.status === 'disabled'"
+                  class="bg-[#F0F1F5] radius-[2px] absolute top-[18px] right-[12px] py-[2px] px-[8px] text-[#63656E]"
+                >
+                  {{ $t('已停用') }}
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -74,16 +88,58 @@
         </section>
       </div>
     </div>
+
+    <!-- 查看/编辑用户 -->
+    <div v-if="showSideBar">
+      <bk-sideslider
+        ext-cls="details-edit-wrapper"
+        :width="640"
+        :is-show="detailsConfig.isShow"
+        :title="detailsConfig.title"
+        :before-close="handleBeforeClose"
+        quick-close
+      >
+        <template #header>
+          <span>{{ detailsConfig.title }}</span>
+          <!-- <bk-button>删除</bk-button> -->
+        </template>
+        <view-user :user-data="state.userInfo" />
+      </bk-sideslider>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { bkTooltips as vBkTooltips } from 'bkui-vue';
+import { inject, reactive, ref } from 'vue';
 
-import { searchOrganization, searchUser } from '@/http/organizationFiles';
+import ViewUser from './view-user.vue';
+
+import { useCustomFields } from '@/hooks';
+import { getOrganizationUsers, searchOrganization, searchUser } from '@/http/organizationFiles';
+import { getFields } from '@/http/settingFiles';
+import { t } from '@/language/index';
 import useAppStore from '@/store/app';
 
 const appStore = useAppStore();
+
+const editLeaveBefore = inject('editLeaveBefore');
+
+const detailsConfig = reactive({
+  isShow: false,
+  title: '',
+});
+
+const showSideBar = ref(false);
+// 销毁侧栏，防止tips不消失
+const hideSideBar = () => {
+  setTimeout(() => {
+    showSideBar.value = false;
+  }, 300);
+};
+const state = reactive({
+  userInfo: {},
+});
 
 const search = ref('');
 const orgs = ref([]);
@@ -95,10 +151,14 @@ const selected = ref({});
 const handleSearch = () => {
   if (search.value.length > 1) {
     searchData();
+  } else {
+    searchDialogVisible.value = false;
+    appStore.isSearchTree = false;
   }
 };
 
 const handleClear = () => {
+  appStore.isSearchTree = false;
   search.value = '';
   searchDialogVisible.value = false;
 };
@@ -123,9 +183,37 @@ const searchData = () => {
 };
 
 const handleOrgSelect = (org) => {
-  console.log(org);
+  appStore.isSearchTree = true;
   selected.value = org;
   searchDialogVisible.value = false;
   appStore.currentOrg = { ...org };
+};
+
+const handleUserSelect = async (user) => {
+  searchDialogVisible.value = false;
+  showSideBar.value = true;
+  const [userRes, fieldsRes] = await Promise.all([
+    getOrganizationUsers(user.id),
+    getFields(),
+  ]);
+  state.userInfo = userRes.data;
+  state.userInfo.extras = useCustomFields(state.userInfo?.extras, fieldsRes.data.custom_fields);
+  detailsConfig.title = t('用户详情');
+  detailsConfig.isShow = true;
+};
+
+const handleBeforeClose = async () => {
+  let enableLeave = true;
+  if (window.changeInput) {
+    enableLeave = await editLeaveBefore();
+    detailsConfig.isShow = false;
+    hideSideBar();
+  } else {
+    detailsConfig.isShow = false;
+    hideSideBar();
+  }
+  if (!enableLeave) {
+    return Promise.resolve(enableLeave);
+  }
 };
 </script>

@@ -7,7 +7,11 @@
     :initial-divide="280">
     <template #aside>
       <search></search>
+      <div v-show="appStore.isSearchTree">
+        <search-result-tree></search-result-tree>
+      </div>
       <bk-resize-layout
+        v-show="!appStore.isSearchTree"
         placement="top"
         style="height: calc(100vh - 106px);"
         :border="false"
@@ -38,6 +42,7 @@
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
 import Search from './components/search.vue';
+import SearchResultTree from './components/search-result-tree.vue';
 
 import useAppStore from '@/store/app';
 
