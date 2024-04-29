@@ -9,20 +9,20 @@ module.exports = {
   open: true,
   replaceStatic: true,
   outputAssetsDirName: '',
+  https: true,
 
   // webpack config 配置
   configureWebpack() {
     return {
       devServer: {
         setupMiddlewares: mockServer,
-        https: true,
-        proxy: {
+        proxy: [{
           '/api': {
             target: process.env.BK_AJAX_BASE_URL,
             changeOrigin: true,
             secure: false,
           },
-        },
+        }],
         client: {
           overlay: false,
         },

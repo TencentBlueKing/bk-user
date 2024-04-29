@@ -7,7 +7,7 @@
       @change="handleSearch"
       @clear="handleClear"
     ></bk-input>
-    <div 
+    <div
       class="user-icon icon-refresh bg-[#F0F1F5] h-[32px] w-[32px] ml-[8px] !leading-[32px] cursor-pointer"
       @click="handleRefresh"
     >
@@ -59,7 +59,7 @@
                   class="text-[#979BA5] leading-[20px]"
                   :class="{
                     'w-[333px]': !!item.organization_paths.length,
-                    'w-[270px]': !!item.organization_paths.length && item.status === 'disabled'
+                    'w-[270px]': !!(item.organization_paths.length && item.status === 'disabled')
                   }"
                 >
                   {{ item.organization_paths[0] }}
@@ -222,6 +222,6 @@ const handleBeforeClose = async () => {
 
 const handleRefresh = () => {
   handleClear();
-  appStore.reloadIndex += 1
-}
+  appStore.reloadIndex += 1;
+};
 </script>
