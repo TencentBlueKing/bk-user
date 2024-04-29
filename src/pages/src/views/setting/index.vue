@@ -64,7 +64,7 @@ const menuData = reactive([
     key: 'collaboration',
     children: [
       {
-        name: t('跨公司协同'),
+        name: t('跨租户协同'),
         key: 'collaboration',
       },
     ],

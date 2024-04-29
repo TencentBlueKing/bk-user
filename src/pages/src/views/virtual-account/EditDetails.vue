@@ -123,7 +123,7 @@ const handleChange = () => {
 };
 </script>
 
-<style>
+<style lang="less" scoped>
 .operation-wrapper {
   padding: 28px 40px;
 

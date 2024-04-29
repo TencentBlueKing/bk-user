@@ -7,10 +7,14 @@ export const useUser = defineStore('user', {
       username: '',
       avatar_url: '',
     },
+    showAlert: false, // 消息通知显示状态
   }),
   actions: {
     setUser(user: IUser) {
       this.user = user;
+    },
+    setShowAlert(status: boolean) {
+      this.showAlert = status;
     },
   },
 });

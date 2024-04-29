@@ -89,8 +89,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
+<script setup lang="ts"> import { bkTooltips as vBkTooltips, Message } from 'bkui-vue';
 import InfoBox from 'bkui-vue/lib/info-box';
 import { inject, onMounted, reactive, ref } from 'vue';
 
@@ -248,7 +247,6 @@ const fetchFieldList = () => {
 
 <style lang="less" scoped>
 .field-setting-content {
-  height: calc(100vh - 104px);
   padding: 24px;
 
   .add-field {
