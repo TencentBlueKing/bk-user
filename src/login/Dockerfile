@@ -20,7 +20,7 @@ RUN poetry config repositories.pypi https://mirrors.tencent.com/pypi/simple/
 
 # for saml 2.0 custom login
 RUN apt-get install -y pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl
-RUN pip install python3-saml==1.14.0
+RUN pip install python3-saml==1.14.0 xmlsec==1.3.13
 
 WORKDIR /app
 COPY src/login/pyproject.toml /app
