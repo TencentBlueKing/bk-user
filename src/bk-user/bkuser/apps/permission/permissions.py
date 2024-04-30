@@ -24,7 +24,7 @@ from bkuser.apps.data_source.models import DataSource, DataSourcePlugin
 from bkuser.apps.idp.models import Idp, IdpPlugin
 from bkuser.apps.natural_user.models import DataSourceUserNaturalUserRelation
 from bkuser.apps.permission.constants import PermAction, UserRole
-from bkuser.apps.tenant.models import Tenant, TenantManager, TenantUser
+from bkuser.apps.tenant.models import CollaborativeStrategy, Tenant, TenantManager, TenantUser
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,12 @@ def perm_class(action: PermAction):  # noqa: C901
 
             # 租户权限与具体对象有关系的，需要根据具体对象确定关联的租户后再鉴权
             if action == PermAction.MANAGE_TENANT:
+                # 协作策略比较特殊，只要是源 / 目标租户的管理员即可（Views 层会具体过滤）
+                if isinstance(obj, CollaborativeStrategy):
+                    return is_tenant_manager(obj.source_tenant_id, username) or is_tenant_manager(
+                        obj.target_tenant_id, username
+                    )
+
                 if isinstance(obj, Tenant):
                     tenant_id = obj.id
                 elif hasattr(obj, "tenant_id"):

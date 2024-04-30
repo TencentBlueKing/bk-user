@@ -259,6 +259,7 @@ class TenantSyncTaskContext:
         self.task.status = status.value
         self.task.duration = timezone.now() - self.task.start_at
         self.task.has_warning = self.logger.has_warning
+        # FIXME (su) 计算 & 存储 summary（新建 x 部门 x 用户， 更新 x 部门 x 用户， 删除 x 部门 x 用户）
         self.task.save(update_fields=["status", "duration", "has_warning", "updated_at"])
 
     def _store_records_into_db(self):

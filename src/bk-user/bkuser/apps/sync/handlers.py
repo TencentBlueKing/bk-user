@@ -24,6 +24,8 @@ from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
 from bkuser.apps.sync.signals import post_sync_data_source, post_sync_tenant
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
+from bkuser.apps.tenant.constants import CollaborativeStrategyStatus
+from bkuser.apps.tenant.models import CollaborativeStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +33,19 @@ logger = logging.getLogger(__name__)
 @receiver(post_sync_data_source)
 def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     """同步租户数据（部门 & 用户）"""
-    # TODO (su) 目前没有跨租户协同，因此只要往数据源所属租户同步即可
-    TenantSyncManager(data_source, data_source.owner_tenant_id, TenantSyncOptions()).execute()
+    sync_opts = TenantSyncOptions()
+    TenantSyncManager(data_source, data_source.owner_tenant_id, sync_opts).execute()
+    # 根据配置的协同策略，同步其他租户
+    for strategy in CollaborativeStrategy.objects.filter(source_tenant_id=data_source.owner_tenant_id):
+        # 任意一方不是以启用，就不会执行协同同步
+        if strategy.source_status != CollaborativeStrategyStatus.ENABLED:
+            logger.info("collaborative strategy %s is not enabled by source, skip sync...", strategy.id)
+            continue
+        if strategy.target_status != CollaborativeStrategyStatus.ENABLED:
+            logger.info("collaborative strategy %s is not enabled by target, skip sync...", strategy.id)
+            continue
+
+        TenantSyncManager(data_source, strategy.target_tenant_id, sync_opts).execute()
 
 
 @receiver(post_sync_tenant)

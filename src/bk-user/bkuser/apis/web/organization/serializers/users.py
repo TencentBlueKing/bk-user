@@ -210,6 +210,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
+    # FIXME (su) 对于协同过来的用户，自定义字段需要做次映射
     extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
 

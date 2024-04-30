@@ -29,6 +29,8 @@ def remove_dropped_field_in_field_mapping(tenant_id: str, field_name: str):
 
     DataSource.objects.bulk_update(data_sources, fields=["field_mapping", "updated_at"])
 
+    # FIXME (su) 协同策略中的也需要删除（分两种，分享方的和接受方的）
+
 
 @app.task(base=BaseTask, ignore_result=True)
 def remove_dropped_field_in_user_extras(tenant_id: str, field_name: str):
