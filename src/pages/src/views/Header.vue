@@ -134,7 +134,7 @@ import { useRoute } from 'vue-router';
 import NoticeComponent from '@blueking/notice-component';
 import ReleaseNote from '@blueking/release-note';
 
-import '@blueking/notice-component/dist/style.css'; 
+import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/dist/vue3-light.css';
 import { logout } from '@/common/auth';
 import I18n, { t } from '@/language/index';
