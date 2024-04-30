@@ -14,7 +14,7 @@
         <div
           style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
           class="cursor-pointer"
-          @click="onGoBack"
+          @click="toTenant"
         >
           <i class="user-icon icon-user-logo-i" />
           <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
@@ -134,7 +134,7 @@ import { useRoute } from 'vue-router';
 import NoticeComponent from '@blueking/notice-component';
 import ReleaseNote from '@blueking/release-note';
 
-import '@blueking/notice-component/dist/style.css';
+import '@blueking/notice-component/dist/style.css'; 
 import '@blueking/release-note/dist/vue3-light.css';
 import { logout } from '@/common/auth';
 import I18n, { t } from '@/language/index';
@@ -151,10 +151,6 @@ const state = reactive({
 
 const userStore = useUser();
 const headerNav = ref([]);
-const onGoBack = () => {
-  if(route.name === 'tenant') return
-  router.push({name: 'tenant'})
-}
 const userInfo = computed(() => {
   const { role } = userStore.user;
   const baseNav = [
@@ -219,6 +215,7 @@ const handleSwitchLocale = (locale: string) => {
 };
 
 const toTenant = () => {
+  if (route.name === 'tenant') return;
   router.push({ name: 'tenant' });
   headerNav.value = [];
 };
