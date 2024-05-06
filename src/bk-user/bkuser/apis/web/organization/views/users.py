@@ -55,8 +55,9 @@ from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.tenant.constants import TenantUserStatus
+from bkuser.apps.tenant.constants import CollaborativeStrategyStatus, TenantUserStatus
 from bkuser.apps.tenant.models import (
+    CollaborativeStrategy,
     Tenant,
     TenantDepartment,
     TenantUser,
@@ -325,19 +326,45 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
             if user_leader_relations:
                 DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relations)
 
-            # FIXME (su) 支持协同后，要对协同的租户也立即创建租户用户（目前只是对数据源所属租户做创建）
-            # 创建租户用户
-            tenant_user = TenantUser(
+            # 租户的用户有效期配置（会生效的才拿出来）
+            tenant_uvp_cfg_map = {
+                cfg.tenant_id: cfg
+                for cfg in TenantUserValidityPeriodConfig.objects.all()
+                if cfg.enabled and cfg.validity_period > 0
+            }
+            # 创建本租户的租户用户
+            tenant_user = TenantUser.objects.create(
                 id=gen_tenant_user_id(cur_tenant_id, data_source, data_source_user),
                 tenant_id=cur_tenant_id,
                 data_source=data_source,
                 data_source_user=data_source_user,
+                account_expired_at=(
+                    timezone.now() + timedelta(days=tenant_uvp_cfg_map[cur_tenant_id].validity_period)
+                    if cur_tenant_id in tenant_uvp_cfg_map
+                    else PERMANENT_TIME
+                ),
             )
-            cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=cur_tenant_id)
-            if cfg.enabled and cfg.validity_period > 0:
-                tenant_user.account_expired_at = timezone.now() + timedelta(days=cfg.validity_period)
-
-            tenant_user.save()
+            # 根据协同策略，将协同的租户用户也创建出来
+            collaboration_tenant_users = [
+                TenantUser(
+                    id=gen_tenant_user_id(strategy.target_tenant_id, data_source, data_source_user),
+                    tenant_id=strategy.target_tenant_id,
+                    data_source=data_source,
+                    data_source_user=data_source_user,
+                    account_expired_at=(
+                        timezone.now() + timedelta(days=tenant_uvp_cfg_map[strategy.target_tenant_id].validity_period)
+                        if strategy.target_tenant_id in tenant_uvp_cfg_map
+                        else PERMANENT_TIME
+                    ),
+                )
+                for strategy in CollaborativeStrategy.objects.filter(
+                    source_tenant_id=cur_tenant_id,
+                    source_status=CollaborativeStrategyStatus.ENABLED,
+                    target_status=CollaborativeStrategyStatus.ENABLED,
+                )
+            ]
+            if collaboration_tenant_users:
+                TenantUser.objects.bulk_create(collaboration_tenant_users)
 
         # 对新增的用户进行账密信息初始化 & 发送密码通知
         initialize_identity_info_and_send_notification.delay(data_source.id)

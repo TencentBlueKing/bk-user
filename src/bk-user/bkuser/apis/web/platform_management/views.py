@@ -11,6 +11,7 @@ specific language governing permissions and limitations under the License.
 from typing import Tuple
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
@@ -28,6 +29,7 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, TenantStatus
 from bkuser.apps.tenant.models import (
+    CollaborativeStrategy,
     Tenant,
     TenantDepartment,
     TenantManager,
@@ -247,8 +249,10 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
             for data_source in DataSource.objects.filter(owner_tenant_id=tenant.id):
                 DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
+            # 删除协同策略，分享方 / 接受方是本租户的都删除
+            CollaborativeStrategy.objects.filter(Q(source_tenant=tenant) | Q(target_tenant=tenant)).delete()
+
             # 删除剩余的，通过协同创建的租户用户 / 部门（本租户数据源同步所得的，已经在删除数据源时候删除）
-            # TODO (su) 协同相关数据的需要删除，比如协同策略，被协同的策略等等
             TenantUser.objects.filter(tenant=tenant).delete()
             TenantDepartment.objects.filter(tenant=tenant).delete()
             # 最后再删除租户

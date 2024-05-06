@@ -67,19 +67,17 @@ def perm_class(action: PermAction):  # noqa: C901
             if action == PermAction.MANAGE_TENANT:
                 # 协作策略比较特殊，只要是源 / 目标租户的管理员即可（Views 层会具体过滤）
                 if isinstance(obj, CollaborativeStrategy):
-                    return is_tenant_manager(obj.source_tenant_id, username) or is_tenant_manager(
-                        obj.target_tenant_id, username
-                    )
+                    is_source_tenant_mgr = is_tenant_manager(obj.source_tenant_id, username)
+                    is_target_tenant_mgr = is_tenant_manager(obj.target_tenant_id, username)
+                    return is_source_tenant_mgr or is_target_tenant_mgr
 
                 if isinstance(obj, Tenant):
                     tenant_id = obj.id
                 elif hasattr(obj, "tenant_id"):
                     tenant_id = obj.tenant_id
                 elif isinstance(obj, DataSource):
-                    # TODO (su) 考虑数据源协同的情况
                     tenant_id = obj.owner_tenant_id
                 elif hasattr(obj, "data_source"):
-                    # TODO (su) 考虑数据源协同的情况
                     tenant_id = obj.data_source.owner_tenant_id
                 elif isinstance(obj, Idp):
                     tenant_id = obj.owner_tenant_id
@@ -109,8 +107,7 @@ def is_super_manager(tenant_id: str, username: str) -> bool:
 
 def is_tenant_manager(tenant_id: str, username: str) -> bool:
     """本租户的管理员，拥有管理当前租户配置的权限"""
-    tenant = Tenant.objects.get(id=tenant_id)
-    return TenantManager.objects.filter(tenant=tenant, tenant_user_id=username).exists()
+    return TenantManager.objects.filter(tenant_id=tenant_id, tenant_user_id=username).exists()
 
 
 def is_same_nature_user(req_username: str, cur_tenant_id: str, username: str) -> bool:
