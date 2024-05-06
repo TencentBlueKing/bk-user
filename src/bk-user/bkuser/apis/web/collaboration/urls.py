@@ -24,13 +24,13 @@ urlpatterns = [
     path(
         "to-strategies/<str:id>/",
         views.CollaborationStrategyUpdateDestroyApi.as_view(),
-        name="collaboration.strategy.update",
+        name="collaboration.to-strategy.update",
     ),
     # 更新协同策略状态（分享方）
     path(
         "to-strategies/<str:id>/source-status/",
         views.CollaborationStrategySourceStatusUpdateApi.as_view(),
-        name="collaboration.strategy.source-status.update",
+        name="collaboration.to-strategy.source-status.update",
     ),
     # ----------------------------- 接受方 -----------------------------
     # 其他租户分享给本租户的协同策略
@@ -43,13 +43,13 @@ urlpatterns = [
     path(
         "from-strategies/<str:id>/operations/confirm/",
         views.CollaborationStrategyConfirmApi.as_view(),
-        name="collaboration.strategy.confirm",
+        name="collaboration.from-strategy.confirm",
     ),
     # 更新协同策略状态（接受方）
     path(
         "from-strategies/<str:id>/target-status/",
         views.CollaborationStrategyTargetStatusUpdateApi.as_view(),
-        name="collaboration.strategy.target-status.update",
+        name="collaboration.from-strategy.target-status.update",
     ),
     # 协同数据更新记录
     path(
