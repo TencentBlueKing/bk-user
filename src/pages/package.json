@@ -8,7 +8,8 @@
     "server": "node ./paas-server/index.js",
     "lint": "eslint --ext .js,.vue,.ts ./src",
     "lint:fix": "eslint --fix --ext .js,.vue,.ts ./src",
-    "lint:style": "stylelint \"./**/*.{css,less,vue,html}\" --fix"
+    "lint:style": "stylelint \"./**/*.{css,less,vue,html}\" --fix",
+    "i18n": "node ./i18n.js"
   },
   "keywords": [
     "bk-ci",
@@ -33,6 +34,7 @@
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.5",
     "dayjs": "^1.11.2",
+    "dot-object": "^2.1.5",
     "express": "^4.18.2",
     "express-art-template": "^1.0.1",
     "intl-tel-input": "^18.2.1",
@@ -50,6 +52,7 @@
     "vite-plugin-monaco-editor": "^1.1.0",
     "vue": "^3.2.41",
     "vue-i18n": "^9.9.0",
+    "vue-i18n-extract": "^2.0.7",
     "vue-router": "^4.1.6"
   },
   "devDependencies": {

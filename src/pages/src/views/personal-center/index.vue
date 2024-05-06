@@ -91,11 +91,12 @@
             </div>
           </div>
           <div class="header-right">
-            <span v-bk-tooltips="{
-              content: $t('当前用户不支持修改密码'),
-              distance: 20,
-              disabled: canChangePassword,
-            }">
+            <span
+              v-bk-tooltips="{
+                content: $t('当前用户不支持修改密码'),
+                distance: 20,
+                disabled: canChangePassword,
+              }">
               <bk-button
                 class="min-w-[88px]"
                 :disabled="!canChangePassword"
@@ -103,11 +104,12 @@
                 {{ $t('修改密码') }}
               </bk-button>
             </span>
-            <span v-bk-tooltips="{
-              content: $t('该账号已登录'),
-              distance: 20,
-              disabled: !isCurrentTenant,
-            }">
+            <span
+              v-bk-tooltips="{
+                content: $t('该账号已登录'),
+                distance: 20,
+                disabled: !isCurrentTenant,
+              }">
               <bk-button :disabled="isCurrentTenant">
                 {{ $t('切换为该账号登录') }}
               </bk-button>
@@ -200,8 +202,8 @@
                             :form-data="currentUserInfo"
                             :tel-error="telError"
                             :custom="true"
-                            @changeCountryCode="changeCountryCode"
-                            @changeTelError="changeTelError" />
+                            @change-country-code="changeCountryCode"
+                            @change-tel-error="changeTelError" />
                         </bk-form-item>
                         <bk-button text theme="primary" class="ml-[12px] mr-[12px]" @click="changePhone">
                           {{ $t('确定') }}

@@ -15,7 +15,7 @@
           <Empty
             :is-data-empty="dataRecordConfig.isDataEmpty"
             :is-data-error="dataRecordConfig.isDataError"
-            @handleUpdate="getSyncRecordsList"
+            @handle-update="getSyncRecordsList"
           />
         </template>
         <bk-table-column prop="start_at" :label="$t('开始时间')" :width="160" />

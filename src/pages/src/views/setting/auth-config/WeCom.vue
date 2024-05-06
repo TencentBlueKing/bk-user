@@ -10,7 +10,7 @@
         <bk-form-item :label="$t('名称')" property="name" required>
           <bk-input v-model="formData.name" :placeholder="validate.name.message" @change="handleChange" />
         </bk-form-item>
-        <bk-form-item label="是否启用" required>
+        <bk-form-item :label="$t('是否启用')" required>
           <bk-switcher
             :value="formData.status === 'enabled'"
             size="large"

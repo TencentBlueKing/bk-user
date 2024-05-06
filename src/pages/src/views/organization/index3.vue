@@ -93,18 +93,18 @@
               :keyword="params.keyword"
               :is-tenant="isTenant"
               :table-settings="tableSettings"
-              @searchUsers="searchUsers"
-              @changeUsers="changeUsers"
-              @updatePageLimit="updatePageLimit"
-              @updatePageCurrent="updatePageCurrent"
-              @handleSettingChange="handleSettingChange" />
+              @search-users="searchUsers"
+              @change-users="changeUsers"
+              @update-page-limit="updatePageLimit"
+              @update-page-current="updatePageCurrent"
+              @handle-setting-change="handleSettingChange" />
             <DetailsInfo
               v-if="index === 1 && isTenant"
               :user-data="state.currentTenant"
               :is-edit="isEdit"
-              @updateTenantsList="updateTenantsList"
-              @handleCancel="handleCancel"
-              @changeEdit="changeEdit" />
+              @update-tenants-list="updateTenantsList"
+              @handle-cancel="handleCancel"
+              @change-edit="changeEdit" />
           </bk-tab-panel>
         </bk-tab>
       </bk-loading>

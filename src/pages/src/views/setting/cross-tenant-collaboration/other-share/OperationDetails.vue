@@ -37,10 +37,10 @@
             :field-setting-data="fieldSettingData"
             :api-fields="apiFields"
             :rules="rulesFieldSetting"
-            @changeApiFields="changeApiFields"
-            @handleAddField="handleAddField"
-            @handleDeleteField="handleDeleteField"
-            @changeCustomField="changeCustomField" />
+            @change-api-fields="changeApiFields"
+            @handle-add-field="handleAddField"
+            @handle-delete-field="handleDeleteField"
+            @change-custom-field="changeCustomField" />
           <div class="ml-[64px]">
             <bk-button
               class="min-w-[64px] mr-[8px]"

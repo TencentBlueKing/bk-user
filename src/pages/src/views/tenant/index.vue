@@ -30,8 +30,8 @@
             :is-data-empty="state.isTableDataEmpty"
             :is-search-empty="state.isEmptySearch"
             :is-data-error="state.isTableDataError"
-            @handleEmpty="search = ''"
-            @handleUpdate="fetchTenantsList"
+            @handle-empty="search = ''"
+            @handle-update="fetchTenantsList"
           />
         </template>
         <bk-table-column
@@ -153,8 +153,8 @@
           :type="detailsConfig.type"
           :tenants-data="state.tenantsData"
           :is-email="isEmail"
-          @handleCancelEdit="handleCancelEdit"
-          @updateTenantsList="updateTenantsList"
+          @handle-cancel-edit="handleCancelEdit"
+          @update-tenants-list="updateTenantsList"
         />
       </template>
     </bk-sideslider>
@@ -190,7 +190,7 @@
             <bk-button
               outline
               theme="primary"
-              class="ml-[8px] min-w-[88px]"
+              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
               @click="handleRandomPassword">
               {{ $t('随机生成') }}
             </bk-button>
@@ -218,8 +218,8 @@
             v-else
             :form-data="adminPasswordData"
             :tel-error="telError"
-            @changeCountryCode="changeCountryCode"
-            @changeTelError="changeTelError" />
+            @change-country-code="changeCountryCode"
+            @change-tel-error="changeTelError" />
         </bk-form-item>
       </bk-form>
     </bk-dialog>
