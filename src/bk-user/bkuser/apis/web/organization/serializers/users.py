@@ -237,7 +237,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         )
         # TODO (su) 如果后续支持表达式，则不能直接取 Dict 做映射
         field_mapping = {mp["source_field"]: mp["target_field"] for mp in strategy.target_config["field_mapping"]}
-        return {field_mapping.get(key, key): value for key, value in obj.data_source_user.extras.items()}
+        return {field_mapping[k]: v for k, v in obj.data_source_user.extras.items() if k in field_mapping}
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_logo(self, obj: TenantUser) -> str:

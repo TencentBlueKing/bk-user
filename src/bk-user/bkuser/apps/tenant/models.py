@@ -234,3 +234,8 @@ class CollaborativeStrategy(AuditedModel):
     )
     source_config = models.JSONField("策略配置（分享方）", default=dict)
     target_config = models.JSONField("策略配置（接受方）", default=dict)
+
+    class Meta:
+        unique_together = [
+            ("source_tenant", "target_tenant"),
+        ]
