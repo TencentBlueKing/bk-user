@@ -45,6 +45,7 @@ from bkuser.apis.web.organization.serializers import (
 from bkuser.apis.web.organization.views.mixins import CurrentUserTenantDataSourceMixin
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import (
+    DataSource,
     DataSourceDepartmentRelation,
     DataSourceDepartmentUserRelation,
     DataSourceUser,
@@ -694,28 +695,72 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             ]
             DataSourceDepartmentUserRelation.objects.bulk_create(relations)
 
-            # FIXME (su) 支持协同后，要对协同的租户也立即创建租户用户（目前只是对数据源所属租户做创建）
-            # 新建租户用户，需要计算账号有效期
-            account_expired_at = PERMANENT_TIME
-            cfg = TenantUserValidityPeriodConfig.objects.get(tenant_id=cur_tenant_id)
-            if cfg.enabled and cfg.validity_period > 0:
-                account_expired_at = timezone.now() + timedelta(days=cfg.validity_period)
+            # 批量创建租户用户（含协同）
+            self._bulk_create_tenant_users(cur_tenant_id, tenant_dept, data_source, data_source_users)
 
-            tenant_users = [
+        # 对新增的用户进行账密信息初始化 & 发送密码通知
+        initialize_identity_info_and_send_notification.delay(data_source.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @staticmethod
+    def _bulk_create_tenant_users(
+        cur_tenant_id: str,
+        tenant_dept: TenantDepartment,
+        data_source: DataSource,
+        data_source_users: QuerySet[DataSourceUser],
+    ):
+        """批量创建租户用户（含协同）"""
+        # 租户的用户有效期配置（会生效的才拿出来）
+        tenant_uvp_cfg_map = {
+            cfg.tenant_id: cfg
+            for cfg in TenantUserValidityPeriodConfig.objects.all()
+            if cfg.enabled and cfg.validity_period > 0
+        }
+
+        # 新建租户用户，需要计算账号有效期
+        account_expired_at = (
+            timezone.now() + timedelta(days=tenant_uvp_cfg_map[cur_tenant_id].validity_period)
+            if cur_tenant_id in tenant_uvp_cfg_map
+            else PERMANENT_TIME
+        )
+
+        tenant_users = [
+            TenantUser(
+                id=gen_tenant_user_id(cur_tenant_id, data_source, user),
+                tenant_id=tenant_dept.tenant_id,
+                data_source=data_source,
+                data_source_user=user,
+                account_expired_at=account_expired_at,
+            )
+            for user in data_source_users
+        ]
+        TenantUser.objects.bulk_create(tenant_users)
+
+        collaboration_tenant_users: List[TenantUser] = []
+        for strategy in CollaborationStrategy.objects.filter(
+            source_tenant_id=cur_tenant_id,
+            source_status=CollaborationStrategyStatus.ENABLED,
+            target_status=CollaborationStrategyStatus.ENABLED,
+        ):
+            # 同一目标租户的用户，有效期是一样的
+            account_expired_at = (
+                timezone.now() + timedelta(days=tenant_uvp_cfg_map[strategy.target_tenant_id].validity_period)
+                if strategy.target_tenant_id in tenant_uvp_cfg_map
+                else PERMANENT_TIME
+            )
+            collaboration_tenant_users += [
                 TenantUser(
-                    id=gen_tenant_user_id(cur_tenant_id, data_source, user),
-                    tenant_id=tenant_dept.tenant_id,
+                    id=gen_tenant_user_id(strategy.target_tenant_id, data_source, user),
+                    tenant_id=strategy.target_tenant_id,
                     data_source=data_source,
                     data_source_user=user,
                     account_expired_at=account_expired_at,
                 )
                 for user in data_source_users
             ]
-            TenantUser.objects.bulk_create(tenant_users)
 
-        # 对新增的用户进行账密信息初始化 & 发送密码通知
-        initialize_identity_info_and_send_notification.delay(data_source.id)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if collaboration_tenant_users:
+            TenantUser.objects.bulk_create(collaboration_tenant_users)
 
 
 class TenantUserBatchCreatePreviewApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):

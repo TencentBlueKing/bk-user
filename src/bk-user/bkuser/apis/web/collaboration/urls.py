@@ -13,51 +13,47 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # 本租户分享给其他租户的协同策略
+    # ----------------------------- 分享方 -----------------------------
+    # 本租户分享给其他租户的协同策略 / 新建协同策略（分享）给其他租户
     path(
-        "tenants/<str:id>/strategies/to/",
-        views.CollaborationToStrategyListApi.as_view(),
-        name="collaboration.to-strategy.list",
-    ),
-    # 其他租户分享给本租户的协同策略
-    path(
-        "tenants/<str:id>/strategies/from/",
-        views.CollaborationFromStrategyListApi.as_view(),
-        name="collaboration.from-strategy.list",
-    ),
-    # 新建协同策略（分享）给其他租户
-    path(
-        "tenants/<str:id>/strategies/",
-        views.CollaborationStrategyCreateApi.as_view(),
-        name="collaboration.strategy.create",
+        "to-strategies/",
+        views.CollaborationToStrategyListCreateApi.as_view(),
+        name="collaboration.to-strategy.list_create",
     ),
     # 编辑 / 删除协同策略（分享方）
     path(
-        "tenants/strategies/<str:id>/",
+        "to-strategies/<str:id>/",
         views.CollaborationStrategyUpdateDestroyApi.as_view(),
         name="collaboration.strategy.update",
     ),
-    # 确认协同策略（接受方）
-    path(
-        "tenants/strategies/<str:id>/operations/confirm/",
-        views.CollaborationStrategyConfirmApi.as_view(),
-        name="collaboration.strategy.confirm",
-    ),
     # 更新协同策略状态（分享方）
     path(
-        "tenants/strategies/<str:id>/source-status/",
+        "to-strategies/<str:id>/source-status/",
         views.CollaborationStrategySourceStatusUpdateApi.as_view(),
         name="collaboration.strategy.source-status.update",
     ),
+    # ----------------------------- 接受方 -----------------------------
+    # 其他租户分享给本租户的协同策略
+    path(
+        "from-strategies/",
+        views.CollaborationFromStrategyListApi.as_view(),
+        name="collaboration.from-strategy.list",
+    ),
+    # 确认协同策略（接受方）
+    path(
+        "from-strategies/<str:id>/operations/confirm/",
+        views.CollaborationStrategyConfirmApi.as_view(),
+        name="collaboration.strategy.confirm",
+    ),
     # 更新协同策略状态（接受方）
     path(
-        "tenants/strategies/<str:id>/target-status/",
+        "from-strategies/<str:id>/target-status/",
         views.CollaborationStrategyTargetStatusUpdateApi.as_view(),
         name="collaboration.strategy.target-status.update",
     ),
     # 协同数据更新记录
     path(
-        "tenants/<str:id>/sync-records/",
+        "sync-records/",
         views.CollaborationSyncRecordListApi.as_view(),
         name="collaboration.sync-record.list",
     ),

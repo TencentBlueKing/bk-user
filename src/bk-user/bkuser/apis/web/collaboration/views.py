@@ -39,7 +39,7 @@ from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
-class CollaborationToStrategyListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class CollaborationToStrategyListCreateApi(CurrentUserTenantMixin, generics.ListAPIView):
     """获取协同策略列表（分享方）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -65,6 +65,28 @@ class CollaborationToStrategyListApi(CurrentUserTenantMixin, generics.ListAPIVie
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
+    @swagger_auto_schema(
+        tags=["collaboration"],
+        operation_description="创建协同策略（分享方）",
+        request_body=CollaborationStrategyCreateInputSLZ,
+        responses={status.HTTP_200_OK: CollaborationStrategyCreateOutputSLZ(many=True)},
+    )
+    def post(self, request, *args, **kwargs):
+        cur_tenant_id = self.get_current_tenant_id()
+        slz = CollaborationStrategyCreateInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+
+        strategy = CollaborationStrategy.objects.create(
+            name=data["name"],
+            source_tenant_id=cur_tenant_id,
+            target_tenant_id=data["target_tenant_id"],
+            source_config=data["source_config"],
+            creator=request.user.username,
+            updater=request.user.username,
+        )
+        return Response(data=CollaborationStrategyCreateOutputSLZ(strategy).data, status=status.HTTP_201_CREATED)
+
 
 class CollaborationFromStrategyListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """获取协同策略列表（接受方）"""
@@ -87,34 +109,6 @@ class CollaborationFromStrategyListApi(CurrentUserTenantMixin, generics.ListAPIV
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
-
-
-class CollaborationStrategyCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
-    """创建协同策略（分享方）"""
-
-    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
-
-    @swagger_auto_schema(
-        tags=["collaboration"],
-        operation_description="创建协同策略（分享方）",
-        request_body=CollaborationStrategyCreateInputSLZ,
-        responses={status.HTTP_200_OK: CollaborationStrategyCreateOutputSLZ(many=True)},
-    )
-    def post(self, request, *args, **kwargs):
-        cur_tenant_id = self.get_current_tenant_id()
-        slz = CollaborationStrategyCreateInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
-        slz.is_valid(raise_exception=True)
-        data = slz.validated_data
-
-        strategy = CollaborationStrategy.objects.create(
-            name=data["name"],
-            source_tenant_id=cur_tenant_id,
-            target_tenant_id=data["target_tenant_id"],
-            source_config=data["config"],
-            creator=request.user.username,
-            updater=request.user.username,
-        )
-        return Response(data=CollaborationStrategyCreateOutputSLZ(strategy).data, status=status.HTTP_201_CREATED)
 
 
 class CollaborationStrategyUpdateDestroyApi(
@@ -148,7 +142,7 @@ class CollaborationStrategyUpdateDestroyApi(
 
         strategy = self.get_object()
         strategy.name = data["name"]
-        strategy.source_config = data["config"]
+        strategy.source_config = data["source_config"]
         strategy.updater = request.user.username
         strategy.save(update_fields=["name", "source_config", "updater", "updated_at"])
 
@@ -206,7 +200,7 @@ class CollaborationStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         data = slz.validated_data
 
         strategy.target_status = CollaborationStrategyStatus.ENABLED
-        strategy.target_config = data["config"]
+        strategy.target_config = data["target_config"]
         strategy.updater = request.user.username
         strategy.save(update_fields=["target_status", "target_config", "updater", "updated_at"])
 

@@ -24,7 +24,12 @@ from bkuser.apis.web.organization.serializers import (
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import UserFieldDataType
-from bkuser.apps.tenant.models import Tenant, TenantDepartment, TenantUser, TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import (
+    CollaborationStrategy,
+    Tenant,
+    TenantUserCustomField,
+    UserBuiltinField,
+)
 
 
 class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):
@@ -51,23 +56,9 @@ class CollaborationTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     serializer_class = TenantListOutputSLZ
 
     def get_queryset(self):
-        # FIXME (su) 目前是根据部门信息获取的协作租户 ID，后续可修改成根据协同策略获取？
-        # 不过通过部门反查优点是一定有数据（协作策略已确认，但是未同步的情况）
-        cur_tenant_id = self.get_current_tenant_id()
-        dept_tenant_ids = (
-            TenantDepartment.objects.filter(tenant_id=cur_tenant_id)
-            .exclude(data_source__owner_tenant_id=cur_tenant_id)
-            .values_list("data_source__owner_tenant_id", flat=True)
-            .distinct()
-        )
-        user_tenant_ids = (
-            TenantUser.objects.filter(tenant_id=cur_tenant_id)
-            .exclude(data_source__owner_tenant_id=cur_tenant_id)
-            .values_list("data_source__owner_tenant_id", flat=True)
-            .distinct()
-        )
-        # 需要用户和部门的 owner_tenant_id 取并集，避免出现用户不属于任何部门的情况
-        collaboration_tenant_ids = set(dept_tenant_ids) | set(user_tenant_ids)
+        collaboration_tenant_ids = CollaborationStrategy.objects.filter(
+            target_tenant_id=self.get_current_tenant_id()
+        ).values_list("source_tenant_id", flat=True)
         return Tenant.objects.filter(id__in=collaboration_tenant_ids)
 
     @swagger_auto_schema(
