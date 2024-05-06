@@ -12,22 +12,8 @@
           <bk-form-item class="w-[590px]" :label="$t('策略名称')" property="name" required>
             <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
           </bk-form-item>
-        </div>
-      </div>
-      <div class="operation-card">
-        <div class="operation-content-title">{{ $t('目标租户1') }}</div>
-        <div class="operation-content-info flex">
-          <bk-form-item class="w-[340px]" :label="$t('租户ID')" property="tenant_id" required>
-            <bk-input
-              v-model="formData.tenant_id"
-              type="textarea"
-              autosize
-              :resize="false"
-              @focus="handleChange" />
-          </bk-form-item>
-          <i class="user-icon icon-arrow-right"></i>
-          <bk-form-item class="w-[340px]" :label="$t('租户名称')" required>
-            <div class="tenant-name"></div>
+          <bk-form-item class="w-[590px]" :label="$t('目标公司')" property="name" required>
+            <bk-input v-model="formData.name" :placeholder="validate.name.message" @focus="handleChange" />
           </bk-form-item>
         </div>
       </div>
@@ -52,8 +38,8 @@
               v-model="formData.sync_type"
             >
               <bk-radio label="all">{{ $t('所有字段') }}</bk-radio>
-              <bk-radio label="appoint">{{ $t('指定字段') }}</bk-radio>
-              <bk-radio label="basics">{{ $t('仅基础字段') }}</bk-radio>
+              <!-- <bk-radio label="appoint">{{ $t('指定字段') }}</bk-radio>
+              <bk-radio label="basics">{{ $t('仅基础字段') }}</bk-radio> -->
             </bk-radio-group>
           </bk-form-item>
           <bk-form-item
@@ -112,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { defineEmits, defineProps, onMounted, reactive, ref } from 'vue';
 
 import Empty from '@/components/Empty.vue';
 import { useValidate } from '@/hooks';
@@ -133,29 +119,7 @@ const formData = reactive({
   ...props.config.data,
 });
 
-const dataSourceList = ref([
-  {
-    value: 'climbing',
-    label: '爬山',
-  },
-  {
-    value: 'fitness',
-    label: '健身',
-  },
-  {
-    value: 'bike',
-    label: '骑车',
-  },
-  {
-    value: 'dancing',
-    label: '跳舞',
-  },
-  {
-    value: 'sleep',
-    label: '睡觉',
-    disabled: true,
-  },
-]);
+const dataSourceList = ref([]);
 
 const rulesBasicInfo = {
   name: [validate.required, validate.name],

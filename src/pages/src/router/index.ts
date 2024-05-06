@@ -68,6 +68,7 @@ export default createRouter({
             routeParentName: 'setting',
             navName: t('跨租户协同'),
             isMenu: true,
+            hiddenBoxShadow: true,
           },
           component: () => import('@/views/setting/cross-tenant-collaboration/index.vue'),
         },

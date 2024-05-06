@@ -454,5 +454,11 @@
   "重命名": "Rename",
   "协同租户": "Collaboration Tenant",
   "协同配置": "Collaboration Configuration",
+  "用户": "User",
+  "暂无搜索结果": "No search results",
+  "已停用": "Disabled",
+  "删除组织": "Delete organization",
+  "确认删除该组织？": "Delete this organization?",
+  "删除该组织同时会删除其下用户与子组织，请谨慎操作": "Deleting this organization will also delete its users and sub-organizations. Please proceed with caution",
   "新增": "Add"
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="virtual-account-wrapper">
+  <div :class="['virtual-account-wrapper user-scroll-y', { 'has-alert': userStore.showAlert }]">
     <header>
       <bk-button theme="primary" @click="handleClick('add')">
         <i class="user-icon icon-add-2 mr8" />
@@ -100,6 +100,9 @@ import Empty from '@/components/Empty.vue';
 import { deleteVirtualUsers, getVirtualUsers, getVirtualUsersDetail } from '@/http';
 import { t } from '@/language/index';
 import { copy } from '@/utils';
+import { useUser } from '@/store';
+
+const userStore = useUser();
 
 const editLeaveBefore = inject('editLeaveBefore');
 
@@ -269,7 +272,12 @@ const pageCurrentChange = (current: number) => {
 </script>
 
 <style lang="less" scoped>
+.has-alert {
+  height: calc(100vh - 92px) !important;
+}
+
 .virtual-account-wrapper {
+  height: calc(100vh - 52px);
   padding: 24px 160px;
 
   header {

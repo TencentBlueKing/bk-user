@@ -3,7 +3,7 @@
     <!-- 消息通知 -->
     <NoticeComponent :api-url="apiUrl" @show-alert-change="showAlertChange" />
     <bk-navigation
-      :class="['main-navigation', { 'has-alert': showAlert}]"
+      :class="['main-navigation', { 'has-alert': userStore.showAlert }]"
       :hover-width="240"
       navigation-type="top-bottom"
       :need-menu="false"
@@ -137,7 +137,7 @@ import '@blueking/release-note/dist/vue3-light.css';
 import { logout } from '@/common/auth';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
-import { useUser } from '@/store/user';
+import { useUser } from '@/store';
 import { logoConvert } from '@/utils';
 import { getVersionLogs } from '@/http';
 
@@ -227,12 +227,9 @@ const feedbackUrl = window.BK_USER_FEEDBACK_URL;
 // 消息通知配置信息
 const apiUrl = `${window.AJAX_BASE_URL}/api/v1/web/notices/announcements/`;
 
-// 是否含有跑马灯类型公告
-const showAlert = ref(false);
-
 // 公告列表change事件回调
 const showAlertChange = (isShow: boolean) => {
-  showAlert.value = isShow;
+  userStore.setShowAlert(isShow);
 };
 
 // 版本日志配置信息
@@ -260,10 +257,6 @@ const openVersionLog = async () => {
 <style lang="less" scoped>
 .has-alert {
   height: calc(100vh - 40px);
-
-  :deep(.bk-navigation-wrapper) {
-    height: calc(100vh - 92px) !important;
-  }
 }
 
 .main-navigation {
@@ -339,6 +332,7 @@ const openVersionLog = async () => {
 
     .container-content {
       padding: 0 !important;
+      overflow-y: hidden !important;
     }
   }
 

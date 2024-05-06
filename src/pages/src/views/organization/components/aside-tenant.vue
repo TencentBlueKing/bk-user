@@ -1,11 +1,20 @@
 <template>
   <section class="bg-white h-full pl-[6px]">
-    <div class="">
-      <div class="leading-[36px] text-[14px] px-[6px]">
-        <img v-if="currentTenant?.logo" class="w-[20px] h-[20px] mr-[8px]" :src="currentTenant?.logo" />
+    <div v-bkloading="{ loading: loading }">
+      <div
+        class="leading-[36px] text-[14px] px-[6px] inline-flex items-center w-full cursor-pointer"
+        :class="{ 'text-[#3A84FF] bg-[#ebf2ff]': appStore.currentOrg?.id === currentTenant?.id }"
+        @click="handleNodeClick(currentTenant)"
+      >
+        <img
+          v-if="currentTenant?.logo"
+          class="w-[20px] h-[20px] mr-[8px]"
+          :src="currentTenant?.logo" />
         <span
           v-else
-          class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center">
+          class="bg-[#C4C6CC] text-white mr-[8px] rounded-[4px] inline-block w-[20px] leading-[20px] text-center"
+          :class="{ 'bg-[#3A84FF]': appStore.currentOrg?.id === currentTenant?.id }"
+        >
           {{ currentTenant?.name.charAt(0).toUpperCase() }}
         </span>
         {{ currentTenant?.name }}
@@ -24,12 +33,13 @@
         }"
       >
         <template #node="node">
-          <div class="org-node flex justify-between pr-[12px]">
+          <div class="org-node pr-[12px] relative">
             <span class="text-[14px]">{{ node.name }}</span>
             <operate-more
               :dept="node"
               :tenant="currentTenant"
               @add-node="addNode"
+              @delete-node="deleteNode"
               @update-node="updateNode">
             </operate-more>
           </div>
@@ -52,6 +62,7 @@ import useAppStore from '@/store/app';
 const appStore = useAppStore();
 
 const currentTenant = ref();
+const loading = ref(false);
 
 const formatTreeData = (data = []) => {
   data.forEach((item) => {
@@ -64,11 +75,13 @@ const formatTreeData = (data = []) => {
 };
 
 onBeforeMount(async () => {
+  loading.value = true;
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
   appStore.currentOrg = tenantData?.data;
   const deptData = await getDepartmentsList(0, currentTenant.value?.id);
   treeData.value = formatTreeData(deptData?.data);
+  loading.value = false;
 });
 
 const organizationAsideHooks = useOrganizationAside(currentTenant);
@@ -77,6 +90,7 @@ const {
   getRemoteData,
   handleNodeClick,
   addNode,
+  deleteNode,
   updateNode,
   getPrefixIcon,
 } = organizationAsideHooks;
