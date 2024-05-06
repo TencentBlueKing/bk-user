@@ -55,9 +55,9 @@ from bkuser.apps.notification.tasks import send_reset_password_to_user
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.tenant.constants import CollaborativeStrategyStatus, TenantUserStatus
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus, TenantUserStatus
 from bkuser.apps.tenant.models import (
-    CollaborativeStrategy,
+    CollaborationStrategy,
     Tenant,
     TenantDepartment,
     TenantUser,
@@ -357,10 +357,10 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
                         else PERMANENT_TIME
                     ),
                 )
-                for strategy in CollaborativeStrategy.objects.filter(
+                for strategy in CollaborationStrategy.objects.filter(
                     source_tenant_id=cur_tenant_id,
-                    source_status=CollaborativeStrategyStatus.ENABLED,
-                    target_status=CollaborativeStrategyStatus.ENABLED,
+                    source_status=CollaborationStrategyStatus.ENABLED,
+                    target_status=CollaborationStrategyStatus.ENABLED,
                 )
             ]
             if collaboration_tenant_users:

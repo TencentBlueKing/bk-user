@@ -41,8 +41,8 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
-from bkuser.apps.tenant.constants import CollaborativeStrategyStatus
-from bkuser.apps.tenant.models import CollaborativeStrategy, Tenant, TenantDepartment
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 from bkuser.utils.uuid import generate_uuid
@@ -203,20 +203,20 @@ class TenantDepartmentListCreateApi(CurrentUserTenantMixin, generics.ListCreateA
                 data_source=data_source,
             )
             # 根据协同策略，将协同的租户部门也创建出来
-            collaborative_tenant_depts = [
+            collaboration_tenant_depts = [
                 TenantDepartment(
                     tenant_id=strategy.target_tenant_id,
                     data_source_department=data_source_dept,
                     data_source=data_source,
                 )
-                for strategy in CollaborativeStrategy.objects.filter(
+                for strategy in CollaborationStrategy.objects.filter(
                     source_tenant_id=current_tenant_id,
-                    source_status=CollaborativeStrategyStatus.ENABLED,
-                    target_status=CollaborativeStrategyStatus.ENABLED,
+                    source_status=CollaborationStrategyStatus.ENABLED,
+                    target_status=CollaborationStrategyStatus.ENABLED,
                 )
             ]
-            if collaborative_tenant_depts:
-                TenantDepartment.objects.bulk_create(collaborative_tenant_depts)
+            if collaboration_tenant_depts:
+                TenantDepartment.objects.bulk_create(collaboration_tenant_depts)
 
         return Response(TenantDepartmentCreateOutputSLZ(tenant_dept).data, status=status.HTTP_201_CREATED)
 

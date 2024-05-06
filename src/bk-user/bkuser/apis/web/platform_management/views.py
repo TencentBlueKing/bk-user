@@ -29,7 +29,7 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
 from bkuser.apps.tenant.constants import DEFAULT_TENANT_USER_VALIDITY_PERIOD_CONFIG, TenantStatus
 from bkuser.apps.tenant.models import (
-    CollaborativeStrategy,
+    CollaborationStrategy,
     Tenant,
     TenantDepartment,
     TenantManager,
@@ -250,7 +250,7 @@ class TenantRetrieveUpdateDestroyApi(ExcludePatchAPIViewMixin, generics.Retrieve
                 DataSourceHandler.delete_data_source_and_related_resources(data_source)
 
             # 删除协同策略，分享方 / 接受方是本租户的都删除
-            CollaborativeStrategy.objects.filter(Q(source_tenant=tenant) | Q(target_tenant=tenant)).delete()
+            CollaborationStrategy.objects.filter(Q(source_tenant=tenant) | Q(target_tenant=tenant)).delete()
 
             # 删除剩余的，通过协同创建的租户用户 / 部门（本租户数据源同步所得的，已经在删除数据源时候删除）
             TenantUser.objects.filter(tenant=tenant).delete()

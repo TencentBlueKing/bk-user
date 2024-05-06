@@ -26,21 +26,21 @@ def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
 
 
 @pytest.fixture()
-def collaborative_tenant() -> Tenant:
+def collaboration_tenant() -> Tenant:
     """创建随机的协同租户"""
     return create_tenant(generate_random_string())
 
 
 @pytest.fixture()
-def _init_collaborative_users_depts(
+def _init_collaboration_users_depts(
     random_tenant,
-    collaborative_tenant,
+    collaboration_tenant,
     local_ds_plugin,
     local_ds_plugin_cfg,
 ) -> None:
     """初始化协同所得的租户部门 & 租户用户（协同租户同步到当前随机租户）"""
     data_source = DataSource.objects.create(
-        owner_tenant_id=collaborative_tenant.id,
+        owner_tenant_id=collaboration_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=local_ds_plugin,
         plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),

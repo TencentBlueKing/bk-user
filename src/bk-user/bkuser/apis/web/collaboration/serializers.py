@@ -17,12 +17,12 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.sync.models import TenantSyncTask
-from bkuser.apps.tenant.data_models import CollaborativeStrategySourceConfig, CollaborativeStrategyTargetConfig
-from bkuser.apps.tenant.models import CollaborativeStrategy, Tenant, TenantUserCustomField
+from bkuser.apps.tenant.data_models import CollaborationStrategySourceConfig, CollaborationStrategyTargetConfig
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
 from bkuser.utils.pydantic import stringify_pydantic_error
 
 
-class CollaborativeToStrategyListOutputSLZ(serializers.Serializer):
+class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="协同策略 ID")
     name = serializers.CharField(help_text="协同策略名称")
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
@@ -33,19 +33,19 @@ class CollaborativeToStrategyListOutputSLZ(serializers.Serializer):
     config = serializers.JSONField(help_text="策略配置", source="source_config")
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_target_tenant_name(self, obj: CollaborativeStrategy) -> str:
+    def get_target_tenant_name(self, obj: CollaborationStrategy) -> str:
         return self.context["tenant_name_map"][obj.target_tenant_id]
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_creator(self, obj: CollaborativeStrategy) -> str:
+    def get_creator(self, obj: CollaborationStrategy) -> str:
         return self.context["user_display_name_map"][obj.creator]
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_created_at(self, obj: CollaborativeStrategy) -> str:
+    def get_created_at(self, obj: CollaborationStrategy) -> str:
         return obj.created_at_display
 
 
-class CollaborativeFromStrategyListOutputSLZ(serializers.Serializer):
+class CollaborationFromStrategyListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="协同策略 ID")
     source_tenant_id = serializers.CharField(help_text="源租户 ID")
     source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")
@@ -55,21 +55,21 @@ class CollaborativeFromStrategyListOutputSLZ(serializers.Serializer):
     target_config = serializers.JSONField(help_text="策略配置（接受方）")
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_source_tenant_name(self, obj: CollaborativeStrategy) -> str:
+    def get_source_tenant_name(self, obj: CollaborationStrategy) -> str:
         return self.context["tenant_name_map"][obj.source_tenant_id]
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_updated_at(self, obj: CollaborativeStrategy) -> str:
+    def get_updated_at(self, obj: CollaborationStrategy) -> str:
         return obj.updated_at_display
 
 
-class CollaborativeStrategyCreateInputSLZ(serializers.Serializer):
+class CollaborationStrategyCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
     config = serializers.JSONField(help_text="策略配置")
 
     def validate_name(self, name: str) -> str:
-        if CollaborativeStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"]).exists():
+        if CollaborationStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"]).exists():
             raise ValidationError(_("同名协同策略已存在"))
 
         return name
@@ -85,24 +85,24 @@ class CollaborativeStrategyCreateInputSLZ(serializers.Serializer):
 
     def validate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         try:
-            CollaborativeStrategySourceConfig(**config)
+            CollaborationStrategySourceConfig(**config)
         except pydantic.ValidationError as e:
             raise ValidationError(_("策略配置不合法：{}").format(stringify_pydantic_error(e)))
 
         return config
 
 
-class CollaborativeStrategyCreateOutputSLZ(serializers.Serializer):
+class CollaborationStrategyCreateOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="协同策略 ID")
 
 
-class CollaborativeStrategyUpdateInputSLZ(serializers.Serializer):
+class CollaborationStrategyUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     config = serializers.JSONField(help_text="策略配置（分享方）")
 
     def validate_name(self, name: str) -> str:
         if (
-            CollaborativeStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"])
+            CollaborationStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"])
             .exclude(id=self.context["strategy_id"])
             .exists()
         ):
@@ -112,7 +112,7 @@ class CollaborativeStrategyUpdateInputSLZ(serializers.Serializer):
 
     def validate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         try:
-            CollaborativeStrategySourceConfig(**config)
+            CollaborationStrategySourceConfig(**config)
         except pydantic.ValidationError as e:
             raise ValidationError(_("策略配置不合法：{}").format(stringify_pydantic_error(e)))
 
@@ -137,12 +137,12 @@ def _validate_field_mapping_with_tenant_user_fields(
     return field_mapping
 
 
-class CollaborativeStrategyConfirmInputSLZ(serializers.Serializer):
+class CollaborationStrategyConfirmInputSLZ(serializers.Serializer):
     config = serializers.JSONField(help_text="策略配置（接受方）")
 
     def validate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         try:
-            CollaborativeStrategyTargetConfig(**config)
+            CollaborationStrategyTargetConfig(**config)
         except pydantic.ValidationError as e:
             raise ValidationError(_("策略配置不合法：{}").format(stringify_pydantic_error(e)))
 
@@ -150,11 +150,11 @@ class CollaborativeStrategyConfirmInputSLZ(serializers.Serializer):
         return config
 
 
-class CollaborativeStrategyStatusUpdateOutputSLZ(serializers.Serializer):
+class CollaborationStrategyStatusUpdateOutputSLZ(serializers.Serializer):
     status = serializers.CharField(help_text="策略状态")
 
 
-class CollaborativeSyncRecordListOutputSLZ(serializers.Serializer):
+class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="同步记录 ID")
     source_tenant_id = serializers.CharField(help_text="源租户 ID", source="data_source.owner_tenant_id")
     source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")

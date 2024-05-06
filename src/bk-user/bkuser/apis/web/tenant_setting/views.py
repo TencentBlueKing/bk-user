@@ -35,7 +35,7 @@ from bkuser.apps.tenant.models import (
     TenantUserValidityPeriodConfig,
     UserBuiltinField,
 )
-from bkuser.apps.tenant.tasks import remove_dropped_field_in_collaborative_strategy_field_mapping
+from bkuser.apps.tenant.tasks import remove_dropped_field_in_collaboration_strategy_field_mapping
 from bkuser.common.views import ExcludePatchAPIViewMixin, ExcludePutAPIViewMixin
 
 
@@ -127,7 +127,7 @@ class TenantUserCustomFieldUpdateDeleteApi(
 
         # 删除自定义字段，需要执行数据清理，包括数据源字段映射配置 + 租户协同策略字段映射 + 用户自定义字段数据
         remove_dropped_field_in_data_source_field_mapping.delay(tenant_id, field_name)
-        remove_dropped_field_in_collaborative_strategy_field_mapping.delay(tenant_id, field_name)
+        remove_dropped_field_in_collaboration_strategy_field_mapping.delay(tenant_id, field_name)
         remove_dropped_field_in_user_extras.delay(tenant_id, field_name)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

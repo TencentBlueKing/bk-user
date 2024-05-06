@@ -26,7 +26,7 @@ from bkuser.apps.data_source.models import (
 )
 from bkuser.apps.tenant.constants import TenantUserStatus, UserFieldDataType
 from bkuser.apps.tenant.models import (
-    CollaborativeStrategy,
+    CollaborationStrategy,
     TenantDepartment,
     TenantUser,
     TenantUserCustomField,
@@ -232,7 +232,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
             return obj.data_source_user.extras
 
         # 对于协同过来的用户，自定义字段需要做次映射
-        strategy = CollaborativeStrategy.objects.get(
+        strategy = CollaborationStrategy.objects.get(
             source_tenant_id=obj.data_source.owner_tenant_id, target_tenant_id=obj.tenant_id
         )
         # TODO (su) 如果后续支持表达式，则不能直接取 Dict 做映射

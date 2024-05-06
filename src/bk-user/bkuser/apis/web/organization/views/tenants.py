@@ -42,7 +42,7 @@ class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView)
         return Response(TenantRetrieveOutputSLZ(tenant).data, status=status.HTTP_200_OK)
 
 
-class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class CollaborationTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """获取当前租户的协作租户信息"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
@@ -67,8 +67,8 @@ class CollaborativeTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
             .distinct()
         )
         # 需要用户和部门的 owner_tenant_id 取并集，避免出现用户不属于任何部门的情况
-        collaborative_tenant_ids = set(dept_tenant_ids) | set(user_tenant_ids)
-        return Tenant.objects.filter(id__in=collaborative_tenant_ids)
+        collaboration_tenant_ids = set(dept_tenant_ids) | set(user_tenant_ids)
+        return Tenant.objects.filter(id__in=collaboration_tenant_ids)
 
     @swagger_auto_schema(
         tags=["organization.tenant"],

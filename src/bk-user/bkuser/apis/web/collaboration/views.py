@@ -19,36 +19,36 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.collaboration.serializers import (
-    CollaborativeFromStrategyListOutputSLZ,
-    CollaborativeStrategyConfirmInputSLZ,
-    CollaborativeStrategyCreateInputSLZ,
-    CollaborativeStrategyCreateOutputSLZ,
-    CollaborativeStrategyStatusUpdateOutputSLZ,
-    CollaborativeStrategyUpdateInputSLZ,
-    CollaborativeSyncRecordListOutputSLZ,
-    CollaborativeToStrategyListOutputSLZ,
+    CollaborationFromStrategyListOutputSLZ,
+    CollaborationStrategyConfirmInputSLZ,
+    CollaborationStrategyCreateInputSLZ,
+    CollaborationStrategyCreateOutputSLZ,
+    CollaborationStrategyStatusUpdateOutputSLZ,
+    CollaborationStrategyUpdateInputSLZ,
+    CollaborationSyncRecordListOutputSLZ,
+    CollaborationToStrategyListOutputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.models import TenantSyncTask
-from bkuser.apps.tenant.constants import CollaborativeStrategyStatus
-from bkuser.apps.tenant.models import CollaborativeStrategy, Tenant, TenantDepartment, TenantUser
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment, TenantUser
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
 
 
-class CollaborativeToStrategyListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class CollaborationToStrategyListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """获取协同策略列表（分享方）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = CollaborativeToStrategyListOutputSLZ
+    serializer_class = CollaborationToStrategyListOutputSLZ
     pagination_class = None
 
-    def get_queryset(self) -> QuerySet[CollaborativeStrategy]:
-        return CollaborativeStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
+    def get_queryset(self) -> QuerySet[CollaborationStrategy]:
+        return CollaborationStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
 
     def get_serializer_context(self) -> Dict[str, Any]:
         tenant_user_ids = self.get_queryset().values_list("creator", flat=True)
@@ -58,55 +58,55 @@ class CollaborativeToStrategyListApi(CurrentUserTenantMixin, generics.ListAPIVie
         }
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="获取协同策略列表（分享方）",
-        responses={status.HTTP_200_OK: CollaborativeToStrategyListOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: CollaborationToStrategyListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
 
-class CollaborativeFromStrategyListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class CollaborationFromStrategyListApi(CurrentUserTenantMixin, generics.ListAPIView):
     """获取协同策略列表（接受方）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = CollaborativeFromStrategyListOutputSLZ
+    serializer_class = CollaborationFromStrategyListOutputSLZ
     pagination_class = None
 
-    def get_queryset(self) -> QuerySet[CollaborativeStrategy]:
-        return CollaborativeStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
+    def get_queryset(self) -> QuerySet[CollaborationStrategy]:
+        return CollaborationStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
 
     def get_serializer_context(self) -> Dict[str, Any]:
         return {"tenant_name_map": {t.id: t.name for t in Tenant.objects.all()}}
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="获取协同策略列表（接受方）",
-        responses={status.HTTP_200_OK: CollaborativeFromStrategyListOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: CollaborationFromStrategyListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
 
-class CollaborativeStrategyCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
+class CollaborationStrategyCreateApi(CurrentUserTenantMixin, generics.CreateAPIView):
     """创建协同策略（分享方）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="创建协同策略（分享方）",
-        request_body=CollaborativeStrategyCreateInputSLZ,
-        responses={status.HTTP_200_OK: CollaborativeStrategyCreateOutputSLZ(many=True)},
+        request_body=CollaborationStrategyCreateInputSLZ,
+        responses={status.HTTP_200_OK: CollaborationStrategyCreateOutputSLZ(many=True)},
     )
     def post(self, request, *args, **kwargs):
         cur_tenant_id = self.get_current_tenant_id()
-        slz = CollaborativeStrategyCreateInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
+        slz = CollaborationStrategyCreateInputSLZ(data=request.data, context={"tenant_id": cur_tenant_id})
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        strategy = CollaborativeStrategy.objects.create(
+        strategy = CollaborationStrategy.objects.create(
             name=data["name"],
             source_tenant_id=cur_tenant_id,
             target_tenant_id=data["target_tenant_id"],
@@ -114,10 +114,10 @@ class CollaborativeStrategyCreateApi(CurrentUserTenantMixin, generics.CreateAPIV
             creator=request.user.username,
             updater=request.user.username,
         )
-        return Response(data=CollaborativeStrategyCreateOutputSLZ(strategy).data, status=status.HTTP_201_CREATED)
+        return Response(data=CollaborationStrategyCreateOutputSLZ(strategy).data, status=status.HTTP_201_CREATED)
 
 
-class CollaborativeStrategyUpdateDestroyApi(
+class CollaborationStrategyUpdateDestroyApi(
     CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView, generics.DestroyAPIView
 ):
     """编辑协同策略（分享方）"""
@@ -126,17 +126,17 @@ class CollaborativeStrategyUpdateDestroyApi(
 
     lookup_url_kwarg = "id"
 
-    def get_queryset(self) -> QuerySet[CollaborativeStrategy]:
-        return CollaborativeStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
+    def get_queryset(self) -> QuerySet[CollaborationStrategy]:
+        return CollaborationStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="编辑协同策略（分享方）",
-        request_body=CollaborativeStrategyUpdateInputSLZ,
+        request_body=CollaborationStrategyUpdateInputSLZ,
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
-        slz = CollaborativeStrategyUpdateInputSLZ(
+        slz = CollaborationStrategyUpdateInputSLZ(
             data=request.data,
             context={
                 "tenant_id": self.get_current_tenant_id(),
@@ -155,7 +155,7 @@ class CollaborativeStrategyUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="删除协同策略（分享方）",
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
@@ -178,34 +178,34 @@ class CollaborativeStrategyUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CollaborativeStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
+class CollaborationStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     """确认协同策略（接受方）"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
     lookup_url_kwarg = "id"
 
-    def get_queryset(self) -> QuerySet[CollaborativeStrategy]:
-        return CollaborativeStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
+    def get_queryset(self) -> QuerySet[CollaborationStrategy]:
+        return CollaborationStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="确认协同策略（接受方）",
-        request_body=CollaborativeStrategyConfirmInputSLZ,
+        request_body=CollaborationStrategyConfirmInputSLZ,
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
         strategy = self.get_object()
-        if strategy.target_status != CollaborativeStrategyStatus.UNCONFIRMED:
-            raise error_codes.COLLABORATIVE_STRATEGY_UPDATE_FAILED.f(_("该协同策略已确认，无需重复操作"))
+        if strategy.target_status != CollaborationStrategyStatus.UNCONFIRMED:
+            raise error_codes.COLLABORATION_STRATEGY_UPDATE_FAILED.f(_("该协同策略已确认，无需重复操作"))
 
-        slz = CollaborativeStrategyConfirmInputSLZ(
+        slz = CollaborationStrategyConfirmInputSLZ(
             data=request.data, context={"tenant_id": self.get_current_tenant_id()}
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        strategy.target_status = CollaborativeStrategyStatus.ENABLED
+        strategy.target_status = CollaborationStrategyStatus.ENABLED
         strategy.target_config = data["config"]
         strategy.updater = request.user.username
         strategy.save(update_fields=["target_status", "target_config", "updater", "updated_at"])
@@ -213,7 +213,7 @@ class CollaborativeStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CollaborativeStrategySourceStatusUpdateApi(
+class CollaborationStrategySourceStatusUpdateApi(
     CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
 ):
     """协同策略更新状态（分享方）"""
@@ -222,33 +222,33 @@ class CollaborativeStrategySourceStatusUpdateApi(
 
     lookup_url_kwarg = "id"
 
-    def get_queryset(self) -> QuerySet[CollaborativeStrategy]:
-        return CollaborativeStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
+    def get_queryset(self) -> QuerySet[CollaborationStrategy]:
+        return CollaborationStrategy.objects.filter(source_tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="协同策略更新状态（分享方）",
-        responses={status.HTTP_200_OK: CollaborativeStrategyStatusUpdateOutputSLZ()},
+        responses={status.HTTP_200_OK: CollaborationStrategyStatusUpdateOutputSLZ()},
     )
     def put(self, request, *args, **kwargs):
         strategy = self.get_object()
 
         # 分享方的策略状态只有启用和禁用
         strategy.source_status = (
-            CollaborativeStrategyStatus.DISABLED
-            if strategy.source_status == CollaborativeStrategyStatus.ENABLED
-            else CollaborativeStrategyStatus.ENABLED
+            CollaborationStrategyStatus.DISABLED
+            if strategy.source_status == CollaborationStrategyStatus.ENABLED
+            else CollaborationStrategyStatus.ENABLED
         )
         strategy.updater = request.user.username
         strategy.save(update_fields=["source_status", "updater", "updated_at"])
 
         return Response(
-            data=CollaborativeStrategyStatusUpdateOutputSLZ({"status": strategy.source_status.value}).data,
+            data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.source_status.value}).data,
             status=status.HTTP_200_OK,
         )
 
 
-class CollaborativeStrategyTargetStatusUpdateApi(
+class CollaborationStrategyTargetStatusUpdateApi(
     CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
 ):
     """协同策略更新状态（接受方）"""
@@ -257,38 +257,38 @@ class CollaborativeStrategyTargetStatusUpdateApi(
 
     lookup_url_kwarg = "id"
 
-    def get_queryset(self) -> QuerySet[CollaborativeStrategy]:
-        return CollaborativeStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
+    def get_queryset(self) -> QuerySet[CollaborationStrategy]:
+        return CollaborationStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="协同策略更新状态（接受方）",
-        responses={status.HTTP_200_OK: CollaborativeStrategyStatusUpdateOutputSLZ()},
+        responses={status.HTTP_200_OK: CollaborationStrategyStatusUpdateOutputSLZ()},
     )
     def put(self, request, *args, **kwargs):
         strategy = self.get_object()
 
-        if strategy.target_status == CollaborativeStrategyStatus.UNCONFIRMED:
-            raise error_codes.COLLABORATIVE_STRATEGY_UPDATE_FAILED.f(_("请先确认策略，再尝试修改状态"))
+        if strategy.target_status == CollaborationStrategyStatus.UNCONFIRMED:
+            raise error_codes.COLLABORATION_STRATEGY_UPDATE_FAILED.f(_("请先确认策略，再尝试修改状态"))
 
         strategy.target_status = (
-            CollaborativeStrategyStatus.DISABLED
-            if strategy.target_status == CollaborativeStrategyStatus.ENABLED
-            else CollaborativeStrategyStatus.ENABLED
+            CollaborationStrategyStatus.DISABLED
+            if strategy.target_status == CollaborationStrategyStatus.ENABLED
+            else CollaborationStrategyStatus.ENABLED
         )
         strategy.updater = request.user.username
         strategy.save(update_fields=["target_status", "updater", "updated_at"])
 
         return Response(
-            data=CollaborativeStrategyStatusUpdateOutputSLZ({"status": strategy.target_status.value}).data,
+            data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.target_status.value}).data,
             status=status.HTTP_200_OK,
         )
 
 
-class CollaborativeSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
+class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
 
-    serializer_class = CollaborativeSyncRecordListOutputSLZ
+    serializer_class = CollaborationSyncRecordListOutputSLZ
 
     def get_queryset(self) -> QuerySet[TenantSyncTask]:
         cur_tenant_id = self.get_current_tenant_id()
@@ -300,9 +300,9 @@ class CollaborativeSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIVie
         return {"tenant_name_map": {t.id: t.name for t in Tenant.objects.all()}}
 
     @swagger_auto_schema(
-        tags=["collaborative"],
+        tags=["collaboration"],
         operation_description="协同策略同步记录列表",
-        responses={status.HTTP_200_OK: CollaborativeSyncRecordListOutputSLZ(many=True)},
+        responses={status.HTTP_200_OK: CollaborationSyncRecordListOutputSLZ(many=True)},
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)

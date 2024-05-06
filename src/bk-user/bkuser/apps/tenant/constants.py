@@ -138,7 +138,7 @@ class TenantUserStatus(str, StructuredEnum):
     EXPIRED = EnumField("expired", label=_("已过期"))
 
 
-class CollaborativeStrategyStatus(str, StructuredEnum):
+class CollaborationStrategyStatus(str, StructuredEnum):
     """协同策略状态"""
 
     ENABLED = EnumField("enabled", label=_("启用"))
@@ -146,7 +146,7 @@ class CollaborativeStrategyStatus(str, StructuredEnum):
     UNCONFIRMED = EnumField("unconfirmed", label=_("未确认"))
 
 
-class CollaborativeScopeType(str, StructuredEnum):
+class CollaborationScopeType(str, StructuredEnum):
     """协同范围类型"""
 
     ALL = EnumField("all", label=_("全部"))

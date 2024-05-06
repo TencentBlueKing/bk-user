@@ -24,8 +24,8 @@ from bkuser.apps.sync.managers import TenantSyncManager
 from bkuser.apps.sync.names import gen_data_source_sync_periodic_task_name
 from bkuser.apps.sync.signals import post_sync_data_source, post_sync_tenant
 from bkuser.apps.sync.tasks import initialize_identity_info_and_send_notification
-from bkuser.apps.tenant.constants import CollaborativeStrategyStatus
-from bkuser.apps.tenant.models import CollaborativeStrategy
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +36,13 @@ def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     sync_opts = TenantSyncOptions()
     TenantSyncManager(data_source, data_source.owner_tenant_id, sync_opts).execute()
     # 根据配置的协同策略，同步其他租户
-    for strategy in CollaborativeStrategy.objects.filter(source_tenant_id=data_source.owner_tenant_id):
+    for strategy in CollaborationStrategy.objects.filter(source_tenant_id=data_source.owner_tenant_id):
         # 任意一方不是以启用，就不会执行协同同步
-        if strategy.source_status != CollaborativeStrategyStatus.ENABLED:
-            logger.info("collaborative strategy %s is not enabled by source, skip sync...", strategy.id)
+        if strategy.source_status != CollaborationStrategyStatus.ENABLED:
+            logger.info("collaboration strategy %s is not enabled by source, skip sync...", strategy.id)
             continue
-        if strategy.target_status != CollaborativeStrategyStatus.ENABLED:
-            logger.info("collaborative strategy %s is not enabled by target, skip sync...", strategy.id)
+        if strategy.target_status != CollaborationStrategyStatus.ENABLED:
+            logger.info("collaboration strategy %s is not enabled by target, skip sync...", strategy.id)
             continue
 
         TenantSyncManager(data_source, strategy.target_tenant_id, sync_opts).execute()

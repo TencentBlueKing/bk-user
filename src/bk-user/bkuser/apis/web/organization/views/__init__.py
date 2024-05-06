@@ -21,7 +21,7 @@ from .relations import (
     TenantDeptUserRelationBatchUpdateApi,
 )
 from .tenants import (
-    CollaborativeTenantListApi,
+    CollaborationTenantListApi,
     CurrentTenantRetrieveApi,
     RequiredTenantUserFieldListApi,
 )
@@ -41,7 +41,7 @@ from .users import (
 __all__ = [
     # 租户
     "CurrentTenantRetrieveApi",
-    "CollaborativeTenantListApi",
+    "CollaborationTenantListApi",
     "RequiredTenantUserFieldListApi",
     # 租户部门
     "TenantDepartmentListCreateApi",

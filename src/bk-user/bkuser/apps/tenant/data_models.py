@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from bkuser.apps.tenant.constants import CollaborativeScopeType, FieldMappingOperation
+from bkuser.apps.tenant.constants import CollaborationScopeType, FieldMappingOperation
 
 
 class TenantUserCustomFieldOption(BaseModel):
@@ -41,26 +41,26 @@ class TenantUserFieldMapping(BaseModel):
         return f"{self.source_field} --{self.expression}--> {self.target_field}"
 
 
-class CollaborativeStrategySourceConfig(BaseModel):
+class CollaborationStrategySourceConfig(BaseModel):
     """
     租户协同策略配置（分享方）
 
     # TODO 后续如果支持指定范围，再考虑两个 scope_config 的建模，现在先用 Dict
     """
 
-    organization_scope_type: CollaborativeScopeType
+    organization_scope_type: CollaborationScopeType
     organization_scope_config: Dict[str, Any] = Field(default_factory=dict)
-    field_scope_type: CollaborativeScopeType
+    field_scope_type: CollaborationScopeType
     field_scope_config: Dict[str, Any] = Field(default_factory=dict)
 
 
-class CollaborativeStrategyTargetConfig(BaseModel):
+class CollaborationStrategyTargetConfig(BaseModel):
     """租户协同策略配置（接受方）
 
     # TODO 后续如果支持指定范围，再考虑 organization_scope_config 的建模，现在先用 Dict
     """
 
-    organization_scope_type: CollaborativeScopeType
+    organization_scope_type: CollaborationScopeType
     organization_scope_config: Dict[str, Any] = Field(default_factory=dict)
     # 注：仅支持用户自定义字段映射，因为协同数据的模型是一致的，内置字段不需要映射
     field_mapping: List[TenantUserFieldMapping]

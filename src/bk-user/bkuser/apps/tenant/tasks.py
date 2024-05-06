@@ -10,7 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 import logging
 
-from bkuser.apps.tenant.models import CollaborativeStrategy
+from bkuser.apps.tenant.models import CollaborationStrategy
 from bkuser.celery import app
 from bkuser.common.task import BaseTask
 
@@ -18,19 +18,19 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(base=BaseTask, ignore_result=True)
-def remove_dropped_field_in_collaborative_strategy_field_mapping(tenant_id: str, field_name: str):
+def remove_dropped_field_in_collaboration_strategy_field_mapping(tenant_id: str, field_name: str):
     """删除租户某个用户自定义字段后，需要将协同策略的 FieldMapping 中的该字段一并清除"""
 
     # 注：一个租户关联的协同策略不会很多，且在后台任务中，可以不用批量操作
     # 协同策略（分享方）处理源字段
-    for strategy in CollaborativeStrategy.objects.filter(source_tenant_id=tenant_id):
+    for strategy in CollaborationStrategy.objects.filter(source_tenant_id=tenant_id):
         strategy.target_config["field_mapping"] = [
             mp for mp in strategy.target_config["field_mapping"] if mp["source_field"] != field_name
         ]
         strategy.save(update_fields=["target_config", "updated_at"])
 
     # 协同策略（接受方）处理目标字段
-    for strategy in CollaborativeStrategy.objects.filter(target_tenant_id=tenant_id):
+    for strategy in CollaborationStrategy.objects.filter(target_tenant_id=tenant_id):
         strategy.target_config["field_mapping"] = [
             mp for mp in strategy.target_config["field_mapping"] if mp["target_field"] != field_name
         ]

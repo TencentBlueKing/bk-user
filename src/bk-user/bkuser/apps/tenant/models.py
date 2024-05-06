@@ -17,7 +17,7 @@ from django.db.models import Q, QuerySet
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
 from bkuser.apps.tenant.constants import (
     TIME_ZONE_CHOICES,
-    CollaborativeStrategyStatus,
+    CollaborationStrategyStatus,
     TenantStatus,
     TenantUserStatus,
     UserFieldDataType,
@@ -210,7 +210,7 @@ class TenantUserValidityPeriodConfig(AuditedModel):
     notification_templates = models.JSONField("通知模板", default=list)
 
 
-class CollaborativeStrategy(AuditedModel):
+class CollaborationStrategy(AuditedModel):
     """协同策略"""
 
     name = models.CharField("策略名称", max_length=128)
@@ -222,14 +222,14 @@ class CollaborativeStrategy(AuditedModel):
     )
     source_status = models.CharField(
         "策略状态（分享方）",
-        choices=CollaborativeStrategyStatus.get_choices(),
-        default=CollaborativeStrategyStatus.ENABLED,
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.ENABLED,
         max_length=32,
     )
     target_status = models.CharField(
         "策略状态（接受方）",
-        choices=CollaborativeStrategyStatus.get_choices(),
-        default=CollaborativeStrategyStatus.UNCONFIRMED,
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.UNCONFIRMED,
         max_length=32,
     )
     source_config = models.JSONField("策略配置（分享方）", default=dict)
