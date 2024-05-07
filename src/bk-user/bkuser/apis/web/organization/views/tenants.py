@@ -24,12 +24,7 @@ from bkuser.apis.web.organization.serializers import (
 from bkuser.apps.permission.constants import PermAction
 from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus, UserFieldDataType
-from bkuser.apps.tenant.models import (
-    CollaborationStrategy,
-    Tenant,
-    TenantUserCustomField,
-    UserBuiltinField,
-)
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField, UserBuiltinField
 
 
 class CurrentTenantRetrieveApi(CurrentUserTenantMixin, generics.RetrieveAPIView):

@@ -34,7 +34,9 @@ logger = logging.getLogger(__name__)
 def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     """同步租户数据（部门 & 用户）"""
     sync_opts = TenantSyncOptions()
+    # 同步到数据源所属租户
     TenantSyncManager(data_source, data_source.owner_tenant_id, sync_opts).execute()
+
     # 根据配置的协同策略，同步其他租户
     for strategy in CollaborationStrategy.objects.filter(source_tenant_id=data_source.owner_tenant_id):
         # 任意一方状态不是已启用，就不会执行协同同步

@@ -330,8 +330,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
             # 租户的用户有效期配置（会生效的才拿出来）
             tenant_uvp_cfg_map = {
                 cfg.tenant_id: cfg
-                for cfg in TenantUserValidityPeriodConfig.objects.all()
-                if cfg.enabled and cfg.validity_period > 0
+                for cfg in TenantUserValidityPeriodConfig.objects.filter(enabled=True, validity_period__gt=0)
             }
             # 创建本租户的租户用户
             tenant_user = TenantUser.objects.create(
@@ -713,8 +712,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         # 租户的用户有效期配置（会生效的才拿出来）
         tenant_uvp_cfg_map = {
             cfg.tenant_id: cfg
-            for cfg in TenantUserValidityPeriodConfig.objects.all()
-            if cfg.enabled and cfg.validity_period > 0
+            for cfg in TenantUserValidityPeriodConfig.objects.filter(enabled=True, validity_period__gt=0)
         }
 
         # 新建租户用户，需要计算账号有效期
@@ -723,7 +721,6 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             if cur_tenant_id in tenant_uvp_cfg_map
             else PERMANENT_TIME
         )
-
         tenant_users = [
             TenantUser(
                 id=gen_tenant_user_id(cur_tenant_id, data_source, user),
@@ -736,6 +733,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         ]
         TenantUser.objects.bulk_create(tenant_users)
 
+        # 批量创建协同租户用户
         collaboration_tenant_users: List[TenantUser] = []
         for strategy in CollaborationStrategy.objects.filter(
             source_tenant_id=cur_tenant_id,
