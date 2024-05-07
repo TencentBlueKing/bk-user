@@ -237,6 +237,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
         )
         # TODO (su) 如果后续支持表达式，则不能直接取 Dict 做映射
         field_mapping = {mp["source_field"]: mp["target_field"] for mp in strategy.target_config["field_mapping"]}
+        # 协同的字段映射不是全量的，可能源租户提供 5 个自定义字段，目标租户只配了 3 个，需要过滤掉多余的
         return {field_mapping[k]: v for k, v in obj.data_source_user.extras.items() if k in field_mapping}
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)

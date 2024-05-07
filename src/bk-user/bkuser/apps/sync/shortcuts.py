@@ -36,7 +36,11 @@ def start_collaboration_tenant_sync(strategy: CollaborationStrategy):
         owner_tenant_id=strategy.source_tenant_id, type=DataSourceTypeEnum.REAL
     ).first()
     if not data_source:
-        logger.info("real user data source in tenant %s not found, skip sync...", strategy.source_tenant_id)
+        logger.info(
+            "collaboration strategy %s source tenant %s didn't have real user data source, skip sync...",
+            strategy.id,
+            strategy.source_tenant_id,
+        )
         return
 
     sync_opts = TenantSyncOptions(operator=strategy.updater, async_run=True, trigger=SyncTaskTrigger.MANUAL)

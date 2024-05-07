@@ -39,6 +39,12 @@ urlpatterns = [
         views.CollaborationFromStrategyListApi.as_view(),
         name="collaboration.from-strategy.list",
     ),
+    # 获取源租户用户自定义字段（接受方）
+    path(
+        "from-strategies/<str:id>/source-tenant-custom-fields/",
+        views.CollaborationStrategySourceTenantCustomFieldListApi.as_view(),
+        name="collaboration.from-strategy.source-tenant-custom-fields",
+    ),
     # 确认协同策略（接受方）
     path(
         "from-strategies/<str:id>/operations/confirm/",

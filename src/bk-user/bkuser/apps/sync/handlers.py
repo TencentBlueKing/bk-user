@@ -37,7 +37,7 @@ def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     TenantSyncManager(data_source, data_source.owner_tenant_id, sync_opts).execute()
     # 根据配置的协同策略，同步其他租户
     for strategy in CollaborationStrategy.objects.filter(source_tenant_id=data_source.owner_tenant_id):
-        # 任意一方不是以启用，就不会执行协同同步
+        # 任意一方状态不是已启用，就不会执行协同同步
         if strategy.source_status != CollaborationStrategyStatus.ENABLED:
             logger.info("collaboration strategy %s is not enabled by source, skip sync...", strategy.id)
             continue

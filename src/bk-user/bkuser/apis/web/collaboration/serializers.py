@@ -21,6 +21,8 @@ from bkuser.apps.tenant.data_models import CollaborationStrategySourceConfig, Co
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
 from bkuser.utils.pydantic import stringify_pydantic_error
 
+# ---------------------------------- 分享方 SLZ ----------------------------------
+
 
 class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="协同策略 ID")
@@ -39,20 +41,6 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_creator(self, obj: CollaborationStrategy) -> str:
         return self.context["user_display_name_map"][obj.creator]
-
-
-class CollaborationFromStrategyListOutputSLZ(serializers.Serializer):
-    id = serializers.IntegerField(help_text="协同策略 ID")
-    source_tenant_id = serializers.CharField(help_text="源租户 ID")
-    source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")
-    updated_at = serializers.CharField(help_text="最近更新时间", source="updated_at_display")
-    target_status = serializers.CharField(help_text="策略状态（接受方）")
-    source_config = serializers.JSONField(help_text="策略配置（分享方）")
-    target_config = serializers.JSONField(help_text="策略配置（接受方）")
-
-    @swagger_serializer_method(serializer_or_field=serializers.CharField)
-    def get_source_tenant_name(self, obj: CollaborationStrategy) -> str:
-        return self.context["tenant_name_map"][obj.source_tenant_id]
 
 
 class CollaborationStrategyCreateInputSLZ(serializers.Serializer):
@@ -111,6 +99,36 @@ class CollaborationStrategyUpdateInputSLZ(serializers.Serializer):
         return config
 
 
+# ---------------------------------- 共享的 SLZ ----------------------------------
+
+
+class CollaborationStrategyStatusUpdateOutputSLZ(serializers.Serializer):
+    status = serializers.CharField(help_text="策略状态")
+
+
+# ---------------------------------- 接受方 SLZ ----------------------------------
+
+
+class CollaborationFromStrategyListOutputSLZ(serializers.Serializer):
+    id = serializers.IntegerField(help_text="协同策略 ID")
+    source_tenant_id = serializers.CharField(help_text="源租户 ID")
+    source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")
+    updated_at = serializers.CharField(help_text="最近更新时间", source="updated_at_display")
+    target_status = serializers.CharField(help_text="策略状态（接受方）")
+    source_config = serializers.JSONField(help_text="策略配置（分享方）")
+    target_config = serializers.JSONField(help_text="策略配置（接受方）")
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
+    def get_source_tenant_name(self, obj: CollaborationStrategy) -> str:
+        return self.context["tenant_name_map"][obj.source_tenant_id]
+
+
+class CollaborationSourceTenantCustomFieldListOutputSLZ(serializers.Serializer):
+    name = serializers.CharField(help_text="英文标识")
+    display_name = serializers.CharField(help_text="展示用名称")
+    data_type = serializers.CharField(help_text="字段类型")
+
+
 def _validate_field_mapping_with_tenant_user_fields(
     field_mapping: List[Dict[str, str]], tenant_id: str
 ) -> List[Dict[str, str]]:
@@ -140,10 +158,6 @@ class CollaborationStrategyConfirmInputSLZ(serializers.Serializer):
 
         _validate_field_mapping_with_tenant_user_fields(config["field_mapping"], self.context["tenant_id"])
         return config
-
-
-class CollaborationStrategyStatusUpdateOutputSLZ(serializers.Serializer):
-    status = serializers.CharField(help_text="策略状态")
 
 
 class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):

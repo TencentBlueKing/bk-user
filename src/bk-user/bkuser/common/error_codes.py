@@ -97,6 +97,7 @@ class ErrorCodes:
     GET_CURRENT_TENANT_FAILED = ErrorCode(_("无法找到当前用户所在租户"))
 
     # 协同策略
+    COLLABORATION_STRATEGY_DISABLED_BY_SOURCE = ErrorCode(_("协同策略被分享方禁用"))
     COLLABORATION_STRATEGY_UPDATE_FAILED = ErrorCode(_("协同策略更新失败"))
 
     # 租户部门

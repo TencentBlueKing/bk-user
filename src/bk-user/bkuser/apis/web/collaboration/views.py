@@ -20,6 +20,7 @@ from rest_framework.response import Response
 
 from bkuser.apis.web.collaboration.serializers import (
     CollaborationFromStrategyListOutputSLZ,
+    CollaborationSourceTenantCustomFieldListOutputSLZ,
     CollaborationStrategyConfirmInputSLZ,
     CollaborationStrategyCreateInputSLZ,
     CollaborationStrategyCreateOutputSLZ,
@@ -34,7 +35,13 @@ from bkuser.apps.permission.permissions import perm_class
 from bkuser.apps.sync.models import TenantSyncTask
 from bkuser.apps.sync.shortcuts import start_collaboration_tenant_sync
 from bkuser.apps.tenant.constants import CollaborationStrategyStatus
-from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantDepartment, TenantUser
+from bkuser.apps.tenant.models import (
+    CollaborationStrategy,
+    Tenant,
+    TenantDepartment,
+    TenantUser,
+    TenantUserCustomField,
+)
 from bkuser.biz.tenant import TenantUserHandler
 from bkuser.common.error_codes import error_codes
 from bkuser.common.views import ExcludePatchAPIViewMixin
@@ -184,10 +191,7 @@ class CollaborationStrategySourceStatusUpdateApi(
         # 分享方启用后，应该触发检查，如果两方都是启用，则需要执行同步（方法内已做检查）
         start_collaboration_tenant_sync(strategy)
 
-        return Response(
-            data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.source_status.value}).data,
-            status=status.HTTP_200_OK,
-        )
+        return Response(data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.source_status.value}).data)
 
 
 # --------------------------------------------- 接受方 API ---------------------------------------------
@@ -216,6 +220,33 @@ class CollaborationFromStrategyListApi(CurrentUserTenantMixin, generics.ListAPIV
         return self.list(request, *args, **kwargs)
 
 
+class CollaborationStrategySourceTenantCustomFieldListApi(
+    CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.RetrieveAPIView
+):
+    """获取协同的源租户用户自定义字段列表（接受方）"""
+
+    permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+
+    lookup_url_kwarg = "id"
+
+    def get_queryset(self) -> QuerySet[CollaborationStrategy]:
+        return CollaborationStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
+
+    @swagger_auto_schema(
+        tags=["collaboration"],
+        operation_description="获取协同的源租户用户自定义字段列表（接受方）",
+        responses={status.HTTP_200_OK: CollaborationSourceTenantCustomFieldListOutputSLZ(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        strategy = self.get_object()
+
+        if strategy.source_status != CollaborationStrategyStatus.ENABLED:
+            raise error_codes.COLLABORATION_STRATEGY_DISABLED_BY_SOURCE.f(_("无法获取分享方租户的自定义字段"))
+
+        custom_fields = TenantUserCustomField.objects.filter(tenant=strategy.source_tenant).all()
+        return Response(data=CollaborationSourceTenantCustomFieldListOutputSLZ(custom_fields, many=True).data)
+
+
 class CollaborationStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView):
     """确认协同策略（接受方）"""
 
@@ -236,6 +267,11 @@ class CollaborationStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAPIVie
         strategy = self.get_object()
         if strategy.target_status != CollaborationStrategyStatus.UNCONFIRMED:
             raise error_codes.COLLABORATION_STRATEGY_UPDATE_FAILED.f(_("该协同策略已确认，无需重复操作"))
+
+        if strategy.source_status != CollaborationStrategyStatus.ENABLED:
+            raise error_codes.COLLABORATION_STRATEGY_DISABLED_BY_SOURCE.f(
+                _("无法进行确认，请联系分享方租户管理员启用该策略")
+            )
 
         slz = CollaborationStrategyConfirmInputSLZ(
             data=request.data, context={"tenant_id": self.get_current_tenant_id()}
@@ -288,10 +324,7 @@ class CollaborationStrategyTargetStatusUpdateApi(
         # 接受方启用后，应该触发检查，如果两方都是启用，则需要执行同步（方法内已做检查）
         start_collaboration_tenant_sync(strategy)
 
-        return Response(
-            data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.target_status.value}).data,
-            status=status.HTTP_200_OK,
-        )
+        return Response(data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.target_status.value}).data)
 
 
 class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):
