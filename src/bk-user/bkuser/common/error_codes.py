@@ -99,6 +99,7 @@ class ErrorCodes:
     # 协同策略
     COLLABORATION_STRATEGY_DISABLED_BY_SOURCE = ErrorCode(_("协同策略被分享方禁用"))
     COLLABORATION_STRATEGY_UPDATE_FAILED = ErrorCode(_("协同策略更新失败"))
+    COLLABORATION_STRATEGY_DELETE_FAILED = ErrorCode(_("协同策略删除失败"))
 
     # 租户部门
     TENANT_DEPARTMENT_CREATE_FAILED = ErrorCode(_("租户部门创建失败"))

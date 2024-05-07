@@ -17,6 +17,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from bkuser.apps.sync.models import TenantSyncTask
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus, UserFieldDataType
 from bkuser.apps.tenant.data_models import CollaborationStrategySourceConfig, CollaborationStrategyTargetConfig
 from bkuser.apps.tenant.models import CollaborationStrategy, Tenant, TenantUserCustomField
 from bkuser.utils.pydantic import stringify_pydantic_error
@@ -31,7 +32,10 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
     target_tenant_name = serializers.SerializerMethodField(help_text="目标租户名称")
     creator = serializers.SerializerMethodField(help_text="创建人")
     created_at = serializers.CharField(help_text="创建时间", source="created_at_display")
-    source_status = serializers.CharField(help_text="策略状态（分享方）")
+    source_status = serializers.ChoiceField(
+        help_text="策略状态（分享方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+    )
     source_config = serializers.JSONField(help_text="策略配置（分享方）")
 
     @swagger_serializer_method(serializer_or_field=serializers.CharField)
@@ -43,7 +47,7 @@ class CollaborationToStrategyListOutputSLZ(serializers.Serializer):
         return self.context["user_display_name_map"][obj.creator]
 
 
-class CollaborationStrategyCreateInputSLZ(serializers.Serializer):
+class CollaborationToStrategyCreateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
     source_config = serializers.JSONField(help_text="策略配置")
@@ -73,11 +77,11 @@ class CollaborationStrategyCreateInputSLZ(serializers.Serializer):
         return attrs
 
 
-class CollaborationStrategyCreateOutputSLZ(serializers.Serializer):
+class CollaborationToStrategyCreateOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="协同策略 ID")
 
 
-class CollaborationStrategyUpdateInputSLZ(serializers.Serializer):
+class CollaborationToStrategyUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     source_config = serializers.JSONField(help_text="策略配置（分享方）")
 
@@ -94,7 +98,7 @@ class CollaborationStrategyUpdateInputSLZ(serializers.Serializer):
 
 
 class CollaborationStrategyStatusUpdateOutputSLZ(serializers.Serializer):
-    status = serializers.CharField(help_text="策略状态")
+    status = serializers.ChoiceField(help_text="策略状态", choices=CollaborationStrategyStatus.get_choices())
 
 
 # ---------------------------------- 接受方 SLZ ----------------------------------
@@ -105,7 +109,10 @@ class CollaborationFromStrategyListOutputSLZ(serializers.Serializer):
     source_tenant_id = serializers.CharField(help_text="源租户 ID")
     source_tenant_name = serializers.SerializerMethodField(help_text="源租户名称")
     updated_at = serializers.CharField(help_text="最近更新时间", source="updated_at_display")
-    target_status = serializers.CharField(help_text="策略状态（接受方）")
+    target_status = serializers.ChoiceField(
+        help_text="策略状态（接受方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+    )
     source_config = serializers.JSONField(help_text="策略配置（分享方）")
     target_config = serializers.JSONField(help_text="策略配置（接受方）")
 
@@ -121,24 +128,50 @@ class CollaborationSourceTenantCustomFieldListOutputSLZ(serializers.Serializer):
 
 
 def _validate_field_mapping_with_tenant_user_fields(
-    field_mapping: List[Dict[str, str]], tenant_id: str
-) -> List[Dict[str, str]]:
-    target_fields = {m.get("target_field") for m in field_mapping}
+    field_mapping: List[Dict[str, str]], source_tenant_id: str, target_tenant_id: str
+):
+    """校验协同策略中的字段映射，是否能匹配源 / 目标租户的自定义字段"""
 
-    custom_fields = TenantUserCustomField.objects.filter(tenant_id=tenant_id)
-    if not_allowed_fields := target_fields - set(custom_fields.values_list("name", flat=True)):
+    source_tenant_custom_field_map = {
+        f.name: f for f in TenantUserCustomField.objects.filter(tenant_id=source_tenant_id)
+    }
+    target_tenant_custom_field_map = {
+        f.name: f for f in TenantUserCustomField.objects.filter(tenant_id=target_tenant_id)
+    }
+
+    # 源字段检查（是否合法）
+    source_fields = {m.get("source_field") for m in field_mapping}
+    if not_allowed_fields := source_fields - set(source_tenant_custom_field_map.keys()):
+        raise ValidationError(_("字段映射中的源字段 {} 不属于源租户用户自定义字段").format(not_allowed_fields))
+
+    # 目标字段检查（是否合法） 注：不需要检查必填字段是否已配置
+    target_fields = {m.get("target_field") for m in field_mapping}
+    if not_allowed_fields := target_fields - set(target_tenant_custom_field_map.keys()):
         raise ValidationError(
-            _("字段映射中的目标字段 {} 不属于租户用户自定义字段").format(not_allowed_fields),
+            _("字段映射中的目标字段 {} 不属于本租户用户自定义字段").format(not_allowed_fields),
         )
 
-    required_target_fields = set(custom_fields.filter(required=True).values_list("name", flat=True))
-    if missed_required_fields := required_target_fields - target_fields:
-        raise ValidationError(_("必填目标字段 {} 缺少字段映射").format(missed_required_fields))
+    for mp in field_mapping:
+        source_field = source_tenant_custom_field_map[mp["source_field"]]
+        target_field = target_tenant_custom_field_map[mp["target_field"]]
+        # 字段类型检查
+        if source_field.data_type != target_field.data_type:
+            raise ValidationError(
+                _("字段映射中的源字段 {} 和 目标字段 {} 的类型不一致").format(mp["source_field"], mp["target_field"]),
+            )
 
-    return field_mapping
+        # 如果是枚举类型，还要校验枚举值是否一致（字面值可以不一致）
+        # TODO (su) 评估策略创建后，某一方修改枚举值的影响？
+        if source_field.data_type in [UserFieldDataType.ENUM, UserFieldDataType.MULTI_ENUM]:  # noqa: SIM102
+            if {opt["id"] for opt in source_field.options} != {opt["id"] for opt in target_field.options}:
+                raise ValidationError(
+                    _(
+                        "字段映射中的源字段 {} 和 目标字段 {} 的枚举值不一致",
+                    ).format(mp["source_field"], mp["target_field"]),
+                )
 
 
-class CollaborationStrategyConfirmInputSLZ(serializers.Serializer):
+class CollaborationFromStrategyUpdateInputSLZ(serializers.Serializer):
     target_config = serializers.JSONField(help_text="策略配置（接受方）")
 
     def validate_target_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -147,8 +180,14 @@ class CollaborationStrategyConfirmInputSLZ(serializers.Serializer):
         except pydantic.ValidationError as e:
             raise ValidationError(_("策略配置不合法：{}").format(stringify_pydantic_error(e)))
 
-        _validate_field_mapping_with_tenant_user_fields(config["field_mapping"], self.context["tenant_id"])
+        _validate_field_mapping_with_tenant_user_fields(
+            config["field_mapping"], self.context["source_tenant_id"], self.context["target_tenant_id"]
+        )
         return config
+
+
+class CollaborationStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateInputSLZ):
+    ...
 
 
 class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):

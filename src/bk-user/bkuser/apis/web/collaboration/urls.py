@@ -23,7 +23,7 @@ urlpatterns = [
     # 编辑 / 删除协同策略（分享方）
     path(
         "to-strategies/<str:id>/",
-        views.CollaborationStrategyUpdateDestroyApi.as_view(),
+        views.CollaborationToStrategyUpdateDestroyApi.as_view(),
         name="collaboration.to-strategy.update",
     ),
     # 更新协同策略状态（分享方）
@@ -39,6 +39,12 @@ urlpatterns = [
         views.CollaborationFromStrategyListApi.as_view(),
         name="collaboration.from-strategy.list",
     ),
+    # 更新协同策略（接受方）
+    path(
+        "from-strategies/<str:id>/",
+        views.CollaborationFromStrategyUpdateApi.as_view(),
+        name="collaboration.from-strategy.update",
+    ),
     # 获取源租户用户自定义字段（接受方）
     path(
         "from-strategies/<str:id>/source-tenant-custom-fields/",
@@ -48,7 +54,7 @@ urlpatterns = [
     # 确认协同策略（接受方）
     path(
         "from-strategies/<str:id>/operations/confirm/",
-        views.CollaborationStrategyConfirmApi.as_view(),
+        views.CollaborationFromStrategyConfirmApi.as_view(),
         name="collaboration.from-strategy.confirm",
     ),
     # 更新协同策略状态（接受方）
