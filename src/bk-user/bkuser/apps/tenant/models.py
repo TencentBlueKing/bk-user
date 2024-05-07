@@ -65,7 +65,7 @@ class TenantUserManager(models.Manager):
         )
 
 
-class TenantUser(TimestampedModel):
+class TenantUser(AuditedModel):
     """
     租户用户即蓝鲸用户
     """
