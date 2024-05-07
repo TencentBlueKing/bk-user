@@ -48,12 +48,6 @@ class CollaborationStrategyCreateInputSLZ(serializers.Serializer):
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
     source_config = serializers.JSONField(help_text="策略配置")
 
-    def validate_name(self, name: str) -> str:
-        if CollaborationStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"]).exists():
-            raise ValidationError(_("同名协同策略已存在"))
-
-        return name
-
     def validate_target_tenant_id(self, target_tenant_id: int) -> int:
         if target_tenant_id == self.context["tenant_id"]:
             raise ValidationError(_("目标租户不能是当前租户"))
@@ -71,6 +65,13 @@ class CollaborationStrategyCreateInputSLZ(serializers.Serializer):
 
         return config
 
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        if CollaborationStrategy.objects.filter(
+            source_tenant=self.context["tenant_id"], target_tenant_id=attrs["target_tenant_id"]
+        ).exists():
+            raise ValidationError(_("当前租户到租户 {} 的协同策略已存在").format(attrs["target_tenant_id"]))
+        return attrs
+
 
 class CollaborationStrategyCreateOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="协同策略 ID")
@@ -79,16 +80,6 @@ class CollaborationStrategyCreateOutputSLZ(serializers.Serializer):
 class CollaborationStrategyUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     source_config = serializers.JSONField(help_text="策略配置（分享方）")
-
-    def validate_name(self, name: str) -> str:
-        if (
-            CollaborationStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"])
-            .exclude(id=self.context["strategy_id"])
-            .exists()
-        ):
-            raise ValidationError(_("同名协同策略已存在"))
-
-        return name
 
     def validate_source_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         try:
