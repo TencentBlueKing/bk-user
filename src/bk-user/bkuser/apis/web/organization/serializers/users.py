@@ -54,6 +54,7 @@ class OptionalTenantUserListOutputSLZ(serializers.Serializer):
 
 
 class TenantUserSearchInputSLZ(serializers.Serializer):
+    tenant_id = serializers.CharField(help_text="租户 ID", required=False)
     keyword = serializers.CharField(help_text="搜索关键字", min_length=2, max_length=64)
 
 
