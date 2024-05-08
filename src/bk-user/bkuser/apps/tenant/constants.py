@@ -136,3 +136,26 @@ class TenantUserStatus(str, StructuredEnum):
     ENABLED = EnumField("enabled", label=_("启用"))
     DISABLED = EnumField("disabled", label=_("禁用"))
     EXPIRED = EnumField("expired", label=_("已过期"))
+
+
+class CollaborationStrategyStatus(str, StructuredEnum):
+    """协同策略状态"""
+
+    ENABLED = EnumField("enabled", label=_("启用"))
+    DISABLED = EnumField("disabled", label=_("禁用"))
+    UNCONFIRMED = EnumField("unconfirmed", label=_("未确认"))
+
+
+class CollaborationScopeType(str, StructuredEnum):
+    """协同范围类型"""
+
+    ALL = EnumField("all", label=_("全部"))
+    # TODO (su) 支持指定协同的组织范围 & 用户字段
+    # SPECIFIED = EnumField("specified", label=_("指定"))
+
+
+class FieldMappingOperation(str, StructuredEnum):
+    """字段映射关系"""
+
+    DIRECT = EnumField("direct", label=_("直接"))
+    EXPRESSION = EnumField("expression", label=_("表达式"))

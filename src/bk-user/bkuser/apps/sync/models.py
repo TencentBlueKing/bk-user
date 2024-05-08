@@ -100,23 +100,10 @@ class TenantSyncTask(TimestampedModel):
     duration = models.DurationField("任务持续时间", default=timedelta(seconds=0))
     logs = models.TextField("任务日志", default="")
     extras = models.JSONField("扩展信息", default=dict)
+    summary = models.JSONField("任务总结", default=dict)
 
     class Meta:
         ordering = ["-id"]
-
-    @property
-    def summary(self):
-        # 异步模式
-        if self.extras.get("async_run", False):
-            if self.status in [SyncTaskStatus.PENDING, SyncTaskStatus.RUNNING]:
-                return _("租户数据同步任务执行中")
-            if self.status == SyncTaskStatus.SUCCESS:
-                return _("租户数据同步成功")
-
-            return _("租户数据同步失败")
-
-        # 租户数据同步不应该有同步模式，都是异步行为
-        return f"Why tenant sync task {self.id} can run in sync mode? Please report this to the administrator."
 
     @property
     def start_at_display(self) -> str:
