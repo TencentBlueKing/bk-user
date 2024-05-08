@@ -237,5 +237,6 @@ class CollaborationStrategy(AuditedModel):
 
     class Meta:
         unique_together = [
+            ("name", "source_tenant"),
             ("source_tenant", "target_tenant"),
         ]
