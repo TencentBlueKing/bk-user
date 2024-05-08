@@ -13,6 +13,8 @@
       <template #side-header>
         <div
           style="display: flex; margin-right: 16px; text-decoration: none; align-items: center"
+          class="cursor-pointer"
+          @click="onGoBack"
         >
           <i class="user-icon icon-user-logo-i" />
           <span class="title-desc">{{ $t('蓝鲸用户管理') }}</span>
@@ -149,7 +151,6 @@ const state = reactive({
 
 const userStore = useUser();
 const headerNav = ref([]);
-
 const userInfo = computed(() => {
   const { role } = userStore.user;
   const baseNav = [
@@ -216,6 +217,16 @@ const handleSwitchLocale = (locale: string) => {
 const toTenant = () => {
   router.push({ name: 'tenant' });
   headerNav.value = [];
+};
+
+const onGoBack = () => {
+  const { role } = userStore.user;
+  if (role === 'super_manager' && route.name !== 'tenant') {
+    router.push({ name: 'tenant' });
+    headerNav.value = [];
+  } else if (role === 'tenant_manager' && route.name !== 'organization') {
+    router.push({ name: 'organization' });
+  } else if (role === 'natural_user') return;
 };
 
 // 产品文档
