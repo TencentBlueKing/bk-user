@@ -52,6 +52,12 @@ class CollaborationToStrategyCreateInputSLZ(serializers.Serializer):
     target_tenant_id = serializers.CharField(help_text="目标租户 ID")
     source_config = serializers.JSONField(help_text="策略配置")
 
+    def validate_name(self, name: str) -> str:
+        if CollaborationStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"]).exists():
+            raise ValidationError(_("同名协同策略已存在"))
+
+        return name
+
     def validate_target_tenant_id(self, target_tenant_id: int) -> int:
         if target_tenant_id == self.context["tenant_id"]:
             raise ValidationError(_("目标租户不能是当前租户"))
@@ -85,6 +91,16 @@ class CollaborationToStrategyUpdateInputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="协同策略名称")
     source_config = serializers.JSONField(help_text="策略配置（分享方）")
 
+    def validate_name(self, name: str) -> str:
+        if (
+            CollaborationStrategy.objects.filter(name=name, source_tenant_id=self.context["tenant_id"])
+            .exclude(id=self.context["strategy_id"])
+            .exists()
+        ):
+            raise ValidationError(_("同名协同策略已存在"))
+
+        return name
+
     def validate_source_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         try:
             CollaborationStrategySourceConfig(**config)
@@ -94,11 +110,8 @@ class CollaborationToStrategyUpdateInputSLZ(serializers.Serializer):
         return config
 
 
-# ---------------------------------- 共享的 SLZ ----------------------------------
-
-
-class CollaborationStrategyStatusUpdateOutputSLZ(serializers.Serializer):
-    status = serializers.ChoiceField(help_text="策略状态", choices=CollaborationStrategyStatus.get_choices())
+class CollaborationToStrategySourceStatusUpdateOutputSLZ(serializers.Serializer):
+    source_status = serializers.ChoiceField(help_text="策略状态", choices=CollaborationStrategyStatus.get_choices())
 
 
 # ---------------------------------- 接受方 SLZ ----------------------------------
@@ -124,7 +137,7 @@ class CollaborationFromStrategyListOutputSLZ(serializers.Serializer):
 class CollaborationSourceTenantCustomFieldListOutputSLZ(serializers.Serializer):
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
-    data_type = serializers.CharField(help_text="字段类型")
+    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
 
 
 def _validate_field_mapping_with_tenant_user_fields(
@@ -186,8 +199,12 @@ class CollaborationFromStrategyUpdateInputSLZ(serializers.Serializer):
         return config
 
 
-class CollaborationStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateInputSLZ):
+class CollaborationFromStrategyConfirmInputSLZ(CollaborationFromStrategyUpdateInputSLZ):
     ...
+
+
+class CollaborationFromStrategyTargetStatusUpdateOutputSLZ(serializers.Serializer):
+    target_status = serializers.ChoiceField(help_text="策略状态", choices=CollaborationStrategyStatus.get_choices())
 
 
 class CollaborationSyncRecordListOutputSLZ(serializers.Serializer):

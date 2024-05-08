@@ -327,9 +327,10 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
             if user_leader_relations:
                 DataSourceUserLeaderRelation.objects.bulk_create(user_leader_relations)
 
-            # 租户的用户有效期配置（会生效的才拿出来）
-            tenant_uvp_cfg_map = {
-                cfg.tenant_id: cfg
+            # 各租户的用户过期时间
+            now = timezone.now()
+            tenant_user_account_expired_at_map = {
+                cfg.tenant_id: now + timedelta(days=cfg.validity_period)
                 for cfg in TenantUserValidityPeriodConfig.objects.filter(enabled=True, validity_period__gt=0)
             }
             # 创建本租户的租户用户
@@ -338,11 +339,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
                 tenant_id=cur_tenant_id,
                 data_source=data_source,
                 data_source_user=data_source_user,
-                account_expired_at=(
-                    timezone.now() + timedelta(days=tenant_uvp_cfg_map[cur_tenant_id].validity_period)
-                    if cur_tenant_id in tenant_uvp_cfg_map
-                    else PERMANENT_TIME
-                ),
+                account_expired_at=tenant_user_account_expired_at_map.get(cur_tenant_id, PERMANENT_TIME),
             )
             # 根据协同策略，将协同的租户用户也创建出来
             collaboration_tenant_users = [
@@ -351,11 +348,7 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
                     tenant_id=strategy.target_tenant_id,
                     data_source=data_source,
                     data_source_user=data_source_user,
-                    account_expired_at=(
-                        timezone.now() + timedelta(days=tenant_uvp_cfg_map[strategy.target_tenant_id].validity_period)
-                        if strategy.target_tenant_id in tenant_uvp_cfg_map
-                        else PERMANENT_TIME
-                    ),
+                    account_expired_at=tenant_user_account_expired_at_map.get(cur_tenant_id, PERMANENT_TIME),
                 )
                 for strategy in CollaborationStrategy.objects.filter(
                     source_tenant_id=cur_tenant_id,
@@ -642,6 +635,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
     """批量创建租户用户"""
 
     permission_classes = [IsAuthenticated, perm_class(PermAction.MANAGE_TENANT)]
+    bulk_create_batch_size = 100
 
     @swagger_auto_schema(
         tags=["organization.user"],
@@ -680,7 +674,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
                 )
                 for info in data["user_infos"]
             ]
-            DataSourceUser.objects.bulk_create(data_source_users)
+            DataSourceUser.objects.bulk_create(data_source_users, batch_size=self.bulk_create_batch_size)
 
             # 重新从 DB 查询以获取带 ID 的数据源用户
             data_source_users = DataSourceUser.objects.filter(code__in=[u["username"] for u in data["user_infos"]])
@@ -692,7 +686,7 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
                 )
                 for user in data_source_users
             ]
-            DataSourceDepartmentUserRelation.objects.bulk_create(relations)
+            DataSourceDepartmentUserRelation.objects.bulk_create(relations, batch_size=self.bulk_create_batch_size)
 
             # 批量创建租户用户（含协同）
             self._bulk_create_tenant_users(cur_tenant_id, tenant_dept, data_source, data_source_users)
@@ -701,37 +695,33 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
         initialize_identity_info_and_send_notification.delay(data_source.id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @staticmethod
     def _bulk_create_tenant_users(
+        self,
         cur_tenant_id: str,
         tenant_dept: TenantDepartment,
         data_source: DataSource,
         data_source_users: QuerySet[DataSourceUser],
     ):
         """批量创建租户用户（含协同）"""
-        # 租户的用户有效期配置（会生效的才拿出来）
-        tenant_uvp_cfg_map = {
-            cfg.tenant_id: cfg
+        # 各租户的用户过期时间
+        now = timezone.now()
+        tenant_user_account_expired_at_map = {
+            cfg.tenant_id: now + timedelta(days=cfg.validity_period)
             for cfg in TenantUserValidityPeriodConfig.objects.filter(enabled=True, validity_period__gt=0)
         }
 
         # 新建租户用户，需要计算账号有效期
-        account_expired_at = (
-            timezone.now() + timedelta(days=tenant_uvp_cfg_map[cur_tenant_id].validity_period)
-            if cur_tenant_id in tenant_uvp_cfg_map
-            else PERMANENT_TIME
-        )
         tenant_users = [
             TenantUser(
                 id=gen_tenant_user_id(cur_tenant_id, data_source, user),
                 tenant_id=tenant_dept.tenant_id,
                 data_source=data_source,
                 data_source_user=user,
-                account_expired_at=account_expired_at,
+                account_expired_at=tenant_user_account_expired_at_map.get(cur_tenant_id, PERMANENT_TIME),
             )
             for user in data_source_users
         ]
-        TenantUser.objects.bulk_create(tenant_users)
+        TenantUser.objects.bulk_create(tenant_users, batch_size=self.bulk_create_batch_size)
 
         # 批量创建协同租户用户
         collaboration_tenant_users: List[TenantUser] = []
@@ -740,25 +730,21 @@ class TenantUserBatchCreateApi(CurrentUserTenantDataSourceMixin, generics.Create
             source_status=CollaborationStrategyStatus.ENABLED,
             target_status=CollaborationStrategyStatus.ENABLED,
         ):
-            # 同一目标租户的用户，有效期是一样的
-            account_expired_at = (
-                timezone.now() + timedelta(days=tenant_uvp_cfg_map[strategy.target_tenant_id].validity_period)
-                if strategy.target_tenant_id in tenant_uvp_cfg_map
-                else PERMANENT_TIME
-            )
             collaboration_tenant_users += [
                 TenantUser(
                     id=gen_tenant_user_id(strategy.target_tenant_id, data_source, user),
                     tenant_id=strategy.target_tenant_id,
                     data_source=data_source,
                     data_source_user=user,
-                    account_expired_at=account_expired_at,
+                    account_expired_at=tenant_user_account_expired_at_map.get(
+                        strategy.target_tenant_id, PERMANENT_TIME
+                    ),
                 )
                 for user in data_source_users
             ]
 
         if collaboration_tenant_users:
-            TenantUser.objects.bulk_create(collaboration_tenant_users)
+            TenantUser.objects.bulk_create(collaboration_tenant_users, batch_size=self.bulk_create_batch_size)
 
 
 class TenantUserBatchCreatePreviewApi(CurrentUserTenantDataSourceMixin, generics.CreateAPIView):

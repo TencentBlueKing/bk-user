@@ -17,6 +17,7 @@ from django.dispatch import receiver
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from pydantic import ValidationError
 
+from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
 from bkuser.apps.sync.constants import DataSourceSyncPeriod
 from bkuser.apps.sync.data_models import DataSourceSyncConfig, TenantSyncOptions
@@ -36,6 +37,11 @@ def sync_tenant_departments_users(sender, data_source: DataSource, **kwargs):
     sync_opts = TenantSyncOptions()
     # 同步到数据源所属租户
     TenantSyncManager(data_source, data_source.owner_tenant_id, sync_opts).execute()
+
+    # 虽然逻辑上只有实名数据源会同步 & 发送 post_sync_data_source 信号，但是防御一下比较好
+    if data_source.type != DataSourceTypeEnum.REAL:
+        logger.warning("data source %s is not real user type, skip sync...", data_source.id)
+        return
 
     # 根据配置的协同策略，同步其他租户
     for strategy in CollaborationStrategy.objects.filter(source_tenant_id=data_source.owner_tenant_id):

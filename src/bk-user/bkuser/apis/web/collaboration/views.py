@@ -19,15 +19,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bkuser.apis.web.collaboration.serializers import (
+    CollaborationFromStrategyConfirmInputSLZ,
     CollaborationFromStrategyListOutputSLZ,
+    CollaborationFromStrategyTargetStatusUpdateOutputSLZ,
     CollaborationFromStrategyUpdateInputSLZ,
     CollaborationSourceTenantCustomFieldListOutputSLZ,
-    CollaborationStrategyConfirmInputSLZ,
-    CollaborationStrategyStatusUpdateOutputSLZ,
     CollaborationSyncRecordListOutputSLZ,
     CollaborationToStrategyCreateInputSLZ,
     CollaborationToStrategyCreateOutputSLZ,
     CollaborationToStrategyListOutputSLZ,
+    CollaborationToStrategySourceStatusUpdateOutputSLZ,
     CollaborationToStrategyUpdateInputSLZ,
 )
 from bkuser.apis.web.mixins import CurrentUserTenantMixin
@@ -177,7 +178,7 @@ class CollaborationStrategySourceStatusUpdateApi(
     @swagger_auto_schema(
         tags=["collaboration"],
         operation_description="协同策略更新状态（分享方）",
-        responses={status.HTTP_200_OK: CollaborationStrategyStatusUpdateOutputSLZ()},
+        responses={status.HTTP_200_OK: CollaborationToStrategySourceStatusUpdateOutputSLZ()},
     )
     def put(self, request, *args, **kwargs):
         strategy = self.get_object()
@@ -194,7 +195,7 @@ class CollaborationStrategySourceStatusUpdateApi(
         # 分享方启用后，应该触发检查，如果两方都是启用，则需要执行同步（方法内已做检查）
         start_collaboration_tenant_sync(strategy)
 
-        return Response(data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.source_status.value}).data)
+        return Response(data=CollaborationToStrategySourceStatusUpdateOutputSLZ(strategy).data)
 
 
 # --------------------------------------------- 接受方 API ---------------------------------------------
@@ -304,7 +305,7 @@ class CollaborationFromStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAP
     @swagger_auto_schema(
         tags=["collaboration"],
         operation_description="确认协同策略（接受方）",
-        request_body=CollaborationStrategyConfirmInputSLZ,
+        request_body=CollaborationFromStrategyConfirmInputSLZ,
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def put(self, request, *args, **kwargs):
@@ -317,8 +318,12 @@ class CollaborationFromStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAP
                 _("无法进行确认，请联系分享方租户管理员启用该策略")
             )
 
-        slz = CollaborationStrategyConfirmInputSLZ(
-            data=request.data, context={"tenant_id": self.get_current_tenant_id()}
+        slz = CollaborationFromStrategyConfirmInputSLZ(
+            data=request.data,
+            context={
+                "source_tenant_id": strategy.target_tenant_id,
+                "target_tenant_id": self.get_current_tenant_id(),
+            },
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
@@ -349,7 +354,7 @@ class CollaborationStrategyTargetStatusUpdateApi(
     @swagger_auto_schema(
         tags=["collaboration"],
         operation_description="协同策略更新状态（接受方）",
-        responses={status.HTTP_200_OK: CollaborationStrategyStatusUpdateOutputSLZ()},
+        responses={status.HTTP_200_OK: CollaborationFromStrategyTargetStatusUpdateOutputSLZ()},
     )
     def put(self, request, *args, **kwargs):
         strategy = self.get_object()
@@ -368,7 +373,7 @@ class CollaborationStrategyTargetStatusUpdateApi(
         # 接受方启用后，应该触发检查，如果两方都是启用，则需要执行同步（方法内已做检查）
         start_collaboration_tenant_sync(strategy)
 
-        return Response(data=CollaborationStrategyStatusUpdateOutputSLZ({"status": strategy.target_status.value}).data)
+        return Response(data=CollaborationFromStrategyTargetStatusUpdateOutputSLZ(strategy).data)
 
 
 class CollaborationSyncRecordListApi(CurrentUserTenantMixin, generics.ListAPIView):

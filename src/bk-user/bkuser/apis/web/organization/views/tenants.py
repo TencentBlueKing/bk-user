@@ -51,12 +51,12 @@ class CollaborationTenantListApi(CurrentUserTenantMixin, generics.ListAPIView):
     serializer_class = TenantListOutputSLZ
 
     def get_queryset(self):
-        # 只有两边都启用的才展示
-        collaboration_tenant_ids = CollaborationStrategy.objects.filter(
-            target_tenant_id=self.get_current_tenant_id(),
-            source_status=CollaborationStrategyStatus.ENABLED,
-            target_status=CollaborationStrategyStatus.ENABLED,
-        ).values_list("source_tenant_id", flat=True)
+        # 只要是本租户确认过的，都展示（即使任一方停用，其实也该有数据同步过来过）
+        collaboration_tenant_ids = (
+            CollaborationStrategy.objects.filter(target_tenant_id=self.get_current_tenant_id())
+            .exclude(target_status=CollaborationStrategyStatus.UNCONFIRMED)
+            .values_list("source_tenant_id", flat=True)
+        )
         return Tenant.objects.filter(id__in=collaboration_tenant_ids)
 
     @swagger_auto_schema(
