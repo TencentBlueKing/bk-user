@@ -25,7 +25,13 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
 )
 from bkuser.apps.tenant.constants import TenantUserStatus, UserFieldDataType
-from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField, UserBuiltinField
+from bkuser.apps.tenant.models import (
+    CollaborationStrategy,
+    TenantDepartment,
+    TenantUser,
+    TenantUserCustomField,
+    UserBuiltinField,
+)
 from bkuser.biz.validators import (
     validate_data_source_user_username,
     validate_logo,
@@ -210,7 +216,7 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     email = serializers.CharField(help_text="邮箱", source="data_source_user.email")
     phone = serializers.CharField(help_text="手机号", source="data_source_user.phone")
     phone_country_code = serializers.CharField(help_text="手机国际区号", source="data_source_user.phone_country_code")
-    extras = serializers.JSONField(help_text="自定义字段", source="data_source_user.extras")
+    extras = serializers.SerializerMethodField(help_text="自定义字段")
     logo = serializers.SerializerMethodField(help_text="用户 Logo")
 
     departments = serializers.SerializerMethodField(help_text="租户部门 ID 列表")
@@ -219,6 +225,22 @@ class TenantUserRetrieveOutputSLZ(serializers.Serializer):
     class Meta:
         ref_name = "organization.TenantUserRetrieveOutputSLZ"
 
+    @swagger_serializer_method(serializer_or_field=serializers.JSONField)
+    def get_extras(self, obj: TenantUser) -> Dict[str, Any]:
+        # 租户用户租户 与 数据源所属租户 一致，说明不是协同产生，直接给 extras 即可
+        if obj.tenant_id == obj.data_source.owner_tenant_id:
+            return obj.data_source_user.extras
+
+        # 对于协同过来的用户，自定义字段需要做次映射
+        strategy = CollaborationStrategy.objects.get(
+            source_tenant_id=obj.data_source.owner_tenant_id, target_tenant_id=obj.tenant_id
+        )
+        # TODO (su) 如果后续支持表达式，则不能直接取 Dict 做映射
+        field_mapping = {mp["source_field"]: mp["target_field"] for mp in strategy.target_config["field_mapping"]}
+        # 协同的字段映射不是全量的，可能源租户提供 5 个自定义字段，目标租户只配了 3 个，需要过滤掉多余的
+        return {field_mapping[k]: v for k, v in obj.data_source_user.extras.items() if k in field_mapping}
+
+    @swagger_serializer_method(serializer_or_field=serializers.CharField)
     def get_logo(self, obj: TenantUser) -> str:
         return obj.data_source_user.logo or settings.DEFAULT_DATA_SOURCE_USER_LOGO
 

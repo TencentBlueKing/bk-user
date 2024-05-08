@@ -21,9 +21,9 @@ urlpatterns = [
     ),
     # 协作租户信息
     path(
-        "collaborative-tenants/",
-        views.CollaborativeTenantListApi.as_view(),
-        name="organization.collaborative_tenant.list",
+        "collaboration-tenants/",
+        views.CollaborationTenantListApi.as_view(),
+        name="organization.collaboration_tenant.list",
     ),
     # 租户用户 - 快速录入必填字段
     path(

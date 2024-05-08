@@ -27,6 +27,8 @@ urlpatterns = [
     path("organization/", include("bkuser.apis.web.organization.urls")),
     # 数据源 & 数据源用户/部门
     path("data-sources/", include("bkuser.apis.web.data_source.urls")),
+    # 租户间协同
+    path("collaboration/", include("bkuser.apis.web.collaboration.urls")),
     # 认证源
     path("idps/", include("bkuser.apis.web.idp.urls")),
     # 租户配置

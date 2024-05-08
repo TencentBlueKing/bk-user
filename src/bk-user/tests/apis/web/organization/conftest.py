@@ -11,7 +11,8 @@ specific language governing permissions and limitations under the License.
 import pytest
 from bkuser.apps.data_source.constants import DataSourceTypeEnum
 from bkuser.apps.data_source.models import DataSource
-from bkuser.apps.tenant.models import Tenant
+from bkuser.apps.tenant.constants import CollaborationStrategyStatus
+from bkuser.apps.tenant.models import CollaborationStrategy, Tenant
 from bkuser.plugins.local.models import LocalDataSourcePluginConfig
 
 from tests.test_utils.data_source import init_data_source_users_depts_and_relations
@@ -26,21 +27,29 @@ def _init_tenant_users_depts(random_tenant, full_local_data_source) -> None:
 
 
 @pytest.fixture()
-def collaborative_tenant() -> Tenant:
+def collaboration_tenant() -> Tenant:
     """创建随机的协同租户"""
     return create_tenant(generate_random_string())
 
 
 @pytest.fixture()
-def _init_collaborative_users_depts(
+def _init_collaboration_users_depts(
     random_tenant,
-    collaborative_tenant,
+    collaboration_tenant,
     local_ds_plugin,
     local_ds_plugin_cfg,
 ) -> None:
     """初始化协同所得的租户部门 & 租户用户（协同租户同步到当前随机租户）"""
+    # 协同策略
+    CollaborationStrategy.objects.create(
+        name=generate_random_string(),
+        source_tenant=collaboration_tenant,
+        target_tenant=random_tenant,
+        source_status=CollaborationStrategyStatus.ENABLED,
+        target_status=CollaborationStrategyStatus.ENABLED,
+    )
     data_source = DataSource.objects.create(
-        owner_tenant_id=collaborative_tenant.id,
+        owner_tenant_id=collaboration_tenant.id,
         type=DataSourceTypeEnum.REAL,
         plugin=local_ds_plugin,
         plugin_config=LocalDataSourcePluginConfig(**local_ds_plugin_cfg),
