@@ -163,7 +163,7 @@ class CollaborationToStrategyUpdateDestroyApi(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CollaborationStrategySourceStatusUpdateApi(
+class CollaborationToStrategySourceStatusUpdateApi(
     CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
 ):
     """协同策略更新状态（分享方）"""
@@ -339,7 +339,7 @@ class CollaborationFromStrategyConfirmApi(CurrentUserTenantMixin, ExcludePatchAP
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CollaborationStrategyTargetStatusUpdateApi(
+class CollaborationFromStrategyTargetStatusUpdateApi(
     CurrentUserTenantMixin, ExcludePatchAPIViewMixin, generics.UpdateAPIView
 ):
     """协同策略更新状态（接受方）"""

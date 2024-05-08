@@ -29,7 +29,7 @@ urlpatterns = [
     # 更新协同策略状态（分享方）
     path(
         "to-strategies/<str:id>/source-status/",
-        views.CollaborationStrategySourceStatusUpdateApi.as_view(),
+        views.CollaborationToStrategySourceStatusUpdateApi.as_view(),
         name="collaboration.to-strategy.source-status.update",
     ),
     # ----------------------------- 接受方 -----------------------------
@@ -60,7 +60,7 @@ urlpatterns = [
     # 更新协同策略状态（接受方）
     path(
         "from-strategies/<str:id>/target-status/",
-        views.CollaborationStrategyTargetStatusUpdateApi.as_view(),
+        views.CollaborationFromStrategyTargetStatusUpdateApi.as_view(),
         name="collaboration.from-strategy.target-status.update",
     ),
     # 协同数据更新记录
