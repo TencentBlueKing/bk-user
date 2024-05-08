@@ -72,8 +72,13 @@ class DataSourceSyncTaskRunner:
 
     def _sync_departments(self, ctx: DataSourceSyncTaskContext):
         """同步部门信息"""
-        departments = self.plugin.fetch_departments()
-        DataSourceDepartmentSyncer(ctx, self.data_source, departments).sync()
+        DataSourceDepartmentSyncer(
+            ctx=ctx,
+            data_source=self.data_source,
+            raw_departments=self.plugin.fetch_departments(),
+            overwrite=bool(self.task.extras.get("overwrite", False)),
+            incremental=bool(self.task.extras.get("incremental", False)),
+        ).sync()
 
     def _sync_users(self, ctx: DataSourceSyncTaskContext):
         """同步用户信息"""

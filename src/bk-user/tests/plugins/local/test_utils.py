@@ -9,7 +9,7 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import pytest
-from bkuser.plugins.local.utils import gen_code
+from bkuser.plugins.local.utils import gen_dept_code
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ from bkuser.plugins.local.utils import gen_code
         ("公司/部门A/中心AA/小组AAA ", "e75be6462a8ff8b9b843b3c2e419db455b4477023f98941508bc19cfa3982ec0"),
     ],
 )
-def test_gen_code(raw, excepted):
+def test_gen_dept_code(raw, excepted):
     # 重要：如果该单元测试挂了，说明修改了本地数据源部门的 Code 的生成规则
     # 该行为会导致新同步的数据，无法与 DB 中的数据匹配上，将会触发数据重建！！！
-    assert gen_code(raw) == excepted
+    assert gen_dept_code(raw) == excepted

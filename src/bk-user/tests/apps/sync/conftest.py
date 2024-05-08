@@ -236,6 +236,17 @@ def raw_users() -> List[RawDataSourceUser]:
 
 
 @pytest.fixture()
+def random_raw_department() -> RawDataSourceDepartment:
+    """生成随机部门"""
+    return RawDataSourceDepartment(
+        code=generate_random_string(),
+        name="dept_random",
+        parent="company",
+        extras={"region": "random"},
+    )
+
+
+@pytest.fixture()
 def random_raw_user() -> RawDataSourceUser:
     """生成随机用户"""
     return RawDataSourceUser(
@@ -250,6 +261,6 @@ def random_raw_user() -> RawDataSourceUser:
             "gender": "other",
             "region": "britain",
         },
-        leaders=[],
-        departments=[],
+        leaders=["zhangsan"],
+        departments=["company"],
     )
