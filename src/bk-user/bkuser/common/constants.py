@@ -11,7 +11,7 @@ specific language governing permissions and limitations under the License.
 import datetime
 
 from blue_krill.data_types.enum import EnumField, StructuredEnum
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class BkLanguageEnum(str, StructuredEnum):
