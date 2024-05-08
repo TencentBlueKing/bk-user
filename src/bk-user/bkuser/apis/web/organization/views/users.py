@@ -194,16 +194,21 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
         slz.is_valid(raise_exception=True)
         params = slz.validated_data
 
+        data_source = DataSource.objects.filter(
+            owner_tenant_id=self.kwargs["id"], type=DataSourceTypeEnum.REAL
+        ).first()
+        if not data_source:
+            return TenantUser.objects.none()
+
         queryset = TenantUser.objects.select_related("data_source_user").filter(
-            tenant_id=cur_tenant_id,
-            data_source__owner_tenant_id=self.kwargs["id"],
-            data_source__type=DataSourceTypeEnum.REAL,
+            tenant_id=cur_tenant_id, data_source=data_source
         )
         if kw := params.get("keyword"):
             queryset = queryset.filter(
                 Q(data_source_user__username__icontains=kw) | Q(data_source_user__full_name__icontains=kw)
             )
 
+        # 指定具体的部门的情况
         if params["department_id"]:
             tenant_dept = TenantDepartment.objects.get(id=params["department_id"], tenant_id=cur_tenant_id)
 
@@ -221,6 +226,10 @@ class TenantUserListCreateApi(CurrentUserTenantDataSourceMixin, generics.ListAPI
                 department_id__in=filter_dept_ids
             ).values_list("user_id", flat=True)
             queryset = queryset.filter(data_source_user_id__in=data_source_user_ids)
+        # 不指定部门 & 不指定递归查询 -> 查询租户下的游离用户（没有部门）
+        elif not params["recursive"]:
+            dept_user_relations = DataSourceDepartmentUserRelation.objects.filter(data_source=data_source)
+            queryset = queryset.exclude(data_source_user_id__in=dept_user_relations.values_list("user_id", flat=True))
 
         return queryset.order_by("data_source_user__username")
 
