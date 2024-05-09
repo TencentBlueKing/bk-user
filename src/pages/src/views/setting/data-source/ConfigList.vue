@@ -18,13 +18,16 @@
         </bk-button>
       </template>
     </MainBreadcrumbsDetails>
-    <div class="data-source-card" v-if="dataSource?.id">
+    <div
+      :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]"
+      v-if="dataSource?.id"
+    >
       <DataSourceCard
         :plugins="dataSourcePlugins"
         :data-source="dataSource"
         :config="true"
         :show-content="showContent"
-        @handleCollapse="handleCollapse">
+        @handle-collapse="handleCollapse">
         <template #right>
           <div class="flex items-center">
             <div class="mr-[40px]" v-if="syncStatus">
@@ -69,14 +72,14 @@
         </template>
       </DataSourceCard>
     </div>
-    <div class="data-source-card" v-else>
+    <div :class="['data-source-card user-scroll-y', { 'has-alert': userStore.showAlert }]" v-else>
       <div class="info" v-if="!dataSource?.id">
         <i class="user-icon icon-info-i" />
-        <span>当前还没有数据源，需要先选择数据源类型并进行配置</span>
+        <span>{{ $t('当前还没有数据源，需要先选择数据源类型并进行配置') }}</span>
       </div>
       <DataSourceCard
         :plugins="dataSourcePlugins"
-        @handleCollapse="handleClick" />
+        @handle-collapse="handleClick" />
     </div>
     <!-- 导入 -->
     <bk-dialog
@@ -170,8 +173,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import axios from 'axios';
+<script setup lang="ts"> import axios from 'axios';
 import { InfoBox, Message } from 'bkui-vue';
 import { InfoLine, Upload } from 'bkui-vue/lib/icon';
 import Cookies from 'js-cookie';
@@ -186,7 +188,10 @@ import { useDataSource, useInfoBoxContent } from '@/hooks';
 import { deleteDataSources, getRelatedResource } from '@/http';
 import { t } from '@/language/index';
 import router from '@/router';
+import { useUser } from '@/store';
 import { dataRecordStatus } from '@/utils';
+
+const userStore = useUser();
 
 const {
   dataSourcePlugins,
@@ -358,7 +363,12 @@ const handleSync = (e) => {
 </script>
 
 <style lang="less" scoped>
+.has-alert {
+  height: calc(100vh - 144px) !important;
+}
+
 .data-source-card {
+  height: calc(100vh - 92px);
   padding: 16px 24px;
 
   .info {

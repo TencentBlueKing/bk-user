@@ -22,6 +22,7 @@ from bkuser.apps.data_source.models import (
     DataSourceUserLeaderRelation,
     LocalDataSourceIdentityInfo,
 )
+from bkuser.apps.tenant.constants import UserFieldDataType
 from bkuser.apps.tenant.models import TenantDepartment, TenantUser, TenantUserCustomField
 from bkuser.biz.validators import validate_logo, validate_user_extras, validate_user_new_password
 from bkuser.common.desensitize import desensitize_email, desensitize_phone
@@ -208,7 +209,7 @@ class TenantUserCustomFieldOutputSLZ(serializers.Serializer):
     id = serializers.IntegerField(help_text="字段 ID")
     name = serializers.CharField(help_text="英文标识")
     display_name = serializers.CharField(help_text="展示用名称")
-    data_type = serializers.CharField(help_text="字段类型")
+    data_type = serializers.ChoiceField(help_text="字段类型", choices=UserFieldDataType.get_choices())
     required = serializers.BooleanField(help_text="是否必填")
     editable = serializers.BooleanField(help_text="是否可编辑", source="personal_center_editable")
     options = serializers.JSONField(help_text="可选项")

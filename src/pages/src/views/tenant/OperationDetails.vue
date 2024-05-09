@@ -59,7 +59,7 @@
             <bk-button
               outline
               theme="primary"
-              class="ml-[8px] min-w-[88px]"
+              :class="['ml-[8px]', { 'min-w-[88px]': $i18n.locale === 'zh-cn' }]"
               @click="handleRandomPassword">
               {{ $t('随机生成') }}
             </bk-button>
@@ -88,8 +88,8 @@
             v-else
             :form-data="formData"
             :tel-error="telError"
-            @changeCountryCode="changeCountryCode"
-            @changeTelError="changeTelError" />
+            @change-country-code="changeCountryCode"
+            @change-tel-error="changeTelError" />
         </bk-form-item>
       </Row>
     </bk-form>
@@ -104,8 +104,7 @@
   </div>
 </template>
 
-<script setup lang="tsx">
-import { Message } from 'bkui-vue';
+<script setup lang="ts"> import { Message } from 'bkui-vue';
 import { computed, defineEmits, defineProps, reactive, ref } from 'vue';
 
 import Row from '@/components/layouts/row.vue';
@@ -113,7 +112,7 @@ import PhoneInput from '@/components/phoneInput.vue';
 import { useAdminPassword, useValidate } from '@/hooks';
 import { createTenants, putTenants } from '@/http';
 import { t } from '@/language/index';
-import { useUser } from '@/store/user';
+import { useUser } from '@/store';
 import { getBase64 } from '@/utils';
 
 const userStore = useUser();

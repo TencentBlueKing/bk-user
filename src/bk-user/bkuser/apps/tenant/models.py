@@ -15,7 +15,13 @@ from django.db import models
 from django.db.models import Q, QuerySet
 
 from bkuser.apps.data_source.models import DataSource, DataSourceDepartment, DataSourceUser
-from bkuser.apps.tenant.constants import TIME_ZONE_CHOICES, TenantStatus, TenantUserStatus, UserFieldDataType
+from bkuser.apps.tenant.constants import (
+    TIME_ZONE_CHOICES,
+    CollaborationStrategyStatus,
+    TenantStatus,
+    TenantUserStatus,
+    UserFieldDataType,
+)
 from bkuser.common.constants import PERMANENT_TIME, BkLanguageEnum
 from bkuser.common.models import AuditedModel, TimestampedModel
 from bkuser.common.time import datetime_to_display
@@ -59,7 +65,7 @@ class TenantUserManager(models.Manager):
         )
 
 
-class TenantUser(TimestampedModel):
+class TenantUser(AuditedModel):
     """
     租户用户即蓝鲸用户
     """
@@ -202,3 +208,35 @@ class TenantUserValidityPeriodConfig(AuditedModel):
     remind_before_expire = models.JSONField("临X天过期发送提醒(单位：天)", default=list)
     enabled_notification_methods = models.JSONField("通知方式", default=list)
     notification_templates = models.JSONField("通知模板", default=list)
+
+
+class CollaborationStrategy(AuditedModel):
+    """协同策略"""
+
+    name = models.CharField("策略名称", max_length=128)
+    source_tenant = models.ForeignKey(
+        Tenant, on_delete=models.DO_NOTHING, db_constraint=False, related_name="source_tenant"
+    )
+    target_tenant = models.ForeignKey(
+        Tenant, on_delete=models.DO_NOTHING, db_constraint=False, related_name="target_tenant"
+    )
+    source_status = models.CharField(
+        "策略状态（分享方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.ENABLED,
+        max_length=32,
+    )
+    target_status = models.CharField(
+        "策略状态（接受方）",
+        choices=CollaborationStrategyStatus.get_choices(),
+        default=CollaborationStrategyStatus.UNCONFIRMED,
+        max_length=32,
+    )
+    source_config = models.JSONField("策略配置（分享方）", default=dict)
+    target_config = models.JSONField("策略配置（接受方）", default=dict)
+
+    class Meta:
+        unique_together = [
+            ("name", "source_tenant"),
+            ("source_tenant", "target_tenant"),
+        ]

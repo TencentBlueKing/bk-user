@@ -37,7 +37,7 @@
             :expired-email-key="'tenant_user_expired'"
             :expiring-sms-key="'tenant_user_expiring'"
             :expired-sms-key="'tenant_user_expired'"
-            @handleEditorText="handleEditorText">
+            @handle-editor-text="handleEditorText">
             <template #label>
               <div class="password-header">
                 <bk-checkbox-group

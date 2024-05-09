@@ -93,7 +93,7 @@
             :current-id="authDetails?.idp_id"
             @cancel="cancelEdit"
             @success="localSuccess" />
-          <LocalView v-else :current-id="authDetails?.idp_id" @updateRow="updateRow" />
+          <LocalView v-else :current-id="authDetails?.idp_id" @update-row="updateRow" />
         </template>
         <template v-if="authDetails?.id === 'wecom'">
           <WeCom
@@ -101,7 +101,7 @@
             :data-source-id="currentDataSource?.id"
             :current-id="authDetails?.idp_id"
             @success="weComSuccess"
-            @cancelEdit="cancelEdit" />
+            @cancel-edit="cancelEdit" />
           <WeComView v-else :current-id="authDetails?.idp_id" />
         </template>
       </template>
@@ -109,8 +109,8 @@
   </div>
 </template>
 
-<script setup lang="ts"> import { h, inject, onMounted, reactive, ref } from 'vue';
-import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
+<script setup lang="ts"> import { bkTooltips as vBkTooltips, InfoBox } from 'bkui-vue';
+import { h, inject, onMounted, reactive, ref } from 'vue';
 
 import Local from './auth-config/Local.vue';
 import LocalView from './auth-config/LocalView.vue';
@@ -330,7 +330,6 @@ const handleDataSource = () => {
 
 <style lang="less" scoped>
 .login-setting-wrapper {
-  height: calc(100vh - 104px);
   padding: 24px;
 
   .login-setting-content {

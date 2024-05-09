@@ -30,10 +30,6 @@ export const putTenantOrganizationDetails = (id: string, params: UpdateTenantPar
  */
 export const getTenantDepartments = (id: string) => http.get(`/api/v1/web/tenant-organization/departments/${id}/children/`);
 
-/**
- * 租户下部门单个用户详情
- */
-export const getTenantOrganizationUsers = (id: string) => http.get(`/api/v1/web/tenant-organization/users/${id}/`);
 
 /**
  * 租户下部门下用户列表
@@ -62,12 +58,17 @@ export const getCurrentTenant = () => http.get(`${prefix}/current-tenant/`);
 export const getDepartmentsList = (deptId: number, id: string) => http.get(`${prefix}/tenants/${id}/departments/`, { parent_department_id: deptId });
 
 /**
- * 创建租户部门
+ * 创建租户组织
  */
 export const addDepartment = (id: string, params: any) => http.post(`${prefix}/tenants/${id}/departments/`, params);
 
 /**
- * 更新租户部门
+ * 删除租户组织
+ */
+export const deleteDepartment = (id: string) => http.delete(`${prefix}/tenants/departments/${id}/`);
+
+/**
+ * 更新租户组织
  */
 export const updateDepartment = (id: string, params: any) => http.put(`${prefix}/tenants/departments/${id}/`, params);
 
@@ -153,3 +154,18 @@ export const batchCreatePreview = (params: any) => http.post(`${prefix}/tenants/
  * 可选部门
  */
 export const departmentsList = (params: any) => http.get(`${prefix}/tenants/optional-departments/`, params);
+
+/**
+ * 搜索组织
+ */
+export const searchOrganization = (params: any) => http.get(`${prefix}/tenants/departments/`, params);
+
+/**
+ * 搜索用户
+ */
+export const searchUser = (params: any) => http.get(`${prefix}/tenants/users/`, params);
+
+/**
+ * 租户下部门单个用户详情
+ */
+export const getOrganizationUsers = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
