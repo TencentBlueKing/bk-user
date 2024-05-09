@@ -55,7 +55,7 @@ urlpatterns = [
         views.OptionalTenantDepartmentListApi.as_view(),
         name="organization.optional_department.list",
     ),
-    # 可选租户用户列表（下拉框数据用）
+    # 可选租户用户上级列表（下拉框数据用）
     path(
         "tenants/optional-leaders/",
         views.OptionalTenantUserListApi.as_view(),
