@@ -75,3 +75,81 @@ export const updateDepartment = (id: string, params: any) => http.put(`${prefix}
  * 获取当前租户的协作租户信息
  */
 export const getCollaboration = () => http.get(`${prefix}/collaborative-tenants/`);
+
+/**
+ * 拉取租户用户列表
+ */
+export const getTenantsUserList = (id: string, params: any) => http.get(`${prefix}/tenants/${id}/users/`, params);
+
+/**
+ * 获取租户用户详情
+ */
+export const getTenantsUserDetail = (id: string) => http.get(`${prefix}/tenants/users/${id}/`);
+
+/**
+ * 更新租户用户
+ */
+export const updateTenantsUserDetail = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/`, params);
+
+/**
+ * 删除租户用户
+ */
+export const delTenantsUser = (id: string) => http.delete(`${prefix}/tenants/users/${id}/`);
+
+/**
+ * 变更租户用户状态（启用/停用）
+ */
+export const updateTenantsUserStatus = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/status/`, params);
+
+
+/**
+ * 重置租户用户密码
+ */
+export const resetTenantsUserPassword = (id: string, params: any) => http.put(`${prefix}/tenants/users/${id}/password/`, params);
+
+/** 批量操作 */
+
+/**
+ * 批量删除用户
+ */
+export const batchDeleteUser = (user_ids: any) => http.delete(`${prefix}/tenants/users/operations/batch_delete/`, {user_ids});
+
+/**
+ * 移出当前组织
+ */
+export const batchDelete= (params: any) => http.delete(`${prefix}/tenants/department-user-relations/operations/batch_delete/`, params);
+
+/**
+ * 移至目标组织
+ */
+export const batchUpdate = (params: any) => http.patch(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+
+/**
+ * 从其他组织拉取 / 追加目标组织
+ */
+export const batchCreate = (params: any) => http.post(`${prefix}/tenants/department-user-relations/operations/batch_create/`, params);
+
+/**
+ * 清空并加入组织
+ */
+export const batchDelUpdate = (params: any) => http.put(`${prefix}/tenants/department-user-relations/operations/batch_update/`, params);
+
+/**
+ * 快速录入
+ */
+export const operationsCreate = (params: any) => http.post(`${prefix}/tenants/users/operations/batch_create/`, params);
+
+/**
+ * 快速录入字段 tips 来源
+ */
+export const getFieldsTips = () => http.get(`${prefix}/tenants/required-user-fields/`);
+
+/**
+ * 快速录入数据预览
+ */
+export const batchCreatePreview = (params: any) => http.post(`${prefix}/tenants/users/operations/batch_create_preview/`, params);
+
+/**
+ * 可选部门
+ */
+export const departmentsList = (params: any) => http.get(`${prefix}/tenants/optional-departments/`, params);

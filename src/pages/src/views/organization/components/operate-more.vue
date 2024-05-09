@@ -41,7 +41,8 @@
 </template>
 
 
-<script setup lang="ts">import { clickoutside as vClickoutside } from 'bkui-vue';
+<script setup lang="ts">
+import { clickoutside as vClickoutside } from 'bkui-vue';
 import { computed, ref   } from 'vue';
 
 import { addDepartment, updateDepartment } from '@/http/organizationFiles';

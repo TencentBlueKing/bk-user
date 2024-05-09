@@ -66,6 +66,7 @@ const formatTreeData = (data = []) => {
 onBeforeMount(async () => {
   const tenantData = await getCurrentTenant();
   currentTenant.value = tenantData?.data;
+  appStore.currentTenant = tenantData?.data;
   appStore.currentOrg = tenantData?.data;
   const deptData = await getDepartmentsList(0, currentTenant.value?.id);
   treeData.value = formatTreeData(deptData?.data);

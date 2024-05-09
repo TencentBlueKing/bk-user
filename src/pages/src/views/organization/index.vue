@@ -28,6 +28,7 @@
         <div class="text-[#313238] leading-[52px] px-[24px] text-[16px] shadow-[0_3px_4px_0_#0000000a] bg-white">
           {{ appStore.currentOrg?.name }}
         </div>
+        <TableList />
       </section>
     </template>
   </bk-resize-layout>
@@ -38,6 +39,7 @@
 import AsideCollaboration from './components/aside-collaboration.vue';
 import AsideTenant from './components/aside-tenant.vue';
 import Search from './components/search.vue';
+import TableList from './components/table-list.vue'
 
 import useAppStore from '@/store/app';
 
