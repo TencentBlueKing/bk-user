@@ -419,7 +419,6 @@
   "租户logo": "Tenant Logo",
   "我分享的": "Shared by Me",
   "其他租户分享的": "Shared by Other Tenants",
-  "目标公司": "Target company",
   "确认": "Confirm",
   "数据变更记录": "Data Change Logs",
   "重置": "Reset",
@@ -463,5 +462,13 @@
   "是否启用管理员账号？": "Enable Administrator Account?",
   "停用后，将不可使用管理员账号进行登录": "After deactivation, the administrator account cannot be used for logging in",
   "停用后，可使用管理员账号进行登录": "After deactivation, the administrator account can still be used for logging in",
-  "当前还没有数据源，需要先选择数据源类型并进行配置": "There is currently no data source; you need to select a data source type and configure it first"
+  "当前还没有数据源，需要先选择数据源类型并进行配置": "There is currently no data source; you need to select a data source type and configure it first",
+  "搜索策略名称": "Search Strategy Name",
+  "协同策略创建成功": "Collaboration Strategy Created Successfully",
+  "协同策略更新成功": "Collaboration Strategy Updated Successfully",
+  "所有部门 + 用户": "All departments + Users",
+  "协同数据选择": "Select Collaboration Data",
+  "已协同": "Already collaborated",
+  "源租户用户字段": "Source tenant user fields",
+  "本租户用户字段": "This tenant's user fields"
 }
