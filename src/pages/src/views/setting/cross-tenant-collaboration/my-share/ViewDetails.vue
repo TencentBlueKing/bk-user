@@ -27,7 +27,7 @@
             <Empty
               :is-data-empty="isDataEmpty"
               :is-data-error="isDataError"
-              @handleUpdate="handleUpdate"
+              @handle-update="handleUpdate"
             />
           </template>
           <bk-table-column prop="username" :label="$t('用户名')" />

@@ -48,8 +48,9 @@
             @show="() => (state.languageDropdown = true)"
           >
             <div class="help-info" :class="state.languageDropdown && 'active'">
-              <i :class="['bk-sq-icon', $i18n.locale === 'en'
-                ? 'icon-yuyanqiehuanyingwen' : 'icon-yuyanqiehuanzhongwen']" />
+              <i
+                :class="['bk-sq-icon', $i18n.locale === 'en'
+                  ? 'icon-yuyanqiehuanyingwen' : 'icon-yuyanqiehuanzhongwen']" />
             </div>
             <template #content>
               <bk-dropdown-menu>
@@ -137,11 +138,11 @@ import ReleaseNote from '@blueking/release-note';
 import '@blueking/notice-component/dist/style.css';
 import '@blueking/release-note/dist/vue3-light.css';
 import { logout } from '@/common/auth';
+import { getVersionLogs } from '@/http';
 import I18n, { t } from '@/language/index';
 import router from '@/router';
 import { useUser } from '@/store';
 import { logoConvert } from '@/utils';
-import { getVersionLogs } from '@/http';
 
 const state = reactive({
   logoutDropdown: false,

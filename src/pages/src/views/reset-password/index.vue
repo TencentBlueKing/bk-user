@@ -17,11 +17,11 @@
             </span>
           </div>
           <Phone v-if="activeMethod === 'phone'" :tenant-id="tenantId" />
-          <Email v-if="activeMethod === 'email'" :tenant-id="tenantId" @emailSend="emailSend" />
+          <Email v-if="activeMethod === 'email'" :tenant-id="tenantId" @email-send="emailSend" />
         </div>
       </template>
       <template v-else>
-        <EmailSent :current-email="currentEmail" @emailSend="emailSend" />
+        <EmailSent :current-email="currentEmail" @email-send="emailSend" />
       </template>
     </div>
   </div>

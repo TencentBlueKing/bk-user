@@ -6,8 +6,8 @@
         :tel-error="telError"
         :tooltips="true"
         :input-style="true"
-        @changeCountryCode="changeCountryCode"
-        @changeTelError="changeTelError" />
+        @change-country-code="changeCountryCode"
+        @change-tel-error="changeTelError" />
     </bk-form-item>
 
     <div style="display: flex; align-items: flex-start;">

@@ -25,7 +25,7 @@
         <Empty
           :is-data-empty="isDataEmpty"
           :is-data-error="isDataError"
-          @handleUpdate="handleUpdate"
+          @handle-update="handleUpdate"
         />
       </template>
       <bk-table-column prop="name" :label="$t('策略名称')">
@@ -88,7 +88,7 @@
         <OperationDetails
           v-else
           :config="detailsConfig"
-          @handleCancelEdit="handleCancelEdit"
+          @handle-cancel-edit="handleCancelEdit"
         />
       </template>
     </bk-sideslider>
